@@ -36,6 +36,17 @@ const baseDict = {
     featuredBadge: 'Featured',
     featuredGroupLabel: 'Grok',
     multilingualGroupLabel: 'Gemini',
+    selectVoicePlaceholder: 'Select a voice...',
+    searchPlaceholder: 'Search name, style, or model...',
+    filterModelLabel: 'Model',
+    filterGenderLabel: 'Gender',
+    clearFilters: 'Clear',
+    noVoicesFound: 'No voices found',
+    noVoicesFoundHint: 'Try a different search or clear the filters.',
+    previewVoice: 'Preview {name}',
+    stopPreview: 'Stop preview of {name}',
+    footerCount: '{filtered} of {total} voices',
+    voiceListLabel: 'Voices',
   },
 } as const;
 

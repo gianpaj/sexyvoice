@@ -22,6 +22,10 @@ export function extractInlineAudio(response: GenerateContentResponse | null): {
   return { data: undefined, mimeType: undefined };
 }
 
+// Gemini 3.1 audio tags for inline expressive control
+export const GEMINI_AUDIO_TAGS =
+  '[cheerfully], [whispering], [laughing], [pause], [excited], [sadly], [nervously], [slowly], [fast], [breathily], [sighing], [giggling]';
+
 // Emotion tags for each voice based on language
 export const getEmotionTags = (language: string) => {
   if (language.startsWith('it-')) {
@@ -42,7 +46,7 @@ export const getCharactersLimit = (model: string, isPaidUser = false) => {
   if (!isPaidUser) {
     return DEFAULT_LIMIT;
   }
-  if (model === 'gpro' || model === 'xai') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'xai') {
     return PAID_LIMIT;
   }
   return DEFAULT_LIMIT;

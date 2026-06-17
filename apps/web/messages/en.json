@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Which languages are supported for Speech Generation?",
-              "answer": "Language support depends on the selected voice.\n\nSome of our AI voices (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) support 24 languages including:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\nand 🇻🇳 Vietnamese (Vietnam).\n\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
+              "answer": "Language support depends on the selected voice and model.\n\n**Gemini 2.5 voices (default)** support 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\nand 🇻🇳 Vietnamese (Vietnam).\n\n**Gemini 3.1 voices (when \"Use new AI model\" is enabled)** support 70+ languages across 80+ regional locales, including everything above plus:\nAfrikaans, Albanian, Amharic, Armenian, Azerbaijani, Basque, Bulgarian, Catalan, Chinese Simplified, Chinese Traditional, Croatian, Czech, Danish, Estonian, Filipino/Tagalog, Finnish, Galician, Georgian, Greek, Gujarati, Hebrew, Hungarian, Icelandic, Irish, Javanese, Kannada, Kazakh, Latvian, Lithuanian, Macedonian, Malay, Maltese, Norwegian, Persian, Punjabi, Serbian, Slovak, Slovenian, Swahili, Swedish, Urdu, Uzbek, Welsh, Zulu, and more regional variants of English, Spanish, French, Portuguese, and Arabic.\n\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
             },
             {
               "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
@@ -426,7 +426,18 @@
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "It supports 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\n🇻🇳 Vietnamese (Vietnam)",
       "grokInfo": "Supports expressive tags like [laugh] and\nwrapping tags like <fast>...</fast> and supports 24 languages:\n🇪🇬 Arabic (Egypt, Saudi Arabia and UAE),\n🇧🇩 Bengali,\n🇳🇱 Dutch (Netherlands),\n🇨🇳 Chinese (Simplified),\n🇺🇸 English,\n🇫🇷 French,\n🇩🇪 German,\n🇮🇳 Hindi,\n🇮🇩 Indonesian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇧🇷 Portuguese (Brazil, Portugal),\n🇷🇺 Russian,\n🇪🇸 Spanish (Mexico, Spain),\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\n🇻🇳 Vietnamese",
-      "featuredBadge": "Featured"
+      "featuredBadge": "Featured",
+      "selectVoicePlaceholder": "Select a voice...",
+      "searchPlaceholder": "Search name, style, or model...",
+      "filterModelLabel": "Model",
+      "filterGenderLabel": "Gender",
+      "clearFilters": "Clear",
+      "noVoicesFound": "No voices found",
+      "noVoicesFoundHint": "Try a different search or clear the filters.",
+      "previewVoice": "Preview {name}",
+      "stopPreview": "Stop preview of {name}",
+      "footerCount": "{filtered} of {total} voices",
+      "voiceListLabel": "Voices"
     },
     "split": {
       "segmentPreviews": "Segment previews",
@@ -869,7 +880,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "New voice generation voices are live — with more control over pacing, breaths, pitch, speed, and intensity.",
+      "text": "New, more expressive voices are here — powered by Gemini 3.1, with finer control over pacing, breaths, pitch, speed, and intensity.",
       "ctaLoggedIn": "Try voices",
       "ctaLoggedOut": "Log in",
       "ariaLabelDismiss": "Dismiss expressive voices announcement"

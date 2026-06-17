@@ -1,5 +1,71 @@
 # Scripts
 
+## Generate Gemini Speech Samples Script
+
+Generates speech samples through the public `/api/v1/speech` endpoint and saves
+them as MP3 files. The API returns WAV for `gpro`/`gpro31`, so the script
+downloads the WAV and converts it to MP3 with `ffmpeg` (required).
+
+### Quick Start
+
+```bash
+# Show help
+pnpm generate-gemini-speech-samples --help
+
+# Generate one sample by voice ID (model is inferred from the voice)
+SEXYVOICE_API_KEY=xxx \
+  pnpm generate-gemini-speech-samples --voiceId 85153e4b-f5b0-477a-856e-1bf05fd84165
+
+# Generate samples for specific voices with a model + style
+SEXYVOICE_API_KEY=xxx \
+  pnpm generate-gemini-speech-samples --model gpro --style "calm" \
+  --text "Hello there" --voices achernar,zephyr
+
+# Run against a local/dev server
+SEXYVOICE_API_BASE_URL=http://localhost:3000 SEXYVOICE_API_KEY=xxx \
+  pnpm generate-gemini-speech-samples --voiceId <id>
+```
+
+> Note: you don't need `--` before the flags (e.g. `pnpm generate-gemini-speech-samples --voiceId <id>`).
+
+### CLI Options
+
+- `--voiceId <id>` - Voice ID from `GET /api/v1/voices`. Used **instead of** `--voice` + `--model` (the model is inferred from the voice).
+- `--model <gpro|gpro31>` - Gemini model alias (used with `--voices`)
+- `--voices <a,b,c>` - Comma-separated voice names (defaults to a built-in list when neither `--voices` nor `--voiceId` is given)
+- `--text <text>` - Text to synthesize
+- `--style <style>` - Emotion/style prompt applied by the API
+- `--seed <number>` - Optional deterministic seed
+- `--out <dir>` - Output directory (default: `scripts/generated-speech`)
+- `--base-url <url>` - Override `SEXYVOICE_API_BASE_URL`
+- `--api-key <key>` - Override `SEXYVOICE_API_KEY`
+- `--keep-wav` - Keep the downloaded WAV next to each MP3
+- `-h, --help` - Show help message
+
+### Environment
+
+- `SEXYVOICE_API_KEY` - Required Bearer API key
+- `SEXYVOICE_API_BASE_URL` - Optional API host (default: `https://sexyvoice.ai`)
+- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN` - Default `--style` if not passed
+- `DEBUG=1` - Print full stack traces on error
+
+`.env.local`/`.env` files in the repo root, `apps/web/`, and `scripts/` are
+loaded automatically.
+
+### Requirements
+
+- `ffmpeg` on your `PATH` (used to convert WAV → MP3)
+
+### Troubleshooting
+
+- **`Could not reach Speech API at ...: ENOTFOUND` / `ECONNREFUSED`** - the host
+  is wrong or the server isn't running. Check `SEXYVOICE_API_BASE_URL`.
+- **`... SELF_SIGNED_CERT_IN_CHAIN`** - the server uses a self-signed
+  certificate. For local/dev only, prepend `NODE_TLS_REJECT_UNAUTHORIZED=0`, or
+  point Node at the cert with `NODE_EXTRA_CA_CERTS=/path/to/cert.pem`.
+
+---
+
 ## Reset Freeloader Credits Script
 
 Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.

@@ -6,10 +6,10 @@ import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import {
   type ComponentPropsWithoutRef,
+  forwardRef,
   type ReactNode,
-  type Ref,
+  useCallback,
   useEffect,
-  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -32,6 +32,7 @@ import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getTtsProvider } from '@/lib/utils';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
+import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
   generateRetrySeed,
@@ -43,6 +44,7 @@ import {
   AudioPlayerWithContext,
 } from './audio-player-with-context';
 import { GenerateButton } from './generate-button';
+import { StreamingWaveformPlayer } from './streaming-waveform-player';
 
 const NonGrokPromptEditor = dynamic(
   () => import('./non-grok-editor').then((mod) => mod.NonGrokPromptEditor),
@@ -61,33 +63,27 @@ import {
 interface AnimatedPromptTextareaProps
   extends ComponentPropsWithoutRef<typeof Textarea> {
   children?: ReactNode;
-  ref?: Ref<HTMLTextAreaElement>;
 }
 
-export function AnimatedPromptTextarea({
-  children,
-  className,
-  onBlur,
-  onFocus,
-  ref,
-  ...props
-}: AnimatedPromptTextareaProps) {
-  return (
-    <SpotlightField>
-      <Textarea
-        className={cn(
-          'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
-          className,
-        )}
-        onBlur={onBlur}
-        onFocus={onFocus}
-        ref={ref}
-        {...props}
-      />
-      {children}
-    </SpotlightField>
-  );
-}
+export const AnimatedPromptTextarea = forwardRef<
+  HTMLTextAreaElement,
+  AnimatedPromptTextareaProps
+>(({ children, className, onBlur, onFocus, ...props }, ref) => (
+  <SpotlightField>
+    <Textarea
+      className={cn(
+        'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
+        className,
+      )}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      ref={ref}
+      {...props}
+    />
+    {children}
+  </SpotlightField>
+));
+AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
 
 interface CreditEstimatorProps {
   buttonLabel: string;
@@ -132,6 +128,83 @@ function CreditEstimator({
       )}
     </div>
   );
+}
+
+const STREAM_TEXT_THRESHOLD = 300;
+
+// ── SSE client parser ─────────────────────────────────────────────────────
+interface SseAudioEvent {
+  data: string;
+  mimeType: string;
+}
+
+interface SseDoneEvent {
+  cached?: boolean;
+  creditsRemaining: number;
+  creditsUsed: number;
+  url: string;
+}
+
+interface SseErrorEvent {
+  error: string;
+}
+
+interface ParseSseStreamCallbacks {
+  onAudio: (event: SseAudioEvent) => void;
+  onDone: (event: SseDoneEvent) => void;
+  onError: (event: SseErrorEvent) => void;
+}
+
+async function parseSseStream(
+  response: Response,
+  callbacks: ParseSseStreamCallbacks,
+): Promise<void> {
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete SSE blocks (separated by blank lines)
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop() ?? ''; // last incomplete block stays in buffer
+
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        let eventType = '';
+        let dataStr = '';
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            dataStr = line.slice(6).trim();
+          }
+        }
+
+        if (!(eventType && dataStr)) continue;
+
+        try {
+          const payload = JSON.parse(dataStr);
+          if (eventType === 'audio') {
+            callbacks.onAudio(payload as SseAudioEvent);
+          } else if (eventType === 'done') {
+            callbacks.onDone(payload as SseDoneEvent);
+          } else if (eventType === 'error') {
+            callbacks.onError(payload as SseErrorEvent);
+          }
+        } catch {
+          // malformed JSON — skip
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 interface AudioGeneratorProps {
@@ -196,13 +269,23 @@ export function AudioGenerator({
   const [splitTextAudios, setSplitTextAudios] = useState(false);
   const [isDownloadingAllSegments, setIsDownloadingAllSegments] =
     useState(false);
-  const playerControlsRef = useRef<AudioPlayerControls | null>(null);
+  const [playerControls, setPlayerControls] =
+    useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
   const retryAbortController = useRef<AbortController | null>(null);
+
+  // Live waveform + Web Audio engine for the gpro31 streaming path. The methods
+  // are stable (useCallback); destructure them for use in memoized callbacks.
+  const streamingPlayer = useStreamingWaveformPlayer();
+  const {
+    pushChunk: pushStreamChunk,
+    finalize: finalizeStream,
+    reset: resetStream,
+  } = streamingPlayer;
 
   const audio = useAudio();
   const {
@@ -214,7 +297,16 @@ export function AudioGenerator({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  const showEnhanceButton = provider === 'replicate';
+  // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
+  // synthesize the whole clip and return it in a single chunk, so streaming
+  // there gives no time-to-first-audio benefit — keep them on the JSON path.
+  const isStreamingModel = selectedVoice?.model === 'gpro31';
+  // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
+  // toward the expected total length before the exact duration is known.
+  const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
+  const showEnhanceButton =
+    provider === 'replicate' ||
+    (provider === 'gemini' && selectedVoice?.model === 'gpro31');
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   const charactersLimit = getCharactersLimit(
@@ -234,7 +326,7 @@ export function AudioGenerator({
         language: isGrokVoice ? selectedGrokLanguage : '',
         styleVariant: isGeminiVoice ? selectedStyle : '',
       }),
-    [isGrokVoice, isGeminiVoice, selectedGrokLanguage, selectedStyle],
+    [isGeminiVoice, isGrokVoice, selectedGrokLanguage, selectedStyle],
   );
   const previewSplitSegmentTexts = useMemo(
     () => splitSegmentTexts.slice(0, SPLIT_SEGMENT_MAX_COUNT),
@@ -271,39 +363,129 @@ export function AudioGenerator({
     textareaRightPadding = 'pr-20';
   }
 
-  const requestGenerateVoice = async (
-    segmentText: string,
-    signal: AbortSignal,
-    seed?: number,
-  ) => {
-    if (!selectedVoice) {
-      throw new APIError(t('error'), new Response(null, { status: 400 }));
-    }
+  const requestGenerateVoiceJson = useCallback(
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+    ): Promise<string> => {
+      if (!selectedVoice) {
+        throw new APIError(t('error'), new Response(null, { status: 400 }));
+      }
 
-    const response = await fetch('/api/generate-voice', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: segmentText,
-        voice: selectedVoice.name,
-        styleVariant: isGeminiVoice ? selectedStyle : '',
-        language: isGrokVoice ? selectedGrokLanguage : undefined,
-        ...(seed === undefined ? {} : { seed }),
-      }),
-      signal,
-    });
+      const response = await fetch('/api/generate-voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: segmentText,
+          voiceId: selectedVoice.id,
+          styleVariant: isGeminiVoice ? selectedStyle : '',
+          language: isGrokVoice ? selectedGrokLanguage : undefined,
+          ...(seed === undefined ? {} : { seed }),
+        }),
+        signal,
+      });
 
-    const data = await response.json();
-    if (!response.ok) {
-      throwGenerateVoiceError(t, data, response);
-    }
+      const data = await response.json();
+      if (!response.ok) {
+        throwGenerateVoiceError(t, data, response);
+      }
 
-    return data.url as string;
-  };
+      return data.url as string;
+    },
+    [
+      t,
+      isGeminiVoice,
+      isGrokVoice,
+      selectedGrokLanguage,
+      selectedStyle,
+      selectedVoice,
+    ],
+  );
 
-  const generateSingleAudio = async () => {
+  const requestGenerateVoiceStream = useCallback(
+    async (segmentText: string, signal: AbortSignal): Promise<string> => {
+      if (!selectedVoice) {
+        throw new APIError(t('error'), new Response(null, { status: 400 }));
+      }
+
+      const response = await fetch('/api/generate-voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: segmentText,
+          voiceId: selectedVoice.id,
+          styleVariant: selectedStyle ?? '',
+          stream: true,
+        }),
+        signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throwGenerateVoiceError(t, data, response);
+      }
+
+      // The streaming player owns the Web Audio engine, peak accumulation, and
+      // the live→file handoff. Here we just feed it PCM chunks as they arrive.
+      return new Promise<string>((resolve, reject) => {
+        parseSseStream(response, {
+          onAudio: ({ data, mimeType }) => {
+            if (signal.aborted) return;
+            pushStreamChunk(data, mimeType);
+          },
+          onDone: ({ url }) => {
+            // Assemble the WAV and arrange the handoff; live playback continues
+            // until the buffered tail finishes (see the hook). A cache hit sends
+            // no audio chunks, so `finalize` is a no-op and the standard file
+            // player handles the persisted URL instead.
+            finalizeStream();
+            resolve(url);
+          },
+          onError: ({ error }) => {
+            resetStream();
+            reject(new APIError(error, new Response(null, { status: 500 })));
+          },
+        }).catch(reject);
+      });
+    },
+    [
+      t,
+      finalizeStream,
+      pushStreamChunk,
+      resetStream,
+      selectedStyle,
+      selectedVoice,
+    ],
+  );
+
+  const requestGenerateVoice = useCallback(
+    (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+    ): Promise<string> => {
+      const useStream =
+        isGeminiVoice &&
+        isStreamingModel &&
+        !shouldUseSplitMode &&
+        segmentText.length > STREAM_TEXT_THRESHOLD;
+
+      if (useStream) {
+        return requestGenerateVoiceStream(segmentText, signal);
+      }
+      return requestGenerateVoiceJson(segmentText, signal, seed);
+    },
+    [
+      isGeminiVoice,
+      isStreamingModel,
+      requestGenerateVoiceJson,
+      requestGenerateVoiceStream,
+      shouldUseSplitMode,
+    ],
+  );
+
+  const generateSingleAudio = useCallback(async () => {
     if (!selectedVoice) return;
 
     abortController.current = new AbortController();
@@ -313,10 +495,10 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(t('success'));
-  };
+  }, [t('success'), requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
-  const generateSplitAudios = async () => {
+  const generateSplitAudios = useCallback(async () => {
     if (!(selectedVoice && splitSegments.length > 0)) return;
 
     const currentSegmentTexts = splitSegments.map((segment) =>
@@ -417,9 +599,22 @@ export function AudioGenerator({
     if (!encounteredFailure) {
       toast.success(t('success'));
     }
-  };
+  }, [
+    t('error'),
+    t('success'),
+    t('split.segmentCannotBeEmpty'),
+    t('split.segmentFailed'),
+    markSegmentFailed,
+    markSegmentGenerating,
+    markSegmentIdle,
+    markSegmentSuccess,
+    requestGenerateVoice,
+    selectedVoice,
+    showGenerationProgressToast,
+    splitSegments,
+  ]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     if (!selectedVoice) return;
 
     if (
@@ -436,6 +631,9 @@ export function AudioGenerator({
     }
 
     setIsGenerating(true);
+    // Clear any previous result/streaming player before a new generation.
+    setAudioURL('');
+    resetStream();
     try {
       if (shouldUseSplitMode) {
         await generateSplitAudios();
@@ -449,86 +647,114 @@ export function AudioGenerator({
       dismissGenerationProgressToast();
       setIsGenerating(false);
     }
-  };
+  }, [
+    t('error'),
+    t('split.tooManySegments'),
+    dismissGenerationProgressToast,
+    generateSingleAudio,
+    generateSplitAudios,
+    resetStream,
+    selectedVoice,
+    shouldUseSplitMode,
+    splitSegmentTexts.length,
+  ]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-  };
+    resetStream();
+  }, [resetStream]);
 
-  const handleRetrySegment = async (segmentIndex: number) => {
-    const segment = splitSegments[segmentIndex];
-    if (!segment || isGenerating || !selectedVoice) {
-      return;
-    }
-
-    const seed = generateRetrySeed();
-    retryAbortController.current = new AbortController();
-
-    setIsGenerating(true);
-    markSegmentGenerating(segmentIndex);
-    showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
-
-    try {
-      const generatedUrl = await requestGenerateVoice(
-        segment.text,
-        retryAbortController.current.signal,
-        seed,
-      );
-
-      markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
-      showGenerationProgressToast(segmentIndex + 1, splitSegments.length, true);
-      toast.success(
-        t('split.segmentGenerated').replace(
-          '__INDEX__',
-          String(segmentIndex + 1),
-        ),
-      );
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        markSegmentIdle(segmentIndex);
+  const handleRetrySegment = useCallback(
+    async (segmentIndex: number) => {
+      const segment = splitSegments[segmentIndex];
+      if (!segment || isGenerating || !selectedVoice) {
         return;
       }
 
-      markSegmentFailed(segmentIndex);
-      if (error instanceof APIError) {
-        toast.error(error.message || t('error'));
-      } else {
-        toast.error(
-          t('split.segmentRetryFailed').replace(
+      const seed = generateRetrySeed();
+      retryAbortController.current = new AbortController();
+
+      setIsGenerating(true);
+      markSegmentGenerating(segmentIndex);
+      showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
+
+      try {
+        const generatedUrl = await requestGenerateVoice(
+          segment.text,
+          retryAbortController.current.signal,
+          seed,
+        );
+
+        markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
+        showGenerationProgressToast(
+          segmentIndex + 1,
+          splitSegments.length,
+          true,
+        );
+        toast.success(
+          t('split.segmentGenerated').replace(
             '__INDEX__',
             String(segmentIndex + 1),
           ),
         );
-      }
-    } finally {
-      setIsGenerating(false);
-      dismissGenerationProgressToast();
-    }
-  };
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          markSegmentIdle(segmentIndex);
+          return;
+        }
 
-  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-      event.preventDefault();
-
-      if (
-        !isGenerating &&
-        text.trim() &&
-        selectedVoice &&
-        hasEnoughCredits &&
-        !textIsOverLimit
-      ) {
-        handleGenerate().catch((error) => {
-          console.error('Keyboard shortcut generation failed:', error);
-        });
+        markSegmentFailed(segmentIndex);
+        if (error instanceof APIError) {
+          toast.error(error.message || t('error'));
+        } else {
+          toast.error(
+            t('split.segmentRetryFailed').replace(
+              '__INDEX__',
+              String(segmentIndex + 1),
+            ),
+          );
+        }
+      } finally {
+        setIsGenerating(false);
+        dismissGenerationProgressToast();
       }
-    }
-  });
+    },
+    [
+      t('error'),
+      t('split.segmentGenerated'),
+      t('split.segmentRetryFailed'),
+      dismissGenerationProgressToast,
+      isGenerating,
+      markSegmentFailed,
+      markSegmentGenerating,
+      markSegmentIdle,
+      markSegmentSuccess,
+      requestGenerateVoice,
+      selectedVoice,
+      showGenerationProgressToast,
+      splitSegments,
+    ],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      onKeyDown(event);
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+
+        if (
+          !isGenerating &&
+          text.trim() &&
+          selectedVoice &&
+          hasEnoughCredits &&
+          !textIsOverLimit
+        ) {
+          handleGenerate().catch((error) => {
+            console.error('Keyboard shortcut generation failed:', error);
+          });
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -536,11 +762,18 @@ export function AudioGenerator({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [
+    handleGenerate,
+    hasEnoughCredits,
+    isGenerating,
+    selectedVoice,
+    text,
+    textIsOverLimit,
+  ]);
 
   const resetPlayer = () => {
-    if (playerControlsRef.current) {
-      playerControlsRef.current.reset();
+    if (playerControls) {
+      playerControls.reset();
       return;
     }
 
@@ -670,7 +903,11 @@ export function AudioGenerator({
 
     try {
       const enhancedText = await complete(text, {
-        body: { selectedVoiceLanguage: selectedVoice.language },
+        body: {
+          selectedVoiceLanguage: selectedVoice.language,
+          ttsProvider: provider,
+          voiceModel: selectedVoice.model,
+        },
       });
 
       if (enhancedText) {
@@ -690,6 +927,10 @@ export function AudioGenerator({
     }
   };
 
+  const handleControlsReady = useCallback((controls: AudioPlayerControls) => {
+    setPlayerControls(controls);
+  }, []);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset estimate when voice or text changes
   useEffect(() => {
     setEstimatedCredits(null);
@@ -702,39 +943,49 @@ export function AudioGenerator({
     }
   }, [text, isFullscreen]);
 
-  const requestEstimateCredits = async (textToEstimate: string) => {
-    if (!(selectedVoice && canEstimateCredits)) {
-      throw new APIError(
-        t('errorEstimating'),
-        new Response(null, { status: 400 }),
-      );
-    }
+  const requestEstimateCredits = useCallback(
+    async (textToEstimate: string) => {
+      if (!(selectedVoice && canEstimateCredits)) {
+        throw new APIError(
+          t('errorEstimating'),
+          new Response(null, { status: 400 }),
+        );
+      }
 
-    const response = await fetch('/api/estimate-credits', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: textToEstimate,
-        voice: selectedVoice.name,
-        styleVariant: isGeminiVoice ? selectedStyle : '',
-      }),
-    });
+      const response = await fetch('/api/estimate-credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: textToEstimate,
+          voiceId: selectedVoice.id,
+          styleVariant: isGeminiVoice ? selectedStyle : '',
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new APIError(data.error || t('error'), response);
-    }
+      if (!response.ok) {
+        throw new APIError(data.error || t('error'), response);
+      }
 
-    const value = Number(data.estimatedCredits);
-    if (!Number.isFinite(value)) {
-      throw new APIError(t('errorEstimating'), response);
-    }
+      const value = Number(data.estimatedCredits);
+      if (!Number.isFinite(value)) {
+        throw new APIError(t('errorEstimating'), response);
+      }
 
-    return value;
-  };
+      return value;
+    },
+    [
+      canEstimateCredits,
+      t('error'),
+      t('errorEstimating'),
+      isGeminiVoice,
+      selectedStyle,
+      selectedVoice,
+    ],
+  );
 
   const handleEstimateCredits = async () => {
     if (!(selectedVoice && canEstimateCredits && text.trim())) return;
@@ -900,37 +1151,73 @@ export function AudioGenerator({
           </div>
 
           <div className="flex justify-start gap-2 sm:w-full">
-            {!shouldUseSplitMode && audioURL && (
+            {!shouldUseSplitMode && streamingPlayer.phase !== 'idle' && (
               <>
-                <AudioPlayerWithContext
-                  autoPlay
+                <StreamingWaveformPlayer
                   className="rounded-md"
+                  controller={streamingPlayer}
+                  estimatedDurationSec={estimatedStreamDurationSec}
+                  onControlsReady={handleControlsReady}
                   playAudioTitle={t('playAudio')}
                   progressColor="#8b5cf6"
-                  ref={playerControlsRef}
-                  showWaveform
-                  url={audioURL}
                   waveColor="#888888"
                   waveformClassName="w-48"
                 />
-                <Button
-                  onClick={resetPlayer}
-                  size="icon"
-                  title={t('resetPlayer')}
-                  variant="secondary"
-                >
-                  <RotateCcw className="size-6" />
-                </Button>
-                <Button
-                  onClick={downloadAudio}
-                  size="icon"
-                  title={t('downloadAudio')}
-                  variant="secondary"
-                >
-                  <Download className="size-6" />
-                </Button>
+                {streamingPlayer.phase === 'file' && (
+                  <>
+                    <Button
+                      onClick={resetPlayer}
+                      size="icon"
+                      title={t('resetPlayer')}
+                      variant="secondary"
+                    >
+                      <RotateCcw className="size-6" />
+                    </Button>
+                    <Button
+                      onClick={downloadAudio}
+                      size="icon"
+                      title={t('downloadAudio')}
+                      variant="secondary"
+                    >
+                      <Download className="size-6" />
+                    </Button>
+                  </>
+                )}
               </>
             )}
+            {!shouldUseSplitMode &&
+              streamingPlayer.phase === 'idle' &&
+              audioURL && (
+                <>
+                  <AudioPlayerWithContext
+                    autoPlay
+                    className="rounded-md"
+                    onControlsReady={handleControlsReady}
+                    playAudioTitle={t('playAudio')}
+                    progressColor="#8b5cf6"
+                    showWaveform
+                    url={audioURL}
+                    waveColor="#888888"
+                    waveformClassName="w-48"
+                  />
+                  <Button
+                    onClick={resetPlayer}
+                    size="icon"
+                    title={t('resetPlayer')}
+                    variant="secondary"
+                  >
+                    <RotateCcw className="size-6" />
+                  </Button>
+                  <Button
+                    onClick={downloadAudio}
+                    size="icon"
+                    title={t('downloadAudio')}
+                    variant="secondary"
+                  >
+                    <Download className="size-6" />
+                  </Button>
+                </>
+              )}
           </div>
         </div>
         {shouldUseSplitMode && (

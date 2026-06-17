@@ -14,8 +14,15 @@ export function resolveExternalModelId(
   return;
 }
 
+export function isModelCompatibleWithVoice(
+  requestedModel: ExternalApiModelId,
+  voiceDbModel: string,
+): boolean {
+  return resolveExternalModelId(voiceDbModel) === requestedModel;
+}
+
 export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
-  return model === 'gpro' ? 'wav' : 'mp3';
+  return model === 'gpro' || model === 'gpro31' ? 'wav' : 'mp3';
 }
 
 export function isFormatSupported(

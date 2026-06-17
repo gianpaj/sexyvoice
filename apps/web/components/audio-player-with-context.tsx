@@ -2,7 +2,7 @@
 
 import WavesurferPlayer from '@wavesurfer/react';
 import { Pause, Play } from 'lucide-react';
-import { type Ref, useImperativeHandle, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
 import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
@@ -19,9 +19,9 @@ interface AudioPlayerWithContextProps {
   autoPlay?: boolean;
   buttonClassName?: string;
   className?: string;
+  onControlsReady?: (controls: AudioPlayerControls) => void;
   playAudioTitle: string;
   progressColor?: string;
-  ref?: Ref<AudioPlayerControls | null>;
   showWaveform?: boolean;
   url: string;
   waveColor?: string;
@@ -40,7 +40,7 @@ export function AudioPlayerWithContext({
   waveColor = '#a1a1aa',
   progressColor = '#7c3aed',
   autoPlay = false,
-  ref,
+  onControlsReady,
 }: AudioPlayerWithContextProps) {
   const audio = useAudio();
 
@@ -54,48 +54,46 @@ export function AudioPlayerWithContext({
   // Determine which playing state to use based on mode
   const isPlaying = showWaveform ? isWaveformPlaying : isPlayingFromContext;
 
-  // Expose imperative controls to the parent (via ref) only while the
-  // waveform player is mounted and ready; otherwise the ref stays null so
-  // callers fall back to the shared audio context.
-  useImperativeHandle<AudioPlayerControls | null, AudioPlayerControls | null>(
-    ref,
-    () =>
-      showWaveform && wavesurfer
-        ? {
-            reset: () => {
-              wavesurfer.stop();
-              wavesurfer.seekTo(0);
-            },
-            stop: () => {
-              wavesurfer.stop();
-            },
-          }
-        : null,
-    [showWaveform, wavesurfer],
+  // Expose controls to parent when wavesurfer is ready
+  useEffect(() => {
+    if (showWaveform && wavesurfer && onControlsReady) {
+      onControlsReady({
+        reset: () => {
+          wavesurfer.stop();
+          wavesurfer.seekTo(0);
+        },
+        stop: () => {
+          wavesurfer.stop();
+        },
+      });
+    }
+  }, [showWaveform, wavesurfer, onControlsReady]);
+
+  const onReady = useCallback(
+    (ws: WaveSurfer) => {
+      setWavesurfer(ws);
+      setIsWaveformPlaying(false);
+      if (autoPlay) {
+        void attemptPlayback(
+          () => ws.play(),
+          () => {
+            setIsWaveformPlaying(false);
+          },
+        );
+      }
+    },
+    [autoPlay],
   );
 
-  const onReady = (ws: WaveSurfer) => {
-    setWavesurfer(ws);
-    setIsWaveformPlaying(false);
-    if (autoPlay) {
-      void attemptPlayback(
-        () => ws.play(),
-        () => {
-          setIsWaveformPlaying(false);
-        },
-      );
-    }
-  };
-
-  const onPlay = () => {
+  const onPlay = useCallback(() => {
     setIsWaveformPlaying(true);
-  };
+  }, []);
 
-  const onPause = () => {
+  const onPause = useCallback(() => {
     setIsWaveformPlaying(false);
-  };
+  }, []);
 
-  const handlePlayWithWaveform = async () => {
+  const handlePlayWithWaveform = useCallback(async () => {
     if (!wavesurfer) return;
 
     if (isWaveformPlaying) {
@@ -110,9 +108,9 @@ export function AudioPlayerWithContext({
         setIsWaveformPlaying(false);
       },
     );
-  };
+  }, [isWaveformPlaying, wavesurfer]);
 
-  const handlePlayWithContext = () => {
+  const handlePlayWithContext = useCallback(() => {
     if (!audio) return;
     if (audio.url !== url) {
       audio.setUrlAndPlay(url);
@@ -121,7 +119,7 @@ export function AudioPlayerWithContext({
     } else {
       audio.play();
     }
-  };
+  }, [audio, url]);
 
   const handlePlay = showWaveform
     ? handlePlayWithWaveform

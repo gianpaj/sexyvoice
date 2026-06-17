@@ -220,7 +220,7 @@ export default function DashboardUI({
             <p className="text-gray-500 text-xs">
               <a
                 className="hover:underline"
-                href="https://sexyvoice.checkly-dashboards.com/"
+                href="https://status.sexyvoice.ai"
                 rel="noopener noreferrer"
                 target="_blank"
               >

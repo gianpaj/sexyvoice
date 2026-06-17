@@ -38,6 +38,17 @@ const baseDict = {
     featuredBadge: 'Featured',
     featuredGroupLabel: 'Featured',
     multilingualGroupLabel: 'Gemini',
+    selectVoicePlaceholder: 'Select a voice...',
+    searchPlaceholder: 'Search name, style, or model...',
+    filterModelLabel: 'Model',
+    filterGenderLabel: 'Gender',
+    clearFilters: 'Clear',
+    noVoicesFound: 'No voices found',
+    noVoicesFoundHint: 'Try a different search or clear the filters.',
+    previewVoice: 'Preview {name}',
+    stopPreview: 'Stop preview of {name}',
+    footerCount: '{filtered} of {total} voices',
+    voiceListLabel: 'Voices',
   },
 } as const;
 
@@ -224,7 +235,7 @@ describe('VoiceSelector', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('exposes the featured badge copy in the selected value for the featured voice', () => {
+  it('shows the selected voice name in the trigger button', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-grok',
@@ -235,7 +246,6 @@ describe('VoiceSelector', () => {
     });
 
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
-    expect(screen.getByRole('combobox')).toHaveTextContent(/featured/i);
   });
 
   it('keeps featured voices first and preserves query order for non-featured groups', () => {

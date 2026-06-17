@@ -23,6 +23,8 @@ Use it when contacting support or debugging failures.
 
 ## Quick Start
 
+Speech requests can identify a voice by `voice` + `model`, or by `voiceId` from `GET /api/v1/voices`. Use `voiceId` when you want a stable ID or when a voice name exists for more than one model.
+
 ### curl
 
 ```bash
@@ -37,6 +39,21 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
     "seed": 1234
   }'
 ```
+
+### curl with `voiceId`
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "voiceId": "390f5864-111b-4795-81ea-7026a1e64cfc",
+    "input": "Hello from SexyVoice API",
+    "style": "calm"
+  }'
+```
+
+Do not include `voice` or `model` when you pass `voiceId`; the API derives the model from the voice.
 
 ### TypeScript (gpro)
 

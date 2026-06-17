@@ -3,8 +3,6 @@ import {
   type GenerateContentConfig,
   type GenerateContentResponse,
   GoogleGenAI,
-  HarmBlockThreshold,
-  HarmCategory,
 } from '@google/genai';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
@@ -13,12 +11,13 @@ import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
+import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCredits,
-  getVoiceIdByName,
+  getVoiceById,
   hasUserPaid,
   insertUsageEvent,
   isFreemiumUserOverLimit,
@@ -29,7 +28,6 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
-  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
@@ -43,6 +41,13 @@ import {
   isGoogleTransientProviderError,
 } from '@/utils/google-rpc-status';
 import { parseGoogleApiError } from '@/utils/googleErrors';
+import {
+  buildGeminiTtsConfig,
+  convertAudioChunksToWav,
+  createSseEvent,
+  extractGeminiStreamAudioChunk,
+  SSE_HEADERS,
+} from './gemini-tts';
 
 const { logger, captureException } = Sentry;
 
@@ -66,7 +71,8 @@ const redis = Redis.fromEnv();
 
 export async function POST(request: Request) {
   let text = '';
-  let voice = '';
+  let voiceId = '';
+  let voiceName = '';
   let styleVariant = '';
   let seed: number | undefined;
   let selectedLanguage = '';
@@ -83,16 +89,17 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     text = body.text || '';
-    voice = body.voice || '';
+    voiceId = body.voiceId || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
+    const stream = body.stream === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
       seed = body.seed;
     }
 
-    if (!(text && voice)) {
-      logger.error('Missing required parameters: text or voice', {
+    if (!(text && voiceId)) {
+      logger.error('Missing required parameters: text or voiceId', {
         body,
         headers: Object.fromEntries(request.headers.entries()),
       });
@@ -120,17 +127,24 @@ export async function POST(request: Request) {
       email: user.email,
     });
 
-    const voiceObj = await getVoiceIdByName(voice);
+    const voiceObj = await getVoiceById(voiceId);
 
     if (!voiceObj) {
       const error = new Error('Voice not found');
-      captureException(error, { extra: { voice, text } });
+      captureException(error, { extra: { voiceId, text } });
       return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
     }
+
+    voiceName = voiceObj.name;
 
     const provider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = provider === 'gemini';
     const isGrokVoice = provider === 'grok';
+    // Streaming is only honoured for the gemini-3.1 (gpro31) voices, which
+    // return audio progressively. The 2.5 models emit the whole clip in a
+    // single chunk, so streaming gives no benefit — they keep the JSON path,
+    // as do Grok/Replicate voices.
+    const shouldStream = stream && isGeminiVoice && voiceObj.model === 'gpro31';
 
     userHasPaid = await hasUserPaid(user.id);
 
@@ -148,16 +162,31 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!userHasPaid && voiceObj.model === 'gpro') {
+      const isOverLimit = await isFreemiumUserOverLimit(user.id);
+      if (isOverLimit) {
+        return NextResponse.json(
+          { errorCode: 'gproLimitExceeded' },
+          { status: 403 },
+        );
+      }
+    }
+
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voice, voiceObj.model);
+    const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
 
     // console.log({ estimate });
 
     if (currentAmount < estimate) {
       logger.info('Insufficient credits', {
         user: { id: user.id, email: user.email },
-        extra: { voice, text, estimate, currentCreditsAmount: currentAmount },
+        extra: {
+          voiceName: voiceObj.name,
+          text,
+          estimate,
+          currentCreditsAmount: currentAmount,
+        },
       });
       return NextResponse.json(
         { error: 'Insufficient credits' },
@@ -165,16 +194,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalText =
-      isGeminiVoice && styleVariant ? `${styleVariant}: ${text}` : text;
+    // The gemini-3.1 (gpro31) model follows direction best when the style and
+    // transcript are sent as labelled sections rather than an inline prefix.
+    let finalText = text;
+    if (isGeminiVoice && styleVariant) {
+      finalText =
+        voiceObj.model === 'gpro31'
+          ? `### DIRECTOR'S NOTES\nStyle: ${styleVariant}\n\n## TRANSCRIPT\n${text}`
+          : `${styleVariant}: ${text}`;
+    }
     text = finalText;
 
-    // Generate hash for the combination of text, voice, model (and seed when provided,
-    // so requests with different seeds don't collide in the Redis cache)
+    // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
+    // seeded requests never share a cache entry.
+    const effectiveModel = isGeminiVoice
+      ? userHasPaid
+        ? voiceObj.model === 'gpro31'
+          ? 'gemini-3.1-flash-tts-preview'
+          : 'gemini-2.5-pro-preview-tts'
+        : 'gemini-2.5-flash-preview-tts'
+      : voiceObj.model;
+
     const hashInput =
       seed === undefined
-        ? `${text}-${voice}-${voiceObj.model}`
-        : `${text}-${voice}-${voiceObj.model}-${seed}`;
+        ? `${text}-${voiceObj.name}-${effectiveModel}`
+        : `${text}-${voiceObj.name}-${effectiveModel}-${seed}`;
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -184,7 +228,7 @@ export async function POST(request: Request) {
     if (userHasPaid) {
       folder = 'generated-audio';
     }
-    const path = `${folder}/${voice}-${hash}`;
+    const path = `${folder}/${voiceObj.name}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {
@@ -193,7 +237,7 @@ export async function POST(request: Request) {
         },
         extra: {
           hash,
-          voice,
+          voiceName: voiceObj.name,
           text,
         },
       });
@@ -210,14 +254,25 @@ export async function POST(request: Request) {
         filename,
         url: result,
         creditsUsed: 0,
+        stream: shouldStream,
       });
       await sendPosthogEvent({
         userId: user.id,
         text,
         voiceId: voiceObj.id,
         creditUsed: 0,
-        model: voiceObj.model,
+        model: effectiveModel,
       });
+
+      if (shouldStream) {
+        const body = createSseEvent('done', {
+          url: result,
+          creditsUsed: 0,
+          creditsRemaining: currentAmount,
+          cached: true,
+        });
+        return new Response(body, { headers: SSE_HEADERS });
+      }
 
       // Return existing audio file URL
       return NextResponse.json({ url: result }, { status: 200 });
@@ -230,45 +285,39 @@ export async function POST(request: Request) {
     let selectedGrokCodec = outputCodec;
 
     if (isGeminiVoice) {
-      let apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-      if (!userHasPaid) {
-        const isOverLimit = await isFreemiumUserOverLimit(user.id);
-        if (isOverLimit) {
-          return NextResponse.json(
-            {
-              errorCode: 'gproLimitExceeded',
-            },
-            { status: 403 },
-          );
-        }
-        apiKey =
-          process.env.GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY ||
-          process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+      const ai = new GoogleGenAI({
+        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      });
+
+      const geminiTTSConfig = buildGeminiTtsConfig({
+        voiceName: voiceObj.name,
+        seed,
+        abortSignal: abortController.signal,
+      });
+
+      if (shouldStream) {
+        return streamGeminiTtsResponse({
+          ai,
+          text,
+          config: geminiTTSConfig,
+          voiceObj,
+          user,
+          userHasPaid,
+          filename,
+          estimate,
+          currentAmount,
+          styleVariant,
+          provider,
+          requestSignal: request.signal,
+        });
       }
 
-      const ai = new GoogleGenAI({ apiKey });
-
-      const geminiTTSConfig: GenerateContentConfig = {
-        abortSignal: abortController.signal,
-        responseModalities: ['AUDIO'],
-        ...(seed === undefined ? {} : { seed }),
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
-            },
-          },
-        },
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-        ],
-      };
       if (userHasPaid) {
         try {
-          modelUsed = 'gemini-2.5-pro-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384 - doesn't support createCachedContent
+          modelUsed =
+            voiceObj.model === 'gpro31'
+              ? 'gemini-3.1-flash-tts-preview'
+              : 'gemini-2.5-pro-preview-tts';
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
@@ -288,7 +337,7 @@ export async function POST(request: Request) {
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
           const geminiRequestContext = {
-            voice,
+            voice: voiceObj.name,
             styleVariant,
             provider,
             textLength: text.length,
@@ -328,7 +377,10 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-2.5-pro-preview-tts',
+                originalModel:
+                  voiceObj.model === 'gpro31'
+                    ? 'gemini-3.1-flash-tts-preview'
+                    : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
                 proErrorMessage,
               },
@@ -341,7 +393,10 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel: 'gemini-2.5-pro-preview-tts',
+                originalModel:
+                  voiceObj.model === 'gpro31'
+                    ? 'gemini-3.1-flash-tts-preview'
+                    : 'gemini-2.5-pro-preview-tts',
                 fallbackModel: modelUsed,
                 proErrorMessage,
                 flashErrorMessage:
@@ -379,7 +434,7 @@ export async function POST(request: Request) {
           logger.warn('Content generation prohibited by Gemini', {
             user: { id: user.id, email: user.email },
             extra: {
-              voice,
+              voice: voiceObj.name,
               styleVariant,
               model: modelUsed,
               provider,
@@ -394,7 +449,7 @@ export async function POST(request: Request) {
           logger.warn('Gemini voice generation returned no audio data', {
             user: { id: user.id, email: user.email },
             extra: {
-              voice,
+              voice: voiceName,
               styleVariant,
               model: modelUsed,
               provider,
@@ -409,7 +464,7 @@ export async function POST(request: Request) {
           logger.error('Gemini voice generation failed', {
             user: { id: user.id, email: user.email },
             extra: {
-              voice,
+              voice: voiceObj.name,
               styleVariant,
               model: modelUsed,
               provider,
@@ -450,7 +505,7 @@ export async function POST(request: Request) {
               isNoAudioData,
               model: modelUsed,
               textPreview: text.slice(0, 200),
-              voice,
+              voice: voiceObj.name,
             },
             user: { id: user.id },
           });
@@ -471,17 +526,17 @@ export async function POST(request: Request) {
           email: user.email,
         },
         extra: {
-          voice,
+          voice: voiceObj.name,
           styleVariant,
           model: modelUsed,
           provider,
-          responseId: genAIResponse.responseId,
+          responseId: genAIResponse!.responseId,
           textLength: text.length,
           textPreview: text.slice(0, 500),
         },
       });
 
-      const audioBuffer = convertToWav(data, mimeType || 'wav');
+      const audioBuffer = convertToWav(data, mimeType);
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
     } else if (isGrokVoice) {
       modelUsed = voiceObj.model;
@@ -499,7 +554,7 @@ export async function POST(request: Request) {
       } catch (error) {
         const errorObj = {
           text,
-          voice,
+          voice: voiceObj.name,
           model: voiceObj.model,
           codec: outputCodec,
           language: selectedLanguage || voiceObj.language,
@@ -511,7 +566,7 @@ export async function POST(request: Request) {
             email: user.email,
           },
           extra: {
-            voice,
+            voice: voiceObj.name,
             text,
             model: voiceObj.model,
             codec: outputCodec,
@@ -538,14 +593,14 @@ export async function POST(request: Request) {
       };
       const output = (await replicate.run(
         voiceObj.model as `${string}/${string}`,
-        { input: { text, voice }, signal: request.signal },
+        { input: { text, voice: voiceObj.name }, signal: request.signal },
         onProgress,
       )) as ReadableStream;
 
       if ('error' in output) {
         const errorObj = {
           text,
-          voice,
+          voice: voiceObj.name,
           model: voiceObj.model,
           errorData: output.error,
         };
@@ -593,9 +648,24 @@ export async function POST(request: Request) {
         );
       }
 
-      const grokDollarAmount = isGrokVoice
-        ? calculateGrokTtsDollarAmount(text)
-        : undefined;
+      let dollarAmount: number | undefined;
+      if (isGrokVoice) {
+        dollarAmount = calculateGenerateApiDollarAmount({
+          sourceType: 'tts',
+          provider: 'xai',
+          model: modelUsed,
+          inputChars: text.length,
+        });
+      } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
+        dollarAmount = calculateGenerateApiDollarAmount({
+          sourceType: 'tts',
+          provider: 'google',
+          model: modelUsed,
+          inputChars: text.length,
+          promptTokenCount: usage.promptTokenCount,
+          candidatesTokenCount: usage.candidatesTokenCount,
+        });
+      }
 
       await reduceCredits({ userId: user.id, amount: creditsUsed });
 
@@ -619,7 +689,7 @@ export async function POST(request: Request) {
       if (audioFileDBResult.error) {
         const errorObj = {
           text,
-          voice,
+          voice: voiceObj.name,
           model: modelUsed,
           errorData: audioFileDBResult.error,
         };
@@ -638,12 +708,10 @@ export async function POST(request: Request) {
         unit: 'chars',
         quantity: text.length,
         creditsUsed,
-        ...(grokDollarAmount === undefined
-          ? {}
-          : { dollarAmount: grokDollarAmount }),
+        ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
-          voiceName: voice,
+          voiceName: voiceObj.name,
           model: modelUsed,
           provider,
           textPreview: text.slice(0, 100),
@@ -718,7 +786,7 @@ export async function POST(request: Request) {
           user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
             textLength: text.length,
-            voice,
+            voice: voiceName,
             googleStatus,
             googleCode: googleApiError.code,
           },
@@ -742,7 +810,7 @@ export async function POST(request: Request) {
           user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
             textLength: text.length,
-            voice,
+            voice: voiceName,
             googleStatus,
             googleCode: googleApiError.code,
           },
@@ -764,7 +832,7 @@ export async function POST(request: Request) {
           user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
             textLength: text.length,
-            voice,
+            voice: voiceName,
             googleStatus,
             googleCode: googleApiError.code,
           },
@@ -784,7 +852,7 @@ export async function POST(request: Request) {
 
     const errorObj = {
       text,
-      voice,
+      voice: voiceName,
       errorData: error,
     };
     captureException(error, {
@@ -811,6 +879,292 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+// ── Gemini streaming helper ────────────────────────────────────────────────
+
+function streamGeminiTtsResponse({
+  ai,
+  text,
+  config,
+  voiceObj,
+  user,
+  userHasPaid,
+  filename,
+  estimate,
+  currentAmount,
+  styleVariant,
+  provider,
+  requestSignal,
+}: {
+  ai: GoogleGenAI;
+  text: string;
+  config: GenerateContentConfig;
+  voiceObj: { id: string; name: string; model: string; language: string };
+  user: { id: string; email?: string };
+  userHasPaid: boolean;
+  filename: string;
+  estimate: number;
+  currentAmount: number;
+  styleVariant: string;
+  provider: string;
+  requestSignal: AbortSignal;
+}): Response {
+  const encoder = new TextEncoder();
+  const selectedModel =
+    voiceObj.model === 'gpro31'
+      ? 'gemini-3.1-flash-tts-preview'
+      : userHasPaid
+        ? 'gemini-2.5-pro-preview-tts'
+        : 'gemini-2.5-flash-preview-tts';
+
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
+
+  const enqueue = (
+    event: 'audio' | 'done' | 'error',
+    payload: Record<string, unknown>,
+  ) => writer.write(encoder.encode(createSseEvent(event, payload)));
+
+  // Run generation asynchronously so we can return the Response immediately.
+  (async () => {
+    const audioChunks: string[] = [];
+    let mimeType = 'audio/L16;rate=24000';
+    let modelUsed = selectedModel;
+    let streamUsageMetadata:
+      | GenerateContentResponse['usageMetadata']
+      | undefined;
+    let audioStarted = false;
+
+    const tryStream = async (model: string) => {
+      const stream = await ai.models.generateContentStream({
+        model,
+        contents: [{ parts: [{ text }] }],
+        config,
+      });
+
+      for await (const chunk of stream) {
+        if (requestSignal.aborted) return;
+
+        const audioChunk = extractGeminiStreamAudioChunk(chunk);
+        if (audioChunk) {
+          audioStarted = true;
+          audioChunks.push(audioChunk.data);
+          mimeType = audioChunk.mimeType;
+          await enqueue('audio', {
+            data: audioChunk.data,
+            mimeType: audioChunk.mimeType,
+          });
+        }
+        if (chunk.usageMetadata) {
+          streamUsageMetadata = chunk.usageMetadata;
+        }
+      }
+    };
+
+    try {
+      logger.info('Gemini stream requested', {
+        user: { id: user.id, email: user.email },
+        extra: { model: selectedModel, textLength: text.length, stream: true },
+      });
+
+      try {
+        await tryStream(selectedModel);
+      } catch (primaryError) {
+        if (requestSignal.aborted || isAbortError(primaryError)) {
+          logger.info('Gemini stream aborted', { user: { id: user.id } });
+          await writer.close();
+          return;
+        }
+
+        if (audioStarted) {
+          // Cannot switch models after audio has started — mixed models in one file.
+          throw primaryError;
+        }
+
+        const proErrorMessage =
+          primaryError instanceof Error
+            ? primaryError.message
+            : String(primaryError);
+        logger.warn(
+          `${selectedModel} stream failed before first chunk, retrying with gemini-2.5-flash-preview-tts`,
+          {
+            user: { id: user.id, email: user.email },
+            extra: {
+              originalModel: selectedModel,
+              errorMessage: proErrorMessage,
+              stream: true,
+              voice: voiceObj.name,
+            },
+          },
+        );
+        modelUsed = 'gemini-2.5-flash-preview-tts';
+        audioChunks.length = 0;
+        await tryStream(modelUsed);
+      }
+
+      if (requestSignal.aborted) {
+        await writer.close();
+        return;
+      }
+
+      if (audioChunks.length === 0) {
+        logger.error('Gemini stream completed with no audio chunks', {
+          user: { id: user.id, email: user.email },
+          extra: { model: modelUsed, textLength: text.length, stream: true },
+        });
+        captureException(new Error('Gemini stream — no audio chunks'), {
+          extra: { model: modelUsed, voice: voiceObj.name },
+          user: { id: user.id },
+        });
+        await enqueue('error', {
+          error: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+        });
+        await writer.close();
+        return;
+      }
+
+      // Build final WAV and persist.
+      logger.info('Gemini stream completed, uploading WAV', {
+        user: { id: user.id, email: user.email },
+        extra: { model: modelUsed, chunks: audioChunks.length, stream: true },
+      });
+
+      const wavBuffer = convertAudioChunksToWav(audioChunks, mimeType);
+      const uploadUrl = await uploadFileToR2(filename, wavBuffer, 'audio/wav');
+      await redis.set(filename, uploadUrl);
+
+      // Billing — calculate credits from stream tokens when available.
+      let creditsUsed = estimate;
+      if (streamUsageMetadata?.totalTokenCount) {
+        creditsUsed = calculateCreditsFromTokens(
+          streamUsageMetadata.totalTokenCount,
+        );
+      }
+
+      await reduceCredits({ userId: user.id, amount: creditsUsed });
+
+      const streamUsage: Record<string, string | number | boolean> =
+        streamUsageMetadata
+          ? {
+              promptTokenCount: String(
+                streamUsageMetadata.promptTokenCount ?? '',
+              ),
+              candidatesTokenCount: String(
+                streamUsageMetadata.candidatesTokenCount ?? '',
+              ),
+              totalTokenCount: String(
+                streamUsageMetadata.totalTokenCount ?? '',
+              ),
+              userHasPaid,
+              stream: true,
+            }
+          : { userHasPaid, stream: true };
+
+      const audioFileDBResult = await saveAudioFile({
+        userId: user.id,
+        filename,
+        text,
+        url: uploadUrl,
+        model: modelUsed,
+        predictionId: undefined,
+        isPublic: false,
+        voiceId: voiceObj.id,
+        duration: '-1',
+        credits_used: creditsUsed,
+        usage: streamUsage,
+      });
+
+      if (audioFileDBResult.error) {
+        captureException(
+          new Error('Failed to insert audio file row (stream)'),
+          {
+            extra: { error: audioFileDBResult.error, model: modelUsed },
+          },
+        );
+      }
+
+      await insertUsageEvent({
+        userId: user.id,
+        sourceType: 'tts',
+        sourceId: audioFileDBResult.data?.id,
+        unit: 'chars',
+        quantity: text.length,
+        creditsUsed,
+        metadata: {
+          voiceId: voiceObj.id,
+          voiceName: voiceObj.name,
+          model: modelUsed,
+          provider,
+          textPreview: text.slice(0, 100),
+          textLength: text.length,
+          isGeminiVoice: true,
+          userHasPaid,
+          predictionId: null,
+          stream: true,
+        },
+      });
+
+      await sendPosthogEvent({
+        userId: user.id,
+        text,
+        voiceId: voiceObj.id,
+        creditUsed: creditsUsed,
+        model: modelUsed,
+      });
+
+      logger.info('Gemini stream done', {
+        user: { id: user.id, email: user.email },
+        extra: { model: modelUsed, creditsUsed, stream: true },
+      });
+
+      await enqueue('done', {
+        url: uploadUrl,
+        creditsUsed,
+        creditsRemaining: (currentAmount || 0) - creditsUsed,
+      });
+    } catch (error) {
+      if (requestSignal.aborted || isAbortError(error)) {
+        logger.info('Gemini stream aborted mid-flight', {
+          user: { id: user.id },
+        });
+        await writer.close();
+        return;
+      }
+
+      const message =
+        error instanceof Error ? error.message : 'Voice generation failed';
+      logger.error('Gemini stream failed', {
+        user: { id: user.id, email: user.email },
+        extra: {
+          model: modelUsed,
+          audioStarted,
+          errorMessage: message,
+          stream: true,
+          voice: voiceObj.name,
+          styleVariant,
+          textLength: text.length,
+        },
+      });
+
+      if (!audioStarted) {
+        captureException(error, {
+          extra: { model: modelUsed, voice: voiceObj.name, stream: true },
+          user: { id: user.id },
+        });
+      }
+
+      await enqueue('error', { error: message });
+    } finally {
+      try {
+        await writer.close();
+      } catch {
+        // Writer already closed via an early-return path — safe to ignore.
+      }
+    }
+  })();
+
+  return new Response(readable, { headers: SSE_HEADERS });
 }
 
 async function sendPosthogEvent({

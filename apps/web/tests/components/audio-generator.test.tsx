@@ -53,7 +53,22 @@ vi.mock('@/components/services/toast', () => ({
 }));
 
 vi.mock('@/components/audio-player-with-context', () => ({
-  AudioPlayerWithContext: () => null,
+  AudioPlayerWithContext: ({ url }: { url: string }) => (
+    <div data-testid="audio-player" data-url={url} />
+  ),
+}));
+
+vi.mock('@/components/streaming-waveform-player', () => ({
+  StreamingWaveformPlayer: ({
+    controller,
+  }: {
+    controller: { phase: string };
+  }) => (
+    <div
+      data-phase={controller.phase}
+      data-testid="streaming-waveform-player"
+    />
+  ),
 }));
 
 vi.mock('@/components/grok-tts-editor', () => ({
@@ -402,7 +417,7 @@ describe('AudioGenerator', () => {
           },
           body: JSON.stringify({
             text: 'مرحبا',
-            voice: 'eve',
+            voiceId: 'voice-id',
             styleVariant: '',
             language: 'ar-EG',
           }),
@@ -543,7 +558,7 @@ describe('AudioGenerator', () => {
     });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: shortText,
-      voice: 'tara',
+      voiceId: 'voice-id',
       styleVariant: '',
     });
     // A single segment doesn't warrant a progress modal.
@@ -701,12 +716,12 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'tara',
+      voiceId: 'voice-id',
       styleVariant: '',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
-      voice: 'tara',
+      voiceId: 'voice-id',
       styleVariant: '',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -799,12 +814,12 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -961,7 +976,7 @@ describe('AudioGenerator', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: secondSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'dramatic',
     });
   });
@@ -1087,12 +1102,12 @@ describe('AudioGenerator', () => {
     });
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
       text: firstSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'calm',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
-      voice: 'achernar',
+      voiceId: 'voice-id',
       styleVariant: 'calm',
     });
   });
@@ -1142,13 +1157,13 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'en',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'en',
     });
@@ -1249,7 +1264,7 @@ describe('AudioGenerator', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: secondSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
@@ -1309,13 +1324,13 @@ describe('AudioGenerator', () => {
     });
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
       text: firstSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'ar-EG',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'ar-EG',
     });
@@ -1459,22 +1474,278 @@ describe('AudioGenerator', () => {
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: wrappedSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: lastSegment,
-      voice: 'eve',
+      voiceId: 'voice-id',
       styleVariant: '',
       language: 'auto',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  // ── Streaming tests ───────────────────────────────────────────────────────
+
+  function makeSseStreamResponse(frames: string[]) {
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const frame of frames) {
+          controller.enqueue(encoder.encode(frame));
+        }
+        controller.close();
+      },
+    });
+    return {
+      ok: true,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
+      body: readable,
+      json: async () => ({}),
+    };
+  }
+
+  const R2_AUDIO_URL = 'https://files.sexyvoice.ai/generated-audio/kore.wav';
+  // 4 zero bytes → 2 Int16 PCM samples → valid for Int16Array
+  const SSE_AUDIO_FRAME =
+    'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
+  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ url: R2_AUDIO_URL, creditsUsed: 26, creditsRemaining: 974 })}\n\n`;
+  const SSE_ERROR_FRAME =
+    'event: error\ndata: {"error":"Voice generation blocked"}\n\n';
+
+  const LONG_TEXT = 'a'.repeat(301);
+  const SHORT_TEXT = 'a'.repeat(10);
+
+  function setupAudioContextMock() {
+    const mockStart = vi.fn();
+    const mockConnect = vi.fn();
+    const mockCreateBufferSource = vi.fn(() => ({
+      buffer: null as unknown,
+      connect: mockConnect,
+      start: mockStart,
+    }));
+    const mockCopyToChannel = vi.fn();
+    const mockCreateBuffer = vi.fn().mockReturnValue({
+      copyToChannel: mockCopyToChannel,
+      duration: 0.1,
+    });
+    const mockClose = vi.fn();
+
+    const MockAudioContext = vi.fn().mockImplementation(function (this: any) {
+      this.currentTime = 0;
+      this.destination = {};
+      this.createBuffer = mockCreateBuffer;
+      this.createBufferSource = mockCreateBufferSource;
+      this.close = mockClose;
+    });
+
+    vi.stubGlobal('AudioContext', MockAudioContext);
+
+    return {
+      MockAudioContext,
+      mockCreateBuffer,
+      mockCreateBufferSource,
+      mockStart,
+      mockClose,
+    };
+  }
+
+  it('sends stream: true when Gemini voice and text exceeds threshold', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(makeSseStreamResponse([SSE_DONE_FRAME]));
+    vi.stubGlobal('fetch', fetchMock);
+    setupAudioContextMock();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBe(true);
+    expect(body.voiceId).toBe('voice-id');
+  });
+
+  it('omits stream for Gemini voice when text is at or below threshold', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: R2_AUDIO_URL }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    fireEvent.change(textarea, { target: { value: SHORT_TEXT } });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeUndefined();
+  });
+
+  it('omits stream for gpro (Gemini 2.5) voice even above threshold', async () => {
+    // Only gpro31 (Gemini 3.1) streams progressively; gpro returns the whole
+    // clip at once, so it must stay on the JSON path regardless of length.
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: R2_AUDIO_URL }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeUndefined();
+  });
+
+  it('omits stream for Grok voice regardless of text length', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: R2_AUDIO_URL }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+    });
+
+    const textarea = screen.getByRole('textbox', {
+      name: baseDict.textAreaPlaceholder,
+    });
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.stream).toBeUndefined();
+  });
+
+  it('schedules audio chunks via Web Audio and shows the streaming player', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_DONE_FRAME]),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const { MockAudioContext, mockCreateBuffer, mockCreateBufferSource } =
+      setupAudioContextMock();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(
+      () => expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success),
+      { timeout: 3000 },
+    );
+
+    // The streamed PCM chunk is decoded + scheduled through the Web Audio engine.
+    expect(MockAudioContext).toHaveBeenCalledOnce();
+    expect(mockCreateBuffer).toHaveBeenCalledOnce();
+    expect(mockCreateBufferSource).toHaveBeenCalledOnce();
+
+    // The single streaming player (waveform + play/pause) is shown — not the
+    // standard file player. After the `done` event the full clip exists, so it
+    // hands off to the seekable `file` phase immediately.
+    await waitFor(() => {
+      const player = screen.getByTestId('streaming-waveform-player');
+      expect(player).toHaveAttribute('data-phase', 'file');
+    });
+    expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
+  });
+
+  it('shows error toast on SSE error event', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        makeSseStreamResponse([SSE_AUDIO_FRAME, SSE_ERROR_FRAME]),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    setupAudioContextMock();
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+    });
+
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    fireEvent.change(textarea, { target: { value: LONG_TEXT } });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('generate-button')).toBeEnabled(),
+    );
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() =>
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        'Voice generation blocked (500)',
+      ),
+    );
   });
 });

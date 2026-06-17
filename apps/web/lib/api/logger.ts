@@ -24,6 +24,7 @@ export interface LogFields {
   userHasPaid?: boolean;
   userId?: string;
   voice?: string;
+  voiceId?: string;
 }
 
 /**
