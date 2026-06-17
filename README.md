@@ -434,6 +434,29 @@ These multilingual Gemini voices support style prompting and the following langu
 | English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
 | Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
 
+#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (model: `gpro31`)
+
+Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`.
+Voices returned as `gpro` stay on Gemini 2.5 Pro.
+
+Supports all 24 languages above, plus (non-exhaustive):
+Afrikaans (`af-ZA`), Albanian (`sq-AL`), Amharic (`am-ET`), Armenian (`hy-AM`),
+Azerbaijani (`az-AZ`), Basque (`eu-ES`), Bulgarian (`bg-BG`), Catalan (`ca-ES`),
+Chinese Simplified (`zh-CN`), Chinese Traditional (`zh-TW`), Croatian (`hr-HR`),
+Czech (`cs-CZ`), Danish (`da-DK`), Estonian (`et-EE`), Filipino/Tagalog (`fil-PH`),
+Finnish (`fi-FI`), Galician (`gl-ES`), Georgian (`ka-GE`), Greek (`el-GR`),
+Gujarati (`gu-IN`), Hebrew (`he-IL`), Hungarian (`hu-HU`), Icelandic (`is-IS`),
+Irish (`ga-IE`), Javanese (`jv-ID`), Kannada (`kn-IN`), Kazakh (`kk-KZ`),
+Latvian (`lv-LV`), Lithuanian (`lt-LT`), Macedonian (`mk-MK`), Malay (`ms-MY`),
+Maltese (`mt-MT`), Norwegian Bokmål (`nb-NO`), Persian (`fa-IR`), Punjabi (`pa-IN`),
+Serbian (`sr-RS`), Slovak (`sk-SK`), Slovenian (`sl-SI`), Swahili (`sw-KE`),
+Swedish (`sv-SE`), Urdu (`ur-PK`), Uzbek (`uz-UZ`), Welsh (`cy-GB`), Zulu (`zu-ZA`).
+Plus English, Spanish, French, Portuguese, and Arabic regional variants.
+
+> Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
+
+Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
+
 #### xAI Grok (`xai`) expressive voices
 
 Primary Grok voices currently exposed in the app:
