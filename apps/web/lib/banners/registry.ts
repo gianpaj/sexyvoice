@@ -51,7 +51,7 @@ const bannerRegistry = {
     },
     id: 'expressiveVoicesLaunch',
     kind: 'announcement',
-    placements: ['landing', 'dashboard'],
+    placements: ['landing', 'dashboard', 'blog'],
     priority: 90,
     theme: 'blue',
   },

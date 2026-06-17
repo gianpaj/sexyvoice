@@ -880,7 +880,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Nye stemmer til stemmegenerering er nu live, med mere kontrol over tempo, aandedraet, toneleje, hastighed og intensitet.",
+      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.1, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"

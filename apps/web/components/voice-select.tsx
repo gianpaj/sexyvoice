@@ -278,7 +278,7 @@ export function VoiceSelect({
               aria-autocomplete="list"
               aria-controls="voice-select-listbox"
               autoFocus
-              className="h-9 pl-8"
+              className="h-9 pl-8 text-sm"
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={t('searchPlaceholder')}
@@ -352,7 +352,7 @@ export function VoiceSelect({
         )}
 
         {/* Results */}
-        <ScrollArea className="h-72">
+        <ScrollArea className="sm:h-72 h-64">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1 px-4 py-10 text-center">
               <Search className="size-5 text-muted-foreground" />

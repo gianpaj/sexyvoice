@@ -880,7 +880,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Die neuen Stimmen fuer die Sprachgenerierung sind jetzt live und bieten mehr Kontrolle ueber Tempo, Atemgeraeusche, Tonhoehe, Geschwindigkeit und Intensitaet.",
+      "text": "Neue, ausdrucksstärkere Stimmen sind da — angetrieben von Gemini 3.1, mit feinerer Kontrolle über Tempo, Atemgeräusche, Tonhöhe, Geschwindigkeit und Intensität.",
       "ctaLoggedIn": "Stimmen testen",
       "ctaLoggedOut": "Anmelden",
       "ariaLabelDismiss": "Hinweis zu expressiven Stimmen schliessen"

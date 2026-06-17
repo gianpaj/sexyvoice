@@ -880,7 +880,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "New voice generation voices are live — with more control over pacing, breaths, pitch, speed, and intensity.",
+      "text": "New, more expressive voices are here — powered by Gemini 3.1, with finer control over pacing, breaths, pitch, speed, and intensity.",
       "ctaLoggedIn": "Try voices",
       "ctaLoggedOut": "Log in",
       "ariaLabelDismiss": "Dismiss expressive voices announcement"

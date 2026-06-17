@@ -880,7 +880,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Le nuove voci per la generazione vocale sono ora disponibili, con piu controllo su ritmo, respiri, tono, velocita e intensita.",
+      "text": "Sono arrivate nuove voci più espressive — basate su Gemini 3.1, con un controllo più preciso su ritmo, respiri, tono, velocità e intensità.",
       "ctaLoggedIn": "Prova le voci",
       "ctaLoggedOut": "Accedi",
       "ariaLabelDismiss": "Chiudi annuncio sulle voci espressive"
