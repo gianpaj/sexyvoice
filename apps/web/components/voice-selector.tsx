@@ -59,9 +59,15 @@ export function VoiceSelector({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  const featuredGroupLabel = t('voiceSelector.featuredGroupLabel');
-  const geminiGroupLabel = t('voiceSelector.multilingualGroupLabel');
-  const featuredBadgeLabel = t('voiceSelector.featuredBadge');
+  const featuredGroupLabel = t.has('voiceSelector.featuredGroupLabel')
+    ? t('voiceSelector.featuredGroupLabel')
+    : 'Featured';
+  const geminiGroupLabel = t.has('voiceSelector.multilingualGroupLabel')
+    ? t('voiceSelector.multilingualGroupLabel')
+    : 'Gemini 🌍';
+  const featuredBadgeLabel = t.has('voiceSelector.featuredBadge')
+    ? t('voiceSelector.featuredBadge')
+    : featuredGroupLabel;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
