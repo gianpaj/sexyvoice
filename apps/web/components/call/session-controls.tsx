@@ -9,6 +9,7 @@ import {
 import { useKrispNoiseFilter } from '@livekit/components-react/krisp';
 import { Track } from 'livekit-client';
 import { ChevronDown, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,8 @@ export function SessionControls() {
   const deviceSelect = usePersistentMediaDevice();
   const connectionState = useConnectionState();
   const { formattedTime } = useCallTimer(connectionState);
-  const { disconnect, dict } = useConnection();
+  const { disconnect } = useConnection();
+  const t = useTranslations('call');
 
   const [isMuted, setIsMuted] = useState(localParticipant.isMicrophoneEnabled);
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
@@ -113,7 +115,7 @@ export function SessionControls() {
               forceMount
             >
               <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-                {dict.availableInputs}
+                {t('availableInputs')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {deviceSelect.devices.map((device) => (
@@ -128,7 +130,7 @@ export function SessionControls() {
               ))}
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-                {dict.audioSettings}
+                {t('audioSettings')}
               </DropdownMenuLabel>
               <DropdownMenuCheckboxItem
                 checked={isNoiseFilterEnabled}
@@ -147,14 +149,14 @@ export function SessionControls() {
                   )
                 }
               >
-                {dict.enhancedNoiseFilter}
+                {t('enhancedNoiseFilter')}
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <Button className="h-9" onClick={disconnect} variant="secondary">
           <PhoneOff className="h-4 w-4" />
-          {dict.disconnect}
+          {t('disconnect')}
         </Button>
       </div>
       <div className="font-mono text-muted-foreground text-sm">

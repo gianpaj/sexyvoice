@@ -9,6 +9,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -32,12 +33,7 @@ import type {
   MonthlyUsageSummary,
   PaginatedUsageEventsResponse,
 } from '@/lib/supabase/usage-queries';
-import type langDict from '@/messages/en.json';
-import { createColumns } from './columns';
-
-interface DataTableProps {
-  dict: (typeof langDict)['usage'];
-}
+import { useColumns } from './columns';
 
 interface UsageEventsApiResponse extends PaginatedUsageEventsResponse {
   allTimeSummary?: MonthlyUsageSummary;
@@ -72,7 +68,8 @@ async function fetchUsageEvents(
   return response.json();
 }
 
-export function DataTable({ dict }: DataTableProps) {
+export function DataTable() {
+  const t = useTranslations('usage');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -116,7 +113,7 @@ export function DataTable({ dict }: DataTableProps) {
     retry: 0,
   });
 
-  const columns = createColumns(dict);
+  const columns = useColumns();
 
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable({
@@ -188,7 +185,7 @@ export function DataTable({ dict }: DataTableProps) {
     return (
       <TableRow>
         <TableCell className="h-24 text-center" colSpan={columns.length}>
-          {dict.empty}
+          {t('empty')}
         </TableCell>
       </TableRow>
     );
@@ -208,26 +205,26 @@ export function DataTable({ dict }: DataTableProps) {
       <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-sm">
-            {dict.ui.filterByType}:
+            {t('ui.filterByType')}:
           </span>
           <Select
             onValueChange={handleSourceTypeChange}
             value={currentSourceType}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={dict.ui.allTypes} />
+              <SelectValue placeholder={t('ui.allTypes')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{dict.ui.allTypes}</SelectItem>
-              <SelectItem value="tts">{dict.summary.byType.tts}</SelectItem>
+              <SelectItem value="all">{t('ui.allTypes')}</SelectItem>
+              <SelectItem value="tts">{t('summary.byType.tts')}</SelectItem>
               <SelectItem value="voice_cloning">
-                {dict.summary.byType.voice_cloning}
+                {t('summary.byType.voice_cloning')}
               </SelectItem>
               <SelectItem value="live_call">
-                {dict.summary.byType.live_call}
+                {t('summary.byType.live_call')}
               </SelectItem>
               <SelectItem value="audio_processing">
-                {dict.summary.byType.audio_processing}
+                {t('summary.byType.audio_processing')}
               </SelectItem>
               <SelectItem value="api_tts">API TTS</SelectItem>
               <SelectItem value="api_voice_cloning">
@@ -239,7 +236,7 @@ export function DataTable({ dict }: DataTableProps) {
 
         <div className="flex items-center gap-2">
           <span className="text-muted-foreground text-sm">
-            {dict.ui.showing}:
+            {t('ui.showing')}:
           </span>
           <Select
             onValueChange={handlePageSizeChange}
@@ -255,7 +252,7 @@ export function DataTable({ dict }: DataTableProps) {
             </SelectContent>
           </Select>
           <span className="text-muted-foreground text-sm">
-            {dict.ui.results}
+            {t('ui.results')}
           </span>
         </div>
       </div>
@@ -291,9 +288,9 @@ export function DataTable({ dict }: DataTableProps) {
         <div className="text-muted-foreground text-sm">
           {data && (
             <>
-              {dict.ui.page} {currentPage} {dict.ui.of} {data.totalPages || 1}
+              {t('ui.page')} {currentPage} {t('ui.of')} {data.totalPages || 1}
               {' - '}
-              {data.totalCount} {dict.ui.results}
+              {data.totalCount} {t('ui.results')}
             </>
           )}
         </div>
@@ -304,7 +301,7 @@ export function DataTable({ dict }: DataTableProps) {
             size="sm"
             variant="outline"
           >
-            {dict.ui.previous}
+            {t('ui.previous')}
           </Button>
           <Button
             disabled={currentPage >= (data?.totalPages ?? 1) || isLoading}
@@ -312,7 +309,7 @@ export function DataTable({ dict }: DataTableProps) {
             size="sm"
             variant="outline"
           >
-            {dict.ui.next}
+            {t('ui.next')}
           </Button>
         </div>
       </div>

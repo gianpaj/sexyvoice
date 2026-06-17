@@ -1,18 +1,18 @@
 'use client';
 
 import { FileAudio, Music, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { cn } from '@/lib/utils';
-import type langDict from '@/messages/en.json';
 
 interface Props {
-  dict: (typeof langDict)['audioConverter']['dropZone'];
   disabled?: boolean;
   onFileSelect: (file: File) => void;
 }
 
-export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
+export function DropZone({ onFileSelect, disabled = false }: Props) {
+  const t = useTranslations('audioConverter.dropZone');
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -52,7 +52,6 @@ export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
   return (
     // biome-ignore lint/a11y/useSemanticElements: we need a div, not a button
     <div
-      // className="cursor-pointer rounded-lg border-2 border-muted-foreground/25 border-dashed p-12 text-center transition-colors hover:border-muted-foreground/50"
       className={cn(
         'group relative cursor-pointer transition-all duration-300 ease-out',
         'rounded-2xl border-2 border-dashed',
@@ -63,7 +62,6 @@ export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
           : 'border-border hover:border-primary/50 hover:bg-muted/50',
       )}
       onClick={() => document.getElementById('file-input')?.click()}
-      // onDragOver={handleDragOver}
       onDragEnter={handleDragIn}
       onDragLeave={handleDragOut}
       onDragOver={handleDrag}
@@ -80,7 +78,6 @@ export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
         type="file"
       />
       <div className="pointer-events-none flex flex-col items-center gap-4">
-        {/* Animated Icons */}
         <div className="relative h-20 w-20">
           <div
             className={cn(
@@ -102,23 +99,20 @@ export function DropZone({ onFileSelect, dict, disabled = false }: Props) {
             )}
           </div>
 
-          {/* Floating music notes */}
           <Music className="absolute -top-2 -right-2 h-5 w-5 animate-float text-teal-700 opacity-70" />
           <Music className="absolute -bottom-1 -left-3 h-4 w-4 animate-float-delayed text-brand-purple opacity-60" />
         </div>
 
-        {/* Text */}
         <div className="space-y-2 text-center">
           <p className="font-semibold text-foreground text-lg md:text-xl">
-            {dict.title}
+            {t('title')}
           </p>
 
           <p className="font-medium text-primary text-sm hover:underline">
-            {dict.description}
+            {t('description')}
           </p>
         </div>
 
-        {/* Supported formats */}
         <div className="mt-2 flex flex-wrap justify-center gap-2">
           {['MP3', 'WAV', 'AAC', 'OGG', 'FLAC', 'M4A', 'MP4'].map((format) => (
             <span

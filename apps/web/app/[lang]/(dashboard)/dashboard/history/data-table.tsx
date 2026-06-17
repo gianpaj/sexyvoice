@@ -13,6 +13,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { ChevronDownIcon, ColumnsIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -36,16 +37,15 @@ import {
   type AudioFileAndVoicesRes,
   getMyAudioFiles,
 } from '@/lib/supabase/queries.client';
-import type langDict from '@/messages/en.json';
-import { createColumns } from './columns';
+import { useColumns } from './columns';
 
 interface DataTableProps {
-  dict: (typeof langDict)['history'];
   showApiColumns: boolean;
   userId: string;
 }
 
-export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
+export function DataTable({ userId, showApiColumns }: DataTableProps) {
+  const t = useTranslations('history');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -56,7 +56,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
     queryFn: () => getMyAudioFiles(supabase, userId),
     enabled: !!userId,
   });
-  const columns = createColumns({ showApiColumns, dict });
+  const columns = useColumns({ showApiColumns });
 
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable<AudioFileAndVoicesRes>({
@@ -86,7 +86,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
             onChange={(event) =>
               table.getColumn('text')?.setFilterValue(event.target.value)
             }
-            placeholder={dict.ui.filterText}
+            placeholder={t('ui.filterText')}
             value={(table.getColumn('text')?.getFilterValue() as string) ?? ''}
           />
           <p className="text-left text-muted-foreground text-sm">
@@ -99,9 +99,9 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
               <Button size="sm" variant="outline">
                 <ColumnsIcon />
                 <span className="hidden lg:inline">
-                  {dict.ui.customizeColumns}
+                  {t('ui.customizeColumns')}
                 </span>
-                <span className="lg:hidden">{dict.ui.columns}</span>
+                <span className="lg:hidden">{t('ui.columns')}</span>
                 <ChevronDownIcon />
               </Button>
             </DropdownMenuTrigger>
@@ -174,7 +174,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
                   className="h-24 text-center"
                   colSpan={columns.length}
                 >
-                  {dict.empty}
+                  {t('empty')}
                 </TableCell>
               </TableRow>
             )}
@@ -188,7 +188,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
           size="sm"
           variant="outline"
         >
-          {dict.ui.previous}
+          {t('ui.previous')}
         </Button>
         <Button
           disabled={!table.getCanNextPage()}
@@ -196,7 +196,7 @@ export function DataTable({ userId, dict, showApiColumns }: DataTableProps) {
           size="sm"
           variant="outline"
         >
-          {dict.ui.next}
+          {t('ui.next')}
         </Button>
       </div>
     </>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -23,7 +24,6 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { DBVoice } from '@/data/voices';
-import type langDict from '@/messages/en.json';
 import { VoicePlayButton } from './voice-play-button';
 
 export interface NewCharacterPayload {
@@ -35,7 +35,6 @@ export interface NewCharacterPayload {
 
 interface CreateCharacterDialogProps {
   callVoices: DBVoice[];
-  dict: (typeof langDict)['call']['createCharacter'];
   isPaidUser: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (character: NewCharacterPayload) => Promise<void>;
@@ -48,8 +47,8 @@ export function CreateCharacterDialog({
   isPaidUser,
   callVoices,
   onSave,
-  dict,
 }: CreateCharacterDialogProps) {
+  const t = useTranslations('call.createCharacter');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [voiceName, setVoiceName] = useState(callVoices[0]?.name ?? '');
@@ -70,11 +69,11 @@ export function CreateCharacterDialog({
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error(dict.errorNameRequired);
+      toast.error(t('errorNameRequired'));
       return;
     }
     if (!voiceName) {
-      toast.error(dict.errorVoiceRequired);
+      toast.error(t('errorVoiceRequired'));
       return;
     }
 
@@ -99,16 +98,16 @@ export function CreateCharacterDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-h-[90vh] overflow-y-auto bg-popover sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{dict.dialogTitle}</DialogTitle>
-          <DialogDescription>{dict.dialogDescription}</DialogDescription>
+          <DialogTitle>{t('dialogTitle')}</DialogTitle>
+          <DialogDescription>{t('dialogDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
           {/* Name (required, editable) */}
           <div className="grid gap-2">
             <Label htmlFor="char-name">
-              {dict.nameLabel}{' '}
-              <span className="text-destructive">{dict.nameRequired}</span>
+              {t('nameLabel')}{' '}
+              <span className="text-destructive">{t('nameRequired')}</span>
             </Label>
             <Input
               autoFocus
@@ -116,31 +115,31 @@ export function CreateCharacterDialog({
               id="char-name"
               maxLength={50}
               onChange={(e) => setName(e.target.value)}
-              placeholder={dict.namePlaceholder}
+              placeholder={t('namePlaceholder')}
               value={name}
             />
           </div>
 
           {/* Description (optional, editable) */}
           <div className="grid gap-2">
-            <Label htmlFor="char-description">{dict.descriptionLabel}</Label>
+            <Label htmlFor="char-description">{t('descriptionLabel')}</Label>
             <Input
               disabled={!isPaidUser}
               id="char-description"
               maxLength={200}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder={dict.descriptionPlaceholder}
+              placeholder={t('descriptionPlaceholder')}
               value={description}
             />
           </div>
 
           {/* Voice selection (dropdown + play button) */}
           <div className="grid gap-2">
-            <Label>{dict.voiceLabel}</Label>
+            <Label>{t('voiceLabel')}</Label>
             <div className="flex items-center gap-2">
               <Select onValueChange={setVoiceName} value={voiceName}>
                 <SelectTrigger className="flex-1" disabled={!isPaidUser}>
-                  <SelectValue placeholder={dict.voicePlaceholder} />
+                  <SelectValue placeholder={t('voicePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {callVoices.map((voice) => (
@@ -158,14 +157,14 @@ export function CreateCharacterDialog({
                 </SelectContent>
               </Select>
               <VoicePlayButton
-                key={voiceName}
                 ariaLabels={{
-                  play: dict.playVoiceSample,
-                  stop: dict.stopVoiceSample,
+                  play: t('playVoiceSample'),
+                  stop: t('stopVoiceSample'),
                 }}
+                key={voiceName}
                 sampleUrl={selectedVoice?.sample_url ?? null}
                 size="lg"
-                title={dict.previewVoice.replace('__VOICE__', voiceName)}
+                title={t('previewVoice').replace('__VOICE__', voiceName)}
                 variant="button"
                 voiceName={voiceName}
               />
@@ -179,19 +178,19 @@ export function CreateCharacterDialog({
 
           {/* Prompt / Instructions (editable textarea) */}
           <div className="grid gap-2">
-            <Label htmlFor="char-prompt">{dict.instructionsLabel}</Label>
+            <Label htmlFor="char-prompt">{t('instructionsLabel')}</Label>
             <Textarea
               className="min-h-32 resize-y"
               disabled={!isPaidUser}
               id="char-prompt"
               maxLength={5000}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={dict.instructionsPlaceholder}
+              placeholder={t('instructionsPlaceholder')}
               rows={6}
               value={prompt}
             />
             <p className="text-muted-foreground text-xs">
-              {dict.characterCount.replace(
+              {t('characterCount').replace(
                 '__COUNT__',
                 prompt.length.toString(),
               )}
@@ -201,7 +200,7 @@ export function CreateCharacterDialog({
 
         <DialogFooter>
           <Button onClick={() => onOpenChange(false)} variant="outline">
-            {dict.cancelButton}
+            {t('cancelButton')}
           </Button>
           <Button
             className={
@@ -210,9 +209,9 @@ export function CreateCharacterDialog({
                 : 'cursor-not-allowed bg-muted text-muted-foreground hover:bg-muted'
             }
             onClick={handleSave}
-            title={isPaidUser ? undefined : dict.paidUserOnly}
+            title={isPaidUser ? undefined : t('paidUserOnly')}
           >
-            {isSaving ? dict.creatingButton : dict.createButton}
+            {isSaving ? t('creatingButton') : t('createButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

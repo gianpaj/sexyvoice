@@ -2,7 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getMessages, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import PricingTable from '@/components/pricing-table';
@@ -44,7 +44,7 @@ export default async function CreditsPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const t = await getTranslations({ locale: lang, namespace: 'credits' });
   const tSidebar = await getTranslations({
     locale: lang,
     namespace: 'sidebar',
@@ -160,12 +160,8 @@ export default async function CreditsPage(props: {
       </Suspense>
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
-          <h3 className="mb-4 font-semibold text-lg">
-            {dict.credits.topup.title}
-          </h3>
-          <p className="text-muted-foreground">
-            {dict.credits.topup.description}
-          </p>
+          <h3 className="mb-4 font-semibold text-lg">{t('topup.title')}</h3>
+          <p className="text-muted-foreground">{t('topup.description')}</p>
         </div>
         <Button asChild icon={ExternalLink} iconPlacement="right">
           <Link
@@ -201,13 +197,8 @@ export default async function CreditsPage(props: {
       />
 
       <div className="my-8">
-        <h3 className="mb-4 font-semibold text-lg">
-          {dict.credits.history.title}
-        </h3>
-        <CreditHistory
-          dict={dict.credits}
-          transactions={existingTransactions}
-        />
+        <h3 className="mb-4 font-semibold text-lg">{t('history.title')}</h3>
+        <CreditHistory transactions={existingTransactions} />
       </div>
     </div>
   );

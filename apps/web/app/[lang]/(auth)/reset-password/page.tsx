@@ -1,4 +1,4 @@
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 import { HeaderStatic } from '@/components/header-static';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -12,7 +12,10 @@ export default async function ResetPasswordPage(props: {
     props.params,
     props.searchParams,
   ]);
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const t = await getTranslations({
+    locale: lang,
+    namespace: 'auth.resetPassword',
+  });
 
   return (
     <>
@@ -21,16 +24,12 @@ export default async function ResetPasswordPage(props: {
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
             <h1 className="mb-2 text-center font-bold text-3xl">
-              {dict.auth.resetPassword.title}
+              {t('title')}
             </h1>
             <p className="mb-8 text-muted-foreground text-sm">
-              {dict.auth.resetPassword.subtitle}
+              {t('subtitle')}
             </p>
-            <ResetPasswordForm
-              dict={dict.auth.resetPassword}
-              lang={lang}
-              message={searchParams}
-            />
+            <ResetPasswordForm lang={lang} message={searchParams} />
           </div>
         </div>
       </div>

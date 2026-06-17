@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import {
@@ -8,7 +11,6 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type langDict from '@/messages/en.json';
 import type { Status } from './clone-state';
 
 export interface SampleAudio {
@@ -22,20 +24,19 @@ export interface SampleAudio {
 }
 
 export default function CloneSampleCard({
-  dict,
   sample,
   addFiles,
   onSelectSample,
   setErrorMessage,
   setStatus,
 }: {
-  dict: (typeof langDict)['clone'];
   sample: SampleAudio;
   addFiles: (files: File[]) => void;
   onSelectSample: (sample: SampleAudio) => void;
   setErrorMessage: (message: string) => void;
   setStatus: (status: Status) => void;
 }) {
+  const t = useTranslations('clone');
   const handleLoadSampleAudio = async (sampleAudio: SampleAudio) => {
     try {
       // we need a local file otherwise we have a CORS error with R2 on https://files.sexyvoice.ai
@@ -98,11 +99,11 @@ export default function CloneSampleCard({
         <Card className="pb-4">
           <div className="center my-2 flex items-baseline justify-center gap-32">
             <div className="flex flex-col text-center">
-              <p>{dict.sampleCard.sourceAudio}:</p>
+              <p>{t('sampleCard.sourceAudio')}:</p>
               <AudioPlayerWithContext
                 buttonClassName="bg-blue-950 hover:bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
                 className="my-4 self-center"
-                playAudioTitle={dict.playAudio}
+                playAudioTitle={t('playAudio')}
                 progressColor="#8b5cf6"
                 showWaveform
                 url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
@@ -110,11 +111,11 @@ export default function CloneSampleCard({
               />
             </div>
             <div className="my-4 flex flex-col justify-center text-center">
-              <p>{dict.sampleCard.exampleOutput}:</p>
+              <p>{t('sampleCard.exampleOutput')}:</p>
               <AudioPlayerWithContext
                 buttonClassName="bg-purple-950 hover:bg-purple-950 opacity-60 transition-opacity hover:opacity-100"
                 className="my-4 self-center"
-                playAudioTitle={dict.playAudio}
+                playAudioTitle={t('playAudio')}
                 progressColor="#8b5cf6"
                 showWaveform
                 url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}

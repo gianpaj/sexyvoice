@@ -1,10 +1,10 @@
 'use client';
 
 import { ArrowDown, Music } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import type langDict from '@/messages/en.json';
 import { ConvertButton } from './components/convert-button';
 import { DownloadSection } from './components/download-section';
 import { DropZone } from './components/drop-zone';
@@ -16,11 +16,8 @@ import './audio-converter.css';
 type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
 type ConversionState = 'idle' | 'converting' | 'complete';
 
-interface Props {
-  dict: (typeof langDict)['audioConverter'];
-}
-
-export default function AudioConverterClient({ dict }: Props) {
+export default function AudioConverterClient() {
+  const t = useTranslations('audioConverter');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [outputFormat, setOutputFormat] = useState<AudioFormat>('mp3');
   const [conversionState, setConversionState] =
@@ -32,9 +29,9 @@ export default function AudioConverterClient({ dict }: Props) {
   // Show toast notification when FFmpeg fails to load
   useEffect(() => {
     if (ffmpegError) {
-      toast.error(dict.errors.converterLoadFailed);
+      toast.error(t('errors.converterLoadFailed'));
     }
-  }, [ffmpegError, dict.errors]);
+  }, [ffmpegError, t]);
 
   const isDisabled = ffmpegLoading || !!ffmpegError;
 
@@ -108,21 +105,20 @@ export default function AudioConverterClient({ dict }: Props) {
             <Music className="h-8 w-8 text-primary-foreground" />
           </div>
           <h1 className="gradient-text font-extrabold text-2xl md:text-4xl">
-            {dict.title}
+            {t('title')}
           </h1>
         </div>
 
         {/* Tagline */}
         <p className="mb-4 text-muted-foreground text-sm sm:text-md">
-          {dict.subtitle}
-          <span className="font-semibold text-foreground">{dict.tagline}</span>
+          {t('subtitle')}
+          <span className="font-semibold text-foreground">{t('tagline')}</span>
         </p>
       </header>
 
       <main className="glass-card animate-fade-in rounded-3xl p-6 md:p-10">
         {conversionState === 'complete' ? (
           <DownloadSection
-            dict={dict.downloadSection}
             fileName={selectedFile?.name || 'audio'}
             format={outputFormat}
             onConvertAnother={handleConvertAnother}
@@ -132,13 +128,12 @@ export default function AudioConverterClient({ dict }: Props) {
           <div className="space-y-6">
             {selectedFile ? (
               <FileInfo
-                dict={dict.fileInfo}
                 disabled={conversionState === 'converting'}
                 file={selectedFile}
                 onRemove={handleRemoveFile}
               />
             ) : (
-              <DropZone dict={dict.dropZone} onFileSelect={handleFileSelect} />
+              <DropZone onFileSelect={handleFileSelect} />
             )}
 
             {selectedFile && (
@@ -148,14 +143,12 @@ export default function AudioConverterClient({ dict }: Props) {
                 </div>
 
                 <FormatSelector
-                  dict={dict.formatSelector}
                   disabled={conversionState === 'converting'}
                   onChange={setOutputFormat}
                   value={outputFormat}
                 />
 
                 <ConvertButton
-                  dict={dict.convertButton}
                   disabled={isDisabled}
                   isConverting={conversionState === 'converting'}
                   onClick={handleConvert}
@@ -164,7 +157,7 @@ export default function AudioConverterClient({ dict }: Props) {
 
                 {ffmpegError && (
                   <p className="text-center text-destructive text-sm">
-                    {dict.errors.converterFailedToLoad}
+                    {t('errors.converterFailedToLoad')}
                   </p>
                 )}
               </div>

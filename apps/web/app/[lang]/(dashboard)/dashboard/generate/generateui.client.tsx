@@ -5,11 +5,9 @@ import { useState } from 'react';
 import { AudioGenerator } from '@/components/audio-generator';
 import { VoiceSelector } from '@/components/voice-selector';
 import { getFeaturedVoice } from '@/lib/voices';
-import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
 interface GenerateUIProps {
-  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
   publicVoices: Tables<'voices'>[];
@@ -22,7 +20,6 @@ export function GenerateUI({
   publicVoices,
   hasEnoughCredits,
   isPaidUser,
-  dict,
 }: GenerateUIProps) {
   const initialVoiceName =
     getFeaturedVoice(publicVoices)?.name || publicVoices[0]?.name || 'zephyr';
@@ -35,7 +32,6 @@ export function GenerateUI({
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
-        dict={dict}
         publicVoices={publicVoices}
         selectedStyle={isGeminiVoice ? selectedStyle : undefined}
         selectedVoice={selectedVoiceSample}
@@ -44,7 +40,6 @@ export function GenerateUI({
       />
       <AudioProvider>
         <AudioGenerator
-          dict={dict}
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}

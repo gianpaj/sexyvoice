@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -12,10 +14,6 @@ import {
 type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
 
 interface Props {
-  dict: {
-    label: string;
-    placeholder: string;
-  };
   disabled: boolean;
   onChange: (value: AudioFormat) => void;
   value: AudioFormat;
@@ -31,18 +29,20 @@ const formats: { value: AudioFormat; label: string }[] = [
   { value: 'mp4', label: 'MP4' },
 ];
 
-export function FormatSelector({ value, onChange, disabled, dict }: Props) {
+export function FormatSelector({ value, onChange, disabled }: Props) {
+  const t = useTranslations('audioConverter.formatSelector');
+
   return (
     <div className="space-y-2">
       <Label className="text-muted-foreground" htmlFor="format-select">
-        {dict.label}
+        {t('label')}
       </Label>
       <Select disabled={disabled} onValueChange={onChange} value={value}>
         <SelectTrigger
           className="h-14 w-full border-border bg-background text-base transition-colors hover:border-brand-purple/50 focus:ring-1 focus:ring-brand-purple"
           id="format-select"
         >
-          <SelectValue placeholder={dict.placeholder} />
+          <SelectValue placeholder={t('placeholder')} />
         </SelectTrigger>
         <SelectContent>
           {formats.map((format) => (

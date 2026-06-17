@@ -2,7 +2,8 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,6 @@ import type {
   UsageSourceType,
   UsageUnitType,
 } from '@/lib/supabase/usage-queries';
-import type langDict from '@/messages/en.json';
 
 function formatDate(
   input: string | number | Date,
@@ -52,19 +52,19 @@ const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
 function formatQuantity(
   quantity: number,
   unit: UsageUnitType,
-  dict: (typeof langDict)['usage']['units'],
+  tUnits: ReturnType<typeof useTranslations<'usage.units'>>,
 ): string {
   const formattedNumber = quantity.toLocaleString();
 
   switch (unit) {
     case 'chars':
-      return `${formattedNumber} ${dict.chars}`;
+      return `${formattedNumber} ${tUnits('chars')}`;
     case 'mins':
-      return `${formattedNumber} ${dict.mins}`;
+      return `${formattedNumber} ${tUnits('mins')}`;
     case 'secs':
-      return `${formattedNumber} ${dict.secs}`;
+      return `${formattedNumber} ${tUnits('secs')}`;
     case 'operation':
-      return `${formattedNumber} ${dict.operation}`;
+      return `${formattedNumber} ${tUnits('operation')}`;
     default:
       return formattedNumber;
   }
@@ -125,64 +125,72 @@ function DetailsCell({
   );
 }
 
-export function createColumns(
-  dict: (typeof langDict)['usage'],
-): ColumnDef<UsageEvent>[] {
-  return [
-    {
-      id: 'source_type',
-      accessorKey: 'source_type',
-      header: dict.table.sourceType,
-      cell: ({ row }) => {
-        const sourceType = row.original.source_type as UsageSourceType;
-        const labels = dict.summary.byType as Record<string, string>;
-        const label = labels[sourceType] || sourceType;
-        return (
-          <Badge
-            className={`${SOURCE_TYPE_COLORS[sourceType]} border`}
-            variant="outline"
-          >
-            {label}
-          </Badge>
-        );
+export function useColumns(): ColumnDef<UsageEvent>[] {
+  const t = useTranslations('usage');
+  const tUnits = useTranslations('usage.units');
+
+  return useMemo(
+    () => [
+      {
+        id: 'source_type',
+        accessorKey: 'source_type',
+        header: t('table.sourceType'),
+        cell: ({ row }) => {
+          const sourceType = row.original.source_type as UsageSourceType;
+          const label =
+            sourceType === 'api_tts'
+              ? 'API TTS'
+              : sourceType === 'api_voice_cloning'
+                ? 'API Voice Cloning'
+                : t(`summary.byType.${sourceType}`);
+          return (
+            <Badge
+              className={`${SOURCE_TYPE_COLORS[sourceType]} border`}
+              variant="outline"
+            >
+              {label}
+            </Badge>
+          );
+        },
       },
-    },
-    {
-      id: 'quantity',
-      accessorKey: 'quantity',
-      header: dict.table.quantity,
-      cell: ({ row }) =>
-        formatQuantity(
-          row.original.quantity,
-          row.original.unit as UsageUnitType,
-          dict.units,
+      {
+        id: 'quantity',
+        accessorKey: 'quantity',
+        header: t('table.quantity'),
+        cell: ({ row }) =>
+          formatQuantity(
+            row.original.quantity,
+            row.original.unit as UsageUnitType,
+            tUnits,
+          ),
+      },
+      {
+        id: 'credits_used',
+        accessorKey: 'credits_used',
+        header: t('table.creditsUsed'),
+        cell: ({ row }) => row.original.credits_used.toLocaleString(),
+      },
+      {
+        id: 'occurred_at',
+        accessorKey: 'occurred_at',
+        header: ({ column }) => (
+          <Button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            variant="ghost"
+          >
+            {t('table.date')}
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
         ),
-    },
-    {
-      id: 'credits_used',
-      accessorKey: 'credits_used',
-      header: dict.table.creditsUsed,
-      cell: ({ row }) => row.original.credits_used.toLocaleString(),
-    },
-    {
-      id: 'occurred_at',
-      accessorKey: 'occurred_at',
-      header: ({ column }) => (
-        <Button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          variant="ghost"
-        >
-          {dict.table.date}
-          <ArrowUpDown className="ml-2 size-4" />
-        </Button>
-      ),
-      cell: ({ row }) => <DateTimeCell value={row.original.occurred_at} />,
-    },
-    {
-      id: 'details',
-      accessorKey: 'metadata',
-      header: dict.table.details,
-      cell: ({ row }) => <DetailsCell metadata={row.original.metadata} />,
-    },
-  ];
+        cell: ({ row }) => <DateTimeCell value={row.original.occurred_at} />,
+      },
+      {
+        id: 'details',
+        accessorKey: 'metadata',
+        header: t('table.details'),
+        cell: ({ row }) => <DetailsCell metadata={row.original.metadata} />,
+      },
+    ],
+    [t, tUnits],
+  );
 }

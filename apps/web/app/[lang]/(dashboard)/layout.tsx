@@ -64,7 +64,6 @@ export default async function DashboardLayout(props: {
         <DashboardUI
           activeBanner={activeBanner}
           creditTransactions={creditTransactions ?? []}
-          dict={messages}
           isPaidUser={isPaidUser}
           lang={lang}
           userId={user.id}

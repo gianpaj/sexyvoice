@@ -1,12 +1,12 @@
 'use client';
 
 import { Languages } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import type langDict from '@/messages/en.json';
 import { AudioInput } from './components/audio-input';
 import { LanguageSelector } from './components/language-selector';
 import { ModelSelector } from './components/model-selector';
@@ -17,11 +17,11 @@ import { useTranscriber } from './hooks/use-transcriber';
 import './transcribe.css';
 
 interface Props {
-  dict: (typeof langDict)['transcribe'];
   lang: Locale;
 }
 
-export default function TranscribeClient({ lang, dict }: Props) {
+export default function TranscribeClient({ lang }: Props) {
+  const t = useTranslations('transcribe');
   const [model, setModel] = useState('onnx-community/whisper-tiny');
   const [language, setLanguage] = useState<string>(lang);
   const [subtask, setSubtask] = useState('transcribe');
@@ -100,10 +100,10 @@ export default function TranscribeClient({ lang, dict }: Props) {
     transcriber.state === 'loading' || transcriber.state === 'transcribing';
 
   const buttonLabel: Record<string, string> = {
-    loading: dict.loadingModel,
-    transcribing: dict.transcribing,
-    ready: dict.transcribeButton,
-    idle: dict.loadAndTranscribe,
+    loading: t('loadingModel'),
+    transcribing: t('transcribing'),
+    ready: t('transcribeButton'),
+    idle: t('loadAndTranscribe'),
   };
 
   const handleTimeUpdate = (time: number) => {
@@ -148,20 +148,19 @@ export default function TranscribeClient({ lang, dict }: Props) {
             <Languages className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="gradient-text font-extrabold text-3xl leading-tight md:text-5xl">
-            {dict.title}
+            {t('title')}
           </h1>
         </div>
 
         <p className="mx-auto mb-4 max-w-md text-muted-foreground text-sm sm:text-base">
-          {dict.subtitle}
-          <span className="font-semibold text-foreground">{dict.tagline}</span>
+          {t('subtitle')}
+          <span className="font-semibold text-foreground">{t('tagline')}</span>
         </p>
       </header>
 
       <main className="glass-card animate-fade-in rounded-3xl p-4 md:p-10">
         <div className="space-y-6">
           <AudioInput
-            dict={dict.audioInput}
             disabled={isProcessing}
             onAudioReady={handleAudioReady}
             onFileSelected={handleFileSelected}
@@ -171,14 +170,12 @@ export default function TranscribeClient({ lang, dict }: Props) {
           {hasAudio && (
             <div className="flex animate-fade-in flex-col gap-8">
               <ModelSelector
-                dict={dict.modelSelector}
                 disabled={isProcessing}
                 onChange={setModel}
                 value={model}
               />
 
               <LanguageSelector
-                dict={dict.languageSelector}
                 disabled={isProcessing}
                 isEnglishOnly={isEnglishOnly}
                 lang={lang}
@@ -189,7 +186,6 @@ export default function TranscribeClient({ lang, dict }: Props) {
               />
 
               <ProgressDisplay
-                dict={dict.progress}
                 isTranscribing={transcriber.state === 'transcribing'}
                 progress={transcriber.downloadProgress}
               />
@@ -204,7 +200,6 @@ export default function TranscribeClient({ lang, dict }: Props) {
 
               <TranscriptDisplay
                 currentTime={currentTime}
-                dict={dict.transcriptDisplay}
                 partialTranscript={transcriber.partialTranscript}
                 transcript={transcriber.transcript}
               />
@@ -225,7 +220,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
                     size="lg"
                     variant="outline"
                   >
-                    {dict.reset}
+                    {t('reset')}
                   </Button>
                 )}
               </div>

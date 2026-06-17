@@ -14,14 +14,12 @@ import {
 } from '@/lib/characters';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
-import type langDict from '@/messages/en.json';
 import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
 
 interface TokenGeneratorData {
   connect: ConnectFn;
-  dict: (typeof langDict)['call'];
   disconnect: () => Promise<void>;
   pgState: PlaygroundState;
   shouldConnect: boolean;
@@ -36,10 +34,8 @@ const ConnectionContext = createContext<TokenGeneratorData | undefined>(
 
 export const ConnectionProvider = ({
   children,
-  dict,
 }: {
   children: React.ReactNode;
-  dict: (typeof langDict)['call'];
 }) => {
   const [connectionDetails, setConnectionDetails] = useState<{
     wsUrl: string;
@@ -115,7 +111,7 @@ export const ConnectionProvider = ({
       if (response.status === 402) {
         toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
       } else if (response.status === 403) {
-        toast.error(dict.freeUserCallLimitExceeded);
+        toast.error(t('freeUserCallLimitExceeded'));
       }
       throw new Error('Failed to fetch token');
     }
@@ -147,7 +143,6 @@ export const ConnectionProvider = ({
         shouldConnect: connectionDetails.shouldConnect,
         voice: connectionDetails.voice,
         pgState,
-        dict,
         connect,
         disconnect,
       }}

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import { VoiceSelector } from '@/components/voice-selector';
@@ -61,16 +62,15 @@ function createVoice(
 
 function renderVoiceSelector(selectedVoice: Tables<'voices'>) {
   return render(
-    <VoiceSelector
-      dict={
-        baseDict as unknown as typeof import('@/messages/en.json')['generate']
-      }
-      publicVoices={[selectedVoice]}
-      selectedStyle={undefined}
-      selectedVoice={selectedVoice}
-      setSelectedStyle={vi.fn()}
-      setSelectedVoice={vi.fn()}
-    />,
+    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+      <VoiceSelector
+        publicVoices={[selectedVoice]}
+        selectedStyle={undefined}
+        selectedVoice={selectedVoice}
+        setSelectedStyle={vi.fn()}
+        setSelectedVoice={vi.fn()}
+      />
+    </NextIntlClientProvider>,
   );
 }
 

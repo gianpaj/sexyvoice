@@ -3,6 +3,7 @@
 import { ChevronUp, ExternalLink, User2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import {
   DropdownMenu,
@@ -18,15 +19,9 @@ import {
 } from '@/components/ui/sidebar';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import type langDict from '@/messages/en.json';
 
-export function SidebarFooterMenu({
-  lang,
-  dict,
-}: {
-  lang: Locale;
-  dict: (typeof langDict)['sidebar'];
-}) {
+export function SidebarFooterMenu({ lang }: { lang: Locale }) {
+  const t = useTranslations('sidebar');
   // Read sidebar state from context; this component must be rendered within SidebarProvider.
   const { isMobile, toggleSidebar } = useSidebar();
 
@@ -44,7 +39,7 @@ export function SidebarFooterMenu({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton>
-              <User2 /> {dict.profile}
+              <User2 /> {t('profile')}
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -61,7 +56,7 @@ export function SidebarFooterMenu({
                   }
                 }}
               >
-                {dict.profile}
+                {t('profile')}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -71,7 +66,7 @@ export function SidebarFooterMenu({
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>
-              <span>{dict.signOut}</span>
+              <span>{t('signOut')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

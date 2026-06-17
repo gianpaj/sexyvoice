@@ -2,6 +2,7 @@
 
 import { CheckCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useFormStatus } from 'react-dom';
 
 import { forgotPasswordAction } from '@/app/actions';
@@ -9,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import type langDict from '@/messages/en.json';
 
 export type Message =
   | { success: string }
@@ -17,14 +17,13 @@ export type Message =
   | { message: string };
 
 export function ResetPasswordForm({
-  dict,
   lang,
   message,
 }: {
-  dict: (typeof langDict)['auth']['resetPassword'];
   lang: Locale;
   message: Message;
 }) {
+  const t = useTranslations('auth.resetPassword');
   const { pending } = useFormStatus();
 
   return (
@@ -32,7 +31,7 @@ export function ResetPasswordForm({
       <input name="lang" type="hidden" value={lang} />
       <div className="flex flex-col gap-6">
         <div className="grid gap-2">
-          <Label htmlFor="email">{dict.email}</Label>
+          <Label htmlFor="email">{t('email')}</Label>
           <Input
             autoComplete="current-email"
             id="email"
@@ -45,13 +44,18 @@ export function ResetPasswordForm({
 
       {'error' in message && (
         <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
-          {dict.errors[message.error as keyof typeof dict.errors]}
+          {(() => {
+            const messageKey = `errors.${message.error}` as Parameters<
+              typeof t
+            >[0];
+            return t.has(messageKey) ? t(messageKey) : message.error;
+          })()}
         </div>
       )}
       {'success' in message && (
         <div className="flex items-center border-green-400 text-foreground text-sm">
           <CheckCircle className="mr-2 inline-block h-4 w-4 text-green-400" />
-          {dict.success}
+          {t('success')}
         </div>
       )}
 
@@ -62,11 +66,11 @@ export function ResetPasswordForm({
         formAction={forgotPasswordAction}
         type="submit"
       >
-        {pending ? dict.loading : dict.submit}
+        {pending ? t('loading') : t('submit')}
       </Button>
 
       <Button asChild className="w-full" type="button" variant="secondary">
-        <Link href="login">{dict.backToLogin}</Link>
+        <Link href="login">{t('backToLogin')}</Link>
       </Button>
     </form>
   );

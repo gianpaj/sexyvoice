@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
 
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -144,8 +143,6 @@ export default async function CallLayout({
 
   const { lang } = await params;
 
-  const dict = ((await getMessages({ locale: lang })) as IntlMessages).call;
-
   return (
     // <PHProvider>
     <PlaygroundStateProvider
@@ -158,7 +155,7 @@ export default async function CallLayout({
         language: lang as CallLanguage,
       }}
     >
-      <ConnectionProvider dict={dict}>
+      <ConnectionProvider>
         <TooltipProvider>
           <RoomWrapper>{children}</RoomWrapper>
         </TooltipProvider>

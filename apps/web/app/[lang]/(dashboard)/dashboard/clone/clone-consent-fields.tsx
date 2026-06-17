@@ -1,22 +1,25 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import type { CloneDict, CloneStateAction } from './clone-state';
+import type { CloneStateAction } from './clone-state';
 
 export function CloneConsentFields({
-  dict,
   disabled,
   legalConsentChecked,
   referenceAudioEnhancementEnabled,
   dispatch,
 }: {
-  dict: CloneDict;
   disabled: boolean;
   legalConsentChecked: boolean;
   referenceAudioEnhancementEnabled: boolean;
   dispatch: Dispatch<CloneStateAction>;
 }) {
+  const t = useTranslations('clone');
+
   return (
     <>
       <div className="flex items-start space-x-2">
@@ -38,10 +41,10 @@ export function CloneConsentFields({
             className="font-normal text-muted-foreground text-sm leading-tight"
             htmlFor="reference-audio-enhancement"
           >
-            {dict.referenceAudioEnhancementLabel}
+            {t('referenceAudioEnhancementLabel')}
           </Label>
           <p className="text-muted-foreground text-xs leading-tight">
-            {dict.referenceAudioEnhancementHelp}
+            {t('referenceAudioEnhancementHelp')}
           </p>
         </div>
       </div>
@@ -63,7 +66,7 @@ export function CloneConsentFields({
           data-testid="clone-legal-consent-label"
           htmlFor="legal-consent"
         >
-          {dict.legalConsentCheckbox}
+          {t('legalConsentCheckbox')}
         </Label>
       </div>
     </>

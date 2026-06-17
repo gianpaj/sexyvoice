@@ -36,53 +36,6 @@ vi.mock('../clone/audio-provider', () => ({
   ),
 }));
 
-const baseDict = {
-  title: 'Generate audio',
-  textAreaPlaceholder: 'Enter text',
-  estimateCreditsButton: 'Estimate credits',
-  ctaButton: 'Generate',
-  generating: 'Generating',
-  cancel: 'Cancel',
-  playAudio: 'Play audio',
-  resetPlayer: 'Reset player',
-  downloadAudio: 'Download audio',
-  notEnoughCredits: 'Not enough credits',
-  success: 'Success',
-  error: 'Something went wrong',
-  errorEstimating: 'Failed to estimate credits',
-  dailyLimitError: 'Daily limit reached (__COUNT__)',
-  voiceSelector: {
-    title: 'Choose voice',
-    description: 'Pick a voice for generation',
-    geminiInfo: 'Gemini voice info',
-    grokInfo: 'Grok voice info',
-    toolTipEmotionTags: 'Emotion tags',
-    selectStyleTextareaPlaceholder: 'Describe the speaking style',
-  },
-  grok: {
-    helperText: 'Use Grok tags to control delivery.',
-    inlineEffectPlaceholder: 'Insert tags',
-    wrappingEffectPlaceholder: 'Wrap selected text',
-    formatPlaceholder: 'Select format',
-    effects: {
-      pause: 'Pause',
-      longPause: 'Long pause',
-      humTune: 'Hum tune',
-      laugh: 'Laugh',
-      chuckle: 'Chuckle',
-      giggle: 'Giggle',
-      cry: 'Cry',
-      tsk: 'Tsk',
-      tongueClick: 'Tongue click',
-      lipSmack: 'Lip smack',
-      breath: 'Breath',
-      inhale: 'Inhale',
-      exhale: 'Exhale',
-      sigh: 'Sigh',
-    },
-  },
-} as const;
-
 function createVoice(
   overrides: Partial<Tables<'voices'>> = {},
 ): Tables<'voices'> {
@@ -106,14 +59,7 @@ function createVoice(
 
 function renderGenerateUI(publicVoices: Tables<'voices'>[]) {
   return render(
-    <GenerateUI
-      dict={
-        baseDict as unknown as typeof import('@/messages/en.json')['generate']
-      }
-      hasEnoughCredits
-      isPaidUser
-      publicVoices={publicVoices}
-    />,
+    <GenerateUI hasEnoughCredits isPaidUser publicVoices={publicVoices} />,
   );
 }
 

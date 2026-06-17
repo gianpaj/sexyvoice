@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getVoiceGroups } from '@/components/voice-groups';
@@ -87,7 +88,6 @@ function renderVoiceSelector(
   ];
 
   const defaultProps: React.ComponentProps<typeof VoiceSelector> = {
-    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     publicVoices,
     selectedStyle: 'soft and breathy',
     selectedVoice: publicVoices[0],
@@ -95,7 +95,11 @@ function renderVoiceSelector(
     setSelectedVoice: vi.fn(),
   };
 
-  return render(<VoiceSelector {...defaultProps} {...overrides} />);
+  return render(
+    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+      <VoiceSelector {...defaultProps} {...overrides} />
+    </NextIntlClientProvider>,
+  );
 }
 
 describe('VoiceSelector', () => {

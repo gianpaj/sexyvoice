@@ -1,4 +1,7 @@
+'use client';
+
 import { AlertCircle, PaperclipIcon, UploadIcon, XIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
@@ -11,12 +14,8 @@ import { formatBytes, type useFileUpload } from '@/hooks/use-file-upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import type { SampleAudio } from './clone-sample-card';
 import CloneSampleCard from './clone-sample-card';
-import {
-  type CloneDict,
-  type CloneStateAction,
-  formatCloneMessage,
-} from './clone-state';
 import type { Status } from './clone-state';
+import { type CloneStateAction, formatCloneMessage } from './clone-state';
 
 type FileUploadResult = ReturnType<typeof useFileUpload>;
 
@@ -74,7 +73,6 @@ const sampleAudios: readonly SampleAudio[] = [
 ];
 
 export function CloneAudioInput({
-  dict,
   fileState,
   fileActions,
   mic,
@@ -84,7 +82,6 @@ export function CloneAudioInput({
   onSelectSample,
   dispatch,
 }: {
-  dict: CloneDict;
   fileState: FileUploadResult[0];
   fileActions: FileUploadResult[1];
   mic: CloneMic;
@@ -94,6 +91,7 @@ export function CloneAudioInput({
   onSelectSample: (sample: SampleAudio) => void;
   dispatch: Dispatch<CloneStateAction>;
 }) {
+  const t = useTranslations('clone');
   const { files, isDragging, errors } = fileState;
   const {
     handleDragEnter,
@@ -112,18 +110,18 @@ export function CloneAudioInput({
     ? VOXTRAL_MIN_AUDIO_DURATION_SECONDS
     : DEFAULT_MIN_AUDIO_DURATION_SECONDS;
   const referenceAudioGuidance = usesVoxtral
-    ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
+    ? formatCloneMessage(t('referenceAudioGuidanceShort'), {
         MIN: minAudioDuration,
         TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
       })
-    : formatCloneMessage(dict.referenceAudioGuidanceLong, {
+    : formatCloneMessage(t('referenceAudioGuidanceLong'), {
         MIN: minAudioDuration,
         TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
       });
 
   return (
     <div className="grid w-full gap-2">
-      <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
+      <Label htmlFor="audio-file">{t('audioFileLabel')}</Label>
 
       {/* Drop area */}
       {!(file || mic.recording) && (
@@ -153,10 +151,10 @@ export function CloneAudioInput({
             >
               <UploadIcon className="size-4 opacity-60" />
             </div>
-            <p className="mb-1.5 font-medium text-sm">{dict.uploadAudioFile}</p>
-            <p className="text-muted-foreground text-xs">{dict.dragDropText}</p>
+            <p className="mb-1.5 font-medium text-sm">{t('uploadAudioFile')}</p>
+            <p className="text-muted-foreground text-xs">{t('dragDropText')}</p>
             <p className="mt-1 text-muted-foreground text-xs">
-              {dict.fileFormatsText.replace(
+              {t('fileFormatsText').replace(
                 '__SIZE__',
                 formatBytes(CLONING_FILE_MAX_SIZE),
               )}
@@ -170,19 +168,19 @@ export function CloneAudioInput({
 
       {!file && (
         <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
-          <p className="text-center text-xs">{dict.orUseMicrophone}</p>
+          <p className="text-center text-xs">{t('orUseMicrophone')}</p>
           {ffmpeg.loading && usesVoxtral && (
             <div className="flex items-center justify-center gap-2 py-2">
               <PulsatingDots />
               <span className="text-muted-foreground text-xs">
-                {dict.loadingAudioProcessor}
+                {t('loadingAudioProcessor')}
               </span>
             </div>
           )}
           {ffmpeg.error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>{dict.audioProcessorError}</AlertTitle>
+              <AlertTitle>{t('audioProcessorError')}</AlertTitle>
               <AlertDescription>{ffmpeg.error}</AlertDescription>
             </Alert>
           )}
@@ -201,7 +199,7 @@ export function CloneAudioInput({
         <div className="text-center text-muted-foreground text-xs">
           <span className="flex items-center justify-center gap-2">
             <PulsatingDots />
-            {formatCloneMessage(dict.preparingAudioProcessor, {
+            {formatCloneMessage(t('preparingAudioProcessor'), {
               LANGUAGE: selectedLocale.value,
             })}
           </span>
@@ -241,7 +239,7 @@ export function CloneAudioInput({
           </div>
 
           <Button
-            aria-label={dict.removeFile}
+            aria-label={t('removeFile')}
             className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
             onClick={() => removeFile(files[0]?.id)}
             size="icon"
@@ -254,13 +252,12 @@ export function CloneAudioInput({
         !mic.blob && (
           // Sample audio demo buttons
           <div className="grid w-full gap-2">
-            <p className="text-muted-foreground text-xs">{dict.tryDemo}</p>
+            <p className="text-muted-foreground text-xs">{t('tryDemo')}</p>
 
             <Accordion className="w-full" collapsible type="single">
               {sampleAudios.map((sample) => (
                 <CloneSampleCard
                   addFiles={addFiles}
-                  dict={dict}
                   key={sample.id}
                   onSelectSample={onSelectSample}
                   sample={sample}
