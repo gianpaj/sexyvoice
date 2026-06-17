@@ -1,9 +1,9 @@
-import { Suspense } from 'react';
-
 import { captureException } from '@sentry/nextjs';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { getMessages, getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import PricingTable from '@/components/pricing-table';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ import {
   isStripeCouponUsable,
   refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
-import { getUserById } from '@/lib/supabase/queries';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 import { PaymentStatus } from './payment-status';
@@ -50,11 +50,43 @@ export default async function CreditsPage(props: {
     namespace: 'sidebar',
   });
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
+  const { data, error: authError } = await supabase.auth.getUser();
   const user = data?.user;
-  const userData = user && (await getUserById(user.id));
-  if (!(user && userData)) {
-    throw new Error('User not found');
+
+  if (!(user && !authError)) {
+    redirect(`/${lang}/login`);
+  }
+
+  const { data: userData, error: userDataError } = await getUserByIdWithError(
+    user.id,
+  );
+  if (userDataError) {
+    const error = new Error('Credits page profile lookup failed');
+    captureException(error, {
+      level: 'error',
+      user: { id: user.id, email: user.email },
+      extra: {
+        route: `/${lang}/dashboard/credits`,
+        profileLookupError: {
+          code: userDataError.code,
+          details: userDataError.details,
+          hint: userDataError.hint,
+          message: userDataError.message,
+        },
+      },
+    });
+    throw error;
+  }
+
+  if (!userData) {
+    captureException(new Error('Credits page profile not found'), {
+      level: 'warning',
+      user: { id: user.id, email: user.email },
+      extra: {
+        route: `/${lang}/dashboard/credits`,
+      },
+    });
+    redirect(`/${lang}/dashboard/generate`);
   }
 
   let shouldShowSubscriptionPlans = false;
@@ -88,8 +120,7 @@ export default async function CreditsPage(props: {
     userData.stripe_id = stripeId;
 
     let customerData = await getCustomerData(stripeId);
-    shouldShowSubscriptionPlans =
-      !customerData || customerData.status !== 'active';
+    shouldShowSubscriptionPlans = customerData?.status !== 'active';
 
     if (shouldShowSubscriptionPlans) {
       try {

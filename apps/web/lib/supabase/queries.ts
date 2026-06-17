@@ -305,15 +305,15 @@ export const insertUsageEvent = async (
 };
 
 export const getUserById = async (userId: string) => {
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data } = await getUserByIdWithError(userId);
 
   return data;
+};
+
+export const getUserByIdWithError = async (userId: string) => {
+  const supabase = await createClient();
+
+  return supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
@@ -367,7 +367,7 @@ export const insertSubscriptionCreditTransaction = async (
       });
       return;
     }
-  } catch (_error) {
+  } catch {
     // Transaction doesn't exist, continue with insertion
   }
 
@@ -446,7 +446,7 @@ export const insertTopupCreditTransaction = async (
       });
       return;
     }
-  } catch (_error) {
+  } catch {
     // Transaction doesn't exist, continue with insertion
   }
 
