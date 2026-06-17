@@ -39,6 +39,14 @@ describe('/api/v1 metadata endpoints', () => {
           is_public: true,
         },
         {
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro31',
+          feature: 'tts',
+          is_public: true,
+        },
+        {
           id: 'voice-tara-id',
           name: 'tara',
           language: 'en',

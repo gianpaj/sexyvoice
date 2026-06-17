@@ -811,7 +811,7 @@ describe('Generate Voice API Route', () => {
 
     it.each([
       ['voice-kore-id', 'gemini-2.5-pro-preview-tts'],
-      ['voice-kore-31-id', 'gemini-3.1-flash-tts-preview'],
+      ['voice-achernar-31-id', 'gemini-3.1-flash-tts-preview'],
     ] as const)('should select %s for paid Gemini users based on voiceId', async (testVoiceId, expectedModel) => {
       const { hasUserPaid, saveAudioFile } = await import(
         '@/lib/supabase/queries'
@@ -1754,7 +1754,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-31-id',
+          voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
       });
@@ -1800,7 +1800,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-31-id',
+          voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
       });
@@ -1828,7 +1828,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-31-id',
+          voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
       });
@@ -1940,7 +1940,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-31-id',
+          voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
       });
@@ -1976,7 +1976,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-31-id',
+          voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
       });
@@ -2008,7 +2008,7 @@ describe('Generate Voice API Route', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
-          voiceId: 'voice-kore-31-id',
+          voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
       });

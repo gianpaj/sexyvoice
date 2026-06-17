@@ -11,6 +11,7 @@ import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
 import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
+import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -27,8 +28,6 @@ import { createClient } from '@/lib/supabase/server';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
-  calculateGeminiTtsDollarAmount,
-  calculateGrokTtsDollarAmount,
   ERROR_CODES,
   estimateCredits,
   extractMetadata,
@@ -651,10 +650,18 @@ export async function POST(request: Request) {
 
       let dollarAmount: number | undefined;
       if (isGrokVoice) {
-        dollarAmount = calculateGrokTtsDollarAmount(text);
-      } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
-        dollarAmount = calculateGeminiTtsDollarAmount({
+        dollarAmount = calculateGenerateApiDollarAmount({
+          sourceType: 'tts',
+          provider: 'xai',
           model: modelUsed,
+          inputChars: text.length,
+        });
+      } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
+        dollarAmount = calculateGenerateApiDollarAmount({
+          sourceType: 'tts',
+          provider: 'google',
+          model: modelUsed,
+          inputChars: text.length,
           promptTokenCount: usage.promptTokenCount,
           candidatesTokenCount: usage.candidatesTokenCount,
         });

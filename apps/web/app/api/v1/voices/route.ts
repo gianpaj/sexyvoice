@@ -57,21 +57,16 @@ export async function GET(request: Request) {
       if (!model) {
         return [];
       }
-      const entry = {
-        id: voice.id,
-        name: voice.name,
-        language: voice.language,
-        model,
-        formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
-        supports_style: model === 'gpro',
-      };
-      if (model === 'gpro') {
-        return [
-          entry,
-          { ...entry, model: 'gpro31' as const, supports_style: true },
-        ];
-      }
-      return [entry];
+      return [
+        {
+          id: voice.id,
+          name: voice.name,
+          language: voice.language,
+          model,
+          formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
+          supports_style: model === 'gpro' || model === 'gpro31',
+        },
+      ];
     });
 
     return jsonWithRateLimitHeaders(

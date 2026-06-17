@@ -394,11 +394,11 @@ vi.mock('@/lib/supabase/queries', async () => {
           model: 'gpro',
         });
       }
-      if (voiceId === 'voice-kore-31-id') {
+      if (voiceId === 'voice-achernar-31-id') {
         return Promise.resolve({
-          id: 'voice-kore-31-id',
-          name: 'kore',
-          language: 'en',
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
           model: 'gpro31',
         });
       }
@@ -436,6 +436,14 @@ vi.mock('@/lib/supabase/queries', async () => {
           name: 'kore',
           language: 'en',
           model: 'gpro',
+        });
+      }
+      if (voiceName === 'achernar') {
+        return Promise.resolve({
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro31',
         });
       }
       if (voiceName === 'eve') {

@@ -22,7 +22,7 @@ import {
   isFormatSupported,
   isModelCompatibleWithVoice,
 } from '@/lib/api/model';
-import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
+import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
@@ -239,7 +239,13 @@ export async function POST(request: Request) {
     const ttsProvider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
-    const finalText = isGeminiVoice && style ? `${style}: ${input}` : input;
+    let finalText = input;
+    if (isGeminiVoice && style) {
+      finalText =
+        voiceObj.model === 'gpro31'
+          ? `### DIRECTOR'S NOTES\nStyle: ${style}\n\n## TRANSCRIPT\n${input}`
+          : `${style}: ${input}`;
+    }
 
     if (!isModelCompatibleWithVoice(model, voiceObj.model)) {
       await log({
@@ -591,11 +597,19 @@ export async function POST(request: Request) {
     }
 
     await reduceCreditsAdmin({ userId, amount: creditsUsed });
-    const dollarAmount = calculateExternalApiDollarAmount({
+    const dollarAmount = calculateGenerateApiDollarAmount({
       sourceType: 'api_tts',
       provider,
-      model,
+      model: modelUsed,
       inputChars: finalText.length,
+      promptTokenCount:
+        isGeminiVoice && usageMetadata && 'promptTokenCount' in usageMetadata
+          ? usageMetadata.promptTokenCount
+          : null,
+      candidatesTokenCount:
+        isGeminiVoice && usageMetadata && 'candidatesTokenCount' in usageMetadata
+          ? usageMetadata.candidatesTokenCount
+          : null,
     });
     const [audioFileResult, updatedCredits] = await Promise.all([
       saveAudioFileAdmin({

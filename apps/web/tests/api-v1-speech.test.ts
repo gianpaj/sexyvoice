@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/v1/speech/route';
 import {
   getCreditsAdmin,
+  getVoiceIdByNameAdmin,
   insertUsageEvent,
   reduceCreditsAdmin,
 } from '@/lib/supabase/queries';
@@ -362,7 +363,7 @@ describe('/api/v1/speech', () => {
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
   });
 
-  it('accepts a Gemini voice with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
+  it('accepts achernar with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -380,15 +381,102 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 5,
-        candidatesTokenCount: 10,
-        totalTokenCount: 15,
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+        totalTokenCount: 42,
       },
     });
     setMockGoogleGenAIFactory(() => ({
       models: { countTokens: vi.fn(), generateContent },
     }));
 
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalled();
+    expect(generateContent.mock.calls[0][0].model).toBe(
+      'gemini-3.1-flash-tts-preview',
+    );
+    expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dollarAmount: 0.000_726,
+        model: 'gemini-3.1-flash-tts-preview',
+      }),
+    );
+  });
+
+  it('accepts an achernar gpro31 Gemini voice row with model gpro31', async () => {
+    vi.mocked(getVoiceIdByNameAdmin).mockResolvedValueOnce({
+      id: 'voice-achernar-31-id',
+      name: 'achernar',
+      language: 'multiple',
+      model: 'gpro31',
+    });
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+        totalTokenCount: 42,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent.mock.calls[0][0].model).toBe(
+      'gemini-3.1-flash-tts-preview',
+    );
+    expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+  });
+
+  it('rejects gpro31 requests for gpro DB voices', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
@@ -405,12 +493,8 @@ describe('/api/v1/speech', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(generateContent).toHaveBeenCalled();
-    expect(generateContent.mock.calls[0][0].model).toBe(
-      'gemini-3.1-flash-tts-preview',
-    );
-    expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('model_not_found');
   });
 
   it('returns provider quota errors from Gemini without capturing exceptions', async () => {
@@ -498,7 +582,7 @@ describe('/api/v1/speech', () => {
       body: JSON.stringify({
         model: 'gpro31',
         input: 'Hello world',
-        voice: 'kore',
+        voice: 'achernar',
       }),
     });
 
@@ -514,6 +598,12 @@ describe('/api/v1/speech', () => {
       'gemini-2.5-flash-preview-tts',
     );
     expect(json.usage.model).toBe('gemini-2.5-flash-preview-tts');
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dollarAmount: 0.000_103,
+        model: 'gemini-2.5-flash-preview-tts',
+      }),
+    );
   });
 
   it('returns provider unavailable from transient Gemini errors without capture', async () => {
