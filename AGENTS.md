@@ -235,3 +235,33 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   `apps/docs/content/`, `AGENTS.md`).
 - Call out impact on credits, billing, generation, storage, or API contracts
   when relevant.
+
+## Cursor Cloud specific instructions
+
+These notes cover non-obvious gotchas for running this repo inside a Cursor
+Cloud VM (the startup update script already runs `pnpm install`). Standard
+commands live in `## Common Commands` above; only the caveats are here.
+
+- Node version: the project requires Node `24.x`, but the base VM's default
+  `node` (at `/exec-daemon/node`) is `v22` and takes PATH precedence over nvm.
+  Before running dev/build/test, select Node 24 and put it first on PATH, e.g.
+  `nvm install 24.9.0 && export PATH="$HOME/.nvm/versions/node/v24.9.0/bin:$PATH"`
+  (then `corepack enable` so `pnpm@10.20.0` is available). `pnpm install` itself
+  works under either Node version.
+- Dev server: `pnpm dev` wraps `next dev` with the external `portless` CLI
+  (serves `https://sv.dev`), which is NOT installed in the cloud VM. Run plain
+  Next.js instead: `pnpm --filter @sexyvoice/web exec next dev -p 3000` and use
+  `http://localhost:3000` (locale root is `/en`). Contentlayer builds
+  automatically on dev start.
+- Secrets: no secrets are required to boot the dev server, load the marketing
+  pages, or use the free in-browser tools under `/[lang]/tools/*` (transcribe,
+  audio-converter, audio-joiner). Auth/dashboard, voice generation/cloning,
+  LiveKit calls, Stripe, and the external API v1 need real provider credentials
+  from `apps/web/.env.example` (copy to `apps/web/.env.local`).
+- Full test suite: `apps/web/tests/stripe-webhook.test.ts` uses
+  `redis-memory-server`, which downloads a Redis 7.2.4 binary on first run
+  (needs network) or reuses a system `redis-server`. If that download is not
+  available, point it at a system binary:
+  `REDISMS_SYSTEM_BINARY=/usr/bin/redis-server pnpm test` (install via
+  `apt-get install -y redis-server`). Without a Redis binary, only that one
+  test file times out; the other 43 files (590+ tests) pass.
