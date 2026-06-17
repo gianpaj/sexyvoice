@@ -44,12 +44,9 @@ export function ResetPasswordForm({
 
       {'error' in message && (
         <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
-          {(() => {
-            const messageKey = `errors.${message.error}` as Parameters<
-              typeof t
-            >[0];
-            return t.has(messageKey) ? t(messageKey) : message.error;
-          })()}
+          {t.has(`errors.${message.error}` as Parameters<typeof t>[0])
+            ? t(`errors.${message.error}` as Parameters<typeof t>[0])
+            : message.error}
         </div>
       )}
       {'success' in message && (
