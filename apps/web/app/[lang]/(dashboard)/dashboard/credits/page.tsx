@@ -17,7 +17,7 @@ import {
   isStripeCouponUsable,
   refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
-import { getUserById } from '@/lib/supabase/queries';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 import { PaymentStatus } from './payment-status';
@@ -57,7 +57,27 @@ export default async function CreditsPage(props: {
     redirect(`/${lang}/login`);
   }
 
-  const userData = await getUserById(user.id);
+  const { data: userData, error: userDataError } = await getUserByIdWithError(
+    user.id,
+  );
+  if (userDataError) {
+    const error = new Error('Credits page profile lookup failed');
+    captureException(error, {
+      level: 'error',
+      user: { id: user.id, email: user.email },
+      extra: {
+        route: `/${lang}/dashboard/credits`,
+        profileLookupError: {
+          code: userDataError.code,
+          details: userDataError.details,
+          hint: userDataError.hint,
+          message: userDataError.message,
+        },
+      },
+    });
+    throw error;
+  }
+
   if (!userData) {
     captureException(new Error('Credits page profile not found'), {
       level: 'warning',

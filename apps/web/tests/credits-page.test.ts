@@ -2,7 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CreditsPage from '@/app/[lang]/(dashboard)/dashboard/credits/page';
-import { getUserById } from '@/lib/supabase/queries';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 const navigationMocks = vi.hoisted(() => ({
@@ -50,7 +50,7 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 }));
 
 vi.mock('@/lib/supabase/queries', () => ({
-  getUserById: vi.fn(),
+  getUserByIdWithError: vi.fn(),
 }));
 
 interface CreditsPageUser {
@@ -91,20 +91,26 @@ describe('CreditsPage auth/profile guards', () => {
     ).rejects.toThrow('NEXT_REDIRECT:/en/login');
 
     expect(navigationMocks.redirect).toHaveBeenCalledWith('/en/login');
-    expect(getUserById).not.toHaveBeenCalled();
+    expect(getUserByIdWithError).not.toHaveBeenCalled();
     expect(captureException).not.toHaveBeenCalled();
   });
 
   it('captures missing profile rows and redirects without crashing the page', async () => {
     const user = { id: 'user-1', email: 'user@example.com' };
     vi.mocked(createClient).mockResolvedValue(createSupabaseMock({ user }));
-    vi.mocked(getUserById).mockResolvedValue(null);
+    vi.mocked(getUserByIdWithError).mockResolvedValue({
+      count: null,
+      data: null,
+      error: null,
+      status: 200,
+      statusText: 'OK',
+    });
 
     await expect(
       CreditsPage({ params: Promise.resolve({ lang: 'en' }) }),
     ).rejects.toThrow('NEXT_REDIRECT:/en/dashboard/generate');
 
-    expect(getUserById).toHaveBeenCalledWith('user-1');
+    expect(getUserByIdWithError).toHaveBeenCalledWith('user-1');
     expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
       level: 'warning',
       user,
@@ -113,6 +119,46 @@ describe('CreditsPage auth/profile guards', () => {
       },
     });
     expect(navigationMocks.redirect).toHaveBeenCalledWith(
+      '/en/dashboard/generate',
+    );
+  });
+
+  it('captures profile lookup errors as errors and does not redirect as missing profile', async () => {
+    const user = { id: 'user-1', email: 'user@example.com' };
+    const profileLookupError = {
+      code: '42501',
+      details: '',
+      hint: '',
+      message: 'permission denied for table profiles',
+      name: 'PostgrestError',
+    };
+    vi.mocked(createClient).mockResolvedValue(createSupabaseMock({ user }));
+    vi.mocked(getUserByIdWithError).mockResolvedValue({
+      count: null,
+      data: null,
+      error: profileLookupError,
+      status: 500,
+      statusText: 'Internal Server Error',
+    });
+
+    await expect(
+      CreditsPage({ params: Promise.resolve({ lang: 'en' }) }),
+    ).rejects.toThrow('Credits page profile lookup failed');
+
+    expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
+      level: 'error',
+      user,
+      extra: {
+        route: '/en/dashboard/credits',
+        profileLookupError: {
+          code: profileLookupError.code,
+          details: profileLookupError.details,
+          hint: profileLookupError.hint,
+          message: profileLookupError.message,
+        },
+      },
+    });
+    expect(navigationMocks.redirect).not.toHaveBeenCalledWith(
       '/en/dashboard/generate',
     );
   });
