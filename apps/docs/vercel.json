@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "git log -1 --pretty=oneline --abbrev-commit | grep -E 'skip deploy|skip ci|skip docs' && exit 0 || exit 1"
+}

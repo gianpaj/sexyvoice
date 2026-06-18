@@ -1,6 +1,25 @@
 {
-    "dependencies": {
-        "dotenv": "^16.6.1",
-        "@supabase/supabase-js": "^2.86.2"
-    }
+  "name": "@sexyvoice/scripts",
+  "dependencies": {
+    "@google/genai": "1.19.0",
+    "@supabase/supabase-js": "catalog:",
+    "disposable-email-domains-js": "^1.21.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "tsx": "catalog:"
+  },
+  "private": true,
+  "scripts": {
+    "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
+    "generate-gemini-speech-samples": "node generate-gemini-speech-samples.mjs",
+    "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
+    "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",
+    "check-disposable-emails": "node check-disposable-emails.mjs",
+    "backfill-free-call": "tsx backfill-free-call.mts",
+    "batch-refund-credits": "tsx batch-refund-credits.mts",
+    "refund-credits": "tsx refund-credits.mts",
+    "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
+    "sync-deny-domains": "node sync-deny-domains.mjs"
+  }
 }

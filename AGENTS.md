@@ -1,357 +1,237 @@
-# Claude Assistant Guidelines for SexyVoice.ai
+# Coding Assistant Guidelines
 
-This file contains repository-specific guidelines and instructions for Claude when working on the SexyVoice.ai project.
+This is the repo-specific operating guide for SexyVoice.ai. Keep it short:
+put durable agent rules here, and move product or architecture detail to linked
+docs (`README.md`, `ARCHITECTURE.md`, `docs/devops.md`).
 
-## Project Overview
+Nested guidance:
 
-SexyVoice.ai is an AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system.
+- `apps/docs/AGENTS.md` - rules specific to the Fumadocs docs app. The
+  closest `AGENTS.md` to the file you are editing takes precedence.
 
-### Key Technologies
+## Task Completion Requirements
 
-- **Frontend**: Next.js 15 with App Router, React 19, TypeScript 5
-- **Backend**: Supabase (authentication, database, SSR), Replicate (AI voice generation), fal.ai (voice cloning)
-- **Database**: Supabase PostgreSQL
-- **Storage**: Cloudflare R2 for audio files
-- **Caching**: Upstash Redis for audio URL caching
-- **Styling**: Tailwind CSS 3.4, shadcn/ui components, Radix UI primitives
-- **Content**: Contentlayer2 for MDX blog processing
-- **Payments**: Stripe integration with promotional bonus system
-- **Monitoring**: Sentry error tracking and PostHog analytics
-- **AI Services**: Google Generative AI for text enhancement
-- **Code Quality**: Biome for linting and formatting
-- **Testing**: Vitest for unit/integration tests, MSW for API mocking
-- **Package Manager**: pnpm 9
-- **Internationalization**: Website support for English, Spanish, and German; voice generation and cloning in 20+ languages
+- All of `pnpm fixall` and `pnpm type-check` must pass before considering tasks completed.
+- When you touch the web app's tests or shared code, also run `pnpm test`
+  (or the focused file) and make sure the suite is green.
 
-## Architecture Overview
+## Mandatory Rules
 
-### Application Structure
-This is a Next.js 15 App Router application with the following key architectural patterns:
+- Search: Use `ck` for codebase search. Prefer `ck --regex -n` for exact text,
+  `ck -l` for filenames only, `ck --sem` for conceptual matches,
+  `ck --hybrid` when unsure, and `ck --jsonl --no-snippet` for tooling.
+  Use `--topk` and `--threshold` to refine semantic results. Use `ck -h` only
+  if you need the short help.
+- Read relevant files before changing code. Follow existing patterns and keep
+  edits scoped.
+- When writing or changing a test, run the test file or the smallest relevant
+  suite. Run broader tests when the change affects shared behavior.
+- When asked to work "step by step," keep working. Only pause when blocked or
+  looping.
+- Never execute `supabase` CLI commands or SQL queries that can write data.
+  Read-only commands such as `supabase status` are allowed.
+- Do not revert user changes unless the user explicitly asks.
+- Run `pnpm fixall` before committing when feasible.
 
-- **Internationalization**: Route-based i18n with English (en), Spanish (es), and German (de) support using `[lang]` dynamic segments
-- **Authentication**: Supabase Auth with SSR support, session management in middleware
-- **Database**: Supabase PostgreSQL with type-safe operations
-- **Content**: Contentlayer2 for MDX blog posts with locale support
-- **Styling**: Tailwind CSS with shadcn/ui components and Radix UI primitives
-- **Caching**: Upstash Redis for performance optimization
+## Maintainability
 
-### Key Directory Structure
-```
-app/[lang]/                    # Internationalized routes
-├── (auth)/                    # Auth-related pages (login, sign up, etc.)
-├── (dashboard)/               # Protected dashboard routes
-│   └── dashboard/             # Main dashboard with nested routes
-├── actions/                   # Server actions (promos, stripe)
-├── blog/[slug]/               # Dynamic blog post pages
-└── page.tsx                   # Landing page
+Long term maintainability is a core priority. If you add new functionality, first check if there is shared logic that can be extracted to a separate module.
+Duplicate logic across multiple files is a code smell and should be avoided. Don't be afraid to change existing code.
+Don't take shortcuts by just adding local logic to solve a problem.
 
-lib/
-├── supabase/                  # Database client, queries, types
-├── i18n/                      # Internationalization config and dictionaries
-└── stripe/                    # Payment processing, pricing configuration
+## Monorepo Layout
 
-components/
-├── ui/                        # shadcn/ui components
-├── promo-banner.tsx           # Generic promotion banner
-└── [feature-components]       # App-specific components
+- Web app package: `apps/web` (`@sexyvoice/web`).
+- Fumadocs docs app: `apps/docs` (`@sexyvoice/docs`) - deployed to
+  `docs.sexyvoice.ai`.
+- Operational one-off scripts: `scripts` (`@sexyvoice/scripts`).
+- Workspace config: `pnpm-workspace.yaml` (declares `apps/*`, `packages/*`,
+  and `scripts`, plus the shared dependency `catalog:`).
+- Root commands are orchestrated with Turborepo (`turbo.json`).
 
-tests/
-├── utils/                     # Test utilities and helpers
-├── setup.ts                   # Vitest setup and mocks
-└── *.test.ts                  # Test files
-```
+## Project Snapshot
 
-### Database Schema
-Core tables:
-- `profiles` - User profiles linked to Supabase Auth
-- `voices` - Voice models (can be user-created or system voices)
-- `audio_files` - Generated audio files with metadata
-- `credits` - User credit balances
-- `credit_transactions` - Credit usage/purchase history
+SexyVoice.ai is a Next.js 16, React 19, TypeScript 5.9, Supabase, and
+Tailwind CSS 4 app for AI voice generation, voice cloning, audio tools, and
+LiveKit-powered AI voice calls.
 
-### Voice Generation Flow
-1. User selects voice and enters text in dashboard
-2. API route validates request and checks user credits in Supabase
-3. Request hash is looked up in Redis cache; if found, cached URL is returned
-4. Otherwise, API invokes Replicate (voice generation) or fal.ai (voice cloning) to synthesize audio
-5. Generated audio is uploaded to Cloudflare R2 Storage
-6. R2 URL is cached in Redis and stored in Supabase with metadata
-7. Analytics sent to PostHog, errors logged in Sentry
-8. Final audio URL returned to client
+Core integrations: Supabase, Cloudflare R2, Upstash Redis, Replicate, fal.ai,
+Google Generative AI, xAI Grok TTS, LiveKit, Stripe, Sentry, PostHog, Axiom,
+Contentlayer2, Inngest, and `next-intl`.
 
-## Development Guidelines
+Runtime and tooling:
 
-### Code Quality Standards
+- Node.js `24.x` (see `engines.node` in each `package.json`).
+- Package manager: `pnpm@10.20.0` (see `packageManager`). Always use `pnpm`,
+  never `npm` or `yarn`.
+- Type checks run on the TypeScript native preview (`tsgo --noEmit`).
 
-#### Essential Commands (Always run before committing)
+## High-Value Paths
+
+- `apps/web/app/[lang]/` - localized App Router pages and layouts.
+- `apps/web/app/api/` - route handlers, including dashboard APIs and external API v1.
+- `apps/web/components/` - reusable UI and feature components.
+- `apps/web/hooks/` - client hooks, including LiveKit call state.
+- `apps/web/lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
+  pricing, and OpenAPI generation.
+- `apps/web/lib/i18n/` and `apps/web/messages/*.json` - locale config, navigation, and copy.
+- `apps/web/lib/supabase/` - Supabase clients, typed queries, and admin access.
+- `apps/web/lib/storage/` - Cloudflare R2 upload/delete helpers.
+- `apps/web/supabase/migrations/` - database migrations.
+- `apps/web/tests/` - Vitest tests and utilities; Playwright e2e tests under
+  `apps/web/tests/e2e/` (run with `pnpm --filter @sexyvoice/web test:e2e`).
+- `apps/docs/` - Fumadocs docs app (Next.js + `fumadocs-ui` + `fumadocs-mdx`).
+  Content lives in `apps/docs/content/`; OpenAPI docs are generated by
+  `apps/docs/src/scripts/generate-docs.mts`.
+- `ARCHITECTURE.md` - high-level architecture overview.
+- `docs/devops.md` - canonical environment, deployment, runtime, and
+  troubleshooting docs.
+- `apps/web/tests/README.md` - testing details.
+- `docs/changelog-format.md` - changelog rules.
+- `.cursor/rules/` - database function and migration rules.
+
+## Common Commands
+
 ```bash
-pnpm run fixall      # Run all fixes: lint, format, and check
-# OR run individually:
-pnpm run lint --write    # Fix linting issues automatically
-pnpm run format --write  # Format code with Biome
-pnpm run typecheck      # Verify TypeScript types
+pnpm dev                 # Start the web app dev server (filtered to @sexyvoice/web)
+pnpm build               # Production build (all apps via Turborepo)
+pnpm test                # Run all Vitest tests
+pnpm --filter @sexyvoice/web test -- <file>   # Run a focused test file
+pnpm --filter @sexyvoice/web test:e2e         # Run Playwright e2e tests
+pnpm test:coverage       # Vitest coverage for the web app
+pnpm test:ui             # Vitest UI for the web app
+pnpm type-check          # TypeScript checks (tsgo)
+pnpm lint                # Biome lint check
+pnpm format              # Biome format check
+pnpm fixall              # lint:write + format:write + check:fix
+pnpm check-translations  # Validate message key parity across locales
+pnpm build:content       # Build MDX content (Contentlayer2) for the web app
+pnpm clean               # Check unused dependencies with knip
 ```
 
-#### Code Style
-- Use **Biome** for linting and formatting (configured in `biome.json`)
-- 2-space indentation, single quotes, 80 character line width
-- Automatic import organization with Node, Package, Alias groups
-- TypeScript strict mode with `strictNullChecks` enabled
-- Use import/export types when appropriate
-- Prefer `const` over `let`, use proper type annotations
-- Follow React Server Components (RSC) patterns
+Use package filters when you only want one app, e.g.
+`pnpm --filter @sexyvoice/web dev` or
+`pnpm --filter @sexyvoice/docs dev`.
 
-### File Structure Conventions
+## Code Style
 
-#### Naming Conventions
-- Components: PascalCase (e.g., `VoiceGenerator.tsx`)
-- Files: kebab-case (e.g., `audio-player.tsx`)
-- API routes: lowercase with hyphens
-- Database tables: snake_case
+- Use Biome formatting and linting from `biome.jsonc` (root) and
+  `apps/docs/biome.json` (docs app).
+- Use 2-space indentation, single quotes, and the repo's import ordering.
+- Keep TypeScript strict. Use `import type` and `export type` where appropriate.
+- Follow React Server Component patterns in App Router code.
+- React Compiler is enabled in `apps/web/next.config.js`. Do not add or restore
+  `useMemo`, `useCallback`, or similar memoization only because a generic code
+  review suggests it. Prefer simpler code unless manual memoization is required
+  for correctness, third-party identity semantics, or a profiler-backed
+  performance issue.
+- Use kebab-case for files, PascalCase for components, lowercase hyphenated API
+  route segments, and snake_case for database names.
+- Shared dependency versions are pinned via the pnpm `catalog:` in
+  `pnpm-workspace.yaml`; prefer `"catalog:"` over hard-coded versions when
+  adding a dependency that is already cataloged.
 
-#### Component Organization
-```
-components/
-├── ui/              # shadcn/ui base components
-├── *.tsx           # Reusable components (kebab-case naming)
-```
+## Internationalization
 
-#### App Router Structure
-```
-app/
-├── [lang]/         # Internationalized routes (en/es)
-│   ├── (auth)/     # Authentication pages
-│   ├── (dashboard)/ # Protected dashboard pages
-│   └── layout.tsx  # Language-specific layout
-├── api/            # API routes
-└── globals.css     # Global styles
-```
+- UI copy must use `next-intl`; do not hardcode user-facing English strings.
+- Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`.
+- Server components use `getMessages()` from `next-intl/server`.
+- Client components use `useTranslations()` from `next-intl`.
+- Use locale-aware navigation exports from `apps/web/lib/i18n/navigation.ts`, not raw
+  Next.js navigation helpers.
+- Add or update keys in every `apps/web/messages/*.json` file and run
+  `pnpm check-translations` for user-facing copy changes.
 
-### Database and API Guidelines
+## Supabase and Database
 
-#### Supabase Integration
-- Use Supabase SSR client for server components
-- Implement proper error handling for database operations
-- Follow Row Level Security (RLS) policies
-- Use typed database queries with proper TypeScript interfaces
+- Use the SSR client from `apps/web/lib/supabase/server.ts` for session-scoped server
+  code.
+- Use `createAdminClient()` only for server-side operations that require service
+  role access, and never expose service role data to the client.
+- Keep RLS in mind for all table access.
+- Database functions should default to `SECURITY INVOKER`, set
+  `search_path = ''`, and use fully qualified names.
+- Migration files use `YYYYMMDDHHmmss_description.sql`.
+- Do not add migrations for one-off data backfills or production data fixes unless
+  explicitly requested; provide the SQL for the user to run instead.
+- Enable RLS on new tables and add granular policies.
 
-#### Database Development Guidelines
-When creating database functions, follow Cursor rules in `.cursor/rules/`:
-- Default to `SECURITY INVOKER` for functions
-- Always set `search_path = ''` and use fully qualified names
-- Migration files use format: `YYYYMMDDHHmmss_description.sql`
-- Enable RLS on all new tables with granular policies
+## External API v1
 
-#### API Route Standards
-- Implement proper error handling and status codes
-- Use Supabase service role for admin operations
-- Validate input data and sanitize outputs
-- Implement rate limiting for resource-intensive operations
+Routes under `apps/web/app/api/v1/*` are API-key authenticated except
+`/api/v1/openapi`.
 
-### Authentication & Routing
-- Middleware handles locale detection and Supabase session management
-- Protected routes use `(dashboard)` route group
-- Public routes include auth pages and static content
+- Validate keys with `validateApiKey()` from `apps/web/lib/api/auth.ts`; never trust raw
+  keys and always compare hashes.
+- Rate-limit with `consumeRateLimit()` and return headers via
+  `jsonWithRateLimitHeaders()`.
+- Use `externalApiErrorResponse()` for structured errors.
+- Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts`, because external
+  API users are resolved from API keys, not session cookies.
+- Call `updateApiKeyLastUsed()` in a `finally` block.
+- Log outcomes through `createLogger()` from `apps/web/lib/api/logger.ts`.
+- Keep request and response schemas in `apps/web/lib/api/schemas.ts`; they feed OpenAPI
+  generation.
+- When changing external API behavior, request/response schemas, auth, rate
+  limits, errors, models, pricing, or OpenAPI output, update the Fumadocs
+  content in `apps/docs/content/` (and re-run
+  `pnpm --filter @sexyvoice/docs generate-openapi-docs` if the OpenAPI schema
+  changes).
+- External speech generation always generates fresh audio and uploads to the
+  external API R2 bucket.
 
-## Development Commands
+## Voice and Call Flows
 
-### Core Commands
-- `pnpm dev` - Start development server with Turbopack
-- `pnpm build` - Build production application (includes content build and translation checks)
-- `pnpm start` - Start production server
-- `pnpm preview` - Build and start (preview production locally)
+- Dashboard TTS may use Redis URL caching; external API speech must not.
+- Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
+  `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
+- Voice generation can involve Replicate, Google Gemini TTS (models `gpro` for
+  Gemini 2.5 and `gpro31` for Gemini 3.1 Flash), or xAI Grok TTS. External API
+  `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
+  `model = 'gpro31'` should use Gemini 3.1 Flash.
+- Voice cloning uses fal.ai and must respect permission and privacy
+  requirements.
+- LiveKit call tokens resolve character prompts server-side. Predefined prompt
+  text must never be exposed to the client.
 
-### Code Quality
-- `pnpm lint` - Run Biome linting on app/, components/, hooks/, lib/, middleware.ts
-- `pnpm lint:write` / `pnpm lint --write` - Auto-fix linting issues
-- `pnpm format` - Format code with Biome
-- `pnpm format:write` / `pnpm format --write` - Auto-format code
-- `pnpm check:fix` - Run Biome check with fixes
-- `pnpm fixall` - Run all code quality fixes (lint:write + format:write + check:fix)
-- `pnpm typecheck` - Run TypeScript type checking
+## Banners
 
-### Testing
-- `pnpm test` - Run all tests with Vitest
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:ui` - Run tests with UI interface
-- `pnpm test:coverage` - Generate test coverage report
+- Banner definitions live in `apps/web/lib/banners/registry.ts`.
+- Banner resolution lives in `apps/web/lib/banners/resolve-banner.ts`.
+- Dismissal actions live in `apps/web/app/[lang]/actions/banners.ts`.
+- Localized copy lives under `promos` or `announcements` in every
+  `apps/web/messages/*.json` file.
+- Only one banner should be visible at a time.
 
-### Content & Data
-- `pnpm build:content` - Build Contentlayer2 content (MDX blog posts)
-- `pnpm dev:content` - Start Contentlayer2 in development mode
-- `pnpm check-translations` - Validate i18n translation files
+## Documentation Rules
 
-### Database (Supabase)
-- `supabase db push` - Apply migrations to database
-- `pnpm run generate-supabase-types` - Generate TypeScript types from database schema
-- Migration files located in `supabase/migrations/` with timestamp format
-- Telegram bot function available in `supabase/functions/telegram-bot/` using Deno and deployed on Deno Deploy
+- Update docs when changing APIs, workflows, environment variables, or
+  operational behavior.
+- For environment variable changes, update `AGENTS.md`, `README.md`,
+  `apps/web/.env.example`, and `docs/devops.md` in the same change.
+- Update `docs/devops.md` for deployment, infrastructure, runtime, secret, and
+  troubleshooting changes.
+- Follow `docs/changelog-format.md` for `Changelog.md`; treat changelog edits as
+  release-only documentation work with no `Unreleased` section.
+- Blog content lives in `apps/web/posts/` and is processed by Contentlayer2.
+- Public product docs live in `apps/docs/content/` and are processed by
+  Fumadocs MDX.
 
-### Additional Commands
-- `pnpm run analyze` - Analyze bundle size
-- `pnpm clean` - Remove unused dependencies with knip
-- `pnpm prepare` - Setup Husky git hooks
+## Security Notes
 
-## Security and Privacy
+- Validate and sanitize API inputs.
+- Preserve structured error handling and status codes.
+- Protect service role secrets, API key hashes, payment data, and generated
+  audio access.
+- Respect voice rights and user privacy when working on cloning, public/private
+  voices, retention, or moderation.
 
-### Security Requirements
-- **Content Security Policy**: Comprehensive CSP headers configured in `next.config.js`
-- **Security Headers**: X-Content-Type-Options set to `nosniff`
-- **Authentication**: Supabase Auth with SSR support and middleware session management
-- **API Security**: Rate limiting and input validation on API routes
-- **Voice Ethics**: Follow voice cloning ethical guidelines (require permission)
-- **Email Security**: Block temporary email addresses for signups
-- **Error Monitoring**: Sentry integration with production tunneling (Generates a random route for each build)
+## Pull Requests
 
-### Privacy Considerations
-- Implement data retention policies
-- Respect voice rights and permissions
-- Secure audio file storage and access
-
-## AI/ML Specific Guidelines
-
-### Voice Generation
-- Use Replicate API for AI voice generation
-- Use fal.ai API for voice cloning functionality
-- Use Google Generative AI for text-to-speech and text enhancement (emotion tags)
-- Implement credit tracking for API usage
-- Handle voice cloning with proper permissions
-- Support voice generation and cloning in 20+ languages (including Arabic, Bengali, Dutch, English, French, German, Hindi, Indonesian, Italian, Japanese, Korean, Marathi, Polish, Portuguese, Romanian, Russian, Spanish, Tamil, Telugu, Thai, Turkish, Ukrainian, Vietnamese, and more)
-- Implement audio preview functionality
-
-### Content Moderation
-- Implement voice privacy controls (public/private)
-- Validate audio content before storage
-
-### Testing Requirements
-
-### Testing Guidelines
-- **Framework**: Vitest with MSW for API mocking
-- **Test Files**: Located in `tests/` directory with `*.test.ts` naming
-- **Coverage**: Voice generation API, Stripe webhooks, utility functions
-- **Mocking**: MSW handlers for external APIs (Replicate, Stripe, Supabase)
-- **Setup**: Global test setup in `tests/setup.ts` with environment variable mocking
-- **Utilities**: Reusable test helpers in `tests/utils/`
-- **CI/CD**: GitHub Actions workflow for automated testing
-- **E2E**: Plan to implement Playwright for end-to-end testing
-- Test critical flows: voice generation, credit management, payment webhooks
-- See `tests/README.md` for detailed testing documentation
-
-## Content Management
-
-### Internationalization
-- Add translations to `lib/i18n/dictionaries/`
-- Currently supports English (`en.json`), Spanish (`es.json`), German (`de.json`)
-- Configured in `lib/i18n/i18n-config.ts` with `en` as default locale
-- Uses route-based i18n with `[lang]` dynamic segments
-- Middleware handles locale detection and routing
-- Use `getDictionary()` for server components
-- Run `pnpm run check-translations` before commits
-
-### Content Guidelines
-- Blog posts written in MDX in `posts/` directory
-- Locale-specific posts use `.es.mdx` extension (defaults to English)
-- Contentlayer2 processes content and generates type-safe data
-- Follow SEO best practices for content structure
-
-## Environment and Deployment
-
-### Environment Setup
-```bash
-pnpm install        # Install dependencies
-pnpm run dev        # Start development server
-pnpm run build      # Build for production
-pnpm run preview    # Preview production build
-```
-
-### Environment Variables
-Key environment variables include:
-- **Supabase**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- **Storage**: `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_ENDPOINT` (Cloudflare R2)
-- **Caching**: `KV_REST_API_URL`, `KV_REST_API_TOKEN` (Upstash Redis)
-- **AI Services**: `REPLICATE_API_TOKEN`, `FAL_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`
-- **Payments**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, plus pricing IDs for top-ups and subscriptions
-- **Promotions**: `NEXT_PUBLIC_PROMO_ENABLED`, `NEXT_PUBLIC_PROMO_ID`, `NEXT_PUBLIC_PROMO_BONUS_STARTER`, `NEXT_PUBLIC_PROMO_BONUS_STANDARD`, `NEXT_PUBLIC_PROMO_BONUS_PRO`
-- **Notifications**: `TELEGRAM_WEBHOOK_URL`, `CRON_SECRET`
-- **Analytics**: PostHog (`NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`), Crisp chat
-- **Monitoring**: Sentry (`SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT`)
-- **Production**: Environment-specific configurations for Sentry and CSP
-- Follow `.env.example` for complete list and setup instructions
-
-## Promotion System
-
-### Generic Promotion Framework
-The platform includes a flexible promotion system for credit bonuses:
-
-- **Configuration**: Environment variables control promotion state and bonus amounts
-- **Banner Component**: `promo-banner.tsx` displays dismissible promotion banners
-- **Server Actions**: `app/[lang]/actions/promos.ts` handles banner dismissal with cookie tracking
-- **Pricing Integration**: `lib/stripe/pricing.ts` calculates credit bonuses based on promotion status
-- **Client-side State**: Cookie-based dismissal tracking (30-day expiry)
-
-### Implementation Pattern
-1. Enable promotion via `NEXT_PUBLIC_PROMO_ENABLED=true`
-2. Set promotion ID (e.g., `halloween_2025`) and bonus amounts
-3. Banner displays on landing and dashboard pages with CTA
-4. Users can dismiss banner (stored in cookies)
-5. Credit packages automatically include bonus credits when enabled
-
-## Feature Development Priorities
-
-Based on TODO.md, current priorities include:
-
-1. **Data Management**: Account deletion with audio cleanup, branch merges (r2, terms-and-conditions)
-2. **Voice Features**: Clone historical voices (Theodore Roosevelt, Queen Victoria, Winston Churchill), pre-cloned voices, PDF to audio conversion
-3. **Internationalization**: Translate dashboard pages and SEO content to German, French; expand voice models to French, German, Korean, Mandarin
-4. **User Experience**: Share pages for audio files, usage statistics, history page with regeneration
-5. **Security**: Implement fakefilter for disposable email blocking, rate limiting, hCaptcha integration
-6. **Analytics**: Add PostHog to auth pages, track paid user status, usage monitoring
-7. **Testing**: Expand test coverage, Playwright E2E tests with test database
-8. **Documentation**: Knowledge base with Nextra, comparison pages with competitors
-
-## Claude-Specific Instructions
-
-### When Working on Issues
-
-1. **Always analyze the project context first** by reading relevant files
-2. **Follow the existing code patterns** and architectural decisions
-3. **Run `pnpm run fixall` before committing** to ensure code quality
-4. **Update documentation** when adding new features or changing APIs
-5. **Consider internationalization** for user-facing text (currently EN/ES/DE, expanding to FR/IT/KO/PT/ZH)
-6. **Implement proper error handling** and loading states
-7. **Follow security best practices** for voice-related features
-8. **Use TodoWrite tool** for multi-step tasks to track progress
-
-### Pull Request Requirements
-
-- Include clear description of changes and their purpose
-- Reference related issues and feature requests
-- Ensure all tests pass and code quality checks pass
-- Update relevant documentation (README, ROADMAP, etc.)
-- Consider impact on credit system and voice generation features
-
-## Troubleshooting
-
-### Common Issues
-- **Build failures**: Check TypeScript errors and dependency conflicts
-- **Database issues**: Verify Supabase connection and migration status
-- **Audio generation**: Check Replicate API status and credit balance
-- **Authentication**: Validate Supabase SSR configuration
-
-### Debug Commands
-```bash
-pnpm run typecheck              # Check TypeScript issues
-pnpm run lint                    # Check code quality issues
-pnpm run fixall                  # Fix all code quality issues
-pnpm clean                       # Check for unused dependencies
-supabase status                  # Check Supabase connection
-pnpm run analyze                 # Analyze bundle size
-```
-
-## Rules
-
-- Do not execute any `supabase` CLI commands or SQL queries that can write data
-
----
-
-This document should be updated as the project evolves and new patterns emerge.
+- Explain what changed and why.
+- Mention tests and checks run (`pnpm fixall`, `pnpm type-check`, `pnpm test`,
+  and Playwright e2e when relevant).
+- Note documentation updates (`README.md`, `docs/devops.md`,
+  `apps/docs/content/`, `AGENTS.md`).
+- Call out impact on credits, billing, generation, storage, or API contracts
+  when relevant.

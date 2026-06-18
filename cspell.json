@@ -1,8 +1,5 @@
 {
-  "dictionaries": [
-    "de-de",
-    "es-es"
-  ],
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "words": [
     "lucide",
     "supabase",
@@ -11,6 +8,20 @@
     "MAX_LENGTH_MULTILANGUAGE",
     "signup",
     "minmax",
-    "TOPUP"
+    "TOPUP",
+    "sexycall",
+    "LIVEKIT",
+    "treeify",
+    "treeified"
+  ],
+  "dictionaries": [
+    "de-de",
+    "es-es"
+  ],
+  "ignorePaths": [
+    "TODO.md",
+    "node_modules",
+    ".git",
+    "dist"
   ]
 }
