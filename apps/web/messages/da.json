@@ -342,7 +342,9 @@
     },
     "history": {
       "title": "Kredithistorik"
-    }
+    },
+    "refundInfo": "Du kan trygt regne med problemfri refusioner inden for 90 dage efter købet. Se vores fulde refusionspolitik på",
+    "refundInfoLinkText": "Refusionspolitik"
   },
   "creditsSection": {
     "title": "Kreditter",

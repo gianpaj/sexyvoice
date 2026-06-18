@@ -342,7 +342,9 @@
     },
     "history": {
       "title": "Historique des crédits"
-    }
+    },
+    "refundInfo": "Soyez rassuré – nous proposons des remboursements sans tracas dans les 90 jours suivant l'achat. Consultez notre politique de remboursement complète sur",
+    "refundInfoLinkText": "Politique de remboursement"
   },
   "creditsSection": {
     "title": "Crédits",
