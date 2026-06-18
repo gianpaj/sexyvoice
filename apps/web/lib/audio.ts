@@ -1,3 +1,5 @@
+import { parseBuffer } from 'music-metadata';
+
 interface WavConversionOptions {
   bitsPerSample: number;
   numChannels: number;
@@ -76,4 +78,31 @@ export async function generateHash(input: string) {
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
     .slice(0, 8);
+}
+
+/**
+ * Parse the duration (in seconds) of an audio buffer using its metadata.
+ * Returns null when the duration can't be determined (e.g. unsupported or
+ * malformed audio), so callers can fall back gracefully.
+ */
+export async function getAudioDuration(
+  fileBuffer: Buffer,
+  mimeType: string,
+): Promise<number | null> {
+  try {
+    const metadata = await parseBuffer(
+      fileBuffer,
+      {
+        mimeType,
+        size: fileBuffer.length,
+      },
+      {
+        duration: true,
+      },
+    );
+
+    return metadata.format.duration ?? null;
+  } catch {
+    return null;
+  }
 }
