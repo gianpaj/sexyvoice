@@ -60,6 +60,7 @@
     "date-fns": "^3.6.0",
     "disposable-email-domains-js": "^1.21.0",
     "embla-carousel-react": "^8.6.0",
+    "evlog": "^2.19.1",
     "globby": "^14.1.0",
     "highlight.js": "^11.11.1",
     "import-in-the-middle": "1.14.2",
