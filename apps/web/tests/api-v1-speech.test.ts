@@ -7,6 +7,7 @@ import {
   getVoiceIdByNameAdmin,
   insertUsageEvent,
   reduceCreditsAdmin,
+  saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import {
@@ -416,6 +417,13 @@ describe('/api/v1/speech', () => {
       expect.objectContaining({
         dollarAmount: 0.000_726,
         model: 'gemini-3.1-flash-tts-preview',
+        durationSeconds: 12,
+      }),
+    );
+    expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        duration: '12',
+        model: 'gemini-3.1-flash-tts-preview',
       }),
     );
   });
@@ -602,6 +610,7 @@ describe('/api/v1/speech', () => {
       expect.objectContaining({
         dollarAmount: 0.000_103,
         model: 'gemini-2.5-flash-preview-tts',
+        durationSeconds: 12,
       }),
     );
   });

@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
+import { saveAudioFileAdmin } from '@/lib/supabase/queries';
 import {
   mockReplicateRun,
   mockUploadFileToR2,
@@ -412,6 +413,10 @@ describe('V1 Speech API Route', () => {
       expect(json.credits_remaining).toBeDefined();
       expect(json.usage.input_characters).toBe(11);
       expect(json.usage.model).toBe('xai');
+      // Duration is parsed from the generated audio and persisted.
+      expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
+        expect.objectContaining({ duration: '12' }),
+      );
     });
 
     it('should generate voice using Grok with wav format', async () => {
