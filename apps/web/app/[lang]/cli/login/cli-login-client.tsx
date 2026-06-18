@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useReducer } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type langDict from '@/messages/en.json';
 
 interface ApiKeyRow {
   created_at: string;
@@ -59,17 +59,16 @@ function cliLoginReducer(
 
 export function CliLoginClient({
   callbackUrl,
-  dict,
   hasCreateAccess,
   keys,
   state,
 }: {
   callbackUrl: string;
-  dict: (typeof langDict)['cliLogin'];
   hasCreateAccess: boolean;
   keys: ApiKeyRow[];
   state: string;
 }) {
+  const t = useTranslations('cliLogin');
   const [cliLoginState, dispatch] = useReducer(cliLoginReducer, {
     error: null,
     isCreatingNew: keys.length === 0,
@@ -119,7 +118,10 @@ export function CliLoginClient({
       if (!response.ok) {
         dispatch({
           type: 'patch',
-          patch: { error: json.error ?? dict.errors.startFailed, isLoading: false },
+          patch: {
+            error: json.error ?? t('errors.startFailed'),
+            isLoading: false,
+          },
         });
         return;
       }
@@ -144,7 +146,7 @@ export function CliLoginClient({
           error:
             caughtError instanceof Error
               ? caughtError.message
-              : dict.errors.startFailed,
+              : t('errors.startFailed'),
           isLoading: false,
         },
       });
@@ -154,16 +156,16 @@ export function CliLoginClient({
   return (
     <Card className="mx-auto w-full max-w-2xl">
       <CardHeader>
-        <CardTitle>{dict.title}</CardTitle>
-        <CardDescription>{dict.description}</CardDescription>
+        <CardTitle>{t('title')}</CardTitle>
+        <CardDescription>{t('description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {keys.length > 0 ? (
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>{dict.existingKeys.label}</Label>
+              <Label>{t('existingKeys.label')}</Label>
               <p className="text-muted-foreground text-sm">
-                {dict.existingKeys.description}
+                {t('existingKeys.description')}
               </p>
             </div>
             <div className="space-y-2">
@@ -195,11 +197,11 @@ export function CliLoginClient({
                       {key.key_prefix}...
                     </div>
                     <div className="text-muted-foreground text-xs">
-                      {dict.existingKeys.lastUsedLabel}{' '}
+                      {t('existingKeys.lastUsedLabel')}{' '}
                       {key.last_used_at ? (
                         <DateTimeText value={key.last_used_at} />
                       ) : (
-                        dict.existingKeys.never
+                        t('existingKeys.never')
                       )}
                     </div>
                   </div>
@@ -235,9 +237,9 @@ export function CliLoginClient({
               }}
             />
             <div className="space-y-1">
-              <Label htmlFor="create-new-cli-key">{dict.createNew.label}</Label>
+              <Label htmlFor="create-new-cli-key">{t('createNew.label')}</Label>
               <p className="text-muted-foreground text-sm">
-                {dict.createNew.description}
+                {t('createNew.description')}
               </p>
             </div>
           </div>
@@ -249,12 +251,12 @@ export function CliLoginClient({
                 patch: { newKeyName: event.target.value },
               });
             }}
-            placeholder={dict.createNew.placeholder}
+            placeholder={t('createNew.placeholder')}
             value={newKeyName}
           />
           {hasCreateAccess ? null : (
             <p className="text-muted-foreground text-sm">
-              {dict.createNew.paidOnly}
+              {t('createNew.paidOnly')}
             </p>
           )}
         </div>
@@ -263,7 +265,7 @@ export function CliLoginClient({
 
         <div className="flex justify-end">
           <Button disabled={isLoading || !canContinue} onClick={handleContinue}>
-            {isLoading ? dict.actions.connecting : dict.actions.continue}
+            {isLoading ? t('actions.connecting') : t('actions.continue')}
           </Button>
         </div>
       </CardContent>

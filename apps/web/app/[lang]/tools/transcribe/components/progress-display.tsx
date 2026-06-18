@@ -1,16 +1,17 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { Progress } from '@/components/ui/progress';
-import type langDict from '@/messages/en.json';
 import type { DownloadProgress } from '../hooks/use-transcriber';
 
 interface Props {
-  dict: (typeof langDict)['transcribe']['progress'];
   isTranscribing: boolean;
   progress: DownloadProgress[];
 }
 
-export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
+export function ProgressDisplay({ progress, isTranscribing }: Props) {
+  const t = useTranslations('transcribe.progress');
   const downloadingFiles = progress.filter(
     (p) => p.status === 'progress' && p.progress != null,
   );
@@ -51,7 +52,7 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
           ))}
         </div>
         <span className="font-medium text-foreground text-sm">
-          {isTranscribing ? dict.transcribing : dict.downloading}
+          {isTranscribing ? t('transcribing') : t('downloading')}
         </span>
       </div>
 
@@ -59,13 +60,13 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
         <>
           <Progress value={Math.min(totalProgress, 100)} />
           <p className="text-muted-foreground text-xs">
-            {Math.round(totalProgress)}% — {dict.modelCacheHint}
+            {Math.round(totalProgress)}% — {t('modelCacheHint')}
           </p>
         </>
       )}
 
       {isTranscribing && (
-        <p className="text-muted-foreground text-xs">{dict.processingHint}</p>
+        <p className="text-muted-foreground text-xs">{t('processingHint')}</p>
       )}
     </div>
   );

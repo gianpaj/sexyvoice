@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle, CircleStop, Download } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   useCallback,
   useEffect,
@@ -29,18 +30,17 @@ import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
 import { CloneAudioInput } from './clone-audio-input';
 import { CloneConsentFields } from './clone-consent-fields';
 import { CloneLanguageSelect } from './clone-language-select';
+import type { SampleAudio } from './clone-sample-card';
 import {
   cloneStateReducer,
   formatCloneMessage,
   initialCloneState,
 } from './clone-state';
 import { CloneTextField } from './clone-text-field';
-import type { SampleAudio } from './clone-sample-card';
 
 export type { Status } from './clone-state';
 
@@ -84,62 +84,48 @@ interface CloneErrorResponse {
   serverMessage?: string;
 }
 
-const getCloneDictMessage = (
-  dict: (typeof messages)['clone'],
-  path: string,
-): string | undefined => {
-  let value: unknown = dict;
-
-  for (const segment of path.split('.')) {
-    if (!(value && typeof value === 'object' && segment in value)) {
-      return;
-    }
-
-    value = (value as Record<string, unknown>)[segment];
-  }
-
-  return typeof value === 'string' ? value : undefined;
-};
+type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
 
 const getCloneErrorMessage = (
-  dict: (typeof messages)['clone'],
+  t: CloneTranslator,
   code?: string,
   fallbackMessage?: string,
   details?: CloneErrorDetails,
 ): string => {
   if (!code) {
-    return fallbackMessage || dict.errorCloning;
+    return fallbackMessage || t('errorCloning');
   }
 
-  const message = getCloneDictMessage(dict, code);
-  if (!message) {
-    return dict.errorCloning;
+  const messageKey = code as Parameters<CloneTranslator>[0];
+  if (!t.has(messageKey)) {
+    return fallbackMessage || t('errorCloning');
   }
 
+  const message = t(messageKey);
   return formatCloneMessage(message, details ?? {});
 };
 
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
 function PreviewTabContent({
-  dict,
   generatedAudioUrl,
   downloadAudio,
 }: {
-  dict: (typeof messages)['clone'];
   generatedAudioUrl: string | null;
   downloadAudio: () => Promise<void>;
 }) {
+  const t = useTranslations('clone');
+
   return (
     <div className="space-y-4">
-      <h3 className="text-center font-medium text-xl">{dict.previewTitle}</h3>
+      <h3 className="text-center font-medium text-xl">{t('previewTitle')}</h3>
 
       <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
         {generatedAudioUrl && (
           <AudioPlayerWithContext
             autoPlay
             className="rounded-full"
-            playAudioTitle={dict.playAudio}
+            playAudioTitle={t('playAudio')}
             progressColor="#8b5cf6"
             showWaveform
             url={generatedAudioUrl}
@@ -151,7 +137,7 @@ function PreviewTabContent({
       <div className="flex justify-center gap-4">
         <Button className="flex items-center gap-2" onClick={downloadAudio}>
           <Download className="h-4 w-4" />
-          {dict.downloadAudio}
+          {t('downloadAudio')}
         </Button>
       </div>
     </div>
@@ -161,12 +147,10 @@ function PreviewTabContent({
 // ─── Public wrapper ───────────────────────────────────────────────────────────
 
 export default function NewVoiceClient({
-  dict,
   lang,
   hasEnoughCredits,
   userHasPaid,
 }: {
-  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
@@ -174,7 +158,6 @@ export default function NewVoiceClient({
   return (
     <AudioProvider>
       <NewVoiceClientInner
-        dict={dict}
         hasEnoughCredits={hasEnoughCredits}
         lang={lang}
         userHasPaid={userHasPaid}
@@ -184,16 +167,15 @@ export default function NewVoiceClient({
 }
 
 function NewVoiceClientInner({
-  dict,
   lang,
   hasEnoughCredits,
   userHasPaid,
 }: {
-  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
 }) {
+  const t = useTranslations('clone');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -228,12 +210,12 @@ function NewVoiceClientInner({
         const errorMsg =
           error instanceof Error
             ? error.message
-            : dict.failedToLoadAudioProcessor;
+            : t('failedToLoadAudioProcessor');
         dispatch({ type: 'patch', patch: { ffmpegError: errorMsg } });
         console.error('FFmpeg preload error:', error);
       });
     }
-  }, [usesVoxtral, ensureLoaded, dict.failedToLoadAudioProcessor]);
+  }, [usesVoxtral, ensureLoaded, t]);
 
   const handleStartRecording = async () => {
     try {
@@ -247,12 +229,12 @@ function NewVoiceClientInner({
       const errorMsg =
         error instanceof Error
           ? error.message
-          : dict.failedToLoadAudioProcessor;
+          : t('failedToLoadAudioProcessor');
       dispatch({
         type: 'patch',
         patch: {
           ffmpegError: errorMsg,
-          errorMessage: formatCloneMessage(dict.failedToStartRecording, {
+          errorMessage: formatCloneMessage(t('failedToStartRecording'), {
             ERROR: errorMsg,
           }),
         },
@@ -281,7 +263,7 @@ function NewVoiceClientInner({
         type: 'patch',
         patch: {
           ffmpegError:
-            err instanceof Error ? err.message : dict.microphoneError,
+            err instanceof Error ? err.message : t('microphoneError'),
         },
       });
     },
@@ -348,7 +330,7 @@ function NewVoiceClientInner({
       dispatch({
         type: 'patch',
         patch: {
-          errorMessage: dict.errors.noAudioFile,
+          errorMessage: t('errors.noAudioFile'),
           status: 'error',
         },
       });
@@ -359,7 +341,7 @@ function NewVoiceClientInner({
       dispatch({
         type: 'patch',
         patch: {
-          errorMessage: dict.errors.noText,
+          errorMessage: t('errors.noText'),
           status: 'error',
         },
       });
@@ -408,10 +390,10 @@ function NewVoiceClientInner({
             patch: {
               errorMessage:
                 convertError instanceof Error
-                  ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
+                  ? formatCloneMessage(t('audioConversionFailedWithMessage'), {
                       ERROR: convertError.message,
                     })
-                  : dict.audioConversionFailed,
+                  : t('audioConversionFailed'),
               status: 'error',
             },
           });
@@ -430,7 +412,7 @@ function NewVoiceClientInner({
         dispatch({
           type: 'patch',
           patch: {
-            errorMessage: dict.errors.noAudioFile,
+            errorMessage: t('errors.noAudioFile'),
             status: 'error',
           },
         });
@@ -454,7 +436,7 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = dict.errorCloning;
+        let errorMessage = t('errorCloning');
         let voiceResult: CloneErrorResponse | null = null;
 
         try {
@@ -465,10 +447,10 @@ function NewVoiceClientInner({
 
         // Older/proxy 413 responses may still arrive without the JSON error contract.
         if (voiceRes.status === 413 && !voiceResult?.code) {
-          errorMessage = dict.errorTooLarge;
+          errorMessage = t('errorTooLarge');
         } else {
           errorMessage = getCloneErrorMessage(
-            dict,
+            t,
             voiceResult?.code,
             voiceResult?.message ||
               voiceResult?.serverMessage ||
@@ -490,7 +472,7 @@ function NewVoiceClientInner({
 
       const voiceResult = await voiceRes.json();
 
-      toast.success(dict.success);
+      toast.success(t('success'));
 
       dispatch({
         type: 'patch',
@@ -516,7 +498,7 @@ function NewVoiceClientInner({
       dispatch({
         type: 'patch',
         patch: {
-          errorMessage: errorMsg || dict.unexpectedError,
+          errorMessage: errorMsg || t('unexpectedError'),
           status: 'error',
         },
       });
@@ -561,7 +543,7 @@ function NewVoiceClientInner({
     try {
       await downloadUrl(generatedAudioUrl, document.createElement('a'));
     } catch {
-      toast.error(dict.errorCloning);
+      toast.error(t('errorCloning'));
     }
   };
 
@@ -617,16 +599,15 @@ function NewVoiceClientInner({
           value={activeTab}
         >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
+            <TabsTrigger value="upload">{t('tabUpload')}</TabsTrigger>
             <TabsTrigger disabled={status !== 'complete'} value="preview">
-              {dict.tabPreview}
+              {t('tabPreview')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
               <CloneAudioInput
-                dict={dict}
                 dispatch={dispatch}
                 ffmpeg={{ error: ffmpegError, loading: Boolean(ffmpegLoading) }}
                 fileActions={fileActions}
@@ -647,7 +628,6 @@ function NewVoiceClientInner({
 
               <div className="grid w-full gap-6">
                 <CloneLanguageSelect
-                  dict={dict}
                   disabled={status === 'generating'}
                   dispatch={dispatch}
                   selectedLocale={selectedLocale}
@@ -655,13 +635,12 @@ function NewVoiceClientInner({
                 />
 
                 <CloneTextField
-                  dict={dict}
                   disabled={status === 'generating'}
                   dispatch={dispatch}
                   text={text}
                   textMaxLength={textMaxLength}
-                  usesVoxtral={usesVoxtral}
                   userHasPaid={userHasPaid}
+                  usesVoxtral={usesVoxtral}
                 />
               </div>
             </div>
@@ -669,19 +648,18 @@ function NewVoiceClientInner({
             {status === 'error' && errorMessage && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{dict.errorTitle}</AlertTitle>
+                <AlertTitle>{t('errorTitle')}</AlertTitle>
                 <AlertDescription>{errorMessage}</AlertDescription>
               </Alert>
             )}
 
             {!hasEnoughCredits && (
               <Alert className="mx-auto w-fit" variant="destructive">
-                <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+                <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
               </Alert>
             )}
 
             <CloneConsentFields
-              dict={dict}
               disabled={status === 'generating'}
               dispatch={dispatch}
               legalConsentChecked={legalConsentChecked}
@@ -692,7 +670,7 @@ function NewVoiceClientInner({
 
             <GenerateButton
               className="w-full"
-              ctaText={dict.ctaButton}
+              ctaText={t('ctaButton')}
               data-testid="clone-generate-button"
               disabled={
                 !((file || micBlob) && text.trim()) ||
@@ -704,8 +682,8 @@ function NewVoiceClientInner({
               }
               generatingText={
                 status === 'generating'
-                  ? `${dict.generating}...`
-                  : `${dict.convertingAudio}...`
+                  ? `${t('generating')}...`
+                  : `${t('convertingAudio')}...`
               }
               isGenerating={status === 'generating' || convertingMicAudio}
               onClick={handleGenerate}
@@ -716,7 +694,7 @@ function NewVoiceClientInner({
                 onClick={handleCancel}
                 variant="outline"
               >
-                {dict.cancelButton}{' '}
+                {t('cancelButton')}{' '}
                 <CircleStop className="size-4" name="cancel" />
               </Button>
             )}
@@ -724,7 +702,6 @@ function NewVoiceClientInner({
 
           <TabsContent className="space-y-4 py-4" value="preview">
             <PreviewTabContent
-              dict={dict}
               downloadAudio={downloadAudio}
               generatedAudioUrl={generatedAudioUrl}
             />

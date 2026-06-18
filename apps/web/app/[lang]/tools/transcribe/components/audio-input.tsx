@@ -1,20 +1,15 @@
 'use client';
 
 import { FileAudio, Mic, Square, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type langDict from '@/messages/en.json';
 
 interface Props {
-  dict: (typeof langDict)['transcribe']['audioInput'];
   disabled?: boolean;
-  errorMessages?: {
-    decodeError?: string;
-    microphoneError?: string;
-  };
   onAudioReady: (audio: Float32Array) => void;
   onFileSelected?: (file: File) => void;
   onRemove?: () => void;
@@ -41,9 +36,8 @@ export function AudioInput({
   onFileSelected,
   onRemove,
   disabled = false,
-  dict,
-  errorMessages,
 }: Props) {
+  const t = useTranslations('transcribe.audioInput');
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
@@ -59,10 +53,7 @@ export function AudioInput({
     } catch (error) {
       setAudioFile(null);
       console.error('Failed to decode audio file:', error);
-      toast.error(
-        errorMessages?.decodeError ||
-          'Failed to decode audio file. Please try a different format.',
-      );
+      toast.error(t('decodeError'));
     }
   };
 
@@ -110,10 +101,7 @@ export function AudioInput({
       setIsRecording(true);
     } catch (error) {
       console.error('Microphone access denied or not available:', error);
-      toast.error(
-        errorMessages?.microphoneError ||
-          'Microphone access denied or not available.',
-      );
+      toast.error(t('microphoneError'));
     }
   };
 
@@ -159,7 +147,7 @@ export function AudioInput({
           size="sm"
           variant="ghost"
         >
-          {dict.remove}
+          {t('remove')}
         </Button>
       </div>
     );
@@ -263,10 +251,10 @@ export function AudioInput({
 
           <div className="space-y-2 text-center">
             <p className="font-semibold text-foreground text-lg md:text-xl">
-              {dict.dropTitle}
+              {t('dropTitle')}
             </p>
             <p className="font-medium text-primary text-sm hover:underline">
-              {dict.dropDescription}
+              {t('dropDescription')}
             </p>
           </div>
 
@@ -285,7 +273,7 @@ export function AudioInput({
 
       <div className="flex items-center justify-center gap-3">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-muted-foreground text-xs">{dict.or}</span>
+        <span className="text-muted-foreground text-xs">{t('or')}</span>
         <div className="h-px flex-1 bg-border" />
       </div>
 
@@ -303,12 +291,12 @@ export function AudioInput({
           {isRecording ? (
             <>
               <Square className="h-4 w-4" />
-              {dict.stopRecording}
+              {t('stopRecording')}
             </>
           ) : (
             <>
               <Mic className="h-4 w-4" />
-              {dict.startRecording}
+              {t('startRecording')}
             </>
           )}
         </Button>

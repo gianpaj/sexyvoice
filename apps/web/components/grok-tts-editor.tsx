@@ -5,6 +5,7 @@ import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Crown, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { type MouseEvent, use, useEffect, useRef, useState } from 'react';
 
 import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
@@ -49,7 +50,6 @@ import {
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
 import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
 import type {
@@ -106,7 +106,6 @@ interface GrokTTSEditorProps {
   characterLimitPaidTooltip: string;
   characterLimitUpgradeTooltip: string;
   charactersLimit: number;
-  dict: (typeof messages)['generate']['grok'];
   enforceCharactersLimit?: boolean;
   isPaidUser?: boolean;
   onChange: (text: string) => void;
@@ -287,7 +286,6 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 export function GrokTTSEditor({
   characterLimitPaidTooltip,
   characterLimitUpgradeTooltip,
-  dict,
   enforceCharactersLimit = true,
   isPaidUser,
   charactersLimit,
@@ -297,6 +295,7 @@ export function GrokTTSEditor({
   setSelectedGrokLanguage,
   value,
 }: GrokTTSEditorProps) {
+  const t = useTranslations('generate.grok');
   const [effectsOpen, setEffectsOpen] = useState(false);
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
@@ -549,11 +548,11 @@ export function GrokTTSEditor({
   }, [handleInsertTag]);
 
   const translatedGrokLanguages = [
-    { value: 'auto', label: dict.langAutomatic },
-    { value: 'en', label: dict.langEnglish },
+    { value: 'auto', label: t('langAutomatic') },
+    { value: 'en', label: t('langEnglish') },
     ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
       value,
-      label: dict[label as keyof typeof dict] as string,
+      label: t(label as Parameters<typeof t>[0]),
     })),
   ];
 
@@ -591,13 +590,13 @@ export function GrokTTSEditor({
   return (
     <>
       <div className="space-y-2 sm:w-1/3">
-        <div className="font-medium text-sm">{dict.languageLabel}</div>
+        <div className="font-medium text-sm">{t('languageLabel')}</div>
         <Select
           onValueChange={setSelectedGrokLanguage}
           value={selectedGrokLanguage}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={dict.languageSelectPlaceholder} />
+            <SelectValue placeholder={t('languageSelectPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {translatedGrokLanguages.map(({ value, label }) => (
@@ -628,7 +627,7 @@ export function GrokTTSEditor({
                   variant="outline"
                 >
                   <Sparkles className="mr-1.5 size-3.5" />
-                  {dict.inlineEffectPlaceholder}
+                  {t('inlineEffectPlaceholder')}
                   <ChevronDown className="ml-1 size-3" />
                 </Button>
               </PopoverTrigger>
@@ -640,7 +639,7 @@ export function GrokTTSEditor({
                 <div className="max-h-[400px] overflow-y-auto">
                   <div className="border-border border-b p-3">
                     <h4 className="mb-2 font-medium text-sm">
-                      {dict.inlineEffectPlaceholder}
+                      {t('inlineEffectPlaceholder')}
                     </h4>
                     <div className="grid grid-cols-2 gap-1">
                       {INSTANT_TAGS.map((tag) => (
@@ -663,7 +662,7 @@ export function GrokTTSEditor({
 
                   <div className="p-3">
                     <h4 className="mb-2 font-medium text-sm">
-                      {dict.wrappingEffectPlaceholder}
+                      {t('wrappingEffectPlaceholder')}
                     </h4>
                     <div className="grid grid-cols-2 gap-1">
                       {WRAPPING_TAGS.map((tag) => (

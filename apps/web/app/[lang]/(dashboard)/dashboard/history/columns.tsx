@@ -2,7 +2,8 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { toast } from '@/components/services/toast';
@@ -16,10 +17,7 @@ import {
 import { downloadUrl } from '@/lib/download';
 import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
-import type langDict from '@/messages/en.json';
 import { DeleteButton } from './delete-button';
-
-type HistoryDict = (typeof langDict)['history'];
 
 const downloadFile = async (url: string, errorMessage: string) => {
   if (!url) return;
@@ -99,145 +97,154 @@ function getUsageData(value: unknown): AudioUsageData | null {
   return value as AudioUsageData;
 }
 
-export function createColumns({
+export function useColumns({
   showApiColumns,
-  dict,
 }: {
   showApiColumns: boolean;
-  dict: HistoryDict;
 }): ColumnDef<AudioFileAndVoicesRes>[] {
-  const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
-    {
-      id: 'file name',
-      accessorKey: 'storage_key',
-      header: 'File Name',
-      cell: ({ row }) =>
-        row.original.storage_key.replace('audio/', '') || 'Unknown',
-    },
-    {
-      id: 'voice',
-      accessorKey: 'voices.name',
-      header: 'Voice',
-      cell: ({ row }) => {
-        const voiceName = row.original.voices?.name || 'Unknown';
+  const t = useTranslations('history');
 
-        return (
-          <div className="w-full lg:w-32">
-            <Badge
-              className={`rounded-lg px-1.5 sm:rounded-full ${getBadgeClasses(voiceName)}`}
-              variant="outline"
+  return useMemo(() => {
+    const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
+      {
+        id: 'file name',
+        accessorKey: 'storage_key',
+        header: 'File Name',
+        cell: ({ row }) =>
+          row.original.storage_key.replace('audio/', '') || 'Unknown',
+      },
+      {
+        id: 'voice',
+        accessorKey: 'voices.name',
+        header: 'Voice',
+        cell: ({ row }) => {
+          const voiceName = row.original.voices?.name || 'Unknown';
+
+          return (
+            <div className="w-full lg:w-32">
+              <Badge
+                className={`rounded-lg px-1.5 sm:rounded-full ${getBadgeClasses(voiceName)}`}
+                variant="outline"
+              >
+                {voiceName.charAt(0).toUpperCase() + voiceName.slice(1)}
+              </Badge>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'text',
+        accessorKey: 'text_content',
+        header: 'Text',
+        cell: ({ row }) => (
+          <div className="flex max-w-[300px] items-center gap-2">
+            <span
+              className="truncate text-muted-foreground text-sm"
+              title={row.original.text_content}
             >
-              {voiceName.charAt(0).toUpperCase() + voiceName.slice(1)}
-            </Badge>
+              {row.original.text_content}
+            </span>
           </div>
-        );
+        ),
       },
-    },
-    {
-      id: 'text',
-      accessorKey: 'text_content',
-      header: 'Text',
-      cell: ({ row }) => (
-        <div className="flex max-w-[300px] items-center gap-2">
-          <span
-            className="truncate text-muted-foreground text-sm"
-            title={row.original.text_content}
+      {
+        id: 'created at',
+        accessorKey: 'created_at',
+        header: ({ column }) => (
+          <Button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            variant="ghost"
           >
-            {row.original.text_content}
-          </span>
-        </div>
-      ),
-    },
-    {
-      id: 'created at',
-      accessorKey: 'created_at',
-      header: ({ column }) => (
-        <Button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          variant="ghost"
-        >
-          Created At
-          <ArrowUpDown className="ml-2 size-4" />
-        </Button>
-      ),
-      cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
-    },
-    {
-      id: 'Preview',
-      header: 'Preview',
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <AudioPlayer url={row.original.url} />
-        </div>
-      ),
-    },
-    {
-      id: 'Download',
-      header: 'Download',
-      cell: ({ row }) => (
-        <Button
-          className="ml-2"
-          onClick={() => downloadFile(row.original.url, dict.downloadError)}
-          size="icon"
-          title="Download"
-          variant="outline"
-        >
-          <Download className="size-4" />
-        </Button>
-      ),
-    },
-    {
-      id: 'Credits',
-      header: 'Credits',
-      accessorKey: 'credits_used',
-    },
-  ];
-
-  if (!showApiColumns) {
-    return [...baseColumns, {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => <ActionsCell file={row.original} />,
-    }];
-  }
-
-  const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
-    {
-      id: 'api source',
-      accessorFn: (row) => getUsageData(row.usage)?.sourceType ?? null,
-      header: 'API Source',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const sourceType = usage?.sourceType;
-        if (sourceType !== 'api_tts') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return <Badge variant="secondary">TTS</Badge>;
+            Created At
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        ),
+        cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
       },
-    },
-    {
-      id: 'api key',
-      accessorFn: (row) => getUsageData(row.usage)?.apiKeyId ?? null,
-      header: 'API Key',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const apiKeyId = usage?.apiKeyId;
-        if (!apiKeyId || typeof apiKeyId !== 'string') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return (
-          <code className="text-xs">
-            {apiKeyId.slice(0, 8)}
-            ...
-          </code>
-        );
+      {
+        id: 'Preview',
+        header: 'Preview',
+        cell: ({ row }) => (
+          <div className="flex justify-center gap-2">
+            <AudioPlayer url={row.original.url} />
+          </div>
+        ),
       },
+      {
+        id: 'Download',
+        header: 'Download',
+        cell: ({ row }) => (
+          <Button
+            className="ml-2"
+            onClick={() => downloadFile(row.original.url, t('downloadError'))}
+            size="icon"
+            title="Download"
+            variant="outline"
+          >
+            <Download className="size-4" />
+          </Button>
+        ),
+      },
+      {
+        id: 'Credits',
+        header: 'Credits',
+        accessorKey: 'credits_used',
+      },
+    ];
+
+    if (!showApiColumns) {
+      return [
+        ...baseColumns,
+        {
+          id: 'actions',
+          header: 'Actions',
+          cell: ({ row }) => <ActionsCell file={row.original} />,
+        },
+      ];
     }
-  ];
 
-  return [...baseColumns, ...apiColumns, {
-    id: 'actions',
-    header: 'Actions',
-    cell: ({ row }) => <ActionsCell file={row.original} />,
-  },];
+    const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
+      {
+        id: 'api source',
+        accessorFn: (row) => getUsageData(row.usage)?.sourceType ?? null,
+        header: 'API Source',
+        cell: ({ row }) => {
+          const usage = getUsageData(row.original.usage);
+          const sourceType = usage?.sourceType;
+          if (sourceType !== 'api_tts') {
+            return <span className="text-muted-foreground">-</span>;
+          }
+          return <Badge variant="secondary">TTS</Badge>;
+        },
+      },
+      {
+        id: 'api key',
+        accessorFn: (row) => getUsageData(row.usage)?.apiKeyId ?? null,
+        header: 'API Key',
+        cell: ({ row }) => {
+          const usage = getUsageData(row.original.usage);
+          const apiKeyId = usage?.apiKeyId;
+          if (!apiKeyId || typeof apiKeyId !== 'string') {
+            return <span className="text-muted-foreground">-</span>;
+          }
+          return (
+            <code className="text-xs">
+              {apiKeyId.slice(0, 8)}
+              ...
+            </code>
+          );
+        },
+      },
+    ];
+
+    return [
+      ...baseColumns,
+      ...apiColumns,
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => <ActionsCell file={row.original} />,
+      },
+    ];
+  }, [showApiColumns, t]);
 }

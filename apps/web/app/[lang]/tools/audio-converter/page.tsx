@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
 import Footer from '@/components/footer';
@@ -15,14 +15,15 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.pages;
-  const dictAudioConverter = messages.audioConverter;
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const t = await getTranslations({
+    locale: lang,
+    namespace: 'audioConverter',
+  });
 
-  const title = dict.titleAudioConverter || dictAudioConverter.title;
-  const description =
-    dict.descriptionAudioConverter || dictAudioConverter.subtitle;
-  const keywords = dict.keywordsAudioConverter || '';
+  const title = tPages('titleAudioConverter') || t('title');
+  const description = tPages('descriptionAudioConverter') || t('subtitle');
+  const keywords = tPages('keywordsAudioConverter') || '';
   const keywordsArray = keywords
     ? keywords.split(',').map((k: string) => k.trim())
     : [
@@ -72,13 +73,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function AudioConverterPage({ params }: Props) {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.audioConverter;
-  const dictPages = messages.pages;
+  const t = await getTranslations({
+    locale: lang,
+    namespace: 'audioConverter',
+  });
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
 
   const url = `https://sexyvoice.ai/${lang}/tools/audio-converter`;
-  const title = dictPages.titleAudioConverter || dict.title;
-  const description = dictPages.descriptionAudioConverter || dict.subtitle;
+  const title = tPages('titleAudioConverter') || t('title');
+  const description = tPages('descriptionAudioConverter') || t('subtitle');
 
   const jsonLd: Graph = {
     '@context': 'https://schema.org',
@@ -116,7 +119,7 @@ export default async function AudioConverterPage({ params }: Props) {
           {
             '@type': 'ListItem',
             position: 2,
-            name: dictPages['/tools/audio-converter'] || 'Audio Converter',
+            name: tPages('/tools/audio-converter') || 'Audio Converter',
             item: url,
           },
         ],
@@ -130,23 +133,23 @@ export default async function AudioConverterPage({ params }: Props) {
       <div className="bg-background">
         <HeaderStatic />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
-          <AudioConverterClient dict={dict} />
+          <AudioConverterClient />
         </div>
       </div>
 
       {/* Attribution bar — preserves FFmpeg credit and privacy note */}
       <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
         <p>
-          {dict.footer.poweredBy}{' '}
+          {t('footer.poweredBy')}{' '}
           <a
             className="font-semibold text-foreground transition-colors hover:text-primary"
             href="https://ffmpeg.org"
             rel="noopener noreferrer"
             target="_blank"
           >
-            {dict.footer.ffmpeg}
+            {t('footer.ffmpeg')}
           </a>{' '}
-          &bull; {dict.footer.noUploads}
+          &bull; {t('footer.noUploads')}
         </p>
       </div>
       <Footer lang={lang} />

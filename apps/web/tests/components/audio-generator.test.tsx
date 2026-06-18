@@ -74,7 +74,6 @@ vi.mock('@/components/streaming-waveform-player', () => ({
 vi.mock('@/components/grok-tts-editor', () => ({
   GrokTTSEditor: ({
     charactersLimit,
-    dict,
     enforceCharactersLimit = true,
     onChange,
     placeholder,
@@ -83,7 +82,6 @@ vi.mock('@/components/grok-tts-editor', () => ({
     value,
   }: {
     charactersLimit: number;
-    dict: typeof baseDict.grok;
     enforceCharactersLimit?: boolean;
     onChange: (text: string) => void;
     placeholder?: string;
@@ -94,7 +92,7 @@ vi.mock('@/components/grok-tts-editor', () => ({
     <>
       <div className="space-y-2 sm:w-1/3">
         <label className="font-medium text-sm" htmlFor="grok-language">
-          {dict.languageLabel}
+          Language
         </label>
         <select
           id="grok-language"
@@ -103,10 +101,10 @@ vi.mock('@/components/grok-tts-editor', () => ({
           }
           value={selectedGrokLanguage}
         >
-          <option value="auto">{dict.langAutomatic}</option>
-          <option value="en">{dict.langEnglish}</option>
-          <option value="ar-EG">{dict.langArabicEgypt}</option>
-          <option value="ar-SA">{dict.langArabicSaudiArabia}</option>
+          <option value="auto">Automatic</option>
+          <option value="en">English</option>
+          <option value="ar-EG">Arabic (Egypt)</option>
+          <option value="ar-SA">Arabic (Saudi Arabia)</option>
         </select>
       </div>
       <textarea
@@ -115,7 +113,7 @@ vi.mock('@/components/grok-tts-editor', () => ({
         onChange={(event) => onChange(event.currentTarget.value)}
         value={value}
       />
-      <button type="button">{dict.inlineEffectPlaceholder}</button>
+      <button type="button">Insert tags</button>
     </>
   ),
 }));
@@ -261,7 +259,6 @@ function renderAudioGenerator(
   overrides: Partial<React.ComponentProps<typeof AudioGenerator>> = {},
 ) {
   const defaultProps: React.ComponentProps<typeof AudioGenerator> = {
-    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     hasEnoughCredits: true,
     isPaidUser: true,
     selectedStyle: 'moan softly',
@@ -1086,9 +1083,6 @@ describe('AudioGenerator', () => {
     view.rerender(
       <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
         <AudioGenerator
-          dict={
-            baseDict as unknown as typeof import('@/messages/en.json')['generate']
-          }
           hasEnoughCredits
           isPaidUser
           selectedStyle="calm"

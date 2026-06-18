@@ -1,5 +1,6 @@
 'use client';
 import { Info, Maximize2, Minimize2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   type Dispatch,
   type SetStateAction,
@@ -20,7 +21,6 @@ import { VoiceSelect } from '@/components/voice-select';
 import { getEmotionTags } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { capitalizeFirstLetter, getTtsProvider } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
@@ -38,15 +38,14 @@ export function VoiceSelector({
   setSelectedVoice,
   selectedStyle,
   setSelectedStyle,
-  dict,
 }: {
   publicVoices: Tables<'voices'>[];
   selectedVoice?: Tables<'voices'>;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
-  dict: (typeof messages)['generate'];
 }) {
+  const t = useTranslations('generate');
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
@@ -64,7 +63,7 @@ export function VoiceSelector({
     <Card>
       <CardHeader className="p-4 pt-6 sm:p-6 sm:pb-2">
         <CardTitle className="flex flex-row">
-          {dict.voiceSelector.title}
+          {t('voiceSelector.title')}
           <TooltipProvider>
             <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>
@@ -77,8 +76,8 @@ export function VoiceSelector({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
-                {isGeminiVoice && <p>{dict.voiceSelector.geminiInfo}</p>}
-                {isGrokVoice && <p>{dict.voiceSelector.grokInfo}</p>}
+                {isGeminiVoice && <p>{t('voiceSelector.geminiInfo')}</p>}
+                {isGrokVoice && <p>{t('voiceSelector.grokInfo')}</p>}
                 {!(isGeminiVoice || isGrokVoice) && (
                   <p>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial
@@ -89,7 +88,7 @@ export function VoiceSelector({
             </Tooltip>
           </TooltipProvider>
         </CardTitle>
-        <CardDescription>{dict.voiceSelector.description}</CardDescription>
+        <CardDescription>{t('voiceSelector.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
         <VoiceSelect
@@ -101,7 +100,7 @@ export function VoiceSelector({
           {selectedVoice?.sample_url && (
             <div className="flex flex-col items-center justify-start gap-4 py-2 sm:flex-row">
               <AudioPlayerWithContext
-                playAudioTitle={dict.playAudio}
+                playAudioTitle={t('playAudio')}
                 showWaveform
                 url={selectedVoice.sample_url}
                 waveformClassName="h-5!"
@@ -136,7 +135,7 @@ export function VoiceSelector({
                       <TooltipContent>
                         <p className="max-w-xs">
                           <strong>
-                            {dict.voiceSelector.toolTipEmotionTags}
+                            {t('voiceSelector.toolTipEmotionTags')}
                           </strong>
                           <br />
                           {getEmotionTags(selectedVoice.language)}
@@ -155,7 +154,7 @@ export function VoiceSelector({
               className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
               data-testid="generate-style-textarea"
               onChange={(e) => setSelectedStyle(e.target.value)}
-              placeholder={dict.voiceSelector.selectStyleTextareaPlaceholder}
+              placeholder={t('voiceSelector.selectStyleTextareaPlaceholder')}
               ref={textareaRef}
               style={
                 {

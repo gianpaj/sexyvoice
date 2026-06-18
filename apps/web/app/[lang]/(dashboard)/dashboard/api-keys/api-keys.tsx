@@ -10,6 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -52,7 +53,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type langDict from '@/messages/en.json';
 
 interface ApiKeyRow {
   created_at: string;
@@ -72,13 +72,8 @@ function DateCell({ value }: { value: string }) {
   );
 }
 
-export function ApiKeys({
-  dict,
-  isPaidUser,
-}: {
-  dict: (typeof langDict)['profile']['apiKeys'];
-  isPaidUser: boolean;
-}) {
+export function ApiKeys({ isPaidUser }: { isPaidUser: boolean }) {
+  const t = useTranslations('profile.apiKeys');
   const [apiKeys, setApiKeys] = useState<ApiKeyRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -91,15 +86,15 @@ export function ApiKeys({
       const response = await fetch('/api/api-keys', { method: 'GET' });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? dict.failedToLoad);
+        throw new Error(json.error ?? t('failedToLoad'));
       }
       setApiKeys(json.data);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : dict.failedToLoad);
+      toast.error(error instanceof Error ? error.message : t('failedToLoad'));
     } finally {
       setLoading(false);
     }
-  }, [dict.failedToLoad]);
+  }, [t]);
 
   useEffect(() => {
     loadApiKeys().catch(() => undefined);
@@ -115,14 +110,14 @@ export function ApiKeys({
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? dict.failedToCreate);
+        throw new Error(json.error ?? t('failedToCreate'));
       }
       setNewApiKeyValue(json.key);
       setDialogOpen(false);
       setName('');
       await loadApiKeys();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : dict.failedToCreate);
+      toast.error(error instanceof Error ? error.message : t('failedToCreate'));
     } finally {
       setLoading(false);
     }
@@ -136,11 +131,11 @@ export function ApiKeys({
       });
       const json = await response.json();
       if (!response.ok) {
-        throw new Error(json.error ?? dict.failedToRevoke);
+        throw new Error(json.error ?? t('failedToRevoke'));
       }
       await loadApiKeys();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : dict.failedToRevoke);
+      toast.error(error instanceof Error ? error.message : t('failedToRevoke'));
     } finally {
       setLoading(false);
     }
@@ -149,9 +144,9 @@ export function ApiKeys({
   const copy = async (value: string) => {
     try {
       await navigator.clipboard.writeText(value);
-      toast.success(dict.copiedToClipboard);
+      toast.success(t('copiedToClipboard'));
     } catch {
-      toast.error(dict.failedToCopy);
+      toast.error(t('failedToCopy'));
     }
   };
 
@@ -160,30 +155,30 @@ export function ApiKeys({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="flex flex-col gap-2">
-            <CardTitle>{dict.title}</CardTitle>
-            <CardDescription>{dict.description}</CardDescription>
+            <CardTitle>{t('title')}</CardTitle>
+            <CardDescription>{t('description')}</CardDescription>
           </div>
           <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
             <DialogTrigger asChild>
               <Button disabled={!isPaidUser}>
                 <Plus className="mr-2 h-4 w-4" />
-                {dict.newKey}
+                {t('newKey')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{dict.createDialogTitle}</DialogTitle>
+                <DialogTitle>{t('createDialogTitle')}</DialogTitle>
                 <DialogDescription>
-                  {dict.createDialogDescription}
+                  {t('createDialogDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-2">
-                <Label htmlFor="api-key-name">{dict.nameLabel}</Label>
+                <Label htmlFor="api-key-name">{t('nameLabel')}</Label>
                 <Input
                   id="api-key-name"
                   maxLength={100}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder={dict.namePlaceholder}
+                  placeholder={t('namePlaceholder')}
                   value={name}
                 />
               </div>
@@ -193,7 +188,7 @@ export function ApiKeys({
                   onClick={createKey}
                   type="button"
                 >
-                  {dict.createButton}
+                  {t('createButton')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -202,7 +197,7 @@ export function ApiKeys({
         <CardContent className="space-y-4">
           {newApiKeyValue ? (
             <div className="rounded-md border p-4">
-              <p className="mb-2 font-medium text-sm">{dict.newKeyBanner}</p>
+              <p className="mb-2 font-medium text-sm">{t('newKeyBanner')}</p>
               <div className="flex gap-2">
                 <code className="block flex-1 overflow-auto rounded bg-muted px-3 py-2 text-xs">
                   {newApiKeyValue}
@@ -220,7 +215,7 @@ export function ApiKeys({
                   type="button"
                   variant="ghost"
                 >
-                  {dict.dismiss}
+                  {t('dismiss')}
                 </Button>
               </div>
             </div>
@@ -229,13 +224,13 @@ export function ApiKeys({
           <Table>
             <TableHeader>
               <TableRow className="[&>th]:px-4 [&>th]:text-muted-foreground">
-                <TableHead>{dict.table.name}</TableHead>
-                <TableHead>{dict.table.prefix}</TableHead>
-                <TableHead>{dict.table.created}</TableHead>
-                <TableHead>{dict.table.lastUsed}</TableHead>
-                <TableHead>{dict.table.status}</TableHead>
+                <TableHead>{t('table.name')}</TableHead>
+                <TableHead>{t('table.prefix')}</TableHead>
+                <TableHead>{t('table.created')}</TableHead>
+                <TableHead>{t('table.lastUsed')}</TableHead>
+                <TableHead>{t('table.status')}</TableHead>
                 <TableHead className="text-right">
-                  {dict.table.action}
+                  {t('table.action')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -243,7 +238,7 @@ export function ApiKeys({
               {apiKeys.length === 0 ? (
                 <TableRow>
                   <TableCell className="text-muted-foreground" colSpan={6}>
-                    {isPaidUser ? dict.empty : dict.unpaidEmpty}
+                    {isPaidUser ? t('empty') : t('unpaidEmpty')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -263,11 +258,11 @@ export function ApiKeys({
                       {key.last_used_at ? (
                         <DateCell value={key.last_used_at} />
                       ) : (
-                        dict.never
+                        t('never')
                       )}
                     </TableCell>
                     <TableCell>
-                      {key.is_active ? dict.statusActive : dict.statusRevoked}
+                      {key.is_active ? t('statusActive') : t('statusRevoked')}
                     </TableCell>
                     <TableCell className="text-right">
                       <AlertDialog>
@@ -284,21 +279,21 @@ export function ApiKeys({
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>
-                              {dict.revokeConfirm.title}
+                              {t('revokeConfirm.title')}
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                              {dict.revokeConfirm.description}
+                              {t('revokeConfirm.description')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>
-                              {dict.revokeConfirm.cancel}
+                              {t('revokeConfirm.cancel')}
                             </AlertDialogCancel>
                             <AlertDialogAction
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               onClick={() => revokeKey(key.id)}
                             >
-                              {dict.revokeConfirm.confirm}
+                              {t('revokeConfirm.confirm')}
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
@@ -314,36 +309,36 @@ export function ApiKeys({
       <Card>
         <CardContent className="mt-4 text-sm">
           <h2 className="mb-1 font-semibold text-base text-white leading-8">
-            {dict.infoCard.title}
+            {t('infoCard.title')}
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <FeatureCard
               external
               href="https://docs.sexyvoice.ai/api-reference/endpoint/speech"
               icon={AudioLines}
-              title={dict.infoCard.generateTitle}
+              title={t('infoCard.generateTitle')}
             >
               <span className="text-sm">
-                {dict.infoCard.generateDescription}
+                {t('infoCard.generateDescription')}
               </span>
             </FeatureCard>
             <FeatureCard
               external
               href="https://github.com/gianpaj/sexyvoice-cli"
               icon={Terminal}
-              title={dict.infoCard.cliTitle}
+              title={t('infoCard.cliTitle')}
             >
-              <span className="text-sm">{dict.infoCard.cliDescription}</span>
+              <span className="text-sm">{t('infoCard.cliDescription')}</span>
             </FeatureCard>
           </div>
           <p className="mt-4 flex items-center gap-1.5 text-muted-foreground">
-            {dict.infoCard.moreInfo}
+            {t('infoCard.moreInfo')}
             <Link
               className="inline-flex items-center gap-1 text-primary hover:underline"
               href="https://docs.sexyvoice.ai"
               target="_blank"
             >
-              {dict.infoCard.docsLinkLabel}
+              {t('infoCard.docsLinkLabel')}
               <ExternalLink className="size-3" />
             </Link>
           </p>

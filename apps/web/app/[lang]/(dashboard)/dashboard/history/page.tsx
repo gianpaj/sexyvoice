@@ -1,5 +1,9 @@
-import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query';
-import { getMessages } from 'next-intl/server';
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from '@tanstack/react-query';
+import { getTranslations } from 'next-intl/server';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getMyAudioFilesQuery } from '@/lib/supabase/queries.client';
@@ -11,6 +15,7 @@ export default async function HistoryPage(props: {
 }) {
   const { lang } = await props.params;
   const queryClient = new QueryClient();
+  const t = await getTranslations({ locale: lang, namespace: 'history' });
 
   const supabase = await createClient();
 
@@ -29,17 +34,11 @@ export default async function HistoryPage(props: {
 
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
 
-  const dict = ((await getMessages({ locale: lang })) as IntlMessages).history;
-
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="container mx-auto pb-10">
-        <h2 className="mb-4 font-bold text-2xl">{dict.header}</h2>
-        <DataTable
-          dict={dict}
-          showApiColumns={(apiKeysCount ?? 0) > 0}
-          userId={user.id}
-        />
+        <h2 className="mb-4 font-bold text-2xl">{t('header')}</h2>
+        <DataTable showApiColumns={(apiKeysCount ?? 0) > 0} userId={user.id} />
       </div>
     </HydrationBoundary>
   );

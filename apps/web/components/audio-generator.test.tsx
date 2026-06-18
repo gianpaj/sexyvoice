@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
@@ -58,9 +59,6 @@ const baseDict = {
   title: 'Generate audio',
   textAreaPlaceholder: 'Enter text',
   estimateCreditsButton: 'Estimate credits',
-  languageLabel: 'Language',
-  languageSelectPlaceholder: 'Select a language',
-  langAutomatic: 'Automatic',
   ctaButton: 'Generate',
   generating: 'Generating',
   cancel: 'Cancel',
@@ -73,6 +71,10 @@ const baseDict = {
   errorEstimating: 'Failed to estimate credits',
   dailyLimitError: 'Daily limit reached (__COUNT__)',
   grok: {
+    languageLabel: 'Language',
+    languageSelectPlaceholder: 'Select a language',
+    langAutomatic: 'Automatic',
+    langEnglish: 'English',
     helperText: 'Use Grok tags to control delivery.',
     inlineEffectPlaceholder: 'Insert inline effect',
     wrappingEffectPlaceholder: 'Wrap selected text',
@@ -121,14 +123,17 @@ function renderAudioGenerator(
   overrides: Partial<React.ComponentProps<typeof AudioGenerator>> = {},
 ) {
   const defaultProps: React.ComponentProps<typeof AudioGenerator> = {
-    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     hasEnoughCredits: true,
     isPaidUser: true,
     selectedStyle: 'moan softly',
     selectedVoice: createVoice(),
   };
 
-  return render(<AudioGenerator {...defaultProps} {...overrides} />);
+  return render(
+    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+      <AudioGenerator {...defaultProps} {...overrides} />
+    </NextIntlClientProvider>,
+  );
 }
 
 describe('AudioGenerator', () => {
@@ -147,19 +152,19 @@ describe('AudioGenerator', () => {
       }),
     });
 
-    const languageLabel = screen.getByText(baseDict.languageLabel);
+    const languageLabel = screen.getByText(baseDict.grok.languageLabel);
     expect(languageLabel).toBeInTheDocument();
 
     const languageField = languageLabel.parentElement;
     expect(languageField).not.toBeNull();
 
     const trigger = within(languageField as HTMLElement).getByRole('combobox');
-    expect(trigger).toHaveTextContent(baseDict.langAutomatic);
+    expect(trigger).toHaveTextContent(baseDict.grok.langAutomatic);
 
     trigger.click();
 
     const options = await screen.findAllByRole('option');
-    expect(options[0]).toHaveTextContent(baseDict.langAutomatic);
+    expect(options[0]).toHaveTextContent(baseDict.grok.langAutomatic);
     expect(options[1]).toHaveTextContent('English');
     expect(options).toEqual(
       expect.arrayContaining([
@@ -187,7 +192,7 @@ describe('AudioGenerator', () => {
       }),
     });
 
-    const languageLabel = screen.getByText(baseDict.languageLabel);
+    const languageLabel = screen.getByText(baseDict.grok.languageLabel);
     const languageField = languageLabel.parentElement;
     expect(languageField).not.toBeNull();
 

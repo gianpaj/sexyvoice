@@ -99,7 +99,6 @@ function renderVoiceSelector(
   ];
 
   const defaultProps: React.ComponentProps<typeof VoiceSelector> = {
-    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     publicVoices,
     selectedStyle: 'soft and breathy',
     selectedVoice: publicVoices[0],

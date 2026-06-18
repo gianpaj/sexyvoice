@@ -75,9 +75,6 @@ function renderVoiceSelector(selectedVoice: Tables<'voices'>) {
   return render(
     <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
       <VoiceSelector
-        dict={
-          baseDict as unknown as typeof import('@/messages/en.json')['generate']
-        }
         publicVoices={[selectedVoice]}
         selectedStyle={undefined}
         selectedVoice={selectedVoice}

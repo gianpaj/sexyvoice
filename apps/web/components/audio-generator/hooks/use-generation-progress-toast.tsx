@@ -1,20 +1,13 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useRef } from 'react';
 import type { ExternalToast } from 'sonner';
 
 import { toast } from '@/components/services/toast';
 
-interface SplitProgressDict {
-  progressSegment: string;
-  progressTitle: string;
-  progressTitleWithVoice: string;
-}
-
-export function useGenerationProgressToast(
-  voiceName?: string,
-  dict?: SplitProgressDict,
-) {
+export function useGenerationProgressToast(voiceName?: string) {
+  const t = useTranslations('generate.split');
   const generationToastIdRef = useRef<ExternalToast['id'] | null>(null);
 
   const showGenerationProgressToast = useCallback(
@@ -27,14 +20,9 @@ export function useGenerationProgressToast(
         ? 100
         : Math.max(0, Math.round(((safeSegmentNumber - 1) / safeTotal) * 100));
       const title = voiceName
-        ? (dict?.progressTitleWithVoice ?? `${voiceName} generation`).replace(
-            '__VOICE__',
-            voiceName,
-          )
-        : (dict?.progressTitle ?? 'Audio generation');
-      const segmentLabel = (
-        dict?.progressSegment ?? 'Segment __CURRENT__/__TOTAL__'
-      )
+        ? t('progressTitleWithVoice').replace('__VOICE__', voiceName)
+        : t('progressTitle');
+      const segmentLabel = t('progressSegment')
         .replace('__CURRENT__', String(safeSegmentNumber))
         .replace('__TOTAL__', String(safeTotal));
 
@@ -60,12 +48,7 @@ export function useGenerationProgressToast(
 
       generationToastIdRef.current = toastId;
     },
-    [
-      voiceName,
-      dict?.progressTitle,
-      dict?.progressTitleWithVoice,
-      dict?.progressSegment,
-    ],
+    [voiceName, t],
   );
 
   const dismissGenerationProgressToast = useCallback(() => {

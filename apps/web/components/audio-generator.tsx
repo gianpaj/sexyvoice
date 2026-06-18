@@ -3,6 +3,7 @@
 import { useCompletion } from '@ai-sdk/react';
 import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import {
   type ComponentPropsWithoutRef,
   forwardRef,
@@ -29,7 +30,6 @@ import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getTtsProvider } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
@@ -208,15 +208,16 @@ async function parseSseStream(
 }
 
 interface AudioGeneratorProps {
-  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
 }
 
+type GenerateTranslator = ReturnType<typeof useTranslations<'generate'>>;
+
 function throwGenerateVoiceError(
-  dict: (typeof messages)['generate'],
+  t: GenerateTranslator,
   data: {
     error?: string;
     errorCode?: string;
@@ -224,40 +225,40 @@ function throwGenerateVoiceError(
   },
   response: Response,
 ): never {
-  if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
-    const errorMessage = dict[data.errorCode as keyof typeof dict] as string;
-    throw new APIError(
-      errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-      response,
-    );
+  if (data.errorCode) {
+    const messageKey = data.errorCode as Parameters<typeof t>[0];
+    if (t.has(messageKey)) {
+      const errorMessage = t(messageKey);
+      throw new APIError(
+        errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+        response,
+      );
+    }
   }
 
-  throw new APIError(data.error || data.serverMessage || dict.error, response);
+  throw new APIError(data.error || data.serverMessage || t('error'), response);
 }
 
-function handleGenerateVoiceError(
-  dict: (typeof messages)['generate'],
-  error: unknown,
-) {
+function handleGenerateVoiceError(t: GenerateTranslator, error: unknown) {
   if (error instanceof DOMException && error.name === 'AbortError') {
     return;
   }
 
   if (error instanceof APIError) {
-    toast.error(error.message || dict.error);
+    toast.error(error.message || t('error'));
     return;
   }
 
-  toast.error(dict.error);
+  toast.error(t('error'));
 }
 
 export function AudioGenerator({
-  dict,
   hasEnoughCredits,
   isPaidUser,
   selectedStyle,
   selectedVoice,
 }: AudioGeneratorProps) {
+  const t = useTranslations('generate');
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -352,7 +353,7 @@ export function AudioGenerator({
     splitSegmentTexts: previewSplitSegmentTexts,
   });
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
-    useGenerationProgressToast(selectedVoice?.name, dict.split);
+    useGenerationProgressToast(selectedVoice?.name);
 
   let textareaRightPadding = 'pr-16';
 
@@ -369,7 +370,7 @@ export function AudioGenerator({
       seed?: number,
     ): Promise<string> => {
       if (!selectedVoice) {
-        throw new APIError(dict.error, new Response(null, { status: 400 }));
+        throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
 
       const response = await fetch('/api/generate-voice', {
@@ -387,13 +388,13 @@ export function AudioGenerator({
 
       const data = await response.json();
       if (!response.ok) {
-        throwGenerateVoiceError(dict, data, response);
+        throwGenerateVoiceError(t, data, response);
       }
 
       return data.url as string;
     },
     [
-      dict,
+      t,
       isGeminiVoice,
       isGrokVoice,
       selectedGrokLanguage,
@@ -405,7 +406,7 @@ export function AudioGenerator({
   const requestGenerateVoiceStream = useCallback(
     async (segmentText: string, signal: AbortSignal): Promise<string> => {
       if (!selectedVoice) {
-        throw new APIError(dict.error, new Response(null, { status: 400 }));
+        throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
 
       const response = await fetch('/api/generate-voice', {
@@ -422,16 +423,7 @@ export function AudioGenerator({
 
       if (!response.ok) {
         const data = await response.json();
-        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
-          const errorMessage = dict[
-            data.errorCode as keyof typeof dict
-          ] as string;
-          throw new APIError(
-            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-            response,
-          );
-        }
-        throw new APIError(data.error || data.serverMessage, response);
+        throwGenerateVoiceError(t, data, response);
       }
 
       // The streaming player owns the Web Audio engine, peak accumulation, and
@@ -458,7 +450,7 @@ export function AudioGenerator({
       });
     },
     [
-      dict,
+      t,
       finalizeStream,
       pushStreamChunk,
       resetStream,
@@ -502,8 +494,8 @@ export function AudioGenerator({
       abortController.current.signal,
     );
     setAudioURL(url);
-    toast.success(dict.success);
-  }, [dict.success, requestGenerateVoice, selectedVoice, text]);
+    toast.success(t('success'));
+  }, [t('success'), requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -513,7 +505,7 @@ export function AudioGenerator({
       segment.text.trim(),
     );
     if (currentSegmentTexts.some((segmentText) => !segmentText)) {
-      toast.error(dict.split.segmentCannotBeEmpty);
+      toast.error(t('split.segmentCannotBeEmpty'));
       return;
     }
 
@@ -592,10 +584,10 @@ export function AudioGenerator({
         markSegmentFailed(index);
 
         if (error instanceof APIError) {
-          toast.error(error.message || dict.error);
+          toast.error(error.message || t('error'));
         } else {
           toast.error(
-            dict.split.segmentFailed.replace('__INDEX__', String(index + 1)),
+            t('split.segmentFailed').replace('__INDEX__', String(index + 1)),
           );
         }
 
@@ -605,13 +597,13 @@ export function AudioGenerator({
     }
 
     if (!encounteredFailure) {
-      toast.success(dict.success);
+      toast.success(t('success'));
     }
   }, [
-    dict.error,
-    dict.success,
-    dict.split.segmentCannotBeEmpty,
-    dict.split.segmentFailed,
+    t('error'),
+    t('success'),
+    t('split.segmentCannotBeEmpty'),
+    t('split.segmentFailed'),
     markSegmentFailed,
     markSegmentGenerating,
     markSegmentIdle,
@@ -630,7 +622,7 @@ export function AudioGenerator({
       splitSegmentTexts.length > SPLIT_SEGMENT_MAX_COUNT
     ) {
       toast.error(
-        dict.split.tooManySegments.replace(
+        t('split.tooManySegments').replace(
           '__COUNT__',
           String(SPLIT_SEGMENT_MAX_COUNT),
         ),
@@ -650,14 +642,14 @@ export function AudioGenerator({
 
       await generateSingleAudio();
     } catch (error) {
-      handleGenerateVoiceError(dict, error);
+      handleGenerateVoiceError(t, error);
     } finally {
       dismissGenerationProgressToast();
       setIsGenerating(false);
     }
   }, [
-    dict.error,
-    dict.split.tooManySegments,
+    t('error'),
+    t('split.tooManySegments'),
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
@@ -702,7 +694,7 @@ export function AudioGenerator({
           true,
         );
         toast.success(
-          dict.split.segmentGenerated.replace(
+          t('split.segmentGenerated').replace(
             '__INDEX__',
             String(segmentIndex + 1),
           ),
@@ -715,10 +707,10 @@ export function AudioGenerator({
 
         markSegmentFailed(segmentIndex);
         if (error instanceof APIError) {
-          toast.error(error.message || dict.error);
+          toast.error(error.message || t('error'));
         } else {
           toast.error(
-            dict.split.segmentRetryFailed.replace(
+            t('split.segmentRetryFailed').replace(
               '__INDEX__',
               String(segmentIndex + 1),
             ),
@@ -730,9 +722,9 @@ export function AudioGenerator({
       }
     },
     [
-      dict.error,
-      dict.split.segmentGenerated,
-      dict.split.segmentRetryFailed,
+      t('error'),
+      t('split.segmentGenerated'),
+      t('split.segmentRetryFailed'),
       dismissGenerationProgressToast,
       isGenerating,
       markSegmentFailed,
@@ -794,7 +786,7 @@ export function AudioGenerator({
     try {
       await downloadUrl(segmentUrl, document.createElement('a'));
     } catch {
-      toast.error(dict.error);
+      toast.error(t('error'));
     }
   };
 
@@ -804,7 +796,7 @@ export function AudioGenerator({
     try {
       await downloadUrl(audioURL, document.createElement('a'));
     } catch {
-      toast.error(dict.error);
+      toast.error(t('error'));
     }
   };
 
@@ -892,7 +884,7 @@ export function AudioGenerator({
       setTimeout(() => URL.revokeObjectURL(outputUrl), 5000);
     } catch (error) {
       console.error('Failed to download all segments:', error);
-      toast.error(dict.split.downloadAllFailed);
+      toast.error(t('split.downloadAllFailed'));
     } finally {
       setIsDownloadingAllSegments(false);
     }
@@ -955,7 +947,7 @@ export function AudioGenerator({
     async (textToEstimate: string) => {
       if (!(selectedVoice && canEstimateCredits)) {
         throw new APIError(
-          dict.errorEstimating,
+          t('errorEstimating'),
           new Response(null, { status: 400 }),
         );
       }
@@ -975,20 +967,20 @@ export function AudioGenerator({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new APIError(data.error || dict.error, response);
+        throw new APIError(data.error || t('error'), response);
       }
 
       const value = Number(data.estimatedCredits);
       if (!Number.isFinite(value)) {
-        throw new APIError(dict.errorEstimating, response);
+        throw new APIError(t('errorEstimating'), response);
       }
 
       return value;
     },
     [
       canEstimateCredits,
-      dict.error,
-      dict.errorEstimating,
+      t('error'),
+      t('errorEstimating'),
       isGeminiVoice,
       selectedStyle,
       selectedVoice,
@@ -1016,9 +1008,9 @@ export function AudioGenerator({
       }
     } catch (error) {
       if (error instanceof APIError) {
-        toast.error(error.message || dict.error);
+        toast.error(error.message || t('error'));
       } else {
-        toast.error(dict.errorEstimating);
+        toast.error(t('errorEstimating'));
       }
     } finally {
       setIsEstimating(false);
@@ -1028,20 +1020,19 @@ export function AudioGenerator({
   return (
     <Card data-testid="audio-generator-card">
       <CardHeader>
-        <CardTitle>{dict.title}</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
-              characterLimitPaidTooltip={dict.paidCharacterLimitTooltip}
-              characterLimitUpgradeTooltip={dict.upgradeCharacterLimitTooltip}
+              characterLimitPaidTooltip={t('paidCharacterLimitTooltip')}
+              characterLimitUpgradeTooltip={t('upgradeCharacterLimitTooltip')}
               charactersLimit={charactersLimit}
-              dict={dict.grok}
               enforceCharactersLimit={!shouldDisableCharactersLimit}
               isPaidUser={isPaidUser}
               onChange={setText}
-              placeholder={dict.textAreaPlaceholder}
+              placeholder={t('textAreaPlaceholder')}
               selectedGrokLanguage={selectedGrokLanguage}
               setSelectedGrokLanguage={setSelectedGrokLanguage}
               value={text}
@@ -1082,7 +1073,7 @@ export function AudioGenerator({
                     })}
                     htmlFor="split-text-audios"
                   >
-                    {dict.split.splitToggleLabel}
+                    {t('split.splitToggleLabel')}
                   </Label>
                   <Checkbox
                     checked={splitTextAudios}
@@ -1096,7 +1087,7 @@ export function AudioGenerator({
               </TooltipTrigger>
               {!isPaidUser && (
                 <TooltipContent>
-                  <p>{dict.split.splitToggleDisabled}</p>
+                  <p>{t('split.splitToggleDisabled')}</p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -1104,7 +1095,7 @@ export function AudioGenerator({
 
           {canEstimateCredits && (
             <CreditEstimator
-              buttonLabel={dict.estimateCreditsButton}
+              buttonLabel={t('estimateCreditsButton')}
               estimatedCredits={estimatedCredits}
               isEstimating={isEstimating}
               isGenerating={isGenerating}
@@ -1123,14 +1114,14 @@ export function AudioGenerator({
         >
           {!hasEnoughCredits && (
             <Alert className="w-fit" variant="destructive">
-              <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+              <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
             </Alert>
           )}
           <div className="flex grow-0 gap-2">
             <GenerateButton
               className="h-10 w-full sm:w-fit"
               ctaText={
-                shouldUseSplitMode ? dict.ctaButtonPlural : dict.ctaButton
+                shouldUseSplitMode ? t('ctaButtonPlural') : t('ctaButton')
               }
               data-testid="generate-button"
               disabled={
@@ -1140,20 +1131,20 @@ export function AudioGenerator({
                 !hasEnoughCredits ||
                 textIsOverLimit
               }
-              generatingText={`${dict.generating}...`}
+              generatingText={`${t('generating')}...`}
               isGenerating={isGenerating}
               onClick={handleGenerate}
               size="lg"
             />
             {isGenerating && (
               <Button
-                aria-label={dict.cancel}
+                aria-label={t('cancel')}
                 className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
                 icon={() => <CircleStop className="size-8!" name="cancel" />}
                 iconPlacement="right"
                 onClick={handleCancel}
                 size="icon"
-                title={dict.cancel}
+                title={t('cancel')}
                 variant="outline"
               />
             )}
@@ -1167,7 +1158,7 @@ export function AudioGenerator({
                   controller={streamingPlayer}
                   estimatedDurationSec={estimatedStreamDurationSec}
                   onControlsReady={handleControlsReady}
-                  playAudioTitle={dict.playAudio}
+                  playAudioTitle={t('playAudio')}
                   progressColor="#8b5cf6"
                   waveColor="#888888"
                   waveformClassName="w-48"
@@ -1177,7 +1168,7 @@ export function AudioGenerator({
                     <Button
                       onClick={resetPlayer}
                       size="icon"
-                      title={dict.resetPlayer}
+                      title={t('resetPlayer')}
                       variant="secondary"
                     >
                       <RotateCcw className="size-6" />
@@ -1185,7 +1176,7 @@ export function AudioGenerator({
                     <Button
                       onClick={downloadAudio}
                       size="icon"
-                      title={dict.downloadAudio}
+                      title={t('downloadAudio')}
                       variant="secondary"
                     >
                       <Download className="size-6" />
@@ -1202,7 +1193,7 @@ export function AudioGenerator({
                     autoPlay
                     className="rounded-md"
                     onControlsReady={handleControlsReady}
-                    playAudioTitle={dict.playAudio}
+                    playAudioTitle={t('playAudio')}
                     progressColor="#8b5cf6"
                     showWaveform
                     url={audioURL}
@@ -1212,7 +1203,7 @@ export function AudioGenerator({
                   <Button
                     onClick={resetPlayer}
                     size="icon"
-                    title={dict.resetPlayer}
+                    title={t('resetPlayer')}
                     variant="secondary"
                   >
                     <RotateCcw className="size-6" />
@@ -1220,7 +1211,7 @@ export function AudioGenerator({
                   <Button
                     onClick={downloadAudio}
                     size="icon"
-                    title={dict.downloadAudio}
+                    title={t('downloadAudio')}
                     variant="secondary"
                   >
                     <Download className="size-6" />

@@ -1,4 +1,7 @@
+'use client';
+
 import { Crown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
 
 import { SpotlightField } from '@/components/spotlight-field';
@@ -12,14 +15,9 @@ import {
 } from '@/components/ui/tooltip';
 import { CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID } from '@/lib/clone/constants';
 import { cn } from '@/lib/utils';
-import {
-  type CloneDict,
-  type CloneStateAction,
-  formatCloneMessage,
-} from './clone-state';
+import { type CloneStateAction, formatCloneMessage } from './clone-state';
 
 export function CloneTextField({
-  dict,
   disabled,
   text,
   textMaxLength,
@@ -27,7 +25,6 @@ export function CloneTextField({
   userHasPaid,
   dispatch,
 }: {
-  dict: CloneDict;
   disabled: boolean;
   text: string;
   textMaxLength: number;
@@ -35,16 +32,17 @@ export function CloneTextField({
   userHasPaid: boolean;
   dispatch: Dispatch<CloneStateAction>;
 }) {
+  const t = useTranslations('clone');
   const textIsOverLimit = text.length > textMaxLength;
   const textLimitTooltip = formatCloneMessage(
-    userHasPaid ? dict.paidTextLimitTooltip : dict.upgradeTextLimitTooltip,
+    userHasPaid ? t('paidTextLimitTooltip') : t('upgradeTextLimitTooltip'),
     { MAX: CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID },
   );
 
   return (
     <>
       <div className="grid w-full gap-2">
-        <Label htmlFor="text-to-convert">{dict.textToConvertLabel}</Label>
+        <Label htmlFor="text-to-convert">{t('textToConvertLabel')}</Label>
         <SpotlightField>
           <Textarea
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -58,7 +56,7 @@ export function CloneTextField({
                 patch: { text: e.target.value },
               });
             }}
-            placeholder={dict.textAreaPlaceholder}
+            placeholder={t('textAreaPlaceholder')}
             rows={5}
             value={text}
           />

@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { getTranslations } from 'next-intl/server';
 
 import {
   Table,
@@ -8,13 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import type messages from '@/messages/en.json';
 
-export function CreditHistory({
-  dict,
+export async function CreditHistory({
   transactions,
 }: {
-  dict: (typeof messages)['credits'];
   transactions:
     | Pick<
         Tables<'credit_transactions'>,
@@ -22,11 +20,13 @@ export function CreditHistory({
       >[]
     | null;
 }) {
+  const t = await getTranslations('credits');
+
   if (!transactions || transactions.length === 0) {
     return (
       <div className="rounded-lg py-8 text-center">
         <h4 className="mb-2 font-semibold text-sm">No transactions yet</h4>
-        <p className="text-muted-foreground text-sm">{dict.historyEmpty}</p>
+        <p className="text-muted-foreground text-sm">{t('historyEmpty')}</p>
       </div>
     );
   }
