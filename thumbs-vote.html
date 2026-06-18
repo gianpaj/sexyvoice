@@ -1,0 +1,132 @@
+<!-- https://codepen.io/an_apco/pen/ZEMqvyP -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Thumbs Vote Button</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .vote {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            outline: none;
+        }
+
+        svg {
+            overflow: visible;
+        }
+
+        .hand {
+            fill: #bbb;
+            transform-origin: 50% 50%;
+        }
+
+        /* animation */
+        .vote.animate .hand {
+            animation: pop 700ms ease-out;
+        }
+        .hand-down {
+          animation: hand-down 1.2s ease-out;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(.3) rotate(0deg);
+            }
+            40% {
+                transform: scale(1.3) rotate(12deg);
+            }
+            70% {
+                transform: scale(.95) rotate(-4deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+        @keyframes hand-down {
+          0% {
+            fill: #fff;
+            transform: scale(.3) rotate(-10deg);
+          }
+          20% {
+            fill: #fb493f;
+            transform: scale(1.2) rotate(20deg);
+          }
+          60% {
+            transform: scale(1) rotate(0deg);
+          }
+          100% {
+            fill: #fff;
+            transform: scale(1);
+          }
+        }
+
+        /* LIKE */
+        .vote[data-state="like"] .hand {
+            fill: #2ecc71;
+        }
+
+        /* DISLIKE = same SVG, flipped */
+        .vote[data-state="dislike"] svg {
+            transform: scaleY(-1);
+        }
+
+        .vote[data-state="dislike"] .hand {
+            fill: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <button class="vote" data-state="neutral" aria-label="Like or dislike">
+        <svg viewBox="0 0 40 40" width="40" height="40">
+            <path class="hand"
+                d="m17.5,29.71c-.55,0-1.02-.2-1.41-.59-.39-.39-.59-.86-.59-1.41v-10.18c0-.27.05-.52.16-.76.11-.24.25-.45.44-.64l5.43-5.4c.25-.23.55-.38.89-.42.34-.05.67,0,.99.17.32.17.55.4.69.7.14.3.17.61.09.92l-1.12,4.6h5.45c.53,0,1,.2,1.4.6.4.4.6.87.6,1.4v2c0,.12-.01.24-.04.38-.02.13-.06.26-.11.38l-3,7.05c-.15.33-.4.62-.75.85-.35.23-.72.35-1.1.35h-8Zm-6,0c-.55,0-1.02-.2-1.41-.59-.39-.39-.59-.86-.59-1.41v-9c0-.55.2-1.02.59-1.41.39-.39.86-.59,1.41-.59s1.02.2,1.41.59c.39.39.59.86.59,1.41v9c0,.55-.2,1.02-.59,1.41-.39.39-.86.59-1.41.59Z"/>
+        </svg>
+    </button>
+
+    <script>
+        'use strict'
+        const btn = document.querySelector('.vote')
+
+        // Define the complete state cycle
+        const states = ['neutral', 'like', 'neutral', 'dislike', 'neutral']
+        let currentStateIndex = 0
+
+        btn.addEventListener('click', () => {
+            // Move to the next state in the cycle
+            currentStateIndex = (currentStateIndex + 1) % states.length
+            const next = states[currentStateIndex]
+
+            btn.dataset.state = next
+
+            // retrigger animation
+            btn.classList.remove('animate')
+            const hand = btn.querySelector('.hand')
+            hand.classList.remove('hand-down')
+            // Force the browser to recompute layout right now
+
+            // biome-ignore lint/complexity/noVoid: force reflow for animation retrigger
+            void btn.offsetWidth
+
+            if (next === 'dislike') {
+              hand.classList.add('hand-down')
+              btn.classList.add('animate')
+            } else if (next === 'like') {
+              btn.classList.add('animate')
+            }
+        })
+    </script>
+</body>
+</html>

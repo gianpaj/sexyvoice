@@ -1,12 +1,25 @@
 #!/bin/bash
 
 # SexyVoice.ai Credit Transaction Analysis Setup Script
-# This script sets up the Python environment and provides usage examples
+# This script sets up the Python environment and provides usage examples.
+#
+# The venv lives OUTSIDE the project root so that Turbopack does not traverse
+# it during the Next.js build.  Default location: ../sexyvoice-scripts-venv
+# Override by setting VENV_DIR before running:
+#   VENV_DIR=/some/other/path bash setup-analysis-environment.sh
 
 set -e  # Exit on any error
 
 echo "🚀 SexyVoice.ai Credit Transaction Analysis Setup"
 echo "================================================"
+
+# Resolve the script's own directory so this works regardless of cwd.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Venv is placed one level above the repo root (next to the project folder).
+VENV_DIR="${VENV_DIR:-"$(dirname "$SCRIPT_DIR")/sexyvoice-scripts-venv"}"
+
+echo "📁 Virtual environment path: $VENV_DIR"
 
 # Function to check if command exists
 command_exists() {
@@ -14,6 +27,7 @@ command_exists() {
 }
 
 # Check Python installation
+echo ""
 echo "📦 Checking Python installation..."
 if command_exists python3; then
     PYTHON_CMD="python3"
@@ -27,40 +41,54 @@ else
     exit 1
 fi
 
-# Check pip installation
-echo "📦 Checking pip installation..."
-if command_exists pip3; then
-    PIP_CMD="pip3"
-    echo "✓ pip3 found"
-elif command_exists pip; then
-    PIP_CMD="pip"
-    echo "✓ pip found"
+# Create the venv if it doesn't already exist
+echo ""
+if [ -d "$VENV_DIR" ]; then
+    echo "♻️  Reusing existing virtual environment at $VENV_DIR"
 else
-    echo "❌ pip not found. Please install pip first."
-    exit 1
+    echo "🔨 Creating virtual environment at $VENV_DIR ..."
+    $PYTHON_CMD -m venv "$VENV_DIR"
+    echo "✓ Virtual environment created"
 fi
+
+# Activate the venv for the rest of this script
+# shellcheck source=/dev/null
+source "$VENV_DIR/bin/activate"
+echo "✓ Virtual environment activated"
+
+PYTHON_CMD="python"
+PIP_CMD="pip"
 
 # Install dependencies
 echo ""
 echo "📥 Installing Python dependencies..."
 echo "   This may take a few minutes..."
 
-if [ -f "requirements.txt" ]; then
-    $PIP_CMD install -r requirements.txt
+$PIP_CMD install --upgrade pip --quiet
+
+if [ -f "$SCRIPT_DIR/requirements.txt" ]; then
+    $PIP_CMD install -r "$SCRIPT_DIR/requirements.txt"
     echo "✓ Dependencies installed from requirements.txt"
 else
     echo "Installing individual packages..."
-    $PIP_CMD install pandas>=2.0.0 numpy>=1.24.0 matplotlib>=3.6.0 seaborn>=0.12.0
+    $PIP_CMD install "pandas>=2.0.0" "numpy>=1.24.0" "matplotlib>=3.6.0" "seaborn>=0.12.0"
     echo "✓ Dependencies installed"
 fi
 
 # Test installation
 echo ""
 echo "🧪 Testing installation..."
-$PYTHON_CMD test-analysis-logic.py
+if [ -f "$SCRIPT_DIR/test-analysis-logic.py" ]; then
+    $PYTHON_CMD "$SCRIPT_DIR/test-analysis-logic.py"
+else
+    echo "⚠️  test-analysis-logic.py not found, skipping test."
+fi
 
 echo ""
 echo "✨ Setup complete! Here's how to use the analysis tools:"
+echo ""
+echo "💡 Activate the venv in your shell before running scripts:"
+echo "   source $VENV_DIR/bin/activate"
 echo ""
 
 # Usage examples
@@ -162,8 +190,10 @@ echo ""
 # echo ""
 echo "🎯 Next steps:"
 echo "   1. Export your credit transactions to CSV"
-echo "   2. Run: python analyze-credit-transactions.py your_file.csv"
-echo "   3. Run: python visualize-transactions.py your_file.csv"
+echo "   2. source $VENV_DIR/bin/activate"
+echo "   3. cd $SCRIPT_DIR"
+echo "   4. python analyze-credit-transactions.py your_file.csv"
+echo "   5. python visualize-transactions.py your_file.csv"
 echo ""
 echo "💡 Tip: Start with sample data to test everything works:"
 echo "   python generate-sample-data.py 1000 test.csv"

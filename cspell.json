@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "words": [
+    "lucide",
+    "supabase",
+    "posthog",
+    "platform",
+    "MAX_LENGTH_MULTILANGUAGE",
+    "signup",
+    "minmax",
+    "TOPUP",
+    "sexycall",
+    "LIVEKIT",
+    "treeify",
+    "treeified"
+  ],
+  "dictionaries": [
+    "de-de",
+    "es-es"
+  ],
+  "ignorePaths": [
+    "TODO.md",
+    "node_modules",
+    ".git",
+    "dist"
+  ]
+}

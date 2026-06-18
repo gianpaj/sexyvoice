@@ -30,6 +30,7 @@ build
 .turbo
 
 .env
+.env.e2e
 .vercel
 .vscode
 .env*.local
@@ -44,3 +45,26 @@ build
 tsconfig.tsbuildinfo
 
 backups
+
+# Python virtual environment used by scripts/
+scripts/venv
+
+# Playwright
+.auth/
+playwright-report/
+test-results/
+playwright/.cache/
+.env.e2e
+
+.edgeconfig.json
+
+.daily-stats-cache.json
+.ck/
+
+agent-browser*.json
+
+# Global skill symlinks (absolute paths to ~/.agents/skills/, not available in CI)
+.claude/skills/brainstorming
+.claude/skills/writing-clearly-and-concisely
+
+*.csv
