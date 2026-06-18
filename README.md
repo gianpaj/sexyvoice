@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://sexyvoice.ai">
-    <img alt="SexyVoice.ai - AI Voice Generation Platform" src="./public/sexyvoice.ai-og-image.jpg" width="640">
+    <img alt="SexyVoice.ai - AI Voice Generation Platform" src="./apps/web/public/sexyvoice.ai-og-image.jpg" width="640">
   </a>
 </p>
 
@@ -15,30 +15,33 @@
   <a href="https://sexyvoice.featurebase.app">🗺️ Roadmap</a> •
   <a href="#-getting-started">🚀 Quick Start</a> •
   <a href="#-features">✨ Features</a> •
-  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a>
+  <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a> •
+  <a href="./docs/devops.md">⚙️ DevOps Guide</a>
 </p>
 
 ---
 
 ## 🌟 About
 
-- Generate AI voices in 20+ languages with voice cloning support
-- Voice selection system with customizable options
+- Generate AI voices in 24+ supported languages and locales
+- Major multilingual voice families from Google Gemini (`gpro`) and xAI Grok (`xai`)
+- Voice cloning support across 20+ supported languages
 <!-- - Public library of generated voices ranked by usage and votes -->
 - Credit-based usage system
 - User authentication and profile management (Google)
 - [Architecture Overview](./ARCHITECTURE.md)
 
-SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
+SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with featured Gemini and Grok voices, plus custom voice cloning capabilities.
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
 
-- **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
+- **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
-- **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, French, German, Japanese, Korean, and more
+- **Voice Selection System**: Choose from featured Gemini voices like `achernar`, `aoede`, `kore`, `puck`, `sulafat`, and `zephyr`, plus Grok voices like `ara`, `eve`, `leo`, `rex`, and `sal`
+- **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
+- **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -51,17 +54,20 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### 🌍 Platform Features
 
 - **Responsive Design**: Optimized for desktop and mobile devices
-- **International Support**: Full i18n implementation for global accessibility
+- **International Support**: Full i18n implementation powered by `next-intl` for global accessibility (EN/ES/DE/DA/IT/FR)
+- **Localized Site Banners**: Shared banner system for promos and announcements across landing, blog, and dashboard with independent dismiss state and one visible banner at a time
 - **Rate Limiting**: Fair usage policies to ensure platform stability
 - **Real-time Updates**: Live audio generation with progress tracking
+- **Public Tools**: Free utility tools including audio transcription and format conversion
 
 ## 🛠️ Tech Stack
 
 ### Frontend
 
-- **[Next.js 15](https://nextjs.org)** - React framework with App Router and TypeScript
+- **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
+- **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `apps/web/messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
-- **[Tailwind CSS](https://tailwindcss.com)** - Utility-first CSS framework
+- **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 
@@ -69,13 +75,14 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **[Supabase](https://supabase.com)** - Authentication and PostgreSQL database with SSR support
 - **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations *(planned)*
-- **[Vercel Blob Storage](https://vercel.com/storage/blob)** - Scalable audio file storage
+- **[Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)** - Scalable audio file storage with global CDN
 
 ### DevOps & Monitoring
 
 - **[Vercel](https://vercel.com)** - Deployment and hosting platform
 - **[Sentry](https://sentry.io)** - Error tracking and performance monitoring
 - **[PostHog](https://posthog.com)** - Product analytics and feature flags
+- **[Axiom](https://axiom.co)** - Structured request logging for API routes
 - **[Stripe](https://stripe.com)** - Payment processing and subscription management
 
 ### Development Tools
@@ -85,6 +92,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Contentlayer](https://contentlayer.dev)** - Type-safe content management
 - **[Husky](https://typicode.github.io/husky)** - Git hooks for automated tasks
 - **[lint-staged](https://github.com/okonet/lint-staged)** - Runs commands on staged files
+
+## Repository Layout
+
+- `apps/web` - Next.js web app deployed to Vercel.
+- `apps/docs` - Mintlify docs app for `docs.sexyvoice.ai`.
+- `scripts` - operational scripts kept outside the web app as
+  `@sexyvoice/scripts`.
+- `docs` - internal engineering and operational docs.
+
+Root commands are orchestrated with Turborepo. Use package filters when you
+only want one app, for example `pnpm --filter @sexyvoice/web dev`.
 
 ## 🚀 Getting Started
 
@@ -112,36 +130,76 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 3. **Set up environment variables**
 
    ```bash
-   cp .env.example .env.local
+   cp apps/web/.env.example apps/web/.env.local
    ```
 
-   Fill in the required environment variables as defined in [`.env.example`](.env.example):
-   - `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous key
-   - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram cronjob)
-   - `KV_REST_API_URL` - Your Redis (Upstash) KV REST API URL
-   - `KV_REST_API_TOKEN` - Your Redis (Upstash) KV REST API token
-   - `BLOB_READ_WRITE_TOKEN` - Vercel Blob storage token
-   - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-   - `FAL_KEY` - Your fal.ai API key for voice cloning
-   - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-   - `STRIPE_SECRET_KEY` - Stripe secret key for payment processing
-   - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret for payment processing
-   - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-   - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-   - `STRIPE_TOPUP_5_PRICE_ID`
-   - `STRIPE_TOPUP_10_PRICE_ID`
-   - `STRIPE_TOPUP_99_PRICE_ID`
-   - `TELEGRAM_WEBHOOK_URL` - Telegram cronjob for daily stats notifications
-   - `CRON_SECRET` - For the Telegram cronjob - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   Fill in the required environment variables as defined in
+   [`apps/web/.env.example`](apps/web/.env.example):
+   - Supabase
+      - `NEXT_PUBLIC_SUPABASE_URL`
+      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+   - Your Redis (Upstash)
+      - `KV_REST_API_URL`
+      - `KV_REST_API_TOKEN`
+   - Cloudflare R2 storage
+      - `R2_ACCESS_KEY_ID`
+      - `R2_SECRET_ACCESS_KEY`
+      - `R2_BUCKET_NAME`
+      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
+      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+   - AI 3rd party services
+      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+      - `FAL_KEY` - Your fal.ai API key for voice cloning
+      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
+   - Real-time Calls (LiveKit)
+      - `LIVEKIT_URL`
+      - `LIVEKIT_API_KEY`
+      - `LIVEKIT_API_SECRET`
+   - Stripe
+      - `STRIPE_SECRET_KEY`
+      - `STRIPE_WEBHOOK_SECRET`
+      - `STRIPE_TOPUP_STARTER_PRICE_ID`
+      - `STRIPE_TOPUP_STANDARD_PRICE_ID`
+      - `STRIPE_TOPUP_PRO_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+      - `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon applied automatically for eligible first-time subscribers
+      - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month discount percentage used to display discounted subscription pricing when the coupon is configured
+   - Banner and promotion configuration
+      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
+      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+      - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
+      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
+      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
+      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
+      - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+      - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
+   - Telegram cronjob
+      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+   - Axiom logging (optional)
+      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+   - API key security
+      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
+   - Vercel Edge Config (optional)
+      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
+
+   For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
 
 4. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
    ```bash
+   cd apps/web
    supabase db push
+   cd ../..
    ```
 
 5. **Start the development server**
@@ -151,7 +209,32 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    ```
 
 6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+   The web app runs through Portless at [https://sv.dev](https://sv.dev).
+   The `portless.json` app name only sets the route name; `PORTLESS_TLD=dev`
+   in `apps/web/package.json` makes the route use `.dev` instead of the
+   default `.localhost`.
+
+   If you previously installed the Portless startup service, it may restart the
+   default `.localhost` proxy on port 443 and block `.dev`. Remove the service
+   before starting the app:
+
+   ```bash
+   sudo portless service uninstall
+   sudo portless proxy stop
+   pnpm dev
+   ```
+
+### Banner System
+
+The app uses a shared banner system for both promotions and announcements:
+
+- `apps/web/components/banner.tsx` renders the banner UI
+- `apps/web/lib/banners/registry.ts` defines supported banners
+- `apps/web/lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `apps/web/app/[lang]/actions/banners.ts` handles dismissal cookies
+
+Banner copy is localized in `apps/web/messages/*.json`.
+Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 ## 🧪 Development
 
@@ -159,18 +242,18 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 | Command                   | Description                             |
 | ------------------------- | --------------------------------------- |
-| `pnpm dev`                | Start development server with Turbopack |
-| `pnpm build`              | Build production application            |
-| `pnpm start`              | Start production server                 |
-| `pnpm test`               | Run test suite                          |
-| `pnpm test:watch`         | Run tests in watch mode                 |
+| `pnpm dev`                | Start all workspace dev tasks           |
+| `pnpm --filter @sexyvoice/web dev` | Start only the web app dev server |
+| `pnpm build`              | Build workspace apps with Turbo         |
+| `pnpm test`               | Run test suites                         |
+| `pnpm test:ui`            | Run Vitest UI for the web app           |
 | `pnpm lint`               | Lint codebase with Biome                |
-| `pnpm lint:fix`           | Fix linting issues automatically        |
-| `pnpm typecheck`          | Run TypeScript type checking            |
+| `pnpm type-check`         | Run TypeScript type checking            |
 | `pnpm format`             | Format code with Biome                  |
-| `pnpm check-translations` | Validate translation files              |
-| `pnpm build:content`      | Build content layer                     |
-| `pnpm clean`              | Clean unused dependencies with Knip     |
+| `pnpm check-translations` | Validate all locale files have matching keys |
+| `pnpm build:content`      | Build web app content layer             |
+| `pnpm clean`              | Check unused dependencies with Knip     |
+| `pnpm fixall`             | Run all fixes: lint, format, and check  |
 
 ### Testing
 
@@ -180,10 +263,10 @@ Run the test suite:
 pnpm test
 ```
 
-For continuous testing during development:
+For the Vitest UI during development:
 
 ```bash
-pnpm test:watch
+pnpm test:ui
 ```
 
 ### Database Operations
@@ -197,13 +280,17 @@ pnpm run generate-supabase-types
 Push schema changes to Supabase:
 
 ```bash
+cd apps/web
 supabase db push
+cd ../..
 ```
 
 Fetch database migrations:
 
 ```bash
+cd apps/web
 supabase migration fetch
+cd ../..
 ```
 
 Backup database and schema:
@@ -212,6 +299,17 @@ Backup database and schema:
 export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
 sh ./scripts/db_backups.sh
 ```
+
+### Mintlify
+
+The docs site remains the Mintlify project for `docs.sexyvoice.ai`.
+
+- In Mintlify Git Settings, point the project to this monorepo repository and
+  the production branch.
+- Enable Mintlify monorepo mode.
+- Set the docs path to `/apps/docs` with no trailing slash.
+- Keep the existing custom domain and GitHub App installation attached to the
+  repository/branch used for docs deployments.
 
 ### Video Generation
 
@@ -233,6 +331,12 @@ seewav your_audio.mp3 --color '0.8,0.0,0.4'
 # -ac 1: Set audio channels to mono (1 channel)
 # output.mp3: Output file
 ffmpeg -i input.wav -acodec libmp3lame -q:a 2 -ar 24000 -ac 1 output.mp3
+
+# For high quality MP3
+ffmpeg -i input.wav -acodec libmp3lame -q:a 0 -ar 44100 -ac 2 output-high-quality.mp3
+
+# For lowest quality MP3 possible
+ffmpeg -i input.wav -acodec libmp3lame -q:a 9 -ar 8000 -ac 1 output-lowest.mp3
 ```
 
 ## 🔒 Security
@@ -242,7 +346,7 @@ SexyVoice.ai implements multiple security layers:
 - **Authentication**: Secure OAuth integration with Supabase Auth
 - **Data Protection**: Row-level security (RLS) policies in PostgreSQL
 - **API Security**: Rate limiting and request validation
-- **File Security**: Secure blob storage with access controls
+- **File Security**: Secure R2 storage with access controls
 - **Error Handling**: Comprehensive error tracking with Sentry
 - **Environment Isolation**: Separate configurations for development and production
 
@@ -254,7 +358,20 @@ We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
+- Review the [DevOps Guide](./docs/devops.md) for environment variables, deployment, infrastructure, and operational setup changes
 <!-- - Follow the code of conduct -->
+
+### Setup
+
+Zed with [Cspell](https://github.com/mantou132/zed-cspell/) extension
+
+```bash
+npm install -g cspell @cspell/dict-de-de @cspell/dict-es-es
+asdf reshim nodejs
+cspell link add @cspell/dict-de-de
+cspell link add @cspell/dict-es-es
+# restart Zed language server
+```
 
 ## 📄 License
 
@@ -264,7 +381,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 - **Website**: [sexyvoice.ai](https://sexyvoice.ai)
 - **Roadmap**: [Feature requests and roadmap](https://sexyvoice.featurebase.app)
-- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) *(coming soon)*
+- **Documentation**: [API Documentation](https://docs.sexyvoice.ai) NEW
 - **Support**: [Contact support](mailto:hello@sexyvoice.ai) or via Chat on the Dashboard
 
 ## 🏗️ Project Status
@@ -277,16 +394,30 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Voice cloning with custom audio samples
 - ✅ User authentication and profiles
 - ✅ Credit system and payment processing
-- ✅ Website multi-language support (EN/ES)
-- 🚧 API access (coming soon)
+- ✅ Website multi-language support (EN/ES/DE/DA/IT/FR) via `next-intl`
+- ✅ Audio transcription and translation tool
+- ✅ Real-time AI voice calls with configurable AI agents
+- ✅ API access
 
-### Supported Languages by these Google Gemini TTS Models
+### Supported Voice Families and Languages
 
-- Puck
-- Zephyr
-- Gacrux
-- Kore
-- Sulafat
+#### Google Gemini (`gpro`) multilingual voices
+
+Primary Gemini voices currently exposed in the app:
+
+- `achernar`
+- `aoede`
+- `autonoe`
+- `callirrhoe`
+- `despina`
+- `erinome`
+- `gacrux`
+- `kore`
+- `puck`
+- `sulafat`
+- `zephyr`
+
+These multilingual Gemini voices support style prompting and the following language/locale set:
 
 | Language               | BCP-47 Code              | Language             | BCP-47 Code |
 | ---------------------- | ------------------------ | -------------------- | ----------- |
@@ -302,6 +433,63 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 | Ukrainian (Ukraine)    | `uk-UA`                  | Bengali (Bangladesh) | `bn-BD`     |
 | English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
 | Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
+
+#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (model: `gpro31`)
+
+Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`.
+Voices returned as `gpro` stay on Gemini 2.5 Pro.
+
+Supports all 24 languages above, plus (non-exhaustive):
+Afrikaans (`af-ZA`), Albanian (`sq-AL`), Amharic (`am-ET`), Armenian (`hy-AM`),
+Azerbaijani (`az-AZ`), Basque (`eu-ES`), Bulgarian (`bg-BG`), Catalan (`ca-ES`),
+Chinese Simplified (`zh-CN`), Chinese Traditional (`zh-TW`), Croatian (`hr-HR`),
+Czech (`cs-CZ`), Danish (`da-DK`), Estonian (`et-EE`), Filipino/Tagalog (`fil-PH`),
+Finnish (`fi-FI`), Galician (`gl-ES`), Georgian (`ka-GE`), Greek (`el-GR`),
+Gujarati (`gu-IN`), Hebrew (`he-IL`), Hungarian (`hu-HU`), Icelandic (`is-IS`),
+Irish (`ga-IE`), Javanese (`jv-ID`), Kannada (`kn-IN`), Kazakh (`kk-KZ`),
+Latvian (`lv-LV`), Lithuanian (`lt-LT`), Macedonian (`mk-MK`), Malay (`ms-MY`),
+Maltese (`mt-MT`), Norwegian Bokmål (`nb-NO`), Persian (`fa-IR`), Punjabi (`pa-IN`),
+Serbian (`sr-RS`), Slovak (`sk-SK`), Slovenian (`sl-SI`), Swahili (`sw-KE`),
+Swedish (`sv-SE`), Urdu (`ur-PK`), Uzbek (`uz-UZ`), Welsh (`cy-GB`), Zulu (`zu-ZA`).
+Plus English, Spanish, French, Portuguese, and Arabic regional variants.
+
+> Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
+
+Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
+
+#### xAI Grok (`xai`) expressive voices
+
+Primary Grok voices currently exposed in the app:
+
+- `ara`
+- `eve`
+- `leo`
+- `rex`
+- `sal`
+
+These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
+
+| Language / Locale              | Code    | Language / Locale   | Code    |
+| ------------------------------ | ------- | ------------------- | ------- |
+| English                        | `en`    | Japanese            | `ja`    |
+| Arabic (Egypt)                 | `ar-EG` | Korean              | `ko`    |
+| Arabic (Saudi Arabia)          | `ar-SA` | Portuguese (Brazil) | `pt-BR` |
+| Arabic (United Arab Emirates)  | `ar-AE` | Portuguese (Portugal) | `pt-PT` |
+| Bengali                        | `bn`    | Russian             | `ru`    |
+| Chinese (Simplified)           | `zh`    | Spanish (Spain)     | `es-ES` |
+| French                         | `fr`    | Spanish (Mexico)    | `es-MX` |
+| German                         | `de`    | Turkish             | `tr`    |
+| Hindi                          | `hi`    | Vietnamese          | `vi`    |
+| Indonesian                     | `id`    | Italian             | `it`    |
+
+#### Additional English voices
+
+We also expose English-focused Orpheus voices:
+
+- `dan` (`en-GB`)
+- `emma` (`en-US`)
+- `josh` (`en-US`)
+- `tara` (`en-US`)
 
 ---
 

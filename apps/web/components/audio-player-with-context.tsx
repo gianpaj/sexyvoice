@@ -1,0 +1,185 @@
+'use client';
+
+import WavesurferPlayer from '@wavesurfer/react';
+import { Pause, Play } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import type WaveSurfer from 'wavesurfer.js';
+
+import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { Button } from '@/components/ui/button';
+import { attemptPlayback } from '@/lib/media-playback';
+import { cn } from '@/lib/utils';
+
+export interface AudioPlayerControls {
+  reset: () => void;
+  stop: () => void;
+}
+
+interface AudioPlayerWithContextProps {
+  autoPlay?: boolean;
+  buttonClassName?: string;
+  className?: string;
+  onControlsReady?: (controls: AudioPlayerControls) => void;
+  playAudioTitle: string;
+  progressColor?: string;
+  showWaveform?: boolean;
+  url: string;
+  waveColor?: string;
+  waveformClassName?: string;
+  waveformHeight?: number;
+}
+
+export function AudioPlayerWithContext({
+  url,
+  className,
+  buttonClassName,
+  waveformClassName,
+  playAudioTitle,
+  showWaveform = false,
+  waveformHeight = 48,
+  waveColor = '#a1a1aa',
+  progressColor = '#7c3aed',
+  autoPlay = false,
+  onControlsReady,
+}: AudioPlayerWithContextProps) {
+  const audio = useAudio();
+
+  // For non-waveform mode, use the shared audio context
+  const isPlayingFromContext = audio?.isPlaying && audio?.url === url;
+
+  // For waveform mode, track local playing state from wavesurfer events
+  const [wavesurfer, setWavesurfer] = useState<WaveSurfer | null>(null);
+  const [isWaveformPlaying, setIsWaveformPlaying] = useState(false);
+
+  // Determine which playing state to use based on mode
+  const isPlaying = showWaveform ? isWaveformPlaying : isPlayingFromContext;
+
+  // Expose controls to parent when wavesurfer is ready
+  useEffect(() => {
+    if (showWaveform && wavesurfer && onControlsReady) {
+      onControlsReady({
+        reset: () => {
+          wavesurfer.stop();
+          wavesurfer.seekTo(0);
+        },
+        stop: () => {
+          wavesurfer.stop();
+        },
+      });
+    }
+  }, [showWaveform, wavesurfer, onControlsReady]);
+
+  const onReady = useCallback(
+    (ws: WaveSurfer) => {
+      setWavesurfer(ws);
+      setIsWaveformPlaying(false);
+      if (autoPlay) {
+        void attemptPlayback(
+          () => ws.play(),
+          () => {
+            setIsWaveformPlaying(false);
+          },
+        );
+      }
+    },
+    [autoPlay],
+  );
+
+  const onPlay = useCallback(() => {
+    setIsWaveformPlaying(true);
+  }, []);
+
+  const onPause = useCallback(() => {
+    setIsWaveformPlaying(false);
+  }, []);
+
+  const handlePlayWithWaveform = useCallback(async () => {
+    if (!wavesurfer) return;
+
+    if (isWaveformPlaying) {
+      wavesurfer.pause();
+      return;
+    }
+
+    setIsWaveformPlaying(true);
+    await attemptPlayback(
+      () => wavesurfer.play(),
+      () => {
+        setIsWaveformPlaying(false);
+      },
+    );
+  }, [isWaveformPlaying, wavesurfer]);
+
+  const handlePlayWithContext = useCallback(() => {
+    if (!audio) return;
+    if (audio.url !== url) {
+      audio.setUrlAndPlay(url);
+    } else if (audio.isPlaying) {
+      audio.pause();
+    } else {
+      audio.play();
+    }
+  }, [audio, url]);
+
+  const handlePlay = showWaveform
+    ? handlePlayWithWaveform
+    : handlePlayWithContext;
+
+  // Render without waveform (original behavior)
+  if (!showWaveform) {
+    return (
+      <Button
+        className={cn('min-h-10 min-w-10 rounded-full', className)}
+        disabled={!audio}
+        onClick={handlePlay}
+        size="icon"
+        title={playAudioTitle}
+        variant="secondary"
+      >
+        {isPlaying ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+    );
+  }
+
+  // Render with waveform
+  return (
+    <div className={cn('flex flex-col items-center gap-3', className)}>
+      <Button
+        className={cn(
+          'min-h-10 min-w-10 shrink-0 rounded-full',
+          buttonClassName,
+        )}
+        disabled={!wavesurfer}
+        onClick={handlePlay}
+        size="icon"
+        title={playAudioTitle}
+        variant="secondary"
+      >
+        {isPlaying ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4" />
+        )}
+      </Button>
+      <div className={cn('w-32 flex-1', waveformClassName)}>
+        <WavesurferPlayer
+          barGap={2}
+          barRadius={2}
+          barWidth={2}
+          cursorColor="transparent"
+          height={waveformHeight}
+          onPause={onPause}
+          onPlay={onPlay}
+          onReady={onReady}
+          progressColor={progressColor}
+          url={url}
+          waveColor={waveColor}
+        />
+      </div>
+    </div>
+  );
+}

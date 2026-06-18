@@ -1,0 +1,45 @@
+'use client';
+
+import { useConnectionState } from '@livekit/components-react';
+import { ConnectionState } from 'livekit-client';
+import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+
+import { usePlaygroundState } from '@/hooks/use-playground-state';
+
+export interface InstructionsEditorProps {
+  instructions?: string;
+}
+
+export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
+  const connectionState = useConnectionState();
+  const isConnected = connectionState === ConnectionState.Connected;
+  const { pgState, dispatch } = usePlaygroundState();
+  const t = useTranslations('call');
+  const [inputValue, setInputValue] = useState(instructions || '');
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = event.target.value;
+    setInputValue(newValue);
+
+    // Dispatch immediately so the connect button reacts without waiting for blur
+    dispatch({ type: 'SET_INSTRUCTIONS', payload: newValue });
+  };
+
+  useEffect(() => {
+    if (instructions !== undefined) {
+      setInputValue(instructions);
+    }
+  }, [instructions]);
+
+  return (
+    <textarea
+      className="w-full rounded bg-transparent font-mono text-xs leading-loose outline-none disabled:cursor-not-allowed disabled:opacity-50"
+      disabled={isConnected}
+      onChange={handleInputChange}
+      placeholder={t('instructionsPlaceholder')}
+      rows={10}
+      value={inputValue}
+    />
+  );
+}
