@@ -15,7 +15,7 @@ const stripeForTesting = await import('stripe').then((m) => {
   return new StripeConstructor(
     process.env.STRIPE_SECRET_KEY || 'sk_test_dummy',
     {
-      apiVersion: '2025-11-17.clover',
+      apiVersion: '2025-02-24.acacia',
     },
   );
 });
@@ -58,7 +58,7 @@ export function createMockEvent<T extends Stripe.Event.Type>(
   return {
     id: `evt_test_${Date.now()}`,
     object: 'event',
-    api_version: '2025-11-17.clover',
+    api_version: '2025-02-24.acacia',
     created: Math.floor(Date.now() / 1000),
     type,
     data: {
@@ -115,8 +115,6 @@ export function createMockSubscription(
         {
           id: 'si_test',
           object: 'subscription_item',
-          current_period_start: Math.floor(Date.now() / 1000),
-          current_period_end: Math.floor(Date.now() / 1000) + 2_592_000, // +30 days
           price: {
             id: priceId,
             object: 'price',
@@ -166,41 +164,8 @@ export function createMockInvoice(
     currency: 'usd',
     custom_fields: null,
     customer: customerId,
-    parent: {
-      subscription_details: {
-        subscription: subscriptionId,
-        metadata: null as unknown as Stripe.Metadata,
-      },
-      quote_details: null,
-      type: 'subscription_details',
-    },
-    payments: {
-      object: 'list',
-      data: [
-        {
-          id: 'py_test123',
-          object: 'invoice_payment',
-          amount: 1000,
-          amount_refunded: 0,
-          charge: 'ch_test123',
-          created: now,
-          currency: 'usd',
-          invoice: 'in_test123',
-          livemode: false,
-          payment: {
-            id: paymentIntentId,
-            object: 'charge',
-            payment_intent: paymentIntentId,
-          },
-          status: 'succeeded',
-          tax: null,
-          type: 'charge',
-          metadata: null,
-        } as unknown as Stripe.InvoicePayment,
-      ],
-      has_more: false,
-      url: '/v1/invoices/in_test123/payments',
-    },
+    subscription: subscriptionId || null,
+    payment_intent: paymentIntentId || null,
     period_end: now,
     period_start: now - 2_592_000,
     status: 'paid',
@@ -246,27 +211,12 @@ export function createMockInvoice(
           subscription: subscriptionId,
           subscription_item: 'si_test',
           tax_amounts: [],
+          tax_rates: [],
           type: 'subscription',
           unit_amount_excluding_tax: null,
-          parent: {
-            type: 'subscription_item_details',
-            subscription_item_details: {
-              subscription_item: 'si_test',
-            } as Stripe.InvoiceLineItem.Parent.SubscriptionItemDetails,
-            invoice_item_details: null,
-            quote_details: null,
-          },
           pretax_credit_amounts: null,
-          pricing: {
-            type: 'price_details',
-            price_details: {
-              price: priceId,
-              product: 'prod_test123',
-            },
-            unit_amount_decimal: '1000',
-          },
           taxes: null,
-        } as Stripe.InvoiceLineItem,
+        } as unknown as Stripe.InvoiceLineItem,
       ],
       has_more: false,
       url: '/v1/invoices/in_test123/lines',

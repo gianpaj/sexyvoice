@@ -21,7 +21,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-11-17.clover',
+  apiVersion: '2025-02-24.acacia',
 });
 
 // https://github.com/Domogo/t3-supabase-drizzle-app-starter
@@ -289,8 +289,8 @@ export async function refreshCustomerSubscriptionData(
       subscriptionId: subscription.id,
       status: subscription.status,
       priceId: firstSubscriptionItem?.price?.id ?? null,
-      currentPeriodEnd: firstSubscriptionItem?.current_period_end ?? null,
-      currentPeriodStart: firstSubscriptionItem?.current_period_start ?? null,
+      currentPeriodEnd: subscription.current_period_end ?? null,
+      currentPeriodStart: subscription.current_period_start ?? null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&

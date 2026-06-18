@@ -346,31 +346,22 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   let subscriptionId = '';
   try {
     // Only process subscription invoices, not one-time invoices
-    if (
-      !invoice.parent?.subscription_details ||
-      invoice.billing_reason === 'manual'
-    ) {
+    if (!invoice.subscription || invoice.billing_reason === 'manual') {
       console.log(
         '[STRIPE HOOK] Skipping non-subscription invoice or manual invoice',
       );
       return;
     }
     let paymentIntentId = '';
-    // Access subscription details through parent property
-    if (invoice.parent?.subscription_details) {
-      const subscriptionDetails = invoice.parent.subscription_details;
-
-      // The subscription ID is still available directly
-      subscriptionId =
-        typeof subscriptionDetails.subscription === 'string'
-          ? subscriptionDetails.subscription
-          : subscriptionDetails.subscription.id;
-    }
-    const paymentData = invoice.payments?.data?.[0];
-    if (paymentData?.payment?.payment_intent) {
-      const paymentIntent = paymentData.payment.payment_intent;
+    subscriptionId =
+      typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription.id;
+    if (invoice.payment_intent) {
       paymentIntentId =
-        typeof paymentIntent === 'string' ? paymentIntent : paymentIntent.id;
+        typeof invoice.payment_intent === 'string'
+          ? invoice.payment_intent
+          : invoice.payment_intent.id;
     }
 
     const customerId = invoice.customer as string;
@@ -508,8 +499,8 @@ export async function syncStripeDataToKV(customerId: string) {
       subscriptionId: subscription.id,
       status: subscription.status,
       priceId: firstSubscriptionItem?.price?.id ?? null,
-      currentPeriodEnd: firstSubscriptionItem?.current_period_end ?? null,
-      currentPeriodStart: firstSubscriptionItem?.current_period_start ?? null,
+      currentPeriodEnd: subscription.current_period_end ?? null,
+      currentPeriodStart: subscription.current_period_start ?? null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&

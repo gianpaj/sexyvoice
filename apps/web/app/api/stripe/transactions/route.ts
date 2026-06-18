@@ -45,9 +45,8 @@ export async function GET(request: NextRequest) {
         description: `Subscription: ${firstSubscriptionItem?.price?.nickname || 'Plan'} (${subscription.status})`,
         created: subscription.created,
         status: subscription.status,
-        current_period_end: firstSubscriptionItem?.current_period_end ?? null,
-        current_period_start:
-          firstSubscriptionItem?.current_period_start ?? null,
+        current_period_end: subscription.current_period_end ?? null,
+        current_period_start: subscription.current_period_start ?? null,
         invoice_id: typeof invoice === 'object' ? invoice.id : invoice,
       };
     });
