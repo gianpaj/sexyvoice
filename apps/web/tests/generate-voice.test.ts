@@ -460,9 +460,12 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsUsed).toBeGreaterThan(0);
       expect(json.creditsRemaining).toBeDefined();
 
+      // Duration parsing adds an extra async hop before persistence; wait for
+      // the after() callback to finish before asserting its side effects.
+      await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 48,
-        duration: '-1',
+        duration: '12',
         filename: expect.stringMatching(
           /^generated-audio-free\/tara-[a-f0-9]+\.wav$/,
         ),
@@ -579,9 +582,12 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.url).toContain('.mp3');
 
+      // Duration parsing adds an extra async hop before persistence; wait for
+      // the after() callback to finish before asserting its side effects.
+      await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 100,
-        duration: '-1',
+        duration: '12',
         filename: expect.stringMatching(
           /^generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
         ),
@@ -761,9 +767,12 @@ describe('Generate Voice API Route', () => {
       expect(saveAudioFile).toHaveBeenCalledOnce();
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
+      // Duration parsing adds an extra async hop before persistence; wait for
+      // the after() callback to finish before asserting its side effects.
+      await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 26,
-        duration: '-1',
+        duration: '12',
         filename: expect.stringMatching(
           /^generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
@@ -867,6 +876,7 @@ describe('Generate Voice API Route', () => {
           contents: [{ parts: [{ text: 'Hello world' }], role: 'user' }],
         }),
       );
+      await vi.waitFor(() => expect(saveAudioFile).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
           model: expectedModel,
@@ -927,9 +937,12 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(callCount).toBe(1);
+      // Duration parsing adds an extra async hop before persistence; wait for
+      // the after() callback to finish before asserting its side effects.
+      await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 26,
-        duration: '-1',
+        duration: '12',
         filename: expect.stringMatching(
           /^generated-audio-free\/kore-[a-f0-9]+\.wav$/,
         ),
@@ -1032,7 +1045,7 @@ describe('Generate Voice API Route', () => {
       expect(callCount).toBe(2);
       expect(saveAudioFile).toHaveBeenCalledWith({
         credits_used: 26,
-        duration: '-1',
+        duration: '12',
         filename: expect.stringMatching(
           /^generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),

@@ -2,11 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { Mistral } from '@mistralai/mistralai';
 import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
-import { parseBuffer } from 'music-metadata';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { generateHash } from '@/lib/audio';
+import { generateHash, getAudioDuration } from '@/lib/audio';
 import {
   AudioDecodeError,
   convertToWav,
@@ -297,28 +296,6 @@ async function generateBufferHash(buffer: Buffer): Promise<string> {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
 
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function getAudioDuration(
-  fileBuffer: Buffer,
-  mimeType: string,
-): Promise<number | null> {
-  try {
-    const metadata = await parseBuffer(
-      fileBuffer,
-      {
-        mimeType,
-        size: fileBuffer.length,
-      },
-      {
-        duration: true,
-      },
-    );
-
-    return metadata.format.duration ?? null;
-  } catch (_e) {
-    return null;
-  }
 }
 
 // ============================================================================

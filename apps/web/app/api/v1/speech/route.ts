@@ -27,7 +27,11 @@ import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
-import { convertToWav } from '@/lib/audio';
+import {
+  convertToWav,
+  formatDurationSeconds,
+  getAudioDuration,
+} from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -389,6 +393,8 @@ export async function POST(request: Request) {
     let uploadUrl: string;
     let replicateResponse: Prediction | undefined;
     let geminiResponse: GenerateContentResponse | null = null;
+    let generatedAudioBuffer: Buffer | undefined;
+    let generatedAudioMimeType: string | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -516,6 +522,8 @@ export async function POST(request: Request) {
       }
 
       const audioBuffer = convertToWav(data, mimeType);
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = 'audio/wav';
       uploadUrl = await uploadFileToR2(
         filename,
         audioBuffer,
@@ -534,6 +542,8 @@ export async function POST(request: Request) {
           language: voiceObj.language ?? 'en',
           codec,
         });
+        generatedAudioBuffer = audioBuffer;
+        generatedAudioMimeType = contentType;
         uploadUrl = await uploadFileToR2(
           filename,
           audioBuffer,
@@ -613,6 +623,8 @@ export async function POST(request: Request) {
         }
       }
       const audioBuffer = Buffer.concat(chunks);
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = 'audio/mpeg';
       uploadUrl = await uploadFileToR2(
         filename,
         audioBuffer,
@@ -625,6 +637,11 @@ export async function POST(request: Request) {
     if (!uploadUrl) {
       throw new Error('uploadUrl is empty after generation — this is a bug');
     }
+
+    const durationSeconds =
+      generatedAudioBuffer && generatedAudioMimeType
+        ? await getAudioDuration(generatedAudioBuffer, generatedAudioMimeType)
+        : null;
 
     let creditsUsed = estimatedCredits;
     const usageMetadata = extractMetadata(
@@ -665,7 +682,7 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: '-1',
+        duration: formatDurationSeconds(durationSeconds),
         credits_used: creditsUsed,
         usage: {
           ...usageMetadata,
@@ -686,7 +703,7 @@ export async function POST(request: Request) {
       apiKeyId: authResult.apiKeyId,
       model: modelUsed,
       inputChars: finalText.length,
-      durationSeconds: null,
+      durationSeconds,
       dollarAmount,
       unit: 'chars',
       quantity: finalText.length,

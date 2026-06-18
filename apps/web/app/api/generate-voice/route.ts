@@ -12,7 +12,11 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import { convertToWav, generateHash } from '@/lib/audio';
+import {
+  convertToWav,
+  generateHash,
+  resolveDurationString,
+} from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -283,6 +287,8 @@ export async function POST(request: Request) {
     let modelUsed = '';
     let uploadUrl = '';
     let selectedGrokCodec = outputCodec;
+    let generatedAudioBuffer: Buffer | undefined;
+    let generatedAudioMimeType: string | undefined;
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -537,6 +543,8 @@ export async function POST(request: Request) {
       });
 
       const audioBuffer = convertToWav(data, mimeType);
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = 'audio/wav';
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/wav');
     } else if (isGrokVoice) {
       modelUsed = voiceObj.model;
@@ -550,6 +558,8 @@ export async function POST(request: Request) {
           signal: abortController.signal,
         });
         selectedGrokCodec = codec;
+        generatedAudioBuffer = audioBuffer;
+        generatedAudioMimeType = contentType;
         uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
       } catch (error) {
         const errorObj = {
@@ -622,6 +632,8 @@ export async function POST(request: Request) {
 
       // Convert ReadableStream to Buffer before uploading
       const audioBuffer = Buffer.from(await new Response(output).arrayBuffer());
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = 'audio/mpeg';
 
       uploadUrl = await uploadFileToR2(filename, audioBuffer, 'audio/mpeg');
     }
@@ -678,7 +690,10 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: '-1',
+        duration: await resolveDurationString(
+          generatedAudioBuffer,
+          generatedAudioMimeType,
+        ),
         credits_used: creditsUsed,
         usage: {
           ...usage,
@@ -1034,6 +1049,8 @@ function streamGeminiTtsResponse({
       const uploadUrl = await uploadFileToR2(filename, wavBuffer, 'audio/wav');
       await redis.set(filename, uploadUrl);
 
+      const duration = await resolveDurationString(wavBuffer, 'audio/wav');
+
       // Billing — calculate credits from stream tokens when available.
       let creditsUsed = estimate;
       if (streamUsageMetadata?.totalTokenCount) {
@@ -1070,7 +1087,7 @@ function streamGeminiTtsResponse({
         predictionId: undefined,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: '-1',
+        duration,
         credits_used: creditsUsed,
         usage: streamUsage,
       });
