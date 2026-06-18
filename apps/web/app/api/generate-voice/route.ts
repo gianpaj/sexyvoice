@@ -12,7 +12,11 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import { convertToWav, generateHash, getAudioDuration } from '@/lib/audio';
+import {
+  convertToWav,
+  generateHash,
+  resolveDurationString,
+} from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -61,19 +65,6 @@ function isAbortError(error: unknown): boolean {
   if (error.name === 'AbortError') return true;
   const msg = error.message.toLowerCase();
   return /\babort(?:ed| ?error)\b/.test(msg);
-}
-
-/**
- * Resolve the audio duration as a string for persistence, falling back to
- * "-1" when the buffer/mime aren't available or the duration can't be parsed.
- */
-async function resolveDurationString(
-  buffer: Buffer | undefined,
-  mimeType: string | undefined,
-): Promise<string> {
-  if (!(buffer && mimeType)) return '-1';
-  const duration = await getAudioDuration(buffer, mimeType);
-  return String(duration ?? -1);
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration

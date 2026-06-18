@@ -27,7 +27,11 @@ import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
-import { convertToWav, getAudioDuration } from '@/lib/audio';
+import {
+  convertToWav,
+  formatDurationSeconds,
+  getAudioDuration,
+} from '@/lib/audio';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -678,7 +682,7 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: String(durationSeconds ?? -1),
+        duration: formatDurationSeconds(durationSeconds),
         credits_used: creditsUsed,
         usage: {
           ...usageMetadata,

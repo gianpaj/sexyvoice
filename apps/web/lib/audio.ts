@@ -106,3 +106,28 @@ export async function getAudioDuration(
     return null;
   }
 }
+
+/** Sentinel persisted in `audio_files.duration` when the duration is unknown. */
+const UNKNOWN_DURATION_SECONDS = -1;
+
+/**
+ * Format a parsed duration (seconds) for persistence as a string, falling back
+ * to the "-1" sentinel when the duration couldn't be determined.
+ */
+export function formatDurationSeconds(
+  seconds: number | null | undefined,
+): string {
+  return String(seconds ?? UNKNOWN_DURATION_SECONDS);
+}
+
+/**
+ * Resolve the audio duration as a string for persistence, falling back to the
+ * "-1" sentinel when the buffer/mime aren't available or parsing fails.
+ */
+export async function resolveDurationString(
+  buffer: Buffer | undefined,
+  mimeType: string | undefined,
+): Promise<string> {
+  if (!(buffer && mimeType)) return formatDurationSeconds(null);
+  return formatDurationSeconds(await getAudioDuration(buffer, mimeType));
+}
