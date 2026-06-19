@@ -7,6 +7,32 @@ import {
 } from './auth-callback-marker';
 import { AUTH_CALLBACK_COOKIE_NAME } from './constants';
 
+export const getSiteUrlOrigin = (): string | null => {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!siteUrl) {
+    return null;
+  }
+
+  try {
+    return new URL(siteUrl).origin;
+  } catch {
+    return null;
+  }
+};
+
+export const getRequestOrigin = (request: Request): string | null => {
+  const siteUrlOrigin = getSiteUrlOrigin();
+  if (siteUrlOrigin) {
+    return siteUrlOrigin;
+  }
+
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return null;
+  }
+};
+
 export const getSafeAuthRedirectPath = (
   value: string | null,
   origin: string,

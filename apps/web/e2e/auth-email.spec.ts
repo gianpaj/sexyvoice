@@ -1,99 +1,39 @@
-import { expect, type Route, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-const corsHeaders = (origin: string) => ({
-  'access-control-allow-headers':
-    'authorization, apikey, content-type, x-client-info, x-supabase-api-version',
-  'access-control-allow-methods': 'POST, OPTIONS',
-  'access-control-allow-origin': origin,
-});
-
-const mockSignupUser = (email: string) => {
-  const now = new Date().toISOString();
-
-  return {
-    id: '11111111-1111-4111-8111-111111111111',
-    aud: 'authenticated',
-    role: 'authenticated',
-    email,
-    phone: '',
-    app_metadata: {
-      provider: 'email',
-      providers: ['email'],
-    },
-    user_metadata: {},
-    identities: [
-      {
-        id: '11111111-1111-4111-8111-111111111111',
-        user_id: '11111111-1111-4111-8111-111111111111',
-        identity_id: '22222222-2222-4222-8222-222222222222',
-        provider: 'email',
-        email,
-        identity_data: {
-          email,
-          email_verified: false,
-          phone_verified: false,
-          sub: '11111111-1111-4111-8111-111111111111',
-        },
-        last_sign_in_at: now,
-        created_at: now,
-        updated_at: now,
-      },
-    ],
-    created_at: now,
-    updated_at: now,
-  };
-};
-
 test.describe('Email auth links', () => {
-  test.afterEach(async ({ page }) => {
-    await page.unroute('**/*');
-  });
-
   test('email signup sends a final destination instead of /auth/callback', async ({
     page,
   }) => {
     const email = `auth-email-${Date.now()}@example.com`;
-    let signupRedirectTo: string | null = null;
-    let signupBody: Record<string, unknown> | null = null;
-
-    await page.route('**/auth/v1/signup**', async (route: Route) => {
-      const request = route.request();
-      const origin = new URL(page.url()).origin;
-
-      if (request.method() === 'OPTIONS') {
-        await route.fulfill({
-          status: 204,
-          headers: corsHeaders(origin),
-        });
-        return;
-      }
-
-      const requestUrl = new URL(request.url());
-      signupRedirectTo = requestUrl.searchParams.get('redirect_to');
-      signupBody = request.postDataJSON();
-
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: corsHeaders(origin),
-        body: JSON.stringify(mockSignupUser(email)),
-      });
-    });
 
     await page.goto('/en/signup');
     const appOrigin = new URL(page.url()).origin;
 
     await page.getByLabel('Email address').fill(email);
     await page.getByLabel('Password').fill('Playwright-password-123');
+
+    const signupResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/auth/signup') &&
+        response.request().method() === 'POST',
+    );
+
     await page.getByRole('button', { name: 'Sign up', exact: true }).click();
 
-    await expect.poll(() => signupRedirectTo).toBe(`${appOrigin}/en/dashboard`);
-    expect(signupRedirectTo).not.toContain('/auth/callback');
+    const signupResponse = await signupResponsePromise;
+    const signupBody = JSON.parse(signupResponse.request().postData() ?? '{}');
+    const signupPayload = (await signupResponse.json()) as {
+      data?: { emailRedirectTo?: string };
+    };
+
+    expect(signupPayload.data?.emailRedirectTo).toBe(`${appOrigin}/en/dashboard`);
+    expect(signupPayload.data?.emailRedirectTo).not.toContain('/auth/callback');
     expect(signupBody).toMatchObject({
       email,
       password: 'Playwright-password-123',
+      lang: 'en',
     });
     await expect(
       page.getByText('Check your email inbox for verification'),

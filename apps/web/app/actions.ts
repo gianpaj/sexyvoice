@@ -1,11 +1,11 @@
 'use server';
 import * as Sentry from '@sentry/nextjs';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
+import { getSiteUrlOrigin } from '@/lib/supabase/auth-redirect';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
@@ -32,8 +32,7 @@ export const forgotPasswordAction = async (formData: FormData) => {
   }
 
   const supabase = await createClient();
-  const origin =
-    (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_SITE_URL;
+  const origin = getSiteUrlOrigin();
   const callbackUrl = formData.get('callbackUrl')?.toString();
   const updatePasswordPath = `/${lang}/protected/update-password?email=${encodeURIComponent(email)}`;
 
