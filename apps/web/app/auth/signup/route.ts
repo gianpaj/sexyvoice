@@ -4,6 +4,9 @@ import z from 'zod';
 import { isDisposableEmail } from '@/lib/disposable-email';
 import { isE2E } from '@/lib/e2e-mode';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import {
+  getRequestOrigin,
+} from '@/lib/supabase/auth-redirect';
 import { createClient } from '@/lib/supabase/server';
 
 interface ParsedError {
@@ -50,20 +53,6 @@ function parseSignUpError(
   return { message: errorMessage };
 }
 
-const getRequestOrigin = (request: Request) => {
-  const originHeader = request.headers.get('origin')?.trim();
-  if (originHeader) {
-    return originHeader;
-  }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (siteUrl) {
-    return new URL(siteUrl).origin;
-  }
-
-  return new URL(request.url).origin;
-};
-
 const getSignupEmailRedirectTo = (origin: string, lang: Locale) =>
   new URL(`/${lang}/dashboard`, origin).toString();
 
@@ -96,7 +85,15 @@ export async function POST(request: Request) {
   }
 
   const { email, password, lang } = result.data;
-  const emailRedirectTo = getSignupEmailRedirectTo(getRequestOrigin(request), lang);
+  const origin = getRequestOrigin(request);
+  if (!origin) {
+    return NextResponse.json(
+      { error: { message: 'Server configuration error' } },
+      { status: 500 },
+    );
+  }
+
+  const emailRedirectTo = getSignupEmailRedirectTo(origin, lang);
 
   if (isDisposableEmail(email)) {
     return NextResponse.json(
