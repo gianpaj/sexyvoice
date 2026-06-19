@@ -1,4 +1,3 @@
-import type { Node as PMNode } from '@tiptap/pm/model';
 import { NodeSelection } from '@tiptap/pm/state';
 import type { Editor } from '@tiptap/react';
 
@@ -75,74 +74,6 @@ export const isNodeInSchema = (
   if (!editor?.schema) return false;
   return editor.schema.spec.nodes.get(nodeName) !== undefined;
 };
-
-/**
- * Checks if a value is a valid number (not null, undefined, or NaN).
- */
-export function isValidPosition(pos: number | null | undefined): pos is number {
-  return typeof pos === 'number' && pos >= 0;
-}
-
-function findNodeAtPosition(editor: Editor, position: number) {
-  try {
-    const node = editor.state.doc.nodeAt(position);
-    if (!node) {
-      console.warn(`No node found at position ${position}`);
-      return null;
-    }
-    return node;
-  } catch (error) {
-    console.error(`Error getting node at position ${position}:`, error);
-    return null;
-  }
-}
-
-/**
- * Finds the position and instance of a node in the document.
- */
-export function findNodePosition(props: {
-  editor: Editor | null;
-  node?: PMNode | null;
-  nodePos?: number | null;
-}): { pos: number; node: PMNode } | null {
-  const { editor, node, nodePos } = props;
-
-  if (!(editor && editor.state?.doc)) return null;
-
-  const hasValidNode = node !== undefined && node !== null;
-  const hasValidPos = isValidPosition(nodePos);
-
-  if (!(hasValidNode || hasValidPos)) {
-    return null;
-  }
-
-  if (hasValidNode) {
-    let foundPos = -1;
-    let foundNode: PMNode | null = null;
-
-    editor.state.doc.descendants((currentNode, pos) => {
-      if (currentNode === node) {
-        foundPos = pos;
-        foundNode = currentNode;
-        return false;
-      }
-      return true;
-    });
-
-    if (foundPos !== -1 && foundNode !== null) {
-      return { pos: foundPos, node: foundNode };
-    }
-  }
-
-  if (hasValidPos) {
-    const nodeAtPos = findNodeAtPosition(editor, nodePos!);
-    if (nodeAtPos) {
-      return { pos: nodePos!, node: nodeAtPos };
-    }
-  }
-
-  return null;
-}
 
 /**
  * Determines whether the current selection contains a node whose type matches

@@ -4,6 +4,9 @@ import { generateApiKey, hashApiKey } from '@/lib/api/auth';
 
 // setup.ts sets API_KEY_HMAC_SECRET globally for all tests; no beforeAll needed.
 
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_API_KEY = `sk_live_${TEST_API_KEY_SUFFIX}`;
+
 describe('external API auth helpers', () => {
   it('generates key in expected format with prefix and hash', () => {
     const generated = generateApiKey();
@@ -16,13 +19,13 @@ describe('external API auth helpers', () => {
   });
 
   it('hashApiKey is deterministic', () => {
-    const key = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+    const key = TEST_API_KEY;
     expect(hashApiKey(key)).toBe(hashApiKey(key));
   });
 
   it('hashApiKey produces different output for different secrets', () => {
     const original = process.env.API_KEY_HMAC_SECRET;
-    const key = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+    const key = TEST_API_KEY;
 
     const hashWithOriginal = hashApiKey(key);
 

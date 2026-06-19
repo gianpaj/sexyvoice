@@ -1,7 +1,12 @@
 venv
+.cache
 *.csv
 __pycache__
+*.mp4
+
 # Audio downloads for analysis scripts
 audio-downloads/
+generated-speech/
 
 *.json
+!package.json

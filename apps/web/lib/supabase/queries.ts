@@ -1,6 +1,4 @@
-'use server';
-
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -166,6 +164,22 @@ export async function getVoiceIdByName(
   return data;
 }
 
+export async function getVoiceById(
+  voiceId: string,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('id', voiceId)
+    .eq('is_public', true)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
 export async function reduceCredits({
   userId,
   amount,
@@ -267,7 +281,7 @@ export const insertUsageEvent = async (
       .single();
 
     if (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         extra: {
           params,
           context: 'insertUsageEvent',
@@ -279,7 +293,7 @@ export const insertUsageEvent = async (
 
     return data?.id ?? null;
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: {
         params,
         context: 'insertUsageEvent',
@@ -291,15 +305,15 @@ export const insertUsageEvent = async (
 };
 
 export const getUserById = async (userId: string) => {
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data } = await getUserByIdWithError(userId);
 
   return data;
+};
+
+export const getUserByIdWithError = async (userId: string) => {
+  const supabase = await createClient();
+
+  return supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
@@ -353,7 +367,7 @@ export const insertSubscriptionCreditTransaction = async (
       });
       return;
     }
-  } catch (_error) {
+  } catch {
     // Transaction doesn't exist, continue with insertion
   }
 
@@ -379,12 +393,19 @@ export const insertSubscriptionCreditTransaction = async (
     metadata: {
       dollarAmount,
       isFirstSubscription,
-      // Figure out how to send promo metadata with a Stripe pricing table
-      // ...(promo && { promo }),
     },
   });
 
   if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Subscription transaction already exists', {
+        userId,
+        paymentIntentId,
+        subscriptionId,
+      });
+      return;
+    }
+
     console.error('Error inserting subscription transaction:', {
       userId,
       subscriptionId,
@@ -425,7 +446,7 @@ export const insertTopupCreditTransaction = async (
       });
       return;
     }
-  } catch (_error) {
+  } catch {
     // Transaction doesn't exist, continue with insertion
   }
 
@@ -454,11 +475,28 @@ export const insertTopupCreditTransaction = async (
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Topup transaction already exists', {
+        userId,
+        paymentIntentId,
+      });
+      return;
+    }
+
+    throw error;
+  }
 
   // Update user's credit balance using the database function
   await updateUserCredits(userId, creditAmount);
 };
+
+const isCreditTransactionReferenceConflict = (error: {
+  code?: string;
+  message?: string;
+}): boolean =>
+  error.code === '23505' &&
+  /unique_reference|reference_id/i.test(error.message ?? '');
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
@@ -518,7 +556,7 @@ export const getTotalCallDurationSeconds = async (
     .eq('user_id', userId);
 
   if (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: { userId, context: 'getTotalCallDurationSeconds' },
     });
     throw error;
@@ -576,6 +614,24 @@ export async function getVoiceIdByNameAdmin(
     .from('voices')
     .select('id, name, language, model')
     .eq('name', voiceName)
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function getVoiceByIdAdmin(
+  voiceId: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('id', voiceId)
+    .eq('feature', 'tts')
     .eq('is_public', isPublic)
     .single();
 

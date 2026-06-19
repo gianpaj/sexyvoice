@@ -1,16 +1,12 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface Props {
-  dict: {
-    convert: string;
-    converting: string;
-    progress: string;
-  };
   disabled: boolean;
   isConverting: boolean;
   onClick: () => void;
@@ -22,8 +18,9 @@ export function ConvertButton({
   isConverting,
   disabled,
   progress,
-  dict,
 }: Props) {
+  const t = useTranslations('audioConverter.convertButton');
+
   return (
     <div className="space-y-2">
       <Button
@@ -36,7 +33,6 @@ export function ConvertButton({
         disabled={disabled || isConverting}
         onClick={onClick}
       >
-        {/* Progress bar background */}
         {isConverting && (
           <div
             className="absolute inset-0 bg-primary-foreground/20 transition-all duration-300 ease-out"
@@ -46,10 +42,10 @@ export function ConvertButton({
         {isConverting ? (
           <span className="relative flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
-            {dict.converting} {progress > 0 && `${Math.round(progress)}%`}
+            {t('converting')} {progress > 0 && `${Math.round(progress)}%`}
           </span>
         ) : (
-          <span>{dict.convert}</span>
+          <span>{t('convert')}</span>
         )}
       </Button>
     </div>

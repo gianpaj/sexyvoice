@@ -32,16 +32,21 @@ vi.mock('lucide-react/dynamic', () => ({
   DynamicIcon: ({ name }: { name: string }) => <span data-icon={name} />,
 }));
 
-vi.mock('@/hooks/use-connection', () => ({
-  useConnection: () => ({
-    dict: {
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => {
+    const labels: Record<string, string> = {
       sceneLabel: 'Scene',
       scenePlaceholder: 'Choose scene',
       sceneNone: 'No scene',
       sceneUpgradeRequired: 'Upgrade to use scenes',
       sceneTextLabel: 'Scene text',
-    },
-  }),
+    };
+    return labels[key] ?? key;
+  },
+}));
+
+vi.mock('@/hooks/use-connection', () => ({
+  useConnection: () => ({}),
 }));
 
 vi.mock('@/hooks/use-playground-state', () => ({

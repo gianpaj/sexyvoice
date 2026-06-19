@@ -1,8 +1,8 @@
 export const MAX_FREE_GENERATIONS = 10;
 export const AUTH_CALLBACK_COOKIE_NAME = 'sv_auth_callback_ok';
 
-export const MINIMUM_CREDITS_FOR_CALL = 700;
-export const CREDITS_PER_MINUTE = 350;
+export const MINIMUM_CREDITS_FOR_CALL = 1000;
+export const CREDITS_PER_MINUTE = 1000;
 
 // 5 minutes in seconds - free users can only make calls up to this limit
 export const FREE_USER_CALL_LIMIT_SECONDS = 5 * 60;

@@ -88,7 +88,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <a
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href="https://sexyvoice.checkly-dashboards.com/"
+                  href="https://status.sexyvoice.ai"
                   rel="noopener noreferrer"
                   target="_blank"
                 >

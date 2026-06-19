@@ -4,15 +4,14 @@ import type { User } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
-import { usePostHog } from 'posthog-js/react';
 import { useEffect } from 'react';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { initPostHog } from '@/lib/posthog-browser';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
-import { hasUserPaid } from '@/lib/supabase/queries';
-import { getCredits } from '@/lib/supabase/queries.client';
+import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
@@ -32,7 +31,6 @@ function CreditsSection({
   showMinutes?: boolean;
 }) {
   const t = useTranslations('creditsSection');
-  const posthog = usePostHog();
   const supabase = useSupabaseBrowser();
   const { isMobile, toggleSidebar } = useSidebar();
   const totalCredits =
@@ -59,7 +57,7 @@ function CreditsSection({
         throw new Error('User not found');
       }
 
-      const userHasPaid = await hasUserPaid(user.id);
+      const userHasPaid = await hasUserPaid(supabase, user.id);
       return { user, userHasPaid };
     };
 
@@ -70,12 +68,16 @@ function CreditsSection({
     ) => {
       const creditsLeft = credits?.amount ?? -1;
 
-      posthog.identify(user.id, {
-        email: user.email,
-        name: user.user_metadata.full_name || user.user_metadata.username,
-        creditsLeft,
-        userHasPaid,
-      });
+      initPostHog()
+        .then((posthog) => {
+          posthog?.identify(user.id, {
+            email: user.email,
+            name: user.user_metadata.full_name || user.user_metadata.username,
+            creditsLeft,
+            userHasPaid,
+          });
+        })
+        .catch(() => undefined);
 
       if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
         return;
@@ -109,10 +111,15 @@ function CreditsSection({
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, [creditsData, lang, posthog, supabase]);
+  }, [creditsData, lang, supabase]);
 
   if (!creditsData) {
-    return <Skeleton className="h-[150px] w-full rounded-lg" />;
+    return (
+      <Skeleton
+        className="h-[150px] w-full rounded-lg"
+        data-visual-test-no-radius
+      />
+    );
   }
 
   const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
@@ -121,8 +128,9 @@ function CreditsSection({
     <div
       className="overflow-hidden rounded-lg bg-secondary px-4 py-2 text-white transition-all group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:p-0"
       data-testid="credits-section"
+      data-visual-test-no-radius
     >
-      <div className="mb-4 flex w-50 items-center justify-between">
+      <div className="mb-4 flex w-min-50 items-center justify-between">
         <div className="flex items-center">
           <span className="whitespace-nowrap text-gray-200 text-xs">
             {t('title')}
@@ -150,18 +158,20 @@ function CreditsSection({
         <div className="flex flex-1 flex-col gap-1">
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('totalCredits')}</span>
-            <span className="font-medium">{totalCredits.toLocaleString()}</span>
+            <span className="font-medium" data-visual-test="transparent">
+              {totalCredits.toLocaleString()}
+            </span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-gray-200">{t('remainingCredits')}</span>
-            <span className="font-medium">
+            <span className="font-medium" data-visual-test="transparent">
               {creditsData.amount.toLocaleString()}
             </span>
           </div>
           {showMinutes && (
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-200">{t('remainingTime')}</span>
-              <span className="font-medium">
+              <span className="font-medium" data-visual-test="transparent">
                 ~{minutesRemaining.toLocaleString()} min
               </span>
             </div>

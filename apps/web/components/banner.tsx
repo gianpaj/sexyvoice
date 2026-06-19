@@ -6,7 +6,6 @@ import { Fragment, useEffect, useState } from 'react';
 
 import { dismissBannerAction } from '@/app/[lang]/actions/banners';
 import { Button } from '@/components/ui/button';
-import { useIsMobileSizes } from '@/hooks/use-mobile';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import { getCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
@@ -53,29 +52,31 @@ export function Banner({
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
-  const { innerWidth } = useIsMobileSizes();
 
   useEffect(() => {
     let isCancelled = false;
 
+    // Hide immediately so a previously-visible banner doesn't flash while the
+    // async cookie check for the new banner resolves.
     setIsVisible(false);
 
-    if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
-      setIsVisible(true);
-      return;
-    }
+    const resolveVisibility = async () => {
+      if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
+        return true;
+      }
 
-    const checkCookies = async () => {
       const cookieValues = await Promise.all(
         banner.dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
       );
 
-      if (!isCancelled && cookieValues.every((cookieValue) => !cookieValue)) {
-        setIsVisible(true);
-      }
+      return cookieValues.every((cookieValue) => !cookieValue);
     };
 
-    checkCookies();
+    resolveVisibility().then((visible) => {
+      if (!isCancelled) {
+        setIsVisible(visible);
+      }
+    });
 
     return () => {
       isCancelled = true;
@@ -129,8 +130,6 @@ export function Banner({
     return null;
   }
 
-  const isLongText = banner.text.length > 100;
-
   return (
     <div
       className={cn('w-full', {
@@ -139,20 +138,11 @@ export function Banner({
       data-promo-theme={banner.theme}
     >
       <div
-        className={cn(
-          'relative mx-auto flex-inline items-center justify-center gap-32 px-4 py-4 pb-3 text-white lg:container portrait:container sm:flex sm:py-8',
-          isLongText ? 'sm:h-16' : 'sm:h-8',
-        )}
+        className="relative mx-auto flex flex-col items-center gap-3 px-4 text-white lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4"
+        style={{ paddingBlock: 'clamp(0.5rem, 1.5vw, 1rem)' }}
       >
-        <div className="flex flex-col items-center justify-stretch gap-3 text-left sm:flex-row sm:gap-10 sm:text-center">
-          <p
-            className={cn(
-              'truncate whitespace-pre-line text-wrap font-medium text-sm sm:whitespace-normal md:text-base',
-              {
-                'sm:text-nowrap': !isLongText && innerWidth > 1000,
-              },
-            )}
-          >
+        <div className="flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6">
+          <p className="whitespace-pre-line text-wrap font-medium text-sm md:text-base">
             {banner.text}
           </p>
 
@@ -186,7 +176,7 @@ export function Banner({
             )}
         </div>
 
-        <div className="relative right-0 mt-3 flex items-center justify-center gap-2 px-4 md:absolute md:mt-0">
+        <div className="flex shrink-0 items-center justify-center gap-2">
           <Button
             asChild
             className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
@@ -200,7 +190,7 @@ export function Banner({
           {banner.dismissible && (
             <Button
               aria-label={banner.ariaLabelDismiss}
-              className="absolute right-0 md:relative"
+              className="shrink-0"
               onClick={handleDismissBanner}
               size="sm"
               variant="ghost"

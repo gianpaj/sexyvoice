@@ -22,6 +22,11 @@ Send your API key as a Bearer token:
 
 ## 2. Generate Speech
 
+You can select a voice in either of two ways:
+
+- Pass `voice` + `model` for name-based lookup.
+- Pass `voiceId` from `GET /api/v1/voices`; the API derives the model from that voice ID.
+
 ### Using `gpro` model
 
 ```bash
@@ -30,10 +35,41 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "gpro",
-    "voice": "poe",
+    "voice": "achernar",
     "input": "Hello from SexyVoice API",
     "style": "calm",
     "seed": 1234
+  }'
+```
+
+### Using G31 (Gemini 3.1 Flash TTS)
+
+Gemini 3.1 supports 70+ languages and inline audio expression tags like `[cheerfully]`, `[whispering]`, and `[pause]`. Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`; `gpro` voices stay on Gemini 2.5 Pro.
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "gpro31",
+    "voice": "achernar",
+    "input": "[cheerfully] Hello from Gemini 3.1! [pause] This supports 70+ languages.",
+    "seed": 1234
+  }'
+```
+
+### Using a `voiceId`
+
+Use `voiceId` when you want a stable identifier from `GET /api/v1/voices` or when the same voice name exists for more than one model. Do not include `voice` or `model` in the same request.
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "voiceId": "390f5864-111b-4795-81ea-7026a1e64cfc",
+    "input": "Hello from a voice ID",
+    "style": "calm"
   }'
 ```
 
@@ -92,5 +128,5 @@ Response includes:
 
 - Read full [API Reference](/api-reference/api)
 - Browse [Grok Voices & Speech Tags](/guides/grok-speech-tags) for the full tag reference
-- Add retries for `429` and transient `500` errors
+- Retry transient `503 provider_unavailable` responses with backoff, and treat `429 provider_quota_exceeded` as temporary provider quota exhaustion
 - Store `request-id` with your logs for support and tracing

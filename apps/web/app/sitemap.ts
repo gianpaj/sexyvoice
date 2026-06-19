@@ -82,18 +82,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const lastModified = getFileLastModified(file);
       const priority = getPriority(url);
 
+      // Emit hreflang alternates for static pages that exist in every locale:
+      // the homepage and the tools pages. (Dynamic routes like [policySlug]
+      // are not guaranteed to be translated, so they are left out to avoid
+      // advertising non-existent localized URLs.)
+      const hasLocalizedAlternates = path === '/' || path.startsWith('/tools/');
+      const alternatePath = path === '/' ? '' : path;
+
       routes.push({
         url,
         lastModified,
         priority,
-        // Emit hreflang alternates for the root homepage only
-        ...(path === '/'
+        ...(hasLocalizedAlternates
           ? {
               alternates: {
                 languages: Object.fromEntries(
                   routing.locales
                     .filter((locale) => locale !== lang)
-                    .map((locale) => [locale, `${BASE_URL}/${locale}`]),
+                    .map((locale) => [
+                      locale,
+                      `${BASE_URL}/${locale}${alternatePath}`,
+                    ]),
                 ),
               },
             }

@@ -24,6 +24,7 @@ export default async function DashboardLayout(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
+  // Server-side QueryClient for data prefetching, safe to create per request
   const queryClient = new QueryClient();
   const supabase = await createClient();
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
@@ -63,7 +64,6 @@ export default async function DashboardLayout(props: {
         <DashboardUI
           activeBanner={activeBanner}
           creditTransactions={creditTransactions ?? []}
-          dict={messages}
           isPaidUser={isPaidUser}
           lang={lang}
           userId={user.id}

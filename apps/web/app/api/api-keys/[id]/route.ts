@@ -6,7 +6,10 @@ export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const supabase = await createClient();
+  const [{ id }, supabase] = await Promise.all([
+    context.params,
+    createClient(),
+  ]);
   const {
     data: { user },
     error: authError,
@@ -16,7 +19,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await context.params;
   const { data, error } = await supabase
     .from('api_keys')
     .update({ is_active: false })

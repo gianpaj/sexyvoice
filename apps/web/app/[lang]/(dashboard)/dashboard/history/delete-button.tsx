@@ -2,7 +2,7 @@
 
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -31,7 +31,7 @@ export function DeleteButton({
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     setIsDeleting(true);
     try {
       await handleDeleteAction(id);
@@ -45,7 +45,7 @@ export function DeleteButton({
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [id, handleCloseDropdown, router]);
 
   return (
     <AlertDialog onOpenChange={setIsOpen} open={isOpen}>

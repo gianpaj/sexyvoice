@@ -41,7 +41,7 @@ const GROK_CREDITS_PER_BUCKET = 100;
 const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro') {
+  if (model === 'gpro' || model === 'gpro31') {
     return 'gemini';
   }
 
@@ -96,7 +96,7 @@ function getCreditMultiplier(voice: string, model?: string): number {
       break;
   }
 
-  if (model === 'gpro') {
+  if (model === 'gpro' || model === 'gpro31') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
@@ -139,6 +139,45 @@ export function calculateGrokTtsDollarAmount(text: string): number {
     (normalizedLength / 1_000_000) * GROK_TTS_DOLLARS_PER_MILLION_CHARS;
 
   return Number.parseFloat(rawAmount.toFixed(6));
+}
+
+const GEMINI_TTS_FLASH_INPUT_DOLLARS_PER_MILLION_TOKENS = 0.5;
+const GEMINI_TTS_FLASH_OUTPUT_DOLLARS_PER_MILLION_TOKENS = 10;
+const GEMINI_TTS_PRO_INPUT_DOLLARS_PER_MILLION_TOKENS = 1;
+const GEMINI_TTS_PRO_OUTPUT_DOLLARS_PER_MILLION_TOKENS = 20;
+
+function normalizeTokenCount(tokenCount: number | string): number {
+  const parsedCount =
+    typeof tokenCount === 'number' ? tokenCount : Number.parseFloat(tokenCount);
+
+  if (!Number.isFinite(parsedCount)) {
+    return 0;
+  }
+
+  return Math.max(0, parsedCount);
+}
+
+export function calculateGeminiTtsDollarAmount({
+  model,
+  promptTokenCount,
+  candidatesTokenCount,
+}: {
+  candidatesTokenCount: number | string;
+  model: string;
+  promptTokenCount: number | string;
+}): number {
+  const isFlashModel = model.startsWith('gemini-2.5-flash');
+  const inputRate = isFlashModel
+    ? GEMINI_TTS_FLASH_INPUT_DOLLARS_PER_MILLION_TOKENS
+    : GEMINI_TTS_PRO_INPUT_DOLLARS_PER_MILLION_TOKENS;
+  const outputRate = isFlashModel
+    ? GEMINI_TTS_FLASH_OUTPUT_DOLLARS_PER_MILLION_TOKENS
+    : GEMINI_TTS_PRO_OUTPUT_DOLLARS_PER_MILLION_TOKENS;
+  const inputCost = normalizeTokenCount(promptTokenCount) * inputRate;
+  const outputCost = normalizeTokenCount(candidatesTokenCount) * outputRate;
+  const microDollarAmount = Math.round(inputCost + outputCost);
+
+  return Number.parseFloat((microDollarAmount / 1_000_000).toFixed(6));
 }
 
 export function estimateCredits(
@@ -241,6 +280,7 @@ export const ERROR_CODES = {
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
+  NO_AUDIO_DATA: 'NO_AUDIO_DATA',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   XAI_TTS_ERROR: 'XAI_TTS_ERROR',
   GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
@@ -252,12 +292,13 @@ export const ERROR_CODES = {
  * Maps error codes to appropriate HTTP status codes.
  * - 422: Client input issues (content policy violations)
  * - 500: Server/upstream errors (third-party API failures)
- * - 503: Service temporarily unavailable (quota exceeded)
+ * - 503: Service temporarily unavailable (quota exceeded / transient upstream)
  */
-export const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
+const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   PROHIBITED_CONTENT: 422,
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
+  NO_AUDIO_DATA: 503,
   REPLICATE_ERROR: 500,
   XAI_TTS_ERROR: 500,
   GEMINI_PROVIDER_UNAVAILABLE: 503,
@@ -309,6 +350,9 @@ export const getErrorMessage = (
     },
     OTHER_GEMINI_BLOCK: {
       default: 'Voice generation failed, please retry',
+    },
+    NO_AUDIO_DATA: {
+      default: 'Voice generation returned no audio, please retry',
     },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',

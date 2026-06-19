@@ -32,6 +32,9 @@ export class CreditsPage {
   readonly standardCard: Locator;
   readonly proCard: Locator;
   readonly buyButtons: Locator;
+  readonly starterPrice: Locator;
+  readonly standardPrice: Locator;
+  readonly proPrice: Locator;
 
   // Credit history section
   readonly historyTitle: Locator;
@@ -74,6 +77,18 @@ export class CreditsPage {
       .first();
     this.proCard = this.packageCards.filter({ hasText: /pro/i }).first();
     this.buyButtons = page.getByRole('button', { name: /buy credits/i });
+    this.starterPrice = this.starterCard
+      .locator('span')
+      .filter({ hasText: /^\$\d+/ })
+      .first();
+    this.standardPrice = this.standardCard
+      .locator('span')
+      .filter({ hasText: /^\$\d+/ })
+      .first();
+    this.proPrice = this.proCard
+      .locator('span')
+      .filter({ hasText: /^\$\d+/ })
+      .first();
 
     // Credit history section
     this.historyTitle = page.getByRole('heading', { name: /history/i });
@@ -164,11 +179,13 @@ export class CreditsPage {
    * Dismiss the topup status alert
    */
   async dismissAlert() {
-    const visibleAlert = (await this.successAlert.isVisible())
-      ? this.successAlert
-      : (await this.canceledAlert.isVisible())
-        ? this.canceledAlert
-        : this.errorAlert;
+    let visibleAlert = this.errorAlert;
+
+    if (await this.successAlert.isVisible()) {
+      visibleAlert = this.successAlert;
+    } else if (await this.canceledAlert.isVisible()) {
+      visibleAlert = this.canceledAlert;
+    }
 
     await visibleAlert
       .getByRole('button', { name: /dismiss/i })
@@ -198,24 +215,9 @@ export class CreditsPage {
    * Verify each package card shows a dollar amount
    */
   async expectPackagePricesVisible() {
-    await expect(
-      this.starterCard
-        .locator('span')
-        .filter({ hasText: /^\$\d+/ })
-        .first(),
-    ).toBeVisible();
-    await expect(
-      this.standardCard
-        .locator('span')
-        .filter({ hasText: /^\$\d+/ })
-        .first(),
-    ).toBeVisible();
-    await expect(
-      this.proCard
-        .locator('span')
-        .filter({ hasText: /^\$\d+/ })
-        .first(),
-    ).toBeVisible();
+    await expect(this.starterPrice).toBeVisible();
+    await expect(this.standardPrice).toBeVisible();
+    await expect(this.proPrice).toBeVisible();
   }
 
   /**

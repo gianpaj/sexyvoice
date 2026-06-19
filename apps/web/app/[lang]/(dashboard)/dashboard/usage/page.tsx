@@ -1,4 +1,5 @@
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
@@ -14,6 +15,7 @@ export default async function UsagePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
+  const t = await getTranslations({ locale: lang, namespace: 'usage' });
 
   const supabase = await createClient();
 
@@ -28,8 +30,6 @@ export default async function UsagePage(props: {
     getAllTimeUsageSummary(supabase, user.id),
   ]);
 
-  const dict = ((await getMessages({ locale: lang })) as IntlMessages).usage;
-
   // Get month name for display
   const currentMonth = new Date().toLocaleDateString(lang, {
     month: 'long',
@@ -38,49 +38,51 @@ export default async function UsagePage(props: {
 
   // Source type labels for display
   const sourceTypeLabels: Record<UsageSourceType, string> = {
-    tts: dict.summary.byType.tts,
-    voice_cloning: dict.summary.byType.voice_cloning,
-    live_call: dict.summary.byType.live_call,
-    audio_processing: dict.summary.byType.audio_processing,
+    tts: t('summary.byType.tts'),
+    voice_cloning: t('summary.byType.voice_cloning'),
+    live_call: t('summary.byType.live_call'),
+    audio_processing: t('summary.byType.audio_processing'),
     api_tts: 'API TTS',
     api_voice_cloning: 'API Voice Cloning',
   };
 
   return (
     <div className="container mx-auto pb-10">
-      <h2 className="mb-6 font-bold text-2xl">{dict.header}</h2>
+      <h2 className="mb-6 font-bold text-2xl">{t('header')}</h2>
 
       {/* Summary Cards */}
       <div className="mb-8 grid gap-4 md:grid-cols-2">
         {/* Monthly Summary */}
         <SummaryCard
           bySourceType={monthlySummary.bySourceType}
-          noDataLabel={dict.summary.noData}
+          noDataLabel={t('summary.noData')}
           sourceTypeLabels={sourceTypeLabels}
           subtitle={currentMonth}
-          title={dict.summary.title}
+          title={t('summary.title')}
           totalCredits={monthlySummary.totalCredits}
-          totalCreditsLabel={dict.summary.totalCredits}
+          totalCreditsLabel={t('summary.totalCredits')}
           totalOperations={monthlySummary.totalOperations}
-          totalOperationsLabel={dict.summary.operations}
+          totalOperationsLabel={t('summary.operations')}
         />
 
         {/* All-time Summary */}
         <SummaryCard
           bySourceType={allTimeSummary.bySourceType}
-          noDataLabel={dict.summary.noData}
+          noDataLabel={t('summary.noData')}
           sourceTypeLabels={sourceTypeLabels}
-          subtitle={dict.summary.allTime}
-          title={dict.summary.totalTitle}
+          subtitle={t('summary.allTime')}
+          title={t('summary.totalTitle')}
           totalCredits={allTimeSummary.totalCredits}
-          totalCreditsLabel={dict.summary.totalCredits}
+          totalCreditsLabel={t('summary.totalCredits')}
           totalOperations={allTimeSummary.totalOperations}
-          totalOperationsLabel={dict.summary.operations}
+          totalOperationsLabel={t('summary.operations')}
         />
       </div>
 
       {/* Data Table */}
-      <DataTable dict={dict} />
+      <Suspense>
+        <DataTable />
+      </Suspense>
     </div>
   );
 }

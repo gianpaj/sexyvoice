@@ -1,4 +1,11 @@
 {
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/next",
+    "ultracite/biome/react",
+    "ultracite/biome/tanstack",
+    "ultracite/biome/vitest"
+  ],
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": true,
@@ -27,7 +34,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useLiteralEnumMembers": "error",
         "useNodejsImportProtocol": "error",
@@ -58,15 +65,15 @@
       },
       "suspicious": {
         "noArrayIndexKey": "off",
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noShadow": "off",
+        "noLeakedRender": "off"
       },
       "correctness": {
         "useUniqueElementIds": "off",
         "noNextAsyncClientComponent": "error"
       },
       "nursery": {
-        "noShadow": "off",
-        "noLeakedRender": "off",
         "noFloatingPromises": "error",
         "noMisusedPromises": "error"
       },
@@ -117,9 +124,5 @@
     "parser": {
       "tailwindDirectives": true
     }
-  },
-  "extends": [
-    "ultracite/core",
-    "ultracite/next"
-  ]
+  }
 }

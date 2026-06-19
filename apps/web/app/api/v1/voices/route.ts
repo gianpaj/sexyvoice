@@ -52,25 +52,25 @@ export async function GET(request: Request) {
       throw error;
     }
 
+    const voices = (data ?? []).flatMap((voice) => {
+      const model = resolveExternalModelId(voice.model);
+      if (!model) {
+        return [];
+      }
+      return [
+        {
+          id: voice.id,
+          name: voice.name,
+          language: voice.language,
+          model,
+          formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
+          supports_style: model === 'gpro' || model === 'gpro31',
+        },
+      ];
+    });
+
     return jsonWithRateLimitHeaders(
-      {
-        data: (data ?? []).flatMap((voice) => {
-          const model = resolveExternalModelId(voice.model);
-          if (!model) {
-            return [];
-          }
-          return [
-            {
-              id: voice.id,
-              name: voice.name,
-              language: voice.language,
-              model,
-              formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
-              supports_style: model === 'gpro',
-            },
-          ];
-        }),
-      },
+      { data: voices },
       { status: 200 },
       rateLimit,
       requestId,

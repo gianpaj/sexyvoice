@@ -171,7 +171,6 @@ Used for:
 ### AI provider credentials
 
 - `FAL_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 - `MISTRAL_API_KEY`
 - `REPLICATE_API_TOKEN`
@@ -179,8 +178,7 @@ Used for:
 
 Notes:
 
-- `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
+- `GOOGLE_GENERATIVE_AI_API_KEY` is the Gemini key.
   for free-user Gemini flows where configured in code.
 - `MISTRAL_API_KEY` is required for voice cloning requests that use the
   Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
@@ -267,14 +265,17 @@ can fall back to the Site URL and drop the intended `redirect_to` destination.
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_PRICING_ID`
-- `STRIPE_TOPUP_5_PRICE_ID`
-- `STRIPE_TOPUP_10_PRICE_ID`
-- `STRIPE_TOPUP_99_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_5_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_10_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_99_PRICE_ID`
+- `STRIPE_TOPUP_STARTER_PRICE_ID`
+- `STRIPE_TOPUP_STANDARD_PRICE_ID`
+- `STRIPE_TOPUP_PRO_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon
+  applied automatically for eligible first-time subscribers.
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month
+  discount percentage used to display discounted subscription pricing when the
+  coupon is configured.
 
 ### Edge Config
 
@@ -530,7 +531,6 @@ Check:
 Check:
 
 - `GOOGLE_GENERATIVE_AI_API_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - provider quotas
 - request logs
 - R2 upload configuration

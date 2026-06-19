@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { DailyStatsProfileRelation } from './types';
 import { fetchAllPages, PAGE_SIZE } from './utils';
 
-export const VOICE_CLONING_MODELS = [
+const VOICE_CLONING_MODELS = [
   'resemble-ai/chatterbox-multilingual',
   'resemble-ai/chatterbox',
   'voxtral-mini-tts-2603',

@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Hvilke sprog understøttes for talesyntese?",
-              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇮🇳 Hindi (Indien),\n🇳🇱 Hollandsk (Holland),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇩🇪 Tysk (Tyskland),\n🇺🇦 Ukrainsk (Ukraine),\nog 🇻🇳 Vietnamesisk (Vietnam).\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK),\n🇮🇹 Pietro (Italiensk),\n🇺🇸 Emma (Engelsk US),\n🇪🇸 Javi (Spansk),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+              "answer": "Sprogunderstøttelse afhænger af den valgte stemme og model.\n\n**Gemini 2.5 stemmer (standard)** understøtter 24 sprog, herunder:\n🇪🇬 Arabisk, 🇧🇩 Bengalsk, 🇺🇸 Engelsk, 🇫🇷 Fransk, 🇮🇳 Hindi, 🇳🇱 Hollandsk, 🇮🇩 Indonesisk, 🇮🇹 Italiensk, 🇯🇵 Japansk, 🇰🇷 Koreansk, 🇮🇳 Marathi, 🇵🇱 Polsk, 🇧🇷 Portugisisk, 🇷🇴 Rumænsk, 🇷🇺 Russisk, 🇺🇸 Spansk, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇭 Thai, 🇹🇷 Tyrkisk, 🇩🇪 Tysk, 🇺🇦 Ukrainsk, og 🇻🇳 Vietnamesisk.\n\n**Gemini 3.1 stemmer (ved aktivering af \"Brug ny AI-model\")** understøtter 70+ sprog på tværs af 80+ regionale varianter, herunder alt ovenstående plus: Afrikaans, Albansk, Amharisk, Armensk, Aserbajdsjansk, Baskisk, Bulgarsk, Catalansk, Kinesisk, Kroatisk, Tjekkisk, Dansk, Estisk, Filippinsk, Finsk, Galicisk, Georgisk, Græsk, Gujarati, Hebraisk, Ungarsk, Islandsk, Irsk, Javanesisk, Kannada, Kasakhisk, Lettisk, Litauisk, Makedonsk, Malayisk, Maltesisk, Norsk, Persisk, Punjabi, Serbisk, Slovakisk, Slovensk, Swahili, Svensk, Urdu, Usbekisk, Walisisk, Zulu og mere.\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK), 🇮🇹 Pietro (Italiensk), 🇺🇸 Emma, Josh, Tara (Engelsk US), 🇪🇸 Javi (Spansk).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -298,7 +298,7 @@
     },
     "topup": {
       "title": "Køb kreditter",
-      "description": "Fyld op på dine kreditter med det samme med et engangskøb",
+      "description": "Fyld op på dine kreditter med det samme, eller abonner og få flere kreditter",
       "buyCredits": "Køb kreditter",
       "onetimePurchase": "Engangskøb",
       "processing": "Behandler...",
@@ -426,7 +426,18 @@
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
       "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
-      "featuredBadge": "Fremhævet"
+      "featuredBadge": "Fremhævet",
+      "selectVoicePlaceholder": "Vælg en stemme...",
+      "searchPlaceholder": "Søg efter navn, stil eller model...",
+      "filterModelLabel": "Model",
+      "filterGenderLabel": "Køn",
+      "clearFilters": "Ryd",
+      "noVoicesFound": "Ingen stemmer fundet",
+      "noVoicesFoundHint": "Prøv en anden søgning eller ryd filtrene.",
+      "previewVoice": "Forhåndsvisning af {name}",
+      "stopPreview": "Stop forhåndsvisning af {name}",
+      "footerCount": "{filtered} af {total} stemmer",
+      "voiceListLabel": "Stemmer"
     },
     "split": {
       "segmentPreviews": "Segmentforhåndsvisninger",
@@ -758,7 +769,7 @@
     "profile": "Profil",
     "signOut": "Log ud",
     "freeTools": "Gratis værktøjer",
-    "subscriptionDiscount": "Få {discount}% ekstra kreditter med et abonnement"
+    "subscriptionDiscount": "Få {extraCredits}% ekstra kreditter og {discount}% rabat den første måned!"
   },
   "header": {
     "generate": "Generer",
@@ -768,6 +779,7 @@
   "history": {
     "header": "Genereringshistorik",
     "empty": "Ingen historik endnu",
+    "downloadError": "Kunne ikke downloade lyd",
     "ui": {
       "filterText": "Filtrer tekst...",
       "customizeColumns": "Tilpas kolonner",
@@ -868,7 +880,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Nye stemmer til stemmegenerering er nu live, med mere kontrol over tempo, aandedraet, toneleje, hastighed og intensitet.",
+      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.1, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
@@ -1034,5 +1046,9 @@
       "audioConverterLink": "Gratis Lydkonverter",
       "madeWith": "Lavet med ♡ af SexyVoice.ai - Prøv gratis AI lydgenerator"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder."
   }
 }

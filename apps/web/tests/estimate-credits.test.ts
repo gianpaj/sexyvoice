@@ -49,7 +49,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'kore' }),
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
     });
 
     const response = await POST(request);
@@ -67,7 +67,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'unknown' }),
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'unknown' }),
     });
 
     const response = await POST(request);
@@ -83,7 +83,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'tara' }),
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
     });
 
     const response = await POST(request);
@@ -107,7 +107,7 @@ describe('Estimate Credits API Route', () => {
       body: JSON.stringify({
         styleVariant: 'emotion_intensity high',
         text: 'Hello world',
-        voice: 'kore',
+        voiceId: 'voice-kore-id',
       }),
     });
 
@@ -128,7 +128,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voice: 'eve' }),
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-sal-id' }),
     });
 
     const response = await POST(request);
@@ -149,7 +149,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voice: 'kore' }),
+      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-kore-id' }),
     });
 
     const response = await POST(request);
@@ -169,7 +169,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voice: 'kore' }),
+      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-kore-id' }),
     });
 
     const response = await POST(request);
@@ -188,7 +188,7 @@ describe('Estimate Credits API Route', () => {
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voice: 'eve' }),
+      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-sal-id' }),
     });
 
     const response = await POST(request);

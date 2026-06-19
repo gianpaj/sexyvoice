@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2, PhoneCall } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -9,7 +10,8 @@ import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export function ConnectButton() {
-  const { connect, disconnect, shouldConnect, dict } = useConnection();
+  const { connect, disconnect, shouldConnect } = useConnection();
+  const t = useTranslations('call');
   const { pgState, helpers } = usePlaygroundState();
   const [connecting, setConnecting] = useState<boolean>(false);
   const [initiateConnectionFlag, setInitiateConnectionFlag] = useState(false);
@@ -46,7 +48,7 @@ export function ConnectButton() {
           (err.name === 'NotAllowedError' ||
             err.name === 'PermissionDeniedError')
         ) {
-          toast.error(dict.microphonePermissionDenied);
+          toast.error(t('microphonePermissionDenied'));
           return;
         }
         // For other errors (e.g. NotFoundError — no mic device), log and
@@ -59,7 +61,7 @@ export function ConnectButton() {
     } finally {
       setConnecting(false);
     }
-  }, [connect, dict]);
+  }, [connect, t]);
 
   useEffect(() => {
     if (initiateConnectionFlag) {
@@ -89,7 +91,7 @@ export function ConnectButton() {
         onClick={handleConnectionToggle}
         size="lg"
       >
-        {connecting || shouldConnect ? dict.connecting : dict.startCall}
+        {connecting || shouldConnect ? t('connecting') : t('startCall')}
       </Button>
     </div>
   );

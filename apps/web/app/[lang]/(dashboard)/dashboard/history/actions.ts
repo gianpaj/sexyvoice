@@ -1,7 +1,8 @@
 'use server';
 
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
+import { after } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
 import { createClient } from '@/lib/supabase/server';
@@ -29,7 +30,7 @@ export const handleDeleteAction = async (id: string) => {
       .single();
 
     if (fetchError) {
-      Sentry.captureException(fetchError, {
+      captureException(fetchError, {
         user: {
           id: user.id,
           email: user.email,
@@ -59,18 +60,20 @@ export const handleDeleteAction = async (id: string) => {
     // allow for regeneration of audio
     await redis.del(audioFile.storage_key);
 
-    const posthog = PostHogClient();
-    posthog.capture({
-      distinctId: user.id,
-      event: 'delete-audio',
-      properties: {
-        id,
-      },
+    after(async () => {
+      const posthog = PostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: 'delete-audio',
+        properties: {
+          id,
+        },
+      });
+      await posthog.shutdown();
     });
-    await posthog.shutdown();
 
     if (deleteError) {
-      Sentry.captureException(deleteError, {
+      captureException(deleteError, {
         user: { id: user.id, email: user.email },
         extra: {
           audioId: id,
@@ -84,7 +87,7 @@ export const handleDeleteAction = async (id: string) => {
 
     return { success: true };
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: { audioId: id },
     });
     console.error('Error deleting audio file:', error);

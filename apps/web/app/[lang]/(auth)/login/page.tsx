@@ -1,4 +1,4 @@
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
@@ -10,25 +10,25 @@ export default async function LoginPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const t = await getTranslations({ locale: lang, namespace: 'auth' });
 
   return (
     <>
       <HeaderStatic />
       <main
-        className="flex min-h-[calc(100vh-65px)] flex-col justify-center p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0 dark:bg-linear-to-br dark:from-gray-900 dark:to-gray-800"
+        className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
         id="main-content"
       >
         <div className="w-full max-w-md">
           <div className="rounded-2xl bg-background p-8 shadow-xl">
             <h1 className="mb-2 text-center font-bold text-3xl">
-              {dict.auth.login.title}
+              {t('login.title')}
             </h1>
             <p className="mb-8 text-center text-muted-foreground">
-              {dict.auth.login.subtitle}
+              {t('login.subtitle')}
             </p>
             <Suspense>
-              <LoginForm dict={dict.auth.login} lang={lang} />
+              <LoginForm lang={lang} />
             </Suspense>
           </div>
         </div>

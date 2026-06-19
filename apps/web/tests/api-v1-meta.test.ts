@@ -5,7 +5,8 @@ import { GET as getOpenApi } from '@/app/api/v1/openapi/route';
 import { GET as getVoices } from '@/app/api/v1/voices/route';
 import { createClient } from '@/lib/supabase/server';
 
-const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_API_KEY = `sk_live_${TEST_API_KEY_SUFFIX}`;
 const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 
 describe('/api/v1 metadata endpoints', () => {
@@ -19,8 +20,9 @@ describe('/api/v1 metadata endpoints', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.data).toHaveLength(3);
+    expect(json.data).toHaveLength(4);
     expect(json.data[0].id).toBe('gpro');
+    expect(json.data[1].id).toBe('gpro31');
     expect(response.headers.get('X-RateLimit-Limit-Requests')).toBe('60');
     expect(response.headers.get('request-id')).toBeTruthy();
   });
@@ -33,6 +35,14 @@ describe('/api/v1 metadata endpoints', () => {
           name: 'kore',
           language: 'en',
           model: 'gpro',
+          feature: 'tts',
+          is_public: true,
+        },
+        {
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro31',
           feature: 'tts',
           is_public: true,
         },
@@ -76,12 +86,14 @@ describe('/api/v1 metadata endpoints', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    expect(json.data).toHaveLength(3);
+    expect(json.data).toHaveLength(4);
     expect(json.data[0].model).toBe('gpro');
-    expect(json.data[1].model).toBe('orpheus');
+    expect(json.data[1].model).toBe('gpro31');
+    expect(json.data[2].model).toBe('orpheus');
     expect(json.data[0].supports_style).toBe(true);
-    expect(json.data[1].supports_style).toBe(false);
-    expect(json.data[2]).toMatchObject({
+    expect(json.data[1].supports_style).toBe(true);
+    expect(json.data[2].supports_style).toBe(false);
+    expect(json.data[3]).toMatchObject({
       model: 'xai',
       formats: ['mp3', 'wav'],
       supports_style: false,
@@ -103,6 +115,14 @@ describe('/api/v1 metadata endpoints', () => {
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .examples.basic.value.model,
     ).toBe('gpro');
+    const voicesExample =
+      json.paths['/api/v1/voices'].get.responses[200].content[
+        'application/json'
+      ].examples.available_voices.value.data;
+    expect(voicesExample).toHaveLength(20);
+    expect(
+      voicesExample.some((voice: { model: string }) => voice.model === 'xai'),
+    ).toBe(true);
     const speechSchema = JSON.stringify(
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']
         .schema,

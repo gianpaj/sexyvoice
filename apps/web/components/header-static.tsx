@@ -17,12 +17,12 @@ export function HeaderStatic() {
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link className="hit-area-2 z-10 flex items-end gap-0" href={'/'}>
+        <Link className="hit-area-2 flex items-end gap-0" href={'/'}>
           <Image alt="Logo" height={292 / 8} src={logoSmall} width={221 / 8} />
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>
 
-        <div className="z-10 hidden items-center justify-center gap-4 md:flex">
+        <div className="hidden items-center justify-center gap-4 md:flex">
           <div className="space-x-4">
             <Button asChild variant="secondary">
               <Link href="/login" prefetch>

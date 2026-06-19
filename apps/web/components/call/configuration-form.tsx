@@ -7,16 +7,15 @@ import {
   useVoiceAssistant,
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import type { UseFormReturn } from 'react-hook-form';
+import { useTranslations } from 'next-intl';
+import { useCallback, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
@@ -31,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { ConfigurationFormSchema } from './configuration-form.schema';
 import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
@@ -41,31 +41,22 @@ import { SceneSelector } from './scene-selector';
 // Configuration changes that require full reconnection instead of hot-reload
 const RECONNECT_REQUIRED_FIELDS = ['voice'];
 
-export const ConfigurationFormSchema = z.object({
-  model: z.enum(Object.values(ModelId)),
-  voice: z.string().min(1),
-  temperature: z.number().min(0).max(1.2),
-  maxOutputTokens: z.number().nullable(),
-});
-
-export interface ConfigurationFormFieldProps {
-  form: UseFormReturn<z.infer<typeof ConfigurationFormSchema>>;
-  schema?: typeof ConfigurationFormSchema;
-}
-
 interface ConfigurationFormProps {
   callVoices?: DBVoice[];
   isPaidUser?: boolean;
   lang: Locale;
 }
 
+const EMPTY_ITEMS: DBVoice[] = [];
+
 export function ConfigurationForm({
   lang,
   isPaidUser = false,
-  callVoices = [],
+  callVoices = EMPTY_ITEMS,
 }: ConfigurationFormProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
-  const { connect, disconnect, dict } = useConnection();
+  const { connect, disconnect } = useConnection();
+  const t = useTranslations('call');
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
   const form = useForm<z.infer<typeof ConfigurationFormSchema>>({
@@ -73,6 +64,7 @@ export function ConfigurationForm({
     defaultValues: { ...defaultSessionConfig },
     mode: 'onChange',
   });
+  // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const formValues = form.watch();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to track timeout
   const hasConnectedOnceRef = useRef(false); // Track if we've connected once
@@ -80,13 +72,9 @@ export function ConfigurationForm({
   // const { toast } = useToast();
   const { agent } = useVoiceAssistant();
 
-  const translatedLanguages = useMemo(
-    () =>
-      getTranslatedLanguages(
-        lang,
-        callLanguageCodes.map(({ value }) => value),
-      ),
-    [lang],
+  const translatedLanguages = getTranslatedLanguages(
+    lang,
+    callLanguageCodes.map(({ value }) => value),
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: fine
@@ -160,9 +148,9 @@ export function ConfigurationForm({
         // Wait a bit longer for the connection to stabilize and attributes to sync
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        toast.success(dict.reconnected);
+        toast.success(t('reconnected'));
       } catch {
-        toast.error(dict.reconnectionFailed);
+        toast.error(t('reconnectionFailed'));
       } finally {
         // Always reset the reconnecting flag
         isReconnectingRef.current = false;
@@ -181,10 +169,10 @@ export function ConfigurationForm({
       console.debug('pg.updateConfig', response);
       const responseObj = JSON.parse(response);
       if (responseObj.changed) {
-        toast(dict.configurationUpdated);
+        toast(t('configurationUpdated'));
       }
     } catch {
-      toast(dict.configurationUpdateError);
+      toast(t('configurationUpdateError'));
     }
   }, [
     pgState.sessionConfig,
@@ -196,7 +184,7 @@ export function ConfigurationForm({
     connect,
     disconnect,
     helpers,
-    dict,
+    t,
   ]);
 
   // Function to debounce updates when user stops interacting
@@ -263,7 +251,7 @@ export function ConfigurationForm({
       <Form {...form}>
         <div className="w-full border-separator1 border-b px-4 pt-0 pb-4 md:px-1 md:py-4">
           <div className="font-bold text-fg0 text-xs uppercase tracking-widest">
-            {dict.configurationTitle}
+            {t('configurationTitle')}
           </div>
         </div>
 
@@ -271,7 +259,7 @@ export function ConfigurationForm({
         {displayLanguage && (
           <div className="flex w-full items-center justify-between border-separator1 border-b px-4 py-4 md:px-1">
             <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-              {dict.languageLabel}
+              {t('languageLabel')}
             </div>
             <Select
               disabled={connectionState === ConnectionState.Connected}
@@ -279,7 +267,7 @@ export function ConfigurationForm({
               value={pgState.language}
             >
               <SelectTrigger className="h-9 w-fit text-neutral-200">
-                <SelectValue placeholder={dict.languagePlaceholder} />
+                <SelectValue placeholder={t('languagePlaceholder')} />
               </SelectTrigger>
               <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
                 {translatedLanguages.map(({ value, label }) => (
@@ -304,10 +292,10 @@ export function ConfigurationForm({
                 {/* Instructions Editor for custom per-character instructions */}
                 <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
                   <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                    {dict.characterInstructions.replace(
+                    {t('characterInstructions').replace(
                       '__NAME__',
                       helpers.getSelectedPreset(pgState)?.name ||
-                        dict.characterFallbackName,
+                        t('characterFallbackName'),
                     )}
                   </div>
                   <InstructionsEditor instructions={pgState.instructions} />

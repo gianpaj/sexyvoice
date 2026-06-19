@@ -1,6 +1,6 @@
 import { Wand2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -12,7 +12,7 @@ export default async function GeneratePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const t = await getTranslations('generate');
   const supabase = await createClient();
 
   const {
@@ -64,9 +64,9 @@ export default async function GeneratePage(props: {
       <div>
         <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
           <Wand2 size={26} />
-          {dict.generate.title}
+          {t('title')}
         </h2>
-        <p className="text-muted-foreground">{dict.generate.subtitle}</p>
+        <p className="text-muted-foreground">{t('subtitle')}</p>
       </div>
 
       <div className="lg:hidden">
@@ -80,7 +80,6 @@ export default async function GeneratePage(props: {
 
       <div className="grid gap-6 pb-16">
         <GenerateUI
-          dict={dict.generate}
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
           publicVoices={publicVoices}

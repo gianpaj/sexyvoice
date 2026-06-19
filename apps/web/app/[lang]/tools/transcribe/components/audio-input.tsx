@@ -1,20 +1,15 @@
 'use client';
 
 import { FileAudio, Mic, Square, Upload } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type langDict from '@/messages/en.json';
 
 interface Props {
-  dict: (typeof langDict)['transcribe']['audioInput'];
   disabled?: boolean;
-  errorMessages?: {
-    decodeError?: string;
-    microphoneError?: string;
-  };
   onAudioReady: (audio: Float32Array) => void;
   onFileSelected?: (file: File) => void;
   onRemove?: () => void;
@@ -41,57 +36,44 @@ export function AudioInput({
   onFileSelected,
   onRemove,
   disabled = false,
-  dict,
-  errorMessages,
 }: Props) {
+  const t = useTranslations('transcribe.audioInput');
   const [isDragging, setIsDragging] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  const processFile = useCallback(
-    async (file: File) => {
-      setAudioFile(file);
-      onFileSelected?.(file);
-      try {
-        const audioData = await decodeAudioFile(file);
-        onAudioReady(audioData);
-      } catch (error) {
-        setAudioFile(null);
-        console.error('Failed to decode audio file:', error);
-        toast.error(
-          errorMessages?.decodeError ||
-            'Failed to decode audio file. Please try a different format.',
-        );
-      }
-    },
-    [onAudioReady, onFileSelected, errorMessages],
-  );
+  const processFile = async (file: File) => {
+    setAudioFile(file);
+    onFileSelected?.(file);
+    try {
+      const audioData = await decodeAudioFile(file);
+      onAudioReady(audioData);
+    } catch (error) {
+      setAudioFile(null);
+      console.error('Failed to decode audio file:', error);
+      toast.error(t('decodeError'));
+    }
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      setIsDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
-        processFile(file);
-      }
-    },
-    [processFile],
-  );
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
+      processFile(file);
+    }
+  };
 
-  const handleFileInput = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        processFile(file);
-      }
-    },
-    [processFile],
-  );
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
 
-  const startRecording = useCallback(async () => {
+  const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
@@ -119,33 +101,31 @@ export function AudioInput({
       setIsRecording(true);
     } catch (error) {
       console.error('Microphone access denied or not available:', error);
-      toast.error(
-        errorMessages?.microphoneError ||
-          'Microphone access denied or not available.',
-      );
+      toast.error(t('microphoneError'));
     }
-  }, [processFile, errorMessages]);
+  };
 
   // Cleanup MediaRecorder on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (mediaRecorderRef.current?.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = () => {
     if (mediaRecorderRef.current?.state === 'recording') {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
-  }, []);
+  };
 
-  const handleRemove = useCallback(() => {
+  const handleRemove = () => {
     setAudioFile(null);
     onRemove?.();
-  }, [onRemove]);
+  };
 
   if (audioFile) {
     return (
@@ -167,7 +147,7 @@ export function AudioInput({
           size="sm"
           variant="ghost"
         >
-          {dict.remove}
+          {t('remove')}
         </Button>
       </div>
     );
@@ -271,10 +251,10 @@ export function AudioInput({
 
           <div className="space-y-2 text-center">
             <p className="font-semibold text-foreground text-lg md:text-xl">
-              {dict.dropTitle}
+              {t('dropTitle')}
             </p>
             <p className="font-medium text-primary text-sm hover:underline">
-              {dict.dropDescription}
+              {t('dropDescription')}
             </p>
           </div>
 
@@ -293,7 +273,7 @@ export function AudioInput({
 
       <div className="flex items-center justify-center gap-3">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-muted-foreground text-xs">{dict.or}</span>
+        <span className="text-muted-foreground text-xs">{t('or')}</span>
         <div className="h-px flex-1 bg-border" />
       </div>
 
@@ -311,12 +291,12 @@ export function AudioInput({
           {isRecording ? (
             <>
               <Square className="h-4 w-4" />
-              {dict.stopRecording}
+              {t('stopRecording')}
             </>
           ) : (
             <>
               <Mic className="h-4 w-4" />
-              {dict.startRecording}
+              {t('startRecording')}
             </>
           )}
         </Button>

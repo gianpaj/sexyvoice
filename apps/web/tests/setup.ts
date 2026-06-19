@@ -32,6 +32,32 @@ export const handlers = [
       },
     });
   }),
+  // fal.ai billing events API mock
+  http.get('https://api.fal.ai/v1/models/billing-events', ({ request }) => {
+    const auth = request.headers.get('authorization');
+    if (!auth?.startsWith('Key ')) {
+      return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const requestId = new URL(request.url).searchParams.get('request_id');
+    if (!requestId) {
+      return HttpResponse.json({ error: 'Missing request_id' }, { status: 400 });
+    }
+    return HttpResponse.json({
+      billing_events: [
+        {
+          request_id: requestId,
+          endpoint_id: 'fal-ai/deepfilternet3',
+          timestamp: '2026-06-13T03:44:17.164745000Z',
+          output_units: 2.6006458333333335,
+          unit_price: 0.001,
+          percent_discount: 0,
+          cost_estimate_nano_usd: 2600646,
+        },
+      ],
+      next_cursor: null,
+      has_more: false,
+    });
+  }),
   // fal.ai audio file fetch mock
   http.get('https://fal-cdn.com/test-audio.mp3', () => {
     // Return a minimal valid audio buffer
@@ -182,6 +208,7 @@ process.env.R2_BUCKET_NAME = 'test-bucket';
 process.env.R2_SPEECH_API_BUCKET_NAME = 'test-speech-bucket';
 process.env.R2_ACCOUNT_ID = 'test-account-id';
 process.env.API_KEY_HMAC_SECRET = 'test-hmac-secret-do-not-use-in-production';
+process.env.FAL_ADMIN_KEY = 'test-fal-admin-key';
 process.env.CLI_LOGIN_ENCRYPTION_SECRET =
   'test-cli-login-secret-do-not-use-in-production';
 
@@ -349,6 +376,94 @@ vi.mock('@/lib/supabase/queries', async () => {
       }
       return Promise.resolve(null);
     }),
+    getVoiceById: vi.fn((voiceId: string) => {
+      if (voiceId === 'voice-tara-id') {
+        return Promise.resolve({
+          id: 'voice-tara-id',
+          name: 'tara',
+          language: 'en',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        });
+      }
+      if (voiceId === 'voice-kore-id') {
+        return Promise.resolve({
+          id: 'voice-kore-id',
+          name: 'kore',
+          language: 'en',
+          model: 'gpro',
+        });
+      }
+      if (voiceId === 'voice-achernar-31-id') {
+        return Promise.resolve({
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro31',
+        });
+      }
+      if (voiceId === 'voice-eve-id') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'xai',
+        });
+      }
+      if (voiceId === 'voice-sal-id') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          name: 'sal',
+          language: 'es-ES',
+          model: 'xai',
+        });
+      }
+      return Promise.resolve(null);
+    }),
+    getVoiceByIdAdmin: vi.fn((voiceId: string) => {
+      if (voiceId === 'voice-tara-id') {
+        return Promise.resolve({
+          id: 'voice-tara-id',
+          name: 'tara',
+          language: 'en',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        });
+      }
+      if (voiceId === 'voice-kore-id') {
+        return Promise.resolve({
+          id: 'voice-kore-id',
+          name: 'kore',
+          language: 'en',
+          model: 'gpro',
+        });
+      }
+      if (voiceId === 'voice-achernar-31-id') {
+        return Promise.resolve({
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro31',
+        });
+      }
+      if (voiceId === 'voice-eve-id') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          name: 'eve',
+          language: 'en',
+          model: 'xai',
+        });
+      }
+      if (voiceId === 'voice-sal-id') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          name: 'sal',
+          language: 'es-ES',
+          model: 'xai',
+        });
+      }
+      return Promise.resolve(null);
+    }),
     getVoiceIdByNameAdmin: vi.fn((voiceName: string) => {
       if (voiceName === 'tara') {
         return Promise.resolve({
@@ -365,6 +480,14 @@ vi.mock('@/lib/supabase/queries', async () => {
           name: 'kore',
           language: 'en',
           model: 'gpro',
+        });
+      }
+      if (voiceName === 'achernar') {
+        return Promise.resolve({
+          id: 'voice-achernar-31-id',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro31',
         });
       }
       if (voiceName === 'eve') {
@@ -492,6 +615,32 @@ export { mockCheckUserPaidStatus };
 // Mock Google Generative AI module
 export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
 
+const DEFAULT_MOCK_AUDIO_DATA =
+  'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+const createDefaultStreamChunk = (): GenerateContentResponse => ({
+  candidates: [
+    {
+      content: {
+        parts: [
+          {
+            inlineData: {
+              data: DEFAULT_MOCK_AUDIO_DATA,
+              mimeType: 'audio/L16;rate=24000',
+            },
+          },
+        ],
+      },
+      finishReason: 'STOP',
+    } as any,
+  ],
+  usageMetadata: {
+    promptTokenCount: 11,
+    candidatesTokenCount: 12,
+    totalTokenCount: 23,
+  },
+} as GenerateContentResponse);
+
 // Create a configurable mock instance that tests can modify
 const createDefaultGoogleGenAIInstance = () => ({
   models: {
@@ -503,7 +652,7 @@ const createDefaultGoogleGenAIInstance = () => ({
             parts: [
               {
                 inlineData: {
-                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  data: DEFAULT_MOCK_AUDIO_DATA,
                   mimeType: 'audio/wav',
                 },
               },
@@ -518,6 +667,9 @@ const createDefaultGoogleGenAIInstance = () => ({
         totalTokenCount: 23,
       },
     } as GenerateContentResponse),
+    generateContentStream: vi.fn().mockImplementation(async function* () {
+      yield createDefaultStreamChunk();
+    }),
   },
 });
 
@@ -532,6 +684,8 @@ export const setMockGoogleGenAIFactory = (factory: () => any) => {
 export const resetMockGoogleGenAIFactory = () => {
   mockGoogleGenAIFactory = createDefaultGoogleGenAIInstance;
 };
+
+export { createDefaultStreamChunk, DEFAULT_MOCK_AUDIO_DATA };
 
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');

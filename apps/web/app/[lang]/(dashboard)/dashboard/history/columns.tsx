@@ -2,7 +2,8 @@
 
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { toast } from '@/components/services/toast';
@@ -18,18 +19,13 @@ import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { formatDate } from '@/lib/utils';
 import { DeleteButton } from './delete-button';
 
-const downloadFile = async (url: string) => {
-  const anchorElement = document.createElement('a');
-  anchorElement.href = url;
-  const filename = url.split('/').pop()?.split('?')[0];
-  anchorElement.download = filename || 'generated_audio.mp3';
-  anchorElement.target = '_blank';
+const downloadFile = async (url: string, errorMessage: string) => {
   if (!url) return;
 
   try {
-    await downloadUrl(url, anchorElement);
+    await downloadUrl(url, document.createElement('a'));
   } catch {
-    toast.error('errorCloning'); // TODO: translate - passing
+    toast.error(errorMessage);
   }
 };
 
@@ -49,6 +45,45 @@ const getBadgeClasses = (name: string) => {
   return `${COLOR_PAIRS[index].bg} ${COLOR_PAIRS[index].text}`;
 };
 
+function ActionsCell({ file }: { file: AudioFileAndVoicesRes }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleCloseDropdown = () => {
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
+            size="icon"
+            variant="ghost"
+          >
+            <MoreVerticalIcon />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-32">
+          <DeleteButton
+            handleCloseDropdown={handleCloseDropdown}
+            id={file.id}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+function DateTimeCell({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {formatDate(value, { withTime: true })}
+    </time>
+  );
+}
+
 interface AudioUsageData {
   apiKeyId?: string;
   dollarAmount?: number;
@@ -62,180 +97,154 @@ function getUsageData(value: unknown): AudioUsageData | null {
   return value as AudioUsageData;
 }
 
-export function createColumns({
+export function useColumns({
   showApiColumns,
 }: {
   showApiColumns: boolean;
 }): ColumnDef<AudioFileAndVoicesRes>[] {
-  const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
-    {
-      id: 'file name',
-      accessorKey: 'storage_key',
-      header: 'File Name',
-      cell: ({ row }) =>
-        row.original.storage_key.replace('audio/', '') || 'Unknown',
-    },
-    {
-      id: 'voice',
-      accessorKey: 'voices.name',
-      header: 'Voice',
-      cell: ({ row }) => {
-        const voiceName = row.original.voices?.name || 'Unknown';
+  const t = useTranslations('history');
 
-        return (
-          <div className="w-full lg:w-32">
-            <Badge
-              className={`rounded-lg px-1.5 sm:rounded-full ${getBadgeClasses(voiceName)}`}
-              variant="outline"
+  return useMemo(() => {
+    const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
+      {
+        id: 'file name',
+        accessorKey: 'storage_key',
+        header: 'File Name',
+        cell: ({ row }) =>
+          row.original.storage_key.replace('audio/', '') || 'Unknown',
+      },
+      {
+        id: 'voice',
+        accessorKey: 'voices.name',
+        header: 'Voice',
+        cell: ({ row }) => {
+          const voiceName = row.original.voices?.name || 'Unknown';
+
+          return (
+            <div className="w-full lg:w-32">
+              <Badge
+                className={`rounded-lg px-1.5 sm:rounded-full ${getBadgeClasses(voiceName)}`}
+                variant="outline"
+              >
+                {voiceName.charAt(0).toUpperCase() + voiceName.slice(1)}
+              </Badge>
+            </div>
+          );
+        },
+      },
+      {
+        id: 'text',
+        accessorKey: 'text_content',
+        header: 'Text',
+        cell: ({ row }) => (
+          <div className="flex max-w-[300px] items-center gap-2">
+            <span
+              className="truncate text-muted-foreground text-sm"
+              title={row.original.text_content}
             >
-              {voiceName.charAt(0).toUpperCase() + voiceName.slice(1)}
-            </Badge>
+              {row.original.text_content}
+            </span>
           </div>
-        );
+        ),
       },
-    },
-    {
-      id: 'text',
-      accessorKey: 'text_content',
-      header: 'Text',
-      cell: ({ row }) => (
-        <div className="flex max-w-[300px] items-center gap-2">
-          <span
-            className="truncate text-muted-foreground text-sm"
-            title={row.original.text_content}
+      {
+        id: 'created at',
+        accessorKey: 'created_at',
+        header: ({ column }) => (
+          <Button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            variant="ghost"
           >
-            {row.original.text_content}
-          </span>
-        </div>
-      ),
-    },
-    {
-      id: 'created at',
-      accessorKey: 'created_at',
-      header: ({ column }) => (
-        <Button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          variant="ghost"
-        >
-          Created At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      ),
-      cell: ({ row }) =>
-        formatDate(new Date(row.original.created_at!), { withTime: true }),
-    },
-    {
-      id: 'Preview',
-      header: 'Preview',
-      cell: ({ row }) => (
-        <div className="flex justify-center gap-2">
-          <AudioPlayer url={row.original.url} />
-        </div>
-      ),
-    },
-    {
-      id: 'Download',
-      header: 'Download',
-      cell: ({ row }) => (
-        <Button
-          className="ml-2"
-          onClick={() => downloadFile(row.original.url)}
-          size="icon"
-          title="Download"
-          variant="outline"
-        >
-          <Download className="size-4" />
-        </Button>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => {
-        const file = row.original;
-
-        const [isOpen, setIsOpen] = useState(false);
-
-        const handleCloseDropdown = () => {
-          setIsOpen(false);
-        };
-
-        return (
-          <div className="flex items-center gap-2">
-            <DropdownMenu onOpenChange={setIsOpen} open={isOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="flex size-8 text-muted-foreground data-[state=open]:bg-muted"
-                  size="icon"
-                  variant="ghost"
-                >
-                  <MoreVerticalIcon />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-32">
-                <DeleteButton
-                  handleCloseDropdown={handleCloseDropdown}
-                  id={file.id}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+            Created At
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        ),
+        cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
+      },
+      {
+        id: 'Preview',
+        header: 'Preview',
+        cell: ({ row }) => (
+          <div className="flex justify-center gap-2">
+            <AudioPlayer url={row.original.url} />
           </div>
-        );
+        ),
       },
-    },
-  ];
+      {
+        id: 'Download',
+        header: 'Download',
+        cell: ({ row }) => (
+          <Button
+            className="ml-2"
+            onClick={() => downloadFile(row.original.url, t('downloadError'))}
+            size="icon"
+            title="Download"
+            variant="outline"
+          >
+            <Download className="size-4" />
+          </Button>
+        ),
+      },
+      {
+        id: 'Credits',
+        header: 'Credits',
+        accessorKey: 'credits_used',
+      },
+    ];
 
-  if (!showApiColumns) {
-    return baseColumns;
-  }
+    if (!showApiColumns) {
+      return [
+        ...baseColumns,
+        {
+          id: 'actions',
+          header: 'Actions',
+          cell: ({ row }) => <ActionsCell file={row.original} />,
+        },
+      ];
+    }
 
-  const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
-    {
-      id: 'api source',
-      accessorFn: (row) => getUsageData(row.usage)?.sourceType ?? null,
-      header: 'API Source',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const sourceType = usage?.sourceType;
-        if (sourceType !== 'api_tts') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return <Badge variant="secondary">TTS</Badge>;
+    const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
+      {
+        id: 'api source',
+        accessorFn: (row) => getUsageData(row.usage)?.sourceType ?? null,
+        header: 'API Source',
+        cell: ({ row }) => {
+          const usage = getUsageData(row.original.usage);
+          const sourceType = usage?.sourceType;
+          if (sourceType !== 'api_tts') {
+            return <span className="text-muted-foreground">-</span>;
+          }
+          return <Badge variant="secondary">TTS</Badge>;
+        },
       },
-    },
-    {
-      id: 'api key',
-      accessorFn: (row) => getUsageData(row.usage)?.apiKeyId ?? null,
-      header: 'API Key',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const apiKeyId = usage?.apiKeyId;
-        if (!apiKeyId || typeof apiKeyId !== 'string') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return (
-          <code className="text-xs">
-            {apiKeyId.slice(0, 8)}
-            ...
-          </code>
-        );
+      {
+        id: 'api key',
+        accessorFn: (row) => getUsageData(row.usage)?.apiKeyId ?? null,
+        header: 'API Key',
+        cell: ({ row }) => {
+          const usage = getUsageData(row.original.usage);
+          const apiKeyId = usage?.apiKeyId;
+          if (!apiKeyId || typeof apiKeyId !== 'string') {
+            return <span className="text-muted-foreground">-</span>;
+          }
+          return (
+            <code className="text-xs">
+              {apiKeyId.slice(0, 8)}
+              ...
+            </code>
+          );
+        },
       },
-    },
-    {
-      id: 'api cost',
-      accessorFn: (row) => getUsageData(row.usage)?.dollarAmount ?? null,
-      header: 'API Cost',
-      cell: ({ row }) => {
-        const usage = getUsageData(row.original.usage);
-        const dollarAmount = usage?.dollarAmount;
-        if (typeof dollarAmount !== 'number') {
-          return <span className="text-muted-foreground">-</span>;
-        }
-        return <span>${dollarAmount.toFixed(4)}</span>;
-      },
-    },
-  ];
+    ];
 
-  return [...baseColumns, ...apiColumns];
+    return [
+      ...baseColumns,
+      ...apiColumns,
+      {
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => <ActionsCell file={row.original} />,
+      },
+    ];
+  }, [showApiColumns, t]);
 }

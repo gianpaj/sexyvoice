@@ -2,7 +2,6 @@
 
 import { GROK_WRAPPING_TAGS } from '@/lib/tts-editor';
 
-export const SPLIT_TEXT_MIN_LENGTH = 500;
 export const SPLIT_SEGMENT_MAX_LENGTH = 500;
 export const SPLIT_SEGMENT_MAX_COUNT = 20;
 const SPLIT_STORAGE_PREFIX = 'generate-split-segments-v1';
