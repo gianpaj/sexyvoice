@@ -7,7 +7,11 @@
 // Next.js bundler) need to import it.
 import 'server-only';
 
-import { E2E_USER_ID } from './e2e-mocks-shared';
+import {
+  E2E_ALL_TIME_USAGE_SUMMARY_VALUES,
+  E2E_MONTHLY_USAGE_SUMMARY_VALUES,
+  E2E_USER_ID,
+} from './e2e-mocks-shared';
 import { isE2E as isE2EMode } from './e2e-mode';
 import type { AudioFileAndVoicesRes } from './supabase/queries.client';
 import type { MonthlyUsageSummary } from './supabase/usage-queries';
@@ -113,26 +117,18 @@ export const E2E_AUDIO_FILES: AudioFileAndVoicesRes[] = [
 // carry zero counts so they are filtered out of the card (SummaryCard hides
 // source types with count === 0), matching the four active types in the mock.
 export const E2E_MONTHLY_USAGE_SUMMARY: MonthlyUsageSummary = {
-  totalCredits: 121,
-  totalOperations: 5,
+  ...E2E_MONTHLY_USAGE_SUMMARY_VALUES,
   bySourceType: {
-    tts: { credits: 36, count: 2 },
-    voice_cloning: { credits: 50, count: 1 },
-    live_call: { credits: 30, count: 1 },
-    audio_processing: { credits: 5, count: 1 },
+    ...E2E_MONTHLY_USAGE_SUMMARY_VALUES.bySourceType,
     api_tts: { credits: 0, count: 0 },
     api_voice_cloning: { credits: 0, count: 0 },
   },
 };
 
 export const E2E_ALL_TIME_USAGE_SUMMARY: MonthlyUsageSummary = {
-  totalCredits: 542,
-  totalOperations: 23,
+  ...E2E_ALL_TIME_USAGE_SUMMARY_VALUES,
   bySourceType: {
-    tts: { credits: 250, count: 12 },
-    voice_cloning: { credits: 150, count: 3 },
-    live_call: { credits: 120, count: 6 },
-    audio_processing: { credits: 22, count: 2 },
+    ...E2E_ALL_TIME_USAGE_SUMMARY_VALUES.bySourceType,
     api_tts: { credits: 0, count: 0 },
     api_voice_cloning: { credits: 0, count: 0 },
   },
