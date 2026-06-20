@@ -138,6 +138,7 @@ export const E2E_ALL_TIME_USAGE_SUMMARY: MonthlyUsageSummary = {
   },
 };
 
-// Pin the monthly card subtitle so the screenshot is stable across calendar
-// months (the page otherwise derives it from `new Date()`).
-export const E2E_USAGE_MONTH_LABEL = 'January 2025';
+// Pin the monthly card reference date so the screenshot is stable across calendar
+// months (the page otherwise derives it from `new Date()`). The page formats this
+// with `toLocaleDateString(lang, …)` so the label stays localized in E2E mode.
+export const E2E_USAGE_REFERENCE_DATE = new Date('2025-01-15T10:30:00.000Z');

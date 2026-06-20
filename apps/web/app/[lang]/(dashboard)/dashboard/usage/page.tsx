@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import {
   E2E_ALL_TIME_USAGE_SUMMARY,
   E2E_MONTHLY_USAGE_SUMMARY,
-  E2E_USAGE_MONTH_LABEL,
+  E2E_USAGE_REFERENCE_DATE,
   isE2E,
 } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -42,13 +42,13 @@ export default async function UsagePage(props: {
         getAllTimeUsageSummary(supabase, user.id),
       ]);
 
-  // Get month name for display
-  const currentMonth = e2e
-    ? E2E_USAGE_MONTH_LABEL
-    : new Date().toLocaleDateString(lang, {
-        month: 'long',
-        year: 'numeric',
-      });
+  // Get month name for display. In E2E mode use a pinned reference date so the
+  // screenshot is stable, while still formatting via the active locale.
+  const referenceDate = e2e ? E2E_USAGE_REFERENCE_DATE : new Date();
+  const currentMonth = referenceDate.toLocaleDateString(lang, {
+    month: 'long',
+    year: 'numeric',
+  });
 
   // Source type labels for display
   const sourceTypeLabels: Record<UsageSourceType, string> = {
