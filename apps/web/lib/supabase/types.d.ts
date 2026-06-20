@@ -131,6 +131,9 @@ declare type Database = {
       };
       call_sessions: {
         Row: {
+          analysis: Json | null;
+          analysis_generated_at: string | null;
+          analysis_status: string | null;
           billed_minutes: number;
           created_at: string | null;
           credits_used: number;
@@ -151,6 +154,9 @@ declare type Database = {
           voice_id: string;
         };
         Insert: {
+          analysis?: Json | null;
+          analysis_generated_at?: string | null;
+          analysis_status?: string | null;
           billed_minutes?: number;
           created_at?: string | null;
           credits_used?: number;
@@ -171,6 +177,9 @@ declare type Database = {
           voice_id: string;
         };
         Update: {
+          analysis?: Json | null;
+          analysis_generated_at?: string | null;
+          analysis_status?: string | null;
           billed_minutes?: number;
           created_at?: string | null;
           credits_used?: number;

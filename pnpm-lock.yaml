@@ -212,6 +212,9 @@ importers:
       '@ai-sdk/react':
         specifier: 'catalog:'
         version: 3.0.118(react@19.2.7)(zod@4.3.6)
+      '@ai-sdk/xai':
+        specifier: 3.0.96
+        version: 3.0.96(zod@4.3.6)
       '@argos-ci/playwright':
         specifier: ^6.6.4
         version: 6.6.4
@@ -340,7 +343,7 @@ importers:
         version: 2.1.1
       contentlayer2:
         specifier: ^0.5.7
-        version: 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+        version: 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       crisp-sdk-web:
         specifier: ^1.0.26
         version: 1.0.27
@@ -391,7 +394,7 @@ importers:
         version: 16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3)
       next-contentlayer2:
         specifier: ^0.5.8
-        version: 0.5.8(acorn@8.16.0)(contentlayer2@0.5.8(acorn@8.16.0)(esbuild@0.28.0))(esbuild@0.28.0)(next@16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 0.5.8(acorn@8.17.0)(contentlayer2@0.5.8(acorn@8.17.0)(esbuild@0.28.0))(esbuild@0.28.0)(next@16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       next-intl:
         specifier: ^4.9.2
         version: 4.9.2(next@16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react@19.2.7)(typescript@5.9.3)
@@ -568,11 +571,27 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/openai-compatible@2.0.51':
+    resolution: {integrity: sha512-A6qfyaVs4lxmRxRux6U3ViOa8mMbsSd0OaHghpei2MpiBT6791J4zFH5MN7kaW1tLfQ246rSC2DVTMOavsycjQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/provider-utils@4.0.19':
     resolution: {integrity: sha512-3eG55CrSWCu2SXlqq2QCsFjo3+E7+Gmg7i/oRVoSZzIodTuDSfLb3MRje67xE9RFea73Zao7Lm4mADIfUETKGg==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/provider-utils@4.0.30':
+    resolution: {integrity: sha512-VO7I+vPffqI5sMnPoUq5DCSqKIgQIk/naJWRdQVpz2ma2zoprC/lqiJiUEl2s6DfvTD76TbhD3q39ROjlA6rGw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
+  '@ai-sdk/provider@3.0.10':
+    resolution: {integrity: sha512-Q3BZ27qfpYqnCYGvE3vt+Qi6LGOF9R5Nmzn+9JoM1lCRsD9mYaIhfJLkSunN48nfGXJ6n+XNV0J/XVpqGQl7Dw==}
+    engines: {node: '>=18'}
 
   '@ai-sdk/provider@3.0.8':
     resolution: {integrity: sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ==}
@@ -583,6 +602,12 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
+
+  '@ai-sdk/xai@3.0.96':
+    resolution: {integrity: sha512-a24jD29cQ3YocP7B4NUvNTb9s5CYR1ao2yU/QncT7QDwwOp4x/lq+6W+BdXGf1VucG7A0dx9jtyIOm6PE4JPyg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -6604,6 +6629,10 @@ packages:
     resolution: {integrity: sha512-Vo1ab+QXPzZ4tCa8SwIHJFaSzy4R6SHf7BY79rFBDf0idraZWAkYrDjDj8uWaSm3S2TK+hJ7/t1CEmZ7jXw+pg==}
     engines: {node: '>=18.0.0'}
 
+  eventsource-parser@3.1.0:
+    resolution: {integrity: sha512-kJezFj9YFAMLeORyi7aCLxLbD5/qWMQnoMVlVPyHIll7lgRJCc3JVln9Vgl9nwQi0YkMnhdGTMNn7CkRRAptMg==}
+    engines: {node: '>=18.0.0'}
+
   expect-type@1.3.0:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
@@ -9521,12 +9550,29 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.19(zod@4.3.6)
       zod: 4.3.6
 
+  '@ai-sdk/openai-compatible@2.0.51(zod@4.3.6)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.10
+      '@ai-sdk/provider-utils': 4.0.30(zod@4.3.6)
+      zod: 4.3.6
+
   '@ai-sdk/provider-utils@4.0.19(zod@4.3.6)':
     dependencies:
       '@ai-sdk/provider': 3.0.8
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.0.6
       zod: 4.3.6
+
+  '@ai-sdk/provider-utils@4.0.30(zod@4.3.6)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.10
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.1.0
+      zod: 4.3.6
+
+  '@ai-sdk/provider@3.0.10':
+    dependencies:
+      json-schema: 0.4.0
 
   '@ai-sdk/provider@3.0.8':
     dependencies:
@@ -9541,6 +9587,13 @@ snapshots:
       throttleit: 2.1.0
     transitivePeerDependencies:
       - zod
+
+  '@ai-sdk/xai@3.0.96(zod@4.3.6)':
+    dependencies:
+      '@ai-sdk/openai-compatible': 2.0.51(zod@4.3.6)
+      '@ai-sdk/provider': 3.0.10
+      '@ai-sdk/provider-utils': 4.0.30(zod@4.3.6)
+      zod: 4.3.6
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -10227,9 +10280,9 @@ snapshots:
       fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
 
-  '@contentlayer2/cli@0.5.8(acorn@8.16.0)(esbuild@0.28.0)':
+  '@contentlayer2/cli@0.5.8(acorn@8.17.0)(esbuild@0.28.0)':
     dependencies:
-      '@contentlayer2/core': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      '@contentlayer2/core': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       '@contentlayer2/utils': 0.5.8
       clipanion: 3.2.1(typanion@3.14.0)
       typanion: 3.14.0
@@ -10240,9 +10293,9 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  '@contentlayer2/client@0.5.8(acorn@8.16.0)(esbuild@0.28.0)':
+  '@contentlayer2/client@0.5.8(acorn@8.17.0)(esbuild@0.28.0)':
     dependencies:
-      '@contentlayer2/core': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      '@contentlayer2/core': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
       - acorn
@@ -10250,13 +10303,13 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  '@contentlayer2/core@0.5.8(acorn@8.16.0)(esbuild@0.28.0)':
+  '@contentlayer2/core@0.5.8(acorn@8.17.0)(esbuild@0.28.0)':
     dependencies:
       '@contentlayer2/utils': 0.5.8
       camel-case: 4.1.2
       comment-json: 4.2.5
       gray-matter: 4.0.3
-      mdx-bundler: 10.1.1(acorn@8.16.0)(esbuild@0.28.0)
+      mdx-bundler: 10.1.1(acorn@8.17.0)(esbuild@0.28.0)
       rehype-stringify: 10.0.1
       remark-frontmatter: 5.0.0
       remark-parse: 11.0.0
@@ -10271,9 +10324,9 @@ snapshots:
       - acorn
       - supports-color
 
-  '@contentlayer2/source-files@0.5.8(acorn@8.16.0)(esbuild@0.28.0)':
+  '@contentlayer2/source-files@0.5.8(acorn@8.17.0)(esbuild@0.28.0)':
     dependencies:
-      '@contentlayer2/core': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      '@contentlayer2/core': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       '@contentlayer2/utils': 0.5.8
       chokidar: 3.6.0
       fast-glob: 3.3.3
@@ -10291,10 +10344,10 @@ snapshots:
       - markdown-wasm
       - supports-color
 
-  '@contentlayer2/source-remote-files@0.5.8(acorn@8.16.0)(esbuild@0.28.0)':
+  '@contentlayer2/source-remote-files@0.5.8(acorn@8.17.0)(esbuild@0.28.0)':
     dependencies:
-      '@contentlayer2/core': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
-      '@contentlayer2/source-files': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      '@contentlayer2/core': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
+      '@contentlayer2/source-files': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       '@contentlayer2/utils': 0.5.8
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
@@ -10953,9 +11006,9 @@ snapshots:
     dependencies:
       '@bufbuild/protobuf': 1.10.1
 
-  '@mdx-js/esbuild@3.1.0(acorn@8.16.0)(esbuild@0.28.0)':
+  '@mdx-js/esbuild@3.1.0(acorn@8.17.0)(esbuild@0.28.0)':
     dependencies:
-      '@mdx-js/mdx': 3.1.0(acorn@8.16.0)
+      '@mdx-js/mdx': 3.1.0(acorn@8.17.0)
       '@types/unist': 3.0.3
       esbuild: 0.28.0
       source-map: 0.7.4
@@ -10965,7 +11018,7 @@ snapshots:
       - acorn
       - supports-color
 
-  '@mdx-js/mdx@3.1.0(acorn@8.16.0)':
+  '@mdx-js/mdx@3.1.0(acorn@8.17.0)':
     dependencies:
       '@types/estree': 1.0.8
       '@types/estree-jsx': 1.0.5
@@ -10979,7 +11032,7 @@ snapshots:
       hast-util-to-jsx-runtime: 2.3.6
       markdown-extensions: 2.0.0
       recma-build-jsx: 1.0.0
-      recma-jsx: 1.0.0(acorn@8.16.0)
+      recma-jsx: 1.0.0(acorn@8.17.0)
       recma-stringify: 1.0.0
       rehype-recma: 1.0.0
       remark-mdx: 3.1.1
@@ -15302,6 +15355,10 @@ snapshots:
     dependencies:
       acorn: 8.16.0
 
+  acorn-jsx@5.3.2(acorn@8.17.0):
+    dependencies:
+      acorn: 8.17.0
+
   acorn@8.16.0: {}
 
   acorn@8.17.0: {}
@@ -15604,13 +15661,13 @@ snapshots:
 
   content-type@1.0.5: {}
 
-  contentlayer2@0.5.8(acorn@8.16.0)(esbuild@0.28.0):
+  contentlayer2@0.5.8(acorn@8.17.0)(esbuild@0.28.0):
     dependencies:
-      '@contentlayer2/cli': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
-      '@contentlayer2/client': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
-      '@contentlayer2/core': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
-      '@contentlayer2/source-files': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
-      '@contentlayer2/source-remote-files': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      '@contentlayer2/cli': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
+      '@contentlayer2/client': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
+      '@contentlayer2/core': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
+      '@contentlayer2/source-files': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
+      '@contentlayer2/source-remote-files': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       '@contentlayer2/utils': 0.5.8
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
@@ -16020,6 +16077,8 @@ snapshots:
   eventsource-parser@1.1.2: {}
 
   eventsource-parser@3.0.6: {}
+
+  eventsource-parser@3.1.0: {}
 
   expect-type@1.3.0: {}
 
@@ -17308,12 +17367,12 @@ snapshots:
 
   mdn-data@2.12.2: {}
 
-  mdx-bundler@10.1.1(acorn@8.16.0)(esbuild@0.28.0):
+  mdx-bundler@10.1.1(acorn@8.17.0)(esbuild@0.28.0):
     dependencies:
       '@babel/runtime': 7.29.2
       '@esbuild-plugins/node-resolve': 0.2.2(esbuild@0.28.0)
       '@fal-works/esbuild-plugin-global-externals': 2.1.2
-      '@mdx-js/esbuild': 3.1.0(acorn@8.16.0)(esbuild@0.28.0)
+      '@mdx-js/esbuild': 3.1.0(acorn@8.17.0)(esbuild@0.28.0)
       esbuild: 0.28.0
       gray-matter: 4.0.3
       remark-frontmatter: 5.0.0
@@ -17732,11 +17791,11 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-contentlayer2@0.5.8(acorn@8.16.0)(contentlayer2@0.5.8(acorn@8.16.0)(esbuild@0.28.0))(esbuild@0.28.0)(next@16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  next-contentlayer2@0.5.8(acorn@8.17.0)(contentlayer2@0.5.8(acorn@8.17.0)(esbuild@0.28.0))(esbuild@0.28.0)(next@16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
-      '@contentlayer2/core': 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      '@contentlayer2/core': 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       '@contentlayer2/utils': 0.5.8
-      contentlayer2: 0.5.8(acorn@8.16.0)(esbuild@0.28.0)
+      contentlayer2: 0.5.8(acorn@8.17.0)(esbuild@0.28.0)
       next: 16.2.6(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3)
       react: 19.2.7
       react-dom: 19.2.7(react@19.2.7)
@@ -18417,6 +18476,16 @@ snapshots:
   recma-jsx@1.0.0(acorn@8.16.0):
     dependencies:
       acorn-jsx: 5.3.2(acorn@8.16.0)
+      estree-util-to-js: 2.0.0
+      recma-parse: 1.0.0
+      recma-stringify: 1.0.0
+      unified: 11.0.5
+    transitivePeerDependencies:
+      - acorn
+
+  recma-jsx@1.0.0(acorn@8.17.0):
+    dependencies:
+      acorn-jsx: 5.3.2(acorn@8.17.0)
       estree-util-to-js: 2.0.0
       recma-parse: 1.0.0
       recma-stringify: 1.0.0
