@@ -1,1 +1,0 @@
-- [E2E SSR data mocking](e2e-ssr-data-mocking.md) — dashboard screenshots need server-side isE2E() mocks, not page.route stubs
