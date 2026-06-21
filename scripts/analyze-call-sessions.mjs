@@ -15,7 +15,7 @@
  *   - NEXT_PUBLIC_SUPABASE_URL
  *   - SUPABASE_SERVICE_ROLE_KEY
  *   - XAI_API_KEY
- *   - XAI_SUMMARY_MODEL (optional; defaults to grok-4)
+ *   - XAI_SUMMARY_MODEL (optional; defaults to grok-4.3)
  *
  * Shared helpers are exported for scripts/backfill-call-analysis.mjs.
  */
@@ -47,7 +47,7 @@ export const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120; // 2 minutes
 export const LONG_CALL_THRESHOLD_SECONDS = 180; // 3 minutes
 const OUTPUT_FILE_PREFIX = 'call-analysis-results';
 const DB_FETCH_PAGE_SIZE = 1000;
-const DEFAULT_MODEL = 'grok-4';
+const DEFAULT_MODEL = 'grok-4.3';
 
 // ============================================================================
 // Clients

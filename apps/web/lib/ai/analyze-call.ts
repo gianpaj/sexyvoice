@@ -9,8 +9,8 @@ import { z } from 'zod';
 // paths all agree on what counts as analysable.
 export const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120;
 
-// Confirm the exact current Grok model id against xAI docs; override via env.
-const DEFAULT_MODEL = 'grok-4';
+// xAI flagship; supports structured outputs (generateObject). Override via env.
+const DEFAULT_MODEL = 'grok-4.3';
 const MAX_CONVERSATION_CHARS = 4000;
 
 // LLM-facing schema. Keys match the prompt and the analyze-call-sessions.mjs

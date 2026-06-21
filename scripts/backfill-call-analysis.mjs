@@ -27,7 +27,7 @@
  *   - NEXT_PUBLIC_SUPABASE_URL
  *   - SUPABASE_SERVICE_ROLE_KEY
  *   - XAI_API_KEY
- *   - XAI_SUMMARY_MODEL (optional; defaults to grok-4)
+ *   - XAI_SUMMARY_MODEL (optional; defaults to grok-4.3)
  */
 
 import {
