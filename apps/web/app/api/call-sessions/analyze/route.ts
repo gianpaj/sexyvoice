@@ -3,7 +3,12 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { summarizeCall } from '@/lib/ai/summarize-call';
+import {
+  analyzeTranscript,
+  extractMessages,
+  MIN_ANALYSIS_CALL_DURATION_SECONDS,
+  toAnalysisRow,
+} from '@/lib/ai/analyze-call';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 // Grok structured generation can take several seconds; the default Node runtime
@@ -39,7 +44,9 @@ export async function POST(request: NextRequest) {
 
   const { data: session, error: selectError } = await supabase
     .from('call_sessions')
-    .select('id, status, transcript, analysis_status')
+    .select(
+      'id, user_id, started_at, ended_at, duration_seconds, end_reason, model, voice_id, status, transcript',
+    )
     .eq('id', id)
     .single();
 
@@ -50,53 +57,46 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Idempotency / sanity guards. Webhooks and the backfill sweep can both fire,
+  // Idempotency / sanity guards. Webhooks and the backfill script can both fire,
   // so a no-op (200) is the correct response when there's nothing to do.
-  const transcriptLength = Array.isArray(session.transcript)
-    ? session.transcript.length
-    : 0;
   if (
     session.status !== 'completed' ||
-    transcriptLength === 0 ||
-    session.analysis_status === 'done'
+    (session.duration_seconds ?? 0) < MIN_ANALYSIS_CALL_DURATION_SECONDS ||
+    extractMessages(session.transcript).length === 0
   ) {
     return NextResponse.json({ skipped: true });
   }
 
-  // Claim the row so concurrent fires don't double-process.
-  await supabase
-    .from('call_sessions')
-    .update({ analysis_status: 'pending' })
-    .eq('id', id);
+  const { count: existing } = await supabase
+    .from('call_session_analysis')
+    .select('id', { count: 'exact', head: true })
+    .eq('session_id', id);
+
+  if ((existing ?? 0) > 0) {
+    return NextResponse.json({ skipped: true });
+  }
 
   try {
-    const analysis = await summarizeCall(session.transcript);
+    const analysis = await analyzeTranscript(session);
 
-    const { error: updateError } = await supabase
-      .from('call_sessions')
-      .update({
-        analysis,
-        analysis_status: 'done',
-        analysis_generated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
+    const { error: insertError } = await supabase
+      .from('call_session_analysis')
+      .insert(toAnalysisRow(session, analysis));
 
-    if (updateError) {
-      throw updateError;
+    if (insertError) {
+      throw insertError;
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Call summarization error:', error);
+    console.error('Call analysis error:', error);
     Sentry.captureException(error, { extra: { callSessionId: id } });
 
-    await supabase
-      .from('call_sessions')
-      .update({ analysis_status: 'error' })
-      .eq('id', id);
-
+    // Don't persist an analysis row on failure: with the "row exists" idempotency
+    // check above, that would block all retries. Leaving no row lets the next
+    // webhook fire or the backfill script reprocess this session.
     return NextResponse.json(
-      { error: 'Failed to summarize call' },
+      { error: 'Failed to analyze call' },
       { status: 500 },
     );
   }

@@ -129,11 +129,109 @@ declare type Database = {
           },
         ];
       };
+      call_session_analysis: {
+        Row: {
+          ai_issues: string | null;
+          analyzed_at: string | null;
+          conversation_quality: string | null;
+          created_at: string | null;
+          duration_seconds: number | null;
+          end_reason: string | null;
+          engagement_level: string | null;
+          error: string | null;
+          id: string;
+          key_requests: Json | null;
+          language: string | null;
+          notable_patterns: string | null;
+          session_id: string;
+          started_at: string | null;
+          topic_category: string | null;
+          topic_subcategory: string | null;
+          user_id: string | null;
+          user_sentiment: string | null;
+          where_died: string | null;
+        };
+        Insert: {
+          ai_issues?: string | null;
+          analyzed_at?: string | null;
+          conversation_quality?: string | null;
+          created_at?: string | null;
+          duration_seconds?: number | null;
+          end_reason?: string | null;
+          engagement_level?: string | null;
+          error?: string | null;
+          id?: string;
+          key_requests?: Json | null;
+          language?: string | null;
+          notable_patterns?: string | null;
+          session_id: string;
+          started_at?: string | null;
+          topic_category?: string | null;
+          topic_subcategory?: string | null;
+          user_id?: string | null;
+          user_sentiment?: string | null;
+          where_died?: string | null;
+        };
+        Update: {
+          ai_issues?: string | null;
+          analyzed_at?: string | null;
+          conversation_quality?: string | null;
+          created_at?: string | null;
+          duration_seconds?: number | null;
+          end_reason?: string | null;
+          engagement_level?: string | null;
+          error?: string | null;
+          id?: string;
+          key_requests?: Json | null;
+          language?: string | null;
+          notable_patterns?: string | null;
+          session_id?: string;
+          started_at?: string | null;
+          topic_category?: string | null;
+          topic_subcategory?: string | null;
+          user_id?: string | null;
+          user_sentiment?: string | null;
+          where_died?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'call_session_analysis_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'call_sessions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      call_session_analytics: {
+        Row: {
+          analysis_date: string;
+          created_at: string | null;
+          id: string;
+          insights: Json;
+          time_range_hours: number;
+          total_sessions_analyzed: number;
+        };
+        Insert: {
+          analysis_date?: string;
+          created_at?: string | null;
+          id?: string;
+          insights: Json;
+          time_range_hours: number;
+          total_sessions_analyzed: number;
+        };
+        Update: {
+          analysis_date?: string;
+          created_at?: string | null;
+          id?: string;
+          insights?: Json;
+          time_range_hours?: number;
+          total_sessions_analyzed?: number;
+        };
+        Relationships: [];
+      };
       call_sessions: {
         Row: {
-          analysis: Json | null;
-          analysis_generated_at: string | null;
-          analysis_status: string | null;
           billed_minutes: number;
           created_at: string | null;
           credits_used: number;
@@ -154,9 +252,6 @@ declare type Database = {
           voice_id: string;
         };
         Insert: {
-          analysis?: Json | null;
-          analysis_generated_at?: string | null;
-          analysis_status?: string | null;
           billed_minutes?: number;
           created_at?: string | null;
           credits_used?: number;
@@ -177,9 +272,6 @@ declare type Database = {
           voice_id: string;
         };
         Update: {
-          analysis?: Json | null;
-          analysis_generated_at?: string | null;
-          analysis_status?: string | null;
           billed_minutes?: number;
           created_at?: string | null;
           credits_used?: number;

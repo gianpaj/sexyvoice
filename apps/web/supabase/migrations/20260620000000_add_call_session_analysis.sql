@@ -1,33 +1,87 @@
--- Automatic call transcript analysis (summary + sentiment) via Grok (xAI).
+-- Automatic call transcript analysis (rich schema) via Grok (xAI).
 --
 -- When a call ends, the agent flips public.call_sessions.status to 'completed'
 -- and writes the final transcript. This migration:
---   1. Adds columns to store the structured analysis and its processing state.
---   2. Fires a Database Webhook (pg_net) that POSTs the session id to the
---      Next.js route handler /api/call-sessions/analyze, which calls Grok and
---      writes the result back to the row.
+--   1. Creates call_session_analysis (one rich row per analysed call) and
+--      call_session_analytics (aggregate insights per analysis run).
+--   2. Fires a Database Webhook (pg_net) on the transition into 'completed' that
+--      POSTs the session id to /api/call-sessions/analyze, which calls Grok and
+--      inserts a call_session_analysis row.
 --
--- The webhook fires only on the transition into 'completed' for a session that
--- has a non-empty transcript and has not already been analysed. The webhook is
--- fire-and-forget: a failure to enqueue must never roll back the call-session
--- update, so missing configuration is tolerated silently and a backfill sweep
--- can reprocess rows where analysis_status is not 'done'.
+-- Both the route and scripts/analyze-call-sessions.mjs write the same shape.
+-- The webhook is fire-and-forget: a failure to enqueue must never roll back the
+-- call_sessions update, so missing configuration is tolerated silently and the
+-- backfill script reprocesses sessions that still have no analysis row.
 
 set search_path = '';
 
--- 1. Analysis storage. `analysis` is intentionally a single JSONB column so it
--- can grow later (e.g. richer sentiment / topic analysis) without new columns.
-alter table public.call_sessions
-  add column if not exists analysis jsonb,
-  add column if not exists analysis_status text, -- null | 'pending' | 'done' | 'error'
-  add column if not exists analysis_generated_at timestamptz;
+-- 1. Per-call analysis: one row per analysed call session.
+create table if not exists public.call_session_analysis (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references public.call_sessions(id) on delete cascade,
+  user_id uuid references auth.users(id) on delete set null,
+  started_at timestamptz,
+  duration_seconds integer,
+  end_reason text,
 
--- Lets a backfill sweep cheaply find completed calls still needing analysis.
-create index if not exists call_sessions_analysis_status_idx
-  on public.call_sessions (analysis_status)
-  where status = 'completed';
+  -- Primary language detected (ISO 639-1: en, es, de, fr, ...).
+  language text,
+  -- High-level topic: roleplay_intimate, roleplay_fantasy, casual_chat,
+  -- emotional_support, asmr_relaxation, fetish_content, other.
+  topic_category text,
+  topic_subcategory text,
+  -- high | medium | low | minimal
+  engagement_level text,
+  -- flowing | choppy | one_sided | dying
+  conversation_quality text,
+  -- what caused disengagement, or null if the conversation flowed well
+  where_died text,
+  -- satisfied | frustrated | bored | engaged | confused
+  user_sentiment text,
+  -- array of main things the user asked for or wanted
+  key_requests jsonb default '[]'::jsonb,
+  -- any issues with AI responses, or null
+  ai_issues text,
+  notable_patterns text,
 
--- 2. Webhook trigger. Requires pg_net for outbound HTTP from Postgres.
+  -- error message if analysis failed (set by the backfill/recent scripts)
+  error text,
+  analyzed_at timestamptz default now(),
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_call_session_analysis_session_id
+  on public.call_session_analysis (session_id);
+create index if not exists idx_call_session_analysis_user_id
+  on public.call_session_analysis (user_id);
+create index if not exists idx_call_session_analysis_started_at
+  on public.call_session_analysis (started_at desc);
+create index if not exists idx_call_session_analysis_language
+  on public.call_session_analysis (language);
+create index if not exists idx_call_session_analysis_topic_category
+  on public.call_session_analysis (topic_category);
+create index if not exists idx_call_session_analysis_engagement_level
+  on public.call_session_analysis (engagement_level);
+
+-- Service-role only (admin client / scripts); no public policies.
+alter table public.call_session_analysis enable row level security;
+
+-- 2. Aggregated insights, one row per analysis run (e.g. daily cron / backfill).
+create table if not exists public.call_session_analytics (
+  id uuid primary key default gen_random_uuid(),
+  analysis_date timestamptz not null default now(),
+  time_range_hours integer not null,
+  total_sessions_analyzed integer not null,
+  insights jsonb not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_call_session_analytics_date
+  on public.call_session_analytics (analysis_date desc);
+
+alter table public.call_session_analytics enable row level security;
+
+-- 3. Webhook trigger. Requires pg_net for outbound HTTP from Postgres.
 create extension if not exists pg_net with schema extensions;
 
 create or replace function public.enqueue_call_summary()
@@ -41,8 +95,8 @@ declare
   v_secret text;
 begin
   -- Read configuration from Supabase Vault. If either is missing we skip the
-  -- webhook rather than failing the call_sessions update; the row stays with
-  -- analysis_status null and can be picked up by a backfill sweep.
+  -- webhook rather than failing the call_sessions update; the row stays without
+  -- a call_session_analysis row and can be picked up by the backfill script.
   select decrypted_secret into v_base_url
   from vault.decrypted_secrets
   where name = 'app_base_url';
@@ -77,7 +131,6 @@ create trigger call_sessions_summarize_trigger
     new.status = 'completed'
     and old.status is distinct from 'completed'
     and new.transcript is not null
-    and jsonb_array_length(new.transcript) > 0
-    and new.analysis_status is distinct from 'done'
+    and new.transcript not in ('[]'::jsonb, '{}'::jsonb, 'null'::jsonb)
   )
   execute function public.enqueue_call_summary();
