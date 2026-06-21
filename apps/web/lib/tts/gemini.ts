@@ -66,11 +66,16 @@ export function buildGeminiTtsConfig({
 
 /**
  * Resolve the effective Gemini model id for a request.
- * - paid: gpro31 → gemini-3.1-flash-tts-preview, else gemini-2.5-pro-preview-tts
- * - free: gemini-2.5-flash-preview-tts
+ * - gpro31 (any tier): gemini-3.1-flash-tts-preview
+ * - gpro paid: gemini-2.5-pro-preview-tts
+ * - gpro free: gemini-2.5-flash-preview-tts
  *
- * The external API always generates at the "paid" tier (pass userHasPaid:true)
- * and relies on the flash fallback in `generateGeminiAudio`.
+ * gpro31 always synthesizes with Gemini 3.1 so free users get a consistent
+ * "taste" of 3.1 (matching the streaming path) as an upgrade funnel, rather
+ * than a 2.5-flash fallback that varied by request path and text length.
+ * `generateGeminiAudio` still falls back to flash if the 3.1 call fails.
+ *
+ * The external API always generates at the "paid" tier (pass userHasPaid:true).
  */
 export function selectGeminiModel({
   dbModel,
@@ -79,12 +84,13 @@ export function selectGeminiModel({
   dbModel: string;
   userHasPaid: boolean;
 }): string {
+  if (dbModel === 'gpro31') {
+    return 'gemini-3.1-flash-tts-preview';
+  }
   if (!userHasPaid) {
     return GEMINI_FLASH_MODEL;
   }
-  return dbModel === 'gpro31'
-    ? 'gemini-3.1-flash-tts-preview'
-    : 'gemini-2.5-pro-preview-tts';
+  return 'gemini-2.5-pro-preview-tts';
 }
 
 export interface GeminiAudioClassification {
