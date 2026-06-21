@@ -366,7 +366,10 @@ describe('V1 Speech API Route', () => {
       expect(response.status).toBe(200);
       expect(mockReplicateRun).toHaveBeenCalledWith(
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-        { input: { text: 'Hello from Orpheus', voice: 'tara' } },
+        {
+          input: { text: 'Hello from Orpheus', voice: 'tara' },
+          signal: expect.any(AbortSignal),
+        },
         expect.any(Function),
       );
       expect(json.url).toContain('.mp3');

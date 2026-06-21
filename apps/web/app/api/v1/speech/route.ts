@@ -42,6 +42,7 @@ import {
   GeminiGenerationError,
   generateGeminiAudio,
   getGeminiProviderFailure,
+  isAbortError,
   selectGeminiModel,
 } from '@/lib/tts/gemini';
 import { buildStyledText } from '@/lib/tts/prompt';
@@ -507,6 +508,7 @@ export async function POST(request: Request) {
           model: voiceObj.model,
           text: finalText,
           voice,
+          signal: request.signal,
           onProgress: (prediction) => {
             replicateResponse = prediction;
           },
@@ -672,6 +674,12 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    // Client disconnected — the in-flight provider call (Gemini/Replicate) is
+    // cancelled via request.signal. Do not report this as a server error.
+    if (request.signal.aborted || isAbortError(error)) {
+      return new Response(null, { status: 499 });
+    }
+
     if (
       Error.isError(error) &&
       error.cause &&
