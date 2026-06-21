@@ -1,36 +1,17 @@
 {
-  "name": "sexyvoice",
-  "version": "2026.4.7",
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
-    "lint-staged": "16.4.0",
-    "turbo": "2.9.5",
-    "ultracite": "^7.5.6"
-  },
-  "engines": {
-    "node": "24.x"
+    "lint-staged": "17.0.7",
+    "turbo": "2.9.18",
+    "ultracite": "7.8.3"
   },
   "lint-staged": {
     "*.{js,cjs,ts,tsx,json,jsonc,css,md,mdx}": [
       "pnpm dlx ultracite fix"
     ]
   },
-  "packageManager": "pnpm@10.20.0",
-  "pnpm": {
-    "overrides": {
-      "@babel/runtime@<7.26.10": ">=7.26.10",
-      "@types/react": "19.2.14",
-      "@types/react-dom": "19.2.3",
-      "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7",
-      "require-in-the-middle": "7.5.2",
-      "undici@<5.28.4": ">=5.28.4",
-      "undici@<=5.28.2": ">=5.28.3",
-      "undici@>=4.5.0 <5.28.5": ">=5.28.5",
-      "whatwg-url": "^14.0.0"
-    }
-  },
-  "private": true,
+  "name": "sexyvoice",
   "scripts": {
     "analyze-free-users": "pnpm --filter @sexyvoice/scripts analyze-free-users",
     "backfill-free-call": "pnpm --filter @sexyvoice/scripts backfill-free-call",
@@ -41,6 +22,8 @@
     "dev": "turbo run dev --filter=@sexyvoice/web",
     "fixall": "turbo run fixall",
     "format": "turbo run format",
+    "generate-gemini-speech-samples": "pnpm --filter @sexyvoice/scripts generate-gemini-speech-samples",
+    "generate-xai-speech-samples": "pnpm --filter @sexyvoice/scripts generate-xai-speech-samples",
     "generate-supabase-types": "pnpm --filter @sexyvoice/web generate-supabase-types",
     "generate-supabase-types:local": "pnpm --filter @sexyvoice/web generate-supabase-types:local",
     "lint": "turbo run lint",
@@ -48,9 +31,19 @@
     "prepare": "husky",
     "refund-credits": "pnpm --filter @sexyvoice/scripts refund-credits",
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
+    "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
     "test": "turbo run test",
+    "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
-    "type-check": "turbo run type-check"
-  }
+    "type-check": "turbo run type-check",
+    "check": "ultracite check",
+    "fix": "ultracite fix"
+  },
+  "version": "2026.4.7",
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "pnpm@10.20.0",
+  "private": true
 }

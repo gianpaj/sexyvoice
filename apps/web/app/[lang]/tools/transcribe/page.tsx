@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
 import Footer from '@/components/footer';
@@ -15,13 +15,12 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.pages;
-  const dictTranscribe = messages.transcribe;
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const t = await getTranslations({ locale: lang, namespace: 'transcribe' });
 
-  const title = dict.titleTranscribe || dictTranscribe.title;
-  const description = dict.descriptionTranscribe || dictTranscribe.subtitle;
-  const keywords = dict.keywordsTranscribe || '';
+  const title = tPages('titleTranscribe') || t('title');
+  const description = tPages('descriptionTranscribe') || t('subtitle');
+  const keywords = tPages('keywordsTranscribe') || '';
   const keywordsArray = keywords
     ? keywords.split(',').map((k: string) => k.trim())
     : [
@@ -80,13 +79,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TranscribePage({ params }: Props) {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.transcribe;
-  const dictPages = messages.pages;
+  const t = await getTranslations({ locale: lang, namespace: 'transcribe' });
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const rawFaqItems = t.raw('faq.items');
+  const faqItems = (Array.isArray(rawFaqItems) ? rawFaqItems : []) as Array<{
+    question: string;
+    answer: string;
+  }>;
 
   const url = `https://sexyvoice.ai/${lang}/tools/transcribe`;
-  const title = dictPages.titleTranscribe || dict.title;
-  const description = dictPages.descriptionTranscribe || dict.subtitle;
+  const title = tPages('titleTranscribe') || t('title');
+  const description = tPages('descriptionTranscribe') || t('subtitle');
 
   const jsonLd: Graph = {
     '@context': 'https://schema.org',
@@ -173,7 +176,7 @@ export default async function TranscribePage({ params }: Props) {
         '@type': 'FAQPage',
         '@id': `${url}/#faq`,
         inLanguage: lang,
-        mainEntity: dict.faq.items.map((item) => ({
+        mainEntity: faqItems.map((item) => ({
           '@type': 'Question',
           name: item.question,
           acceptedAnswer: {
@@ -194,7 +197,7 @@ export default async function TranscribePage({ params }: Props) {
           {
             '@type': 'ListItem',
             position: 2,
-            name: dictPages['/tools/transcribe'] || 'Audio Transcription',
+            name: tPages('/tools/transcribe') || 'Audio Transcription',
             item: url,
           },
         ],
@@ -208,7 +211,7 @@ export default async function TranscribePage({ params }: Props) {
       <div className="bg-background">
         <HeaderStatic />
         <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
-          <TranscribeClient dict={dict} lang={lang} />
+          <TranscribeClient lang={lang} />
 
           {/* Server-rendered FAQ — crawlable without JavaScript */}
           <section
@@ -220,10 +223,10 @@ export default async function TranscribePage({ params }: Props) {
               className="mb-8 font-semibold text-foreground text-xl"
               id="faq-heading"
             >
-              {dict.faq.title}
+              {t('faq.title')}
             </h2>
             <dl className="space-y-6">
-              {dict.faq.items.map((item) => (
+              {faqItems.map((item) => (
                 <div key={item.question}>
                   <dt className="mb-1.5 font-medium text-foreground text-sm">
                     {item.question}
@@ -241,14 +244,14 @@ export default async function TranscribePage({ params }: Props) {
       {/* Attribution bar — preserves Whisper/Transformers.js credit and privacy note */}
       <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
         <p>
-          {dict.footer.poweredBy}{' '}
+          {t('footer.poweredBy')}{' '}
           <a
             className="font-semibold text-foreground transition-colors hover:text-primary"
             href="https://huggingface.co/docs/transformers.js"
             rel="noopener noreferrer"
             target="_blank"
           >
-            {dict.footer.transformersJs}
+            {t('footer.transformersJs')}
           </a>{' '}
           &bull;{' '}
           <a
@@ -257,9 +260,9 @@ export default async function TranscribePage({ params }: Props) {
             rel="noopener noreferrer"
             target="_blank"
           >
-            {dict.footer.whisper}
+            {t('footer.whisper')}
           </a>{' '}
-          &bull; {dict.footer.noUploads}
+          &bull; {t('footer.noUploads')}
         </p>
       </div>
       <Footer lang={lang} />

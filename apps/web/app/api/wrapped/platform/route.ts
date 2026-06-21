@@ -159,7 +159,6 @@ function calculateTopVoices(audioFiles: AudioFile[], limit = 5) {
     .slice(0, limit);
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Function iterates over multiple data sources separately for clarity
 function calculateMonthlyStats(
   audioFiles: AudioFile[],
   profiles: Array<{ created_at: string | null }>,

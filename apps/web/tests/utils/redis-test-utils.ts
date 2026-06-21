@@ -32,7 +32,15 @@ export async function setupRedis(): Promise<Redis> {
 
   // Local development: use in-memory Redis server
   // Configure redis-memory-server with explicit settings for faster downloads
-  const config: any = {
+  const config: {
+    binary: {
+      downloadDir?: string;
+      version: string;
+    };
+    instance: {
+      port: number | undefined;
+    };
+  } = {
     instance: {
       port: undefined, // auto-assign available port
     },
@@ -48,8 +56,10 @@ export async function setupRedis(): Promise<Redis> {
 
   redisServer = new RedisMemoryServer(config);
 
-  const host = await redisServer.getHost();
-  const port = await redisServer.getPort();
+  const [host, port] = await Promise.all([
+    redisServer.getHost(),
+    redisServer.getPort(),
+  ]);
 
   redisClient = new Redis({
     host,

@@ -1,16 +1,17 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import { Progress } from '@/components/ui/progress';
-import type langDict from '@/messages/en.json';
 import type { DownloadProgress } from '../hooks/use-transcriber';
 
 interface Props {
-  dict: (typeof langDict)['transcribe']['progress'];
   isTranscribing: boolean;
   progress: DownloadProgress[];
 }
 
-export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
+export function ProgressDisplay({ progress, isTranscribing }: Props) {
+  const t = useTranslations('transcribe.progress');
   const downloadingFiles = progress.filter(
     (p) => p.status === 'progress' && p.progress != null,
   );
@@ -33,19 +34,25 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
           className="flex shrink-0 items-end gap-[3px]"
           style={{ height: '18px' }}
         >
-          {([10, 16, 18, 12, 14] as const).map((h, i) => (
+          {[
+            { key: 'progress-wave-1', height: 10, delay: '0s' },
+            { key: 'progress-wave-2', height: 16, delay: '0.12s' },
+            { key: 'progress-wave-3', height: 18, delay: '0.24s' },
+            { key: 'progress-wave-4', height: 12, delay: '0.36s' },
+            { key: 'progress-wave-5', height: 14, delay: '0.48s' },
+          ].map((wave) => (
             <div
               className="wave-bar"
-              key={i}
+              key={wave.key}
               style={{
-                height: `${h}px`,
-                animationDelay: `${i * 0.12}s`,
+                height: `${wave.height}px`,
+                animationDelay: wave.delay,
               }}
             />
           ))}
         </div>
         <span className="font-medium text-foreground text-sm">
-          {isTranscribing ? dict.transcribing : dict.downloading}
+          {isTranscribing ? t('transcribing') : t('downloading')}
         </span>
       </div>
 
@@ -53,13 +60,13 @@ export function ProgressDisplay({ progress, isTranscribing, dict }: Props) {
         <>
           <Progress value={Math.min(totalProgress, 100)} />
           <p className="text-muted-foreground text-xs">
-            {Math.round(totalProgress)}% — {dict.modelCacheHint}
+            {Math.round(totalProgress)}% — {t('modelCacheHint')}
           </p>
         </>
       )}
 
       {isTranscribing && (
-        <p className="text-muted-foreground text-xs">{dict.processingHint}</p>
+        <p className="text-muted-foreground text-xs">{t('processingHint')}</p>
       )}
     </div>
   );

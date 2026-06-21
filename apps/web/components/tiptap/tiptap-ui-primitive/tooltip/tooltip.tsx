@@ -24,7 +24,6 @@ import {
   forwardRef,
   isValidElement,
   useContext,
-  useMemo,
   useState,
   version,
 } from 'react';
@@ -116,15 +115,12 @@ function useTooltip({
 
   const interactions = useInteractions([hover, focus, dismiss, role]);
 
-  return useMemo(
-    () => ({
-      open,
-      setOpen,
-      ...interactions,
-      ...data,
-    }),
-    [open, setOpen, interactions, data],
-  );
+  return {
+    open,
+    setOpen,
+    ...interactions,
+    ...data,
+  };
 }
 
 const TooltipContext = createContext<TooltipContextValue | null>(null);
@@ -181,6 +177,7 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
         'data-tooltip-state': context.open ? 'open' : 'closed',
       };
 
+      // eslint-disable-next-line react-compiler/react-compiler
       return cloneElement(
         children,
         context.getReferenceProps({

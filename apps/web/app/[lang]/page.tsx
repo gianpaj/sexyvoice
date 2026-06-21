@@ -1,7 +1,6 @@
 import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -58,14 +57,14 @@ export default async function LandingPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
-  const cookieStore = await cookies();
-  const dismissedCookieKeys = cookieStore
-    .getAll()
-    .filter((cookie) => cookie.value)
-    .map((cookie) => cookie.name);
+  // NOTE: intentionally do NOT read cookies() here. Doing so opts this page into
+  // dynamic rendering (`cache-control: private, no-store`), which both prevents
+  // CDN caching and disqualifies the page from the back/forward cache (bfcache).
+  // The <Banner> client component already re-reads the dismissal cookies on the
+  // client (it starts hidden and only reveals itself when no dismiss cookie is
+  // set), so server-side filtering here is redundant.
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
-    dismissedCookieKeys,
     lang,
     messages,
     placement: 'landing',
@@ -90,8 +89,8 @@ export default async function LandingPage(props: {
         url: 'https://sexyvoice.ai',
         logo: 'https://sexyvoice.ai/icon-192x192.png',
         sameAs: [
-          'https://x.com/sexyvoice_ai',
-          'https://instagram.com/sexyvoice.ai',
+          'https://x.com/sexyvoiceai',
+          'https://instagram.com/sexyvoice_ai',
         ],
       },
       {
@@ -144,7 +143,7 @@ export default async function LandingPage(props: {
       {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
+        <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
@@ -171,9 +170,7 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href={`/${lang}/signup`}>
-                    {dictLanding.hero.buttonCTA}
-                  </Link>
+                  <Link href="/signup">{dictLanding.hero.buttonCTA}</Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
                   {dictLanding.hero.noCreditCard}
@@ -268,7 +265,12 @@ export default async function LandingPage(props: {
               </Card>
             </div>
 
-            <PricingTable lang={lang} />
+            <div className="flex flex-col">
+              <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
+                {messages.credits.pricingPlan}
+              </h2>
+              <PricingTable className="py-4 pb-16" lang={lang} />
+            </div>
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">
@@ -280,10 +282,10 @@ export default async function LandingPage(props: {
               <h2 className="mb-4 font-bold text-2xl">
                 {dictLanding.latestPosts}
               </h2>
-              {get3PostsByLang(lang).map((post, idx) => (
+              {get3PostsByLang(lang).map((post) => (
                 <Card
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
-                  key={idx}
+                  key={post.url}
                 >
                   <Link href={post.url} prefetch>
                     <CardHeader>
@@ -329,7 +331,7 @@ export default async function LandingPage(props: {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href={`/${lang}/signup`}>{dictLanding.cta.action}</Link>
+                <Link href="/signup">{dictLanding.cta.action}</Link>
               </Button>
             </div>
           </div>
@@ -341,8 +343,8 @@ export default async function LandingPage(props: {
 }
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="relative mx-auto size-36">
-    <div className="ic absolute inset-0 m-auto flex size-15 items-center justify-center rounded-sm border-t border-l bg-linear-150 from-brand-purple to-80% to-brand-red">
+  <div className="mx-auto grid size-36 place-items-center">
+    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-linear-150 from-brand-purple to-80% to-brand-red">
       {children}
     </div>
   </div>

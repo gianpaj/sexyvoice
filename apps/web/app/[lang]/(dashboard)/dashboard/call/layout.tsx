@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
 
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -57,8 +56,6 @@ function toSessionConfig(value: unknown): {
   temperature?: number;
   maxOutputTokens?: number | null;
   max_output_tokens?: number | null;
-  grokImageEnabled?: boolean;
-  grok_image_enabled?: boolean;
 } {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
@@ -70,8 +67,6 @@ function toSessionConfig(value: unknown): {
     temperature?: number;
     maxOutputTokens?: number | null;
     max_output_tokens?: number | null;
-    grokImageEnabled?: boolean;
-    grok_image_enabled?: boolean;
   };
 }
 
@@ -95,17 +90,13 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
     localizedInstructions: prompts?.localized_prompts ?? {},
     sessionConfig: {
       model: (sessionConfig.model ??
-        'grok-4-1-fast-non-reasoning') as Preset['sessionConfig']['model'],
+        'grok-voice-think-fast-1.0') as Preset['sessionConfig']['model'],
       voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
         null,
-      grokImageEnabled:
-        sessionConfig.grokImageEnabled ??
-        sessionConfig.grok_image_enabled ??
-        false,
     },
     image: character.image ?? undefined,
     promptId: character.prompt_id ?? undefined,
@@ -152,8 +143,6 @@ export default async function CallLayout({
 
   const { lang } = await params;
 
-  const dict = ((await getMessages({ locale: lang })) as IntlMessages).call;
-
   return (
     // <PHProvider>
     <PlaygroundStateProvider
@@ -166,7 +155,7 @@ export default async function CallLayout({
         language: lang as CallLanguage,
       }}
     >
-      <ConnectionProvider dict={dict}>
+      <ConnectionProvider>
         <TooltipProvider>
           <RoomWrapper>{children}</RoomWrapper>
         </TooltipProvider>

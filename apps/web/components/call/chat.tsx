@@ -5,25 +5,35 @@ import {
   useConnectionState,
   // useVoiceAssistant,
 } from '@livekit/components-react';
-import * as Sentry from '@sentry/nextjs';
-import { AnimatePresence, motion } from 'framer-motion';
 import { ConnectionState } from 'livekit-client';
+import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { SessionControls } from '@/components/call/session-controls';
 // import { GrokVisualizer } from "@/components/visualizer/grok-visualizer";
-// import { GrokImageFeed } from '@/components/grok-image-feed';
 import { useAgent } from '@/hooks/use-agent';
 import { useConnection } from '@/hooks/use-connection';
 import { ConnectButton } from './connect-button';
+
+const SessionControls = dynamic(
+  () =>
+    import('@/components/call/session-controls').then(
+      (mod) => mod.SessionControls,
+    ),
+  {
+    loading: () => <div className="h-[72px]" />,
+    ssr: false,
+  },
+);
 
 export function Chat() {
   const connectionState = useConnectionState();
   // const { audioTrack, state } = useVoiceAssistant();
   const [isChatRunning, setIsChatRunning] = useState(false);
   const { agent } = useAgent();
-  const { disconnect, dict } = useConnection();
+  const { disconnect } = useConnection();
+  const t = useTranslations('call');
   // const [isEditingInstructions, setIsEditingInstructions] = useState(false);
 
   const [hasSeenAgent, setHasSeenAgent] = useState(false);
@@ -37,11 +47,9 @@ export function Chat() {
         disconnect();
         setHasSeenAgent(false);
 
-        Sentry.captureMessage('Agent Unavailable');
-
         console.error('Agent Unavailable');
 
-        toast.error(dict.agentUnavailable);
+        toast.error(t('agentUnavailable'));
       }, 5000);
     }
 
@@ -59,8 +67,7 @@ export function Chat() {
         if (!agent) {
           disconnect();
           setHasSeenAgent(false);
-          toast.info(dict.disconnected);
-          Sentry.captureMessage('Disconnected');
+          toast.info(t('disconnected'));
         }
       }, 5000);
     }
@@ -73,7 +80,7 @@ export function Chat() {
       if (disconnectTimer) clearTimeout(disconnectTimer);
       if (appearanceTimer) clearTimeout(appearanceTimer);
     };
-  }, [connectionState, agent, disconnect, hasSeenAgent]);
+  }, [connectionState, agent, disconnect, hasSeenAgent, t]);
 
   // const toggleInstructionsEdit = () =>
   //   setIsEditingInstructions(!isEditingInstructions);
@@ -91,17 +98,12 @@ export function Chat() {
   // );
 
   const renderConnectionControl = () => (
-    <AnimatePresence mode="wait">
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        initial={{ opacity: 0, y: 20 }}
-        key={isChatRunning ? 'session-controls' : 'connect-button'}
-        transition={{ type: 'tween', duration: 0.15, ease: 'easeInOut' }}
-      >
-        {isChatRunning ? <SessionControls /> : <ConnectButton />}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      className="fade-in-0 slide-in-from-bottom-2 animate-in duration-150"
+      key={isChatRunning ? 'session-controls' : 'connect-button'}
+    >
+      {isChatRunning ? <SessionControls /> : <ConnectButton />}
+    </div>
   );
 
   return (
@@ -121,8 +123,6 @@ export function Chat() {
 
             <RoomAudioRenderer />
           </div>
-
-          {/*<GrokImageFeed />*/}
         </div>
 
         {/* Button for normal screens - show after visualizer */}

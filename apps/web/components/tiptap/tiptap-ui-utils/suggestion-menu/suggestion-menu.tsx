@@ -1,6 +1,5 @@
 import { flip, offset, shift, size } from '@floating-ui/react';
 import { PluginKey } from '@tiptap/pm/state';
-import type { Range } from '@tiptap/react';
 import {
   exitSuggestion,
   Suggestion,
@@ -8,7 +7,7 @@ import {
   SuggestionPluginKey,
   type SuggestionProps,
 } from '@tiptap/suggestion';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 
 import type {
   SuggestionItem,
@@ -38,6 +37,58 @@ function shouldCloseSuggestionForQuery(
   return false;
 }
 
+interface SuggestionMenuState {
+  command: ((item: SuggestionItem) => void) | null;
+  decorationNode: HTMLElement | null;
+  items: SuggestionItem[];
+  query: string;
+  show: boolean;
+}
+
+type SuggestionMenuAction =
+  | {
+      type: 'update';
+      payload: {
+        command: (item: SuggestionItem) => void;
+        decorationNode: HTMLElement | null;
+        items: SuggestionItem[];
+        query: string;
+        show?: boolean;
+      };
+    }
+  | { type: 'set-open'; payload: boolean }
+  | { type: 'reset' };
+
+const initialSuggestionMenuState: SuggestionMenuState = {
+  command: null,
+  decorationNode: null,
+  items: [],
+  query: '',
+  show: false,
+};
+
+function suggestionMenuReducer(
+  state: SuggestionMenuState,
+  action: SuggestionMenuAction,
+): SuggestionMenuState {
+  switch (action.type) {
+    case 'update':
+      return {
+        ...state,
+        ...action.payload,
+      };
+    case 'set-open':
+      return {
+        ...state,
+        show: action.payload,
+      };
+    case 'reset':
+      return initialSuggestionMenuState;
+    default:
+      return state;
+  }
+}
+
 /**
  * A component that renders a suggestion menu for Tiptap editors.
  * Displays a floating menu when a trigger character is typed.
@@ -49,25 +100,27 @@ export const SuggestionMenu = ({
   children,
   maxHeight = 384,
   pluginKey = SuggestionPluginKey,
+  char,
   ...internalSuggestionProps
 }: SuggestionMenuProps) => {
   const { editor } = useTiptapEditor(providedEditor);
-
-  const [show, setShow] = useState<boolean>(false);
+  const [state, dispatch] = useReducer(
+    suggestionMenuReducer,
+    initialSuggestionMenuState,
+  );
+  const {
+    show,
+    decorationNode: internalDecorationNode,
+    command: internalCommand,
+    items: internalItems,
+    query: internalQuery,
+  } = state;
 
   // If later we want the floating stick to the position while browser is scrolling,
   // we can uncomment this part and pass the getBoundingClientRect prop to FloatingElement instead of referenceElement.
   // const [internalClientRect, setInternalClientRect] = useState<DOMRect | null>(
   //   null
   // )
-  const [internalDecorationNode, setInternalDecorationNode] =
-    useState<HTMLElement | null>(null);
-  const [internalCommand, setInternalCommand] = useState<
-    ((item: SuggestionItem) => void) | null
-  >(null);
-  const [internalItems, setInternalItems] = useState<SuggestionItem[]>([]);
-  const [internalQuery, setInternalQuery] = useState<string>('');
-  const [, setInternalRange] = useState<Range | null>(null);
 
   const { ref, style, getFloatingProps, isMounted } = useFloatingElement(
     show,
@@ -99,14 +152,17 @@ export const SuggestionMenu = ({
       ],
       onOpenChange(open) {
         if (!open) {
-          setShow(false);
+          dispatch({ type: 'set-open', payload: false });
         }
       },
       ...floatingOptions,
     },
   );
 
-  const internalSuggestionPropsRef = useRef(internalSuggestionProps);
+  const internalSuggestionPropsRef = useRef({
+    char,
+    ...internalSuggestionProps,
+  });
   const normalizedPluginKey = useMemo(
     () =>
       pluginKey instanceof PluginKey ? pluginKey : new PluginKey(pluginKey),
@@ -114,21 +170,16 @@ export const SuggestionMenu = ({
   );
 
   useEffect(() => {
-    internalSuggestionPropsRef.current = internalSuggestionProps;
+    internalSuggestionPropsRef.current = { char, ...internalSuggestionProps };
   });
 
   const resetMenuState = useCallback(() => {
-    setInternalDecorationNode(null);
-    setInternalCommand(null);
-    setInternalItems([]);
-    setInternalQuery('');
-    setInternalRange(null);
-    setShow(false);
+    dispatch({ type: 'reset' });
   }, []);
 
   const closePopup = useCallback(() => {
     if (editor && !editor.isDestroyed) {
-      const triggerChar = internalSuggestionPropsRef.current.char;
+      const triggerChar = char;
       const { selection } = editor.state;
       const previousNode = selection.$head?.nodeBefore;
       const cursorPosition = selection.$from.pos;
@@ -150,7 +201,7 @@ export const SuggestionMenu = ({
     }
 
     resetMenuState();
-  }, [editor, normalizedPluginKey, resetMenuState]);
+  }, [char, editor, normalizedPluginKey, resetMenuState]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {
@@ -201,52 +252,54 @@ export const SuggestionMenu = ({
         props.onSelect({ editor, range: rangeToUse, context: props.context });
       },
 
-      render: () => {
-        return {
-          onStart: (props: SuggestionProps<SuggestionItem>) => {
-            setInternalDecorationNode(
-              (props.decorationNode as HTMLElement) ?? null,
-            );
-            setInternalCommand(() => props.command);
-            setInternalItems(props.items);
-            setInternalQuery(props.query);
-            setInternalRange(props.range);
-            setShow(true);
-          },
+      render: () => ({
+        onStart: (props: SuggestionProps<SuggestionItem>) => {
+          dispatch({
+            type: 'update',
+            payload: {
+              decorationNode: (props.decorationNode as HTMLElement) ?? null,
+              command: props.command,
+              items: props.items,
+              query: props.query,
+              show: true,
+            },
+          });
+        },
 
-          onUpdate: (props: SuggestionProps<SuggestionItem>) => {
-            if (
-              shouldCloseSuggestionForQuery(
-                internalSuggestionPropsRef.current.char,
-                props.query,
-              )
-            ) {
-              exitSuggestion(editor.view, normalizedPluginKey);
-              return;
-            }
+        onUpdate: (props: SuggestionProps<SuggestionItem>) => {
+          if (
+            shouldCloseSuggestionForQuery(
+              internalSuggestionPropsRef.current.char,
+              props.query,
+            )
+          ) {
+            exitSuggestion(editor.view, normalizedPluginKey);
+            return;
+          }
 
-            setInternalDecorationNode(
-              (props.decorationNode as HTMLElement) ?? null,
-            );
-            setInternalCommand(() => props.command);
-            setInternalItems(props.items);
-            setInternalQuery(props.query);
-            setInternalRange(props.range);
-          },
+          dispatch({
+            type: 'update',
+            payload: {
+              decorationNode: (props.decorationNode as HTMLElement) ?? null,
+              command: props.command,
+              items: props.items,
+              query: props.query,
+            },
+          });
+        },
 
-          onKeyDown: (props: SuggestionKeyDownProps) => {
-            if (props.event.key === 'Escape') {
-              closePopup();
-              return true;
-            }
-            return false;
-          },
+        onKeyDown: (props: SuggestionKeyDownProps) => {
+          if (props.event.key === 'Escape') {
+            closePopup();
+            return true;
+          }
+          return false;
+        },
 
-          onExit: () => {
-            resetMenuState();
-          },
-        };
-      },
+        onExit: () => {
+          resetMenuState();
+        },
+      }),
       ...internalSuggestionPropsRef.current,
     });
 

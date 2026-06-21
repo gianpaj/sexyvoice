@@ -28,7 +28,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <Link
                 aria-label="Twitter/X"
                 className="hit-area-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-                href="https://x.com/SexyvoiceAi"
+                href="https://x.com/sexyvoiceai"
                 rel="noopener noreferrer"
                 target="_blank"
               >
@@ -88,7 +88,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <a
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href="https://sexyvoice.checkly-dashboards.com/"
+                  href="https://status.sexyvoice.ai"
                   rel="noopener noreferrer"
                   target="_blank"
                 >

@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
-import { getVoiceIdByName, hasUserPaid } from '@/lib/supabase/queries';
+import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
   calculateCreditsFromTokens,
@@ -17,7 +17,7 @@ type ValidationResult<T> =
 async function validateRequestBody(
   request: Request,
 ): Promise<
-  ValidationResult<{ text: string; voice: string; styleVariant: string }>
+  ValidationResult<{ text: string; voiceId: string; styleVariant: string }>
 > {
   if (request.body === null) {
     return {
@@ -32,10 +32,10 @@ async function validateRequestBody(
   try {
     const body = await request.json();
     const text: string = body.text || '';
-    const voice: string = body.voice || '';
+    const voiceId: string = body.voiceId || '';
     const styleVariant: string = body.styleVariant || '';
 
-    if (!(text && voice)) {
+    if (!(text && voiceId)) {
       return {
         ok: false,
         response: NextResponse.json(
@@ -45,7 +45,7 @@ async function validateRequestBody(
       };
     }
 
-    return { ok: true, data: { text, voice, styleVariant } };
+    return { ok: true, data: { text, voiceId, styleVariant } };
   } catch (error) {
     if (error instanceof SyntaxError) {
       return {
@@ -76,9 +76,9 @@ async function validateUser(): Promise<ValidationResult<{ id: string }>> {
 }
 
 async function validateVoice(
-  voiceName: string,
+  voiceId: string,
 ): Promise<ValidationResult<{ model: string }>> {
-  const voiceObj = await getVoiceIdByName(voiceName);
+  const voiceObj = await getVoiceById(voiceId);
 
   if (!voiceObj) {
     return {
@@ -110,10 +110,10 @@ async function validateVoice(
 
 function validateTextLength(
   text: string,
-  voiceModel: string,
-  isPaidUser = false,
+  model: string,
+  isPaidUser: boolean,
 ): ValidationResult<null> {
-  const maxLength = getCharactersLimit(voiceModel, isPaidUser);
+  const maxLength = getCharactersLimit(model, isPaidUser);
 
   if (text.length > maxLength) {
     return {
@@ -153,19 +153,19 @@ export async function POST(request: Request) {
       return bodyResult.response;
     }
 
-    const { text, voice, styleVariant } = bodyResult.data;
+    const { text, voiceId, styleVariant } = bodyResult.data;
 
     const userResult = await validateUser();
     if (!userResult.ok) {
       return userResult.response;
     }
 
-    const isPaidUser = await hasUserPaid(userResult.data.id);
-
-    const voiceResult = await validateVoice(voice);
+    const voiceResult = await validateVoice(voiceId);
     if (!voiceResult.ok) {
       return voiceResult.response;
     }
+
+    const isPaidUser = await hasUserPaid(userResult.data.id);
 
     const textError = validateTextLength(
       text,

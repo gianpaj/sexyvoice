@@ -1,5 +1,6 @@
 import { getMessages } from 'next-intl/server';
 
+import { CallFaq } from '@/components/call/call-faq';
 import { Chat } from '@/components/call/chat';
 import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
@@ -13,6 +14,10 @@ export default async function Call(props: {
 }) {
   const { lang } = await props.params;
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
+
+  const callFaq = dict.landing?.faq?.groups?.find(
+    (group) => group.id === 'liveCalling',
+  );
 
   const supabase = await createClient();
 
@@ -56,11 +61,17 @@ export default async function Call(props: {
       <main className="flex w-full flex-1 flex-col md:p-4 lg:mt-16">
         <div className="mx-auto flex h-full w-full flex-col justify-center gap-5 bg-bg1">
           <Chat />
-          <p className="text-center text-foreground text-xs leading-7">
+          <p
+            className="text-center text-foreground text-xs leading-7"
+            data-testid="call-notice-text"
+          >
             {dict.call.notice1}
             <br />
             {dict.call.notice2}
           </p>
+          {callFaq && (
+            <CallFaq questions={callFaq.questions} title={callFaq.category} />
+          )}
         </div>
       </main>
     </div>

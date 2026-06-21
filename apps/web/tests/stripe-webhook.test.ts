@@ -231,7 +231,7 @@ describe('Stripe Webhook Route', () => {
       const paymentIntentId = 'pi_initial_test123';
 
       const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
       );
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
@@ -263,7 +263,7 @@ describe('Stripe Webhook Route', () => {
       expect(customerData).toMatchObject({
         subscriptionId: 'sub_test123',
         status: 'active',
-        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
       });
 
       // Verify credits were inserted with payment_intent as reference_id
@@ -278,7 +278,7 @@ describe('Stripe Webhook Route', () => {
 
     it('should handle subscription checkout without payment_intent gracefully', async () => {
       const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
       );
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
@@ -300,6 +300,43 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
+
+    it('should fall back to the latest invoice payment intent when the session has none', async () => {
+      const paymentIntentId = 'pi_from_latest_invoice';
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
+      );
+      // Stripe leaves payment_intent null on subscription-mode sessions; the
+      // initial payment lives on the subscription's first invoice
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      (subscription as any).latest_invoice = {
+        id: 'in_initial_test',
+        object: 'invoice',
+        payment_intent: paymentIntentId,
+      };
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      const session = createMockCheckoutSession('subscription');
+      session.payment_intent = null;
+
+      const request = createMockRequest('checkout.session.completed', session);
+      await POST(request);
+
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+        'user_789',
+        paymentIntentId,
+        'sub_test123',
+        28_750, // 25,000 * 1.15 (subscription bonus)
+        10,
+      );
+    });
   });
 
   describe('Invoice Payment Succeeded - Recurring Subscription Payments', () => {
@@ -307,7 +344,7 @@ describe('Stripe Webhook Route', () => {
       const customerId = 'cus_test123';
       const subscriptionId = 'sub_test123';
       const paymentIntentId = 'pi_recurring_test456';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       const subscription = createMockSubscription(priceId);
 
@@ -350,7 +387,7 @@ describe('Stripe Webhook Route', () => {
       const customerId = 'cus_test123';
       const subscriptionId = 'sub_test123';
       const paymentIntentId = 'pi_manual_test789';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       const invoice = createMockInvoice(
         subscriptionId,
@@ -370,7 +407,7 @@ describe('Stripe Webhook Route', () => {
     it('should skip invoices without subscription', async () => {
       const customerId = 'cus_test123';
       const paymentIntentId = 'pi_no_sub_test';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       const invoice = createMockInvoice(
         '', // No subscription
@@ -391,7 +428,7 @@ describe('Stripe Webhook Route', () => {
     it('should handle invoice without payment_intent gracefully', async () => {
       const customerId = 'cus_test123';
       const subscriptionId = 'sub_test123';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_test');
 
@@ -411,6 +448,69 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
+
+    it('should record the discounted first-month amount on the initial subscription invoice', async () => {
+      const originalCouponId =
+        process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+      const originalDiscountPercent =
+        process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
+      process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID = 'coupon_25_off';
+      process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT = '25';
+
+      try {
+        const customerId = 'cus_test123';
+        const subscriptionId = 'sub_test123';
+        const paymentIntentId = 'pi_initial_discounted';
+        const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
+
+        const subscription = createMockSubscription(priceId);
+        vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(
+          subscription,
+        );
+        vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+          data: [subscription],
+          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        } as any);
+        vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+        const invoice = createMockInvoice(
+          subscriptionId,
+          customerId,
+          paymentIntentId,
+          priceId,
+          'subscription_create', // initial subscription invoice
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        (invoice as any).discount = {
+          id: 'di_test',
+          coupon: { id: 'coupon_25_off' },
+        };
+
+        const request = createMockRequest('invoice.payment_succeeded', invoice);
+        await POST(request);
+
+        expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+          'user_789',
+          paymentIntentId,
+          subscriptionId,
+          28_750, // 25,000 * 1.15 (subscription bonus)
+          7.5, // $10 standard with 25% first-month discount
+        );
+      } finally {
+        if (originalCouponId === undefined) {
+          delete process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+        } else {
+          process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+            originalCouponId;
+        }
+        if (originalDiscountPercent === undefined) {
+          delete process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT;
+        } else {
+          process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT =
+            originalDiscountPercent;
+        }
+      }
+    });
   });
 
   describe('Complete Subscription Payment Flow', () => {
@@ -418,7 +518,7 @@ describe('Stripe Webhook Route', () => {
       const customerId = 'cus_real_test';
       const subscriptionId = 'sub_real_test';
       const paymentIntentId = 'pi_unique_payment_123';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       const subscription = createMockSubscription(priceId);
 
@@ -480,7 +580,7 @@ describe('Stripe Webhook Route', () => {
     it('should handle different payment_intents for recurring payments separately', async () => {
       const customerId = 'cus_recurring_test';
       const subscriptionId = 'sub_recurring_test';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       const subscription = createMockSubscription(priceId);
 
@@ -540,7 +640,7 @@ describe('Stripe Webhook Route', () => {
     it('should handle customer.subscription.created and only sync to Redis', async () => {
       const customerId = 'cus_test123';
       const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
       );
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
@@ -571,7 +671,7 @@ describe('Stripe Webhook Route', () => {
     it('should handle customer.subscription.updated and only sync to Redis', async () => {
       const customerId = 'cus_test123';
       const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
         'active',
       );
 
@@ -603,7 +703,7 @@ describe('Stripe Webhook Route', () => {
     it('should handle customer.subscription.deleted and update Redis with canceled status', async () => {
       const customerId = 'cus_test123';
       const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
         'canceled',
       );
 
@@ -633,14 +733,14 @@ describe('Stripe Webhook Route', () => {
       expect(customerData).toMatchObject({
         subscriptionId: 'sub_test123',
         status: 'canceled',
-        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
       });
     });
 
     it('should handle customer.subscription.paused and only sync to Redis', async () => {
       const customerId = 'cus_test123';
       const subscription = createMockSubscription(
-        process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!,
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
         'paused',
       );
 
@@ -673,19 +773,19 @@ describe('Stripe Webhook Route', () => {
     const testPlans = [
       {
         name: 'Starter',
-        priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
         expectedCredits: 11_500, // 10,000 * 1.15
         expectedAmount: 5,
       },
       {
         name: 'Standard',
-        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
         expectedCredits: 28_750, // 25,000 * 1.15
         expectedAmount: 10,
       },
       {
         name: 'Pro',
-        priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
         expectedCredits: 345_000, // 300,000 * 1.15
         expectedAmount: 75,
       },
@@ -860,19 +960,19 @@ describe('Stripe Webhook Route', () => {
     const testSubscriptionPlans = [
       {
         name: 'Starter',
-        priceId: process.env.STRIPE_SUBSCRIPTION_5_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
         expectedCredits: 13_800, // (10,000 + 2,000) * 1.15
         expectedAmount: 5,
       },
       {
         name: 'Standard',
-        priceId: process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
         expectedCredits: 37_375, // (25,000 + 7,500) * 1.15
         expectedAmount: 10,
       },
       {
         name: 'Pro',
-        priceId: process.env.STRIPE_SUBSCRIPTION_99_PRICE_ID,
+        priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
         expectedCredits: 465_750, // (300,000 + 105,000) * 1.15
         expectedAmount: 75,
       },
@@ -950,7 +1050,7 @@ describe('Stripe Webhook Route', () => {
       const customerId = 'cus_unknown';
       const subscriptionId = 'sub_test123';
       const paymentIntentId = 'pi_test_no_user';
-      const priceId = process.env.STRIPE_SUBSCRIPTION_10_PRICE_ID!;
+      const priceId = process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!;
 
       const subscription = createMockSubscription(priceId);
 

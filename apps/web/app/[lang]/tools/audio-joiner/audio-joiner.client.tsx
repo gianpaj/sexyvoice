@@ -1,10 +1,10 @@
 'use client';
 
 import { ScissorsLineDashed } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import type langDict from '@/messages/en.json';
 import { DropZone } from './components/drop-zone';
 import { JoinControls } from './components/join-controls';
 import { TrackList } from './components/track-list';
@@ -23,10 +23,6 @@ interface TrackSegment {
   name: string;
   startSec: number;
   url: string;
-}
-
-interface Props {
-  dict: (typeof langDict)['audioJoiner'];
 }
 
 function formatTime(valueSec: number): string {
@@ -60,7 +56,8 @@ function computeTotalDuration(tracks: TrackSegment[]): number {
   );
 }
 
-export default function AudioJoinerClient({ dict }: Props) {
+export default function AudioJoinerClient() {
+  const t = useTranslations('audioJoiner');
   const [tracks, setTracks] = useState<TrackSegment[]>([]);
   const [outputFormat, setOutputFormat] = useState<JoinerOutputFormat>('mp3');
   const [currentTimeSec, setCurrentTimeSec] = useState(0);
@@ -84,9 +81,9 @@ export default function AudioJoinerClient({ dict }: Props) {
 
   useEffect(() => {
     ensureLoaded().catch((_err) => {
-      toast.error(dict.errors.ffmpegLoadFailed);
+      toast.error(t('errors.ffmpegLoadFailed'));
     });
-  }, [ensureLoaded, dict.errors.ffmpegLoadFailed]);
+  }, [ensureLoaded, t]);
 
   const stopPlayback = useCallback((resetTime = false) => {
     for (const source of playbackSourcesRef.current) {
@@ -209,7 +206,7 @@ export default function AudioJoinerClient({ dict }: Props) {
         try {
           await schedulePlayback(clamped);
         } catch (_err) {
-          toast.error(dict.errors.previewFailed);
+          toast.error(t('errors.previewFailed'));
         }
       } else {
         // Just stop any lingering sources without resetting the time.
@@ -221,7 +218,7 @@ export default function AudioJoinerClient({ dict }: Props) {
       isPlaying,
       schedulePlayback,
       stopPlayback,
-      dict.errors.previewFailed,
+      t('errors.previewFailed'),
     ],
   );
 
@@ -234,9 +231,9 @@ export default function AudioJoinerClient({ dict }: Props) {
     try {
       await schedulePlayback(playbackOffsetRef.current);
     } catch (_err) {
-      toast.error(dict.errors.previewFailed);
+      toast.error(t('errors.previewFailed'));
     }
-  }, [dict.errors.previewFailed, isPlaying, schedulePlayback, stopPlayback]);
+  }, [t, isPlaying, schedulePlayback, stopPlayback]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -262,15 +259,16 @@ export default function AudioJoinerClient({ dict }: Props) {
     tracksRef.current = tracks;
   }, [tracks]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       for (const track of tracksRef.current) {
         URL.revokeObjectURL(track.url);
       }
       stopPlayback(true);
       audioContextRef.current?.close().catch(() => undefined);
-    };
-  }, [stopPlayback]);
+    },
+    [stopPlayback],
+  );
 
   useEffect(() => {
     if (error) {
@@ -306,7 +304,7 @@ export default function AudioJoinerClient({ dict }: Props) {
             decodedBuffer,
           });
         } catch (_err) {
-          toast.error(dict.errors.decodeFailed.replace('{file}', file.name));
+          toast.error(t('errors.decodeFailed', { file: file.name }));
         }
       }
 
@@ -314,7 +312,7 @@ export default function AudioJoinerClient({ dict }: Props) {
         setTracks((current) => [...current, ...createdTracks]);
       }
     },
-    [dict.errors.decodeFailed],
+    [t],
   );
 
   const updateTrack = useCallback(
@@ -447,21 +445,21 @@ export default function AudioJoinerClient({ dict }: Props) {
       anchor.click();
       document.body.removeChild(anchor);
       setTimeout(() => URL.revokeObjectURL(outputUrl), 150);
-      toast.success(dict.success.downloadStarted);
+      toast.success(t('success.downloadStarted'));
     } catch (err) {
       if (err instanceof Error && err.message === 'CANCELLED') {
-        toast.info(dict.success.cancelled);
+        toast.info(t('success.cancelled'));
         return;
       }
 
-      toast.error(dict.errors.joinFailed);
+      toast.error(t('errors.joinFailed'));
     }
-  }, [tracks, isProcessing, stopPlayback, join, outputFormat, dict]);
+  }, [tracks, isProcessing, stopPlayback, join, outputFormat, t]);
 
   const handleCancel = useCallback(async () => {
     await cancel();
-    toast.info(dict.success.cancelled);
-  }, [cancel, dict.success.cancelled]);
+    toast.info(t('success.cancelled'));
+  }, [cancel, t]);
 
   const canJoin = tracks.length > 0 && !isLoading && !isProcessing;
 
@@ -473,11 +471,11 @@ export default function AudioJoinerClient({ dict }: Props) {
             <ScissorsLineDashed className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="gradient-text font-extrabold text-3xl md:text-4xl">
-            {dict.title}
+            {t('title')}
           </h1>
         </div>
         <p className="text-muted-foreground text-sm md:text-base">
-          {dict.subtitle}
+          {t('subtitle')}
         </p>
       </header>
 
@@ -496,12 +494,12 @@ export default function AudioJoinerClient({ dict }: Props) {
           />
 
           <DropZone
-            addFilesLabel={dict.dropZone.addFiles}
+            addFilesLabel={t('dropZone.addFiles')}
             compact={tracks.length > 0}
             disabled={isProcessing}
             onFilesSelected={handleFilesSelected}
-            subtitle={dict.dropZone.subtitle}
-            title={dict.dropZone.title}
+            subtitle={t('dropZone.subtitle')}
+            title={t('dropZone.title')}
           />
 
           <div className="flex items-center justify-between text-muted-foreground text-sm">
@@ -510,7 +508,7 @@ export default function AudioJoinerClient({ dict }: Props) {
             </span>
             {isProcessing && (
               <span>
-                {dict.progress.processing}: {Math.round(progress * 100)}%
+                {t('progress.processing')}: {Math.round(progress * 100)}%
               </span>
             )}
           </div>
@@ -519,7 +517,14 @@ export default function AudioJoinerClient({ dict }: Props) {
             canJoin={canJoin}
             isPlaying={isPlaying}
             isProcessing={isProcessing}
-            labels={dict.controls}
+            labels={{
+              format: t('controls.format'),
+              play: t('controls.play'),
+              pause: t('controls.pause'),
+              join: t('controls.join'),
+              joining: t('controls.joining'),
+              cancel: t('controls.cancel'),
+            }}
             onCancel={handleCancel}
             onJoin={handleJoin}
             onOutputFormatChange={setOutputFormat}

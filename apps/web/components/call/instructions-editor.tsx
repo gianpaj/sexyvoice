@@ -2,9 +2,9 @@
 
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
-import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
 export interface InstructionsEditorProps {
@@ -15,7 +15,7 @@ export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch } = usePlaygroundState();
-  const { dict } = useConnection();
+  const t = useTranslations('call');
   const [inputValue, setInputValue] = useState(instructions || '');
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -23,17 +23,7 @@ export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
     setInputValue(newValue);
 
     // Dispatch immediately so the connect button reacts without waiting for blur
-    if (pgState.selectedPresetId) {
-      dispatch({
-        type: 'SET_CHARACTER_OVERRIDE',
-        payload: {
-          characterId: pgState.selectedPresetId,
-          instructions: newValue,
-        },
-      });
-    } else {
-      dispatch({ type: 'SET_INSTRUCTIONS', payload: newValue });
-    }
+    dispatch({ type: 'SET_INSTRUCTIONS', payload: newValue });
   };
 
   useEffect(() => {
@@ -47,7 +37,7 @@ export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
       className="w-full rounded bg-transparent font-mono text-xs leading-loose outline-none disabled:cursor-not-allowed disabled:opacity-50"
       disabled={isConnected}
       onChange={handleInputChange}
-      placeholder={dict.instructionsPlaceholder}
+      placeholder={t('instructionsPlaceholder')}
       rows={10}
       value={inputValue}
     />

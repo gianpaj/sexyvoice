@@ -1,10 +1,10 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 
-import { GROK_TAG_CHIP_CLASS } from '@/components/grok-tts/extensions/instant-tag';
-import type {
-  GrokWrapperBoundaryKind,
-  GrokWrapperCloseTag,
-  GrokWrapperOpenTag,
+import {
+  GROK_TAG_CHIP_CLASS,
+  type GrokWrapperBoundaryKind,
+  type GrokWrapperCloseTag,
+  type GrokWrapperOpenTag,
 } from '@/lib/tts-editor';
 
 export const WrapperBoundary = Node.create({

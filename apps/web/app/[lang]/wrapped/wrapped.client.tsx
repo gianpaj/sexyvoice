@@ -248,6 +248,8 @@ const launchDate = new Date('2025-04-25');
 const daysSinceLaunch = Math.floor(
   (Date.now() - launchDate.getTime()) / (1000 * 60 * 60 * 24),
 );
+const PLATFORM_LAUNCH_MONTH_LABEL = 'Apr 2025';
+
 const stats = {
   totalAudioFiles: 38_765,
   totalDurationSeconds: 54_323.691_367_347_41,
@@ -350,13 +352,7 @@ export function PlatformWrappedClient() {
             icon={Calendar}
             subtitle={`${stats.daysSinceLaunch} days ago`}
             title="Platform Launch"
-            value={new Date(stats.platformLaunchDate).toLocaleDateString(
-              'en-US',
-              {
-                month: 'short',
-                year: 'numeric',
-              },
-            )}
+            value={PLATFORM_LAUNCH_MONTH_LABEL}
           />
         </div>
 
@@ -366,7 +362,7 @@ export function PlatformWrappedClient() {
         {/* Footer */}
         <footer className="pt-8 text-center">
           <p className="text-muted-foreground text-sm">
-            SexyVoice.ai — Expressive Voices, Uncensored
+            SexyVoice.ai — Expressive Voices, Limitless Possibilities
           </p>
         </footer>
       </div>

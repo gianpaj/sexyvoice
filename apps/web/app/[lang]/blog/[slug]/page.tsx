@@ -2,6 +2,7 @@ import { allPosts } from 'contentlayer/generated';
 import { format, parseISO } from 'date-fns';
 import { cookies } from 'next/headers';
 import Image from 'next/image';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next/types';
 import { getMessages } from 'next-intl/server';
 
@@ -73,7 +74,6 @@ export async function generateMetadata({
       'voice cloning',
       'text-to-speech',
       'voice synthesis',
-      'uncensored voice',
       'AI voice call',
     ],
     authors: [{ name: 'SexyVoice.ai' }],
@@ -104,11 +104,17 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: postUrl,
+      // Only advertise hreflang alternates for locales that actually have a
+      // translated post. Otherwise search engines crawl non-existent URLs
+      // (e.g. /de/blog/<slug> with no German translation) and flag them.
       languages: Object.fromEntries(
-        routing.locales.map((locale) => [
-          locale,
-          `/${locale}/blog/${post.slug}`,
-        ]),
+        routing.locales
+          .filter((locale) =>
+            allPosts.some(
+              (p) => p.slugAsParams === post.slug && p.locale === locale,
+            ),
+          )
+          .map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
       ),
     },
   };
@@ -135,7 +141,7 @@ const PostLayout = async (props: {
   });
 
   if (!post) {
-    return <div>Post not found ({params.slug})</div>;
+    notFound();
   }
 
   // Generate structured data for better LLM understanding

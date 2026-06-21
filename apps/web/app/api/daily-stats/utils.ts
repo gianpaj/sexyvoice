@@ -116,7 +116,7 @@ export function getProfileUsername(
   profileRelation: DailyStatsProfileRelation,
 ): string | undefined {
   if (!profileRelation) {
-    return undefined;
+    return;
   }
 
   if (Array.isArray(profileRelation)) {
@@ -210,12 +210,14 @@ export const normalizeModelName = (modelName: string | null | undefined) => {
     modelWithoutVersion.split('/').pop() ?? modelWithoutVersion;
   const normalizedModelName = modelWithoutOwner
     .replace('-preview-tts', '')
+    .replace('-tts-preview', '')
     .replace('-multilingual', '');
 
   const friendlyModelLabels: Record<string, string> = {
     chatterbox: 'Chatterbox',
     'gemini-2.5-flash': 'Gemini Flash',
     'gemini-2.5-pro': 'Gemini Pro',
+    'gemini-3.1-flash': 'Gemini 3.1',
     grok: 'Grok',
     'orpheus-3b-0.1-ft': 'Orpheus',
     'voxtral-mini-tts-2603': 'Voxtral Clone',

@@ -18,13 +18,12 @@ const MAX_PROMPT_LENGTH = 5000;
 const sessionConfigSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   voice: z.string().min(1, 'Voice is required'),
-  temperature: z.number().min(0.6).max(1.2),
+  temperature: z.number().min(0).max(1.2),
   maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
 });
 
 const createOrUpdateSchema = z.object({
-  id: z.string().uuid('Invalid character ID').optional(),
+  id: z.uuid().optional(),
   name: z
     .string()
     .trim()
@@ -46,7 +45,7 @@ const createOrUpdateSchema = z.object({
 });
 
 const deleteSchema = z.object({
-  id: z.string().uuid('Character ID is required'),
+  id: z.uuid(),
 });
 
 type CreateOrUpdateBody = z.infer<typeof createOrUpdateSchema>;
@@ -119,7 +118,7 @@ export async function POST(request: Request) {
     // Validate voice exists in DB
     let voiceObj: { id: string; name: string; language: string; model: string };
     try {
-      voiceObj = await getVoiceIdByName(body.voiceName, false);
+      voiceObj = await getVoiceIdByName(body.voiceName);
     } catch {
       return NextResponse.json(
         { error: 'Voice no longer available' },

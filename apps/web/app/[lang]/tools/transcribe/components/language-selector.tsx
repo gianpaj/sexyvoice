@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   Select,
@@ -11,10 +11,8 @@ import {
 } from '@/components/ui/select';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import type langDict from '@/messages/en.json';
 
 interface Props {
-  dict: (typeof langDict)['transcribe']['languageSelector'];
   disabled?: boolean;
   isEnglishOnly?: boolean;
   lang: Locale;
@@ -24,7 +22,7 @@ interface Props {
   value: string;
 }
 
-export const WHISPER_LANGUAGE_CODES = [
+const WHISPER_LANGUAGE_CODES = [
   'en',
   'es',
   'fr',
@@ -67,14 +65,13 @@ export function LanguageSelector({
   onSubtaskChange,
   disabled,
   isEnglishOnly,
-  dict,
 }: Props) {
-  const translatedLanguages = useMemo(() => {
-    const all = getTranslatedLanguages(lang, WHISPER_LANGUAGE_CODES);
-    const current = all.find((l) => l.value === lang);
-    const rest = all.filter((l) => l.value !== lang);
-    return current ? [current, ...rest] : all;
-  }, [lang]);
+  const t = useTranslations('transcribe.languageSelector');
+  const allLanguages = getTranslatedLanguages(lang, WHISPER_LANGUAGE_CODES);
+  const currentLanguage = allLanguages.find((item) => item.value === lang);
+  const translatedLanguages = currentLanguage
+    ? [currentLanguage, ...allLanguages.filter((item) => item.value !== lang)]
+    : allLanguages;
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -83,7 +80,7 @@ export function LanguageSelector({
           className="font-medium text-foreground text-sm"
           htmlFor="language-select"
         >
-          {dict.label}
+          {t('label')}
         </label>
         <Select
           defaultValue={lang}
@@ -104,7 +101,7 @@ export function LanguageSelector({
         </Select>
         {isEnglishOnly && (
           <p className="text-muted-foreground text-xs">
-            {dict.englishOnlyHint}
+            {t('englishOnlyHint')}
           </p>
         )}
       </div>
@@ -114,7 +111,7 @@ export function LanguageSelector({
           className="font-medium text-foreground text-sm"
           htmlFor="subtask-select"
         >
-          {dict.taskLabel}
+          {t('taskLabel')}
         </label>
         <Select
           disabled={disabled || isEnglishOnly}
@@ -125,12 +122,12 @@ export function LanguageSelector({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="transcribe">{dict.transcribe}</SelectItem>
-            <SelectItem value="translate">{dict.translate}</SelectItem>
+            <SelectItem value="transcribe">{t('transcribe')}</SelectItem>
+            <SelectItem value="translate">{t('translate')}</SelectItem>
           </SelectContent>
         </Select>
         <p className="whitespace-pre text-muted-foreground text-xs">
-          {dict.taskHint}
+          {t('taskHint')}
         </p>
       </div>
     </div>

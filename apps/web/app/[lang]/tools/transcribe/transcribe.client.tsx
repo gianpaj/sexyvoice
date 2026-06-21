@@ -1,26 +1,27 @@
 'use client';
 
 import { Languages } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import type langDict from '@/messages/en.json';
 import { AudioInput } from './components/audio-input';
 import { LanguageSelector } from './components/language-selector';
-import { ModelSelector, WHISPER_MODELS } from './components/model-selector';
+import { ModelSelector } from './components/model-selector';
+import { WHISPER_MODELS } from './components/models';
 import { ProgressDisplay } from './components/progress-display';
 import { TranscriptDisplay } from './components/transcript-display';
 import { useTranscriber } from './hooks/use-transcriber';
 import './transcribe.css';
 
 interface Props {
-  dict: (typeof langDict)['transcribe'];
   lang: Locale;
 }
 
-export default function TranscribeClient({ lang, dict }: Props) {
+export default function TranscribeClient({ lang }: Props) {
+  const t = useTranslations('transcribe');
   const [model, setModel] = useState('onnx-community/whisper-tiny');
   const [language, setLanguage] = useState<string>(lang);
   const [subtask, setSubtask] = useState('transcribe');
@@ -36,38 +37,36 @@ export default function TranscribeClient({ lang, dict }: Props) {
   const isEnglishOnly =
     WHISPER_MODELS.find((m) => m.id === model)?.multilingual === false;
 
-  const handleAudioReady = useCallback((audio: Float32Array) => {
+  const handleAudioReady = (audio: Float32Array) => {
     audioRef.current = audio;
     setHasAudio(true);
-  }, []);
+  };
 
-  const handleFileSelected = useCallback(
-    (file: File) => {
+  const handleFileSelected = (file: File) => {
+    if (audioFileUrl) {
+      URL.revokeObjectURL(audioFileUrl);
+    }
+    setAudioFileUrl(URL.createObjectURL(file));
+    setCurrentTime(null);
+  };
+
+  // Revoke blob URL on unmount
+  useEffect(
+    () => () => {
       if (audioFileUrl) {
         URL.revokeObjectURL(audioFileUrl);
       }
-      setAudioFileUrl(URL.createObjectURL(file));
-      setCurrentTime(null);
     },
     [audioFileUrl],
   );
 
-  // Revoke blob URL on unmount
-  useEffect(() => {
-    return () => {
-      if (audioFileUrl) {
-        URL.revokeObjectURL(audioFileUrl);
-      }
-    };
-  }, [audioFileUrl]);
-
-  const handleRemoveAudio = useCallback(() => {
+  const handleRemoveAudio = () => {
     audioRef.current = null;
     setHasAudio(false);
     transcriber.reset();
-  }, [transcriber]);
+  };
 
-  const handleLoadAndTranscribe = useCallback(() => {
+  const handleLoadAndTranscribe = () => {
     if (!audioRef.current) return;
 
     if (transcriber.state === 'idle' || loadedModelRef.current !== model) {
@@ -79,7 +78,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
         isEnglishOnly ? 'transcribe' : subtask,
       );
     }
-  }, [transcriber, model, language, subtask, isEnglishOnly]);
+  };
 
   // Auto-transcribe when model finishes loading (loading → ready transition)
   useEffect(() => {
@@ -101,15 +100,15 @@ export default function TranscribeClient({ lang, dict }: Props) {
     transcriber.state === 'loading' || transcriber.state === 'transcribing';
 
   const buttonLabel: Record<string, string> = {
-    loading: dict.loadingModel,
-    transcribing: dict.transcribing,
-    ready: dict.transcribeButton,
-    idle: dict.loadAndTranscribe,
+    loading: t('loadingModel'),
+    transcribing: t('transcribing'),
+    ready: t('transcribeButton'),
+    idle: t('loadAndTranscribe'),
   };
 
-  const handleTimeUpdate = useCallback((time: number) => {
+  const handleTimeUpdate = (time: number) => {
     setCurrentTime(time);
-  }, []);
+  };
 
   return (
     <>
@@ -119,13 +118,26 @@ export default function TranscribeClient({ lang, dict }: Props) {
           className="mb-5 flex items-end justify-center gap-[3px] opacity-50"
           style={{ height: '28px' }}
         >
-          {[10, 18, 26, 14, 28, 20, 24, 12, 22, 16, 28, 18].map((height, i) => (
+          {[
+            { key: 'hero-wave-1', height: 10, delay: '0s' },
+            { key: 'hero-wave-2', height: 18, delay: '0.09s' },
+            { key: 'hero-wave-3', height: 26, delay: '0.18s' },
+            { key: 'hero-wave-4', height: 14, delay: '0.27s' },
+            { key: 'hero-wave-5', height: 28, delay: '0.36s' },
+            { key: 'hero-wave-6', height: 20, delay: '0.45s' },
+            { key: 'hero-wave-7', height: 24, delay: '0.54s' },
+            { key: 'hero-wave-8', height: 12, delay: '0.63s' },
+            { key: 'hero-wave-9', height: 22, delay: '0.72s' },
+            { key: 'hero-wave-10', height: 16, delay: '0.81s' },
+            { key: 'hero-wave-11', height: 28, delay: '0.9s' },
+            { key: 'hero-wave-12', height: 18, delay: '0.99s' },
+          ].map((wave) => (
             <div
               className="wave-bar"
-              key={i}
+              key={wave.key}
               style={{
-                height: `${height}px`,
-                animationDelay: `${i * 0.09}s`,
+                height: `${wave.height}px`,
+                animationDelay: wave.delay,
               }}
             />
           ))}
@@ -136,20 +148,19 @@ export default function TranscribeClient({ lang, dict }: Props) {
             <Languages className="h-7 w-7 text-primary-foreground" />
           </div>
           <h1 className="gradient-text font-extrabold text-3xl leading-tight md:text-5xl">
-            {dict.title}
+            {t('title')}
           </h1>
         </div>
 
         <p className="mx-auto mb-4 max-w-md text-muted-foreground text-sm sm:text-base">
-          {dict.subtitle}
-          <span className="font-semibold text-foreground">{dict.tagline}</span>
+          {t('subtitle')}
+          <span className="font-semibold text-foreground">{t('tagline')}</span>
         </p>
       </header>
 
       <main className="glass-card animate-fade-in rounded-3xl p-4 md:p-10">
         <div className="space-y-6">
           <AudioInput
-            dict={dict.audioInput}
             disabled={isProcessing}
             onAudioReady={handleAudioReady}
             onFileSelected={handleFileSelected}
@@ -159,14 +170,12 @@ export default function TranscribeClient({ lang, dict }: Props) {
           {hasAudio && (
             <div className="flex animate-fade-in flex-col gap-8">
               <ModelSelector
-                dict={dict.modelSelector}
                 disabled={isProcessing}
                 onChange={setModel}
                 value={model}
               />
 
               <LanguageSelector
-                dict={dict.languageSelector}
                 disabled={isProcessing}
                 isEnglishOnly={isEnglishOnly}
                 lang={lang}
@@ -177,7 +186,6 @@ export default function TranscribeClient({ lang, dict }: Props) {
               />
 
               <ProgressDisplay
-                dict={dict.progress}
                 isTranscribing={transcriber.state === 'transcribing'}
                 progress={transcriber.downloadProgress}
               />
@@ -192,7 +200,6 @@ export default function TranscribeClient({ lang, dict }: Props) {
 
               <TranscriptDisplay
                 currentTime={currentTime}
-                dict={dict.transcriptDisplay}
                 partialTranscript={transcriber.partialTranscript}
                 transcript={transcriber.transcript}
               />
@@ -213,7 +220,7 @@ export default function TranscribeClient({ lang, dict }: Props) {
                     size="lg"
                     variant="outline"
                   >
-                    {dict.reset}
+                    {t('reset')}
                   </Button>
                 )}
               </div>

@@ -9,6 +9,7 @@ import {
 import { useKrispNoiseFilter } from '@livekit/components-react/krisp';
 import { Track } from 'livekit-client';
 import { ChevronDown, Mic, MicOff, PhoneOff } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -23,20 +24,43 @@ import {
 import { useCallTimer } from '@/hooks/use-call-timer';
 import { useConnection } from '@/hooks/use-connection';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
+import {
+  enableKrispNoiseFilterIfReady,
+  isExpectedKrispNoiseFilterError,
+} from './krisp-noise-filter';
 
 export function SessionControls() {
   const localParticipant = useLocalParticipant();
   const deviceSelect = usePersistentMediaDevice();
   const connectionState = useConnectionState();
   const { formattedTime } = useCallTimer(connectionState);
-  const { disconnect, dict } = useConnection();
+  const { disconnect } = useConnection();
+  const t = useTranslations('call');
 
   const [isMuted, setIsMuted] = useState(localParticipant.isMicrophoneEnabled);
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
     useKrispNoiseFilter();
   useEffect(() => {
-    setNoiseFilterEnabled(true);
-  }, [setNoiseFilterEnabled]);
+    let cancelled = false;
+
+    enableKrispNoiseFilterIfReady({
+      microphonePublication: localParticipant.microphoneTrack,
+      onUnexpectedError: (error) => {
+        if (!cancelled) {
+          console.warn('Krisp noise filter could not be enabled', error);
+        }
+      },
+      setNoiseFilterEnabled,
+    }).catch((error) => {
+      if (!cancelled) {
+        console.warn('Krisp noise filter could not be enabled', error);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [localParticipant.microphoneTrack, setNoiseFilterEnabled]);
   useEffect(() => {
     setIsMuted(localParticipant.isMicrophoneEnabled === false);
   }, [localParticipant.isMicrophoneEnabled]);
@@ -91,14 +115,14 @@ export function SessionControls() {
               forceMount
             >
               <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-                {dict.availableInputs}
+                {t('availableInputs')}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {deviceSelect.devices.map((device, index) => (
+              {deviceSelect.devices.map((device) => (
                 <DropdownMenuCheckboxItem
                   checked={device.deviceId === deviceSelect.activeDeviceId}
                   className="text-xs"
-                  key={`device-${index}`}
+                  key={`device-${device.deviceId}`}
                   onCheckedChange={() => handleDeviceChange(device.deviceId)}
                 >
                   {device.label}
@@ -106,24 +130,33 @@ export function SessionControls() {
               ))}
               <DropdownMenuSeparator />
               <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-                {dict.audioSettings}
+                {t('audioSettings')}
               </DropdownMenuLabel>
               <DropdownMenuCheckboxItem
                 checked={isNoiseFilterEnabled}
                 className="text-xs"
                 disabled={isNoiseFilterPending}
-                onCheckedChange={(checked) => {
-                  setNoiseFilterEnabled(checked);
-                }}
+                onCheckedChange={(checked) =>
+                  Promise.resolve(setNoiseFilterEnabled(checked)).catch(
+                    (error) => {
+                      if (!isExpectedKrispNoiseFilterError(error)) {
+                        console.warn(
+                          'Krisp noise filter could not be changed',
+                          error,
+                        );
+                      }
+                    },
+                  )
+                }
               >
-                {dict.enhancedNoiseFilter}
+                {t('enhancedNoiseFilter')}
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
         <Button className="h-9" onClick={disconnect} variant="secondary">
           <PhoneOff className="h-4 w-4" />
-          {dict.disconnect}
+          {t('disconnect')}
         </Button>
       </div>
       <div className="font-mono text-muted-foreground text-sm">

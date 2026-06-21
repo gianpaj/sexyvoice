@@ -1,10 +1,13 @@
+import { captureException } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
 import {
   getCreditsAdmin,
+  getVoiceIdByNameAdmin,
   insertUsageEvent,
   reduceCreditsAdmin,
+  saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import { estimateCredits } from '@/lib/utils';
 import {
@@ -14,7 +17,8 @@ import {
   setMockGoogleGenAIFactory,
 } from './setup';
 
-const TEST_API_KEY = 'sk_live_Abc123Def456Ghi789Jkl012Mno345Pq';
+const TEST_API_KEY_SUFFIX = 'A'.repeat(32);
+const TEST_API_KEY = `sk_live_${TEST_API_KEY_SUFFIX}`;
 const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 
 describe('/api/v1/speech', () => {
@@ -358,6 +362,301 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(200);
     expect(generateContent).toHaveBeenCalled();
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
+  });
+
+  it('accepts achernar with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+        totalTokenCount: 42,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalled();
+    expect(generateContent.mock.calls[0][0].model).toBe(
+      'gemini-3.1-flash-tts-preview',
+    );
+    expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dollarAmount: 0.000_726,
+        model: 'gemini-3.1-flash-tts-preview',
+        durationSeconds: 12,
+      }),
+    );
+    expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        duration: '12',
+        model: 'gemini-3.1-flash-tts-preview',
+      }),
+    );
+  });
+
+  it('accepts an achernar gpro31 Gemini voice row with model gpro31', async () => {
+    vi.mocked(getVoiceIdByNameAdmin).mockResolvedValueOnce({
+      id: 'voice-achernar-31-id',
+      name: 'achernar',
+      language: 'multiple',
+      model: 'gpro31',
+    });
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+        totalTokenCount: 42,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent.mock.calls[0][0].model).toBe(
+      'gemini-3.1-flash-tts-preview',
+    );
+    expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+  });
+
+  it('rejects gpro31 requests for gpro DB voices', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'kore',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('model_not_found');
+  });
+
+  it('returns provider quota errors from Gemini without capturing exceptions', async () => {
+    const quotaError = new Error(
+      JSON.stringify({
+        error: {
+          code: 429,
+          message: 'Your prepayment credits are depleted.',
+          status: 'RESOURCE_EXHAUSTED',
+        },
+      }),
+    );
+    const generateContent = vi
+      .fn()
+      .mockRejectedValueOnce(quotaError)
+      .mockRejectedValueOnce(quotaError);
+    setMockGoogleGenAIFactory(() => ({
+      models: {
+        countTokens: vi.fn(),
+        generateContent,
+      },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'Hello world',
+        voice: 'kore',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(json.error.type).toBe('rate_limit_error');
+    expect(json.error.code).toBe('provider_quota_exceeded');
+    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('falls back to gemini-2.5-flash-preview-tts when gpro31 primary call fails', async () => {
+    let callCount = 0;
+    const generateContent = vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) throw new Error('3.1 model unavailable');
+      return Promise.resolve({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 5,
+          candidatesTokenCount: 10,
+          totalTokenCount: 15,
+        },
+      });
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(generateContent.mock.calls[0][0].model).toBe(
+      'gemini-3.1-flash-tts-preview',
+    );
+    expect(generateContent.mock.calls[1][0].model).toBe(
+      'gemini-2.5-flash-preview-tts',
+    );
+    expect(json.usage.model).toBe('gemini-2.5-flash-preview-tts');
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dollarAmount: 0.000_103,
+        model: 'gemini-2.5-flash-preview-tts',
+        durationSeconds: 12,
+      }),
+    );
+  });
+
+  it('returns provider unavailable from transient Gemini errors without capture', async () => {
+    const transientError = new Error(
+      JSON.stringify({
+        error: {
+          code: 500,
+          message: 'Internal provider error.',
+          status: 'INTERNAL',
+        },
+      }),
+    );
+    const generateContent = vi
+      .fn()
+      .mockRejectedValueOnce(transientError)
+      .mockRejectedValueOnce(transientError);
+    setMockGoogleGenAIFactory(() => ({
+      models: {
+        countTokens: vi.fn(),
+        generateContent,
+      },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'Hello world',
+        voice: 'kore',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(captureException).not.toHaveBeenCalled();
   });
 
   it('always generates fresh audio (no caching)', async () => {

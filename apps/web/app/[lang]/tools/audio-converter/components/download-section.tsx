@@ -1,16 +1,11 @@
 'use client';
 
 import { CheckCircle2, Download, RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  dict: {
-    title: string;
-    description: string;
-    download: string;
-    convertAnother: string;
-  };
   fileName: string;
   format: string;
   onConvertAnother: () => void;
@@ -22,8 +17,8 @@ export function DownloadSection({
   format,
   onDownload,
   onConvertAnother,
-  dict,
 }: Props) {
+  const t = useTranslations('audioConverter.downloadSection');
   const baseName = fileName.split('.').slice(0, -1).join('.');
   const newFileName = `${baseName}.${format}`;
 
@@ -34,8 +29,8 @@ export function DownloadSection({
       </div>
 
       <div>
-        <h2 className="mb-2 font-bold text-2xl">{dict.title}</h2>
-        <p className="text-muted-foreground">{dict.description}</p>
+        <h2 className="mb-2 font-bold text-2xl">{t('title')}</h2>
+        <p className="text-muted-foreground">{t('description')}</p>
       </div>
 
       <div className="rounded-lg border border-green-500/20 bg-green-500/10 p-4">
@@ -48,7 +43,7 @@ export function DownloadSection({
           onClick={onDownload}
         >
           <Download className="h-4 w-4" />
-          {dict.download}
+          {t('download')}
         </Button>
         <Button
           className="h-14 flex-1 font-semibold transition-colors hover:bg-muted"
@@ -56,7 +51,7 @@ export function DownloadSection({
           variant="outline"
         >
           <RefreshCw className="h-4 w-4" />
-          {dict.convertAnother}
+          {t('convertAnother')}
         </Button>
       </div>
     </div>
