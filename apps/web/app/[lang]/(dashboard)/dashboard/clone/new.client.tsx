@@ -33,7 +33,9 @@ import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { AudioProvider } from './audio-provider';
 import { CloneAudioInput } from './clone-audio-input';
 import { CloneConsentFields } from './clone-consent-fields';
+import { CloneInworldVoiceSelect } from './clone-inworld-voice-select';
 import { CloneLanguageSelect } from './clone-language-select';
+import { CloneProviderSelect } from './clone-provider-select';
 import type { SampleAudio } from './clone-sample-card';
 import {
   cloneStateReducer,
@@ -41,6 +43,7 @@ import {
   initialCloneState,
 } from './clone-state';
 import { CloneTextField } from './clone-text-field';
+import { CloneVoiceNameField } from './clone-voice-name-field';
 
 export type { Status } from './clone-state';
 
@@ -191,20 +194,81 @@ function NewVoiceClientInner({
     errorMessage,
     ffmpegError,
     generatedAudioUrl,
+    inworldVoices,
+    inworldVoicesLoading,
     legalConsentChecked,
     micBlob,
     micRecording,
     referenceAudioEnhancementEnabled,
+    selectedAudioReferenceId,
     selectedLocale,
+    selectedProvider,
     status,
     text,
+    voiceName,
   } = cloneState;
 
+  const usesInworld = selectedProvider === 'inworld';
+  // Reusing a saved voice skips the audio upload and re-cloning entirely.
+  const isReusingVoice = usesInworld && selectedAudioReferenceId !== 'new';
   const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code);
+  // Inworld also needs WAV reference audio, so preload FFmpeg for it too
+  // (only relevant when creating a new voice from a fresh upload).
+  const needsWavPreload = usesVoxtral || (usesInworld && !isReusingVoice);
 
-  // Preload FFmpeg when Voxtral locale is selected
+  // Load the user's saved Inworld voices when the Inworld engine is selected.
+  const loadInworldVoices = useCallback(async () => {
+    dispatch({ type: 'patch', patch: { inworldVoicesLoading: true } });
+    try {
+      const res = await fetch('/api/audio-references?provider=inworld');
+      if (!res.ok) {
+        throw new Error('Failed to load voices');
+      }
+      const json = (await res.json()) as {
+        data: {
+          id: string;
+          provider: string;
+          voice_id: string;
+          name: string;
+          is_paid: boolean;
+          created_at: string | null;
+        }[];
+      };
+      dispatch({
+        type: 'patch',
+        patch: {
+          inworldVoices: (json.data ?? []).map((row) => ({
+            id: row.id,
+            provider: row.provider,
+            voiceId: row.voice_id,
+            name: row.name,
+            isPaid: row.is_paid,
+            createdAt: row.created_at,
+          })),
+        },
+      });
+    } catch (error) {
+      console.error('Failed to load Inworld voices:', error);
+      toast.error(t('errors.failedToLoadVoices'));
+    } finally {
+      dispatch({ type: 'patch', patch: { inworldVoicesLoading: false } });
+    }
+  }, [t]);
+
   useEffect(() => {
-    if (usesVoxtral) {
+    if (usesInworld) {
+      loadInworldVoices().catch(() => undefined);
+    }
+  }, [usesInworld, loadInworldVoices]);
+
+  const onVoiceDeleted = useCallback(() => {
+    dispatch({ type: 'patch', patch: { selectedAudioReferenceId: 'new' } });
+    loadInworldVoices().catch(() => undefined);
+  }, [loadInworldVoices]);
+
+  // Preload FFmpeg when a provider that needs WAV reference audio is selected
+  useEffect(() => {
+    if (needsWavPreload) {
       dispatch({ type: 'patch', patch: { ffmpegError: null } });
       ensureLoaded().catch((error) => {
         const errorMsg =
@@ -215,13 +279,13 @@ function NewVoiceClientInner({
         console.error('FFmpeg preload error:', error);
       });
     }
-  }, [usesVoxtral, ensureLoaded, t]);
+  }, [needsWavPreload, ensureLoaded, t]);
 
   const handleStartRecording = async () => {
     try {
       dispatch({ type: 'patch', patch: { ffmpegError: null } });
-      // Preload FFmpeg before recording if needed for this locale
-      if (usesVoxtral) {
+      // Preload FFmpeg before recording if needed for this locale/provider
+      if (needsWavPreload) {
         await ensureLoaded();
       }
       await startRecording();
@@ -326,7 +390,7 @@ function NewVoiceClientInner({
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
   const handleGenerate = async () => {
-    if (!(file || micBlob)) {
+    if (!(isReusingVoice || file || micBlob)) {
       dispatch({
         type: 'patch',
         patch: {
@@ -348,6 +412,17 @@ function NewVoiceClientInner({
       return;
     }
 
+    if (usesInworld && !isReusingVoice && !voiceName.trim()) {
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: t('errors.voiceNameRequired'),
+          status: 'error',
+        },
+      });
+      return;
+    }
+
     // Clear both custom errors and file upload errors
     clearErrors();
     dispatch({
@@ -362,72 +437,86 @@ function NewVoiceClientInner({
     try {
       abortController.current = new AbortController();
 
-      let audioToProcess = file;
-      if (micBlob && !file) {
-        const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+      const formData = new FormData();
+      formData.append('text', text);
+      formData.append('locale', selectedLocale.code);
+      if (selectedProvider !== 'auto') {
+        formData.append('provider', selectedProvider);
+      }
 
-        if (shouldConvertMicAudio) {
-          dispatch({
-            type: 'patch',
-            patch: { convertingMicAudio: true },
-          });
-        }
+      if (isReusingVoice) {
+        // Reuse a saved Inworld voice — no audio upload, no re-cloning.
+        formData.append('audioReferenceId', selectedAudioReferenceId);
+      } else {
+        let audioToProcess = file;
+        if (micBlob && !file) {
+          const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
 
-        try {
           if (shouldConvertMicAudio) {
-            await ensureLoaded();
+            dispatch({
+              type: 'patch',
+              patch: { convertingMicAudio: true },
+            });
           }
 
-          audioToProcess = await createMicrophoneReferenceAudioFile(
-            micBlob,
-            convertWithFFmpeg,
-          );
-        } catch (convertError) {
-          console.error('WebM to WAV conversion error:', convertError);
-          // TODO send logs to Sentry
+          try {
+            if (shouldConvertMicAudio) {
+              await ensureLoaded();
+            }
+
+            audioToProcess = await createMicrophoneReferenceAudioFile(
+              micBlob,
+              convertWithFFmpeg,
+            );
+          } catch (convertError) {
+            console.error('WebM to WAV conversion error:', convertError);
+            // TODO send logs to Sentry
+            dispatch({
+              type: 'patch',
+              patch: {
+                errorMessage:
+                  convertError instanceof Error
+                    ? formatCloneMessage(
+                        t('audioConversionFailedWithMessage'),
+                        {
+                          ERROR: convertError.message,
+                        },
+                      )
+                    : t('audioConversionFailed'),
+                status: 'error',
+              },
+            });
+            return;
+          } finally {
+            if (shouldConvertMicAudio) {
+              dispatch({
+                type: 'patch',
+                patch: { convertingMicAudio: false },
+              });
+            }
+          }
+        }
+
+        if (!audioToProcess) {
           dispatch({
             type: 'patch',
             patch: {
-              errorMessage:
-                convertError instanceof Error
-                  ? formatCloneMessage(t('audioConversionFailedWithMessage'), {
-                      ERROR: convertError.message,
-                    })
-                  : t('audioConversionFailed'),
+              errorMessage: t('errors.noAudioFile'),
               status: 'error',
             },
           });
           return;
-        } finally {
-          if (shouldConvertMicAudio) {
-            dispatch({
-              type: 'patch',
-              patch: { convertingMicAudio: false },
-            });
-          }
+        }
+
+        formData.append('file', audioToProcess);
+        formData.append(
+          'enhanceReferenceAudio',
+          String(referenceAudioEnhancementEnabled),
+        );
+        if (usesInworld) {
+          formData.append('voiceName', voiceName);
         }
       }
-
-      if (!audioToProcess) {
-        dispatch({
-          type: 'patch',
-          patch: {
-            errorMessage: t('errors.noAudioFile'),
-            status: 'error',
-          },
-        });
-        return;
-      }
-
-      // First upload and process the voice
-      const formData = new FormData();
-      formData.append('file', audioToProcess);
-      formData.append('text', text);
-      formData.append('locale', selectedLocale.code);
-      formData.append(
-        'enhanceReferenceAudio',
-        String(referenceAudioEnhancementEnabled),
-      );
 
       voiceRes = await fetch('/api/clone-voice', {
         method: 'POST',
@@ -482,6 +571,11 @@ function NewVoiceClientInner({
           status: 'complete',
         },
       });
+
+      // A new Inworld voice was just saved — refresh the reusable-voice list.
+      if (usesInworld && !isReusingVoice) {
+        loadInworldVoices().catch(() => undefined);
+      }
     } catch (err) {
       if (
         err instanceof Error &&
@@ -607,26 +701,56 @@ function NewVoiceClientInner({
 
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
-              <CloneAudioInput
-                dispatch={dispatch}
-                ffmpeg={{ error: ffmpegError, loading: Boolean(ffmpegLoading) }}
-                fileActions={fileActions}
-                fileState={fileState}
-                mic={{
-                  blob: micBlob,
-                  mediaBlob: recorderMediaBlob,
-                  mediaStream,
-                  onClear: onClearMediaStream,
-                  onToggle: onToggleMicrophone,
-                  recording: micRecording,
-                  status: micStatus,
-                }}
-                onSelectSample={onSelectSample}
-                selectedLocale={selectedLocale}
-                usesVoxtral={usesVoxtral}
-              />
+              {!isReusingVoice && (
+                <CloneAudioInput
+                  dispatch={dispatch}
+                  ffmpeg={{
+                    error: ffmpegError,
+                    loading: Boolean(ffmpegLoading),
+                  }}
+                  fileActions={fileActions}
+                  fileState={fileState}
+                  mic={{
+                    blob: micBlob,
+                    mediaBlob: recorderMediaBlob,
+                    mediaStream,
+                    onClear: onClearMediaStream,
+                    onToggle: onToggleMicrophone,
+                    recording: micRecording,
+                    status: micStatus,
+                  }}
+                  onSelectSample={onSelectSample}
+                  selectedLocale={selectedLocale}
+                  usesVoxtral={usesVoxtral}
+                />
+              )}
 
               <div className="grid w-full gap-6">
+                <CloneProviderSelect
+                  disabled={status === 'generating'}
+                  dispatch={dispatch}
+                  selectedProvider={selectedProvider}
+                />
+
+                {usesInworld && (
+                  <CloneInworldVoiceSelect
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    loading={inworldVoicesLoading}
+                    onVoiceDeleted={onVoiceDeleted}
+                    selectedAudioReferenceId={selectedAudioReferenceId}
+                    voices={inworldVoices}
+                  />
+                )}
+
+                {usesInworld && !isReusingVoice && (
+                  <CloneVoiceNameField
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    voiceName={voiceName}
+                  />
+                )}
+
                 <CloneLanguageSelect
                   disabled={status === 'generating'}
                   dispatch={dispatch}
@@ -673,7 +797,11 @@ function NewVoiceClientInner({
               ctaText={t('ctaButton')}
               data-testid="clone-generate-button"
               disabled={
-                !((file || micBlob) && text.trim()) ||
+                !(
+                  (isReusingVoice || file || micBlob) &&
+                  text.trim() &&
+                  (!usesInworld || isReusingVoice || voiceName.trim())
+                ) ||
                 status === 'generating' ||
                 !hasEnoughCredits ||
                 convertingMicAudio ||

@@ -129,6 +129,47 @@ declare type Database = {
           },
         ];
       };
+      audio_references: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          is_paid: boolean;
+          name: string;
+          provider: string;
+          updated_at: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          is_paid?: boolean;
+          name: string;
+          provider: string;
+          updated_at?: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          is_paid?: boolean;
+          name?: string;
+          provider?: string;
+          updated_at?: string | null;
+          user_id?: string;
+          voice_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'audio_references_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       call_sessions: {
         Row: {
           billed_minutes: number;
