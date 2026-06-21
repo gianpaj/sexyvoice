@@ -9,8 +9,8 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import * as React from 'react';
 import { useTranslations } from 'next-intl';
+import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -144,17 +144,26 @@ export function VoiceSelect({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // biome-ignore lint/style/useDefaultSwitchClause: unneeded
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          filtered.length === 0 ? -1 : prev < filtered.length - 1 ? prev + 1 : 0,
+          filtered.length === 0
+            ? -1
+            : prev < filtered.length - 1
+              ? prev + 1
+              : 0,
         );
         break;
       case 'ArrowUp':
         e.preventDefault();
         setHighlightedIndex((prev) =>
-          filtered.length === 0 ? -1 : prev > 0 ? prev - 1 : filtered.length - 1,
+          filtered.length === 0
+            ? -1
+            : prev > 0
+              ? prev - 1
+              : filtered.length - 1,
         );
         break;
       case 'Enter':
@@ -203,7 +212,8 @@ export function VoiceSelect({
   // Scroll highlighted item into view
   React.useEffect(() => {
     if (highlightedIndex < 0 || !listRef.current) return;
-    const items = listRef.current.querySelectorAll<HTMLElement>('[data-voice-item]');
+    const items =
+      listRef.current.querySelectorAll<HTMLElement>('[data-voice-item]');
     items[highlightedIndex]?.scrollIntoView({ block: 'nearest' });
   }, [highlightedIndex]);
 
@@ -256,7 +266,9 @@ export function VoiceSelect({
               </span>
             </span>
           ) : (
-            <span className="text-muted-foreground">{t('selectVoicePlaceholder')}</span>
+            <span className="text-muted-foreground">
+              {t('selectVoicePlaceholder')}
+            </span>
           )}
           <ChevronsUpDown className="size-4 shrink-0 opacity-50" />
         </Button>
@@ -352,7 +364,7 @@ export function VoiceSelect({
         )}
 
         {/* Results */}
-        <ScrollArea className="sm:h-72 h-64">
+        <ScrollArea className="h-64 sm:h-72">
           {filtered.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-1 px-4 py-10 text-center">
               <Search className="size-5 text-muted-foreground" />
@@ -386,7 +398,9 @@ export function VoiceSelect({
                     <button
                       className={cn(
                         'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors',
-                        isSelected || isHighlighted ? 'bg-accent' : 'hover:bg-accent',
+                        isSelected || isHighlighted
+                          ? 'bg-accent'
+                          : 'hover:bg-accent',
                       )}
                       onClick={() => handleSelect(voice.id)}
                       type="button"
@@ -458,7 +472,10 @@ export function VoiceSelect({
         {/* Footer count */}
         <div className="flex items-center justify-between border-t px-3 py-2 text-muted-foreground text-xs">
           <span>
-            {t('footerCount', { filtered: filtered.length, total: voices.length })}
+            {t('footerCount', {
+              filtered: filtered.length,
+              total: voices.length,
+            })}
           </span>
         </div>
       </PopoverContent>
