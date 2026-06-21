@@ -88,16 +88,16 @@ describe('buildStyledText', () => {
 });
 
 describe('selectGeminiModel', () => {
-  it('returns flash for free users', () => {
+  it('returns 2.5 flash for free gpro users', () => {
     expect(selectGeminiModel({ dbModel: 'gpro', userHasPaid: false })).toBe(
-      GEMINI_FLASH_MODEL,
-    );
-    expect(selectGeminiModel({ dbModel: 'gpro31', userHasPaid: false })).toBe(
       GEMINI_FLASH_MODEL,
     );
   });
 
-  it('returns the 3.1 model for paid gpro31', () => {
+  it('returns 3.1 for gpro31 regardless of tier (free taste of 3.1)', () => {
+    expect(selectGeminiModel({ dbModel: 'gpro31', userHasPaid: false })).toBe(
+      'gemini-3.1-flash-tts-preview',
+    );
     expect(selectGeminiModel({ dbModel: 'gpro31', userHasPaid: true })).toBe(
       'gemini-3.1-flash-tts-preview',
     );

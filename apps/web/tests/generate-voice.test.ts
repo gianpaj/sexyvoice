@@ -1314,6 +1314,33 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it('should return 403 when freemium user exceeds the gpro31 voice limit', async () => {
+      const queries = await import('@/lib/supabase/queries');
+
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(false);
+      vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(true);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(json.errorCode).toBe('gproLimitExceeded');
+      expect(queries.isFreemiumUserOverLimit).toHaveBeenCalledWith(
+        'test-user-id',
+      );
+    });
+
     it('should allow voice generation when freemium user is under limit', async () => {
       const queries = await import('@/lib/supabase/queries');
 
