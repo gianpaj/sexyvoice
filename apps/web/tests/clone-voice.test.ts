@@ -2241,6 +2241,117 @@ describe('Clone Voice API Route', () => {
       );
       expect(queries.insertAudioReference).not.toHaveBeenCalled();
     });
+
+    it('returns 400 when Mistral is selected with an unsupported locale', async () => {
+      const formData = createFormDataWithAudio(
+        'Konnichiwa',
+        createMockAudioFile('audio1.wav'),
+        'ja',
+        false,
+        'mistral',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.code).toBe('errors.providerLocaleUnsupported');
+      expect(json.details).toMatchObject({ provider: 'mistral', locale: 'ja' });
+    });
+
+    it('returns 400 when the Inworld voice name is too long', async () => {
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1.wav'),
+        'en',
+        false,
+        'inworld',
+      );
+      formData.append('voiceName', 'a'.repeat(61));
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.code).toBe('errors.voiceNameTooLong');
+      expect(queries.insertAudioReference).not.toHaveBeenCalled();
+    });
+
+    it('surfaces an Inworld 4xx as a non-retryable client error', async () => {
+      server.use(
+        http.post('https://api.inworld.ai/voices/v1/voices:clone', () =>
+          HttpResponse.text('bad request', { status: 400 }),
+        ),
+      );
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1.wav'),
+        'en',
+        false,
+        'inworld',
+      );
+      formData.append('voiceName', 'My Voice');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.code).toBe('errors.providerRequestRejected');
+      expect(json.details).toMatchObject({ provider: 'inworld' });
+    });
+
+    it('rolls back the Inworld voice when saving the audio reference fails', async () => {
+      vi.mocked(queries.insertAudioReference).mockResolvedValueOnce({
+        data: null,
+        error: { message: 'unique violation' },
+        // biome-ignore lint/suspicious/noExplicitAny: test mock shape
+      } as any);
+
+      let inworldDeleteCalled = false;
+      server.use(
+        http.delete('https://api.inworld.ai/voices/v1/voices/:voiceId', () => {
+          inworldDeleteCalled = true;
+          return HttpResponse.json({});
+        }),
+      );
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1.wav'),
+        'en',
+        false,
+        'inworld',
+      );
+      formData.append('voiceName', 'My Voice');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      await flushPromises();
+
+      // The user still receives generated audio; only the voice is rolled back.
+      expect(response.status).toBe(200);
+      expect(inworldDeleteCalled).toBe(true);
+    });
   });
 });
 

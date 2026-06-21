@@ -618,6 +618,8 @@
       "missingRequiredParameters": "Ingresa texto y selecciona un archivo de audio.",
       "providerLocaleUnsupported": "Este motor no admite el idioma seleccionado. Elige otro motor u otro idioma.",
       "voiceNameRequired": "Ingresa un nombre para la voz.",
+      "voiceNameTooLong": "El nombre de la voz debe tener como máximo __MAX__ caracteres.",
+      "providerRequestRejected": "El proveedor de clonación de voz no pudo procesar esta solicitud. Prueba con otro audio de referencia o texto.",
       "audioReferenceNotFound": "No se encontró la voz guardada seleccionada.",
       "failedToLoadVoices": "No se pudieron cargar tus voces guardadas.",
       "failedToDeleteVoice": "No se pudo eliminar la voz. Inténtalo de nuevo.",

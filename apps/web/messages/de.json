@@ -618,6 +618,8 @@
       "missingRequiredParameters": "Bitte geben Sie Text ein und wählen Sie eine Audiodatei aus.",
       "providerLocaleUnsupported": "Diese Engine unterstützt die ausgewählte Sprache nicht. Bitte wählen Sie eine andere Engine oder Sprache.",
       "voiceNameRequired": "Bitte geben Sie einen Namen für die Stimme ein.",
+      "voiceNameTooLong": "Der Stimmenname darf höchstens __MAX__ Zeichen lang sein.",
+      "providerRequestRejected": "Der Anbieter für das Klonen von Stimmen konnte diese Anfrage nicht verarbeiten. Bitte versuchen Sie es mit anderem Referenz-Audio oder Text.",
       "audioReferenceNotFound": "Die ausgewählte gespeicherte Stimme wurde nicht gefunden.",
       "failedToLoadVoices": "Ihre gespeicherten Stimmen konnten nicht geladen werden.",
       "failedToDeleteVoice": "Die Stimme konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",

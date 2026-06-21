@@ -19,6 +19,7 @@ import {
 } from '@/lib/clone/constants';
 import {
   cloneVoiceWithInworld,
+  deleteInworldVoice,
   INWORLD_MAX_DURATION,
   INWORLD_MIN_DURATION,
   INWORLD_OUTPUT_MIME_TYPE,
@@ -68,6 +69,7 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
+const MAX_VOICE_NAME_LENGTH = 60;
 const FALLBACK_MIN_DURATION = 10;
 const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
 const VOXTRAL_MIN_DURATION = 3;
@@ -171,7 +173,9 @@ type CloneRouteErrorCode =
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
   | 'errors.providerLocaleUnsupported'
+  | 'errors.providerRequestRejected'
   | 'errors.voiceNameRequired'
+  | 'errors.voiceNameTooLong'
   | 'errors.providerUnavailable'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
@@ -356,6 +360,17 @@ function validateProviderLocale(provider: CloneProvider, locale: string): void {
   if (provider === 'inworld' && !isInworldSupportedLocale(locale)) {
     throw createRouteError(
       `Inworld voice cloning does not support the language: ${locale}`,
+      400,
+      'errors.providerLocaleUnsupported',
+      { provider, locale },
+    );
+  }
+
+  // Mistral (Voxtral) can now be selected explicitly, so reject locales it
+  // does not support instead of failing later / wasting credits.
+  if (provider === 'mistral' && !isVoxtralCloneLocale(locale)) {
+    throw createRouteError(
+      `Mistral voice cloning does not support the language: ${locale}`,
       400,
       'errors.providerLocaleUnsupported',
       { provider, locale },
@@ -1385,6 +1400,19 @@ function throwInworldRouteError(error: unknown, locale: string): never {
       );
     }
 
+    // Other 4xx responses are client-side problems (bad reference audio,
+    // unsupported langCode, payload too large) — surface them as non-retryable
+    // instead of "temporarily unavailable", which would invite retries that
+    // keep failing and, on the new-clone path, mint another voice each time.
+    if (error.status >= 400 && error.status < 500) {
+      throw createRouteError(
+        'The voice cloning provider could not process this request. Please try a different reference audio or text.',
+        error.status,
+        'errors.providerRequestRejected',
+        { provider: 'inworld', status: error.status },
+      );
+    }
+
     throw createProviderUnavailableRouteError('inworld');
   }
 
@@ -1584,12 +1612,23 @@ export async function POST(request: Request) {
     }
 
     // Saving a new Inworld voice requires a name.
-    if (provider === 'inworld' && !formInput.voiceName) {
-      throw createRouteError(
-        'A voice name is required to save the cloned voice.',
-        400,
-        'errors.voiceNameRequired',
-      );
+    if (provider === 'inworld') {
+      if (!formInput.voiceName) {
+        throw createRouteError(
+          'A voice name is required to save the cloned voice.',
+          400,
+          'errors.voiceNameRequired',
+        );
+      }
+
+      if (formInput.voiceName.length > MAX_VOICE_NAME_LENGTH) {
+        throw createRouteError(
+          `Voice name must be at most ${MAX_VOICE_NAME_LENGTH} characters.`,
+          400,
+          'errors.voiceNameTooLong',
+          { MAX: MAX_VOICE_NAME_LENGTH },
+        );
+      }
     }
 
     validateFileType(referenceAudioFile);
@@ -1832,6 +1871,20 @@ export async function POST(request: Request) {
           user: { id: user.id },
           extra: { voiceId: createdInworldVoiceId },
         });
+
+        // The voice can't be tracked or reused, so roll it back on Inworld's
+        // side instead of leaving an orphaned voice in the workspace.
+        try {
+          await deleteInworldVoice(createdInworldVoiceId);
+        } catch (rollbackError) {
+          captureException(rollbackError, {
+            user: { id: user.id },
+            extra: {
+              voiceId: createdInworldVoiceId,
+              reason: 'rollback_after_audio_reference_insert_failure',
+            },
+          });
+        }
       } else if (inserted.data) {
         createdAudioReference = {
           id: inserted.data.id,

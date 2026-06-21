@@ -618,6 +618,8 @@
       "missingRequiredParameters": "Indtast tekst, og vælg en lydfil.",
       "providerLocaleUnsupported": "Denne motor understøtter ikke det valgte sprog. Vælg en anden motor eller et andet sprog.",
       "voiceNameRequired": "Indtast et navn til stemmen.",
+      "voiceNameTooLong": "Stemmenavn må højst være __MAX__ tegn.",
+      "providerRequestRejected": "Udbyderen af stemmekloning kunne ikke behandle denne anmodning. Prøv en anden referencelyd eller tekst.",
       "audioReferenceNotFound": "Den valgte gemte stemme kunne ikke findes.",
       "failedToLoadVoices": "Kunne ikke indlæse dine gemte stemmer.",
       "failedToDeleteVoice": "Kunne ikke slette stemmen. Prøv igen.",

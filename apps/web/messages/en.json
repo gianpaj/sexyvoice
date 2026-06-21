@@ -618,6 +618,8 @@
       "missingRequiredParameters": "Please enter text and select an audio file.",
       "providerLocaleUnsupported": "This engine does not support the selected language. Please choose a different engine or language.",
       "voiceNameRequired": "Please enter a name for the voice.",
+      "voiceNameTooLong": "Voice name must be at most __MAX__ characters.",
+      "providerRequestRejected": "The voice cloning provider could not process this request. Please try a different reference audio or text.",
       "audioReferenceNotFound": "The selected saved voice could not be found.",
       "failedToLoadVoices": "Failed to load your saved voices.",
       "failedToDeleteVoice": "Failed to delete the voice. Please try again.",

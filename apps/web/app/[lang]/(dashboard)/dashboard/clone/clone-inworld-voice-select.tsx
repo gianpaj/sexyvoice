@@ -138,7 +138,12 @@ export function CloneInworldVoiceSelect({
                 <AlertDialogAction asChild>
                   <Button
                     disabled={isDeleting}
-                    onClick={handleDelete}
+                    onClick={async (event) => {
+                      // Keep the dialog open until the request resolves;
+                      // handleDelete closes it on success and handles its own errors.
+                      event.preventDefault();
+                      await handleDelete();
+                    }}
                     variant="destructive"
                   >
                     {isDeleting
