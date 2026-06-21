@@ -162,7 +162,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!userHasPaid && voiceObj.model === 'gpro') {
+    if (
+      !userHasPaid &&
+      (voiceObj.model === 'gpro' || voiceObj.model === 'gpro31')
+    ) {
       const isOverLimit = await isFreemiumUserOverLimit(user.id);
       if (isOverLimit) {
         return NextResponse.json(

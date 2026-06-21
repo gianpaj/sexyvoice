@@ -708,12 +708,13 @@ export const isFreemiumUserOverLimit = async (
 ): Promise<boolean> => {
   const supabase = await createClient();
   // TODO: use redis instead
-  // If the user is a freemium user, count their voice model 'gpro' audio files.
+  // Count the freemium user's Gemini audio files (2.5 'gpro' and 3.1 'gpro31')
+  // against a single shared free-generation cap.
   const { count, error } = await supabase
     .from('audio_files')
     .select('id, voices!inner(model)', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .eq('voices.model', 'gpro');
+    .in('voices.model', ['gpro', 'gpro31']);
 
   if (error) {
     throw error;
