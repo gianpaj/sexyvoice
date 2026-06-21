@@ -20,8 +20,15 @@ export async function POST(request: NextRequest) {
   // Auth: the Supabase Database Webhook sends a shared secret. Mirrors the
   // CRON_SECRET pattern used by /api/daily-stats, but a distinct secret so the
   // webhook isn't conflated with the cron.
+  const secret = process.env.CALL_SUMMARY_SECRET;
+  // Guard against an unset secret: otherwise the comparison would succeed for a
+  // literal `Bearer undefined`, leaving the endpoint open to anyone.
+  if (!secret) {
+    Sentry.captureMessage('CALL_SUMMARY_SECRET is not configured');
+    return new NextResponse('Server misconfigured', { status: 500 });
+  }
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CALL_SUMMARY_SECRET}`) {
+  if (authHeader !== `Bearer ${secret}`) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
@@ -48,9 +55,17 @@ export async function POST(request: NextRequest) {
       'id, user_id, started_at, ended_at, duration_seconds, end_reason, model, voice_id, status, transcript',
     )
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
-  if (selectError || !session) {
+  if (selectError) {
+    console.error('Error fetching call session:', selectError);
+    return NextResponse.json(
+      { error: 'Failed to fetch call session' },
+      { status: 500 },
+    );
+  }
+
+  if (!session) {
     return NextResponse.json(
       { error: 'Call session not found' },
       { status: 404 },
@@ -67,10 +82,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ skipped: true });
   }
 
-  const { count: existing } = await supabase
+  const { count: existing, error: countError } = await supabase
     .from('call_session_analysis')
     .select('id', { count: 'exact', head: true })
     .eq('session_id', id);
+
+  if (countError) {
+    console.error('Error checking existing analysis:', countError);
+    return NextResponse.json(
+      { error: 'Failed to check existing analysis' },
+      { status: 500 },
+    );
+  }
 
   if ((existing ?? 0) > 0) {
     return NextResponse.json({ skipped: true });
@@ -79,9 +102,16 @@ export async function POST(request: NextRequest) {
   try {
     const analysis = await analyzeTranscript(session);
 
+    // Upsert with the unique session_id constraint as the source of truth: the
+    // count check above avoids the LLM call in the common case, while
+    // ignoreDuplicates closes the race when two webhook deliveries (or a webhook
+    // and the backfill script) run concurrently.
     const { error: insertError } = await supabase
       .from('call_session_analysis')
-      .insert(toAnalysisRow(session, analysis));
+      .upsert(toAnalysisRow(session, analysis), {
+        onConflict: 'session_id',
+        ignoreDuplicates: true,
+      });
 
     if (insertError) {
       throw insertError;

@@ -139,36 +139,10 @@ Options:
 const SESSION_COLUMNS =
   'id, user_id, model, voice_id, started_at, ended_at, duration_seconds, status, end_reason, transcript, created_at';
 
-/**
- * Remove sessions that already have a call_session_analysis row.
- */
-export async function filterAnalyzedSessions(supabase, sessions) {
-  if (sessions.length === 0) {
-    return [];
-  }
-
-  const analyzed = new Set();
-  const ids = sessions.map((s) => s.id);
-  const CHUNK = 200;
-
-  for (let i = 0; i < ids.length; i += CHUNK) {
-    const slice = ids.slice(i, i + CHUNK);
-    const { data, error } = await supabase
-      .from('call_session_analysis')
-      .select('session_id')
-      .in('session_id', slice);
-
-    if (error) {
-      throw new Error(`Error checking existing analyses: ${error.message}`);
-    }
-
-    for (const row of data || []) {
-      analyzed.add(row.session_id);
-    }
-  }
-
-  return sessions.filter((s) => !analyzed.has(s.id));
-}
+// Embed call_session_analysis and keep only parent rows with no match. With the
+// unique constraint on session_id this is a true 1:1 anti-join, so PostgREST
+// returns unanalyzed sessions in a single round-trip (no in-memory filtering).
+const SELECT_WITH_ANTI_JOIN = `${SESSION_COLUMNS}, call_session_analysis!left(id)`;
 
 async function getRecentCallSessions(supabase, hoursAgo, limit = null) {
   const cutoffTime = new Date(
@@ -177,7 +151,8 @@ async function getRecentCallSessions(supabase, hoursAgo, limit = null) {
 
   let query = supabase
     .from('call_sessions')
-    .select(SESSION_COLUMNS)
+    .select(SELECT_WITH_ANTI_JOIN)
+    .is('call_session_analysis', null)
     .gte('started_at', cutoffTime)
     .eq('status', 'completed')
     .not('transcript', 'is', null)
@@ -193,12 +168,12 @@ async function getRecentCallSessions(supabase, hoursAgo, limit = null) {
     throw new Error(`Error fetching call sessions: ${error.message}`);
   }
 
-  return filterAnalyzedSessions(supabase, data || []);
+  return data || [];
 }
 
 /**
- * Fetch all completed call sessions with a transcript (paginated). Used by the
- * backfill script.
+ * Fetch all completed, unanalyzed call sessions with a transcript (paginated).
+ * Used by the backfill script.
  */
 export async function getAllCompletedCallSessions(supabase, options = {}) {
   const { minDuration = MIN_ANALYSIS_CALL_DURATION_SECONDS, models = [] } =
@@ -209,7 +184,8 @@ export async function getAllCompletedCallSessions(supabase, options = {}) {
   while (true) {
     let query = supabase
       .from('call_sessions')
-      .select(SESSION_COLUMNS)
+      .select(SELECT_WITH_ANTI_JOIN)
+      .is('call_session_analysis', null)
       .eq('status', 'completed')
       .not('transcript', 'is', null)
       .gte('duration_seconds', minDuration)
@@ -235,7 +211,7 @@ export async function getAllCompletedCallSessions(supabase, options = {}) {
     from += DB_FETCH_PAGE_SIZE;
   }
 
-  return filterAnalyzedSessions(supabase, rows);
+  return rows;
 }
 
 function buildAnalysisRecord(result) {
@@ -264,11 +240,25 @@ function buildAnalysisRecord(result) {
 export async function saveAllSessionAnalyses(supabase, results) {
   let successCount = 0;
   let errorCount = 0;
+  let skippedCount = 0;
 
   for (const result of results) {
+    // Never persist a row for a failed analysis: a row would permanently
+    // exclude the session from future runs (and the webhook deliberately does
+    // the same), so failures stay retryable.
+    if (result.error || !result.analysis) {
+      skippedCount += 1;
+      continue;
+    }
+
+    // Upsert against the unique session_id so a concurrent webhook/run can't
+    // create a duplicate.
     const { error } = await supabase
       .from('call_session_analysis')
-      .insert(buildAnalysisRecord(result));
+      .upsert(buildAnalysisRecord(result), {
+        onConflict: 'session_id',
+        ignoreDuplicates: true,
+      });
     if (error) {
       console.error(
         `   ❌ Failed to save analysis for session ${result.sessionId}: ${error.message}`,
@@ -280,10 +270,15 @@ export async function saveAllSessionAnalyses(supabase, results) {
   }
 
   console.log(`   ✅ Saved ${successCount} session analyses`);
+  if (skippedCount > 0) {
+    console.log(
+      `   ⏭️ Skipped ${skippedCount} failed analyses (left for retry)`,
+    );
+  }
   if (errorCount > 0) {
     console.log(`   ❌ Failed to save ${errorCount} session analyses`);
   }
-  return { successCount, errorCount };
+  return { successCount, errorCount, skippedCount };
 }
 
 export async function saveAnalyticsRecord(supabase, analyticsData) {
@@ -340,11 +335,18 @@ export function extractMessages(transcript) {
     }))
     .filter((msg) => msg.content);
 
-  return [...normalizedAssistant, ...normalizedUser].sort((a, b) => {
-    const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-    const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-    return timeA - timeB;
-  });
+  return [...normalizedAssistant, ...normalizedUser].sort(
+    (a, b) => toEpoch(a.timestamp) - toEpoch(b.timestamp),
+  );
+}
+
+// Parse a timestamp to epoch ms; missing/invalid values sort first (0).
+function toEpoch(timestamp) {
+  if (!timestamp) {
+    return 0;
+  }
+  const parsed = Date.parse(timestamp);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 export function calculateConversationStats(messages) {
@@ -477,10 +479,21 @@ export async function analyzeCallSessionsWithLLM(xai, sessions, options = {}) {
       try {
         analysis = parseLlmJson(responseText);
       } catch (parseError) {
-        analysis = {
-          raw_response: responseText,
-          parse_error: parseError.message,
-        };
+        // Treat an unparseable response as a failure (top-level error), not a
+        // valid analysis: otherwise it would inflate success metrics and persist
+        // an all-null row that blocks reprocessing.
+        console.error(
+          `❌ Failed to parse LLM response for session ${session.id}: ${parseError.message}`,
+        );
+        results.push({
+          sessionId: session.id,
+          userId: session.user_id,
+          startedAt: session.started_at,
+          durationSeconds: session.duration_seconds,
+          endReason: session.end_reason,
+          error: `parse failed: ${parseError.message}`,
+        });
+        continue;
       }
 
       results.push({

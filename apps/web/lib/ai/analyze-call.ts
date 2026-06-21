@@ -159,11 +159,18 @@ export function extractMessages(
     }))
     .filter((msg) => msg.content);
 
-  return [...normalizedAssistant, ...normalizedUser].sort((a, b) => {
-    const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-    const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-    return timeA - timeB;
-  });
+  return [...normalizedAssistant, ...normalizedUser].sort(
+    (a, b) => toEpoch(a.timestamp) - toEpoch(b.timestamp),
+  );
+}
+
+/** Parse a timestamp to epoch ms; missing/invalid values sort first (0). */
+function toEpoch(timestamp: string | null): number {
+  if (!timestamp) {
+    return 0;
+  }
+  const parsed = Date.parse(timestamp);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 /** Condense the conversation into a USER:/AI: transcript for the LLM prompt. */
@@ -223,10 +230,14 @@ CONTEXT:
 - End reason: ${session.end_reason || 'unknown'}
 - Total messages: ${messages.length}
 ${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}`,
+    // Disable AI-SDK telemetry for this call: the prompt embeds the verbatim
+    // (intimate/adult) transcript, and the global Sentry vercelAIIntegration is
+    // configured with recordInputs/recordOutputs = true. Emitting no telemetry
+    // span here guarantees the conversation is never shipped to Sentry.
     experimental_telemetry: {
-      isEnabled: true,
-      recordInputs: true,
-      recordOutputs: true,
+      isEnabled: false,
+      recordInputs: false,
+      recordOutputs: false,
     },
   });
 

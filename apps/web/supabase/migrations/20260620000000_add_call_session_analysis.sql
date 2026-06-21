@@ -18,7 +18,11 @@ set search_path = '';
 -- 1. Per-call analysis: one row per analysed call session.
 create table if not exists public.call_session_analysis (
   id uuid primary key default gen_random_uuid(),
-  session_id uuid not null references public.call_sessions(id) on delete cascade,
+  -- One analysis row per call (1:1). The unique constraint enforces idempotency
+  -- at the DB level and is the conflict target for the route/script upserts.
+  -- Safe because neither the route nor the scripts persist rows for failed
+  -- analyses, so a session never has more than a single (successful) row.
+  session_id uuid not null unique references public.call_sessions(id) on delete cascade,
   user_id uuid references auth.users(id) on delete set null,
   started_at timestamptz,
   duration_seconds integer,
@@ -50,8 +54,7 @@ create table if not exists public.call_session_analysis (
   created_at timestamptz default now()
 );
 
-create index if not exists idx_call_session_analysis_session_id
-  on public.call_session_analysis (session_id);
+-- Note: session_id already has a unique index from the UNIQUE constraint above.
 create index if not exists idx_call_session_analysis_user_id
   on public.call_session_analysis (user_id);
 create index if not exists idx_call_session_analysis_started_at
