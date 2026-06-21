@@ -735,10 +735,15 @@ function NewVoiceClientInner({
                 {usesInworld && (
                   <CloneInworldVoiceSelect
                     disabled={status === 'generating'}
-                    dispatch={dispatch}
                     loading={inworldVoicesLoading}
+                    onChange={(value) =>
+                      dispatch({
+                        type: 'patch',
+                        patch: { selectedAudioReferenceId: value },
+                      })
+                    }
                     onVoiceDeleted={onVoiceDeleted}
-                    selectedAudioReferenceId={selectedAudioReferenceId}
+                    value={selectedAudioReferenceId}
                     voices={inworldVoices}
                   />
                 )}

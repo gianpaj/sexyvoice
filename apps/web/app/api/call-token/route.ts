@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { callScenes } from '@/data/call-scenes';
+import { ModelId } from '@/data/models';
 import {
   defaultLanguage,
   languageInitialInstructions,
@@ -17,6 +18,7 @@ import {
 import { APIErrorResponse } from '@/lib/error-ts';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
+  getAudioReferenceById,
   getCredits,
   getVoiceIdByName,
   hasUserPaid,
@@ -123,19 +125,67 @@ export async function POST(request: Request) {
       sceneInstructions,
       selectedPresetId,
       selectedSceneId,
-      sessionConfig: { model, voice, temperature, maxOutputTokens },
+      sessionConfig: {
+        model,
+        voice,
+        temperature,
+        maxOutputTokens,
+        audioReferenceId,
+      },
     } = playgroundState;
 
     const selectedLanguage = languageInitialInstructions[language]
       ? language
       : defaultLanguage;
 
-    // Validate voice exists in DB
-    const voiceObj = await getVoiceIdByName(voice);
+    // Resolve the voice id sent to the agent. Inworld uses a saved
+    // audio_references voice (paid-only); Grok uses a public DB voice.
+    let resolvedVoiceId: string;
 
-    if (!voiceObj) {
-      captureException('Voice not found', { extra: { voice } });
-      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+    if (model === ModelId.INWORLD_REALTIME) {
+      if (!(await hasUserPaid(user.id))) {
+        return NextResponse.json(
+          { error: 'Inworld voices require a paid account' },
+          { status: 403 },
+        );
+      }
+
+      if (!audioReferenceId) {
+        return NextResponse.json(
+          { error: 'No voice selected' },
+          { status: 400 },
+        );
+      }
+
+      const { data: reference, error: referenceError } =
+        await getAudioReferenceById(audioReferenceId, user.id);
+
+      if (referenceError) {
+        captureException(referenceError, {
+          user: { id: user.id },
+          extra: { audioReferenceId },
+        });
+        return NextResponse.json(
+          { error: 'Failed to load voice' },
+          { status: 500 },
+        );
+      }
+
+      if (!reference) {
+        return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+      }
+
+      resolvedVoiceId = reference.voice_id;
+    } else {
+      // Validate voice exists in DB
+      const voiceObj = await getVoiceIdByName(voice);
+
+      if (!voiceObj) {
+        captureException('Voice not found', { extra: { voice } });
+        return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+      }
+
+      resolvedVoiceId = voiceObj.id;
     }
 
     // ─── Resolve instructions ───
@@ -251,7 +301,7 @@ export async function POST(request: Request) {
     const metadata = {
       instructions: resolvedInstructions,
       model,
-      voice: voiceObj.id,
+      voice: resolvedVoiceId,
       temperature,
       max_output_tokens: maxOutputTokens,
       language: selectedLanguage,

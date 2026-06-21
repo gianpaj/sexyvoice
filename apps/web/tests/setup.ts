@@ -1,3 +1,4 @@
+import { randomUUID as nodeRandomUUID } from 'node:crypto';
 import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
@@ -542,6 +543,7 @@ vi.mock('@/lib/supabase/queries', async () => {
     }),
     insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
     isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
+    isFreeUserOverCallLimit: vi.fn().mockResolvedValue(false),
     hasUserPaid: vi.fn().mockResolvedValue(false),
     hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
     getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
@@ -750,9 +752,11 @@ vi.mock('@google/genai', async () => {
   };
 });
 
-// Mock crypto.subtle for filename hash generation
+// Mock crypto.subtle for filename hash generation (keep a real randomUUID,
+// which API routes use for room/request ids).
 Object.defineProperty(global, 'crypto', {
   value: {
+    randomUUID: nodeRandomUUID,
     subtle: {
       digest: vi.fn().mockImplementation((_algorithm, data) => {
         // Generate a simple hash based on the input data

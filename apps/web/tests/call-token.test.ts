@@ -133,6 +133,23 @@ describe('call-token API validation', () => {
       }
     });
 
+    it('should accept an inworld-realtime payload with audioReferenceId', () => {
+      const payload = {
+        instructions: 'Test instructions',
+        selectedPresetId: null,
+        sessionConfig: {
+          model: 'inworld-realtime',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+          audioReferenceId: '123e4567-e89b-12d3-a456-426614174000',
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
     it('should accept all valid language codes', () => {
       const validLanguages = [
         'ar',

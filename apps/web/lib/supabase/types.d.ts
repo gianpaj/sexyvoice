@@ -13,6 +13,31 @@ declare type Database = {
   __InternalSupabase: {
     PostgrestVersion: '12.2.3 (519615d)';
   };
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       api_keys: {
@@ -160,15 +185,7 @@ declare type Database = {
           user_id?: string;
           voice_id?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'audio_references_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       call_sessions: {
         Row: {
@@ -839,6 +856,9 @@ declare type CompositeTypes<
     : never;
 
 declare const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],

@@ -1,5 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
+import { getAudioDuration } from '@/lib/audio';
+import {
+  convertToWav,
+  isConversionSupported,
+  needsConversion,
+  trimWavBuffer,
+} from '@/lib/audio-converter';
+
 // ============================================================================
 // Inworld TTS voice cloning
 //
@@ -255,6 +263,53 @@ export async function cloneVoiceWithInworld({
   const synthesized = await synthesizeWithInworld({ locale, text, voiceId });
 
   return { ...synthesized, voiceId };
+}
+
+/**
+ * Normalizes an uploaded reference clip for Inworld: converts to WAV when
+ * needed and trims to Inworld's max duration. Returns the processed buffer and
+ * its measured duration (caller validates the minimum). Throws on unsupported
+ * formats / decode failures. Shared by the clone-voice route and the call-page
+ * clone-only endpoint.
+ */
+export async function prepareInworldReferenceAudio({
+  buffer,
+  filename,
+  mimeType,
+}: {
+  buffer: Buffer;
+  filename: string;
+  mimeType: string;
+}): Promise<{ buffer: Buffer; duration: number | null }> {
+  let processed = buffer;
+  let workingMime = mimeType;
+
+  if (needsConversion(mimeType)) {
+    if (!isConversionSupported(mimeType, filename)) {
+      throw new Error(
+        `Unsupported audio format for Inworld voice: ${mimeType}`,
+      );
+    }
+    const wav = await convertToWav(buffer, mimeType, filename);
+    if (wav) {
+      processed = wav as Buffer;
+      workingMime = 'audio/wav';
+    }
+  }
+
+  let duration = await getAudioDuration(processed, workingMime);
+
+  if (duration !== null && duration > INWORLD_MAX_DURATION) {
+    const trimmed = trimWavBuffer(processed, INWORLD_MAX_DURATION);
+    if (trimmed && trimmed !== processed) {
+      processed = trimmed;
+      duration =
+        (await getAudioDuration(processed, 'audio/wav')) ??
+        INWORLD_MAX_DURATION;
+    }
+  }
+
+  return { buffer: processed, duration };
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type Dispatch, useState } from 'react';
+import { useState } from 'react';
 
 import { toast } from '@/components/services/toast';
 import {
@@ -25,25 +25,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type {
-  AudioReference,
-  AudioReferenceSelection,
-  CloneStateAction,
-} from './clone-state';
+import type { AudioReference, AudioReferenceSelection } from './clone-state';
 
+// Reusable saved-voice picker (Clone page + Call page). Callback-based so it is
+// not tied to any particular state container.
 export function CloneInworldVoiceSelect({
   disabled,
-  dispatch,
   loading,
+  onChange,
   onVoiceDeleted,
-  selectedAudioReferenceId,
+  value,
   voices,
 }: {
   disabled: boolean;
-  dispatch: Dispatch<CloneStateAction>;
   loading: boolean;
+  onChange: (value: AudioReferenceSelection) => void;
   onVoiceDeleted: (deletedId: string) => void;
-  selectedAudioReferenceId: AudioReferenceSelection;
+  value: AudioReferenceSelection;
   voices: AudioReference[];
 }) {
   const t = useTranslations('clone');
@@ -51,9 +49,9 @@ export function CloneInworldVoiceSelect({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const selectedVoice =
-    selectedAudioReferenceId === 'new'
+    value === 'new'
       ? null
-      : (voices.find((voice) => voice.id === selectedAudioReferenceId) ?? null);
+      : (voices.find((voice) => voice.id === value) ?? null);
 
   const handleDelete = async () => {
     if (!selectedVoice) {
@@ -86,15 +84,8 @@ export function CloneInworldVoiceSelect({
       <div className="flex items-center gap-2">
         <Select
           disabled={disabled || loading}
-          onValueChange={(value) =>
-            dispatch({
-              type: 'patch',
-              patch: {
-                selectedAudioReferenceId: value as AudioReferenceSelection,
-              },
-            })
-          }
-          value={selectedAudioReferenceId}
+          onValueChange={(next) => onChange(next as AudioReferenceSelection)}
+          value={value}
         >
           <SelectTrigger
             className="w-56"

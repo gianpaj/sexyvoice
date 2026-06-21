@@ -13,9 +13,11 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
+import { InworldVoiceSection } from '@/components/call/inworld-voice-section';
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
+import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
@@ -39,7 +41,7 @@ import { SceneSelector } from './scene-selector';
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
-const RECONNECT_REQUIRED_FIELDS = ['voice'];
+const RECONNECT_REQUIRED_FIELDS = ['voice', 'audio_reference_id'];
 
 interface ConfigurationFormProps {
   callVoices?: DBVoice[];
@@ -91,6 +93,7 @@ export function ConfigurationForm({
       instructions: fullInstructions,
       model: values.model,
       voice: values.voice,
+      audio_reference_id: values.audioReferenceId || '',
       temperature: values.temperature,
       max_output_tokens: values.maxOutputTokens || '',
     };
@@ -195,7 +198,7 @@ export function ConfigurationForm({
 
     // Set a new timeout to perform the update after 500ms of inactivity
     debounceTimeoutRef.current = setTimeout(() => {
-      updateConfig();
+      updateConfig().catch(() => undefined);
     }, 500); // Adjust delay as needed
   }, [updateConfig]);
 
@@ -243,6 +246,27 @@ export function ConfigurationForm({
   };
   const displayLanguage = true;
 
+  const currentModel = pgState.sessionConfig.model;
+  const isInworld = currentModel === ModelId.INWORLD_REALTIME;
+
+  const handleEngineChange = (value: string) => {
+    if (value === ModelId.INWORLD_REALTIME) {
+      dispatch({
+        type: 'SET_SESSION_CONFIG',
+        payload: { model: ModelId.INWORLD_REALTIME },
+      });
+    } else {
+      // Switching back to Grok clears the Inworld voice selection.
+      dispatch({
+        type: 'SET_SESSION_CONFIG',
+        payload: {
+          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+          audioReferenceId: null,
+        },
+      });
+    }
+  };
+
   return (
     <header
       className="flex w-full flex-col items-stretch justify-stretch"
@@ -277,6 +301,41 @@ export function ConfigurationForm({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        )}
+
+        {/* Engine Selection */}
+        <div className="flex w-full items-center justify-between border-separator1 border-b px-4 py-4 md:px-1">
+          <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+            {t('engineLabel')}
+          </div>
+          <Select
+            disabled={connectionState === ConnectionState.Connected}
+            onValueChange={handleEngineChange}
+            value={currentModel}
+          >
+            <SelectTrigger className="h-9 w-fit text-neutral-200">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="text-neutral-100">
+              <SelectItem value={ModelId.GROK_VOICE_THINK_FAST_1_0}>
+                {t('engineGrok')}
+              </SelectItem>
+              <SelectItem
+                disabled={!isPaidUser}
+                value={ModelId.INWORLD_REALTIME}
+              >
+                {isPaidUser
+                  ? t('engineInworld')
+                  : `${t('engineInworld')} (${t('paidOnly')})`}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {isInworld && (
+          <div className="w-full border-separator1 border-b px-4 py-4 md:px-1">
+            <InworldVoiceSection />
           </div>
         )}
 
