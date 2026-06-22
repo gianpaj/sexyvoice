@@ -491,12 +491,18 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
-const isCreditTransactionReferenceConflict = (error: {
+export const isCreditTransactionReferenceConflict = (error: {
   code?: string;
+  details?: string;
   message?: string;
-}): boolean =>
-  error.code === '23505' &&
-  /unique_reference|reference_id/i.test(error.message ?? '');
+}): boolean => {
+  const conflictContext = `${error.message ?? ''} ${error.details ?? ''}`;
+
+  return (
+    error.code === '23505' &&
+    /unique_reference|reference_id/i.test(conflictContext)
+  );
+};
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
