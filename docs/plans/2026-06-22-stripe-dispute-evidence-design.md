@@ -78,7 +78,12 @@ error before running the remaining queries.
 
 ### Delivered artifacts (metadata only — no `text_content`, no URLs)
 - `audio_files`: count, total `duration`, total `credits_used`, first/last
-  `created_at`, distinct `model`s.
+  `created_at`, distinct `model`s, and a paid-vs-free split (first/last paid,
+  first free). Paid/free is "was the user a paying customer at generation time",
+  read from `usage.userHasPaid` (falling back to the `generated-audio/` vs
+  `generated-audio-free/` `storage_key` folder). It is **not** based on
+  `credits_used`, which is recorded for free users too. Rows that can't be
+  classified are counted as `unknown`.
 - `voices`: count of voice clones the user created.
 - `call_sessions`: count, total `billed_minutes`, total `duration_seconds`,
   total `credits_used`.

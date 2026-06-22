@@ -413,8 +413,10 @@ to the Stripe dispute response.
    strongest proof the service was used.
 4. **Delivered artifacts** (metadata only — no `text_content`, no URLs):
    - `audio_files`: count, total duration, models, and the **first/last paid**
-     (`credits_used > 0`) and **first free** (`credits_used = 0`) generation
-     dates.
+     and **first free** generation dates. Paid/free reflects whether the user
+     was a paying customer when the file was generated (`usage.userHasPaid`,
+     with the `generated-audio/` vs `generated-audio-free/` `storage_key` folder
+     as a fallback) — **not** `credits_used`, which is set for free users too.
    - `voices`: count of voice clones created.
    - `call_sessions`: count, billed minutes, duration, credits used.
 5. **Totals & reconciliation** — total paid, credits purchased / freemium /

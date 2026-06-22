@@ -26,7 +26,7 @@ interface CreditTransaction {
   } | null;
   reference_id: string | null;
   subscription_id: string | null;
-  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  type: 'purchase' | 'topup' | 'freemium' | 'refund';
   user_id: string;
 }
 
@@ -58,6 +58,7 @@ interface AudioFilesSummary {
   paidCount: number;
   totalCreditsUsed: number;
   totalDuration: number;
+  unknownCount: number;
 }
 
 interface CallSessionsSummary {
@@ -228,7 +229,7 @@ async function getAudioFilesSummary(
 ): Promise<AudioFilesSummary> {
   const { data, error } = await supabase
     .from('audio_files')
-    .select('duration, credits_used, created_at, model')
+    .select('duration, credits_used, created_at, model, storage_key, usage')
     .eq('user_id', userId)
     .order('created_at', { ascending: true });
 
@@ -241,15 +242,37 @@ async function getAudioFilesSummary(
     credits_used: number | null;
     created_at: string;
     model: string | null;
+    storage_key: string | null;
+    usage: { userHasPaid?: boolean } | null;
   }[];
 
   const models = [
     ...new Set(rows.map((r) => r.model).filter((m): m is string => !!m)),
   ].sort();
 
-  // rows are ordered by created_at ascending; paid = credits_used > 0
-  const paidRows = rows.filter((r) => (r.credits_used ?? 0) > 0);
-  const freeRows = rows.filter((r) => (r.credits_used ?? 0) === 0);
+  // Paid/free reflects whether the user was a paying customer when the file was
+  // generated — NOT whether credits were consumed (credits_used is set for free
+  // users too). The signal is captured at generation time as usage.userHasPaid,
+  // and mirrored in the storage_key folder (generated-audio/ vs
+  // generated-audio-free/), used as a fallback for rows predating the flag.
+  const isPaidRow = (r: (typeof rows)[number]): boolean | null => {
+    if (typeof r.usage?.userHasPaid === 'boolean') {
+      return r.usage.userHasPaid;
+    }
+    const key = r.storage_key ?? '';
+    if (key.startsWith('generated-audio-free/')) {
+      return false;
+    }
+    if (key.startsWith('generated-audio/')) {
+      return true;
+    }
+    return null;
+  };
+
+  // rows are ordered by created_at ascending
+  const paidRows = rows.filter((r) => isPaidRow(r) === true);
+  const freeRows = rows.filter((r) => isPaidRow(r) === false);
+  const unknownCount = rows.filter((r) => isPaidRow(r) === null).length;
 
   return {
     count: rows.length,
@@ -259,6 +282,7 @@ async function getAudioFilesSummary(
     lastCreatedAt: rows.at(-1)?.created_at ?? null,
     paidCount: paidRows.length,
     freeCount: freeRows.length,
+    unknownCount,
     firstPaidCreatedAt: paidRows.length > 0 ? paidRows[0].created_at : null,
     lastPaidCreatedAt: paidRows.at(-1)?.created_at ?? null,
     firstFreeCreatedAt: freeRows.length > 0 ? freeRows[0].created_at : null,
@@ -484,6 +508,11 @@ function renderConsole(report: DisputeReport): void {
   console.log(
     `    Free (${String(audioFiles.freeCount).padStart(3)}):    first ${fmtDate(audioFiles.firstFreeCreatedAt)}`,
   );
+  if (audioFiles.unknownCount > 0) {
+    console.log(
+      `    Unknown (${String(audioFiles.unknownCount).padStart(3)}): paid/free could not be determined`,
+    );
+  }
   console.log(
     `    Models:       ${audioFiles.models.length > 0 ? audioFiles.models.join(', ') : 'N/A'}`,
   );
@@ -575,6 +604,11 @@ function renderMarkdown(report: DisputeReport): string {
   lines.push(
     `| Audio files (free) | ${audioFiles.freeCount} | first ${fmtDate(audioFiles.firstFreeCreatedAt)} |`,
   );
+  if (audioFiles.unknownCount > 0) {
+    lines.push(
+      `| Audio files (unknown) | ${audioFiles.unknownCount} | paid/free could not be determined |`,
+    );
+  }
   lines.push(`| Voice clones | ${report.voiceCloneCount} | created by user |`);
   lines.push(
     `| Call sessions | ${callSessions.count} | ${callSessions.totalBilledMinutes} billed min, ${callSessions.totalDurationSeconds}s, ${callSessions.totalCreditsUsed} credits |`,
