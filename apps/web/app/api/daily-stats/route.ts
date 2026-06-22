@@ -13,6 +13,7 @@ const ROLLING_WINDOW_LABEL = `${ROLLING_WINDOW_DAYS}d`;
 import {
   countActiveCustomerSubscriptions,
   findNextSubscriptionDueForPayment,
+  getActiveSubscriptionsMrr,
 } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
@@ -148,6 +149,8 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let subscriptionsMrr: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let nextSubscriptionDueForPayment: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessions14dResult: any;
@@ -187,6 +190,7 @@ export async function GET(request: NextRequest) {
       allCreditTransactions = cached.allCreditTransactions;
       allTimePurchaseTransactions = cached.allTimePurchaseTransactions ?? [];
       activeSubscribersCount = cached.activeSubscribersCount;
+      subscriptionsMrr = cached.subscriptionsMrr;
       nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
       callSessions14dResult =
         cached.callSessions14dResult ?? cached.callSessionsWeekResult;
@@ -225,6 +229,7 @@ export async function GET(request: NextRequest) {
 
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
+      subscriptionsMrr,
       // Call sessions - fetch for the rolling 14-day window (includes yesterday)
       callSessions14dResult,
       callSessionsTotalCountResult,
@@ -301,9 +306,11 @@ export async function GET(request: NextRequest) {
         return q;
       })(),
 
-      // Fetch active subscribers count
+      // Fetch active subscribers count, next renewal, and MRR (all share one
+      // Redis SCAN pass via the cached scan promise).
       countActiveCustomerSubscriptions(),
       findNextSubscriptionDueForPayment(),
+      getActiveSubscriptionsMrr(),
 
       // (callSessions14dResult) Call sessions last 14 days with duration info
       (() => {
@@ -501,6 +508,7 @@ export async function GET(request: NextRequest) {
       allCreditTransactions,
       allTimePurchaseTransactions,
       activeSubscribersCount,
+      subscriptionsMrr,
       nextSubscriptionDueForPayment,
       callSessions14dResult,
       callSessionsTotalCountResult,
@@ -1366,11 +1374,17 @@ export async function GET(request: NextRequest) {
   const shouldShowConcentrationRisk =
     totalCreditsYesterday === 0 || Number.parseFloat(top3UsageSharePct) >= 60;
 
+  const mrrAmount = subscriptionsMrr?.mrr ?? 0;
+  const mrrUnknownCount = subscriptionsMrr?.unknownCount ?? 0;
+  const mrrDisplay = `$${mrrAmount.toFixed(0)}/mo MRR${
+    mrrUnknownCount > 0 ? `, ${mrrUnknownCount} unpriced` : ''
+  }`;
+
   const revenueSummaryLines = [
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg14dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg14dRevenue).toFixed(2)} vs ${ROLLING_WINDOW_LABEL} avg)`,
     `  - ${ROLLING_WINDOW_LABEL}: $${total14dRevenue.toFixed(2)} (avg $${avg14dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
     `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribers14dCount} in ${ROLLING_WINDOW_LABEL} | Next renewal: ${maskUsername(getProfileUsername(nextPayingSubscriber?.profiles ?? null))} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active (${mrrDisplay}) | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribers14dCount} in ${ROLLING_WINDOW_LABEL} | Next renewal: ${maskUsername(getProfileUsername(nextPayingSubscriber?.profiles ?? null))} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
   ];
 
   const message = [
