@@ -49,8 +49,13 @@ interface UsageSummaryRow {
 interface AudioFilesSummary {
   count: number;
   firstCreatedAt: string | null;
+  firstFreeCreatedAt: string | null;
+  firstPaidCreatedAt: string | null;
+  freeCount: number;
   lastCreatedAt: string | null;
+  lastPaidCreatedAt: string | null;
   models: string[];
+  paidCount: number;
   totalCreditsUsed: number;
   totalDuration: number;
 }
@@ -240,12 +245,21 @@ async function getAudioFilesSummary(
     ...new Set(rows.map((r) => r.model).filter((m): m is string => !!m)),
   ].sort();
 
+  // rows are ordered by created_at ascending; paid = credits_used > 0
+  const paidRows = rows.filter((r) => (r.credits_used ?? 0) > 0);
+  const freeRows = rows.filter((r) => (r.credits_used ?? 0) === 0);
+
   return {
     count: rows.length,
     totalDuration: rows.reduce((sum, r) => sum + Number(r.duration ?? 0), 0),
     totalCreditsUsed: rows.reduce((sum, r) => sum + (r.credits_used ?? 0), 0),
     firstCreatedAt: rows.length > 0 ? rows[0].created_at : null,
     lastCreatedAt: rows.at(-1)?.created_at ?? null,
+    paidCount: paidRows.length,
+    freeCount: freeRows.length,
+    firstPaidCreatedAt: paidRows.length > 0 ? paidRows[0].created_at : null,
+    lastPaidCreatedAt: paidRows.at(-1)?.created_at ?? null,
+    firstFreeCreatedAt: freeRows.length > 0 ? freeRows[0].created_at : null,
     models,
   };
 }
@@ -449,6 +463,12 @@ function renderConsole(report: DisputeReport): void {
     `    Date range:   ${fmtDate(audioFiles.firstCreatedAt)} → ${fmtDate(audioFiles.lastCreatedAt)}`,
   );
   console.log(
+    `    Paid (${String(audioFiles.paidCount).padStart(3)}):    ${fmtDate(audioFiles.firstPaidCreatedAt)} → ${fmtDate(audioFiles.lastPaidCreatedAt)} (first → last)`,
+  );
+  console.log(
+    `    Free (${String(audioFiles.freeCount).padStart(3)}):    first ${fmtDate(audioFiles.firstFreeCreatedAt)}`,
+  );
+  console.log(
     `    Models:       ${audioFiles.models.length > 0 ? audioFiles.models.join(', ') : 'N/A'}`,
   );
   console.log(`  Voice clones:   ${report.voiceCloneCount}`);
@@ -530,6 +550,12 @@ function renderMarkdown(report: DisputeReport): string {
   lines.push('| --- | ---: | --- |');
   lines.push(
     `| Audio files | ${audioFiles.count} | ${audioFiles.totalDuration.toFixed(1)}s total, ${audioFiles.totalCreditsUsed} credits, ${fmtDate(audioFiles.firstCreatedAt)} → ${fmtDate(audioFiles.lastCreatedAt)}; models: ${audioFiles.models.join(', ') || 'N/A'} |`,
+  );
+  lines.push(
+    `| Audio files (paid) | ${audioFiles.paidCount} | first ${fmtDate(audioFiles.firstPaidCreatedAt)} → last ${fmtDate(audioFiles.lastPaidCreatedAt)} |`,
+  );
+  lines.push(
+    `| Audio files (free) | ${audioFiles.freeCount} | first ${fmtDate(audioFiles.firstFreeCreatedAt)} |`,
   );
   lines.push(`| Voice clones | ${report.voiceCloneCount} | created by user |`);
   lines.push(
