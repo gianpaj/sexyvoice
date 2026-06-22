@@ -2056,6 +2056,62 @@ describe('Generate Voice API Route', () => {
       expect(reduceCredits).not.toHaveBeenCalled();
     });
 
+    it.each([
+      {
+        errorCode: 'PROHIBITED_CONTENT' as const,
+        name: 'prohibited content finish',
+        terminalChunk: {
+          candidates: [
+            { content: { parts: [] }, finishReason: 'PROHIBITED_CONTENT' },
+          ],
+        },
+      },
+      {
+        errorCode: 'OTHER_GEMINI_BLOCK' as const,
+        name: 'safety prompt block',
+        terminalChunk: {
+          candidates: [],
+          promptFeedback: { blockReason: 'SAFETY' },
+        },
+      },
+    ])('does not retry a $name from the primary stream', async ({
+      errorCode,
+      terminalChunk,
+    }) => {
+      const { hasUserPaid, reduceCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        yield terminalChunk;
+      });
+      setMockGoogleGenAIFactory(() => ({
+        models: { generateContentStream },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(getErrorMessage(errorCode, 'voice-generation'));
+      expect(body).not.toContain('event: done');
+      expect(callCount).toBe(1);
+      expect(reduceCredits).not.toHaveBeenCalled();
+    });
+
     it('emits error event after audio started and skips billing when stream throws mid-flight', async () => {
       const { hasUserPaid, reduceCredits } = await import(
         '@/lib/supabase/queries'

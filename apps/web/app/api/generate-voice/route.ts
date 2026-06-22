@@ -945,7 +945,30 @@ function streamGeminiTtsResponse({
     let streamUsageMetadata:
       | GenerateContentResponse['usageMetadata']
       | undefined;
+    let streamFinishReason: FinishReason | undefined;
+    let streamBlockReason: string | undefined;
     let audioStarted = false;
+
+    const getStreamBlockError = () => {
+      let errorCode: keyof typeof ERROR_CODES | undefined;
+      if (
+        streamFinishReason === FinishReason.PROHIBITED_CONTENT ||
+        streamBlockReason === 'PROHIBITED_CONTENT'
+      ) {
+        errorCode = 'PROHIBITED_CONTENT';
+      } else if (
+        (streamFinishReason && streamFinishReason !== FinishReason.STOP) ||
+        streamBlockReason
+      ) {
+        errorCode = 'OTHER_GEMINI_BLOCK';
+      }
+
+      return errorCode
+        ? new Error(getErrorMessage(errorCode, 'voice-generation'), {
+            cause: errorCode,
+          })
+        : undefined;
+    };
 
     const tryStream = async (model: string) => {
       const stream = await ai.models.generateContentStream({
@@ -970,6 +993,14 @@ function streamGeminiTtsResponse({
         if (chunk.usageMetadata) {
           streamUsageMetadata = chunk.usageMetadata;
         }
+        const finishReason = chunk.candidates?.[0]?.finishReason;
+        if (finishReason) {
+          streamFinishReason = finishReason;
+        }
+        const blockReason = chunk.promptFeedback?.blockReason;
+        if (blockReason) {
+          streamBlockReason = blockReason;
+        }
       }
     };
 
@@ -982,6 +1013,10 @@ function streamGeminiTtsResponse({
       try {
         await tryStream(selectedModel);
         if (audioChunks.length === 0) {
+          const streamBlockError = getStreamBlockError();
+          if (streamBlockError) {
+            throw streamBlockError;
+          }
           throw new Error(
             `${selectedModel} stream completed without audio chunks`,
           );
@@ -991,6 +1026,14 @@ function streamGeminiTtsResponse({
           logger.info('Gemini stream aborted', { user: { id: user.id } });
           await writer.close();
           return;
+        }
+
+        if (
+          Error.isError(primaryError) &&
+          (primaryError.cause === 'PROHIBITED_CONTENT' ||
+            primaryError.cause === 'OTHER_GEMINI_BLOCK')
+        ) {
+          throw primaryError;
         }
 
         if (audioStarted) {
@@ -1017,6 +1060,8 @@ function streamGeminiTtsResponse({
         modelUsed = 'gemini-2.5-flash-preview-tts';
         audioChunks.length = 0;
         streamUsageMetadata = undefined;
+        streamFinishReason = undefined;
+        streamBlockReason = undefined;
         await tryStream(modelUsed);
       }
 
@@ -1026,6 +1071,10 @@ function streamGeminiTtsResponse({
       }
 
       if (audioChunks.length === 0) {
+        const streamBlockError = getStreamBlockError();
+        if (streamBlockError) {
+          throw streamBlockError;
+        }
         logger.error('Gemini stream completed with no audio chunks', {
           user: { id: user.id, email: user.email },
           extra: { model: modelUsed, textLength: text.length, stream: true },
@@ -1166,7 +1215,9 @@ function streamGeminiTtsResponse({
         },
       });
 
-      if (!audioStarted) {
+      const isProhibitedContent =
+        Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
+      if (!audioStarted && !isProhibitedContent) {
         captureException(error, {
           extra: { model: modelUsed, voice: voiceObj.name, stream: true },
           user: { id: user.id },
