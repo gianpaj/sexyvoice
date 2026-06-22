@@ -85,7 +85,12 @@ error before running the remaining queries.
 
 ## Computed Totals & Reconciliation
 
-- Total USD paid = sum of `metadata.dollarAmount` over purchase/topup rows.
+- Total charged (gross) USD = sum of `metadata.dollarAmount` over purchase/topup
+  rows.
+- USD refunded = absolute sum of the negative `metadata.dollarAmount` on
+  `refund` rows (cash refunds; platform-bug refunds carry no `dollarAmount`).
+- Net paid USD = total charged − USD refunded. (Net is the figure that usually
+  matters for a dispute.)
 - Total credits purchased = sum of `amount` over purchase/topup rows.
 - Total freemium credits = sum of `amount` over `freemium` rows.
 - Total credits used = sum of `credits_used` over `usage_events`.

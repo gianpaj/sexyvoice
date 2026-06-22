@@ -71,11 +71,13 @@ interface Totals {
   balanceDelta: number;
   currentBalance: number;
   expectedBalance: number;
+  netPaidUSD: number;
+  totalChargedUSD: number;
   totalCreditsUsed: number;
   totalFreemiumCredits: number;
   totalPurchasedCredits: number;
   totalRefundedCredits: number;
-  totalSpentUSD: number;
+  totalRefundedUSD: number;
 }
 
 interface DisputeReport {
@@ -366,9 +368,21 @@ function computeTotals(
   const isPaid = (t: CreditTransaction) =>
     t.type === 'purchase' || t.type === 'topup';
 
-  const totalSpentUSD = transactions
+  // Gross amount charged via purchase/topup rows (positive dollarAmount).
+  const totalChargedUSD = transactions
     .filter(isPaid)
     .reduce((sum, t) => sum + (t.metadata?.dollarAmount ?? 0), 0);
+
+  // USD refunded back to the user. refund-credits.mts stores a NEGATIVE
+  // metadata.dollarAmount on `type: 'refund'` rows for cash refunds (platform-
+  // bug refunds are credits-only and carry no dollarAmount). Report as positive.
+  const totalRefundedUSD =
+    transactions
+      .filter((t) => t.type === 'refund')
+      .reduce((sum, t) => sum + Math.min(0, t.metadata?.dollarAmount ?? 0), 0) *
+    -1;
+
+  const netPaidUSD = totalChargedUSD - totalRefundedUSD;
 
   const totalPurchasedCredits = transactions
     .filter(isPaid)
@@ -395,7 +409,9 @@ function computeTotals(
     totalCreditsUsed;
 
   return {
-    totalSpentUSD,
+    totalChargedUSD,
+    totalRefundedUSD,
+    netPaidUSD,
     totalPurchasedCredits,
     totalFreemiumCredits,
     totalCreditsUsed,
@@ -477,7 +493,9 @@ function renderConsole(report: DisputeReport): void {
   );
 
   console.log('\n--- Totals & Reconciliation ---');
-  console.log(`  Total paid:            ${fmtUSD(totals.totalSpentUSD)}`);
+  console.log(`  Total charged (gross): ${fmtUSD(totals.totalChargedUSD)}`);
+  console.log(`  USD refunded:          ${fmtUSD(totals.totalRefundedUSD)}`);
+  console.log(`  Net paid:              ${fmtUSD(totals.netPaidUSD)}`);
   console.log(`  Credits purchased:     ${totals.totalPurchasedCredits}`);
   console.log(`  Freemium credits:      ${totals.totalFreemiumCredits}`);
   console.log(`  Credits used:          ${totals.totalCreditsUsed}`);
@@ -567,7 +585,9 @@ function renderMarkdown(report: DisputeReport): string {
   lines.push('');
   lines.push('| Metric | Value |');
   lines.push('| --- | ---: |');
-  lines.push(`| Total paid | ${fmtUSD(totals.totalSpentUSD)} |`);
+  lines.push(`| Total charged (gross) | ${fmtUSD(totals.totalChargedUSD)} |`);
+  lines.push(`| USD refunded | ${fmtUSD(totals.totalRefundedUSD)} |`);
+  lines.push(`| Net paid | ${fmtUSD(totals.netPaidUSD)} |`);
   lines.push(`| Credits purchased | ${totals.totalPurchasedCredits} |`);
   lines.push(`| Freemium credits | ${totals.totalFreemiumCredits} |`);
   lines.push(`| Credits used | ${totals.totalCreditsUsed} |`);
@@ -601,7 +621,7 @@ async function getUserId(
     throw new Error('User ID is required');
   }
 
-  return userId;
+  return userId.replace(/[^a-zA-Z0-9-_]/g, '_');
 }
 
 // ---------------------------------------------------------------------------
