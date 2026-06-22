@@ -12,11 +12,7 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import {
-  convertToWav,
-  generateHash,
-  resolveDurationString,
-} from '@/lib/audio';
+import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -985,6 +981,11 @@ function streamGeminiTtsResponse({
 
       try {
         await tryStream(selectedModel);
+        if (audioChunks.length === 0) {
+          throw new Error(
+            `${selectedModel} stream completed without audio chunks`,
+          );
+        }
       } catch (primaryError) {
         if (requestSignal.aborted || isAbortError(primaryError)) {
           logger.info('Gemini stream aborted', { user: { id: user.id } });
