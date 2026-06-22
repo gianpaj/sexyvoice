@@ -1968,7 +1968,7 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('falls back to flash when the primary stream yields no audio chunks', async () => {
+    it('falls back to flash without retaining primary usage when the primary stream yields no audio', async () => {
       const { hasUserPaid, reduceCredits, saveAudioFile } = await import(
         '@/lib/supabase/queries'
       );
@@ -1980,10 +1980,17 @@ describe('Generate Voice API Route', () => {
         if (callCount === 1) {
           yield {
             candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }],
+            usageMetadata: {
+              promptTokenCount: 100,
+              candidatesTokenCount: 200,
+              totalTokenCount: 300,
+            },
           };
           return;
         }
-        yield createDefaultStreamChunk();
+        const fallbackChunk = createDefaultStreamChunk();
+        fallbackChunk.usageMetadata = undefined;
+        yield fallbackChunk;
       });
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
@@ -2002,9 +2009,15 @@ describe('Generate Voice API Route', () => {
 
       expect(body).toContain('event: done');
       expect(callCount).toBe(2);
-      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenCalledWith({
+        amount: estimateCredits('Hello world', 'achernar', 'gpro31'),
+        userId: 'test-user-id',
+      });
       expect(saveAudioFile).toHaveBeenCalledWith(
-        expect.objectContaining({ model: 'gemini-2.5-flash-preview-tts' }),
+        expect.objectContaining({
+          model: 'gemini-2.5-flash-preview-tts',
+          usage: { stream: true, userHasPaid: true },
+        }),
       );
     });
 

@@ -1016,6 +1016,7 @@ function streamGeminiTtsResponse({
         );
         modelUsed = 'gemini-2.5-flash-preview-tts';
         audioChunks.length = 0;
+        streamUsageMetadata = undefined;
         await tryStream(modelUsed);
       }
 
