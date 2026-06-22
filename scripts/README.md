@@ -374,6 +374,69 @@ Each refund transaction is recorded with:
 
 ---
 
+## Compile Dispute Evidence Script
+
+Read-only Node.js/TypeScript script (`compile-dispute-evidence.mts`) that compiles
+a single user's complete account data to respond to a Stripe payment dispute
+(chargeback). It makes **no** database writes and **no** Stripe API calls — it
+only reads from Supabase, so it's safe to run against production.
+
+The output serves two audiences at once: a human-readable summary for deciding
+whether to contest or refund the dispute, and a Stripe-ready evidence record
+proving the user signed up, paid, and actually used the service.
+
+### Usage
+
+```bash
+# Run with user ID as argument
+pnpm compile-dispute-evidence -- <user-id>
+
+# Or run interactively (will prompt for user ID)
+pnpm compile-dispute-evidence
+```
+
+The script prints the report to the console **and** writes a Markdown file to
+the current directory: `dispute-<user_id>-<YYYY-MM-DD>.md`, which you can attach
+to the Stripe dispute response.
+
+### What it gathers (all scoped to the one user)
+
+1. **Account** — `profiles`: email (`username`), Stripe customer ID
+   (`stripe_id`), and signup date. Proves identity and when they joined.
+2. **Payments** — `credit_transactions` of type `purchase` / `topup` / `refund`:
+   date, credits, USD (`metadata.dollarAmount`), Stripe **Payment Intent**
+   (`reference_id`) and **subscription** (`subscription_id`). Links each charge
+   to Stripe.
+3. **Usage** — `usage_events` aggregated by `source_type` (`tts`,
+   `voice_cloning`, `live_call`, API…): event count, total quantity, credits
+   used, and first/last `occurred_at`. This append-only audit log is the
+   strongest proof the service was used.
+4. **Delivered artifacts** (metadata only — no `text_content`, no URLs):
+   - `audio_files`: count, total duration, models, and the **first/last paid**
+     (`credits_used > 0`) and **first free** (`credits_used = 0`) generation
+     dates.
+   - `voices`: count of voice clones created.
+   - `call_sessions`: count, billed minutes, duration, credits used.
+5. **Totals & reconciliation** — total paid, credits purchased / freemium /
+   used / refunded, current balance vs. expected balance, and the delta
+   (`✅` when it reconciles).
+
+### Deciding how much to refund
+
+The reconciliation makes it easy to size a fair refund: refund only the **cash
+value of the credits from the disputed charge that haven't been consumed yet**,
+at that charge's own rate (`dollarAmount / credits`). Credits the user already
+turned into delivered audio represent value delivered and shouldn't be refunded
+as cash. When the usage profile looks like abuse (new account, large usage, then
+chargeback), the `usage_events` + `audio_files` data is strong evidence to
+**contest** the dispute instead.
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
 ## Check Disposable Emails Script
 
 Node.js script (`check-disposable-emails.mjs`) that fetches the most recently
