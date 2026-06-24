@@ -91,6 +91,10 @@ AS $$
     WHERE m.user_id = p_user_id
       AND m.character_id = p_character_id
       AND m.embedding IS NOT NULL
+      -- Guard: with a NULL query_embedding, `embedding <=> NULL` is NULL and the
+      -- ORDER BY would rank arbitrary rows, polluting the fused result. Returning
+      -- 0 rows here lets the hybrid search fall back to pure full-text.
+      AND query_embedding IS NOT NULL
     ORDER BY m.embedding <=> query_embedding ASC
     LIMIT least(greatest(match_count, 1) * 4, 50)
   ),
