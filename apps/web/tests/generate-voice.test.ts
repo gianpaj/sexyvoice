@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits, getErrorMessage } from '@/lib/utils';
+import {
+  calculateCreditsFromTokens,
+  estimateCredits,
+  getErrorMessage,
+} from '@/lib/utils';
 import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
   createDefaultStreamChunk,
@@ -1782,6 +1786,9 @@ describe('Generate Voice API Route', () => {
       const { hasUserPaid, saveAudioFile, insertUsageEvent, reduceCredits } =
         await import('@/lib/supabase/queries');
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+      const text = 'Hello world';
+      const reservedCredits = estimateCredits(text, 'achernar', 'gpro31');
+      const actualCredits = calculateCreditsFromTokens(23);
 
       const generateContentStream = vi
         .fn()
@@ -1794,7 +1801,7 @@ describe('Generate Voice API Route', () => {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          text: 'Hello world',
+          text,
           voiceId: 'voice-achernar-31-id',
           stream: true,
         }),
@@ -1811,7 +1818,14 @@ describe('Generate Voice API Route', () => {
       expect(body).toContain('event: done');
       expect(body).toContain('files.sexyvoice.ai');
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
-      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenNthCalledWith(1, {
+        userId: 'test-user-id',
+        amount: reservedCredits,
+      });
+      expect(reduceCredits).toHaveBeenNthCalledWith(2, {
+        userId: 'test-user-id',
+        amount: actualCredits - reservedCredits,
+      });
       expect(saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gemini-3.1-flash-tts-preview',
@@ -1853,6 +1867,46 @@ describe('Generate Voice API Route', () => {
       expect(generateContentStream).toHaveBeenCalledWith(
         expect.objectContaining({ model: 'gemini-3.1-flash-tts-preview' }),
       );
+    });
+
+    it('refunds unused reserved credits when stream token usage is below estimate', async () => {
+      const { reduceCredits, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      const text = 'Hello world '.repeat(10).trim();
+      const reservedCredits = estimateCredits(text, 'achernar', 'gpro31');
+      const actualCredits = calculateCreditsFromTokens(23);
+      const generateContentStream = vi
+        .fn()
+        .mockImplementation(async function* () {
+          yield createDefaultStreamChunk();
+        });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: done');
+      expect(reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: reservedCredits,
+      });
+      expect(restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: reservedCredits - actualCredits,
+      });
+      expect(body).toContain(`"creditsUsed":${actualCredits}`);
+      expect(body).toContain(`"creditsRemaining":${1000 - actualCredits}`);
     });
 
     it('returns SSE done-only on cache hit with stream: true', async () => {

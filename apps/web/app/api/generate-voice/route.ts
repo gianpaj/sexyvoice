@@ -99,6 +99,70 @@ async function refundReservedCredits({
   }
 }
 
+async function reconcileReservedCredits({
+  actualCredits,
+  context,
+  reservedCredits,
+  userId,
+}: {
+  actualCredits: number;
+  context: string;
+  reservedCredits: number;
+  userId: string;
+}): Promise<number> {
+  if (actualCredits === reservedCredits) {
+    return reservedCredits;
+  }
+
+  if (actualCredits < reservedCredits) {
+    const refundAmount = reservedCredits - actualCredits;
+    try {
+      await restoreCredits({ userId, amount: refundAmount });
+      return actualCredits;
+    } catch (refundError) {
+      logger.error('Failed to refund unused reserved credits', {
+        user: { id: userId },
+        extra: {
+          actualCredits,
+          context,
+          errorMessage:
+            refundError instanceof Error ? refundError.message : String(refundError),
+          refundAmount,
+          reservedCredits,
+        },
+      });
+      captureException(refundError, {
+        extra: { actualCredits, context, refundAmount, reservedCredits },
+        user: { id: userId },
+      });
+      return reservedCredits;
+    }
+  }
+
+  const additionalCredits = actualCredits - reservedCredits;
+  try {
+    await reduceCredits({ userId, amount: additionalCredits });
+    return actualCredits;
+  } catch (debitError) {
+    logger.error('Failed to debit additional stream credits', {
+      user: { id: userId },
+      extra: {
+        actualCredits,
+        additionalCredits,
+        context,
+        errorMessage:
+          debitError instanceof Error ? debitError.message : String(debitError),
+        reservedCredits,
+      },
+    });
+    captureException(debitError, {
+      extra: { actualCredits, additionalCredits, context, reservedCredits },
+      user: { id: userId },
+    });
+    return reservedCredits;
+  }
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -1119,6 +1183,12 @@ function streamGeminiTtsResponse({
           streamUsageMetadata.totalTokenCount,
         );
       }
+      const creditsDebited = await reconcileReservedCredits({
+        userId: user.id,
+        reservedCredits,
+        actualCredits: creditsUsed,
+        context: 'generate_voice_stream_success',
+      });
 
       const streamUsage: Record<string, string | number | boolean> =
         streamUsageMetadata
@@ -1194,12 +1264,12 @@ function streamGeminiTtsResponse({
         extra: { model: modelUsed, creditsUsed, stream: true },
       });
 
+      completed = true;
       await enqueue('done', {
         url: uploadUrl,
         creditsUsed,
-        creditsRemaining: (currentAmount || 0) - reservedCredits,
+        creditsRemaining: (currentAmount || 0) - creditsDebited,
       });
-      completed = true;
     } catch (error) {
       if (requestSignal.aborted || isAbortError(error)) {
         logger.info('Gemini stream aborted mid-flight', {
