@@ -747,43 +747,47 @@ export async function POST(request: Request) {
 
     await redis.set(filename, uploadUrl);
 
+    let creditsUsed = estimate;
+
+    const usage = extractMetadata(isGeminiVoice, genAIResponse, replicateResponse);
+
+    if (isGeminiVoice && usage) {
+      creditsUsed = calculateCreditsFromTokens(
+        Number.parseInt(usage.totalTokenCount, 10),
+      );
+    }
+
+    const creditsDebited = await reconcileReservedCredits({
+      userId: user.id,
+      reservedCredits,
+      actualCredits: creditsUsed,
+      context: 'generate_voice_success',
+    });
+    reservedCredits = 0;
+
+    let dollarAmount: number | undefined;
+    if (isGrokVoice) {
+      dollarAmount = calculateGenerateApiDollarAmount({
+        sourceType: 'tts',
+        provider: 'xai',
+        model: modelUsed,
+        inputChars: text.length,
+      });
+    } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
+      dollarAmount = calculateGenerateApiDollarAmount({
+        sourceType: 'tts',
+        provider: 'google',
+        model: modelUsed,
+        inputChars: text.length,
+        promptTokenCount: usage.promptTokenCount,
+        candidatesTokenCount: usage.candidatesTokenCount,
+      });
+    }
+
     after(async () => {
       if (!user) {
         captureException(new Error('User not found'));
         return;
-      }
-
-      let creditsUsed = estimate;
-
-      const usage = extractMetadata(
-        isGeminiVoice,
-        genAIResponse,
-        replicateResponse,
-      );
-
-      if (isGeminiVoice && usage) {
-        creditsUsed = calculateCreditsFromTokens(
-          Number.parseInt(usage.totalTokenCount, 10),
-        );
-      }
-
-      let dollarAmount: number | undefined;
-      if (isGrokVoice) {
-        dollarAmount = calculateGenerateApiDollarAmount({
-          sourceType: 'tts',
-          provider: 'xai',
-          model: modelUsed,
-          inputChars: text.length,
-        });
-      } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
-        dollarAmount = calculateGenerateApiDollarAmount({
-          sourceType: 'tts',
-          provider: 'google',
-          model: modelUsed,
-          inputChars: text.length,
-          promptTokenCount: usage.promptTokenCount,
-          candidatesTokenCount: usage.candidatesTokenCount,
-        });
       }
 
       const audioFileDBResult = await saveAudioFile({
@@ -799,7 +803,7 @@ export async function POST(request: Request) {
           generatedAudioBuffer,
           generatedAudioMimeType,
         ),
-        credits_used: creditsUsed,
+        credits_used: creditsDebited,
         usage: {
           ...usage,
           userHasPaid,
@@ -827,7 +831,7 @@ export async function POST(request: Request) {
         sourceId: audioFileDBResult.data?.id,
         unit: 'chars',
         quantity: text.length,
-        creditsUsed,
+        creditsUsed: creditsDebited,
         ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
           voiceId: voiceObj.id,
@@ -848,7 +852,7 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         text,
         voiceId: voiceObj.id,
-        creditUsed: estimate,
+        creditUsed: creditsDebited,
         model: modelUsed,
       });
     });
@@ -856,8 +860,8 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         url: uploadUrl,
-        creditsUsed: estimate,
-        creditsRemaining: (currentAmount || 0) - estimate,
+        creditsUsed: creditsDebited,
+        creditsRemaining: (currentAmount || 0) - creditsDebited,
       },
       { status: 200 },
     );

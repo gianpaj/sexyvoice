@@ -778,6 +778,8 @@ describe('Generate Voice API Route', () => {
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
       const text = 'Hello world';
+      const reservedCredits = estimateCredits(text, 'kore', 'gpro');
+      const actualCredits = calculateCreditsFromTokens(23);
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
         headers: {
@@ -791,11 +793,18 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
-      expect(json.creditsUsed).toBeGreaterThan(0);
-      expect(json.creditsRemaining).toBeDefined();
+      expect(json.creditsUsed).toBe(actualCredits);
+      expect(json.creditsRemaining).toBe(3000 - actualCredits);
 
       // Verify credits were consumed
-      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenNthCalledWith(1, {
+        userId: 'test-user-id',
+        amount: reservedCredits,
+      });
+      expect(reduceCredits).toHaveBeenNthCalledWith(2, {
+        userId: 'test-user-id',
+        amount: actualCredits - reservedCredits,
+      });
       expect(saveAudioFile).toHaveBeenCalledOnce();
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
 
