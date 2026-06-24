@@ -34,7 +34,15 @@ export async function POST(request: Request) {
     .eq('token_hash', hashCliExchangeToken(parsed.data.exchange_token))
     .maybeSingle();
 
-  if (error || !session) {
+  if (error) {
+    return APIErrorResponse(
+      'Failed to fetch CLI login session',
+      500,
+      undefined,
+      headers,
+    );
+  }
+  if (!session) {
     return APIErrorResponse(
       'CLI login session not found',
       404,
