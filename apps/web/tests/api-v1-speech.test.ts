@@ -10,7 +10,7 @@ import {
   reduceCreditsAdmin,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { estimateCredits } from '@/lib/utils';
+import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
 import {
   mockRatelimitLimit,
   mockUploadFileToR2,
@@ -394,6 +394,12 @@ describe('/api/v1/speech', () => {
   });
 
   it('accepts achernar with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
+    const reservedCredits = estimateCredits(
+      'Hello world',
+      'achernar',
+      'gpro31',
+    );
+    const actualCredits = calculateCreditsFromTokens(42);
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -438,6 +444,15 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(200);
     expect(generateContent).toHaveBeenCalled();
+    expect(json.credits_used).toBe(actualCredits);
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenNthCalledWith(1, {
+      userId: 'test-user-id',
+      amount: reservedCredits,
+    });
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenNthCalledWith(2, {
+      userId: 'test-user-id',
+      amount: actualCredits - reservedCredits,
+    });
     expect(generateContent.mock.calls[0][0].model).toBe(
       'gemini-3.1-flash-tts-preview',
     );
@@ -447,10 +462,12 @@ describe('/api/v1/speech', () => {
         dollarAmount: 0.000_726,
         model: 'gemini-3.1-flash-tts-preview',
         durationSeconds: 12,
+        creditsUsed: actualCredits,
       }),
     );
     expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
       expect.objectContaining({
+        credits_used: actualCredits,
         duration: '12',
         model: 'gemini-3.1-flash-tts-preview',
       }),

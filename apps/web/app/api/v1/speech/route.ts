@@ -217,6 +217,83 @@ export async function POST(request: Request) {
       });
     }
   };
+  const reconcileReservedCredits = async ({
+    actualCredits,
+    context,
+  }: {
+    actualCredits: number;
+    context: string;
+  }): Promise<number> => {
+    if (actualCredits === reservedCredits) {
+      return reservedCredits;
+    }
+
+    if (actualCredits < reservedCredits) {
+      const refundAmount = reservedCredits - actualCredits;
+      try {
+        await restoreCredits({
+          userId: authResult.userId,
+          amount: refundAmount,
+        });
+        return actualCredits;
+      } catch (refundError) {
+        captureException(refundError, {
+          extra: {
+            requestId,
+            endpoint: ENDPOINT,
+            userId: authResult.userId,
+            apiKeyId: authResult.apiKeyId,
+            actualCredits,
+            amount: refundAmount,
+            context,
+            reservedCredits,
+          },
+        });
+        await log({
+          status: 500,
+          errorCode: 'credit_refund_failed',
+          error:
+            refundError instanceof Error
+              ? refundError.message
+              : String(refundError),
+          userId: authResult.userId,
+          apiKeyId: authResult.apiKeyId,
+        });
+        return reservedCredits;
+      }
+    }
+
+    const additionalCredits = actualCredits - reservedCredits;
+    try {
+      await reduceCreditsAdmin({
+        userId: authResult.userId,
+        amount: additionalCredits,
+      });
+      return actualCredits;
+    } catch (debitError) {
+      captureException(debitError, {
+        extra: {
+          requestId,
+          endpoint: ENDPOINT,
+          userId: authResult.userId,
+          apiKeyId: authResult.apiKeyId,
+          actualCredits,
+          amount: additionalCredits,
+          context,
+          reservedCredits,
+        },
+      });
+      await log({
+        status: 500,
+        errorCode: 'credit_debit_failed',
+        error:
+          debitError instanceof Error ? debitError.message : String(debitError),
+        userId: authResult.userId,
+        apiKeyId: authResult.apiKeyId,
+      });
+      return reservedCredits;
+    }
+  };
 
   // Fail fast on misconfiguration before performing any I/O (credit checks,
   // voice lookups, generation). The internal env-var name is intentionally
@@ -724,6 +801,11 @@ export async function POST(request: Request) {
         Number.parseInt(usageMetadata.totalTokenCount, 10),
       );
     }
+    const creditsDebited = await reconcileReservedCredits({
+      actualCredits: creditsUsed,
+      context: 'speech_success',
+    });
+    reservedCredits = 0;
 
     const dollarAmount = calculateGenerateApiDollarAmount({
       sourceType: 'api_tts',
@@ -752,7 +834,7 @@ export async function POST(request: Request) {
         isPublic: false,
         voiceId: voiceObj.id,
         duration: formatDurationSeconds(durationSeconds),
-        credits_used: creditsUsed,
+        credits_used: creditsDebited,
         usage: {
           ...usageMetadata,
           userHasPaid,
@@ -776,7 +858,7 @@ export async function POST(request: Request) {
       dollarAmount,
       unit: 'chars',
       quantity: finalText.length,
-      creditsUsed,
+      creditsUsed: creditsDebited,
       requestId,
       metadata: {
         voiceId: voiceObj.id,
@@ -803,7 +885,7 @@ export async function POST(request: Request) {
       model: modelUsed,
       textLength: finalText.length,
       provider,
-      creditsUsed,
+      creditsUsed: creditsDebited,
       dollarAmount,
       isGeminiVoice,
       isGrokVoice,
@@ -811,11 +893,10 @@ export async function POST(request: Request) {
     }).catch((err) => {
       console.error('[speech] success-path log failed:', err);
     });
-    reservedCredits = 0;
     return respond(
       {
         url: uploadUrl,
-        credits_used: creditsUsed,
+        credits_used: creditsDebited,
         credits_remaining: updatedCredits,
         usage: {
           input_characters: finalText.length,
