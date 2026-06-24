@@ -152,13 +152,7 @@ export default async function LandingPage(props: {
                 <span className="text-white/90">{firstPart}</span>
                 <br />
                 {titleRestParts && (
-                  <span
-                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
-                    }}
-                  >
+                  <span className="phosphor whitespace-break-spaces leading-14">
                     {titleRestParts}
                   </span>
                 )}
@@ -221,7 +215,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Shield aria-hidden className="size-6 text-gray-200" />
+                    <Shield aria-hidden className="size-7 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
@@ -237,7 +231,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Mic2 aria-hidden className="size-6 text-gray-200" />
+                    <Mic2 aria-hidden className="size-7 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
@@ -255,7 +249,7 @@ export default async function LandingPage(props: {
               <Card className="group shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
-                    <Globe2 aria-hidden className="size-6 text-gray-200" />
+                    <Globe2 aria-hidden className="size-7 text-gray-200" />
                   </CardDecorator>
 
                   <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
@@ -321,7 +315,7 @@ export default async function LandingPage(props: {
 
             {/* CTA Section */}
             <div className="space-y-8 py-16 text-center">
-              <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
+              <div className="mb-4 inline-flex items-center rounded-full bg-primary/10 px-4 py-2 text-primary">
                 <Sparkles className="mr-2 size-4" />
                 <span>{dictLanding.cta.freeCredits}</span>
               </div>
@@ -333,7 +327,7 @@ export default async function LandingPage(props: {
               </p>
               <Button
                 asChild
-                className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
+                className="hit-area-4 mt-4"
                 effect="ringHover"
                 size="lg"
               >
@@ -350,7 +344,7 @@ export default async function LandingPage(props: {
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
   <div className="mx-auto grid size-36 place-items-center">
-    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
+    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-linear-150 from-brand-purple to-80% to-brand-red">
       {children}
     </div>
   </div>

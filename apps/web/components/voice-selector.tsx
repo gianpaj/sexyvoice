@@ -79,10 +79,10 @@ export function VoiceSelector({
                 {isGeminiVoice && <p>{t('voiceSelector.geminiInfo')}</p>}
                 {isGrokVoice && <p>{t('voiceSelector.grokInfo')}</p>}
                 {!(isGeminiVoice || isGrokVoice) && (
-                  <p>
+                  <span>
                     Model: Orpheus-TTS (text-to-speech AI model) - Commercial
                     use ✔️
-                  </p>
+                  </span>
                 )}
               </TooltipContent>
             </Tooltip>

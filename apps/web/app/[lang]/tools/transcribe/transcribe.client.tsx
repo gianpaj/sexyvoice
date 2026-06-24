@@ -115,7 +115,7 @@ export default function TranscribeClient({ lang }: Props) {
       <header className="mb-12 animate-fade-in text-center">
         {/* Ambient waveform decoration */}
         <div
-          className="mb-5 flex items-end justify-center gap-[3px] opacity-40"
+          className="mb-5 flex items-end justify-center gap-[3px] opacity-50"
           style={{ height: '28px' }}
         >
           {[

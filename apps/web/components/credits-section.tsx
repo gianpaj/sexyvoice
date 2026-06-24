@@ -138,7 +138,7 @@ function CreditsSection({
         </div>
         <Button
           asChild
-          className="bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text pr-0 text-transparent hover:no-underline"
+          className="bg-linear-to-r from-40% from-brand-purple to-brand-red/90 bg-clip-text pr-0 text-transparent hover:no-underline"
           size="sm"
           variant="link"
         >

@@ -187,7 +187,10 @@ export function useStreamingWaveformPlayer(): StreamingWaveformPlayer {
   }, []);
 
   const getHandoff = useCallback(
-    () => ({ time: handoffTimeRef.current, wasPlaying: handoffPlayingRef.current }),
+    () => ({
+      time: handoffTimeRef.current,
+      wasPlaying: handoffPlayingRef.current,
+    }),
     [],
   );
 

@@ -64,15 +64,15 @@ interface BillingUsageResponse {
 const chartConfig = {
   requests: {
     label: 'Requests',
-    color: 'hsl(var(--chart-1))',
+    color: 'var(--chart-1)',
   },
   credits: {
     label: 'Credits',
-    color: 'hsl(var(--chart-2))',
+    color: 'var(--chart-2)',
   },
   cost: {
     label: 'Cost (USD)',
-    color: 'hsl(var(--chart-3))',
+    color: 'var(--chart-3)',
   },
 } satisfies ChartConfig;
 

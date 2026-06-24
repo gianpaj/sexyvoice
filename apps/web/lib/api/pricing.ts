@@ -43,12 +43,14 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perInputToken: 0.000_000_5,
     perOutputToken: 0.000_01,
   },
-  'api_tts:replicate:lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f': {
-    perInputChar: 0.000_015,
-  },
-  'api_tts:replicate:gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650': {
-    perInputChar: 0.000_015,
-  },
+  'api_tts:replicate:lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f':
+    {
+      perInputChar: 0.000_015,
+    },
+  'api_tts:replicate:gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650':
+    {
+      perInputChar: 0.000_015,
+    },
   'api_tts:xai:xai': {
     perInputChar: 0.000_015,
   },
