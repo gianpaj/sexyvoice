@@ -61,9 +61,12 @@ const GEMINI_25_STYLE_LIMIT_FREE = 1000;
 const GEMINI_25_STYLE_LIMIT_PAID = 2500;
 
 // Gemini 3.1 (gpro31) streams audio, so the transcript and style share one
-// larger combined *token* budget instead of separate character caps.
-const GEMINI_31_TOKEN_LIMIT_FREE = 8000;
-const GEMINI_31_TOKEN_LIMIT_PAID = 32_000;
+// combined *token* budget instead of separate character caps. The Gemini TTS
+// models cap input at 8192 tokens (gemini-3.1-flash-tts-preview and the
+// gemini-2.5-*-tts fallback both reject larger inputs), so the paid budget is
+// the model ceiling; longer text must go through Split mode.
+const GEMINI_31_TOKEN_LIMIT_FREE = 400;
+const GEMINI_31_TOKEN_LIMIT_PAID = 8192;
 
 // No tokenizer is bundled, so approximate tokens from characters. ~4 chars per
 // token is the conventional rough heuristic for English-like text.

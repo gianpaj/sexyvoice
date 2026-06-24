@@ -71,6 +71,30 @@ function isAbortError(error: unknown): boolean {
   return /\babort(?:ed| ?error)\b/.test(msg);
 }
 
+/**
+ * Gemini rejects inputs over its 8192-token TTS input limit with an
+ * INVALID_ARGUMENT error whose message mentions the token count. Detect it so
+ * we can surface a clean message instead of the raw provider JSON.
+ */
+function isGeminiInputTooLongError(error: unknown): boolean {
+  const message = (
+    error instanceof Error ? error.message : String(error)
+  ).toLowerCase();
+  if (
+    !(
+      message.includes('input token count') ||
+      message.includes('maximum number of tokens')
+    )
+  ) {
+    return false;
+  }
+  const googleApiError = parseGoogleApiError(error);
+  const status = googleApiError
+    ? getGoogleApiErrorStatus(googleApiError)
+    : undefined;
+  return status === undefined || status === 'INVALID_ARGUMENT';
+}
+
 async function refundReservedCredits({
   amount,
   context,
@@ -132,7 +156,9 @@ async function reconcileReservedCredits({
           actualCredits,
           context,
           errorMessage:
-            refundError instanceof Error ? refundError.message : String(refundError),
+            refundError instanceof Error
+              ? refundError.message
+              : String(refundError),
           refundAmount,
           reservedCredits,
         },
@@ -334,7 +360,11 @@ export async function POST(request: Request) {
 
     const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
 
-    // console.log({ estimate });
+    // console.log({
+    //   estimate,
+    //   textLength: text.length,
+    //   styleVariantLength: styleVariant.length,
+    // });
 
     if (currentAmount < estimate) {
       logger.info('Insufficient credits', {
@@ -795,7 +825,11 @@ export async function POST(request: Request) {
 
     let creditsUsed = estimate;
 
-    const usage = extractMetadata(isGeminiVoice, genAIResponse, replicateResponse);
+    const usage = extractMetadata(
+      isGeminiVoice,
+      genAIResponse,
+      replicateResponse,
+    );
 
     if (isGeminiVoice && usage) {
       creditsUsed = calculateCreditsFromTokens(
@@ -1027,6 +1061,18 @@ export async function POST(request: Request) {
             googleCode: googleApiError.code,
           },
         });
+
+        if (isGeminiInputTooLongError(error)) {
+          return NextResponse.json(
+            {
+              error: getErrorMessage(
+                ERROR_CODES.GEMINI_INPUT_TOO_LONG,
+                'voice-generation',
+              ),
+            },
+            { status: getErrorStatusCode(ERROR_CODES.GEMINI_INPUT_TOO_LONG) },
+          );
+        }
 
         return NextResponse.json(
           {
@@ -1328,14 +1374,28 @@ function streamGeminiTtsResponse({
         return;
       }
 
-      const message =
+      const rawMessage =
         error instanceof Error ? error.message : 'Voice generation failed';
+      // Send a clean, user-facing message to the client instead of the raw
+      // provider JSON (e.g. Gemini's nested INVALID_ARGUMENT token-limit error).
+      let clientMessage = rawMessage;
+      if (isGeminiInputTooLongError(error)) {
+        clientMessage = getErrorMessage(
+          ERROR_CODES.GEMINI_INPUT_TOO_LONG,
+          'voice-generation',
+        );
+      } else if (parseGoogleApiError(error)) {
+        clientMessage = getErrorMessage(
+          'OTHER_GEMINI_BLOCK',
+          'voice-generation',
+        );
+      }
       logger.error('Gemini stream failed', {
         user: { id: user.id, email: user.email },
         extra: {
           model: modelUsed,
           audioStarted,
-          errorMessage: message,
+          errorMessage: rawMessage,
           stream: true,
           voice: voiceObj.name,
           styleVariant,
@@ -1350,7 +1410,7 @@ function streamGeminiTtsResponse({
         });
       }
 
-      await enqueue('error', { error: message });
+      await enqueue('error', { error: clientMessage });
     } finally {
       if (!completed) {
         await refundReservedCredits({

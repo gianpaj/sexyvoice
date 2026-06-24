@@ -134,7 +134,7 @@ vi.mock('@/lib/ai', () => ({
     isPaidUser ? 2500 : 1000,
   ),
   getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 32_000 : 8000,
+    isPaidUser ? 8192 : 400,
   ),
   estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
   GEMINI_CHARS_PER_TOKEN: 4,

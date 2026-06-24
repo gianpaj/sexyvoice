@@ -1397,6 +1397,40 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it('should return 400 with a clean message when Gemini rejects the input as too long', async () => {
+      const tokenLimitError: GoogleApiErrorWithStatus = {
+        code: 400,
+        message:
+          'The input token count exceeds the maximum number of tokens allowed (8192).',
+        status: 'INVALID_ARGUMENT',
+        details: [],
+      };
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockImplementation(() => {
+            throw new Error(JSON.stringify({ error: tokenLimitError }));
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toBe(
+        'Your text is too long for this voice. Please shorten it or use Split mode.',
+      );
+    });
+
     it('should handle Google API quota exceeded error', async () => {
       // Mock Google API quota error - should fail on both pro and flash models
       setMockGoogleGenAIFactory(() => ({
