@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -22,10 +23,7 @@ async function validateRequestBody(
   if (request.body === null) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: 'Request body is empty' },
-        { status: 400 },
-      ),
+      response: APIErrorResponse('Request body is empty', 400),
     };
   }
 
@@ -38,10 +36,7 @@ async function validateRequestBody(
     if (!(text && voiceId)) {
       return {
         ok: false,
-        response: NextResponse.json(
-          { error: 'Missing required parameters' },
-          { status: 400 },
-        ),
+        response: APIErrorResponse('Missing required parameters', 400),
       };
     }
 
@@ -50,10 +45,7 @@ async function validateRequestBody(
     if (error instanceof SyntaxError) {
       return {
         ok: false,
-        response: NextResponse.json(
-          { error: 'Invalid JSON in request body' },
-          { status: 400 },
-        ),
+        response: APIErrorResponse('Invalid JSON in request body', 400),
       };
     }
     throw error;
@@ -68,7 +60,7 @@ async function validateUser(): Promise<ValidationResult<{ id: string }>> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'User not found' }, { status: 401 }),
+      response: APIErrorResponse('User not found', 401),
     };
   }
 
@@ -83,10 +75,7 @@ async function validateVoice(
   if (!voiceObj) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: 'Voice not found' },
-        { status: 404 },
-      ),
+      response: APIErrorResponse('Voice not found', 404),
     };
   }
 
@@ -95,12 +84,9 @@ async function validateVoice(
   if (!(provider === 'gemini' || provider === 'grok')) {
     return {
       ok: false,
-      response: NextResponse.json(
-        {
-          error:
-            'Credit estimation currently supports only gpro and grok voices',
-        },
-        { status: 400 },
+      response: APIErrorResponse(
+        'Credit estimation currently supports only gpro and grok voices',
+        400,
       ),
     };
   }
@@ -118,11 +104,9 @@ function validateTextLength(
   if (text.length > maxLength) {
     return {
       ok: false,
-      response: NextResponse.json(
-        {
-          error: `Text exceeds the maximum length of ${maxLength} characters`,
-        },
-        { status: 400 },
+      response: APIErrorResponse(
+        `Text exceeds the maximum length of ${maxLength} characters`,
+        400,
       ),
     };
   }
@@ -136,10 +120,7 @@ function validateApiKey(): ValidationResult<string> {
   if (!apiKey) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: 'Missing Google Generative AI API key' },
-        { status: 500 },
-      ),
+      response: APIErrorResponse('Missing Google Generative AI API key', 500),
     };
   }
 
@@ -220,9 +201,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Estimate credits error:', error);
-    return NextResponse.json(
-      { error: 'Failed to estimate credits' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to estimate credits', 500);
   }
 }

@@ -53,10 +53,10 @@ describe('Generate Voice API Route', () => {
       });
 
       const response = await POST(request);
-      const text = await response.text();
+      const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(text).toBe('Request body is empty');
+      expect(json.error).toBe('Request body is empty');
     });
 
     it('should return 400 when text is missing', async () => {

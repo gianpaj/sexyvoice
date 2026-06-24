@@ -87,13 +87,9 @@ export async function POST(request: Request) {
         logger.error('Invalid request body schema', {
           error: formattedError,
         });
-        return NextResponse.json(
-          {
-            error: 'Invalid request body',
-            details: z.prettifyError(validationResult.error),
-          },
-          { status: 400 },
-        );
+        return APIErrorResponse('Invalid request body', 400, {
+          details: z.prettifyError(validationResult.error),
+        });
       }
 
       playgroundState = validationResult.data;
@@ -101,19 +97,16 @@ export async function POST(request: Request) {
       logger.error('Invalid JSON in request body', {
         error: Error.isError(error) ? error.message : String(error),
       });
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid JSON in request body', 400);
     }
 
     const roomName = `ro-${crypto.randomUUID()}`;
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
     if (!(apiKey && apiSecret)) {
-      return NextResponse.json(
-        { error: 'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set' },
-        { status: 400 },
+      return APIErrorResponse(
+        'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set',
+        400,
       );
     }
 
@@ -135,7 +128,7 @@ export async function POST(request: Request) {
 
     if (!voiceObj) {
       captureException('Voice not found', { extra: { voice } });
-      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+      return APIErrorResponse('Voice not found', 404);
     }
 
     // ─── Resolve instructions ───
@@ -149,10 +142,7 @@ export async function POST(request: Request) {
         const character = await resolveCharacterPrompt(selectedPresetId);
 
         if (!character) {
-          return NextResponse.json(
-            { error: 'Character not found' },
-            { status: 404 },
-          );
+          return APIErrorResponse('Character not found', 404);
         }
 
         if (character.is_public) {
@@ -164,10 +154,7 @@ export async function POST(request: Request) {
           } | null;
 
           if (!prompts?.prompt) {
-            return NextResponse.json(
-              { error: 'Character prompt not found' },
-              { status: 404 },
-            );
+            return APIErrorResponse('Character prompt not found', 404);
           }
 
           resolvedInstructions =
@@ -177,18 +164,15 @@ export async function POST(request: Request) {
           // ── Custom character ──
           // Verify ownership
           if (character.user_id !== user.id) {
-            return NextResponse.json(
-              { error: 'Character not found' },
-              { status: 404 },
-            );
+            return APIErrorResponse('Character not found', 404);
           }
 
           // Verify user has paid (custom characters require paid account)
           isPaidUser = await hasUserPaid(user.id);
           if (!isPaidUser) {
-            return NextResponse.json(
-              { error: 'Custom characters require a paid account' },
-              { status: 403 },
+            return APIErrorResponse(
+              'Custom characters require a paid account',
+              403,
             );
           }
 
@@ -199,10 +183,7 @@ export async function POST(request: Request) {
           } | null;
 
           if (!prompts?.prompt) {
-            return NextResponse.json(
-              { error: 'Character prompt not found' },
-              { status: 404 },
-            );
+            return APIErrorResponse('Character prompt not found', 404);
           }
 
           resolvedInstructions =
@@ -216,10 +197,7 @@ export async function POST(request: Request) {
             context: 'resolveCharacterPrompt',
           },
         });
-        return NextResponse.json(
-          { error: 'Failed to resolve character prompt' },
-          { status: 500 },
-        );
+        return APIErrorResponse('Failed to resolve character prompt', 500);
       }
     }
 
@@ -228,10 +206,7 @@ export async function POST(request: Request) {
         isPaidUser = await hasUserPaid(user.id);
       }
       if (!isPaidUser) {
-        return NextResponse.json(
-          { error: 'Scenes require a paid account' },
-          { status: 403 },
-        );
+        return APIErrorResponse('Scenes require a paid account', 403);
       }
 
       resolvedInstructions = appendSceneInstructions(
@@ -311,12 +286,8 @@ export async function POST(request: Request) {
     captureException(error, {
       user: user ? { id: user.id, email: user.email } : undefined,
     });
-    return NextResponse.json(
-      {
-        error: 'Error generating token',
-        details: Error.isError(error) ? error.message : JSON.stringify(error),
-      },
-      { status: 500 },
-    );
+    return APIErrorResponse('Error generating token', 500, {
+      details: Error.isError(error) ? error.message : JSON.stringify(error),
+    });
   }
 }

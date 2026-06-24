@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { generateApiKey } from '@/lib/api/auth';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -20,7 +21,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const { data, error } = await supabase
@@ -32,10 +33,7 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json(
-      { error: 'Failed to load API keys' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to load API keys', 500);
   }
 
   return NextResponse.json({ data: data ?? [] }, { status: 200 });
@@ -49,24 +47,21 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const payload = await request.json().catch(() => null);
   const parsed = CreateApiKeySchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 },
-    );
+    return APIErrorResponse('Invalid request body', 400);
   }
 
   const isPaidUser = await hasUserPaid(user.id);
 
   if (!isPaidUser) {
-    return NextResponse.json(
-      { error: 'A subscription or top-up is required to create API keys' },
-      { status: 403 },
+    return APIErrorResponse(
+      'A subscription or top-up is required to create API keys',
+      403,
     );
   }
 
@@ -77,16 +72,13 @@ export async function POST(request: Request) {
     .eq('is_active', true);
 
   if (countError) {
-    return NextResponse.json(
-      { error: 'Failed to count API keys' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to count API keys', 500);
   }
 
   if ((count ?? 0) >= MAX_ACTIVE_API_KEYS) {
-    return NextResponse.json(
-      { error: `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed` },
-      { status: 400 },
+    return APIErrorResponse(
+      `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed`,
+      400,
     );
   }
 
@@ -113,10 +105,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: 'Failed to create API key' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to create API key', 500);
   }
 
   return NextResponse.json(
