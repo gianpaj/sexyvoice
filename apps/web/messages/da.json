@@ -643,9 +643,10 @@
     "convertingAudio": "Konverterer lyd"
   },
   "profile": {
-    "title": "Profilindstillinger",
+    "title": "Konto",
     "subtitle": "Administrer dine kontoindstillinger og præferencer",
     "notLoggedIn": "Ikke logget ind",
+    "logOut": "Log ud",
     "tabs": {
       "profile": "Profil",
       "security": "Sikkerhed"
@@ -653,6 +654,33 @@
     "personalInfo": {
       "title": "Personlige oplysninger",
       "description": "Opdater dine profiloplysninger og avatar"
+    },
+    "myPlan": {
+      "title": "Min plan",
+      "creativeEnergy": "Kreativ energi",
+      "energyReplenish": "Din daglige energi genoplades om {hours}t.",
+      "freePlan": "Gratis plan",
+      "upgrade": "Opgrader"
+    },
+    "login": {
+      "title": "Login",
+      "password": "Adgangskode",
+      "resetPassword": "Nulstil din adgangskode",
+      "reset": "Nulstil",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "Ikke tilsluttet endnu",
+      "connect": "Forbind",
+      "remove": "Fjern"
+    },
+    "support": {
+      "title": "Support",
+      "faq": "Ofte stillede spørgsmål",
+      "faqDescription": "Brug for hjælp? Start her",
+      "open": "Åbn",
+      "contactSupport": "Kontakt support",
+      "contactDescription": "Kontakt SexyVoice-teamet",
+      "contact": "Kontakt"
     },
     "security": {
       "title": "Sikkerhedsindstillinger",
@@ -676,13 +704,18 @@
     "dangerZone": {
       "title": "Farezone",
       "deleteAccount": {
-        "button": "Slet konto",
+        "button": "Slet min konto",
         "confirmTitle": "Er du helt sikker?",
         "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• API-forbrug\n• Brugerdefinerede opkaldskarakterer\n• Alle tilknyttede data fra vores servere",
         "alertTitle": "Bekræft at du vil slette din konto",
         "cancel": "Annuller",
         "continue": "Fortsæt"
       }
+    },
+    "links": {
+      "privacyPolicy": "Privatlivspolitik",
+      "termsOfService": "Servicevilkår",
+      "enableApiAccess": "Aktivér API-adgang"
     },
     "apiKeys": {
       "title": "API-nøgler",

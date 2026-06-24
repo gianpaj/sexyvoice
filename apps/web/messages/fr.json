@@ -643,9 +643,10 @@
     "convertingAudio": "Conversion de l'audio"
   },
   "profile": {
-    "title": "Paramètres du profil",
+    "title": "Compte",
     "subtitle": "Gérez les paramètres de votre compte et vos préférences",
     "notLoggedIn": "Non connecté",
+    "logOut": "Déconnexion",
     "tabs": {
       "profile": "Profil",
       "security": "Sécurité"
@@ -653,6 +654,33 @@
     "personalInfo": {
       "title": "Informations personnelles",
       "description": "Mettez à jour vos informations de profil et votre avatar"
+    },
+    "myPlan": {
+      "title": "Mon forfait",
+      "creativeEnergy": "Énergie créative",
+      "energyReplenish": "Votre énergie quotidienne se rechargera dans {hours}h.",
+      "freePlan": "Forfait gratuit",
+      "upgrade": "Mettre à niveau"
+    },
+    "login": {
+      "title": "Connexion",
+      "password": "Mot de passe",
+      "resetPassword": "Réinitialiser votre mot de passe",
+      "reset": "Réinitialiser",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "Pas encore connecté",
+      "connect": "Connecter",
+      "remove": "Supprimer"
+    },
+    "support": {
+      "title": "Support",
+      "faq": "Questions fréquemment posées",
+      "faqDescription": "Besoin d'aide ? Commencez ici",
+      "open": "Ouvrir",
+      "contactSupport": "Contacter le support",
+      "contactDescription": "Contactez l'équipe SexyVoice",
+      "contact": "Contacter"
     },
     "security": {
       "title": "Paramètres de sécurité",
@@ -676,13 +704,18 @@
     "dangerZone": {
       "title": "Zone de danger",
       "deleteAccount": {
-        "button": "Supprimer le compte",
+        "button": "Supprimer mon compte",
         "confirmTitle": "Êtes-vous absolument sûr ?",
         "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• L'utilisation de l'API\n• Les personnages d'appel personnalisés\n• Toutes les données associées de nos serveurs",
         "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
         "cancel": "Annuler",
         "continue": "Continuer"
       }
+    },
+    "links": {
+      "privacyPolicy": "Politique de confidentialité",
+      "termsOfService": "Conditions d'utilisation",
+      "enableApiAccess": "Activer l'accès API"
     },
     "apiKeys": {
       "title": "Clés API",

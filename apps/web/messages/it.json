@@ -643,9 +643,10 @@
     "convertingAudio": "Conversione audio"
   },
   "profile": {
-    "title": "Impostazioni profilo",
+    "title": "Account",
     "subtitle": "Gestisci le impostazioni del tuo account e le preferenze",
     "notLoggedIn": "Non connesso",
+    "logOut": "Esci",
     "tabs": {
       "profile": "Profilo",
       "security": "Sicurezza"
@@ -653,6 +654,33 @@
     "personalInfo": {
       "title": "Informazioni personali",
       "description": "Aggiorna le informazioni del tuo profilo e l'avatar"
+    },
+    "myPlan": {
+      "title": "Il mio piano",
+      "creativeEnergy": "Energia creativa",
+      "energyReplenish": "La tua energia giornaliera si ricaricherà tra {hours}h.",
+      "freePlan": "Piano gratuito",
+      "upgrade": "Aggiorna"
+    },
+    "login": {
+      "title": "Accesso",
+      "password": "Password",
+      "resetPassword": "Reimposta la password",
+      "reset": "Reimposta",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "Non ancora connesso",
+      "connect": "Connetti",
+      "remove": "Rimuovi"
+    },
+    "support": {
+      "title": "Supporto",
+      "faq": "Domande frequenti",
+      "faqDescription": "Hai bisogno di aiuto? Inizia qui",
+      "open": "Apri",
+      "contactSupport": "Contatta il supporto",
+      "contactDescription": "Contatta il team SexyVoice",
+      "contact": "Contatta"
     },
     "security": {
       "title": "Impostazioni sicurezza",
@@ -676,13 +704,18 @@
     "dangerZone": {
       "title": "Zona pericolosa",
       "deleteAccount": {
-        "button": "Elimina account",
+        "button": "Elimina il mio account",
         "confirmTitle": "Sei assolutamente sicuro?",
         "confirmDescription": "Questa azione non può essere annullata. Eliminerà permanentemente il tuo account, inclusi:\n• Tutti i file audio generati\n• Voci clonate\n• Utilizzo API\n• Personaggi personalizzati per le chiamate\n• Tutti i dati associati dai nostri server",
         "alertTitle": "Conferma di voler eliminare il tuo account",
         "cancel": "Annulla",
         "continue": "Continua"
       }
+    },
+    "links": {
+      "privacyPolicy": "Informativa sulla privacy",
+      "termsOfService": "Termini di servizio",
+      "enableApiAccess": "Abilita accesso API"
     },
     "apiKeys": {
       "title": "Chiavi API",

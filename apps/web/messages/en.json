@@ -643,9 +643,10 @@
     "convertingAudio": "Converting audio"
   },
   "profile": {
-    "title": "Profile Settings",
+    "title": "Account",
     "subtitle": "Manage your account settings and preferences",
     "notLoggedIn": "Not logged in",
+    "logOut": "Log out",
     "tabs": {
       "profile": "Profile",
       "security": "Security"
@@ -653,6 +654,33 @@
     "personalInfo": {
       "title": "Personal Information",
       "description": "Update your profile information and avatar"
+    },
+    "myPlan": {
+      "title": "My plan",
+      "creativeEnergy": "Creative energy",
+      "energyReplenish": "Your daily energy will replenish in {hours}h.",
+      "freePlan": "Free plan",
+      "upgrade": "Upgrade"
+    },
+    "login": {
+      "title": "Login",
+      "password": "Password",
+      "resetPassword": "Reset your password",
+      "reset": "Reset",
+      "apple": "Apple",
+      "google": "Google",
+      "notConnected": "Not yet connected",
+      "connect": "Connect",
+      "remove": "Remove"
+    },
+    "support": {
+      "title": "Support",
+      "faq": "Frequently asked questions",
+      "faqDescription": "Need help? Start here",
+      "open": "Open",
+      "contactSupport": "Contact support",
+      "contactDescription": "Get in touch with the SexyVoice team",
+      "contact": "Contact"
     },
     "security": {
       "title": "Security Settings",
@@ -676,13 +704,18 @@
     "dangerZone": {
       "title": "Danger Zone",
       "deleteAccount": {
-        "button": "Delete account",
+        "button": "Delete my account",
         "confirmTitle": "Are you absolutely sure?",
         "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
         "continue": "Continue"
       }
+    },
+    "links": {
+      "privacyPolicy": "Privacy policy",
+      "termsOfService": "Terms of Service",
+      "enableApiAccess": "Enable API access"
     },
     "apiKeys": {
       "title": "API Keys",
