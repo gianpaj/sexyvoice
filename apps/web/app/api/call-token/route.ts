@@ -106,7 +106,7 @@ export async function POST(request: Request) {
     if (!(apiKey && apiSecret)) {
       return APIErrorResponse(
         'LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set',
-        400,
+        500,
       );
     }
 
