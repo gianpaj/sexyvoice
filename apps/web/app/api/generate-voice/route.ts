@@ -219,7 +219,12 @@ export async function POST(request: Request) {
       return APIErrorResponse('Request body is empty', 400);
     }
 
-    const body = await request.json();
+    let body: Awaited<ReturnType<typeof request.json>>;
+    try {
+      body = await request.json();
+    } catch {
+      return APIErrorResponse('Invalid JSON in request body', 400);
+    }
     text = body.text || '';
     voiceId = body.voiceId || '';
     styleVariant = body.styleVariant || '';
