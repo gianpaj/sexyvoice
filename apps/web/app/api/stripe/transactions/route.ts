@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
 import { stripe } from '@/lib/stripe/stripe-admin';
+import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
@@ -25,6 +26,18 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
     if (!user || error) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userData = await getUserById(user.id);
+    if (!userData?.stripe_id) {
+      return NextResponse.json(
+        { error: 'Stripe customer not found' },
+        { status: 404 },
+      );
+    }
+
+    if (userData.stripe_id !== stripeId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Get active subscriptions for this customer
@@ -69,7 +82,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Combine transactions and sort by created date
-    const transactions = subscriptionTransactions.toSorted((a, b) => b.created - a.created);
+    const transactions = subscriptionTransactions.toSorted(
+      (a, b) => b.created - a.created,
+    );
 
     return NextResponse.json(transactions);
   } catch (error) {

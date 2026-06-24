@@ -12,11 +12,7 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import {
-  convertToWav,
-  generateHash,
-  resolveDurationString,
-} from '@/lib/audio';
+import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -25,7 +21,9 @@ import {
   hasUserPaid,
   insertUsageEvent,
   isFreemiumUserOverLimit,
+  isInsufficientCreditsError,
   reduceCredits,
+  restoreCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -67,6 +65,40 @@ function isAbortError(error: unknown): boolean {
   return /\babort(?:ed| ?error)\b/.test(msg);
 }
 
+async function refundReservedCredits({
+  amount,
+  context,
+  userId,
+}: {
+  amount: number;
+  context: string;
+  userId: string;
+}) {
+  if (amount <= 0) {
+    return;
+  }
+
+  try {
+    await restoreCredits({ userId, amount });
+  } catch (refundError) {
+    logger.error('Failed to restore reserved credits', {
+      user: { id: userId },
+      extra: {
+        amount,
+        context,
+        errorMessage:
+          refundError instanceof Error
+            ? refundError.message
+            : String(refundError),
+      },
+    });
+    captureException(refundError, {
+      extra: { amount, context },
+      user: { id: userId },
+    });
+  }
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -83,6 +115,7 @@ export async function POST(request: Request) {
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
+  let reservedCredits = 0;
   try {
     if (request.body === null) {
       logger.error('Request body is empty', {
@@ -290,6 +323,9 @@ export async function POST(request: Request) {
     let generatedAudioBuffer: Buffer | undefined;
     let generatedAudioMimeType: string | undefined;
 
+    await reduceCredits({ userId: user.id, amount: estimate });
+    reservedCredits = estimate;
+
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
         apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
@@ -315,6 +351,7 @@ export async function POST(request: Request) {
           styleVariant,
           provider,
           requestSignal: request.signal,
+          reservedCredits: estimate,
         });
       }
 
@@ -334,6 +371,12 @@ export async function POST(request: Request) {
           console.warn(error);
           if (error instanceof Error && error.name === 'AbortError') {
             console.info('Gemini voice generation aborted');
+            await refundReservedCredits({
+              userId: user.id,
+              amount: reservedCredits,
+              context: 'gemini_generate_abort',
+            });
+            reservedCredits = 0;
             return NextResponse.json(
               { error: 'Request aborted' },
               { status: 499 },
@@ -679,8 +722,6 @@ export async function POST(request: Request) {
         });
       }
 
-      await reduceCredits({ userId: user.id, amount: creditsUsed });
-
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
@@ -757,6 +798,26 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    if (reservedCredits > 0 && user) {
+      await refundReservedCredits({
+        userId: user.id,
+        amount: reservedCredits,
+        context: 'generate_voice_failure',
+      });
+      reservedCredits = 0;
+    }
+
+    if (isInsufficientCreditsError(error)) {
+      logger.info('Insufficient credits during reservation', {
+        user: user ? { id: user.id, email: user.email } : undefined,
+        extra: { voiceName, textLength: text.length },
+      });
+      return NextResponse.json(
+        { error: 'Insufficient credits' },
+        { status: 402 },
+      );
+    }
+
     // Client disconnected — do not attempt to write to a dead socket (prevents write EPIPE)
     if (request.signal.aborted) {
       return new Response(null, { status: 499 });
@@ -911,6 +972,7 @@ function streamGeminiTtsResponse({
   styleVariant,
   provider,
   requestSignal,
+  reservedCredits,
 }: {
   ai: GoogleGenAI;
   text: string;
@@ -924,6 +986,7 @@ function streamGeminiTtsResponse({
   styleVariant: string;
   provider: string;
   requestSignal: AbortSignal;
+  reservedCredits: number;
 }): Response {
   const encoder = new TextEncoder();
   const selectedModel =
@@ -950,6 +1013,7 @@ function streamGeminiTtsResponse({
       | GenerateContentResponse['usageMetadata']
       | undefined;
     let audioStarted = false;
+    let completed = false;
 
     const tryStream = async (model: string) => {
       const stream = await ai.models.generateContentStream({
@@ -988,7 +1052,6 @@ function streamGeminiTtsResponse({
       } catch (primaryError) {
         if (requestSignal.aborted || isAbortError(primaryError)) {
           logger.info('Gemini stream aborted', { user: { id: user.id } });
-          await writer.close();
           return;
         }
 
@@ -1019,7 +1082,6 @@ function streamGeminiTtsResponse({
       }
 
       if (requestSignal.aborted) {
-        await writer.close();
         return;
       }
 
@@ -1035,7 +1097,6 @@ function streamGeminiTtsResponse({
         await enqueue('error', {
           error: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
         });
-        await writer.close();
         return;
       }
 
@@ -1058,8 +1119,6 @@ function streamGeminiTtsResponse({
           streamUsageMetadata.totalTokenCount,
         );
       }
-
-      await reduceCredits({ userId: user.id, amount: creditsUsed });
 
       const streamUsage: Record<string, string | number | boolean> =
         streamUsageMetadata
@@ -1138,14 +1197,14 @@ function streamGeminiTtsResponse({
       await enqueue('done', {
         url: uploadUrl,
         creditsUsed,
-        creditsRemaining: (currentAmount || 0) - creditsUsed,
+        creditsRemaining: (currentAmount || 0) - reservedCredits,
       });
+      completed = true;
     } catch (error) {
       if (requestSignal.aborted || isAbortError(error)) {
         logger.info('Gemini stream aborted mid-flight', {
           user: { id: user.id },
         });
-        await writer.close();
         return;
       }
 
@@ -1173,6 +1232,14 @@ function streamGeminiTtsResponse({
 
       await enqueue('error', { error: message });
     } finally {
+      if (!completed) {
+        await refundReservedCredits({
+          userId: user.id,
+          amount: reservedCredits,
+          context: 'generate_voice_stream_failure',
+        });
+      }
+
       try {
         await writer.close();
       } catch {

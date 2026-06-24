@@ -512,6 +512,7 @@ vi.mock('@/lib/supabase/queries', async () => {
     getCreditsAdmin: vi.fn().mockResolvedValue(1000),
     reduceCredits: vi.fn().mockResolvedValue(true),
     reduceCreditsAdmin: vi.fn().mockResolvedValue(true),
+    restoreCredits: vi.fn().mockResolvedValue(true),
     saveAudioFile: vi.fn().mockResolvedValue({
       data: { id: 'test-audio-file-id' },
       error: null,

@@ -271,6 +271,34 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(402);
       expect(json.error).toBe('Insufficient credits');
     });
+
+    it('should return 402 when atomic credit reservation fails after precheck', async () => {
+      const queries = await import('@/lib/supabase/queries');
+      vi.mocked(queries.reduceCredits).mockRejectedValueOnce(
+        new Error('Insufficient credits', {
+          cause: queries.INSUFFICIENT_CREDITS_ERROR_CODE,
+        }),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world this is a test',
+          voiceId: 'voice-tara-id',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.error).toBe('Insufficient credits');
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      expect(queries.restoreCredits).not.toHaveBeenCalled();
+    });
   });
 
   describe('Caching', () => {
@@ -1968,8 +1996,8 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('emits error event and skips billing when stream yields no audio chunks', async () => {
-      const { hasUserPaid, reduceCredits } = await import(
+    it('emits error event and refunds reserved credits when stream yields no audio chunks', async () => {
+      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
         '@/lib/supabase/queries'
       );
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
@@ -1999,11 +2027,18 @@ describe('Generate Voice API Route', () => {
 
       expect(body).toContain('event: error');
       expect(body).not.toContain('event: done');
-      expect(reduceCredits).not.toHaveBeenCalled();
+      expect(reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
+      expect(restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
     });
 
-    it('emits error event after audio started and skips billing when stream throws mid-flight', async () => {
-      const { hasUserPaid, reduceCredits } = await import(
+    it('emits error event after audio started and refunds reserved credits when stream throws mid-flight', async () => {
+      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
         '@/lib/supabase/queries'
       );
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
@@ -2032,7 +2067,14 @@ describe('Generate Voice API Route', () => {
       expect(body).toContain('event: audio');
       expect(body).toContain('event: error');
       expect(body).not.toContain('event: done');
-      expect(reduceCredits).not.toHaveBeenCalled();
+      expect(reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
+      expect(restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
     });
   });
 });

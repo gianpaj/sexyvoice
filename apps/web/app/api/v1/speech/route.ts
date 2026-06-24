@@ -39,7 +39,9 @@ import {
   getVoiceIdByNameAdmin,
   hasUserPaidAdmin,
   insertUsageEvent,
+  isInsufficientCreditsError,
   reduceCreditsAdmin,
+  restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
@@ -178,6 +180,43 @@ export async function POST(request: Request) {
     init: ResponseInit = {},
     rateLimitState = rateLimit,
   ) => jsonWithRateLimitHeaders(body, init, rateLimitState, requestId);
+  let reservedCredits = 0;
+  const refundReservedCredits = async (context: string) => {
+    if (reservedCredits <= 0) {
+      return;
+    }
+
+    const creditsToRestore = reservedCredits;
+    reservedCredits = 0;
+
+    try {
+      await restoreCredits({
+        userId: authResult.userId,
+        amount: creditsToRestore,
+      });
+    } catch (refundError) {
+      captureException(refundError, {
+        extra: {
+          requestId,
+          endpoint: ENDPOINT,
+          userId: authResult.userId,
+          apiKeyId: authResult.apiKeyId,
+          amount: creditsToRestore,
+          context,
+        },
+      });
+      await log({
+        status: 500,
+        errorCode: 'credit_refund_failed',
+        error:
+          refundError instanceof Error
+            ? refundError.message
+            : String(refundError),
+        userId: authResult.userId,
+        apiKeyId: authResult.apiKeyId,
+      });
+    }
+  };
 
   // Fail fast on misconfiguration before performing any I/O (credit checks,
   // voice lookups, generation). The internal env-var name is intentionally
@@ -384,6 +423,33 @@ export async function POST(request: Request) {
       );
     }
 
+    try {
+      await reduceCreditsAdmin({ userId, amount: estimatedCredits });
+      reservedCredits = estimatedCredits;
+    } catch (error) {
+      if (!isInsufficientCreditsError(error)) {
+        throw error;
+      }
+
+      await log({
+        status: 402,
+        errorCode: 'insufficient_credits',
+        userId,
+        apiKeyId: authResult.apiKeyId,
+        voice,
+        model,
+        textLength: finalText.length,
+      });
+      return respond(
+        createApiError({
+          message: 'Insufficient credits',
+          type: 'permission_error',
+          code: 'insufficient_credits',
+        }),
+        { status: 402 },
+      );
+    }
+
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
     const extension = chosenFormat;
     const filename = `${folder}/${voice}-${Date.now()}.${extension}`;
@@ -443,6 +509,7 @@ export async function POST(request: Request) {
           );
 
           if (providerFailure) {
+            await refundReservedCredits('gemini_provider_failure');
             await log({
               status: providerFailure.status,
               errorCode: providerFailure.code,
@@ -497,6 +564,7 @@ export async function POST(request: Request) {
         }
         const message = getErrorMessage(noAudioErrorCode, 'voice-generation');
         const httpStatus = isProhibitedContent ? 422 : 500;
+        await refundReservedCredits('gemini_no_audio');
         await log({
           status: httpStatus,
           errorCode: code,
@@ -556,6 +624,7 @@ export async function POST(request: Request) {
           extra: { requestId, voice, model: modelUsed, codec },
         });
         const message = getErrorMessage('XAI_TTS_ERROR', 'voice-generation');
+        await refundReservedCredits('xai_tts_error');
         await log({
           status: 500,
           errorCode: 'xai_tts_error',
@@ -589,6 +658,7 @@ export async function POST(request: Request) {
 
       if ('error' in output) {
         const message = getErrorMessage('REPLICATE_ERROR', 'voice-generation');
+        await refundReservedCredits('replicate_error');
         await log({
           status: 500,
           errorCode: 'replicate_error',
@@ -655,7 +725,6 @@ export async function POST(request: Request) {
       );
     }
 
-    await reduceCreditsAdmin({ userId, amount: creditsUsed });
     const dollarAmount = calculateGenerateApiDollarAmount({
       sourceType: 'api_tts',
       provider,
@@ -742,11 +811,12 @@ export async function POST(request: Request) {
     }).catch((err) => {
       console.error('[speech] success-path log failed:', err);
     });
+    reservedCredits = 0;
     return respond(
       {
         url: uploadUrl,
         credits_used: creditsUsed,
-        credits_remaining: Math.max(0, updatedCredits - creditsUsed),
+        credits_remaining: updatedCredits,
         usage: {
           input_characters: finalText.length,
           model: modelUsed,
@@ -755,6 +825,8 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    await refundReservedCredits('speech_failure');
+
     if (
       Error.isError(error) &&
       error.cause &&

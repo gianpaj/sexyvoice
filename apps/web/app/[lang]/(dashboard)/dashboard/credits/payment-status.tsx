@@ -18,10 +18,13 @@ export function PaymentStatus() {
   const error = searchParams.get('error');
 
   const status: 'success' | 'canceled' | 'error' | null =
-    success === 'true' ? 'success'
-    : canceled === 'true' ? 'canceled'
-    : error ? 'error'
-    : null;
+    success === 'true'
+      ? 'success'
+      : canceled === 'true'
+        ? 'canceled'
+        : error
+          ? 'error'
+          : null;
 
   const [isVisible, setIsVisible] = useState(() => status !== null);
 

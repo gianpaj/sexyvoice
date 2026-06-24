@@ -5,6 +5,7 @@ import { POST } from '@/app/api/v1/speech/route';
 import {
   getCreditsAdmin,
   getVoiceIdByNameAdmin,
+  INSUFFICIENT_CREDITS_ERROR_CODE,
   insertUsageEvent,
   reduceCreditsAdmin,
   saveAudioFileAdmin,
@@ -155,6 +156,34 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(402);
     expect(json.error.code).toBe('insufficient_credits');
+  });
+
+  it('returns 402 when atomic credit reservation fails after precheck', async () => {
+    vi.mocked(reduceCreditsAdmin).mockRejectedValueOnce(
+      new Error('Insufficient credits', {
+        cause: INSUFFICIENT_CREDITS_ERROR_CODE,
+      }),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'orpheus',
+        input: 'Hello world this is a long enough sentence',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(402);
+    expect(json.error.code).toBe('insufficient_credits');
+    expect(mockUploadFileToR2).not.toHaveBeenCalled();
   });
 
   it('returns 429 when rate limit is exceeded', async () => {

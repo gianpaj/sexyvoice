@@ -8,7 +8,10 @@ type ThinkingAction =
   | { center: number; type: 'reset' }
   | { max: number; type: 'tick' };
 
-function thinkingReducer(state: ThinkingState, action: ThinkingAction): ThinkingState {
+function thinkingReducer(
+  state: ThinkingState,
+  action: ThinkingAction,
+): ThinkingState {
   if (action.type === 'reset') {
     return { direction: 'right', index: action.center };
   }
