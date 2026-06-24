@@ -182,9 +182,7 @@ export async function POST(request: Request) {
   let reservedCredits = 0;
   try {
     if (request.body === null) {
-      logger.error('Request body is empty', {
-        headers: Object.fromEntries(request.headers.entries()),
-      });
+      logger.error('Request body is empty');
       return new Response('Request body is empty', { status: 400 });
     }
 
@@ -201,8 +199,8 @@ export async function POST(request: Request) {
 
     if (!(text && voiceId)) {
       logger.error('Missing required parameters: text or voiceId', {
-        body,
-        headers: Object.fromEntries(request.headers.entries()),
+        hasText: Boolean(text),
+        hasVoiceId: Boolean(voiceId),
       });
       return NextResponse.json(
         { error: 'Missing required parameters' },
@@ -217,8 +215,7 @@ export async function POST(request: Request) {
 
     if (!user) {
       logger.error('User not found', {
-        body,
-        headers: Object.fromEntries(request.headers.entries()),
+        voiceId,
       });
       return NextResponse.json({ error: 'User not found' }, { status: 401 });
     }
@@ -254,8 +251,6 @@ export async function POST(request: Request) {
       logger.error('Text exceeds maximum length', {
         textLength: text.length,
         maxLength,
-        body,
-        headers: Object.fromEntries(request.headers.entries()),
       });
       return NextResponse.json(
         { error: `Text exceeds the maximum length of ${maxLength} characters` },
@@ -284,7 +279,7 @@ export async function POST(request: Request) {
         user: { id: user.id, email: user.email },
         extra: {
           voiceName: voiceObj.name,
-          text,
+          textLength: text.length,
           estimate,
           currentCreditsAmount: currentAmount,
         },
