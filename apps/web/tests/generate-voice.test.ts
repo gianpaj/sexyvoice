@@ -859,6 +859,54 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
+    it('refunds unused reserved credits when Gemini token usage is below estimate', async () => {
+      const {
+        reduceCredits,
+        restoreCredits,
+        getCredits,
+        hasUserPaid,
+        saveAudioFile,
+        insertUsageEvent,
+      } = await import('@/lib/supabase/queries');
+      vi.mocked(getCredits).mockResolvedValueOnce(1000);
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const text = 'Hello world '.repeat(5).trim();
+      const reservedCredits = estimateCredits(text, 'kore', 'gpro');
+      const actualCredits = calculateCreditsFromTokens(23);
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.creditsUsed).toBe(actualCredits);
+      expect(json.creditsRemaining).toBe(1000 - actualCredits);
+      expect(reduceCredits).toHaveBeenCalledOnce();
+      expect(reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: reservedCredits,
+      });
+      expect(restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: reservedCredits - actualCredits,
+      });
+
+      await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({ credits_used: actualCredits }),
+      );
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ creditsUsed: actualCredits }),
+      );
+    });
+
     it.each([
       ['voice-kore-id', 'gemini-2.5-pro-preview-tts'],
       ['voice-achernar-31-id', 'gemini-3.1-flash-tts-preview'],
