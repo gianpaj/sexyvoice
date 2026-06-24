@@ -127,6 +127,81 @@ describe('Generate Voice API Route', () => {
       expect(json.error).toContain('Text exceeds the maximum length');
     });
 
+    it('should enforce a separate style limit for Gemini 2.5 voices (free)', async () => {
+      // Regression: styleVariant cannot bypass the per-tier limits. For Gemini
+      // 2.5 it has its own character cap (1000 free) independent of the text cap.
+      const shortText = 'a'.repeat(10);
+      const longStyle = 'b'.repeat(1001); // exceeds the 1000-char free style limit
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: shortText,
+          voiceId: 'voice-kore-id',
+          styleVariant: longStyle,
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('Style exceeds the maximum length');
+    });
+
+    it('should allow a Gemini 2.5 style within the free character limit', async () => {
+      // A short transcript with an in-limit style must pass validation (it fails
+      // later for other reasons, but not with a length error).
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'a'.repeat(10),
+          voiceId: 'voice-kore-id',
+          styleVariant: 'b'.repeat(1000),
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      if (response.status === 400) {
+        expect(json.error).not.toContain('maximum length');
+      }
+    });
+
+    it('should enforce the combined token limit for Gemini 3.1 (gpro31)', async () => {
+      const { getVoiceById } = await import('@/lib/supabase/queries');
+      vi.mocked(getVoiceById).mockResolvedValueOnce({
+        id: 'voice-gpro31-id',
+        name: 'kore',
+        language: 'en',
+        model: 'gpro31',
+      });
+
+      // Free gpro31 budget is 8000 tokens (~32000 chars); 32001 chars exceeds it.
+      const longText = 'a'.repeat(32_001);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text: longText, voiceId: 'voice-gpro31-id' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.error).toContain('tokens');
+    });
+
     it('should return 400 when paid Gemini text exceeds maximum length', async () => {
       const longText = 'a'.repeat(1001); // Exceeds 1000 char paid Gemini limit
 

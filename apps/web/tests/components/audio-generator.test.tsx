@@ -130,6 +130,14 @@ vi.mock('@/lib/ai', () => ({
 
     return 500;
   }),
+  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 2500 : 1000,
+  ),
+  getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 32_000 : 8000,
+  ),
+  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
+  GEMINI_CHARS_PER_TOKEN: 4,
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -158,8 +166,8 @@ const baseDict = {
   notEnoughCredits: 'Not enough credits',
   fullscreenTitle: 'Fullscreen',
   paidCharacterLimitTooltip: 'Paid users enjoy 2× character limit',
-  success: 'Success',
   upgradeCharacterLimitTooltip: 'Upgrade to a paid plan for 2× character limit',
+  success: 'Success',
   error: 'Something went wrong',
   errorEstimating: 'Failed to estimate credits',
   dailyLimitError: 'Daily limit reached (__COUNT__)',

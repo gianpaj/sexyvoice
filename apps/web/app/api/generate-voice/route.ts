@@ -10,7 +10,13 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
+import {
+  estimateTokenCount,
+  extractInlineAudio,
+  getCharactersLimit,
+  getGeminiCombinedTokenLimit,
+  getGeminiStyleCharacterLimit,
+} from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import PostHogClient from '@/lib/posthog';
@@ -246,16 +252,72 @@ export async function POST(request: Request) {
 
     userHasPaid = await hasUserPaid(user.id);
 
-    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
-    if (text.length > maxLength) {
-      logger.error('Text exceeds maximum length', {
-        textLength: text.length,
-        maxLength,
-      });
-      return NextResponse.json(
-        { error: `Text exceeds the maximum length of ${maxLength} characters` },
-        { status: 400 },
+    // Enforce per-tier input limits on the RAW transcript and style before
+    // combining them, so the attacker-controlled (and otherwise unbounded)
+    // styleVariant cannot bypass the limits or under-estimate credits.
+    const isGemini31 = isGeminiVoice && voiceObj.model === 'gpro31';
+
+    if (isGemini31) {
+      // Gemini 3.1 streams audio, so the transcript and style share one combined
+      // token budget instead of separate character caps.
+      const combinedTokenLimit = getGeminiCombinedTokenLimit(userHasPaid);
+      const estimatedTokens = estimateTokenCount(
+        styleVariant ? `${styleVariant}\n${text}` : text,
       );
+      if (estimatedTokens > combinedTokenLimit) {
+        logger.error('Gemini 3.1 input exceeds token limit', {
+          estimatedTokens,
+          combinedTokenLimit,
+        });
+        return NextResponse.json(
+          {
+            error: `Text and style exceed the maximum of ${combinedTokenLimit} tokens`,
+          },
+          { status: 400 },
+        );
+      }
+    } else {
+      const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
+      if (text.length > maxLength) {
+        logger.error('Text exceeds maximum length', {
+          textLength: text.length,
+          maxLength,
+        });
+        return NextResponse.json(
+          {
+            error: `Text exceeds the maximum length of ${maxLength} characters`,
+          },
+          { status: 400 },
+        );
+      }
+
+      // Gemini 2.5 voices accept a separate, character-bounded style prompt.
+      // (styleVariant is ignored for non-Gemini voices.)
+      if (isGeminiVoice && styleVariant) {
+        const styleLimit = getGeminiStyleCharacterLimit(userHasPaid);
+        if (styleVariant.length > styleLimit) {
+          logger.error('Style exceeds maximum length', {
+            styleLength: styleVariant.length,
+            styleLimit,
+          });
+          return NextResponse.json(
+            {
+              error: `Style exceeds the maximum length of ${styleLimit} characters`,
+            },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    // Build the effective payload sent to the provider. The gemini-3.1 (gpro31)
+    // model follows direction best when the style and transcript are sent as
+    // labelled sections rather than an inline prefix.
+    if (isGeminiVoice && styleVariant) {
+      text =
+        voiceObj.model === 'gpro31'
+          ? `### DIRECTOR'S NOTES\nStyle: ${styleVariant}\n\n## TRANSCRIPT\n${text}`
+          : `${styleVariant}: ${text}`;
     }
 
     if (!userHasPaid && voiceObj.model === 'gpro') {
@@ -289,17 +351,6 @@ export async function POST(request: Request) {
         { status: 402 },
       );
     }
-
-    // The gemini-3.1 (gpro31) model follows direction best when the style and
-    // transcript are sent as labelled sections rather than an inline prefix.
-    let finalText = text;
-    if (isGeminiVoice && styleVariant) {
-      finalText =
-        voiceObj.model === 'gpro31'
-          ? `### DIRECTOR'S NOTES\nStyle: ${styleVariant}\n\n## TRANSCRIPT\n${text}`
-          : `${styleVariant}: ${text}`;
-    }
-    text = finalText;
 
     // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
     // seeded requests never share a cache entry.
