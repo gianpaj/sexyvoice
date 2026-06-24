@@ -58,7 +58,7 @@ export function createMockEvent<T extends Stripe.Event.Type>(
   return {
     id: `evt_test_${Date.now()}`,
     object: 'event',
-    api_version: '2024-12-18.acacia',
+    api_version: '2025-02-24.acacia',
     created: Math.floor(Date.now() / 1000),
     type,
     data: {
@@ -144,45 +144,84 @@ export function createMockSubscription(
 /**
  * Creates mock invoice object
  */
+
+// biome-ignore lint/nursery/useMaxParams: it's grand
 export function createMockInvoice(
   subscriptionId: string,
   customerId: string,
   paymentIntentId: string,
   priceId: string,
   billingReason: Stripe.Invoice.BillingReason = 'subscription_cycle',
-): Stripe.Invoice {
+): Partial<Stripe.Invoice> {
+  const now = Math.floor(Date.now() / 1000);
+
   return {
     id: 'in_test123',
     object: 'invoice',
-    customer: customerId,
-    subscription: subscriptionId,
-    payment_intent: paymentIntentId,
     billing_reason: billingReason,
+    collection_method: 'charge_automatically',
+    created: now,
+    currency: 'usd',
+    custom_fields: null,
+    customer: customerId,
+    subscription: subscriptionId || null,
+    payment_intent: paymentIntentId || null,
+    period_end: now,
+    period_start: now - 2_592_000,
     status: 'paid',
-    amount_paid: 1000,
-    amount_due: 1000,
+    status_transitions: {
+      finalized_at: now,
+      marked_uncollectible_at: null,
+      paid_at: now,
+      voided_at: null,
+    },
+    subtotal: 1000,
+    subtotal_excluding_tax: 1000,
+    test_clock: null,
+    total: 1000,
+    total_discount_amounts: null,
+    total_excluding_tax: 1000,
     lines: {
       object: 'list',
       data: [
         {
           id: 'il_test',
           object: 'line_item',
-          price: {
-            id: priceId,
-            object: 'price',
-            active: true,
-            currency: 'usd',
-            unit_amount: 1000,
-            type: 'recurring',
-            recurring: {
-              interval: 'month',
-              interval_count: 1,
-            },
+          amount: 1000,
+          amount_excluding_tax: 1000,
+          billing_details: null,
+          currency: 'usd',
+          custom_fields: null,
+          description: null,
+          discount_amounts: null,
+          discountable: true,
+          discounts: [],
+          invoice: 'in_test123',
+          livemode: false,
+          metadata: null as unknown as Stripe.Metadata,
+          period: {
+            end: Math.floor(Date.now() / 1000),
+            start: Math.floor(Date.now() / 1000) - 2_592_000,
           },
-        },
+          plan: null,
+          price: null,
+          proration: false,
+          proration_details: null,
+          quantity: 1,
+          subscription: subscriptionId,
+          subscription_item: 'si_test',
+          tax_amounts: [],
+          tax_rates: [],
+          type: 'subscription',
+          unit_amount_excluding_tax: null,
+          pretax_credit_amounts: null,
+          taxes: null,
+        } as unknown as Stripe.InvoiceLineItem,
       ],
+      has_more: false,
+      url: '/v1/invoices/in_test123/lines',
     },
-  } as Stripe.Invoice;
+  };
 }
 
 export function createMockRequest<T extends Stripe.Event.Type>(

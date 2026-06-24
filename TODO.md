@@ -41,6 +41,7 @@
 - Implement `fakefilter` or `mailchecker` npm packages to block disposable or temporary email address registrations <https://github.com/7c/fakefilter> <https://rapidapi.com/Top-Rated/api/e-mail-check-invalid-or-disposable-domain> e.g `fursee.com`
   - `curl -X GET https://api.usercheck.com/domain/fursee.com`
 - RESEARCH: AudioWaveform React component. can it compute the wave form in the browser in a small package and computing resources?
+- Refactor terms and privacy-policy pages to use content layer and markdown pages
 - Return error messages with error codes and translate those in the front-end
 - Setup react testing library for the Generate & Clone pages and its components. Including mocking recording a microphone audio input.
 - show a Badge translated status of the voice model when cloning multi-lingual . add nextjs headers

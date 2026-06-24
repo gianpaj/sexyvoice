@@ -342,7 +342,9 @@
     },
     "history": {
       "title": "Cronologia crediti"
-    }
+    },
+    "refundInfo": "Stai tranquillo – offriamo rimborsi senza problemi entro 90 giorni dall'acquisto. Consulta la nostra politica di rimborso completa su",
+    "refundInfoLinkText": "Politica di rimborso"
   },
   "creditsSection": {
     "title": "Crediti",

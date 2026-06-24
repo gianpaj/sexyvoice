@@ -342,7 +342,9 @@
     },
     "history": {
       "title": "Credit History"
-    }
+    },
+    "refundInfo": "Rest assured – we offer hassle-free refunds within 90 days of purchase. See our full refund policy at",
+    "refundInfoLinkText": "Refund Policy"
   },
   "creditsSection": {
     "title": "Credits",

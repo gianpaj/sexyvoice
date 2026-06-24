@@ -53,22 +53,22 @@ export async function POST(req: Request) {
 }
 
 async function processEvent(event: Stripe.Event) {
+  if (!isAllowedStripeEvent(event)) {
+    console.info(`[STRIPE HOOK] Not allowed event type: ${event.type}`);
+    return;
+  }
   console.log(`[STRIPE HOOK] Processing event: ${event.type}`);
 
   try {
     switch (event.type) {
       // Top-up purchases
       case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(
-          event.data.object as Stripe.Checkout.Session,
-        );
+        await handleCheckoutSessionCompleted(event.data.object);
         break;
 
       // Subscription recurring payments - this is where credits are awarded for renewals
       case 'invoice.payment_succeeded': {
-        await handleInvoicePaymentSucceeded(
-          event.data.object as Stripe.Invoice,
-        );
+        await handleInvoicePaymentSucceeded(event.data.object);
         break;
       }
 
@@ -146,7 +146,7 @@ export type AllowedStripeEvent = Extract<
   { type: AllowedEventType }
 >;
 
-export const isAllowedStripeEvent = (
+const isAllowedStripeEvent = (
   event: Stripe.Event,
 ): event is AllowedStripeEvent =>
   allowedEvents.includes(event.type as AllowedEventType);
@@ -343,6 +343,7 @@ async function handleCheckoutSessionCompleted(
 
 // Handles successful invoice payments (recurring subscription payments)
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+  let subscriptionId = '';
   try {
     // Only process subscription invoices, not one-time invoices
     if (!invoice.subscription || invoice.billing_reason === 'manual') {
@@ -351,10 +352,19 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       );
       return;
     }
+    let paymentIntentId = '';
+    subscriptionId =
+      typeof invoice.subscription === 'string'
+        ? invoice.subscription
+        : invoice.subscription.id;
+    if (invoice.payment_intent) {
+      paymentIntentId =
+        typeof invoice.payment_intent === 'string'
+          ? invoice.payment_intent
+          : invoice.payment_intent.id;
+    }
 
     const customerId = invoice.customer as string;
-    const subscriptionId = invoice.subscription as string;
-    const paymentIntentId = invoice.payment_intent as string | null;
 
     if (!paymentIntentId) {
       console.error(
@@ -454,7 +464,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       },
       extra: {
         invoice_id: invoice.id,
-        subscription_id: invoice.subscription,
+        subscription_id: subscriptionId,
         customer_id: invoice.customer,
       },
     });
@@ -482,14 +492,15 @@ export async function syncStripeDataToKV(customerId: string) {
 
     // If a user can have multiple subscriptions, that's your problem
     const subscription = subscriptions.data[0];
+    const firstSubscriptionItem = subscription.items.data[0];
 
     // Store complete subscription state
     const subData = {
       subscriptionId: subscription.id,
       status: subscription.status,
-      priceId: subscription.items.data[0].price.id,
-      currentPeriodEnd: subscription.current_period_end,
-      currentPeriodStart: subscription.current_period_start,
+      priceId: firstSubscriptionItem?.price?.id ?? null,
+      currentPeriodEnd: subscription.current_period_end ?? null,
+      currentPeriodStart: subscription.current_period_start ?? null,
       cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&

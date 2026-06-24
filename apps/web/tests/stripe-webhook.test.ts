@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
+import type Stripe from 'stripe';
 import {
   afterAll,
   afterEach,
@@ -438,7 +439,7 @@ describe('Stripe Webhook Route', () => {
         '', // No payment intent
         priceId,
         'subscription_cycle',
-      );
+      ) as Stripe.Invoice;
       invoice.payment_intent = null;
 
       const request = createMockRequest('invoice.payment_succeeded', invoice);
@@ -791,7 +792,12 @@ describe('Stripe Webhook Route', () => {
       },
     ];
 
-    testPlans.forEach(({ name, priceId, expectedCredits, expectedAmount }) => {
+    for (const {
+      name,
+      priceId,
+      expectedCredits,
+      expectedAmount,
+    } of testPlans) {
       it(`should award ${expectedCredits.toLocaleString()} credits for ${name} plan via invoice payment`, async () => {
         const customerId = 'cus_test123';
         const subscriptionId = 'sub_test123';
@@ -803,7 +809,6 @@ describe('Stripe Webhook Route', () => {
         );
         vi.mocked(stripe.subscriptions.list).mockResolvedValue({
           data: [subscription],
-          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
         } as any);
 
         vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
@@ -830,7 +835,7 @@ describe('Stripe Webhook Route', () => {
           expectedAmount,
         );
       });
-    });
+    }
   });
 
   describe('Promo Enabled - Topup Transactions', () => {
@@ -877,7 +882,7 @@ describe('Stripe Webhook Route', () => {
       },
     ];
 
-    testTopupPlans.forEach(({ name, packageId, credits, dollarAmount }) => {
+    for (const { name, packageId, credits, dollarAmount } of testTopupPlans) {
       it(`should process ${name.toLowerCase()} topup with promo bonus (${credits.toLocaleString()} credits)`, async () => {
         const session = createMockCheckoutSession('payment', {
           type: 'topup',
@@ -904,7 +909,7 @@ describe('Stripe Webhook Route', () => {
           undefined,
         );
       });
-    });
+    }
 
     it('should handle topup with promo code in metadata', async () => {
       const session = createMockCheckoutSession('payment', {
@@ -978,50 +983,50 @@ describe('Stripe Webhook Route', () => {
       },
     ];
 
-    testSubscriptionPlans.forEach(
-      ({ name, priceId, expectedCredits, expectedAmount }) => {
-        it(`should award bonus subscription credits for ${name.toLowerCase()} plan`, async () => {
-          const customerId = 'cus_test123';
-          const subscriptionId = 'sub_test123';
-          const paymentIntentId = `pi_promo_${name.toLowerCase()}_test`;
-          const subscription = createMockSubscription(priceId!, 'active');
+    for (const {
+      name,
+      priceId,
+      expectedCredits,
+      expectedAmount,
+    } of testSubscriptionPlans) {
+      it(`should award bonus subscription credits for ${name.toLowerCase()} plan`, async () => {
+        const customerId = 'cus_test123';
+        const subscriptionId = 'sub_test123';
+        const paymentIntentId = `pi_promo_${name.toLowerCase()}_test`;
+        const subscription = createMockSubscription(priceId!, 'active');
 
-          vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(
-            subscription,
-          );
-          vi.mocked(stripe.subscriptions.list).mockResolvedValue({
-            data: [subscription],
-            // biome-ignore lint/suspicious/noExplicitAny: Test mock data
-          } as any);
+        vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(
+          subscription,
+        );
+        vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+          data: [subscription],
+          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+        } as any);
 
-          vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(userId);
+        vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(userId);
 
-          const invoice = createMockInvoice(
-            subscriptionId,
-            customerId,
-            paymentIntentId,
-            priceId!,
-            'subscription_cycle',
-          );
+        const invoice = createMockInvoice(
+          subscriptionId,
+          customerId,
+          paymentIntentId,
+          priceId!,
+          'subscription_cycle',
+        );
 
-          const request = createMockRequest(
-            'invoice.payment_succeeded',
-            invoice,
-          );
+        const request = createMockRequest('invoice.payment_succeeded', invoice);
 
-          await POST(request);
+        await POST(request);
 
-          // Subscription credits are awarded via invoice.payment_succeeded with promo bonus
-          expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
-            userId,
-            paymentIntentId,
-            subscriptionId,
-            expectedCredits,
-            expectedAmount,
-          );
-        });
-      },
-    );
+        // Subscription credits are awarded via invoice.payment_succeeded with promo bonus
+        expect(insertSubscriptionCreditTransaction).toHaveBeenCalledWith(
+          userId,
+          paymentIntentId,
+          subscriptionId,
+          expectedCredits,
+          expectedAmount,
+        );
+      });
+    }
   });
 
   describe('Edge Cases', () => {

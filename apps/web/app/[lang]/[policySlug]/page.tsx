@@ -16,6 +16,9 @@ const POLICY_CONFIG = {
   terms: {
     fallbackTitle: 'Terms and Conditions',
   },
+  'refund-policy': {
+    fallbackTitle: 'Refund Policy',
+  },
 } as const;
 
 type PolicySlug = keyof typeof POLICY_CONFIG;

@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import PricingTable from '@/components/pricing-table';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -200,6 +201,13 @@ export default async function CreditsPage(props: {
         <h3 className="mb-4 font-semibold text-lg">{t('history.title')}</h3>
         <CreditHistory transactions={existingTransactions} />
       </div>
+
+      <Alert className="pt-4">
+        {t('refundInfo')}{' '}
+        <Link className="underline" href={`/${lang}/refund-policy`}>
+          {t('refundInfoLinkText')}
+        </Link>
+      </Alert>
     </div>
   );
 }
