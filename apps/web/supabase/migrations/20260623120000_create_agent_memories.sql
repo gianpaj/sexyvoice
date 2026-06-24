@@ -38,10 +38,13 @@ CREATE TABLE public.agent_memories (
   UNIQUE (user_id, character_id, memory_type)
 );
 
--- Indexes. The UNIQUE constraint already covers (user_id, character_id, ...),
--- so a plain user_id index is redundant; add ANN + FTS indexes for retrieval.
-CREATE INDEX agent_memories_embedding_hnsw
-  ON public.agent_memories USING hnsw (embedding vector_cosine_ops);
+-- Indexes. Deliberately NO HNSW/ANN index on `embedding`: retrieval always
+-- filters to one user (and character), whose memories number in the dozens, so
+-- the UNIQUE B-tree on (user_id, character_id, ...) selects that tiny subset and
+-- pgvector does an EXACT distance scan over it — sub-millisecond and 100% recall.
+-- A global HNSW index would hit the "single-user filtering problem" (global graph
+-- traversal can return 0 rows after the user_id filter) and only adds write/memory
+-- overhead. The GIN index backs the full-text branch of the hybrid search.
 CREATE INDEX agent_memories_fts_gin
   ON public.agent_memories USING gin (fts);
 
