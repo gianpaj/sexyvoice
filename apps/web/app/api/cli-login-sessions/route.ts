@@ -70,7 +70,10 @@ export async function POST(request: Request) {
       .eq('is_active', true)
       .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      return APIErrorResponse('Failed to fetch API key', 500);
+    }
+    if (!data) {
       return APIErrorResponse('API key not found', 404);
     }
     if (data.expires_at && new Date(data.expires_at) <= new Date()) {
