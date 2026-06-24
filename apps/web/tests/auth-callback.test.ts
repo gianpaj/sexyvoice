@@ -2,11 +2,11 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/auth/callback/route';
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import {
-  createOauthCallbackMarkerValue,
-  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-} from '@/lib/supabase/oauth-callback-marker';
+  AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+  createAuthCallbackMarkerValue,
+} from '@/lib/supabase/auth-callback-marker';
+import { AUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { createClient } from '@/lib/supabase/server';
 
 const { responseCookieSetMock } = vi.hoisted(() => ({
@@ -78,7 +78,7 @@ describe('OAuth callback route', () => {
         {
           headers: {
             cookie:
-              'sb-test-auth-token=token; sv_oauth_callback_ok=marker-value',
+              'sb-test-auth-token=token; sv_auth_callback_ok=marker-value',
           },
         },
       ),
@@ -107,14 +107,14 @@ describe('OAuth callback route', () => {
           supabaseCookieCount: 1,
           hasSupabaseAuthCookie: true,
           hasSupabaseCodeVerifierCookie: false,
-          hasOauthCallbackMarkerCookie: true,
+          hasAuthCallbackMarkerCookie: true,
           errorMessage: 'PKCE code verifier not found in storage.',
         }),
       },
     );
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
+        name: AUTH_CALLBACK_COOKIE_NAME,
         maxAge: 0,
       }),
     );
@@ -154,7 +154,7 @@ describe('OAuth callback route', () => {
     expect(captureMessage).not.toHaveBeenCalled();
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
+        name: AUTH_CALLBACK_COOKIE_NAME,
         maxAge: 0,
         secure: true,
       }),
@@ -163,14 +163,14 @@ describe('OAuth callback route', () => {
 
   it('treats valid marked callbacks without a verifier as already completed', async () => {
     vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
-    const marker = createOauthCallbackMarkerValue();
+    const marker = createAuthCallbackMarkerValue();
 
     const response = await GET(
       new Request(
         'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
         {
           headers: {
-            cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token`,
+            cookie: `${AUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token`,
           },
         },
       ),
@@ -183,8 +183,8 @@ describe('OAuth callback route', () => {
     expect(createClient).not.toHaveBeenCalled();
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
-        maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+        name: AUTH_CALLBACK_COOKIE_NAME,
+        maxAge: AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
       }),
     );
   });
