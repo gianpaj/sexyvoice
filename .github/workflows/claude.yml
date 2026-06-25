@@ -29,7 +29,7 @@ jobs:
           persist-credentials: false
 
       - name: PR Review with Progress Tracking
-        uses: anthropics/claude-code-action@11ba60486e4aec9ddfeafcf4bb3f00b028ac2c16 # v1
+        uses: anthropics/claude-code-action@80b31826338489861333dc17217865dfe8085cdc # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
@@ -47,7 +47,7 @@ jobs:
 
           claude_args: |
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-            --model "claude-opus-4-7"
+            --model "claude-opus-4-8"
 
   claude:
     if: |
@@ -71,11 +71,11 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@11ba60486e4aec9ddfeafcf4bb3f00b028ac2c16 # v1
+        uses: anthropics/claude-code-action@80b31826338489861333dc17217865dfe8085cdc # v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Trigger when specific user is assigned to an issue
           assignee_trigger: "claude-bot"
           claude_args: |
             --allowedTools "Bash(pnpm install),Bash(pnpm test:*),Bash(pnpm fixall),Bash(pnpm type-check),mcp__github_inline_comment__create_inline_comment"
-            --model "claude-opus-4-7"
+            --model "claude-opus-4-8"

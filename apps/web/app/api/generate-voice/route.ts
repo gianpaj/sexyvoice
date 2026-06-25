@@ -1251,6 +1251,10 @@ function streamGeminiTtsResponse({
         actualCredits: creditsUsed,
         context: 'generate_voice_stream_success',
       });
+      // Reconcile has settled the balance — clear the reservation so a later
+      // failure (e.g. posthog flush) doesn't trigger a double-refund in the
+      // `finally` block. Mirrors the non-stream path (reservedCredits = 0).
+      reservedCredits = 0;
 
       const streamUsage: Record<string, string | number | boolean> =
         streamUsageMetadata
@@ -1279,7 +1283,7 @@ function streamGeminiTtsResponse({
         isPublic: false,
         voiceId: voiceObj.id,
         duration,
-        credits_used: creditsUsed,
+        credits_used: creditsDebited,
         usage: streamUsage,
       });
 
@@ -1298,7 +1302,7 @@ function streamGeminiTtsResponse({
         sourceId: audioFileDBResult.data?.id,
         unit: 'chars',
         quantity: text.length,
-        creditsUsed,
+        creditsUsed: creditsDebited,
         metadata: {
           voiceId: voiceObj.id,
           voiceName: voiceObj.name,
@@ -1317,19 +1321,19 @@ function streamGeminiTtsResponse({
         userId: user.id,
         text,
         voiceId: voiceObj.id,
-        creditUsed: creditsUsed,
+        creditUsed: creditsDebited,
         model: modelUsed,
       });
 
       logger.info('Gemini stream done', {
         user: { id: user.id, email: user.email },
-        extra: { model: modelUsed, creditsUsed, stream: true },
+        extra: { model: modelUsed, creditsUsed: creditsDebited, stream: true },
       });
 
       completed = true;
       await enqueue('done', {
         url: uploadUrl,
-        creditsUsed,
+        creditsUsed: creditsDebited,
         creditsRemaining: (currentAmount || 0) - creditsDebited,
       });
     } catch (error) {

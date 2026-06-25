@@ -184,7 +184,7 @@ describe('Generate Voice API Route', () => {
         model: 'gpro31',
       });
 
-      // Free gpro31 budget is 8000 tokens (~32000 chars); 32001 chars exceeds it.
+      // Free gpro31 budget is 400 tokens (~1600 chars); 32001 chars (~8001 tokens) exceeds it.
       const longText = 'a'.repeat(32_001);
 
       const request = new Request('http://localhost/api/generate-voice', {
