@@ -14,6 +14,13 @@ import {
   trimWavBuffer,
 } from '@/lib/audio-converter';
 import {
+  CLONE_FORM_FIELDS,
+  type CloneErrorResponseBody,
+  type CloneRouteErrorCode,
+  type CloneSuccessResponse,
+  type RouteErrorDetails,
+} from '@/lib/clone/api-types';
+import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
@@ -141,30 +148,6 @@ interface MistralSdkErrorLike {
   statusCode?: unknown;
 }
 
-type RouteErrorDetails = Record<string, boolean | number | string | null>;
-
-type CloneRouteErrorCode =
-  | 'errors.audioConversionFailed'
-  | 'errors.audioConversionRequiredWebm'
-  | 'errors.audioDurationInvalidFallback'
-  | 'errors.audioDurationInvalidVoxtral'
-  | 'errors.audioDurationUnknown'
-  | 'errors.fileTooLarge'
-  | 'errors.guardrailViolation'
-  | 'errors.insufficientCredits'
-  | 'errors.internalError'
-  | 'errors.invalidContentType'
-  | 'errors.invalidFileType'
-  | 'errors.missingLocale'
-  | 'errors.missingRequiredParameters'
-  | 'errors.providerUnavailable'
-  | 'errors.referenceAudioEnhancementInputTooLarge'
-  | 'errors.referenceAudioEnhancementInputTooLong'
-  | 'errors.textTooLong'
-  | 'errors.unsupportedAudioFormat'
-  | 'errors.unsupportedLocale'
-  | 'errors.userNotFound';
-
 class RouteError extends Error {
   code?: CloneRouteErrorCode;
   details?: RouteErrorDetails;
@@ -225,7 +208,7 @@ function routeErrorResponse(
       status,
       code,
       details,
-    },
+    } satisfies CloneErrorResponseBody,
     { status },
   );
 }
@@ -341,10 +324,12 @@ function validateContentType(contentType: string): void {
 async function parseFormData(request: Request): Promise<FormInput> {
   const formData = await request.formData();
 
-  const enhanceReferenceAudioValue = formData.get('enhanceReferenceAudio');
-  const textValue = formData.get('text');
-  const file = formData.get('file');
-  const locale = formData.get('locale');
+  const enhanceReferenceAudioValue = formData.get(
+    CLONE_FORM_FIELDS.enhanceReferenceAudio,
+  );
+  const textValue = formData.get(CLONE_FORM_FIELDS.text);
+  const file = formData.get(CLONE_FORM_FIELDS.file);
+  const locale = formData.get(CLONE_FORM_FIELDS.locale);
 
   const text = typeof textValue === 'string' ? textValue : '';
   const audioFile = file instanceof File ? file : null;
@@ -1433,7 +1418,7 @@ export async function POST(request: Request) {
           url: cachedOutputUrl,
           creditsUsed: 0,
           creditsRemaining: currentAmount || 0,
-        },
+        } satisfies CloneSuccessResponse,
         { status: 200 },
       );
     }
@@ -1545,7 +1530,7 @@ export async function POST(request: Request) {
               url: fallbackCachedOutputUrl,
               creditsUsed: 0,
               creditsRemaining: currentAmount || 0,
-            },
+            } satisfies CloneSuccessResponse,
             { status: 200 },
           );
         }
@@ -1655,7 +1640,7 @@ export async function POST(request: Request) {
         url: outputUrl,
         creditsUsed,
         creditsRemaining: (currentAmount || 0) - creditsUsed,
-      },
+      } satisfies CloneSuccessResponse,
       { status: 200 },
     );
   } catch (error) {
@@ -1705,7 +1690,7 @@ export async function POST(request: Request) {
         serverMessage,
         status: 500,
         code: 'errors.internalError',
-      },
+      } satisfies CloneErrorResponseBody,
       { status: 500 },
     );
   }
