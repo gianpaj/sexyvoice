@@ -217,6 +217,7 @@ function routeErrorResponse(
   code?: CloneRouteErrorCode,
   details?: RouteErrorDetails,
 ) {
+  // biome-ignore lint/plugin: clone-voice intentionally returns a structured error body ({ error, serverMessage, status, code, details }) that its client and tests depend on; APIErrorResponse doesn't carry the route-specific `code`.
   return NextResponse.json(
     {
       error: `${serverMessage} (${status})`,
@@ -1697,6 +1698,7 @@ export async function POST(request: Request) {
     const serverMessage =
       'An unexpected error occurred while cloning voice. Please try again.';
 
+    // biome-ignore lint/plugin: clone-voice intentionally returns a structured error body ({ error, serverMessage, status, code }) that its client and tests depend on; APIErrorResponse doesn't carry the route-specific `code`.
     return NextResponse.json(
       {
         error: serverMessage,

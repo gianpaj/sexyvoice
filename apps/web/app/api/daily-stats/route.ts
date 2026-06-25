@@ -1476,9 +1476,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
     if (!isProd) {
-      return NextResponse.json({
-        error: 'Failed to send Telegram message',
-      });
+      return APIErrorResponse('Failed to send Telegram message', 500);
     }
     Sentry.captureException(error);
     Sentry.captureCheckIn({
