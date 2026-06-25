@@ -197,9 +197,12 @@ export async function POST(request: Request) {
     // Base the audio-duration estimate on the full spoken payload. For gpro31
     // the style is delivered as direction (it shapes pacing/delivery), so the
     // combined length tracks real audio length better than the transcript alone.
-    const spokenLength = styleVariant
-      ? styleVariant.length + text.length
-      : text.length;
+    // For gpro (2.5) the style is an inline `style: text` instruction rather
+    // than spoken content, so it doesn't add to the audio duration.
+    const spokenLength =
+      styleVariant && model === 'gpro31'
+        ? styleVariant.length + text.length
+        : text.length;
     const estimatedDurationSeconds = spokenLength / CHARACTERS_PER_SECOND;
     const estimatedOutputTokens = Math.ceil(
       estimatedDurationSeconds * TOKENS_PER_SECOND,
