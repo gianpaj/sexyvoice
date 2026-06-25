@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/style/useConsistentTypeDefinitions: <explanation> */
+/** biome-ignore-all lint/style/useConsistentTypeDefinitions: generated Supabase types use type aliases */
 declare type Json =
   | string
   | number
@@ -641,6 +641,10 @@ declare type Database = {
       decrement_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
+      };
+      decrement_user_credits_up_to: {
+        Args: { credit_amount_var: number; user_id_var: string };
+        Returns: number;
       };
       get_usage_summary: {
         Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };

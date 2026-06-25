@@ -30,6 +30,7 @@ import {
   isFreemiumUserOverLimit,
   isInsufficientCreditsError,
   reduceCredits,
+  reduceCreditsUpTo,
   restoreCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
@@ -174,10 +175,29 @@ async function reconcileReservedCredits({
 
   const additionalCredits = actualCredits - reservedCredits;
   try {
-    await reduceCredits({ userId, amount: additionalCredits });
-    return actualCredits;
+    const additionalCreditsDebited = await reduceCreditsUpTo({
+      userId,
+      amount: additionalCredits,
+    });
+    const totalCreditsDebited = reservedCredits + additionalCreditsDebited;
+
+    if (additionalCreditsDebited < additionalCredits) {
+      logger.warn('Partially debited additional reserved credits', {
+        user: { id: userId },
+        extra: {
+          actualCredits,
+          additionalCredits,
+          additionalCreditsDebited,
+          context,
+          reservedCredits,
+          totalCreditsDebited,
+        },
+      });
+    }
+
+    return totalCreditsDebited;
   } catch (debitError) {
-    logger.error('Failed to debit additional stream credits', {
+    logger.error('Failed to debit additional reserved credits', {
       user: { id: userId },
       extra: {
         actualCredits,

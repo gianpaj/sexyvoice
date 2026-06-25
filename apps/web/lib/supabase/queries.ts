@@ -243,6 +243,29 @@ export async function reduceCredits({
   if (creditsError) throw toCreditDebitError(creditsError);
 }
 
+export async function reduceCreditsUpTo({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<number> {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return 0;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('decrement_user_credits_up_to', {
+    user_id_var: userId,
+    credit_amount_var: creditAmount,
+  });
+
+  if (error) throw toCreditDebitError(error);
+
+  return data ?? 0;
+}
+
 export async function restoreCredits({
   userId,
   amount,
@@ -720,6 +743,29 @@ export async function reduceCreditsAdmin({
   });
 
   if (error) throw toCreditDebitError(error);
+}
+
+export async function reduceCreditsUpToAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<number> {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return 0;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('decrement_user_credits_up_to', {
+    user_id_var: userId,
+    credit_amount_var: creditAmount,
+  });
+
+  if (error) throw toCreditDebitError(error);
+
+  return data ?? 0;
 }
 
 // biome-ignore lint/suspicious/useAwait: server action

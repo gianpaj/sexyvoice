@@ -842,6 +842,7 @@ describe('Generate Voice API Route', () => {
     it('should successfully generate voice using Google Gemini', async () => {
       const {
         reduceCredits,
+        reduceCreditsUpTo,
         saveAudioFile,
         getCredits,
         insertUsageEvent,
@@ -876,7 +877,7 @@ describe('Generate Voice API Route', () => {
         userId: 'test-user-id',
         amount: reservedCredits,
       });
-      expect(reduceCredits).toHaveBeenNthCalledWith(2, {
+      expect(reduceCreditsUpTo).toHaveBeenCalledWith({
         userId: 'test-user-id',
         amount: actualCredits - reservedCredits,
       });
@@ -979,6 +980,59 @@ describe('Generate Voice API Route', () => {
       );
       expect(insertUsageEvent).toHaveBeenCalledWith(
         expect.objectContaining({ creditsUsed: actualCredits }),
+      );
+    });
+
+    it('deducts remaining available credits when Gemini usage exceeds the reserved estimate', async () => {
+      const {
+        reduceCredits,
+        reduceCreditsUpTo,
+        getCredits,
+        hasUserPaid,
+        saveAudioFile,
+        insertUsageEvent,
+      } = await import('@/lib/supabase/queries');
+
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const text = 'Hello world';
+      const reservedCredits = estimateCredits(text, 'kore', 'gpro');
+      const actualCredits = calculateCreditsFromTokens(23);
+      const remainingCredits = 1;
+      const creditsDebited = reservedCredits + remainingCredits;
+
+      vi.mocked(getCredits).mockResolvedValueOnce(creditsDebited);
+      vi.mocked(reduceCreditsUpTo).mockResolvedValueOnce(remainingCredits);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.creditsUsed).toBe(creditsDebited);
+      expect(json.creditsRemaining).toBe(0);
+      expect(reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: reservedCredits,
+      });
+      expect(reduceCreditsUpTo).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: actualCredits - reservedCredits,
+      });
+
+      await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({ credits_used: creditsDebited }),
+      );
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ creditsUsed: creditsDebited }),
       );
     });
 
@@ -1949,8 +2003,13 @@ describe('Generate Voice API Route', () => {
 
   describe('Streaming - Gemini SSE', () => {
     it('streams audio events and done event for Gemini voice', async () => {
-      const { hasUserPaid, saveAudioFile, insertUsageEvent, reduceCredits } =
-        await import('@/lib/supabase/queries');
+      const {
+        hasUserPaid,
+        saveAudioFile,
+        insertUsageEvent,
+        reduceCredits,
+        reduceCreditsUpTo,
+      } = await import('@/lib/supabase/queries');
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
       const text = 'Hello world';
       const reservedCredits = estimateCredits(text, 'achernar', 'gpro31');
@@ -1988,7 +2047,7 @@ describe('Generate Voice API Route', () => {
         userId: 'test-user-id',
         amount: reservedCredits,
       });
-      expect(reduceCredits).toHaveBeenNthCalledWith(2, {
+      expect(reduceCreditsUpTo).toHaveBeenCalledWith({
         userId: 'test-user-id',
         amount: actualCredits - reservedCredits,
       });
