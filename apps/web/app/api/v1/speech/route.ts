@@ -41,6 +41,7 @@ import {
   insertUsageEvent,
   isInsufficientCreditsError,
   reduceCreditsAdmin,
+  reduceCreditsUpToAdmin,
   restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
@@ -265,11 +266,23 @@ export async function POST(request: Request) {
 
     const additionalCredits = actualCredits - reservedCredits;
     try {
-      await reduceCreditsAdmin({
+      const additionalCreditsDebited = await reduceCreditsUpToAdmin({
         userId: authResult.userId,
         amount: additionalCredits,
       });
-      return actualCredits;
+      const totalCreditsDebited = reservedCredits + additionalCreditsDebited;
+
+      if (additionalCreditsDebited < additionalCredits) {
+        await log({
+          status: 200,
+          errorCode: 'credit_partial_debit',
+          userId: authResult.userId,
+          apiKeyId: authResult.apiKeyId,
+          creditsUsed: totalCreditsDebited,
+        });
+      }
+
+      return totalCreditsDebited;
     } catch (debitError) {
       captureException(debitError, {
         extra: {
