@@ -31,7 +31,7 @@ jobs:
       - name: PR Review with Progress Tracking
         uses: anthropics/claude-code-action@80b31826338489861333dc17217865dfe8085cdc # v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
           prompt: |
             REPO: ${{ github.repository }}
@@ -73,7 +73,7 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@80b31826338489861333dc17217865dfe8085cdc # v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Trigger when specific user is assigned to an issue
           assignee_trigger: "claude-bot"
           claude_args: |
