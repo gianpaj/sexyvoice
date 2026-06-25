@@ -998,11 +998,11 @@ describe('Generate Voice API Route', () => {
       const text = 'Hello world';
       const reservedCredits = estimateCredits(text, 'kore', 'gpro');
       const actualCredits = calculateCreditsFromTokens(23);
-      const remainingCredits = 1;
-      const creditsDebited = reservedCredits + remainingCredits;
+      const availableExtraCredits = 1;
+      const creditsDebited = reservedCredits + availableExtraCredits;
 
       vi.mocked(getCredits).mockResolvedValueOnce(creditsDebited);
-      vi.mocked(reduceCreditsUpTo).mockResolvedValueOnce(remainingCredits);
+      vi.mocked(reduceCreditsUpTo).mockResolvedValueOnce(availableExtraCredits);
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
