@@ -612,7 +612,10 @@ export async function POST(request: Request) {
           }
         }
       } else {
-        modelUsed = 'gemini-2.5-flash-preview-tts';
+        modelUsed = resolveGeminiTtsModel({
+          model: voiceObj.model,
+          userHasPaid,
+        });
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ role: 'user', parts: [{ text }] }],

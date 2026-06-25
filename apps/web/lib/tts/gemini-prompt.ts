@@ -21,10 +21,13 @@ export function resolveGeminiTtsModel({
   model: string;
   userHasPaid: boolean;
 }): string {
-  if (!userHasPaid) {
-    return GEMINI_TTS_FLASH_FREE;
+  // gpro31 is an explicit voice choice (Gemini 3.1): it sounds and behaves
+  // differently and has no flash variant, so it always runs on 3.1 regardless
+  // of tier. Other Gemini voices use pro for paid users and flash for free.
+  if (model === 'gpro31') {
+    return GEMINI_TTS_31;
   }
-  return model === 'gpro31' ? GEMINI_TTS_31 : GEMINI_TTS_PRO;
+  return userHasPaid ? GEMINI_TTS_PRO : GEMINI_TTS_FLASH_FREE;
 }
 
 /**
