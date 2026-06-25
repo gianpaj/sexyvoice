@@ -45,6 +45,7 @@ import {
   restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
+import { buildGeminiTtsPrompt } from '@/lib/tts/gemini-prompt';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -414,13 +415,14 @@ export async function POST(request: Request) {
     const ttsProvider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
-    let finalText = input;
-    if (isGeminiVoice && style) {
-      finalText =
-        voiceObj.model === 'gpro31'
-          ? `### DIRECTOR'S NOTES\nStyle: ${style}\n\n## TRANSCRIPT\n${input}`
-          : `${style}: ${input}`;
-    }
+    const finalText =
+      isGeminiVoice && style
+        ? buildGeminiTtsPrompt({
+            model: voiceObj.model,
+            text: input,
+            styleVariant: style,
+          })
+        : input;
 
     if (!isModelCompatibleWithVoice(model, voiceObj.model)) {
       await log({

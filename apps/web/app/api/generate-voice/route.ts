@@ -35,6 +35,10 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import {
+  buildGeminiTtsPrompt,
+  resolveGeminiTtsModel,
+} from '@/lib/tts/gemini-prompt';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -357,10 +361,11 @@ export async function POST(request: Request) {
     // model follows direction best when the style and transcript are sent as
     // labelled sections rather than an inline prefix.
     if (isGeminiVoice && styleVariant) {
-      text =
-        voiceObj.model === 'gpro31'
-          ? `### DIRECTOR'S NOTES\nStyle: ${styleVariant}\n\n## TRANSCRIPT\n${text}`
-          : `${styleVariant}: ${text}`;
+      text = buildGeminiTtsPrompt({
+        model: voiceObj.model,
+        text,
+        styleVariant,
+      });
     }
 
     if (!userHasPaid && voiceObj.model === 'gpro') {
@@ -399,11 +404,7 @@ export async function POST(request: Request) {
     // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
     // seeded requests never share a cache entry.
     const effectiveModel = isGeminiVoice
-      ? userHasPaid
-        ? voiceObj.model === 'gpro31'
-          ? 'gemini-3.1-flash-tts-preview'
-          : 'gemini-2.5-pro-preview-tts'
-        : 'gemini-2.5-flash-preview-tts'
+      ? resolveGeminiTtsModel({ model: voiceObj.model, userHasPaid })
       : voiceObj.model;
 
     const hashInput =
