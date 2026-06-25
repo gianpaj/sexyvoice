@@ -29,7 +29,9 @@ import {
   getCredits,
   hasUserPaid,
   insertUsageEvent,
+  isInsufficientCreditsError,
   reduceCredits,
+  restoreCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -570,6 +572,77 @@ function validateCreditAmount({
     'errors.insufficientCredits',
     { CREDITS: requiredCredits, currentCredits: currentAmount },
   );
+}
+
+async function reserveCloneCredits({
+  currentAmount,
+  requiredCredits,
+  text,
+  userEmail,
+  userId,
+}: {
+  currentAmount: number;
+  requiredCredits: number;
+  text: string;
+  userEmail?: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await reduceCredits({ userId, amount: requiredCredits });
+  } catch (error) {
+    if (!isInsufficientCreditsError(error)) {
+      throw error;
+    }
+
+    logger.info('Insufficient credits during clone reservation', {
+      user: { id: userId, email: userEmail },
+      extra: {
+        text,
+        estimate: requiredCredits,
+        currentCreditsAmount: currentAmount,
+      },
+    });
+    throw createRouteError(
+      `Insufficient credits. You need ${requiredCredits} credits to clone this audio`,
+      402,
+      'errors.insufficientCredits',
+      { CREDITS: requiredCredits, currentCredits: currentAmount },
+    );
+  }
+}
+
+async function refundReservedCloneCredits({
+  amount,
+  context,
+  userId,
+}: {
+  amount: number;
+  context: string;
+  userId: string;
+}): Promise<void> {
+  if (amount <= 0) {
+    return;
+  }
+
+  try {
+    await restoreCredits({ userId, amount });
+  } catch (refundError) {
+    logger.error('Failed to restore reserved clone credits', {
+      user: { id: userId },
+      extra: {
+        amount,
+        context,
+        errorMessage:
+          refundError instanceof Error
+            ? refundError.message
+            : String(refundError),
+      },
+    });
+    captureException(refundError, {
+      user: { id: userId },
+      extra: { amount, context },
+    });
+  }
 }
 
 function validateReferenceAudioEnhancementInput(
@@ -1130,8 +1203,6 @@ async function runBackgroundTasks(
     referenceAudioProcessedMimeType: string;
   },
 ): Promise<void> {
-  await reduceCredits({ userId, amount: creditsUsed });
-
   const userHasPaid = await hasUserPaid(userId);
 
   const audioFileDBResult = await saveAudioFile({
@@ -1286,6 +1357,8 @@ export async function POST(request: Request) {
   let duration: number | null = null;
   let modelUsed = '';
   let referenceAudioFile: File | null = null;
+  let reservedCredits = 0;
+  let userId = '';
 
   try {
     // Authentication
@@ -1296,6 +1369,7 @@ export async function POST(request: Request) {
     if (!user) {
       return routeErrorResponse('User not found', 401, 'errors.userNotFound');
     }
+    userId = user.id;
 
     setUser({
       id: user.id,
@@ -1381,6 +1455,14 @@ export async function POST(request: Request) {
         userEmail: user.email,
         userId: user.id,
       });
+      await reserveCloneCredits({
+        currentAmount,
+        requiredCredits: estimate + referenceAudioEnhancementCredits,
+        text,
+        userEmail: user.email,
+        userId: user.id,
+      });
+      reservedCredits = estimate + referenceAudioEnhancementCredits;
 
       try {
         const enhancedAudio = await enhanceReferenceAudio({
@@ -1451,6 +1533,12 @@ export async function POST(request: Request) {
 
         const fallbackCachedOutputUrl = await redis.get<string>(filename);
         if (fallbackCachedOutputUrl) {
+          await refundReservedCloneCredits({
+            userId: user.id,
+            amount: reservedCredits,
+            context: 'clone_voice_enhancement_fallback_cache_hit',
+          });
+          reservedCredits = 0;
           return NextResponse.json(
             {
               url: fallbackCachedOutputUrl,
@@ -1460,11 +1548,31 @@ export async function POST(request: Request) {
             { status: 200 },
           );
         }
+
+        if (reservedCredits > estimate) {
+          await refundReservedCloneCredits({
+            userId: user.id,
+            amount: reservedCredits - estimate,
+            context: 'clone_voice_enhancement_fallback',
+          });
+          reservedCredits = estimate;
+        }
       }
     }
 
     validateAudioDuration(cloneInputAudio.duration, provider);
     duration = cloneInputAudio.duration;
+
+    if (reservedCredits === 0) {
+      await reserveCloneCredits({
+        currentAmount,
+        requiredCredits: creditsUsed,
+        text,
+        userEmail: user.email,
+        userId: user.id,
+      });
+      reservedCredits = creditsUsed;
+    }
 
     // Generate voice
     let outputUrl: string;
@@ -1517,6 +1625,7 @@ export async function POST(request: Request) {
     }
 
     // Background tasks
+    reservedCredits = 0;
     after(async () => {
       await runBackgroundTasks(user.id, creditsUsed, provider, {
         baseCloneCredits: estimate,
@@ -1549,6 +1658,15 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
+    if (reservedCredits > 0 && userId) {
+      await refundReservedCloneCredits({
+        userId,
+        amount: reservedCredits,
+        context: 'clone_voice_failure',
+      });
+      reservedCredits = 0;
+    }
+
     if (error instanceof RouteError) {
       return routeErrorResponse(
         error.serverMessage,

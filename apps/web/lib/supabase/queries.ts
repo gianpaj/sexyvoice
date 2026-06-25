@@ -147,6 +147,51 @@ export async function getCredits(userId: string): Promise<number> {
   return data.amount;
 }
 
+export const INSUFFICIENT_CREDITS_ERROR_CODE = 'INSUFFICIENT_CREDITS';
+
+interface CreditErrorLike {
+  cause?: unknown;
+  code?: unknown;
+  details?: unknown;
+  hint?: unknown;
+  message?: unknown;
+}
+
+export function isInsufficientCreditsError(error: unknown): boolean {
+  if (
+    error instanceof Error &&
+    error.cause === INSUFFICIENT_CREDITS_ERROR_CODE
+  ) {
+    return true;
+  }
+
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const maybeError = error as CreditErrorLike;
+  const errorContext = [
+    maybeError.message,
+    maybeError.details,
+    maybeError.hint,
+    maybeError.code,
+  ]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
+
+  return /insufficient credits/i.test(errorContext);
+}
+
+function toCreditDebitError(error: unknown): unknown {
+  if (!isInsufficientCreditsError(error)) {
+    return error;
+  }
+
+  return new Error('Insufficient credits', {
+    cause: INSUFFICIENT_CREDITS_ERROR_CODE,
+  });
+}
+
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
@@ -195,7 +240,22 @@ export async function reduceCredits({
     credit_amount_var: Math.abs(amount),
   });
 
-  if (creditsError) throw creditsError;
+  if (creditsError) throw toCreditDebitError(creditsError);
+}
+
+export async function restoreCredits({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return;
+  }
+
+  await updateUserCredits(userId, creditAmount);
 }
 
 export async function saveAudioFile({
@@ -659,7 +719,7 @@ export async function reduceCreditsAdmin({
     credit_amount_var: Math.abs(amount),
   });
 
-  if (error) throw error;
+  if (error) throw toCreditDebitError(error);
 }
 
 // biome-ignore lint/suspicious/useAwait: server action

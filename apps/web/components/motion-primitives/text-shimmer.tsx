@@ -11,8 +11,7 @@ export interface TextShimmerProps {
   spread?: number;
 }
 
-const loadFeatures = () =>
-  import('./features').then((res) => res.domAnimation);
+const loadFeatures = () => import('./features').then((res) => res.domAnimation);
 
 export function TextShimmer({
   children,
