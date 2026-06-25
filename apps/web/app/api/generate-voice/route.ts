@@ -512,10 +512,10 @@ export async function POST(request: Request) {
 
       if (userHasPaid) {
         try {
-          modelUsed =
-            voiceObj.model === 'gpro31'
-              ? 'gemini-3.1-flash-tts-preview'
-              : 'gemini-2.5-pro-preview-tts';
+          modelUsed = resolveGeminiTtsModel({
+            model: voiceObj.model,
+            userHasPaid,
+          });
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
@@ -578,10 +578,10 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel:
-                  voiceObj.model === 'gpro31'
-                    ? 'gemini-3.1-flash-tts-preview'
-                    : 'gemini-2.5-pro-preview-tts',
+                originalModel: resolveGeminiTtsModel({
+                  model: voiceObj.model,
+                  userHasPaid,
+                }),
                 fallbackModel: modelUsed,
                 proErrorMessage,
               },
@@ -594,10 +594,10 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel:
-                  voiceObj.model === 'gpro31'
-                    ? 'gemini-3.1-flash-tts-preview'
-                    : 'gemini-2.5-pro-preview-tts',
+                originalModel: resolveGeminiTtsModel({
+                  model: voiceObj.model,
+                  userHasPaid,
+                }),
                 fallbackModel: modelUsed,
                 proErrorMessage,
                 flashErrorMessage:
@@ -1136,12 +1136,10 @@ function streamGeminiTtsResponse({
   reservedCredits: number;
 }): Response {
   const encoder = new TextEncoder();
-  const selectedModel =
-    voiceObj.model === 'gpro31'
-      ? 'gemini-3.1-flash-tts-preview'
-      : userHasPaid
-        ? 'gemini-2.5-pro-preview-tts'
-        : 'gemini-2.5-flash-preview-tts';
+  const selectedModel = resolveGeminiTtsModel({
+    model: voiceObj.model,
+    userHasPaid,
+  });
 
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
