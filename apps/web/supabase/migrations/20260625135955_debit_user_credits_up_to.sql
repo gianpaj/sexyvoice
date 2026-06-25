@@ -121,6 +121,8 @@ $$;
 -- and allow service_role calls from server-only code.
 REVOKE EXECUTE ON FUNCTION public.decrement_user_credits(UUID, INTEGER) FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION public.decrement_user_credits_up_to(UUID, INTEGER) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.decrement_user_credits(UUID, INTEGER) FROM anon;
+REVOKE EXECUTE ON FUNCTION public.decrement_user_credits_up_to(UUID, INTEGER) FROM anon;
 
 GRANT EXECUTE ON FUNCTION public.decrement_user_credits(UUID, INTEGER) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.decrement_user_credits_up_to(UUID, INTEGER) TO authenticated, service_role;
