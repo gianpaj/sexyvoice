@@ -35,6 +35,10 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import {
+  buildGeminiTtsPrompt,
+  resolveGeminiTtsModel,
+} from '@/lib/tts/gemini-prompt';
 import { generateXaiTts } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -357,10 +361,11 @@ export async function POST(request: Request) {
     // model follows direction best when the style and transcript are sent as
     // labelled sections rather than an inline prefix.
     if (isGeminiVoice && styleVariant) {
-      text =
-        voiceObj.model === 'gpro31'
-          ? `### DIRECTOR'S NOTES\nStyle: ${styleVariant}\n\n## TRANSCRIPT\n${text}`
-          : `${styleVariant}: ${text}`;
+      text = buildGeminiTtsPrompt({
+        model: voiceObj.model,
+        text,
+        styleVariant,
+      });
     }
 
     if (!userHasPaid && voiceObj.model === 'gpro') {
@@ -399,11 +404,7 @@ export async function POST(request: Request) {
     // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
     // seeded requests never share a cache entry.
     const effectiveModel = isGeminiVoice
-      ? userHasPaid
-        ? voiceObj.model === 'gpro31'
-          ? 'gemini-3.1-flash-tts-preview'
-          : 'gemini-2.5-pro-preview-tts'
-        : 'gemini-2.5-flash-preview-tts'
+      ? resolveGeminiTtsModel({ model: voiceObj.model, userHasPaid })
       : voiceObj.model;
 
     const hashInput =
@@ -511,10 +512,10 @@ export async function POST(request: Request) {
 
       if (userHasPaid) {
         try {
-          modelUsed =
-            voiceObj.model === 'gpro31'
-              ? 'gemini-3.1-flash-tts-preview'
-              : 'gemini-2.5-pro-preview-tts';
+          modelUsed = resolveGeminiTtsModel({
+            model: voiceObj.model,
+            userHasPaid,
+          });
 
           genAIResponse = await ai.models.generateContent({
             model: modelUsed,
@@ -577,10 +578,10 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel:
-                  voiceObj.model === 'gpro31'
-                    ? 'gemini-3.1-flash-tts-preview'
-                    : 'gemini-2.5-pro-preview-tts',
+                originalModel: resolveGeminiTtsModel({
+                  model: voiceObj.model,
+                  userHasPaid,
+                }),
                 fallbackModel: modelUsed,
                 proErrorMessage,
               },
@@ -593,10 +594,10 @@ export async function POST(request: Request) {
               },
               extra: {
                 ...geminiRequestContext,
-                originalModel:
-                  voiceObj.model === 'gpro31'
-                    ? 'gemini-3.1-flash-tts-preview'
-                    : 'gemini-2.5-pro-preview-tts',
+                originalModel: resolveGeminiTtsModel({
+                  model: voiceObj.model,
+                  userHasPaid,
+                }),
                 fallbackModel: modelUsed,
                 proErrorMessage,
                 flashErrorMessage:
@@ -611,7 +612,10 @@ export async function POST(request: Request) {
           }
         }
       } else {
-        modelUsed = 'gemini-2.5-flash-preview-tts';
+        modelUsed = resolveGeminiTtsModel({
+          model: voiceObj.model,
+          userHasPaid,
+        });
         genAIResponse = await ai.models.generateContent({
           model: modelUsed,
           contents: [{ role: 'user', parts: [{ text }] }],
@@ -1135,12 +1139,10 @@ function streamGeminiTtsResponse({
   reservedCredits: number;
 }): Response {
   const encoder = new TextEncoder();
-  const selectedModel =
-    voiceObj.model === 'gpro31'
-      ? 'gemini-3.1-flash-tts-preview'
-      : userHasPaid
-        ? 'gemini-2.5-pro-preview-tts'
-        : 'gemini-2.5-flash-preview-tts';
+  const selectedModel = resolveGeminiTtsModel({
+    model: voiceObj.model,
+    userHasPaid,
+  });
 
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();

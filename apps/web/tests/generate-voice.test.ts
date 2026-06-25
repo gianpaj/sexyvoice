@@ -1203,6 +1203,81 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
+    it('uses Gemini 3.1 for free users on gpro31 voices (no flash variant)', async () => {
+      // gpro31 is an explicit voice choice with no flash variant, so free users
+      // who pick it run on 3.1 too — what we estimate/charge/cache must match.
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      } as GenerateContentResponse);
+
+      setMockGoogleGenAIFactory(() => ({
+        models: { generateContent },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+        }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'gemini-3.1-flash-tts-preview' }),
+      );
+    });
+
+    it('uses Gemini 3.1 for free users streaming gpro31 voices', async () => {
+      const generateContentStream = vi
+        .fn()
+        .mockImplementation(async function* () {
+          yield createDefaultStreamChunk();
+        });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+
+      expect(response.headers.get('content-type')).toContain(
+        'text/event-stream',
+      );
+      expect(generateContentStream).toHaveBeenCalledWith(
+        expect.objectContaining({ model: 'gemini-3.1-flash-tts-preview' }),
+      );
+    });
+
     it('should fallback to flash model when pro model fails for paid Gemini users', async () => {
       const { hasUserPaid, saveAudioFile } = await import(
         '@/lib/supabase/queries'
