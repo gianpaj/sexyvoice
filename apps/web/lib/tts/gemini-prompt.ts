@@ -42,7 +42,7 @@ export function buildGeminiTtsPrompt({
 }: {
   model: string;
   text: string;
-  styleVariant: string;
+  styleVariant?: string;
 }): string {
   if (!styleVariant) {
     return text;
