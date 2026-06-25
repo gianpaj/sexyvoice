@@ -5,6 +5,8 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
+
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 const ROLLING_WINDOW_DAYS = 14;
@@ -61,17 +63,12 @@ export async function GET(request: NextRequest) {
 
   const authHeader = request.headers.get('authorization');
   if (isProd && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', {
-      status: 401,
-    });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const webhook = process.env.TELEGRAM_WEBHOOK_URL;
   if (!webhook) {
-    return NextResponse.json(
-      { error: 'Missing TELEGRAM_WEBHOOK_URL' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Missing TELEGRAM_WEBHOOK_URL', 500);
   }
 
   let checkInId = '';
@@ -1479,9 +1476,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
     if (!isProd) {
-      return NextResponse.json({
-        error: 'Failed to send Telegram message',
-      });
+      return APIErrorResponse('Failed to send Telegram message', 500);
     }
     Sentry.captureException(error);
     Sentry.captureCheckIn({

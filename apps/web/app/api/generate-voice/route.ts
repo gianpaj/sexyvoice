@@ -19,6 +19,7 @@ import {
 } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
+import { APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -215,10 +216,15 @@ export async function POST(request: Request) {
   try {
     if (request.body === null) {
       logger.error('Request body is empty');
-      return new Response('Request body is empty', { status: 400 });
+      return APIErrorResponse('Request body is empty', 400);
     }
 
-    const body = await request.json();
+    let body: Awaited<ReturnType<typeof request.json>>;
+    try {
+      body = await request.json();
+    } catch {
+      return APIErrorResponse('Invalid JSON in request body', 400);
+    }
     text = body.text || '';
     voiceId = body.voiceId || '';
     styleVariant = body.styleVariant || '';
@@ -234,10 +240,7 @@ export async function POST(request: Request) {
         hasText: Boolean(text),
         hasVoiceId: Boolean(voiceId),
       });
-      return NextResponse.json(
-        { error: 'Missing required parameters' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Missing required parameters', 400);
     }
 
     const supabase = await createClient();
@@ -249,7 +252,7 @@ export async function POST(request: Request) {
       logger.error('User not found', {
         voiceId,
       });
-      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+      return APIErrorResponse('User not found', 401);
     }
 
     Sentry.setUser({
@@ -262,7 +265,7 @@ export async function POST(request: Request) {
     if (!voiceObj) {
       const error = new Error('Voice not found');
       captureException(error, { extra: { voiceId, text } });
-      return NextResponse.json({ error: 'Voice not found' }, { status: 404 });
+      return APIErrorResponse('Voice not found', 404);
     }
 
     voiceName = voiceObj.name;
@@ -295,11 +298,9 @@ export async function POST(request: Request) {
           estimatedTokens,
           combinedTokenLimit,
         });
-        return NextResponse.json(
-          {
-            error: `Text and style exceed the maximum of ${combinedTokenLimit} tokens`,
-          },
-          { status: 400 },
+        return APIErrorResponse(
+          `Text and style exceed the maximum of ${combinedTokenLimit} tokens`,
+          400,
         );
       }
     } else {
@@ -309,11 +310,9 @@ export async function POST(request: Request) {
           textLength: text.length,
           maxLength,
         });
-        return NextResponse.json(
-          {
-            error: `Text exceeds the maximum length of ${maxLength} characters`,
-          },
-          { status: 400 },
+        return APIErrorResponse(
+          `Text exceeds the maximum length of ${maxLength} characters`,
+          400,
         );
       }
 
@@ -326,11 +325,9 @@ export async function POST(request: Request) {
             styleLength: styleVariant.length,
             styleLimit,
           });
-          return NextResponse.json(
-            {
-              error: `Style exceeds the maximum length of ${styleLimit} characters`,
-            },
-            { status: 400 },
+          return APIErrorResponse(
+            `Style exceeds the maximum length of ${styleLimit} characters`,
+            400,
           );
         }
       }
@@ -376,10 +373,7 @@ export async function POST(request: Request) {
           currentCreditsAmount: currentAmount,
         },
       });
-      return NextResponse.json(
-        { error: 'Insufficient credits' },
-        { status: 402 },
-      );
+      return APIErrorResponse('Insufficient credits', 402);
     }
 
     // Resolve the effective model before hashing so paid/free, 2.5/3.1, and
@@ -517,10 +511,7 @@ export async function POST(request: Request) {
               context: 'gemini_generate_abort',
             });
             reservedCredits = 0;
-            return NextResponse.json(
-              { error: 'Request aborted' },
-              { status: 499 },
-            );
+            return APIErrorResponse('Request aborted', 499);
           }
 
           const proErrorMessage =
@@ -960,10 +951,7 @@ export async function POST(request: Request) {
         user: user ? { id: user.id, email: user.email } : undefined,
         extra: { voiceName, textLength: text.length },
       });
-      return NextResponse.json(
-        { error: 'Insufficient credits' },
-        { status: 402 },
-      );
+      return APIErrorResponse('Insufficient credits', 402);
     }
 
     // Client disconnected — do not attempt to write to a dead socket (prevents write EPIPE)
@@ -972,33 +960,27 @@ export async function POST(request: Request) {
     }
     if (isAbortError(error)) {
       console.info('Gemini voice generation aborted');
-      return NextResponse.json({ error: 'Request aborted' }, { status: 499 });
+      return APIErrorResponse('Request aborted', 499);
     }
 
     if (Error.isError(error) && error.cause === 'PROHIBITED_CONTENT') {
-      return NextResponse.json(
-        {
-          error: error.message || 'Voice generation failed, please retry',
-        },
-        { status: getErrorStatusCode(error.cause) },
+      return APIErrorResponse(
+        error.message || 'Voice generation failed, please retry',
+        getErrorStatusCode(error.cause),
       );
     }
 
     if (Error.isError(error) && error.cause === 'OTHER_GEMINI_BLOCK') {
-      return NextResponse.json(
-        {
-          error: error.message || 'Voice generation failed, please retry',
-        },
-        { status: getErrorStatusCode(error.cause) },
+      return APIErrorResponse(
+        error.message || 'Voice generation failed, please retry',
+        getErrorStatusCode(error.cause),
       );
     }
 
     if (Error.isError(error) && error.cause === 'NO_AUDIO_DATA') {
-      return NextResponse.json(
-        {
-          error: error.message || 'Voice generation returned no audio',
-        },
-        { status: getErrorStatusCode(error.cause) },
+      return APIErrorResponse(
+        error.message || 'Voice generation returned no audio',
+        getErrorStatusCode(error.cause),
       );
     }
 
@@ -1016,16 +998,14 @@ export async function POST(request: Request) {
           },
         });
 
-        return NextResponse.json(
-          {
-            error: getErrorMessage(
-              userHasPaid
-                ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
-                : ERROR_CODES.FREE_QUOTA_EXCEEDED,
-              'voice-generation',
-            ),
-          },
-          { status: 429 },
+        return APIErrorResponse(
+          getErrorMessage(
+            userHasPaid
+              ? ERROR_CODES.THIRD_P_QUOTA_EXCEEDED
+              : ERROR_CODES.FREE_QUOTA_EXCEEDED,
+            'voice-generation',
+          ),
+          429,
         );
       }
 
@@ -1040,14 +1020,12 @@ export async function POST(request: Request) {
           },
         });
 
-        return NextResponse.json(
-          {
-            error: getErrorMessage(
-              ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
-              'voice-generation',
-            ),
-          },
-          { status: 503 },
+        return APIErrorResponse(
+          getErrorMessage(
+            ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
+            'voice-generation',
+          ),
+          503,
         );
       }
 
@@ -1063,25 +1041,18 @@ export async function POST(request: Request) {
         });
 
         if (isGeminiInputTooLongError(error)) {
-          return NextResponse.json(
-            {
-              error: getErrorMessage(
-                ERROR_CODES.GEMINI_INPUT_TOO_LONG,
-                'voice-generation',
-              ),
-            },
-            { status: getErrorStatusCode(ERROR_CODES.GEMINI_INPUT_TOO_LONG) },
+          return APIErrorResponse(
+            getErrorMessage(
+              ERROR_CODES.GEMINI_INPUT_TOO_LONG,
+              'voice-generation',
+            ),
+            getErrorStatusCode(ERROR_CODES.GEMINI_INPUT_TOO_LONG),
           );
         }
 
-        return NextResponse.json(
-          {
-            error: getErrorMessage(
-              ERROR_CODES.OTHER_GEMINI_BLOCK,
-              'voice-generation',
-            ),
-          },
-          { status: 422 },
+        return APIErrorResponse(
+          getErrorMessage(ERROR_CODES.OTHER_GEMINI_BLOCK, 'voice-generation'),
+          422,
         );
       }
     }
@@ -1102,18 +1073,13 @@ export async function POST(request: Request) {
       Error.isError(error) &&
       Object.keys(ERROR_CODES).includes(String(error.cause))
     ) {
-      return NextResponse.json(
-        {
-          error: error.message || 'Voice generation failed, please retry',
-        },
-        { status: getErrorStatusCode(error.cause) },
+      return APIErrorResponse(
+        error.message || 'Voice generation failed, please retry',
+        getErrorStatusCode(error.cause),
       );
     }
 
-    return NextResponse.json(
-      { error: 'Failed to generate voice' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to generate voice', 500);
   }
 }
 
