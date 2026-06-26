@@ -188,6 +188,10 @@
             {
               "question": "How much does it cost?",
               "answer": "Live calling costs {count} credits per minute while you're connected."
+            },
+            {
+              "question": "Does the AI remember our previous conversations?",
+              "answer": "Only if you turn on memory — it's optional and off by default, so normally nothing from your calls is stored. When enabled, the assistant keeps a few short details (like how you like to be addressed and topics you enjoy), not full recordings or transcripts, so it can pick up where you left off next time. We keep only your most recent details, you can erase everything at any time, and deleting your account removes them automatically."
             }
           ]
         },

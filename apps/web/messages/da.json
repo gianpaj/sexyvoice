@@ -188,6 +188,10 @@
             {
               "question": "Hvor meget koster det?",
               "answer": "Live-opkald koster {count} kreditter pr. minut, mens du er forbundet."
+            },
+            {
+              "question": "Husker AI'en vores tidligere samtaler?",
+              "answer": "Kun hvis du slår hukommelse til – den er valgfri og slået fra som standard, så normalt gemmes intet fra dine opkald. Når den er slået til, husker assistenten nogle få korte oplysninger (som hvordan du gerne vil tiltales, og hvilke emner du kan lide), ikke optagelser eller fulde udskrifter, så den kan fortsætte, hvor I slap. Vi gemmer kun dine nyeste oplysninger, du kan slette alt når som helst, og hvis du sletter din konto, fjernes de automatisk."
             }
           ]
         },

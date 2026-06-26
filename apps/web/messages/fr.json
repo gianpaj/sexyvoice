@@ -188,6 +188,10 @@
             {
               "question": "Combien ça coûte ?",
               "answer": "Les appels en direct coûtent {count} crédits par minute pendant que vous êtes connecté."
+            },
+            {
+              "question": "L'IA se souvient-elle de nos conversations précédentes ?",
+              "answer": "Uniquement si vous activez la mémoire : elle est facultative et désactivée par défaut, donc en principe rien de vos appels n'est conservé. Lorsqu'elle est activée, l'assistant retient quelques informations courtes (comme la façon dont vous aimez qu'on s'adresse à vous et les sujets que vous appréciez), pas d'enregistrements ni de transcriptions complètes, afin de reprendre là où vous vous étiez arrêté. Nous ne conservons que vos informations les plus récentes, vous pouvez tout effacer à tout moment, et la suppression de votre compte les supprime automatiquement."
             }
           ]
         },
