@@ -477,6 +477,7 @@
     "configurationTitle": "Konfiguration",
     "memoryLabel": "Erinnerung",
     "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Es wird nichts gespeichert, sofern es nicht aktiviert ist.",
+    "memoryUpgradeTooltip": "Wechsle zu einem kostenpflichtigen Tarif, damit die Charaktere sich zwischen Anrufen an dich erinnern.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",

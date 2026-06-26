@@ -477,6 +477,7 @@
     "configurationTitle": "Configuration",
     "memoryLabel": "Mémoire",
     "memoryDescription": "Laissez les personnages se souvenir de vous d’un appel à l’autre. Rien n’est enregistré sauf si c’est activé.",
+    "memoryUpgradeTooltip": "Passez à une offre payante pour que les personnages se souviennent de vous d’un appel à l’autre.",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
     "sceneLabel": "Scène",

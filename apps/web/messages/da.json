@@ -477,6 +477,7 @@
     "configurationTitle": "Konfiguration",
     "memoryLabel": "Hukommelse",
     "memoryDescription": "Lad karaktererne huske dig mellem opkald. Der gemmes intet, medmindre det er slået til.",
+    "memoryUpgradeTooltip": "Opgrader til en betalt plan, så karaktererne kan huske dig mellem opkald.",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
     "sceneLabel": "Scene",
