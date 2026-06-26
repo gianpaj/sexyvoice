@@ -476,7 +476,7 @@
     "freeUserCallLimitExceeded": "Los usuarios gratuitos están limitados a 5 minutos de llamadas. Por favor, actualiza tu cuenta para continuar.",
     "configurationTitle": "Configuración",
     "memoryLabel": "Memoria",
-    "memoryDescription": "Deja que el asistente te recuerde entre llamadas. Desactivado por defecto: no se guarda nada a menos que lo actives.",
+    "memoryDescription": "Deja que los personajes te recuerden entre llamadas. No se guarda nada a menos que esté activado.",
     "languageLabel": "Idioma",
     "languagePlaceholder": "Elige un idioma",
     "sceneLabel": "Escena",

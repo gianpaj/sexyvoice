@@ -476,7 +476,7 @@
     "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
     "memoryLabel": "Hukommelse",
-    "memoryDescription": "Lad assistenten huske dig mellem opkald. Slået fra som standard – der gemmes intet, medmindre du aktiverer det.",
+    "memoryDescription": "Lad karaktererne huske dig mellem opkald. Der gemmes intet, medmindre det er slået til.",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
     "sceneLabel": "Scene",

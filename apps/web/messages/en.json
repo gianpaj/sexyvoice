@@ -476,7 +476,7 @@
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
     "memoryLabel": "Memory",
-    "memoryDescription": "Let the assistant remember you between calls. Off by default — nothing is stored unless you turn it on.",
+    "memoryDescription": "Let the characters remember you between calls. Nothing is stored unless it's on.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
