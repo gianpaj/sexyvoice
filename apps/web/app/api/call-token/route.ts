@@ -116,6 +116,7 @@ export async function POST(request: Request) {
       sceneInstructions,
       selectedPresetId,
       selectedSceneId,
+      memory,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
@@ -237,6 +238,10 @@ export async function POST(request: Request) {
       character_id: selectedPresetId,
       scene_id: selectedSceneId ?? null,
       scene_modified: sceneModified,
+      // Long-term memory opt-in. Absent/false → the agent stores nothing.
+      // Scope is per-user only for now (sexycall defaults memory_scope to
+      // "user"); per-character scope is deferred.
+      memory: memory ?? false,
     };
 
     // Create access token
