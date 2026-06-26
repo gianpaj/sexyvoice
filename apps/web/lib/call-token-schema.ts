@@ -43,8 +43,7 @@ export const callTokenPlaygroundStateSchema = z.object({
     .optional(),
   // Long-term memory (opt-in). When true, the agent (sexycall) preloads and
   // stores distilled facts for this user across calls. Off/absent → nothing is
-  // stored. NOTE: per-user scope only for now; `memory_scope` (per-character)
-  // is intentionally deferred — see sexycall docs/plans/memory-retention-slot-cap.md.
+  // stored.
   memory: z.boolean().optional(),
   sessionConfig: sessionConfigSchema,
 });
