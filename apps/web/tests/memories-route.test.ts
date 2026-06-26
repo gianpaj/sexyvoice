@@ -1,19 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Mock state – declared before vi.mock() so the factory can reference it
+// Mock state – declared before vi.mock() so the factory can reference it.
+// Vitest hoists vi.mock() above these declarations, so every variable the
+// factory closes over is `mock`-prefixed per Vitest's convention.
 // ---------------------------------------------------------------------------
 const mockUser = {
   id: 'a1b2c3d4-5678-4abc-9def-012345678901',
   email: 'test@example.com',
 };
 let mockIsAuthenticated = true;
+let mockAuthError: { message: string } | null = null;
 let mockDeleteError: { message: string } | null = null;
 let mockDeletedRows: Array<{ id: number }> = [];
 
 // Capture the table name and user_id filter the route applies, so we can
 // assert the erasure is correctly scoped to the authenticated user.
-const calls = {
+const mockCalls = {
   table: null as string | null,
   filter: null as { column: string; value: unknown } | null,
 };
@@ -26,20 +29,25 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() =>
     Promise.resolve({
       auth: {
-        getUser: vi.fn(() =>
-          Promise.resolve(
-            mockIsAuthenticated
-              ? { data: { user: mockUser }, error: null }
-              : { data: { user: null }, error: null },
-          ),
-        ),
+        getUser: vi.fn(() => {
+          if (mockAuthError) {
+            return Promise.resolve({
+              data: { user: null },
+              error: mockAuthError,
+            });
+          }
+          return Promise.resolve({
+            data: { user: mockIsAuthenticated ? mockUser : null },
+            error: null,
+          });
+        }),
       },
       from: (table: string) => {
-        calls.table = table;
+        mockCalls.table = table;
         const builder = {
           delete: () => builder,
           eq: (column: string, value: unknown) => {
-            calls.filter = { column, value };
+            mockCalls.filter = { column, value };
             return builder;
           },
           select: () =>
@@ -65,10 +73,11 @@ import { DELETE } from '@/app/api/memories/route';
 describe('DELETE /api/memories', () => {
   beforeEach(() => {
     mockIsAuthenticated = true;
+    mockAuthError = null;
     mockDeleteError = null;
     mockDeletedRows = [];
-    calls.table = null;
-    calls.filter = null;
+    mockCalls.table = null;
+    mockCalls.filter = null;
   });
 
   it('returns 401 for an unauthenticated user', async () => {
@@ -78,7 +87,17 @@ describe('DELETE /api/memories', () => {
 
     expect(res.status).toBe(401);
     // No DB access should happen when unauthenticated.
-    expect(calls.table).toBeNull();
+    expect(mockCalls.table).toBeNull();
+  });
+
+  it('returns 401 when getUser reports an auth error', async () => {
+    mockAuthError = { message: 'session expired' };
+
+    const res = await DELETE();
+
+    expect(res.status).toBe(401);
+    // No DB access should happen when authentication fails.
+    expect(mockCalls.table).toBeNull();
   });
 
   it('erases the authenticated user own memories and reports the count', async () => {
@@ -90,8 +109,11 @@ describe('DELETE /api/memories', () => {
     expect(res.status).toBe(200);
     expect(body).toEqual({ success: true, deleted: 3 });
     // Erasure must target agent_memories scoped to the current user only.
-    expect(calls.table).toBe('agent_memories');
-    expect(calls.filter).toEqual({ column: 'user_id', value: mockUser.id });
+    expect(mockCalls.table).toBe('agent_memories');
+    expect(mockCalls.filter).toEqual({
+      column: 'user_id',
+      value: mockUser.id,
+    });
   });
 
   it('reports zero deleted when the user has no memories', async () => {
