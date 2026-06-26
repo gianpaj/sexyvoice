@@ -70,6 +70,7 @@ type Action =
   | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
+  | { type: 'SET_MEMORY'; payload: boolean }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
@@ -148,6 +149,11 @@ function playgroundStateReducer(
           : (selectedScene?.text ?? ''),
       };
     }
+    case 'SET_MEMORY':
+      return {
+        ...state,
+        memory: action.payload,
+      };
     case 'SAVE_CUSTOM_CHARACTER': {
       const language = state.language;
       const existingCharacter = state.customCharacters.find(

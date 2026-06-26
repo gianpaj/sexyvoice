@@ -471,6 +471,8 @@
     "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
     "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 5 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
+    "memoryLabel": "Mémoire",
+    "memoryDescription": "Laissez l’assistant se souvenir de vous d’un appel à l’autre. Désactivé par défaut : rien n’est enregistré sauf si vous l’activez.",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
     "sceneLabel": "Scène",

@@ -471,6 +471,8 @@
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
+    "memoryLabel": "Erinnerung",
+    "memoryDescription": "Lass den Assistenten sich zwischen Anrufen an dich erinnern. Standardmäßig aus – es wird nichts gespeichert, sofern du es nicht aktivierst.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",

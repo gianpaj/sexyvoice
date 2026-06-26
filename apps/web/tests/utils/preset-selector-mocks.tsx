@@ -232,6 +232,7 @@ export function createDefaultPgState(
     sceneInstructions: '',
     instructions: 'test instructions',
     language: 'en' as const,
+    memory: false,
     initialInstruction: 'Say hi',
     defaultPresets: defaultPresetsFixture,
     ...overrides,

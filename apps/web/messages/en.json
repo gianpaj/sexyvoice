@@ -471,6 +471,8 @@
     "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
+    "memoryLabel": "Memory",
+    "memoryDescription": "Let the assistant remember you between calls. Off by default — nothing is stored unless you turn it on.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",

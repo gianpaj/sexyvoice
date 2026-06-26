@@ -471,6 +471,8 @@
     "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è {count}",
     "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
+    "memoryLabel": "Memoria",
+    "memoryDescription": "Lascia che l’assistente ti ricordi tra una chiamata e l’altra. Disattivato di default: non viene memorizzato nulla se non lo attivi.",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
     "sceneLabel": "Scena",
