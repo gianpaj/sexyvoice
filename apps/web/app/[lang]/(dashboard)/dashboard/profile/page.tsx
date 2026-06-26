@@ -10,6 +10,7 @@ import {
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
+import { DeleteMemoryForm } from './delete-memory-form';
 import { SecurityForm } from './security-form';
 
 export default async function ProfilePage(props: {
@@ -34,6 +35,15 @@ export default async function ProfilePage(props: {
         </CardHeader>
         <CardContent>
           <SecurityForm email={user.email} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('memory.title')}</CardTitle>
+          <CardDescription>{t('memory.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DeleteMemoryForm />
         </CardContent>
       </Card>
       <Card>

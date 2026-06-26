@@ -737,6 +737,17 @@
         "cancel": "Cancelar",
         "confirm": "Sí, revocar"
       }
+    },
+    "memory": {
+      "title": "Memoria de llamadas de voz",
+      "description": "Si activas la memoria durante las llamadas, los personajes recuerdan algunos datos sobre ti para mantener la continuidad. Aquí puedes borrarlo todo.",
+      "button": "Eliminar todas las memorias",
+      "confirmTitle": "¿Eliminar todas las memorias de las llamadas de voz?",
+      "confirmDescription": "Esto borra de forma permanente todo lo que los personajes han recordado sobre ti en llamadas anteriores. No se puede deshacer.",
+      "cancel": "Cancelar",
+      "continue": "Eliminar",
+      "success": "Tus memorias de llamadas de voz se han eliminado.",
+      "error": "No se han podido eliminar tus memorias. Inténtalo de nuevo."
     }
   },
   "apiBilling": {

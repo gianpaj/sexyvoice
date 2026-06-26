@@ -737,6 +737,17 @@
         "cancel": "Abbrechen",
         "confirm": "Widerrufen"
       }
+    },
+    "memory": {
+      "title": "Sprachanruf-Erinnerung",
+      "description": "Wenn du die Erinnerungsfunktion während Anrufen aktivierst, merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
+      "button": "Alle Erinnerungen löschen",
+      "confirmTitle": "Alle Sprachanruf-Erinnerungen löschen?",
+      "confirmDescription": "Dadurch wird dauerhaft alles gelöscht, was sich die Charaktere aus früheren Anrufen über dich gemerkt haben. Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "continue": "Löschen",
+      "success": "Deine Sprachanruf-Erinnerungen wurden gelöscht.",
+      "error": "Deine Erinnerungen konnten nicht gelöscht werden. Bitte versuche es erneut."
     }
   },
   "apiBilling": {

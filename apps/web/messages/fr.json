@@ -737,6 +737,17 @@
         "cancel": "Annuler",
         "confirm": "Révoquer"
       }
+    },
+    "memory": {
+      "title": "Mémoire des appels vocaux",
+      "description": "Si vous activez la mémoire pendant les appels, les personnages retiennent quelques informations sur vous pour assurer la continuité. Vous pouvez tout effacer ici.",
+      "button": "Supprimer toutes les mémoires",
+      "confirmTitle": "Supprimer toutes les mémoires des appels vocaux ?",
+      "confirmDescription": "Cela efface définitivement tout ce que les personnages ont retenu de vous lors des appels précédents. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "continue": "Supprimer",
+      "success": "Vos mémoires d’appels vocaux ont été supprimées.",
+      "error": "Impossible de supprimer vos mémoires. Veuillez réessayer."
     }
   },
   "apiBilling": {

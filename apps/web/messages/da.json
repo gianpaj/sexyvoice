@@ -737,6 +737,17 @@
         "cancel": "Annuller",
         "confirm": "Tilbagekald"
       }
+    },
+    "memory": {
+      "title": "Hukommelse for stemmeopkald",
+      "description": "Hvis du slår hukommelse til under opkald, husker karaktererne nogle få oplysninger om dig for at bevare sammenhængen. Du kan slette det hele her.",
+      "button": "Slet al hukommelse",
+      "confirmTitle": "Slet al hukommelse fra stemmeopkald?",
+      "confirmDescription": "Dette sletter permanent alt, hvad karaktererne har husket om dig fra tidligere opkald. Det kan ikke fortrydes.",
+      "cancel": "Annuller",
+      "continue": "Slet",
+      "success": "Din hukommelse fra stemmeopkald blev slettet.",
+      "error": "Din hukommelse kunne ikke slettes. Prøv igen."
     }
   },
   "apiBilling": {
