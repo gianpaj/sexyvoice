@@ -53,6 +53,7 @@ vi.mock('@/lib/ai', () => ({
   ),
   estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
   GEMINI_CHARS_PER_TOKEN: 4,
+  GEMINI_STREAMING_ENABLED: false,
 }));
 
 vi.mock('@/lib/download', () => ({

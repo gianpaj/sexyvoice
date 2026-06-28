@@ -72,6 +72,15 @@ const GEMINI_31_TOKEN_LIMIT_PAID = 8192;
 // token is the conventional rough heuristic for English-like text.
 export const GEMINI_CHARS_PER_TOKEN = 4;
 
+// HOTFIX: Gemini 3.1 (gpro31) progressive streaming was corrupting some
+// generations, so streaming — and the larger combined input *token* budget that
+// shipped with it — are temporarily disabled. While this is `false`, gpro31 uses
+// the non-streaming JSON path and the standard per-tier *character* limits
+// (getCharactersLimit) with a separate style-prompt cap, exactly like the Gemini
+// 2.5 voices. Flip back to `true` to restore streaming + the combined token
+// budget once the streaming corruption is fixed.
+export const GEMINI_STREAMING_ENABLED = false;
+
 /** Character limit for the Gemini 2.5 style prompt, per tier. */
 export const getGeminiStyleCharacterLimit = (isPaidUser = false) =>
   isPaidUser ? GEMINI_25_STYLE_LIMIT_PAID : GEMINI_25_STYLE_LIMIT_FREE;

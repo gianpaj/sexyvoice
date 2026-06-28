@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   estimateTokenCount,
   GEMINI_CHARS_PER_TOKEN,
+  GEMINI_STREAMING_ENABLED,
   getCharactersLimit,
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
@@ -306,7 +307,10 @@ export function AudioGenerator({
   // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
   // synthesize the whole clip and return it in a single chunk, so streaming
   // there gives no time-to-first-audio benefit — keep them on the JSON path.
-  const isStreamingModel = selectedVoice?.model === 'gpro31';
+  // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
+  // progressive streaming corrupted some gpro31 generations.
+  const isStreamingModel =
+    GEMINI_STREAMING_ENABLED && selectedVoice?.model === 'gpro31';
   // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
   // toward the expected total length before the exact duration is known.
   const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
@@ -318,7 +322,13 @@ export function AudioGenerator({
   // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
   // and the style, so its transcript "character limit" is that token budget
   // expressed in approximate characters. Other voices keep the per-tier cap.
-  const isGemini31 = isGeminiVoice && selectedVoice?.model === 'gpro31';
+  // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
+  // gpro31 reverts to the standard per-tier character limits and the separate
+  // style-prompt cap, like the Gemini 2.5 voices.
+  const isGemini31 =
+    GEMINI_STREAMING_ENABLED &&
+    isGeminiVoice &&
+    selectedVoice?.model === 'gpro31';
   const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
   const charactersLimit = isGemini31
     ? getGeminiCombinedTokenLimit(isPaidUser) * GEMINI_CHARS_PER_TOKEN
