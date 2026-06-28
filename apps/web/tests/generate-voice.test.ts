@@ -2079,6 +2079,35 @@ describe('Generate Voice API Route', () => {
     });
   });
 
+  describe('Streaming disabled (hotfix)', () => {
+    it('rejects stream: true for gpro31 with 409 and does not debit credits', async () => {
+      const { reduceCredits } = await import('@/lib/supabase/queries');
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      // Stale bundles that still request the SSE path get a fast non-OK
+      // response instead of a JSON body that would hang their SSE parser.
+      expect(response.status).toBe(409);
+      expect(response.headers.get('content-type')).not.toContain(
+        'text/event-stream',
+      );
+      expect(json.error).toBeTruthy();
+      // Fail-fast happens before any credit reservation.
+      expect(reduceCredits).not.toHaveBeenCalled();
+    });
+  });
+
   // HOTFIX: Gemini 3.1 (gpro31) streaming is disabled via GEMINI_STREAMING_ENABLED
   // because progressive streaming corrupted some generations. The SSE path is
   // retained in the route for a future re-enable, so this suite is parked rather

@@ -302,13 +302,29 @@ export async function POST(request: Request) {
     // return audio progressively. The 2.5 models emit the whole clip in a
     // single chunk, so streaming gives no benefit — they keep the JSON path,
     // as do Grok/Replicate voices.
+    const clientRequestedStream =
+      stream && isGeminiVoice && voiceObj.model === 'gpro31';
     // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
     // progressive streaming corrupted some gpro31 generations.
-    const shouldStream =
-      GEMINI_STREAMING_ENABLED &&
-      stream &&
-      isGeminiVoice &&
-      voiceObj.model === 'gpro31';
+    const shouldStream = GEMINI_STREAMING_ENABLED && clientRequestedStream;
+
+    // HOTFIX: while streaming is disabled, a stale browser bundle from a
+    // previous deploy may still POST `stream: true` and wait for an SSE `done`
+    // event. The non-streaming JSON response never satisfies that contract, so
+    // the client would hang after audio was generated and credits debited.
+    // Fail fast with an explicit non-OK response — before any credit
+    // reservation — so the stale client surfaces an error and the user reloads
+    // to pick up the non-streaming bundle.
+    if (clientRequestedStream && !shouldStream) {
+      logger.warn('Rejected stream request while streaming is disabled', {
+        user: { id: user.id },
+        extra: { voice: voiceObj.name, model: voiceObj.model },
+      });
+      return APIErrorResponse(
+        'Streaming is temporarily disabled. Please refresh the page and try again.',
+        409,
+      );
+    }
 
     userHasPaid = await hasUserPaid(user.id);
 
