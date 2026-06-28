@@ -13,6 +13,7 @@ import Replicate, { type Prediction } from 'replicate';
 import {
   estimateTokenCount,
   extractInlineAudio,
+  GEMINI_STREAMING_ENABLED,
   getCharactersLimit,
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
@@ -301,14 +302,24 @@ export async function POST(request: Request) {
     // return audio progressively. The 2.5 models emit the whole clip in a
     // single chunk, so streaming gives no benefit — they keep the JSON path,
     // as do Grok/Replicate voices.
-    const shouldStream = stream && isGeminiVoice && voiceObj.model === 'gpro31';
+    // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
+    // progressive streaming corrupted some gpro31 generations.
+    const shouldStream =
+      GEMINI_STREAMING_ENABLED &&
+      stream &&
+      isGeminiVoice &&
+      voiceObj.model === 'gpro31';
 
     userHasPaid = await hasUserPaid(user.id);
 
     // Enforce per-tier input limits on the RAW transcript and style before
     // combining them, so the attacker-controlled (and otherwise unbounded)
     // styleVariant cannot bypass the limits or under-estimate credits.
-    const isGemini31 = isGeminiVoice && voiceObj.model === 'gpro31';
+    // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
+    // gpro31 falls back to the standard per-tier character limits below, like
+    // the Gemini 2.5 voices, instead of the larger combined token budget.
+    const isGemini31 =
+      GEMINI_STREAMING_ENABLED && isGeminiVoice && voiceObj.model === 'gpro31';
 
     if (isGemini31) {
       // Gemini 3.1 streams audio, so the transcript and style share one combined
