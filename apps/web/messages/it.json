@@ -477,6 +477,7 @@
     "configurationTitle": "Configurazione",
     "memoryLabel": "Memoria",
     "memoryDescription": "Lascia che i personaggi ti ricordino tra una chiamata e l’altra. Non viene memorizzato nulla a meno che non sia attivo.",
+    "memoryUpgradeTooltip": "Passa a un piano a pagamento per far sì che i personaggi ti ricordino tra una chiamata e l’altra.",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
     "sceneLabel": "Scena",

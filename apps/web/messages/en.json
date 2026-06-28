@@ -477,6 +477,7 @@
     "configurationTitle": "Configuration",
     "memoryLabel": "Memory",
     "memoryDescription": "Let the characters remember you between calls. Nothing is stored unless it's on.",
+    "memoryUpgradeTooltip": "Upgrade to a paid plan to let the characters remember you between calls.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
