@@ -407,7 +407,12 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
+    const estimate = estimateCredits(
+      text,
+      voiceObj.name,
+      voiceObj.model,
+      userHasPaid,
+    );
 
     // console.log({
     //   estimate,
@@ -876,6 +881,7 @@ export async function POST(request: Request) {
     if (isGeminiVoice && usage) {
       creditsUsed = calculateCreditsFromTokens(
         Number.parseInt(usage.totalTokenCount, 10),
+        { model: voiceObj.model, userHasPaid },
       );
     }
 
@@ -1292,6 +1298,7 @@ function streamGeminiTtsResponse({
       if (streamUsageMetadata?.totalTokenCount) {
         creditsUsed = calculateCreditsFromTokens(
           streamUsageMetadata.totalTokenCount,
+          { model: voiceObj.model, userHasPaid },
         );
       }
       const creditsDebited = await reconcileReservedCredits({
