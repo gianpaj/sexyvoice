@@ -6,6 +6,7 @@ import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
 import type { CloneProvider } from '@/lib/clone/constants';
+import { GEMINI_TTS_31 } from '@/lib/tts/gemini-prompt';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -49,11 +50,17 @@ const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 // so they are not affected.
 const GEMINI_31_FREE_CREDIT_MULTIPLIER = 2;
 
+// `model` may be the stored voice token (`gpro31`), used by the estimate and the
+// upfront reservation, or the resolved provider model id, used when billing the
+// actual generation. Keying on both means the surcharge follows the audio that
+// was really produced: a free 3.1 request that errors out and falls back to
+// 2.5 Flash bills at 1×, not 2×.
 function getGemini31FreeMultiplier(
   model?: string,
   userHasPaid?: boolean,
 ): number {
-  return model === 'gpro31' && userHasPaid === false
+  const isGemini31 = model === 'gpro31' || model === GEMINI_TTS_31;
+  return isGemini31 && userHasPaid === false
     ? GEMINI_31_FREE_CREDIT_MULTIPLIER
     : 1;
 }

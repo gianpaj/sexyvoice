@@ -126,6 +126,26 @@ describe('calculateCreditsFromTokens', () => {
       calculateCreditsFromTokens(100, { model: 'gpro', userHasPaid: false }),
     ).toBe(calculateCreditsFromTokens(100));
   });
+
+  test('should double credits when billed against the resolved 3.1 model id', () => {
+    expect(
+      calculateCreditsFromTokens(100, {
+        model: 'gemini-3.1-flash-tts-preview',
+        userHasPaid: false,
+      }),
+    ).toBe(Math.ceil(100 * 1.1 * 2));
+  });
+
+  test('should not surcharge a free 3.1 request that fell back to 2.5 Flash', () => {
+    // The deduction bills against the model that actually ran; a 2.5 Flash
+    // fallback must stay at 1× even for a free user.
+    expect(
+      calculateCreditsFromTokens(100, {
+        model: 'gemini-2.5-flash-preview-tts',
+        userHasPaid: false,
+      }),
+    ).toBe(calculateCreditsFromTokens(100));
+  });
 });
 
 describe('estimateGrokCredits', () => {
