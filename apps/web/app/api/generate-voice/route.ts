@@ -38,6 +38,7 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import {
   buildGeminiTtsPrompt,
+  GEMINI_TTS_31,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
 import { generateXaiTts } from '@/lib/tts/xai';
@@ -407,7 +408,12 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
+    const estimate = estimateCredits(
+      text,
+      voiceObj.name,
+      voiceObj.model,
+      userHasPaid,
+    );
 
     // console.log({
     //   estimate,
@@ -874,8 +880,12 @@ export async function POST(request: Request) {
     );
 
     if (isGeminiVoice && usage) {
+      // Bill against the model that actually ran (`modelUsed`), not the stored
+      // voice model: a 3.1 request that fell back to 2.5 Flash must not incur
+      // the 3.1 free-user surcharge.
       creditsUsed = calculateCreditsFromTokens(
         Number.parseInt(usage.totalTokenCount, 10),
+        { model: modelUsed, userHasPaid },
       );
     }
 
@@ -1345,8 +1355,12 @@ function streamGeminiTtsResponse({
       // Billing — calculate credits from stream tokens when available.
       let creditsUsed = estimate;
       if (streamUsageMetadata?.totalTokenCount) {
+        // Bill against the model that actually ran (`modelUsed`), which the
+        // stream sets to 2.5 Flash on fallback — so a downgraded 3.1 request
+        // is not charged the 3.1 free-user surcharge.
         creditsUsed = calculateCreditsFromTokens(
           streamUsageMetadata.totalTokenCount,
+          { model: modelUsed, userHasPaid },
         );
       }
       const creditsDebited = await reconcileReservedCredits({

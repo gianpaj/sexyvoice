@@ -210,7 +210,10 @@ export async function POST(request: Request) {
 
     const totalEstimatedTokens = inputTokens + estimatedOutputTokens;
 
-    const credits = calculateCreditsFromTokens(totalEstimatedTokens);
+    const credits = calculateCreditsFromTokens(totalEstimatedTokens, {
+      model,
+      userHasPaid: isPaidUser,
+    });
 
     return NextResponse.json({
       tokens: totalEstimatedTokens,
