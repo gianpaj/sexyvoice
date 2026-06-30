@@ -188,6 +188,10 @@
             {
               "question": "How much does it cost?",
               "answer": "Live calling costs {count} credits per minute while you're connected."
+            },
+            {
+              "question": "Does the AI remember my previous conversations?",
+              "answer": "Only if you turn on memory — it's optional and off by default, so normally nothing from your calls is stored. When enabled, the assistant keeps a few short details (like how you like to be addressed and topics you enjoy), not full recordings or transcripts, so it can pick up where you left off next time. We keep only your most recent details, you can erase everything at any time, and deleting your account removes them automatically."
             }
           ]
         },
@@ -471,6 +475,9 @@
     "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
+    "memoryLabel": "Memory",
+    "memoryDescription": "Let the characters remember you between calls. Nothing is stored unless it's on.",
+    "memoryUpgradeTooltip": "Upgrade to a paid plan to let the characters remember you between calls.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
@@ -731,6 +738,17 @@
         "cancel": "Cancel",
         "confirm": "Revoke"
       }
+    },
+    "memory": {
+      "title": "Voice Call Memory",
+      "description": "If you turn on memory during calls, the characters remember a few details about you to keep continuity. You can erase all of it here.",
+      "button": "Delete all memories",
+      "confirmTitle": "Delete all voice call memories?",
+      "confirmDescription": "This permanently erases everything the characters have remembered about you from past calls. This cannot be undone.",
+      "cancel": "Cancel",
+      "continue": "Delete",
+      "success": "Your voice call memories were deleted.",
+      "error": "Couldn't delete your memories. Please try again."
     }
   },
   "apiBilling": {

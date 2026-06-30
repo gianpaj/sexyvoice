@@ -188,6 +188,10 @@
             {
               "question": "¿Cuánto cuesta?",
               "answer": "Las llamadas en vivo cuestan {count} créditos por minuto mientras estás conectado."
+            },
+            {
+              "question": "¿La IA recuerda nuestras conversaciones anteriores?",
+              "answer": "Solo si activas la memoria: es opcional y está desactivada por defecto, así que normalmente no se guarda nada de tus llamadas. Cuando la activas, el asistente guarda algunos datos breves (como la forma en que te gusta que te llamen y los temas que disfrutas), no grabaciones ni transcripciones completas, para retomar la conversación donde la dejaste. Solo conservamos tus datos más recientes, puedes borrarlo todo en cualquier momento y, si eliminas tu cuenta, se borran automáticamente."
             }
           ]
         },
@@ -471,6 +475,9 @@
     "notEnoughCredits": "No tienes suficientes créditos. El mínimo requerido es {count}",
     "freeUserCallLimitExceeded": "Los usuarios gratuitos están limitados a 5 minutos de llamadas. Por favor, actualiza tu cuenta para continuar.",
     "configurationTitle": "Configuración",
+    "memoryLabel": "Memoria",
+    "memoryDescription": "Deja que los personajes te recuerden entre llamadas. No se guarda nada a menos que esté activado.",
+    "memoryUpgradeTooltip": "Actualiza a un plan de pago para que los personajes te recuerden entre llamadas.",
     "languageLabel": "Idioma",
     "languagePlaceholder": "Elige un idioma",
     "sceneLabel": "Escena",
@@ -731,6 +738,17 @@
         "cancel": "Cancelar",
         "confirm": "Sí, revocar"
       }
+    },
+    "memory": {
+      "title": "Memoria de llamadas de voz",
+      "description": "Si activas la memoria durante las llamadas, los personajes recuerdan algunos datos sobre ti para mantener la continuidad. Aquí puedes borrarlo todo.",
+      "button": "Eliminar todas las memorias",
+      "confirmTitle": "¿Eliminar todas las memorias de las llamadas de voz?",
+      "confirmDescription": "Esto borra de forma permanente todo lo que los personajes han recordado sobre ti en llamadas anteriores. No se puede deshacer.",
+      "cancel": "Cancelar",
+      "continue": "Eliminar",
+      "success": "Tus memorias de llamadas de voz se han eliminado.",
+      "error": "No se han podido eliminar tus memorias. Inténtalo de nuevo."
     }
   },
   "apiBilling": {

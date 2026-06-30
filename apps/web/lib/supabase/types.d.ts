@@ -15,6 +15,42 @@ declare type Database = {
   };
   public: {
     Tables: {
+      agent_memories: {
+        Row: {
+          character_id: string;
+          content: string;
+          created_at: string;
+          embedding: string | null;
+          fts: unknown | null;
+          id: number;
+          memory_type: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          character_id?: string;
+          content: string;
+          created_at?: string;
+          embedding?: string | null;
+          fts?: never;
+          id?: never;
+          memory_type: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          character_id?: string;
+          content?: string;
+          created_at?: string;
+          embedding?: string | null;
+          fts?: never;
+          id?: never;
+          memory_type?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       api_keys: {
         Row: {
           created_at: string;
