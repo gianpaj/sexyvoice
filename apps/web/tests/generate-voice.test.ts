@@ -2386,20 +2386,73 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('emits error event and refunds reserved credits when stream yields no audio chunks', async () => {
-      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
+    it('falls back to flash without retaining primary usage when the primary stream yields no audio', async () => {
+      const { hasUserPaid, reduceCredits, saveAudioFile } = await import(
         '@/lib/supabase/queries'
       );
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      const generateContentStream = vi
-        .fn()
-        .mockImplementation(async function* () {
-          // Yield a chunk with no inlineData
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        if (callCount === 1) {
           yield {
             candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }],
+            usageMetadata: {
+              promptTokenCount: 100,
+              candidatesTokenCount: 200,
+              totalTokenCount: 300,
+            },
           };
-        });
+          return;
+        }
+        const fallbackChunk = createDefaultStreamChunk();
+        fallbackChunk.usageMetadata = undefined;
+        yield fallbackChunk;
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: done');
+      expect(callCount).toBe(2);
+      expect(reduceCredits).toHaveBeenCalledWith({
+        amount: estimateCredits('Hello world', 'achernar', 'gpro31'),
+        userId: 'test-user-id',
+      });
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'gemini-2.5-flash-preview-tts',
+          usage: { stream: true, userHasPaid: true },
+        }),
+      );
+    });
+
+    it('emits error event and skips billing when stream yields no audio chunks', async () => {
+      const { hasUserPaid, reduceCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        // Yield a chunk with no inlineData
+        yield {
+          candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }],
+        };
+      });
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -2417,6 +2470,63 @@ describe('Generate Voice API Route', () => {
 
       expect(body).toContain('event: error');
       expect(body).not.toContain('event: done');
+      expect(callCount).toBe(2);
+      expect(reduceCredits).toHaveBeenCalled();
+    });
+
+    it.each([
+      {
+        errorCode: 'PROHIBITED_CONTENT' as const,
+        name: 'prohibited content finish',
+        terminalChunk: {
+          candidates: [
+            { content: { parts: [] }, finishReason: 'PROHIBITED_CONTENT' },
+          ],
+        },
+      },
+      {
+        errorCode: 'OTHER_GEMINI_BLOCK' as const,
+        name: 'safety prompt block',
+        terminalChunk: {
+          candidates: [],
+          promptFeedback: { blockReason: 'SAFETY' },
+        },
+      },
+    ])('does not retry a $name from the primary stream', async ({
+      errorCode,
+      terminalChunk,
+    }) => {
+      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        yield terminalChunk;
+      });
+      setMockGoogleGenAIFactory(() => ({
+        models: { generateContentStream },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(getErrorMessage(errorCode, 'voice-generation'));
+      expect(body).not.toContain('event: done');
+      expect(callCount).toBe(1);
       expect(reduceCredits).toHaveBeenCalledWith({
         userId: 'test-user-id',
         amount: expect.any(Number),
