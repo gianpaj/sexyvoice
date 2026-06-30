@@ -103,5 +103,5 @@ $$;
 
 -- Re-grant: DROP removed the privileges, so restore the original posture.
 GRANT EXECUTE ON FUNCTION public.match_agent_memories_hybrid(
-  vector, text, uuid, text, int
+  extensions.vector, text, uuid, text, int
 ) TO authenticated, service_role;
