@@ -31,7 +31,7 @@ DROP FUNCTION IF EXISTS public.match_agent_memories_hybrid(
 );
 
 CREATE OR REPLACE FUNCTION public.match_agent_memories_hybrid(
-  query_embedding vector(1536),
+  query_embedding extensions.vector(1536),
   query_text      text,
   p_user_id       uuid,
   p_character_id  text DEFAULT '__shared__',
