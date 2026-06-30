@@ -103,8 +103,6 @@ const XAI_LANGUAGE_OPTIONS = [
 ] as const;
 
 interface GrokTTSEditorProps {
-  characterLimitPaidTooltip: string;
-  characterLimitUpgradeTooltip: string;
   charactersLimit: number;
   enforceCharactersLimit?: boolean;
   isPaidUser?: boolean;
@@ -284,8 +282,6 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 }
 
 export function GrokTTSEditor({
-  characterLimitPaidTooltip,
-  characterLimitUpgradeTooltip,
   enforceCharactersLimit = true,
   isPaidUser,
   charactersLimit,
@@ -296,6 +292,7 @@ export function GrokTTSEditor({
   value,
 }: GrokTTSEditorProps) {
   const t = useTranslations('generate.grok');
+  const tGenerate = useTranslations('generate');
   const [effectsOpen, setEffectsOpen] = useState(false);
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
@@ -696,9 +693,9 @@ export function GrokTTSEditor({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                enforceCharactersLimit && currentLength > charactersLimit
-                  ? 'font-bold text-red-500'
-                  : '',
+                enforceCharactersLimit &&
+                  currentLength > charactersLimit &&
+                  'text-red-500',
               )}
               data-testid="generate-character-count"
             >
@@ -720,8 +717,8 @@ export function GrokTTSEditor({
                   <TooltipContent>
                     <p>
                       {isPaidUser
-                        ? characterLimitPaidTooltip
-                        : characterLimitUpgradeTooltip}
+                        ? tGenerate('paidCharacterLimitTooltip')
+                        : tGenerate('upgradeCharacterLimitTooltip')}
                     </p>
                   </TooltipContent>
                 </Tooltip>

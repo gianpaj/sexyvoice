@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createClient } from '@/lib/supabase/server';
 
 type BillingGroupBy = 'source_type' | 'api_key_id' | 'model';
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const params = request.nextUrl.searchParams;
@@ -89,25 +90,19 @@ export async function GET(request: NextRequest) {
   const end = floorToUtcDay(endBeforeEpoch);
 
   if (end <= start) {
-    return NextResponse.json(
-      { error: 'ending_before must be after starting_on' },
-      { status: 400 },
-    );
+    return APIErrorResponse('ending_before must be after starting_on', 400);
   }
 
   const bucketWidth = (params.get('bucket_width') ?? '1d') as BucketWidth;
   if (!(bucketWidth === '1d' || bucketWidth === '7d')) {
-    return NextResponse.json(
-      { error: 'bucket_width must be 1d or 7d' },
-      { status: 400 },
-    );
+    return APIErrorResponse('bucket_width must be 1d or 7d', 400);
   }
 
   const groupBy = params.get('group_by') as BillingGroupBy | null;
   if (groupBy && !['source_type', 'api_key_id', 'model'].includes(groupBy)) {
-    return NextResponse.json(
-      { error: 'group_by must be source_type, api_key_id, or model' },
-      { status: 400 },
+    return APIErrorResponse(
+      'group_by must be source_type, api_key_id, or model',
+      400,
     );
   }
 
@@ -120,10 +115,7 @@ export async function GET(request: NextRequest) {
       'api_voice_cloning',
     ];
     if (!validSourceTypes.includes(sourceTypeParam as ApiUsageSourceType)) {
-      return NextResponse.json(
-        { error: 'Invalid source_type for API billing usage' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid source_type for API billing usage', 400);
     }
     sourceType = sourceTypeParam as ApiUsageSourceType;
   }
@@ -147,10 +139,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: 'Failed to fetch billing usage' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch billing usage', 500);
   }
 
   const rows = (data ?? []) as ApiUsageDailyRow[];

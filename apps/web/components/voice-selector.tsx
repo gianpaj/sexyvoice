@@ -1,5 +1,5 @@
 'use client';
-import { Info, Maximize2, Minimize2 } from 'lucide-react';
+import { Crown, Info, Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   type Dispatch,
@@ -18,9 +18,9 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { VoiceSelect } from '@/components/voice-select';
-import { getEmotionTags } from '@/lib/ai';
+import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { capitalizeFirstLetter, getTtsProvider } from '@/lib/utils';
+import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
@@ -38,17 +38,27 @@ export function VoiceSelector({
   setSelectedVoice,
   selectedStyle,
   setSelectedStyle,
+  isPaidUser = false,
 }: {
   publicVoices: Tables<'voices'>[];
   selectedVoice?: Tables<'voices'>;
   setSelectedVoice: Dispatch<SetStateAction<string>>;
   selectedStyle?: string;
   setSelectedStyle: Dispatch<SetStateAction<string | undefined>>;
+  isPaidUser?: boolean;
 }) {
   const t = useTranslations('generate');
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
+  // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
+  // and the style, enforced in the generator; the standalone character counter
+  // below only applies to the character-bounded Gemini 2.5 style prompt.
+  const isGemini31 = selectedVoice?.model === 'gpro31';
+  const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
+  const styleLength = selectedStyle?.length ?? 0;
+  const isStyleOverLimit =
+    isGeminiVoice && !isGemini31 && styleLength > styleCharacterLimit;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -153,6 +163,7 @@ export function VoiceSelector({
             <Textarea
               className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
               data-testid="generate-style-textarea"
+              maxLength={styleCharacterLimit + 30}
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={t('voiceSelector.selectStyleTextareaPlaceholder')}
               ref={textareaRef}
@@ -176,6 +187,42 @@ export function VoiceSelector({
                 <Maximize2 className="h-4 w-4" />
               )}
             </Button>
+            {!isGemini31 && (
+              <div
+                className={cn(
+                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+                  isStyleOverLimit && 'text-red-500',
+                )}
+              >
+                <p
+                  className="mt-1 text-right"
+                  data-testid="generate-style-character-count"
+                >
+                  {styleLength}/{styleCharacterLimit}
+                </p>
+                <TooltipProvider>
+                  <Tooltip delayDuration={100}>
+                    <TooltipTrigger asChild>
+                      <Crown
+                        className={cn(
+                          'h-3.5 w-3.5 cursor-default',
+                          isPaidUser
+                            ? 'text-muted-foreground/50'
+                            : 'text-yellow-400',
+                        )}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {isPaidUser
+                          ? t('paidStyleLimitTooltip')
+                          : t('upgradeStyleLimitTooltip')}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

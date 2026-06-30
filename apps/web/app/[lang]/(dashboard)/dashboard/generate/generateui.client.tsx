@@ -33,6 +33,7 @@ export function GenerateUI({
   return (
     <div className="flex flex-col gap-6">
       <VoiceSelector
+        isPaidUser={isPaidUser}
         publicVoices={publicVoices}
         selectedStyle={isGeminiVoice ? selectedStyle : undefined}
         selectedVoice={selectedVoiceSample}
