@@ -1,4 +1,3 @@
--- Migration: 20260623120000_create_agent_memories.sql
 -- Long-term voice-agent memory backed by pgvector (replaces hosted mem0).
 -- See sexycall docs/plans/supabase-pgvector-memory.md.
 --
