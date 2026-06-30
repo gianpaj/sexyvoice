@@ -27,7 +27,7 @@
 -- two-column definition.
 
 DROP FUNCTION IF EXISTS public.match_agent_memories_hybrid(
-  vector, text, uuid, text, int
+  extensions.vector, text, uuid, text, int
 );
 
 CREATE OR REPLACE FUNCTION public.match_agent_memories_hybrid(
