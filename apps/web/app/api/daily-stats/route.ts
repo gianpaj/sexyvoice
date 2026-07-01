@@ -33,6 +33,7 @@ import {
 import {
   _timed,
   calculateUsageBreakdown,
+  classifyRefund,
   countByDateRange,
   filterByDateRange,
   formatChange,
@@ -643,9 +644,15 @@ export async function GET(request: NextRequest) {
   const callCostYesterday =
     (callsDurationYesterday / 60) * CALL_COST_PER_MINUTE;
   const callCost14d = (callsDuration14d / 60) * CALL_COST_PER_MINUTE;
-  // Separate refunds from purchases/top-ups
+  // Separate refunds from purchases/top-ups. Chargeback hold/release rows are
+  // also `type='refund'` but are internal credit-ledger moves (dispute
+  // handling), not customer refunds — keep them out of the refund metrics and
+  // report them separately below.
   const refundTransactions = creditTransactions.filter(
-    (t) => t.type === 'refund',
+    (t) => t.type === 'refund' && classifyRefund(t) === 'refund',
+  );
+  const chargebackTransactions = creditTransactions.filter(
+    (t) => t.type === 'refund' && classifyRefund(t) !== 'refund',
   );
   const purchaseTransactions = creditTransactions.filter(
     (t) => t.type !== 'refund',
@@ -785,6 +792,28 @@ export async function GET(request: NextRequest) {
       transaction.created_at < previousDay.toISOString(),
   ).length;
   const refundsTotalCount = refundTransactions.length;
+
+  // Chargeback dispute activity (holds vs releases). Hold rows carry a negative
+  // `amount` (credits frozen), release rows a positive `amount` (credits
+  // restored after a won dispute); neither carries a `dollarAmount`, so they
+  // never touch the revenue/refund USD totals.
+  const chargebackHolds = chargebackTransactions.filter(
+    (t) => classifyRefund(t) === 'chargeback_hold',
+  );
+  const chargebackReleases = chargebackTransactions.filter(
+    (t) => classifyRefund(t) === 'chargeback_release',
+  );
+  const inPrevDay = (transaction: { created_at: string }) =>
+    transaction.created_at >= previousDay.toISOString() &&
+    transaction.created_at < today.toISOString();
+  const chargebackHoldsTodayCount = chargebackHolds.filter(inPrevDay).length;
+  const chargebackReleasesTodayCount =
+    chargebackReleases.filter(inPrevDay).length;
+  // Positive = credits still frozen (holds outweigh releases).
+  const creditsCurrentlyFrozen = -chargebackTransactions.reduce(
+    (sum, t) => sum + t.amount,
+    0,
+  );
 
   // Top customers calculation
   let hasInvalidMetadata = false;
@@ -1448,6 +1477,12 @@ export async function GET(request: NextRequest) {
       : [
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
+    ...(chargebackTransactions.length > 0
+      ? [
+          `⚖️ Chargebacks: ${chargebackHoldsTodayCount} held / ${chargebackReleasesTodayCount} released today`,
+          `  - Total: ${chargebackHolds.length} held, ${chargebackReleases.length} released | Frozen credits: ${formatCompactNumber(creditsCurrentlyFrozen)}`,
+        ]
+      : []),
     ...(hasInvalidMetadata
       ? ['', '‼️ Info', '  - Invalid Metadata in credit_transactions']
       : []),
