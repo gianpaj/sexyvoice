@@ -93,15 +93,6 @@ export const formatDuration = (seconds: number): string => {
   return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 };
 
-export const formatDurationChange = (
-  currentSeconds: number,
-  baselineSeconds: number,
-): string => {
-  const diffSeconds = Math.round(currentSeconds - baselineSeconds);
-  const sign = diffSeconds >= 0 ? '+' : '-';
-  return `${sign}${formatDuration(Math.abs(diffSeconds))}`;
-};
-
 export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     console.log('Invalid metadata in row:', row);

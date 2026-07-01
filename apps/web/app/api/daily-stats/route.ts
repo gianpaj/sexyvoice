@@ -40,7 +40,6 @@ import {
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
-  formatDurationChange,
   getFeatureHealthStatus,
   getProfileUsername,
   maskUsername,
@@ -594,9 +593,6 @@ export async function GET(request: NextRequest) {
     (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
-  const callsAvgDurationYesterday =
-    Math.round(callsDurationYesterday / callsYesterdayCount) || 0;
-  const callsAvgDuration14d = Math.round(callsDuration14d / calls14dCount) || 0;
   const callsDurationAllTime = callSessionsAllTimeDurationData.reduce(
     (sum, call) => sum + call.duration_seconds,
     0,
@@ -1451,10 +1447,8 @@ export async function GET(request: NextRequest) {
     `  - Top models: ${topVoiceList}`,
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
-    `  - ${ROLLING_WINDOW_LABEL}: ${calls14dCount} (avg ${(calls14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDuration14d)} vs ${ROLLING_WINDOW_LABEL}) | ${ROLLING_WINDOW_LABEL}: ${formatDuration(callsDuration14d)} (avg ${formatDuration(callsAvgDuration14d)})`,
     `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
