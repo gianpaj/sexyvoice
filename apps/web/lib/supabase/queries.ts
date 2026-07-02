@@ -619,25 +619,35 @@ export const insertCardBonusCreditTransaction = async (
     throw claimError;
   }
 
-  try {
-    // Check if the user already has a card bonus transaction to prevent
-    // duplicate credits when multiple webhook events fire.
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('type', 'card_bonus')
-      .single();
+  // Check if the user already has a card bonus transaction to prevent
+  // duplicate credits when multiple webhook events fire. Use `.maybeSingle()`:
+  // the Supabase client returns `{ data, error }` rather than throwing, and
+  // `.single()` reports a PGRST116 "no rows" error for the common case of a
+  // first-time claim. `.maybeSingle()` yields `data: null` with no error there,
+  // so a non-null error is a genuine DB failure.
+  const { data: existingTransaction, error: existingError } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'card_bonus')
+    .maybeSingle();
 
-    if (data) {
-      console.log('Card bonus transaction already exists', {
-        userId,
-        setupIntentId,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existingError) {
+    // This lookup is only a best-effort early return; the partial unique index
+    // `credit_transactions_one_card_bonus_per_user` on the insert below is the
+    // authoritative dedup guard. Log and continue rather than throw, so a
+    // transient read failure doesn't strand the grant.
+    console.error('Error checking existing card bonus transaction:', {
+      userId,
+      setupIntentId,
+      error: existingError.message,
+    });
+  } else if (existingTransaction) {
+    console.log('Card bonus transaction already exists', {
+      userId,
+      setupIntentId,
+    });
+    return;
   }
 
   const { error } = await supabase.from('credit_transactions').insert({

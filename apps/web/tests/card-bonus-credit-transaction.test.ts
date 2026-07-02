@@ -13,6 +13,7 @@ vi.mock('@/lib/supabase/admin', () => ({
 interface AdminMockOptions {
   claimError?: { code: string; message?: string } | null;
   existingBonusData?: { id: string } | null;
+  existingError?: { message: string } | null;
   insertError?: { code: string; message?: string } | null;
   rpcError?: { message: string } | null;
 }
@@ -20,6 +21,7 @@ interface AdminMockOptions {
 function makeAdminMock({
   claimError = null,
   existingBonusData = null,
+  existingError = null,
   insertError = null,
   rpcError = null,
 }: AdminMockOptions = {}) {
@@ -36,9 +38,9 @@ function makeAdminMock({
     return {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      single: vi
+      maybeSingle: vi
         .fn()
-        .mockResolvedValue({ data: existingBonusData, error: null }),
+        .mockResolvedValue({ data: existingBonusData, error: existingError }),
       insert: transactionsInsert,
     };
   });
@@ -105,6 +107,20 @@ describe('insertCardBonusCreditTransaction()', () => {
 
     expect(admin.transactionsInsert).not.toHaveBeenCalled();
     expect(admin.rpc).not.toHaveBeenCalled();
+  });
+
+  it('still grants the bonus when the existing-transaction lookup errors', async () => {
+    // A transient read failure on the best-effort dedup lookup must not strand
+    // the grant — the partial unique index on the insert is the real guard.
+    const admin = makeAdminMock({
+      existingError: { message: 'connection reset' },
+    });
+    vi.mocked(createAdminClient).mockReturnValue(admin as never);
+
+    await insertCardBonusCreditTransaction('user_123', 'seti_read', 'fp_read');
+
+    expect(admin.transactionsInsert).toHaveBeenCalled();
+    expect(admin.rpc).toHaveBeenCalled();
   });
 
   it('skips the grant when the per-user unique index rejects the insert', async () => {
