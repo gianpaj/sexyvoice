@@ -94,7 +94,7 @@
       "title": "Udtryksfulde stemmer, ubegrænsede muligheder",
       "subtitle": "Gratis AI tekst-til-tale & stemmegenerator.\nPerfekt til indholdsskabere og historiefortællere.",
       "buttonCTA": "Tilmeld dig gratis",
-      "noCreditCard": "Intet kreditkort påkrævet",
+      "noCreditCard": "Intet kreditkort påkrævet*⃰",
       "signIn": "Log ind"
     },
     "features": {
@@ -112,7 +112,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start med 10.000 gratis kreditter",
+      "freeCredits": "Start med 10.000 gratis kreditter (tilføj et kort for at låse dem op)",
       "title": "Klar til at finde din stemme?",
       "subtitle": "Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.",
       "action": "Opret din første stemme"
@@ -215,7 +215,7 @@
           "questions": [
             {
               "question": "Hvor mange kreditter har jeg brug for?",
-              "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 10.000 gratis kreditter (ca. 5 minutters tale). Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
+              "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 1.000 gratis kreditter, plus 9.000 ekstra (10.000 i alt), når de tilføjer et kort – uden beregning. Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
             },
             {
               "question": "Hvorfor vælge SexyVoice.ai?",
@@ -245,6 +245,20 @@
     "title": "Køb kreditter til skabere og virksomheder i alle størrelser",
     "description": "Vælg den mængde kreditter, der passer bedst til dine behov",
     "historyEmpty": "Din kreditforbrugshistorik vises her",
+    "historyTypes": {
+      "purchase": "Køb",
+      "freemium": "Freemium",
+      "topup": "Optankning",
+      "refund": "Refundering",
+      "card_bonus": "Kortbonus"
+    },
+    "cardBonus": {
+      "title": "Tilføj et kort, få 9.000 kreditter",
+      "description": "Tilføj en betalingsmetode (uden beregning), så øger vi din saldo fra 1.000 til 10.000 kreditter.",
+      "cta": "Tilføj kort",
+      "processing": "Omdirigerer…",
+      "error": "Kunne ikke starte opsætningen af kortbonussen. Prøv igen."
+    },
     "billing": {
       "forever": "(for evigt)",
       "monthly": "/måned",
@@ -345,6 +359,16 @@
       "error": {
         "title": "Betaling mislykkedes",
         "description": "Der opstod et problem med at behandle din betaling. Prøv igen eller kontakt support, hvis problemet fortsætter.",
+        "dismiss": "Luk"
+      },
+      "cardBonusSuccess": {
+        "title": "Kort tilføjet!",
+        "description": "9.000 bonuskreditter er blevet tilføjet til din konto.",
+        "dismiss": "Luk"
+      },
+      "cardBonusCanceled": {
+        "title": "Kortopsætning annulleret",
+        "description": "Der blev ikke tilføjet noget kort, så bonuskreditterne blev ikke tildelt. Du kan prøve igen når som helst.",
         "dismiss": "Luk"
       },
       "checkoutError": "Kunne ikke oprette betalingssession"
@@ -764,7 +788,7 @@
     "description": "Generer udtryksfuld AI-tale med følelser på 24+ sprog. Prøv gratis tekst-til-tale med stemmekloning og naturlig talesyntese. Start med gratis credits – intet kort påkrævet.",
     "skipToMainContent": "Spring til hovedindhold",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
-    "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
+    "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 1.000 kreditter med det samme, plus 9.000 ekstra, når du tilføjer et kort. Skab realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "/": "",
     "/login": "Log ind",
     "/signup": "Tilmeld med e-mail eller Google",
@@ -909,6 +933,12 @@
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
+    },
+    "cardBonusBanner": {
+      "text": "Tilføj et kort (uden beregning) og lås op for 9.000 bonuskreditter — 10.000 i alt.",
+      "ctaLoggedIn": "Tilføj kort",
+      "ctaLoggedOut": "Tilmeld dig",
+      "ariaLabelDismiss": "Luk besked om kortbonus"
     }
   },
   "audioConverter": {

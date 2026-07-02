@@ -1,13 +1,16 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
+import {
+  createCardBonusSetupSession,
+  createCheckoutSession,
+} from '@/app/[lang]/actions/stripe';
 import {
   hasAnySubscriptionHistory,
   isStripeCouponUsable,
   stripe,
 } from '@/lib/stripe/stripe-admin';
-import { getUserById } from '@/lib/supabase/queries';
+import { getUserById, hasClaimedCardBonus } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('@sentry/nextjs', () => ({
@@ -30,6 +33,7 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 
 vi.mock('@/lib/supabase/queries', () => ({
   getUserById: vi.fn(),
+  hasClaimedCardBonus: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -71,6 +75,7 @@ describe('createCheckoutSession()', () => {
     } as never);
     vi.mocked(hasAnySubscriptionHistory).mockResolvedValue(false);
     vi.mocked(isStripeCouponUsable).mockResolvedValue(true);
+    vi.mocked(hasClaimedCardBonus).mockResolvedValue(false);
     vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
       client_secret: 'client_secret_123',
       url: 'https://checkout.stripe.com/session',
@@ -284,5 +289,122 @@ describe('createCheckoutSession()', () => {
         discounts: expect.anything(),
       }),
     );
+  });
+});
+
+describe('createCardBonusSetupSession()', () => {
+  const originalE2ETestMode = process.env.E2E_TEST_MODE;
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: {
+            user: {
+              email: 'user@example.com',
+              id: 'user_123',
+            },
+          },
+          error: null,
+        }),
+      },
+    } as never);
+    vi.mocked(getUserById).mockResolvedValue({
+      stripe_id: 'cus_123',
+    } as never);
+    vi.mocked(hasClaimedCardBonus).mockResolvedValue(false);
+    vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
+      client_secret: 'client_secret_123',
+      url: 'https://checkout.stripe.com/session',
+    } as never);
+  });
+
+  afterEach(() => {
+    if (originalE2ETestMode === undefined) {
+      delete process.env.E2E_TEST_MODE;
+    } else {
+      process.env.E2E_TEST_MODE = originalE2ETestMode;
+    }
+
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+    }
+  });
+
+  it('creates a setup-mode session for an eligible user', async () => {
+    const result = await createCardBonusSetupSession();
+
+    expect(result).toEqual({
+      alreadyClaimed: false,
+      client_secret: 'client_secret_123',
+      url: 'https://checkout.stripe.com/session',
+    });
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'setup',
+        customer: 'cus_123',
+        payment_method_types: ['card'],
+        metadata: { userId: 'user_123', type: 'card_bonus' },
+        setup_intent_data: {
+          metadata: { userId: 'user_123', type: 'card_bonus' },
+        },
+        success_url:
+          'https://example.com/en/dashboard/credits?card_bonus=success',
+        cancel_url:
+          'https://example.com/en/dashboard/credits?card_bonus=canceled',
+        ui_mode: 'hosted',
+      }),
+    );
+  });
+
+  it('returns alreadyClaimed without creating a session', async () => {
+    vi.mocked(hasClaimedCardBonus).mockResolvedValue(true);
+
+    const result = await createCardBonusSetupSession();
+
+    expect(result).toEqual({
+      alreadyClaimed: true,
+      client_secret: null,
+      url: null,
+    });
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  it('returns a safe null result in E2E mode without touching Stripe', async () => {
+    process.env.E2E_TEST_MODE = 'true';
+
+    const result = await createCardBonusSetupSession();
+
+    expect(result).toEqual({
+      alreadyClaimed: false,
+      client_secret: null,
+      url: null,
+    });
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(hasClaimedCardBonus).not.toHaveBeenCalled();
+  });
+
+  it('throws and reports Sentry on auth error', async () => {
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: null },
+          error: null,
+        }),
+      },
+    } as never);
+
+    await expect(createCardBonusSetupSession()).rejects.toThrow(
+      'Unauthorized card bonus setup session request',
+    );
+    expect(captureException).toHaveBeenCalled();
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
   });
 });

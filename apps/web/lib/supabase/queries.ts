@@ -574,6 +574,105 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
+export const CARD_BONUS_CREDIT_AMOUNT = 9000;
+
+/**
+ * Grants the one-time card-on-file credit bonus.
+ *
+ * Guarded by three layers: a global claim on the card fingerprint
+ * (card_bonus_claims, keyed by fingerprint), a per-user check for an
+ * existing 'card_bonus' transaction, and the DB-level partial unique index
+ * `credit_transactions_one_card_bonus_per_user`. Any 23505 on the
+ * credit_transactions insert below means one of those guards already fired,
+ * so it's treated as "already claimed" rather than an error.
+ */
+export const insertCardBonusCreditTransaction = async (
+  userId: string,
+  setupIntentId: string,
+  fingerprint: string,
+  creditAmount: number = CARD_BONUS_CREDIT_AMOUNT,
+) => {
+  const supabase = createAdminClient();
+
+  const { error: claimError } = await supabase
+    .from('card_bonus_claims')
+    .insert({
+      fingerprint,
+      user_id: userId,
+      setup_intent_id: setupIntentId,
+    });
+
+  if (claimError) {
+    if (claimError.code === '23505') {
+      console.log('Card bonus already claimed for this card', {
+        userId,
+        setupIntentId,
+      });
+      return;
+    }
+
+    console.error('Error inserting card bonus claim:', {
+      userId,
+      setupIntentId,
+      error: claimError.message,
+    });
+    throw claimError;
+  }
+
+  try {
+    // Check if the user already has a card bonus transaction to prevent
+    // duplicate credits when multiple webhook events fire.
+    const { data } = await supabase
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('type', 'card_bonus')
+      .single();
+
+    if (data) {
+      console.log('Card bonus transaction already exists', {
+        userId,
+        setupIntentId,
+      });
+      return;
+    }
+  } catch {
+    // Transaction doesn't exist, continue with insertion
+  }
+
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    amount: creditAmount,
+    type: 'card_bonus',
+    description: 'Card-on-file bonus',
+    reference_id: setupIntentId,
+    metadata: { fingerprint },
+  });
+
+  if (error) {
+    // Every unique constraint that can fire on this insert means "already
+    // claimed" (the per-user partial index). isCreditTransactionReferenceConflict
+    // doesn't match its name, so check the Postgres error code directly.
+    if (error.code === '23505') {
+      console.log('Card bonus transaction already exists', {
+        userId,
+        setupIntentId,
+      });
+      return;
+    }
+
+    console.error('Error inserting card bonus transaction:', {
+      userId,
+      setupIntentId,
+      error: error.message,
+    });
+    throw error;
+  }
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, creditAmount);
+};
+
 export const isCreditTransactionReferenceConflict = (error: {
   code?: string;
   details?: string;
@@ -628,6 +727,60 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
+};
+
+export const hasClaimedCardBonus = async (userId: string): Promise<boolean> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'card_bonus')
+    .limit(1);
+
+  if (error) throw error;
+
+  return (data?.length ?? 0) > 0;
+};
+
+/**
+ * Eligibility for the card-on-file credit bonus CTA/banner: not yet
+ * claimed, hasn't paid, and is a "new-regime" user (received the 1,000
+ * freemium grant, not the legacy 10,000). The freemium amount is the sole
+ * new-regime signal — `add_credits_trigger` (which used to write a second,
+ * ambiguous freemium row) was dropped in the same migration that lowered
+ * the grant, so a 1,000 freemium row unambiguously means new-regime.
+ *
+ * Pure so callers that already have a user's transactions loaded (e.g. the
+ * dashboard layout) can reuse it without an extra query.
+ */
+export function computeCardBonusEligibility(
+  transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
+): boolean {
+  const hasClaimed = transactions.some((t) => t.type === 'card_bonus');
+  const hasPaid = transactions.some(
+    (t) => t.type === 'purchase' || t.type === 'topup',
+  );
+  const isNewRegimeUser = transactions.some(
+    (t) => t.type === 'freemium' && Number(t.amount) === 1000,
+  );
+
+  return !(hasClaimed || hasPaid) && isNewRegimeUser;
+}
+
+export const isEligibleForCardBonus = async (
+  userId: string,
+): Promise<boolean> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('type, amount')
+    .eq('user_id', userId)
+    .in('type', ['card_bonus', 'purchase', 'topup', 'freemium']);
+
+  if (error) throw error;
+
+  return computeCardBonusEligibility(data ?? []);
 };
 
 /**

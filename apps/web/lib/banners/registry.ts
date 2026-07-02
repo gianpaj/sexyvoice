@@ -26,6 +26,22 @@ function creditsHref(lang: Locale) {
 }
 
 const bannerRegistry = {
+  cardBonusBanner: {
+    cta: {
+      loggedInHref: creditsHref,
+      loggedOutHref: signupHref,
+    },
+    dismiss: {
+      // Never set — the banner is non-dismissible — but the type requires a key.
+      cookieKey: 'banner-card-bonus-dismissed',
+      days: 0,
+    },
+    dismissible: false,
+    id: 'cardBonusBanner',
+    kind: 'announcement',
+    placements: ['dashboard'],
+    priority: 1000,
+  },
   blackFridayBanner: {
     cta: {
       loggedInHref: creditsHref,

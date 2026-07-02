@@ -94,7 +94,7 @@
       "title": "Voix expressives, possibilités infinies",
       "subtitle": "Générateur de voix et de synthèse vocale IA gratuit.\nParfait pour les créateurs de contenu et les conteurs.",
       "buttonCTA": "S'inscrire gratuitement",
-      "noCreditCard": "Aucune carte de crédit requise",
+      "noCreditCard": "Aucune carte de crédit requise*⃰",
       "signIn": "Se connecter"
     },
     "features": {
@@ -112,7 +112,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Commencez avec 10 000 crédits gratuits",
+      "freeCredits": "Commencez avec 10 000 crédits gratuits (ajoutez une carte pour les débloquer)",
       "title": "Prêt à trouver votre voix ?",
       "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
       "action": "Créez votre première voix"
@@ -215,7 +215,7 @@
           "questions": [
             {
               "question": "De combien de crédits ai-je besoin ?",
-              "answer": "Environ 1 000 crédits produisent 1 minute de génération audio. Les nouveaux utilisateurs reçoivent 10 000 crédits gratuits (environ 5 minutes de parole). Notre plan Starter inclut 25 000 crédits mensuels, tandis que Pro offre 300 000 crédits pour les projets plus importants. Choisissez ce qui convient à vos besoins."
+              "answer": "Environ 1 000 crédits produisent 1 minute de génération audio. Les nouveaux utilisateurs reçoivent 1 000 crédits gratuits, plus 9 000 supplémentaires (10 000 au total) en ajoutant une carte, sans frais. Notre plan Starter inclut 25 000 crédits mensuels, tandis que Pro offre 300 000 crédits pour les projets plus importants. Choisissez ce qui convient à vos besoins."
             },
             {
               "question": "Pourquoi choisir SexyVoice.ai ?",
@@ -245,6 +245,20 @@
     "title": "Achetez des crédits pour les créateurs et entreprises de toutes tailles",
     "description": "Choisissez la quantité de crédits qui correspond le mieux à vos besoins",
     "historyEmpty": "Votre historique d'utilisation des crédits apparaîtra ici",
+    "historyTypes": {
+      "purchase": "Achat",
+      "freemium": "Freemium",
+      "topup": "Recharge",
+      "refund": "Remboursement",
+      "card_bonus": "Bonus carte"
+    },
+    "cardBonus": {
+      "title": "Ajoutez une carte, obtenez 9 000 crédits",
+      "description": "Ajoutez un moyen de paiement (sans frais) et nous ferons passer votre solde de 1 000 à 10 000 crédits.",
+      "cta": "Ajouter une carte",
+      "processing": "Redirection…",
+      "error": "Impossible de démarrer la configuration du bonus carte. Veuillez réessayer."
+    },
     "billing": {
       "forever": "(pour toujours)",
       "monthly": "/mois",
@@ -345,6 +359,16 @@
       "error": {
         "title": "Paiement échoué",
         "description": "Un problème est survenu lors du traitement de votre paiement. Veuillez réessayer ou contacter le support si le problème persiste.",
+        "dismiss": "Fermer"
+      },
+      "cardBonusSuccess": {
+        "title": "Carte ajoutée !",
+        "description": "9 000 crédits bonus ont été ajoutés à votre compte.",
+        "dismiss": "Fermer"
+      },
+      "cardBonusCanceled": {
+        "title": "Configuration de la carte annulée",
+        "description": "Aucune carte n'a été ajoutée, les crédits bonus n'ont donc pas été accordés. Vous pouvez réessayer à tout moment.",
         "dismiss": "Fermer"
       },
       "checkoutError": "Impossible de créer la session de paiement"
@@ -764,7 +788,7 @@
     "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues. Essayez gratuitement la synthèse vocale avec clonage vocal et synthèse naturelle de la parole. Commencez avec des crédits gratuits – aucune carte requise.",
     "skipToMainContent": "Aller au contenu principal",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
-    "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
+    "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 1 000 crédits instantanément, puis 9 000 de plus en ajoutant une carte. Créez des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
     "/": "",
     "/login": "Connexion",
     "/signup": "Inscription avec e-mail ou Google",
@@ -909,6 +933,12 @@
       "ctaLoggedIn": "Essayer les voix",
       "ctaLoggedOut": "Se connecter",
       "ariaLabelDismiss": "Fermer l'annonce des voix expressives"
+    },
+    "cardBonusBanner": {
+      "text": "Ajoutez une carte (sans frais) et débloquez 9 000 crédits bonus — 10 000 au total.",
+      "ctaLoggedIn": "Ajouter une carte",
+      "ctaLoggedOut": "S'inscrire",
+      "ariaLabelDismiss": "Fermer l'annonce du bonus carte"
     }
   },
   "audioConverter": {

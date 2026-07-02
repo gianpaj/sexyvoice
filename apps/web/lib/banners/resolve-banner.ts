@@ -11,6 +11,7 @@ import type {
 
 interface ResolveActiveBannerOptions {
   audience: BannerAudience;
+  cardBonusEligible?: boolean;
   dismissedCookieKeys?: Iterable<string>;
   lang: Locale;
   messages: IntlMessages;
@@ -120,6 +121,7 @@ export function resolveActiveBanner(
   const activeBannerIds = [
     getActivePromoBannerId(),
     getActiveAnnouncementBannerId(),
+    options.cardBonusEligible ? 'cardBonusBanner' : null,
   ].filter((bannerId): bannerId is string => Boolean(bannerId));
 
   const resolvedBanners = activeBannerIds
