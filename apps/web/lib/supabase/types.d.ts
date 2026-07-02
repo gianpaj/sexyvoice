@@ -8,10 +8,30 @@ declare type Json =
   | Json[];
 
 declare type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: '12.2.3 (519615d)';
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
@@ -21,7 +41,7 @@ declare type Database = {
           content: string;
           created_at: string;
           embedding: string | null;
-          fts: unknown | null;
+          fts: unknown;
           id: number;
           memory_type: string;
           updated_at: string;
@@ -32,7 +52,7 @@ declare type Database = {
           content: string;
           created_at?: string;
           embedding?: string | null;
-          fts?: never;
+          fts?: unknown;
           id?: never;
           memory_type: string;
           updated_at?: string;
@@ -43,7 +63,7 @@ declare type Database = {
           content?: string;
           created_at?: string;
           embedding?: string | null;
-          fts?: never;
+          fts?: unknown;
           id?: never;
           memory_type?: string;
           updated_at?: string;
@@ -165,6 +185,39 @@ declare type Database = {
           },
         ];
       };
+      audio_references: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          is_paid: boolean;
+          name: string;
+          provider: string;
+          updated_at: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          is_paid?: boolean;
+          name: string;
+          provider: string;
+          updated_at?: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          is_paid?: boolean;
+          name?: string;
+          provider?: string;
+          updated_at?: string | null;
+          user_id?: string;
+          voice_id?: string;
+        };
+        Relationships: [];
+      };
       call_sessions: {
         Row: {
           billed_minutes: number;
@@ -232,6 +285,35 @@ declare type Database = {
             columns: ['voice_id'];
             isOneToOne: false;
             referencedRelation: 'voices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      card_bonus_claims: {
+        Row: {
+          created_at: string;
+          fingerprint: string;
+          setup_intent_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          fingerprint: string;
+          setup_intent_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          fingerprint?: string;
+          setup_intent_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'card_bonus_claims_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -496,7 +578,6 @@ declare type Database = {
         Row: {
           api_key_id: string | null;
           created_at: string;
-          credit_transaction_id: string | null;
           credits_used: number;
           dollar_amount: number | null;
           duration_seconds: number | null;
@@ -516,7 +597,6 @@ declare type Database = {
         Insert: {
           api_key_id?: string | null;
           created_at?: string;
-          credit_transaction_id?: string | null;
           credits_used: number;
           dollar_amount?: number | null;
           duration_seconds?: number | null;
@@ -536,7 +616,6 @@ declare type Database = {
         Update: {
           api_key_id?: string | null;
           created_at?: string;
-          credit_transaction_id?: string | null;
           credits_used?: number;
           dollar_amount?: number | null;
           duration_seconds?: number | null;
@@ -559,13 +638,6 @@ declare type Database = {
             columns: ['api_key_id'];
             isOneToOne: false;
             referencedRelation: 'api_keys';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'usage_events_credit_transaction_id_fkey';
-            columns: ['credit_transaction_id'];
-            isOneToOne: false;
-            referencedRelation: 'credit_transactions';
             referencedColumns: ['id'];
           },
           {
@@ -603,7 +675,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model?: string;
+          model: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -694,13 +766,39 @@ declare type Database = {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
       };
+      match_agent_memories_hybrid: {
+        Args: {
+          match_count?: number;
+          p_character_id?: string;
+          p_user_id: string;
+          query_embedding: string;
+          query_text: string;
+        };
+        Returns: {
+          content: string;
+          cosine_distance: number;
+          memory_type: string;
+          rrf_score: number;
+          text_rank: number;
+          vector_rank: number;
+        }[];
+      };
+      prune_agent_memories_over_cap: {
+        Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
+        Returns: number;
+      };
       update_api_key_last_used: {
         Args: { p_key_hash: string };
         Returns: undefined;
       };
     };
     Enums: {
-      credit_transaction_type: 'purchase' | 'freemium' | 'topup' | 'refund';
+      credit_transaction_type:
+        | 'purchase'
+        | 'freemium'
+        | 'topup'
+        | 'refund'
+        | 'card_bonus';
       feature_type: 'tts' | 'call';
       usage_source_type:
         | 'tts'
@@ -838,9 +936,18 @@ declare type CompositeTypes<
     : never;
 
 declare const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
-      credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],
+      credit_transaction_type: [
+        'purchase',
+        'freemium',
+        'topup',
+        'refund',
+        'card_bonus',
+      ],
       feature_type: ['tts', 'call'],
       usage_source_type: [
         'tts',

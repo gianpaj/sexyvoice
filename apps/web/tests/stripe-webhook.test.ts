@@ -16,7 +16,9 @@ import { POST } from '@/app/api/stripe/webhook/route';
 import { getCustomerData, setTestRedisClient } from '@/lib/redis/queries';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
+  CARD_BONUS_CREDIT_AMOUNT,
   getUserIdByStripeCustomerId,
+  insertCardBonusCreditTransaction,
   insertSubscriptionCreditTransaction,
   insertTopupCreditTransaction,
 } from '@/lib/supabase/queries';
@@ -49,12 +51,20 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
       list: vi.fn(),
       retrieve: vi.fn(),
     },
+    setupIntents: {
+      retrieve: vi.fn(),
+    },
+    customers: {
+      update: vi.fn(),
+    },
   },
 }));
 
 // Mock Supabase queries
 vi.mock('@/lib/supabase/queries', () => ({
+  CARD_BONUS_CREDIT_AMOUNT: 9000,
   getUserIdByStripeCustomerId: vi.fn(),
+  insertCardBonusCreditTransaction: vi.fn(),
   insertSubscriptionCreditTransaction: vi.fn(),
   insertTopupCreditTransaction: vi.fn(),
 }));
@@ -1106,6 +1116,154 @@ describe('Stripe Webhook Route', () => {
       const json = await response.json();
       expect(json).toEqual({ received: true });
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Card Bonus (Setup Intent)', () => {
+    function mockSetupIntent(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'seti_test123',
+        object: 'setup_intent',
+        customer: 'cus_test123',
+        metadata: { type: 'card_bonus', userId: 'user_123' },
+        payment_method: {
+          id: 'pm_test123',
+          object: 'payment_method',
+          card: { fingerprint: 'fp_abc123' },
+        },
+        ...overrides,
+      } as never;
+    }
+
+    it('grants the bonus on checkout.session.completed (mode: setup)', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent(),
+      );
+
+      const session = createMockCheckoutSession('setup', {
+        type: 'card_bonus',
+        userId: 'user_123',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(stripe.setupIntents.retrieve).toHaveBeenCalledWith(
+        'seti_test123',
+        { expand: ['payment_method'] },
+      );
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'seti_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+      expect(stripe.customers.update).toHaveBeenCalledWith('cus_test123', {
+        invoice_settings: { default_payment_method: 'pm_test123' },
+      });
+    });
+
+    it('grants the bonus via the setup_intent.succeeded backup path', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent(),
+      );
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent(),
+      );
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'seti_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+    });
+
+    it('resolves the user via stripe_id when metadata.userId is missing', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_456');
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      await POST(request);
+
+      expect(getUserIdByStripeCustomerId).toHaveBeenCalledWith('cus_test123');
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_456',
+        'seti_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+    });
+
+    it('ignores setup intents that are not for the card bonus', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({ metadata: {} }),
+      );
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent({ metadata: {} }),
+      );
+      await POST(request);
+
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('reports a missing card fingerprint to Sentry and skips the grant', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({
+          payment_method: { id: 'pm_test123', object: 'payment_method' },
+        }),
+      );
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent(),
+      );
+      await POST(request);
+
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          tags: expect.objectContaining({
+            event_type: 'card_bonus_setup_intent',
+          }),
+        }),
+      );
+    });
+
+    it('reports an unresolvable user to Sentry and skips the grant', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(undefined);
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      await POST(request);
+
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          tags: expect.objectContaining({
+            event_type: 'card_bonus_setup_intent',
+          }),
+        }),
+      );
     });
   });
 

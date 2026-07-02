@@ -8,7 +8,15 @@ import { dismissBannerAction } from '@/app/[lang]/actions/banners';
 import { Button } from '@/components/ui/button';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import { getCookie } from '@/lib/cookies';
+import { usePathname } from '@/lib/i18n/navigation';
 import { cn } from '@/lib/utils';
+
+// The locale-aware pathname omits the locale prefix, while banner CTA links
+// include it (e.g. `/en/dashboard/credits`). Strip the leading locale segment
+// so we can tell when the CTA points to the page the user is already on.
+function stripLocalePrefix(href: string) {
+  return href.replace(/^\/[^/]+/, '') || '/';
+}
 
 interface TimeRemaining {
   days: number;
@@ -52,6 +60,11 @@ export function Banner({
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
+  const pathname = usePathname();
+
+  // Hide the CTA when it would link to the page the user is already viewing
+  // (e.g. the card-bonus banner's "add a card" button on the credits page).
+  const isOnCtaPage = pathname === stripLocalePrefix(banner.ctaLink);
 
   useEffect(() => {
     let isCancelled = false;
@@ -177,15 +190,17 @@ export function Banner({
         </div>
 
         <div className="flex shrink-0 items-center justify-center gap-2">
-          <Button
-            asChild
-            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
-            effect="ringHover"
-            size="sm"
-            variant="outline"
-          >
-            <Link href={banner.ctaLink}>{banner.ctaText}</Link>
-          </Button>
+          {!isOnCtaPage && (
+            <Button
+              asChild
+              className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
+              effect="ringHover"
+              size="sm"
+              variant="outline"
+            >
+              <Link href={banner.ctaLink}>{banner.ctaText}</Link>
+            </Button>
+          )}
 
           {banner.dismissible && (
             <Button

@@ -94,7 +94,7 @@
       "title": "Voces expresivas, posibilidades sin límites",
       "subtitle": "Generador de voz y texto a voz con IA gratis.\nPerfecto para creadores de contenido y narradores.",
       "buttonCTA": "Empezar",
-      "noCreditCard": "Sin tarjeta de crédito",
+      "noCreditCard": "Sin tarjeta de crédito*⃰",
       "signIn": "Iniciar Sesión"
     },
     "features": {
@@ -112,7 +112,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Comienza con 10,000 créditos gratis",
+      "freeCredits": "Comienza con 10,000 créditos gratis (añade una tarjeta para desbloquearlos)",
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
       "action": "Crea tu primera voz"
@@ -215,7 +215,11 @@
           "questions": [
             {
               "question": "¿Cuántos créditos necesito?",
-              "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 10.000 créditos gratuitos (alrededor de 5 minutos de voz). Nuestro plan Starter incluye 25.000 créditos mensuales, mientras que Pro ofrece 300.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
+              "answer": "Aproximadamente 1.000 créditos generan 1 minuto de audio. Los nuevos usuarios reciben 1.000 créditos gratuitos, más 9.000 adicionales (10.000 en total) al añadir una tarjeta sin cargo. Nuestro plan Starter incluye 25.000 créditos mensuales, mientras que Pro ofrece 300.000 créditos para proyectos más grandes. Elige lo que mejor se adapte a tus necesidades."
+            },
+            {
+              "question": "¿Por qué piden una tarjeta de crédito?",
+              "answer": "Añadir una tarjeta es opcional y no supone ningún cargo: simplemente desbloquea tus créditos de bonificación (9.000 adicionales, para un total de 10.000). Exigir un método de pago válido también nos ayuda a mantener SexyVoice.ai limitado a personas adultas (mayores de 18 años) y reduce el abuso de nuestros créditos gratuitos. Puedes seguir usando tus 1.000 créditos gratuitos sin necesidad de añadir una tarjeta."
             },
             {
               "question": "¿Por qué elegir SexyVoice.ai?",
@@ -245,6 +249,20 @@
     "title": "Compra créditos para creadores y empresas de todos los tamaños",
     "description": "Elige la cantidad de créditos que mejor se adapte a tus necesidades",
     "historyEmpty": "Tu historial de uso de créditos aparecerá aquí",
+    "historyTypes": {
+      "purchase": "Compra",
+      "freemium": "Freemium",
+      "topup": "Recarga",
+      "refund": "Reembolso",
+      "card_bonus": "Bono por tarjeta"
+    },
+    "cardBonus": {
+      "title": "Añade una tarjeta y obtén 9,000 créditos",
+      "description": "Añade un método de pago (sin cargo) y aumentaremos tu saldo de 1,000 a 10,000 créditos.",
+      "cta": "Añadir tarjeta",
+      "processing": "Redirigiendo…",
+      "error": "No se pudo iniciar la configuración del bono por tarjeta. Inténtalo de nuevo."
+    },
     "billing": {
       "forever": "(para siempre)",
       "monthly": "/mes",
@@ -345,6 +363,16 @@
       "error": {
         "title": "Pago Fallido",
         "description": "Hubo un problema procesando tu pago. Por favor intenta de nuevo o contacta soporte si el problema persiste.",
+        "dismiss": "Descartar"
+      },
+      "cardBonusSuccess": {
+        "title": "¡Tarjeta añadida!",
+        "description": "Se han añadido 9,000 créditos de bonificación a tu cuenta.",
+        "dismiss": "Descartar"
+      },
+      "cardBonusCanceled": {
+        "title": "Configuración de tarjeta cancelada",
+        "description": "No se añadió ninguna tarjeta, por lo que los créditos de bonificación no se otorgaron. Puedes intentarlo de nuevo cuando quieras.",
         "dismiss": "Descartar"
       },
       "checkoutError": "Error al crear sesión de pago"
@@ -764,7 +792,7 @@
     "description": "Genera voz IA expresiva con emociones en 24+ idiomas. Prueba gratis texto a voz con clonación de voz y síntesis de habla natural. Empieza con créditos gratis – sin tarjeta requerida.",
     "skipToMainContent": "Saltar al contenido principal",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
-    "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
+    "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 1,000 créditos al instante, más 9,000 adicionales al añadir una tarjeta. Crea voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "/": "",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
@@ -909,6 +937,12 @@
       "ctaLoggedIn": "Probar voces",
       "ctaLoggedOut": "Iniciar sesion",
       "ariaLabelDismiss": "Cerrar anuncio de voces expresivas"
+    },
+    "cardBonusBanner": {
+      "text": "Añade una tarjeta (sin cargo) y desbloquea 9,000 créditos de bonificación — 10,000 en total.",
+      "ctaLoggedIn": "Añadir tarjeta",
+      "ctaLoggedOut": "Registrarse",
+      "ariaLabelDismiss": "Cerrar anuncio de bono por tarjeta"
     }
   },
   "audioConverter": {

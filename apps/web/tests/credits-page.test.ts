@@ -29,6 +29,10 @@ vi.mock('@/components/pricing-table', () => ({
   default: vi.fn(() => null),
 }));
 
+vi.mock('@/app/[lang]/(dashboard)/dashboard/credits/card-bonus-cta', () => ({
+  CardBonusCta: vi.fn(() => null),
+}));
+
 vi.mock('@/lib/e2e-mocks', () => ({
   E2E_CREDIT_TRANSACTIONS: [],
   isE2E: vi.fn(() => false),

@@ -11,7 +11,10 @@ import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider'
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { hasUserPaid } from '@/lib/supabase/queries';
+import {
+  computeCardBonusEligibility,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
 import {
   getCreditsQuery,
   getCreditTransactions,
@@ -40,14 +43,6 @@ export default async function DashboardLayout(props: {
     .filter((cookie) => cookie.value)
     .map((cookie) => cookie.name);
 
-  const activeBanner = resolveActiveBanner({
-    audience: 'loggedIn',
-    dismissedCookieKeys,
-    lang,
-    messages,
-    placement: 'dashboard',
-  });
-
   const [{ data: creditTransactions }, isPaidUser] = isE2E()
     ? [{ data: E2E_CREDIT_TRANSACTIONS }, false]
     : await Promise.all([
@@ -57,6 +52,19 @@ export default async function DashboardLayout(props: {
   if (!isE2E()) {
     await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
   }
+
+  const cardBonusEligible = isE2E()
+    ? false
+    : computeCardBonusEligibility(creditTransactions ?? []);
+
+  const activeBanner = resolveActiveBanner({
+    audience: 'loggedIn',
+    cardBonusEligible,
+    dismissedCookieKeys,
+    lang,
+    messages,
+    placement: 'dashboard',
+  });
 
   return (
     <ReactQueryClientProvider>

@@ -20,7 +20,7 @@ interface CreditTransaction {
     [key: string]: unknown;
   } | null;
   reference_id: string | null;
-  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  type: 'purchase' | 'topup' | 'freemium' | 'refund';
   user_id: string;
 }
 
@@ -188,7 +188,10 @@ function calculateRefund(
   const totalAdded = totalPurchased + totalFreemium;
   const stillOwedCredits = Math.max(
     0,
-    totalAdded - totalPurchaseRefunded - totalUsedFromEvents - userCreditBalance,
+    totalAdded -
+      totalPurchaseRefunded -
+      totalUsedFromEvents -
+      userCreditBalance,
   );
 
   return {
@@ -323,16 +326,20 @@ function displayRefundInfo(calculation: RefundCalculation): void {
   console.log('\n=== Credit Refund Calculation ===\n');
   console.log(`Total Credits Purchased:       ${calculation.totalPurchased}`);
   console.log(`Total Freemium Credits:        ${calculation.totalFreemium}`);
-  console.log(`Legitimate Usage (events):     ${calculation.totalUsedFromEvents}`);
+  console.log(
+    `Legitimate Usage (events):     ${calculation.totalUsedFromEvents}`,
+  );
   console.log(`Available Credits (balance):   ${calculation.availableCredits}`);
   console.log(
     `Refund Adjustment (all):       ${calculation.totalRefundAdjustment >= 0 ? '+' : ''}${calculation.totalRefundAdjustment}`,
   );
   console.log(`USD Refunds Given:             ${calculation.totalRefunded}`);
   if (calculation.stillOwedCredits > 0) {
-    console.log(`\n⚠️  Still owed to user:         ${calculation.stillOwedCredits} credits (overcharged but not yet refunded)`);
+    console.log(
+      `\n⚠️  Still owed to user:         ${calculation.stillOwedCredits} credits (overcharged but not yet refunded)`,
+    );
   } else {
-    console.log(`\n✅ Overcharge fully compensated`);
+    console.log('\n✅ Overcharge fully compensated');
   }
   console.log(`Total Spent: $${calculation.totalSpentUSD.toFixed(2)}`);
   console.log(
@@ -535,7 +542,11 @@ async function main() {
     }
 
     // Calculate refund using credits table as source of truth for available balance
-    const calculation = calculateRefund(transactions, userCreditBalance, totalUsedFromEvents);
+    const calculation = calculateRefund(
+      transactions,
+      userCreditBalance,
+      totalUsedFromEvents,
+    );
 
     // Display info
     displayRefundInfo(calculation);
