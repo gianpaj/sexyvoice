@@ -300,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Your monthly credit plan is scheduled to end",
+      "description": "Your monthly credit plan is still active until {date}, but it won’t renew or add more monthly credits after that. You can keep using any credits in your account. To switch tiers, manage your subscription in Stripe.",
+      "manageButton": "Manage subscription"
+    },
     "topup": {
       "title": "Buy Credits",
       "description": "Top up your credits instantly or subscribe and get more credits",

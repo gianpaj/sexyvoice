@@ -1,15 +1,16 @@
 import { captureException } from '@sentry/nextjs';
-import { ExternalLink, Sparkles } from 'lucide-react';
+import { CircleAlert, ExternalLink, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
 import PricingTable from '@/components/pricing-table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { getCustomerData } from '@/lib/redis/queries';
+import { type CustomerData, getCustomerData } from '@/lib/redis/queries';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
   createOrRetrieveCustomer,
@@ -21,6 +22,26 @@ import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 import { PaymentStatus } from './payment-status';
+
+function getScheduledSubscriptionEndDate(
+  customerData: CustomerData | null,
+  lang: Locale,
+) {
+  if (
+    customerData?.status !== 'active' ||
+    !customerData.cancelAtPeriodEnd ||
+    !customerData.currentPeriodEnd
+  ) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(lang, {
+    dateStyle: 'medium',
+  }).format(new Date(customerData.currentPeriodEnd * 1000));
+}
+
+const STRIPE_BILLING_PORTAL_URL =
+  'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww';
 
 async function canApplyFirstMonthSubscriptionDiscount(stripeId: string) {
   const subscriptionDiscountCouponId =
@@ -91,6 +112,7 @@ export default async function CreditsPage(props: {
 
   let shouldShowSubscriptionPlans = false;
   let isEligibleForSubscriptionDiscount = false;
+  let scheduledSubscriptionEndDate: string | null = null;
   let existingTransactions:
     | Pick<
         Tables<'credit_transactions'>,
@@ -132,6 +154,11 @@ export default async function CreditsPage(props: {
       }
     }
 
+    scheduledSubscriptionEndDate = getScheduledSubscriptionEndDate(
+      customerData,
+      lang,
+    );
+
     if (shouldShowSubscriptionPlans) {
       isEligibleForSubscriptionDiscount =
         await canApplyFirstMonthSubscriptionDiscount(stripeId);
@@ -164,10 +191,7 @@ export default async function CreditsPage(props: {
           <p className="text-muted-foreground">{t('topup.description')}</p>
         </div>
         <Button asChild icon={ExternalLink} iconPlacement="right">
-          <Link
-            href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
-            target="_blank"
-          >
+          <Link href={STRIPE_BILLING_PORTAL_URL} target="_blank">
             Stripe Customer Portal
           </Link>
         </Button>
@@ -185,6 +209,34 @@ export default async function CreditsPage(props: {
             })}
           </span>
         </div>
+      ) : null}
+
+      {scheduledSubscriptionEndDate ? (
+        <Alert className="border-amber-500/30 bg-amber-500/10 [&>svg]:text-amber-500">
+          <CircleAlert />
+          <AlertTitle className="line-clamp-none">
+            {t('subscriptionScheduledToCancel.title')}
+          </AlertTitle>
+          <AlertDescription>
+            <p>
+              {t('subscriptionScheduledToCancel.description', {
+                date: scheduledSubscriptionEndDate,
+              })}
+            </p>
+            <Button
+              asChild
+              className="mt-2"
+              icon={ExternalLink}
+              iconPlacement="right"
+              size="sm"
+              variant="secondary"
+            >
+              <Link href={STRIPE_BILLING_PORTAL_URL} target="_blank">
+                {t('subscriptionScheduledToCancel.manageButton')}
+              </Link>
+            </Button>
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       <PricingTable

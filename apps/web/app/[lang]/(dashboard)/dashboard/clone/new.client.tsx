@@ -11,13 +11,6 @@ import {
 } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
-import {
-  CLONE_FORM_FIELDS,
-  type CloneErrorResponseBody,
-  type CloneRouteErrorCode,
-  type CloneSuccessResponse,
-  type RouteErrorDetails,
-} from '@/lib/clone/api-types';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { GenerateButton } from '@/components/generate-button';
 import { toast } from '@/components/services/toast';
@@ -27,6 +20,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import {
+  CLONE_FORM_FIELDS,
+  type CloneErrorResponseBody,
+  type CloneRouteErrorCode,
+  type CloneSuccessResponse,
+  type RouteErrorDetails,
+} from '@/lib/clone/api-types';
 import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import {
   createMicrophoneReferenceAudioFile,

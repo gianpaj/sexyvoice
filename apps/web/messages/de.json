@@ -300,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Ihr monatlicher Credit-Plan endet demnächst",
+      "description": "Ihr monatlicher Credit-Plan ist noch bis zum {date} aktiv, wird danach aber nicht verlängert und fügt keine weiteren monatlichen Credits hinzu. Sie können alle Credits in Ihrem Konto weiter nutzen. Um die Stufe zu wechseln, verwalten Sie Ihr Abonnement in Stripe.",
+      "manageButton": "Abonnement verwalten"
+    },
     "topup": {
       "title": "Credits kaufen",
       "description": "Füllen Sie Ihre Credits sofort auf oder abonnieren Sie und erhalten Sie mehr Credits",

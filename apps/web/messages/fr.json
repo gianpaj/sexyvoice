@@ -300,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Votre forfait mensuel de crédits est programmé pour se terminer",
+      "description": "Votre forfait mensuel de crédits reste actif jusqu’au {date}, mais il ne sera pas renouvelé et n’ajoutera plus de crédits mensuels ensuite. Vous pouvez continuer à utiliser les crédits disponibles sur votre compte. Pour changer de niveau, gérez votre abonnement dans Stripe.",
+      "manageButton": "Gérer l’abonnement"
+    },
     "topup": {
       "title": "Acheter des crédits",
       "description": "Rechargez vos crédits instantanément ou abonnez-vous et obtenez plus de crédits",
