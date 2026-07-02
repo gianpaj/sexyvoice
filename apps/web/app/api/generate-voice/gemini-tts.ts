@@ -1,48 +1,6 @@
-import {
-  type GenerateContentConfig,
-  type GenerateContentResponse,
-  HarmBlockThreshold,
-  HarmCategory,
-} from '@google/genai';
+import type { GenerateContentResponse } from '@google/genai';
 
 import { convertToWav } from '@/lib/audio';
-
-export function buildGeminiTtsConfig({
-  voiceName,
-  seed,
-  abortSignal,
-}: {
-  voiceName: string;
-  seed?: number;
-  abortSignal: AbortSignal;
-}): GenerateContentConfig {
-  return {
-    abortSignal,
-    responseModalities: ['AUDIO'],
-    ...(seed === undefined ? {} : { seed }),
-    speechConfig: {
-      voiceConfig: {
-        prebuiltVoiceConfig: {
-          voiceName: voiceName.charAt(0).toUpperCase() + voiceName.slice(1),
-        },
-      },
-    },
-    safetySettings: [
-      {
-        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: HarmBlockThreshold.BLOCK_NONE,
-      },
-    ],
-  };
-}
-
-export function extractGeminiInlineAudio(
-  response: GenerateContentResponse,
-): { data: string; mimeType: string } | null {
-  const part = response?.candidates?.[0]?.content?.parts?.[0]?.inlineData;
-  if (!(part?.data && part?.mimeType)) return null;
-  return { data: part.data, mimeType: part.mimeType };
-}
 
 export function extractGeminiStreamAudioChunk(
   chunk: GenerateContentResponse,

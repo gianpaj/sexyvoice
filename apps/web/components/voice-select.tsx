@@ -144,6 +144,7 @@ export function VoiceSelect({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // biome-ignore lint/style/useDefaultSwitchClause: unneeded
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
