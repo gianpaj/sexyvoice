@@ -339,7 +339,7 @@ describe('createCardBonusSetupSession()', () => {
   });
 
   it('creates a setup-mode session for an eligible user', async () => {
-    const result = await createCardBonusSetupSession();
+    const result = await createCardBonusSetupSession({ lang: 'en' });
 
     expect(result).toEqual({
       alreadyClaimed: false,
@@ -367,7 +367,7 @@ describe('createCardBonusSetupSession()', () => {
   it('returns alreadyClaimed without creating a session', async () => {
     vi.mocked(hasClaimedCardBonus).mockResolvedValue(true);
 
-    const result = await createCardBonusSetupSession();
+    const result = await createCardBonusSetupSession({ lang: 'en' });
 
     expect(result).toEqual({
       alreadyClaimed: true,
@@ -380,7 +380,7 @@ describe('createCardBonusSetupSession()', () => {
   it('returns a safe null result in E2E mode without touching Stripe', async () => {
     process.env.E2E_TEST_MODE = 'true';
 
-    const result = await createCardBonusSetupSession();
+    const result = await createCardBonusSetupSession({ lang: 'en' });
 
     expect(result).toEqual({
       alreadyClaimed: false,
@@ -401,7 +401,7 @@ describe('createCardBonusSetupSession()', () => {
       },
     } as never);
 
-    await expect(createCardBonusSetupSession()).rejects.toThrow(
+    await expect(createCardBonusSetupSession({ lang: 'en' })).rejects.toThrow(
       'Unauthorized card bonus setup session request',
     );
     expect(captureException).toHaveBeenCalled();

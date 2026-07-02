@@ -1,6 +1,7 @@
 'use client';
 
 import { CreditCard, Loader2 } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useActionState } from 'react';
 
@@ -19,10 +20,13 @@ const initialState: ActionState = {
 
 export function CardBonusCta() {
   const t = useTranslations('credits.cardBonus');
+  const { lang } = useParams();
 
   const formAction = async (_prevState: ActionState): Promise<ActionState> => {
     try {
-      const { alreadyClaimed, url } = await createCardBonusSetupSession();
+      const { alreadyClaimed, url } = await createCardBonusSetupSession({
+        lang,
+      });
 
       if (alreadyClaimed) {
         return { alreadyClaimed: true, error: null };

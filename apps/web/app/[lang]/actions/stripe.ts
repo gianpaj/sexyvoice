@@ -1,6 +1,7 @@
 'use server';
 
 import { captureException, captureMessage } from '@sentry/nextjs';
+import type { ParamValue } from 'next/dist/server/request/params';
 import type { Stripe } from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
@@ -297,9 +298,11 @@ export interface CardBonusSessionResult {
  * `insertCardBonusCreditTransaction` for the grant + dedupe logic that runs
  * once the webhook confirms the SetupIntent.
  */
-export async function createCardBonusSetupSession(): Promise<CardBonusSessionResult> {
-  const lang = 'en';
-
+export async function createCardBonusSetupSession({
+  lang,
+}: {
+  lang: ParamValue;
+}): Promise<CardBonusSessionResult> {
   try {
     if (isE2E()) {
       return { alreadyClaimed: false, client_secret: null, url: null };
