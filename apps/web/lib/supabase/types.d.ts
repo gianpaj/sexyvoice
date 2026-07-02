@@ -13,6 +13,31 @@ declare type Database = {
   __InternalSupabase: {
     PostgrestVersion: '12.2.3 (519615d)';
   };
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       agent_memories: {
@@ -164,6 +189,39 @@ declare type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      audio_references: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          is_paid: boolean;
+          name: string;
+          provider: string;
+          updated_at: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          is_paid?: boolean;
+          name: string;
+          provider: string;
+          updated_at?: string | null;
+          user_id: string;
+          voice_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          is_paid?: boolean;
+          name?: string;
+          provider?: string;
+          updated_at?: string | null;
+          user_id?: string;
+          voice_id?: string;
+        };
+        Relationships: [];
       };
       call_sessions: {
         Row: {
@@ -838,6 +896,9 @@ declare type CompositeTypes<
     : never;
 
 declare const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],

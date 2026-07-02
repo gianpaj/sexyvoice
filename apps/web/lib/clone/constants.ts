@@ -1,4 +1,4 @@
-export type CloneProvider = 'mistral' | 'replicate';
+export type CloneProvider = 'mistral' | 'replicate' | 'inworld';
 
 export const VOXTRAL_SUPPORTED_LOCALE_CODES = new Set([
   'ar',

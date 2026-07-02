@@ -327,6 +327,75 @@ export async function saveAudioFile({
     .single();
 }
 
+// ─── Audio references (reusable cloned voices) ───
+
+const AUDIO_REFERENCE_COLUMNS =
+  'id, provider, voice_id, name, is_paid, created_at';
+
+export async function insertAudioReference({
+  userId,
+  provider,
+  voiceId,
+  name,
+  isPaid,
+}: {
+  userId: string;
+  provider: string;
+  voiceId: string;
+  name: string;
+  isPaid: boolean;
+}) {
+  const supabase = await createClient();
+
+  return supabase
+    .from('audio_references')
+    .insert({
+      user_id: userId,
+      provider,
+      voice_id: voiceId,
+      name,
+      is_paid: isPaid,
+    })
+    .select(AUDIO_REFERENCE_COLUMNS)
+    .single();
+}
+
+export async function getAudioReferencesForUser(
+  userId: string,
+  provider?: string,
+) {
+  const supabase = await createClient();
+  const query = supabase
+    .from('audio_references')
+    .select(AUDIO_REFERENCE_COLUMNS)
+    .eq('user_id', userId);
+
+  if (provider) {
+    query.eq('provider', provider);
+  }
+
+  return query.order('created_at', { ascending: false });
+}
+
+export async function getAudioReferenceById(id: string, userId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from('audio_references')
+    .select(AUDIO_REFERENCE_COLUMNS)
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle();
+}
+
+export async function deleteAudioReference(id: string, userId: string) {
+  const supabase = await createClient();
+  return supabase
+    .from('audio_references')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId);
+}
+
 /**
  * Insert a usage event record for tracking credit consumption.
  *

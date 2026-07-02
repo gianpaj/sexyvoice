@@ -1,6 +1,23 @@
+import type { CloneProvider } from '@/lib/clone/constants';
 import type messages from '@/messages/en.json';
 
 export type CloneDict = (typeof messages)['clone'];
+
+// 'auto' lets the backend pick the provider by locale (current default behavior).
+export type CloneProviderSelection = CloneProvider | 'auto';
+
+// A previously-saved, reusable cloned voice (currently Inworld).
+export interface AudioReference {
+  createdAt: string | null;
+  id: string;
+  isPaid: boolean;
+  name: string;
+  provider: string;
+  voiceId: string;
+}
+
+// 'new' = clone a fresh voice from uploaded audio; otherwise an audio_references row id.
+export type AudioReferenceSelection = string | 'new';
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
@@ -22,16 +39,21 @@ export interface CloneState {
   errorMessage: string;
   ffmpegError: string | null;
   generatedAudioUrl: string | null;
+  inworldVoices: AudioReference[];
+  inworldVoicesLoading: boolean;
   legalConsentChecked: boolean;
   micBlob: Blob | null;
   micRecording: boolean;
   referenceAudioEnhancementEnabled: boolean;
+  selectedAudioReferenceId: AudioReferenceSelection;
   selectedLocale: {
     code: string;
     value: string;
   };
+  selectedProvider: CloneProviderSelection;
   status: Status;
   text: string;
+  voiceName: string;
 }
 
 export interface CloneStateAction {
@@ -46,15 +68,20 @@ export const initialCloneState: CloneState = {
   ffmpegError: null,
   generatedAudioUrl: null,
   legalConsentChecked: false,
+  inworldVoices: [],
+  inworldVoicesLoading: false,
   micBlob: null,
   micRecording: false,
   referenceAudioEnhancementEnabled: false,
+  selectedAudioReferenceId: 'new',
   selectedLocale: {
     code: 'en',
     value: 'english',
   },
+  selectedProvider: 'auto',
   status: 'idle',
   text: '',
+  voiceName: '',
 };
 
 export function cloneStateReducer(

@@ -433,6 +433,9 @@ export function isWavFormat(buffer: Buffer): boolean {
   );
 }
 
+// inworld-tts-2 pricing: $25 per 1,000,000 characters.
+const INWORLD_TTS2_DOLLARS_PER_MILLION_CHARS = 25;
+
 export const getDollarCost = (
   provider: CloneProvider,
   credits?: number,
@@ -446,6 +449,12 @@ export const getDollarCost = (
     // resemble-ai/chatterbox-multilingual - model costs approximately $0.0046 to run on Replicate
     // 0.012 is the average of 11 last predictions - https://replicate.com/predictions
     return credits ? 0.0121 : -1;
+  }
+  if (provider === 'inworld') {
+    // inworld-tts-2 - $25 per 1M characters
+    return text
+      ? (text.length / 1_000_000) * INWORLD_TTS2_DOLLARS_PER_MILLION_CHARS
+      : -1;
   }
   return -1;
 };

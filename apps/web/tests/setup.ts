@@ -1,3 +1,4 @@
+import { randomUUID as nodeRandomUUID } from 'node:crypto';
 import type { GenerateContentResponse } from '@google/genai';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
@@ -40,7 +41,10 @@ export const handlers = [
     }
     const requestId = new URL(request.url).searchParams.get('request_id');
     if (!requestId) {
-      return HttpResponse.json({ error: 'Missing request_id' }, { status: 400 });
+      return HttpResponse.json(
+        { error: 'Missing request_id' },
+        { status: 400 },
+      );
     }
     return HttpResponse.json({
       billing_events: [
@@ -48,10 +52,10 @@ export const handlers = [
           request_id: requestId,
           endpoint_id: 'fal-ai/deepfilternet3',
           timestamp: '2026-06-13T03:44:17.164745000Z',
-          output_units: 2.6006458333333335,
+          output_units: 2.600_645_833_333_333_5,
           unit_price: 0.001,
           percent_discount: 0,
-          cost_estimate_nano_usd: 2600646,
+          cost_estimate_nano_usd: 2_600_646,
         },
       ],
       next_cursor: null,
@@ -86,6 +90,22 @@ export const handlers = [
     HttpResponse.json({
       audio_data: Buffer.from(new Uint8Array(1024)).toString('base64'),
     }),
+  ),
+  // Inworld voice clone API mock
+  http.post('https://api.inworld.ai/voices/v1/voices:clone', () =>
+    HttpResponse.json({
+      voice: { voiceId: 'test-inworld-voice-id' },
+    }),
+  ),
+  // Inworld TTS synthesize API mock (returns base64 MP3)
+  http.post('https://api.inworld.ai/tts/v1/voice', () =>
+    HttpResponse.json({
+      audioContent: Buffer.from(new Uint8Array(1024)).toString('base64'),
+    }),
+  ),
+  // Inworld delete voice API mock
+  http.delete('https://api.inworld.ai/voices/v1/voices/:voiceId', () =>
+    HttpResponse.json({}),
   ),
 ];
 
@@ -197,6 +217,7 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.MISTRAL_API_KEY = 'test-mistral-api-key';
+process.env.INWORLD_API_KEY = 'test-inworld-key';
 process.env.XAI_API_KEY = 'test-xai-key';
 process.env.KV_REST_API_URL = 'http://localhost:8079';
 process.env.KV_REST_API_TOKEN = 'example_token';
@@ -529,12 +550,39 @@ vi.mock('@/lib/supabase/queries', async () => {
     }),
     insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
     isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
+    isFreeUserOverCallLimit: vi.fn().mockResolvedValue(false),
     hasUserPaid: vi.fn().mockResolvedValue(false),
     hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
     getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
     reserveCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(true),
     markCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(undefined),
     getUserEmailAdmin: vi.fn().mockResolvedValue('test@example.com'),
+    insertAudioReference: vi.fn().mockResolvedValue({
+      data: {
+        id: 'test-audio-reference-id',
+        provider: 'inworld',
+        voice_id: 'test-inworld-voice-id',
+        name: 'My Voice',
+        is_paid: false,
+        created_at: '2026-06-21T00:00:00.000Z',
+      },
+      error: null,
+    }),
+    getAudioReferencesForUser: vi
+      .fn()
+      .mockResolvedValue({ data: [], error: null }),
+    getAudioReferenceById: vi.fn().mockResolvedValue({
+      data: {
+        id: 'test-audio-reference-id',
+        provider: 'inworld',
+        voice_id: 'test-inworld-voice-id',
+        name: 'My Voice',
+        is_paid: false,
+        created_at: '2026-06-21T00:00:00.000Z',
+      },
+      error: null,
+    }),
+    deleteAudioReference: vi.fn().mockResolvedValue({ error: null }),
   };
 });
 
@@ -625,28 +673,29 @@ export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
 const DEFAULT_MOCK_AUDIO_DATA =
   'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 
-const createDefaultStreamChunk = (): GenerateContentResponse => ({
-  candidates: [
-    {
-      content: {
-        parts: [
-          {
-            inlineData: {
-              data: DEFAULT_MOCK_AUDIO_DATA,
-              mimeType: 'audio/L16;rate=24000',
+const createDefaultStreamChunk = (): GenerateContentResponse =>
+  ({
+    candidates: [
+      {
+        content: {
+          parts: [
+            {
+              inlineData: {
+                data: DEFAULT_MOCK_AUDIO_DATA,
+                mimeType: 'audio/L16;rate=24000',
+              },
             },
-          },
-        ],
-      },
-      finishReason: 'STOP',
-    } as any,
-  ],
-  usageMetadata: {
-    promptTokenCount: 11,
-    candidatesTokenCount: 12,
-    totalTokenCount: 23,
-  },
-} as GenerateContentResponse);
+          ],
+        },
+        finishReason: 'STOP',
+      } as any,
+    ],
+    usageMetadata: {
+      promptTokenCount: 11,
+      candidatesTokenCount: 12,
+      totalTokenCount: 23,
+    },
+  }) as GenerateContentResponse;
 
 // Create a configurable mock instance that tests can modify
 const createDefaultGoogleGenAIInstance = () => ({
@@ -710,9 +759,11 @@ vi.mock('@google/genai', async () => {
   };
 });
 
-// Mock crypto.subtle for filename hash generation
+// Mock crypto.subtle for filename hash generation (keep a real randomUUID,
+// which API routes use for room/request ids).
 Object.defineProperty(global, 'crypto', {
   value: {
+    randomUUID: nodeRandomUUID,
     subtle: {
       digest: vi.fn().mockImplementation((_algorithm, data) => {
         // Generate a simple hash based on the input data
