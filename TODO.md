@@ -21,7 +21,7 @@
 - test and implement text interruptions <https://github.com/livekit/agents-js/pull/998>
 - add duration to generate audios. if there is a high duration and short text, add warning in `usage` JSON col that the audio may be silent for a long time.
 - fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
-- fix: landing page audios not stopping if another audio is played
+- fix: landing page audios is not stopping if another audio is played
 - Add usage page in Dashboard
 - Update daily-stats API route to include usage and a section for Voice calls. Mins, credits used, Top preset/voice/language and the averages
 - add audio clones demos on landing page
@@ -130,6 +130,8 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Later
 
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- Audio wave preview like <https://www.muna.ai/@kitten-ml/kitten-tts> (canvas)
+- Voice list search and preview like <https://platform.inworld.ai/v2/workspaces/default-g16raugwkppmeeuex7qjla/tts-playground>
 - add a 'Remove background noise' checkbox in the Voice cloning upload step. (Extra 500 credits). 'You can download the cleaned audio after too'.
 
 ## Other Voice cloning demos

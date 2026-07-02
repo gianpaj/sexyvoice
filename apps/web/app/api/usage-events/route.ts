@@ -2,6 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createClient } from '@/lib/supabase/server';
 import {
   getAllTimeUsageSummary,
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return APIErrorResponse('Unauthorized', 401);
     }
 
     // Parse query parameters
@@ -38,10 +39,7 @@ export async function GET(request: NextRequest) {
 
     // Validate parsed numbers to prevent NaN propagation
     if (!(Number.isFinite(page) && Number.isFinite(pageSize))) {
-      return NextResponse.json(
-        { error: 'Invalid page or pageSize parameter' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid page or pageSize parameter', 400);
     }
 
     const sourceType = searchParams.get('sourceType') as
@@ -59,10 +57,7 @@ export async function GET(request: NextRequest) {
       'api_voice_cloning',
     ];
     if (sourceType && !validSourceTypes.includes(sourceType)) {
-      return NextResponse.json(
-        { error: 'Invalid sourceType parameter' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid sourceType parameter', 400);
     }
 
     // Fetch paginated usage events
@@ -101,9 +96,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to fetch usage events:', error);
     captureException(error);
-    return NextResponse.json(
-      { error: 'Failed to fetch usage events' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch usage events', 500);
   }
 }

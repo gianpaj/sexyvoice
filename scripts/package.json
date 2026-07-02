@@ -16,6 +16,7 @@
     "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
     "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",
     "check-disposable-emails": "node check-disposable-emails.mjs",
+    "compile-dispute-evidence": "tsx compile-dispute-evidence.mts",
     "backfill-free-call": "tsx backfill-free-call.mts",
     "batch-refund-credits": "tsx batch-refund-credits.mts",
     "refund-credits": "tsx refund-credits.mts",

@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { stripe } from '@/lib/stripe/stripe-admin';
+import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
@@ -10,10 +12,7 @@ export async function GET(request: NextRequest) {
     const stripeId = searchParams.get('stripeId');
 
     if (!stripeId) {
-      return NextResponse.json(
-        { error: 'Stripe ID is required' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Stripe ID is required', 400);
     }
 
     const supabase = await createClient();
@@ -24,7 +23,16 @@ export async function GET(request: NextRequest) {
       error,
     } = await supabase.auth.getUser();
     if (!user || error) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return APIErrorResponse('Unauthorized', 401);
+    }
+
+    const userData = await getUserById(user.id);
+    if (!userData?.stripe_id) {
+      return APIErrorResponse('Stripe customer not found', 404);
+    }
+
+    if (userData.stripe_id !== stripeId) {
+      return APIErrorResponse('Forbidden', 403);
     }
 
     // Get active subscriptions for this customer
@@ -76,9 +84,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(transactions);
   } catch (error) {
     console.error('Error fetching Stripe transactions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch transactions' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch transactions', 500);
   }
 }

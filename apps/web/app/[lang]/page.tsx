@@ -148,12 +148,12 @@ export default async function LandingPage(props: {
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <HeroWaveform />
-              <h1 className="font-bold text-5xl md:text-6xl">
-                <span className="text-white/90 leading-14">{firstPart}</span>
+              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+                <span className="text-white/90">{firstPart}</span>
                 <br />
                 {titleRestParts && (
                   <span
-                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent leading-16"
+                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent"
                     style={{
                       backgroundImage:
                         'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
@@ -163,7 +163,7 @@ export default async function LandingPage(props: {
                   </span>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl leading-10">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
                 {dictLanding.hero.subtitle}
               </p>
 
@@ -224,7 +224,7 @@ export default async function LandingPage(props: {
                     <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
                     {dictLanding.features.security.title}
                   </h3>
                 </CardHeader>
@@ -240,7 +240,7 @@ export default async function LandingPage(props: {
                     <Mic2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
                     {dictLanding.features.voiceCloning.title}
                   </h3>
                 </CardHeader>
@@ -258,7 +258,7 @@ export default async function LandingPage(props: {
                     <Globe2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
                     {dictLanding.features.multiLanguage.title}
                   </h3>
                 </CardHeader>
@@ -285,7 +285,7 @@ export default async function LandingPage(props: {
 
             {/* Blog posts Section */}
             <div className="mx-auto grid grid-cols-1 gap-4 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
-              <h2 className="mb-4 font-bold text-2xl">
+              <h2 className="mb-4 text-balance font-bold text-2xl">
                 {dictLanding.latestPosts}
               </h2>
               {get3PostsByLang(lang).map((post) => (
@@ -298,7 +298,7 @@ export default async function LandingPage(props: {
                       {post.image && (
                         <Image
                           alt={post.title}
-                          className="mx-auto rounded-lg"
+                          className="mx-auto rounded-lg outline outline-white/10 -outline-offset-1"
                           height={200}
                           loading="lazy"
                           priority={false}
@@ -307,7 +307,7 @@ export default async function LandingPage(props: {
                           width={300}
                         />
                       )}
-                      <CardTitle className="text-center text-gray-200 text-lg leading-8">
+                      <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
                         {post.title}
                       </CardTitle>
                     </CardHeader>
@@ -325,10 +325,10 @@ export default async function LandingPage(props: {
                 <Sparkles className="mr-2 size-4" />
                 <span>{dictLanding.cta.freeCredits}</span>
               </div>
-              <h2 className="font-bold text-3xl text-white md:text-4xl">
+              <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
                 {dictLanding.cta.title}
               </h2>
-              <p className="mx-auto max-w-2xl text-gray-300 text-xl">
+              <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
                 {dictLanding.cta.subtitle}
               </p>
               <Button

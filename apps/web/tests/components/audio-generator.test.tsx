@@ -130,6 +130,15 @@ vi.mock('@/lib/ai', () => ({
 
     return 500;
   }),
+  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 2500 : 1000,
+  ),
+  getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 8192 : 400,
+  ),
+  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
+  GEMINI_CHARS_PER_TOKEN: 4,
+  GEMINI_STREAMING_ENABLED: false,
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -158,8 +167,8 @@ const baseDict = {
   notEnoughCredits: 'Not enough credits',
   fullscreenTitle: 'Fullscreen',
   paidCharacterLimitTooltip: 'Paid users enjoy 2× character limit',
-  success: 'Success',
   upgradeCharacterLimitTooltip: 'Upgrade to a paid plan for 2× character limit',
+  success: 'Success',
   error: 'Something went wrong',
   errorEstimating: 'Failed to estimate credits',
   dailyLimitError: 'Daily limit reached (__COUNT__)',
@@ -1558,7 +1567,9 @@ describe('AudioGenerator', () => {
     };
   }
 
-  it('sends stream: true when Gemini voice and text exceeds threshold', async () => {
+  // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false), so the
+  // client no longer requests the SSE path. Re-enable with the flag.
+  it.skip('sends stream: true when Gemini voice and text exceeds threshold', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()
@@ -1673,7 +1684,8 @@ describe('AudioGenerator', () => {
     expect(body.stream).toBeUndefined();
   });
 
-  it('schedules audio chunks via Web Audio and shows the streaming player', async () => {
+  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
+  it.skip('schedules audio chunks via Web Audio and shows the streaming player', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()
@@ -1718,7 +1730,8 @@ describe('AudioGenerator', () => {
     expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
   });
 
-  it('shows error toast on SSE error event', async () => {
+  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
+  it.skip('shows error toast on SSE error event', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()

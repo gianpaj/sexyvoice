@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createClient } from '@/lib/supabase/server';
 
 export async function DELETE(
@@ -16,7 +17,7 @@ export async function DELETE(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const { data, error } = await supabase
@@ -27,14 +28,11 @@ export async function DELETE(
     .select('id');
 
   if (error) {
-    return NextResponse.json(
-      { error: 'Failed to deactivate API key' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to deactivate API key', 500);
   }
 
   if (!data || data.length === 0) {
-    return NextResponse.json({ error: 'API key not found' }, { status: 404 });
+    return APIErrorResponse('API key not found', 404);
   }
 
   return NextResponse.json({ success: true }, { status: 200 });

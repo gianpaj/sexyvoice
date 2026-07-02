@@ -18,6 +18,9 @@ vi.mock('@/components/audio-player-with-context', () => ({
 
 vi.mock('@/lib/ai', () => ({
   getEmotionTags: vi.fn(() => null),
+  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 2500 : 1000,
+  ),
 }));
 
 vi.mock('@/lib/react-textarea-autosize', () => ({
