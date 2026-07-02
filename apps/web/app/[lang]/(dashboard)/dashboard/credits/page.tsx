@@ -223,7 +223,14 @@ export default async function CreditsPage(props: {
                 date: scheduledSubscriptionEndDate,
               })}
             </p>
-            <Button asChild className="mt-2" size="sm" variant="outline">
+            <Button
+              asChild
+              className="mt-2"
+              icon={ExternalLink}
+              iconPlacement="right"
+              size="sm"
+              variant="secondary"
+            >
               <Link
                 href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
                 target="_blank"
