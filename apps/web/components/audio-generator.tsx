@@ -24,7 +24,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getCharactersLimit } from '@/lib/ai';
+import {
+  estimateTokenCount,
+  GEMINI_CHARS_PER_TOKEN,
+  GEMINI_STREAMING_ENABLED,
+  getCharactersLimit,
+  getGeminiCombinedTokenLimit,
+  getGeminiStyleCharacterLimit,
+} from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
@@ -300,7 +307,10 @@ export function AudioGenerator({
   // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
   // synthesize the whole clip and return it in a single chunk, so streaming
   // there gives no time-to-first-audio benefit — keep them on the JSON path.
-  const isStreamingModel = selectedVoice?.model === 'gpro31';
+  // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
+  // progressive streaming corrupted some gpro31 generations.
+  const isStreamingModel =
+    GEMINI_STREAMING_ENABLED && selectedVoice?.model === 'gpro31';
   // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
   // toward the expected total length before the exact duration is known.
   const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
@@ -309,10 +319,20 @@ export function AudioGenerator({
     (provider === 'gemini' && selectedVoice?.model === 'gpro31');
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
-  const charactersLimit = getCharactersLimit(
-    selectedVoice?.model || '',
-    isPaidUser,
-  );
+  // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
+  // and the style, so its transcript "character limit" is that token budget
+  // expressed in approximate characters. Other voices keep the per-tier cap.
+  // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
+  // gpro31 reverts to the standard per-tier character limits and the separate
+  // style-prompt cap, like the Gemini 2.5 voices.
+  const isGemini31 =
+    GEMINI_STREAMING_ENABLED &&
+    isGeminiVoice &&
+    selectedVoice?.model === 'gpro31';
+  const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
+  const charactersLimit = isGemini31
+    ? getGeminiCombinedTokenLimit(isPaidUser) * GEMINI_CHARS_PER_TOKEN
+    : getCharactersLimit(selectedVoice?.model || '', isPaidUser);
   const splitSegmentTexts = useMemo(
     () =>
       splitLongTextIntoSegments(text, {
@@ -335,8 +355,22 @@ export function AudioGenerator({
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
     shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
+  // Gemini 2.5 voices have a separate character-bounded style prompt; gpro31
+  // folds the style into the combined token budget checked below.
+  const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
+  const styleIsOverLimit =
+    isGeminiVoice && !isGemini31 && styleText.length > styleCharacterLimit;
+  const combinedTokenLimit = getGeminiCombinedTokenLimit(isPaidUser);
+  const combinedTokenEstimate = isGemini31
+    ? estimateTokenCount(styleText ? `${styleText}\n${text}` : text)
+    : 0;
+  const combinedIsOverLimit =
+    isGemini31 && combinedTokenEstimate > combinedTokenLimit;
   const textIsOverLimit =
-    !shouldDisableCharactersLimit && text.length > charactersLimit;
+    !shouldDisableCharactersLimit &&
+    (isGemini31 ? combinedIsOverLimit : text.length > charactersLimit);
+  // Any input limit (transcript, style, or combined token budget) blocks generation.
+  const inputIsOverLimit = textIsOverLimit || styleIsOverLimit;
   const {
     splitSegments,
     allSegmentsGenerated,
@@ -748,7 +782,7 @@ export function AudioGenerator({
           text.trim() &&
           selectedVoice &&
           hasEnoughCredits &&
-          !textIsOverLimit
+          !inputIsOverLimit
         ) {
           handleGenerate().catch((error) => {
             console.error('Keyboard shortcut generation failed:', error);
@@ -768,7 +802,7 @@ export function AudioGenerator({
     isGenerating,
     selectedVoice,
     text,
-    textIsOverLimit,
+    inputIsOverLimit,
   ]);
 
   const resetPlayer = () => {
@@ -1026,8 +1060,6 @@ export function AudioGenerator({
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
-              characterLimitPaidTooltip={t('paidCharacterLimitTooltip')}
-              characterLimitUpgradeTooltip={t('upgradeCharacterLimitTooltip')}
               charactersLimit={charactersLimit}
               enforceCharactersLimit={!shouldDisableCharactersLimit}
               isPaidUser={isPaidUser}
@@ -1101,7 +1133,7 @@ export function AudioGenerator({
               isGenerating={isGenerating}
               onEstimateCredits={handleEstimateCredits}
               text={text}
-              textIsOverLimit={textIsOverLimit}
+              textIsOverLimit={inputIsOverLimit}
             />
           )}
         </div>
@@ -1129,7 +1161,7 @@ export function AudioGenerator({
                 !text.trim() ||
                 !selectedVoice ||
                 !hasEnoughCredits ||
-                textIsOverLimit
+                inputIsOverLimit
               }
               generatingText={`${t('generating')}...`}
               isGenerating={isGenerating}

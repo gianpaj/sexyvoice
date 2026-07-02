@@ -188,6 +188,10 @@
             {
               "question": "Combien ça coûte ?",
               "answer": "Les appels en direct coûtent {count} crédits par minute pendant que vous êtes connecté."
+            },
+            {
+              "question": "L'IA se souvient-elle de nos conversations précédentes ?",
+              "answer": "Uniquement si vous activez la mémoire : elle est facultative et désactivée par défaut, donc en principe rien de vos appels n'est conservé. Lorsqu'elle est activée, l'assistant retient quelques informations courtes (comme la façon dont vous aimez qu'on s'adresse à vous et les sujets que vous appréciez), pas d'enregistrements ni de transcriptions complètes, afin de reprendre là où vous vous étiez arrêté. Nous ne conservons que vos informations les plus récentes, vous pouvez tout effacer à tout moment, et la suppression de votre compte les supprime automatiquement."
             }
           ]
         },
@@ -296,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Votre forfait mensuel de crédits est programmé pour se terminer",
+      "description": "Votre forfait mensuel de crédits reste actif jusqu’au {date}, mais il ne sera pas renouvelé et n’ajoutera plus de crédits mensuels ensuite. Vous pouvez continuer à utiliser les crédits disponibles sur votre compte. Pour changer de niveau, gérez votre abonnement dans Stripe.",
+      "manageButton": "Gérer l’abonnement"
+    },
     "topup": {
       "title": "Acheter des crédits",
       "description": "Rechargez vos crédits instantanément ou abonnez-vous et obtenez plus de crédits",
@@ -365,14 +374,16 @@
     "generating": "Génération",
     "gproLimitExceeded": "Vous avez dépassé la limite de __COUNT__ générations de voix multilingues en tant qu'utilisateur gratuit. Veuillez essayer une voix différente ou mettre à niveau votre forfait pour un accès illimité.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
-    "paidCharacterLimitTooltip": "Les utilisateurs payants bénéficient d'une limite de caractères 2×",
     "playAudio": "Lire l'audio",
     "resetPlayer": "Réinitialiser le lecteur",
     "subtitle": "Sélectionnez une voix et générez de l'audio à partir du texte",
     "success": "Audio généré avec succès !",
     "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
-    "title": "Générer de l'audio",
+    "paidStyleLimitTooltip": "Vous bénéficiez d'une limite de style 2,5×",
+    "upgradeStyleLimitTooltip": "Passez à un forfait payant pour une limite de style 2,5×",
+    "paidCharacterLimitTooltip": "Vous bénéficiez d'une limite de caractères 2×",
     "upgradeCharacterLimitTooltip": "Passez à un forfait payant pour une limite de caractères 2×",
+    "title": "Générer de l'audio",
     "grok": {
       "inlineEffectPlaceholder": "Insérer un effet inline",
       "wrappingEffectPlaceholder": "Entourer avec une balise de style",
@@ -480,6 +491,9 @@
     "inworldVoiceCreated": "Voix créée",
     "inworldVoiceCreateError": "Impossible de créer la voix. Veuillez réessayer.",
     "inworldVoiceLoadError": "Impossible de charger vos voix.",
+    "memoryLabel": "Mémoire",
+    "memoryDescription": "Laissez les personnages se souvenir de vous d’un appel à l’autre. Rien n’est enregistré sauf si c’est activé.",
+    "memoryUpgradeTooltip": "Passez à une offre payante pour que les personnages se souviennent de vous d’un appel à l’autre.",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
     "sceneLabel": "Scène",
@@ -761,6 +775,17 @@
         "cancel": "Annuler",
         "confirm": "Révoquer"
       }
+    },
+    "memory": {
+      "title": "Mémoire des appels vocaux",
+      "description": "Si vous activez la mémoire pendant les appels, les personnages retiennent quelques informations sur vous pour assurer la continuité. Vous pouvez tout effacer ici.",
+      "button": "Supprimer toutes les mémoires",
+      "confirmTitle": "Supprimer toutes les mémoires des appels vocaux ?",
+      "confirmDescription": "Cela efface définitivement tout ce que les personnages ont retenu de vous lors des appels précédents. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "continue": "Supprimer",
+      "success": "Vos mémoires d’appels vocaux ont été supprimées.",
+      "error": "Impossible de supprimer vos mémoires. Veuillez réessayer."
     }
   },
   "apiBilling": {

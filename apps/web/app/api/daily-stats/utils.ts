@@ -93,15 +93,6 @@ export const formatDuration = (seconds: number): string => {
   return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 };
 
-export const formatDurationChange = (
-  currentSeconds: number,
-  baselineSeconds: number,
-): string => {
-  const diffSeconds = Math.round(currentSeconds - baselineSeconds);
-  const sign = diffSeconds >= 0 ? '+' : '-';
-  return `${sign}${formatDuration(Math.abs(diffSeconds))}`;
-};
-
 export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     console.log('Invalid metadata in row:', row);
@@ -110,6 +101,38 @@ export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
 
   const { dollarAmount } = row.metadata as MetadataWithDollarAmount;
   return typeof dollarAmount === 'number' ? acc + dollarAmount : acc;
+}
+
+// `metadata.reason` values set on the chargeback freeze / restore credit_transactions
+// rows (see the dispute-evidence SQL playbook). Kept here so daily-stats and any
+// future tooling classify these rows the same way.
+export const CHARGEBACK_HOLD_REASON = 'chargeback_dispute';
+export const CHARGEBACK_RELEASE_REASON = 'chargeback_dispute_released';
+
+export type RefundKind = 'refund' | 'chargeback_hold' | 'chargeback_release';
+
+/**
+ * Classify a `type='refund'` credit_transactions row.
+ *
+ * Chargeback hold (freeze) and release (dispute won) rows are internal
+ * credit-ledger moves, not customer refunds — they carry no `dollarAmount` and
+ * must be kept out of the refund metrics. Everything else (cash refunds and
+ * platform-bug credit refunds) is a genuine refund. Keyed on the exact reason
+ * string, not on the absence of `dollarAmount`, because platform-bug refunds
+ * also lack a `dollarAmount`.
+ */
+export function classifyRefund(row: { metadata: Json }): RefundKind {
+  const reason =
+    row.metadata && typeof row.metadata === 'object'
+      ? (row.metadata as { reason?: unknown }).reason
+      : undefined;
+  if (reason === CHARGEBACK_HOLD_REASON) {
+    return 'chargeback_hold';
+  }
+  if (reason === CHARGEBACK_RELEASE_REASON) {
+    return 'chargeback_release';
+  }
+  return 'refund';
 }
 
 export function getProfileUsername(

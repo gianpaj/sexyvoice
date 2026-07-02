@@ -2,6 +2,8 @@ import { Redis } from '@upstash/redis';
 import type { Redis as IORedis } from 'ioredis';
 import type Stripe from 'stripe';
 
+import { getSubscriptionMrrByPriceId } from '../stripe/pricing';
+
 // Initialize Redis
 const redis = Redis.fromEnv();
 
@@ -58,6 +60,10 @@ export async function getCustomerData(
 
 interface SubscriptionScanResult {
   activeCount: number;
+  /** Sum of full monthly recurring dollar amounts across active subscriptions. */
+  mrr: number;
+  /** Active subscriptions whose priceId has no known recurring amount. */
+  mrrUnknownCount: number;
   nextDueSubscription: {
     customerId: string;
     data: CustomerData;
@@ -65,19 +71,68 @@ interface SubscriptionScanResult {
   } | null;
 }
 
+interface SubscriptionScanAccumulator extends SubscriptionScanResult {
+  /** Soonest future renewal time seen so far, in epoch seconds. */
+  closestDueTime: number;
+}
+
+/**
+ * Folds a single `stripe:customer:*` record into the running scan totals:
+ * active count, MRR (sum of full monthly recurring amounts), and the next
+ * renewal due. No-op for missing or non-active subscriptions.
+ */
+function accumulateSubscription(
+  acc: SubscriptionScanAccumulator,
+  key: string,
+  data: CustomerData | null,
+  now: number,
+  mrrByPriceId: Map<string, number>,
+): void {
+  if (data === null || data.status !== 'active') return;
+
+  acc.activeCount++;
+
+  const monthlyAmount = data.priceId
+    ? mrrByPriceId.get(data.priceId)
+    : undefined;
+  if (monthlyAmount === undefined) {
+    acc.mrrUnknownCount++;
+  } else {
+    acc.mrr += monthlyAmount;
+  }
+
+  if (
+    data.currentPeriodEnd &&
+    data.currentPeriodEnd > now &&
+    data.currentPeriodEnd < acc.closestDueTime
+  ) {
+    acc.closestDueTime = data.currentPeriodEnd;
+    acc.nextDueSubscription = {
+      customerId: key.replace('stripe:customer:', ''),
+      data,
+      dueDate: new Date(data.currentPeriodEnd * 1000).toISOString(),
+    };
+  }
+}
+
 /**
  * Single SCAN pass over all `stripe:customer:*` keys that simultaneously
- * counts active subscriptions and finds the next renewal date.
- * Calling both `countActiveCustomerSubscriptions` and
- * `findNextSubscriptionDueForPayment` separately used to do two full scans
- * (hundreds of round-trips each). This shared helper halves that cost.
+ * counts active subscriptions, sums their MRR, and finds the next renewal date.
+ * Calling `countActiveCustomerSubscriptions`, `getActiveSubscriptionsMrr` and
+ * `findNextSubscriptionDueForPayment` separately used to do full scans each
+ * (hundreds of round-trips each). This shared helper collapses them into one.
  */
 async function scanSubscriptions(): Promise<SubscriptionScanResult> {
   let cursor: string | number = 0;
-  let activeCount = 0;
-  let nextDueSubscription: SubscriptionScanResult['nextDueSubscription'] = null;
-  let closestDueTime = Number.POSITIVE_INFINITY;
   const now = Date.now() / 1000; // seconds
+  const mrrByPriceId = getSubscriptionMrrByPriceId();
+  const acc: SubscriptionScanAccumulator = {
+    activeCount: 0,
+    mrr: 0,
+    mrrUnknownCount: 0,
+    nextDueSubscription: null,
+    closestDueTime: Number.POSITIVE_INFINITY,
+  };
 
   do {
     const [nextCursor, keys]: [string, string[]] = await redis.scan(cursor, {
@@ -90,28 +145,23 @@ async function scanSubscriptions(): Promise<SubscriptionScanResult> {
       const customerDataList = await redis.mget<CustomerData[]>(...keys);
 
       for (let i = 0; i < customerDataList.length; i++) {
-        const data = customerDataList[i];
-        if (data === null || data.status !== 'active') continue;
-
-        activeCount++;
-
-        if (
-          data.currentPeriodEnd &&
-          data.currentPeriodEnd > now &&
-          data.currentPeriodEnd < closestDueTime
-        ) {
-          closestDueTime = data.currentPeriodEnd;
-          nextDueSubscription = {
-            customerId: keys[i].replace('stripe:customer:', ''),
-            data,
-            dueDate: new Date(data.currentPeriodEnd * 1000).toISOString(),
-          };
-        }
+        accumulateSubscription(
+          acc,
+          keys[i],
+          customerDataList[i],
+          now,
+          mrrByPriceId,
+        );
       }
     }
   } while (cursor !== '0');
 
-  return { activeCount, nextDueSubscription };
+  return {
+    activeCount: acc.activeCount,
+    mrr: acc.mrr,
+    mrrUnknownCount: acc.mrrUnknownCount,
+    nextDueSubscription: acc.nextDueSubscription,
+  };
 }
 
 // Cache the in-flight scan promise so that concurrent callers (e.g. both
@@ -138,4 +188,12 @@ export async function findNextSubscriptionDueForPayment(): Promise<
 > {
   const { nextDueSubscription } = await getSharedScanResult();
   return nextDueSubscription;
+}
+
+export async function getActiveSubscriptionsMrr(): Promise<{
+  mrr: number;
+  unknownCount: number;
+}> {
+  const { mrr, mrrUnknownCount } = await getSharedScanResult();
+  return { mrr, unknownCount: mrrUnknownCount };
 }

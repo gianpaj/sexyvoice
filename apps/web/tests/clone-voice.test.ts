@@ -739,6 +739,29 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     });
 
+    it('should return 402 when atomic credit reservation fails after precheck', async () => {
+      vi.mocked(queries.reduceCredits).mockRejectedValueOnce(
+        new Error('Insufficient credits', {
+          cause: queries.INSUFFICIENT_CREDITS_ERROR_CODE,
+        }),
+      );
+
+      const formData = createFormDataWithAudio('Hello world');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.code).toBe('errors.insufficientCredits');
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(queries.restoreCredits).not.toHaveBeenCalled();
+    });
+
     it('should allow voice cloning when user has sufficient credits', async () => {
       const formData = createFormDataWithAudio('Hello world');
 
@@ -1143,7 +1166,14 @@ describe('Clone Voice API Route', () => {
         'This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.',
       );
       expect(json.details).toEqual({ provider: 'mistral' });
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
@@ -1878,7 +1908,11 @@ describe('Clone Voice API Route', () => {
       expect(json.creditsUsed).toBe(132);
       expect(queries.reduceCredits).toHaveBeenCalledWith({
         userId: 'test-user-id',
-        amount: 132,
+        amount: 252,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 120,
       });
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -2149,7 +2183,14 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(503);
       expect(json.code).toBe('errors.providerUnavailable');
       expect(json.details).toEqual({ provider: 'inworld' });
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 

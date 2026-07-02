@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 interface CreditTransaction {
@@ -283,9 +284,7 @@ export async function GET() {
     const isProd = process.env.NODE_ENV === 'production';
 
     if (isProd) {
-      return new NextResponse('Unauthorized', {
-        status: 401,
-      });
+      return APIErrorResponse('Unauthorized', 401);
     }
 
     const supabase = createAdminClient();
@@ -371,9 +370,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching platform wrapped stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch platform stats' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch platform stats', 500);
   }
 }

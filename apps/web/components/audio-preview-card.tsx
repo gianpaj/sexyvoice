@@ -1,6 +1,7 @@
 'use client';
 
 import { Pause, Play } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
 import { attemptPlayback } from '@/lib/media-playback';
@@ -66,15 +67,25 @@ export function AudioPreviewCard({
           size="icon"
           variant="outline"
         >
-          {isPlaying ? (
-            <Pause className="size-4" />
-          ) : (
-            <Play className="size-4" />
-          )}
+          <AnimatePresence initial={false} mode="popLayout">
+            <motion.span
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              key={isPlaying ? 'pause' : 'play'}
+              transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
+            >
+              {isPlaying ? (
+                <Pause className="size-4" />
+              ) : (
+                <Play className="size-4" />
+              )}
+            </motion.span>
+          </AnimatePresence>
         </Button>
       </div>
       <div
-        className="line-clamp-5 whitespace-break-spaces rounded border-12 border-transparent bg-accent text-justify text-sm text-zinc-200"
+        className="line-clamp-5 whitespace-break-spaces text-pretty rounded border-12 border-transparent bg-accent text-sm text-zinc-200"
         dir={dir}
         lang={lang}
         title={prompt}

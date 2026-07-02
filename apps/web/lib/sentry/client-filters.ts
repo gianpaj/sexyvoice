@@ -39,7 +39,7 @@ const reactCommitDeletionFramePattern =
 const thirdPartyScriptFramePattern = /posthog-recorder\.js|addEL_hook/i;
 const localAppFramePattern = /apps\/web|\/_next\/static\/chunks\/app\//i;
 const browserMediaNoisePattern =
-  /Track has ended|WASM_OR_WORKER_NOT_READY|Lock was stolen by another request/i;
+  /Track has ended|WASM_OR_WORKER_NOT_READY|Wasm SIMD unsupported|Lock was stolen by another request/i;
 const opaqueBrowserEventRejectionPattern =
   /Event `Event` \(type=error\) captured as promise rejection/i;
 const injectedBrowserGlobalPattern =
@@ -90,7 +90,11 @@ function isReactDomNoiseException(exception: SentryException): boolean {
 
   const frames = exception.stacktrace?.frames ?? [];
 
-  return frames.length === 0 || frames.some(frameMatchesReactInternals);
+  return (
+    frames.length === 0 ||
+    frames.some(frameMatchesReactInternals) ||
+    !frames.some(frameMatchesLocalApp)
+  );
 }
 
 function isThirdPartyScriptNoiseException(exception: SentryException): boolean {

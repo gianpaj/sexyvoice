@@ -67,9 +67,7 @@ async function cleanupTempFiles(ffmpeg: FFmpeg, tempFiles: string[]) {
   }
 }
 
-function assertNotCancelled(
-  cancelRequestedRef: React.RefObject<boolean>,
-) {
+function assertNotCancelled(cancelRequestedRef: React.RefObject<boolean>) {
   if (cancelRequestedRef.current) {
     throw new Error(CANCELLED_ERROR);
   }

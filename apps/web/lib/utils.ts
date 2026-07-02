@@ -6,6 +6,7 @@ import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
 import type { CloneProvider } from '@/lib/clone/constants';
+import { GEMINI_TTS_31 } from '@/lib/tts/gemini-prompt';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,6 +40,30 @@ const GEMINI_CREDIT_MULTIPLIER = 1.1;
 const GROK_CHAR_BUCKET = 100;
 const GROK_CREDITS_PER_BUCKET = 100;
 const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
+
+// Gemini 3.1 (`gpro31`) voices always run on the full Gemini 3.1 model, which
+// costs the provider twice as much per token ($1/$20 per 1M in/out) as the
+// Gemini 2.5 Flash model ($0.5/$10) that free users are downgraded to for
+// `gpro` (2.5) voices. Our base credit rates are calibrated to that 2.5 cost,
+// so free users get 3.1 audio for the price of 2.5. Charge them double for 3.1
+// voices to compensate. Paid users run 2.5 Pro for `gpro` (same cost as 3.1),
+// so they are not affected.
+const GEMINI_31_FREE_CREDIT_MULTIPLIER = 2;
+
+// `model` may be the stored voice token (`gpro31`), used by the estimate and the
+// upfront reservation, or the resolved provider model id, used when billing the
+// actual generation. Keying on both means the surcharge follows the audio that
+// was really produced: a free 3.1 request that errors out and falls back to
+// 2.5 Flash bills at 1×, not 2×.
+function getGemini31FreeMultiplier(
+  model?: string,
+  userHasPaid?: boolean,
+): number {
+  const isGemini31 = model === 'gpro31' || model === GEMINI_TTS_31;
+  return isGemini31 && userHasPaid === false
+    ? GEMINI_31_FREE_CREDIT_MULTIPLIER
+    : 1;
+}
 
 export function getTtsProvider(model?: string): TtsProvider {
   if (model === 'gpro' || model === 'gpro31') {
@@ -77,7 +102,11 @@ export function calculateReadingTime(
   return Math.ceil(wordCount / wordsPerMinute);
 }
 
-function getCreditMultiplier(voice: string, model?: string): number {
+function getCreditMultiplier(
+  voice: string,
+  model?: string,
+  userHasPaid?: boolean,
+): number {
   let multiplier: number;
   switch (voice) {
     case 'pietro':
@@ -100,13 +129,14 @@ function getCreditMultiplier(voice: string, model?: string): number {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
-  return multiplier;
+  return multiplier * getGemini31FreeMultiplier(model, userHasPaid);
 }
 
 function calculateCredits(
   words: number,
   voice: string,
   model?: string,
+  userHasPaid?: boolean,
 ): number {
   if (!voice) {
     throw new Error('Voice is required');
@@ -118,7 +148,7 @@ function calculateCredits(
 
   // Using average speaking rate of 100 words per minute (middle of 120-150 range)
   const wordsPerSecond = 100 / 60; // 2.25 words per second
-  const multiplier = getCreditMultiplier(voice, model);
+  const multiplier = getCreditMultiplier(voice, model, userHasPaid);
 
   return Math.ceil((words / wordsPerSecond) * 10 * multiplier);
 }
@@ -184,6 +214,7 @@ export function estimateCredits(
   text: string,
   voice: string,
   model?: string,
+  userHasPaid?: boolean,
 ): number {
   const words = countWords(text);
 
@@ -195,7 +226,7 @@ export function estimateCredits(
     return estimateGrokCredits(text);
   }
 
-  return calculateCredits(words, voice, model);
+  return calculateCredits(words, voice, model, userHasPaid);
 }
 
 // Credit calculation constants for gpro voices
@@ -203,14 +234,19 @@ const CREDITS_PER_TOKEN = 1.1;
 
 export function calculateCreditsFromTokens(
   tokenCount: number,
-  // voice?: string,
-  // model?: string,
+  options?: { model?: string; userHasPaid?: boolean },
 ): number {
   const normalizedTokens = Math.max(0, tokenCount);
 
   // Calculate estimated credits based on tokens
-  // Using a ratio that approximates the actual credit consumption
-  return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN);
+  // Using a ratio that approximates the actual credit consumption. Free users
+  // on a Gemini 3.1 voice pay double (see GEMINI_31_FREE_CREDIT_MULTIPLIER).
+  const multiplier = getGemini31FreeMultiplier(
+    options?.model,
+    options?.userHasPaid,
+  );
+
+  return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN * multiplier);
 }
 
 export function capitalizeFirstLetter(str: string) {
@@ -281,6 +317,7 @@ export const ERROR_CODES = {
   PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
   NO_AUDIO_DATA: 'NO_AUDIO_DATA',
+  GEMINI_INPUT_TOO_LONG: 'GEMINI_INPUT_TOO_LONG',
   REPLICATE_ERROR: 'REPLICATE_ERROR',
   XAI_TTS_ERROR: 'XAI_TTS_ERROR',
   GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
@@ -299,6 +336,7 @@ const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   FREE_QUOTA_EXCEEDED: 503,
   OTHER_GEMINI_BLOCK: 500,
   NO_AUDIO_DATA: 503,
+  GEMINI_INPUT_TOO_LONG: 400,
   REPLICATE_ERROR: 500,
   XAI_TTS_ERROR: 500,
   GEMINI_PROVIDER_UNAVAILABLE: 503,
@@ -353,6 +391,10 @@ export const getErrorMessage = (
     },
     NO_AUDIO_DATA: {
       default: 'Voice generation returned no audio, please retry',
+    },
+    GEMINI_INPUT_TOO_LONG: {
+      default:
+        'Your text is too long for this voice. Please shorten it or use Split mode.',
     },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',

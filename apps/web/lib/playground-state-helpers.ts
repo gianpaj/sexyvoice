@@ -170,6 +170,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       return {
         instructions,
         language: state.language,
+        memory: state.memory,
         sceneInstructions: state.sceneInstructions.trim() || null,
         selectedPresetId: state.selectedPresetId,
         selectedSceneId: state.selectedSceneId,

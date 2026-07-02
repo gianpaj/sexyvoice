@@ -13,9 +13,14 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
-import { InworldVoiceSection } from '@/components/call/inworld-voice-section';
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
@@ -304,40 +309,36 @@ export function ConfigurationForm({
           </div>
         )}
 
-        {/* Engine Selection */}
-        <div className="flex w-full items-center justify-between border-separator1 border-b px-4 py-4 md:px-1">
-          <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-            {t('engineLabel')}
-          </div>
-          <Select
-            disabled={connectionState === ConnectionState.Connected}
-            onValueChange={handleEngineChange}
-            value={currentModel}
-          >
-            <SelectTrigger className="h-9 w-fit text-neutral-200">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="text-neutral-100">
-              <SelectItem value={ModelId.GROK_VOICE_THINK_FAST_1_0}>
-                {t('engineGrok')}
-              </SelectItem>
-              <SelectItem
-                disabled={!isPaidUser}
-                value={ModelId.INWORLD_REALTIME}
-              >
-                {isPaidUser
-                  ? t('engineInworld')
-                  : `${t('engineInworld')} (${t('paidOnly')})`}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {isInworld && (
-          <div className="w-full border-separator1 border-b px-4 py-4 md:px-1">
-            <InworldVoiceSection />
-          </div>
-        )}
+        {/* Memory opt-in (paid users only) */}
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div className="flex w-full items-center justify-between gap-4 border-separator1 border-b px-4 py-4 md:px-1">
+              <label className="flex flex-col gap-1" htmlFor="memory-toggle">
+                <span className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                  {t('memoryLabel')}
+                </span>
+                <span className="text-neutral-300 text-xs normal-case">
+                  {t('memoryDescription')}
+                </span>
+              </label>
+              <Switch
+                checked={isPaidUser && pgState.memory}
+                disabled={
+                  !isPaidUser || connectionState === ConnectionState.Connected
+                }
+                id="memory-toggle"
+                onCheckedChange={(checked) =>
+                  dispatch({ type: 'SET_MEMORY', payload: checked })
+                }
+              />
+            </div>
+          </TooltipTrigger>
+          {!isPaidUser && (
+            <TooltipContent className="TooltipContent">
+              <p>{t('memoryUpgradeTooltip')}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">

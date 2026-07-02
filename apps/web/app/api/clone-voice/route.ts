@@ -14,6 +14,13 @@ import {
   trimWavBuffer,
 } from '@/lib/audio-converter';
 import {
+  CLONE_FORM_FIELDS,
+  type CloneErrorResponseBody,
+  type CloneRouteErrorCode,
+  type CloneSuccessResponse,
+  type RouteErrorDetails,
+} from '@/lib/clone/api-types';
+import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
@@ -41,7 +48,9 @@ import {
   hasUserPaid,
   insertAudioReference,
   insertUsageEvent,
+  isInsufficientCreditsError,
   reduceCredits,
+  restoreCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -155,35 +164,6 @@ interface MistralSdkErrorLike {
   statusCode?: unknown;
 }
 
-type RouteErrorDetails = Record<string, boolean | number | string | null>;
-
-type CloneRouteErrorCode =
-  | 'errors.audioConversionFailed'
-  | 'errors.audioConversionRequiredWebm'
-  | 'errors.audioDurationInvalidFallback'
-  | 'errors.audioDurationInvalidVoxtral'
-  | 'errors.audioDurationUnknown'
-  | 'errors.fileTooLarge'
-  | 'errors.guardrailViolation'
-  | 'errors.insufficientCredits'
-  | 'errors.internalError'
-  | 'errors.invalidContentType'
-  | 'errors.invalidFileType'
-  | 'errors.audioReferenceNotFound'
-  | 'errors.missingLocale'
-  | 'errors.missingRequiredParameters'
-  | 'errors.providerLocaleUnsupported'
-  | 'errors.providerRequestRejected'
-  | 'errors.voiceNameRequired'
-  | 'errors.voiceNameTooLong'
-  | 'errors.providerUnavailable'
-  | 'errors.referenceAudioEnhancementInputTooLarge'
-  | 'errors.referenceAudioEnhancementInputTooLong'
-  | 'errors.textTooLong'
-  | 'errors.unsupportedAudioFormat'
-  | 'errors.unsupportedLocale'
-  | 'errors.userNotFound';
-
 class RouteError extends Error {
   code?: CloneRouteErrorCode;
   details?: RouteErrorDetails;
@@ -236,6 +216,7 @@ function routeErrorResponse(
   code?: CloneRouteErrorCode,
   details?: RouteErrorDetails,
 ) {
+  // biome-ignore lint/plugin: clone-voice intentionally returns a structured error body ({ error, serverMessage, status, code, details }) that its client and tests depend on; APIErrorResponse doesn't carry the route-specific `code`.
   return NextResponse.json(
     {
       error: `${serverMessage} (${status})`,
@@ -243,7 +224,7 @@ function routeErrorResponse(
       status,
       code,
       details,
-    },
+    } satisfies CloneErrorResponseBody,
     { status },
   );
 }
@@ -412,13 +393,17 @@ function validateContentType(contentType: string): void {
 async function parseFormData(request: Request): Promise<FormInput> {
   const formData = await request.formData();
 
-  const enhanceReferenceAudioValue = formData.get('enhanceReferenceAudio');
-  const textValue = formData.get('text');
-  const file = formData.get('file');
-  const locale = formData.get('locale');
-  const providerValue = formData.get('provider');
-  const audioReferenceIdValue = formData.get('audioReferenceId');
-  const voiceNameValue = formData.get('voiceName');
+  const enhanceReferenceAudioValue = formData.get(
+    CLONE_FORM_FIELDS.enhanceReferenceAudio,
+  );
+  const textValue = formData.get(CLONE_FORM_FIELDS.text);
+  const file = formData.get(CLONE_FORM_FIELDS.file);
+  const locale = formData.get(CLONE_FORM_FIELDS.locale);
+  const providerValue = formData.get(CLONE_FORM_FIELDS.provider);
+  const audioReferenceIdValue = formData.get(
+    CLONE_FORM_FIELDS.audioReferenceId,
+  );
+  const voiceNameValue = formData.get(CLONE_FORM_FIELDS.voiceName);
 
   const text = typeof textValue === 'string' ? textValue : '';
   const audioFile = file instanceof File ? file : null;
@@ -668,6 +653,77 @@ function validateCreditAmount({
     'errors.insufficientCredits',
     { CREDITS: requiredCredits, currentCredits: currentAmount },
   );
+}
+
+async function reserveCloneCredits({
+  currentAmount,
+  requiredCredits,
+  text,
+  userEmail,
+  userId,
+}: {
+  currentAmount: number;
+  requiredCredits: number;
+  text: string;
+  userEmail?: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    await reduceCredits({ userId, amount: requiredCredits });
+  } catch (error) {
+    if (!isInsufficientCreditsError(error)) {
+      throw error;
+    }
+
+    logger.info('Insufficient credits during clone reservation', {
+      user: { id: userId, email: userEmail },
+      extra: {
+        text,
+        estimate: requiredCredits,
+        currentCreditsAmount: currentAmount,
+      },
+    });
+    throw createRouteError(
+      `Insufficient credits. You need ${requiredCredits} credits to clone this audio`,
+      402,
+      'errors.insufficientCredits',
+      { CREDITS: requiredCredits, currentCredits: currentAmount },
+    );
+  }
+}
+
+async function refundReservedCloneCredits({
+  amount,
+  context,
+  userId,
+}: {
+  amount: number;
+  context: string;
+  userId: string;
+}): Promise<void> {
+  if (amount <= 0) {
+    return;
+  }
+
+  try {
+    await restoreCredits({ userId, amount });
+  } catch (refundError) {
+    logger.error('Failed to restore reserved clone credits', {
+      user: { id: userId },
+      extra: {
+        amount,
+        context,
+        errorMessage:
+          refundError instanceof Error
+            ? refundError.message
+            : String(refundError),
+      },
+    });
+    captureException(refundError, {
+      user: { id: userId },
+      extra: { amount, context },
+    });
+  }
 }
 
 function validateReferenceAudioEnhancementInput(
@@ -1238,8 +1294,6 @@ async function runBackgroundTasks(
     referenceAudioProcessedMimeType: string;
   },
 ): Promise<void> {
-  await reduceCredits({ userId, amount: creditsUsed });
-
   const userHasPaid = await hasUserPaid(userId);
 
   const audioFileDBResult = await saveAudioFile({
@@ -1545,6 +1599,8 @@ export async function POST(request: Request) {
   let duration: number | null = null;
   let modelUsed = '';
   let referenceAudioFile: File | null = null;
+  let reservedCredits = 0;
+  let userId = '';
 
   try {
     // Authentication
@@ -1555,6 +1611,7 @@ export async function POST(request: Request) {
     if (!user) {
       return routeErrorResponse('User not found', 401, 'errors.userNotFound');
     }
+    userId = user.id;
 
     setUser({
       id: user.id,
@@ -1665,7 +1722,7 @@ export async function POST(request: Request) {
           url: cachedOutputUrl,
           creditsUsed: 0,
           creditsRemaining: currentAmount || 0,
-        },
+        } satisfies CloneSuccessResponse,
         { status: 200 },
       );
     }
@@ -1688,6 +1745,14 @@ export async function POST(request: Request) {
         userEmail: user.email,
         userId: user.id,
       });
+      await reserveCloneCredits({
+        currentAmount,
+        requiredCredits: estimate + referenceAudioEnhancementCredits,
+        text,
+        userEmail: user.email,
+        userId: user.id,
+      });
+      reservedCredits = estimate + referenceAudioEnhancementCredits;
 
       try {
         const enhancedAudio = await enhanceReferenceAudio({
@@ -1758,20 +1823,46 @@ export async function POST(request: Request) {
 
         const fallbackCachedOutputUrl = await redis.get<string>(filename);
         if (fallbackCachedOutputUrl) {
+          await refundReservedCloneCredits({
+            userId: user.id,
+            amount: reservedCredits,
+            context: 'clone_voice_enhancement_fallback_cache_hit',
+          });
+          reservedCredits = 0;
           return NextResponse.json(
             {
               url: fallbackCachedOutputUrl,
               creditsUsed: 0,
               creditsRemaining: currentAmount || 0,
-            },
+            } satisfies CloneSuccessResponse,
             { status: 200 },
           );
+        }
+
+        if (reservedCredits > estimate) {
+          await refundReservedCloneCredits({
+            userId: user.id,
+            amount: reservedCredits - estimate,
+            context: 'clone_voice_enhancement_fallback',
+          });
+          reservedCredits = estimate;
         }
       }
     }
 
     validateAudioDuration(cloneInputAudio.duration, provider);
     duration = cloneInputAudio.duration;
+
+    if (reservedCredits === 0) {
+      await reserveCloneCredits({
+        currentAmount,
+        requiredCredits: creditsUsed,
+        text,
+        userEmail: user.email,
+        userId: user.id,
+      });
+      reservedCredits = creditsUsed;
+    }
 
     // Generate voice
     let outputUrl: string;
@@ -1895,6 +1986,7 @@ export async function POST(request: Request) {
     }
 
     // Background tasks
+    reservedCredits = 0;
     after(async () => {
       await runBackgroundTasks(user.id, creditsUsed, provider, {
         baseCloneCredits: estimate,
@@ -1924,10 +2016,19 @@ export async function POST(request: Request) {
         creditsUsed,
         creditsRemaining: (currentAmount || 0) - creditsUsed,
         audioReference: createdAudioReference,
-      },
+      } satisfies CloneSuccessResponse,
       { status: 200 },
     );
   } catch (error) {
+    if (reservedCredits > 0 && userId) {
+      await refundReservedCloneCredits({
+        userId,
+        amount: reservedCredits,
+        context: 'clone_voice_failure',
+      });
+      reservedCredits = 0;
+    }
+
     if (error instanceof RouteError) {
       return routeErrorResponse(
         error.serverMessage,
@@ -1958,13 +2059,14 @@ export async function POST(request: Request) {
     const serverMessage =
       'An unexpected error occurred while cloning voice. Please try again.';
 
+    // biome-ignore lint/plugin: clone-voice intentionally returns a structured error body ({ error, serverMessage, status, code }) that its client and tests depend on; APIErrorResponse doesn't carry the route-specific `code`.
     return NextResponse.json(
       {
         error: serverMessage,
         serverMessage,
         status: 500,
         code: 'errors.internalError',
-      },
+      } satisfies CloneErrorResponseBody,
       { status: 500 },
     );
   }

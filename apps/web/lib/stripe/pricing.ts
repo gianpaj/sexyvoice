@@ -242,6 +242,22 @@ export const getSubscriptionPackages = (
   } as const;
 };
 
+/**
+ * Maps each subscription Stripe price ID to its full monthly recurring dollar
+ * amount (ignoring any first-month discount). Used to compute MRR from the set
+ * of active subscriptions. Price IDs that are unset (no env var) are omitted.
+ */
+export function getSubscriptionMrrByPriceId(): Map<string, number> {
+  const packages = getSubscriptionPackages('en');
+  const map = new Map<string, number>();
+  for (const pkg of Object.values(packages)) {
+    if (pkg.priceId) {
+      map.set(pkg.priceId, pkg.recurringDollarAmount);
+    }
+  }
+  return map;
+}
+
 const TOPUP_PACKAGES = getTopupPackages('en');
 
 export type PackageType = keyof typeof TOPUP_PACKAGES;
