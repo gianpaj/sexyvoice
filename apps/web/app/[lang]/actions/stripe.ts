@@ -15,7 +15,7 @@ import {
   isStripeCouponUsable,
   stripe,
 } from '@/lib/stripe/stripe-admin';
-import { getUserById, hasClaimedCardBonus } from '@/lib/supabase/queries';
+import { getUserById, isEligibleForCardBonus } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
@@ -328,7 +328,11 @@ export async function createCardBonusSetupSession({
       throw error;
     }
 
-    if (await hasClaimedCardBonus(user.id)) {
+    // Enforce full bonus eligibility here — hiding the CTA client-side is not a
+    // security boundary. Any authenticated user could invoke this action
+    // directly, so re-check that they haven't already claimed, haven't paid,
+    // and are a new-regime user before minting a `card_bonus` setup session.
+    if (!(await isEligibleForCardBonus(user.id))) {
       return { alreadyClaimed: true, client_secret: null, url: null };
     }
 

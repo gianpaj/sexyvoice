@@ -10,7 +10,7 @@ import {
   isStripeCouponUsable,
   stripe,
 } from '@/lib/stripe/stripe-admin';
-import { getUserById, hasClaimedCardBonus } from '@/lib/supabase/queries';
+import { getUserById, isEligibleForCardBonus } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('@sentry/nextjs', () => ({
@@ -33,7 +33,7 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
 
 vi.mock('@/lib/supabase/queries', () => ({
   getUserById: vi.fn(),
-  hasClaimedCardBonus: vi.fn(),
+  isEligibleForCardBonus: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -75,7 +75,7 @@ describe('createCheckoutSession()', () => {
     } as never);
     vi.mocked(hasAnySubscriptionHistory).mockResolvedValue(false);
     vi.mocked(isStripeCouponUsable).mockResolvedValue(true);
-    vi.mocked(hasClaimedCardBonus).mockResolvedValue(false);
+    vi.mocked(isEligibleForCardBonus).mockResolvedValue(true);
     vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
       client_secret: 'client_secret_123',
       url: 'https://checkout.stripe.com/session',
@@ -317,7 +317,7 @@ describe('createCardBonusSetupSession()', () => {
     vi.mocked(getUserById).mockResolvedValue({
       stripe_id: 'cus_123',
     } as never);
-    vi.mocked(hasClaimedCardBonus).mockResolvedValue(false);
+    vi.mocked(isEligibleForCardBonus).mockResolvedValue(true);
     vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
       client_secret: 'client_secret_123',
       url: 'https://checkout.stripe.com/session',
@@ -364,8 +364,8 @@ describe('createCardBonusSetupSession()', () => {
     );
   });
 
-  it('returns alreadyClaimed without creating a session', async () => {
-    vi.mocked(hasClaimedCardBonus).mockResolvedValue(true);
+  it('returns alreadyClaimed without creating a session for an ineligible user', async () => {
+    vi.mocked(isEligibleForCardBonus).mockResolvedValue(false);
 
     const result = await createCardBonusSetupSession({ lang: 'en' });
 
@@ -388,7 +388,7 @@ describe('createCardBonusSetupSession()', () => {
       url: null,
     });
     expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
-    expect(hasClaimedCardBonus).not.toHaveBeenCalled();
+    expect(isEligibleForCardBonus).not.toHaveBeenCalled();
   });
 
   it('throws and reports Sentry on auth error', async () => {
