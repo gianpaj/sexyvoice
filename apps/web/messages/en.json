@@ -218,6 +218,10 @@
               "answer": "About 1,000 credits make 1 minute of audio generation. New users get 1,000 free credits, plus 9,000 more (10,000 total) by adding a card on file – no charge. Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
             },
             {
+              "question": "Why do you ask for a credit card?",
+              "answer": "Adding a card is optional and there's no charge — it simply unlocks your bonus credits (9,000 extra, for 10,000 total). Requiring a valid payment method also helps us keep SexyVoice.ai limited to adults (18+) and reduces abuse of our free credits. You're welcome to keep using your 1,000 free credits without ever adding a card."
+            },
+            {
               "question": "Why choose SexyVoice.ai?",
               "answer": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out."
             }
