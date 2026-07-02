@@ -272,11 +272,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -299,6 +295,11 @@
           "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       }
+    },
+    "subscriptionScheduledToCancel": {
+      "title": "Dit månedlige kreditabonnement er planlagt til at ophøre",
+      "description": "Dit månedlige kreditabonnement er stadig aktivt indtil {date}, men det fornyes ikke og tilføjer ikke flere månedlige kreditter efter det. Du kan fortsætte med at bruge de kreditter, du har på din konto. Hvis du vil skifte niveau, skal du administrere dit abonnement i Stripe.",
+      "manageButton": "Administrer abonnement"
     },
     "topup": {
       "title": "Køb kreditter",

@@ -300,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Tu plan mensual de créditos está programado para finalizar",
+      "description": "Tu plan mensual de créditos sigue activo hasta el {date}, pero después no se renovará ni añadirá más créditos mensuales. Puedes seguir usando los créditos que tengas en tu cuenta. Para cambiar de nivel, gestiona tu suscripción en Stripe.",
+      "manageButton": "Gestionar suscripción"
+    },
     "topup": {
       "title": "Comprar Créditos",
       "description": "Recarga tus créditos instantáneamente o suscríbete y obtén más créditos",

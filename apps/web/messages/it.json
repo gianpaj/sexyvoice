@@ -300,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Il tuo piano mensile di crediti è programmato per terminare",
+      "description": "Il tuo piano mensile di crediti è ancora attivo fino al {date}, ma dopo non si rinnoverà né aggiungerà altri crediti mensili. Puoi continuare a usare i crediti presenti nel tuo account. Per cambiare livello, gestisci l’abbonamento in Stripe.",
+      "manageButton": "Gestisci abbonamento"
+    },
     "topup": {
       "title": "Acquista crediti",
       "description": "Ricarica i tuoi crediti istantaneamente o abbonati e ottieni più crediti",
