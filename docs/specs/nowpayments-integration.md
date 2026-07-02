@@ -22,9 +22,10 @@ What we parallel:
 - **Stripe webhook:** `apps/web/app/api/stripe/webhook/route.ts` → on
   `checkout.session.completed` / `invoice.payment_succeeded`, awards credits
   via `insertTopupCreditTransaction` / `insertSubscriptionCreditTransaction`.
-- **DB:** `credit_transactions` (enum `purchase|usage|freemium|topup|refund`,
-  plus `reference_id`, `subscription_id`, `metadata JSONB`); `profiles.stripe_id`
-  links the Supabase user to a Stripe customer.
+- **DB:** `credit_transactions` (enum `purchase|freemium|topup|refund` — `usage`
+  was removed in `20260105154300`; consumption is tracked in `usage_events`
+  instead; plus `reference_id`, `subscription_id`, `metadata JSONB`);
+  `profiles.stripe_id` links the Supabase user to a Stripe customer.
 - **Idempotency key:** `reference_id` (Stripe `payment_intent`).
 - **UI:** `apps/web/app/[lang]/(dashboard)/dashboard/credits/credit-topup.tsx`
   calls the server action.
@@ -42,7 +43,8 @@ What we parallel:
 4. **Status state-machine:**
    `waiting → confirming → confirmed → sending → finished`, plus
    `partially_paid`, `failed`, `refunded`, `expired`. Credits are only granted
-   on `finished` (and possibly `partially_paid` if amount ≥ expected).
+   on `finished`. `partially_paid` is logged but never grants credits in v1
+   (see webhook handler for the authoritative policy).
 5. **Idempotency:** the same `payment_id`/`invoice_id` will receive multiple
    IPN calls as it transitions — must dedupe by `(provider, reference_id)`.
 6. **Subscriptions need JWT.** `/v1/subscriptions/*` endpoints require Bearer
@@ -66,10 +68,25 @@ What we parallel:
 
 - Add `provider TEXT NOT NULL DEFAULT 'stripe'` to `credit_transactions` with
   `CHECK (provider IN ('stripe','nowpayments'))`.
-- Drop existing `credit_transactions_reference_id_idx`.
-- Add composite uniqueness:
-  `UNIQUE (provider, reference_id) WHERE reference_id IS NOT NULL`.
 - Backfill not needed (default takes care of existing rows).
+- Drop **all** existing reference_id uniqueness structures before replacing:
+  - `credit_transactions_reference_id_idx` (non-partial, created in
+    `20250401150000`)
+  - `unique_reference_topup_idx` (partial on `type='topup'`, from
+    `20260105154300`)
+  - `unique_reference_purchase_idx` (partial on `type='purchase'`, from
+    `20260105154300`)
+  - `reference_id_required_for_payments` check constraint (from
+    `20260105154300`)
+- Add provider-aware composite uniqueness so each provider's reference IDs
+  are deduplicated independently:
+  `CREATE UNIQUE INDEX … ON credit_transactions (provider, reference_id)
+   WHERE reference_id IS NOT NULL`.
+- Recreate check constraint to require `reference_id` for payment types:
+  `CHECK ((type IN ('purchase','topup') AND reference_id IS NOT NULL)
+         OR (type NOT IN ('purchase','topup')))`.
+- The composite index allows Stripe and NowPayments to share the same
+  `reference_id` value without conflict (different providers).
 
 ### 2. Pricing config
 
@@ -95,6 +112,10 @@ apps/web/app/api/nowpayments/webhook/route.ts
   POST handler: verify sig → switch on payment_status → award credits
   (mirrors stripe/webhook/route.ts structure)
 
+apps/web/supabase/migrations/<timestamp>_add_nowpayments_credit_functions.sql
+  grant_nowpayments_topup(order_id, credit_amount)   — atomic grant + idempotency
+  refund_nowpayments_topup(order_id, credit_amount)  — atomic compensating refund
+
 apps/web/app/[lang]/(dashboard)/dashboard/credits/crypto-topup.tsx
   Mirrors credit-topup.tsx but calls createCryptoTopupCheckout
 ```
@@ -105,7 +126,8 @@ apps/web/app/[lang]/(dashboard)/dashboard/credits/crypto-topup.tsx
 2. Server action:
    - Authenticate user via Supabase.
    - Look up the selected package from `getTopupPackages('en')`.
-   - Generate `order_id = "topup_${userId}_${nanoid()}"`.
+   - Generate JS variable `orderId = "topup_${userId}_${nanoid()}"` (maps to
+     the NowPayments API field `order_id`; stored as `reference_id` in DB).
    - Insert a *pending* row in `credit_transactions`:
      `{ provider: 'nowpayments', reference_id: orderId, amount: 0,
         type: 'topup', metadata: { status: 'pending', packageId, credits,
@@ -114,22 +136,39 @@ apps/web/app/[lang]/(dashboard)/dashboard/credits/crypto-topup.tsx
      - `price_amount: package.dollarAmount`, `price_currency: 'usd'`
      - `order_id: orderId`
      - `order_description: "<credits> credits top-up"`
-     - `ipn_callback_url: ${SITE_URL}/api/nowpayments/webhook`
+     - `ipn_callback_url: ${process.env.NEXT_PUBLIC_SITE_URL}/api/nowpayments/webhook`
      - `success_url`, `cancel_url` mirroring Stripe's
-     - `pay_currency` whitelist (optional, hosted page lets user pick from
-       enabled coins)
+     - `pay_currencies: NOWPAYMENTS_PAY_CURRENCIES.split(',')` — the accepted
+       coin whitelist from env (see §8); omit the field to let the hosted page
+       show all enabled coins, but always populate it from the env var so we
+       control the list centrally.
    - Update the pending row's metadata with the returned `invoiceId`.
    - Return `invoice_url`.
 3. Client redirects to `invoice_url`.
 4. IPN webhook:
    - Read raw body, verify HMAC-SHA512, parse JSON.
    - Switch on `payment_status`:
-     - `finished` → atomically look up the pending row by `(provider='nowpayments',
-       reference_id=order_id)`, set `amount = credits` and
-       `metadata.status = 'finished'`, then call `increment_user_credits` RPC.
-     - `partially_paid` → update metadata, Sentry breadcrumb, no credit grant.
-     - `failed` / `expired` / `refunded` → update metadata, Sentry breadcrumb,
+     - `finished`: handled by a single **Postgres function**
+       `grant_nowpayments_topup(order_id, credit_amount)` that, in one
+       transaction:
+       1. Looks up the row by `(provider='nowpayments', reference_id=order_id)`
+          with `FOR UPDATE`.
+       2. **Idempotency guard:** if `metadata.status` is already `'finished'`,
+          returns early — credits were already granted.
+       3. Updates `amount = credits` and `metadata.status = 'finished'`, then
+          `PERFORM increment_user_credits(...)`. Both succeed or both roll
+          back — never update the record without granting credits, and never
+          grant credits without updating the record.
+
+       This must be a DB function, not client-side logic: the Supabase JS
+       client cannot span multiple statements in a single transaction, so the
+       atomicity requirement can only be met inside Postgres.
+     - `partially_paid` → update `metadata.status`, Sentry breadcrumb, no
+       credit grant. (Policy: always require full payment; never grant partial
+       credits in v1.)
+     - `failed` / `expired` → update `metadata.status`, Sentry breadcrumb,
        no credit grant.
+     - `refunded` → see refund handling below.
    - Return 200 (400 only on invalid signature).
 
 We persist the pending row up-front because the IPN payload echoes only
@@ -145,7 +184,8 @@ the user back to the success page.
   - Tab 2: *Crypto* — new `crypto-topup.tsx`, with a one-line disclaimer
     about crypto confirmation times.
 - `crypto-topup.tsx` mirrors `credit-topup.tsx`: same cards, same pricing,
-  same `Buy Credits` CTA wired to `createCryptoTopupCheckout`.
+  same `Buy Credits` CTA wired to `createCryptoTopupCheckout`. Only render
+  the three purchasable tiers (`dollarAmount > 0`); skip the `free` tier.
 - `credit-history.tsx` — render a small provider icon (card / coin) per row,
   reading from the new `provider` column.
 
@@ -156,8 +196,15 @@ the user back to the success page.
 - `verifySignature`:
   - Recursively sort all object keys (NowPayments quirk — applies to nested
     objects and arrays-of-objects).
-  - `crypto.createHmac('sha512', IPN_SECRET).update(sortedJson).digest('hex')`.
-  - Compare to `x-nowpayments-sig` via `crypto.timingSafeEqual`.
+  - Serialize to JSON with **no whitespace** (`JSON.stringify(sorted)` —
+    no spaces or newlines), encoded as **UTF-8**. The exact byte sequence must
+    match what NowPayments signs; any extra whitespace will break the hash.
+  - `crypto.createHmac('sha512', IPN_SECRET).update(sortedJson, 'utf8').digest('hex')`.
+  - Compare via `crypto.timingSafeEqual`: both arguments must be `Buffer`
+    objects of equal byte length. Convert hex strings with
+    `Buffer.from(hexString, 'hex')`. If the lengths differ (truncated or
+    malformed header), reject immediately rather than letting
+    `timingSafeEqual` throw.
 - Reject non-matching with 400; no Sentry noise on signature failures
   (they're typically scanners).
 
@@ -203,6 +250,11 @@ NOWPAYMENTS_SUB_99_PLAN_ID=
 
 1. Migration + queries refactor (thread `provider` through the existing
    `insertTopupCreditTransaction`; default `'stripe'` for backwards compat).
+   Also add `.eq('provider', 'stripe')` to the duplicate-check SELECT inside
+   both `insertTopupCreditTransaction` and `insertSubscriptionCreditTransaction`
+   — without it, a Stripe `payment_intent` and a NowPayments `order_id` with
+   the same string value would incorrectly collide after the composite index is
+   in place.
 2. `lib/nowpayments/*` (client, invoice, ipn, types) + HMAC unit tests.
 3. Server action `actions/nowpayments.ts` + webhook route (top-up happy path).
 4. UI: Tabs on `/dashboard/credits`, new `crypto-topup.tsx`, provider icon
@@ -236,6 +288,12 @@ NOWPAYMENTS_SUB_99_PLAN_ID=
   don't affect credit balance, but a periodic cleanup job (or filter in
   `credit-history.tsx`) keeps the history clean.
 - **Refunds.** NowPayments refunds are manual. If we see `payment_status:
-  refunded` after we've credited, we need to insert a compensating
-  `refund`-type row. The enum already supports `refund` — handler stub is
-  cheap to add now even if rare.
+  refunded` after we've credited, a `refund_nowpayments_topup` Postgres
+  function must, in one transaction: insert a compensating `refund`-type row
+  in `credit_transactions` **and** `PERFORM decrement_user_credits(...)`.
+  Updating the transaction log alone will not adjust the user's balance in the
+  `credits` table. Like `grant_nowpayments_topup`, this is a DB function for
+  atomicity (the JS client can't span statements transactionally). The enum
+  already supports `refund` — the function stub is cheap to add now even if
+  rare. Skip the decrement if `metadata.status` is not yet `'finished'`
+  (nothing was credited).
