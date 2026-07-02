@@ -38,7 +38,6 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import {
   buildGeminiTtsPrompt,
-  GEMINI_TTS_31,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
 import { generateXaiTts } from '@/lib/tts/xai';
@@ -1493,7 +1492,7 @@ function streamGeminiTtsResponse({
 
       const isProhibitedContent =
         Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
-      if (!audioStarted && !isProhibitedContent) {
+      if (!(audioStarted || isProhibitedContent)) {
         captureException(error, {
           extra: { model: modelUsed, voice: voiceObj.name, stream: true },
           user: { id: user.id },
