@@ -40,6 +40,9 @@ function getScheduledSubscriptionEndDate(
   }).format(new Date(customerData.currentPeriodEnd * 1000));
 }
 
+const STRIPE_BILLING_PORTAL_URL =
+  'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww';
+
 async function canApplyFirstMonthSubscriptionDiscount(stripeId: string) {
   const subscriptionDiscountCouponId =
     process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
@@ -188,10 +191,7 @@ export default async function CreditsPage(props: {
           <p className="text-muted-foreground">{t('topup.description')}</p>
         </div>
         <Button asChild icon={ExternalLink} iconPlacement="right">
-          <Link
-            href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
-            target="_blank"
-          >
+          <Link href={STRIPE_BILLING_PORTAL_URL} target="_blank">
             Stripe Customer Portal
           </Link>
         </Button>
@@ -231,10 +231,7 @@ export default async function CreditsPage(props: {
               size="sm"
               variant="secondary"
             >
-              <Link
-                href="https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww"
-                target="_blank"
-              >
+              <Link href={STRIPE_BILLING_PORTAL_URL} target="_blank">
                 {t('subscriptionScheduledToCancel.manageButton')}
               </Link>
             </Button>
