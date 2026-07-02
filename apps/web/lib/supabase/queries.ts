@@ -739,20 +739,6 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
   return (nonFreemiumTransactions?.length ?? 0) > 0;
 };
 
-export const hasClaimedCardBonus = async (userId: string): Promise<boolean> => {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('credit_transactions')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('type', 'card_bonus')
-    .limit(1);
-
-  if (error) throw error;
-
-  return (data?.length ?? 0) > 0;
-};
-
 /**
  * Eligibility for the card-on-file credit bonus CTA/banner: not yet
  * claimed, hasn't paid, and is a "new-regime" user (received the 1,000

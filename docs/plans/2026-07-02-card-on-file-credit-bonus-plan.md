@@ -46,8 +46,8 @@ farming (one physical card = one bonus, globally).
   physical card could plausibly claim the bonus 2–3× (manual entry + each
   wallet). Fingerprinting still blocks the cheap attack (re-entering the same
   card across accounts); the wallet loophole is bounded and handled in phase 2.
-- Radar's ML targets *stolen/fraudulent* cards, not *legitimate cards used for
-  promo abuse*, so it is defense-in-depth here, not the primary control.
+- Radar's ML targets _stolen/fraudulent_ cards, not _legitimate cards used for
+  promo abuse_, so it is defense-in-depth here, not the primary control.
 
 ## Current architecture (as-is)
 
@@ -83,24 +83,24 @@ farming (one physical card = one bonus, globally).
 
 1. User visits `/dashboard/credits`, sees a "Add a card, get 9,000 credits"
    CTA (hidden once already claimed).
-2. Server action `createCardBonusSetupSession()`:
+2. Server action `createCardBonusSetupSession({ lang })`:
    - Auth + resolve `stripe_id`.
    - Guard: if the user already has a `card_bonus` transaction, short-circuit
      (return an "already claimed" signal; do not create a session).
    - Create a Checkout Session:
      ```ts
      stripe.checkout.sessions.create({
-       mode: 'setup',
+       mode: "setup",
        customer: stripeId,
-       payment_method_types: ['card'],
+       payment_method_types: ["card"],
        // Set metadata in BOTH places: `setup_intent_data.metadata` lands only
        // on the SetupIntent and is NOT mirrored onto the session, so the
        // session needs its own top-level `metadata` for the webhook branch.
-       metadata: { userId, type: 'card_bonus' },
-       setup_intent_data: { metadata: { userId, type: 'card_bonus' } },
+       metadata: { userId, type: "card_bonus" },
+       setup_intent_data: { metadata: { userId, type: "card_bonus" } },
        success_url: `${SITE}/${lang}/dashboard/credits?card_bonus=success`,
-       cancel_url:  `${SITE}/${lang}/dashboard/credits?card_bonus=canceled`,
-       ui_mode: 'hosted', // match existing hosted/embedded handling
+       cancel_url: `${SITE}/${lang}/dashboard/credits?card_bonus=canceled`,
+       ui_mode: "hosted", // match existing hosted/embedded handling
      });
      ```
 3. Stripe collects the card and attaches the `PaymentMethod` to the Customer.
@@ -115,7 +115,7 @@ farming (one physical card = one bonus, globally).
    - Optionally set it as the Customer's default payment method
      (`invoice_settings.default_payment_method`) for future use.
    - Call `insertCardBonusCreditTransaction(userId, setupIntentId, fingerprint,
-     9000)`.
+9000)`.
 5. Grant is idempotent and fingerprint-guarded (below).
 
 Add `setup_intent.succeeded` as a backup handler that routes to the same grant
@@ -157,7 +157,7 @@ on `fingerprint` means the card already claimed → skip the credit grant
 ### 1. Migrations (`apps/web/supabase/migrations/`)
 
 Use `YYYYMMDDHHmmss_description.sql` naming. Provide these as migrations
-(schema changes are appropriate here; the balance change to *existing* users is
+(schema changes are appropriate here; the balance change to _existing_ users is
 not a backfill — only the trigger definition changes going forward).
 
 - **`..._lower_initial_credits_to_1000.sql`**
@@ -177,9 +177,9 @@ not a backfill — only the trigger definition changes going forward).
 
 - **`..._add_card_bonus_transaction_type.sql`** — enum value **only**.
   - Add the enum value using the existing guarded `DO $$ ... ALTER TYPE
-    credit_transaction_type ADD VALUE 'card_bonus' ... $$;` pattern (see
+credit_transaction_type ADD VALUE 'card_bonus' ... $$;` pattern (see
     `20250401150000_add_topup_transaction_type.sql`).
-  - Nothing else in this file. Postgres refuses to *use* an enum value in the
+  - Nothing else in this file. Postgres refuses to _use_ an enum value in the
     same transaction that added it, and each migration file runs in one
     transaction — so the partial index below (whose `WHERE` clause uses the
     value) **must** live in a later migration. This split is required, not a
@@ -187,6 +187,7 @@ not a backfill — only the trigger definition changes going forward).
 
 - **`..._add_card_bonus_unique_index.sql`** — per-user enforcement, in its own
   later-timestamped migration:
+
   ```sql
   CREATE UNIQUE INDEX IF NOT EXISTS credit_transactions_one_card_bonus_per_user
     ON public.credit_transactions (user_id)
@@ -220,8 +221,9 @@ creditAmount = 9000)` modeled on `insertTopupCreditTransaction`:
   without granting); every unique constraint that can fire here means exactly
   that.
 - Call `updateUserCredits(userId, creditAmount)`.
-- Add a helper `hasClaimedCardBonus(userId): Promise<boolean>` for the UI guard
-  (checks for an existing `card_bonus` transaction).
+- Add a helper `isEligibleForCardBonus(userId): Promise<boolean>` for both the
+  CTA/banner and the server-action guard (see step 5 for the full eligibility
+  rules).
 
 Consider extracting the shared insert/dedupe skeleton (topup, subscription, and
 now card-bonus all repeat it) into a small helper to honor the repo's
@@ -229,11 +231,12 @@ now card-bonus all repeat it) into a small helper to honor the repo's
 
 ### 3. Server action (`apps/web/app/[lang]/actions/stripe.ts`)
 
-Add `createCardBonusSetupSession()`:
+Add `createCardBonusSetupSession({ lang })`:
 
 - Reuse `getCheckoutStripeId()` for auth + `stripe_id`.
-- Guard with `hasClaimedCardBonus(user.id)` → return an
-  `{ alreadyClaimed: true }` shape (no session).
+- Guard with `isEligibleForCardBonus(user.id)` → if not eligible, return an
+  `{ alreadyClaimed: true }` shape (no session). This is the server-side
+  enforcement boundary — hiding the CTA client-side is not sufficient.
 - Respect `isE2E()` (return null client_secret/url like the existing action).
 - Create the `mode: 'setup'` session shown above.
 - Sentry error handling consistent with `createCheckoutSession`.
@@ -266,7 +269,7 @@ Add `createCardBonusSetupSession()`:
 - **Eligibility — show the CTA only when ALL are true** (new helper
   `isEligibleForCardBonus(userId)` in `lib/supabase/queries.ts`, ideally one
   query over `credit_transactions`):
-  1. **Not yet claimed:** no `card_bonus` transaction (`hasClaimedCardBonus`).
+  1. **Not yet claimed:** no `card_bonus` transaction.
   2. **Non-paid:** no `purchase` or `topup` transaction (reuse `hasUserPaid`).
   3. **New-regime user:** received the 1,000 grant, not the legacy 10,000.
      Detect via the user's `freemium` transaction `amount = 1000` — this is
@@ -276,9 +279,9 @@ Add `createCardBonusSetupSession()`:
      users only have 10,000 rows). No `created_at` fallback needed.
 - On success return (`?card_bonus=success`), show a success toast (mirror the
   existing `?success=true` topup handling).
-- Wire the CTA to `createCardBonusSetupSession()` and redirect to the returned
+- Wire the CTA to `createCardBonusSetupSession({ lang })` and redirect to the returned
   hosted `url` (or use embedded checkout consistent with the current pattern).
-- If `createCardBonusSetupSession()` returns `{ alreadyClaimed: true }`, hide
+- If `createCardBonusSetupSession({ lang })` returns `{ alreadyClaimed: true }`, hide
   the CTA / show claimed state (defensive — the eligibility check should
   already prevent this).
 - **Render the new type as a credit, not a debit:** `credit-history.tsx:64`
@@ -303,6 +306,7 @@ can't claim. (Interpreting the "didn't add a card OR old user without 10k" note
 as this single eligible population — confirm if a broader audience is intended.)
 
 **How the current banner system constrains this:**
+
 - `resolveActiveBanner` (`lib/banners/resolve-banner.ts`) already returns only
   the single highest-`priority` banner, so a higher priority automatically
   hides the others ("only one banner visible").
@@ -335,7 +339,7 @@ as this single eligible population — confirm if a broader audience is intended
    with `amount === 1000`. Pass it into `resolveActiveBanner`. In `isE2E()`,
    default to `false` (mirrors the hardcoded `isPaidUser = false`).
    Two mechanical prerequisites: `resolveActiveBanner` is currently called
-   *before* the transactions fetch (line ~43 vs ~51) — reorder so eligibility
+   _before_ the transactions fetch (line ~43 vs ~51) — reorder so eligibility
    is available; and `dashboard.ui.tsx` types the prop as
    `Pick<Tables<'credit_transactions'>, 'amount'>[]` — widen to include
    `type` where the eligibility fields are consumed.
@@ -417,7 +421,7 @@ If prepaid/virtual burner cards farm the bonus despite fingerprinting:
 
 - Replace `mode: 'setup'` with a `mode: 'payment'` PaymentIntent for a small
   amount (e.g. $0.50) with `capture_method: 'automatic'` and `setup_future_
-  usage: 'off_session'`, then **refund** it in the webhook after grant.
+usage: 'off_session'`, then **refund** it in the webhook after grant.
 - Pros: proves funds; blocks empty prepaid cards. Cons: statement noise, Stripe
   fee on tiny amounts, more failure branches (partial refund, failed refund).
 - Would add an amount env var and refund handling; document in `docs/devops.md`.
@@ -445,7 +449,7 @@ If prepaid/virtual burner cards farm the bonus despite fingerprinting:
    other banners while the user is eligible.
 2. **Existing pre-change users:** **not** eligible — bonus is new-signups-only
    (users who received the 1,000 grant). Enforced by the `freemium amount =
-   1000` eligibility check plus the per-user and per-card guards.
+1000` eligibility check plus the per-user and per-card guards.
 3. **`add_credits_trigger`:** **dropped.** It only writes a duplicate freemium
    ledger row; the spendable balance comes from `handle_new_user()`
    (`new_user_trigger`), which stays. Dropping keeps the ledger clean so the
