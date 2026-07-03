@@ -14,7 +14,9 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeWrapper(initialState?: Parameters<typeof PlaygroundStateProvider>[0]['initialState']) {
+function makeWrapper(
+  initialState?: Parameters<typeof PlaygroundStateProvider>[0]['initialState'],
+) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <PlaygroundStateProvider initialState={initialState}>
@@ -24,8 +26,8 @@ function makeWrapper(initialState?: Parameters<typeof PlaygroundStateProvider>[0
   };
 }
 
-const firstScene = callScenes[0]; // stranger-on-the-train
-const secondScene = callScenes[1]; // bartender-after-closing
+const firstScene = callScenes[0]; // bartender-after-closing
+const secondScene = callScenes[1]; // forbidden-colleague
 
 // ---------------------------------------------------------------------------
 // Tests
