@@ -96,7 +96,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ## Repository Layout
 
 - `apps/web` - Next.js web app deployed to Vercel.
-- `apps/docs` - Mintlify docs app for `docs.sexyvoice.ai`.
+- `apps/docs` - Fumadocs docs app for `docs.sexyvoice.ai`.
 - `scripts` - operational scripts kept outside the web app as
   `@sexyvoice/scripts`.
 - `docs` - internal engineering and operational docs.
@@ -152,7 +152,9 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
       - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
       - `FAL_KEY` - Your fal.ai API key for voice cloning
       - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
+      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation and call transcript analysis
+      - `XAI_SUMMARY_MODEL` - Optional override for the Grok model used to analyze call transcripts (default `grok-4.3`)
+      - `CALL_SUMMARY_SECRET` - Shared secret for the Supabase Database Webhook that triggers `/api/call-sessions/analyze` (also stored in Supabase Vault as `call_summary_secret`)
    - Real-time Calls (LiveKit)
       - `LIVEKIT_URL`
       - `LIVEKIT_API_KEY`
@@ -300,16 +302,15 @@ export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgr
 sh ./scripts/db_backups.sh
 ```
 
-### Mintlify
+### Docs site (Fumadocs)
 
-The docs site remains the Mintlify project for `docs.sexyvoice.ai`.
+The docs site at `docs.sexyvoice.ai` is a Fumadocs (Next.js) app in
+`apps/docs`. Content lives in `apps/docs/content/`.
 
-- In Mintlify Git Settings, point the project to this monorepo repository and
-  the production branch.
-- Enable Mintlify monorepo mode.
-- Set the docs path to `/apps/docs` with no trailing slash.
-- Keep the existing custom domain and GitHub App installation attached to the
-  repository/branch used for docs deployments.
+- Run it locally with `pnpm --filter @sexyvoice/docs dev`.
+- Regenerate the external API reference with
+  `pnpm --filter @sexyvoice/docs generate-openapi-docs` after changing the
+  `/api/v1/*` request/response schemas.
 
 ### Video Generation
 
