@@ -34,6 +34,7 @@ import {
   aggregateInsights,
   createAdminClient,
   createXaiClient,
+  DEFAULT_BATCH_TIMEOUT_MINUTES,
   getAllCompletedCallSessions,
   MIN_ANALYSIS_CALL_DURATION_SECONDS,
   persistResults,
@@ -53,31 +54,50 @@ function parseArgs() {
     debug: false,
     debugSession: null,
     smokeTest: false,
+    realtime: false,
+    batchTimeoutMinutes: DEFAULT_BATCH_TIMEOUT_MINUTES,
   };
 
   for (const arg of args) {
-    if (arg === '--dry-run') {
-      options.dryRun = true;
-    } else if (arg.startsWith('--limit=')) {
-      options.limit = Number.parseInt(arg.split('=')[1], 10);
-    } else if (arg.startsWith('--min-duration=')) {
-      options.minDuration = Number.parseInt(arg.split('=')[1], 10);
-    } else if (arg.startsWith('--models=')) {
-      options.models = arg
-        .split('=')[1]
-        .split(',')
-        .map((m) => m.trim())
-        .filter(Boolean);
-    } else if (arg === '--debug') {
-      options.debug = true;
-    } else if (arg.startsWith('--debug-session=')) {
-      options.debugSession = arg.split('=')[1] || null;
-      options.debug = true;
-    } else if (arg === '--smoke-test') {
-      options.smokeTest = true;
-      options.debug = true;
-    } else if (arg === '--help' || arg === '-h') {
-      console.log(`
+    const [key, ...rest] = arg.split('=');
+    const value = rest.join('=');
+    switch (key) {
+      case '--dry-run':
+        options.dryRun = true;
+        break;
+      case '--limit':
+        options.limit = Number.parseInt(value, 10);
+        break;
+      case '--min-duration':
+        options.minDuration = Number.parseInt(value, 10);
+        break;
+      case '--models':
+        options.models = value
+          .split(',')
+          .map((m) => m.trim())
+          .filter(Boolean);
+        break;
+      case '--debug':
+        options.debug = true;
+        break;
+      case '--debug-session':
+        options.debugSession = value || null;
+        options.debug = true;
+        break;
+      case '--smoke-test':
+        options.smokeTest = true;
+        options.debug = true;
+        break;
+      case '--realtime':
+      case '--no-batch':
+        options.realtime = true;
+        break;
+      case '--batch-timeout':
+        options.batchTimeoutMinutes = Number.parseInt(value, 10);
+        break;
+      case '--help':
+      case '-h':
+        console.log(`
 Backfill Call Analysis Script
 
 Usage:
@@ -91,9 +111,14 @@ Options:
   --debug              Verbose logging
   --debug-session=UUID Only analyze a specific session id
   --smoke-test         Run a tiny xAI request first to validate the model id
+  --realtime           Use synchronous xAI calls instead of the Batch API
+  --batch-timeout=N    Minutes to wait for the batch to finish (default: ${DEFAULT_BATCH_TIMEOUT_MINUTES})
   -h, --help           Show this help
       `);
-      process.exit(0);
+        process.exit(0);
+        break;
+      default:
+        break;
     }
   }
 
@@ -104,6 +129,7 @@ async function main() {
   const options = parseArgs();
   console.log('🚀 Backfill Call Analysis');
   console.log(`   Mode: ${options.dryRun ? 'DRY RUN' : 'LIVE'}`);
+  console.log(`   Engine: ${options.realtime ? 'real-time' : 'Batch API'}`);
   console.log(
     `   Min duration: ${options.minDuration}s, limit: ${options.limit || 'none'}, models: ${
       options.models.length > 0 ? options.models.join(', ') : 'all'

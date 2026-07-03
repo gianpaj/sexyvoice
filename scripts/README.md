@@ -166,6 +166,89 @@ pnpm backfill-free-call
 
 ---
 
+## Call Transcript Analysis Scripts
+
+Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
+to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
+AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
+entry points that share a single engine (`analyze-call-sessions.mjs`); the
+backfill script imports its prompt, transcript extraction, analysis schema, and
+persistence, so all paths write identical rows.
+
+- **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
+  last N hours.
+- **`backfill-call-analysis`** - one-off catch-up over **all** completed,
+  unanalyzed calls (paginated), with model and duration filters.
+
+A third path (not a script) analyzes a single call in real time: the
+`POST /api/call-sessions/analyze` webhook fired when a call completes.
+
+Only successful analyses are persisted; failures leave no row so they stay
+retryable. Calls shorter than 120s and sessions that already have an analysis row
+are skipped.
+
+### Quick Start
+
+```bash
+# Show help
+pnpm analyze-call-sessions --help
+pnpm backfill-call-analysis --help
+
+# Analyze calls from the last 12h (default: 24h)
+pnpm analyze-call-sessions --hours=12
+
+# Dry-run: analyze but write CSV + insights instead of the database
+pnpm analyze-call-sessions --dry-run
+
+# First real Batch API run is cheapest to validate with a tiny sample
+pnpm backfill-call-analysis --limit=2 --debug
+
+# Backfill everything (all completed, unanalyzed calls)
+pnpm backfill-call-analysis
+```
+
+### Engine: xAI Batch API
+
+Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api):
+requests are uploaded as a JSONL batch, then the script block-polls until the
+batch completes before writing results. It is discounted and has no per-request
+rate limits, at the cost of async latency — best suited to the large backfill.
+Use `--realtime` to fall back to synchronous per-call generation instead.
+
+### CLI Options
+
+Shared by both scripts:
+
+- `--dry-run` - Analyze but write CSV + insights instead of the database
+- `--limit=N` - Limit the number of calls to analyze
+- `--realtime` (alias `--no-batch`) - Use synchronous xAI calls instead of the Batch API
+- `--batch-timeout=N` - Minutes to wait for the batch to finish (default: 60)
+- `--debug` - Verbose logging
+- `--debug-session=UUID` - Only analyze/debug a specific session id
+- `--smoke-test` - Run a tiny xAI request first to validate the model id
+- `-h, --help` - Show help message
+
+`analyze-call-sessions` only:
+
+- `--hours=N` - Analyze calls started in the last N hours (default: 24)
+
+`backfill-call-analysis` only:
+
+- `--min-duration=N` - Minimum call duration in seconds (default: 120)
+- `--models=a,b,c` - Only analyze these call models
+
+### Environment
+
+Requires `.env` or `.env.local` with:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `XAI_API_KEY`
+- `XAI_SUMMARY_MODEL` (optional; defaults to `grok-4.3`)
+- `XAI_API_BASE_URL` (optional; defaults to `https://api.x.ai`)
+
+---
+
 ## Refund Credits Script
 
 Interactive Node.js/TypeScript script to process credit refunds for users.
