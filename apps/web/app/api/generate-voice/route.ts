@@ -234,6 +234,7 @@ export async function POST(request: Request) {
   let styleVariant = '';
   let seed: number | undefined;
   let selectedLanguage = '';
+  let isSplit = false;
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
@@ -254,6 +255,7 @@ export async function POST(request: Request) {
     voiceId = body.voiceId || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
+    isSplit = body.split === true;
     const stream = body.stream === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
@@ -486,6 +488,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         creditUsed: 0,
         model: effectiveModel,
+        split: isSplit,
       });
 
       if (shouldStream) {
@@ -938,6 +941,7 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           userHasPaid,
+          split: isSplit,
         },
       });
 
@@ -973,6 +977,7 @@ export async function POST(request: Request) {
           textLength: text.length,
           isGeminiVoice,
           userHasPaid,
+          split: isSplit,
           predictionId: replicateResponse?.id ?? null,
           ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
@@ -985,6 +990,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         creditUsed: creditsDebited,
         model: modelUsed,
+        split: isSplit,
       });
     });
 
@@ -1527,6 +1533,7 @@ async function sendPosthogEvent({
   predictionId,
   creditUsed,
   model,
+  split,
 }: {
   userId: string;
   text: string;
@@ -1534,6 +1541,7 @@ async function sendPosthogEvent({
   predictionId?: string;
   creditUsed: number;
   model: string;
+  split?: boolean;
 }) {
   const posthog = PostHogClient();
   posthog.capture({
@@ -1547,6 +1555,7 @@ async function sendPosthogEvent({
       voiceId,
       credits_used: creditUsed,
       textLength: text.length,
+      split,
     },
   });
   await posthog.shutdown();
