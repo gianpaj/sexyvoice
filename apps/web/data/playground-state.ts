@@ -73,14 +73,19 @@ export const languageInitialInstructions: Record<CallLanguage, string> = {
 export const defaultLanguage: CallLanguage = 'en';
 
 export interface PlaygroundState {
-  sessionConfig: SessionConfig;
   /** User-created custom characters */
   customCharacters: Preset[];
-  selectedPresetId: string | null;
+  defaultPresets: Preset[];
+  initialInstruction: string;
   instructions: string;
   language: CallLanguage;
-  initialInstruction: string;
-  defaultPresets: Preset[];
+  /** Long-term memory opt-in. When true, the agent remembers distilled facts
+   * about the user across calls; off (default) stores nothing. */
+  memory: boolean;
+  sceneInstructions: string;
+  selectedPresetId: string | null;
+  selectedSceneId: string | null;
+  sessionConfig: SessionConfig;
 }
 
 export const initialInstruction = languageInitialInstructions[defaultLanguage];
@@ -90,8 +95,11 @@ export const defaultPlaygroundState: PlaygroundState = {
   sessionConfig: { ...defaultSessionConfig },
   customCharacters: [],
   selectedPresetId: null,
+  selectedSceneId: null,
+  sceneInstructions: '',
   instructions,
   language: defaultLanguage,
+  memory: false,
   initialInstruction,
   defaultPresets: [], // Now populated from DB via SSR props
 };

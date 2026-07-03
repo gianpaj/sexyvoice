@@ -1,0 +1,19 @@
+# Files copied into a new git worktree on creation.
+# These are gitignored (so a fresh worktree starts without them) but are
+# needed to build, run, and test the app locally. Patterns are gitignore-style
+# globs, evaluated from the repo root.
+
+# Local environment / secrets
+.env.local
+.env*.local
+apps/web/.env.local
+apps/web/.env.e2e
+apps/web/.env.test
+apps/docs/.env.local
+scripts/.env
+
+# Local tooling config
+.claude/settings.local.json
+
+# Vercel project link (so `vercel` / env pulls resolve to the right project)
+.vercel/project.json

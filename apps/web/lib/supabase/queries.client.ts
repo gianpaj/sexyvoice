@@ -59,3 +59,21 @@ export function getCreditTransactions(
     .eq('user_id', userId)
     .throwOnError();
 }
+
+export async function hasUserPaid(
+  client: TypedSupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const { data, error } = await client
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .in('type', ['purchase', 'topup'])
+    .limit(1);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data?.length ?? 0) > 0;
+}

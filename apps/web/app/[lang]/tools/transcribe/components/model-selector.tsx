@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import {
   Select,
   SelectContent,
@@ -7,56 +9,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type langDict from '@/messages/en.json';
+import { WHISPER_MODELS } from './models';
 
 interface Props {
-  dict: (typeof langDict)['transcribe']['modelSelector'];
   disabled?: boolean;
   onChange: (model: string) => void;
   value: string;
 }
 
-export const WHISPER_MODELS = [
-  {
-    id: 'onnx-community/whisper-tiny',
-    label: 'Whisper Tiny (~40 MB)',
-    size: '~40 MB',
-    multilingual: true,
-  },
-  {
-    id: 'onnx-community/whisper-base',
-    label: 'Whisper Base (~75 MB)',
-    size: '~75 MB',
-    multilingual: true,
-  },
-  {
-    id: 'onnx-community/whisper-small',
-    label: 'Whisper Small (~250 MB)',
-    size: '~250 MB',
-    multilingual: true,
-  },
-  {
-    id: 'onnx-community/whisper-tiny.en',
-    label: 'Whisper Tiny (English only, ~40 MB)',
-    size: '~40 MB',
-    multilingual: false,
-  },
-  {
-    id: 'onnx-community/whisper-base.en',
-    label: 'Whisper Base (English only, ~75 MB)',
-    size: '~75 MB',
-    multilingual: false,
-  },
-] as const;
+export function ModelSelector({ value, onChange, disabled }: Props) {
+  const t = useTranslations('transcribe.modelSelector');
 
-export function ModelSelector({ value, onChange, disabled, dict }: Props) {
   return (
     <div className="space-y-2">
       <label
         className="font-medium text-foreground text-sm"
         htmlFor="model-select"
       >
-        {dict.label}
+        {t('label')}
       </label>
       <Select disabled={disabled} onValueChange={onChange} value={value}>
         <SelectTrigger className="w-full bg-muted/30" id="model-select">
@@ -70,7 +40,7 @@ export function ModelSelector({ value, onChange, disabled, dict }: Props) {
           ))}
         </SelectContent>
       </Select>
-      <p className="text-muted-foreground text-xs">{dict.hint}</p>
+      <p className="text-muted-foreground text-xs">{t('hint')}</p>
     </div>
   );
 }

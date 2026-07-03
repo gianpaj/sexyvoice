@@ -1,8 +1,9 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { createContext, useCallback, useContext, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
@@ -13,14 +14,12 @@ import {
 } from '@/lib/characters';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
-import type langDict from '@/messages/en.json';
 import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
 
 interface TokenGeneratorData {
   connect: ConnectFn;
-  dict: (typeof langDict)['call'];
   disconnect: () => Promise<void>;
   pgState: PlaygroundState;
   shouldConnect: boolean;
@@ -35,10 +34,8 @@ const ConnectionContext = createContext<TokenGeneratorData | undefined>(
 
 export const ConnectionProvider = ({
   children,
-  dict,
 }: {
   children: React.ReactNode;
-  dict: (typeof langDict)['call'];
 }) => {
   const [connectionDetails, setConnectionDetails] = useState<{
     wsUrl: string;
@@ -47,6 +44,7 @@ export const ConnectionProvider = ({
     voice: string;
   }>({ wsUrl: '', token: '', shouldConnect: false, voice: 'Ara' });
 
+  const t = useTranslations('call');
   const queryClient = useQueryClient();
   const supabase = useSupabaseBrowser();
   const { pgState, dispatch, helpers } = usePlaygroundState();
@@ -111,14 +109,9 @@ export const ConnectionProvider = ({
 
     if (!response.ok) {
       if (response.status === 402) {
-        toast.error(
-          dict.notEnoughCredits.replace(
-            '__COUNT__',
-            MINIMUM_CREDITS_FOR_CALL.toString(),
-          ),
-        );
+        toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
       } else if (response.status === 403) {
-        toast.error(dict.freeUserCallLimitExceeded);
+        toast.error(t('freeUserCallLimitExceeded'));
       }
       throw new Error('Failed to fetch token');
     }
@@ -133,14 +126,14 @@ export const ConnectionProvider = ({
     });
   };
 
-  const disconnect = useCallback(async () => {
+  const disconnect = async () => {
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
     const { data } = await supabase.auth.getUser();
     if (data?.user?.id) {
       queryClient.refetchQueries({ queryKey: ['credits', data.user.id] });
       queryClient.invalidateQueries({ queryKey: ['credits', data.user.id] });
     }
-  }, [queryClient, supabase.auth]);
+  };
 
   return (
     <ConnectionContext.Provider
@@ -150,7 +143,6 @@ export const ConnectionProvider = ({
         shouldConnect: connectionDetails.shouldConnect,
         voice: connectionDetails.voice,
         pgState,
-        dict,
         connect,
         disconnect,
       }}

@@ -1,7 +1,6 @@
 import { allPosts } from 'contentlayer/generated';
 import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -58,14 +57,14 @@ export default async function LandingPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
-  const cookieStore = await cookies();
-  const dismissedCookieKeys = cookieStore
-    .getAll()
-    .filter((cookie) => cookie.value)
-    .map((cookie) => cookie.name);
+  // NOTE: intentionally do NOT read cookies() here. Doing so opts this page into
+  // dynamic rendering (`cache-control: private, no-store`), which both prevents
+  // CDN caching and disqualifies the page from the back/forward cache (bfcache).
+  // The <Banner> client component already re-reads the dismissal cookies on the
+  // client (it starts hidden and only reveals itself when no dismiss cookie is
+  // set), so server-side filtering here is redundant.
   const activeBanner = resolveActiveBanner({
     audience: 'loggedOut',
-    dismissedCookieKeys,
     lang,
     messages,
     placement: 'landing',
@@ -144,17 +143,17 @@ export default async function LandingPage(props: {
       {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-linear-to-br from-background to-gray-800">
+        <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <HeroWaveform />
-              <h1 className="font-bold text-5xl md:text-6xl">
-                <span className="text-white/90 leading-14">{firstPart}</span>
+              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+                <span className="text-white/90">{firstPart}</span>
                 <br />
                 {titleRestParts && (
                   <span
-                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent leading-16"
+                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent"
                     style={{
                       backgroundImage:
                         'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
@@ -164,7 +163,7 @@ export default async function LandingPage(props: {
                   </span>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces py-12 text-gray-300 text-xl leading-10">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
                 {dictLanding.hero.subtitle}
               </p>
 
@@ -177,9 +176,7 @@ export default async function LandingPage(props: {
                   iconPlacement="right"
                   size="lg"
                 >
-                  <Link href={`/${lang}/signup`}>
-                    {dictLanding.hero.buttonCTA}
-                  </Link>
+                  <Link href="/signup">{dictLanding.hero.buttonCTA}</Link>
                 </Button>
                 <p className="text-gray-300 text-xs">
                   {dictLanding.hero.noCreditCard}
@@ -227,7 +224,7 @@ export default async function LandingPage(props: {
                     <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
                     {dictLanding.features.security.title}
                   </h3>
                 </CardHeader>
@@ -243,7 +240,7 @@ export default async function LandingPage(props: {
                     <Mic2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
                     {dictLanding.features.voiceCloning.title}
                   </h3>
                 </CardHeader>
@@ -261,7 +258,7 @@ export default async function LandingPage(props: {
                     <Globe2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
 
-                  <h3 className="mt-6 text-center font-medium text-pink-200">
+                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
                     {dictLanding.features.multiLanguage.title}
                   </h3>
                 </CardHeader>
@@ -274,7 +271,12 @@ export default async function LandingPage(props: {
               </Card>
             </div>
 
-            <PricingTable lang={lang} />
+            <div className="flex flex-col">
+              <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
+                {messages.credits.pricingPlan}
+              </h2>
+              <PricingTable className="py-4 pb-16" lang={lang} />
+            </div>
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">
@@ -283,20 +285,20 @@ export default async function LandingPage(props: {
 
             {/* Blog posts Section */}
             <div className="mx-auto grid grid-cols-1 gap-4 md:grid-cols-1 lg:max-w-[400px] lg:grid-cols-1">
-              <h2 className="mb-4 font-bold text-2xl">
+              <h2 className="mb-4 text-balance font-bold text-2xl">
                 {dictLanding.latestPosts}
               </h2>
-              {get3PostsByLang(lang).map((post, idx) => (
+              {get3PostsByLang(lang).map((post) => (
                 <Card
                   className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
-                  key={idx}
+                  key={post.url}
                 >
                   <Link href={post.url} prefetch>
                     <CardHeader>
                       {post.image && (
                         <Image
                           alt={post.title}
-                          className="mx-auto rounded-lg"
+                          className="mx-auto rounded-lg outline outline-white/10 -outline-offset-1"
                           height={200}
                           loading="lazy"
                           priority={false}
@@ -305,7 +307,7 @@ export default async function LandingPage(props: {
                           width={300}
                         />
                       )}
-                      <CardTitle className="text-center text-gray-200 text-lg leading-8">
+                      <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
                         {post.title}
                       </CardTitle>
                     </CardHeader>
@@ -323,10 +325,10 @@ export default async function LandingPage(props: {
                 <Sparkles className="mr-2 size-4" />
                 <span>{dictLanding.cta.freeCredits}</span>
               </div>
-              <h2 className="font-bold text-3xl text-white md:text-4xl">
+              <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
                 {dictLanding.cta.title}
               </h2>
-              <p className="mx-auto max-w-2xl text-gray-300 text-xl">
+              <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
                 {dictLanding.cta.subtitle}
               </p>
               <Button
@@ -335,7 +337,7 @@ export default async function LandingPage(props: {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href={`/${lang}/signup`}>{dictLanding.cta.action}</Link>
+                <Link href="/signup">{dictLanding.cta.action}</Link>
               </Button>
             </div>
           </div>
@@ -347,8 +349,8 @@ export default async function LandingPage(props: {
 }
 
 const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="relative mx-auto size-36">
-    <div className="absolute inset-0 m-auto flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
+  <div className="mx-auto grid size-36 place-items-center">
+    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
       {children}
     </div>
   </div>

@@ -4,6 +4,7 @@ import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -94,6 +95,7 @@ function AvatarButton({
                   isConnected && !isSelected ? 'opacity-40 grayscale' : ''
                 }`}
                 fill
+                sizes="(min-width: 640px) 64px, 56px"
                 src={`/characters/${image}`}
               />
             ) : (
@@ -126,12 +128,16 @@ interface PresetSelectorProps {
   isPaidUser?: boolean;
 }
 
+const EMPTY_ITEMS: DBVoice[] = [];
+
 export function PresetSelector({
   isPaidUser = false,
-  callVoices = [],
+  callVoices = EMPTY_ITEMS,
 }: PresetSelectorProps) {
   const { pgState, dispatch, helpers } = usePlaygroundState();
-  const { disconnect, connect, shouldConnect, dict } = useConnection();
+  const { disconnect, connect, shouldConnect } = useConnection();
+  const t = useTranslations('call');
+  const tPresetSelector = useTranslations('call.presetSelector');
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
 
@@ -224,14 +230,14 @@ export function PresetSelector({
 
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? dict.presetSelector.failedToCreate);
-      throw new Error(result.error ?? dict.presetSelector.failedToCreate);
+      toast.error(result.error ?? tPresetSelector('failedToCreate'));
+      throw new Error(result.error ?? tPresetSelector('failedToCreate'));
     }
 
     const newPreset = mapApiCharacterToPreset(result);
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
-    toast.success(dict.presetSelector.characterCreated);
+    toast.success(tPresetSelector('characterCreated'));
   };
 
   // Build updated localizedDescriptions with the new description value
@@ -327,12 +333,12 @@ export function PresetSelector({
       voiceName: selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
     });
     if (!saveResult.ok) {
-      toast.error(saveResult.error ?? dict.presetSelector.failedToUpdate);
+      toast.error(saveResult.error ?? tPresetSelector('failedToUpdate'));
       return;
     }
 
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: saveResult.preset });
-    toast.success(dict.presetSelector.characterUpdated);
+    toast.success(tPresetSelector('characterUpdated'));
 
     setIsEditingName(false);
     setIsEditingDescription(false);
@@ -376,7 +382,7 @@ export function PresetSelector({
     });
     const result = await response.json();
     if (!response.ok) {
-      toast.error(result.error ?? dict.presetSelector.failedToDelete);
+      toast.error(result.error ?? tPresetSelector('failedToDelete'));
       return;
     }
 
@@ -390,7 +396,7 @@ export function PresetSelector({
     });
     setShowDeleteDialog(false);
     setCharacterToDelete(null);
-    toast.info(dict.presetSelector.characterRemoved);
+    toast.info(tPresetSelector('characterRemoved'));
   };
 
   const isCustomCharacter = (id: string) =>
@@ -416,18 +422,19 @@ export function PresetSelector({
       <div className="rounded-full p-[3px]">
         <div className="rounded-full p-[2px]">
           <PremiumActionButton
-            aria-label={dict.addCustomCharacter}
+            aria-label={t('addCustomCharacter')}
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
             disabled={isConnected}
+            isPaidUser={isPaidUser}
             onClick={handleOpenCreateDialog}
-            premiumTooltip={dict.upgradePremiumTooltip}
+            premiumTooltip={t('upgradePremiumTooltip')}
           >
             <Plus className="h-5 w-5" />
           </PremiumActionButton>
         </div>
       </div>
       <span className="max-w-16 truncate font-medium text-muted-foreground text-xs sm:max-w-20">
-        {dict.addCharacterLabel}
+        {t('addCharacterLabel')}
       </span>
     </div>
   ) : null;
@@ -437,7 +444,7 @@ export function PresetSelector({
       <div className="w-full">
         {/* Character Avatar Selection */}
         <div className="mb-4 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-          {dict.chooseCharacter}
+          {t('chooseCharacter')}
         </div>
 
         {/* Avatar Row — Carousel: each avatar is its own slide, 5 visible on mobile / 6 on desktop */}
@@ -463,7 +470,7 @@ export function PresetSelector({
                       {/* Delete button for custom characters */}
                       {isCustom && !isConnected && (
                         <button
-                          aria-label={dict.deleteCharacterAriaLabel.replace(
+                          aria-label={t('deleteCharacterAriaLabel').replace(
                             '__NAME__',
                             preset.name,
                           )}
@@ -476,7 +483,7 @@ export function PresetSelector({
                             });
                             setShowDeleteDialog(true);
                           }}
-                          title={dict.deleteCharacterAriaLabel.replace(
+                          title={t('deleteCharacterAriaLabel').replace(
                             '__NAME__',
                             preset.name,
                           )}
@@ -532,8 +539,9 @@ export function PresetSelector({
                       maxLength={50}
                       onBlur={handleSaveNameOrDescription}
                       onChange={(e) => setEditableName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter')
+                          await handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
                       value={editableName}
@@ -561,11 +569,12 @@ export function PresetSelector({
                       maxLength={200}
                       onBlur={handleSaveNameOrDescription}
                       onChange={(e) => setEditableDescription(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleSaveNameOrDescription();
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter')
+                          await handleSaveNameOrDescription();
                         if (e.key === 'Escape') handleCancelEdit();
                       }}
-                      placeholder={dict.addDescriptionPlaceholder}
+                      placeholder={t('addDescriptionPlaceholder')}
                       value={editableDescription}
                     />
                   ) : (
@@ -579,7 +588,7 @@ export function PresetSelector({
                           pgState.language
                         ] ??
                           selectedPreset.localizedDescriptions?.en ??
-                          dict.clickToAddDescription}
+                          t('clickToAddDescription')}
                       </span>
                       <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
@@ -592,7 +601,7 @@ export function PresetSelector({
                     className="text-muted-foreground text-xs"
                     htmlFor="voice-select"
                   >
-                    {dict.voiceLabel}
+                    {t('voiceLabel')}
                   </Label>
                   <div className="flex items-center gap-2">
                     <Select
@@ -601,7 +610,7 @@ export function PresetSelector({
                       value={resolvedVoiceName}
                     >
                       <SelectTrigger className="flex-1" id="voice-select">
-                        <SelectValue placeholder={dict.voicePlaceholder} />
+                        <SelectValue placeholder={t('voicePlaceholder')} />
                       </SelectTrigger>
                       <SelectContent>
                         {callVoices.map((voice) => (
@@ -619,6 +628,7 @@ export function PresetSelector({
                       </SelectContent>
                     </Select>
                     <VoicePlayButton
+                      key={resolvedVoiceName}
                       sampleUrl={resolvedVoice?.sample_url ?? null}
                       size="md"
                       voiceName={resolvedVoiceName}
@@ -644,7 +654,6 @@ export function PresetSelector({
 
       <CreateCharacterDialog
         callVoices={callVoices}
-        dict={dict.createCharacter}
         isPaidUser={isPaidUser}
         onOpenChange={setShowCreateDialog}
         onSave={handleCreateCharacter}

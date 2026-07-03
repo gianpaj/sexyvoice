@@ -5,15 +5,8 @@ import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Crown, Sparkles } from 'lucide-react';
-import {
-  type MouseEvent,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useTranslations } from 'next-intl';
+import { type MouseEvent, use, useEffect, useRef, useState } from 'react';
 
 import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
 import {
@@ -57,9 +50,8 @@ import {
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
 import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
-import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu';
+import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
 import type {
   SuggestionItem,
   SuggestionMenuProps,
@@ -111,10 +103,7 @@ const XAI_LANGUAGE_OPTIONS = [
 ] as const;
 
 interface GrokTTSEditorProps {
-  characterLimitPaidTooltip: string;
-  characterLimitUpgradeTooltip: string;
   charactersLimit: number;
-  dict: (typeof messages)['generate']['grok'];
   enforceCharactersLimit?: boolean;
   isPaidUser?: boolean;
   onChange: (text: string) => void;
@@ -168,6 +157,56 @@ function getDomSelectionSnapshot(
   }
 }
 
+function clampEditorPosition(editor: EditorInstance, position: number): number {
+  const maxPosition = Math.max(1, editor.state.doc.content.size - 1);
+
+  return Math.min(Math.max(position, 1), maxPosition);
+}
+
+function normalizeEditorSelectionSnapshot(
+  editor: EditorInstance,
+  selection: EditorSelectionSnapshot,
+): EditorSelectionSnapshot {
+  const from = clampEditorPosition(editor, selection.from);
+  const to = clampEditorPosition(editor, selection.to);
+  const normalizedFrom = Math.min(from, to);
+  const normalizedTo = Math.max(from, to);
+
+  return {
+    empty: normalizedFrom === normalizedTo,
+    from: normalizedFrom,
+    to: normalizedTo,
+  };
+}
+
+function getEditorSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const { empty, from, to } = editor.state.selection;
+
+  return { empty, from, to };
+}
+
+function getEditorEndSelectionSnapshot(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const position = clampEditorPosition(
+    editor,
+    editor.state.doc.content.size - 1,
+  );
+
+  return { empty: true, from: position, to: position };
+}
+
+function moveEditorSelectionToEnd(
+  editor: EditorInstance,
+): EditorSelectionSnapshot {
+  const selection = getEditorEndSelectionSnapshot(editor);
+  editor.commands.setTextSelection(selection.from);
+
+  return selection;
+}
+
 interface GrokSlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
@@ -207,7 +246,7 @@ function createWrapperTagSuggestionItem(
  * EditorContent component that renders the actual editor
  */
 export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
-  const { editor } = useContext(EditorContext)!;
+  const { editor } = use(EditorContext)!;
   const { isDragging } = useUiEditorState(editor);
 
   // useScrollToHash()
@@ -243,9 +282,6 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
 }
 
 export function GrokTTSEditor({
-  characterLimitPaidTooltip,
-  characterLimitUpgradeTooltip,
-  dict,
   enforceCharactersLimit = true,
   isPaidUser,
   charactersLimit,
@@ -255,10 +291,13 @@ export function GrokTTSEditor({
   setSelectedGrokLanguage,
   value,
 }: GrokTTSEditorProps) {
+  const t = useTranslations('generate.grok');
+  const tGenerate = useTranslations('generate');
   const [effectsOpen, setEffectsOpen] = useState(false);
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
+  const contentResetSelectionRef = useRef<EditorSelectionSnapshot | null>(null);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
     from: 1,
@@ -316,12 +355,21 @@ export function GrokTTSEditor({
       handleTextInput: () => false,
     },
     onCreate: ({ editor: nextEditor }) => {
-      const { empty, from, to } = nextEditor.state.selection;
-      lastSelectionRef.current = { empty, from, to };
+      lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
     onSelectionUpdate: ({ editor: nextEditor }) => {
-      const { empty, from, to } = nextEditor.state.selection;
-      lastSelectionRef.current = { empty, from, to };
+      const selection = getEditorSelectionSnapshot(nextEditor);
+      const resetSelection = contentResetSelectionRef.current;
+      lastSelectionRef.current = selection;
+
+      if (
+        resetSelection &&
+        (!selection.empty ||
+          selection.from !== resetSelection.from ||
+          selection.to !== resetSelection.to)
+      ) {
+        contentResetSelectionRef.current = null;
+      }
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
@@ -331,6 +379,9 @@ export function GrokTTSEditor({
 
       if (text !== fullText) {
         nextEditor.commands.setContent(plainTextToDoc(text));
+        const resetSelection = moveEditorSelectionToEnd(nextEditor);
+        lastSelectionRef.current = resetSelection;
+        contentResetSelectionRef.current = resetSelection;
       }
 
       setCurrentLength(text.length);
@@ -350,177 +401,180 @@ export function GrokTTSEditor({
     }
 
     editor.commands.setContent(plainTextToDoc(value));
+    const resetSelection = moveEditorSelectionToEnd(editor);
+    lastSelectionRef.current = resetSelection;
+    contentResetSelectionRef.current = resetSelection;
     setCurrentLength(value.length);
   }, [editor, value]);
 
-  const insertInstantTag = useCallback(
-    (tag: InstantTagDef) => {
-      if (!editor) {
-        return;
-      }
+  const insertInstantTag = (tag: InstantTagDef) => {
+    if (!editor) {
+      return;
+    }
 
-      const selection = lastSelectionRef.current;
-      const serialized = grokTipTapDocToText(editor.getJSON());
-      const selectedTextLength = selection.empty
-        ? 0
-        : editor.state.doc.textBetween(selection.from, selection.to, '\n')
-            .length;
-      const nextLength =
-        serialized.length - selectedTextLength + tag.tag.length;
+    const selection = normalizeEditorSelectionSnapshot(
+      editor,
+      lastSelectionRef.current,
+    );
+    lastSelectionRef.current = selection;
+    const serialized = grokTipTapDocToText(editor.getJSON());
+    const selectedTextLength = selection.empty
+      ? 0
+      : editor.state.doc.textBetween(selection.from, selection.to, '\n').length;
+    const nextLength = serialized.length - selectedTextLength + tag.tag.length;
 
-      if (enforceCharactersLimit && nextLength > charactersLimit) {
-        return;
-      }
+    if (enforceCharactersLimit && nextLength > charactersLimit) {
+      return;
+    }
 
-      editor
-        .chain()
-        .focus()
-        .setTextSelection({ from: selection.from, to: selection.to })
-        .insertContent(createInstantTagNode(tag.tag))
-        .run();
-      setEffectsOpen(false);
-    },
-    [editor, charactersLimit, enforceCharactersLimit],
-  );
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: selection.from, to: selection.to })
+      .insertContent(createInstantTagNode(tag.tag))
+      .run();
+    setEffectsOpen(false);
+  };
 
-  const insertWrapperTag = useCallback(
-    (tag: WrapperTagDef) => {
-      if (!editor) {
-        return;
-      }
+  const insertWrapperTag = (tag: WrapperTagDef) => {
+    if (!editor) {
+      return;
+    }
 
-      const selection = lastSelectionRef.current;
-      const wrapperLength = tag.tag.length + tag.closeTag.length;
+    const selection = normalizeEditorSelectionSnapshot(
+      editor,
+      lastSelectionRef.current,
+    );
+    lastSelectionRef.current = selection;
+    const wrapperLength = tag.tag.length + tag.closeTag.length;
 
-      const serialized = grokTipTapDocToText(editor.getJSON());
-      const nextLength = serialized.length + wrapperLength;
+    const serialized = grokTipTapDocToText(editor.getJSON());
+    const nextLength = serialized.length + wrapperLength;
 
-      if (enforceCharactersLimit && nextLength > charactersLimit) {
-        return;
-      }
+    if (enforceCharactersLimit && nextLength > charactersLimit) {
+      return;
+    }
 
-      const openBoundary = createWrapperBoundaryNode(
-        'open',
-        tag.tag,
-        tag.closeTag,
+    const openBoundary = createWrapperBoundaryNode(
+      'open',
+      tag.tag,
+      tag.closeTag,
+    );
+    const closeBoundary = createWrapperBoundaryNode(
+      'close',
+      tag.tag,
+      tag.closeTag,
+    );
+
+    editor
+      .chain()
+      .focus()
+      .setTextSelection({ from: selection.from, to: selection.to })
+      .run();
+
+    if (selection.empty) {
+      const insertFrom = selection.from;
+      const tr = editor.state.tr.replaceSelectionWith(
+        editor.schema.nodeFromJSON(openBoundary),
       );
-      const closeBoundary = createWrapperBoundaryNode(
-        'close',
-        tag.tag,
-        tag.closeTag,
+
+      tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPING_TEXT));
+      tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
+
+      const cursorPos = insertFrom + 2;
+      tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+      editor.view.dispatch(tr);
+      editor.chain().focus().setTextSelection(cursorPos).run();
+    } else {
+      const selectedSlice = editor.state.doc.slice(
+        selection.from,
+        selection.to,
+      );
+      const tr = editor.state.tr.replaceSelectionWith(
+        editor.schema.nodeFromJSON(openBoundary),
       );
 
-      editor
-        .chain()
-        .focus()
-        .setTextSelection({ from: selection.from, to: selection.to })
-        .run();
+      tr.insert(selection.from + 1, selectedSlice.content);
+      const closeBoundaryPos = selection.from + 1 + selectedSlice.content.size;
+      tr.insert(closeBoundaryPos, editor.schema.nodeFromJSON(closeBoundary));
 
-      if (selection.empty) {
-        const insertFrom = selection.from;
-        const tr = editor.state.tr.replaceSelectionWith(
-          editor.schema.nodeFromJSON(openBoundary),
-        );
+      const cursorPos = closeBoundaryPos + 1;
+      tr.setSelection(TextSelection.create(tr.doc, cursorPos));
+      editor.view.dispatch(tr);
+      editor.chain().focus().setTextSelection(cursorPos).run();
+    }
 
-        tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPING_TEXT));
-        tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
+    setEffectsOpen(false);
+  };
 
-        const cursorPos = insertFrom + 2;
-        tr.setSelection(TextSelection.create(tr.doc, cursorPos));
-        editor.view.dispatch(tr);
-        editor.chain().focus().setTextSelection(cursorPos).run();
-      } else {
-        const selectedSlice = editor.state.doc.slice(
-          selection.from,
-          selection.to,
-        );
-        const tr = editor.state.tr.replaceSelectionWith(
-          editor.schema.nodeFromJSON(openBoundary),
-        );
+  const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+  };
 
-        tr.insert(selection.from + 1, selectedSlice.content);
-        const closeBoundaryPos =
-          selection.from + 1 + selectedSlice.content.size;
-        tr.insert(closeBoundaryPos, editor.schema.nodeFromJSON(closeBoundary));
+  const preserveEditorSelection = (event: MouseEvent<HTMLButtonElement>) => {
+    if (editor) {
+      const snapshot = getDomSelectionSnapshot(editor);
+      const resetSelection = contentResetSelectionRef.current;
+      const isContentResetSnapshot =
+        snapshot && resetSelection && snapshot.empty;
 
-        const cursorPos = closeBoundaryPos + 1;
-        tr.setSelection(TextSelection.create(tr.doc, cursorPos));
-        editor.view.dispatch(tr);
-        editor.chain().focus().setTextSelection(cursorPos).run();
+      if (snapshot && !isContentResetSnapshot) {
+        lastSelectionRef.current = snapshot;
+      } else if (!isContentResetSnapshot) {
+        lastSelectionRef.current = getEditorSelectionSnapshot(editor);
       }
+      contentResetSelectionRef.current = null;
+    }
 
-      setEffectsOpen(false);
-    },
-    [editor, charactersLimit, enforceCharactersLimit],
-  );
+    event.preventDefault();
+  };
 
-  const preserveSelection = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-    },
-    [],
-  );
+  const handleInsertTag = (tag: TagDef) => {
+    if ('closeTag' in tag) {
+      insertWrapperTag(tag);
+      return;
+    }
 
-  const preserveEditorSelection = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      if (editor) {
-        const snapshot = getDomSelectionSnapshot(editor);
+    insertInstantTag(tag);
+  };
 
-        if (snapshot) {
-          lastSelectionRef.current = snapshot;
-        }
-      }
+  const handleInsertTagRef = useRef(handleInsertTag);
+  useEffect(() => {
+    handleInsertTagRef.current = handleInsertTag;
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional "latest ref" sync — handleInsertTag is rebuilt each render on purpose so the long-lived slash-menu callbacks always invoke the current closure.
+  }, [handleInsertTag]);
 
-      event.preventDefault();
-    },
-    [editor],
-  );
+  const translatedGrokLanguages = [
+    { value: 'auto', label: t('langAutomatic') },
+    { value: 'en', label: t('langEnglish') },
+    ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
+      value,
+      label: t(label as Parameters<typeof t>[0]),
+    })),
+  ];
 
-  const handleInsertTag = useCallback(
-    (tag: TagDef) => {
-      if ('closeTag' in tag) {
-        insertWrapperTag(tag);
-        return;
-      }
-
-      insertInstantTag(tag);
-    },
-    [insertInstantTag, insertWrapperTag],
-  );
-
-  const translatedGrokLanguages = useMemo(
-    () => [
-      { value: 'auto', label: dict.langAutomatic },
-      { value: 'en', label: dict.langEnglish },
-      ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
-        value,
-        label: dict[label as keyof typeof dict] as string,
-      })),
-    ],
-    [dict],
-  );
-
-  const slashMenus = useMemo<GrokSlashMenuConfig[]>(
-    () => [
-      {
-        customItems: INSTANT_TAGS.map((tag) =>
-          createInstantTagSuggestionItem(tag, () => handleInsertTag(tag)),
+  const slashMenus: GrokSlashMenuConfig[] = [
+    {
+      customItems: INSTANT_TAGS.map((tag) =>
+        createInstantTagSuggestionItem(tag, () =>
+          handleInsertTagRef.current(tag),
         ),
-        pluginKey: 'grokInstantTagMenu',
-        triggerChar: '[',
-      },
-      {
-        allow: ({ editor, range, state }) =>
-          isGrokWrapperSuggestionAllowed({ editor, range, state }),
-        customItems: WRAPPING_TAGS.map((tag) =>
-          createWrapperTagSuggestionItem(tag, () => handleInsertTag(tag)),
+      ),
+      pluginKey: 'grokInstantTagMenu',
+      triggerChar: '[',
+    },
+    {
+      allow: ({ editor, range, state }) =>
+        isGrokWrapperSuggestionAllowed({ editor, range, state }),
+      customItems: WRAPPING_TAGS.map((tag) =>
+        createWrapperTagSuggestionItem(tag, () =>
+          handleInsertTagRef.current(tag),
         ),
-        pluginKey: 'grokWrapperTagMenu',
-        triggerChar: '<',
-      },
-    ],
-    [handleInsertTag],
-  );
+      ),
+      pluginKey: 'grokWrapperTagMenu',
+      triggerChar: '<',
+    },
+  ];
 
   if (!editor) {
     return (
@@ -533,13 +587,13 @@ export function GrokTTSEditor({
   return (
     <>
       <div className="space-y-2 sm:w-1/3">
-        <div className="font-medium text-sm">{dict.languageLabel}</div>
+        <div className="font-medium text-sm">{t('languageLabel')}</div>
         <Select
           onValueChange={setSelectedGrokLanguage}
           value={selectedGrokLanguage}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder={dict.languageSelectPlaceholder} />
+            <SelectValue placeholder={t('languageSelectPlaceholder')} />
           </SelectTrigger>
           <SelectContent>
             {translatedGrokLanguages.map(({ value, label }) => (
@@ -570,7 +624,7 @@ export function GrokTTSEditor({
                   variant="outline"
                 >
                   <Sparkles className="mr-1.5 size-3.5" />
-                  {dict.inlineEffectPlaceholder}
+                  {t('inlineEffectPlaceholder')}
                   <ChevronDown className="ml-1 size-3" />
                 </Button>
               </PopoverTrigger>
@@ -582,7 +636,7 @@ export function GrokTTSEditor({
                 <div className="max-h-[400px] overflow-y-auto">
                   <div className="border-border border-b p-3">
                     <h4 className="mb-2 font-medium text-sm">
-                      {dict.inlineEffectPlaceholder}
+                      {t('inlineEffectPlaceholder')}
                     </h4>
                     <div className="grid grid-cols-2 gap-1">
                       {INSTANT_TAGS.map((tag) => (
@@ -605,7 +659,7 @@ export function GrokTTSEditor({
 
                   <div className="p-3">
                     <h4 className="mb-2 font-medium text-sm">
-                      {dict.wrappingEffectPlaceholder}
+                      {t('wrappingEffectPlaceholder')}
                     </h4>
                     <div className="grid grid-cols-2 gap-1">
                       {WRAPPING_TAGS.map((tag) => (
@@ -639,9 +693,9 @@ export function GrokTTSEditor({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                enforceCharactersLimit && currentLength > charactersLimit
-                  ? 'font-bold text-red-500'
-                  : '',
+                enforceCharactersLimit &&
+                  currentLength > charactersLimit &&
+                  'text-red-500',
               )}
               data-testid="generate-character-count"
             >
@@ -663,8 +717,8 @@ export function GrokTTSEditor({
                   <TooltipContent>
                     <p>
                       {isPaidUser
-                        ? characterLimitPaidTooltip
-                        : characterLimitUpgradeTooltip}
+                        ? tGenerate('paidCharacterLimitTooltip')
+                        : tGenerate('upgradeCharacterLimitTooltip')}
                     </p>
                   </TooltipContent>
                 </Tooltip>

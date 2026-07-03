@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/style/useConsistentTypeDefinitions: <explanation> */
+/** biome-ignore-all lint/style/useConsistentTypeDefinitions: generated Supabase types use type aliases */
 declare type Json =
   | string
   | number
@@ -15,6 +15,42 @@ declare type Database = {
   };
   public: {
     Tables: {
+      agent_memories: {
+        Row: {
+          character_id: string;
+          content: string;
+          created_at: string;
+          embedding: string | null;
+          fts: unknown | null;
+          id: number;
+          memory_type: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          character_id?: string;
+          content: string;
+          created_at?: string;
+          embedding?: string | null;
+          fts?: never;
+          id?: never;
+          memory_type: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          character_id?: string;
+          content?: string;
+          created_at?: string;
+          embedding?: string | null;
+          fts?: never;
+          id?: never;
+          memory_type?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       api_keys: {
         Row: {
           created_at: string;
@@ -138,7 +174,6 @@ declare type Database = {
           end_reason: string | null;
           ended_at: string | null;
           free_call: boolean | null;
-          grok_image_enabled: boolean | null;
           id: string;
           last_metered_at: string;
           max_output_tokens: number | null;
@@ -159,7 +194,6 @@ declare type Database = {
           end_reason?: string | null;
           ended_at?: string | null;
           free_call?: boolean | null;
-          grok_image_enabled?: boolean | null;
           id?: string;
           last_metered_at?: string;
           max_output_tokens?: number | null;
@@ -180,7 +214,6 @@ declare type Database = {
           end_reason?: string | null;
           ended_at?: string | null;
           free_call?: boolean | null;
-          grok_image_enabled?: boolean | null;
           id?: string;
           last_metered_at?: string;
           max_output_tokens?: number | null;
@@ -644,6 +677,10 @@ declare type Database = {
       decrement_user_credits: {
         Args: { credit_amount_var: number; user_id_var: string };
         Returns: undefined;
+      };
+      decrement_user_credits_up_to: {
+        Args: { credit_amount_var: number; user_id_var: string };
+        Returns: number;
       };
       get_usage_summary: {
         Args: { p_end_date?: string; p_start_date?: string; p_user_id: string };

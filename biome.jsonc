@@ -1,4 +1,11 @@
 {
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/next",
+    "ultracite/biome/react",
+    "ultracite/biome/tanstack",
+    "ultracite/biome/vitest"
+  ],
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": true,
@@ -15,7 +22,8 @@
       "!**/.next",
       "!**/dist",
       "!**/build",
-      "!apps/web/components/ui"
+      "!apps/web/components/ui",
+      "!apps/web/app/globals.css"
     ]
   },
   "formatter": {
@@ -26,7 +34,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useLiteralEnumMembers": "error",
         "useNodejsImportProtocol": "error",
@@ -57,15 +65,17 @@
       },
       "suspicious": {
         "noArrayIndexKey": "off",
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noShadow": "off",
+        "noLeakedRender": "off"
       },
       "correctness": {
         "useUniqueElementIds": "off",
         "noNextAsyncClientComponent": "error"
       },
       "nursery": {
-        "noShadow": "off",
-        "noLeakedRender": "off"
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error"
       },
       "performance": {
         "noNamespaceImport": "warn",
@@ -115,8 +125,13 @@
       "tailwindDirectives": true
     }
   },
-  "extends": [
-    "ultracite/core",
-    "ultracite/next"
+  "overrides": [
+    {
+      // Enforce the shared APIErrorResponse helper for error responses in the
+      // web app's API route handlers. Scoped here (not global) because other
+      // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
+      "includes": ["apps/web/app/api/**"],
+      "plugins": ["./biome-plugins/use-api-error-response.grit"]
+    }
   ]
 }

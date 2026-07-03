@@ -1,5 +1,5 @@
 import { argosScreenshot } from '@argos-ci/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 import { CallPage } from './pages/call.page';
 
@@ -97,6 +97,10 @@ test.describe('Call Dashboard - Authenticated User', () => {
 
   test('should display notice text', async () => {
     await callPage.expectNoticeTextVisible();
+  });
+
+  test('should display the FAQ section when disconnected', async () => {
+    await callPage.expectCallFaqVisible();
   });
 
   test('should display configuration form with form element', async () => {

@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Quelles langues sont supportées pour la génération vocale ?",
-              "answer": "Le support linguistique dépend de la voix sélectionnée.\n\nCertaines de nos voix IA (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) supportent 24 langues, notamment :\n🇩🇪 Allemand (Allemagne),\n🇺🇸 Anglais (US),\n🇮🇳 Anglais/Hindi (Inde),\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇰🇷 Coréen (Corée),\n🇺🇸 Espagnol (US),\n🇫🇷 Français (France),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇮🇳 Marathi (Inde),\n🇳🇱 Néerlandais (Pays-Bas),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇮🇳 Tamoul (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\net 🇻🇳 Vietnamien (Vietnam).\n\nD'autres voix sont spécifiques à une langue :\n🇬🇧 Dan (Anglais UK),\n🇮🇹 Pietro (Italien),\n🇺🇸 Emma (Anglais US),\n🇪🇸 Javi (Espagnol),\n🇺🇸 Josh (Anglais US),\n🇺🇸 et Tara (Anglais US).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
+              "answer": "Le support linguistique dépend de la voix et du modèle sélectionnés.\n\n**Voix Gemini 2.5 (par défaut)** prennent en charge 24 langues, notamment :\n🇩🇪 Allemand, 🇺🇸 Anglais, 🇪🇬 Arabe, 🇧🇩 Bengali, 🇰🇷 Coréen, 🇺🇸 Espagnol, 🇫🇷 Français, 🇮🇳 Hindi, 🇮🇩 Indonésien, 🇮🇹 Italien, 🇯🇵 Japonais, 🇮🇳 Marathi, 🇳🇱 Néerlandais, 🇵🇱 Polonais, 🇧🇷 Portugais, 🇷🇴 Roumain, 🇷🇺 Russe, 🇮🇳 Tamoul, 🇮🇳 Telugu, 🇹🇭 Thaï, 🇹🇷 Turc, 🇺🇦 Ukrainien, et 🇻🇳 Vietnamien.\n\n**Voix Gemini 3.1 (en activant \"Utiliser le nouveau modèle IA\")** prennent en charge 70+ langues sur 80+ variantes régionales, incluant tout ce qui précède plus : Afrikaans, Albanais, Amharique, Arménien, Azerbaïdjanais, Basque, Bulgare, Catalan, Chinois, Croate, Tchèque, Danois, Estonien, Filipino, Finnois, Galicien, Géorgien, Grec, Gujarati, Hébreu, Hongrois, Islandais, Irlandais, Javanais, Kannada, Kazakh, Letton, Lituanien, Macédonien, Malais, Maltais, Norvégien, Persan, Pendjabi, Serbe, Slovak, Slovène, Swahili, Suédois, Ourdou, Ouzbek, Gallois, Zulu et plus.\n\nD'autres voix sont spécifiques à une langue :\n🇬🇧 Dan (Anglais UK), 🇮🇹 Pietro (Italien), 🇺🇸 Emma, Josh, Tara (Anglais US), 🇪🇸 Javi (Espagnol).\n\nChoisissez votre voix en fonction de votre langue cible pour les résultats les plus naturels."
             },
             {
               "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
@@ -187,7 +187,11 @@
             },
             {
               "question": "Combien ça coûte ?",
-              "answer": "Les appels en direct coûtent 2000 crédits par minute pendant que vous êtes connecté."
+              "answer": "Les appels en direct coûtent {count} crédits par minute pendant que vous êtes connecté."
+            },
+            {
+              "question": "L'IA se souvient-elle de nos conversations précédentes ?",
+              "answer": "Uniquement si vous activez la mémoire : elle est facultative et désactivée par défaut, donc en principe rien de vos appels n'est conservé. Lorsqu'elle est activée, l'assistant retient quelques informations courtes (comme la façon dont vous aimez qu'on s'adresse à vous et les sujets que vous appréciez), pas d'enregistrements ni de transcriptions complètes, afin de reprendre là où vous vous étiez arrêté. Nous ne conservons que vos informations les plus récentes, vous pouvez tout effacer à tout moment, et la suppression de votre compte les supprime automatiquement."
             }
           ]
         },
@@ -296,9 +300,14 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Votre forfait mensuel de crédits est programmé pour se terminer",
+      "description": "Votre forfait mensuel de crédits reste actif jusqu’au {date}, mais il ne sera pas renouvelé et n’ajoutera plus de crédits mensuels ensuite. Vous pouvez continuer à utiliser les crédits disponibles sur votre compte. Pour changer de niveau, gérez votre abonnement dans Stripe.",
+      "manageButton": "Gérer l’abonnement"
+    },
     "topup": {
       "title": "Acheter des crédits",
-      "description": "Rechargez vos crédits instantanément avec un achat unique",
+      "description": "Rechargez vos crédits instantanément ou abonnez-vous et obtenez plus de crédits",
       "buyCredits": "Acheter des crédits",
       "onetimePurchase": "Achat unique",
       "processing": "Traitement...",
@@ -365,14 +374,16 @@
     "generating": "Génération",
     "gproLimitExceeded": "Vous avez dépassé la limite de __COUNT__ générations de voix multilingues en tant qu'utilisateur gratuit. Veuillez essayer une voix différente ou mettre à niveau votre forfait pour un accès illimité.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
-    "paidCharacterLimitTooltip": "Les utilisateurs payants bénéficient d'une limite de caractères 2×",
     "playAudio": "Lire l'audio",
     "resetPlayer": "Réinitialiser le lecteur",
     "subtitle": "Sélectionnez une voix et générez de l'audio à partir du texte",
     "success": "Audio généré avec succès !",
     "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
-    "title": "Générer de l'audio",
+    "paidStyleLimitTooltip": "Vous bénéficiez d'une limite de style 2,5×",
+    "upgradeStyleLimitTooltip": "Passez à un forfait payant pour une limite de style 2,5×",
+    "paidCharacterLimitTooltip": "Vous bénéficiez d'une limite de caractères 2×",
     "upgradeCharacterLimitTooltip": "Passez à un forfait payant pour une limite de caractères 2×",
+    "title": "Générer de l'audio",
     "grok": {
       "inlineEffectPlaceholder": "Insérer un effet inline",
       "wrappingEffectPlaceholder": "Entourer avec une balise de style",
@@ -426,7 +437,18 @@
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
       "geminiInfo": "Il prend en charge 24 langues :\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Néerlandais (Pays-Bas),\n🇺🇸 Anglais (États-Unis),\n🇮🇳 Anglais/Hindi (Inde),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇺🇸 Espagnol (États-Unis),\n🇮🇳 Tamil (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)",
       "grokInfo": "Prend en charge des balises expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast> et prend en charge 24 langues :\n🇪🇬 Arabe (Égypte, Arabie saoudite et EAU),\n🇧🇩 Bengali,\n🇳🇱 Néerlandais (Pays-Bas),\n🇨🇳 Chinois (simplifié),\n🇺🇸 Anglais,\n🇫🇷 Français,\n🇩🇪 Allemand,\n🇮🇳 Hindi,\n🇮🇩 Indonésien,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇰🇷 Coréen,\n🇧🇷 Portugais (Brésil, Portugal),\n🇷🇺 Russe,\n🇪🇸 Espagnol (Mexique, Espagne),\n🇹🇷 Turc,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien",
-      "featuredBadge": "En vedette"
+      "featuredBadge": "En vedette",
+      "selectVoicePlaceholder": "Sélectionner une voix...",
+      "searchPlaceholder": "Rechercher par nom, style ou modèle...",
+      "filterModelLabel": "Modèle",
+      "filterGenderLabel": "Genre",
+      "clearFilters": "Effacer",
+      "noVoicesFound": "Aucune voix trouvée",
+      "noVoicesFoundHint": "Essayez une recherche différente ou effacez les filtres.",
+      "previewVoice": "Aperçu de {name}",
+      "stopPreview": "Arrêter l'aperçu de {name}",
+      "footerCount": "{filtered} sur {total} voix",
+      "voiceListLabel": "Voix"
     },
     "split": {
       "segmentPreviews": "Aperçus des segments",
@@ -455,11 +477,19 @@
   "call": {
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
-    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est __COUNT__",
+    "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
     "freeUserCallLimitExceeded": "Les utilisateurs gratuits sont limités à 5 minutes d'appels. Veuillez passer à un forfait supérieur pour continuer.",
     "configurationTitle": "Configuration",
+    "memoryLabel": "Mémoire",
+    "memoryDescription": "Laissez les personnages se souvenir de vous d’un appel à l’autre. Rien n’est enregistré sauf si c’est activé.",
+    "memoryUpgradeTooltip": "Passez à une offre payante pour que les personnages se souviennent de vous d’un appel à l’autre.",
     "languageLabel": "Langue",
     "languagePlaceholder": "Choisir une langue",
+    "sceneLabel": "Scène",
+    "scenePlaceholder": "Choisir une scène",
+    "sceneNone": "Aucune scène",
+    "sceneUpgradeRequired": "Passez à une offre supérieure pour utiliser les scènes",
+    "sceneTextLabel": "Texte de la scène",
     "startCall": "Démarrer un appel",
     "connecting": "Connexion en cours",
     "reconnected": "Reconnecté",
@@ -581,6 +611,7 @@
       "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
       "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
       "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
+      "providerUnavailable": "Le fournisseur de clonage vocal est temporairement indisponible. Veuillez réessayer.",
       "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
       "missingLocale": "Veuillez sélectionner une langue.",
@@ -712,6 +743,17 @@
         "cancel": "Annuler",
         "confirm": "Révoquer"
       }
+    },
+    "memory": {
+      "title": "Mémoire des appels vocaux",
+      "description": "Si vous activez la mémoire pendant les appels, les personnages retiennent quelques informations sur vous pour assurer la continuité. Vous pouvez tout effacer ici.",
+      "button": "Supprimer toutes les mémoires",
+      "confirmTitle": "Supprimer toutes les mémoires des appels vocaux ?",
+      "confirmDescription": "Cela efface définitivement tout ce que les personnages ont retenu de vous lors des appels précédents. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "continue": "Supprimer",
+      "success": "Vos mémoires d’appels vocaux ont été supprimées.",
+      "error": "Impossible de supprimer vos mémoires. Veuillez réessayer."
     }
   },
   "apiBilling": {
@@ -752,7 +794,7 @@
     "profile": "Profil",
     "signOut": "Déconnexion",
     "freeTools": "Outils gratuits",
-    "subscriptionDiscount": "Obtenez {discount}% de crédits supplémentaires avec un abonnement"
+    "subscriptionDiscount": "Obtenez {extraCredits}% de crédits supplémentaires et {discount}% de réduction sur le premier mois !"
   },
   "header": {
     "generate": "Générer",
@@ -762,6 +804,7 @@
   "history": {
     "header": "Historique des générations",
     "empty": "Aucun historique pour le moment",
+    "downloadError": "Échec du téléchargement de l'audio",
     "ui": {
       "filterText": "Filtrer le texte...",
       "customizeColumns": "Personnaliser les colonnes",
@@ -862,7 +905,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Les nouvelles voix pour la generation vocale sont disponibles, avec plus de controle sur le rythme, les respirations, la hauteur, la vitesse et l'intensite.",
+      "text": "De nouvelles voix plus expressives sont arrivées — propulsées par Gemini 3.1, avec un contrôle plus fin du rythme, des respirations, de la hauteur, de la vitesse et de l'intensité.",
       "ctaLoggedIn": "Essayer les voix",
       "ctaLoggedOut": "Se connecter",
       "ariaLabelDismiss": "Fermer l'annonce des voix expressives"
@@ -1028,5 +1071,9 @@
       "audioConverterLink": "Convertisseur Audio Gratuit",
       "madeWith": "Fait avec ♡ par SexyVoice.ai - Générateur audio IA gratuit à essayer"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
+    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes."
   }
 }

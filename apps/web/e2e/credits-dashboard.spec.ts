@@ -1,6 +1,6 @@
 import { argosScreenshot } from '@argos-ci/playwright';
-import { expect, test } from '@playwright/test';
 
+import { expect, test } from './fixtures';
 import { CreditsPage } from './pages/credits.page';
 
 /**
@@ -66,6 +66,15 @@ test.describe('Credits Dashboard - Authenticated User', () => {
   test('should show Stripe Customer Portal link with correct href', async () => {
     await creditsPage.expectStripePortalLinkVisible();
     await creditsPage.expectStripePortalLinkOpensNewTab();
+  });
+
+  test('sidebar shows mocked credit values', async ({ page }) => {
+    // Sidebar renders on every dashboard page; with E2E mocks:
+    //   totalCredits = 10000 + 5000 + 12000 = 27,000 (sum of E2E_CREDIT_TRANSACTIONS)
+    //   remainingCredits = 5,000 (from fixtures.ts /rest/v1/credits route)
+    const sidebar = page.getByTestId('credits-section');
+    await expect(sidebar.getByText('27,000')).toBeVisible();
+    await expect(sidebar.getByText('5,000')).toBeVisible();
   });
 });
 

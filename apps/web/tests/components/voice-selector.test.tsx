@@ -2,8 +2,10 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
+import { getVoiceGroups } from '@/components/voice-groups';
 import { VoiceSelector } from '@/components/voice-selector';
 
 vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
@@ -18,6 +20,9 @@ vi.mock('@/components/audio-player-with-context', () => ({
 
 vi.mock('@/lib/ai', () => ({
   getEmotionTags: vi.fn(() => null),
+  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 2500 : 1000,
+  ),
 }));
 
 vi.mock('@/lib/react-textarea-autosize', () => ({
@@ -34,8 +39,19 @@ const baseDict = {
     toolTipEmotionTags: 'Emotion tags',
     selectStyleTextareaPlaceholder: 'Describe the speaking style',
     featuredBadge: 'Featured',
-    featuredGroupLabel: 'Grok',
+    featuredGroupLabel: 'Featured',
     multilingualGroupLabel: 'Gemini',
+    selectVoicePlaceholder: 'Select a voice...',
+    searchPlaceholder: 'Search name, style, or model...',
+    filterModelLabel: 'Model',
+    filterGenderLabel: 'Gender',
+    clearFilters: 'Clear',
+    noVoicesFound: 'No voices found',
+    noVoicesFoundHint: 'Try a different search or clear the filters.',
+    previewVoice: 'Preview {name}',
+    stopPreview: 'Stop preview of {name}',
+    footerCount: '{filtered} of {total} voices',
+    voiceListLabel: 'Voices',
   },
 } as const;
 
@@ -50,7 +66,7 @@ function createVoice(
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
     description: null,
     type: null,
-    sort_order: 0,
+    sort_order: 1,
     feature: 'tts',
     sample_url: null,
     sample_prompt: null,
@@ -86,7 +102,6 @@ function renderVoiceSelector(
   ];
 
   const defaultProps: React.ComponentProps<typeof VoiceSelector> = {
-    dict: baseDict as unknown as typeof import('@/messages/en.json')['generate'],
     publicVoices,
     selectedStyle: 'soft and breathy',
     selectedVoice: publicVoices[0],
@@ -94,7 +109,11 @@ function renderVoiceSelector(
     setSelectedVoice: vi.fn(),
   };
 
-  return render(<VoiceSelector {...defaultProps} {...overrides} />);
+  return render(
+    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+      <VoiceSelector {...defaultProps} {...overrides} />
+    </NextIntlClientProvider>,
+  );
 }
 
 describe('VoiceSelector', () => {
@@ -219,17 +238,82 @@ describe('VoiceSelector', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('exposes the featured badge copy in the selected value for the featured voice', () => {
+  it('shows the selected voice name in the trigger button', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-grok',
         name: 'eve',
         model: 'xai',
+        sort_order: 0,
       }),
     });
 
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
-    expect(screen.getByRole('combobox')).toHaveTextContent(/featured/i);
+  });
+
+  it('keeps featured voices first and preserves query order for non-featured groups', () => {
+    const voiceGroups = getVoiceGroups(
+      [
+        createVoice({
+          id: 'voice-featured-zephyr',
+          name: 'zephyr',
+          language: 'multiple',
+          model: 'gpro',
+          sort_order: 0,
+        }),
+        createVoice({
+          id: 'voice-featured-achernar',
+          name: 'achernar',
+          language: 'multiple',
+          model: 'gpro',
+          sort_order: 0,
+        }),
+        createVoice({
+          id: 'voice-grok-sal',
+          name: 'sal',
+          language: 'multiple',
+          model: 'xai',
+          sort_order: 1,
+        }),
+        createVoice({
+          id: 'voice-grok-ara',
+          name: 'ara',
+          language: 'multiple',
+          model: 'xai',
+          sort_order: 1,
+        }),
+        createVoice({
+          id: 'voice-replicate-dan',
+          name: 'dan',
+          language: 'en-GB 🇬🇧',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          sort_order: 2,
+        }),
+        createVoice({
+          id: 'voice-replicate-emma',
+          name: 'emma',
+          language: 'en-US 🇺🇸',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          sort_order: 2,
+        }),
+      ],
+      {
+        featuredGroupLabel: baseDict.voiceSelector.featuredGroupLabel,
+        geminiGroupLabel: baseDict.voiceSelector.multilingualGroupLabel,
+      },
+    );
+
+    expect(voiceGroups.map((group) => group.label)).toEqual([
+      'Featured',
+      'Grok ✨',
+      'en-GB 🇬🇧',
+      'en-US 🇺🇸',
+    ]);
+    expect(
+      voiceGroups.map((group) => group.voices.map((voice) => voice.name)),
+    ).toEqual([['achernar', 'zephyr'], ['ara', 'sal'], ['dan'], ['emma']]);
   });
 
   it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
@@ -247,6 +331,7 @@ describe('VoiceSelector', () => {
           name: 'eve',
           language: 'en',
           model: 'xai',
+          sort_order: 0,
         }),
       ],
       selectedVoice: createVoice({
@@ -254,6 +339,7 @@ describe('VoiceSelector', () => {
         name: 'eve',
         language: 'en',
         model: 'xai',
+        sort_order: 0,
       }),
     });
 

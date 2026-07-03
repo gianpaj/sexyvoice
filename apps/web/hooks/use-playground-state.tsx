@@ -10,6 +10,7 @@ import {
   useReducer,
 } from 'react';
 
+import { callScenes } from '@/data/call-scenes';
 import { defaultSessionConfig } from '@/data/default-config';
 import {
   type CallLanguage,
@@ -17,7 +18,6 @@ import {
   languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
-import { getPresetInstructions } from '@/data/preset-instructions';
 import type { Preset } from '@/data/presets';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
@@ -39,9 +39,8 @@ const storageHelper = {
  * Resolves the best instructions for a given character and language.
  *
  * Priority:
- * 1. Custom character localizedInstructions for the specific language
- * 2. Built-in preset translations (from preset-instructions index)
- * 3. Preset's default instructions field (English / fallback)
+ * 1. Character localizedInstructions for the specific language
+ * 2. Preset's default instructions field (fallback)
  */
 function resolveInstructions(
   characterId: string,
@@ -56,10 +55,6 @@ function resolveInstructions(
     return preset.localizedInstructions[language] as string;
   }
 
-  // 2. Built-in preset translations
-  const translated = getPresetInstructions(characterId, language);
-  if (translated) return translated;
-
   // 3. Fallback to preset's default instructions
   return preset?.instructions || '';
 }
@@ -71,8 +66,11 @@ type Action =
       payload: Partial<PlaygroundState['sessionConfig']>;
     }
   | { type: 'SET_INSTRUCTIONS'; payload: string }
+  | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
   | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
+  | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
+  | { type: 'SET_MEMORY'; payload: boolean }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
@@ -95,6 +93,11 @@ function playgroundStateReducer(
       return {
         ...state,
         instructions: action.payload,
+      };
+    case 'SET_SCENE_INSTRUCTIONS':
+      return {
+        ...state,
+        sceneInstructions: action.payload,
       };
     case 'SET_CUSTOM_CHARACTERS':
       return {
@@ -128,6 +131,29 @@ function playgroundStateReducer(
         selectedPreset?.sessionConfig || defaultSessionConfig;
       return newState;
     }
+    case 'SET_SELECTED_SCENE_ID': {
+      const selectedScene = callScenes.find(
+        (scene) => scene.id === action.payload,
+      );
+      const currentScene = callScenes.find(
+        (scene) => scene.id === state.selectedSceneId,
+      );
+      const isTextModified =
+        state.sceneInstructions !== (currentScene?.text ?? '');
+
+      return {
+        ...state,
+        selectedSceneId: action.payload,
+        sceneInstructions: isTextModified
+          ? state.sceneInstructions
+          : (selectedScene?.text ?? ''),
+      };
+    }
+    case 'SET_MEMORY':
+      return {
+        ...state,
+        memory: action.payload,
+      };
     case 'SAVE_CUSTOM_CHARACTER': {
       const language = state.language;
       const existingCharacter = state.customCharacters.find(
@@ -238,10 +264,12 @@ interface PlaygroundStateProviderProps {
   initialState?: Partial<PlaygroundState>;
 }
 
+const EMPTY_PRESETS: Preset[] = [];
+
 export const PlaygroundStateProvider = ({
   children,
   defaultPresets: defaultPresetsProp,
-  initialCustomCharacters = [],
+  initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
   const mergedDefaultPresets = defaultPresetsProp ?? [];
@@ -249,19 +277,16 @@ export const PlaygroundStateProvider = ({
     () => createPlaygroundStateHelpers(mergedDefaultPresets),
     [mergedDefaultPresets],
   );
-  const mergedInitialState: PlaygroundState = useMemo(
-    () => ({
-      ...defaultPlaygroundState,
-      defaultPresets: mergedDefaultPresets,
-      customCharacters: initialCustomCharacters,
-      ...initialState,
-      sessionConfig: {
-        ...defaultPlaygroundState.sessionConfig,
-        ...(initialState?.sessionConfig ?? {}),
-      },
-    }),
-    [initialState, mergedDefaultPresets, initialCustomCharacters],
-  );
+  const mergedInitialState: PlaygroundState = {
+    ...defaultPlaygroundState,
+    defaultPresets: mergedDefaultPresets,
+    customCharacters: initialCustomCharacters,
+    ...initialState,
+    sessionConfig: {
+      ...defaultPlaygroundState.sessionConfig,
+      ...(initialState?.sessionConfig ?? {}),
+    },
+  };
 
   const [state, dispatch] = useReducer(
     playgroundStateReducer,

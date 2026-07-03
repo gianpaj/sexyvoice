@@ -30,6 +30,7 @@ export function GenerateButton({
       className={cn('disabled:opacity-70', className)}
       disabled={disabled}
     >
+      {/* TODO: animate between states with motion.dev */}
       {isGenerating ? (
         <span className="flex items-center">
           <TextShimmer

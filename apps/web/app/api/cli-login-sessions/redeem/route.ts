@@ -3,13 +3,12 @@ import { z } from 'zod';
 
 import { decryptCliApiKey, hashCliExchangeToken } from '@/lib/api/cli-login';
 import { consumeRateLimit, createRateLimitHeaders } from '@/lib/api/rate-limit';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-const RedeemCliLoginSessionSchema = z
-  .object({
-    exchange_token: z.string().min(1),
-  })
-  .strict();
+const RedeemCliLoginSessionSchema = z.strictObject({
+  exchange_token: z.string().min(1),
+});
 
 export async function POST(request: Request) {
   const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1';
@@ -17,19 +16,13 @@ export async function POST(request: Request) {
   const headers = createRateLimitHeaders(rateLimit);
 
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests' },
-      { status: 429, headers },
-    );
+    return APIErrorResponse('Too many requests', 429, undefined, headers);
   }
 
   const payload = await request.json().catch(() => null);
   const parsed = RedeemCliLoginSessionSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400, headers },
-    );
+    return APIErrorResponse('Invalid request body', 400, undefined, headers);
   }
 
   const admin = createAdminClient();
@@ -41,24 +34,38 @@ export async function POST(request: Request) {
     .eq('token_hash', hashCliExchangeToken(parsed.data.exchange_token))
     .maybeSingle();
 
-  if (error || !session) {
-    return NextResponse.json(
-      { error: 'CLI login session not found' },
-      { status: 404, headers },
+  if (error) {
+    return APIErrorResponse(
+      'Failed to fetch CLI login session',
+      500,
+      undefined,
+      headers,
+    );
+  }
+  if (!session) {
+    return APIErrorResponse(
+      'CLI login session not found',
+      404,
+      undefined,
+      headers,
     );
   }
 
   if (session.redeemed_at || !session.encrypted_api_key) {
-    return NextResponse.json(
-      { error: 'CLI login session has already been redeemed' },
-      { status: 410, headers },
+    return APIErrorResponse(
+      'CLI login session has already been redeemed',
+      410,
+      undefined,
+      headers,
     );
   }
 
   if (new Date(session.expires_at) <= new Date()) {
-    return NextResponse.json(
-      { error: 'CLI login session has expired' },
-      { status: 410, headers },
+    return APIErrorResponse(
+      'CLI login session has expired',
+      410,
+      undefined,
+      headers,
     );
   }
 
@@ -66,9 +73,11 @@ export async function POST(request: Request) {
   try {
     apiKey = decryptCliApiKey(session.encrypted_api_key);
   } catch {
-    return NextResponse.json(
-      { error: 'CLI login session could not be decrypted' },
-      { status: 500, headers },
+    return APIErrorResponse(
+      'CLI login session could not be decrypted',
+      500,
+      undefined,
+      headers,
     );
   }
 
@@ -84,9 +93,11 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (updateError || !updated) {
-    return NextResponse.json(
-      { error: 'CLI login session has already been redeemed' },
-      { status: 410, headers },
+    return APIErrorResponse(
+      'CLI login session has already been redeemed',
+      410,
+      undefined,
+      headers,
     );
   }
 

@@ -3,6 +3,7 @@
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { Save, SaveAll } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -18,7 +19,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { buildSaveCharacterPayload, saveCharacter } from '@/lib/characters';
 
@@ -26,8 +26,7 @@ export function PresetSave() {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
   const { pgState, dispatch, helpers } = usePlaygroundState();
-  const { dict } = useConnection();
-  const t = dict.savePreset;
+  const t = useTranslations('call.savePreset');
   const selectedPreset = helpers.getSelectedPreset(pgState);
   const defaultPresets = helpers.getDefaultPresets();
   const isDefaultPreset = selectedPreset
@@ -64,14 +63,14 @@ export function PresetSave() {
       voiceName: pgState.sessionConfig.voice,
     });
     if (!result.ok) {
-      toast.error(result.error ?? t.failedToCreate);
+      toast.error(result.error ?? t('failedToCreate'));
       return;
     }
 
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
     dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: result.preset.id });
     setOpen(false);
-    toast.success(t.characterCreated);
+    toast.success(t('characterCreated'));
   };
 
   const handleSave = async () => {
@@ -92,12 +91,12 @@ export function PresetSave() {
     );
     const result = await saveCharacter(payload);
     if (!result.ok) {
-      toast.error(result.error ?? t.failedToUpdate);
+      toast.error(result.error ?? t('failedToUpdate'));
       return;
     }
 
     dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
-    toast.success(t.characterSaved);
+    toast.success(t('characterSaved'));
   };
 
   return (
@@ -110,7 +109,7 @@ export function PresetSave() {
           variant="secondary"
         >
           <Save className="h-4 w-4" />
-          <span className="ml-2">{t.save}</span>
+          <span className="ml-2">{t('save')}</span>
         </Button>
       )}
 
@@ -123,17 +122,17 @@ export function PresetSave() {
             variant="secondary"
           >
             <SaveAll className="h-4 w-4" />
-            <span className="ml-2">{t.saveAsNew}</span>
+            <span className="ml-2">{t('saveAsNew')}</span>
           </Button>
         </DialogTrigger>
         <DialogContent className="bg-background sm:max-w-[475px]">
           <DialogHeader>
-            <DialogTitle>{t.saveAsNewTitle}</DialogTitle>
-            <DialogDescription>{t.saveAsNewDescription}</DialogDescription>
+            <DialogTitle>{t('saveAsNewTitle')}</DialogTitle>
+            <DialogDescription>{t('saveAsNewDescription')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">{t.nameLabel}</Label>
+              <Label htmlFor="name">{t('nameLabel')}</Label>
               <Input
                 autoComplete="off"
                 autoFocus
@@ -143,7 +142,7 @@ export function PresetSave() {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">{t.descriptionLabel}</Label>
+              <Label htmlFor="description">{t('descriptionLabel')}</Label>
               <Input
                 id="description"
                 onChange={(e) => setDescription(e.target.value)}
@@ -159,7 +158,7 @@ export function PresetSave() {
               type="submit"
               variant="secondary"
             >
-              {t.save}
+              {t('save')}
             </Button>
           </DialogFooter>
         </DialogContent>

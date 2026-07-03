@@ -1,5 +1,5 @@
 import { argosScreenshot } from '@argos-ci/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 import {
   handleUsageEvents,
@@ -35,7 +35,7 @@ test.describe('Usage Dashboard - Authenticated User', () => {
   });
 
   test.afterEach(async ({ page }) => {
-    await page.unroute('**/*');
+    await page.unroute('**/api/usage-events*');
   });
 
   test('should display the usage page correctly', async ({
@@ -125,7 +125,7 @@ test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
     );
 
     // Clean up
-    await page.unroute('**/*');
+    await page.unroute('**/api/usage-events*');
   });
 
   test('should show empty state when no data', async ({ page }, testInfo) => {
@@ -143,7 +143,7 @@ test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
     );
 
     // Clean up
-    await page.unroute('**/*');
+    await page.unroute('**/api/usage-events*');
   });
 
   test('should handle API error gracefully', async ({ page }, testInfo) => {
@@ -161,7 +161,7 @@ test.describe('Usage Dashboard - Mocked Data Scenarios', () => {
     );
 
     // Clean up
-    await page.unroute('**/*');
+    await page.unroute('**/api/usage-events*');
   });
 });
 

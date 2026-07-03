@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -201,6 +202,23 @@ const dict = {
   },
 } as const;
 
+const renderClone = (
+  props: {
+    hasEnoughCredits?: boolean;
+    lang?: 'en';
+    userHasPaid?: boolean;
+  } = {},
+) =>
+  render(
+    <NextIntlClientProvider locale="en" messages={{ clone: dict }}>
+      <NewVoiceClient
+        hasEnoughCredits={props.hasEnoughCredits ?? true}
+        lang={props.lang ?? 'en'}
+        userHasPaid={props.userHasPaid ?? false}
+      />
+    </NextIntlClientProvider>,
+  );
+
 describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -223,14 +241,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('renders reference audio enhancement unchecked by default', () => {
-    render(
-      <NewVoiceClient
-        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
-        hasEnoughCredits
-        lang={'en' as any}
-        userHasPaid={false}
-      />,
-    );
+    renderClone();
 
     expect(
       screen.getByRole('checkbox', {
@@ -240,14 +251,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('shows the free Voxtral text limit by default', () => {
-    render(
-      <NewVoiceClient
-        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
-        hasEnoughCredits
-        lang={'en' as any}
-        userHasPaid={false}
-      />,
-    );
+    renderClone();
 
     expect(screen.getByText('0 / 1000')).toBeInTheDocument();
     expect(
@@ -258,14 +262,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('shows the paid Voxtral text limit for paid users', () => {
-    render(
-      <NewVoiceClient
-        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
-        hasEnoughCredits
-        lang={'en' as any}
-        userHasPaid
-      />,
-    );
+    renderClone({ userHasPaid: true });
 
     expect(screen.getByText('0 / 4000')).toBeInTheDocument();
     expect(
@@ -278,14 +275,7 @@ describe('NewVoiceClient', () => {
   it('submits enhanceReferenceAudio=true when the toggle is enabled', async () => {
     const user = userEvent.setup();
 
-    render(
-      <NewVoiceClient
-        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
-        hasEnoughCredits
-        lang={'en' as any}
-        userHasPaid={false}
-      />,
-    );
+    renderClone();
 
     await user.type(
       screen.getByLabelText(dict.textToConvertLabel),
@@ -335,14 +325,7 @@ describe('NewVoiceClient', () => {
       ),
     );
 
-    render(
-      <NewVoiceClient
-        dict={dict as unknown as typeof import('@/messages/en.json')['clone']}
-        hasEnoughCredits
-        lang={'en' as any}
-        userHasPaid={false}
-      />,
-    );
+    renderClone();
 
     await user.type(
       screen.getByLabelText(dict.textToConvertLabel),

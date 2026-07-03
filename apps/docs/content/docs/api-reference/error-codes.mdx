@@ -38,7 +38,9 @@ All errors return this shape:
 | `invalid_api_key` | `authentication_error` | Bearer key missing/invalid/inactive.
 | `insufficient_credits` | `permission_error` | Account balance is too low.
 | `rate_limit_exceeded` | `rate_limit_error` | Too many requests.
+| `provider_quota_exceeded` | `rate_limit_error` | Provider quota or billing is temporarily exhausted.
 | `content_policy_violation` | `invalid_request_error` | Content blocked by provider safety policy.
+| `provider_unavailable` | `server_error` | Upstream provider is temporarily unavailable; retry later.
 | `server_error` | `server_error` | Internal service/provider failure.
 
 ## Debugging with request-id

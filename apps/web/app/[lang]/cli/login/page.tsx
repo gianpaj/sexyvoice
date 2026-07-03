@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -15,8 +15,7 @@ export default async function CliLoginPage(props: {
 }) {
   const { lang } = await props.params;
   const { callback_url, state } = await props.searchParams;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.cliLogin;
+  const t = await getTranslations({ locale: lang, namespace: 'cliLogin' });
 
   if (!(callback_url && state && isAllowedCliCallbackUrl(callback_url))) {
     return (
@@ -24,9 +23,9 @@ export default async function CliLoginPage(props: {
         <HeaderStatic />
         <main className="mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12">
           <div className="rounded-2xl border bg-background p-8 shadow-sm">
-            <h1 className="font-bold text-2xl">{dict.invalidRequest.title}</h1>
+            <h1 className="font-bold text-2xl">{t('invalidRequest.title')}</h1>
             <p className="mt-3 text-muted-foreground">
-              {dict.invalidRequest.description}
+              {t('invalidRequest.description')}
             </p>
           </div>
         </main>
@@ -70,7 +69,6 @@ export default async function CliLoginPage(props: {
       <main className="mx-auto flex min-h-[calc(100vh-65px)] w-full max-w-3xl items-center px-4 py-12">
         <CliLoginClient
           callbackUrl={callback_url}
-          dict={dict}
           hasCreateAccess={isPaidUser}
           keys={visibleKeys}
           state={state}

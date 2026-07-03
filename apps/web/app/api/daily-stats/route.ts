@@ -5,6 +5,8 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
+
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 const ROLLING_WINDOW_DAYS = 14;
@@ -13,28 +15,31 @@ const ROLLING_WINDOW_LABEL = `${ROLLING_WINDOW_DAYS}d`;
 import {
   countActiveCustomerSubscriptions,
   findNextSubscriptionDueForPayment,
+  getActiveSubscriptionsMrr,
 } from '@/lib/redis/queries';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
+  formatIdList,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
+  getClonedAudioFilesInRange,
   getCreditTransactionsInRange,
+  getInternalUserIds,
   getProfilesInRange,
   getUsageEventsInRange,
-  VOICE_CLONING_MODELS,
 } from './queries';
 import {
   _timed,
   calculateUsageBreakdown,
+  classifyRefund,
   countByDateRange,
   filterByDateRange,
   formatChange,
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
-  formatDurationChange,
   getFeatureHealthStatus,
   getProfileUsername,
   maskUsername,
@@ -58,17 +63,12 @@ export async function GET(request: NextRequest) {
 
   const authHeader = request.headers.get('authorization');
   if (isProd && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', {
-      status: 401,
-    });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const webhook = process.env.TELEGRAM_WEBHOOK_URL;
   if (!webhook) {
-    return NextResponse.json(
-      { error: 'Missing TELEGRAM_WEBHOOK_URL' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Missing TELEGRAM_WEBHOOK_URL', 500);
   }
 
   let checkInId = '';
@@ -146,6 +146,8 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
+  let subscriptionsMrr: any;
+  // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let nextSubscriptionDueForPayment: any;
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let callSessions14dResult: any;
@@ -185,6 +187,7 @@ export async function GET(request: NextRequest) {
       allCreditTransactions = cached.allCreditTransactions;
       allTimePurchaseTransactions = cached.allTimePurchaseTransactions ?? [];
       activeSubscribersCount = cached.activeSubscribersCount;
+      subscriptionsMrr = cached.subscriptionsMrr;
       nextSubscriptionDueForPayment = cached.nextSubscriptionDueForPayment;
       callSessions14dResult =
         cached.callSessions14dResult ?? cached.callSessionsWeekResult;
@@ -205,6 +208,12 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
+  // Exclude internal users (e.g. founders) from all stats aggregations so the
+  // numbers reflect real customer activity only.
+  const internalUserIds = await getInternalUserIds(supabase);
+  const internalUserIdsFilter = formatIdList(internalUserIds);
+  const hasInternalUserIds = internalUserIds.length > 0;
+
   if (!loadedFromValidCache) {
     // Fetch data in parallel - combine related queries and filter in memory
     [
@@ -217,6 +226,7 @@ export async function GET(request: NextRequest) {
 
       activeSubscribersCount,
       nextSubscriptionDueForPayment,
+      subscriptionsMrr,
       // Call sessions - fetch for the rolling 14-day window (includes yesterday)
       callSessions14dResult,
       callSessionsTotalCountResult,
@@ -224,65 +234,107 @@ export async function GET(request: NextRequest) {
       // (audio14dResult) Audio files last 14 days
       _timed(
         `audio_files:${ROLLING_WINDOW_LABEL}_count ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id', { count: 'exact', head: true })
-          .gte('created_at', fourteenDaysAgo.toISOString())
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
+        (() => {
+          let q = supabase
+            .from('audio_files')
+            .select('id', { count: 'exact', head: true })
+            .gte('created_at', fourteenDaysAgo.toISOString())
+            .lt('created_at', today.toISOString());
+          if (hasInternalUserIds) {
+            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
+          }
+          return q.then((result) => result);
+        })(),
       ),
 
       // (audioTotalCountResult) Approximate total audio files count
       _timed(
         `audio_files:total_count_estimated < ${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id', { count: 'planned', head: true })
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
+        (() => {
+          let q = supabase
+            .from('audio_files')
+            .select('id', { count: 'planned', head: true })
+            .lt('created_at', today.toISOString());
+          if (hasInternalUserIds) {
+            q = q.or(`user_id.is.null,user_id.not.in.${internalUserIdsFilter}`);
+          }
+          return q.then((result) => result);
+        })(),
       ),
 
-      // (clonesResult) Cloned audio files last 14 days (includes yesterday)
+      // (clonesResult) Cloned audio files last 14 days (includes yesterday).
+      // Paginated so the count isn't silently capped at PostgREST's 1000-row
+      // default — the 14d clone total can exceed that.
       _timed(
-        `audio_files:clones ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        supabase
-          .from('audio_files')
-          .select('id, created_at')
-          .in('model', VOICE_CLONING_MODELS)
-          .gte('created_at', fourteenDaysAgo.toISOString())
-          .lt('created_at', today.toISOString())
-          .then((result) => result),
+        `audio_files:clones paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getClonedAudioFilesInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then(
+          (data) => ({ data, error: null }),
+          (error) => ({ data: null, error }),
+        ),
       ),
 
       // (profilesTotalCountResult) Total profiles count
-      supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .lt('created_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .lt('created_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.notIn('id', internalUserIds);
+        }
+        return q;
+      })(),
 
       // (apiKeysYesterdayResult) API keys created yesterday with usage
-      supabase
-        .from('api_keys')
-        .select('id, created_at, last_used_at')
-        .gte('created_at', previousDay.toISOString())
-        .lt('created_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('api_keys')
+          .select('id, created_at, last_used_at')
+          .gte('created_at', previousDay.toISOString())
+          .lt('created_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.notIn('user_id', internalUserIds);
+        }
+        return q;
+      })(),
 
-      // Fetch active subscribers count
+      // Fetch active subscribers count, next renewal, and MRR (all share one
+      // Redis SCAN pass via the cached scan promise).
       countActiveCustomerSubscriptions(),
       findNextSubscriptionDueForPayment(),
+      getActiveSubscriptionsMrr(),
 
       // (callSessions14dResult) Call sessions last 14 days with duration info
-      supabase
-        .from('call_sessions')
-        .select('id, started_at, duration_seconds, credits_used, status')
-        .gte('started_at', fourteenDaysAgo.toISOString())
-        .lt('started_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('call_sessions')
+          .select(
+            'id, started_at, duration_seconds, credits_used, status, free_call',
+          )
+          .gte('started_at', fourteenDaysAgo.toISOString())
+          .lt('started_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.notIn('user_id', internalUserIds);
+        }
+        return q;
+      })(),
 
       // (callSessionsTotalCountResult) Total call sessions count
-      supabase
-        .from('call_sessions')
-        .select('id', { count: 'exact', head: true })
-        .lt('started_at', today.toISOString()),
+      (() => {
+        let q = supabase
+          .from('call_sessions')
+          .select('id', { count: 'exact', head: true })
+          .lt('started_at', today.toISOString());
+        if (hasInternalUserIds) {
+          q = q.notIn('user_id', internalUserIds);
+        }
+        return q;
+      })(),
     ]);
 
     [
@@ -291,25 +343,42 @@ export async function GET(request: NextRequest) {
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
     ] = await Promise.all([
-      getUsageEventsInRange(supabase, fourteenDaysAgo, today).then((data) => ({
+      getUsageEventsInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ).then((data) => ({
         data,
         error: null,
       })),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
-        getAudioFilesInRange(supabase, previousDay, today).then((data) => ({
+        getAudioFilesInRange(
+          supabase,
+          previousDay,
+          today,
+          internalUserIds,
+        ).then((data) => ({
           data,
           error: null,
         })),
       ),
       _timed(
         `call_sessions:all_time_durations paginated < ${today.toISOString().slice(0, 10)}`,
-        getCallSessionDurationsBefore(supabase, today).then((data) => ({
-          data,
-          error: null,
-        })),
+        getCallSessionDurationsBefore(supabase, today, internalUserIds).then(
+          (data) => ({
+            data,
+            error: null,
+          }),
+        ),
       ),
-      getProfilesInRange(supabase, fourteenDaysAgo, today).then((data) => ({
+      getProfilesInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ).then((data) => ({
         data,
         error: null,
       })),
@@ -325,29 +394,53 @@ export async function GET(request: NextRequest) {
       threeMonthsAgoToDateCreditTransactions,
       allTimeCreditTransactions,
     ] = await Promise.all([
-      getCreditTransactionsInRange(supabase, previousDay, today),
-      getCreditTransactionsInRange(supabase, fourteenDaysAgo, today),
-      getCreditTransactionsInRange(supabase, thirtyDaysAgo, today),
-      getCreditTransactionsInRange(supabase, monthStart, today),
+      getCreditTransactionsInRange(
+        supabase,
+        previousDay,
+        today,
+        internalUserIds,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
+        thirtyDaysAgo,
+        today,
+        internalUserIds,
+      ),
+      getCreditTransactionsInRange(
+        supabase,
+        monthStart,
+        today,
+        internalUserIds,
+      ),
       getCreditTransactionsInRange(
         supabase,
         previousMonthStart,
         previousMonthPeriodEnd,
+        internalUserIds,
       ),
       getCreditTransactionsInRange(
         supabase,
         twoMonthsAgoStart,
         twoMonthsAgoPeriodEnd,
+        internalUserIds,
       ),
       getCreditTransactionsInRange(
         supabase,
         threeMonthsAgoStart,
         threeMonthsAgoPeriodEnd,
+        internalUserIds,
       ),
       getCreditTransactionsInRange(
         supabase,
         new Date('1970-01-01T00:00:00.000Z'),
         today,
+        internalUserIds,
       ),
     ]);
 
@@ -412,6 +505,7 @@ export async function GET(request: NextRequest) {
       allCreditTransactions,
       allTimePurchaseTransactions,
       activeSubscribersCount,
+      subscriptionsMrr,
       nextSubscriptionDueForPayment,
       callSessions14dResult,
       callSessionsTotalCountResult,
@@ -499,9 +593,6 @@ export async function GET(request: NextRequest) {
     (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
-  const callsAvgDurationYesterday =
-    Math.round(callsDurationYesterday / callsYesterdayCount) || 0;
-  const callsAvgDuration14d = Math.round(callsDuration14d / calls14dCount) || 0;
   const callsDurationAllTime = callSessionsAllTimeDurationData.reduce(
     (sum, call) => sum + call.duration_seconds,
     0,
@@ -513,14 +604,51 @@ export async function GET(request: NextRequest) {
         : 0,
     ) || 0;
 
-  // Call costs at $0.05 per minute
+  // Split yesterday and the rolling 14-day window into free vs paid calls
+  const isFreeCall = (call: Tables<'call_sessions'>) => call.free_call === true;
+  const freeCallsYesterday = callSessionsYesterdayData.filter(isFreeCall);
+  const freeCallsYesterdayCount = freeCallsYesterday.length;
+  const freeCallsDurationYesterday = freeCallsYesterday.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const paidCallsYesterdayCount = callsYesterdayCount - freeCallsYesterdayCount;
+  const paidCallsDurationYesterday =
+    callsDurationYesterday - freeCallsDurationYesterday;
+  const freeCalls14d = callSessions14dData.filter(isFreeCall);
+  const freeCalls14dCount = freeCalls14d.length;
+  const freeCallsDuration14d = freeCalls14d.reduce(
+    (sum, call) => sum + call.duration_seconds,
+    0,
+  );
+  const paidCalls14dCount = calls14dCount - freeCalls14dCount;
+  const paidCallsDuration14d = callsDuration14d - freeCallsDuration14d;
+
+  // Average duration per free vs paid call (guarded against divide-by-zero)
+  const freeCallsAvgDurationYesterday =
+    Math.round(freeCallsDurationYesterday / freeCallsYesterdayCount) || 0;
+  const paidCallsAvgDurationYesterday =
+    Math.round(paidCallsDurationYesterday / paidCallsYesterdayCount) || 0;
+  const freeCallsAvgDuration14d =
+    Math.round(freeCallsDuration14d / freeCalls14dCount) || 0;
+  const paidCallsAvgDuration14d =
+    Math.round(paidCallsDuration14d / paidCalls14dCount) || 0;
+
+  // Platform infra cost at $0.05 per minute — covers all calls (free included),
+  // not billable revenue, so free-call duration is intentionally part of this.
   const CALL_COST_PER_MINUTE = 0.05;
   const callCostYesterday =
     (callsDurationYesterday / 60) * CALL_COST_PER_MINUTE;
   const callCost14d = (callsDuration14d / 60) * CALL_COST_PER_MINUTE;
-  // Separate refunds from purchases/top-ups
+  // Separate refunds from purchases/top-ups. Chargeback hold/release rows are
+  // also `type='refund'` but are internal credit-ledger moves (dispute
+  // handling), not customer refunds — keep them out of the refund metrics and
+  // report them separately below.
   const refundTransactions = creditTransactions.filter(
-    (t) => t.type === 'refund',
+    (t) => t.type === 'refund' && classifyRefund(t) === 'refund',
+  );
+  const chargebackTransactions = creditTransactions.filter(
+    (t) => t.type === 'refund' && classifyRefund(t) !== 'refund',
   );
   const purchaseTransactions = creditTransactions.filter(
     (t) => t.type !== 'refund',
@@ -660,6 +788,28 @@ export async function GET(request: NextRequest) {
       transaction.created_at < previousDay.toISOString(),
   ).length;
   const refundsTotalCount = refundTransactions.length;
+
+  // Chargeback dispute activity (holds vs releases). Hold rows carry a negative
+  // `amount` (credits frozen), release rows a positive `amount` (credits
+  // restored after a won dispute); neither carries a `dollarAmount`, so they
+  // never touch the revenue/refund USD totals.
+  const chargebackHolds = chargebackTransactions.filter(
+    (t) => classifyRefund(t) === 'chargeback_hold',
+  );
+  const chargebackReleases = chargebackTransactions.filter(
+    (t) => classifyRefund(t) === 'chargeback_release',
+  );
+  const inPrevDay = (transaction: { created_at: string }) =>
+    transaction.created_at >= previousDay.toISOString() &&
+    transaction.created_at < today.toISOString();
+  const chargebackHoldsTodayCount = chargebackHolds.filter(inPrevDay).length;
+  const chargebackReleasesTodayCount =
+    chargebackReleases.filter(inPrevDay).length;
+  // Positive = credits still frozen (holds outweigh releases).
+  const creditsCurrentlyFrozen = -chargebackTransactions.reduce(
+    (sum, t) => sum + t.amount,
+    0,
+  );
 
   // Top customers calculation
   let hasInvalidMetadata = false;
@@ -1246,11 +1396,17 @@ export async function GET(request: NextRequest) {
   const shouldShowConcentrationRisk =
     totalCreditsYesterday === 0 || Number.parseFloat(top3UsageSharePct) >= 60;
 
+  const mrrAmount = subscriptionsMrr?.mrr ?? 0;
+  const mrrUnknownCount = subscriptionsMrr?.unknownCount ?? 0;
+  const mrrDisplay = `$${mrrAmount.toFixed(0)}/mo MRR${
+    mrrUnknownCount > 0 ? `, ${mrrUnknownCount} unpriced` : ''
+  }`;
+
   const revenueSummaryLines = [
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg14dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg14dRevenue).toFixed(2)} vs ${ROLLING_WINDOW_LABEL} avg)`,
     `  - ${ROLLING_WINDOW_LABEL}: $${total14dRevenue.toFixed(2)} (avg $${avg14dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
     `  - 3mo avg MTD: $${avgPrevMtdRevenue.toFixed(0)} vs MTD: $${mtdRevenue.toFixed(0)} (${formatCurrencyChange(mtdRevenue, avgPrevMtdRevenue)})`,
-    `  - Subscribers: ${activeSubscribersCount} active | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribers14dCount} in ${ROLLING_WINDOW_LABEL} | Next renewal: ${maskUsername(getProfileUsername(nextPayingSubscriber?.profiles ?? null))} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
+    `  - Subscribers: ${activeSubscribersCount} active (${mrrDisplay}) | New subs: ${newSubscribersTodayCount} yesterday, ${newSubscribers14dCount} in ${ROLLING_WINDOW_LABEL} | Next renewal: ${maskUsername(getProfileUsername(nextPayingSubscriber?.profiles ?? null))} on ${nextSubscriptionDueForPayment?.dueDate.slice(0, 10)}`,
   ];
 
   const message = [
@@ -1291,8 +1447,8 @@ export async function GET(request: NextRequest) {
     `  - Top models: ${topVoiceList}`,
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
-    `  - ${ROLLING_WINDOW_LABEL}: ${calls14dCount} (avg ${(calls14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDuration14d)} vs ${ROLLING_WINDOW_LABEL}) | ${ROLLING_WINDOW_LABEL}: ${formatDuration(callsDuration14d)} (avg ${formatDuration(callsAvgDuration14d)})`,
+    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
+    `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
     `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
@@ -1302,7 +1458,7 @@ export async function GET(request: NextRequest) {
     '',
     `🔌 API: ${usedNewApiKeysCount} new key${usedNewApiKeysCount === 1 ? '' : 's'} | ${formatCompactNumber(apiTtsCreditsYesterday)} credits ≈ $${(apiTtsCreditsYesterday * LRCV).toFixed(2)}`,
     '',
-    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, credits14dCount / ROLLING_WINDOW_DAYS)}) ${creditsTodayCount > (credits14dCount / ROLLING_WINDOW_DAYS) ? '🤑' : '😿'}`,
+    `💳 Credit Transactions: ${creditsTodayCount} (${formatChange(creditsTodayCount, credits14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${credits14dCount} (avg ${(credits14dCount / ROLLING_WINDOW_DAYS).toFixed(1)}) | 30d: ${creditsMonthCount} (avg ${(creditsMonthCount / 30).toFixed(1)})`,
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount}: ${topCustomersList}`,
@@ -1315,6 +1471,12 @@ export async function GET(request: NextRequest) {
       : [
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
+    ...(chargebackTransactions.length > 0
+      ? [
+          `⚖️ Chargebacks: ${chargebackHoldsTodayCount} held / ${chargebackReleasesTodayCount} released today`,
+          `  - Total: ${chargebackHolds.length} held, ${chargebackReleases.length} released | Frozen credits: ${formatCompactNumber(creditsCurrentlyFrozen)}`,
+        ]
+      : []),
     ...(hasInvalidMetadata
       ? ['', '‼️ Info', '  - Invalid Metadata in credit_transactions']
       : []),
@@ -1343,9 +1505,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
     if (!isProd) {
-      return NextResponse.json({
-        error: 'Failed to send Telegram message',
-      });
+      return APIErrorResponse('Failed to send Telegram message', 500);
     }
     Sentry.captureException(error);
     Sentry.captureCheckIn({

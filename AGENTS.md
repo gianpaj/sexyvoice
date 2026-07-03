@@ -120,6 +120,11 @@ Use package filters when you only want one app, e.g.
 - Use 2-space indentation, single quotes, and the repo's import ordering.
 - Keep TypeScript strict. Use `import type` and `export type` where appropriate.
 - Follow React Server Component patterns in App Router code.
+- React Compiler is enabled in `apps/web/next.config.js`. Do not add or restore
+  `useMemo`, `useCallback`, or similar memoization only because a generic code
+  review suggests it. Prefer simpler code unless manual memoization is required
+  for correctness, third-party identity semantics, or a profiler-backed
+  performance issue.
 - Use kebab-case for files, PascalCase for components, lowercase hyphenated API
   route segments, and snake_case for database names.
 - Shared dependency versions are pinned via the pnpm `catalog:` in
@@ -147,6 +152,8 @@ Use package filters when you only want one app, e.g.
 - Database functions should default to `SECURITY INVOKER`, set
   `search_path = ''`, and use fully qualified names.
 - Migration files use `YYYYMMDDHHmmss_description.sql`.
+- Do not add migrations for one-off data backfills or production data fixes unless
+  explicitly requested; provide the SQL for the user to run instead.
 - Enable RLS on new tables and add granular policies.
 
 ## External API v1
@@ -178,7 +185,10 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - Dashboard TTS may use Redis URL caching; external API speech must not.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
-- Voice generation can involve Replicate, Google Gemini TTS, or xAI Grok TTS.
+- Voice generation can involve Replicate, Google Gemini TTS (models `gpro` for
+  Gemini 2.5 and `gpro31` for Gemini 3.1 Flash), or xAI Grok TTS. External API
+  `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
+  `model = 'gpro31'` should use Gemini 3.1 Flash.
 - Voice cloning uses fal.ai and must respect permission and privacy
   requirements.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt

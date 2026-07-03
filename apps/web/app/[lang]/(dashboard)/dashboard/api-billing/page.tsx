@@ -1,4 +1,5 @@
 import { getMessages } from 'next-intl/server';
+import { Suspense } from 'react';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { BillingUsageChart } from './billing-usage-chart';
@@ -19,7 +20,9 @@ export default async function ApiBillingPage(props: {
           {dict.apiBilling.description}
         </p>
       </div>
-      <BillingUsageChart />
+      <Suspense>
+        <BillingUsageChart />
+      </Suspense>
     </div>
   );
 }

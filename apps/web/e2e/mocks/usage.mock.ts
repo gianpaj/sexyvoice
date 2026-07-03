@@ -1,5 +1,10 @@
 import type { Route } from '@playwright/test';
 
+import {
+  E2E_ALL_TIME_USAGE_SUMMARY_VALUES,
+  E2E_MONTHLY_USAGE_SUMMARY_VALUES,
+} from '@/lib/e2e-mocks-shared';
+
 /**
  * Usage Dashboard Mock Handlers
  *
@@ -18,7 +23,7 @@ export const mockUsageEvents = [
     quantity: 150,
     unit: 'chars',
     credits_used: 12,
-    occurred_at: new Date().toISOString(),
+    occurred_at: '2025-01-15T10:30:00.000Z',
     metadata: {
       voiceName: 'Zephyr',
       textPreview: 'Hello, this is a test message for voice generation.',
@@ -31,7 +36,7 @@ export const mockUsageEvents = [
     quantity: 1,
     unit: 'operation',
     credits_used: 50,
-    occurred_at: new Date(Date.now() - 86_400_000).toISOString(), // 1 day ago
+    occurred_at: '2025-01-14T15:45:00.000Z',
     metadata: {
       voiceName: 'My Custom Voice',
     },
@@ -43,7 +48,7 @@ export const mockUsageEvents = [
     quantity: 3,
     unit: 'mins',
     credits_used: 30,
-    occurred_at: new Date(Date.now() - 172_800_000).toISOString(), // 2 days ago
+    occurred_at: '2025-01-13T09:00:00.000Z',
     metadata: {
       voiceName: 'Ara',
       textPreview: 'Live call session with AI agent',
@@ -56,7 +61,7 @@ export const mockUsageEvents = [
     quantity: 300,
     unit: 'chars',
     credits_used: 24,
-    occurred_at: new Date(Date.now() - 259_200_000).toISOString(), // 3 days ago
+    occurred_at: '2025-01-12T14:20:00.000Z',
     metadata: {
       voiceName: 'Poe',
       textPreview: 'Another text-to-speech generation test.',
@@ -69,38 +74,21 @@ export const mockUsageEvents = [
     quantity: 45,
     unit: 'secs',
     credits_used: 5,
-    occurred_at: new Date(Date.now() - 345_600_000).toISOString(), // 4 days ago
+    occurred_at: '2025-01-11T11:00:00.000Z',
     metadata: {},
   },
 ];
 
 /**
- * Mock monthly summary data
+ * Mock monthly summary data — shared with the server-side summary-card mock via
+ * `lib/e2e-mocks-shared.ts` so the table and the cards can never drift apart.
  */
-export const mockMonthlySummary = {
-  totalCredits: 121,
-  totalOperations: 5,
-  bySourceType: {
-    tts: { credits: 36, count: 2 },
-    voice_cloning: { credits: 50, count: 1 },
-    live_call: { credits: 30, count: 1 },
-    audio_processing: { credits: 5, count: 1 },
-  },
-};
+export const mockMonthlySummary = E2E_MONTHLY_USAGE_SUMMARY_VALUES;
 
 /**
- * Mock all-time summary data
+ * Mock all-time summary data — shared source of truth (see above).
  */
-export const mockAllTimeSummary = {
-  totalCredits: 542,
-  totalOperations: 23,
-  bySourceType: {
-    tts: { credits: 250, count: 12 },
-    voice_cloning: { credits: 150, count: 3 },
-    live_call: { credits: 120, count: 6 },
-    audio_processing: { credits: 22, count: 2 },
-  },
-};
+export const mockAllTimeSummary = E2E_ALL_TIME_USAGE_SUMMARY_VALUES;
 
 /**
  * Mock paginated response for /api/usage-events

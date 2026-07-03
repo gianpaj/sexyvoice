@@ -2,6 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import {
   countUserCallCharacters,
   getVoiceIdByName,
@@ -18,13 +19,12 @@ const MAX_PROMPT_LENGTH = 5000;
 const sessionConfigSchema = z.object({
   model: z.string().min(1, 'Model is required'),
   voice: z.string().min(1, 'Voice is required'),
-  temperature: z.number().min(0.6).max(1.2),
+  temperature: z.number().min(0).max(1.2),
   maxOutputTokens: z.number().nullable(),
-  grokImageEnabled: z.boolean(),
 });
 
 const createOrUpdateSchema = z.object({
-  id: z.string().uuid('Invalid character ID').optional(),
+  id: z.uuid().optional(),
   name: z
     .string()
     .trim()
@@ -46,7 +46,7 @@ const createOrUpdateSchema = z.object({
 });
 
 const deleteSchema = z.object({
-  id: z.string().uuid('Character ID is required'),
+  id: z.uuid(),
 });
 
 type CreateOrUpdateBody = z.infer<typeof createOrUpdateSchema>;
@@ -84,34 +84,25 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return APIErrorResponse('Unauthorized', 401);
     }
 
     // Check if user has paid
     const isPaid = await hasUserPaid(user.id);
     if (!isPaid) {
-      return NextResponse.json(
-        { error: 'Custom characters require a paid account' },
-        { status: 403 },
-      );
+      return APIErrorResponse('Custom characters require a paid account', 403);
     }
 
     let rawBody: unknown;
     try {
       rawBody = await request.json();
     } catch {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid JSON in request body', 400);
     }
 
     const parsed = createOrUpdateSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: formatZodError(parsed.error) },
-        { status: 400 },
-      );
+      return APIErrorResponse(formatZodError(parsed.error), 400);
     }
 
     const body: CreateOrUpdateBody = parsed.data;
@@ -121,10 +112,7 @@ export async function POST(request: Request) {
     try {
       voiceObj = await getVoiceIdByName(body.voiceName);
     } catch {
-      return NextResponse.json(
-        { error: 'Voice no longer available' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Voice no longer available', 400);
     }
 
     const isUpdate = !!body.id;
@@ -140,22 +128,13 @@ export async function POST(request: Request) {
         .single();
 
       if (fetchError || !existingCharacter) {
-        return NextResponse.json(
-          { error: 'Character not found' },
-          { status: 404 },
-        );
+        return APIErrorResponse('Character not found', 404);
       }
       if (existingCharacter.is_public) {
-        return NextResponse.json(
-          { error: 'Cannot modify predefined characters' },
-          { status: 403 },
-        );
+        return APIErrorResponse('Cannot modify predefined characters', 403);
       }
       if (existingCharacter.user_id !== user.id) {
-        return NextResponse.json(
-          { error: 'Character not found' },
-          { status: 404 },
-        );
+        return APIErrorResponse('Character not found', 404);
       }
 
       // Update prompt
@@ -171,10 +150,7 @@ export async function POST(request: Request) {
         captureException(promptUpdateError, {
           extra: { userId: user.id, characterId: body.id },
         });
-        return NextResponse.json(
-          { error: 'Failed to update prompt' },
-          { status: 500 },
-        );
+        return APIErrorResponse('Failed to update prompt', 500);
       }
 
       // Update character
@@ -205,10 +181,7 @@ export async function POST(request: Request) {
         captureException(charUpdateError, {
           extra: { userId: user.id, characterId: body.id },
         });
-        return NextResponse.json(
-          { error: 'Failed to update character' },
-          { status: 500 },
-        );
+        return APIErrorResponse('Failed to update character', 500);
       }
 
       return NextResponse.json(updatedCharacter);
@@ -219,11 +192,9 @@ export async function POST(request: Request) {
     // Check limit
     const currentCount = await countUserCallCharacters(user.id);
     if (currentCount >= MAX_CUSTOM_CHARACTERS) {
-      return NextResponse.json(
-        {
-          error: `Maximum of ${MAX_CUSTOM_CHARACTERS} custom characters reached`,
-        },
-        { status: 400 },
+      return APIErrorResponse(
+        `Maximum of ${MAX_CUSTOM_CHARACTERS} custom characters reached`,
+        400,
       );
     }
 
@@ -244,10 +215,7 @@ export async function POST(request: Request) {
       captureException(promptInsertError, {
         extra: { userId: user.id },
       });
-      return NextResponse.json(
-        { error: 'Failed to create prompt' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to create prompt', 500);
     }
 
     // Insert character
@@ -283,19 +251,13 @@ export async function POST(request: Request) {
       });
       // Clean up orphaned prompt
       await supabase.from('prompts').delete().eq('id', newPrompt.id);
-      return NextResponse.json(
-        { error: 'Failed to create character' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to create character', 500);
     }
 
     return NextResponse.json(newCharacter, { status: 201 });
   } catch (error) {
     captureException(error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Internal server error', 500);
   }
 }
 
@@ -307,25 +269,19 @@ export async function DELETE(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return APIErrorResponse('Unauthorized', 401);
     }
 
     let rawBody: unknown;
     try {
       rawBody = await request.json();
     } catch {
-      return NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid JSON in request body', 400);
     }
 
     const parsed = deleteSchema.safeParse(rawBody);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: formatZodError(parsed.error) },
-        { status: 400 },
-      );
+      return APIErrorResponse(formatZodError(parsed.error), 400);
     }
 
     const { id } = parsed.data;
@@ -338,22 +294,13 @@ export async function DELETE(request: Request) {
       .single();
 
     if (fetchError || !character) {
-      return NextResponse.json(
-        { error: 'Character not found' },
-        { status: 404 },
-      );
+      return APIErrorResponse('Character not found', 404);
     }
     if (character.is_public) {
-      return NextResponse.json(
-        { error: 'Cannot delete predefined characters' },
-        { status: 403 },
-      );
+      return APIErrorResponse('Cannot delete predefined characters', 403);
     }
     if (character.user_id !== user.id) {
-      return NextResponse.json(
-        { error: 'Character not found' },
-        { status: 404 },
-      );
+      return APIErrorResponse('Character not found', 404);
     }
 
     // Delete character first
@@ -368,10 +315,7 @@ export async function DELETE(request: Request) {
       captureException(charDeleteError, {
         extra: { userId: user.id, characterId: id },
       });
-      return NextResponse.json(
-        { error: 'Failed to delete character' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to delete character', 500);
     }
 
     // Delete the orphaned prompt
@@ -396,9 +340,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     captureException(error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Internal server error', 500);
   }
 }

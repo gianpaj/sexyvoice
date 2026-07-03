@@ -84,17 +84,6 @@ export function VoicePlayButton({
     [],
   );
 
-  // Stop playing and clear audio ref when voice or sampleUrl changes to allow prefetching new sample
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we want to stop when voiceName or sampleUrl changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current = null; // Clear ref to allow prefetching new voice
-      setIsPlaying(false);
-    }
-  }, [voiceName, sampleUrl]);
-
   if (!sampleUrl) return null;
 
   const defaultAriaLabel = isPlaying

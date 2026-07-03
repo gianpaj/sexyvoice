@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, forwardRef, useMemo } from 'react';
+import { Fragment, forwardRef } from 'react';
 
 import {
   Tooltip,
@@ -63,10 +63,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const shortcuts = useMemo<string[]>(
-      () => parseShortcutKeys({ shortcutKeys }),
-      [shortcutKeys],
-    );
+    const shortcuts = parseShortcutKeys({ shortcutKeys });
 
     // Handle data-style and data-size props from legacy code if passed
     const finalVariant = (props as any)['data-style'] || variant;
@@ -130,23 +127,21 @@ export const ButtonGroup = forwardRef<
   React.ComponentProps<'div'> & {
     orientation?: 'horizontal' | 'vertical';
   }
->(({ className, children, orientation = 'vertical', ...props }, ref) => {
-  return (
-    <div
-      className={cn(
-        'flex',
-        orientation === 'vertical'
-          ? 'min-w-max flex-col items-start [&>button]:w-full'
-          : 'flex-row items-center gap-0.5',
-        className,
-      )}
-      data-orientation={orientation}
-      ref={ref}
-      role="group"
-      {...props}
-    >
-      {children}
-    </div>
-  );
-});
+>(({ className, children, orientation = 'vertical', ...props }, ref) => (
+  <div
+    className={cn(
+      'flex',
+      orientation === 'vertical'
+        ? 'min-w-max flex-col items-start [&>button]:w-full'
+        : 'flex-row items-center gap-0.5',
+      className,
+    )}
+    data-orientation={orientation}
+    ref={ref}
+    role="group"
+    {...props}
+  >
+    {children}
+  </div>
+));
 ButtonGroup.displayName = 'ButtonGroup';

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useFormStatus } from 'react-dom';
 
 import { updatePasswordAction } from '@/app/actions';
@@ -7,18 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import type langDict from '@/messages/en.json';
 import type { Message } from '../../reset-password/reset-password-form';
 
 export function UpdatePasswordForm({
-  dict,
   lang,
   message,
 }: {
-  dict: (typeof langDict)['auth']['updatePassword'];
   lang: Locale;
   message: Message;
 }) {
+  const t = useTranslations('auth.updatePassword');
   const { pending } = useFormStatus();
 
   return (
@@ -26,7 +25,7 @@ export function UpdatePasswordForm({
       <input name="lang" type="hidden" value={lang} />
       <div className="flex flex-col gap-6">
         <div className="grid gap-2">
-          <Label htmlFor="password">{dict.newPassword}</Label>
+          <Label htmlFor="password">{t('newPassword')}</Label>
           <Input
             autoComplete="new-password"
             autoFocus
@@ -39,7 +38,7 @@ export function UpdatePasswordForm({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="confirmPassword">{dict.confirmPassword}</Label>
+          <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
           <Input
             autoComplete="new-password"
             id="confirmPassword"
@@ -53,8 +52,9 @@ export function UpdatePasswordForm({
 
       {'error' in message && (
         <div className="border-destructive border-l-2 px-4 text-destructive-foreground text-sm">
-          {/* @ts-ignore */}
-          {dict.errors[message.error as keyof typeof dict.errors]}
+          {t.has(`errors.${message.error}` as Parameters<typeof t>[0])
+            ? t(`errors.${message.error}` as Parameters<typeof t>[0])
+            : message.error}
         </div>
       )}
 
@@ -65,7 +65,7 @@ export function UpdatePasswordForm({
         formAction={updatePasswordAction}
         type="submit"
       >
-        {pending ? dict.loading : dict.updatePassword}
+        {pending ? t('loading') : t('updatePassword')}
       </Button>
     </form>
   );

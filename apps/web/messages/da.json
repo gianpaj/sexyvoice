@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Hvilke sprog understøttes for talesyntese?",
-              "answer": "Sprogunderstøttelse afhænger af den valgte stemme.\n\nNogle af vores AI-stemmer (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) understøtter 24 sprog, herunder:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengalsk (Bangladesh),\n🇺🇸 Engelsk (US),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇮🇳 Hindi (Indien),\n🇳🇱 Hollandsk (Holland),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇩🇪 Tysk (Tyskland),\n🇺🇦 Ukrainsk (Ukraine),\nog 🇻🇳 Vietnamesisk (Vietnam).\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK),\n🇮🇹 Pietro (Italiensk),\n🇺🇸 Emma (Engelsk US),\n🇪🇸 Javi (Spansk),\n🇺🇸 Josh (Engelsk US),\n🇺🇸 og Tara (Engelsk US).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+              "answer": "Sprogunderstøttelse afhænger af den valgte stemme og model.\n\n**Gemini 2.5 stemmer (standard)** understøtter 24 sprog, herunder:\n🇪🇬 Arabisk, 🇧🇩 Bengalsk, 🇺🇸 Engelsk, 🇫🇷 Fransk, 🇮🇳 Hindi, 🇳🇱 Hollandsk, 🇮🇩 Indonesisk, 🇮🇹 Italiensk, 🇯🇵 Japansk, 🇰🇷 Koreansk, 🇮🇳 Marathi, 🇵🇱 Polsk, 🇧🇷 Portugisisk, 🇷🇴 Rumænsk, 🇷🇺 Russisk, 🇺🇸 Spansk, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇭 Thai, 🇹🇷 Tyrkisk, 🇩🇪 Tysk, 🇺🇦 Ukrainsk, og 🇻🇳 Vietnamesisk.\n\n**Gemini 3.1 stemmer (ved aktivering af \"Brug ny AI-model\")** understøtter 70+ sprog på tværs af 80+ regionale varianter, herunder alt ovenstående plus: Afrikaans, Albansk, Amharisk, Armensk, Aserbajdsjansk, Baskisk, Bulgarsk, Catalansk, Kinesisk, Kroatisk, Tjekkisk, Dansk, Estisk, Filippinsk, Finsk, Galicisk, Georgisk, Græsk, Gujarati, Hebraisk, Ungarsk, Islandsk, Irsk, Javanesisk, Kannada, Kasakhisk, Lettisk, Litauisk, Makedonsk, Malayisk, Maltesisk, Norsk, Persisk, Punjabi, Serbisk, Slovakisk, Slovensk, Swahili, Svensk, Urdu, Usbekisk, Walisisk, Zulu og mere.\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK), 🇮🇹 Pietro (Italiensk), 🇺🇸 Emma, Josh, Tara (Engelsk US), 🇪🇸 Javi (Spansk).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -187,7 +187,11 @@
             },
             {
               "question": "Hvor meget koster det?",
-              "answer": "Live-opkald koster 2000 kreditter pr. minut, mens du er forbundet."
+              "answer": "Live-opkald koster {count} kreditter pr. minut, mens du er forbundet."
+            },
+            {
+              "question": "Husker AI'en vores tidligere samtaler?",
+              "answer": "Kun hvis du slår hukommelse til – den er valgfri og slået fra som standard, så normalt gemmes intet fra dine opkald. Når den er slået til, husker assistenten nogle få korte oplysninger (som hvordan du gerne vil tiltales, og hvilke emner du kan lide), ikke optagelser eller fulde udskrifter, så den kan fortsætte, hvor I slap. Vi gemmer kun dine nyeste oplysninger, du kan slette alt når som helst, og hvis du sletter din konto, fjernes de automatisk."
             }
           ]
         },
@@ -296,9 +300,14 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Dit månedlige kreditabonnement er planlagt til at ophøre",
+      "description": "Dit månedlige kreditabonnement er stadig aktivt indtil {date}, men det fornyes ikke og tilføjer ikke flere månedlige kreditter efter det. Du kan fortsætte med at bruge de kreditter, du har på din konto. Hvis du vil skifte niveau, skal du administrere dit abonnement i Stripe.",
+      "manageButton": "Administrer abonnement"
+    },
     "topup": {
       "title": "Køb kreditter",
-      "description": "Fyld op på dine kreditter med det samme med et engangskøb",
+      "description": "Fyld op på dine kreditter med det samme, eller abonner og få flere kreditter",
       "buyCredits": "Køb kreditter",
       "onetimePurchase": "Engangskøb",
       "processing": "Behandler...",
@@ -365,14 +374,16 @@
     "generating": "Genererer",
     "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
-    "paidCharacterLimitTooltip": "Betalende brugere får 2× tegngrænse",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
     "subtitle": "Vælg en stemme og generer lyd fra tekst",
     "success": "Lyd genereret!",
     "textAreaPlaceholder": "Indtast teksten, du vil omdanne til tale...",
-    "title": "Generer lyd",
+    "paidStyleLimitTooltip": "Du har en 2,5× stilgrænse",
+    "upgradeStyleLimitTooltip": "Opgrader til en betalt plan for 2,5× stilgrænse",
+    "paidCharacterLimitTooltip": "Du har en 2× tegngrænse",
     "upgradeCharacterLimitTooltip": "Opgrader til en betalt plan for 2× tegngrænse",
+    "title": "Generer lyd",
     "grok": {
       "inlineEffectPlaceholder": "Indsæt inline-effekt",
       "wrappingEffectPlaceholder": "Omslut med stil-tag",
@@ -426,7 +437,18 @@
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Den understøtter 24 sprog:\n🇪🇬 Arabisk (egyptisk),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Hollandsk (Nederlandene),\n🇺🇸 Engelsk (USA),\n🇮🇳 Engelsk/Hindi (Indien),\n🇫🇷 Fransk (Frankrig),\n🇩🇪 Tysk (Tyskland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisk (Indonesien),\n🇮🇹 Italiensk (Italien),\n🇯🇵 Japansk (Japan),\n🇰🇷 Koreansk (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polsk (Polen),\n🇧🇷 Portugisisk (Brasilien),\n🇷🇴 Rumænsk (Rumænien),\n🇷🇺 Russisk (Rusland),\n🇺🇸 Spansk (USA),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thai (Thailand),\n🇹🇷 Tyrkisk (Tyrkiet),\n🇺🇦 Ukrainsk (Ukraine),\n🇻🇳 Vietnamesisk (Vietnam)",
       "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
-      "featuredBadge": "Fremhævet"
+      "featuredBadge": "Fremhævet",
+      "selectVoicePlaceholder": "Vælg en stemme...",
+      "searchPlaceholder": "Søg efter navn, stil eller model...",
+      "filterModelLabel": "Model",
+      "filterGenderLabel": "Køn",
+      "clearFilters": "Ryd",
+      "noVoicesFound": "Ingen stemmer fundet",
+      "noVoicesFoundHint": "Prøv en anden søgning eller ryd filtrene.",
+      "previewVoice": "Forhåndsvisning af {name}",
+      "stopPreview": "Stop forhåndsvisning af {name}",
+      "footerCount": "{filtered} af {total} stemmer",
+      "voiceListLabel": "Stemmer"
     },
     "split": {
       "segmentPreviews": "Segmentforhåndsvisninger",
@@ -455,11 +477,19 @@
   "call": {
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
-    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er __COUNT__",
+    "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er {count}",
     "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
+    "memoryLabel": "Hukommelse",
+    "memoryDescription": "Lad karaktererne huske dig mellem opkald. Der gemmes intet, medmindre det er slået til.",
+    "memoryUpgradeTooltip": "Opgrader til en betalt plan, så karaktererne kan huske dig mellem opkald.",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
+    "sceneLabel": "Scene",
+    "scenePlaceholder": "Vælg scene",
+    "sceneNone": "Ingen scene",
+    "sceneUpgradeRequired": "Opgrader for at bruge scener",
+    "sceneTextLabel": "Scenetekst",
     "startCall": "Start et opkald",
     "connecting": "Forbinder",
     "reconnected": "Forbundet igen",
@@ -581,6 +611,7 @@
       "guardrailViolation": "Denne anmodning blev blokeret af en tredjeparts sikkerhedspolitik for stemmekloning. Prøv med en anden tekst eller en anden referencelyd.",
       "insufficientCredits": "Du skal bruge __CREDITS__ kreditter for at klone denne lyd.",
       "internalError": "Kunne ikke klone stemmen. Prøv igen.",
+      "providerUnavailable": "Udbyderen af stemmekloning er midlertidigt utilgængelig. Prøv igen.",
       "invalidContentType": "Uploadanmodningen er ugyldig. Prøv igen.",
       "invalidFileType": "Ugyldig filtype. Upload MP3, OGG, Opus, M4A, WAV eller WebM.",
       "missingLocale": "Vælg et sprog.",
@@ -712,6 +743,17 @@
         "cancel": "Annuller",
         "confirm": "Tilbagekald"
       }
+    },
+    "memory": {
+      "title": "Hukommelse for stemmeopkald",
+      "description": "Hvis du slår hukommelse til under opkald, husker karaktererne nogle få oplysninger om dig for at bevare sammenhængen. Du kan slette det hele her.",
+      "button": "Slet al hukommelse",
+      "confirmTitle": "Slet al hukommelse fra stemmeopkald?",
+      "confirmDescription": "Dette sletter permanent alt, hvad karaktererne har husket om dig fra tidligere opkald. Det kan ikke fortrydes.",
+      "cancel": "Annuller",
+      "continue": "Slet",
+      "success": "Din hukommelse fra stemmeopkald blev slettet.",
+      "error": "Din hukommelse kunne ikke slettes. Prøv igen."
     }
   },
   "apiBilling": {
@@ -752,7 +794,7 @@
     "profile": "Profil",
     "signOut": "Log ud",
     "freeTools": "Gratis værktøjer",
-    "subscriptionDiscount": "Få {discount}% ekstra kreditter med et abonnement"
+    "subscriptionDiscount": "Få {extraCredits}% ekstra kreditter og {discount}% rabat den første måned!"
   },
   "header": {
     "generate": "Generer",
@@ -762,6 +804,7 @@
   "history": {
     "header": "Genereringshistorik",
     "empty": "Ingen historik endnu",
+    "downloadError": "Kunne ikke downloade lyd",
     "ui": {
       "filterText": "Filtrer tekst...",
       "customizeColumns": "Tilpas kolonner",
@@ -862,7 +905,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Nye stemmer til stemmegenerering er nu live, med mere kontrol over tempo, aandedraet, toneleje, hastighed og intensitet.",
+      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.1, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
@@ -1028,5 +1071,9 @@
       "audioConverterLink": "Gratis Lydkonverter",
       "madeWith": "Lavet med ♡ af SexyVoice.ai - Prøv gratis AI lydgenerator"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder."
   }
 }

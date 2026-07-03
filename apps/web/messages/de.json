@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
-              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme ab.\n\nEinige unserer KI-Stimmen (Puck, Zephyr, Gacrux, Kore, Sulafat, etc.) unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇩🇪 Deutsch (Deutschland),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇳🇱 Niederländisch (Niederlande),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\nund 🇻🇳 Vietnamesisch (Vietnam).\n\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK),\n🇮🇹 Pietro (Italienisch),\n🇺🇸 Emma (Englisch US),\n🇪🇸 Javi (Spanisch),\n🇺🇸 Josh (Englisch US),\n🇺🇸 und Tara (Englisch US).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme und dem Modell ab.\n\n**Gemini 2.5 Stimmen (Standard)** unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch, 🇧🇩 Bengali, 🇩🇪 Deutsch, 🇺🇸 Englisch, 🇫🇷 Französisch, 🇮🇳 Hindi, 🇮🇩 Indonesisch, 🇮🇹 Italienisch, 🇯🇵 Japanisch, 🇰🇷 Koreanisch, 🇮🇳 Marathi, 🇳🇱 Niederländisch, 🇵🇱 Polnisch, 🇧🇷 Portugiesisch, 🇷🇴 Rumänisch, 🇷🇺 Russisch, 🇺🇸 Spanisch, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇭 Thailändisch, 🇹🇷 Türkisch, 🇺🇦 Ukrainisch, und 🇻🇳 Vietnamesisch.\n\n**Gemini 3.1 Stimmen (bei Aktivierung von \"Neues KI-Modell verwenden\")** unterstützen 70+ Sprachen in 80+ regionalen Varianten, inklusive allem oben genannten plus: Afrikaans, Albanisch, Amharisch, Armenisch, Aserbaidschanisch, Baskisch, Bulgarisch, Katalanisch, Chinesisch, Kroatisch, Tschechisch, Dänisch, Estnisch, Filipino, Finnisch, Galizisch, Georgisch, Griechisch, Gujarati, Hebräisch, Ungarisch, Isländisch, Irisch, Javanisch, Kannada, Kasachisch, Lettisch, Litauisch, Mazedonisch, Malaiisch, Maltesisch, Norwegisch, Persisch, Punjabi, Serbisch, Slowakisch, Slowenisch, Suaheli, Schwedisch, Urdu, Usbekisch, Walisisch, Zulu und mehr.\n\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK), 🇮🇹 Pietro (Italienisch), 🇺🇸 Emma, Josh, Tara (Englisch US), 🇪🇸 Javi (Spanisch).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
             },
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
@@ -187,7 +187,11 @@
             },
             {
               "question": "Was kostet das?",
-              "answer": "Live-Anrufe kosten 2000 Credits pro Minute, solange Sie verbunden sind."
+              "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
+            },
+            {
+              "question": "Erinnert sich die KI an unsere früheren Gespräche?",
+              "answer": "Nur wenn du die Erinnerungsfunktion aktivierst – sie ist optional und standardmäßig deaktiviert, sodass normalerweise nichts aus deinen Anrufen gespeichert wird. Wenn sie aktiviert ist, merkt sich der Assistent ein paar kurze Angaben (etwa wie du angesprochen werden möchtest und welche Themen dir gefallen), keine vollständigen Aufnahmen oder Transkripte, um beim nächsten Mal nahtlos weiterzumachen. Wir speichern nur deine neuesten Angaben, du kannst jederzeit alles löschen, und beim Löschen deines Kontos werden sie automatisch entfernt."
             }
           ]
         },
@@ -296,9 +300,14 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Ihr monatlicher Credit-Plan endet demnächst",
+      "description": "Ihr monatlicher Credit-Plan ist noch bis zum {date} aktiv, wird danach aber nicht verlängert und fügt keine weiteren monatlichen Credits hinzu. Sie können alle Credits in Ihrem Konto weiter nutzen. Um die Stufe zu wechseln, verwalten Sie Ihr Abonnement in Stripe.",
+      "manageButton": "Abonnement verwalten"
+    },
     "topup": {
       "title": "Credits kaufen",
-      "description": "Füllen Sie Ihre Credits sofort mit einem einmaligen Kauf auf",
+      "description": "Füllen Sie Ihre Credits sofort auf oder abonnieren Sie und erhalten Sie mehr Credits",
       "buyCredits": "Credits kaufen",
       "onetimePurchase": "Einmaliger Kauf",
       "processing": "Wird verarbeitet...",
@@ -365,14 +374,16 @@
     "generating": "Wird generiert",
     "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
-    "paidCharacterLimitTooltip": "Zahlende Nutzer haben ein 2× Zeichenlimit",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
     "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
     "success": "Audio erfolgreich generiert!",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
-    "title": "Audio generieren",
+    "paidStyleLimitTooltip": "Sie haben ein 2,5× Stil-Limit",
+    "upgradeStyleLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2,5× Stil-Limit zu erhalten",
+    "paidCharacterLimitTooltip": "Sie haben ein 2× Zeichenlimit",
     "upgradeCharacterLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2× Zeichenlimit zu erhalten",
+    "title": "Audio generieren",
     "grok": {
       "inlineEffectPlaceholder": "Inline-Effekt einfügen",
       "wrappingEffectPlaceholder": "Mit Stil-Tag umschließen",
@@ -426,7 +437,18 @@
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
       "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)",
       "grokInfo": "Unterstützt ausdrucksstarke Tags wie [laugh] und\numschließende Tags wie <fast>...</fast> und unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägypten, Saudi-Arabien und VAE),\n🇧🇩 Bengali,\n🇳🇱 Niederländisch (Niederlande),\n🇨🇳 Chinesisch (vereinfacht),\n🇺🇸 Englisch,\n🇫🇷 Französisch,\n🇩🇪 Deutsch,\n🇮🇳 Hindi,\n🇮🇩 Indonesisch,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇧🇷 Portugiesisch (Brasilien, Portugal),\n🇷🇺 Russisch,\n🇪🇸 Spanisch (Mexiko, Spanien),\n🇹🇷 Türkisch,\n🇺🇦 Ukrainisch,\n🇻🇳 Vietnamesisch",
-      "featuredBadge": "Empfohlen"
+      "featuredBadge": "Empfohlen",
+      "selectVoicePlaceholder": "Stimme auswählen...",
+      "searchPlaceholder": "Name, Stil oder Modell suchen...",
+      "filterModelLabel": "Modell",
+      "filterGenderLabel": "Geschlecht",
+      "clearFilters": "Löschen",
+      "noVoicesFound": "Keine Stimmen gefunden",
+      "noVoicesFoundHint": "Versuchen Sie eine andere Suche oder löschen Sie die Filter.",
+      "previewVoice": "Vorschau von {name}",
+      "stopPreview": "Vorschau von {name} stoppen",
+      "footerCount": "{filtered} von {total} Stimmen",
+      "voiceListLabel": "Stimmen"
     },
     "split": {
       "segmentPreviews": "Segmentvorschauen",
@@ -455,11 +477,19 @@
   "call": {
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
-    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt __COUNT__",
+    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
+    "memoryLabel": "Erinnerung",
+    "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Es wird nichts gespeichert, sofern es nicht aktiviert ist.",
+    "memoryUpgradeTooltip": "Wechsle zu einem kostenpflichtigen Tarif, damit die Charaktere sich zwischen Anrufen an dich erinnern.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
+    "sceneLabel": "Szene",
+    "scenePlaceholder": "Szene wählen",
+    "sceneNone": "Keine Szene",
+    "sceneUpgradeRequired": "Upgrade erforderlich, um Szenen zu nutzen",
+    "sceneTextLabel": "Szenentext",
     "startCall": "Anruf starten",
     "connecting": "Verbinden",
     "reconnected": "Wiederverbunden",
@@ -581,6 +611,7 @@
       "guardrailViolation": "Diese Anfrage wurde durch die Sicherheitsrichtlinie eines Drittanbieters für das Klonen von Stimmen blockiert. Bitte versuchen Sie es mit anderem Text oder anderem Referenz-Audio.",
       "insufficientCredits": "Sie benötigen __CREDITS__ Credits, um dieses Audio zu klonen.",
       "internalError": "Die Stimme konnte nicht geklont werden. Bitte versuchen Sie es erneut.",
+      "providerUnavailable": "Der Anbieter für das Klonen von Stimmen ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
       "invalidContentType": "Die Upload-Anfrage ist ungültig. Bitte versuchen Sie es erneut.",
       "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
       "missingLocale": "Bitte wählen Sie eine Sprache.",
@@ -712,6 +743,17 @@
         "cancel": "Abbrechen",
         "confirm": "Widerrufen"
       }
+    },
+    "memory": {
+      "title": "Sprachanruf-Erinnerung",
+      "description": "Wenn du die Erinnerungsfunktion während Anrufen aktivierst, merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
+      "button": "Alle Erinnerungen löschen",
+      "confirmTitle": "Alle Sprachanruf-Erinnerungen löschen?",
+      "confirmDescription": "Dadurch wird dauerhaft alles gelöscht, was sich die Charaktere aus früheren Anrufen über dich gemerkt haben. Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "continue": "Löschen",
+      "success": "Deine Sprachanruf-Erinnerungen wurden gelöscht.",
+      "error": "Deine Erinnerungen konnten nicht gelöscht werden. Bitte versuche es erneut."
     }
   },
   "apiBilling": {
@@ -752,7 +794,7 @@
     "profile": "Profil",
     "signOut": "Abmelden",
     "freeTools": "Kostenlose Tools",
-    "subscriptionDiscount": "Erhalte {discount}% zusätzliche Credits mit einem Abonnement"
+    "subscriptionDiscount": "Erhalte {extraCredits}% zusätzliche Credits und {discount}% Rabatt im ersten Monat!"
   },
   "header": {
     "generate": "Generieren",
@@ -762,6 +804,7 @@
   "history": {
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
+    "downloadError": "Audio konnte nicht heruntergeladen werden",
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",
@@ -862,7 +905,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Die neuen Stimmen fuer die Sprachgenerierung sind jetzt live und bieten mehr Kontrolle ueber Tempo, Atemgeraeusche, Tonhoehe, Geschwindigkeit und Intensitaet.",
+      "text": "Neue, ausdrucksstärkere Stimmen sind da — angetrieben von Gemini 3.1, mit feinerer Kontrolle über Tempo, Atemgeräusche, Tonhöhe, Geschwindigkeit und Intensität.",
       "ctaLoggedIn": "Stimmen testen",
       "ctaLoggedOut": "Anmelden",
       "ariaLabelDismiss": "Hinweis zu expressiven Stimmen schliessen"
@@ -1028,5 +1071,9 @@
       "audioConverterLink": "Kostenloses Audio-Konverter-Tool",
       "madeWith": "Mit ♡ von SexyVoice.ai – Kostenlos den KI-Audiogenerator ausprobieren"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
   }
 }

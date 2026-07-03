@@ -36,16 +36,6 @@ SexyVoice.ai is an AI voice SaaS with three products: TTS generation, voice clon
 
 ---
 
-### 3. Multi-Modal Conversations: Voice + Visual Avatar (Intelligence + Confidence)
-
-**The insight:** `grokImageEnabled` exists as a stub field set to `false`. There's a planned but unbuilt image capability. Voice-only is powerful but leaves 50% of the sensory experience on the table.
-
-**The 10x move:** Add a real-time animated avatar that reacts during calls - facial expressions, lip sync, gestures. Start with pre-rendered sprite-based animations (cheap), graduate to real-time generation. Even a simple 2D animated face that moves its lips and emotes would dramatically increase immersion.
-
-**Why this is 10x:** Competitors in the AI companion space are all converging on multi-modal. Voice-only will feel dated within 12 months. An avatar makes the experience 10x more engaging, increases session length (more credits burned), and creates a massive moat if done well. Users would pay 2-3x more credits/minute for visual + voice.
-
----
-
 ### 4. API / Developer Platform (Access + Integration)
 
 **The insight:** SexyVoice has assembled a sophisticated multi-provider TTS pipeline (Replicate, Gemini, fal.ai, Qwen) with smart caching, credit metering, and quality routing. This is hard-won infrastructure.

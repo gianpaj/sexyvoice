@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import {
+  calculateCreditsFromTokens,
+  calculateGeminiTtsDollarAmount,
   calculateGrokTtsDollarAmount,
   calculateReadingTime,
   capitalizeFirstLetter,
@@ -75,6 +77,75 @@ describe('estimateCredits', () => {
     const credits = estimateCredits(text, 'eve', 'xai');
     expect(credits).toBe(100); // 27 characters = 1 bucket
   });
+
+  test('should charge free users roughly double for Gemini 3.1 voices', () => {
+    const text =
+      'This is a longer sentence that should take more time to speak';
+    const paid = estimateCredits(text, 'achernar', 'gpro31', true);
+    const free = estimateCredits(text, 'achernar', 'gpro31', false);
+    // Free users run the full Gemini 3.1 model (twice the cost of the 2.5
+    // Flash model that gpro voices are downgraded to), so they pay double.
+    // ceil() can shift the result by at most 1 credit either side of 2x.
+    expect(free).toBeGreaterThan(paid);
+    expect(free).toBeGreaterThanOrEqual(paid * 2 - 1);
+    expect(free).toBeLessThanOrEqual(paid * 2);
+  });
+
+  test('should not change Gemini 2.5 (gpro) pricing by tier', () => {
+    const text =
+      'This is a longer sentence that should take more time to speak';
+    const paid = estimateCredits(text, 'kore', 'gpro', true);
+    const free = estimateCredits(text, 'kore', 'gpro', false);
+    expect(free).toBe(paid);
+  });
+});
+
+describe('calculateCreditsFromTokens', () => {
+  test('should convert tokens to credits at the base rate', () => {
+    expect(calculateCreditsFromTokens(100)).toBe(Math.ceil(100 * 1.1));
+  });
+
+  test('should clamp negative token counts to zero', () => {
+    expect(calculateCreditsFromTokens(-50)).toBe(0);
+  });
+
+  test('should charge free users double for Gemini 3.1 voices', () => {
+    expect(
+      calculateCreditsFromTokens(100, { model: 'gpro31', userHasPaid: false }),
+    ).toBe(Math.ceil(100 * 1.1 * 2));
+  });
+
+  test('should not double credits for paid Gemini 3.1 users', () => {
+    expect(
+      calculateCreditsFromTokens(100, { model: 'gpro31', userHasPaid: true }),
+    ).toBe(calculateCreditsFromTokens(100));
+  });
+
+  test('should not double credits for Gemini 2.5 (gpro) voices', () => {
+    expect(
+      calculateCreditsFromTokens(100, { model: 'gpro', userHasPaid: false }),
+    ).toBe(calculateCreditsFromTokens(100));
+  });
+
+  test('should double credits when billed against the resolved 3.1 model id', () => {
+    expect(
+      calculateCreditsFromTokens(100, {
+        model: 'gemini-3.1-flash-tts-preview',
+        userHasPaid: false,
+      }),
+    ).toBe(Math.ceil(100 * 1.1 * 2));
+  });
+
+  test('should not surcharge a free 3.1 request that fell back to 2.5 Flash', () => {
+    // The deduction bills against the model that actually ran; a 2.5 Flash
+    // fallback must stay at 1× even for a free user.
+    expect(
+      calculateCreditsFromTokens(100, {
+        model: 'gemini-2.5-flash-preview-tts',
+        userHasPaid: false,
+      }),
+    ).toBe(calculateCreditsFromTokens(100));
+  });
 });
 
 describe('estimateGrokCredits', () => {
@@ -98,6 +169,38 @@ describe('calculateGrokTtsDollarAmount', () => {
 
   test('calculates Grok TTS cost per character', () => {
     expect(calculateGrokTtsDollarAmount('Hello [laugh]')).toBe(0.000_055);
+  });
+});
+
+describe('calculateGeminiTtsDollarAmount', () => {
+  test('calculates Gemini 2.5 Pro TTS cost from input and output tokens', () => {
+    expect(
+      calculateGeminiTtsDollarAmount({
+        model: 'gemini-2.5-pro-preview-tts',
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+      }),
+    ).toBe(0.000_251);
+  });
+
+  test('calculates Gemini 3.1 Flash TTS cost at Pro TTS rates', () => {
+    expect(
+      calculateGeminiTtsDollarAmount({
+        model: 'gemini-3.1-flash-tts-preview',
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+      }),
+    ).toBe(0.000_726);
+  });
+
+  test('calculates Gemini 2.5 Flash TTS cost at flash rates', () => {
+    expect(
+      calculateGeminiTtsDollarAmount({
+        model: 'gemini-2.5-flash-preview-tts',
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+      }),
+    ).toBe(0.000_126);
   });
 });
 
