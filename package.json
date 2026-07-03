@@ -31,6 +31,7 @@
     "lint": "turbo run lint",
     "lint-staged": "lint-staged",
     "prepare": "husky",
+    "compile-dispute-evidence": "pnpm --filter @sexyvoice/scripts compile-dispute-evidence",
     "refund-credits": "pnpm --filter @sexyvoice/scripts refund-credits",
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",

@@ -5,11 +5,14 @@ import { POST } from '@/app/api/v1/speech/route';
 import {
   getCreditsAdmin,
   getVoiceIdByNameAdmin,
+  INSUFFICIENT_CREDITS_ERROR_CODE,
   insertUsageEvent,
   reduceCreditsAdmin,
+  reduceCreditsUpToAdmin,
+  restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { estimateCredits } from '@/lib/utils';
+import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
 import {
   mockRatelimitLimit,
   mockUploadFileToR2,
@@ -155,6 +158,34 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(402);
     expect(json.error.code).toBe('insufficient_credits');
+  });
+
+  it('returns 402 when atomic credit reservation fails after precheck', async () => {
+    vi.mocked(reduceCreditsAdmin).mockRejectedValueOnce(
+      new Error('Insufficient credits', {
+        cause: INSUFFICIENT_CREDITS_ERROR_CODE,
+      }),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'orpheus',
+        input: 'Hello world this is a long enough sentence',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(402);
+    expect(json.error.code).toBe('insufficient_credits');
+    expect(mockUploadFileToR2).not.toHaveBeenCalled();
   });
 
   it('returns 429 when rate limit is exceeded', async () => {
@@ -365,6 +396,12 @@ describe('/api/v1/speech', () => {
   });
 
   it('accepts achernar with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {
+    const reservedCredits = estimateCredits(
+      'Hello world',
+      'achernar',
+      'gpro31',
+    );
+    const actualCredits = calculateCreditsFromTokens(42);
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -409,6 +446,15 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(200);
     expect(generateContent).toHaveBeenCalled();
+    expect(json.credits_used).toBe(actualCredits);
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenNthCalledWith(1, {
+      userId: 'test-user-id',
+      amount: reservedCredits,
+    });
+    expect(vi.mocked(reduceCreditsUpToAdmin)).toHaveBeenCalledWith({
+      userId: 'test-user-id',
+      amount: actualCredits - reservedCredits,
+    });
     expect(generateContent.mock.calls[0][0].model).toBe(
       'gemini-3.1-flash-tts-preview',
     );
@@ -418,13 +464,153 @@ describe('/api/v1/speech', () => {
         dollarAmount: 0.000_726,
         model: 'gemini-3.1-flash-tts-preview',
         durationSeconds: 12,
+        creditsUsed: actualCredits,
       }),
     );
     expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
       expect.objectContaining({
+        credits_used: actualCredits,
         duration: '12',
         model: 'gemini-3.1-flash-tts-preview',
       }),
+    );
+  });
+
+  it('deducts remaining available credits when API Gemini usage exceeds the reserved estimate', async () => {
+    const input = 'Hello world';
+    const reservedCredits = estimateCredits(input, 'achernar', 'gpro31');
+    const actualCredits = calculateCreditsFromTokens(42);
+    const remainingCredits = 1;
+    const creditsDebited = reservedCredits + remainingCredits;
+
+    vi.mocked(getCreditsAdmin)
+      .mockResolvedValueOnce(creditsDebited)
+      .mockResolvedValueOnce(0);
+    vi.mocked(reduceCreditsUpToAdmin).mockResolvedValueOnce(remainingCredits);
+
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 6,
+        candidatesTokenCount: 36,
+        totalTokenCount: 42,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input,
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.credits_used).toBe(creditsDebited);
+    expect(json.credits_remaining).toBe(0);
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
+      userId: 'test-user-id',
+      amount: reservedCredits,
+    });
+    expect(vi.mocked(reduceCreditsUpToAdmin)).toHaveBeenCalledWith({
+      userId: 'test-user-id',
+      amount: actualCredits - reservedCredits,
+    });
+    expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
+      expect.objectContaining({ credits_used: creditsDebited }),
+    );
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({ creditsUsed: creditsDebited }),
+    );
+  });
+
+  it('refunds unused reserved credits when API Gemini token usage is below estimate', async () => {
+    const input = 'Hello world '.repeat(5).trim();
+    const reservedCredits = estimateCredits(input, 'achernar', 'gpro31');
+    const actualCredits = calculateCreditsFromTokens(23);
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+        totalTokenCount: 23,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input,
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.credits_used).toBe(actualCredits);
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledOnce();
+    expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
+      userId: 'test-user-id',
+      amount: reservedCredits,
+    });
+    expect(vi.mocked(restoreCredits)).toHaveBeenCalledWith({
+      userId: 'test-user-id',
+      amount: reservedCredits - actualCredits,
+    });
+    expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
+      expect.objectContaining({ credits_used: actualCredits }),
+    );
+    expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({ creditsUsed: actualCredits }),
     );
   });
 

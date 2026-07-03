@@ -68,3 +68,6 @@ agent-browser*.json
 .claude/skills/writing-clearly-and-concisely
 
 *.csv
+
+# Agent-private memory (Claude Code) — must never be committed
+.claude-personal/

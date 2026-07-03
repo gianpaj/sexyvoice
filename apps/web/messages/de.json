@@ -188,6 +188,10 @@
             {
               "question": "Was kostet das?",
               "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
+            },
+            {
+              "question": "Erinnert sich die KI an unsere früheren Gespräche?",
+              "answer": "Nur wenn du die Erinnerungsfunktion aktivierst – sie ist optional und standardmäßig deaktiviert, sodass normalerweise nichts aus deinen Anrufen gespeichert wird. Wenn sie aktiviert ist, merkt sich der Assistent ein paar kurze Angaben (etwa wie du angesprochen werden möchtest und welche Themen dir gefallen), keine vollständigen Aufnahmen oder Transkripte, um beim nächsten Mal nahtlos weiterzumachen. Wir speichern nur deine neuesten Angaben, du kannst jederzeit alles löschen, und beim Löschen deines Kontos werden sie automatisch entfernt."
             }
           ]
         },
@@ -296,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Ihr monatlicher Credit-Plan endet demnächst",
+      "description": "Ihr monatlicher Credit-Plan ist noch bis zum {date} aktiv, wird danach aber nicht verlängert und fügt keine weiteren monatlichen Credits hinzu. Sie können alle Credits in Ihrem Konto weiter nutzen. Um die Stufe zu wechseln, verwalten Sie Ihr Abonnement in Stripe.",
+      "manageButton": "Abonnement verwalten"
+    },
     "topup": {
       "title": "Credits kaufen",
       "description": "Füllen Sie Ihre Credits sofort auf oder abonnieren Sie und erhalten Sie mehr Credits",
@@ -365,14 +374,16 @@
     "generating": "Wird generiert",
     "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
-    "paidCharacterLimitTooltip": "Zahlende Nutzer haben ein 2× Zeichenlimit",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
     "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
     "success": "Audio erfolgreich generiert!",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
-    "title": "Audio generieren",
+    "paidStyleLimitTooltip": "Sie haben ein 2,5× Stil-Limit",
+    "upgradeStyleLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2,5× Stil-Limit zu erhalten",
+    "paidCharacterLimitTooltip": "Sie haben ein 2× Zeichenlimit",
     "upgradeCharacterLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2× Zeichenlimit zu erhalten",
+    "title": "Audio generieren",
     "grok": {
       "inlineEffectPlaceholder": "Inline-Effekt einfügen",
       "wrappingEffectPlaceholder": "Mit Stil-Tag umschließen",
@@ -469,6 +480,9 @@
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
+    "memoryLabel": "Erinnerung",
+    "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Es wird nichts gespeichert, sofern es nicht aktiviert ist.",
+    "memoryUpgradeTooltip": "Wechsle zu einem kostenpflichtigen Tarif, damit die Charaktere sich zwischen Anrufen an dich erinnern.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",
@@ -729,6 +743,17 @@
         "cancel": "Abbrechen",
         "confirm": "Widerrufen"
       }
+    },
+    "memory": {
+      "title": "Sprachanruf-Erinnerung",
+      "description": "Wenn du die Erinnerungsfunktion während Anrufen aktivierst, merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
+      "button": "Alle Erinnerungen löschen",
+      "confirmTitle": "Alle Sprachanruf-Erinnerungen löschen?",
+      "confirmDescription": "Dadurch wird dauerhaft alles gelöscht, was sich die Charaktere aus früheren Anrufen über dich gemerkt haben. Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "continue": "Löschen",
+      "success": "Deine Sprachanruf-Erinnerungen wurden gelöscht.",
+      "error": "Deine Erinnerungen konnten nicht gelöscht werden. Bitte versuche es erneut."
     }
   },
   "apiBilling": {

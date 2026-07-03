@@ -41,6 +41,10 @@ export const callTokenPlaygroundStateSchema = z.object({
     .enum(callScenes.map((s) => s.id) as [string, ...string[]])
     .nullable()
     .optional(),
+  // Long-term memory (opt-in). When true, the agent (sexycall) preloads and
+  // stores distilled facts for this user across calls. Off/absent → nothing is
+  // stored.
+  memory: z.boolean().optional(),
   sessionConfig: sessionConfigSchema,
 });
 

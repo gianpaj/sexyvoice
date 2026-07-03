@@ -188,6 +188,10 @@
             {
               "question": "How much does it cost?",
               "answer": "Live calling costs {count} credits per minute while you're connected."
+            },
+            {
+              "question": "Does the AI remember my previous conversations?",
+              "answer": "Only if you turn on memory — it's optional and off by default, so normally nothing from your calls is stored. When enabled, the assistant keeps a few short details (like how you like to be addressed and topics you enjoy), not full recordings or transcripts, so it can pick up where you left off next time. We keep only your most recent details, you can erase everything at any time, and deleting your account removes them automatically."
             }
           ]
         },
@@ -296,6 +300,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Your monthly credit plan is scheduled to end",
+      "description": "Your monthly credit plan is still active until {date}, but it won’t renew or add more monthly credits after that. You can keep using any credits in your account. To switch tiers, manage your subscription in Stripe.",
+      "manageButton": "Manage subscription"
+    },
     "topup": {
       "title": "Buy Credits",
       "description": "Top up your credits instantly or subscribe and get more credits",
@@ -365,14 +374,16 @@
     "generating": "Generating",
     "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
-    "paidCharacterLimitTooltip": "Paid users enjoy 2× character limit",
     "playAudio": "Play Audio",
     "resetPlayer": "Reset Player",
     "subtitle": "Select a voice and generate audio from text",
     "success": "Audio generated successfully!",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
-    "title": "Generate Audio",
+    "paidStyleLimitTooltip": "You have a 2.5× style limit",
+    "upgradeStyleLimitTooltip": "Upgrade to a paid plan for 2.5× style limit",
+    "paidCharacterLimitTooltip": "You have a 2× character limit",
     "upgradeCharacterLimitTooltip": "Upgrade to a paid plan for 2× character limit",
+    "title": "Generate Audio",
     "grok": {
       "inlineEffectPlaceholder": "Insert tags",
       "wrappingEffectPlaceholder": "Wrap with style tag",
@@ -469,6 +480,9 @@
     "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
+    "memoryLabel": "Memory",
+    "memoryDescription": "Let the characters remember you between calls. Nothing is stored unless it's on.",
+    "memoryUpgradeTooltip": "Upgrade to a paid plan to let the characters remember you between calls.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
@@ -729,6 +743,17 @@
         "cancel": "Cancel",
         "confirm": "Revoke"
       }
+    },
+    "memory": {
+      "title": "Voice Call Memory",
+      "description": "If you turn on memory during calls, the characters remember a few details about you to keep continuity. You can erase all of it here.",
+      "button": "Delete all memories",
+      "confirmTitle": "Delete all voice call memories?",
+      "confirmDescription": "This permanently erases everything the characters have remembered about you from past calls. This cannot be undone.",
+      "cancel": "Cancel",
+      "continue": "Delete",
+      "success": "Your voice call memories were deleted.",
+      "error": "Couldn't delete your memories. Please try again."
     }
   },
   "apiBilling": {

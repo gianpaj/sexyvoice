@@ -2,9 +2,9 @@ import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
-import { NextResponse } from 'next/server';
 
 import { GEMINI_AUDIO_TAGS, getEmotionTags } from '@/lib/ai';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createClient } from '@/lib/supabase/server';
 
 // gemini-3.1-flash-lite
@@ -33,17 +33,17 @@ export async function POST(request: Request) {
     user = data?.user;
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 401 });
+      return APIErrorResponse('User not found', 401);
     }
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-      return NextResponse.json({ error: 'Text is required' }, { status: 400 });
+      return APIErrorResponse('Text is required', 400);
     }
 
     if (prompt.length > 1000) {
-      return NextResponse.json(
-        { error: 'Text exceeds maximum length of 1000 characters' },
-        { status: 400 },
+      return APIErrorResponse(
+        'Text exceeds maximum length of 1000 characters',
+        400,
       );
     }
 
@@ -103,12 +103,9 @@ Rules:
     });
 
     if (Error.isError(error)) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return APIErrorResponse(error.message, 500);
     }
 
-    return NextResponse.json(
-      { error: 'Failed to generate enhanced text' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to generate enhanced text', 500);
   }
 }

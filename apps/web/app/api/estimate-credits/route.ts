@@ -2,8 +2,13 @@ import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import {
+  buildGeminiTtsPrompt,
+  resolveGeminiTtsModel,
+} from '@/lib/tts/gemini-prompt';
 import {
   calculateCreditsFromTokens,
   estimateGrokCredits,
@@ -22,10 +27,7 @@ async function validateRequestBody(
   if (request.body === null) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: 'Request body is empty' },
-        { status: 400 },
-      ),
+      response: APIErrorResponse('Request body is empty', 400),
     };
   }
 
@@ -38,10 +40,7 @@ async function validateRequestBody(
     if (!(text && voiceId)) {
       return {
         ok: false,
-        response: NextResponse.json(
-          { error: 'Missing required parameters' },
-          { status: 400 },
-        ),
+        response: APIErrorResponse('Missing required parameters', 400),
       };
     }
 
@@ -50,10 +49,7 @@ async function validateRequestBody(
     if (error instanceof SyntaxError) {
       return {
         ok: false,
-        response: NextResponse.json(
-          { error: 'Invalid JSON in request body' },
-          { status: 400 },
-        ),
+        response: APIErrorResponse('Invalid JSON in request body', 400),
       };
     }
     throw error;
@@ -68,7 +64,7 @@ async function validateUser(): Promise<ValidationResult<{ id: string }>> {
   if (!user) {
     return {
       ok: false,
-      response: NextResponse.json({ error: 'User not found' }, { status: 401 }),
+      response: APIErrorResponse('User not found', 401),
     };
   }
 
@@ -83,10 +79,7 @@ async function validateVoice(
   if (!voiceObj) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: 'Voice not found' },
-        { status: 404 },
-      ),
+      response: APIErrorResponse('Voice not found', 404),
     };
   }
 
@@ -95,12 +88,9 @@ async function validateVoice(
   if (!(provider === 'gemini' || provider === 'grok')) {
     return {
       ok: false,
-      response: NextResponse.json(
-        {
-          error:
-            'Credit estimation currently supports only gpro and grok voices',
-        },
-        { status: 400 },
+      response: APIErrorResponse(
+        'Credit estimation currently supports only gpro and grok voices',
+        400,
       ),
     };
   }
@@ -118,11 +108,9 @@ function validateTextLength(
   if (text.length > maxLength) {
     return {
       ok: false,
-      response: NextResponse.json(
-        {
-          error: `Text exceeds the maximum length of ${maxLength} characters`,
-        },
-        { status: 400 },
+      response: APIErrorResponse(
+        `Text exceeds the maximum length of ${maxLength} characters`,
+        400,
       ),
     };
   }
@@ -136,10 +124,7 @@ function validateApiKey(): ValidationResult<string> {
   if (!apiKey) {
     return {
       ok: false,
-      response: NextResponse.json(
-        { error: 'Missing Google Generative AI API key' },
-        { status: 500 },
-      ),
+      response: APIErrorResponse('Missing Google Generative AI API key', 500),
     };
   }
 
@@ -167,16 +152,13 @@ export async function POST(request: Request) {
 
     const isPaidUser = await hasUserPaid(userResult.data.id);
 
-    const textError = validateTextLength(
-      text,
-      voiceResult.data.model,
-      isPaidUser,
-    );
+    const model = voiceResult.data.model;
+    const textError = validateTextLength(text, model, isPaidUser);
     if (!textError.ok) {
       return textError.response;
     }
 
-    if (getTtsProvider(voiceResult.data.model) === 'grok') {
+    if (getTtsProvider(model) === 'grok') {
       const credits = estimateGrokCredits(text);
 
       return NextResponse.json({
@@ -189,11 +171,18 @@ export async function POST(request: Request) {
       return apiKeyResult.response;
     }
 
-    const finalText = styleVariant ? `${styleVariant}: ${text}` : text;
+    // Build the exact same prompt and target the same model the generation
+    // route will use, so the token count reflects the real request. The model
+    // and prompt format differ by voice (gpro31 vs gpro) and by user tier.
+    const finalText = buildGeminiTtsPrompt({ model, text, styleVariant });
+    const estimateModel = resolveGeminiTtsModel({
+      model,
+      userHasPaid: isPaidUser,
+    });
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
 
     const tokenResponse = await ai.models.countTokens({
-      model: 'gemini-2.5-pro-preview-tts',
+      model: estimateModel,
       contents: [{ parts: [{ text: finalText }], role: 'user' }],
     });
 
@@ -205,14 +194,26 @@ export async function POST(request: Request) {
     const CHARACTERS_PER_SECOND = 15;
     const TOKENS_PER_SECOND = 32;
 
-    const estimatedDurationSeconds = text.length / CHARACTERS_PER_SECOND;
+    // Base the audio-duration estimate on the full spoken payload. For gpro31
+    // the style is delivered as direction (it shapes pacing/delivery), so the
+    // combined length tracks real audio length better than the transcript alone.
+    // For gpro (2.5) the style is an inline `style: text` instruction rather
+    // than spoken content, so it doesn't add to the audio duration.
+    const spokenLength =
+      styleVariant && model === 'gpro31'
+        ? styleVariant.length + text.length
+        : text.length;
+    const estimatedDurationSeconds = spokenLength / CHARACTERS_PER_SECOND;
     const estimatedOutputTokens = Math.ceil(
       estimatedDurationSeconds * TOKENS_PER_SECOND,
     );
 
     const totalEstimatedTokens = inputTokens + estimatedOutputTokens;
 
-    const credits = calculateCreditsFromTokens(totalEstimatedTokens);
+    const credits = calculateCreditsFromTokens(totalEstimatedTokens, {
+      model,
+      userHasPaid: isPaidUser,
+    });
 
     return NextResponse.json({
       tokens: totalEstimatedTokens,
@@ -220,9 +221,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Estimate credits error:', error);
-    return NextResponse.json(
-      { error: 'Failed to estimate credits' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to estimate credits', 500);
   }
 }

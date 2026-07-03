@@ -20,6 +20,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import {
+  CLONE_FORM_FIELDS,
+  type CloneErrorResponseBody,
+  type CloneRouteErrorCode,
+  type CloneSuccessResponse,
+  type RouteErrorDetails,
+} from '@/lib/clone/api-types';
 import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import {
   createMicrophoneReferenceAudioFile,
@@ -74,23 +81,20 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   zh: 'chinese',
 };
 
-type CloneErrorDetails = Record<string, boolean | number | string | null>;
-
-interface CloneErrorResponse {
-  code?: string;
-  details?: CloneErrorDetails;
-  error?: string;
+// The server returns `CloneErrorResponseBody`, but proxies and older responses
+// may omit fields, so every field is treated as optional here. `message` is not
+// part of the route contract but can arrive from upstream/proxy error bodies.
+type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
   message?: string;
-  serverMessage?: string;
-}
+};
 
 type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
 
 const getCloneErrorMessage = (
   t: CloneTranslator,
-  code?: string,
+  code?: CloneRouteErrorCode,
   fallbackMessage?: string,
-  details?: CloneErrorDetails,
+  details?: RouteErrorDetails,
 ): string => {
   if (!code) {
     return fallbackMessage || t('errorCloning');
@@ -421,11 +425,11 @@ function NewVoiceClientInner({
 
       // First upload and process the voice
       const formData = new FormData();
-      formData.append('file', audioToProcess);
-      formData.append('text', text);
-      formData.append('locale', selectedLocale.code);
+      formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
+      formData.append(CLONE_FORM_FIELDS.text, text);
+      formData.append(CLONE_FORM_FIELDS.locale, selectedLocale.code);
       formData.append(
-        'enhanceReferenceAudio',
+        CLONE_FORM_FIELDS.enhanceReferenceAudio,
         String(referenceAudioEnhancementEnabled),
       );
 
@@ -470,7 +474,7 @@ function NewVoiceClientInner({
         return;
       }
 
-      const voiceResult = await voiceRes.json();
+      const voiceResult = (await voiceRes.json()) as CloneSuccessResponse;
 
       toast.success(t('success'));
 

@@ -10,3 +10,5 @@ generated-speech/
 
 *.json
 !package.json
+
+dispute*.md
