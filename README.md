@@ -153,8 +153,6 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
       - `FAL_KEY` - Your fal.ai API key for voice cloning
       - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
       - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation and call transcript analysis
-      - `XAI_SUMMARY_MODEL` - Optional override for the Grok model used to analyze call transcripts (default `grok-4.3`)
-      - `CALL_SUMMARY_SECRET` - Shared secret for the Supabase Database Webhook that triggers `/api/call-sessions/analyze` (also stored in Supabase Vault as `call_summary_secret`)
    - Real-time Calls (LiveKit)
       - `LIVEKIT_URL`
       - `LIVEKIT_API_KEY`

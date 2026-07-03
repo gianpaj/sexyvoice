@@ -175,6 +175,8 @@ Used for:
 - `MISTRAL_API_KEY`
 - `REPLICATE_API_TOKEN`
 - `XAI_API_KEY` if xAI TTS is enabled in the environment
+- `XAI_SUMMARY_MODEL` optional override for the Grok model used to analyze call
+  transcripts (default `grok-4.3`)
 
 Notes:
 
@@ -182,6 +184,8 @@ Notes:
   for free-user Gemini flows where configured in code.
 - `MISTRAL_API_KEY` is required for voice cloning requests that use the
   Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
+- `XAI_API_KEY` also powers call transcript analysis
+  (`apps/web/lib/ai/analyze-call.ts`), not just Grok TTS.
 
 ### LiveKit real-time calls
 
@@ -200,6 +204,7 @@ Notes:
 
 - `API_KEY_HMAC_SECRET`
 - `OAUTH_CALLBACK_MARKER_SECRET`
+- `CALL_SUMMARY_SECRET`
 
 Notes:
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
@@ -207,6 +212,10 @@ Notes:
   and verifying the short-lived OAuth callback marker cookie.
 - If `OAUTH_CALLBACK_MARKER_SECRET` is unset, code may fall back to
   `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
+- `CALL_SUMMARY_SECRET` authenticates the Supabase Database Webhook that
+  triggers `/api/call-sessions/analyze` on call completion. The same value must
+  be stored in Supabase Vault as `call_summary_secret` (alongside
+  `app_base_url`) so the `pg_net` trigger can call back into this app.
 
 Generate secure secrets with:
 

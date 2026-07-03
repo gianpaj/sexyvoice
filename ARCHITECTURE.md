@@ -310,7 +310,8 @@ flowchart TD
 - `usage_events` – Granular usage tracking for analytics, billing, and reporting
 - `api_keys` – External API keys; stores `key_hash` (HMAC-SHA256), `key_prefix` (first 12 chars for display), `is_active`, `expires_at`, `permissions` (JSONB scopes), `last_used_at`
 
-See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
+See `apps/web/supabase/migrations/` and `apps/web/lib/supabase/types.d.ts` for
+the full schema definitions.
 
 ## Caching Strategy
 
@@ -422,4 +423,4 @@ tests/
 ├── api-keys-routes.test.ts # API key CRUD routes
 └── \*.test.ts # Other feature test suites
 
-See [AGENTS.md](./AGENTS.md) for detailed application structure and development guidelines.
+See [AGENTS.md](./AGENTS.md) for development guidelines.
