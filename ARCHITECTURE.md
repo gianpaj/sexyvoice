@@ -304,7 +304,7 @@ flowchart TD
 - `credits` – User credit balances
 - `credit_transactions` – Credit usage and purchase history
 - `call_sessions` – Real-time voice call sessions with duration, room ID, and billing info
-- `call_session_analysis` – One rich per-call analysis row (title, summary, topic, sentiment, key requests, action items) generated from the transcript by Grok
+- call_session_analysis – One rich per-call analysis row (language, topic, sentiment, engagement, key requests, AI issues, notable patterns) generated from the transcript by Grok
 - `call_session_analytics` – Aggregate analysis stats per run
 - `agent_memories` – pgvector-backed voice-agent memory with hybrid (semantic + keyword) retrieval via the `match_agent_memories_hybrid` RPC
 - `usage_events` – Granular usage tracking for analytics, billing, and reporting
