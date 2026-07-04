@@ -13,6 +13,7 @@ import {
   insertCardBonusCreditTransaction,
   insertSubscriptionCreditTransaction,
   insertTopupCreditTransaction,
+  isEligibleForCardBonusOnPayment,
 } from '@/lib/supabase/queries';
 
 export async function POST(req: Request) {
@@ -268,6 +269,75 @@ async function grantCardBonusForSetupIntent(setupIntentId: string) {
   console.log(`[STRIPE HOOK] Card bonus granted to user: ${userId}`);
 }
 
+/**
+ * Auto-grants the one-time card-on-file bonus when a new-regime user makes
+ * their first *direct payment* (top-up or subscription), so paying customers
+ * reach the same 10,000-credit total as users who take the "add a card" CTA.
+ *
+ * Reuses the payment's card fingerprint, so the same global one-card-one-bonus
+ * dedupe and per-user uniqueness guards in `insertCardBonusCreditTransaction`
+ * apply. Best-effort: it never throws, so a bonus hiccup can't fail (or trigger
+ * Stripe to retry) the purchase crediting that already succeeded.
+ */
+async function maybeGrantCardBonusFromPayment({
+  userId,
+  paymentIntentId,
+}: {
+  userId: string;
+  paymentIntentId: string | null;
+}) {
+  try {
+    if (!paymentIntentId) return;
+    if (!(await isEligibleForCardBonusOnPayment(userId))) return;
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      paymentIntentId,
+      {
+        expand: ['payment_method'],
+      },
+    );
+    const paymentMethod =
+      typeof paymentIntent.payment_method === 'string'
+        ? null
+        : paymentIntent.payment_method;
+    const fingerprint = paymentMethod?.card?.fingerprint;
+
+    if (!fingerprint) {
+      // Non-card payment method (e.g. some wallets) exposes no reusable card
+      // fingerprint; skip rather than grant the bonus without its anti-abuse
+      // dedupe.
+      console.log(
+        '[STRIPE HOOK] Skipping card bonus on payment: no card fingerprint',
+        { user_id: userId, payment_intent_id: paymentIntentId },
+      );
+      return;
+    }
+
+    await insertCardBonusCreditTransaction(
+      userId,
+      paymentIntentId,
+      fingerprint,
+      CARD_BONUS_CREDIT_AMOUNT,
+    );
+
+    console.log(
+      `[STRIPE HOOK] Card bonus granted on payment to user: ${userId}`,
+    );
+  } catch (error) {
+    console.error('[STRIPE HOOK] Failed to grant card bonus on payment', {
+      user_id: userId,
+      payment_intent_id: paymentIntentId,
+    });
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'card_bonus_on_payment',
+      },
+      extra: { user_id: userId, payment_intent_id: paymentIntentId },
+    });
+  }
+}
+
 async function handleCardBonusSetupCheckoutSession(
   session: Stripe.Checkout.Session,
 ) {
@@ -330,9 +400,11 @@ async function handleTopupCheckoutSession(session: Stripe.Checkout.Session) {
     `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
   );
 
+  const paymentIntentId = session.payment_intent.toString();
+
   await insertTopupCreditTransaction(
     userId,
-    session.payment_intent.toString(),
+    paymentIntentId,
     creditAmount,
     dollarAmountNum,
     packageId,
@@ -342,6 +414,10 @@ async function handleTopupCheckoutSession(session: Stripe.Checkout.Session) {
   console.log(
     `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
   );
+
+  // A first direct top-up also unlocks the card-on-file bonus for new-regime
+  // users, matching the "add a card" CTA.
+  await maybeGrantCardBonusFromPayment({ userId, paymentIntentId });
 }
 
 // Handles completed Stripe checkout sessions for both one-time credit purchases and subscription checkouts
@@ -467,6 +543,10 @@ async function handleCheckoutSessionCompleted(
       console.log(
         `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
       );
+
+      // Subscribing directly also unlocks the card-on-file bonus for
+      // new-regime users, matching the "add a card" CTA.
+      await maybeGrantCardBonusFromPayment({ userId, paymentIntentId });
     }
   } catch (error) {
     const extra = {

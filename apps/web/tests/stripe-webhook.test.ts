@@ -21,6 +21,7 @@ import {
   insertCardBonusCreditTransaction,
   insertSubscriptionCreditTransaction,
   insertTopupCreditTransaction,
+  isEligibleForCardBonusOnPayment,
 } from '@/lib/supabase/queries';
 import {
   clearRedis,
@@ -54,6 +55,9 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
     setupIntents: {
       retrieve: vi.fn(),
     },
+    paymentIntents: {
+      retrieve: vi.fn(),
+    },
     customers: {
       update: vi.fn(),
     },
@@ -67,6 +71,7 @@ vi.mock('@/lib/supabase/queries', () => ({
   insertCardBonusCreditTransaction: vi.fn(),
   insertSubscriptionCreditTransaction: vi.fn(),
   insertTopupCreditTransaction: vi.fn(),
+  isEligibleForCardBonusOnPayment: vi.fn(),
 }));
 
 describe('Stripe Webhook Route', () => {
@@ -84,6 +89,9 @@ describe('Stripe Webhook Route', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    // Default: the card-on-file bonus is NOT auto-granted on payment. Tests
+    // that exercise the grant opt in explicitly.
+    vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(false);
     // Clear Redis data before each test
     await clearRedis();
   });
@@ -232,6 +240,82 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       expect(Sentry.captureException).toHaveBeenCalled();
     });
+
+    it('should also grant the card-on-file bonus on a first topup for an eligible user', async () => {
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(true);
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      vi.mocked(stripe.paymentIntents.retrieve).mockResolvedValue({
+        id: 'pi_test123',
+        payment_method: { card: { fingerprint: 'fp_abc123' } },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageId: 'starter',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertTopupCreditTransaction).toHaveBeenCalled();
+      expect(isEligibleForCardBonusOnPayment).toHaveBeenCalledWith('user_123');
+      // Uses the payment_intent as reference_id and the card fingerprint for
+      // the global one-card-one-bonus dedupe.
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'pi_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+    });
+
+    it('should not grant the card-on-file bonus on topup when the user is ineligible', async () => {
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(false);
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageId: 'starter',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      await POST(request);
+
+      expect(insertTopupCreditTransaction).toHaveBeenCalled();
+      expect(stripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should skip the card-on-file bonus on topup when the payment has no card fingerprint', async () => {
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(true);
+      vi.mocked(stripe.paymentIntents.retrieve).mockResolvedValue({
+        id: 'pi_test123',
+        payment_method: { card: null },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageId: 'starter',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertTopupCreditTransaction).toHaveBeenCalled();
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+    });
   });
 
   describe('Checkout Session - Subscription', () => {
@@ -283,6 +367,44 @@ describe('Stripe Webhook Route', () => {
         subscriptionId,
         28_750, // 25,000 * 1.15 (subscription bonus)
         10,
+      );
+    });
+
+    it('should also grant the card-on-file bonus on an initial subscription for an eligible user', async () => {
+      const paymentIntentId = 'pi_initial_test123';
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(true);
+      vi.mocked(stripe.paymentIntents.retrieve).mockResolvedValue({
+        id: paymentIntentId,
+        payment_method: { card: { fingerprint: 'fp_sub123' } },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const session = createMockCheckoutSession('subscription');
+      session.payment_intent = paymentIntentId;
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalled();
+      expect(isEligibleForCardBonusOnPayment).toHaveBeenCalledWith('user_789');
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_789',
+        paymentIntentId,
+        'fp_sub123',
+        CARD_BONUS_CREDIT_AMOUNT,
       );
     });
 

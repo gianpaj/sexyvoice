@@ -244,6 +244,17 @@ events enabled: `checkout.session.completed`,
 the card-on-file credit bonus (`mode: 'setup'` Checkout Sessions, no charge)
 and must be added alongside the existing events.
 
+The card-on-file bonus (9,000 credits) is also auto-granted on a new-regime
+user's first **direct payment** — a top-up or an initial subscription — so
+paying customers reach the same 10,000-credit total as users who take the
+"add a card" CTA. The webhook reuses the payment's card fingerprint, so the
+same global one-card-one-bonus dedupe (`card_bonus_claims`) and per-user
+uniqueness guard apply. It runs only when
+`isEligibleForCardBonusOnPayment()` is true (new-regime user, bonus not yet
+granted) and is best-effort: a bonus failure is logged to Sentry but never
+fails the purchase crediting. Non-card payment methods without a fingerprint
+(e.g. some wallets) skip the bonus rather than granting it unguarded.
+
 ### Edge Config
 
 - `EDGE_CONFIG`

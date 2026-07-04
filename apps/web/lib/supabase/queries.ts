@@ -740,12 +740,28 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 };
 
 /**
+ * A user has already been granted the card-on-file bonus if any `card_bonus`
+ * ledger row exists for them.
+ */
+const hasCardBonusTransaction = (
+  transactions: Pick<Tables<'credit_transactions'>, 'type'>[],
+): boolean => transactions.some((t) => t.type === 'card_bonus');
+
+/**
+ * "New-regime" users received the reduced 1,000 freemium signup grant (not the
+ * legacy 10,000). The freemium amount is the sole new-regime signal —
+ * `add_credits_trigger` (which used to write a second, ambiguous freemium row)
+ * was dropped in the same migration that lowered the grant, so a 1,000
+ * freemium row unambiguously means new-regime.
+ */
+const isNewRegimeUser = (
+  transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
+): boolean =>
+  transactions.some((t) => t.type === 'freemium' && Number(t.amount) === 1000);
+
+/**
  * Eligibility for the card-on-file credit bonus CTA/banner: not yet
- * claimed, hasn't paid, and is a "new-regime" user (received the 1,000
- * freemium grant, not the legacy 10,000). The freemium amount is the sole
- * new-regime signal — `add_credits_trigger` (which used to write a second,
- * ambiguous freemium row) was dropped in the same migration that lowered
- * the grant, so a 1,000 freemium row unambiguously means new-regime.
+ * claimed, hasn't paid, and is a new-regime user.
  *
  * Pure so callers that already have a user's transactions loaded (e.g. the
  * dashboard layout) can reuse it without an extra query.
@@ -753,15 +769,33 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 export function computeCardBonusEligibility(
   transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
 ): boolean {
-  const hasClaimed = transactions.some((t) => t.type === 'card_bonus');
   const hasPaid = transactions.some(
     (t) => t.type === 'purchase' || t.type === 'topup',
   );
-  const isNewRegimeUser = transactions.some(
-    (t) => t.type === 'freemium' && Number(t.amount) === 1000,
-  );
 
-  return !(hasClaimed || hasPaid) && isNewRegimeUser;
+  return (
+    !(hasCardBonusTransaction(transactions) || hasPaid) &&
+    isNewRegimeUser(transactions)
+  );
+}
+
+/**
+ * Eligibility for auto-granting the card-on-file bonus when a new-regime user
+ * makes their first *direct payment* (top-up or subscription), mirroring the
+ * add-a-card CTA. Paying is the trigger here, so — unlike the CTA — a
+ * prior/concurrent payment does NOT disqualify: we only require a new-regime
+ * user who hasn't already been granted the bonus. The global one-card-one-bonus
+ * fingerprint dedupe and the per-user uniqueness guard are enforced downstream
+ * by `insertCardBonusCreditTransaction`.
+ *
+ * Pure so it can be unit-tested and reused without a DB round-trip.
+ */
+export function computeCardBonusOnPaymentEligibility(
+  transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
+): boolean {
+  return (
+    isNewRegimeUser(transactions) && !hasCardBonusTransaction(transactions)
+  );
 }
 
 export const isEligibleForCardBonus = async (
@@ -777,6 +811,26 @@ export const isEligibleForCardBonus = async (
   if (error) throw error;
 
   return computeCardBonusEligibility(data ?? []);
+};
+
+/**
+ * Whether a direct payment should also auto-grant the card-on-file bonus.
+ * Runs from the Stripe webhook (no user session), so it uses the admin client
+ * to read the ledger regardless of RLS.
+ */
+export const isEligibleForCardBonusOnPayment = async (
+  userId: string,
+): Promise<boolean> => {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('type, amount')
+    .eq('user_id', userId)
+    .in('type', ['card_bonus', 'freemium']);
+
+  if (error) throw error;
+
+  return computeCardBonusOnPaymentEligibility(data ?? []);
 };
 
 /**

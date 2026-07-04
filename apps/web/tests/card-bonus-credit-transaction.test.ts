@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   computeCardBonusEligibility,
+  computeCardBonusOnPaymentEligibility,
   insertCardBonusCreditTransaction,
 } from '@/lib/supabase/queries';
 
@@ -205,5 +206,51 @@ describe('computeCardBonusEligibility()', () => {
 
   it('is not eligible without any freemium row', () => {
     expect(computeCardBonusEligibility([])).toBe(false);
+  });
+});
+
+describe('computeCardBonusOnPaymentEligibility()', () => {
+  it('is eligible for a new-regime user who has not claimed the bonus', () => {
+    expect(
+      computeCardBonusOnPaymentEligibility([
+        { type: 'freemium', amount: 1000 },
+      ]),
+    ).toBe(true);
+  });
+
+  it('stays eligible even after the user has paid (paying is the trigger)', () => {
+    expect(
+      computeCardBonusOnPaymentEligibility([
+        { type: 'freemium', amount: 1000 },
+        { type: 'topup', amount: 5000 },
+      ]),
+    ).toBe(true);
+    expect(
+      computeCardBonusOnPaymentEligibility([
+        { type: 'freemium', amount: 1000 },
+        { type: 'purchase', amount: 25_000 },
+      ]),
+    ).toBe(true);
+  });
+
+  it('is not eligible for legacy 10,000-credit freemium users', () => {
+    expect(
+      computeCardBonusOnPaymentEligibility([
+        { type: 'freemium', amount: 10_000 },
+      ]),
+    ).toBe(false);
+  });
+
+  it('is not eligible once the bonus was already granted', () => {
+    expect(
+      computeCardBonusOnPaymentEligibility([
+        { type: 'freemium', amount: 1000 },
+        { type: 'card_bonus', amount: 9000 },
+      ]),
+    ).toBe(false);
+  });
+
+  it('is not eligible without any freemium row', () => {
+    expect(computeCardBonusOnPaymentEligibility([])).toBe(false);
   });
 });
