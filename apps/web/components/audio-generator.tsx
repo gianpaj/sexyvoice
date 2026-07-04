@@ -402,6 +402,7 @@ export function AudioGenerator({
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
+      split = false,
     ): Promise<string> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
@@ -416,6 +417,7 @@ export function AudioGenerator({
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
           ...(seed === undefined ? {} : { seed }),
+          split,
         }),
         signal,
       });
@@ -498,6 +500,7 @@ export function AudioGenerator({
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
+      split = false,
     ): Promise<string> => {
       const useStream =
         isGeminiVoice &&
@@ -508,7 +511,7 @@ export function AudioGenerator({
       if (useStream) {
         return requestGenerateVoiceStream(segmentText, signal);
       }
-      return requestGenerateVoiceJson(segmentText, signal, seed);
+      return requestGenerateVoiceJson(segmentText, signal, seed, split);
     },
     [
       isGeminiVoice,
@@ -529,7 +532,7 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(t('success'));
-  }, [t('success'), requestGenerateVoice, selectedVoice, text]);
+  }, [requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -586,6 +589,8 @@ export function AudioGenerator({
         const generatedUrl = await requestGenerateVoice(
           currentSegmentTexts[index],
           abortController.current.signal,
+          undefined,
+          true,
         );
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
@@ -634,10 +639,6 @@ export function AudioGenerator({
       toast.success(t('success'));
     }
   }, [
-    t('error'),
-    t('success'),
-    t('split.segmentCannotBeEmpty'),
-    t('split.segmentFailed'),
     markSegmentFailed,
     markSegmentGenerating,
     markSegmentIdle,
@@ -682,8 +683,6 @@ export function AudioGenerator({
       setIsGenerating(false);
     }
   }, [
-    t('error'),
-    t('split.tooManySegments'),
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
@@ -719,6 +718,7 @@ export function AudioGenerator({
           segment.text,
           retryAbortController.current.signal,
           seed,
+          true,
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
@@ -756,9 +756,6 @@ export function AudioGenerator({
       }
     },
     [
-      t('error'),
-      t('split.segmentGenerated'),
-      t('split.segmentRetryFailed'),
       dismissGenerationProgressToast,
       isGenerating,
       markSegmentFailed,
@@ -1011,14 +1008,7 @@ export function AudioGenerator({
 
       return value;
     },
-    [
-      canEstimateCredits,
-      t('error'),
-      t('errorEstimating'),
-      isGeminiVoice,
-      selectedStyle,
-      selectedVoice,
-    ],
+    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice],
   );
 
   const handleEstimateCredits = async () => {

@@ -1,8 +1,10 @@
 {
   "name": "@sexyvoice/scripts",
   "dependencies": {
+    "@ai-sdk/xai": "3.0.96",
     "@google/genai": "1.19.0",
     "@supabase/supabase-js": "catalog:",
+    "ai": "catalog:",
     "disposable-email-domains-js": "^1.21.0",
     "dotenv": "^16.6.1"
   },
@@ -11,6 +13,8 @@
   },
   "private": true,
   "scripts": {
+    "analyze-call-sessions": "node analyze-call-sessions.mjs",
+    "backfill-call-analysis": "node backfill-call-analysis.mjs",
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
     "generate-gemini-speech-samples": "node generate-gemini-speech-samples.mjs",
     "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",

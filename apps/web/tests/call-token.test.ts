@@ -63,7 +63,7 @@ describe('call-token API validation', () => {
         language: 'en' as const,
         sceneInstructions: 'Use the late-night train setting.',
         selectedPresetId: null,
-        selectedSceneId: 'stranger-on-the-train',
+        selectedSceneId: 'bartender-after-closing',
         sessionConfig: {
           model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
