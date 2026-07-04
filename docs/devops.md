@@ -10,7 +10,7 @@ For architecture and product context, see [`ARCHITECTURE.md`](../ARCHITECTURE.md
 ## Monorepo Layout
 
 - `apps/web` contains the Next.js app package, `@sexyvoice/web`.
-- `apps/docs` contains the Mintlify docs site for `docs.sexyvoice.ai`.
+- `apps/docs` contains the Fumadocs docs site for `docs.sexyvoice.ai`.
 - `scripts` contains operational one-off scripts as `@sexyvoice/scripts`.
 - Root package scripts run through Turborepo.
 
@@ -283,15 +283,17 @@ Used for:
 
 ## Deployment Notes
 
-### Mintlify
+### Docs site (Fumadocs)
 
-- Docs are deployed from `apps/docs`.
-- In Mintlify Git Settings, point the project at this monorepo repository and
-  the production branch.
-- Enable Mintlify monorepo mode.
-- Set the documentation path to `/apps/docs` with no trailing slash.
-- Keep the existing `docs.sexyvoice.ai` custom domain and Mintlify GitHub App
-  installation connected to the repository/branch used for docs deployments.
+- The docs site is a Fumadocs (Next.js) app in `apps/docs`, deployed to
+  `docs.sexyvoice.ai` as its own Vercel project (separate from the web app).
+- Set the Vercel project Root Directory to `apps/docs`; the build runs
+  `next build` (which regenerates the OpenAPI reference via
+  `generate-openapi-docs`).
+- `apps/docs/vercel.json` sets an `ignoreCommand` that skips the deploy when the
+  latest commit message contains `skip deploy`, `skip ci`, or `skip docs`.
+- Keep the `docs.sexyvoice.ai` custom domain and the Vercel GitHub App
+  connected to the repository/branch used for docs deployments.
 
 ### Supabase
 
