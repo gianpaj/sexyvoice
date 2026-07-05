@@ -16,6 +16,7 @@
     "analyze-call-sessions": "node analyze-call-sessions.mjs",
     "backfill-call-analysis": "node backfill-call-analysis.mjs",
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
+    "find-truncated-gemini31-tts": "node find-truncated-gemini31-tts.mjs",
     "generate-gemini-speech-samples": "node generate-gemini-speech-samples.mjs",
     "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
     "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",

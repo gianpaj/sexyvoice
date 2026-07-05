@@ -249,6 +249,94 @@ Requires `.env` or `.env.local` with:
 
 ---
 
+## Find Truncated Gemini 3.1 Flash TTS Script
+
+Read-only Node.js script that finds `gemini-3.1-flash-tts-preview` `audio_files`
+whose audio was truncated — the model rendered only a few seconds of a much
+longer transcript, yet the user was billed for the full input text. Use it to
+size and issue refunds when a user reports "the audio wasn't generated properly
+and I was charged too many credits."
+
+### Why these are over-charges
+
+Gemini TTS credits are `ceil(totalTokenCount * 1.1 * multiplier)` where
+`totalTokenCount = promptTokenCount + candidatesTokenCount` (see
+`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). When the model fails to
+voice the whole script, `promptTokenCount` (the input it read) is still large,
+so the user pays for text that was never turned into audio.
+
+### Detection signal
+
+The transcript stored in `audio_files.text_content` (everything after the
+`## TRANSCRIPT` marker, see `apps/web/lib/tts/gemini-prompt.ts`) is the text that
+_should_ have been spoken. Dividing its character count by the audio `duration`
+gives chars-per-second. Natural speech tops out around ~25 cps, so any file well
+above the threshold was truncated:
+
+- bad : `~2400 spoken chars / 7.08s ≈ 340 cps` → truncated
+- good: `~1050 spoken chars / 70.24s ≈ 15 cps` → normal
+
+Rows with `duration = -1` (the "couldn't measure" sentinel) are listed
+separately as `unknown-duration` and are not flagged.
+
+### Quick Start
+
+```bash
+# Scan just the complaining user
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
+
+# Scope to files created since a date
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id> --since 2026-06-01
+
+# Scan all users
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
+```
+
+### CLI Options
+
+- `--user <uuid>` — only scan this `user_id` (default: all users)
+- `--threshold <cps>` — flag when spoken chars-per-second exceeds this
+  (default: `30`, comfortably above natural speech)
+- `--min-chars <n>` — ignore clips whose transcript is shorter than this, to
+  avoid noise on tiny generations (default: `150`)
+- `--normal-cps <cps>` — assumed natural rate used to compute the expected
+  duration and the "delivered %" column (default: `15`)
+- `--active-only` — skip soft-deleted rows (`deleted_at` not null)
+- `--since <date>` — only scan files created on/after this date/timestamp
+  (ISO-parseable, e.g. `2026-06-01` or `2026-06-01T00:00:00Z`); default scans
+  the user's entire history for the model
+- `--paid-only` — only scan users who have paid (have a `purchase`/`topup`
+  credit transaction, matching `hasUserPaid`). Freemium-only users can't be
+  refunded, so this keeps the refund commands runnable
+- `--out <path>` — JSON report path (default: `./truncated-gemini31-tts.json`)
+- `--reason <text>` — refund reason printed in the generated refund commands
+
+### Output
+
+- A per-file table (worst first) with chars/sec, duration, spoken chars,
+  delivered %, credits billed, and the audio-out/text-in token ratio.
+- A **refund exposure by user** rollup (total credits billed for truncated
+  files).
+- A **refund commands** block: one ready-to-run
+  `pnpm --filter @sexyvoice/scripts refund-credits -- <user-id>` per affected
+  user, annotated with the exact prompt answers to issue a credits-only
+  ("platform bug") refund — press Enter to skip transaction selection (no USD
+  refund), enter the total credits, then the reason.
+- A JSON report (`report.byUser[]` carries the `command`, `credits`, `reason`,
+  and file `ids`) plus the full `truncated` and `unknownDuration` lists.
+
+Review the flagged rows before refunding, then run the printed commands. Because
+`refund-credits.mts` takes only the user id on the CLI and asks for the credit
+amount and reason interactively, the amount/reason are printed as annotations
+rather than passed as flags. See [Refund Credits Script](#refund-credits-script).
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` (read-only usage).
+
+---
+
 ## Refund Credits Script
 
 Interactive Node.js/TypeScript script to process credit refunds for users.
