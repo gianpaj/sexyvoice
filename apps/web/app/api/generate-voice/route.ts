@@ -924,6 +924,11 @@ export async function POST(request: Request) {
         return;
       }
 
+      const duration = await resolveDurationString(
+        generatedAudioBuffer,
+        generatedAudioMimeType,
+      );
+
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
@@ -933,10 +938,7 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: await resolveDurationString(
-          generatedAudioBuffer,
-          generatedAudioMimeType,
-        ),
+        duration,
         credits_used: creditsDebited,
         usage: {
           ...usage,
@@ -975,7 +977,7 @@ export async function POST(request: Request) {
           provider,
           textPreview: text.slice(0, 100),
           textLength: text.length,
-          isGeminiVoice,
+          duration,
           userHasPaid,
           split: isSplit,
           predictionId: replicateResponse?.id ?? null,
@@ -1433,7 +1435,7 @@ function streamGeminiTtsResponse({
           provider,
           textPreview: text.slice(0, 100),
           textLength: text.length,
-          isGeminiVoice: true,
+          duration,
           userHasPaid,
           predictionId: null,
           stream: true,
