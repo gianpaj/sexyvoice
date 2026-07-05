@@ -463,6 +463,36 @@
       "splitToggleDisabled": "La división de texto en audios está disponible para usuarios de pago.",
       "tooManySegments": "El texto dividido puede tener como máximo __COUNT__ segmentos. Acorta el texto o combina segmentos antes de generar.",
       "downloadAllFailed": "No se pudieron descargar todos los segmentos."
+    },
+    "advancedSettings": {
+      "trigger": "Avanzado",
+      "title": "Ajustes avanzados",
+      "subtitle": "Ajusta con precisión cómo se genera tu audio.",
+      "default": "Predeterminado",
+      "reset": "Restablecer",
+      "upgradeToUnlock": "Mejora tu plan para desbloquear",
+      "noSettings": "No hay ajustes avanzados para esta voz.",
+      "seed": {
+        "label": "Semilla",
+        "description": "Fija una semilla para obtener resultados reproducibles. Déjala vacía para una semilla aleatoria.",
+        "placeholder": "Aleatoria",
+        "randomize": "Semilla aleatoria"
+      },
+      "streaming": {
+        "label": "Transmisión",
+        "description": "Transmite el audio a medida que se genera (solo Gemini 3.1).",
+        "auto": "Automático",
+        "on": "Activado",
+        "off": "Desactivado"
+      },
+      "temperature": {
+        "label": "Temperatura",
+        "description": "Los valores más altos hacen que la interpretación sea más variada y expresiva."
+      },
+      "speed": {
+        "label": "Velocidad",
+        "description": "Ajusta la rapidez con la que habla la voz."
+      }
     }
   },
   "call": {

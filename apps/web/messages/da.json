@@ -463,6 +463,36 @@
       "splitToggleDisabled": "Opdeling af tekst i lydfiler er tilgængelig for betalende brugere.",
       "tooManySegments": "Opdelt tekst må højst have __COUNT__ segmenter. Forkort teksten eller saml segmenter, før du genererer.",
       "downloadAllFailed": "Kunne ikke downloade alle segmenter."
+    },
+    "advancedSettings": {
+      "trigger": "Avanceret",
+      "title": "Avancerede indstillinger",
+      "subtitle": "Finjustér, hvordan din lyd genereres.",
+      "default": "Standard",
+      "reset": "Nulstil",
+      "upgradeToUnlock": "Opgradér for at låse op",
+      "noSettings": "Ingen avancerede indstillinger for denne stemme.",
+      "seed": {
+        "label": "Seed",
+        "description": "Fastlås et seed for reproducerbare resultater. Lad feltet stå tomt for et tilfældigt seed.",
+        "placeholder": "Tilfældig",
+        "randomize": "Tilfældigt seed"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Stream lyd, mens den genereres (kun Gemini 3.1).",
+        "auto": "Auto",
+        "on": "Til",
+        "off": "Fra"
+      },
+      "temperature": {
+        "label": "Temperatur",
+        "description": "Højere værdier gør oplæsningen mere varieret og udtryksfuld."
+      },
+      "speed": {
+        "label": "Hastighed",
+        "description": "Justér, hvor hurtigt stemmen taler."
+      }
     }
   },
   "call": {
