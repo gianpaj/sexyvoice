@@ -51,9 +51,9 @@ const opaqueBrowserEventRejectionPattern =
 const injectedBrowserGlobalPattern =
   /(?:Can't find variable: __firefox__|window\.__firefox__|window\.ethereum\.selectedAddress)/i;
 const externalWorkerImportPattern =
-  /Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https?:\/\/(?!([^/]+\.)?sexyvoice\.ai\/)[^']+' failed to load/i;
+  /Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https?:\/\/(?!([^/]+\.)?sexyvoice\.ai\/)(?![^']*\/_next\/static\/chunks\/)[^']+' failed to load/i;
 const staleNextWorkerImportPattern =
-  /Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https?:\/\/(www\.)?sexyvoice\.ai\/_next\/static\/chunks\/[^']+' failed to load/i;
+  /Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https?:\/\/[^']+\/_next\/static\/chunks\/[^']+' failed to load/i;
 const webViewBridgeNoisePattern =
   /WKWebView API client did not respond to this postMessage/i;
 const transientBrowserNetworkPattern =

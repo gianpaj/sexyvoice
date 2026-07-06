@@ -495,6 +495,29 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'Error',
+              value:
+                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice-git-fix-sentry.vercel.app/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'app:///_next/static/chunks/turbopack-worker-0g5kymvzkx-yr.js',
+                    function: 'global code',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
   });
 
   it('does not drop injected browser global text with app frames', () => {
