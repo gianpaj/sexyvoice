@@ -225,6 +225,24 @@ export function createExternalApiOpenApiDocument() {
                       style: 'happy',
                     },
                   },
+                  gemini_with_temperature: {
+                    summary: 'Gemini voice with sampling temperature',
+                    value: {
+                      model: 'gpro',
+                      input: 'Hello from SexyVoice API',
+                      voice: 'achernar',
+                      temperature: 1.2,
+                    },
+                  },
+                  grok_with_speed: {
+                    summary: 'Grok voice with speech speed',
+                    value: {
+                      model: 'xai',
+                      input: 'Hello from Grok!',
+                      voice: 'eve',
+                      speed: 1.2,
+                    },
+                  },
                   by_voice_id: {
                     summary: 'Generate with a voice ID from /api/v1/voices',
                     value: {

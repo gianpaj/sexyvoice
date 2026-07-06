@@ -65,6 +65,22 @@ export const VoiceGenerationRequestSchema = z
       .describe(
         'Optional deterministic seed for providers that support it (e.g. Gemini)',
       ),
+    temperature: z
+      .number()
+      .min(0)
+      .max(2)
+      .optional()
+      .describe(
+        'Sampling temperature for Gemini voices (gpro/gpro31). Range 0-2; higher is more expressive. Ignored by other models.',
+      ),
+    speed: z
+      .number()
+      .min(0.7)
+      .max(1.5)
+      .optional()
+      .describe(
+        'Speech speed multiplier for Grok (xai) voices. Range 0.7-1.5. Ignored by other models.',
+      ),
   })
   .superRefine((data, ctx) => {
     const hasVoiceId = data.voiceId !== undefined;

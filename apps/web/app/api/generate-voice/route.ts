@@ -40,7 +40,7 @@ import {
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
-import { generateXaiTts } from '@/lib/tts/xai';
+import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -262,6 +262,18 @@ export async function POST(request: Request) {
       seed = body.seed;
     }
 
+    // Advanced generation settings. `seed` and `temperature` (Gemini) are paid
+    // features and are gated by `userHasPaid` below; `speed` (Grok) is available
+    // to everyone and is clamped to the supported range before use.
+    const requestedTemperature =
+      typeof body.temperature === 'number' && Number.isFinite(body.temperature)
+        ? Math.min(2, Math.max(0, body.temperature))
+        : undefined;
+    const requestedSpeed =
+      typeof body.speed === 'number' && Number.isFinite(body.speed)
+        ? body.speed
+        : undefined;
+
     if (!(text && voiceId)) {
       logger.error('Missing required parameters: text or voiceId', {
         hasText: Boolean(text),
@@ -329,6 +341,19 @@ export async function POST(request: Request) {
     }
 
     userHasPaid = await hasUserPaid(user.id);
+
+    // Seed and temperature are paid-only knobs: ignore them for free users even
+    // if the client forged them into the request. Manual seed is UI-locked and
+    // the only other seed source (segment retries) is itself paid-only, so this
+    // never strips a seed a free user legitimately set.
+    if (!userHasPaid) {
+      seed = undefined;
+    }
+    const temperature = userHasPaid ? requestedTemperature : undefined;
+    // Clamp speed to the supported range before it reaches the cache key, so
+    // out-of-range values (e.g. speed=100) can't mint unbounded distinct cache
+    // entries that all collapse to the same clamped audio on generation.
+    const speed = normalizeXaiTtsSpeed(requestedSpeed);
 
     // Enforce per-tier input limits on the RAW transcript and style before
     // combining them, so the attacker-controlled (and otherwise unbounded)
@@ -441,10 +466,19 @@ export async function POST(request: Request) {
       ? resolveGeminiTtsModel({ model: voiceObj.model, userHasPaid })
       : voiceObj.model;
 
-    const hashInput =
+    // Keep the base key stable so requests without advanced settings keep
+    // hitting the existing cache; only seeded/temperature/speed variants get a
+    // distinct entry so they never collide with the default output.
+    let hashInput =
       seed === undefined
         ? `${text}-${voiceObj.name}-${effectiveModel}`
         : `${text}-${voiceObj.name}-${effectiveModel}-${seed}`;
+    if (temperature !== undefined) {
+      hashInput += `-temp:${temperature}`;
+    }
+    if (speed !== undefined) {
+      hashInput += `-speed:${speed}`;
+    }
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -524,6 +558,7 @@ export async function POST(request: Request) {
       const geminiTTSConfig = buildGeminiTtsConfig({
         voiceName: voiceObj.name,
         seed,
+        temperature,
         abortSignal: abortController.signal,
       });
 
@@ -790,6 +825,7 @@ export async function POST(request: Request) {
           voiceId: voiceObj.name,
           language: selectedLanguage || voiceObj.language,
           codec: outputCodec,
+          speed,
           signal: abortController.signal,
         });
         selectedGrokCodec = codec;
