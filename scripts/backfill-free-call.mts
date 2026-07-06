@@ -15,31 +15,31 @@ config({
 
 interface CliOptions {
   dryrun: boolean;
-  limit?: number;
   help: boolean;
+  limit?: number;
 }
 
 interface CallSession {
-  id: string;
-  user_id: string;
-  started_at: string;
   free_call: boolean | null;
+  id: string;
+  started_at: string;
+  user_id: string;
 }
 
 interface CreditTransaction {
-  user_id: string;
-  type: string;
   created_at: string;
+  type: string;
+  user_id: string;
 }
 
 interface UpdateResult {
   callId: string;
-  userId: string;
-  startedAt: string;
-  previousValue: boolean | null;
-  newValue: boolean;
   changed: boolean;
   error?: string;
+  newValue: boolean;
+  previousValue: boolean | null;
+  startedAt: string;
+  userId: string;
 }
 
 // ---------------------------------------------------------------------------

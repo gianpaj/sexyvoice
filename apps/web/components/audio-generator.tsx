@@ -25,6 +25,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  DEFAULT_GENERATION_SETTINGS,
+  type GenerationSettings,
+} from '@/hooks/use-generation-settings';
+import {
   estimateTokenCount,
   GEMINI_CHARS_PER_TOKEN,
   GEMINI_STREAMING_ENABLED,
@@ -219,6 +223,7 @@ interface AudioGeneratorProps {
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
+  settings?: GenerationSettings;
 }
 
 type GenerateTranslator = ReturnType<typeof useTranslations<'generate'>>;
@@ -264,6 +269,7 @@ export function AudioGenerator({
   isPaidUser,
   selectedStyle,
   selectedVoice,
+  settings = DEFAULT_GENERATION_SETTINGS,
 }: AudioGeneratorProps) {
   const t = useTranslations('generate');
   const [text, setText] = useState('');
@@ -402,10 +408,18 @@ export function AudioGenerator({
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
+      split = false,
     ): Promise<string> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
+
+      // An explicit seed argument (e.g. a segment retry re-roll) wins; otherwise
+      // fall back to the user's pinned seed — but only for Gemini, which is the
+      // only provider that uses it. Sending it on Grok/Replicate would do
+      // nothing but fragment their cache and force needless regenerations.
+      const effectiveSeed =
+        seed ?? (isGeminiVoice ? (settings.seed ?? undefined) : undefined);
 
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
@@ -415,7 +429,14 @@ export function AudioGenerator({
           voiceId: selectedVoice.id,
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
-          ...(seed === undefined ? {} : { seed }),
+          ...(effectiveSeed === undefined ? {} : { seed: effectiveSeed }),
+          ...(isGeminiVoice && settings.temperature !== null
+            ? { temperature: settings.temperature }
+            : {}),
+          ...(isGrokVoice && settings.speed !== null
+            ? { speed: settings.speed }
+            : {}),
+          split,
         }),
         signal,
       });
@@ -434,6 +455,9 @@ export function AudioGenerator({
       selectedGrokLanguage,
       selectedStyle,
       selectedVoice,
+      settings.seed,
+      settings.speed,
+      settings.temperature,
     ],
   );
 
@@ -451,6 +475,10 @@ export function AudioGenerator({
           voiceId: selectedVoice.id,
           styleVariant: selectedStyle ?? '',
           stream: true,
+          ...(settings.seed === null ? {} : { seed: settings.seed }),
+          ...(settings.temperature === null
+            ? {}
+            : { temperature: settings.temperature }),
         }),
         signal,
       });
@@ -490,6 +518,8 @@ export function AudioGenerator({
       resetStream,
       selectedStyle,
       selectedVoice,
+      settings.seed,
+      settings.temperature,
     ],
   );
 
@@ -498,17 +528,26 @@ export function AudioGenerator({
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
+      split = false,
     ): Promise<string> => {
+      // `auto` keeps the length-based heuristic; `on`/`off` are explicit
+      // overrides. Streaming only applies to gpro31 in the non-split path.
+      let shouldStream = segmentText.length > STREAM_TEXT_THRESHOLD;
+      if (settings.streamMode === 'on') {
+        shouldStream = true;
+      } else if (settings.streamMode === 'off') {
+        shouldStream = false;
+      }
       const useStream =
         isGeminiVoice &&
         isStreamingModel &&
         !shouldUseSplitMode &&
-        segmentText.length > STREAM_TEXT_THRESHOLD;
+        shouldStream;
 
       if (useStream) {
         return requestGenerateVoiceStream(segmentText, signal);
       }
-      return requestGenerateVoiceJson(segmentText, signal, seed);
+      return requestGenerateVoiceJson(segmentText, signal, seed, split);
     },
     [
       isGeminiVoice,
@@ -516,6 +555,7 @@ export function AudioGenerator({
       requestGenerateVoiceJson,
       requestGenerateVoiceStream,
       shouldUseSplitMode,
+      settings.streamMode,
     ],
   );
 
@@ -529,7 +569,7 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(t('success'));
-  }, [t('success'), requestGenerateVoice, selectedVoice, text]);
+  }, [requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -586,6 +626,8 @@ export function AudioGenerator({
         const generatedUrl = await requestGenerateVoice(
           currentSegmentTexts[index],
           abortController.current.signal,
+          undefined,
+          true,
         );
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
@@ -634,10 +676,6 @@ export function AudioGenerator({
       toast.success(t('success'));
     }
   }, [
-    t('error'),
-    t('success'),
-    t('split.segmentCannotBeEmpty'),
-    t('split.segmentFailed'),
     markSegmentFailed,
     markSegmentGenerating,
     markSegmentIdle,
@@ -682,8 +720,6 @@ export function AudioGenerator({
       setIsGenerating(false);
     }
   }, [
-    t('error'),
-    t('split.tooManySegments'),
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
@@ -719,6 +755,7 @@ export function AudioGenerator({
           segment.text,
           retryAbortController.current.signal,
           seed,
+          true,
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
@@ -756,9 +793,6 @@ export function AudioGenerator({
       }
     },
     [
-      t('error'),
-      t('split.segmentGenerated'),
-      t('split.segmentRetryFailed'),
       dismissGenerationProgressToast,
       isGenerating,
       markSegmentFailed,
@@ -1011,14 +1045,7 @@ export function AudioGenerator({
 
       return value;
     },
-    [
-      canEstimateCredits,
-      t('error'),
-      t('errorEstimating'),
-      isGeminiVoice,
-      selectedStyle,
-      selectedVoice,
-    ],
+    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice],
   );
 
   const handleEstimateCredits = async () => {

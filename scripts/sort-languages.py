@@ -836,7 +836,8 @@ def main() -> None:
                     and question.get("question")
                     == target_questions["speech_generation"]
                 ):
-                    question["answer"] = build_speech_generation_answer(filename)
+                    question["answer"] = build_speech_generation_answer(
+                        filename)
 
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

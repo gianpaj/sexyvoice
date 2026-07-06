@@ -4,8 +4,21 @@ export interface GenerateXaiTtsInput {
   codec?: XaiTtsCodec;
   language: string;
   signal?: AbortSignal;
+  /** Speech speed multiplier. Clamped to the xAI-supported 0.7–1.5 range. */
+  speed?: number;
   text: string;
   voiceId: string;
+}
+
+const XAI_TTS_MIN_SPEED = 0.7;
+const XAI_TTS_MAX_SPEED = 1.5;
+
+/** Clamp a speed multiplier to the range the xAI TTS API accepts. */
+export function normalizeXaiTtsSpeed(speed?: number): number | undefined {
+  if (typeof speed !== 'number' || Number.isNaN(speed)) {
+    return;
+  }
+  return Math.min(XAI_TTS_MAX_SPEED, Math.max(XAI_TTS_MIN_SPEED, speed));
 }
 
 export interface GenerateXaiTtsResult {
@@ -94,6 +107,7 @@ export async function generateXaiTts({
   voiceId,
   language,
   codec,
+  speed,
   signal,
 }: GenerateXaiTtsInput): Promise<GenerateXaiTtsResult> {
   const apiKey = process.env.XAI_API_KEY;
@@ -106,6 +120,7 @@ export async function generateXaiTts({
 
   const normalizedCodec = normalizeXaiTtsCodec(codec);
   const normalizedLanguage = normalizeXaiTtsLanguage(language);
+  const normalizedSpeed = normalizeXaiTtsSpeed(speed);
 
   const response = await fetch(XAI_TTS_URL, {
     method: 'POST',
@@ -120,6 +135,7 @@ export async function generateXaiTts({
       output_format: {
         codec: normalizedCodec,
       },
+      ...(normalizedSpeed === undefined ? {} : { speed: normalizedSpeed }),
     }),
     signal,
   });

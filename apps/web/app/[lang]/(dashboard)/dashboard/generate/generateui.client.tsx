@@ -3,7 +3,9 @@
 import { useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
+import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
 import { VoiceSelector } from '@/components/voice-selector';
+import { useGenerationSettings } from '@/hooks/use-generation-settings';
 import { getTtsProvider } from '@/lib/utils';
 import { getFeaturedVoice } from '@/lib/voices';
 import { AudioProvider } from '../clone/audio-provider';
@@ -26,12 +28,22 @@ export function GenerateUI({
     getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '';
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
+  const { settings, updateSettings, resetSettings } = useGenerationSettings();
   const selectedVoiceSample = publicVoices.find(
     (file) => file.id === selectedVoice,
   );
   const isGeminiVoice = getTtsProvider(selectedVoiceSample?.model) === 'gemini';
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex justify-end">
+        <GenerationSettingsPanel
+          isPaidUser={isPaidUser}
+          resetSettings={resetSettings}
+          selectedVoice={selectedVoiceSample}
+          settings={settings}
+          updateSettings={updateSettings}
+        />
+      </div>
       <VoiceSelector
         isPaidUser={isPaidUser}
         publicVoices={publicVoices}
@@ -46,6 +58,7 @@ export function GenerateUI({
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
+          settings={settings}
         />
       </AudioProvider>
     </div>

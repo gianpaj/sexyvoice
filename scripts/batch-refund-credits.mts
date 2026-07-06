@@ -7,20 +7,20 @@ import { config } from 'dotenv';
 config({ path: ['.env', '.env.local'] });
 
 interface DupeRow {
-  sourceId: string;
-  userId: string;
+  duplicateCredits: number;
   eventCount: number;
   firstEventAt: string;
   lastEventAt: string;
-  duplicateCredits: number;
+  sourceId: string;
+  userId: string;
 }
 
 interface RefundResult {
-  sourceId: string;
-  userId: string;
   credits: number;
-  status: 'ok' | 'skipped' | 'error';
   reason?: string;
+  sourceId: string;
+  status: 'ok' | 'skipped' | 'error';
+  userId: string;
 }
 
 function createAdminClient() {
@@ -81,7 +81,9 @@ function parseCsv(filePath: string): DupeRow[] {
     const duplicateCredits = Number.parseInt(fields[iDupCredits], 10);
 
     if (Number.isNaN(duplicateCredits) || duplicateCredits <= 0) {
-      console.warn(`  Row ${i}: skipping — invalid duplicate_credits: ${fields[iDupCredits]}`);
+      console.warn(
+        `  Row ${i}: skipping — invalid duplicate_credits: ${fields[iDupCredits]}`,
+      );
       continue;
     }
 
@@ -158,7 +160,9 @@ async function main() {
 
   const rl = createInterface({ input, output });
 
-  const confirm = (await rl.question('Proceed? (yes/no): ')).trim().toLowerCase();
+  const confirm = (await rl.question('Proceed? (yes/no): '))
+    .trim()
+    .toLowerCase();
   rl.close();
 
   if (confirm !== 'yes') {
@@ -179,20 +183,41 @@ async function main() {
 
     if (isDryRun) {
       console.log('(dry run)');
-      results.push({ sourceId: row.sourceId, userId: row.userId, credits: row.duplicateCredits, status: 'skipped', reason: 'dry run' });
+      results.push({
+        sourceId: row.sourceId,
+        userId: row.userId,
+        credits: row.duplicateCredits,
+        status: 'skipped',
+        reason: 'dry run',
+      });
       continue;
     }
 
     try {
-      await applyPlatformBugRefund(row.userId, row.duplicateCredits, row.sourceId);
+      await applyPlatformBugRefund(
+        row.userId,
+        row.duplicateCredits,
+        row.sourceId,
+      );
       console.log('OK');
       okCount++;
-      results.push({ sourceId: row.sourceId, userId: row.userId, credits: row.duplicateCredits, status: 'ok' });
+      results.push({
+        sourceId: row.sourceId,
+        userId: row.userId,
+        credits: row.duplicateCredits,
+        status: 'ok',
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.log(`ERROR: ${msg}`);
       errCount++;
-      results.push({ sourceId: row.sourceId, userId: row.userId, credits: row.duplicateCredits, status: 'error', reason: msg });
+      results.push({
+        sourceId: row.sourceId,
+        userId: row.userId,
+        credits: row.duplicateCredits,
+        status: 'error',
+        reason: msg,
+      });
     }
   }
 
@@ -203,7 +228,9 @@ async function main() {
   if (errCount > 0) {
     console.log('\nFailed rows:');
     for (const r of results.filter((r) => r.status === 'error')) {
-      console.log(`  source=${r.sourceId} user=${r.userId} credits=${r.credits} — ${r.reason}`);
+      console.log(
+        `  source=${r.sourceId} user=${r.userId} credits=${r.credits} — ${r.reason}`,
+      );
     }
     process.exit(1);
   }

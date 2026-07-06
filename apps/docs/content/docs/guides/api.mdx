@@ -29,6 +29,10 @@ You can select a voice in either of two ways:
 
 ### Using `gpro` model
 
+Gemini voices (`gpro` and `gpro31`) accept an optional `temperature` (range `0`–`2`).
+Higher values make the delivery more varied and expressive; omit it to use the model
+default. `temperature` is ignored for non-Gemini voices.
+
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
@@ -38,7 +42,8 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
     "voice": "achernar",
     "input": "Hello from SexyVoice API",
     "style": "calm",
-    "seed": 1234
+    "seed": 1234,
+    "temperature": 1.2
   }'
 ```
 
@@ -75,7 +80,10 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
 
 ### Using Grok (xAI)
 
-Grok voices support both MP3 (default) and WAV output via `response_format`.
+Grok voices support both MP3 (default) and WAV output via `response_format`. They also
+accept an optional `speed` multiplier (range `0.7`–`1.5`, per the xAI TTS API) to slow
+down or speed up delivery; omit it for the default `1.0`. `speed` is ignored for
+non-Grok voices.
 
 ```bash
 curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
@@ -85,7 +93,8 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
     "model": "xai",
     "voice": "eve",
     "input": "Hello from Grok! [laugh] This is exciting.",
-    "response_format": "mp3"
+    "response_format": "mp3",
+    "speed": 1.2
   }'
 ```
 

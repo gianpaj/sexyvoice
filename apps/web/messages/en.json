@@ -472,6 +472,37 @@
       "splitToggleDisabled": "Split text audios is available for paid users.",
       "tooManySegments": "Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.",
       "downloadAllFailed": "Failed to download all segments."
+    },
+    "advancedSettings": {
+      "trigger": "Advanced",
+      "activeCount": "{count, plural, one {# changed setting} other {# changed settings}}",
+      "title": "Advanced settings",
+      "subtitle": "Fine-tune how your audio is generated.",
+      "default": "Default",
+      "reset": "Reset",
+      "upgradeToUnlock": "Upgrade to unlock",
+      "noSettings": "No advanced settings for this voice.",
+      "seed": {
+        "label": "Seed",
+        "description": "Pin a seed for reproducible results. Leave empty for a random seed.",
+        "placeholder": "Random",
+        "randomize": "Randomize seed"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Stream audio as it's generated (Gemini 3.1 only).",
+        "auto": "Auto",
+        "on": "On",
+        "off": "Off"
+      },
+      "temperature": {
+        "label": "Temperature",
+        "description": "Higher values make the delivery more varied and expressive."
+      },
+      "speed": {
+        "label": "Speed",
+        "description": "Adjust how fast the voice speaks."
+      }
     }
   },
   "call": {

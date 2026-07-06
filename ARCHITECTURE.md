@@ -16,7 +16,7 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
 - **fal.ai** – Alternative voice cloning service _(optional)_
 - **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS and Gemini 3.1 Flash TTS, text enhancement, and automatic emotion tagging
-- **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output)
+- **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output); also analyzes completed call transcripts into structured summaries
 - **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
 - **Cloudflare R2** – Scalable storage for generated audio files; two buckets: `R2_BUCKET_NAME` (dashboard) and `R2_SPEECH_API_BUCKET_NAME` (external API)
 - **Upstash Redis** – High-performance caching for audio URLs (dashboard/clone flows); rate limiting for external API keys
@@ -304,10 +304,14 @@ flowchart TD
 - `credits` – User credit balances
 - `credit_transactions` – Credit usage and purchase history
 - `call_sessions` – Real-time voice call sessions with duration, room ID, and billing info
+- `call_session_analysis` – One rich per-call analysis row (language, topic, sentiment, engagement, key requests, AI issues, notable patterns) generated from the transcript by Grok
+- `call_session_analytics` – Aggregate analysis stats per run
+- `agent_memories` – pgvector-backed voice-agent memory with hybrid (semantic + keyword) retrieval via the `match_agent_memories_hybrid` RPC
 - `usage_events` – Granular usage tracking for analytics, billing, and reporting
 - `api_keys` – External API keys; stores `key_hash` (HMAC-SHA256), `key_prefix` (first 12 chars for display), `is_active`, `expires_at`, `permissions` (JSONB scopes), `last_used_at`
 
-See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
+See `apps/web/supabase/migrations/` and `apps/web/lib/supabase/types.d.ts` for
+the full schema definitions.
 
 ## Caching Strategy
 
@@ -419,4 +423,4 @@ tests/
 ├── api-keys-routes.test.ts # API key CRUD routes
 └── \*.test.ts # Other feature test suites
 
-See [AGENTS.md](./AGENTS.md) for detailed application structure and development guidelines.
+See [AGENTS.md](./AGENTS.md) for development guidelines.

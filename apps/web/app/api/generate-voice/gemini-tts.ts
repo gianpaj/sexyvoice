@@ -10,16 +10,19 @@ import { convertToWav } from '@/lib/audio';
 export function buildGeminiTtsConfig({
   voiceName,
   seed,
+  temperature,
   abortSignal,
 }: {
   voiceName: string;
   seed?: number;
+  temperature?: number;
   abortSignal: AbortSignal;
 }): GenerateContentConfig {
   return {
     abortSignal,
     responseModalities: ['AUDIO'],
     ...(seed === undefined ? {} : { seed }),
+    ...(temperature === undefined ? {} : { temperature }),
     speechConfig: {
       voiceConfig: {
         prebuiltVoiceConfig: {

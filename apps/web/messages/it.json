@@ -472,6 +472,37 @@
       "splitToggleDisabled": "La divisione del testo in audio è disponibile per gli utenti a pagamento.",
       "tooManySegments": "Il testo diviso può avere al massimo __COUNT__ segmenti. Accorcia il testo o combina i segmenti prima di generare.",
       "downloadAllFailed": "Impossibile scaricare tutti i segmenti."
+    },
+    "advancedSettings": {
+      "trigger": "Avanzate",
+      "activeCount": "{count, plural, one {# impostazione modificata} other {# impostazioni modificate}}",
+      "title": "Impostazioni avanzate",
+      "subtitle": "Perfeziona come viene generato il tuo audio.",
+      "default": "Predefinito",
+      "reset": "Reimposta",
+      "upgradeToUnlock": "Esegui l'upgrade per sbloccare",
+      "noSettings": "Nessuna impostazione avanzata per questa voce.",
+      "seed": {
+        "label": "Seed",
+        "description": "Fissa un seed per risultati riproducibili. Lascia vuoto per un seed casuale.",
+        "placeholder": "Casuale",
+        "randomize": "Seed casuale"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Trasmetti l'audio mentre viene generato (solo Gemini 3.1).",
+        "auto": "Auto",
+        "on": "Attivo",
+        "off": "Disattivo"
+      },
+      "temperature": {
+        "label": "Temperatura",
+        "description": "Valori più alti rendono la resa più varia ed espressiva."
+      },
+      "speed": {
+        "label": "Velocità",
+        "description": "Regola la velocità con cui parla la voce."
+      }
     }
   },
   "call": {

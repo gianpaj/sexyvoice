@@ -22,7 +22,13 @@ config({
 
 // Voice IDs from https://docs.x.ai/docs/api-reference#tts
 const VOICES = [
-  { voice_id: 'yis75yfp', display_name: 'Manuel', language: 'en', gender: 'female', age: 'young' },
+  {
+    voice_id: 'yis75yfp',
+    display_name: 'Manuel',
+    language: 'en',
+    gender: 'female',
+    age: 'young',
+  },
   // { voice_id: 'om17cury', display_name: 'Irina', language: 'ru', gender: 'female', age: 'young' },
   // { voice_id: 'hqxr4yub', display_name: 'Luca', language: 'it', gender: 'female', age: 'middle-aged' },
   // { voice_id: '73xd5dum', display_name: 'Ananya', language: 'hi', gender: 'female', age: 'young' },
@@ -147,26 +153,27 @@ const VOICE_MAP = Object.fromEntries(VOICES.map((v) => [v.voice_id, v]));
 const DEFAULT_VOICES = VOICES.map((v) => v.voice_id);
 
 const DEFAULT_TEXT =
-  "<soft>Oh baby... right there...</soft> [inhale] [sigh] <build-intensity>yes, just like that, don’t you dare stop</build-intensity> [breath] <higher-pitch>mmm it’s building so deep inside me</higher-pitch>";
+  '<soft>Oh baby... right there...</soft> [inhale] [sigh] <build-intensity>yes, just like that, don’t you dare stop</build-intensity> [breath] <higher-pitch>mmm it’s building so deep inside me</higher-pitch>';
 const DEFAULT_LANGUAGE = 'en-US';
 
 const LANGUAGE_TEXTS = {
-  en:     "<soft>Oh baby... right there...</soft> [inhale] [sigh] <build-intensity>yes, just like that, don’t you dare stop</build-intensity> [breath] <higher-pitch>mmm it’s building so deep inside me</higher-pitch>",
-  ru:     "<soft>О боже... вот так...</soft> [inhale] [sigh] <build-intensity>да, именно так, только не останавливайся</build-intensity> [breath] <higher-pitch>ммм, это нарастает так глубоко во мне</higher-pitch>",
-  it:     "<soft>Oh tesoro... proprio lì...</soft> [inhale] [sigh] <build-intensity>sì, proprio così, non osare fermarti</build-intensity> [breath] <higher-pitch>mmm si accumula così profondo dentro di me</higher-pitch>",
-  hi:     "<soft>ओह बेबी... वहीं पर...</soft> [inhale] [sigh] <build-intensity>हाँ, बिल्कुल ऐसे, रुकने की हिम्मत मत करना</build-intensity> [breath] <higher-pitch>म्म्म यह मेरे अंदर इतनी गहराई में बन रहा है</higher-pitch>",
-  fr:     "<soft>Oh chéri... juste là...</soft> [inhale] [sigh] <build-intensity>oui, exactement comme ça, n’ose pas t’arrêter</build-intensity> [breath] <higher-pitch>mmm ça monte si profond en moi</higher-pitch>",
-  da:     "<soft>Åh skat... lige der...</soft> [inhale] [sigh] <build-intensity>ja, ligesom det, vov ikke at stoppe</build-intensity> [breath] <higher-pitch>mmm det bygger sig op så dybt inde i mig</higher-pitch>",
-  tr:     "<soft>Oh bebeğim... tam orada...</soft> [inhale] [sigh] <build-intensity>evet, işte böyle, durmaya cesaret etme</build-intensity> [breath] <higher-pitch>mmm içimde çok derinlerde birikiyor</higher-pitch>",
-  ja:     "<soft>ああ、ベイビー... そこよ...</soft> [inhale] [sigh] <build-intensity>そう、ちょうどそんな感じ、絶対に止めないで</build-intensity> [breath] <higher-pitch>んん... 奥深くで高まってきてる</higher-pitch>",
-  fi:     "<soft>Oi kultaseni... juuri siellä...</soft> [inhale] [sigh] <build-intensity>kyllä, juuri noin, älä uskalla lopettaa</build-intensity> [breath] <higher-pitch>mmm se rakentuu niin syvälle minussa</higher-pitch>",
-  pl:     "<soft>O boże... właśnie tam...</soft> [inhale] [sigh] <build-intensity>tak, dokładnie tak, nie waż się przestawać</build-intensity> [breath] <higher-pitch>mmm to narasta tak głęboko we mnie</higher-pitch>",
-  pt:     "<soft>Oh querido... bem ali...</soft> [inhale] [sigh] <build-intensity>sim, exatamente assim, não se atreva a parar</build-intensity> [breath] <higher-pitch>mmm está crescendo tão fundo dentro de mim</higher-pitch>",
-  nl:     "<soft>Oh schatje... precies daar...</soft> [inhale] [sigh] <build-intensity>ja, precies zo, durf niet te stoppen</build-intensity> [breath] <higher-pitch>mmm het groeit zo diep in mij</higher-pitch>",
-  'sv-SE':"<soft>Åh älskling... precis där...</soft> [inhale] [sigh] <build-intensity>ja, precis så, våga inte sluta</build-intensity> [breath] <higher-pitch>mmm det byggs upp så djupt inne i mig</higher-pitch>",
-  de:     "<soft>Oh Liebling... genau dort...</soft> [inhale] [sigh] <build-intensity>ja, genau so, wag es nicht aufzuhören</build-intensity> [breath] <higher-pitch>mmm es baut sich so tief in mir auf</higher-pitch>",
-  ar:     "<soft>آه حبيبي... هناك تماماً...</soft> [inhale] [sigh] <build-intensity>نعم، هكذا بالضبط، لا تجرؤ على التوقف</build-intensity> [breath] <higher-pitch>مم... إنه يتصاعد عميقاً جداً في داخلي</higher-pitch>",
-  vi:     "<soft>Ôi em yêu... đúng chỗ đó...</soft> [inhale] [sigh] <build-intensity>có, cứ như vậy đi, đừng dám dừng lại</build-intensity> [breath] <higher-pitch>mmm nó đang xây dựng sâu trong em</higher-pitch>",
+  en: '<soft>Oh baby... right there...</soft> [inhale] [sigh] <build-intensity>yes, just like that, don’t you dare stop</build-intensity> [breath] <higher-pitch>mmm it’s building so deep inside me</higher-pitch>',
+  ru: '<soft>О боже... вот так...</soft> [inhale] [sigh] <build-intensity>да, именно так, только не останавливайся</build-intensity> [breath] <higher-pitch>ммм, это нарастает так глубоко во мне</higher-pitch>',
+  it: '<soft>Oh tesoro... proprio lì...</soft> [inhale] [sigh] <build-intensity>sì, proprio così, non osare fermarti</build-intensity> [breath] <higher-pitch>mmm si accumula così profondo dentro di me</higher-pitch>',
+  hi: '<soft>ओह बेबी... वहीं पर...</soft> [inhale] [sigh] <build-intensity>हाँ, बिल्कुल ऐसे, रुकने की हिम्मत मत करना</build-intensity> [breath] <higher-pitch>म्म्म यह मेरे अंदर इतनी गहराई में बन रहा है</higher-pitch>',
+  fr: '<soft>Oh chéri... juste là...</soft> [inhale] [sigh] <build-intensity>oui, exactement comme ça, n’ose pas t’arrêter</build-intensity> [breath] <higher-pitch>mmm ça monte si profond en moi</higher-pitch>',
+  da: '<soft>Åh skat... lige der...</soft> [inhale] [sigh] <build-intensity>ja, ligesom det, vov ikke at stoppe</build-intensity> [breath] <higher-pitch>mmm det bygger sig op så dybt inde i mig</higher-pitch>',
+  tr: '<soft>Oh bebeğim... tam orada...</soft> [inhale] [sigh] <build-intensity>evet, işte böyle, durmaya cesaret etme</build-intensity> [breath] <higher-pitch>mmm içimde çok derinlerde birikiyor</higher-pitch>',
+  ja: '<soft>ああ、ベイビー... そこよ...</soft> [inhale] [sigh] <build-intensity>そう、ちょうどそんな感じ、絶対に止めないで</build-intensity> [breath] <higher-pitch>んん... 奥深くで高まってきてる</higher-pitch>',
+  fi: '<soft>Oi kultaseni... juuri siellä...</soft> [inhale] [sigh] <build-intensity>kyllä, juuri noin, älä uskalla lopettaa</build-intensity> [breath] <higher-pitch>mmm se rakentuu niin syvälle minussa</higher-pitch>',
+  pl: '<soft>O boże... właśnie tam...</soft> [inhale] [sigh] <build-intensity>tak, dokładnie tak, nie waż się przestawać</build-intensity> [breath] <higher-pitch>mmm to narasta tak głęboko we mnie</higher-pitch>',
+  pt: '<soft>Oh querido... bem ali...</soft> [inhale] [sigh] <build-intensity>sim, exatamente assim, não se atreva a parar</build-intensity> [breath] <higher-pitch>mmm está crescendo tão fundo dentro de mim</higher-pitch>',
+  nl: '<soft>Oh schatje... precies daar...</soft> [inhale] [sigh] <build-intensity>ja, precies zo, durf niet te stoppen</build-intensity> [breath] <higher-pitch>mmm het groeit zo diep in mij</higher-pitch>',
+  'sv-SE':
+    '<soft>Åh älskling... precis där...</soft> [inhale] [sigh] <build-intensity>ja, precis så, våga inte sluta</build-intensity> [breath] <higher-pitch>mmm det byggs upp så djupt inne i mig</higher-pitch>',
+  de: '<soft>Oh Liebling... genau dort...</soft> [inhale] [sigh] <build-intensity>ja, genau so, wag es nicht aufzuhören</build-intensity> [breath] <higher-pitch>mmm es baut sich so tief in mir auf</higher-pitch>',
+  ar: '<soft>آه حبيبي... هناك تماماً...</soft> [inhale] [sigh] <build-intensity>نعم، هكذا بالضبط، لا تجرؤ على التوقف</build-intensity> [breath] <higher-pitch>مم... إنه يتصاعد عميقاً جداً في داخلي</higher-pitch>',
+  vi: '<soft>Ôi em yêu... đúng chỗ đó...</soft> [inhale] [sigh] <build-intensity>có, cứ như vậy đi, đừng dám dừng lại</build-intensity> [breath] <higher-pitch>mmm nó đang xây dựng sâu trong em</higher-pitch>',
 };
 
 function printHelp() {
@@ -196,7 +203,7 @@ function readFlag(args, name) {
     return equalsValue.slice(equalsPrefix.length);
   }
   const index = args.indexOf(name);
-  if (index === -1) return undefined;
+  if (index === -1) return;
   return args[index + 1];
 }
 
@@ -220,13 +227,14 @@ function parseArgs(args) {
   }
 
   const sampleRateFlag = readFlag(args, '--sample-rate');
-  const sampleRate = sampleRateFlag !== undefined ? Number(sampleRateFlag) : 44100;
+  const sampleRate =
+    sampleRateFlag === undefined ? 44_100 : Number(sampleRateFlag);
   if (!Number.isInteger(sampleRate) || sampleRate <= 0) {
     throw new Error('--sample-rate must be a positive integer');
   }
 
   const bitRateFlag = readFlag(args, '--bit-rate');
-  const bitRate = bitRateFlag !== undefined ? Number(bitRateFlag) : 128000;
+  const bitRate = bitRateFlag === undefined ? 128_000 : Number(bitRateFlag);
   if (!Number.isInteger(bitRate) || bitRate <= 0) {
     throw new Error('--bit-rate must be a positive integer');
   }
@@ -288,7 +296,9 @@ async function generateForVoice(options, voiceId) {
   });
 
   if (!res.ok) {
-    throw new Error(`TTS error for ${voiceId} (${res.status}): ${await res.text()}`);
+    throw new Error(
+      `TTS error for ${voiceId} (${res.status}): ${await res.text()}`,
+    );
   }
 
   const buf = Buffer.from(await res.arrayBuffer());
@@ -301,7 +311,9 @@ async function generateForVoice(options, voiceId) {
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (!options.apiKey) {
-    throw new Error('Missing XAI_API_KEY. Set it in your env or pass --api-key.');
+    throw new Error(
+      'Missing XAI_API_KEY. Set it in your env or pass --api-key.',
+    );
   }
 
   await mkdir(options.outDir, { recursive: true });
