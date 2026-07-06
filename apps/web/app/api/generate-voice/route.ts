@@ -666,7 +666,8 @@ export async function POST(request: Request) {
       // Finished without audio — transient provider glitch rather than a content
       // block, so surface it as retryable. Gemini 3.1 may report this as OTHER.
       const isNoAudioData =
-        (finishReason === FinishReason.STOP || finishReason === 'OTHER') &&
+        (finishReason === FinishReason.STOP ||
+          finishReason === FinishReason.OTHER) &&
         !(data && mimeType);
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {

@@ -1733,7 +1733,7 @@ describe('Generate Voice API Route', () => {
           generateContent: vi.fn().mockResolvedValue({
             candidates: [
               {
-                finishReason: 'OTHER',
+                finishReason: FinishReason.OTHER,
                 content: {
                   parts: [],
                 },
@@ -1766,7 +1766,7 @@ describe('Generate Voice API Route', () => {
         'Gemini voice generation returned no audio data',
         expect.objectContaining({
           extra: expect.objectContaining({
-            finishReason: 'OTHER',
+            finishReason: FinishReason.OTHER,
             model: 'gemini-3.1-flash-tts-preview',
             voice: 'achernar',
           }),
