@@ -475,6 +475,7 @@
     },
     "advancedSettings": {
       "trigger": "Erweitert",
+      "activeCount": "{count, plural, one {# geänderte Einstellung} other {# geänderte Einstellungen}}",
       "title": "Erweiterte Einstellungen",
       "subtitle": "Optimiere, wie dein Audio erzeugt wird.",
       "default": "Standard",

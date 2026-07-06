@@ -475,6 +475,7 @@
     },
     "advancedSettings": {
       "trigger": "Avancé",
+      "activeCount": "{count, plural, one {# paramètre modifié} other {# paramètres modifiés}}",
       "title": "Paramètres avancés",
       "subtitle": "Ajustez finement la génération de votre audio.",
       "default": "Par défaut",

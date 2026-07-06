@@ -173,12 +173,47 @@ export function GenerationSettingsPanel({
 
   const hasAnySettings = isGeminiVoice || isGrokVoice;
 
+  // Count only the settings whose controls are actually visible for the current
+  // voice, so the badge matches the panel and clears on reset.
+  let activeCount = 0;
+  if (isGeminiVoice) {
+    if (settings.seed !== null) activeCount += 1;
+    if (settings.temperature !== null) activeCount += 1;
+    if (
+      isGemini31 &&
+      GEMINI_STREAMING_ENABLED &&
+      settings.streamMode !== 'auto'
+    ) {
+      activeCount += 1;
+    }
+  } else if (isGrokVoice && settings.speed !== null) {
+    activeCount += 1;
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button className="gap-2" size="sm" type="button" variant="outline">
+        <Button
+          className="relative gap-2"
+          size="sm"
+          type="button"
+          variant="outline"
+        >
           <SlidersHorizontal className="h-4 w-4" />
           {t('trigger')}
+          {activeCount > 0 && (
+            <>
+              <span
+                aria-hidden="true"
+                className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-medium text-[10px] text-primary-foreground tabular-nums shadow-sm"
+              >
+                {activeCount}
+              </span>
+              <span className="sr-only">
+                {t('activeCount', { count: activeCount })}
+              </span>
+            </>
+          )}
         </Button>
       </SheetTrigger>
       <SheetContent

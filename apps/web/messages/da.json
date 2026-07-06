@@ -475,6 +475,7 @@
     },
     "advancedSettings": {
       "trigger": "Avanceret",
+      "activeCount": "{count, plural, one {# ændret indstilling} other {# ændrede indstillinger}}",
       "title": "Avancerede indstillinger",
       "subtitle": "Finjustér, hvordan din lyd genereres.",
       "default": "Standard",

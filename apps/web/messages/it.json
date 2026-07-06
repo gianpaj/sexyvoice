@@ -475,6 +475,7 @@
     },
     "advancedSettings": {
       "trigger": "Avanzate",
+      "activeCount": "{count, plural, one {# impostazione modificata} other {# impostazioni modificate}}",
       "title": "Impostazioni avanzate",
       "subtitle": "Perfeziona come viene generato il tuo audio.",
       "default": "Predefinito",
