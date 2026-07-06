@@ -181,7 +181,10 @@ export function GenerationSettingsPanel({
           {t('trigger')}
         </Button>
       </SheetTrigger>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-md" side="right">
+      <SheetContent
+        className="w-10/12 overflow-y-auto sm:max-w-md"
+        side="right"
+      >
         <SheetHeader>
           <SheetTitle>{t('title')}</SheetTitle>
           <SheetDescription>{t('subtitle')}</SheetDescription>
@@ -307,7 +310,7 @@ export function GenerationSettingsPanel({
             className="gap-2"
             onClick={resetSettings}
             type="button"
-            variant="ghost"
+            variant="outline"
           >
             <RotateCcw className="h-4 w-4" />
             {t('reset')}
