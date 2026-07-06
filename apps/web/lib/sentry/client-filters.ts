@@ -44,6 +44,7 @@ const nextClientFrameworkFramePattern =
   /app-router|react-dom-client|react-server-dom|server-action-reducer|next\/src\/client|next\/dist\/compiled\/react/i;
 const thirdPartyScriptFramePattern = /posthog-recorder\.js|addEL_hook/i;
 const localAppFramePattern = /apps\/web|\/_next\/static\/chunks\/app\//i;
+const nextSharedChunkFramePattern = /\/_next\/static\/chunks\/(?!app\/)/i;
 const browserMediaNoisePattern =
   /Track has ended|WASM_OR_WORKER_NOT_READY|Wasm SIMD unsupported|Lock was stolen by another request/i;
 const opaqueBrowserEventRejectionPattern =
@@ -92,6 +93,10 @@ function frameMatchesLocalApp(frame: SentryStackFrame): boolean {
   return localAppFramePattern.test(getFrameText(frame));
 }
 
+function frameMatchesNextSharedChunk(frame: SentryStackFrame): boolean {
+  return nextSharedChunkFramePattern.test(getFrameText(frame));
+}
+
 function frameMatchesProsemirror(frame: SentryStackFrame): boolean {
   return prosemirrorFramePattern.test(getFrameText(frame));
 }
@@ -129,6 +134,10 @@ function isReactRenderLifecycleNoiseException(
   }
 
   const frames = exception.stacktrace?.frames ?? [];
+  if (frames.some(frameMatchesNextSharedChunk)) {
+    return false;
+  }
+
   return (
     framesHaveNoLocalAppFrame(frames) &&
     (frames.length === 0 || frames.some(frameMatchesReactInternals))

@@ -380,7 +380,7 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(true);
   });
 
-  it('keeps React render loop errors with app frames', () => {
+  it('keeps React render loop errors with app or shared chunk frames', () => {
     expect(
       shouldDropClientSentryEvent({
         exception: {
@@ -393,6 +393,28 @@ describe('shouldDropClientSentryEvent', () => {
                   {
                     filename: 'apps/web/components/audio-generator.tsx',
                     function: 'AudioGenerator',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'Error',
+              value: 'Maximum update depth exceeded.',
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'https://sexyvoice.ai/_next/static/chunks/1234.js',
+                    module: 'react-dom-client',
                   },
                 ],
               },
