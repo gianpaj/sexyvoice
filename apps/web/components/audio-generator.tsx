@@ -404,8 +404,11 @@ export function AudioGenerator({
       }
 
       // An explicit seed argument (e.g. a segment retry re-roll) wins; otherwise
-      // fall back to the user's pinned seed from advanced settings.
-      const effectiveSeed = seed ?? settings.seed ?? undefined;
+      // fall back to the user's pinned seed — but only for Gemini, which is the
+      // only provider that uses it. Sending it on Grok/Replicate would do
+      // nothing but fragment their cache and force needless regenerations.
+      const effectiveSeed =
+        seed ?? (isGeminiVoice ? (settings.seed ?? undefined) : undefined);
 
       const response = await fetch('/api/generate-voice', {
         method: 'POST',

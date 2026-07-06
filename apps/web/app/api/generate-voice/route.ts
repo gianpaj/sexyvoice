@@ -39,7 +39,7 @@ import {
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
-import { generateXaiTts } from '@/lib/tts/xai';
+import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -259,9 +259,9 @@ export async function POST(request: Request) {
       seed = body.seed;
     }
 
-    // Advanced generation settings. `temperature` (Gemini) is a paid feature and
-    // is gated by `userHasPaid` below; `speed` (Grok) is available to everyone
-    // and is clamped to the supported range inside `generateXaiTts`.
+    // Advanced generation settings. `seed` and `temperature` (Gemini) are paid
+    // features and are gated by `userHasPaid` below; `speed` (Grok) is available
+    // to everyone and is clamped to the supported range before use.
     const requestedTemperature =
       typeof body.temperature === 'number' && Number.isFinite(body.temperature)
         ? Math.min(2, Math.max(0, body.temperature))
@@ -317,10 +317,18 @@ export async function POST(request: Request) {
 
     userHasPaid = await hasUserPaid(user.id);
 
-    // Temperature is a paid-only knob: ignore it for free users even if the
-    // client forged it into the request. Speed (Grok) stays available to all.
+    // Seed and temperature are paid-only knobs: ignore them for free users even
+    // if the client forged them into the request. Manual seed is UI-locked and
+    // the only other seed source (segment retries) is itself paid-only, so this
+    // never strips a seed a free user legitimately set.
+    if (!userHasPaid) {
+      seed = undefined;
+    }
     const temperature = userHasPaid ? requestedTemperature : undefined;
-    const speed = requestedSpeed;
+    // Clamp speed to the supported range before it reaches the cache key, so
+    // out-of-range values (e.g. speed=100) can't mint unbounded distinct cache
+    // entries that all collapse to the same clamped audio on generation.
+    const speed = normalizeXaiTtsSpeed(requestedSpeed);
 
     // Enforce per-tier input limits on the RAW transcript and style before
     // combining them, so the attacker-controlled (and otherwise unbounded)

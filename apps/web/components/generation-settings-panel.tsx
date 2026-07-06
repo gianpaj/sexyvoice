@@ -2,7 +2,7 @@
 
 import { Dices, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { generateRetrySeed } from '@/components/audio-generator/split-segments-utils';
 import { Button } from '@/components/ui/button';
@@ -99,6 +99,62 @@ function SettingRow({
   );
 }
 
+/**
+ * A slider with a numeric readout that only commits to the (localStorage-backed)
+ * settings on release. While dragging it tracks a local draft so we avoid a
+ * synchronous storage write on every pointer-move tick. `value === null` means
+ * "unset", rendered as `defaultLabel` and positioned at the neutral 1.
+ */
+function DraftSlider({
+  defaultLabel,
+  format,
+  max,
+  min,
+  onCommit,
+  step,
+  value,
+}: {
+  defaultLabel: string;
+  format: (value: number) => string;
+  max: number;
+  min: number;
+  onCommit: (value: number) => void;
+  step: number;
+  value: number | null;
+}) {
+  const [draft, setDraft] = useState<number | null>(null);
+  const position = draft ?? value ?? 1;
+
+  let readout: string;
+  if (draft !== null) {
+    readout = format(draft);
+  } else if (value === null) {
+    readout = defaultLabel;
+  } else {
+    readout = format(value);
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <Slider
+        className="flex-1"
+        max={max}
+        min={min}
+        onValueChange={([next]) => setDraft(next)}
+        onValueCommit={([next]) => {
+          onCommit(next);
+          setDraft(null);
+        }}
+        step={step}
+        value={[position]}
+      />
+      <span className="w-16 text-right text-muted-foreground text-xs tabular-nums">
+        {readout}
+      </span>
+    </div>
+  );
+}
+
 export function GenerationSettingsPanel({
   isPaidUser,
   resetSettings,
@@ -161,6 +217,7 @@ export function GenerationSettingsPanel({
                         });
                       }}
                       placeholder={t('seed.placeholder')}
+                      step={1}
                       type="number"
                       value={settings.seed ?? ''}
                     />
@@ -185,23 +242,15 @@ export function GenerationSettingsPanel({
                   description={t('temperature.description')}
                   title={t('temperature.label')}
                 >
-                  <div className="flex items-center gap-3">
-                    <Slider
-                      className="flex-1"
-                      max={2}
-                      min={0}
-                      onValueChange={([value]) =>
-                        updateSettings({ temperature: value })
-                      }
-                      step={0.1}
-                      value={[settings.temperature ?? 1]}
-                    />
-                    <span className="w-16 text-right text-muted-foreground text-xs tabular-nums">
-                      {settings.temperature === null
-                        ? t('default')
-                        : settings.temperature.toFixed(1)}
-                    </span>
-                  </div>
+                  <DraftSlider
+                    defaultLabel={t('default')}
+                    format={(value) => value.toFixed(1)}
+                    max={2}
+                    min={0}
+                    onCommit={(value) => updateSettings({ temperature: value })}
+                    step={0.1}
+                    value={settings.temperature}
+                  />
                 </SettingRow>
               </PremiumField>
 
@@ -236,21 +285,15 @@ export function GenerationSettingsPanel({
               description={t('speed.description')}
               title={t('speed.label')}
             >
-              <div className="flex items-center gap-3">
-                <Slider
-                  className="flex-1"
-                  max={1.5}
-                  min={0.7}
-                  onValueChange={([value]) => updateSettings({ speed: value })}
-                  step={0.05}
-                  value={[settings.speed ?? 1]}
-                />
-                <span className="w-16 text-right text-muted-foreground text-xs tabular-nums">
-                  {settings.speed === null
-                    ? t('default')
-                    : `${settings.speed.toFixed(2)}×`}
-                </span>
-              </div>
+              <DraftSlider
+                defaultLabel={t('default')}
+                format={(value) => `${value.toFixed(2)}×`}
+                max={1.5}
+                min={0.7}
+                onCommit={(value) => updateSettings({ speed: value })}
+                step={0.05}
+                value={settings.speed}
+              />
             </SettingRow>
           )}
         </div>
