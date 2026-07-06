@@ -419,6 +419,31 @@ describe('V1 Speech API Route', () => {
       );
     });
 
+    it('should forward speed to the xAI TTS request for Grok voices', async () => {
+      server.use(
+        http.post('https://api.x.ai/v1/tts', async ({ request }) => {
+          const body = (await request.json()) as { speed?: number };
+
+          expect(body.speed).toBe(1.2);
+
+          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          });
+        }),
+      );
+
+      const response = await POST(
+        speechRequest({
+          model: 'xai',
+          input: 'Hello world',
+          voice: 'eve',
+          speed: 1.2,
+        }),
+      );
+
+      expect(response.status).toBe(200);
+    });
+
     it('should generate voice using Grok with wav format', async () => {
       server.use(
         http.post('https://api.x.ai/v1/tts', async ({ request }) => {
