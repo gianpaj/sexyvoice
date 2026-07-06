@@ -663,10 +663,11 @@ export async function POST(request: Request) {
       const isProhibitedContent =
         finishReason === FinishReason.PROHIBITED_CONTENT ||
         blockReason === 'PROHIBITED_CONTENT';
-      // Finished normally but no audio came back — transient provider glitch
-      // rather than a content block, so surface it as retryable.
+      // Finished without audio — transient provider glitch rather than a content
+      // block, so surface it as retryable. Gemini 3.1 may report this as OTHER.
       const isNoAudioData =
-        finishReason === FinishReason.STOP && !(data && mimeType);
+        (finishReason === FinishReason.STOP || finishReason === 'OTHER') &&
+        !(data && mimeType);
 
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
         if (isProhibitedContent) {

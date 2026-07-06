@@ -1727,6 +1727,57 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it('should return 503 without Sentry capture when Gemini finishes with OTHER and no audio data', async () => {
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                finishReason: 'OTHER',
+                content: {
+                  parts: [],
+                },
+              },
+            ],
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini voice generation returned no audio data',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: 'OTHER',
+            model: 'gemini-3.1-flash-tts-preview',
+            voice: 'achernar',
+          }),
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+        }),
+      );
+    });
+
     it('should throw error when Gemini response has no data', async () => {
       // Mock Gemini to return response without data (both pro and flash will fail)
       setMockGoogleGenAIFactory(() => ({
