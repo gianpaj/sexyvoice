@@ -31,6 +31,7 @@ import {
 import {
   estimateTokenCount,
   GEMINI_CHARS_PER_TOKEN,
+  GEMINI_STREAMING_ENABLED,
   getCharactersLimit,
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
@@ -312,7 +313,10 @@ export function AudioGenerator({
   // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
   // synthesize the whole clip and return it in a single chunk, so streaming
   // there gives no time-to-first-audio benefit — keep them on the JSON path.
-  const isStreamingModel = selectedVoice?.model === 'gpro31';
+  // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
+  // progressive streaming corrupted some gpro31 generations.
+  const isStreamingModel =
+    GEMINI_STREAMING_ENABLED && selectedVoice?.model === 'gpro31';
   // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
   // toward the expected total length before the exact duration is known.
   const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
@@ -324,7 +328,13 @@ export function AudioGenerator({
   // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
   // and the style, so its transcript "character limit" is that token budget
   // expressed in approximate characters. Other voices keep the per-tier cap.
-  const isGemini31 = isGeminiVoice && selectedVoice?.model === 'gpro31';
+  // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
+  // gpro31 reverts to the standard per-tier character limits and the separate
+  // style-prompt cap, like the Gemini 2.5 voices.
+  const isGemini31 =
+    GEMINI_STREAMING_ENABLED &&
+    isGeminiVoice &&
+    selectedVoice?.model === 'gpro31';
   const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
   const charactersLimit = isGemini31
     ? getGeminiCombinedTokenLimit(isPaidUser) * GEMINI_CHARS_PER_TOKEN
@@ -398,6 +408,7 @@ export function AudioGenerator({
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
+      split = false,
     ): Promise<string> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
@@ -425,6 +436,7 @@ export function AudioGenerator({
           ...(isGrokVoice && settings.speed !== null
             ? { speed: settings.speed }
             : {}),
+          split,
         }),
         signal,
       });
@@ -516,6 +528,7 @@ export function AudioGenerator({
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
+      split = false,
     ): Promise<string> => {
       // `auto` keeps the length-based heuristic; `on`/`off` are explicit
       // overrides. Streaming only applies to gpro31 in the non-split path.
@@ -534,7 +547,7 @@ export function AudioGenerator({
       if (useStream) {
         return requestGenerateVoiceStream(segmentText, signal);
       }
-      return requestGenerateVoiceJson(segmentText, signal, seed);
+      return requestGenerateVoiceJson(segmentText, signal, seed, split);
     },
     [
       isGeminiVoice,
@@ -556,7 +569,7 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(t('success'));
-  }, [t('success'), requestGenerateVoice, selectedVoice, text]);
+  }, [requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -613,6 +626,8 @@ export function AudioGenerator({
         const generatedUrl = await requestGenerateVoice(
           currentSegmentTexts[index],
           abortController.current.signal,
+          undefined,
+          true,
         );
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
@@ -661,10 +676,6 @@ export function AudioGenerator({
       toast.success(t('success'));
     }
   }, [
-    t('error'),
-    t('success'),
-    t('split.segmentCannotBeEmpty'),
-    t('split.segmentFailed'),
     markSegmentFailed,
     markSegmentGenerating,
     markSegmentIdle,
@@ -709,8 +720,6 @@ export function AudioGenerator({
       setIsGenerating(false);
     }
   }, [
-    t('error'),
-    t('split.tooManySegments'),
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
@@ -746,6 +755,7 @@ export function AudioGenerator({
           segment.text,
           retryAbortController.current.signal,
           seed,
+          true,
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
@@ -783,9 +793,6 @@ export function AudioGenerator({
       }
     },
     [
-      t('error'),
-      t('split.segmentGenerated'),
-      t('split.segmentRetryFailed'),
       dismissGenerationProgressToast,
       isGenerating,
       markSegmentFailed,
@@ -1038,14 +1045,7 @@ export function AudioGenerator({
 
       return value;
     },
-    [
-      canEstimateCredits,
-      t('error'),
-      t('errorEstimating'),
-      isGeminiVoice,
-      selectedStyle,
-      selectedVoice,
-    ],
+    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice],
   );
 
   const handleEstimateCredits = async () => {

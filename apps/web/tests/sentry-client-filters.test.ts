@@ -72,6 +72,31 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(false);
   });
 
+  it('drops known DOM mutation noise with unsymbolicated non-app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'NotFoundError',
+              value:
+                "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'https://sexyvoice.ai/_next/static/chunks/1234.js',
+                    function: 'rZ',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
   it('drops message-only React DOM mutation noise', () => {
     expect(
       shouldDropClientSentryEvent({
@@ -193,6 +218,46 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'CompileError',
+              value:
+                'WebAssembly.Module(): Compiling function failed: Wasm SIMD unsupported',
+              stacktrace: {
+                frames: [{ filename: 'blob:app:///krisp-worker' }],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps Wasm SIMD errors with app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'CompileError',
+              value: 'Wasm SIMD unsupported',
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/lib/audio/custom-wasm.ts',
+                    function: 'loadAudioModule',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
   });
 
   it('drops injected browser globals and external worker imports without app frames', () => {

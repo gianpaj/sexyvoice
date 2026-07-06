@@ -138,6 +138,7 @@ vi.mock('@/lib/ai', () => ({
   ),
   estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
   GEMINI_CHARS_PER_TOKEN: 4,
+  GEMINI_STREAMING_ENABLED: false,
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -428,6 +429,7 @@ describe('AudioGenerator', () => {
             voiceId: 'voice-id',
             styleVariant: '',
             language: 'ar-EG',
+            split: false,
           }),
           signal: expect.any(AbortSignal),
         }),
@@ -567,6 +569,7 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: shortText,
       voiceId: 'voice-id',
+      split: false,
       styleVariant: '',
     });
     // A single segment doesn't warrant a progress modal.
@@ -725,11 +728,13 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: '',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: '',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -823,11 +828,13 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
       text: firstSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: 'Read this in a dramatic whisper',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -985,6 +992,7 @@ describe('AudioGenerator', () => {
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: secondSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: 'dramatic',
     });
   });
@@ -1111,11 +1119,13 @@ describe('AudioGenerator', () => {
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
       text: firstSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: 'calm',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
       voiceId: 'voice-id',
+      split: true,
       styleVariant: 'calm',
     });
   });
@@ -1167,12 +1177,14 @@ describe('AudioGenerator', () => {
       text: firstSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'en',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: secondSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'en',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -1274,6 +1286,7 @@ describe('AudioGenerator', () => {
       text: secondSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
   });
@@ -1334,12 +1347,14 @@ describe('AudioGenerator', () => {
       text: firstSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'ar-EG',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       text: secondSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'ar-EG',
     });
   });
@@ -1484,18 +1499,21 @@ describe('AudioGenerator', () => {
       text: firstSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       text: wrappedSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       text: lastSegment,
       voiceId: 'voice-id',
       styleVariant: '',
+      split: true,
       language: 'auto',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -1566,7 +1584,9 @@ describe('AudioGenerator', () => {
     };
   }
 
-  it('sends stream: true when Gemini voice and text exceeds threshold', async () => {
+  // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false), so the
+  // client no longer requests the SSE path. Re-enable with the flag.
+  it.skip('sends stream: true when Gemini voice and text exceeds threshold', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()
@@ -1681,7 +1701,8 @@ describe('AudioGenerator', () => {
     expect(body.stream).toBeUndefined();
   });
 
-  it('schedules audio chunks via Web Audio and shows the streaming player', async () => {
+  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
+  it.skip('schedules audio chunks via Web Audio and shows the streaming player', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()
@@ -1726,7 +1747,8 @@ describe('AudioGenerator', () => {
     expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
   });
 
-  it('shows error toast on SSE error event', async () => {
+  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
+  it.skip('shows error toast on SSE error event', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()

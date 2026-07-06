@@ -27,6 +27,7 @@ import type {
   GenerationSettings,
   StreamMode,
 } from '@/hooks/use-generation-settings';
+import { GEMINI_STREAMING_ENABLED } from '@/lib/ai';
 import { getTtsProvider } from '@/lib/utils';
 
 interface GenerationSettingsPanelProps {
@@ -254,7 +255,10 @@ export function GenerationSettingsPanel({
                 </SettingRow>
               </PremiumField>
 
-              {isGemini31 && (
+              {/* Streaming is a hotfix-disabled feature (GEMINI_STREAMING_ENABLED).
+                  Hide the override while it's off so we don't show a control
+                  that can't do anything; it returns when streaming is re-enabled. */}
+              {isGemini31 && GEMINI_STREAMING_ENABLED && (
                 <SettingRow
                   description={t('streaming.description')}
                   title={t('streaming.label')}

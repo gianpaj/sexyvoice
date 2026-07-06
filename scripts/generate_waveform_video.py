@@ -21,6 +21,11 @@ Requirements
 """
 
 from __future__ import annotations
+from moviepy import AudioFileClip, VideoClip
+from matplotlib.collections import LineCollection
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib import pyplot as plt
+import numpy as np
 
 import argparse
 import subprocess
@@ -30,12 +35,6 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg
-from matplotlib.collections import LineCollection
-from moviepy import AudioFileClip, VideoClip
 
 
 @dataclass(frozen=True)
@@ -112,7 +111,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fps", type=int, default=30, help="Frames per second for the video"
     )
-    parser.add_argument("--width", type=int, default=1280, help="Video width in pixels")
+    parser.add_argument("--width", type=int, default=1280,
+                        help="Video width in pixels")
     parser.add_argument(
         "--height", type=int, default=720, help="Video height in pixels"
     )
@@ -297,7 +297,8 @@ class WaveformRenderer:
         if self.progress_line is not None:
             self.progress_line.set_data(self.times[:idx], self.waveform[:idx])
             if self.progress_glow is not None:
-                self.progress_glow.set_data(self.times[:idx], self.waveform[:idx])
+                self.progress_glow.set_data(
+                    self.times[:idx], self.waveform[:idx])
         else:
             # Draw gradient waveform
             self._draw_gradient_waveform(idx)
@@ -355,7 +356,7 @@ class WaveformRenderer:
     def _hex_to_rgb(self, hex_color: str) -> tuple[int, int, int]:
         """Convert hex color to RGB tuple."""
         hex_color = hex_color.lstrip("#")
-        return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+        return tuple(int(hex_color[i: i + 2], 16) for i in (0, 2, 4))
 
 
 def main() -> None:

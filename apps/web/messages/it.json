@@ -188,6 +188,10 @@
             {
               "question": "Quanto costa?",
               "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
+            },
+            {
+              "question": "L'IA ricorda le nostre conversazioni precedenti?",
+              "answer": "Solo se attivi la memoria: è facoltativa e disattivata per impostazione predefinita, quindi di norma non viene memorizzato nulla delle tue chiamate. Quando è attiva, l'assistente conserva alcuni brevi dettagli (come il modo in cui preferisci essere chiamato e gli argomenti che ti piacciono), non registrazioni o trascrizioni complete, per riprendere da dove avevi lasciato. Conserviamo solo i tuoi dettagli più recenti, puoi cancellare tutto in qualsiasi momento e l'eliminazione dell'account li rimuove automaticamente."
             }
           ]
         },
@@ -295,6 +299,11 @@
           "Chiamata vocale: Personaggi personalizzati"
         ]
       }
+    },
+    "subscriptionScheduledToCancel": {
+      "title": "Il tuo piano mensile di crediti è programmato per terminare",
+      "description": "Il tuo piano mensile di crediti è ancora attivo fino al {date}, ma dopo non si rinnoverà né aggiungerà altri crediti mensili. Puoi continuare a usare i crediti presenti nel tuo account. Per cambiare livello, gestisci l’abbonamento in Stripe.",
+      "manageButton": "Gestisci abbonamento"
     },
     "topup": {
       "title": "Acquista crediti",
@@ -501,6 +510,9 @@
     "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è {count}",
     "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
+    "memoryLabel": "Memoria",
+    "memoryDescription": "Lascia che i personaggi ti ricordino tra una chiamata e l’altra. Non viene memorizzato nulla a meno che non sia attivo.",
+    "memoryUpgradeTooltip": "Passa a un piano a pagamento per far sì che i personaggi ti ricordino tra una chiamata e l’altra.",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
     "sceneLabel": "Scena",
@@ -761,6 +773,17 @@
         "cancel": "Annulla",
         "confirm": "Sì, revoca"
       }
+    },
+    "memory": {
+      "title": "Memoria delle chiamate vocali",
+      "description": "Se attivi la memoria durante le chiamate, i personaggi ricordano alcuni dettagli su di te per mantenere la continuità. Qui puoi cancellare tutto.",
+      "button": "Elimina tutte le memorie",
+      "confirmTitle": "Eliminare tutte le memorie delle chiamate vocali?",
+      "confirmDescription": "Questa operazione cancella in modo permanente tutto ciò che i personaggi hanno ricordato di te dalle chiamate precedenti. Non può essere annullata.",
+      "cancel": "Annulla",
+      "continue": "Elimina",
+      "success": "Le tue memorie delle chiamate vocali sono state eliminate.",
+      "error": "Impossibile eliminare le tue memorie. Riprova."
     }
   },
   "apiBilling": {

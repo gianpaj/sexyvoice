@@ -166,6 +166,177 @@ pnpm backfill-free-call
 
 ---
 
+## Call Transcript Analysis Scripts
+
+Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
+to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
+AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
+entry points that share a single engine (`analyze-call-sessions.mjs`); the
+backfill script imports its prompt, transcript extraction, analysis schema, and
+persistence, so all paths write identical rows.
+
+- **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
+  last N hours.
+- **`backfill-call-analysis`** - one-off catch-up over **all** completed,
+  unanalyzed calls (paginated), with model and duration filters.
+
+A third path (not a script) analyzes a single call in real time: the
+`POST /api/call-sessions/analyze` webhook fired when a call completes.
+
+Only successful analyses are persisted; failures leave no row so they stay
+retryable. Calls shorter than 120s and sessions that already have an analysis row
+are skipped.
+
+### Quick Start
+
+```bash
+# Show help
+pnpm analyze-call-sessions --help
+pnpm backfill-call-analysis --help
+
+# Analyze calls from the last 12h (default: 24h)
+pnpm analyze-call-sessions --hours=12
+
+# Dry-run: analyze but write CSV + insights instead of the database
+pnpm analyze-call-sessions --dry-run
+
+# First real Batch API run is cheapest to validate with a tiny sample
+pnpm backfill-call-analysis --limit=2 --debug
+
+# Backfill everything (all completed, unanalyzed calls)
+pnpm backfill-call-analysis
+```
+
+### Engine: xAI Batch API
+
+Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api):
+requests are uploaded as a JSONL batch, then the script block-polls until the
+batch completes before writing results. It is discounted and has no per-request
+rate limits, at the cost of async latency — best suited to the large backfill.
+Use `--realtime` to fall back to synchronous per-call generation instead.
+
+### CLI Options
+
+Shared by both scripts:
+
+- `--dry-run` - Analyze but write CSV + insights instead of the database
+- `--limit=N` - Limit the number of calls to analyze
+- `--realtime` (alias `--no-batch`) - Use synchronous xAI calls instead of the Batch API
+- `--batch-timeout=N` - Minutes to wait for the batch to finish (default: 60)
+- `--debug` - Verbose logging
+- `--debug-session=UUID` - Only analyze/debug a specific session id
+- `--smoke-test` - Run a tiny xAI request first to validate the model id
+- `-h, --help` - Show help message
+
+`analyze-call-sessions` only:
+
+- `--hours=N` - Analyze calls started in the last N hours (default: 24)
+
+`backfill-call-analysis` only:
+
+- `--min-duration=N` - Minimum call duration in seconds (default: 120)
+- `--models=a,b,c` - Only analyze these call models
+
+### Environment
+
+Requires `.env` or `.env.local` with:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `XAI_API_KEY`
+- `XAI_SUMMARY_MODEL` (optional; defaults to `grok-4.3`)
+- `XAI_API_BASE_URL` (optional; defaults to `https://api.x.ai`)
+
+---
+
+## Find Truncated Gemini 3.1 Flash TTS Script
+
+Read-only Node.js script that finds `gemini-3.1-flash-tts-preview` `audio_files`
+whose audio was truncated — the model rendered only a few seconds of a much
+longer transcript, yet the user was billed for the full input text. Use it to
+size and issue refunds when a user reports "the audio wasn't generated properly
+and I was charged too many credits."
+
+### Why these are over-charges
+
+Gemini TTS credits are `ceil(totalTokenCount * 1.1 * multiplier)` where
+`totalTokenCount = promptTokenCount + candidatesTokenCount` (see
+`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). When the model fails to
+voice the whole script, `promptTokenCount` (the input it read) is still large,
+so the user pays for text that was never turned into audio.
+
+### Detection signal
+
+The transcript stored in `audio_files.text_content` (everything after the
+`## TRANSCRIPT` marker, see `apps/web/lib/tts/gemini-prompt.ts`) is the text that
+_should_ have been spoken. Dividing its character count by the audio `duration`
+gives chars-per-second. Natural speech tops out around ~25 cps, so any file well
+above the threshold was truncated:
+
+- bad : `~2400 spoken chars / 7.08s ≈ 340 cps` → truncated
+- good: `~1050 spoken chars / 70.24s ≈ 15 cps` → normal
+
+Rows with `duration = -1` (the "couldn't measure" sentinel) are listed
+separately as `unknown-duration` and are not flagged.
+
+### Quick Start
+
+```bash
+# Scan just the complaining user
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
+
+# Scope to files created since a date
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id> --since 2026-06-01
+
+# Scan all users
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
+```
+
+### CLI Options
+
+- `--user <uuid>` — only scan this `user_id` (default: all users)
+- `--threshold <cps>` — flag when spoken chars-per-second exceeds this
+  (default: `30`, comfortably above natural speech)
+- `--min-chars <n>` — ignore clips whose transcript is shorter than this, to
+  avoid noise on tiny generations (default: `150`)
+- `--normal-cps <cps>` — assumed natural rate used to compute the expected
+  duration and the "delivered %" column (default: `15`)
+- `--active-only` — skip soft-deleted rows (`deleted_at` not null)
+- `--since <date>` — only scan files created on/after this date/timestamp
+  (ISO-parseable, e.g. `2026-06-01` or `2026-06-01T00:00:00Z`); default scans
+  the user's entire history for the model
+- `--paid-only` — only scan users who have paid (have a `purchase`/`topup`
+  credit transaction, matching `hasUserPaid`). Freemium-only users can't be
+  refunded, so this keeps the refund commands runnable
+- `--out <path>` — JSON report path (default: `./truncated-gemini31-tts.json`)
+- `--reason <text>` — refund reason printed in the generated refund commands
+
+### Output
+
+- A per-file table (worst first) with chars/sec, duration, spoken chars,
+  delivered %, credits billed, and the audio-out/text-in token ratio.
+- A **refund exposure by user** rollup (total credits billed for truncated
+  files).
+- A **refund commands** block: one ready-to-run
+  `pnpm --filter @sexyvoice/scripts refund-credits -- <user-id>` per affected
+  user, annotated with the exact prompt answers to issue a credits-only
+  ("platform bug") refund — press Enter to skip transaction selection (no USD
+  refund), enter the total credits, then the reason.
+- A JSON report (`report.byUser[]` carries the `command`, `credits`, `reason`,
+  and file `ids`) plus the full `truncated` and `unknownDuration` lists.
+
+Review the flagged rows before refunding, then run the printed commands. Because
+`refund-credits.mts` takes only the user id on the CLI and asks for the credit
+amount and reason interactively, the amount/reason are printed as annotations
+rather than passed as flags. See [Refund Credits Script](#refund-credits-script).
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` (read-only usage).
+
+---
+
 ## Refund Credits Script
 
 Interactive Node.js/TypeScript script to process credit refunds for users.

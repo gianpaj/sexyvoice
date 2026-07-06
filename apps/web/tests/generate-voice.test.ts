@@ -175,7 +175,7 @@ describe('Generate Voice API Route', () => {
       }
     });
 
-    it('should enforce the combined token limit for Gemini 3.1 (gpro31)', async () => {
+    it('should enforce the character limit for Gemini 3.1 (gpro31)', async () => {
       const { getVoiceById } = await import('@/lib/supabase/queries');
       vi.mocked(getVoiceById).mockResolvedValueOnce({
         id: 'voice-gpro31-id',
@@ -184,8 +184,9 @@ describe('Generate Voice API Route', () => {
         model: 'gpro31',
       });
 
-      // Free gpro31 budget is 400 tokens (~1600 chars); 32001 chars (~8001 tokens) exceeds it.
-      const longText = 'a'.repeat(32_001);
+      // HOTFIX: streaming is disabled, so gpro31 uses the standard per-tier
+      // character limits like the Gemini 2.5 voices (500 chars for free users).
+      const longText = 'a'.repeat(501);
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -199,7 +200,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.error).toContain('tokens');
+      expect(json.error).toContain('maximum length');
     });
 
     it('should return 400 when paid Gemini text exceeds maximum length', async () => {
@@ -579,7 +580,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
-        usage: { userHasPaid: false },
+        usage: { split: false, userHasPaid: false },
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
@@ -603,9 +604,10 @@ describe('Generate Voice API Route', () => {
           model:
             'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
           provider: 'replicate',
+          split: false,
           textPreview: 'Hello world',
           textLength: 11,
-          isGeminiVoice: false,
+          duration: '12',
           userHasPaid: false,
           predictionId: null,
         },
@@ -700,9 +702,7 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model: 'xai',
-        usage: {
-          userHasPaid: false,
-        },
+        usage: { split: false, userHasPaid: false },
         predictionId: undefined,
         text: 'Hello [laugh]',
         url: expect.stringMatching(
@@ -725,9 +725,10 @@ describe('Generate Voice API Route', () => {
           voiceName: 'eve',
           model: 'xai',
           provider: 'grok',
+          split: false,
           textPreview: 'Hello [laugh]',
           textLength: 13,
-          isGeminiVoice: false,
+          duration: '12',
           userHasPaid: false,
           predictionId: null,
           codec: 'mp3',
@@ -948,6 +949,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
         usage: {
+          split: false,
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
@@ -976,9 +978,10 @@ describe('Generate Voice API Route', () => {
           voiceName: 'kore',
           model: 'gemini-2.5-pro-preview-tts',
           provider: 'gemini',
+          split: false,
           textPreview: text.slice(0, 100),
           textLength: text.length,
-          isGeminiVoice: true,
+          duration: '12',
           userHasPaid: true,
           predictionId: null,
         },
@@ -1219,6 +1222,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
         usage: {
+          split: false,
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
@@ -1302,7 +1306,9 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('uses Gemini 3.1 for free users streaming gpro31 voices', async () => {
+    // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false); gpro31
+    // now uses the non-streaming JSON path. Re-enable with the flag.
+    it.skip('uses Gemini 3.1 for free users streaming gpro31 voices', async () => {
       const generateContentStream = vi
         .fn()
         .mockImplementation(async function* () {
@@ -1397,6 +1403,7 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
         usage: {
+          split: false,
           promptTokenCount: '11',
           candidatesTokenCount: '12',
           totalTokenCount: '23',
@@ -2128,7 +2135,40 @@ describe('Generate Voice API Route', () => {
     });
   });
 
-  describe('Streaming - Gemini SSE', () => {
+  describe('Streaming disabled (hotfix)', () => {
+    it('rejects stream: true for gpro31 with 409 and does not debit credits', async () => {
+      const { reduceCredits } = await import('@/lib/supabase/queries');
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      // Stale bundles that still request the SSE path get a fast non-OK
+      // response instead of a JSON body that would hang their SSE parser.
+      expect(response.status).toBe(409);
+      expect(response.headers.get('content-type')).not.toContain(
+        'text/event-stream',
+      );
+      expect(json.error).toBeTruthy();
+      // Fail-fast happens before any credit reservation.
+      expect(reduceCredits).not.toHaveBeenCalled();
+    });
+  });
+
+  // HOTFIX: Gemini 3.1 (gpro31) streaming is disabled via GEMINI_STREAMING_ENABLED
+  // because progressive streaming corrupted some generations. The SSE path is
+  // retained in the route for a future re-enable, so this suite is parked rather
+  // than removed — flip the flag back to `true` to restore it.
+  describe.skip('Streaming - Gemini SSE', () => {
     it('streams audio events and done event for Gemini voice', async () => {
       const {
         hasUserPaid,
@@ -2402,20 +2442,73 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('emits error event and refunds reserved credits when stream yields no audio chunks', async () => {
-      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
+    it('falls back to flash without retaining primary usage when the primary stream yields no audio', async () => {
+      const { hasUserPaid, reduceCredits, saveAudioFile } = await import(
         '@/lib/supabase/queries'
       );
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      const generateContentStream = vi
-        .fn()
-        .mockImplementation(async function* () {
-          // Yield a chunk with no inlineData
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        if (callCount === 1) {
           yield {
             candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }],
+            usageMetadata: {
+              promptTokenCount: 100,
+              candidatesTokenCount: 200,
+              totalTokenCount: 300,
+            },
           };
-        });
+          return;
+        }
+        const fallbackChunk = createDefaultStreamChunk();
+        fallbackChunk.usageMetadata = undefined;
+        yield fallbackChunk;
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: done');
+      expect(callCount).toBe(2);
+      expect(reduceCredits).toHaveBeenCalledWith({
+        amount: estimateCredits('Hello world', 'achernar', 'gpro31'),
+        userId: 'test-user-id',
+      });
+      expect(saveAudioFile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          model: 'gemini-2.5-flash-preview-tts',
+          usage: { stream: true, userHasPaid: true },
+        }),
+      );
+    });
+
+    it('emits error event and skips billing when stream yields no audio chunks', async () => {
+      const { hasUserPaid, reduceCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        // Yield a chunk with no inlineData
+        yield {
+          candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }],
+        };
+      });
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
@@ -2433,6 +2526,63 @@ describe('Generate Voice API Route', () => {
 
       expect(body).toContain('event: error');
       expect(body).not.toContain('event: done');
+      expect(callCount).toBe(2);
+      expect(reduceCredits).toHaveBeenCalled();
+    });
+
+    it.each([
+      {
+        errorCode: 'PROHIBITED_CONTENT' as const,
+        name: 'prohibited content finish',
+        terminalChunk: {
+          candidates: [
+            { content: { parts: [] }, finishReason: 'PROHIBITED_CONTENT' },
+          ],
+        },
+      },
+      {
+        errorCode: 'OTHER_GEMINI_BLOCK' as const,
+        name: 'safety prompt block',
+        terminalChunk: {
+          candidates: [],
+          promptFeedback: { blockReason: 'SAFETY' },
+        },
+      },
+    ])('does not retry a $name from the primary stream', async ({
+      errorCode,
+      terminalChunk,
+    }) => {
+      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        yield terminalChunk;
+      });
+      setMockGoogleGenAIFactory(() => ({
+        models: { generateContentStream },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(getErrorMessage(errorCode, 'voice-generation'));
+      expect(body).not.toContain('event: done');
+      expect(callCount).toBe(1);
       expect(reduceCredits).toHaveBeenCalledWith({
         userId: 'test-user-id',
         amount: expect.any(Number),

@@ -33,13 +33,13 @@ import {
 import {
   _timed,
   calculateUsageBreakdown,
+  classifyRefund,
   countByDateRange,
   filterByDateRange,
   formatChange,
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
-  formatDurationChange,
   getFeatureHealthStatus,
   getProfileUsername,
   maskUsername,
@@ -593,9 +593,6 @@ export async function GET(request: NextRequest) {
     (sum: number, call: Tables<'call_sessions'>) => sum + call.duration_seconds,
     0,
   );
-  const callsAvgDurationYesterday =
-    Math.round(callsDurationYesterday / callsYesterdayCount) || 0;
-  const callsAvgDuration14d = Math.round(callsDuration14d / calls14dCount) || 0;
   const callsDurationAllTime = callSessionsAllTimeDurationData.reduce(
     (sum, call) => sum + call.duration_seconds,
     0,
@@ -643,9 +640,15 @@ export async function GET(request: NextRequest) {
   const callCostYesterday =
     (callsDurationYesterday / 60) * CALL_COST_PER_MINUTE;
   const callCost14d = (callsDuration14d / 60) * CALL_COST_PER_MINUTE;
-  // Separate refunds from purchases/top-ups
+  // Separate refunds from purchases/top-ups. Chargeback hold/release rows are
+  // also `type='refund'` but are internal credit-ledger moves (dispute
+  // handling), not customer refunds — keep them out of the refund metrics and
+  // report them separately below.
   const refundTransactions = creditTransactions.filter(
-    (t) => t.type === 'refund',
+    (t) => t.type === 'refund' && classifyRefund(t) === 'refund',
+  );
+  const chargebackTransactions = creditTransactions.filter(
+    (t) => t.type === 'refund' && classifyRefund(t) !== 'refund',
   );
   const purchaseTransactions = creditTransactions.filter(
     (t) => t.type !== 'refund',
@@ -785,6 +788,28 @@ export async function GET(request: NextRequest) {
       transaction.created_at < previousDay.toISOString(),
   ).length;
   const refundsTotalCount = refundTransactions.length;
+
+  // Chargeback dispute activity (holds vs releases). Hold rows carry a negative
+  // `amount` (credits frozen), release rows a positive `amount` (credits
+  // restored after a won dispute); neither carries a `dollarAmount`, so they
+  // never touch the revenue/refund USD totals.
+  const chargebackHolds = chargebackTransactions.filter(
+    (t) => classifyRefund(t) === 'chargeback_hold',
+  );
+  const chargebackReleases = chargebackTransactions.filter(
+    (t) => classifyRefund(t) === 'chargeback_release',
+  );
+  const inPrevDay = (transaction: { created_at: string }) =>
+    transaction.created_at >= previousDay.toISOString() &&
+    transaction.created_at < today.toISOString();
+  const chargebackHoldsTodayCount = chargebackHolds.filter(inPrevDay).length;
+  const chargebackReleasesTodayCount =
+    chargebackReleases.filter(inPrevDay).length;
+  // Positive = credits still frozen (holds outweigh releases).
+  const creditsCurrentlyFrozen = -chargebackTransactions.reduce(
+    (sum, t) => sum + t.amount,
+    0,
+  );
 
   // Top customers calculation
   let hasInvalidMetadata = false;
@@ -1422,10 +1447,8 @@ export async function GET(request: NextRequest) {
     `  - Top models: ${topVoiceList}`,
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
-    `  - ${ROLLING_WINDOW_LABEL}: ${calls14dCount} (avg ${(calls14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
-    `  - Duration: ${formatDuration(callsDurationYesterday)} (avg ${formatDuration(callsAvgDurationYesterday)}, ${formatDurationChange(callsAvgDurationYesterday, callsAvgDuration14d)} vs ${ROLLING_WINDOW_LABEL}) | ${ROLLING_WINDOW_LABEL}: ${formatDuration(callsDuration14d)} (avg ${formatDuration(callsAvgDuration14d)})`,
     `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
@@ -1448,6 +1471,12 @@ export async function GET(request: NextRequest) {
       : [
           `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
         ]),
+    ...(chargebackTransactions.length > 0
+      ? [
+          `⚖️ Chargebacks: ${chargebackHoldsTodayCount} held / ${chargebackReleasesTodayCount} released today`,
+          `  - Total: ${chargebackHolds.length} held, ${chargebackReleases.length} released | Frozen credits: ${formatCompactNumber(creditsCurrentlyFrozen)}`,
+        ]
+      : []),
     ...(hasInvalidMetadata
       ? ['', '‼️ Info', '  - Invalid Metadata in credit_transactions']
       : []),

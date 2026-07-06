@@ -33,18 +33,18 @@ export type CloneRouteErrorCode =
 
 /** Shape of the JSON body returned by every clone-voice error response. */
 export interface CloneErrorResponseBody {
+  code?: CloneRouteErrorCode;
+  details?: RouteErrorDetails;
   error: string;
   serverMessage: string;
   status: number;
-  code?: CloneRouteErrorCode;
-  details?: RouteErrorDetails;
 }
 
 /** Shape of the JSON body returned by a successful clone-voice request. */
 export interface CloneSuccessResponse {
-  url: string;
-  creditsUsed: number;
   creditsRemaining: number;
+  creditsUsed: number;
+  url: string;
 }
 
 /** Names of the multipart form fields accepted by `POST /api/clone-voice`. */

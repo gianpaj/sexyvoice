@@ -116,6 +116,7 @@ export async function POST(request: Request) {
       sceneInstructions,
       selectedPresetId,
       selectedSceneId,
+      memory,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
@@ -215,6 +216,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Long-term memory is a paid-only feature. Enforce server-side so a stale
+    // or tampered client can't enable it for a free user. Reuse the lazily
+    // resolved paid-status flag to avoid an extra query when possible.
+    let memoryEnabled = false;
+    if (memory) {
+      if (isPaidUser === undefined) {
+        isPaidUser = await hasUserPaid(user.id);
+      }
+      memoryEnabled = isPaidUser;
+    }
+
     const defaultSceneText = callScenes.find(
       (s) => s.id === selectedSceneId,
     )?.text;
@@ -237,6 +249,10 @@ export async function POST(request: Request) {
       character_id: selectedPresetId,
       scene_id: selectedSceneId ?? null,
       scene_modified: sceneModified,
+      // Long-term memory opt-in (paid users only). Absent/false → the agent
+      // stores nothing. Scope is per-user only for now (sexycall defaults
+      // memory_scope to "user"); per-character scope is deferred.
+      memory: memoryEnabled,
     };
 
     // Create access token

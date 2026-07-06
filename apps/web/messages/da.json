@@ -188,6 +188,10 @@
             {
               "question": "Hvor meget koster det?",
               "answer": "Live-opkald koster {count} kreditter pr. minut, mens du er forbundet."
+            },
+            {
+              "question": "Husker AI'en vores tidligere samtaler?",
+              "answer": "Kun hvis du slår hukommelse til – den er valgfri og slået fra som standard, så normalt gemmes intet fra dine opkald. Når den er slået til, husker assistenten nogle få korte oplysninger (som hvordan du gerne vil tiltales, og hvilke emner du kan lide), ikke optagelser eller fulde udskrifter, så den kan fortsætte, hvor I slap. Vi gemmer kun dine nyeste oplysninger, du kan slette alt når som helst, og hvis du sletter din konto, fjernes de automatisk."
             }
           ]
         },
@@ -295,6 +299,11 @@
           "Stemmeopkald: Brugerdefinerede karakterer"
         ]
       }
+    },
+    "subscriptionScheduledToCancel": {
+      "title": "Dit månedlige kreditabonnement er planlagt til at ophøre",
+      "description": "Dit månedlige kreditabonnement er stadig aktivt indtil {date}, men det fornyes ikke og tilføjer ikke flere månedlige kreditter efter det. Du kan fortsætte med at bruge de kreditter, du har på din konto. Hvis du vil skifte niveau, skal du administrere dit abonnement i Stripe.",
+      "manageButton": "Administrer abonnement"
     },
     "topup": {
       "title": "Køb kreditter",
@@ -501,6 +510,9 @@
     "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er {count}",
     "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
+    "memoryLabel": "Hukommelse",
+    "memoryDescription": "Lad karaktererne huske dig mellem opkald. Der gemmes intet, medmindre det er slået til.",
+    "memoryUpgradeTooltip": "Opgrader til en betalt plan, så karaktererne kan huske dig mellem opkald.",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
     "sceneLabel": "Scene",
@@ -761,6 +773,17 @@
         "cancel": "Annuller",
         "confirm": "Tilbagekald"
       }
+    },
+    "memory": {
+      "title": "Hukommelse for stemmeopkald",
+      "description": "Hvis du slår hukommelse til under opkald, husker karaktererne nogle få oplysninger om dig for at bevare sammenhængen. Du kan slette det hele her.",
+      "button": "Slet al hukommelse",
+      "confirmTitle": "Slet al hukommelse fra stemmeopkald?",
+      "confirmDescription": "Dette sletter permanent alt, hvad karaktererne har husket om dig fra tidligere opkald. Det kan ikke fortrydes.",
+      "cancel": "Annuller",
+      "continue": "Slet",
+      "success": "Din hukommelse fra stemmeopkald blev slettet.",
+      "error": "Din hukommelse kunne ikke slettes. Prøv igen."
     }
   },
   "apiBilling": {

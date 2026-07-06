@@ -13,6 +13,7 @@ import Replicate, { type Prediction } from 'replicate';
 import {
   estimateTokenCount,
   extractInlineAudio,
+  GEMINI_STREAMING_ENABLED,
   getCharactersLimit,
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
@@ -233,6 +234,7 @@ export async function POST(request: Request) {
   let styleVariant = '';
   let seed: number | undefined;
   let selectedLanguage = '';
+  let isSplit = false;
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
@@ -253,6 +255,7 @@ export async function POST(request: Request) {
     voiceId = body.voiceId || '';
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
+    isSplit = body.split === true;
     const stream = body.stream === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
@@ -313,7 +316,29 @@ export async function POST(request: Request) {
     // return audio progressively. The 2.5 models emit the whole clip in a
     // single chunk, so streaming gives no benefit — they keep the JSON path,
     // as do Grok/Replicate voices.
-    const shouldStream = stream && isGeminiVoice && voiceObj.model === 'gpro31';
+    const clientRequestedStream =
+      stream && isGeminiVoice && voiceObj.model === 'gpro31';
+    // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
+    // progressive streaming corrupted some gpro31 generations.
+    const shouldStream = GEMINI_STREAMING_ENABLED && clientRequestedStream;
+
+    // HOTFIX: while streaming is disabled, a stale browser bundle from a
+    // previous deploy may still POST `stream: true` and wait for an SSE `done`
+    // event. The non-streaming JSON response never satisfies that contract, so
+    // the client would hang after audio was generated and credits debited.
+    // Fail fast with an explicit non-OK response — before any credit
+    // reservation — so the stale client surfaces an error and the user reloads
+    // to pick up the non-streaming bundle.
+    if (clientRequestedStream && !shouldStream) {
+      logger.warn('Rejected stream request while streaming is disabled', {
+        user: { id: user.id },
+        extra: { voice: voiceObj.name, model: voiceObj.model },
+      });
+      return APIErrorResponse(
+        'Streaming is temporarily disabled. Please refresh the page and try again.',
+        409,
+      );
+    }
 
     userHasPaid = await hasUserPaid(user.id);
 
@@ -333,7 +358,11 @@ export async function POST(request: Request) {
     // Enforce per-tier input limits on the RAW transcript and style before
     // combining them, so the attacker-controlled (and otherwise unbounded)
     // styleVariant cannot bypass the limits or under-estimate credits.
-    const isGemini31 = isGeminiVoice && voiceObj.model === 'gpro31';
+    // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
+    // gpro31 falls back to the standard per-tier character limits below, like
+    // the Gemini 2.5 voices, instead of the larger combined token budget.
+    const isGemini31 =
+      GEMINI_STREAMING_ENABLED && isGeminiVoice && voiceObj.model === 'gpro31';
 
     if (isGemini31) {
       // Gemini 3.1 streams audio, so the transcript and style share one combined
@@ -405,7 +434,12 @@ export async function POST(request: Request) {
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
+    const estimate = estimateCredits(
+      text,
+      voiceObj.name,
+      voiceObj.model,
+      userHasPaid,
+    );
 
     // console.log({
     //   estimate,
@@ -488,6 +522,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         creditUsed: 0,
         model: effectiveModel,
+        split: isSplit,
       });
 
       if (shouldStream) {
@@ -883,8 +918,12 @@ export async function POST(request: Request) {
     );
 
     if (isGeminiVoice && usage) {
+      // Bill against the model that actually ran (`modelUsed`), not the stored
+      // voice model: a 3.1 request that fell back to 2.5 Flash must not incur
+      // the 3.1 free-user surcharge.
       creditsUsed = calculateCreditsFromTokens(
         Number.parseInt(usage.totalTokenCount, 10),
+        { model: modelUsed, userHasPaid },
       );
     }
 
@@ -921,6 +960,11 @@ export async function POST(request: Request) {
         return;
       }
 
+      const duration = await resolveDurationString(
+        generatedAudioBuffer,
+        generatedAudioMimeType,
+      );
+
       const audioFileDBResult = await saveAudioFile({
         userId: user.id,
         filename,
@@ -930,14 +974,12 @@ export async function POST(request: Request) {
         predictionId: replicateResponse?.id,
         isPublic: false,
         voiceId: voiceObj.id,
-        duration: await resolveDurationString(
-          generatedAudioBuffer,
-          generatedAudioMimeType,
-        ),
+        duration,
         credits_used: creditsDebited,
         usage: {
           ...usage,
           userHasPaid,
+          split: isSplit,
         },
       });
 
@@ -971,8 +1013,9 @@ export async function POST(request: Request) {
           provider,
           textPreview: text.slice(0, 100),
           textLength: text.length,
-          isGeminiVoice,
+          duration,
           userHasPaid,
+          split: isSplit,
           predictionId: replicateResponse?.id ?? null,
           ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
@@ -985,6 +1028,7 @@ export async function POST(request: Request) {
         voiceId: voiceObj.id,
         creditUsed: creditsDebited,
         model: modelUsed,
+        split: isSplit,
       });
     });
 
@@ -1196,8 +1240,31 @@ function streamGeminiTtsResponse({
     let streamUsageMetadata:
       | GenerateContentResponse['usageMetadata']
       | undefined;
+    let streamFinishReason: FinishReason | undefined;
+    let streamBlockReason: string | undefined;
     let audioStarted = false;
     let completed = false;
+
+    const getStreamBlockError = () => {
+      let errorCode: keyof typeof ERROR_CODES | undefined;
+      if (
+        streamFinishReason === FinishReason.PROHIBITED_CONTENT ||
+        streamBlockReason === 'PROHIBITED_CONTENT'
+      ) {
+        errorCode = 'PROHIBITED_CONTENT';
+      } else if (
+        (streamFinishReason && streamFinishReason !== FinishReason.STOP) ||
+        streamBlockReason
+      ) {
+        errorCode = 'OTHER_GEMINI_BLOCK';
+      }
+
+      return errorCode
+        ? new Error(getErrorMessage(errorCode, 'voice-generation'), {
+            cause: errorCode,
+          })
+        : undefined;
+    };
 
     const tryStream = async (model: string) => {
       const stream = await ai.models.generateContentStream({
@@ -1222,6 +1289,14 @@ function streamGeminiTtsResponse({
         if (chunk.usageMetadata) {
           streamUsageMetadata = chunk.usageMetadata;
         }
+        const finishReason = chunk.candidates?.[0]?.finishReason;
+        if (finishReason) {
+          streamFinishReason = finishReason;
+        }
+        const blockReason = chunk.promptFeedback?.blockReason;
+        if (blockReason) {
+          streamBlockReason = blockReason;
+        }
       }
     };
 
@@ -1233,10 +1308,27 @@ function streamGeminiTtsResponse({
 
       try {
         await tryStream(selectedModel);
+        if (audioChunks.length === 0) {
+          const streamBlockError = getStreamBlockError();
+          if (streamBlockError) {
+            throw streamBlockError;
+          }
+          throw new Error(
+            `${selectedModel} stream completed without audio chunks`,
+          );
+        }
       } catch (primaryError) {
         if (requestSignal.aborted || isAbortError(primaryError)) {
           logger.info('Gemini stream aborted', { user: { id: user.id } });
           return;
+        }
+
+        if (
+          Error.isError(primaryError) &&
+          (primaryError.cause === 'PROHIBITED_CONTENT' ||
+            primaryError.cause === 'OTHER_GEMINI_BLOCK')
+        ) {
+          throw primaryError;
         }
 
         if (audioStarted) {
@@ -1262,6 +1354,9 @@ function streamGeminiTtsResponse({
         );
         modelUsed = 'gemini-2.5-flash-preview-tts';
         audioChunks.length = 0;
+        streamUsageMetadata = undefined;
+        streamFinishReason = undefined;
+        streamBlockReason = undefined;
         await tryStream(modelUsed);
       }
 
@@ -1270,6 +1365,10 @@ function streamGeminiTtsResponse({
       }
 
       if (audioChunks.length === 0) {
+        const streamBlockError = getStreamBlockError();
+        if (streamBlockError) {
+          throw streamBlockError;
+        }
         logger.error('Gemini stream completed with no audio chunks', {
           user: { id: user.id, email: user.email },
           extra: { model: modelUsed, textLength: text.length, stream: true },
@@ -1299,8 +1398,12 @@ function streamGeminiTtsResponse({
       // Billing — calculate credits from stream tokens when available.
       let creditsUsed = estimate;
       if (streamUsageMetadata?.totalTokenCount) {
+        // Bill against the model that actually ran (`modelUsed`), which the
+        // stream sets to 2.5 Flash on fallback — so a downgraded 3.1 request
+        // is not charged the 3.1 free-user surcharge.
         creditsUsed = calculateCreditsFromTokens(
           streamUsageMetadata.totalTokenCount,
+          { model: modelUsed, userHasPaid },
         );
       }
       const creditsDebited = await reconcileReservedCredits({
@@ -1368,7 +1471,7 @@ function streamGeminiTtsResponse({
           provider,
           textPreview: text.slice(0, 100),
           textLength: text.length,
-          isGeminiVoice: true,
+          duration,
           userHasPaid,
           predictionId: null,
           stream: true,
@@ -1431,7 +1534,9 @@ function streamGeminiTtsResponse({
         },
       });
 
-      if (!audioStarted) {
+      const isProhibitedContent =
+        Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
+      if (!(audioStarted || isProhibitedContent)) {
         captureException(error, {
           extra: { model: modelUsed, voice: voiceObj.name, stream: true },
           user: { id: user.id },
@@ -1466,6 +1571,7 @@ async function sendPosthogEvent({
   predictionId,
   creditUsed,
   model,
+  split,
 }: {
   userId: string;
   text: string;
@@ -1473,6 +1579,7 @@ async function sendPosthogEvent({
   predictionId?: string;
   creditUsed: number;
   model: string;
+  split?: boolean;
 }) {
   const posthog = PostHogClient();
   posthog.capture({
@@ -1486,6 +1593,7 @@ async function sendPosthogEvent({
       voiceId,
       credits_used: creditUsed,
       textLength: text.length,
+      split,
     },
   });
   await posthog.shutdown();
