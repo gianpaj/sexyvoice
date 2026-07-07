@@ -206,6 +206,29 @@ describe('Clone Voice API Route', () => {
       expect(json.details).toEqual({ MAX: 4000 });
     });
 
+    it('should return 400 when Inworld text exceeds 2000 characters', async () => {
+      const formData = new FormData();
+      formData.append('text', 'a'.repeat(2001));
+      formData.append('locale', 'en');
+      formData.append('provider', 'inworld');
+      formData.append('audioReferenceId', 'test-audio-reference-id');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.serverMessage).toContain(
+        'Text exceeds the maximum length of 2000 characters',
+      );
+      expect(json.code).toBe('errors.textTooLong');
+      expect(json.details).toEqual({ MAX: 2000 });
+    });
+
     it('should return 400 when non-Voxtral text exceeds 300 characters', async () => {
       const longText = 'a'.repeat(301);
       const formData = createFormDataWithAudio(
@@ -661,6 +684,7 @@ describe('Clone Voice API Route', () => {
     });
   });
 
+  // biome-ignore lint/suspicious/noSkippedTests: Existing unauthenticated Supabase mock coverage is parked until the auth test setup is fixed.
   describe.skip('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
       // Mock unauthenticated user
@@ -2066,15 +2090,12 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Inworld provider', () => {
-    it('should clone voice using Inworld when explicitly selected', async () => {
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'My Voice');
+    it('should generate speech with Inworld when a saved voice is selected', async () => {
+      const formData = new FormData();
+      formData.append('text', 'Hello world');
+      formData.append('locale', 'en');
+      formData.append('provider', 'inworld');
+      formData.append('audioReferenceId', 'test-audio-reference-id');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -2088,6 +2109,10 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
       // Inworld is a TTS engine, not the locale-resolved Replicate/Mistral path.
+      expect(queries.getAudioReferenceById).toHaveBeenCalledWith(
+        'test-audio-reference-id',
+        'test-user-id',
+      );
       expect(mockReplicateRun).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -2106,14 +2131,11 @@ describe('Clone Voice API Route', () => {
     it('should store Inworld output as an mp3 file', async () => {
       mockRedisGet.mockResolvedValueOnce(null);
 
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'My Voice');
+      const formData = new FormData();
+      formData.append('text', 'Hello world');
+      formData.append('locale', 'en');
+      formData.append('provider', 'inworld');
+      formData.append('audioReferenceId', 'test-audio-reference-id');
 
       const request = new Request('http://localhost/api/clone-voice', {
         method: 'POST',
@@ -2156,80 +2178,7 @@ describe('Clone Voice API Route', () => {
       expect(json.details).toMatchObject({ provider: 'inworld', locale: 'sw' });
     });
 
-    it('should return a typed 503 when the Inworld clone API fails', async () => {
-      server.use(
-        http.post('https://api.inworld.ai/voices/v1/voices:clone', () =>
-          HttpResponse.text('bad gateway', { status: 502 }),
-        ),
-      );
-
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'My Voice');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-
-      expect(response.status).toBe(503);
-      expect(json.code).toBe('errors.providerUnavailable');
-      expect(json.details).toEqual({ provider: 'inworld' });
-      expect(queries.reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        amount: expect.any(Number),
-      });
-      expect(queries.restoreCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        amount: expect.any(Number),
-      });
-      expect(queries.saveAudioFile).not.toHaveBeenCalled();
-    });
-
-    it('saves a new audio reference when cloning a new Inworld voice', async () => {
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'My Voice');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-      await flushPromises();
-
-      expect(response.status).toBe(200);
-      expect(queries.insertAudioReference).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: 'test-user-id',
-          provider: 'inworld',
-          voiceId: 'test-inworld-voice-id',
-          name: 'My Voice',
-          isPaid: false,
-        }),
-      );
-      expect(json.audioReference).toMatchObject({
-        id: 'test-audio-reference-id',
-        voice_id: 'test-inworld-voice-id',
-      });
-    });
-
-    it('returns 400 when cloning a new Inworld voice without a name', async () => {
+    it('returns 400 when Inworld generation does not use a saved voice', async () => {
       const formData = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('audio1.wav'),
@@ -2247,8 +2196,10 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(400);
-      expect(json.code).toBe('errors.voiceNameRequired');
-      expect(queries.insertAudioReference).not.toHaveBeenCalled();
+      expect(json.code).toBe('errors.inworldVoiceRequired');
+      expect(json.details).toEqual({ provider: 'inworld' });
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
     it('reuses a saved Inworld voice without uploading audio or re-cloning', async () => {
@@ -2303,95 +2254,6 @@ describe('Clone Voice API Route', () => {
       expect(response.status).toBe(400);
       expect(json.code).toBe('errors.providerLocaleUnsupported');
       expect(json.details).toMatchObject({ provider: 'mistral', locale: 'ja' });
-    });
-
-    it('returns 400 when the Inworld voice name is too long', async () => {
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'a'.repeat(61));
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(json.code).toBe('errors.voiceNameTooLong');
-      expect(queries.insertAudioReference).not.toHaveBeenCalled();
-    });
-
-    it('surfaces an Inworld 4xx as a non-retryable client error', async () => {
-      server.use(
-        http.post('https://api.inworld.ai/voices/v1/voices:clone', () =>
-          HttpResponse.text('bad request', { status: 400 }),
-        ),
-      );
-
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'My Voice');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(json.code).toBe('errors.providerRequestRejected');
-      expect(json.details).toMatchObject({ provider: 'inworld' });
-    });
-
-    it('rolls back the Inworld voice when saving the audio reference fails', async () => {
-      vi.mocked(queries.insertAudioReference).mockResolvedValueOnce({
-        data: null,
-        error: { message: 'unique violation' },
-        // biome-ignore lint/suspicious/noExplicitAny: test mock shape
-      } as any);
-
-      let inworldDeleteCalled = false;
-      server.use(
-        http.delete('https://api.inworld.ai/voices/v1/voices/:voiceId', () => {
-          inworldDeleteCalled = true;
-          return HttpResponse.json({});
-        }),
-      );
-
-      const formData = createFormDataWithAudio(
-        'Hello world',
-        createMockAudioFile('audio1.wav'),
-        'en',
-        false,
-        'inworld',
-      );
-      formData.append('voiceName', 'My Voice');
-
-      const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const response = await POST(request);
-      await flushPromises();
-
-      // The user still receives generated audio; only the voice is rolled back.
-      expect(response.status).toBe(200);
-      expect(inworldDeleteCalled).toBe(true);
     });
   });
 });

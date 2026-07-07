@@ -21,6 +21,7 @@ export function CloneTextField({
   disabled,
   text,
   textMaxLength,
+  usesInworld,
   usesVoxtral,
   userHasPaid,
   dispatch,
@@ -28,6 +29,7 @@ export function CloneTextField({
   disabled: boolean;
   text: string;
   textMaxLength: number;
+  usesInworld: boolean;
   usesVoxtral: boolean;
   userHasPaid: boolean;
   dispatch: Dispatch<CloneStateAction>;
@@ -72,7 +74,7 @@ export function CloneTextField({
         <span>
           {text.length} / {textMaxLength}
         </span>
-        {usesVoxtral && (
+        {usesVoxtral && !usesInworld && (
           <TooltipProvider>
             <Tooltip delayDuration={100}>
               <TooltipTrigger asChild>

@@ -109,12 +109,13 @@ export function CloneInworldVoiceSelect({
             <AlertDialogTrigger asChild>
               <Button
                 aria-label={t('deleteVoice')}
+                className="h-9"
                 disabled={disabled}
                 size="icon"
                 type="button"
                 variant="outline"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

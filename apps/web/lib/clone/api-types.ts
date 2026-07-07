@@ -22,6 +22,7 @@ export type CloneRouteErrorCode =
   | 'errors.invalidContentType'
   | 'errors.invalidFileType'
   | 'errors.audioReferenceNotFound'
+  | 'errors.inworldVoiceRequired'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
   | 'errors.providerUnavailable'
@@ -47,11 +48,6 @@ export interface CloneErrorResponseBody {
 
 /** Shape of the JSON body returned by a successful clone-voice request. */
 export interface CloneSuccessResponse {
-  audioReference?: {
-    id: string;
-    name: string;
-    voice_id: string;
-  } | null;
   creditsRemaining: number;
   creditsUsed: number;
   url: string;
@@ -65,5 +61,4 @@ export const CLONE_FORM_FIELDS = {
   provider: 'provider',
   enhanceReferenceAudio: 'enhanceReferenceAudio',
   audioReferenceId: 'audioReferenceId',
-  voiceName: 'voiceName',
 } as const;

@@ -44,7 +44,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { AudioProvider } from './audio-provider';
 import { CloneAudioInput } from './clone-audio-input';
-import { CloneConsentFields } from './clone-consent-fields';
+import { CloneCheckboxes } from './clone-consent-fields';
 import { CloneInworldVoiceSelect } from './clone-inworld-voice-select';
 import { CloneLanguageSelect } from './clone-language-select';
 import { CloneProviderSelect } from './clone-provider-select';
@@ -256,6 +256,67 @@ function VoiceSetupStepContent({
   );
 }
 
+function InworldVoiceSetupActions({
+  convertingMicAudio,
+  dispatch,
+  handleCreateInworldVoice,
+  inworldVoiceSetupIsComplete,
+  isReusingVoice,
+  legalConsentChecked,
+  referenceAudioEnhancementEnabled,
+  status,
+}: {
+  convertingMicAudio: boolean;
+  dispatch: Dispatch<CloneStateAction>;
+  handleCreateInworldVoice: () => Promise<void>;
+  inworldVoiceSetupIsComplete: boolean;
+  isReusingVoice: boolean;
+  legalConsentChecked: boolean;
+  referenceAudioEnhancementEnabled: boolean;
+  status: CloneState['status'];
+}) {
+  const t = useTranslations('clone');
+
+  return (
+    <>
+      <CloneCheckboxes
+        disabled={status === 'generating'}
+        dispatch={dispatch}
+        legalConsentChecked={legalConsentChecked}
+        referenceAudioEnhancementEnabled={referenceAudioEnhancementEnabled}
+        usesInworld
+      />
+      <GenerateButton
+        className="w-full"
+        ctaText={isReusingVoice ? t('goToGenerate') : t('createVoice')}
+        data-testid="clone-create-voice-button"
+        disabled={
+          !inworldVoiceSetupIsComplete ||
+          status === 'generating' ||
+          convertingMicAudio ||
+          !legalConsentChecked
+        }
+        generatingText={`${t('creatingVoice')}...`}
+        isGenerating={status === 'generating' || convertingMicAudio}
+        onClick={() => {
+          if (isReusingVoice) {
+            dispatch({
+              type: 'patch',
+              patch: { activeTab: 'generate' },
+            });
+            return;
+          }
+
+          handleCreateInworldVoice().catch((error) => {
+            console.error('Inworld voice creation failed:', error);
+          });
+        }}
+        showShortcut={false}
+      />
+    </>
+  );
+}
+
 function GenerateStepContent({
   canStartGeneration,
   convertingMicAudio,
@@ -271,6 +332,7 @@ function GenerateStepContent({
   textIsOverLimit,
   textMaxLength,
   userHasPaid,
+  usesInworld,
   usesVoxtral,
 }: {
   canStartGeneration: boolean;
@@ -287,6 +349,7 @@ function GenerateStepContent({
   textIsOverLimit: boolean;
   textMaxLength: number;
   userHasPaid: boolean;
+  usesInworld: boolean;
   usesVoxtral: boolean;
 }) {
   const t = useTranslations('clone');
@@ -299,6 +362,7 @@ function GenerateStepContent({
         text={text}
         textMaxLength={textMaxLength}
         userHasPaid={userHasPaid}
+        usesInworld={usesInworld}
         usesVoxtral={usesVoxtral}
       />
 
@@ -316,11 +380,13 @@ function GenerateStepContent({
         </Alert>
       )}
 
-      <CloneConsentFields
+      <CloneCheckboxes
         disabled={status === 'generating'}
         dispatch={dispatch}
         legalConsentChecked={legalConsentChecked}
         referenceAudioEnhancementEnabled={referenceAudioEnhancementEnabled}
+        showLegalConsent={!usesInworld}
+        usesInworld={usesInworld}
       />
 
       <GenerateButton
@@ -603,7 +669,11 @@ function NewVoiceClientInner({
     });
   }, []);
 
-  const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
+  const textMaxLength = getCloneTextMaxLength(
+    selectedLocale.code,
+    userHasPaid,
+    usesInworld ? 'inworld' : null,
+  );
 
   const [fileState, fileActions] = useFileUpload({
     onFilesAdded,
@@ -649,11 +719,11 @@ function NewVoiceClientInner({
       return;
     }
 
-    if (usesInworld && !isReusingVoice && !voiceName.trim()) {
+    if (usesInworld && !isReusingVoice) {
       dispatch({
         type: 'patch',
         patch: {
-          errorMessage: t('errors.voiceNameRequired'),
+          errorMessage: t('errors.inworldVoiceRequired'),
           status: 'error',
         },
       });
@@ -753,9 +823,6 @@ function NewVoiceClientInner({
           CLONE_FORM_FIELDS.enhanceReferenceAudio,
           String(referenceAudioEnhancementEnabled),
         );
-        if (usesInworld) {
-          formData.append(CLONE_FORM_FIELDS.voiceName, voiceName);
-        }
       }
 
       voiceRes = await fetch('/api/clone-voice', {
@@ -839,20 +906,194 @@ function NewVoiceClientInner({
     }
   };
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Inworld voice creation handles validation, microphone conversion, upload, API errors, and state transitions together.
+  const handleCreateInworldVoice = async () => {
+    if (!(file || micBlob)) {
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: t('errors.noAudioFile'),
+          status: 'error',
+        },
+      });
+      return;
+    }
+
+    if (!voiceName.trim()) {
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: t('errors.voiceNameRequired'),
+          status: 'error',
+        },
+      });
+      return;
+    }
+
+    clearErrors();
+    dispatch({
+      type: 'patch',
+      patch: {
+        errorMessage: '',
+        status: 'generating',
+      },
+    });
+
+    let voiceRes: Response | undefined;
+    try {
+      abortController.current = new AbortController();
+
+      let audioToProcess = file;
+      if (micBlob && !file) {
+        const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+
+        if (shouldConvertMicAudio) {
+          dispatch({
+            type: 'patch',
+            patch: { convertingMicAudio: true },
+          });
+        }
+
+        try {
+          if (shouldConvertMicAudio) {
+            await ensureLoaded();
+          }
+
+          audioToProcess = await createMicrophoneReferenceAudioFile(
+            micBlob,
+            convertWithFFmpeg,
+          );
+        } catch (convertError) {
+          console.error('WebM to WAV conversion error:', convertError);
+          dispatch({
+            type: 'patch',
+            patch: {
+              errorMessage:
+                convertError instanceof Error
+                  ? formatCloneMessage(t('audioConversionFailedWithMessage'), {
+                      ERROR: convertError.message,
+                    })
+                  : t('audioConversionFailed'),
+              status: 'error',
+            },
+          });
+          return;
+        } finally {
+          if (shouldConvertMicAudio) {
+            dispatch({
+              type: 'patch',
+              patch: { convertingMicAudio: false },
+            });
+          }
+        }
+      }
+
+      if (!audioToProcess) {
+        dispatch({
+          type: 'patch',
+          patch: {
+            errorMessage: t('errors.noAudioFile'),
+            status: 'error',
+          },
+        });
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', audioToProcess);
+      formData.append('locale', selectedLocale.code);
+      formData.append('name', voiceName);
+
+      voiceRes = await fetch('/api/audio-references', {
+        method: 'POST',
+        body: formData,
+        signal: abortController.current.signal,
+      });
+
+      if (!voiceRes.ok) {
+        let errorMessage = t('errorCloning');
+        let voiceResult: { error?: string } | null = null;
+
+        try {
+          voiceResult = (await voiceRes.json()) as { error?: string };
+        } catch {
+          voiceResult = null;
+        }
+
+        errorMessage = voiceResult?.error || errorMessage;
+
+        dispatch({
+          type: 'patch',
+          patch: {
+            errorMessage,
+            status: 'error',
+          },
+        });
+        return;
+      }
+
+      const voiceResult = (await voiceRes.json()) as {
+        data: AudioReference;
+      };
+
+      toast.success(t('voiceCreated'));
+      dispatch({
+        type: 'patch',
+        patch: {
+          activeTab: 'generate',
+          errorMessage: '',
+          selectedAudioReferenceId: voiceResult.data.id,
+          status: 'idle',
+        },
+      });
+      loadInworldVoices().catch(() => undefined);
+    } catch (err) {
+      if (
+        err instanceof Error &&
+        err.message === 'signal is aborted without reason'
+      ) {
+        return;
+      }
+      let errorMsg = '';
+      if (voiceRes && !voiceRes.ok) {
+        errorMsg = voiceRes.statusText;
+      } else if (err instanceof Error) {
+        errorMsg = err.message;
+      }
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: errorMsg || t('unexpectedError'),
+          status: 'error',
+        },
+      });
+    }
+  };
+
   const handleCancel = useCallback(() => {
     abortController.current?.abort();
     dispatch({ type: 'patch', patch: { status: 'idle' } });
   }, []);
+
+  const textIsOverLimit = text.length > textMaxLength;
+  const hasVoiceSource = Boolean(isReusingVoice || file || micBlob);
+  const inworldVoiceSetupIsComplete = Boolean(
+    isReusingVoice || ((file || micBlob) && voiceName.trim()),
+  );
+  const canStartGeneration = Boolean(
+    text.trim() && (usesInworld ? isReusingVoice : hasVoiceSource),
+  );
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
       event.preventDefault();
 
       if (
+        canStartGeneration &&
         status !== 'generating' &&
-        text.trim() &&
         hasEnoughCredits &&
-        legalConsentChecked
+        legalConsentChecked &&
+        !textIsOverLimit
       ) {
         handleGenerate().catch((error) => {
           console.error('Keyboard shortcut clone generation failed:', error);
@@ -915,17 +1156,6 @@ function NewVoiceClientInner({
     });
   };
 
-  const textIsOverLimit = text.length > textMaxLength;
-  const hasVoiceSource = Boolean(isReusingVoice || file || micBlob);
-  const inworldVoiceSetupIsComplete = Boolean(
-    isReusingVoice || ((file || micBlob) && voiceName.trim()),
-  );
-  const canStartGeneration = Boolean(
-    hasVoiceSource &&
-      text.trim() &&
-      (!usesInworld || inworldVoiceSetupIsComplete),
-  );
-
   useEffect(() => {
     if (!usesInworld && activeTab === 'generate') {
       dispatch({ type: 'patch', patch: { activeTab: 'upload' } });
@@ -965,7 +1195,7 @@ function NewVoiceClientInner({
             </TabsTrigger>
             {usesInworld && (
               <TabsTrigger
-                disabled={!inworldVoiceSetupIsComplete}
+                disabled={!(isReusingVoice && legalConsentChecked)}
                 value="generate"
               >
                 {t('tabGenerate')}
@@ -1004,6 +1234,20 @@ function NewVoiceClientInner({
               usesVoxtral={usesVoxtral}
               voiceName={voiceName}
             />
+            {usesInworld && (
+              <InworldVoiceSetupActions
+                convertingMicAudio={convertingMicAudio}
+                dispatch={dispatch}
+                handleCreateInworldVoice={handleCreateInworldVoice}
+                inworldVoiceSetupIsComplete={inworldVoiceSetupIsComplete}
+                isReusingVoice={isReusingVoice}
+                legalConsentChecked={legalConsentChecked}
+                referenceAudioEnhancementEnabled={
+                  referenceAudioEnhancementEnabled
+                }
+                status={status}
+              />
+            )}
             {!usesInworld && (
               <GenerateStepContent
                 canStartGeneration={canStartGeneration}
@@ -1022,6 +1266,7 @@ function NewVoiceClientInner({
                 textIsOverLimit={textIsOverLimit}
                 textMaxLength={textMaxLength}
                 userHasPaid={userHasPaid}
+                usesInworld={false}
                 usesVoxtral={usesVoxtral}
               />
             )}
@@ -1046,6 +1291,7 @@ function NewVoiceClientInner({
                 textIsOverLimit={textIsOverLimit}
                 textMaxLength={textMaxLength}
                 userHasPaid={userHasPaid}
+                usesInworld={usesInworld}
                 usesVoxtral={usesVoxtral}
               />
             </TabsContent>

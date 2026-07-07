@@ -51,7 +51,6 @@ describe('Audio References API', () => {
             created_at: null,
           },
         ],
-        // biome-ignore lint/suspicious/noExplicitAny: test mock shape
       } as any);
 
       const request = new Request(
@@ -73,7 +72,6 @@ describe('Audio References API', () => {
       vi.mocked(queries.getAudioReferencesForUser).mockResolvedValueOnce({
         data: null,
         error: { message: 'boom' },
-        // biome-ignore lint/suspicious/noExplicitAny: test mock shape
       } as any);
 
       const request = new Request('http://localhost/api/audio-references');
@@ -108,7 +106,6 @@ describe('Audio References API', () => {
       vi.mocked(queries.getAudioReferenceById).mockResolvedValueOnce({
         data: null,
         error: null,
-        // biome-ignore lint/suspicious/noExplicitAny: test mock shape
       } as any);
 
       const request = new Request(
@@ -117,8 +114,14 @@ describe('Audio References API', () => {
       );
 
       const response = await DELETE(request, makeContext('missing'));
+      const json = await response.json();
 
       expect(response.status).toBe(404);
+      expect(json).toMatchObject({
+        error: 'Audio reference not found',
+        serverMessage: 'Audio reference not found',
+        status: 404,
+      });
       expect(queries.deleteAudioReference).not.toHaveBeenCalled();
     });
 
@@ -156,20 +159,68 @@ describe('Audio References API', () => {
       );
 
       const response = await DELETE(request, makeContext('ref-1'));
+      const json = await response.json();
 
       expect(response.status).toBe(502);
+      expect(json).toMatchObject({
+        error:
+          'Failed to delete the voice from the provider. Please try again.',
+        serverMessage:
+          'Failed to delete the voice from the provider. Please try again.',
+        status: 502,
+      });
       expect(queries.deleteAudioReference).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 when the DB row cannot be deleted', async () => {
+      vi.mocked(queries.deleteAudioReference).mockResolvedValueOnce({
+        error: { message: 'delete failed' },
+      } as any);
+
+      const request = new Request(
+        'http://localhost/api/audio-references/ref-1',
+        { method: 'DELETE' },
+      );
+
+      const response = await DELETE(request, makeContext('ref-1'));
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json).toMatchObject({
+        error: 'Failed to delete audio reference',
+        serverMessage: 'Failed to delete audio reference',
+        status: 500,
+      });
     });
   });
 
   describe('POST /api/audio-references', () => {
     it('mints an Inworld voice from an upload for a paid user', async () => {
       vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+      let inworldCloneBody: Record<string, unknown> | null = null;
+      server.use(
+        http.post(
+          'https://api.inworld.ai/voices/v1/voices:clone',
+          async ({ request }) => {
+            inworldCloneBody = (await request.json()) as Record<
+              string,
+              unknown
+            >;
+            return HttpResponse.json({
+              voice: { voiceId: 'test-inworld-voice-id' },
+            });
+          },
+        ),
+      );
 
       const response = await POST(makeCreateRequest(makeCreateForm()));
       const json = await response.json();
 
       expect(response.status).toBe(201);
+      expect(inworldCloneBody).toMatchObject({
+        description: 'test-user-id',
+        displayName: 'My Voice',
+      });
       expect(queries.insertAudioReference).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: 'test-user-id',
@@ -206,7 +257,6 @@ describe('Audio References API', () => {
       vi.mocked(queries.insertAudioReference).mockResolvedValueOnce({
         data: null,
         error: { message: 'unique violation' },
-        // biome-ignore lint/suspicious/noExplicitAny: test mock shape
       } as any);
 
       let inworldDeleteCalled = false;

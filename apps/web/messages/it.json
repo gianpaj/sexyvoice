@@ -640,6 +640,7 @@
     "deleteVoiceTitle": "Elimina voce salvata",
     "deleteVoiceDescription": "Questa operazione elimina definitivamente la voce dal tuo account e dal provider. Non può essere annullata.",
     "deleteVoiceConfirm": "Elimina",
+    "voiceCreated": "Voce creata",
     "voiceDeleted": "Voce eliminata",
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
     "playAudio": "Riproduci audio",
@@ -679,6 +680,7 @@
       "voiceNameTooLong": "Il nome della voce deve contenere al massimo __MAX__ caratteri.",
       "providerRequestRejected": "Il provider di clonazione vocale non è riuscito a elaborare questa richiesta. Prova con un altro audio di riferimento o testo.",
       "audioReferenceNotFound": "Impossibile trovare la voce salvata selezionata.",
+      "inworldVoiceRequired": "Crea o seleziona una voce Inworld salvata prima di generare audio.",
       "failedToLoadVoices": "Impossibile caricare le tue voci salvate.",
       "failedToDeleteVoice": "Impossibile eliminare la voce. Riprova.",
       "referenceAudioEnhancementInputTooLarge": "L'audio di riferimento è troppo grande per essere migliorato. Usa un file più piccolo o disattiva la pulizia audio.",
@@ -693,6 +695,9 @@
       "exampleOutput": "Esempio",
       "loadSource": "Carica sorgente"
     },
+    "createVoice": "Crea voce",
+    "creatingVoice": "Creazione voce",
+    "goToGenerate": "Vai a Genera",
     "crossLanguageInfo": {
       "title": "Trasferimento vocale cross-lingua",
       "description": "Clona una voce in una lingua e falla parlare fluentemente in una qualsiasi delle altre 23 lingue supportate preservando le caratteristiche uniche del parlante.",

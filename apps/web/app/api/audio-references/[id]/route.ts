@@ -2,6 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
 import { deleteInworldVoice } from '@/lib/clone/inworld';
+import { APIErrorResponse } from '@/lib/error-ts';
 import {
   deleteAudioReference,
   getAudioReferenceById,
@@ -23,24 +24,18 @@ export async function DELETE(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const { data: reference, error } = await getAudioReferenceById(id, user.id);
 
   if (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: 'Failed to load audio reference' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to load audio reference', 500);
   }
 
   if (!reference) {
-    return NextResponse.json(
-      { error: 'Audio reference not found' },
-      { status: 404 },
-    );
+    return APIErrorResponse('Audio reference not found', 404);
   }
 
   // Delete the provider-side voice first so we never orphan a remote voice
@@ -53,12 +48,9 @@ export async function DELETE(
         user: { id: user.id },
         extra: { voiceId: reference.voice_id },
       });
-      return NextResponse.json(
-        {
-          error:
-            'Failed to delete the voice from the provider. Please try again.',
-        },
-        { status: 502 },
+      return APIErrorResponse(
+        'Failed to delete the voice from the provider. Please try again.',
+        502,
       );
     }
   }
@@ -67,10 +59,7 @@ export async function DELETE(
 
   if (deleteRowError) {
     console.error(deleteRowError);
-    return NextResponse.json(
-      { error: 'Failed to delete audio reference' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to delete audio reference', 500);
   }
 
   return NextResponse.json({}, { status: 200 });

@@ -640,6 +640,7 @@
     "deleteVoiceTitle": "Slet gemt stemme",
     "deleteVoiceDescription": "Dette sletter stemmen permanent fra din konto og hos udbyderen. Dette kan ikke fortrydes.",
     "deleteVoiceConfirm": "Slet",
+    "voiceCreated": "Stemme oprettet",
     "voiceDeleted": "Stemme slettet",
     "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
     "playAudio": "Afspil lyd",
@@ -679,6 +680,7 @@
       "voiceNameTooLong": "Stemmenavn må højst være __MAX__ tegn.",
       "providerRequestRejected": "Udbyderen af stemmekloning kunne ikke behandle denne anmodning. Prøv en anden referencelyd eller tekst.",
       "audioReferenceNotFound": "Den valgte gemte stemme kunne ikke findes.",
+      "inworldVoiceRequired": "Opret eller vælg en gemt Inworld-stemme, før du genererer lyd.",
       "failedToLoadVoices": "Kunne ikke indlæse dine gemte stemmer.",
       "failedToDeleteVoice": "Kunne ikke slette stemmen. Prøv igen.",
       "referenceAudioEnhancementInputTooLarge": "Referenceaudioen er for stor til at blive forbedret. Brug en mindre fil, eller slå lydrensning fra.",
@@ -693,6 +695,9 @@
       "exampleOutput": "Eksempel",
       "loadSource": "Indlæs kilde"
     },
+    "createVoice": "Opret stemme",
+    "creatingVoice": "Opretter stemme",
+    "goToGenerate": "Gå til Generér",
     "crossLanguageInfo": {
       "title": "Stemmekloning på tværs af sprog",
       "description": "Klon en stemme på ét sprog og få den til at tale flydende på et af de andre 23 understøttede sprog, mens talerens unikke karakteristika bevares.",

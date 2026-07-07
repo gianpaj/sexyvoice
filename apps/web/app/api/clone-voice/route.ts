@@ -25,8 +25,6 @@ import {
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import {
-  cloneVoiceWithInworld,
-  deleteInworldVoice,
   INWORLD_MAX_DURATION,
   INWORLD_MIN_DURATION,
   INWORLD_OUTPUT_MIME_TYPE,
@@ -49,7 +47,6 @@ import {
   getAudioReferenceById,
   getCredits,
   hasUserPaid,
-  insertAudioReference,
   insertUsageEvent,
   isInsufficientCreditsError,
   reduceCredits,
@@ -81,7 +78,6 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
-const MAX_VOICE_NAME_LENGTH = 60;
 const FALLBACK_MIN_DURATION = 10;
 const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
 const VOXTRAL_MIN_DURATION = 3;
@@ -129,7 +125,6 @@ interface FormInput {
   locale: string;
   provider: CloneProvider | null;
   text: string;
-  voiceName: string | null;
 }
 
 interface MistralSdkErrorLike {
@@ -377,7 +372,6 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const audioReferenceIdValue = formData.get(
     CLONE_FORM_FIELDS.audioReferenceId,
   );
-  const voiceNameValue = formData.get(CLONE_FORM_FIELDS.voiceName);
 
   const text = typeof textValue === 'string' ? textValue : '';
   const audioFile = file instanceof File ? file : null;
@@ -387,12 +381,8 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const localeStr = typeof locale === 'string' ? locale : '';
   const requestedProvider = parseRequestedProvider(providerValue);
   const audioReferenceId =
-    typeof audioReferenceIdValue === 'string' && audioReferenceIdValue
-      ? audioReferenceIdValue
-      : null;
-  const voiceName =
-    typeof voiceNameValue === 'string' && voiceNameValue.trim()
-      ? voiceNameValue.trim()
+    typeof audioReferenceIdValue === 'string' && audioReferenceIdValue.trim()
+      ? audioReferenceIdValue.trim()
       : null;
 
   if (!text) {
@@ -427,7 +417,6 @@ async function parseFormData(request: Request): Promise<FormInput> {
     provider: requestedProvider,
     enhanceReferenceAudio: shouldEnhanceReferenceAudio,
     audioReferenceId,
-    voiceName,
   };
 }
 
@@ -435,10 +424,11 @@ function validateTextLength(
   text: string,
   locale: string,
   userHasPaid: boolean,
+  provider?: CloneProvider | null,
 ): void {
-  const maxLength = getCloneTextMaxLength(locale, userHasPaid);
+  const maxLength = getCloneTextMaxLength(locale, userHasPaid, provider);
 
-  if (!isCloneTextOverLimit({ text, locale, userHasPaid })) {
+  if (!isCloneTextOverLimit({ text, locale, provider, userHasPaid })) {
     return;
   }
 
@@ -1611,7 +1601,7 @@ export async function POST(request: Request) {
       provider === 'inworld' && Boolean(formInput.audioReferenceId);
 
     const userHasPaid = await hasUserPaid(user.id);
-    validateTextLength(text, locale, userHasPaid);
+    validateTextLength(text, locale, userHasPaid, provider);
 
     // Check credits
     const { currentAmount, estimate } = await validateCredits(
@@ -1633,6 +1623,15 @@ export async function POST(request: Request) {
       });
     }
 
+    if (provider === 'inworld') {
+      throw createRouteError(
+        'Create or select an Inworld voice before generating audio.',
+        400,
+        'errors.inworldVoiceRequired',
+        { provider },
+      );
+    }
+
     // New-clone path requires a reference audio file.
     if (!referenceAudioFile) {
       throw createRouteError(
@@ -1640,26 +1639,6 @@ export async function POST(request: Request) {
         400,
         'errors.missingRequiredParameters',
       );
-    }
-
-    // Saving a new Inworld voice requires a name.
-    if (provider === 'inworld') {
-      if (!formInput.voiceName) {
-        throw createRouteError(
-          'A voice name is required to save the cloned voice.',
-          400,
-          'errors.voiceNameRequired',
-        );
-      }
-
-      if (formInput.voiceName.length > MAX_VOICE_NAME_LENGTH) {
-        throw createRouteError(
-          `Voice name must be at most ${MAX_VOICE_NAME_LENGTH} characters.`,
-          400,
-          'errors.voiceNameTooLong',
-          { MAX: MAX_VOICE_NAME_LENGTH },
-        );
-      }
     }
 
     validateFileType(referenceAudioFile);
@@ -1841,7 +1820,6 @@ export async function POST(request: Request) {
     // Generate voice
     let outputUrl: string;
     let requestId: string;
-    let createdInworldVoiceId: string | null = null;
 
     if (provider === 'mistral') {
       const result = await generateVoiceWithMistral(
@@ -1853,29 +1831,6 @@ export async function POST(request: Request) {
         result.buffer,
         filename,
         'audio/wav',
-      );
-
-      modelUsed = result.modelUsed;
-      requestId = result.requestId;
-    } else if (provider === 'inworld') {
-      let result: Awaited<ReturnType<typeof cloneVoiceWithInworld>>;
-      try {
-        result = await cloneVoiceWithInworld({
-          displayName: formInput.voiceName as string,
-          text,
-          locale,
-          referenceAudioBuffer: cloneInputAudio.buffer,
-        });
-      } catch (error) {
-        throwInworldRouteError(error, locale);
-      }
-
-      createdInworldVoiceId = result.voiceId;
-
-      outputUrl = await uploadGeneratedAudio(
-        result.buffer,
-        filename,
-        INWORLD_OUTPUT_MIME_TYPE,
       );
 
       modelUsed = result.modelUsed;
@@ -1912,53 +1867,6 @@ export async function POST(request: Request) {
       requestId = result.requestId;
     }
 
-    // Persist the new Inworld voice so it can be reused without re-cloning.
-    let createdAudioReference: {
-      id: string;
-      name: string;
-      voice_id: string;
-    } | null = null;
-    if (
-      provider === 'inworld' &&
-      createdInworldVoiceId &&
-      formInput.voiceName
-    ) {
-      const inserted = await insertAudioReference({
-        userId: user.id,
-        provider: 'inworld',
-        voiceId: createdInworldVoiceId,
-        name: formInput.voiceName,
-        isPaid: userHasPaid,
-      });
-
-      if (inserted.error) {
-        captureException(inserted.error, {
-          user: { id: user.id },
-          extra: { voiceId: createdInworldVoiceId },
-        });
-
-        // The voice can't be tracked or reused, so roll it back on Inworld's
-        // side instead of leaving an orphaned voice in the workspace.
-        try {
-          await deleteInworldVoice(createdInworldVoiceId);
-        } catch (rollbackError) {
-          captureException(rollbackError, {
-            user: { id: user.id },
-            extra: {
-              voiceId: createdInworldVoiceId,
-              reason: 'rollback_after_audio_reference_insert_failure',
-            },
-          });
-        }
-      } else if (inserted.data) {
-        createdAudioReference = {
-          id: inserted.data.id,
-          name: inserted.data.name,
-          voice_id: inserted.data.voice_id,
-        };
-      }
-    }
-
     // Background tasks
     reservedCredits = 0;
     after(async () => {
@@ -1989,7 +1897,6 @@ export async function POST(request: Request) {
         url: outputUrl,
         creditsUsed,
         creditsRemaining: (currentAmount || 0) - creditsUsed,
-        audioReference: createdAudioReference,
       } satisfies CloneSuccessResponse,
       { status: 200 },
     );

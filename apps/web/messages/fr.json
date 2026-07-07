@@ -640,6 +640,7 @@
     "deleteVoiceTitle": "Supprimer la voix enregistrée",
     "deleteVoiceDescription": "Cela supprime définitivement la voix de votre compte et du fournisseur. Cette action est irréversible.",
     "deleteVoiceConfirm": "Supprimer",
+    "voiceCreated": "Voix créée",
     "voiceDeleted": "Voix supprimée",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
@@ -679,6 +680,7 @@
       "voiceNameTooLong": "Le nom de la voix ne doit pas dépasser __MAX__ caractères.",
       "providerRequestRejected": "Le fournisseur de clonage vocal n'a pas pu traiter cette demande. Veuillez essayer un autre audio de référence ou un autre texte.",
       "audioReferenceNotFound": "La voix enregistrée sélectionnée est introuvable.",
+      "inworldVoiceRequired": "Veuillez créer ou sélectionner une voix Inworld enregistrée avant de générer l’audio.",
       "failedToLoadVoices": "Impossible de charger vos voix enregistrées.",
       "failedToDeleteVoice": "Impossible de supprimer la voix. Veuillez réessayer.",
       "referenceAudioEnhancementInputTooLarge": "L'audio de référence est trop volumineux pour être amélioré. Utilisez un fichier plus petit ou désactivez le nettoyage audio.",
@@ -693,6 +695,9 @@
       "exampleOutput": "Exemple",
       "loadSource": "Charger la source"
     },
+    "createVoice": "Créer une voix",
+    "creatingVoice": "Création de la voix",
+    "goToGenerate": "Aller à Générer",
     "crossLanguageInfo": {
       "title": "Transfert vocal inter-langues",
       "description": "Clonez une voix dans une langue et faites-la parler couramment dans l'une des 23 autres langues supportées tout en préservant les caractéristiques uniques du locuteur.",

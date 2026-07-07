@@ -69,6 +69,7 @@ async function readErrorBody(response: Response): Promise<string> {
 }
 
 interface CreateInworldVoiceArgs {
+  description?: string;
   displayName: string;
   locale: string;
   referenceAudioBuffer: Buffer;
@@ -79,6 +80,7 @@ interface CreateInworldVoiceArgs {
  * `voiceId`. The voice stays in the Inworld workspace until deleted.
  */
 export async function createInworldVoice({
+  description,
   displayName,
   locale,
   referenceAudioBuffer,
@@ -95,6 +97,7 @@ export async function createInworldVoice({
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      description,
       displayName,
       langCode: langConfig.langCode,
       voiceSamples: [
@@ -200,6 +203,7 @@ interface CloneVoiceWithInworldArgs {
   locale: string;
   referenceAudioBuffer: Buffer;
   text: string;
+  userId: string;
 }
 
 /**
@@ -211,6 +215,7 @@ export async function cloneVoiceWithInworld({
   displayName,
   locale,
   referenceAudioBuffer,
+  userId,
   text,
 }: CloneVoiceWithInworldArgs): Promise<{
   buffer: Buffer;
@@ -223,6 +228,7 @@ export async function cloneVoiceWithInworld({
     displayName,
     locale,
     referenceAudioBuffer,
+    description: userId,
   });
 
   const synthesized = await synthesizeWithInworld({ locale, text, voiceId });

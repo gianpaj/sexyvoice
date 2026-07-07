@@ -9,6 +9,7 @@ import {
   prepareInworldReferenceAudio,
 } from '@/lib/clone/inworld';
 import { isInworldSupportedLocale } from '@/lib/clone/languages';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getAudioReferencesForUser,
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const provider =
@@ -37,10 +38,7 @@ export async function GET(request: Request) {
 
   if (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: 'Failed to fetch audio references' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch audio references', 500);
   }
 
   return NextResponse.json({ data });
@@ -57,23 +55,17 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return APIErrorResponse('Unauthorized', 401);
     }
 
     // Inworld voices are a paid-only feature.
     if (!(await hasUserPaid(user.id))) {
-      return NextResponse.json(
-        { error: 'Creating voices requires a paid account' },
-        { status: 403 },
-      );
+      return APIErrorResponse('Creating voices requires a paid account', 403);
     }
 
     const contentType = request.headers.get('content-type') || '';
     if (!contentType.startsWith('multipart/form-data')) {
-      return NextResponse.json(
-        { error: 'Content-Type must be multipart/form-data' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Content-Type must be multipart/form-data', 400);
     }
 
     const formData = await request.formData();
@@ -86,33 +78,22 @@ export async function POST(request: Request) {
     const locale = typeof localeValue === 'string' ? localeValue : '';
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'Missing audio file' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Missing audio file', 400);
     }
     if (!name) {
-      return NextResponse.json(
-        { error: 'A voice name is required' },
-        { status: 400 },
-      );
+      return APIErrorResponse('A voice name is required', 400);
     }
     if (name.length > MAX_VOICE_NAME_LENGTH) {
-      return NextResponse.json(
-        {
-          error: `Voice name must be at most ${MAX_VOICE_NAME_LENGTH} characters`,
-        },
-        { status: 400 },
+      return APIErrorResponse(
+        `Voice name must be at most ${MAX_VOICE_NAME_LENGTH} characters`,
+        400,
       );
     }
     if (!isInworldSupportedLocale(locale)) {
-      return NextResponse.json(
-        { error: `Unsupported language: ${locale}` },
-        { status: 400 },
-      );
+      return APIErrorResponse(`Unsupported language: ${locale}`, 400);
     }
     if (file.size > CLONING_FILE_MAX_SIZE) {
-      return NextResponse.json({ error: 'File too large' }, { status: 413 });
+      return APIErrorResponse('File too large', 413);
     }
 
     const inputBuffer = Buffer.from(await file.arrayBuffer());
@@ -127,30 +108,26 @@ export async function POST(request: Request) {
       });
     } catch (error) {
       console.error('Inworld reference audio processing failed:', error);
-      return NextResponse.json(
-        { error: 'Could not process the audio. Use MP3, OGG, Opus, or WAV.' },
-        { status: 400 },
+      return APIErrorResponse(
+        'Could not process the audio. Use MP3, OGG, Opus, or WAV.',
+        400,
       );
     }
 
     if (prepared.duration === null) {
-      return NextResponse.json(
-        { error: 'Could not determine audio duration' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Could not determine audio duration', 400);
     }
     if (prepared.duration < INWORLD_MIN_DURATION) {
-      return NextResponse.json(
-        {
-          error: `Reference audio must be at least ${INWORLD_MIN_DURATION} seconds`,
-        },
-        { status: 400 },
+      return APIErrorResponse(
+        `Reference audio must be at least ${INWORLD_MIN_DURATION} seconds`,
+        400,
       );
     }
 
     let voiceId: string;
     try {
       ({ voiceId } = await createInworldVoice({
+        description: user.id,
         displayName: name,
         locale,
         referenceAudioBuffer: prepared.buffer,
@@ -158,20 +135,14 @@ export async function POST(request: Request) {
     } catch (error) {
       if (error instanceof InworldError) {
         if (error.status >= 400 && error.status < 500) {
-          return NextResponse.json(
-            {
-              error:
-                'The voice provider could not process this audio. Please try a different sample.',
-            },
-            { status: 400 },
+          return APIErrorResponse(
+            'The voice provider could not process this audio. Please try a different sample.',
+            400,
           );
         }
-        return NextResponse.json(
-          {
-            error:
-              'Voice provider is temporarily unavailable. Please try again.',
-          },
-          { status: 503 },
+        return APIErrorResponse(
+          'Voice provider is temporarily unavailable. Please try again.',
+          503,
         );
       }
       throw error;
@@ -199,19 +170,13 @@ export async function POST(request: Request) {
           extra: { voiceId, reason: 'rollback_after_insert_failure' },
         });
       }
-      return NextResponse.json(
-        { error: 'Failed to save the voice' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to save the voice', 500);
     }
 
     return NextResponse.json({ data: inserted.data }, { status: 201 });
   } catch (error) {
     console.error('Failed to create audio reference:', error);
     captureException(error);
-    return NextResponse.json(
-      { error: 'Failed to create voice' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to create voice', 500);
   }
 }

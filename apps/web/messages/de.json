@@ -640,6 +640,7 @@
     "deleteVoiceTitle": "Gespeicherte Stimme löschen",
     "deleteVoiceDescription": "Dadurch wird die Stimme dauerhaft aus Ihrem Konto und beim Anbieter gelöscht. Dies kann nicht rückgängig gemacht werden.",
     "deleteVoiceConfirm": "Löschen",
+    "voiceCreated": "Stimme erstellt",
     "voiceDeleted": "Stimme gelöscht",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
@@ -679,6 +680,7 @@
       "voiceNameTooLong": "Der Stimmenname darf höchstens __MAX__ Zeichen lang sein.",
       "providerRequestRejected": "Der Anbieter für das Klonen von Stimmen konnte diese Anfrage nicht verarbeiten. Bitte versuchen Sie es mit anderem Referenz-Audio oder Text.",
       "audioReferenceNotFound": "Die ausgewählte gespeicherte Stimme wurde nicht gefunden.",
+      "inworldVoiceRequired": "Bitte erstellen oder wählen Sie eine gespeicherte Inworld-Stimme aus, bevor Sie Audio generieren.",
       "failedToLoadVoices": "Ihre gespeicherten Stimmen konnten nicht geladen werden.",
       "failedToDeleteVoice": "Die Stimme konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
       "referenceAudioEnhancementInputTooLarge": "Das Referenz-Audio ist zu groß für die Verbesserung. Verwenden Sie eine kleinere Datei oder deaktivieren Sie die Audiobereinigung.",
@@ -693,6 +695,9 @@
       "exampleOutput": "Beispiel",
       "loadSource": "Quelle laden"
     },
+    "createVoice": "Stimme erstellen",
+    "creatingVoice": "Stimme wird erstellt",
+    "goToGenerate": "Zu Generieren gehen",
     "crossLanguageInfo": {
       "title": "Stimmübertragung zwischen Sprachen",
       "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
