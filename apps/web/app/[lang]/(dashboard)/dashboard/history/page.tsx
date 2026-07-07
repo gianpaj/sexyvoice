@@ -1,6 +1,11 @@
-import { QueryClient } from '@tanstack/react-query';
-import { getMessages } from 'next-intl/server';
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from '@tanstack/react-query';
+import { getTranslations } from 'next-intl/server';
 
+import { E2E_AUDIO_FILES, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getMyAudioFilesQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
@@ -11,6 +16,7 @@ export default async function HistoryPage(props: {
 }) {
   const { lang } = await props.params;
   const queryClient = new QueryClient();
+  const t = await getTranslations({ locale: lang, namespace: 'history' });
 
   const supabase = await createClient();
 
@@ -19,25 +25,27 @@ export default async function HistoryPage(props: {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: audioFiles } = await getMyAudioFilesQuery(supabase, user.id);
-  const { count: apiKeysCount } = await supabase
-    .from('api_keys')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id);
+  // In E2E mode serve deterministic data: the table is hydrated from this RSC
+  // query and the client never refetches, so live rows would otherwise leak
+  // into the Argos screenshot. Pin apiKeysCount to 0 to hide the API columns.
+  const [{ data: audioFiles }, { count: apiKeysCount }] = isE2E()
+    ? [{ data: E2E_AUDIO_FILES }, { count: 0 }]
+    : await Promise.all([
+        getMyAudioFilesQuery(supabase, user.id),
+        supabase
+          .from('api_keys')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id),
+      ]);
 
-  // set the initial data
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
 
-  const dict = ((await getMessages({ locale: lang })) as IntlMessages).history;
-
   return (
-    <div className="container mx-auto pb-10">
-      <h2 className="mb-4 font-bold text-2xl">{dict.header}</h2>
-      <DataTable
-        dict={dict}
-        showApiColumns={(apiKeysCount ?? 0) > 0}
-        userId={user.id}
-      />
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="container mx-auto pb-10">
+        <h2 className="mb-4 font-bold text-2xl">{t('header')}</h2>
+        <DataTable showApiColumns={(apiKeysCount ?? 0) > 0} userId={user.id} />
+      </div>
+    </HydrationBoundary>
   );
 }

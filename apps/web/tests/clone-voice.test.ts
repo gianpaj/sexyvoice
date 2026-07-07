@@ -735,6 +735,29 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     });
 
+    it('should return 402 when atomic credit reservation fails after precheck', async () => {
+      vi.mocked(queries.reduceCredits).mockRejectedValueOnce(
+        new Error('Insufficient credits', {
+          cause: queries.INSUFFICIENT_CREDITS_ERROR_CODE,
+        }),
+      );
+
+      const formData = createFormDataWithAudio('Hello world');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.code).toBe('errors.insufficientCredits');
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(queries.restoreCredits).not.toHaveBeenCalled();
+    });
+
     it('should allow voice cloning when user has sufficient credits', async () => {
       const formData = createFormDataWithAudio('Hello world');
 
@@ -973,9 +996,8 @@ describe('Clone Voice API Route', () => {
           quantity: 10,
           durationSeconds: 10,
           creditsUsed: 100,
-          dollarAmount: 0.01,
+          dollarAmount: 0.002_600_646,
           metadata: expect.objectContaining({
-            referenceAudioOriginalDurationSeconds: 61,
             referenceAudioTrimmed: true,
           }),
         }),
@@ -1068,9 +1090,8 @@ describe('Clone Voice API Route', () => {
           quantity: 25,
           durationSeconds: 25,
           creditsUsed: 250,
-          dollarAmount: 0.025,
+          dollarAmount: 0.002_600_646,
           metadata: expect.objectContaining({
-            referenceAudioOriginalDurationSeconds: 30,
             referenceAudioTrimmed: true,
           }),
         }),
@@ -1141,7 +1162,14 @@ describe('Clone Voice API Route', () => {
         'This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.',
       );
       expect(json.details).toEqual({ provider: 'mistral' });
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
@@ -1182,6 +1210,8 @@ describe('Clone Voice API Route', () => {
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
           credits_used: 252,
+          duration: '12.000',
+          model: 'voxtral-mini-tts-2603',
           usage: { creditsUsed: 252 },
         }),
       );
@@ -1190,11 +1220,15 @@ describe('Clone Voice API Route', () => {
         1,
         expect.objectContaining({
           sourceType: 'voice_cloning',
+          sourceId: 'test-audio-file-id',
           creditsUsed: 132,
+          quantity: 1,
+          unit: 'operation',
+          userId: 'test-user-id',
+          model: 'voxtral-mini-tts-2603',
+          requestId: expect.any(String),
           dollarAmount: 0.000_176,
           metadata: expect.objectContaining({
-            referenceAudioEnhanced: true,
-            referenceAudioEnhancementModel: 'fal-ai/deepfilternet3',
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
@@ -1211,14 +1245,11 @@ describe('Clone Voice API Route', () => {
           quantity: 12,
           durationSeconds: 12,
           creditsUsed: 120,
-          dollarAmount: 0.012,
+          dollarAmount: 0.002_600_646,
           metadata: expect.objectContaining({
             operation: 'reference_audio_enhancement',
-            provider: 'fal',
             model: 'fal-ai/deepfilternet3',
-            voiceCloningModel: 'voxtral-mini-tts-2603',
             locale: 'en',
-            referenceAudioFileMimeType: 'audio/wav',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
         }),
@@ -1368,8 +1399,6 @@ describe('Clone Voice API Route', () => {
             textPreview: 'Hello world',
             textLength: 11,
             audioDuration: 12,
-            referenceAudioEnhanced: false,
-            referenceAudioEnhancementModel: null,
             referenceAudioEnhancementRequestId: null,
             referenceAudioFileMimeType: 'audio/wav',
             referenceAudioProcessedMimeType: 'audio/wav',
@@ -1406,6 +1435,34 @@ describe('Clone Voice API Route', () => {
       );
       expect(json.code).toBe('errors.providerUnavailable');
       expect(json.details).toEqual({ provider: 'replicate' });
+    });
+
+    it('returns a typed 503 without Sentry capture for Replicate 5xx failures', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      mockReplicateRun.mockRejectedValueOnce(
+        new Error(
+          'Request to https://api.replicate.com/v1/predictions failed with status 502 Bad Gateway',
+        ),
+      );
+
+      const formData = createFormDataWithAudio(
+        'こんにちは',
+        createMockAudioFile(),
+        'ja',
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.code).toBe('errors.providerUnavailable');
+      expect(json.details).toEqual({ provider: 'replicate' });
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -1584,6 +1641,33 @@ describe('Clone Voice API Route', () => {
   });
 
   describe('Error Handling', () => {
+    it('returns a typed 400 without Sentry capture for direct WebM uploads', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const convertToWavModule = await import('@/lib/audio-converter');
+      const convertSpy = vi.spyOn(convertToWavModule, 'convertToWav');
+      const webmFile = new File(['webm'], 'microphone-recording.webm', {
+        type: 'video/webm',
+      });
+
+      const formData = createFormDataWithAudio('Hello world', webmFile, 'en');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(json.code).toBe('errors.audioConversionRequiredWebm');
+      expect(json.serverMessage).toContain(
+        'WebM audio must be converted to WAV on the client before uploading.',
+      );
+      expect(convertSpy).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should return 400 without logging to Sentry when audio decoding fails for non-English', async () => {
       const { captureException } = await import('@sentry/nextjs');
       // Mock convertToWav to throw an error for multilingual
@@ -1722,9 +1806,39 @@ describe('Clone Voice API Route', () => {
 
     it('does not log expected fal.ai timeout failures to Sentry when falling back to original audio', async () => {
       const { captureException } = await import('@sentry/nextjs');
-      const timeoutError = new Error('The operation was aborted due to timeout');
+      const timeoutError = new Error(
+        'The operation was aborted due to timeout',
+      );
       timeoutError.name = 'TimeoutError';
       mockFalSubscribe.mockRejectedValueOnce(timeoutError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile(),
+        'en',
+        true,
+      );
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(json.url).toContain('files.sexyvoice.ai');
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('does not log fal.ai enhanced audio download 5xx failures to Sentry', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      server.use(
+        http.get('https://fal-cdn.com/test-enhanced-audio.wav', () =>
+          HttpResponse.text('provider unavailable', { status: 500 }),
+        ),
+      );
 
       const formData = createFormDataWithAudio(
         'Hello world',
@@ -1790,7 +1904,11 @@ describe('Clone Voice API Route', () => {
       expect(json.creditsUsed).toBe(132);
       expect(queries.reduceCredits).toHaveBeenCalledWith({
         userId: 'test-user-id',
-        amount: 132,
+        amount: 252,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 120,
       });
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -1,3 +1,5 @@
+import { parseBuffer } from 'music-metadata';
+
 interface WavConversionOptions {
   bitsPerSample: number;
   numChannels: number;
@@ -76,4 +78,56 @@ export async function generateHash(input: string) {
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
     .slice(0, 8);
+}
+
+/**
+ * Parse the duration (in seconds) of an audio buffer using its metadata.
+ * Returns null when the duration can't be determined (e.g. unsupported or
+ * malformed audio), so callers can fall back gracefully.
+ */
+export async function getAudioDuration(
+  fileBuffer: Buffer,
+  mimeType: string,
+): Promise<number | null> {
+  try {
+    const metadata = await parseBuffer(
+      fileBuffer,
+      {
+        mimeType,
+        size: fileBuffer.length,
+      },
+      {
+        duration: true,
+      },
+    );
+
+    return metadata.format.duration ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Sentinel persisted in `audio_files.duration` when the duration is unknown. */
+const UNKNOWN_DURATION_SECONDS = -1;
+
+/**
+ * Format a parsed duration (seconds) for persistence as a string, falling back
+ * to the "-1" sentinel when the duration couldn't be determined.
+ */
+export function formatDurationSeconds(
+  seconds: number | null | undefined,
+): string {
+  return String(seconds ?? UNKNOWN_DURATION_SECONDS);
+}
+
+/**
+ * Resolve the audio duration as a string for persistence, falling back to the
+ * "-1" sentinel when the buffer/mime aren't available or parsing fails.
+ */
+export async function resolveDurationString(
+  buffer: Buffer | undefined,
+  mimeType: string | undefined,
+): Promise<string> {
+  if (!(buffer && mimeType)) return formatDurationSeconds(null);
+  return formatDurationSeconds(await getAudioDuration(buffer, mimeType));
 }

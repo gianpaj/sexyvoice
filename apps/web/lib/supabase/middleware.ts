@@ -29,6 +29,7 @@ const clearOauthCallbackCookie = (response: NextResponse) => {
 
 const publicRoutes = [
   '/api/health',
+  '/auth/signup',
   '/auth/callback',
   ...routesPerLocale([
     '/',

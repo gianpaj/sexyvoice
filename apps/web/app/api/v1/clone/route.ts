@@ -9,7 +9,7 @@ import {
   getExternalApiRequestId,
 } from '@/lib/api/external-errors';
 import { createLogger } from '@/lib/api/logger';
-import { calculateExternalApiDollarAmount } from '@/lib/api/pricing';
+import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceCloneRequestSchema } from '@/lib/api/schemas';
@@ -593,7 +593,7 @@ export async function POST(request: Request) {
 
     await reduceCreditsAdmin({ userId, amount: creditsUsed });
 
-    const dollarAmount = calculateExternalApiDollarAmount({
+    const dollarAmount = calculateGenerateApiDollarAmount({
       sourceType: 'api_voice_cloning',
       provider,
       inputChars: input.length,

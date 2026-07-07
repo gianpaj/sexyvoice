@@ -11,7 +11,6 @@ import {
   type MouseEvent,
   type PointerEvent,
   type ReactNode,
-  useCallback,
   useState,
 } from 'react';
 
@@ -39,26 +38,20 @@ export function SpotlightField({ children }: SpotlightFieldProps) {
   const spotlightY = useMotionValue(0);
   const spotlightBackground = useMotionTemplate`radial-gradient(260px circle at ${spotlightX}px ${spotlightY}px, hsl(var(--primary) / 0.38), transparent 70%)`;
 
-  const handleMouseMove = useCallback(
-    (event: SpotlightPointerEvent) => {
-      const rect = event.currentTarget.getBoundingClientRect();
+  const handleMouseMove = (event: SpotlightPointerEvent) => {
+    const rect = event.currentTarget.getBoundingClientRect();
 
-      setIsHovered(true);
-      spotlightX.set(event.clientX - rect.left);
-      spotlightY.set(event.clientY - rect.top);
-    },
-    [spotlightX, spotlightY],
-  );
+    setIsHovered(true);
+    spotlightX.set(event.clientX - rect.left);
+    spotlightY.set(event.clientY - rect.top);
+  };
 
-  const handleMouseEnter = useCallback(
-    (event: SpotlightPointerEvent) => {
-      setIsHovered(true);
-      handleMouseMove(event);
-    },
-    [handleMouseMove],
-  );
+  const handleMouseEnter = (event: SpotlightPointerEvent) => {
+    setIsHovered(true);
+    handleMouseMove(event);
+  };
 
-  const handleBlurCapture = useCallback((event: FocusEvent<HTMLDivElement>) => {
+  const handleBlurCapture = (event: FocusEvent<HTMLDivElement>) => {
     const nextFocusedElement = event.relatedTarget;
 
     if (
@@ -69,7 +62,7 @@ export function SpotlightField({ children }: SpotlightFieldProps) {
     ) {
       setIsFocused(false);
     }
-  }, []);
+  };
 
   const canShowHoverSpotlight = isHovered && !hasFocusedOnce;
 

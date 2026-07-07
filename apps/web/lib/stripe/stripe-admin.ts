@@ -1,9 +1,20 @@
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
+const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
+  'trialing',
+  'active',
+  'past_due',
+  'unpaid',
+  'paused',
+  'canceled',
+]);
+
 import { type CustomerData, setCustomerData } from '../redis/queries';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
+
+const { logger, captureException } = Sentry;
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
@@ -32,7 +43,7 @@ export async function createOrRetrieveCustomer(
         `Stripe customer ${customer.id} already linked to Supabase user ${metadataUuid}.`,
       );
       console.error(`[STRIPE ADMIN] ${error.message}`);
-      Sentry.captureException(error, {
+      captureException(error, {
         user: { id: userId, email },
         extra: {
           customerId: customer.id,
@@ -62,7 +73,7 @@ export async function createOrRetrieveCustomer(
           `[STRIPE ADMIN] Failed to update metadata for Stripe customer ${customer.id}`,
           error,
         );
-        Sentry.captureException(error, {
+        captureException(error, {
           user: { id: userId, email },
           extra: {
             customerId: customer.id,
@@ -97,7 +108,7 @@ export async function createOrRetrieveCustomer(
         `[STRIPE ADMIN] Failed to retrieve Stripe customer with id ${customerId}`,
         error,
       );
-      Sentry.captureException(error, {
+      captureException(error, {
         user: { id: userId, email },
         extra: { customerId },
       });
@@ -121,13 +132,11 @@ export async function createOrRetrieveCustomer(
     const error = new Error(
       `Multiple customers found for supabaseUUID ${userId}. Using the first one.`,
     );
-    console.error(`[STRIPE ADMIN] ${error.message}`);
-    Sentry.captureMessage(error.message, {
-      level: 'warning',
+    console.warn(`[STRIPE ADMIN] ${error.message}`);
+    logger.warn('Multiple Stripe customers found for Supabase user', {
       user: { id: userId, email },
-      extra: {
-        customerCount: customersResults.data.length,
-      },
+      customerCount: customersResults.data.length,
+      customerIds: customersResults.data.map((customer) => customer.id),
     });
   }
 
@@ -145,10 +154,10 @@ export async function createOrRetrieveCustomer(
       `Multiple customers found for email ${email}. Using the first one.`,
     );
     console.warn(error.message);
-    Sentry.captureMessage(error.message, {
-      level: 'warning',
+    logger.warn('Multiple Stripe customers found for email', {
       user: { id: userId, email },
-      extra: { customerCount: customers.data.length },
+      customerCount: customers.data.length,
+      customerIds: customers.data.map((customer) => customer.id),
     });
   }
 
@@ -170,7 +179,7 @@ export async function createOrRetrieveCustomer(
   console.info(
     `[STRIPE ADMIN] Created new Stripe customer with id ${stripeId} (${userId}) for email ${email}`,
   );
-  Sentry.logger.info('Created new Stripe customer', {
+  logger.info('Created new Stripe customer', {
     customerId: stripeId,
     email,
     userId,
@@ -188,31 +197,73 @@ const updateStripeId = async (userId: string, stripeId: string) => {
     .eq('id', userId);
 };
 
-export async function createCustomerSession(userId: string, stripeId: string) {
-  try {
-    const customerSession = await stripe.customerSessions.create({
-      customer: stripeId,
-      components: {
-        pricing_table: {
-          enabled: true,
-        },
-      },
+async function hasMatchingSubscriptionHistory(
+  customerId: string | null | undefined,
+  matchesSubscription: (subscription: Stripe.Subscription) => boolean,
+): Promise<boolean> {
+  if (!customerId) {
+    return false;
+  }
+
+  let startingAfter: string | undefined;
+
+  while (true) {
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      limit: 100,
+      status: 'all',
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
     });
 
-    return customerSession;
-  } catch (error) {
-    console.error(
-      '[STRIPE ADMIN] Error creating Stripe customer session:',
-      error,
-    );
-    if (process.env.NODE_ENV !== 'production') {
-      return null;
+    if (subscriptions.data.some(matchesSubscription)) {
+      return true;
     }
-    Sentry.captureException(error, {
-      user: { id: userId },
-      extra: { stripeId },
+
+    if (!subscriptions.has_more) {
+      return false;
+    }
+
+    startingAfter = subscriptions.data.at(-1)?.id;
+    if (!startingAfter) {
+      return false;
+    }
+  }
+}
+
+export function hasEverHadRealSubscription(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(customerId, (subscription) =>
+    REAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+  );
+}
+
+export function hasAnySubscriptionHistory(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(customerId, () => true);
+}
+
+export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
+  try {
+    const coupon = await stripe.coupons.retrieve(couponId);
+
+    if ('deleted' in coupon && coupon.deleted) {
+      return false;
+    }
+
+    return coupon.valid;
+  } catch (error) {
+    captureException(error, {
+      tags: {
+        section: 'stripe_admin',
+        event_type: 'coupon_validation_error',
+      },
+      extra: {
+        coupon_id: couponId,
+      },
     });
-    throw error;
+    return false;
   }
 }
 
@@ -260,7 +311,7 @@ export async function refreshCustomerSubscriptionData(
       error,
     );
     const userId = await getUserIdByStripeCustomerId(customerId);
-    Sentry.captureException(error, {
+    captureException(error, {
       user: userId ? { id: userId } : undefined,
       extra: { customerId },
     });

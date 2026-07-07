@@ -70,6 +70,7 @@ type Action =
   | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
+  | { type: 'SET_MEMORY'; payload: boolean }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
@@ -148,6 +149,11 @@ function playgroundStateReducer(
           : (selectedScene?.text ?? ''),
       };
     }
+    case 'SET_MEMORY':
+      return {
+        ...state,
+        memory: action.payload,
+      };
     case 'SAVE_CUSTOM_CHARACTER': {
       const language = state.language;
       const existingCharacter = state.customCharacters.find(
@@ -258,10 +264,12 @@ interface PlaygroundStateProviderProps {
   initialState?: Partial<PlaygroundState>;
 }
 
+const EMPTY_PRESETS: Preset[] = [];
+
 export const PlaygroundStateProvider = ({
   children,
   defaultPresets: defaultPresetsProp,
-  initialCustomCharacters = [],
+  initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
   const mergedDefaultPresets = defaultPresetsProp ?? [];
@@ -269,19 +277,16 @@ export const PlaygroundStateProvider = ({
     () => createPlaygroundStateHelpers(mergedDefaultPresets),
     [mergedDefaultPresets],
   );
-  const mergedInitialState: PlaygroundState = useMemo(
-    () => ({
-      ...defaultPlaygroundState,
-      defaultPresets: mergedDefaultPresets,
-      customCharacters: initialCustomCharacters,
-      ...initialState,
-      sessionConfig: {
-        ...defaultPlaygroundState.sessionConfig,
-        ...(initialState?.sessionConfig ?? {}),
-      },
-    }),
-    [initialState, mergedDefaultPresets, initialCustomCharacters],
-  );
+  const mergedInitialState: PlaygroundState = {
+    ...defaultPlaygroundState,
+    defaultPresets: mergedDefaultPresets,
+    customCharacters: initialCustomCharacters,
+    ...initialState,
+    sessionConfig: {
+      ...defaultPlaygroundState.sessionConfig,
+      ...(initialState?.sessionConfig ?? {}),
+    },
+  };
 
   const [state, dispatch] = useReducer(
     playgroundStateReducer,

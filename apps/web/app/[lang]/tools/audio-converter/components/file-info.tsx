@@ -1,13 +1,11 @@
 'use client';
 
 import { FileAudio, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  dict: {
-    remove: string;
-  };
   disabled: boolean;
   file: File;
   onRemove: () => void;
@@ -25,7 +23,9 @@ function formatFileSize(bytes: number): string {
   return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
 }
 
-export function FileInfo({ file, onRemove, disabled, dict }: Props) {
+export function FileInfo({ file, onRemove, disabled }: Props) {
+  const t = useTranslations('audioConverter.fileInfo');
+
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/50 p-4">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center">
@@ -43,7 +43,7 @@ export function FileInfo({ file, onRemove, disabled, dict }: Props) {
         </div>
       </div>
       <Button
-        aria-label={dict.remove}
+        aria-label={t('remove')}
         className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
         disabled={disabled}
         onClick={onRemove}

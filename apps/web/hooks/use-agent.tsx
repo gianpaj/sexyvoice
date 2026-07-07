@@ -44,7 +44,7 @@ const ERROR_RPC_METHOD = 'pg.error';
 export function AgentProvider({ children }: { children: React.ReactNode }) {
   const t = useTranslations('call');
   const room = useMaybeRoomContext();
-  const { shouldConnect, dict, disconnect } = useConnection();
+  const { shouldConnect, disconnect } = useConnection();
   const { agent } = useVoiceAssistant();
   const [rawSegments, setRawSegments] = useState<{
     [id: string]: Transcription;
@@ -121,7 +121,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         console.error('Agent error received:', errorData);
 
         if (errorData.error === 'active_call') {
-          toast.error(dict.activeCallError);
+          toast.error(t('activeCallError'));
         } else if (errorData.error === 'insufficient_credits') {
           toast.error(t('notEnoughCredits', { count: CREDITS_PER_MINUTE }));
         } else {
@@ -137,7 +137,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
       room.unregisterRpcMethod(TOAST_RPC_METHOD);
       room.unregisterRpcMethod(ERROR_RPC_METHOD);
     };
-  }, [room, dict, disconnect, t]);
+  }, [room, disconnect, t]);
 
   // Register byte stream handler for images
   useEffect(() => {

@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -9,15 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import type langDict from '@/messages/en.json';
 
-export function SecurityForm({
-  email,
-  dict,
-}: {
-  email?: string;
-  dict: (typeof langDict)['profile']['securityForm'];
-}) {
+export function SecurityForm({ email }: { email?: string }) {
+  const t = useTranslations('profile.securityForm');
   const [isLoading, setIsLoading] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -27,12 +22,12 @@ export function SecurityForm({
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error(dict.errors.passwordsDoNotMatch);
+      toast.error(t('errors.passwordsDoNotMatch'));
       return;
     }
 
     if (!email) {
-      toast.error(dict.errors.updateFailed);
+      toast.error(t('errors.updateFailed'));
       return;
     }
 
@@ -45,7 +40,7 @@ export function SecurityForm({
     });
 
     if (signInError) {
-      toast.error(dict.errors.currentPasswordIncorrect);
+      toast.error(t('errors.currentPasswordIncorrect'));
       setIsLoading(false);
       return;
     }
@@ -55,12 +50,12 @@ export function SecurityForm({
     });
 
     if (error) {
-      toast.error(dict.errors.updateFailed);
+      toast.error(t('errors.updateFailed'));
       setIsLoading(false);
       return;
     }
 
-    toast.success(dict.success);
+    toast.success(t('success'));
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -72,15 +67,15 @@ export function SecurityForm({
       <div className="grid gap-4">
         <Alert className="p-4">
           <AlertCircle className="size-4" />
-          <AlertDescription>{dict.description}</AlertDescription>
+          <AlertDescription>{t('description')}</AlertDescription>
         </Alert>
-        <Label>{dict.emailLabel}</Label>
+        <Label>{t('emailLabel')}</Label>
         <Input className="bg-muted" disabled type="email" value={email} />
       </div>
 
       <form className="grid grid-cols-1 gap-4" onSubmit={handlePasswordUpdate}>
         <div className="space-y-2">
-          <Label htmlFor="currentPassword">{dict.currentPassword}</Label>
+          <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
           <Input
             id="currentPassword"
             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -91,7 +86,7 @@ export function SecurityForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="newPassword">{dict.newPassword}</Label>
+          <Label htmlFor="newPassword">{t('newPassword')}</Label>
           <Input
             id="newPassword"
             onChange={(e) => setNewPassword(e.target.value)}
@@ -102,7 +97,7 @@ export function SecurityForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">{dict.confirmPassword}</Label>
+          <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
           <Input
             id="confirmPassword"
             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -114,7 +109,7 @@ export function SecurityForm({
 
         <div className="flex justify-end">
           <Button disabled={isLoading} type="submit">
-            {isLoading ? dict.updating : dict.updatePassword}
+            {isLoading ? t('updating') : t('updatePassword')}
           </Button>
         </div>
       </form>

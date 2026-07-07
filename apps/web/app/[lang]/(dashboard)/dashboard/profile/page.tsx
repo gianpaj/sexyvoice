@@ -1,4 +1,4 @@
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
 import {
   Card,
@@ -10,39 +10,45 @@ import {
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
+import { DeleteMemoryForm } from './delete-memory-form';
 import { SecurityForm } from './security-form';
 
 export default async function ProfilePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const profileDict = (
-    (await getMessages({
-      locale: lang,
-    })) as IntlMessages
-  ).profile;
+  const t = await getTranslations({ locale: lang, namespace: 'profile' });
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
   if (!user) {
-    return <div>{profileDict.notLoggedIn}</div>;
+    return <div>{t('notLoggedIn')}</div>;
   }
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>{profileDict.security.title}</CardTitle>
-          <CardDescription>{profileDict.security.description}</CardDescription>
+          <CardTitle>{t('security.title')}</CardTitle>
+          <CardDescription>{t('security.description')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <SecurityForm dict={profileDict.securityForm} email={user.email} />
+          <SecurityForm email={user.email} />
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>{profileDict.dangerZone.title}</CardTitle>
+          <CardTitle>{t('memory.title')}</CardTitle>
+          <CardDescription>{t('memory.description')}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DeleteMemoryForm />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('dangerZone.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <DeleteAccountForm />

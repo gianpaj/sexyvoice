@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
 import Footer from '@/components/footer';
@@ -15,14 +15,12 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dictPages = messages.pages;
-  const dictAudioJoiner = messages.audioJoiner;
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const t = await getTranslations({ locale: lang, namespace: 'audioJoiner' });
 
-  const title = dictPages.titleAudioJoiner || dictAudioJoiner.title;
-  const description =
-    dictPages.descriptionAudioJoiner || dictAudioJoiner.subtitle;
-  const keywords = dictPages.keywordsAudioJoiner || '';
+  const title = tPages('titleAudioJoiner') || t('title');
+  const description = tPages('descriptionAudioJoiner') || t('subtitle');
+  const keywords = tPages('keywordsAudioJoiner') || '';
 
   const keywordsArray = keywords
     ? keywords.split(',').map((keyword: string) => keyword.trim())
@@ -68,13 +66,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function AudioJoinerPage({ params }: Props) {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dict = messages.audioJoiner;
-  const dictPages = messages.pages;
+  const t = await getTranslations({ locale: lang, namespace: 'audioJoiner' });
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
 
   const url = `https://sexyvoice.ai/${lang}/tools/audio-joiner`;
-  const title = dictPages.titleAudioJoiner || dict.title;
-  const description = dictPages.descriptionAudioJoiner || dict.subtitle;
+  const title = tPages('titleAudioJoiner') || t('title');
+  const description = tPages('descriptionAudioJoiner') || t('subtitle');
 
   const jsonLd: Graph = {
     '@context': 'https://schema.org',
@@ -113,7 +110,7 @@ export default async function AudioJoinerPage({ params }: Props) {
           {
             '@type': 'ListItem',
             position: 2,
-            name: dictPages['/tools/audio-joiner'] || 'Audio Joiner',
+            name: tPages('/tools/audio-joiner') || 'Audio Joiner',
             item: url,
           },
         ],
@@ -127,23 +124,23 @@ export default async function AudioJoinerPage({ params }: Props) {
       <div className="bg-background">
         <HeaderStatic />
         <div className="container mx-auto max-w-5xl px-4 py-12 md:py-20">
-          <AudioJoinerClient dict={dict} />
+          <AudioJoinerClient />
         </div>
       </div>
 
       {/* Attribution bar — preserves FFmpeg credit and privacy note */}
       <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
         <p>
-          {dict.footer.poweredBy}{' '}
+          {t('footer.poweredBy')}{' '}
           <a
             className="font-semibold text-foreground transition-colors hover:text-primary"
             href="https://ffmpeg.org"
             rel="noopener noreferrer"
             target="_blank"
           >
-            {dict.footer.ffmpeg}
+            {t('footer.ffmpeg')}
           </a>{' '}
-          &bull; {dict.footer.noUploads}
+          &bull; {t('footer.noUploads')}
         </p>
       </div>
       <Footer lang={lang} />

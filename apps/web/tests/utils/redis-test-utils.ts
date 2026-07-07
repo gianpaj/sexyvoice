@@ -1,6 +1,5 @@
 import { Redis } from 'ioredis';
 import { RedisMemoryServer } from 'redis-memory-server';
-import type { RedisMemoryServerOptsT } from 'redis-memory-server/lib/RedisMemoryServer';
 
 let redisServer: RedisMemoryServer | null = null;
 let redisClient: Redis | null = null;
@@ -33,7 +32,15 @@ export async function setupRedis(): Promise<Redis> {
 
   // Local development: use in-memory Redis server
   // Configure redis-memory-server with explicit settings for faster downloads
-  const config: RedisMemoryServerOptsT = {
+  const config: {
+    binary: {
+      downloadDir?: string;
+      version: string;
+    };
+    instance: {
+      port: number | undefined;
+    };
+  } = {
     instance: {
       port: undefined, // auto-assign available port
     },
@@ -44,13 +51,15 @@ export async function setupRedis(): Promise<Redis> {
 
   // Only set downloadDir if the environment variable is defined
   if (process.env.REDIS_MEMORY_SERVER_CACHE_DIR) {
-    config.binary!.downloadDir = process.env.REDIS_MEMORY_SERVER_CACHE_DIR;
+    config.binary.downloadDir = process.env.REDIS_MEMORY_SERVER_CACHE_DIR;
   }
 
   redisServer = new RedisMemoryServer(config);
 
-  const host = await redisServer.getHost();
-  const port = await redisServer.getPort();
+  const [host, port] = await Promise.all([
+    redisServer.getHost(),
+    redisServer.getPort(),
+  ]);
 
   redisClient = new Redis({
     host,

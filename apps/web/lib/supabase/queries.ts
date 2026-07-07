@@ -1,6 +1,4 @@
-'use server';
-
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -149,6 +147,51 @@ export async function getCredits(userId: string): Promise<number> {
   return data.amount;
 }
 
+export const INSUFFICIENT_CREDITS_ERROR_CODE = 'INSUFFICIENT_CREDITS';
+
+interface CreditErrorLike {
+  cause?: unknown;
+  code?: unknown;
+  details?: unknown;
+  hint?: unknown;
+  message?: unknown;
+}
+
+export function isInsufficientCreditsError(error: unknown): boolean {
+  if (
+    error instanceof Error &&
+    error.cause === INSUFFICIENT_CREDITS_ERROR_CODE
+  ) {
+    return true;
+  }
+
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const maybeError = error as CreditErrorLike;
+  const errorContext = [
+    maybeError.message,
+    maybeError.details,
+    maybeError.hint,
+    maybeError.code,
+  ]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
+
+  return /insufficient credits/i.test(errorContext);
+}
+
+function toCreditDebitError(error: unknown): unknown {
+  if (!isInsufficientCreditsError(error)) {
+    return error;
+  }
+
+  return new Error('Insufficient credits', {
+    cause: INSUFFICIENT_CREDITS_ERROR_CODE,
+  });
+}
+
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
@@ -159,6 +202,22 @@ export async function getVoiceIdByName(
     .select('id, name, language, model')
     .eq('name', voiceName)
     .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
+export async function getVoiceById(
+  voiceId: string,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('id', voiceId)
+    .eq('is_public', true)
     .single();
 
   if (error) throw error;
@@ -181,7 +240,45 @@ export async function reduceCredits({
     credit_amount_var: Math.abs(amount),
   });
 
-  if (creditsError) throw creditsError;
+  if (creditsError) throw toCreditDebitError(creditsError);
+}
+
+export async function reduceCreditsUpTo({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<number> {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return 0;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('decrement_user_credits_up_to', {
+    user_id_var: userId,
+    credit_amount_var: creditAmount,
+  });
+
+  if (error) throw toCreditDebitError(error);
+
+  return data ?? 0;
+}
+
+export async function restoreCredits({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return;
+  }
+
+  await updateUserCredits(userId, creditAmount);
 }
 
 export async function saveAudioFile({
@@ -267,7 +364,7 @@ export const insertUsageEvent = async (
       .single();
 
     if (error) {
-      Sentry.captureException(error, {
+      captureException(error, {
         extra: {
           params,
           context: 'insertUsageEvent',
@@ -279,7 +376,7 @@ export const insertUsageEvent = async (
 
     return data?.id ?? null;
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: {
         params,
         context: 'insertUsageEvent',
@@ -291,15 +388,15 @@ export const insertUsageEvent = async (
 };
 
 export const getUserById = async (userId: string) => {
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+  const { data } = await getUserByIdWithError(userId);
 
   return data;
+};
+
+export const getUserByIdWithError = async (userId: string) => {
+  const supabase = await createClient();
+
+  return supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
@@ -353,7 +450,7 @@ export const insertSubscriptionCreditTransaction = async (
       });
       return;
     }
-  } catch (_error) {
+  } catch {
     // Transaction doesn't exist, continue with insertion
   }
 
@@ -379,12 +476,19 @@ export const insertSubscriptionCreditTransaction = async (
     metadata: {
       dollarAmount,
       isFirstSubscription,
-      // Figure out how to send promo metadata with a Stripe pricing table
-      // ...(promo && { promo }),
     },
   });
 
   if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Subscription transaction already exists', {
+        userId,
+        paymentIntentId,
+        subscriptionId,
+      });
+      return;
+    }
+
     console.error('Error inserting subscription transaction:', {
       userId,
       subscriptionId,
@@ -425,7 +529,7 @@ export const insertTopupCreditTransaction = async (
       });
       return;
     }
-  } catch (_error) {
+  } catch {
     // Transaction doesn't exist, continue with insertion
   }
 
@@ -454,10 +558,33 @@ export const insertTopupCreditTransaction = async (
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    if (isCreditTransactionReferenceConflict(error)) {
+      console.log('Topup transaction already exists', {
+        userId,
+        paymentIntentId,
+      });
+      return;
+    }
+
+    throw error;
+  }
 
   // Update user's credit balance using the database function
   await updateUserCredits(userId, creditAmount);
+};
+
+export const isCreditTransactionReferenceConflict = (error: {
+  code?: string;
+  details?: string;
+  message?: string;
+}): boolean => {
+  const conflictContext = `${error.message ?? ''} ${error.details ?? ''}`;
+
+  return (
+    error.code === '23505' &&
+    /unique_reference|reference_id/i.test(conflictContext)
+  );
 };
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {
@@ -518,7 +645,7 @@ export const getTotalCallDurationSeconds = async (
     .eq('user_id', userId);
 
   if (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       extra: { userId, context: 'getTotalCallDurationSeconds' },
     });
     throw error;
@@ -584,6 +711,24 @@ export async function getVoiceIdByNameAdmin(
   return data;
 }
 
+export async function getVoiceByIdAdmin(
+  voiceId: string,
+  isPublic = true,
+): Promise<{ id: string; name: string; language: string; model: string }> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from('voices')
+    .select('id, name, language, model')
+    .eq('id', voiceId)
+    .eq('feature', 'tts')
+    .eq('is_public', isPublic)
+    .single();
+
+  if (error) throw error;
+
+  return data;
+}
+
 export async function reduceCreditsAdmin({
   userId,
   amount,
@@ -597,7 +742,30 @@ export async function reduceCreditsAdmin({
     credit_amount_var: Math.abs(amount),
   });
 
-  if (error) throw error;
+  if (error) throw toCreditDebitError(error);
+}
+
+export async function reduceCreditsUpToAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<number> {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return 0;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('decrement_user_credits_up_to', {
+    user_id_var: userId,
+    credit_amount_var: creditAmount,
+  });
+
+  if (error) throw toCreditDebitError(error);
+
+  return data ?? 0;
 }
 
 // biome-ignore lint/suspicious/useAwait: server action

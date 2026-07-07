@@ -1,7 +1,30 @@
 // https://github.com/livekit-examples/realtime-playground/blob/9c091a4e220c4d4410bcb62b9f9ee3fe15e7c152/web/src/components/agent/visualizers/multiband-bar-visualizer.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer } from 'react';
 
 type VisualizerState = 'listening' | 'idle' | 'speaking' | 'thinking';
+
+type ThinkingState = { direction: 'left' | 'right'; index: number };
+type ThinkingAction =
+  | { center: number; type: 'reset' }
+  | { max: number; type: 'tick' };
+
+function thinkingReducer(
+  state: ThinkingState,
+  action: ThinkingAction,
+): ThinkingState {
+  if (action.type === 'reset') {
+    return { direction: 'right', index: action.center };
+  }
+  const { direction, index } = state;
+  if (direction === 'right') {
+    return index === action.max
+      ? { direction: 'left', index: index - 1 }
+      : { direction: 'right', index: index + 1 };
+  }
+  return index === 0
+    ? { direction: 'right', index: index + 1 }
+    : { direction: 'left', index: index - 1 };
+}
 
 interface MultibandAudioVisualizerProps {
   barColor?: string;
@@ -29,36 +52,22 @@ export const MultibandAudioVisualizer = ({
     return Math.sqrt(sum / bandFrequencies.length);
   });
 
-  const [thinkingIndex, setThinkingIndex] = useState(
-    Math.floor(summedFrequencies.length / 2),
-  );
-  const [thinkingDirection, setThinkingDirection] = useState<'left' | 'right'>(
-    'right',
-  );
+  const centerIndex = Math.floor(summedFrequencies.length / 2);
+  const [thinking, dispatch] = useReducer(thinkingReducer, {
+    direction: 'right',
+    index: centerIndex,
+  });
 
   useEffect(() => {
     if (state !== 'thinking') {
-      setThinkingIndex(Math.floor(summedFrequencies.length / 2));
+      dispatch({ type: 'reset', center: centerIndex });
       return;
     }
     const timeout = setTimeout(() => {
-      if (thinkingDirection === 'right') {
-        if (thinkingIndex === summedFrequencies.length - 1) {
-          setThinkingDirection('left');
-          setThinkingIndex((prev) => prev - 1);
-        } else {
-          setThinkingIndex((prev) => prev + 1);
-        }
-      } else if (thinkingIndex === 0) {
-        setThinkingDirection('right');
-        setThinkingIndex((prev) => prev + 1);
-      } else {
-        setThinkingIndex((prev) => prev - 1);
-      }
+      dispatch({ type: 'tick', max: summedFrequencies.length - 1 });
     }, 200);
-
     return () => clearTimeout(timeout);
-  }, [state, summedFrequencies.length, thinkingDirection, thinkingIndex]);
+  }, [state, centerIndex, thinking]);
 
   return (
     <div

@@ -9,7 +9,7 @@ import {
   FileText,
   KeyRound,
   Mic2,
-  PhoneCallIcon,
+  PhoneIcon,
   ReceiptText,
   Scissors,
   Wand2,
@@ -17,6 +17,7 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import logoSmall from '@/app/assets/S-logo-transparent-small.png';
 import { Banner } from '@/components/banner';
@@ -38,13 +39,11 @@ import {
 } from '@/components/ui/sidebar';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import type messages from '@/messages/en.json';
 
 interface DashboardUIProps {
   activeBanner: ResolvedBanner | null;
   children: React.ReactNode;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[];
-  dict: typeof messages;
   isPaidUser: boolean;
   lang: Locale;
   userId: string;
@@ -57,49 +56,50 @@ export default function DashboardUI({
   isPaidUser,
   userId,
   lang,
-  dict,
 }: DashboardUIProps) {
   const pathname = usePathname();
+  const t = useTranslations('pages');
+  const tSidebar = useTranslations('sidebar');
 
   const navigation = [
     {
-      name: dict.pages['/dashboard/generate'],
+      name: t('/dashboard/generate'),
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
       current: pathname === `/${lang}/dashboard/generate`,
     },
     {
-      name: dict.pages['/dashboard/clone'],
+      name: t('/dashboard/clone'),
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
       current: pathname === `/${lang}/dashboard/clone`,
     },
     {
-      name: dict.pages['/dashboard/call'],
+      name: t('/dashboard/call'),
       href: `/${lang}/dashboard/call`,
-      icon: PhoneCallIcon,
+      icon: PhoneIcon,
       current: pathname === `/${lang}/dashboard/call`,
     },
     {
-      name: dict.pages['/dashboard/credits'],
+      name: t('/dashboard/credits'),
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
       current: pathname === `/${lang}/dashboard/credits`,
     },
     {
-      name: dict.pages['/dashboard/history'],
+      name: t('/dashboard/history'),
       href: `/${lang}/dashboard/history`,
       icon: FileClock,
       current: pathname === `/${lang}/dashboard/history`,
     },
     {
-      name: dict.pages['/dashboard/usage'],
+      name: t('/dashboard/usage'),
       href: `/${lang}/dashboard/usage`,
       icon: BarChart3,
       current: pathname === `/${lang}/dashboard/usage`,
     },
     {
-      name: dict.pages['/dashboard/api-keys'],
+      name: t('/dashboard/api-keys'),
       href: `/${lang}/dashboard/api-keys`,
       icon: KeyRound,
       current: pathname === `/${lang}/dashboard/api-keys`,
@@ -107,7 +107,7 @@ export default function DashboardUI({
     ...(isPaidUser
       ? [
           {
-            name: dict.pages['/dashboard/api-billing'],
+            name: t('/dashboard/api-billing'),
             href: `/${lang}/dashboard/api-billing`,
             icon: ReceiptText,
             current: pathname === `/${lang}/dashboard/api-billing`,
@@ -118,17 +118,17 @@ export default function DashboardUI({
 
   const freeTools = [
     {
-      name: dict.pages['/tools/audio-converter'],
+      name: t('/tools/audio-converter'),
       href: `/${lang}/tools/audio-converter`,
       icon: FileAudio,
     },
     {
-      name: dict.pages['/tools/transcribe'],
+      name: t('/tools/transcribe'),
       href: `/${lang}/tools/transcribe`,
       icon: FileText,
     },
     {
-      name: dict.pages['/tools/audio-joiner'],
+      name: t('/tools/audio-joiner'),
       href: `/${lang}/tools/audio-joiner`,
       icon: Scissors,
     },
@@ -177,7 +177,7 @@ export default function DashboardUI({
               </SidebarGroupContent>
             </SidebarGroup>
             <SidebarGroup>
-              <SidebarGroupLabel>{dict.sidebar.freeTools}</SidebarGroupLabel>
+              <SidebarGroupLabel>{tSidebar('freeTools')}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {freeTools.map((item) => (
@@ -203,7 +203,7 @@ export default function DashboardUI({
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />
-            <SidebarFooterMenu dict={dict.sidebar} lang={lang} />
+            <SidebarFooterMenu lang={lang} />
           </SidebarFooter>
         </Sidebar>
 
@@ -220,7 +220,7 @@ export default function DashboardUI({
             <p className="text-gray-500 text-xs">
               <a
                 className="hover:underline"
-                href="https://sexyvoice.checkly-dashboards.com/"
+                href="https://status.sexyvoice.ai"
                 rel="noopener noreferrer"
                 target="_blank"
               >

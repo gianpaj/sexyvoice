@@ -2,9 +2,23 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
-import { stripe } from '@/lib/stripe/stripe-admin';
+import {
+  hasAnySubscriptionHistory,
+  isStripeCouponUsable,
+  stripe,
+} from '@/lib/stripe/stripe-admin';
+import { getUserById } from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
+
+vi.mock('@sentry/nextjs', () => ({
+  default: {},
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+}));
 
 vi.mock('@/lib/stripe/stripe-admin', () => ({
+  hasAnySubscriptionHistory: vi.fn(),
+  isStripeCouponUsable: vi.fn(),
   stripe: {
     checkout: {
       sessions: {
@@ -14,25 +28,92 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
   },
 }));
 
+vi.mock('@/lib/supabase/queries', () => ({
+  getUserById: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}));
+
 describe('createCheckoutSession()', () => {
+  const originalE2ETestMode = process.env.E2E_TEST_MODE;
   const originalVercelEnv = process.env.VERCEL_ENV;
-  const originalStarterPriceId = process.env.STRIPE_TOPUP_5_PRICE_ID;
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const originalStarterPriceId = process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+  const originalSubscriptionStarterPriceId =
+    process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID;
+  const originalSubscriptionCouponId =
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
+    process.env.STRIPE_TOPUP_STARTER_PRICE_ID = 'price_topup_starter';
+    process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID =
+      'price_subscription_starter';
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: {
+            user: {
+              email: 'user@example.com',
+              id: 'user_123',
+            },
+          },
+        }),
+      },
+    } as never);
+    vi.mocked(getUserById).mockResolvedValue({
+      stripe_id: 'cus_123',
+    } as never);
+    vi.mocked(hasAnySubscriptionHistory).mockResolvedValue(false);
+    vi.mocked(isStripeCouponUsable).mockResolvedValue(true);
+    vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
+      client_secret: 'client_secret_123',
+      url: 'https://checkout.stripe.com/session',
+    } as never);
   });
 
   afterEach(() => {
+    if (originalE2ETestMode === undefined) {
+      delete process.env.E2E_TEST_MODE;
+    } else {
+      process.env.E2E_TEST_MODE = originalE2ETestMode;
+    }
+
     if (originalVercelEnv === undefined) {
       delete process.env.VERCEL_ENV;
     } else {
       process.env.VERCEL_ENV = originalVercelEnv;
     }
 
-    if (originalStarterPriceId === undefined) {
-      delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
     } else {
-      process.env.STRIPE_TOPUP_5_PRICE_ID = originalStarterPriceId;
+      process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+    }
+
+    if (originalStarterPriceId === undefined) {
+      delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    } else {
+      process.env.STRIPE_TOPUP_STARTER_PRICE_ID = originalStarterPriceId;
+    }
+
+    if (originalSubscriptionStarterPriceId === undefined) {
+      delete process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID;
+    } else {
+      process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID =
+        originalSubscriptionStarterPriceId;
+    }
+
+    if (originalSubscriptionCouponId === undefined) {
+      delete process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+    } else {
+      process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+        originalSubscriptionCouponId;
     }
   });
 
@@ -78,8 +159,25 @@ describe('createCheckoutSession()', () => {
     );
   });
 
+  it('returns a safe null checkout result in E2E mode without price IDs', async () => {
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    delete process.env.VERCEL_ENV;
+    process.env.E2E_TEST_MODE = 'true';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).resolves.toEqual({
+      client_secret: null,
+      url: null,
+    });
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+  });
+
   it('does not report missing top-up price IDs outside Vercel production', async () => {
-    delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     process.env.VERCEL_ENV = 'preview';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
@@ -93,7 +191,7 @@ describe('createCheckoutSession()', () => {
   });
 
   it('reports missing top-up price IDs in Vercel production', async () => {
-    delete process.env.STRIPE_TOPUP_5_PRICE_ID;
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
     process.env.VERCEL_ENV = 'production';
     const formData = new FormData();
     formData.set('uiMode', 'hosted');
@@ -115,6 +213,75 @@ describe('createCheckoutSession()', () => {
           packageId: 'starter',
           vercelEnv: 'production',
         }),
+      }),
+    );
+  });
+
+  it('applies the first-month coupon for eligible subscription customers', async () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+      'coupon_first_month';
+    const formData = new FormData();
+    formData.set('type', 'subscription');
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).resolves.toEqual({
+      client_secret: 'client_secret_123',
+      url: 'https://checkout.stripe.com/session',
+    });
+
+    expect(hasAnySubscriptionHistory).toHaveBeenCalledWith('cus_123');
+    expect(isStripeCouponUsable).toHaveBeenCalledWith('coupon_first_month');
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discounts: [{ coupon: 'coupon_first_month' }],
+        metadata: expect.objectContaining({
+          packageId: 'starter',
+          subscriptionDiscountCouponId: 'coupon_first_month',
+          type: 'subscription',
+          userId: 'user_123',
+        }),
+        mode: 'subscription',
+      }),
+    );
+  });
+
+  it('does not apply an unusable first-month coupon', async () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID = 'coupon_expired';
+    vi.mocked(isStripeCouponUsable).mockResolvedValue(false);
+    const formData = new FormData();
+    formData.set('type', 'subscription');
+    formData.set('uiMode', 'hosted');
+
+    await createCheckoutSession(formData, 'starter');
+
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        discounts: expect.anything(),
+      }),
+    );
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.not.objectContaining({
+          subscriptionDiscountCouponId: expect.anything(),
+        }),
+      }),
+    );
+  });
+
+  it('does not validate or apply a coupon after any subscription history', async () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+      'coupon_first_month';
+    vi.mocked(hasAnySubscriptionHistory).mockResolvedValue(true);
+    const formData = new FormData();
+    formData.set('type', 'subscription');
+    formData.set('uiMode', 'hosted');
+
+    await createCheckoutSession(formData, 'starter');
+
+    expect(isStripeCouponUsable).not.toHaveBeenCalled();
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        discounts: expect.anything(),
       }),
     );
   });

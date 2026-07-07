@@ -63,7 +63,7 @@ describe('call-token API validation', () => {
         language: 'en' as const,
         sceneInstructions: 'Use the late-night train setting.',
         selectedPresetId: null,
-        selectedSceneId: 'stranger-on-the-train',
+        selectedSceneId: 'bartender-after-closing',
         sessionConfig: {
           model: 'grok-voice-think-fast-1.0',
           voice: 'Ara',
@@ -90,6 +90,45 @@ describe('call-token API validation', () => {
       };
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
+    });
+
+    it('should accept the optional memory opt-in flag', () => {
+      const base = {
+        instructions: 'Test',
+        selectedPresetId: null,
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
+
+      // Present (true/false) and absent are all valid; the paid-only gating is
+      // enforced server-side in the route, not by the schema.
+      for (const memory of [true, false, undefined]) {
+        const result = playgroundStateSchema.safeParse({ ...base, memory });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.memory).toBe(memory);
+        }
+      }
+    });
+
+    it('should reject a non-boolean memory flag', () => {
+      const payload = {
+        instructions: 'Test',
+        selectedPresetId: null,
+        memory: 'yes',
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(false);
     });
 
     it('should accept every known scene ID', () => {

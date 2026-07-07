@@ -147,7 +147,7 @@
           "questions": [
             {
               "question": "Quali lingue sono supportate per la generazione vocale?",
-              "answer": "Il supporto linguistico dipende dalla voce selezionata.\n\nAlcune delle nostre voci IA (Puck, Zephyr, Gacrux, Kore, Sulafat, ecc.) supportano 24 lingue tra cui:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇰🇷 Coreano (Corea),\n🇫🇷 Francese (Francia),\n🇯🇵 Giapponese (Giappone),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇮🇹 Italiano (Italia),\n🇮🇳 Marathi (India),\n🇳🇱 Olandese (Paesi Bassi),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇹🇭 Tai (Thailandia),\n🇮🇳 Tamil (India),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Telugu (India),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\ne 🇻🇳 Vietnamita (Vietnam).\n\nAltre voci sono specifiche per lingua:\n🇬🇧 Dan (Inglese UK),\n🇮🇹 Pietro (Italiano),\n🇺🇸 Emma (Inglese US),\n🇪🇸 Javi (Spagnolo),\n🇺🇸 Josh (Inglese US),\n🇺🇸 e Tara (Inglese US).\n\nScegli la tua voce in base alla lingua target per i risultati più naturali."
+              "answer": "Il supporto linguistico dipende dalla voce e dal modello selezionati.\n\n**Voci Gemini 2.5 (predefinite)** supportano 24 lingue tra cui:\n🇪🇬 Arabo, 🇧🇩 Bengalese, 🇰🇷 Coreano, 🇫🇷 Francese, 🇯🇵 Giapponese, 🇮🇳 Hindi, 🇮🇩 Indonesiano, 🇺🇸 Inglese, 🇮🇹 Italiano, 🇮🇳 Marathi, 🇳🇱 Olandese, 🇵🇱 Polacco, 🇧🇷 Portoghese, 🇷🇴 Rumeno, 🇷🇺 Russo, 🇺🇸 Spagnolo, 🇹🇭 Tailandese, 🇮🇳 Tamil, 🇩🇪 Tedesco, 🇮🇳 Telugu, 🇹🇷 Turco, 🇺🇦 Ucraino, e 🇻🇳 Vietnamita.\n\n**Voci Gemini 3.1 (attivando \"Usa il nuovo modello AI\")** supportano 70+ lingue in 80+ varianti regionali, incluso tutto quanto sopra più: Afrikaans, Albanese, Amarico, Armeno, Azerbaigiano, Basco, Bulgaro, Catalano, Cinese, Croato, Ceco, Danese, Estone, Filipino, Finlandese, Galiziano, Georgiano, Greco, Gujarati, Ebraico, Ungherese, Islandese, Irlandese, Giavanese, Kannada, Kazako, Lettone, Lituano, Macedone, Malese, Maltese, Norvegese, Persiano, Punjabi, Serbo, Slovacco, Sloveno, Swahili, Svedese, Urdu, Uzbeco, Gallese, Zulu e altri.\n\nAltre voci sono specifiche per lingua:\n🇬🇧 Dan (Inglese UK), 🇮🇹 Pietro (Italiano), 🇺🇸 Emma, Josh, Tara (Inglese US), 🇪🇸 Javi (Spagnolo).\n\nScegli la tua voce in base alla lingua target per i risultati più naturali."
             },
             {
               "question": "Posso far parlare una voce con un accento o uno stile specifico, come britannico o pirata🏴‍☠️?",
@@ -188,6 +188,10 @@
             {
               "question": "Quanto costa?",
               "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
+            },
+            {
+              "question": "L'IA ricorda le nostre conversazioni precedenti?",
+              "answer": "Solo se attivi la memoria: è facoltativa e disattivata per impostazione predefinita, quindi di norma non viene memorizzato nulla delle tue chiamate. Quando è attiva, l'assistente conserva alcuni brevi dettagli (come il modo in cui preferisci essere chiamato e gli argomenti che ti piacciono), non registrazioni o trascrizioni complete, per riprendere da dove avevi lasciato. Conserviamo solo i tuoi dettagli più recenti, puoi cancellare tutto in qualsiasi momento e l'eliminazione dell'account li rimuove automaticamente."
             }
           ]
         },
@@ -296,9 +300,14 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Il tuo piano mensile di crediti è programmato per terminare",
+      "description": "Il tuo piano mensile di crediti è ancora attivo fino al {date}, ma dopo non si rinnoverà né aggiungerà altri crediti mensili. Puoi continuare a usare i crediti presenti nel tuo account. Per cambiare livello, gestisci l’abbonamento in Stripe.",
+      "manageButton": "Gestisci abbonamento"
+    },
     "topup": {
       "title": "Acquista crediti",
-      "description": "Ricarica i tuoi crediti istantaneamente con un acquisto una tantum",
+      "description": "Ricarica i tuoi crediti istantaneamente o abbonati e ottieni più crediti",
       "buyCredits": "Acquista crediti",
       "onetimePurchase": "Acquisto una tantum",
       "processing": "Elaborazione...",
@@ -365,14 +374,16 @@
     "generating": "Generazione",
     "gproLimitExceeded": "Hai superato il limite di __COUNT__ generazioni vocali multilingua come utente gratuito. Prova una voce diversa o aggiorna il tuo piano per l'accesso illimitato.",
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
-    "paidCharacterLimitTooltip": "Gli utenti a pagamento hanno un limite di caratteri 2×",
     "playAudio": "Riproduci audio",
     "resetPlayer": "Reimposta player",
     "subtitle": "Seleziona una voce e genera audio dal testo",
     "success": "Audio generato con successo!",
     "textAreaPlaceholder": "Inserisci il testo che vuoi convertire in parlato...",
-    "title": "Genera audio",
+    "paidStyleLimitTooltip": "Hai un limite di stile 2,5×",
+    "upgradeStyleLimitTooltip": "Passa a un piano a pagamento per un limite di stile 2,5×",
+    "paidCharacterLimitTooltip": "Hai un limite di caratteri 2×",
     "upgradeCharacterLimitTooltip": "Passa a un piano a pagamento per un limite di caratteri 2×",
+    "title": "Genera audio",
     "grok": {
       "inlineEffectPlaceholder": "Inserisci effetto inline",
       "wrappingEffectPlaceholder": "Avvolgi con tag di stile",
@@ -426,7 +437,18 @@
       "toolTipEmotionTags": "Tag emotivi supportati:",
       "geminiInfo": "Supporta 24 lingue:\n🇪🇬 Arabo (egiziano),\n🇧🇩 Bengalese (Bangladesh),\n🇳🇱 Olandese (Paesi Bassi),\n🇺🇸 Inglese (US),\n🇮🇳 Inglese/Hindi (India),\n🇫🇷 Francese (Francia),\n🇩🇪 Tedesco (Germania),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesiano (Indonesia),\n🇮🇹 Italiano (Italia),\n🇯🇵 Giapponese (Giappone),\n🇰🇷 Coreano (Corea),\n🇮🇳 Marathi (India),\n🇵🇱 Polacco (Polonia),\n🇧🇷 Portoghese (Brasile),\n🇷🇴 Rumeno (Romania),\n🇷🇺 Russo (Russia),\n🇺🇸 Spagnolo (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailandia),\n🇹🇷 Turco (Turchia),\n🇺🇦 Ucraino (Ucraina),\n🇻🇳 Vietnamita (Vietnam)",
       "grokInfo": "Supporta tag espressivi come [laugh] e\ntag avvolgenti come <fast>...</fast> e supporta 24 lingue:\n🇪🇬 Arabo (Egitto, Arabia Saudita ed EAU),\n🇧🇩 Bengalese,\n🇳🇱 Olandese (Paesi Bassi),\n🇨🇳 Cinese (semplificato),\n🇺🇸 Inglese,\n🇫🇷 Francese,\n🇩🇪 Tedesco,\n🇮🇳 Hindi,\n🇮🇩 Indonesiano,\n🇮🇹 Italiano,\n🇯🇵 Giapponese,\n🇰🇷 Coreano,\n🇧🇷 Portoghese (Brasile, Portogallo),\n🇷🇺 Russo,\n🇪🇸 Spagnolo (Messico, Spagna),\n🇹🇷 Turco,\n🇺🇦 Ucraino,\n🇻🇳 Vietnamita",
-      "featuredBadge": "In evidenza"
+      "featuredBadge": "In evidenza",
+      "selectVoicePlaceholder": "Seleziona una voce...",
+      "searchPlaceholder": "Cerca per nome, stile o modello...",
+      "filterModelLabel": "Modello",
+      "filterGenderLabel": "Genere",
+      "clearFilters": "Cancella",
+      "noVoicesFound": "Nessuna voce trovata",
+      "noVoicesFoundHint": "Prova una ricerca diversa o cancella i filtri.",
+      "previewVoice": "Anteprima di {name}",
+      "stopPreview": "Interrompi anteprima di {name}",
+      "footerCount": "{filtered} di {total} voci",
+      "voiceListLabel": "Voci"
     },
     "split": {
       "segmentPreviews": "Anteprime segmenti",
@@ -450,6 +472,37 @@
       "splitToggleDisabled": "La divisione del testo in audio è disponibile per gli utenti a pagamento.",
       "tooManySegments": "Il testo diviso può avere al massimo __COUNT__ segmenti. Accorcia il testo o combina i segmenti prima di generare.",
       "downloadAllFailed": "Impossibile scaricare tutti i segmenti."
+    },
+    "advancedSettings": {
+      "trigger": "Avanzate",
+      "activeCount": "{count, plural, one {# impostazione modificata} other {# impostazioni modificate}}",
+      "title": "Impostazioni avanzate",
+      "subtitle": "Perfeziona come viene generato il tuo audio.",
+      "default": "Predefinito",
+      "reset": "Reimposta",
+      "upgradeToUnlock": "Esegui l'upgrade per sbloccare",
+      "noSettings": "Nessuna impostazione avanzata per questa voce.",
+      "seed": {
+        "label": "Seed",
+        "description": "Fissa un seed per risultati riproducibili. Lascia vuoto per un seed casuale.",
+        "placeholder": "Casuale",
+        "randomize": "Seed casuale"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Trasmetti l'audio mentre viene generato (solo Gemini 3.1).",
+        "auto": "Auto",
+        "on": "Attivo",
+        "off": "Disattivo"
+      },
+      "temperature": {
+        "label": "Temperatura",
+        "description": "Valori più alti rendono la resa più varia ed espressiva."
+      },
+      "speed": {
+        "label": "Velocità",
+        "description": "Regola la velocità con cui parla la voce."
+      }
     }
   },
   "call": {
@@ -458,6 +511,9 @@
     "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è {count}",
     "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
+    "memoryLabel": "Memoria",
+    "memoryDescription": "Lascia che i personaggi ti ricordino tra una chiamata e l’altra. Non viene memorizzato nulla a meno che non sia attivo.",
+    "memoryUpgradeTooltip": "Passa a un piano a pagamento per far sì che i personaggi ti ricordino tra una chiamata e l’altra.",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
     "sceneLabel": "Scena",
@@ -720,6 +776,17 @@
         "cancel": "Annulla",
         "confirm": "Sì, revoca"
       }
+    },
+    "memory": {
+      "title": "Memoria delle chiamate vocali",
+      "description": "Se attivi la memoria durante le chiamate, i personaggi ricordano alcuni dettagli su di te per mantenere la continuità. Qui puoi cancellare tutto.",
+      "button": "Elimina tutte le memorie",
+      "confirmTitle": "Eliminare tutte le memorie delle chiamate vocali?",
+      "confirmDescription": "Questa operazione cancella in modo permanente tutto ciò che i personaggi hanno ricordato di te dalle chiamate precedenti. Non può essere annullata.",
+      "cancel": "Annulla",
+      "continue": "Elimina",
+      "success": "Le tue memorie delle chiamate vocali sono state eliminate.",
+      "error": "Impossibile eliminare le tue memorie. Riprova."
     }
   },
   "apiBilling": {
@@ -760,7 +827,7 @@
     "profile": "Profilo",
     "signOut": "Esci",
     "freeTools": "Strumenti Gratuiti",
-    "subscriptionDiscount": "Ottieni {discount}% di crediti extra con un abbonamento"
+    "subscriptionDiscount": "Ottieni il {extraCredits}% di crediti extra e il {discount}% di sconto sul primo mese!"
   },
   "header": {
     "generate": "Genera",
@@ -770,6 +837,7 @@
   "history": {
     "header": "Cronologia generazioni",
     "empty": "Nessuna cronologia ancora",
+    "downloadError": "Impossibile scaricare l'audio",
     "ui": {
       "filterText": "Filtra testo...",
       "customizeColumns": "Personalizza colonne",
@@ -870,7 +938,7 @@
   },
   "announcements": {
     "expressiveVoicesLaunch": {
-      "text": "Le nuove voci per la generazione vocale sono ora disponibili, con piu controllo su ritmo, respiri, tono, velocita e intensita.",
+      "text": "Sono arrivate nuove voci più espressive — basate su Gemini 3.1, con un controllo più preciso su ritmo, respiri, tono, velocità e intensità.",
       "ctaLoggedIn": "Prova le voci",
       "ctaLoggedOut": "Accedi",
       "ariaLabelDismiss": "Chiudi annuncio sulle voci espressive"
@@ -1036,5 +1104,9 @@
       "audioConverterLink": "Convertitore Audio Gratuito",
       "madeWith": "Fatto con ♡ da SexyVoice.ai - Generatore audio IA gratuito"
     }
+  },
+  "errorCodes": {
+    "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
+    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi."
   }
 }

@@ -14,9 +14,9 @@ SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeSc
 - **Next.js App Router** – React framework with Server Components (RSCs), Suspense, and Server Actions
 - **Supabase** – Authentication (OAuth with Google) and PostgreSQL database with SSR support
 - **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
-- **fal.ai** – Alternative voice cloning service *(optional)*
-- **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS, text enhancement, and automatic emotion tagging
-- **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output)
+- **fal.ai** – Alternative voice cloning service _(optional)_
+- **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS and Gemini 3.1 Flash TTS, text enhancement, and automatic emotion tagging
+- **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output); also analyzes completed call transcripts into structured summaries
 - **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
 - **Cloudflare R2** – Scalable storage for generated audio files; two buckets: `R2_BUCKET_NAME` (dashboard) and `R2_SPEECH_API_BUCKET_NAME` (external API)
 - **Upstash Redis** – High-performance caching for audio URLs (dashboard/clone flows); rate limiting for external API keys
@@ -40,13 +40,13 @@ All endpoints except `GET /api/v1/openapi` require an `Authorization: Bearer sk_
 
 ### Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/v1/speech` | Generate speech audio (always fresh, no cache) |
-| `GET` | `/api/v1/voices` | List available public TTS voices |
-| `GET` | `/api/v1/models` | List available model catalog |
-| `GET` | `/api/v1/billing` | Get credit balance and last transaction |
-| `GET` | `/api/v1/openapi` | OpenAPI 3.1 spec (public, no auth required) |
+| Method | Path              | Description                                    |
+| ------ | ----------------- | ---------------------------------------------- |
+| `POST` | `/api/v1/speech`  | Generate speech audio (always fresh, no cache) |
+| `GET`  | `/api/v1/voices`  | List available public TTS voices               |
+| `GET`  | `/api/v1/models`  | List available model catalog                   |
+| `GET`  | `/api/v1/billing` | Get credit balance and last transaction        |
+| `GET`  | `/api/v1/openapi` | OpenAPI 3.1 spec (public, no auth required)    |
 
 ### Error Shape
 
@@ -66,6 +66,7 @@ All errors follow a consistent nested structure:
 ### Rate Limiting
 
 60 requests/minute per API key. Every response includes:
+
 - `X-RateLimit-Limit-Requests`
 - `X-RateLimit-Remaining-Requests`
 - `X-RateLimit-Reset-Requests`
@@ -89,6 +90,7 @@ flowchart TD
     G -->|Insufficient| Z6[402 insufficient_credits]
     G -->|Sufficient| H{Model?}
     H -->|gpro| I[Gemini 2.5 Pro TTS → fallback Flash]
+    H -->|gpro31| I2[Gemini 3.1 Flash TTS → fallback Flash]
     H -->|grok| J2[xAI Grok TTS — mp3 or wav]
     H -->|orpheus| J[Replicate Orpheus model]
     I --> K[Upload to R2_SPEECH_API_BUCKET]
@@ -101,19 +103,19 @@ flowchart TD
 
 ### Shared API Layer (`lib/api/`)
 
-| File | Purpose |
-|------|---------|
-| `auth.ts` | `generateApiKey()`, `hashApiKey()`, `validateApiKey()`, `updateApiKeyLastUsed()` |
-| `constants.ts` | `EXTERNAL_API_MODELS` catalog, `RATE_LIMIT_DEFAULT` |
-| `errors.ts` | `createApiError()`, `zodErrorToApiError()` |
-| `external-errors.ts` | Structured error key map + `externalApiErrorResponse()` |
-| `logger.ts` | Axiom-backed per-request structured logger via `createLogger()` |
-| `model.ts` | `resolveExternalModelId()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
-| `openapi.ts` | `createExternalApiOpenApiDocument()` using `zod-openapi` |
-| `pricing.ts` | `calculateExternalApiDollarAmount()` |
-| `rate-limit.ts` | `consumeRateLimit()` via Upstash Ratelimit (token bucket) |
-| `responses.ts` | `jsonWithRateLimitHeaders()` |
-| `schemas.ts` | Zod schemas for all v1 request/response types (shared with OpenAPI generator) |
+| File                 | Purpose                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `auth.ts`            | `generateApiKey()`, `hashApiKey()`, `validateApiKey()`, `updateApiKeyLastUsed()`                                                     |
+| `constants.ts`       | `EXTERNAL_API_MODELS` catalog, `RATE_LIMIT_DEFAULT`                                                                                  |
+| `errors.ts`          | `createApiError()`, `zodErrorToApiError()`                                                                                           |
+| `external-errors.ts` | Structured error key map + `externalApiErrorResponse()`                                                                              |
+| `logger.ts`          | Axiom-backed per-request structured logger via `createLogger()`                                                                      |
+| `model.ts`           | `resolveExternalModelId()`, `isModelCompatibleWithVoice()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
+| `openapi.ts`         | `createExternalApiOpenApiDocument()` using `zod-openapi`                                                                             |
+| `pricing.ts`         | `calculateExternalApiDollarAmount()`                                                                                                 |
+| `rate-limit.ts`      | `consumeRateLimit()` via Upstash Ratelimit (token bucket)                                                                            |
+| `responses.ts`       | `jsonWithRateLimitHeaders()`                                                                                                         |
+| `schemas.ts`         | Zod schemas for all v1 request/response types (shared with OpenAPI generator)                                                        |
 
 ### Admin Query Pattern
 
@@ -149,14 +151,14 @@ flowchart TD
 
 1. **Frontend Validation**: User enters text (max 500 chars) and selects a voice
 2. **API Authentication**: Verify user session via Supabase Auth
-4. **Credit Check**: Query user's credit balance in Supabase (via session-scoped `createClient()`)
-5. **Credit Estimation**: Calculate required credits based on text length
-6. **Cache Lookup**: Generate hash from (text + voice + parameters) and check Redis
-7. **Cache Hit**: Return cached audio URL immediately (0 credits used)
-8. **Cache Miss**:
+3. **Credit Check**: Query user's credit balance in Supabase (via session-scoped `createClient()`)
+4. **Credit Estimation**: Calculate required credits based on text length
+5. **Cache Lookup**: Generate hash from (text + voice + parameters) and check Redis
+6. **Cache Hit**: Return cached audio URL immediately (0 credits used)
+7. **Cache Miss**:
    - Call appropriate AI service (Replicate or Google Gemini TTS)
    - Generate audio from text
-9. **Storage**: Upload generated audio to Cloudflare R2 (`R2_BUCKET_NAME`, served from `files.sexyvoice.ai`)
+8. **Storage**: Upload generated audio to Cloudflare R2 (`R2_BUCKET_NAME`, served from `files.sexyvoice.ai`)
 9. **Cache Update**: Store R2 URL in Redis for future requests
 10. **Background Tasks** (using Next.js `after()`):
     - Deduct credits from user balance
@@ -225,9 +227,9 @@ flowchart TD
 
 ### Voice Cloning Models
 
-| Locale group | Locales | Model | Provider |
-|--------------|---------|-------|----------|
-| Voxtral-supported locales | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt` | `voxtral-mini-tts-2603` | Mistral |
+| Locale group                    | Locales                                                                                        | Model                                 | Provider  |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral-supported locales       | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
 | Chatterbox multilingual locales | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 ### File Constraints
@@ -283,14 +285,14 @@ flowchart TD
 
 ### Call Configuration Options
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Voice | AI voice for the call | Configurable |
-| Model | LLM model for conversation | gpt-4o-realtime |
-| Temperature | Response creativity (0-1) | 0.8 |
-| Max Output Tokens | Token limit for responses | 4096 |
-| Instructions | System prompt for AI behavior | From Edge Config |
-| Language | Conversation language | English |
+| Setting           | Description                   | Default          |
+| ----------------- | ----------------------------- | ---------------- |
+| Voice             | AI voice for the call         | Configurable     |
+| Model             | LLM model for conversation    | gpt-4o-realtime  |
+| Temperature       | Response creativity (0-1)     | 0.8              |
+| Max Output Tokens | Token limit for responses     | 4096             |
+| Instructions      | System prompt for AI behavior | From Edge Config |
+| Language          | Conversation language         | English          |
 
 ## Database Schema
 
@@ -302,10 +304,14 @@ flowchart TD
 - `credits` – User credit balances
 - `credit_transactions` – Credit usage and purchase history
 - `call_sessions` – Real-time voice call sessions with duration, room ID, and billing info
+- `call_session_analysis` – One rich per-call analysis row (language, topic, sentiment, engagement, key requests, AI issues, notable patterns) generated from the transcript by Grok
+- `call_session_analytics` – Aggregate analysis stats per run
+- `agent_memories` – pgvector-backed voice-agent memory with hybrid (semantic + keyword) retrieval via the `match_agent_memories_hybrid` RPC
 - `usage_events` – Granular usage tracking for analytics, billing, and reporting
 - `api_keys` – External API keys; stores `key_hash` (HMAC-SHA256), `key_prefix` (first 12 chars for display), `is_active`, `expires_at`, `permissions` (JSONB scopes), `last_used_at`
 
-See [AGENTS.md](./AGENTS.md) for detailed schema definitions.
+See `apps/web/supabase/migrations/` and `apps/web/lib/supabase/types.d.ts` for
+the full schema definitions.
 
 ## Caching Strategy
 
@@ -410,11 +416,11 @@ components/
 ```
 
 tests/
-├── setup.ts                   # Global Vitest setup — env vars, vi.mock() for all external deps
-├── v1-speech.test.ts           # External speech API — auth, validation, Grok/Gemini/Replicate generation, credits
-├── api-v1-meta.test.ts        # External models/voices/openapi endpoints
-├── api-v1-billing.test.ts     # External billing endpoint
-├── api-keys-routes.test.ts    # API key CRUD routes
-└── *.test.ts                  # Other feature test suites
+├── setup.ts # Global Vitest setup — env vars, vi.mock() for all external deps
+├── v1-speech.test.ts # External speech API — auth, validation, Grok/Gemini/Replicate generation, credits
+├── api-v1-meta.test.ts # External models/voices/openapi endpoints
+├── api-v1-billing.test.ts # External billing endpoint
+├── api-keys-routes.test.ts # API key CRUD routes
+└── \*.test.ts # Other feature test suites
 
-See [AGENTS.md](./AGENTS.md) for detailed application structure and development guidelines.
+See [AGENTS.md](./AGENTS.md) for development guidelines.

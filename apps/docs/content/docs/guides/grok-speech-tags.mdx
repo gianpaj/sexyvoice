@@ -8,7 +8,7 @@ Grok voices are powered by xAI and support expressive speech synthesis through a
 
 ## Available Voices
 
-Use `GET /api/v1/voices` to retrieve the current list of voices and filter the results by `model: "grok"`:
+Use `GET /api/v1/voices` to retrieve the current list of voices and filter the results by `model: "xai"`:
 
 ```bash
 curl -X GET 'https://sexyvoice.ai/api/v1/voices' \
@@ -113,6 +113,21 @@ Grok voices support both `mp3` (default) and `wav`:
   "voice": "eve",
   "input": "Hello there!",
   "response_format": "mp3"
+}
+```
+
+## Speech Speed
+
+Grok voices accept an optional `speed` multiplier in the `0.7`–`1.5` range (per the xAI
+TTS API). Values below `1.0` slow the delivery down and values above `1.0` speed it up.
+Omit it to use the default `1.0`.
+
+```json
+{
+  "model": "xai",
+  "voice": "eve",
+  "input": "Hello there!",
+  "speed": 1.2
 }
 ```
 

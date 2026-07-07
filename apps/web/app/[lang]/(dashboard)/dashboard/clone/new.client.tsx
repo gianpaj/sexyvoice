@@ -1,93 +1,58 @@
 'use client';
 
+import { AlertCircle, CircleStop, Download } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
-  AlertCircle,
-  CircleStop,
-  Crown,
-  Download,
-  PaperclipIcon,
-  UploadIcon,
-  XIcon,
-} from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useReducer,
+  useRef,
+} from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
-import { MicrophoneMain } from '@/components/audio/microphone-main';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { GenerateButton } from '@/components/generate-button';
-import PulsatingDots from '@/components/PulsatingDots';
 import { toast } from '@/components/services/toast';
-import { SpotlightField } from '@/components/spotlight-field';
-import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { formatBytes, useFileUpload } from '@/hooks/use-file-upload';
+import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import {
-  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
-  VOXTRAL_SUPPORTED_LOCALE_CODES,
-} from '@/lib/clone/constants';
+  CLONE_FORM_FIELDS,
+  type CloneErrorResponseBody,
+  type CloneRouteErrorCode,
+  type CloneSuccessResponse,
+  type RouteErrorDetails,
+} from '@/lib/clone/api-types';
+import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import {
+  createMicrophoneReferenceAudioFile,
+  isWebmAudioBlob,
+} from '@/lib/clone/microphone-reference-audio';
 import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import { cn } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { AudioProvider } from './audio-provider';
+import { CloneAudioInput } from './clone-audio-input';
+import { CloneConsentFields } from './clone-consent-fields';
+import { CloneLanguageSelect } from './clone-language-select';
 import type { SampleAudio } from './clone-sample-card';
-import CloneSampleCard from './clone-sample-card';
+import {
+  cloneStateReducer,
+  formatCloneMessage,
+  initialCloneState,
+} from './clone-state';
+import { CloneTextField } from './clone-text-field';
 
-export type Status = 'idle' | 'generating' | 'complete' | 'error';
+export type { Status } from './clone-state';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
-
-const sampleAudios: readonly SampleAudio[] = [
-  {
-    id: 1,
-    name: 'Marilyn Monroe 🇺🇸',
-    language: 'english',
-    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
-    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
-    audioExampleOutputSrc:
-      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
-    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
-  },
-  // {
-  //   id: 2,
-  //   name: 'Morgan Freeman 🇺🇸',
-  //   prompt: 'The most important thing is the mission, not the money',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  // },
-  // {
-  //   id: 3,
-  //   name: 'Audrey Hepburn 🇬🇧',
-  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  // },
-  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
-];
 
 const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   ar: 'arabic',
@@ -116,57 +81,80 @@ const SUPPORTED_LOCALE_CODES: Record<string, string> = {
   zh: 'chinese',
 };
 
-const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
-const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
-const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
-const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
-
-const formatCloneMessage = (
-  message: string,
-  values: Record<string, boolean | number | string | null | undefined>,
-) =>
-  Object.entries(values).reduce(
-    (formatted, [key, value]) =>
-      value === null || value === undefined
-        ? formatted
-        : formatted.replaceAll(`__${key}__`, String(value)),
-    message,
-  );
-
-type CloneErrorDetails = Record<string, boolean | number | string | null>;
-
-interface CloneErrorResponse {
-  code?: string;
-  details?: CloneErrorDetails;
-  error?: string;
+// The server returns `CloneErrorResponseBody`, but proxies and older responses
+// may omit fields, so every field is treated as optional here. `message` is not
+// part of the route contract but can arrive from upstream/proxy error bodies.
+type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
   message?: string;
-  serverMessage?: string;
-}
-
-const getCloneDictMessage = (
-  dict: (typeof messages)['clone'],
-  path: string,
-): string | undefined => {
-  let value: unknown = dict;
-
-  for (const segment of path.split('.')) {
-    if (!(value && typeof value === 'object' && segment in value)) {
-      return undefined;
-    }
-
-    value = (value as Record<string, unknown>)[segment];
-  }
-
-  return typeof value === 'string' ? value : undefined;
 };
 
+type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
+
+const getCloneErrorMessage = (
+  t: CloneTranslator,
+  code?: CloneRouteErrorCode,
+  fallbackMessage?: string,
+  details?: RouteErrorDetails,
+): string => {
+  if (!code) {
+    return fallbackMessage || t('errorCloning');
+  }
+
+  const messageKey = code as Parameters<CloneTranslator>[0];
+  if (!t.has(messageKey)) {
+    return fallbackMessage || t('errorCloning');
+  }
+
+  const message = t(messageKey);
+  return formatCloneMessage(message, details ?? {});
+};
+
+// ─── PreviewTabContent ────────────────────────────────────────────────────────
+
+function PreviewTabContent({
+  generatedAudioUrl,
+  downloadAudio,
+}: {
+  generatedAudioUrl: string | null;
+  downloadAudio: () => Promise<void>;
+}) {
+  const t = useTranslations('clone');
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-center font-medium text-xl">{t('previewTitle')}</h3>
+
+      <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
+        {generatedAudioUrl && (
+          <AudioPlayerWithContext
+            autoPlay
+            className="rounded-full"
+            playAudioTitle={t('playAudio')}
+            progressColor="#8b5cf6"
+            showWaveform
+            url={generatedAudioUrl}
+            waveColor="#888888"
+          />
+        )}
+      </div>
+
+      <div className="flex justify-center gap-4">
+        <Button className="flex items-center gap-2" onClick={downloadAudio}>
+          <Download className="h-4 w-4" />
+          {t('downloadAudio')}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Public wrapper ───────────────────────────────────────────────────────────
+
 export default function NewVoiceClient({
-  dict,
   lang,
   hasEnoughCredits,
   userHasPaid,
 }: {
-  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
@@ -174,7 +162,6 @@ export default function NewVoiceClient({
   return (
     <AudioProvider>
       <NewVoiceClientInner
-        dict={dict}
         hasEnoughCredits={hasEnoughCredits}
         lang={lang}
         userHasPaid={userHasPaid}
@@ -183,97 +170,79 @@ export default function NewVoiceClient({
   );
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing clone form coordinates upload, recording, conversion, and preview state.
 function NewVoiceClientInner({
-  dict,
   lang,
   hasEnoughCredits,
   userHasPaid,
 }: {
-  dict: (typeof messages)['clone'];
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
 }) {
+  const t = useTranslations('clone');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
     isLoading: ffmpegLoading,
   } = useFFmpeg({ lazyLoad: true });
-  const [status, setStatus] = useState<Status>('idle');
-  const [activeTab, setActiveTab] = useState('upload');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [text, setText] = useState('');
-  const [selectedLocale, setSelectedLocale] = useState({
-    code: 'en',
-    value: 'english',
-  });
-  const [ffmpegError, setFFmpegError] = useState<string | null>(null);
-  const [micBlob, setMicBlob] = useState<Blob | null>(null);
-  const [micRecording, setMicRecording] = useState(false);
-  const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(
-    null,
+  const [cloneState, dispatch] = useReducer(
+    cloneStateReducer,
+    initialCloneState,
   );
-  const [convertingMicAudio, setConvertingMicAudio] = useState(false);
-  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
-  const [
+  const {
+    activeTab,
+    convertingMicAudio,
+    errorMessage,
+    ffmpegError,
+    generatedAudioUrl,
+    legalConsentChecked,
+    micBlob,
+    micRecording,
     referenceAudioEnhancementEnabled,
-    setReferenceAudioEnhancementEnabled,
-  ] = useState(false);
+    selectedLocale,
+    status,
+    text,
+  } = cloneState;
 
-  const usesVoxtral = useMemo(
-    () => VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code),
-    [selectedLocale.code],
-  );
-
-  const audioDurationGuidance = useMemo(
-    () =>
-      usesVoxtral
-        ? {
-            min: VOXTRAL_MIN_AUDIO_DURATION_SECONDS,
-            max: null,
-          }
-        : {
-            min: DEFAULT_MIN_AUDIO_DURATION_SECONDS,
-            max: null,
-          },
-    [usesVoxtral],
-  );
+  const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code);
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
     if (usesVoxtral) {
-      setFFmpegError(null);
+      dispatch({ type: 'patch', patch: { ffmpegError: null } });
       ensureLoaded().catch((error) => {
         const errorMsg =
           error instanceof Error
             ? error.message
-            : dict.failedToLoadAudioProcessor;
-        setFFmpegError(errorMsg);
+            : t('failedToLoadAudioProcessor');
+        dispatch({ type: 'patch', patch: { ffmpegError: errorMsg } });
         console.error('FFmpeg preload error:', error);
       });
     }
-  }, [usesVoxtral, ensureLoaded, dict.failedToLoadAudioProcessor]);
+  }, [usesVoxtral, ensureLoaded, t]);
 
   const handleStartRecording = async () => {
     try {
-      setFFmpegError(null);
+      dispatch({ type: 'patch', patch: { ffmpegError: null } });
       // Preload FFmpeg before recording if needed for this locale
       if (usesVoxtral) {
         await ensureLoaded();
       }
-      startRecording();
+      await startRecording();
     } catch (error) {
       const errorMsg =
         error instanceof Error
           ? error.message
-          : dict.failedToLoadAudioProcessor;
-      setFFmpegError(errorMsg);
-      setErrorMessage(
-        formatCloneMessage(dict.failedToStartRecording, {
-          ERROR: errorMsg,
-        }),
-      );
+          : t('failedToLoadAudioProcessor');
+      dispatch({
+        type: 'patch',
+        patch: {
+          ffmpegError: errorMsg,
+          errorMessage: formatCloneMessage(t('failedToStartRecording'), {
+            ERROR: errorMsg,
+          }),
+        },
+      });
     }
   };
 
@@ -290,22 +259,31 @@ function NewVoiceClientInner({
     mediaStreamConstraints: { audio: true },
     onStop: (blob) => {
       // Store the raw blob - conversion will happen at generation time based on the locale
-      setMicBlob(blob);
+      dispatch({ type: 'patch', patch: { micBlob: blob } });
     },
     onError: (err) => {
       console.error(err);
-      setFFmpegError(err instanceof Error ? err.message : dict.microphoneError);
+      dispatch({
+        type: 'patch',
+        patch: {
+          ffmpegError:
+            err instanceof Error ? err.message : t('microphoneError'),
+        },
+      });
     },
     onStart: () => {
-      setMicRecording(true);
-      setMicBlob(null);
-      setFFmpegError(null);
+      dispatch({
+        type: 'patch',
+        patch: {
+          micRecording: true,
+          micBlob: null,
+          ffmpegError: null,
+        },
+      });
     },
   });
 
-  // FFmpeg for audio conversion
-
-  const supportedLocales = useMemo(() => {
+  const supportedLocales = (() => {
     const codes = Object.keys(SUPPORTED_LOCALE_CODES);
     const translated = getTranslatedLanguages(lang, codes);
     const merged = translated.map(({ value: code, label }) => ({
@@ -316,156 +294,142 @@ function NewVoiceClientInner({
     const current = merged.find((l) => l.code === lang);
     const rest = merged.filter((l) => l.code !== lang);
     return current ? [current, ...rest] : merged;
-  }, [lang]);
+  })();
 
-  const onFilesAdded = () => {
-    setStatus('idle');
-    setErrorMessage('');
-  };
-
-  const localeSpecificReferenceAudioGuidance = usesVoxtral
-    ? formatCloneMessage(dict.referenceAudioGuidanceShort, {
-        MIN: audioDurationGuidance.min,
-        TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
-      })
-    : formatCloneMessage(dict.referenceAudioGuidanceLong, {
-        MIN: audioDurationGuidance.min,
-        TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
-      });
+  const onFilesAdded = useCallback(() => {
+    dispatch({
+      type: 'patch',
+      patch: {
+        status: 'idle',
+        errorMessage: '',
+      },
+    });
+  }, []);
 
   const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
-  const paidVoxtralTextMaxLength = CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID;
-  const textLimitTooltip = formatCloneMessage(
-    userHasPaid ? dict.paidTextLimitTooltip : dict.upgradeTextLimitTooltip,
-    { MAX: paidVoxtralTextMaxLength },
-  );
 
-  const getCloneErrorMessage = useCallback(
-    (
-      code?: string,
-      fallbackMessage?: string,
-      details?: CloneErrorDetails,
-    ): string => {
-      if (!code) {
-        return fallbackMessage || dict.errorCloning;
-      }
-
-      const message = getCloneDictMessage(dict, code);
-      if (!message) {
-        return dict.errorCloning;
-      }
-
-      return formatCloneMessage(message, details ?? {});
-    },
-    [dict],
-  );
-
-  const [
-    { files, isDragging, errors },
-    {
-      handleDragEnter,
-      handleDragLeave,
-      handleDragOver,
-      handleDrop,
-      openFileDialog,
-      removeFile,
-      getInputProps,
-      clearErrors,
-      addFiles,
-    },
-  ] = useFileUpload({
+  const [fileState, fileActions] = useFileUpload({
     onFilesAdded,
     maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
     multiple: false,
   });
+  const { files, errors } = fileState;
+  const { clearErrors } = fileActions;
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
 
   // Clear custom error message when file upload errors change
   useEffect(() => {
     if (errors.length > 0) {
-      setErrorMessage('');
+      dispatch({ type: 'patch', patch: { errorMessage: '' } });
     }
   }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = async () => {
     if (!(file || micBlob)) {
-      setErrorMessage(dict.errors.noAudioFile);
-      setStatus('error');
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: t('errors.noAudioFile'),
+          status: 'error',
+        },
+      });
       return;
     }
 
     if (!text.trim()) {
-      setErrorMessage(dict.errors.noText);
-      setStatus('error');
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: t('errors.noText'),
+          status: 'error',
+        },
+      });
       return;
     }
 
     // Clear both custom errors and file upload errors
-    setErrorMessage('');
     clearErrors();
-    setStatus('generating');
+    dispatch({
+      type: 'patch',
+      patch: {
+        errorMessage: '',
+        status: 'generating',
+      },
+    });
 
     let voiceRes: Response | undefined;
     try {
       abortController.current = new AbortController();
 
-      // Use micBlob if available, otherwise use file
       let audioToProcess = file;
       if (micBlob && !file) {
-        // Convert WebM to WAV for non-English locales
-        // Check locale at GENERATION time, not recording time
-        if (micBlob.type.includes('webm') && selectedLocale.code !== 'en') {
-          setConvertingMicAudio(true);
-          try {
-            const wavBlob = await convertWithFFmpeg(micBlob, 'wav');
-            audioToProcess = new File([wavBlob], 'microphone-recording.wav', {
-              type: wavBlob.type,
-            });
-          } catch (convertError) {
-            console.error('WebM to WAV conversion error:', convertError);
-            // TODO send logs to Sentry
-            setErrorMessage(
-              convertError instanceof Error
-                ? formatCloneMessage(dict.audioConversionFailedWithMessage, {
-                    ERROR: convertError.message,
-                  })
-                : dict.audioConversionFailed,
-            );
-            setStatus('error');
-            setConvertingMicAudio(false);
-            return;
-          } finally {
-            setConvertingMicAudio(false);
+        const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+
+        if (shouldConvertMicAudio) {
+          dispatch({
+            type: 'patch',
+            patch: { convertingMicAudio: true },
+          });
+        }
+
+        try {
+          if (shouldConvertMicAudio) {
+            await ensureLoaded();
           }
-        } else {
-          // For English or non-WebM formats, use blob directly
-          const mimeType = micBlob.type || 'audio/wav';
-          const isWebM = mimeType.includes('webm');
-          const filename = isWebM
-            ? 'microphone-recording.webm'
-            : 'microphone-recording.wav';
-          audioToProcess = new File([micBlob], filename, { type: mimeType });
+
+          audioToProcess = await createMicrophoneReferenceAudioFile(
+            micBlob,
+            convertWithFFmpeg,
+          );
+        } catch (convertError) {
+          console.error('WebM to WAV conversion error:', convertError);
+          // TODO send logs to Sentry
+          dispatch({
+            type: 'patch',
+            patch: {
+              errorMessage:
+                convertError instanceof Error
+                  ? formatCloneMessage(t('audioConversionFailedWithMessage'), {
+                      ERROR: convertError.message,
+                    })
+                  : t('audioConversionFailed'),
+              status: 'error',
+            },
+          });
+          return;
+        } finally {
+          if (shouldConvertMicAudio) {
+            dispatch({
+              type: 'patch',
+              patch: { convertingMicAudio: false },
+            });
+          }
         }
       }
 
       if (!audioToProcess) {
-        setErrorMessage(dict.errors.noAudioFile);
-        setStatus('error');
+        dispatch({
+          type: 'patch',
+          patch: {
+            errorMessage: t('errors.noAudioFile'),
+            status: 'error',
+          },
+        });
         return;
       }
 
       // First upload and process the voice
       const formData = new FormData();
-      formData.append('file', audioToProcess);
-      formData.append('text', text);
-      formData.append('locale', selectedLocale.code);
+      formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
+      formData.append(CLONE_FORM_FIELDS.text, text);
+      formData.append(CLONE_FORM_FIELDS.locale, selectedLocale.code);
       formData.append(
-        'enhanceReferenceAudio',
+        CLONE_FORM_FIELDS.enhanceReferenceAudio,
         String(referenceAudioEnhancementEnabled),
       );
 
@@ -476,7 +440,7 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = dict.errorCloning;
+        let errorMessage = t('errorCloning');
         let voiceResult: CloneErrorResponse | null = null;
 
         try {
@@ -487,9 +451,10 @@ function NewVoiceClientInner({
 
         // Older/proxy 413 responses may still arrive without the JSON error contract.
         if (voiceRes.status === 413 && !voiceResult?.code) {
-          errorMessage = dict.errorTooLarge;
+          errorMessage = t('errorTooLarge');
         } else {
           errorMessage = getCloneErrorMessage(
+            t,
             voiceResult?.code,
             voiceResult?.message ||
               voiceResult?.serverMessage ||
@@ -499,19 +464,28 @@ function NewVoiceClientInner({
           );
         }
 
-        setErrorMessage(errorMessage);
-        setStatus('error');
+        dispatch({
+          type: 'patch',
+          patch: {
+            errorMessage,
+            status: 'error',
+          },
+        });
         return;
       }
 
-      const voiceResult = await voiceRes.json();
+      const voiceResult = (await voiceRes.json()) as CloneSuccessResponse;
 
-      setGeneratedAudioUrl(voiceResult.url);
+      toast.success(t('success'));
 
-      toast.success(dict.success);
-
-      setStatus('complete');
-      setActiveTab('preview');
+      dispatch({
+        type: 'patch',
+        patch: {
+          activeTab: 'preview',
+          generatedAudioUrl: voiceResult.url,
+          status: 'complete',
+        },
+      });
     } catch (err) {
       if (
         err instanceof Error &&
@@ -525,72 +499,66 @@ function NewVoiceClientInner({
       } else if (err instanceof Error) {
         errorMsg = err.message;
       }
-      setErrorMessage(errorMsg || dict.unexpectedError);
-      setStatus('error');
+      dispatch({
+        type: 'patch',
+        patch: {
+          errorMessage: errorMsg || t('unexpectedError'),
+          status: 'error',
+        },
+      });
     }
-  }, [
-    clearErrors,
-    convertWithFFmpeg,
-    dict,
-    file,
-    getCloneErrorMessage,
-    micBlob,
-    referenceAudioEnhancementEnabled,
-    selectedLocale,
-    text,
-  ]);
-
-  const handleCancel = () => {
-    abortController.current?.abort();
-    setStatus('idle');
   };
 
-  // Keyboard shortcut handler
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for CMD+Enter on Mac or Ctrl+Enter on other platforms
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        event.preventDefault();
+  const handleCancel = useCallback(() => {
+    abortController.current?.abort();
+    dispatch({ type: 'patch', patch: { status: 'idle' } });
+  }, []);
 
-        // Only trigger if form can be submitted
-        if (
-          status !== 'generating' &&
-          text.trim() &&
-          hasEnoughCredits &&
-          legalConsentChecked
-        ) {
-          handleGenerate();
-        }
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      event.preventDefault();
+
+      if (
+        status !== 'generating' &&
+        text.trim() &&
+        hasEnoughCredits &&
+        legalConsentChecked
+      ) {
+        handleGenerate().catch((error) => {
+          console.error('Keyboard shortcut clone generation failed:', error);
+        });
       }
-    };
+    }
+  });
 
-    // Add event listener to document
-    document.addEventListener('keydown', handleKeyDown);
+  // Keyboard shortcut handler. onKeyDown is a useEffectEvent, so it already has
+  // a stable identity and can be attached directly.
+  useEffect(() => {
+    document.addEventListener('keydown', onKeyDown);
 
-    // Cleanup
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keydown', onKeyDown);
     };
-  }, [status, text, handleGenerate, hasEnoughCredits, legalConsentChecked]);
+  }, []);
 
   const downloadAudio = async () => {
-    // Prepare the anchor element once in a closure scope
-    const anchorElement = document.createElement('a');
-    document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
-
     if (!generatedAudioUrl) return;
 
     try {
-      await downloadUrl(generatedAudioUrl, anchorElement);
+      await downloadUrl(generatedAudioUrl, document.createElement('a'));
     } catch {
-      toast.error(dict.errorCloning);
+      toast.error(t('errorCloning'));
     }
   };
 
   const onSelectSample = (sample: SampleAudio) => {
-    setSelectedLocale({ code: 'en', value: 'english' });
-    setText(sample.prompt);
+    dispatch({
+      type: 'patch',
+      patch: {
+        selectedLocale: { code: 'en', value: 'english' },
+        text: sample.prompt,
+      },
+    });
   };
 
   const onToggleMicrophone = async () => {
@@ -607,9 +575,14 @@ function NewVoiceClientInner({
   const onClearMediaStream = () => {
     clearMediaStream();
     clearMediaBlob();
-    setMicBlob(null);
-    setMicRecording(false);
-    setFFmpegError(null);
+    dispatch({
+      type: 'patch',
+      patch: {
+        ffmpegError: null,
+        micBlob: null,
+        micRecording: false,
+      },
+    });
   };
 
   const textIsOverLimit = text.length > textMaxLength;
@@ -617,344 +590,91 @@ function NewVoiceClientInner({
   return (
     <Card>
       <CardContent className="pt-6">
-        <Tabs className="w-full" onValueChange={setActiveTab} value={activeTab}>
+        <Tabs
+          className="w-full"
+          onValueChange={(nextTab) => {
+            dispatch({
+              type: 'patch',
+              patch: {
+                activeTab: nextTab === 'preview' ? 'preview' : 'upload',
+              },
+            });
+          }}
+          value={activeTab}
+        >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="upload">{dict.tabUpload}</TabsTrigger>
+            <TabsTrigger value="upload">{t('tabUpload')}</TabsTrigger>
             <TabsTrigger disabled={status !== 'complete'} value="preview">
-              {dict.tabPreview}
+              {t('tabPreview')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
-              <div className="grid w-full gap-2">
-                <Label htmlFor="audio-file">{dict.audioFileLabel}</Label>
-
-                {/* Drop area */}
-                {!(file || micRecording) && (
-                  <button
-                    className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
-                    data-dragging={isDragging || undefined}
-                    data-testid="clone-upload-dropzone"
-                    disabled={Boolean(micRecording)}
-                    onClick={openFileDialog}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                    onKeyUp={openFileDialog}
-                    type="button"
-                  >
-                    <input
-                      {...getInputProps()}
-                      aria-label="Upload audio file"
-                      className="sr-only"
-                      disabled={Boolean(file) || Boolean(micBlob)}
-                    />
-
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <div
-                        aria-hidden="true"
-                        className="mb-2 flex size-11 shrink-0 items-center justify-center rounded-full border bg-background"
-                      >
-                        <UploadIcon className="size-4 opacity-60" />
-                      </div>
-                      <p className="mb-1.5 font-medium text-sm">
-                        {dict.uploadAudioFile}
-                      </p>
-                      <p className="text-muted-foreground text-xs">
-                        {dict.dragDropText}
-                      </p>
-                      <p className="mt-1 text-muted-foreground text-xs">
-                        {dict.fileFormatsText.replace(
-                          '__SIZE__',
-                          formatBytes(CLONING_FILE_MAX_SIZE),
-                        )}
-                      </p>
-                      <p className="mt-2 text-muted-foreground text-xs italic">
-                        {localeSpecificReferenceAudioGuidance}
-                      </p>
-                    </div>
-                  </button>
-                )}
-
-                {!file && (
-                  <div className="grid gap-3 rounded-xl border border-input border-dashed p-4">
-                    <p className="text-center text-xs">
-                      {dict.orUseMicrophone}
-                    </p>
-                    {ffmpegLoading && usesVoxtral && (
-                      <div className="flex items-center justify-center gap-2 py-2">
-                        <PulsatingDots />
-                        <span className="text-muted-foreground text-xs">
-                          {dict.loadingAudioProcessor}
-                        </span>
-                      </div>
-                    )}
-                    {ffmpegError && (
-                      <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>{dict.audioProcessorError}</AlertTitle>
-                        <AlertDescription>{ffmpegError}</AlertDescription>
-                      </Alert>
-                    )}
-                    <MicrophoneMain
-                      mediaBlob={recorderMediaBlob}
-                      mediaStream={mediaStream}
-                      onClearMediaStream={onClearMediaStream}
-                      onToggleMicrophone={onToggleMicrophone}
-                      status={micStatus}
-                    />
-                  </div>
-                )}
-
-                {/* FFmpeg loading message for non-English locales */}
-                {ffmpegLoading && selectedLocale.code !== 'en' && (
-                  <div className="text-center text-muted-foreground text-xs">
-                    <span className="flex items-center justify-center gap-2">
-                      <PulsatingDots />
-                      {formatCloneMessage(dict.preparingAudioProcessor, {
-                        LANGUAGE: selectedLocale.value,
-                      })}
-                    </span>
-                  </div>
-                )}
-
-                {/* File upload errors */}
-                {errors.length > 0 && (
-                  <div
-                    className="flex items-center gap-1 text-destructive text-xs"
-                    role="alert"
-                  >
-                    <AlertCircle className="size-3 shrink-0" />
-                    <span>{errors[0]}</span>
-                  </div>
-                )}
-
-                {/* Selected file display */}
-                {file ? (
-                  <div
-                    className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
-                    key={files[0]?.id}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden">
-                      <PaperclipIcon
-                        aria-hidden="true"
-                        className="size-4 shrink-0 opacity-60"
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate whitespace-normal break-all font-medium text-[13px]">
-                          {file.name}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {formatBytes(file.size)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button
-                      aria-label={dict.removeFile}
-                      className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
-                      onClick={() => removeFile(files[0]?.id)}
-                      size="icon"
-                      variant="ghost"
-                    >
-                      <XIcon aria-hidden="true" className="size-6!" />
-                    </Button>
-                  </div>
-                ) : (
-                  !micBlob && (
-                    // Sample audio demo buttons
-                    <div className="grid w-full gap-2">
-                      <p className="text-muted-foreground text-xs">
-                        {dict.tryDemo}
-                      </p>
-
-                      <Accordion className="w-full" collapsible type="single">
-                        {sampleAudios.map((sample) => (
-                          <CloneSampleCard
-                            addFiles={addFiles}
-                            dict={dict}
-                            key={sample.id}
-                            onSelectSample={onSelectSample}
-                            sample={sample}
-                            setErrorMessage={setErrorMessage}
-                            setStatus={setStatus}
-                          />
-                        ))}
-                      </Accordion>
-                    </div>
-                  )
-                )}
-              </div>
+              <CloneAudioInput
+                dispatch={dispatch}
+                ffmpeg={{ error: ffmpegError, loading: Boolean(ffmpegLoading) }}
+                fileActions={fileActions}
+                fileState={fileState}
+                mic={{
+                  blob: micBlob,
+                  mediaBlob: recorderMediaBlob,
+                  mediaStream,
+                  onClear: onClearMediaStream,
+                  onToggle: onToggleMicrophone,
+                  recording: micRecording,
+                  status: micStatus,
+                }}
+                onSelectSample={onSelectSample}
+                selectedLocale={selectedLocale}
+                usesVoxtral={usesVoxtral}
+              />
 
               <div className="grid w-full gap-6">
-                <div className="grid w-full gap-2">
-                  <Label htmlFor="language">{dict.languageLabel}</Label>
-                  <Select
-                    disabled={status === 'generating'}
-                    onValueChange={(code) =>
-                      setSelectedLocale({
-                        code,
-                        value:
-                          supportedLocales.find((c) => c.code === code)
-                            ?.value || '',
-                      })
-                    }
-                    value={selectedLocale.code}
-                  >
-                    <SelectTrigger
-                      className="w-32"
-                      data-testid="clone-language-select"
-                      id="language"
-                    >
-                      <SelectValue
-                        placeholder={dict.languageSelectPlaceholder}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {supportedLocales.map((locale) => (
-                        <SelectItem key={locale.code} value={locale.code}>
-                          {locale.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <CloneLanguageSelect
+                  disabled={status === 'generating'}
+                  dispatch={dispatch}
+                  selectedLocale={selectedLocale}
+                  supportedLocales={supportedLocales}
+                />
 
-                {/*{selectedLocale.code !== 'en' && (
-                <Card className="border-blue-800">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                      <InfoIcon className="size-5 text-blue-600" />
-                      {dict.crossLanguageInfo.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-gray-200 text-sm">
-                      {dict.crossLanguageInfo.description}
-                    </p>
-                    <div className="rounded-md bg-white p-3 text-gray-100 text-sm italic">
-                      {dict.crossLanguageInfo.example}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}*/}
-
-                <div className="grid w-full gap-2">
-                  <Label htmlFor="text-to-convert">
-                    {dict.textToConvertLabel}
-                  </Label>
-                  <SpotlightField>
-                    <Textarea
-                      className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-                      data-testid="clone-text-input"
-                      disabled={status === 'generating'}
-                      id="text-to-convert"
-                      maxLength={textMaxLength + 30}
-                      onChange={(e) => setText(e.target.value)}
-                      placeholder={dict.textAreaPlaceholder}
-                      rows={5}
-                      value={text}
-                    />
-                  </SpotlightField>
-                </div>
-                <div
-                  className={cn(
-                    '-mt-2 flex items-center justify-end gap-1.5 text-right text-muted-foreground text-sm',
-                    [textIsOverLimit ? 'font-bold text-red-500' : ''],
-                  )}
-                  data-testid="clone-character-count"
-                >
-                  <span>
-                    {text.length} / {textMaxLength}
-                  </span>
-                  {usesVoxtral && (
-                    <TooltipProvider>
-                      <Tooltip delayDuration={100}>
-                        <TooltipTrigger asChild>
-                          <button
-                            aria-label={textLimitTooltip}
-                            className="inline-flex"
-                            type="button"
-                          >
-                            <Crown
-                              className={cn(
-                                'h-3.5 w-3.5 cursor-default',
-                                userHasPaid
-                                  ? 'text-muted-foreground/50'
-                                  : 'text-yellow-400',
-                              )}
-                            />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{textLimitTooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                </div>
+                <CloneTextField
+                  disabled={status === 'generating'}
+                  dispatch={dispatch}
+                  text={text}
+                  textMaxLength={textMaxLength}
+                  userHasPaid={userHasPaid}
+                  usesVoxtral={usesVoxtral}
+                />
               </div>
             </div>
 
             {status === 'error' && errorMessage && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{dict.errorTitle}</AlertTitle>
+                <AlertTitle>{t('errorTitle')}</AlertTitle>
                 <AlertDescription>{errorMessage}</AlertDescription>
               </Alert>
             )}
 
             {!hasEnoughCredits && (
               <Alert className="mx-auto w-fit" variant="destructive">
-                <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+                <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
               </Alert>
             )}
 
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                checked={referenceAudioEnhancementEnabled}
-                disabled={status === 'generating'}
-                id="reference-audio-enhancement"
-                onCheckedChange={(checked) =>
-                  setReferenceAudioEnhancementEnabled(checked === true)
-                }
-              />
-              <div className="grid gap-1">
-                <Label
-                  className="font-normal text-muted-foreground text-sm leading-tight"
-                  htmlFor="reference-audio-enhancement"
-                >
-                  {dict.referenceAudioEnhancementLabel}
-                </Label>
-                <p className="text-muted-foreground text-xs leading-tight">
-                  {dict.referenceAudioEnhancementHelp}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                checked={legalConsentChecked}
-                data-testid="clone-legal-consent"
-                id="legal-consent"
-                onCheckedChange={(checked) =>
-                  setLegalConsentChecked(checked === true)
-                }
-              />
-              <Label
-                className="font-normal text-muted-foreground text-sm leading-tight"
-                data-testid="clone-legal-consent-label"
-                htmlFor="legal-consent"
-              >
-                {dict.legalConsentCheckbox}
-              </Label>
-            </div>
+            <CloneConsentFields
+              disabled={status === 'generating'}
+              dispatch={dispatch}
+              legalConsentChecked={legalConsentChecked}
+              referenceAudioEnhancementEnabled={
+                referenceAudioEnhancementEnabled
+              }
+            />
 
             <GenerateButton
               className="w-full"
-              ctaText={dict.ctaButton}
+              ctaText={t('ctaButton')}
               data-testid="clone-generate-button"
               disabled={
                 !((file || micBlob) && text.trim()) ||
@@ -966,8 +686,8 @@ function NewVoiceClientInner({
               }
               generatingText={
                 status === 'generating'
-                  ? `${dict.generating}...`
-                  : `${dict.convertingAudio}...`
+                  ? `${t('generating')}...`
+                  : `${t('convertingAudio')}...`
               }
               isGenerating={status === 'generating' || convertingMicAudio}
               onClick={handleGenerate}
@@ -978,42 +698,17 @@ function NewVoiceClientInner({
                 onClick={handleCancel}
                 variant="outline"
               >
-                {dict.cancelButton}{' '}
+                {t('cancelButton')}{' '}
                 <CircleStop className="size-4" name="cancel" />
               </Button>
             )}
           </TabsContent>
 
           <TabsContent className="space-y-4 py-4" value="preview">
-            <div className="space-y-4">
-              <h3 className="text-center font-medium text-xl">
-                {dict.previewTitle}
-              </h3>
-
-              <div className="mx-auto w-fit rounded-lg border bg-muted/30 p-4">
-                {generatedAudioUrl && (
-                  <AudioPlayerWithContext
-                    autoPlay
-                    className="rounded-full"
-                    playAudioTitle={dict.playAudio}
-                    progressColor="#8b5cf6"
-                    showWaveform
-                    url={generatedAudioUrl}
-                    waveColor="#888888"
-                  />
-                )}
-              </div>
-
-              <div className="flex justify-center gap-4">
-                <Button
-                  className="flex items-center gap-2"
-                  onClick={downloadAudio}
-                >
-                  <Download className="h-4 w-4" />
-                  {dict.downloadAudio}
-                </Button>
-              </div>
-            </div>
+            <PreviewTabContent
+              downloadAudio={downloadAudio}
+              generatedAudioUrl={generatedAudioUrl}
+            />
           </TabsContent>
         </Tabs>
       </CardContent>

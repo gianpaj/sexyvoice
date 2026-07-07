@@ -3,6 +3,7 @@
 import { useCompletion } from '@ai-sdk/react';
 import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import {
   type ComponentPropsWithoutRef,
   forwardRef,
@@ -23,15 +24,26 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getCharactersLimit } from '@/lib/ai';
+import {
+  DEFAULT_GENERATION_SETTINGS,
+  type GenerationSettings,
+} from '@/hooks/use-generation-settings';
+import {
+  estimateTokenCount,
+  GEMINI_CHARS_PER_TOKEN,
+  GEMINI_STREAMING_ENABLED,
+  getCharactersLimit,
+  getGeminiCombinedTokenLimit,
+  getGeminiStyleCharacterLimit,
+} from '@/lib/ai';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getTtsProvider } from '@/lib/utils';
-import type messages from '@/messages/en.json';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
+import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
   generateRetrySeed,
@@ -43,6 +55,7 @@ import {
   AudioPlayerWithContext,
 } from './audio-player-with-context';
 import { GenerateButton } from './generate-button';
+import { StreamingWaveformPlayer } from './streaming-waveform-player';
 
 const NonGrokPromptEditor = dynamic(
   () => import('./non-grok-editor').then((mod) => mod.NonGrokPromptEditor),
@@ -66,23 +79,21 @@ interface AnimatedPromptTextareaProps
 export const AnimatedPromptTextarea = forwardRef<
   HTMLTextAreaElement,
   AnimatedPromptTextareaProps
->(({ children, className, onBlur, onFocus, ...props }, ref) => {
-  return (
-    <SpotlightField>
-      <Textarea
-        className={cn(
-          'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
-          className,
-        )}
-        onBlur={onBlur}
-        onFocus={onFocus}
-        ref={ref}
-        {...props}
-      />
-      {children}
-    </SpotlightField>
-  );
-});
+>(({ children, className, onBlur, onFocus, ...props }, ref) => (
+  <SpotlightField>
+    <Textarea
+      className={cn(
+        'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
+        className,
+      )}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      ref={ref}
+      {...props}
+    />
+    {children}
+  </SpotlightField>
+));
 AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
 
 interface CreditEstimatorProps {
@@ -130,21 +141,137 @@ function CreditEstimator({
   );
 }
 
+const STREAM_TEXT_THRESHOLD = 300;
+
+// ── SSE client parser ─────────────────────────────────────────────────────
+interface SseAudioEvent {
+  data: string;
+  mimeType: string;
+}
+
+interface SseDoneEvent {
+  cached?: boolean;
+  creditsRemaining: number;
+  creditsUsed: number;
+  url: string;
+}
+
+interface SseErrorEvent {
+  error: string;
+}
+
+interface ParseSseStreamCallbacks {
+  onAudio: (event: SseAudioEvent) => void;
+  onDone: (event: SseDoneEvent) => void;
+  onError: (event: SseErrorEvent) => void;
+}
+
+async function parseSseStream(
+  response: Response,
+  callbacks: ParseSseStreamCallbacks,
+): Promise<void> {
+  const reader = response.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Process complete SSE blocks (separated by blank lines)
+      const blocks = buffer.split('\n\n');
+      buffer = blocks.pop() ?? ''; // last incomplete block stays in buffer
+
+      for (const block of blocks) {
+        const lines = block.split('\n');
+        let eventType = '';
+        let dataStr = '';
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            dataStr = line.slice(6).trim();
+          }
+        }
+
+        if (!(eventType && dataStr)) continue;
+
+        try {
+          const payload = JSON.parse(dataStr);
+          if (eventType === 'audio') {
+            callbacks.onAudio(payload as SseAudioEvent);
+          } else if (eventType === 'done') {
+            callbacks.onDone(payload as SseDoneEvent);
+          } else if (eventType === 'error') {
+            callbacks.onError(payload as SseErrorEvent);
+          }
+        } catch {
+          // malformed JSON — skip
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 interface AudioGeneratorProps {
-  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
+  settings?: GenerationSettings;
+}
+
+type GenerateTranslator = ReturnType<typeof useTranslations<'generate'>>;
+
+function throwGenerateVoiceError(
+  t: GenerateTranslator,
+  data: {
+    error?: string;
+    errorCode?: string;
+    serverMessage?: string;
+  },
+  response: Response,
+): never {
+  if (data.errorCode) {
+    const messageKey = data.errorCode as Parameters<typeof t>[0];
+    if (t.has(messageKey)) {
+      const errorMessage = t(messageKey);
+      throw new APIError(
+        errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
+        response,
+      );
+    }
+  }
+
+  throw new APIError(data.error || data.serverMessage || t('error'), response);
+}
+
+function handleGenerateVoiceError(t: GenerateTranslator, error: unknown) {
+  if (error instanceof DOMException && error.name === 'AbortError') {
+    return;
+  }
+
+  if (error instanceof APIError) {
+    toast.error(error.message || t('error'));
+    return;
+  }
+
+  toast.error(t('error'));
 }
 
 export function AudioGenerator({
-  dict,
   hasEnoughCredits,
   isPaidUser,
   selectedStyle,
   selectedVoice,
+  settings = DEFAULT_GENERATION_SETTINGS,
 }: AudioGeneratorProps) {
+  const t = useTranslations('generate');
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -164,6 +291,15 @@ export function AudioGenerator({
   const abortController = useRef<AbortController | null>(null);
   const retryAbortController = useRef<AbortController | null>(null);
 
+  // Live waveform + Web Audio engine for the gpro31 streaming path. The methods
+  // are stable (useCallback); destructure them for use in memoized callbacks.
+  const streamingPlayer = useStreamingWaveformPlayer();
+  const {
+    pushChunk: pushStreamChunk,
+    finalize: finalizeStream,
+    reset: resetStream,
+  } = streamingPlayer;
+
   const audio = useAudio();
   const {
     join: joinSegments,
@@ -174,13 +310,35 @@ export function AudioGenerator({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  const showEnhanceButton = provider === 'replicate';
+  // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
+  // synthesize the whole clip and return it in a single chunk, so streaming
+  // there gives no time-to-first-audio benefit — keep them on the JSON path.
+  // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
+  // progressive streaming corrupted some gpro31 generations.
+  const isStreamingModel =
+    GEMINI_STREAMING_ENABLED && selectedVoice?.model === 'gpro31';
+  // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
+  // toward the expected total length before the exact duration is known.
+  const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
+  const showEnhanceButton =
+    provider === 'replicate' ||
+    (provider === 'gemini' && selectedVoice?.model === 'gpro31');
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
-  const charactersLimit = getCharactersLimit(
-    selectedVoice?.model ?? '',
-    isPaidUser,
-  );
+  // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
+  // and the style, so its transcript "character limit" is that token budget
+  // expressed in approximate characters. Other voices keep the per-tier cap.
+  // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
+  // gpro31 reverts to the standard per-tier character limits and the separate
+  // style-prompt cap, like the Gemini 2.5 voices.
+  const isGemini31 =
+    GEMINI_STREAMING_ENABLED &&
+    isGeminiVoice &&
+    selectedVoice?.model === 'gpro31';
+  const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
+  const charactersLimit = isGemini31
+    ? getGeminiCombinedTokenLimit(isPaidUser) * GEMINI_CHARS_PER_TOKEN
+    : getCharactersLimit(selectedVoice?.model || '', isPaidUser);
   const splitSegmentTexts = useMemo(
     () =>
       splitLongTextIntoSegments(text, {
@@ -203,8 +361,22 @@ export function AudioGenerator({
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
     shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
+  // Gemini 2.5 voices have a separate character-bounded style prompt; gpro31
+  // folds the style into the combined token budget checked below.
+  const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
+  const styleIsOverLimit =
+    isGeminiVoice && !isGemini31 && styleText.length > styleCharacterLimit;
+  const combinedTokenLimit = getGeminiCombinedTokenLimit(isPaidUser);
+  const combinedTokenEstimate = isGemini31
+    ? estimateTokenCount(styleText ? `${styleText}\n${text}` : text)
+    : 0;
+  const combinedIsOverLimit =
+    isGemini31 && combinedTokenEstimate > combinedTokenLimit;
   const textIsOverLimit =
-    !shouldDisableCharactersLimit && text.length > charactersLimit;
+    !shouldDisableCharactersLimit &&
+    (isGemini31 ? combinedIsOverLimit : text.length > charactersLimit);
+  // Any input limit (transcript, style, or combined token budget) blocks generation.
+  const inputIsOverLimit = textIsOverLimit || styleIsOverLimit;
   const {
     splitSegments,
     allSegmentsGenerated,
@@ -221,65 +393,169 @@ export function AudioGenerator({
     splitSegmentTexts: previewSplitSegmentTexts,
   });
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
-    useGenerationProgressToast(selectedVoice?.name, dict.split);
+    useGenerationProgressToast(selectedVoice?.name);
 
-  const textareaRightPadding = useMemo(() => {
-    if (isGeminiVoice) {
-      return 'pr-10';
-    }
+  let textareaRightPadding = 'pr-16';
 
-    if (showEnhanceButton) {
-      return 'pr-20';
-    }
+  if (isGeminiVoice) {
+    textareaRightPadding = 'pr-10';
+  } else if (showEnhanceButton) {
+    textareaRightPadding = 'pr-20';
+  }
 
-    return 'pr-16';
-  }, [isGeminiVoice, showEnhanceButton]);
-
-  const requestGenerateVoice = useCallback(
-    async (segmentText: string, signal: AbortSignal, seed?: number) => {
+  const requestGenerateVoiceJson = useCallback(
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+      split = false,
+    ): Promise<string> => {
       if (!selectedVoice) {
-        throw new APIError(dict.error, new Response(null, { status: 400 }));
+        throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
+
+      // An explicit seed argument (e.g. a segment retry re-roll) wins; otherwise
+      // fall back to the user's pinned seed — but only for Gemini, which is the
+      // only provider that uses it. Sending it on Grok/Replicate would do
+      // nothing but fragment their cache and force needless regenerations.
+      const effectiveSeed =
+        seed ?? (isGeminiVoice ? (settings.seed ?? undefined) : undefined);
 
       const response = await fetch('/api/generate-voice', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: segmentText,
-          voice: selectedVoice.name,
+          voiceId: selectedVoice.id,
           styleVariant: isGeminiVoice ? selectedStyle : '',
           language: isGrokVoice ? selectedGrokLanguage : undefined,
-          ...(seed === undefined ? {} : { seed }),
+          ...(effectiveSeed === undefined ? {} : { seed: effectiveSeed }),
+          ...(isGeminiVoice && settings.temperature !== null
+            ? { temperature: settings.temperature }
+            : {}),
+          ...(isGrokVoice && settings.speed !== null
+            ? { speed: settings.speed }
+            : {}),
+          split,
         }),
         signal,
       });
 
       const data = await response.json();
       if (!response.ok) {
-        if (data.errorCode && dict[data.errorCode as keyof typeof dict]) {
-          const errorMessage = dict[
-            data.errorCode as keyof typeof dict
-          ] as string;
-          throw new APIError(
-            errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-            response,
-          );
-        }
-
-        throw new APIError(data.error || data.serverMessage, response);
+        throwGenerateVoiceError(t, data, response);
       }
 
       return data.url as string;
     },
     [
-      dict,
+      t,
       isGeminiVoice,
       isGrokVoice,
       selectedGrokLanguage,
       selectedStyle,
       selectedVoice,
+      settings.seed,
+      settings.speed,
+      settings.temperature,
+    ],
+  );
+
+  const requestGenerateVoiceStream = useCallback(
+    async (segmentText: string, signal: AbortSignal): Promise<string> => {
+      if (!selectedVoice) {
+        throw new APIError(t('error'), new Response(null, { status: 400 }));
+      }
+
+      const response = await fetch('/api/generate-voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: segmentText,
+          voiceId: selectedVoice.id,
+          styleVariant: selectedStyle ?? '',
+          stream: true,
+          ...(settings.seed === null ? {} : { seed: settings.seed }),
+          ...(settings.temperature === null
+            ? {}
+            : { temperature: settings.temperature }),
+        }),
+        signal,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throwGenerateVoiceError(t, data, response);
+      }
+
+      // The streaming player owns the Web Audio engine, peak accumulation, and
+      // the live→file handoff. Here we just feed it PCM chunks as they arrive.
+      return new Promise<string>((resolve, reject) => {
+        parseSseStream(response, {
+          onAudio: ({ data, mimeType }) => {
+            if (signal.aborted) return;
+            pushStreamChunk(data, mimeType);
+          },
+          onDone: ({ url }) => {
+            // Assemble the WAV and arrange the handoff; live playback continues
+            // until the buffered tail finishes (see the hook). A cache hit sends
+            // no audio chunks, so `finalize` is a no-op and the standard file
+            // player handles the persisted URL instead.
+            finalizeStream();
+            resolve(url);
+          },
+          onError: ({ error }) => {
+            resetStream();
+            reject(new APIError(error, new Response(null, { status: 500 })));
+          },
+        }).catch(reject);
+      });
+    },
+    [
+      t,
+      finalizeStream,
+      pushStreamChunk,
+      resetStream,
+      selectedStyle,
+      selectedVoice,
+      settings.seed,
+      settings.temperature,
+    ],
+  );
+
+  const requestGenerateVoice = useCallback(
+    (
+      segmentText: string,
+      signal: AbortSignal,
+      seed?: number,
+      split = false,
+    ): Promise<string> => {
+      // `auto` keeps the length-based heuristic; `on`/`off` are explicit
+      // overrides. Streaming only applies to gpro31 in the non-split path.
+      let shouldStream = segmentText.length > STREAM_TEXT_THRESHOLD;
+      if (settings.streamMode === 'on') {
+        shouldStream = true;
+      } else if (settings.streamMode === 'off') {
+        shouldStream = false;
+      }
+      const useStream =
+        isGeminiVoice &&
+        isStreamingModel &&
+        !shouldUseSplitMode &&
+        shouldStream;
+
+      if (useStream) {
+        return requestGenerateVoiceStream(segmentText, signal);
+      }
+      return requestGenerateVoiceJson(segmentText, signal, seed, split);
+    },
+    [
+      isGeminiVoice,
+      isStreamingModel,
+      requestGenerateVoiceJson,
+      requestGenerateVoiceStream,
+      shouldUseSplitMode,
+      settings.streamMode,
     ],
   );
 
@@ -287,20 +563,13 @@ export function AudioGenerator({
     if (!selectedVoice) return;
 
     abortController.current = new AbortController();
-    showGenerationProgressToast(1, 1);
     const url = await requestGenerateVoice(
       text,
       abortController.current.signal,
     );
     setAudioURL(url);
-    toast.success(dict.success);
-  }, [
-    dict.success,
-    requestGenerateVoice,
-    selectedVoice,
-    showGenerationProgressToast,
-    text,
-  ]);
+    toast.success(t('success'));
+  }, [requestGenerateVoice, selectedVoice, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -310,7 +579,7 @@ export function AudioGenerator({
       segment.text.trim(),
     );
     if (currentSegmentTexts.some((segmentText) => !segmentText)) {
-      toast.error(dict.split.segmentCannotBeEmpty);
+      toast.error(t('split.segmentCannotBeEmpty'));
       return;
     }
 
@@ -320,11 +589,27 @@ export function AudioGenerator({
     let latestSegments = [...splitSegments];
     let encounteredFailure = false;
 
+    // Only surface the progress toast when more than one segment will actually
+    // be generated. Segments that already succeeded are skipped below, so a
+    // retry-via-generate run that resolves to a single pending segment must
+    // not show the progress modal.
+    const pendingSegmentCount = currentSegmentTexts.reduce(
+      (count, _segmentText, segmentIndex) => {
+        const existing = latestSegments[segmentIndex];
+        const willSkip = existing?.status === 'success' && !!existing.audioUrl;
+        return willSkip ? count : count + 1;
+      },
+      0,
+    );
+    const showProgress = pendingSegmentCount > 1;
+    let pendingProgressIndex = 0;
+
     for (let index = 0; index < currentSegmentTexts.length; index++) {
       const existing = latestSegments[index];
       if (existing?.status === 'success' && existing.audioUrl) {
         continue;
       }
+      pendingProgressIndex += 1;
 
       latestSegments = latestSegments.map((segment, segmentIndex) =>
         segmentIndex === index
@@ -332,13 +617,17 @@ export function AudioGenerator({
           : segment,
       );
       markSegmentGenerating(index);
-      const isLastSegment = index === currentSegmentTexts.length - 1;
-      showGenerationProgressToast(index + 1, currentSegmentTexts.length);
+      const isLastPendingSegment = pendingProgressIndex === pendingSegmentCount;
+      if (showProgress) {
+        showGenerationProgressToast(pendingProgressIndex, pendingSegmentCount);
+      }
 
       try {
         const generatedUrl = await requestGenerateVoice(
           currentSegmentTexts[index],
           abortController.current.signal,
+          undefined,
+          true,
         );
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
@@ -347,10 +636,10 @@ export function AudioGenerator({
             : segment,
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
-        if (isLastSegment) {
+        if (isLastPendingSegment && showProgress) {
           showGenerationProgressToast(
-            index + 1,
-            currentSegmentTexts.length,
+            pendingProgressIndex,
+            pendingSegmentCount,
             true,
           );
         }
@@ -371,10 +660,10 @@ export function AudioGenerator({
         markSegmentFailed(index);
 
         if (error instanceof APIError) {
-          toast.error(error.message || dict.error);
+          toast.error(error.message || t('error'));
         } else {
           toast.error(
-            dict.split.segmentFailed.replace('__INDEX__', String(index + 1)),
+            t('split.segmentFailed').replace('__INDEX__', String(index + 1)),
           );
         }
 
@@ -384,13 +673,9 @@ export function AudioGenerator({
     }
 
     if (!encounteredFailure) {
-      toast.success(dict.success);
+      toast.success(t('success'));
     }
   }, [
-    dict.error,
-    dict.success,
-    dict.split.segmentCannotBeEmpty,
-    dict.split.segmentFailed,
     markSegmentFailed,
     markSegmentGenerating,
     markSegmentIdle,
@@ -409,7 +694,7 @@ export function AudioGenerator({
       splitSegmentTexts.length > SPLIT_SEGMENT_MAX_COUNT
     ) {
       toast.error(
-        dict.split.tooManySegments.replace(
+        t('split.tooManySegments').replace(
           '__COUNT__',
           String(SPLIT_SEGMENT_MAX_COUNT),
         ),
@@ -418,6 +703,9 @@ export function AudioGenerator({
     }
 
     setIsGenerating(true);
+    // Clear any previous result/streaming player before a new generation.
+    setAudioURL('');
+    resetStream();
     try {
       if (shouldUseSplitMode) {
         await generateSplitAudios();
@@ -426,25 +714,16 @@ export function AudioGenerator({
 
       await generateSingleAudio();
     } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') {
-        return;
-      }
-
-      if (error instanceof APIError) {
-        toast.error(error.message || dict.error);
-      } else {
-        toast.error(dict.error);
-      }
+      handleGenerateVoiceError(t, error);
     } finally {
       dismissGenerationProgressToast();
       setIsGenerating(false);
     }
   }, [
-    dict.error,
-    dict.split.tooManySegments,
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
+    resetStream,
     selectedVoice,
     shouldUseSplitMode,
     splitSegmentTexts.length,
@@ -454,7 +733,8 @@ export function AudioGenerator({
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-  }, []);
+    resetStream();
+  }, [resetStream]);
 
   const handleRetrySegment = useCallback(
     async (segmentIndex: number) => {
@@ -475,6 +755,7 @@ export function AudioGenerator({
           segment.text,
           retryAbortController.current.signal,
           seed,
+          true,
         );
 
         markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
@@ -484,7 +765,7 @@ export function AudioGenerator({
           true,
         );
         toast.success(
-          dict.split.segmentGenerated.replace(
+          t('split.segmentGenerated').replace(
             '__INDEX__',
             String(segmentIndex + 1),
           ),
@@ -497,10 +778,10 @@ export function AudioGenerator({
 
         markSegmentFailed(segmentIndex);
         if (error instanceof APIError) {
-          toast.error(error.message || dict.error);
+          toast.error(error.message || t('error'));
         } else {
           toast.error(
-            dict.split.segmentRetryFailed.replace(
+            t('split.segmentRetryFailed').replace(
               '__INDEX__',
               String(segmentIndex + 1),
             ),
@@ -512,9 +793,6 @@ export function AudioGenerator({
       }
     },
     [
-      dict.error,
-      dict.split.segmentGenerated,
-      dict.split.segmentRetryFailed,
       dismissGenerationProgressToast,
       isGenerating,
       markSegmentFailed,
@@ -538,7 +816,7 @@ export function AudioGenerator({
           text.trim() &&
           selectedVoice &&
           hasEnoughCredits &&
-          !textIsOverLimit
+          !inputIsOverLimit
         ) {
           handleGenerate().catch((error) => {
             console.error('Keyboard shortcut generation failed:', error);
@@ -558,7 +836,7 @@ export function AudioGenerator({
     isGenerating,
     selectedVoice,
     text,
-    textIsOverLimit,
+    inputIsOverLimit,
   ]);
 
   const resetPlayer = () => {
@@ -573,32 +851,20 @@ export function AudioGenerator({
   };
 
   const downloadSegmentAudio = async (segmentUrl: string) => {
-    const anchorElement = document.createElement('a');
-    document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
-
     try {
-      await downloadUrl(segmentUrl, anchorElement);
+      await downloadUrl(segmentUrl, document.createElement('a'));
     } catch {
-      toast.error(dict.error);
-    } finally {
-      document.body.removeChild(anchorElement);
+      toast.error(t('error'));
     }
   };
 
   const downloadAudio = async () => {
     if (!audioURL) return;
 
-    const anchorElement = document.createElement('a');
-    document.body.appendChild(anchorElement);
-    anchorElement.style.display = 'none';
-
     try {
-      await downloadUrl(audioURL, anchorElement);
+      await downloadUrl(audioURL, document.createElement('a'));
     } catch {
-      toast.error(dict.error);
-    } finally {
-      document.body.removeChild(anchorElement);
+      toast.error(t('error'));
     }
   };
 
@@ -686,7 +952,7 @@ export function AudioGenerator({
       setTimeout(() => URL.revokeObjectURL(outputUrl), 5000);
     } catch (error) {
       console.error('Failed to download all segments:', error);
-      toast.error(dict.split.downloadAllFailed);
+      toast.error(t('split.downloadAllFailed'));
     } finally {
       setIsDownloadingAllSegments(false);
     }
@@ -705,7 +971,11 @@ export function AudioGenerator({
 
     try {
       const enhancedText = await complete(text, {
-        body: { selectedVoiceLanguage: selectedVoice.language },
+        body: {
+          selectedVoiceLanguage: selectedVoice.language,
+          ttsProvider: provider,
+          voiceModel: selectedVoice.model,
+        },
       });
 
       if (enhancedText) {
@@ -745,7 +1015,7 @@ export function AudioGenerator({
     async (textToEstimate: string) => {
       if (!(selectedVoice && canEstimateCredits)) {
         throw new APIError(
-          dict.errorEstimating,
+          t('errorEstimating'),
           new Response(null, { status: 400 }),
         );
       }
@@ -757,7 +1027,7 @@ export function AudioGenerator({
         },
         body: JSON.stringify({
           text: textToEstimate,
-          voice: selectedVoice.name,
+          voiceId: selectedVoice.id,
           styleVariant: isGeminiVoice ? selectedStyle : '',
         }),
       });
@@ -765,24 +1035,17 @@ export function AudioGenerator({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new APIError(data.error || dict.error, response);
+        throw new APIError(data.error || t('error'), response);
       }
 
       const value = Number(data.estimatedCredits);
       if (!Number.isFinite(value)) {
-        throw new APIError(dict.errorEstimating, response);
+        throw new APIError(t('errorEstimating'), response);
       }
 
       return value;
     },
-    [
-      canEstimateCredits,
-      dict.error,
-      dict.errorEstimating,
-      isGeminiVoice,
-      selectedStyle,
-      selectedVoice,
-    ],
+    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice],
   );
 
   const handleEstimateCredits = async () => {
@@ -806,9 +1069,9 @@ export function AudioGenerator({
       }
     } catch (error) {
       if (error instanceof APIError) {
-        toast.error(error.message || dict.error);
+        toast.error(error.message || t('error'));
       } else {
-        toast.error(dict.errorEstimating);
+        toast.error(t('errorEstimating'));
       }
     } finally {
       setIsEstimating(false);
@@ -818,20 +1081,17 @@ export function AudioGenerator({
   return (
     <Card data-testid="audio-generator-card">
       <CardHeader>
-        <CardTitle>{dict.title}</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
-              characterLimitPaidTooltip={dict.paidCharacterLimitTooltip}
-              characterLimitUpgradeTooltip={dict.upgradeCharacterLimitTooltip}
               charactersLimit={charactersLimit}
-              dict={dict.grok}
               enforceCharactersLimit={!shouldDisableCharactersLimit}
               isPaidUser={isPaidUser}
               onChange={setText}
-              placeholder={dict.textAreaPlaceholder}
+              placeholder={t('textAreaPlaceholder')}
               selectedGrokLanguage={selectedGrokLanguage}
               setSelectedGrokLanguage={setSelectedGrokLanguage}
               value={text}
@@ -872,7 +1132,7 @@ export function AudioGenerator({
                     })}
                     htmlFor="split-text-audios"
                   >
-                    {dict.split.splitToggleLabel}
+                    {t('split.splitToggleLabel')}
                   </Label>
                   <Checkbox
                     checked={splitTextAudios}
@@ -886,7 +1146,7 @@ export function AudioGenerator({
               </TooltipTrigger>
               {!isPaidUser && (
                 <TooltipContent>
-                  <p>{dict.split.splitToggleDisabled}</p>
+                  <p>{t('split.splitToggleDisabled')}</p>
                 </TooltipContent>
               )}
             </Tooltip>
@@ -894,13 +1154,13 @@ export function AudioGenerator({
 
           {canEstimateCredits && (
             <CreditEstimator
-              buttonLabel={dict.estimateCreditsButton}
+              buttonLabel={t('estimateCreditsButton')}
               estimatedCredits={estimatedCredits}
               isEstimating={isEstimating}
               isGenerating={isGenerating}
               onEstimateCredits={handleEstimateCredits}
               text={text}
-              textIsOverLimit={textIsOverLimit}
+              textIsOverLimit={inputIsOverLimit}
             />
           )}
         </div>
@@ -913,14 +1173,14 @@ export function AudioGenerator({
         >
           {!hasEnoughCredits && (
             <Alert className="w-fit" variant="destructive">
-              <AlertDescription>{dict.notEnoughCredits}</AlertDescription>
+              <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
             </Alert>
           )}
           <div className="flex grow-0 gap-2">
             <GenerateButton
               className="h-10 w-full sm:w-fit"
               ctaText={
-                shouldUseSplitMode ? dict.ctaButtonPlural : dict.ctaButton
+                shouldUseSplitMode ? t('ctaButtonPlural') : t('ctaButton')
               }
               data-testid="generate-button"
               disabled={
@@ -928,59 +1188,95 @@ export function AudioGenerator({
                 !text.trim() ||
                 !selectedVoice ||
                 !hasEnoughCredits ||
-                textIsOverLimit
+                inputIsOverLimit
               }
-              generatingText={`${dict.generating}...`}
+              generatingText={`${t('generating')}...`}
               isGenerating={isGenerating}
               onClick={handleGenerate}
               size="lg"
             />
             {isGenerating && (
               <Button
-                aria-label={dict.cancel}
+                aria-label={t('cancel')}
                 className="cursor-pointer border-none p-0 text-gray-300 hover:bg-transparent hover:text-white"
                 icon={() => <CircleStop className="size-8!" name="cancel" />}
                 iconPlacement="right"
                 onClick={handleCancel}
                 size="icon"
-                title={dict.cancel}
+                title={t('cancel')}
                 variant="outline"
               />
             )}
           </div>
 
           <div className="flex justify-start gap-2 sm:w-full">
-            {!shouldUseSplitMode && audioURL && (
+            {!shouldUseSplitMode && streamingPlayer.phase !== 'idle' && (
               <>
-                <AudioPlayerWithContext
-                  autoPlay
+                <StreamingWaveformPlayer
                   className="rounded-md"
+                  controller={streamingPlayer}
+                  estimatedDurationSec={estimatedStreamDurationSec}
                   onControlsReady={handleControlsReady}
-                  playAudioTitle={dict.playAudio}
+                  playAudioTitle={t('playAudio')}
                   progressColor="#8b5cf6"
-                  showWaveform
-                  url={audioURL}
                   waveColor="#888888"
                   waveformClassName="w-48"
                 />
-                <Button
-                  onClick={resetPlayer}
-                  size="icon"
-                  title={dict.resetPlayer}
-                  variant="secondary"
-                >
-                  <RotateCcw className="size-6" />
-                </Button>
-                <Button
-                  onClick={downloadAudio}
-                  size="icon"
-                  title={dict.downloadAudio}
-                  variant="secondary"
-                >
-                  <Download className="size-6" />
-                </Button>
+                {streamingPlayer.phase === 'file' && (
+                  <>
+                    <Button
+                      onClick={resetPlayer}
+                      size="icon"
+                      title={t('resetPlayer')}
+                      variant="secondary"
+                    >
+                      <RotateCcw className="size-6" />
+                    </Button>
+                    <Button
+                      onClick={downloadAudio}
+                      size="icon"
+                      title={t('downloadAudio')}
+                      variant="secondary"
+                    >
+                      <Download className="size-6" />
+                    </Button>
+                  </>
+                )}
               </>
             )}
+            {!shouldUseSplitMode &&
+              streamingPlayer.phase === 'idle' &&
+              audioURL && (
+                <>
+                  <AudioPlayerWithContext
+                    autoPlay
+                    className="rounded-md"
+                    onControlsReady={handleControlsReady}
+                    playAudioTitle={t('playAudio')}
+                    progressColor="#8b5cf6"
+                    showWaveform
+                    url={audioURL}
+                    waveColor="#888888"
+                    waveformClassName="w-48"
+                  />
+                  <Button
+                    onClick={resetPlayer}
+                    size="icon"
+                    title={t('resetPlayer')}
+                    variant="secondary"
+                  >
+                    <RotateCcw className="size-6" />
+                  </Button>
+                  <Button
+                    onClick={downloadAudio}
+                    size="icon"
+                    title={t('downloadAudio')}
+                    variant="secondary"
+                  >
+                    <Download className="size-6" />
+                  </Button>
+                </>
+              )}
           </div>
         </div>
         {shouldUseSplitMode && (

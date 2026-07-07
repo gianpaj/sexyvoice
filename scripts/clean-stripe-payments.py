@@ -16,7 +16,8 @@ try:
     df = pd.read_csv(
         file_path,
         header=None,
-        names=['id', 'amount', 'currency', 'created', 'customer', 'description', 'status']
+        names=['id', 'amount', 'currency', 'created',
+               'customer', 'description', 'status']
     )
     print(f"Successfully loaded {len(df)} rows")
 except FileNotFoundError:
@@ -33,11 +34,14 @@ print(df.head())
 # Convert Unix timestamp to ISO date format
 if 'created' in df.columns:
     # Convert Unix timestamp (seconds) to datetime
-    df['created_date'] = pd.to_datetime(df['created'], unit='s', errors='coerce')
+    df['created_date'] = pd.to_datetime(
+        df['created'], unit='s', errors='coerce')
     # Format as ISO 8601 string
-    df['created_date_iso'] = df['created_date'].dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+    df['created_date_iso'] = df['created_date'].dt.strftime(
+        '%Y-%m-%dT%H:%M:%SZ')
     # Also keep a human-readable format
-    df['created_date_readable'] = df['created_date'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    df['created_date_readable'] = df['created_date'].dt.strftime(
+        '%Y-%m-%d %H:%M:%S')
     print(f"\nConverted {df['created'].count()} Unix timestamps to ISO dates")
 
 # Convert amount from cents to dollars
@@ -54,7 +58,8 @@ if 'status' in df.columns:
     initial_count = len(df)
     df = df[df['status'].str.lower() == 'succeeded']
     filtered_count = len(df)
-    print(f"\nFiltered from {initial_count} to {filtered_count} transactions (only 'succeeded' status)")
+    print(f"\nFiltered from {initial_count} to {
+          filtered_count} transactions (only 'succeeded' status)")
 else:
     print("\nWarning: 'status' column not found. No status filtering applied.")
 

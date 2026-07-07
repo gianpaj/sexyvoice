@@ -23,6 +23,13 @@ Use it when contacting support or debugging failures.
 
 ## Quick Start
 
+Speech requests can identify a voice by `voice` + `model`, or by `voiceId` from `GET /api/v1/voices`. Use `voiceId` when you want a stable ID or when a voice name exists for more than one model.
+
+Optional generation parameters:
+
+- `temperature` (`0`–`2`) — sampling temperature for Gemini voices (`gpro`/`gpro31`); higher is more expressive. Ignored by other models.
+- `speed` (`0.7`–`1.5`) — speech speed multiplier for Grok (`xai`) voices, per the xAI TTS API. Ignored by other models.
+
 ### curl
 
 ```bash
@@ -31,12 +38,28 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "gpro",
-    "voice": "poe",
+    "voice": "achernar",
     "input": "Hello from SexyVoice API",
     "style": "calm",
-    "seed": 1234
+    "seed": 1234,
+    "temperature": 1.2
   }'
 ```
+
+### curl with `voiceId`
+
+```bash
+curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
+  -H 'Authorization: Bearer sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "voiceId": "390f5864-111b-4795-81ea-7026a1e64cfc",
+    "input": "Hello from SexyVoice API",
+    "style": "calm"
+  }'
+```
+
+Do not include `voice` or `model` when you pass `voiceId`; the API derives the model from the voice.
 
 ### TypeScript (gpro)
 
@@ -49,10 +72,11 @@ const response = await fetch('https://sexyvoice.ai/api/v1/speech', {
   },
   body: JSON.stringify({
     model: 'gpro',
-    voice: 'poe',
+    voice: 'achernar',
     input: 'Hello from TypeScript',
     style: 'happy',
     seed: 42,
+    temperature: 1.2,
   }),
 });
 
@@ -74,6 +98,7 @@ const response = await fetch('https://sexyvoice.ai/api/v1/speech', {
     voice: 'eve',
     input: 'Hello from Grok! [laugh] This sounds great.',
     response_format: 'wav',
+    speed: 1.2,
   }),
 });
 
@@ -173,10 +198,11 @@ response = requests.post(
     },
     json={
         'model': 'gpro',
-        'voice': 'poe',
+        'voice': 'achernar',
         'input': 'Hello from Python',
         'style': 'warm',
         'seed': 42,
+        'temperature': 1.2,
     },
     timeout=30,
 )
@@ -201,6 +227,7 @@ response = requests.post(
         'voice': 'eve',
         'input': 'Hello from Grok! <whisper>This is a secret.</whisper>',
         'response_format': 'mp3',
+        'speed': 1.2,
     },
     timeout=30,
 )

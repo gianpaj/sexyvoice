@@ -31,38 +31,27 @@ async function loadFFmpegCore(): Promise<FFmpeg> {
 
 export function useFFmpeg(options?: UseFFmpegOptions) {
   const ffmpegRef = useRef<FFmpeg | null>(null);
+  const loadPromiseRef = useRef<Promise<FFmpeg> | null>(null);
   const [isLoading, setIsLoading] = useState(options?.lazyLoad);
   const [error, setError] = useState<string | null>(null);
   const lazyLoad = options?.lazyLoad ?? false;
 
-  useEffect(() => {
-    if (lazyLoad) {
-      return;
-    }
-
-    const loadFFmpeg = async () => {
-      try {
-        setIsLoading(true);
-        ffmpegRef.current = await loadFFmpegCore();
-      } catch (err) {
-        console.error('Failed to load FFmpeg:', err);
-        setError('Failed to load FFmpeg');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadFFmpeg();
-  }, [lazyLoad]);
-
+  // Stable identity is required for correctness: clone preloads FFmpeg from an
+  // effect that depends on this callback, and failures update local state.
   const ensureLoaded = useCallback(async (): Promise<void> => {
     if (ffmpegRef.current) {
       return;
     }
 
-    try {
+    let loadPromise = loadPromiseRef.current;
+    if (!loadPromise) {
       setIsLoading(true);
-      ffmpegRef.current = await loadFFmpegCore();
+      loadPromise = loadFFmpegCore();
+      loadPromiseRef.current = loadPromise;
+    }
+
+    try {
+      ffmpegRef.current = await loadPromise;
       setError(null);
     } catch (err) {
       const errorMsg = `Failed to load FFmpeg: ${err instanceof Error ? err.message : 'Unknown error'}`;
@@ -70,9 +59,22 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
       setError(errorMsg);
       throw err;
     } finally {
-      setIsLoading(false);
+      if (loadPromiseRef.current === loadPromise) {
+        loadPromiseRef.current = null;
+        setIsLoading(false);
+      }
     }
   }, []);
+
+  useEffect(() => {
+    if (lazyLoad) {
+      return;
+    }
+
+    ensureLoaded().catch((error: unknown) => {
+      console.error('Initial FFmpeg load failed:', error);
+    });
+  }, [ensureLoaded, lazyLoad]);
 
   const convert = async (
     file: File | Blob,

@@ -10,6 +10,7 @@ import {
   hashCliExchangeToken,
   isAllowedCliCallbackUrl,
 } from '@/lib/api/cli-login';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -17,13 +18,12 @@ import { createClient } from '@/lib/supabase/server';
 const MAX_ACTIVE_API_KEYS = 10;
 
 const CreateCliLoginSessionSchema = z
-  .object({
-    api_key_id: z.string().uuid().optional(),
-    callback_url: z.string().url(),
+  .strictObject({
+    api_key_id: z.uuid().optional(),
+    callback_url: z.url(),
     name: z.string().trim().min(1).max(100).optional(),
     state: z.string().min(1).max(512),
   })
-  .strict()
   .refine((value) => value.api_key_id || value.name, {
     message: 'An API key selection or new key name is required',
     path: ['api_key_id'],
@@ -38,23 +38,20 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const payload = await request.json().catch(() => null);
   const parsed = CreateCliLoginSessionSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 },
-    );
+    return APIErrorResponse('Invalid request body', 400);
   }
 
   const { api_key_id, callback_url, name, state } = parsed.data;
   if (!isAllowedCliCallbackUrl(callback_url)) {
-    return NextResponse.json(
-      { error: 'Callback URL must target localhost or 127.0.0.1 over HTTP' },
-      { status: 400 },
+    return APIErrorResponse(
+      'Callback URL must target localhost or 127.0.0.1 over HTTP',
+      400,
     );
   }
 
@@ -73,22 +70,22 @@ export async function POST(request: Request) {
       .eq('is_active', true)
       .maybeSingle();
 
-    if (error || !data) {
-      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
+    if (error) {
+      return APIErrorResponse('Failed to fetch API key', 500);
+    }
+    if (!data) {
+      return APIErrorResponse('API key not found', 404);
     }
     if (data.expires_at && new Date(data.expires_at) <= new Date()) {
-      return NextResponse.json(
-        { error: 'Selected API key is expired' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Selected API key is expired', 400);
     }
     selectedKey = data;
   } else {
     const isPaidUser = await hasUserPaid(user.id);
     if (!isPaidUser) {
-      return NextResponse.json(
-        { error: 'A subscription or top-up is required to create API keys' },
-        { status: 403 },
+      return APIErrorResponse(
+        'A subscription or top-up is required to create API keys',
+        403,
       );
     }
 
@@ -99,16 +96,13 @@ export async function POST(request: Request) {
       .eq('is_active', true);
 
     if (countError) {
-      return NextResponse.json(
-        { error: 'Failed to count API keys' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to count API keys', 500);
     }
 
     if ((count ?? 0) >= MAX_ACTIVE_API_KEYS) {
-      return NextResponse.json(
-        { error: `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed` },
-        { status: 400 },
+      return APIErrorResponse(
+        `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed`,
+        400,
       );
     }
   }
@@ -132,10 +126,7 @@ export async function POST(request: Request) {
     .single();
 
   if (newKeyError || !newKey) {
-    return NextResponse.json(
-      { error: 'Failed to create replacement API key' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to create replacement API key', 500);
   }
 
   const exchangeToken = generateCliExchangeToken();
@@ -158,10 +149,7 @@ export async function POST(request: Request) {
 
   if (sessionError) {
     await admin.from('api_keys').delete().eq('id', newKey.id);
-    return NextResponse.json(
-      { error: 'Failed to create CLI login session' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to create CLI login session', 500);
   }
 
   return NextResponse.json(

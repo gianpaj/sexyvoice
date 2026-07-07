@@ -1,15 +1,16 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
+import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
 import { VoiceSelector } from '@/components/voice-selector';
+import { useGenerationSettings } from '@/hooks/use-generation-settings';
+import { getTtsProvider } from '@/lib/utils';
 import { getFeaturedVoice } from '@/lib/voices';
-import type messages from '@/messages/en.json';
 import { AudioProvider } from '../clone/audio-provider';
 
 interface GenerateUIProps {
-  dict: (typeof messages)['generate'];
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
   publicVoices: Tables<'voices'>[];
@@ -22,23 +23,29 @@ export function GenerateUI({
   publicVoices,
   hasEnoughCredits,
   isPaidUser,
-  dict,
 }: GenerateUIProps) {
-  const initialVoiceName = useMemo(
-    () =>
-      getFeaturedVoice(publicVoices)?.name || publicVoices[0]?.name || 'zephyr',
-    [publicVoices],
-  );
-  const [selectedVoice, setSelectedVoice] = useState(initialVoiceName);
+  const initialVoiceId =
+    getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '';
+  const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
+  const { settings, updateSettings, resetSettings } = useGenerationSettings();
   const selectedVoiceSample = publicVoices.find(
-    (file) => file.name === selectedVoice,
+    (file) => file.id === selectedVoice,
   );
-  const isGeminiVoice = selectedVoiceSample?.model === 'gpro';
+  const isGeminiVoice = getTtsProvider(selectedVoiceSample?.model) === 'gemini';
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex justify-end">
+        <GenerationSettingsPanel
+          isPaidUser={isPaidUser}
+          resetSettings={resetSettings}
+          selectedVoice={selectedVoiceSample}
+          settings={settings}
+          updateSettings={updateSettings}
+        />
+      </div>
       <VoiceSelector
-        dict={dict}
+        isPaidUser={isPaidUser}
         publicVoices={publicVoices}
         selectedStyle={isGeminiVoice ? selectedStyle : undefined}
         selectedVoice={selectedVoiceSample}
@@ -47,11 +54,11 @@ export function GenerateUI({
       />
       <AudioProvider>
         <AudioGenerator
-          dict={dict}
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
+          settings={settings}
         />
       </AudioProvider>
     </div>

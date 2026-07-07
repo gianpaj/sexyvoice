@@ -1,5 +1,7 @@
+'use client';
+
 import Image from 'next/image';
-import { useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import {
@@ -9,8 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type langDict from '@/messages/en.json';
-import type { Status } from './new.client';
+import type { Status } from './clone-state';
 
 export interface SampleAudio {
   audioExampleOutputSrc: string;
@@ -23,70 +24,64 @@ export interface SampleAudio {
 }
 
 export default function CloneSampleCard({
-  dict,
   sample,
   addFiles,
   onSelectSample,
   setErrorMessage,
   setStatus,
 }: {
-  dict: (typeof langDict)['clone'];
   sample: SampleAudio;
   addFiles: (files: File[]) => void;
   onSelectSample: (sample: SampleAudio) => void;
   setErrorMessage: (message: string) => void;
   setStatus: (status: Status) => void;
 }) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: no need
-  const handleLoadSampleAudio = useCallback(
-    async (sampleAudio: SampleAudio) => {
-      try {
-        // we need a local file otherwise we have a CORS error with R2 on https://files.sexyvoice.ai
-        const localPath = sampleAudio.audioSrc.replace(
-          'clone-en-audio-samples/',
-          '',
-        );
-        const audioPath = `/sv-samples/${localPath}`;
-        const res = await fetch(audioPath);
+  const t = useTranslations('clone');
+  const handleLoadSampleAudio = async (sampleAudio: SampleAudio) => {
+    try {
+      // we need a local file otherwise we have a CORS error with R2 on https://files.sexyvoice.ai
+      const localPath = sampleAudio.audioSrc.replace(
+        'clone-en-audio-samples/',
+        '',
+      );
+      const audioPath = `/sv-samples/${localPath}`;
+      const res = await fetch(audioPath);
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch audio: ${res.statusText}`);
-        }
-
-        const blob = await res.blob();
-
-        // Use the blob's actual type if available, otherwise infer from filename
-        let mimeType = blob.type;
-        if (!mimeType || mimeType === 'application/octet-stream') {
-          const extension = sampleAudio.audioSrc
-            .split('.')
-            .pop()
-            ?.toLowerCase();
-          if (extension === 'mp3') {
-            mimeType = 'audio/mpeg';
-          } else if (extension === 'wav') {
-            mimeType = 'audio/wav';
-          } else if (extension === 'm4a') {
-            mimeType = 'audio/mp4';
-          } else {
-            mimeType = 'audio/mpeg'; // default
-          }
-        }
-
-        const file = new File([blob], sampleAudio.audioSrc, {
-          type: mimeType,
-        });
-
-        addFiles([file]);
-        onSelectSample(sampleAudio);
-      } catch (err) {
-        const error = err as Error;
-        setErrorMessage(`Failed to load sample audio: ${error.message}`);
+      if (!res.ok) {
+        setErrorMessage(`Failed to fetch audio: ${res.statusText}`);
         setStatus('error');
+        return;
       }
-    },
-    [addFiles],
-  );
+
+      const blob = await res.blob();
+
+      // Use the blob's actual type if available, otherwise infer from filename
+      let mimeType = blob.type;
+      if (!mimeType || mimeType === 'application/octet-stream') {
+        const extension = sampleAudio.audioSrc.split('.').pop()?.toLowerCase();
+        if (extension === 'mp3') {
+          mimeType = 'audio/mpeg';
+        } else if (extension === 'wav') {
+          mimeType = 'audio/wav';
+        } else if (extension === 'm4a') {
+          mimeType = 'audio/mp4';
+        } else {
+          mimeType = 'audio/mpeg'; // default
+        }
+      }
+
+      const file = new File([blob], sampleAudio.audioSrc, {
+        type: mimeType,
+      });
+
+      addFiles([file]);
+      onSelectSample(sampleAudio);
+    } catch (err) {
+      const error = err as Error;
+      setErrorMessage(`Failed to load sample audio: ${error.message}`);
+      setStatus('error');
+    }
+  };
 
   return (
     <AccordionItem
@@ -104,11 +99,11 @@ export default function CloneSampleCard({
         <Card className="pb-4">
           <div className="center my-2 flex items-baseline justify-center gap-32">
             <div className="flex flex-col text-center">
-              <p>{dict.sampleCard.sourceAudio}:</p>
+              <p>{t('sampleCard.sourceAudio')}:</p>
               <AudioPlayerWithContext
                 buttonClassName="bg-blue-950 hover:bg-blue-950 opacity-60 transition-opacity hover:opacity-100"
                 className="my-4 self-center"
-                playAudioTitle={dict.playAudio}
+                playAudioTitle={t('playAudio')}
                 progressColor="#8b5cf6"
                 showWaveform
                 url={`https://files.sexyvoice.ai/${sample.audioSrc}`}
@@ -116,11 +111,11 @@ export default function CloneSampleCard({
               />
             </div>
             <div className="my-4 flex flex-col justify-center text-center">
-              <p>{dict.sampleCard.exampleOutput}:</p>
+              <p>{t('sampleCard.exampleOutput')}:</p>
               <AudioPlayerWithContext
                 buttonClassName="bg-purple-950 hover:bg-purple-950 opacity-60 transition-opacity hover:opacity-100"
                 className="my-4 self-center"
-                playAudioTitle={dict.playAudio}
+                playAudioTitle={t('playAudio')}
                 progressColor="#8b5cf6"
                 showWaveform
                 url={`https://files.sexyvoice.ai/${sample.audioExampleOutputSrc}`}

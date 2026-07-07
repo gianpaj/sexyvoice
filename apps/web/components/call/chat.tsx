@@ -7,6 +7,7 @@ import {
 } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -31,7 +32,8 @@ export function Chat() {
   // const { audioTrack, state } = useVoiceAssistant();
   const [isChatRunning, setIsChatRunning] = useState(false);
   const { agent } = useAgent();
-  const { disconnect, dict } = useConnection();
+  const { disconnect } = useConnection();
+  const t = useTranslations('call');
   // const [isEditingInstructions, setIsEditingInstructions] = useState(false);
 
   const [hasSeenAgent, setHasSeenAgent] = useState(false);
@@ -47,7 +49,7 @@ export function Chat() {
 
         console.error('Agent Unavailable');
 
-        toast.error(dict.agentUnavailable);
+        toast.error(t('agentUnavailable'));
       }, 5000);
     }
 
@@ -65,7 +67,7 @@ export function Chat() {
         if (!agent) {
           disconnect();
           setHasSeenAgent(false);
-          toast.info(dict.disconnected);
+          toast.info(t('disconnected'));
         }
       }, 5000);
     }
@@ -78,14 +80,7 @@ export function Chat() {
       if (disconnectTimer) clearTimeout(disconnectTimer);
       if (appearanceTimer) clearTimeout(appearanceTimer);
     };
-  }, [
-    connectionState,
-    agent,
-    disconnect,
-    hasSeenAgent,
-    dict.agentUnavailable,
-    dict.disconnected,
-  ]);
+  }, [connectionState, agent, disconnect, hasSeenAgent, t]);
 
   // const toggleInstructionsEdit = () =>
   //   setIsEditingInstructions(!isEditingInstructions);

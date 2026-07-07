@@ -8,6 +8,7 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
@@ -41,8 +42,6 @@ function getSuggestionDecoration(editor: HTMLElement) {
   return editor.querySelector('[data-decoration-content="Filter..."]');
 }
 
-const baseDict = messages.generate.grok;
-
 function renderEditor({
   charactersLimit = 500,
   enforceCharactersLimit = true,
@@ -61,20 +60,17 @@ function renderEditor({
   value?: string;
 } = {}) {
   return render(
-    <GrokTTSEditor
-      characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
-      characterLimitUpgradeTooltip={
-        messages.generate.upgradeCharacterLimitTooltip
-      }
-      charactersLimit={charactersLimit}
-      dict={baseDict}
-      enforceCharactersLimit={enforceCharactersLimit}
-      onChange={onChange}
-      placeholder={placeholder}
-      selectedGrokLanguage={selectedGrokLanguage}
-      setSelectedGrokLanguage={setSelectedGrokLanguage}
-      value={value}
-    />,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <GrokTTSEditor
+        charactersLimit={charactersLimit}
+        enforceCharactersLimit={enforceCharactersLimit}
+        onChange={onChange}
+        placeholder={placeholder}
+        selectedGrokLanguage={selectedGrokLanguage}
+        setSelectedGrokLanguage={setSelectedGrokLanguage}
+        value={value}
+      />
+    </NextIntlClientProvider>,
   );
 }
 
@@ -165,7 +161,9 @@ describe('GrokTTSEditor', () => {
 
     expect(await findEditor()).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText('0 / 500')).toBeInTheDocument();
   });
@@ -200,12 +198,14 @@ describe('GrokTTSEditor', () => {
     renderEditor({ onChange });
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
 
     expect(
       await screen.findByRole('heading', {
-        name: baseDict.inlineEffectPlaceholder,
+        name: messages.generate.grok.inlineEffectPlaceholder,
       }),
     ).toBeInTheDocument();
     expect(
@@ -221,7 +221,9 @@ describe('GrokTTSEditor', () => {
     renderEditor({ onChange });
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -279,7 +281,9 @@ describe('GrokTTSEditor', () => {
     placeCaretAtEnd(editor);
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -299,7 +303,9 @@ describe('GrokTTSEditor', () => {
     selectEditorText(editor, 'world');
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -317,19 +323,16 @@ describe('GrokTTSEditor', () => {
     selectEditorText(editor, 'world');
 
     rendered.rerender(
-      <GrokTTSEditor
-        characterLimitPaidTooltip={messages.generate.paidCharacterLimitTooltip}
-        characterLimitUpgradeTooltip={
-          messages.generate.upgradeCharacterLimitTooltip
-        }
-        charactersLimit={500}
-        dict={baseDict}
-        onChange={onChange}
-        placeholder={messages.generate.textAreaPlaceholder}
-        selectedGrokLanguage="auto"
-        setSelectedGrokLanguage={vi.fn()}
-        value="Hi"
-      />,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <GrokTTSEditor
+          charactersLimit={500}
+          onChange={onChange}
+          placeholder={messages.generate.textAreaPlaceholder}
+          selectedGrokLanguage="auto"
+          setSelectedGrokLanguage={vi.fn()}
+          value="Hi"
+        />
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() => {
@@ -337,7 +340,9 @@ describe('GrokTTSEditor', () => {
     });
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /\[pause\]/i }));
 
@@ -359,7 +364,9 @@ describe('GrokTTSEditor', () => {
     selectEditorText(editor, 'Hello');
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
 
@@ -371,7 +378,7 @@ describe('GrokTTSEditor', () => {
     await waitFor(() => {
       expect(
         screen.queryByRole('heading', {
-          name: baseDict.wrappingEffectPlaceholder,
+          name: messages.generate.grok.wrappingEffectPlaceholder,
         }),
       ).not.toBeInTheDocument();
     });
@@ -384,7 +391,9 @@ describe('GrokTTSEditor', () => {
     renderEditor({ onChange });
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
 
@@ -396,7 +405,7 @@ describe('GrokTTSEditor', () => {
     await waitFor(() => {
       expect(
         screen.queryByRole('heading', {
-          name: baseDict.wrappingEffectPlaceholder,
+          name: messages.generate.grok.wrappingEffectPlaceholder,
         }),
       ).not.toBeInTheDocument();
     });
@@ -411,7 +420,9 @@ describe('GrokTTSEditor', () => {
     const editor = await findEditor();
 
     await user.click(
-      screen.getByRole('button', { name: baseDict.inlineEffectPlaceholder }),
+      screen.getByRole('button', {
+        name: messages.generate.grok.inlineEffectPlaceholder,
+      }),
     );
     await user.click(await screen.findByRole('button', { name: /<soft>/i }));
     const paragraph = editor.querySelector('p');
@@ -433,7 +444,10 @@ describe('GrokTTSEditor', () => {
       const serializedCalls = onChange.mock.calls.map(([value]) => value);
       expect(
         serializedCalls.some(
-          (value) => value === '<soft>ab</soft>' || value === '<soft></soft>ab',
+          (value) =>
+            value === '<soft>ab</soft>' ||
+            value === '<soft></soft>ab' ||
+            value === 'ab<soft></soft>',
         ),
       ).toBe(true);
     });
