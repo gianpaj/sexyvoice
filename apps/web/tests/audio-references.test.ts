@@ -47,6 +47,7 @@ describe('Audio References API', () => {
             provider: 'inworld',
             voice_id: 'v1',
             name: 'A',
+            locale: 'en',
             is_paid: false,
             created_at: null,
           },
@@ -226,6 +227,7 @@ describe('Audio References API', () => {
           userId: 'test-user-id',
           provider: 'inworld',
           name: 'My Voice',
+          locale: 'en',
           isPaid: true,
         }),
       );

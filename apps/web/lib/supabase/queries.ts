@@ -330,19 +330,21 @@ export async function saveAudioFile({
 // ─── Audio references (reusable cloned voices) ───
 
 const AUDIO_REFERENCE_COLUMNS =
-  'id, provider, voice_id, name, is_paid, created_at';
+  'id, provider, voice_id, name, locale, is_paid, created_at';
 
 export async function insertAudioReference({
   userId,
   provider,
   voiceId,
   name,
+  locale,
   isPaid,
 }: {
   userId: string;
   provider: string;
   voiceId: string;
   name: string;
+  locale: string;
   isPaid: boolean;
 }) {
   const supabase = await createClient();
@@ -354,6 +356,7 @@ export async function insertAudioReference({
       provider,
       voice_id: voiceId,
       name,
+      locale,
       is_paid: isPaid,
     })
     .select(AUDIO_REFERENCE_COLUMNS)

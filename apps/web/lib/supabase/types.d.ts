@@ -215,6 +215,7 @@ declare type Database = {
           created_at: string | null;
           id: string;
           is_paid: boolean;
+          locale: string;
           name: string;
           provider: string;
           updated_at: string | null;
@@ -225,6 +226,7 @@ declare type Database = {
           created_at?: string | null;
           id?: string;
           is_paid?: boolean;
+          locale: string;
           name: string;
           provider: string;
           updated_at?: string | null;
@@ -235,6 +237,7 @@ declare type Database = {
           created_at?: string | null;
           id?: string;
           is_paid?: boolean;
+          locale?: string;
           name?: string;
           provider?: string;
           updated_at?: string | null;

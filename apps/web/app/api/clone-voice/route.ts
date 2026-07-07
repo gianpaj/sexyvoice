@@ -1477,12 +1477,13 @@ async function handleInworldVoiceReuse({
   }
 
   const voiceId = reference.voice_id;
+  const synthesisLocale = reference.locale;
   const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
   const filename = await createCloneOutputFilename({
     audioHash: voiceId,
     basePath,
     enhancementEnabled: false,
-    locale,
+    locale: synthesisLocale,
     provider: 'inworld',
     text,
   });
@@ -1512,7 +1513,11 @@ async function handleInworldVoiceReuse({
     });
     reuseCreditsReserved = estimate;
 
-    result = await synthesizeWithInworld({ text, locale, voiceId });
+    result = await synthesizeWithInworld({
+      text,
+      locale: synthesisLocale,
+      voiceId,
+    });
     outputUrl = await uploadGeneratedAudio(
       result.buffer,
       filename,
@@ -1527,7 +1532,7 @@ async function handleInworldVoiceReuse({
       });
     }
 
-    throwInworldRouteError(reuseError, locale);
+    throwInworldRouteError(reuseError, synthesisLocale);
   }
 
   const duration =
@@ -1551,7 +1556,7 @@ async function handleInworldVoiceReuse({
       modelUsed: result.modelUsed,
       requestId: result.requestId,
       duration,
-      locale,
+      locale: synthesisLocale,
       referenceAudioFileMimeType: '',
       referenceAudioProcessedMimeType: INWORLD_OUTPUT_MIME_TYPE,
     });

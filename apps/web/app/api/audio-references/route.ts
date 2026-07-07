@@ -153,6 +153,7 @@ export async function POST(request: Request) {
       provider: 'inworld',
       voiceId,
       name,
+      locale,
       isPaid: true,
     });
 

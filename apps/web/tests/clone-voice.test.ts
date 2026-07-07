@@ -2161,6 +2161,60 @@ describe('Clone Voice API Route', () => {
       );
     });
 
+    it('uses the saved Inworld voice locale when reusing a voice', async () => {
+      vi.mocked(queries.getAudioReferenceById).mockResolvedValueOnce({
+        data: {
+          id: 'test-audio-reference-id',
+          provider: 'inworld',
+          voice_id: 'test-inworld-voice-id',
+          name: 'Spanish Voice',
+          locale: 'es',
+          is_paid: false,
+          created_at: '2026-06-21T00:00:00.000Z',
+        },
+        error: null,
+      } as any);
+
+      let synthBody: Record<string, unknown> | null = null;
+      server.use(
+        http.post(
+          'https://api.inworld.ai/tts/v1/voice',
+          async ({ request }) => {
+            synthBody = (await request.json()) as Record<string, unknown>;
+            return HttpResponse.json({
+              audioContent: Buffer.from(new Uint8Array(1024)).toString(
+                'base64',
+              ),
+            });
+          },
+        ),
+      );
+
+      const formData = new FormData();
+      formData.append('text', 'Hola mundo');
+      formData.append('locale', 'en');
+      formData.append('provider', 'inworld');
+      formData.append('audioReferenceId', 'test-audio-reference-id');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(synthBody).toMatchObject({ language: 'es-ES' });
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        expect.stringMatching(/^cloned-audio-free\/es-inworld-[a-f0-9]+\.mp3$/),
+      );
+      expect(mockUploadFileToR2).toHaveBeenCalledWith(
+        expect.stringMatching(/^cloned-audio-free\/es-inworld-[a-f0-9]+\.mp3$/),
+        expect.any(Buffer),
+        'audio/mpeg',
+      );
+    });
+
     it('should return 400 when Inworld does not support the locale', async () => {
       // Swahili is supported by Replicate but not by Inworld.
       const formData = createFormDataWithAudio(

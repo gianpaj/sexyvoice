@@ -11,6 +11,7 @@ export interface AudioReference {
   createdAt: string | null;
   id: string;
   isPaid: boolean;
+  locale: string;
   name: string;
   provider: string;
   voiceId: string;

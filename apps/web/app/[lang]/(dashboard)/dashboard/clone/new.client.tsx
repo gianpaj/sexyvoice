@@ -501,6 +501,7 @@ function NewVoiceClientInner({
           provider: string;
           voice_id: string;
           name: string;
+          locale: string;
           is_paid: boolean;
           created_at: string | null;
         }[];
@@ -513,6 +514,7 @@ function NewVoiceClientInner({
             provider: row.provider,
             voiceId: row.voice_id,
             name: row.name,
+            locale: row.locale,
             isPaid: row.is_paid,
             createdAt: row.created_at,
           })),
