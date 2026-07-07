@@ -638,7 +638,7 @@
     "voiceNamePlaceholder": "p. ej. Mi voz de narrador",
     "deleteVoice": "Eliminar voz",
     "deleteVoiceTitle": "Eliminar voz guardada",
-    "deleteVoiceDescription": "Esto elimina la voz permanentemente de tu cuenta y del proveedor. No se puede deshacer.",
+    "deleteVoiceDescription": "Esto elimina la voz permanentemente de tu cuenta. No se puede deshacer.",
     "deleteVoiceConfirm": "Eliminar",
     "voiceCreated": "Voz creada",
     "voiceDeleted": "Voz eliminada",

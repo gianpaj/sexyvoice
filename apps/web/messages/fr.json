@@ -638,7 +638,7 @@
     "voiceNamePlaceholder": "p. ex. Ma voix de narrateur",
     "deleteVoice": "Supprimer la voix",
     "deleteVoiceTitle": "Supprimer la voix enregistrée",
-    "deleteVoiceDescription": "Cela supprime définitivement la voix de votre compte et du fournisseur. Cette action est irréversible.",
+    "deleteVoiceDescription": "Cela supprime définitivement la voix de votre compte. Cette action est irréversible.",
     "deleteVoiceConfirm": "Supprimer",
     "voiceCreated": "Voix créée",
     "voiceDeleted": "Voix supprimée",

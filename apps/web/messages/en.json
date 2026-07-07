@@ -638,7 +638,7 @@
     "voiceNamePlaceholder": "e.g. My narrator voice",
     "deleteVoice": "Delete voice",
     "deleteVoiceTitle": "Delete saved voice",
-    "deleteVoiceDescription": "This permanently deletes the voice from your account and from the provider. This cannot be undone.",
+    "deleteVoiceDescription": "This permanently deletes the voice from your account. This cannot be undone.",
     "deleteVoiceConfirm": "Delete",
     "voiceCreated": "Voice created",
     "voiceDeleted": "Voice deleted",

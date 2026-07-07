@@ -638,7 +638,7 @@
     "voiceNamePlaceholder": "z. B. Meine Erzählerstimme",
     "deleteVoice": "Stimme löschen",
     "deleteVoiceTitle": "Gespeicherte Stimme löschen",
-    "deleteVoiceDescription": "Dadurch wird die Stimme dauerhaft aus Ihrem Konto und beim Anbieter gelöscht. Dies kann nicht rückgängig gemacht werden.",
+    "deleteVoiceDescription": "Dadurch wird die Stimme dauerhaft aus Ihrem Konto gelöscht. Dies kann nicht rückgängig gemacht werden.",
     "deleteVoiceConfirm": "Löschen",
     "voiceCreated": "Stimme erstellt",
     "voiceDeleted": "Stimme gelöscht",
