@@ -23,6 +23,7 @@ interface AudioReferenceRow {
   created_at: string | null;
   id: string;
   is_paid: boolean;
+  locale: string;
   name: string;
   provider: string;
   voice_id: string;
@@ -67,6 +68,7 @@ export function InworldVoiceSection() {
           provider: row.provider,
           voiceId: row.voice_id,
           name: row.name,
+          locale: row.locale,
           isPaid: row.is_paid,
           createdAt: row.created_at,
         })),
