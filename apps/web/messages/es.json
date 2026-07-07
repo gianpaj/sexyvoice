@@ -188,10 +188,6 @@
             {
               "question": "¿Cuánto cuesta?",
               "answer": "Las llamadas en vivo cuestan {count} créditos por minuto mientras estás conectado."
-            },
-            {
-              "question": "¿La IA recuerda nuestras conversaciones anteriores?",
-              "answer": "Solo si activas la memoria: es opcional y está desactivada por defecto, así que normalmente no se guarda nada de tus llamadas. Cuando la activas, el asistente guarda algunos datos breves (como la forma en que te gusta que te llamen y los temas que disfrutas), no grabaciones ni transcripciones completas, para retomar la conversación donde la dejaste. Solo conservamos tus datos más recientes, puedes borrarlo todo en cualquier momento y, si eliminas tu cuenta, se borran automáticamente."
             }
           ]
         },

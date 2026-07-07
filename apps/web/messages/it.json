@@ -188,10 +188,6 @@
             {
               "question": "Quanto costa?",
               "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
-            },
-            {
-              "question": "L'IA ricorda le nostre conversazioni precedenti?",
-              "answer": "Solo se attivi la memoria: è facoltativa e disattivata per impostazione predefinita, quindi di norma non viene memorizzato nulla delle tue chiamate. Quando è attiva, l'assistente conserva alcuni brevi dettagli (come il modo in cui preferisci essere chiamato e gli argomenti che ti piacciono), non registrazioni o trascrizioni complete, per riprendere da dove avevi lasciato. Conserviamo solo i tuoi dettagli più recenti, puoi cancellare tutto in qualsiasi momento e l'eliminazione dell'account li rimuove automaticamente."
             }
           ]
         },

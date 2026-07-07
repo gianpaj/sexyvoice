@@ -188,10 +188,6 @@
             {
               "question": "Was kostet das?",
               "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
-            },
-            {
-              "question": "Erinnert sich die KI an unsere früheren Gespräche?",
-              "answer": "Nur wenn du die Erinnerungsfunktion aktivierst – sie ist optional und standardmäßig deaktiviert, sodass normalerweise nichts aus deinen Anrufen gespeichert wird. Wenn sie aktiviert ist, merkt sich der Assistent ein paar kurze Angaben (etwa wie du angesprochen werden möchtest und welche Themen dir gefallen), keine vollständigen Aufnahmen oder Transkripte, um beim nächsten Mal nahtlos weiterzumachen. Wir speichern nur deine neuesten Angaben, du kannst jederzeit alles löschen, und beim Löschen deines Kontos werden sie automatisch entfernt."
             }
           ]
         },
