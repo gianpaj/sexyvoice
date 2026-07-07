@@ -8,30 +8,10 @@ declare type Json =
   | Json[];
 
 declare type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '12.2.3 (519615d)';
   };
   graphql_public: {
     Tables: {
@@ -804,7 +784,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model: string;
+          model?: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -905,11 +885,7 @@ declare type Database = {
         };
         Returns: {
           content: string;
-          cosine_distance: number;
           memory_type: string;
-          rrf_score: number;
-          text_rank: number;
-          vector_rank: number;
         }[];
       };
       prune_agent_memories_over_cap: {
