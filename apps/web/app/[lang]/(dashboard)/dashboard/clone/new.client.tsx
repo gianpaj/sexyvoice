@@ -501,7 +501,7 @@ function NewVoiceClientInner({
           provider: string;
           voice_id: string;
           name: string;
-          locale: string;
+          locale: string | null;
           is_paid: boolean;
           created_at: string | null;
         }[];

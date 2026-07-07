@@ -15,9 +15,6 @@ CREATE TABLE public.audio_references (
   -- User-entered display name
   name text NOT NULL,
 
-  -- Clone-time locale/langCode binding for provider-side voices
-  locale text NOT NULL,
-
   -- Whether the voice was created by a paid user (for retention/cleanup policies)
   is_paid boolean NOT NULL DEFAULT false,
 

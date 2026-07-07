@@ -1477,7 +1477,7 @@ async function handleInworldVoiceReuse({
   }
 
   const voiceId = reference.voice_id;
-  const synthesisLocale = reference.locale;
+  const synthesisLocale = reference.locale ?? locale;
   const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
   const filename = await createCloneOutputFilename({
     audioHash: voiceId,
