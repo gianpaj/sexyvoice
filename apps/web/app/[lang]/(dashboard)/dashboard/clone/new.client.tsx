@@ -728,17 +728,25 @@ function NewVoiceClientInner({
                   }}
                   onSelectSample={onSelectSample}
                   selectedLocale={selectedLocale}
+                  usesInworld={usesInworld}
                   usesVoxtral={usesVoxtral}
                 />
               )}
 
               <div className="grid w-full gap-6">
-                <CloneProviderSelect
-                  disabled={status === 'generating'}
-                  dispatch={dispatch}
-                  selectedProvider={selectedProvider}
-                />
-
+                <div className="flex w-full gap-2">
+                  <CloneProviderSelect
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    selectedProvider={selectedProvider}
+                  />
+                  <CloneLanguageSelect
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    selectedLocale={selectedLocale}
+                    supportedLocales={supportedLocales}
+                  />
+                </div>
                 {usesInworld && (
                   <CloneInworldVoiceSelect
                     disabled={status === 'generating'}
@@ -762,13 +770,6 @@ function NewVoiceClientInner({
                     voiceName={voiceName}
                   />
                 )}
-
-                <CloneLanguageSelect
-                  disabled={status === 'generating'}
-                  dispatch={dispatch}
-                  selectedLocale={selectedLocale}
-                  supportedLocales={supportedLocales}
-                />
 
                 <CloneTextField
                   disabled={status === 'generating'}
