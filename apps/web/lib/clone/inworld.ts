@@ -7,6 +7,7 @@ import {
   needsConversion,
   trimWavBuffer,
 } from '@/lib/audio-converter';
+import { INWORLD_LANG_CONFIG } from '@/lib/clone/languages';
 
 // ============================================================================
 // Inworld TTS voice cloning
@@ -31,42 +32,6 @@ export const INWORLD_OUTPUT_MIME_TYPE = 'audio/mpeg';
 // Reference audio constraints (Inworld accepts 3–15s clips, ≤4MB, wav/mp3).
 export const INWORLD_MIN_DURATION = 3;
 export const INWORLD_MAX_DURATION = 15;
-
-interface InworldLangConfig {
-  // Enum used by the clone API (`langCode`).
-  langCode: string;
-  // BCP-47 tag used by the synthesize API (`language`).
-  language: string;
-}
-
-// Maps our internal locale codes → Inworld language identifiers. The keys of
-// this map are the source of truth for which locales Inworld can clone.
-const INWORLD_LANG_CONFIG: Record<string, InworldLangConfig> = {
-  en: { langCode: 'EN_US', language: 'en-US' },
-  'en-multi': { langCode: 'EN_US', language: 'en-US' },
-  es: { langCode: 'ES_ES', language: 'es-ES' },
-  pt: { langCode: 'PT_BR', language: 'pt-BR' },
-  it: { langCode: 'IT_IT', language: 'it-IT' },
-  de: { langCode: 'DE_DE', language: 'de-DE' },
-  fr: { langCode: 'FR_FR', language: 'fr-FR' },
-  ar: { langCode: 'AR_SA', language: 'ar-SA' },
-  pl: { langCode: 'PL_PL', language: 'pl-PL' },
-  nl: { langCode: 'NL_NL', language: 'nl-NL' },
-  hi: { langCode: 'HI_IN', language: 'hi-IN' },
-  he: { langCode: 'HE_IL', language: 'he-IL' },
-  zh: { langCode: 'ZH_CN', language: 'zh-CN' },
-  ko: { langCode: 'KO_KR', language: 'ko-KR' },
-  ja: { langCode: 'JA_JP', language: 'ja-JP' },
-  ru: { langCode: 'RU_RU', language: 'ru-RU' },
-};
-
-export const INWORLD_SUPPORTED_LOCALE_CODES = new Set(
-  Object.keys(INWORLD_LANG_CONFIG),
-);
-
-export function isInworldSupportedLocale(locale: string): boolean {
-  return INWORLD_SUPPORTED_LOCALE_CODES.has(locale);
-}
 
 /**
  * Thrown when the Inworld API returns a non-2xx response. `status` is the HTTP

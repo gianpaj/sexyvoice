@@ -3,6 +3,7 @@
 import { AlertCircle, CircleStop, Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
+  type Dispatch,
   useCallback,
   useEffect,
   useEffectEvent,
@@ -29,6 +30,10 @@ import {
 } from '@/lib/clone/api-types';
 import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import {
+  CLONE_SUPPORTED_LOCALES,
+  INWORLD_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/languages';
+import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
@@ -45,6 +50,9 @@ import { CloneLanguageSelect } from './clone-language-select';
 import { CloneProviderSelect } from './clone-provider-select';
 import type { SampleAudio } from './clone-sample-card';
 import {
+  type AudioReference,
+  type CloneState,
+  type CloneStateAction,
   cloneStateReducer,
   formatCloneMessage,
   initialCloneState,
@@ -57,33 +65,6 @@ export type { Status } from './clone-state';
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
 
-const SUPPORTED_LOCALE_CODES: Record<string, string> = {
-  ar: 'arabic',
-  da: 'danish',
-  de: 'german',
-  el: 'greek',
-  en: 'english',
-  'en-multi': 'english',
-  es: 'spanish',
-  fi: 'finnish',
-  fr: 'french',
-  he: 'hebrew',
-  hi: 'hindi',
-  it: 'italian',
-  ja: 'japanese',
-  ko: 'korean',
-  ms: 'malay',
-  nl: 'dutch',
-  no: 'norwegian',
-  pl: 'polish',
-  pt: 'portuguese',
-  ru: 'russian',
-  sv: 'swedish',
-  sw: 'swahili',
-  tr: 'turkish',
-  zh: 'chinese',
-};
-
 // The server returns `CloneErrorResponseBody`, but proxies and older responses
 // may omit fields, so every field is treated as optional here. `message` is not
 // part of the route contract but can arrive from upstream/proxy error bodies.
@@ -92,6 +73,8 @@ type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
 };
 
 type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
+type FileUploadResult = ReturnType<typeof useFileUpload>;
+type RecorderResult = ReturnType<typeof useMediaRecorder>;
 
 const getCloneErrorMessage = (
   t: CloneTranslator,
@@ -148,6 +131,224 @@ function PreviewTabContent({
         </Button>
       </div>
     </div>
+  );
+}
+
+function VoiceSetupStepContent({
+  dispatch,
+  ffmpegError,
+  ffmpegLoading,
+  fileActions,
+  fileState,
+  inworldVoices,
+  inworldVoicesLoading,
+  isReusingVoice,
+  mediaStream,
+  micBlob,
+  micRecording,
+  micStatus,
+  onClearMediaStream,
+  onSelectSample,
+  onToggleMicrophone,
+  onVoiceDeleted,
+  recorderMediaBlob,
+  selectedAudioReferenceId,
+  selectedLocale,
+  selectedProvider,
+  status,
+  supportedLocales,
+  usesInworld,
+  usesVoxtral,
+  voiceName,
+}: {
+  dispatch: Dispatch<CloneStateAction>;
+  ffmpegError: string | null;
+  ffmpegLoading: boolean;
+  fileActions: FileUploadResult[1];
+  fileState: FileUploadResult[0];
+  inworldVoices: AudioReference[];
+  inworldVoicesLoading: boolean;
+  isReusingVoice: boolean;
+  mediaStream: MediaStream | null;
+  micBlob: Blob | null;
+  micRecording: boolean;
+  micStatus: RecorderResult['status'];
+  onClearMediaStream: () => void;
+  onSelectSample: (sample: SampleAudio) => void;
+  onToggleMicrophone: () => Promise<void>;
+  onVoiceDeleted: () => void;
+  recorderMediaBlob: Blob | null;
+  selectedAudioReferenceId: CloneState['selectedAudioReferenceId'];
+  selectedLocale: CloneState['selectedLocale'];
+  selectedProvider: CloneState['selectedProvider'];
+  status: CloneState['status'];
+  supportedLocales: { code: string; name: string; value: string }[];
+  usesInworld: boolean;
+  usesVoxtral: boolean;
+  voiceName: string;
+}) {
+  return (
+    <div className="grid w-full gap-6">
+      {!isReusingVoice && (
+        <CloneAudioInput
+          dispatch={dispatch}
+          ffmpeg={{
+            error: ffmpegError,
+            loading: Boolean(ffmpegLoading),
+          }}
+          fileActions={fileActions}
+          fileState={fileState}
+          mic={{
+            blob: micBlob,
+            mediaBlob: recorderMediaBlob,
+            mediaStream,
+            onClear: onClearMediaStream,
+            onToggle: onToggleMicrophone,
+            recording: micRecording,
+            status: micStatus,
+          }}
+          onSelectSample={onSelectSample}
+          selectedLocale={selectedLocale}
+          usesInworld={usesInworld}
+          usesVoxtral={usesVoxtral}
+        />
+      )}
+
+      <div className="grid w-full gap-6">
+        <div className="flex w-full gap-2">
+          <CloneProviderSelect
+            disabled={status === 'generating'}
+            dispatch={dispatch}
+            selectedProvider={selectedProvider}
+          />
+          <CloneLanguageSelect
+            disabled={status === 'generating'}
+            dispatch={dispatch}
+            selectedLocale={selectedLocale}
+            supportedLocales={supportedLocales}
+          />
+        </div>
+        {usesInworld && (
+          <CloneInworldVoiceSelect
+            disabled={status === 'generating'}
+            loading={inworldVoicesLoading}
+            onChange={(value) =>
+              dispatch({
+                type: 'patch',
+                patch: { selectedAudioReferenceId: value },
+              })
+            }
+            onVoiceDeleted={onVoiceDeleted}
+            value={selectedAudioReferenceId}
+            voices={inworldVoices}
+          />
+        )}
+
+        {usesInworld && !isReusingVoice && (
+          <CloneVoiceNameField
+            disabled={status === 'generating'}
+            dispatch={dispatch}
+            voiceName={voiceName}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function GenerateStepContent({
+  canStartGeneration,
+  convertingMicAudio,
+  dispatch,
+  errorMessage,
+  handleCancel,
+  handleGenerate,
+  hasEnoughCredits,
+  legalConsentChecked,
+  referenceAudioEnhancementEnabled,
+  status,
+  text,
+  textIsOverLimit,
+  textMaxLength,
+  userHasPaid,
+  usesVoxtral,
+}: {
+  canStartGeneration: boolean;
+  convertingMicAudio: boolean;
+  dispatch: Dispatch<CloneStateAction>;
+  errorMessage: string;
+  handleCancel: () => void;
+  handleGenerate: () => Promise<void>;
+  hasEnoughCredits: boolean;
+  legalConsentChecked: boolean;
+  referenceAudioEnhancementEnabled: boolean;
+  status: CloneState['status'];
+  text: string;
+  textIsOverLimit: boolean;
+  textMaxLength: number;
+  userHasPaid: boolean;
+  usesVoxtral: boolean;
+}) {
+  const t = useTranslations('clone');
+
+  return (
+    <>
+      <CloneTextField
+        disabled={status === 'generating'}
+        dispatch={dispatch}
+        text={text}
+        textMaxLength={textMaxLength}
+        userHasPaid={userHasPaid}
+        usesVoxtral={usesVoxtral}
+      />
+
+      {status === 'error' && errorMessage && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{t('errorTitle')}</AlertTitle>
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      )}
+
+      {!hasEnoughCredits && (
+        <Alert className="mx-auto w-fit" variant="destructive">
+          <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
+        </Alert>
+      )}
+
+      <CloneConsentFields
+        disabled={status === 'generating'}
+        dispatch={dispatch}
+        legalConsentChecked={legalConsentChecked}
+        referenceAudioEnhancementEnabled={referenceAudioEnhancementEnabled}
+      />
+
+      <GenerateButton
+        className="w-full"
+        ctaText={t('ctaButton')}
+        data-testid="clone-generate-button"
+        disabled={
+          !canStartGeneration ||
+          status === 'generating' ||
+          !hasEnoughCredits ||
+          convertingMicAudio ||
+          textIsOverLimit ||
+          !legalConsentChecked
+        }
+        generatingText={
+          status === 'generating'
+            ? `${t('generating')}...`
+            : `${t('convertingAudio')}...`
+        }
+        isGenerating={status === 'generating' || convertingMicAudio}
+        onClick={handleGenerate}
+      />
+      {status === 'generating' && (
+        <Button className="mx-auto" onClick={handleCancel} variant="outline">
+          {t('cancelButton')} <CircleStop className="size-4" name="cancel" />
+        </Button>
+      )}
+    </>
   );
 }
 
@@ -347,18 +548,50 @@ function NewVoiceClientInner({
     },
   });
 
+  const supportedLocaleOptions = usesInworld
+    ? CLONE_SUPPORTED_LOCALES.filter(({ code }) =>
+        INWORLD_SUPPORTED_LOCALE_CODES.has(code),
+      )
+    : CLONE_SUPPORTED_LOCALES;
   const supportedLocales = (() => {
-    const codes = Object.keys(SUPPORTED_LOCALE_CODES);
+    const codes = supportedLocaleOptions.map(({ code }) => code);
     const translated = getTranslatedLanguages(lang, codes);
     const merged = translated.map(({ value: code, label }) => ({
       code,
-      value: SUPPORTED_LOCALE_CODES[code] || code,
+      value:
+        supportedLocaleOptions.find((locale) => locale.code === code)?.value ||
+        code,
       name: label,
     }));
     const current = merged.find((l) => l.code === lang);
     const rest = merged.filter((l) => l.code !== lang);
     return current ? [current, ...rest] : merged;
   })();
+
+  useEffect(() => {
+    if (
+      supportedLocales.some((locale) => locale.code === selectedLocale.code)
+    ) {
+      return;
+    }
+
+    const fallbackLocale =
+      supportedLocales.find((locale) => locale.code === 'en') ??
+      supportedLocales[0];
+    if (!fallbackLocale) {
+      return;
+    }
+
+    dispatch({
+      type: 'patch',
+      patch: {
+        selectedLocale: {
+          code: fallbackLocale.code,
+          value: fallbackLocale.value,
+        },
+      },
+    });
+  }, [selectedLocale.code, supportedLocales]);
 
   const onFilesAdded = useCallback(() => {
     dispatch({
@@ -683,163 +916,140 @@ function NewVoiceClientInner({
   };
 
   const textIsOverLimit = text.length > textMaxLength;
+  const hasVoiceSource = Boolean(isReusingVoice || file || micBlob);
+  const inworldVoiceSetupIsComplete = Boolean(
+    isReusingVoice || ((file || micBlob) && voiceName.trim()),
+  );
+  const canStartGeneration = Boolean(
+    hasVoiceSource &&
+      text.trim() &&
+      (!usesInworld || inworldVoiceSetupIsComplete),
+  );
+
+  useEffect(() => {
+    if (!usesInworld && activeTab === 'generate') {
+      dispatch({ type: 'patch', patch: { activeTab: 'upload' } });
+    }
+  }, [activeTab, usesInworld]);
+
+  const onTabValueChange = (nextTab: string) => {
+    let nextActiveTab: typeof activeTab = 'upload';
+
+    if (nextTab === 'preview') {
+      nextActiveTab = 'preview';
+    } else if (usesInworld && nextTab === 'generate') {
+      nextActiveTab = 'generate';
+    }
+
+    dispatch({
+      type: 'patch',
+      patch: {
+        activeTab: nextActiveTab,
+      },
+    });
+  };
 
   return (
     <Card>
       <CardContent className="pt-6">
         <Tabs
           className="w-full"
-          onValueChange={(nextTab) => {
-            dispatch({
-              type: 'patch',
-              patch: {
-                activeTab: nextTab === 'preview' ? 'preview' : 'upload',
-              },
-            });
-          }}
+          onValueChange={onTabValueChange}
           value={activeTab}
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="upload">{t('tabUpload')}</TabsTrigger>
+          <TabsList
+            className={`grid w-full ${usesInworld ? 'grid-cols-3' : 'grid-cols-2'}`}
+          >
+            <TabsTrigger value="upload">
+              {usesInworld ? t('tabUploadSelectVoice') : t('tabUpload')}
+            </TabsTrigger>
+            {usesInworld && (
+              <TabsTrigger
+                disabled={!inworldVoiceSetupIsComplete}
+                value="generate"
+              >
+                {t('tabGenerate')}
+              </TabsTrigger>
+            )}
             <TabsTrigger disabled={status !== 'complete'} value="preview">
               {t('tabPreview')}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent className="space-y-6 py-4" value="upload">
-            <div className="grid w-full gap-6">
-              {!isReusingVoice && (
-                <CloneAudioInput
-                  dispatch={dispatch}
-                  ffmpeg={{
-                    error: ffmpegError,
-                    loading: Boolean(ffmpegLoading),
-                  }}
-                  fileActions={fileActions}
-                  fileState={fileState}
-                  mic={{
-                    blob: micBlob,
-                    mediaBlob: recorderMediaBlob,
-                    mediaStream,
-                    onClear: onClearMediaStream,
-                    onToggle: onToggleMicrophone,
-                    recording: micRecording,
-                    status: micStatus,
-                  }}
-                  onSelectSample={onSelectSample}
-                  selectedLocale={selectedLocale}
-                  usesInworld={usesInworld}
-                  usesVoxtral={usesVoxtral}
-                />
-              )}
-
-              <div className="grid w-full gap-6">
-                <div className="flex w-full gap-2">
-                  <CloneProviderSelect
-                    disabled={status === 'generating'}
-                    dispatch={dispatch}
-                    selectedProvider={selectedProvider}
-                  />
-                  <CloneLanguageSelect
-                    disabled={status === 'generating'}
-                    dispatch={dispatch}
-                    selectedLocale={selectedLocale}
-                    supportedLocales={supportedLocales}
-                  />
-                </div>
-                {usesInworld && (
-                  <CloneInworldVoiceSelect
-                    disabled={status === 'generating'}
-                    loading={inworldVoicesLoading}
-                    onChange={(value) =>
-                      dispatch({
-                        type: 'patch',
-                        patch: { selectedAudioReferenceId: value },
-                      })
-                    }
-                    onVoiceDeleted={onVoiceDeleted}
-                    value={selectedAudioReferenceId}
-                    voices={inworldVoices}
-                  />
-                )}
-
-                {usesInworld && !isReusingVoice && (
-                  <CloneVoiceNameField
-                    disabled={status === 'generating'}
-                    dispatch={dispatch}
-                    voiceName={voiceName}
-                  />
-                )}
-
-                <CloneTextField
-                  disabled={status === 'generating'}
-                  dispatch={dispatch}
-                  text={text}
-                  textMaxLength={textMaxLength}
-                  userHasPaid={userHasPaid}
-                  usesVoxtral={usesVoxtral}
-                />
-              </div>
-            </div>
-
-            {status === 'error' && errorMessage && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t('errorTitle')}</AlertTitle>
-                <AlertDescription>{errorMessage}</AlertDescription>
-              </Alert>
-            )}
-
-            {!hasEnoughCredits && (
-              <Alert className="mx-auto w-fit" variant="destructive">
-                <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
-              </Alert>
-            )}
-
-            <CloneConsentFields
-              disabled={status === 'generating'}
+            <VoiceSetupStepContent
               dispatch={dispatch}
-              legalConsentChecked={legalConsentChecked}
-              referenceAudioEnhancementEnabled={
-                referenceAudioEnhancementEnabled
-              }
+              ffmpegError={ffmpegError}
+              ffmpegLoading={Boolean(ffmpegLoading)}
+              fileActions={fileActions}
+              fileState={fileState}
+              inworldVoices={inworldVoices}
+              inworldVoicesLoading={inworldVoicesLoading}
+              isReusingVoice={isReusingVoice}
+              mediaStream={mediaStream}
+              micBlob={micBlob}
+              micRecording={micRecording}
+              micStatus={micStatus}
+              onClearMediaStream={onClearMediaStream}
+              onSelectSample={onSelectSample}
+              onToggleMicrophone={onToggleMicrophone}
+              onVoiceDeleted={onVoiceDeleted}
+              recorderMediaBlob={recorderMediaBlob}
+              selectedAudioReferenceId={selectedAudioReferenceId}
+              selectedLocale={selectedLocale}
+              selectedProvider={selectedProvider}
+              status={status}
+              supportedLocales={supportedLocales}
+              usesInworld={usesInworld}
+              usesVoxtral={usesVoxtral}
+              voiceName={voiceName}
             />
-
-            <GenerateButton
-              className="w-full"
-              ctaText={t('ctaButton')}
-              data-testid="clone-generate-button"
-              disabled={
-                !(
-                  (isReusingVoice || file || micBlob) &&
-                  text.trim() &&
-                  (!usesInworld || isReusingVoice || voiceName.trim())
-                ) ||
-                status === 'generating' ||
-                !hasEnoughCredits ||
-                convertingMicAudio ||
-                textIsOverLimit ||
-                !legalConsentChecked
-              }
-              generatingText={
-                status === 'generating'
-                  ? `${t('generating')}...`
-                  : `${t('convertingAudio')}...`
-              }
-              isGenerating={status === 'generating' || convertingMicAudio}
-              onClick={handleGenerate}
-            />
-            {status === 'generating' && (
-              <Button
-                className="mx-auto"
-                onClick={handleCancel}
-                variant="outline"
-              >
-                {t('cancelButton')}{' '}
-                <CircleStop className="size-4" name="cancel" />
-              </Button>
+            {!usesInworld && (
+              <GenerateStepContent
+                canStartGeneration={canStartGeneration}
+                convertingMicAudio={convertingMicAudio}
+                dispatch={dispatch}
+                errorMessage={errorMessage}
+                handleCancel={handleCancel}
+                handleGenerate={handleGenerate}
+                hasEnoughCredits={hasEnoughCredits}
+                legalConsentChecked={legalConsentChecked}
+                referenceAudioEnhancementEnabled={
+                  referenceAudioEnhancementEnabled
+                }
+                status={status}
+                text={text}
+                textIsOverLimit={textIsOverLimit}
+                textMaxLength={textMaxLength}
+                userHasPaid={userHasPaid}
+                usesVoxtral={usesVoxtral}
+              />
             )}
           </TabsContent>
+
+          {usesInworld && (
+            <TabsContent className="space-y-6 py-4" value="generate">
+              <GenerateStepContent
+                canStartGeneration={canStartGeneration}
+                convertingMicAudio={convertingMicAudio}
+                dispatch={dispatch}
+                errorMessage={errorMessage}
+                handleCancel={handleCancel}
+                handleGenerate={handleGenerate}
+                hasEnoughCredits={hasEnoughCredits}
+                legalConsentChecked={legalConsentChecked}
+                referenceAudioEnhancementEnabled={
+                  referenceAudioEnhancementEnabled
+                }
+                status={status}
+                text={text}
+                textIsOverLimit={textIsOverLimit}
+                textMaxLength={textMaxLength}
+                userHasPaid={userHasPaid}
+                usesVoxtral={usesVoxtral}
+              />
+            </TabsContent>
+          )}
 
           <TabsContent className="space-y-4 py-4" value="preview">
             <PreviewTabContent

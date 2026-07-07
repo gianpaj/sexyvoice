@@ -34,7 +34,7 @@ export const formatCloneMessage = (
   );
 
 export interface CloneState {
-  activeTab: 'upload' | 'preview';
+  activeTab: 'generate' | 'preview' | 'upload';
   convertingMicAudio: boolean;
   errorMessage: string;
   ffmpegError: string | null;

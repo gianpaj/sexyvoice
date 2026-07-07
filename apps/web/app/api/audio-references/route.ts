@@ -6,9 +6,9 @@ import {
   deleteInworldVoice,
   INWORLD_MIN_DURATION,
   InworldError,
-  isInworldSupportedLocale,
   prepareInworldReferenceAudio,
 } from '@/lib/clone/inworld';
+import { isInworldSupportedLocale } from '@/lib/clone/languages';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getAudioReferencesForUser,
