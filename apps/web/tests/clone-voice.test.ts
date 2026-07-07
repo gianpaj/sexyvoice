@@ -2108,11 +2108,17 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json.creditsRemaining).toBe(1000 - json.creditsUsed);
       // Inworld is a TTS engine, not the locale-resolved Replicate/Mistral path.
       expect(queries.getAudioReferenceById).toHaveBeenCalledWith(
         'test-audio-reference-id',
         'test-user-id',
       );
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: json.creditsUsed,
+      });
       expect(mockReplicateRun).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -2227,11 +2233,53 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
+      expect(json.creditsUsed).toBeGreaterThan(0);
+      expect(json.creditsRemaining).toBe(1000 - json.creditsUsed);
       expect(queries.getAudioReferenceById).toHaveBeenCalledWith(
         'test-audio-reference-id',
         'test-user-id',
       );
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: json.creditsUsed,
+      });
       expect(queries.insertAudioReference).not.toHaveBeenCalled();
+    });
+
+    it('refunds credits when saved Inworld voice synthesis fails', async () => {
+      server.use(
+        http.post('https://api.inworld.ai/tts/v1/voice', () =>
+          HttpResponse.text('provider unavailable', { status: 503 }),
+        ),
+      );
+
+      const formData = new FormData();
+      formData.append('text', 'Hello world');
+      formData.append('locale', 'en');
+      formData.append('provider', 'inworld');
+      formData.append('audioReferenceId', 'test-audio-reference-id');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.code).toBe('errors.providerUnavailable');
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: expect.any(Number),
+      });
+      const reservedAmount = vi.mocked(queries.reduceCredits).mock.calls[0]?.[0]
+        .amount;
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: reservedAmount,
+      });
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
     it('returns 400 when Mistral is selected with an unsupported locale', async () => {

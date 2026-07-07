@@ -1500,17 +1500,35 @@ async function handleInworldVoiceReuse({
   }
 
   let result: Awaited<ReturnType<typeof synthesizeWithInworld>>;
-  try {
-    result = await synthesizeWithInworld({ text, locale, voiceId });
-  } catch (synthError) {
-    throwInworldRouteError(synthError, locale);
-  }
+  let outputUrl: string;
+  let reuseCreditsReserved = 0;
 
-  const outputUrl = await uploadGeneratedAudio(
-    result.buffer,
-    filename,
-    INWORLD_OUTPUT_MIME_TYPE,
-  );
+  try {
+    await reserveCloneCredits({
+      currentAmount,
+      requiredCredits: estimate,
+      text,
+      userId,
+    });
+    reuseCreditsReserved = estimate;
+
+    result = await synthesizeWithInworld({ text, locale, voiceId });
+    outputUrl = await uploadGeneratedAudio(
+      result.buffer,
+      filename,
+      INWORLD_OUTPUT_MIME_TYPE,
+    );
+  } catch (reuseError) {
+    if (reuseCreditsReserved > 0) {
+      await refundReservedCloneCredits({
+        userId,
+        amount: reuseCreditsReserved,
+        context: 'clone_voice_inworld_reuse_failure',
+      });
+    }
+
+    throwInworldRouteError(reuseError, locale);
+  }
 
   const duration =
     (await getAudioDuration(result.buffer, INWORLD_OUTPUT_MIME_TYPE)) ?? 0;
