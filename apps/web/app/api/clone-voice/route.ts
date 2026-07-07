@@ -743,6 +743,8 @@ async function validateCredits(
   userEmail?: string,
 ): Promise<{ currentAmount: number; estimate: number }> {
   const currentAmount = await getCredits(userId);
+  // Clone credits are product-priced consistently across providers. Provider-specific
+  // dollar costs are tracked separately in usage events.
   const estimate = estimateCredits(text, 'clone');
 
   validateCreditAmount({
