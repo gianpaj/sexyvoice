@@ -231,9 +231,25 @@ export async function cloneVoiceWithInworld({
     description: userId,
   });
 
-  const synthesized = await synthesizeWithInworld({ locale, text, voiceId });
+  try {
+    const synthesized = await synthesizeWithInworld({ locale, text, voiceId });
 
-  return { ...synthesized, voiceId };
+    return { ...synthesized, voiceId };
+  } catch (error) {
+    try {
+      await deleteInworldVoice(voiceId);
+    } catch (rollbackError) {
+      console.error(
+        'Failed to roll back Inworld voice after synthesis error:',
+        {
+          voiceId,
+          rollbackError,
+        },
+      );
+    }
+
+    throw error;
+  }
 }
 
 /**
