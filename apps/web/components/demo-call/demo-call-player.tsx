@@ -226,7 +226,7 @@ export function DemoCallPlayer({
             >
               <input
                 checked={isSelected}
-                className="sr-only"
+                className="peer sr-only"
                 name="demo-character"
                 onChange={() => handleCharacterSelect(char.id)}
                 type="radio"
@@ -238,7 +238,7 @@ export function DemoCallPlayer({
                   isSelected
                     ? `bg-gradient-to-tr ${char.accent}`
                     : 'bg-transparent'
-                } group-hover:scale-105`}
+                } group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background`}
               >
                 <div className="rounded-full bg-background p-[2px]">
                   <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-neutral-800 sm:h-12 sm:w-12">
