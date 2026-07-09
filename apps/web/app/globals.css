@@ -527,9 +527,6 @@
     animation: incoming-call 2s ease-in-out infinite;
   }
 
-  .animate-speaking-pulse {
-    animation: speaking-pulse 1.2s ease-in-out infinite;
-  }
 }
 
 /* Added incoming call animation */

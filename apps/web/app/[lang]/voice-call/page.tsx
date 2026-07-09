@@ -1,7 +1,11 @@
 import { Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from 'next-intl/server';
 import type { Graph } from 'schema-dts';
 
 import { Banner } from '@/components/banner';
@@ -16,15 +20,54 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { routing } from '@/src/i18n/routing';
 
-export const metadata: Metadata = {
-  other: {
-    preconnect: 'https://files.sexyvoice.ai',
-  },
-};
-
-export default async function LandingPage(props: {
+interface Props {
   params: Promise<{ lang: Locale }>;
-}) {
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params;
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const tHero = await getTranslations({
+    locale: lang,
+    namespace: 'landing.voiceCall.hero',
+  });
+
+  const title = tPages('titleVoiceCall') || tHero('title');
+  const description = tPages('descriptionVoiceCall') || tHero('subtitle');
+  const url = `https://sexyvoice.ai/${lang}/voice-call`;
+
+  return {
+    title,
+    description,
+    other: {
+      preconnect: 'https://files.sexyvoice.ai',
+    },
+    openGraph: {
+      title: `${title} | SexyVoice.ai`,
+      description,
+      url,
+      siteName: 'SexyVoice.ai',
+      type: 'website',
+      locale: lang,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${title} | SexyVoice.ai`,
+      description,
+    },
+    alternates: {
+      canonical: url,
+      languages: Object.fromEntries(
+        routing.locales.map((locale) => [
+          locale,
+          `https://sexyvoice.ai/${locale}/voice-call`,
+        ]),
+      ),
+    },
+  };
+}
+
+export default async function LandingPage(props: Props) {
   const { lang } = await props.params;
 
   // Validate that the language is a supported locale
@@ -53,7 +96,7 @@ export default async function LandingPage(props: {
   const [firstPart, ...restParts] = dictLanding.voiceCall.hero.title.split(',');
   const titleRestParts = restParts.join(',');
 
-  const siteUrl = `https://sexyvoice.ai/${lang}`;
+  const siteUrl = `https://sexyvoice.ai/${lang}/voice-call`;
 
   const jsonLd: Graph = {
     '@context': 'https://schema.org',
@@ -84,8 +127,10 @@ export default async function LandingPage(props: {
         '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
         url: siteUrl,
-        name: messages.pages.defaultTitle,
-        description: messages.pages.description,
+        name: messages.pages.titleVoiceCall || dictLanding.voiceCall.hero.title,
+        description:
+          messages.pages.descriptionVoiceCall ||
+          dictLanding.voiceCall.hero.subtitle,
         isPartOf: {
           '@id': 'https://sexyvoice.ai/#website',
         },

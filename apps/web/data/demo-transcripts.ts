@@ -1,6 +1,6 @@
 import type { TranscriptionResult } from '@/app/[lang]/tools/transcribe/hooks/use-transcriber';
 
-export interface DemoCallData {
+interface DemoCallData {
   audioSrc: string;
   characterId: string;
   durationSeconds: number;

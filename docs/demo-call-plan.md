@@ -300,10 +300,6 @@ Add to `globals.css`:
     opacity: 1;
   }
 }
-
-.animate-speaking-pulse {
-  animation: speaking-pulse 1.2s ease-in-out infinite;
-}
 ```
 
 The waveform bars and avatar ring are primarily driven by inline `style` from real frequency data, not CSS keyframes.
