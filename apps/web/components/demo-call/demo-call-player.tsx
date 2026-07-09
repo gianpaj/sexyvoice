@@ -21,14 +21,14 @@ const demoCharacters = [
   {
     id: 'miyu',
     name: 'Miyu',
-    image: 'lily.webp',
+    image: 'miyu.webp',
     accent: 'from-blue-400 to-cyan-400',
     glowColor: '96, 165, 250',
   },
   {
     id: 'luna',
     name: 'Luna',
-    image: 'ramona.webp',
+    image: 'luna.webp',
     accent: 'from-amber-400 to-orange-500',
     glowColor: '251, 191, 36',
   },
