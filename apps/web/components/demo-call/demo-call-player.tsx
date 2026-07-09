@@ -21,7 +21,7 @@ const demoCharacters = [
   },
   {
     id: 'lily',
-    name: 'lily',
+    name: 'Lily',
     image: 'lily.webp',
     accent: 'from-amber-400 to-orange-500',
     glowColor: '251, 191, 36',
@@ -113,6 +113,7 @@ export function DemoCallPlayer({
 
     // Create a fresh Audio element (required for createMediaElementSource)
     const audio = new Audio(data.audioSrc);
+    audio.crossOrigin="anonymous"
     audio.preload = 'auto';
     audioRef.current = audio;
 
@@ -278,19 +279,6 @@ export function DemoCallPlayer({
       {/* Waveform */}
       <DemoWaveform frequencyBands={frequencyBands} isActive={isPlaying} />
 
-      <TranscriptDisplay
-        allowCopy={false}
-        currentTime={currentTime}
-        transcript={charData.transcript}
-      />
-
-      {/* Timer */}
-      <div
-        aria-live="off"
-        className="font-mono text-muted-foreground text-sm tabular-nums"
-      >
-        {formatTime(currentTime)} / {formatTime(duration)}
-      </div>
 
       {/* Call / Stop button */}
       <Button
@@ -312,6 +300,21 @@ export function DemoCallPlayer({
           </>
         )}
       </Button>
+
+      <TranscriptDisplay
+        allowCopy={false}
+        currentTime={currentTime}
+        transcript={charData.transcript}
+      />
+
+      {/* Timer */}
+      <div
+        aria-live="off"
+        className="font-mono text-muted-foreground text-sm tabular-nums"
+      >
+        {formatTime(currentTime)} / {formatTime(duration)}
+      </div>
+
     </div>
   );
 }

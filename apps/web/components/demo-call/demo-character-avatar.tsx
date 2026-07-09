@@ -15,7 +15,6 @@ interface DemoCharacterAvatarProps {
  * Animated avatar with energy-driven speaking pulse ring and glow effect.
  *
  * When `isSpeaking` is true:
- * - Ring scale is driven by `energy`: `scale(1 + energy * 0.1)` for natural pulse.
  * - Glow effect: box-shadow spread and opacity scaled by energy, using accent color.
  *
  * When not speaking: static ring, no glow.
