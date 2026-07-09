@@ -1,0 +1,53 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "scripts"
+
+publicHoistPattern:
+  - "*import-in-the-middle*"
+  - "*require-in-the-middle*"
+
+minimumReleaseAge: 2880
+
+minimumReleaseAgeExclude:
+  - next
+  - "@next/*"
+  - react
+  - react-dom
+  # Renovate security update: protobufjs@7.6.3
+  - protobufjs@7.6.3
+
+catalog:
+  "@ai-sdk/react": "3.0.118"
+  "@biomejs/biome": "2.5.1"
+  "@supabase/supabase-js": "2.99.2"
+  "@tailwindcss/postcss": "4.2.2"
+  "@types/node": "24.10.4"
+  "@types/react": "19.2.16"
+  "@types/react-dom": "19.2.3"
+  "ai": "6.0.116"
+  "next": "16.2.6"
+  "postcss": "8.5.15"
+  "react": "19.2.7"
+  "react-dom": "19.2.7"
+  "tailwindcss": "4.2.2"
+  "tsx": "4.19.3"
+  "typescript": "5.9.3"
+  "zod": "^4.3.5"
+
+overrides:
+  "@babel/runtime@<7.26.10": ">=7.26.10"
+  "@opentelemetry/auto-instrumentations-node": "0.76.0"
+  "@opentelemetry/exporter-prometheus": "0.218.0"
+  "@opentelemetry/exporter-trace-otlp-http": "0.218.0"
+  "@opentelemetry/sdk-node": "0.218.0"
+  "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7"
+  "protobufjs@<7.5.8": "7.6.3"
+  "protobufjs@>=8.0.0 <8.2.0": "8.4.0"
+  "require-in-the-middle": "7.5.2"
+  "undici@<5.28.4": ">=5.28.4"
+  "undici@<=5.28.2": ">=5.28.3"
+  "undici@>=4.5.0 <5.28.5": ">=5.28.5"
+  "ultracite>zod": "4.3.6"
+  "unbash>zod": "4.3.6"
+  "whatwg-url": "^14.0.0"

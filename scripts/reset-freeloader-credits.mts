@@ -20,26 +20,26 @@ const BATCH_SIZE = 10;
 interface CliOptions {
   csvPath?: string;
   dryrun: boolean;
-  limit?: number;
   help: boolean;
+  limit?: number;
 }
 
 interface FreeloaderRecord {
-  id: string;
-  username: string;
   created_at: string;
+  current_credits: number;
+  id: string;
   total_credits_received: number;
   total_credits_used: number;
-  current_credits: number;
   usage_percentage: number;
+  username: string;
 }
 
 interface ProcessingResult {
-  userId: string;
-  username: string;
+  error?: string;
   previousCredits: number;
   success: boolean;
-  error?: string;
+  userId: string;
+  username: string;
 }
 
 /**
@@ -112,7 +112,7 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
     return records;
   } catch (error) {
     throw new Error(
-      `Failed to parse CSV file: ${Error.isError(error) ? error.message : error}`,
+      `Failed to parse CSV file: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -301,7 +301,7 @@ async function processUser(
       username: record.username,
       previousCredits: 0,
       success: false,
-      error: Error.isError(error) ? error.message : String(error),
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -662,7 +662,7 @@ async function main() {
   } catch (error) {
     console.error(
       '\n❌ Error:',
-      Error.isError(error) ? error.message : error,
+      error instanceof Error ? error.message : error,
       '\n',
     );
     process.exit(1);

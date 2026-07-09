@@ -1,0 +1,18 @@
+language js
+
+// Enforce the shared `APIErrorResponse` helper for JSON error responses.
+//
+// `NextResponse.json({ error: ... }, { status })` produces ad-hoc error bodies
+// that drift between routes. Use `APIErrorResponse(message, status)` from
+// `@/lib/error-ts` instead so every error response shares one shape:
+// `{ error, message, status, serverMessage, retryAfter }`.
+//
+// Success responses (`NextResponse.json({ data })`, streaming `Response`s, and
+// machine-readable `{ errorCode }` i18n responses) are intentionally not flagged.
+`NextResponse.json($args)` as $call where {
+  $args <: contains `error: $_`,
+  register_diagnostic(
+    span = $call,
+    message = "Return error responses with APIErrorResponse(message, status) from '@/lib/error-ts' instead of NextResponse.json({ error }, ...). This keeps error bodies consistent across the API."
+  )
+}

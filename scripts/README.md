@@ -1,5 +1,71 @@
 # Scripts
 
+## Generate Gemini Speech Samples Script
+
+Generates speech samples through the public `/api/v1/speech` endpoint and saves
+them as MP3 files. The API returns WAV for `gpro`/`gpro31`, so the script
+downloads the WAV and converts it to MP3 with `ffmpeg` (required).
+
+### Quick Start
+
+```bash
+# Show help
+pnpm generate-gemini-speech-samples --help
+
+# Generate one sample by voice ID (model is inferred from the voice)
+SEXYVOICE_API_KEY=xxx \
+  pnpm generate-gemini-speech-samples --voiceId 85153e4b-f5b0-477a-856e-1bf05fd84165
+
+# Generate samples for specific voices with a model + style
+SEXYVOICE_API_KEY=xxx \
+  pnpm generate-gemini-speech-samples --model gpro --style "calm" \
+  --text "Hello there" --voices achernar,zephyr
+
+# Run against a local/dev server
+SEXYVOICE_API_BASE_URL=http://localhost:3000 SEXYVOICE_API_KEY=xxx \
+  pnpm generate-gemini-speech-samples --voiceId <id>
+```
+
+> Note: you don't need `--` before the flags (e.g. `pnpm generate-gemini-speech-samples --voiceId <id>`).
+
+### CLI Options
+
+- `--voiceId <id>` - Voice ID from `GET /api/v1/voices`. Used **instead of** `--voice` + `--model` (the model is inferred from the voice).
+- `--model <gpro|gpro31>` - Gemini model alias (used with `--voices`)
+- `--voices <a,b,c>` - Comma-separated voice names (defaults to a built-in list when neither `--voices` nor `--voiceId` is given)
+- `--text <text>` - Text to synthesize
+- `--style <style>` - Emotion/style prompt applied by the API
+- `--seed <number>` - Optional deterministic seed
+- `--out <dir>` - Output directory (default: `scripts/generated-speech`)
+- `--base-url <url>` - Override `SEXYVOICE_API_BASE_URL`
+- `--api-key <key>` - Override `SEXYVOICE_API_KEY`
+- `--keep-wav` - Keep the downloaded WAV next to each MP3
+- `-h, --help` - Show help message
+
+### Environment
+
+- `SEXYVOICE_API_KEY` - Required Bearer API key
+- `SEXYVOICE_API_BASE_URL` - Optional API host (default: `https://sexyvoice.ai`)
+- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN` - Default `--style` if not passed
+- `DEBUG=1` - Print full stack traces on error
+
+`.env.local`/`.env` files in the repo root, `apps/web/`, and `scripts/` are
+loaded automatically.
+
+### Requirements
+
+- `ffmpeg` on your `PATH` (used to convert WAV → MP3)
+
+### Troubleshooting
+
+- **`Could not reach Speech API at ...: ENOTFOUND` / `ECONNREFUSED`** - the host
+  is wrong or the server isn't running. Check `SEXYVOICE_API_BASE_URL`.
+- **`... SELF_SIGNED_CERT_IN_CHAIN`** - the server uses a self-signed
+  certificate. For local/dev only, prepend `NODE_TLS_REJECT_UNAUTHORIZED=0`, or
+  point Node at the cert with `NODE_EXTRA_CA_CERTS=/path/to/cert.pem`.
+
+---
+
 ## Reset Freeloader Credits Script
 
 Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.
@@ -8,16 +74,16 @@ Node.js/TypeScript script to reset credits to 0 for users who exploited a bug th
 
 ```bash
 # Show help
-pnpm tsx scripts/reset-freeloader-credits.ts --help
+pnpm reset-freeloader-credits --help
 
 # Test with dry-run flag (no changes made)
-pnpm tsx scripts/reset-freeloader-credits.ts --dryrun freeloaders.csv
+pnpm reset-freeloader-credits --dryrun freeloaders.csv
 
 # Test with limited records
-pnpm tsx scripts/reset-freeloader-credits.ts --dryrun --limit 10 freeloaders.csv
+pnpm reset-freeloader-credits --dryrun --limit 10 freeloaders.csv
 
 # Run for real (will prompt for confirmation)
-pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
+pnpm reset-freeloader-credits freeloaders.csv
 ```
 
 ### CLI Options
@@ -45,11 +111,13 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 - Detailed progress reporting
 
 ### Performance
+
 - 50 users: ~10 seconds (vs ~50 seconds sequential)
 - 100 users: ~10 seconds (vs ~100 seconds sequential)
 - Processes 10 users per database query
 
 ### Documentation
+
 - [RESET_CREDITS_GUIDE.md](./RESET_CREDITS_GUIDE.md) - Complete guide with examples
 - [QUICKREF.md](./QUICKREF.md) - Quick reference card
 - [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
@@ -65,16 +133,16 @@ user had a paid transaction (`purchase` or `topup`) before the call started.
 
 ```bash
 # Show help
-pnpm tsx scripts/backfill-free-call.mts --help
+pnpm backfill-free-call --help
 
 # Dry-run to preview changes
-pnpm tsx scripts/backfill-free-call.mts --dryrun
+pnpm backfill-free-call --dryrun
 
 # Dry-run first 50 records
-pnpm tsx scripts/backfill-free-call.mts --dryrun --limit 50
+pnpm backfill-free-call --dryrun --limit 50
 
 # Apply changes (prompts for confirmation)
-pnpm tsx scripts/backfill-free-call.mts
+pnpm backfill-free-call
 ```
 
 ### CLI Options
@@ -98,11 +166,183 @@ pnpm tsx scripts/backfill-free-call.mts
 
 ---
 
+## Call Transcript Analysis Scripts
+
+Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
+to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
+AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
+entry points that share a single engine (`analyze-call-sessions.mjs`); the
+backfill script imports its prompt, transcript extraction, analysis schema, and
+persistence, so all paths write identical rows.
+
+- **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
+  last N hours.
+- **`backfill-call-analysis`** - one-off catch-up over **all** completed,
+  unanalyzed calls (paginated), with model and duration filters.
+
+A third path (not a script) analyzes a single call in real time: the
+`POST /api/call-sessions/analyze` webhook fired when a call completes.
+
+Only successful analyses are persisted; failures leave no row so they stay
+retryable. Calls shorter than 120s and sessions that already have an analysis row
+are skipped.
+
+### Quick Start
+
+```bash
+# Show help
+pnpm analyze-call-sessions --help
+pnpm backfill-call-analysis --help
+
+# Analyze calls from the last 12h (default: 24h)
+pnpm analyze-call-sessions --hours=12
+
+# Dry-run: analyze but write CSV + insights instead of the database
+pnpm analyze-call-sessions --dry-run
+
+# First real Batch API run is cheapest to validate with a tiny sample
+pnpm backfill-call-analysis --limit=2 --debug
+
+# Backfill everything (all completed, unanalyzed calls)
+pnpm backfill-call-analysis
+```
+
+### Engine: xAI Batch API
+
+Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api):
+requests are uploaded as a JSONL batch, then the script block-polls until the
+batch completes before writing results. It is discounted and has no per-request
+rate limits, at the cost of async latency — best suited to the large backfill.
+Use `--realtime` to fall back to synchronous per-call generation instead.
+
+### CLI Options
+
+Shared by both scripts:
+
+- `--dry-run` - Analyze but write CSV + insights instead of the database
+- `--limit=N` - Limit the number of calls to analyze
+- `--realtime` (alias `--no-batch`) - Use synchronous xAI calls instead of the Batch API
+- `--batch-timeout=N` - Minutes to wait for the batch to finish (default: 60)
+- `--debug` - Verbose logging
+- `--debug-session=UUID` - Only analyze/debug a specific session id
+- `--smoke-test` - Run a tiny xAI request first to validate the model id
+- `-h, --help` - Show help message
+
+`analyze-call-sessions` only:
+
+- `--hours=N` - Analyze calls started in the last N hours (default: 24)
+
+`backfill-call-analysis` only:
+
+- `--min-duration=N` - Minimum call duration in seconds (default: 120)
+- `--models=a,b,c` - Only analyze these call models
+
+### Environment
+
+Requires `.env` or `.env.local` with:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `XAI_API_KEY`
+- `XAI_SUMMARY_MODEL` (optional; defaults to `grok-4.3`)
+- `XAI_API_BASE_URL` (optional; defaults to `https://api.x.ai`)
+
+---
+
+## Find Truncated Gemini 3.1 Flash TTS Script
+
+Read-only Node.js script that finds `gemini-3.1-flash-tts-preview` `audio_files`
+whose audio was truncated — the model rendered only a few seconds of a much
+longer transcript, yet the user was billed for the full input text. Use it to
+size and issue refunds when a user reports "the audio wasn't generated properly
+and I was charged too many credits."
+
+### Why these are over-charges
+
+Gemini TTS credits are `ceil(totalTokenCount * 1.1 * multiplier)` where
+`totalTokenCount = promptTokenCount + candidatesTokenCount` (see
+`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). When the model fails to
+voice the whole script, `promptTokenCount` (the input it read) is still large,
+so the user pays for text that was never turned into audio.
+
+### Detection signal
+
+The transcript stored in `audio_files.text_content` (everything after the
+`## TRANSCRIPT` marker, see `apps/web/lib/tts/gemini-prompt.ts`) is the text that
+_should_ have been spoken. Dividing its character count by the audio `duration`
+gives chars-per-second. Natural speech tops out around ~25 cps, so any file well
+above the threshold was truncated:
+
+- bad : `~2400 spoken chars / 7.08s ≈ 340 cps` → truncated
+- good: `~1050 spoken chars / 70.24s ≈ 15 cps` → normal
+
+Rows with `duration = -1` (the "couldn't measure" sentinel) are listed
+separately as `unknown-duration` and are not flagged.
+
+### Quick Start
+
+```bash
+# Scan just the complaining user
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
+
+# Scope to files created since a date
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id> --since 2026-06-01
+
+# Scan all users
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
+```
+
+### CLI Options
+
+- `--user <uuid>` — only scan this `user_id` (default: all users)
+- `--threshold <cps>` — flag when spoken chars-per-second exceeds this
+  (default: `30`, comfortably above natural speech)
+- `--min-chars <n>` — ignore clips whose transcript is shorter than this, to
+  avoid noise on tiny generations (default: `150`)
+- `--normal-cps <cps>` — assumed natural rate used to compute the expected
+  duration and the "delivered %" column (default: `15`)
+- `--active-only` — skip soft-deleted rows (`deleted_at` not null)
+- `--since <date>` — only scan files created on/after this date/timestamp
+  (ISO-parseable, e.g. `2026-06-01` or `2026-06-01T00:00:00Z`); default scans
+  the user's entire history for the model
+- `--paid-only` — only scan users who have paid (have a `purchase`/`topup`
+  credit transaction, matching `hasUserPaid`). Freemium-only users can't be
+  refunded, so this keeps the refund commands runnable
+- `--out <path>` — JSON report path (default: `./truncated-gemini31-tts.json`)
+- `--reason <text>` — refund reason printed in the generated refund commands
+
+### Output
+
+- A per-file table (worst first) with chars/sec, duration, spoken chars,
+  delivered %, credits billed, and the audio-out/text-in token ratio.
+- A **refund exposure by user** rollup (total credits billed for truncated
+  files).
+- A **refund commands** block: one ready-to-run
+  `pnpm --filter @sexyvoice/scripts refund-credits -- <user-id>` per affected
+  user, annotated with the exact prompt answers to issue a credits-only
+  ("platform bug") refund — press Enter to skip transaction selection (no USD
+  refund), enter the total credits, then the reason.
+- A JSON report (`report.byUser[]` carries the `command`, `credits`, `reason`,
+  and file `ids`) plus the full `truncated` and `unknownDuration` lists.
+
+Review the flagged rows before refunding, then run the printed commands. Because
+`refund-credits.mts` takes only the user id on the CLI and asks for the credit
+amount and reason interactively, the amount/reason are printed as annotations
+rather than passed as flags. See [Refund Credits Script](#refund-credits-script).
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` (read-only usage).
+
+---
+
 ## Refund Credits Script
 
 Interactive Node.js/TypeScript script to process credit refunds for users.
 
 ### Features
+
 - Calculates maximum refundable amount based on credits purchased vs. used
 - Prevents refunds for freemium-only users
 - Links refund to original payment intent
@@ -116,16 +356,17 @@ Interactive Node.js/TypeScript script to process credit refunds for users.
 
 ```bash
 # Run with user ID as argument
-pnpm exec tsx scripts/refund-credits.ts <user-id>
+pnpm refund-credits -- <user-id>
 
 # Or run interactively (will prompt for user ID)
-pnpm exec tsx scripts/refund-credits.ts
+pnpm refund-credits
 ```
 
-### What it does:
+### What it does
+
 1. Fetches all credit transactions for the user
 2. Calculates total credits purchased (from `purchase` and `topup` transactions)
-3. Calculates total credits used (from `audio_files.credits_used`)
+3. Calculates total credits used (from `usage_events.credits_used`)
 4. Calculates total credits already refunded (from `refund` transactions)
 5. Fetches user's credit balance from `credits` table
 6. **Validates that calculated credits match actual balance** (throws error if mismatch)
@@ -139,11 +380,13 @@ pnpm exec tsx scripts/refund-credits.ts
 14. Updates the `credits` table by calling `decrement_user_credits` function
 
 ### Requirements
+
 - `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
 - User must have `purchase` or `topup` transactions with `metadata.dollarAmount`
 - Freemium-only users cannot be refunded
 
 ### Example Output
+
 ```
 Processing refund for user: xxx-xxx-xxx
 
@@ -164,11 +407,13 @@ Max Refund Amount: $38.00
 The script prevents duplicate refunds by tracking all previous refunds and automatically updates the user's credit balance:
 
 **Available Credits Formula:**
+
 ```
 Available Credits = (Purchased + Topup + Freemium) - Used - Refunded
 ```
 
 **Maximum Refundable Credits Formula:**
+
 ```
 Max Refundable = Total Purchased - Total Used - Total Already Refunded
 ```
@@ -181,6 +426,7 @@ Max Refundable = Total Purchased - Total Used - Total Already Refunded
 - Maximum refundable now: 5000 - 1200 - 500 = **3300 credits** ($33.00)
 
 This ensures:
+
 - Users can't be refunded more than they paid
 - Users can't get refunds for credits they've already used
 - Users can't receive multiple refunds for the same credits
@@ -190,15 +436,15 @@ This ensures:
 
 ### Data Integrity Check
 
-Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table. 
+Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table.
 
-The calculated available credits = (purchase + topup + freemium credits) - (credits used from audio files) - (previously refunded credits)
+The calculated available credits = (purchase + topup + freemium credits) - (credits used from `usage_events`) - (previously refunded credits)
 
 If there's a mismatch, the script will throw an error:
 
 ```
 Credit mismatch detected!
-  Calculated from transactions: 3800
+  Calculated from usage_events: 3800
   Actual balance in credits table: 3750
   Please investigate data integrity before processing refund.
 ```
@@ -210,20 +456,270 @@ This prevents refunds when there are data inconsistencies that need to be resolv
 When you select a transaction to refund:
 
 **If refunding the full transaction amount:**
+
 ```
 💡 Note: Refunding full transaction amount. Suggested refund: $10.00
 Enter USD amount to refund [suggested: $10.00]:
 ```
+
 The script suggests the exact dollar amount from that transaction's metadata, preventing rounding errors.
 
 **If refunding a partial amount:**
+
 ```
 Calculated refund based on credit rate: $7.50
 Enter USD amount to refund [suggested: $7.50]:
 ```
+
 The script calculates the amount based on the credit rate (total spent / total credits).
 
 You can press Enter to accept the suggestion, or enter a custom amount.
+
+---
+
+## Batch Refund Credits Script
+
+Processes platform-bug credit refunds in bulk from a CSV of duplicate usage events. Adds credits back to affected users (no USD refund) one by one, with a single confirmation prompt before starting.
+
+### Usage
+
+```bash
+# Dry run first to verify CSV parsing and row count
+pnpm batch-refund-credits -- dupes.csv --dry-run
+
+# Apply refunds (prompts for confirmation)
+pnpm batch-refund-credits -- dupes.csv
+```
+
+### CSV Format
+
+Export the duplicate sessions query result as CSV:
+
+```csv
+source_id,user_id,event_count,first_event_at,last_event_at,duplicate_credits,duplicate_dollars,end_reasons
+38ae34f3-f7fd-48ec-88dc-0955f0722812,8c56bc8d-b16f-4de3-acf7-2f58313b209b,19,2026-05-15 16:45:07+00,2026-05-15 16:47:46+00,72000,null,"[""credit_limit""]"
+```
+
+Only `source_id`, `user_id`, and `duplicate_credits` are used. Rows with `duplicate_credits` ≤ 0 or null are skipped automatically.
+
+### SQL to identify duplicate sessions
+
+```sql
+WITH dupes AS (
+    SELECT
+        source_id,
+        user_id,
+        COUNT(*)                                  AS event_count,
+        MIN(occurred_at)                          AS first_event_at,
+        MAX(occurred_at)                          AS last_event_at,
+        SUM(credits_used)   - MAX(credits_used)   AS duplicate_credits,
+        SUM(dollar_amount)  - MAX(dollar_amount)  AS duplicate_dollars,
+        ARRAY_AGG(DISTINCT metadata ->> 'end_reason') AS end_reasons
+    FROM usage_events
+    WHERE source_type = 'live_call'
+    GROUP BY source_id, user_id
+    HAVING COUNT(*) > 1
+)
+SELECT * FROM dupes
+ORDER BY event_count DESC, last_event_at DESC;
+```
+
+### What it does
+
+1. Parses the CSV (handles quoted fields)
+2. Shows total rows and total credits to restore, then asks for confirmation
+3. For each row, inserts a `refund` credit transaction (positive amount, credits added back) and calls `increment_user_credits`
+4. Continues on per-row errors — failed rows are listed in the summary
+5. Exits with code 1 if any rows failed
+
+Each refund transaction is recorded with:
+
+- `type: 'refund'`
+- `description: "Refund - Double billing (voice call <source_id_prefix>)"`
+- `metadata.reason: "Double billing - voice call"`
+- `metadata.sourceId`: the full source_id for traceability
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
+## Compile Dispute Evidence Script
+
+Read-only Node.js/TypeScript script (`compile-dispute-evidence.mts`) that compiles
+a single user's complete account data to respond to a Stripe payment dispute
+(chargeback). It makes **no** database writes and **no** Stripe API calls — it
+only reads from Supabase, so it's safe to run against production.
+
+The output serves two audiences at once: a human-readable summary for deciding
+whether to contest or refund the dispute, and a Stripe-ready evidence record
+proving the user signed up, paid, and actually used the service.
+
+### Usage
+
+```bash
+# Run with user ID as argument
+pnpm compile-dispute-evidence -- <user-id>
+
+# Or run interactively (will prompt for user ID)
+pnpm compile-dispute-evidence
+```
+
+The script prints the report to the console **and** writes a Markdown file to
+the current directory: `dispute-<user_id>-<YYYY-MM-DD>.md`, which you can attach
+to the Stripe dispute response.
+
+### What it gathers (all scoped to the one user)
+
+1. **Account** — `profiles`: email (`username`), Stripe customer ID
+   (`stripe_id`), and signup date. Proves identity and when they joined.
+2. **Payments** — `credit_transactions` of type `purchase` / `topup` / `refund`:
+   date, credits, USD (`metadata.dollarAmount`), Stripe **Payment Intent**
+   (`reference_id`) and **subscription** (`subscription_id`). Links each charge
+   to Stripe.
+3. **Usage** — `usage_events` aggregated by `source_type` (`tts`,
+   `voice_cloning`, `live_call`, API…): event count, total quantity, credits
+   used, and first/last `occurred_at`. This append-only audit log is the
+   strongest proof the service was used.
+4. **Delivered artifacts** (metadata only — no `text_content`, no URLs):
+   - `audio_files`: count, total duration, models, and the **first/last paid**
+     and **first free** generation dates. Paid/free reflects whether the user
+     was a paying customer when the file was generated (`usage.userHasPaid`,
+     with the `generated-audio/` vs `generated-audio-free/` `storage_key` folder
+     as a fallback) — **not** `credits_used`, which is set for free users too.
+   - `voices`: count of voice clones created.
+   - `call_sessions`: count, billed minutes, duration, credits used.
+5. **Totals & reconciliation** — total paid, credits purchased / freemium /
+   used / refunded, current balance vs. expected balance, and the delta
+   (`✅` when it reconciles).
+
+### Deciding how much to refund
+
+The reconciliation makes it easy to size a fair refund: refund only the **cash
+value of the credits from the disputed charge that haven't been consumed yet**,
+at that charge's own rate (`dollarAmount / credits`). Credits the user already
+turned into delivered audio represent value delivered and shouldn't be refunded
+as cash. When the usage profile looks like abuse (new account, large usage, then
+chargeback), the `usage_events` + `audio_files` data is strong evidence to
+**contest** the dispute instead.
+
+### Requirements
+
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+
+---
+
+## Check Disposable Emails Script
+
+Node.js script (`check-disposable-emails.mjs`) that fetches the most recently
+created `profiles` and checks how many `username` values (which are actually the
+user's email) belong to a disposable / temporary email provider. It can
+optionally reset the flagged users' credits to 0.
+
+Two independent sources are cross-checked:
+
+1. The `disposable-email-domains-js` npm package (the same one used by the web
+   app's signup route, `apps/web/app/auth/signup/route.ts`).
+2. The `denyDomains.txt` list from
+   [amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains),
+   which is shallow-cloned into `scripts/.cache` on first run and `git pull`ed
+   on subsequent runs.
+
+### Quick Start
+
+```bash
+# Check the last 1000 profiles (default) and write a summary + CSV
+pnpm check-disposable-emails
+
+# Check the last 3000 profiles (paginates past Supabase's 1000-row cap)
+pnpm check-disposable-emails -- --limit 3000
+
+# Only profiles created in the last 14 days
+pnpm check-disposable-emails -- --days 14
+
+# Preview resetting flagged users' credits to 0 (no DB changes)
+pnpm check-disposable-emails -- --days 14 --reset-credits --dry-run
+
+# Apply the reset (prompts for a typed "RESET CREDITS" confirmation)
+pnpm check-disposable-emails -- --days 14 --reset-credits
+
+# Apply without the prompt (e.g. CI)
+pnpm check-disposable-emails -- --days 14 --reset-credits --yes
+```
+
+### CLI Options
+
+- `--limit <n>` - Number of most-recent profiles to fetch (default: 1000)
+- `--days <n>` - Only consider profiles created in the last `<n>` days
+- `--out <dir>` - Output directory for the summary / CSV (default: cwd)
+- `--no-clone` - Skip cloning/updating the amieiro repo (use cached copy)
+- `--reset-credits` - Reset flagged users' credits to 0
+- `--dry-run` - With `--reset-credits`, only report what would change
+- `--yes` - Skip the interactive confirmation for a live reset
+
+### Output
+
+- `disposable-emails-summary-<timestamp>.txt` - Counts and percentages by
+  source, plus the most common disposable domains (also printed to stdout)
+- `disposable-emails-<timestamp>.csv` - Every flagged profile with
+  `by_package` / `by_amieiro` columns (gitignored)
+
+### Credit reset
+
+When `--reset-credits` is passed, for each flagged user with a **positive**
+balance the script resets their credits. Users are **skipped** when they:
+
+- have ever paid — any `purchase` or `topup` `credit_transactions` row, or
+- already have a balance of ≤0.
+
+For each user that is reset, the script:
+
+1. Sets `credits.amount` to 0
+2. Inserts an audit `credit_transactions` row with:
+   - `type: 'refund'` — the `credit_transaction_type` enum has no `penalty` /
+     `ban` value, so this reuses `'refund'` (as
+     `reset-freeloader-credits.mts` does) and records the real reason in the
+     description / metadata. To change it later, edit the `RESET_TX_TYPE`
+     constant (and add the enum value via a migration first).
+   - `amount: -<previous balance>`
+   - `description: "Credits reset to 0 — disposable email signup (<domain>)"`
+   - `metadata.reason: "disposable_email"` plus `domain`, `detected_by`,
+     `previous_amount`, and a `timestamp`
+
+> ⚠️ Detection is **domain-based** and the amieiro list is broad. Spot-check the
+> generated CSV before a live reset to make sure no legitimate users are caught.
+
+### Requirements
+
+- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` — read
+  automatically from `apps/web/.env.local` (then `scripts/.env`)
+- `git` (for cloning the amieiro list on first run)
+
+---
+
+## Sync Deny Domains Script
+
+`sync-deny-domains.mjs` regenerates the disposable-domain list bundled into the
+web app's signup route. It clones/updates
+[amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains)
+in `scripts/.cache`, normalizes its deny list (trim, lowercase, dedupe, sort)
+and writes it to `apps/web/lib/disposable-email/deny-domains.json` as a minified
+JSON array, which the web app imports and turns into a `Set`.
+
+The signup route (`apps/web/app/auth/signup/route.ts`) checks this list **in
+addition** to the `disposable-email-domains-js` package, which catches far more
+disposable signups (~16% vs ~1.6% of recent profiles in production).
+
+```bash
+# Refresh the bundled list (run after amieiro publishes updates)
+pnpm sync-deny-domains
+```
+
+The generated `deny-domains.json` is ~3 MB; it is committed (so deploys don't
+need network access) and excluded from the formatter via `.biomeignore` (kept
+minified). TypeScript widens the homogeneous array to `string[]`, so importing it
+stays cheap to type-check.
 
 ---
 
@@ -288,6 +784,31 @@ All visualizations created! 📊
 Files saved with prefix: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_
 ```
 
+---
+
+## Waveform Video Generator
+
+Modern audio visualizer that turns any ffmpeg-compatible audio file into a
+gradient waveform video with multiple style presets.
+
+### Usage
+
+```bash
+# Neon gradient at 60fps with a custom title
+python scripts/generate_waveform_video.py input.wav output.mp4 --style neon --fps 60 --title "Deep Night Session"
+
+# Light mode preview at 720p
+python scripts/generate_waveform_video.py song.mp3 preview.mp4 --style minimal --width 1280 --height 720
+```
+
+### Options
+
+- `--style`: `neon` (default), `minimal`, `sunset`, `forest`
+- `--fps`: Frames per second (default 30)
+- `--width` / `--height`: Output resolution
+- `--title`: Optional text rendered above the waveform
+- `--preset`: ffmpeg x264 preset passed through MoviePy
+
 ## Stripe Payments Comparison and Analysis Scripts
 
 ```bash
@@ -299,12 +820,12 @@ export SUPABASE_DB_URL="postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postg
 ```
 
 This will:
+
 1. Fetch 500 Stripe payment intents (with pagination)
 2. Export Supabase credit transactions
 3. Clean both datasets
 4. Detect duplicates in both systems
 5. Compare and generate reports including CSV exports
-
 
 ## Credit Transaction Analysis Scripts
 
