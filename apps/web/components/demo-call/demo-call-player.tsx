@@ -2,7 +2,7 @@
 
 import { Pause, Play } from 'lucide-react';
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { demoCallData } from '@/data/demo-transcripts';
@@ -63,6 +63,8 @@ export function DemoCallPlayer({
 
   // Ref to hold the audio element for cleanup without re-triggering effects
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const cleanupListenersRef = useRef<(() => void) | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const frequencyBands = useAudioAnalyser(audioElement);
 
@@ -80,7 +82,17 @@ export function DemoCallPlayer({
   const hasAudioEnergy = avgEnergy > 0.15;
 
   // Stop and tear down current audio
-  const stopAudio = useCallback(() => {
+  const stopAudio = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    if (cleanupListenersRef.current) {
+      cleanupListenersRef.current();
+      cleanupListenersRef.current = null;
+    }
+
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
@@ -91,104 +103,107 @@ export function DemoCallPlayer({
     setAudioElement(null);
     setIsPlaying(false);
     setCurrentTime(0);
-  }, []);
+  };
 
   // Start playback for a given character
-  const playCharacter = useCallback(
-    (charId: string) => {
-      // Clean up any existing audio first
-      stopAudio();
+  const playCharacter = (charId: string) => {
+    // Clean up any existing audio first
+    stopAudio();
 
-      const data = demoCallData[charId];
-      if (!data) return;
+    const data = demoCallData[charId];
+    if (!data) return;
 
-      // Create a fresh Audio element (required for createMediaElementSource)
-      const audio = new Audio(data.audioSrc);
-      audio.preload = 'auto';
-      audioRef.current = audio;
+    // Create a fresh Audio element (required for createMediaElementSource)
+    const audio = new Audio(data.audioSrc);
+    audio.preload = 'auto';
+    audioRef.current = audio;
 
-      // Track time updates for the timer display
-      const onTimeUpdate = () => {
+    // Track time updates for the timer display
+    const onTimeUpdate = () => {
+      if (audioRef.current === audio) {
         setCurrentTime(audio.currentTime);
-      };
+      }
+    };
 
-      const onEnded = () => {
-        setIsPlaying(false);
-        setAudioElement(null);
+    const cleanupCurrentAudio = () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+      if (audioRef.current === audio) {
+        cleanupListenersRef.current = null;
         audioRef.current = null;
-        setCurrentTime(0);
-      };
-
-      const onError = () => {
-        setIsPlaying(false);
         setAudioElement(null);
-        audioRef.current = null;
+        setIsPlaying(false);
         setCurrentTime(0);
-      };
+      }
+    };
 
-      audio.addEventListener('timeupdate', onTimeUpdate);
-      audio.addEventListener('ended', onEnded);
-      audio.addEventListener('error', onError);
+    const onEnded = () => {
+      cleanupCurrentAudio();
+    };
 
-      // Set the audio element state first so useAudioAnalyser can set up
-      // the Web Audio graph before play() is called
-      setAudioElement(audio);
-      setIsPlaying(true);
+    const onError = () => {
+      cleanupCurrentAudio();
+    };
 
-      // Small delay to let the AudioContext connect before playing
-      requestAnimationFrame(() => {
-        audio.play().catch(() => {
-          setIsPlaying(false);
-          setAudioElement(null);
-          audioRef.current = null;
-        });
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('error', onError);
+
+    cleanupListenersRef.current = () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('error', onError);
+    };
+
+    // Set the audio element state first so useAudioAnalyser can set up
+    // the Web Audio graph before play() is called
+    setAudioElement(audio);
+    setIsPlaying(true);
+
+    // Small delay to let the AudioContext connect before playing
+    requestAnimationFrame(() => {
+      audio.play().catch(() => {
+        cleanupCurrentAudio();
       });
-    },
-    [stopAudio],
-  );
+    });
+  };
 
   // Handle play/stop toggle
-  const handlePlayStop = useCallback(() => {
+  const handlePlayStop = () => {
     if (isPlaying) {
       stopAudio();
     } else {
       playCharacter(selectedCharId);
     }
-  }, [isPlaying, stopAudio, playCharacter, selectedCharId]);
+  };
 
   // Handle character selection
-  const handleCharacterSelect = useCallback(
-    (charId: string) => {
-      if (charId === selectedCharId && !isPlaying) {
-        // Same character, not playing — just play
+  const handleCharacterSelect = (charId: string) => {
+    if (charId === selectedCharId && !isPlaying) {
+      // Same character, not playing — just play
+      playCharacter(charId);
+      return;
+    }
+
+    setSelectedCharId(charId);
+
+    if (isPlaying) {
+      // Auto-play the new character
+      // Need to use setTimeout to allow state to settle
+      stopAudio();
+      // Play after a tick so cleanup completes
+      timeoutRef.current = setTimeout(() => {
+        timeoutRef.current = null;
         playCharacter(charId);
-        return;
-      }
-
-      setSelectedCharId(charId);
-
-      if (isPlaying) {
-        // Auto-play the new character
-        // Need to use setTimeout to allow state to settle
-        stopAudio();
-        // Play after a tick so cleanup completes
-        setTimeout(() => {
-          playCharacter(charId);
-        }, 50);
-      }
-    },
-    [selectedCharId, isPlaying, playCharacter, stopAudio],
-  );
+      }, 50);
+    }
+  };
 
   // Cleanup on unmount
   useEffect(
     () => () => {
-      const audio = audioRef.current;
-      if (audio) {
-        audio.pause();
-        audio.removeAttribute('src');
-        audio.load();
-      }
+      stopAudio();
     },
     [],
   );
