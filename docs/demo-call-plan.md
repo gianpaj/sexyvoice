@@ -10,22 +10,22 @@ Replace the current hero `IncomingCallButton` with a **visual audio demo** of th
 
 ## Existing Assets
 
-| Asset | Path | Notes |
-|---|---|---|
-| Demo call data | `data/demo-transcripts.ts` | 4 characters: `ramona`, `miyu`, `luna`, `rafal` |
-| Demo audio files | `public/demo-calls/` | See actual durations below |
-| Character avatars | `public/characters/` | `ramona.webp`, `rafal.webp` exist; `miyu.webp` and `luna.webp` **TODO** |
-| Landing page | `app/[lang]/page.tsx` | Hero section currently uses `IncomingCallButton` |
-| Avatar ring style | `components/call/preset-selector.tsx` → `AvatarButton` | Gradient ring + image pattern to replicate |
+| Asset             | Path                                                   | Notes                                                                   |
+| ----------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Demo call data    | `data/demo-transcripts.ts`                             | 4 characters: `ramona`, `miyu`, `luna`, `rafal`                         |
+| Demo audio files  | `public/demo-calls/`                                   | See actual durations below                                              |
+| Character avatars | `public/characters/`                                   | `ramona.webp`, `rafal.webp` exist; `miyu.webp` and `luna.webp` **TODO** |
+| Landing page      | `app/[lang]/page.tsx`                                  | Hero section currently uses `IncomingCallButton`                        |
+| Avatar ring style | `components/call/preset-selector.tsx` → `AvatarButton` | Gradient ring + image pattern to replicate                              |
 
 ### Actual audio durations (via `ffprobe`)
 
-| File | Format | Duration | Size |
-|---|---|---|---|
-| `ramona.mp3` | mp3 | **7.85 s** | 96 KB |
-| `luna.wav` | wav | **11.90 s** | 2.2 MB |
-| `miyu.wav` | wav | **18.90 s** | 3.5 MB |
-| `rafal.wav` | wav | **18.84 s** | 3.4 MB |
+| File         | Format | Duration    | Size   |
+| ------------ | ------ | ----------- | ------ |
+| `ramona.mp3` | mp3    | **7.85 s**  | 96 KB  |
+| `luna.wav`   | wav    | **11.90 s** | 2.2 MB |
+| `miyu.wav`   | wav    | **18.90 s** | 3.5 MB |
+| `rafal.wav`  | wav    | **18.84 s** | 3.4 MB |
 
 ### Pre-implementation prep (owner: user)
 
@@ -39,13 +39,13 @@ Replace the current hero `IncomingCallButton` with a **visual audio demo** of th
 
 ### New files
 
-| File | Purpose |
-|---|---|
-| `hooks/use-audio-analyser.ts` | Web Audio API hook — analyses `HTMLAudioElement` frequency data, returns multiband `Float32Array[]` |
-| `components/demo-call/demo-call-section.tsx` | Server component wrapper: i18n strings + renders the client component |
-| `components/demo-call/demo-call-player.tsx` | `'use client'` – Orchestrator: character picker, audio playback, waveform, avatar animation |
-| `components/demo-call/demo-character-avatar.tsx` | `'use client'` – Animated avatar with energy-driven speaking pulse |
-| `components/demo-call/demo-waveform.tsx` | `'use client'` – Frequency-driven visualizer bars powered by `useAudioAnalyser` |
+| File                                             | Purpose                                                                                             |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `hooks/use-audio-analyser.ts`                    | Web Audio API hook — analyses `HTMLAudioElement` frequency data, returns multiband `Float32Array[]` |
+| `components/demo-call/demo-call-section.tsx`     | Server component wrapper: i18n strings + renders the client component                               |
+| `components/demo-call/demo-call-player.tsx`      | `'use client'` – Orchestrator: character picker, audio playback, waveform, avatar animation         |
+| `components/demo-call/demo-character-avatar.tsx` | `'use client'` – Animated avatar with energy-driven speaking pulse                                  |
+| `components/demo-call/demo-waveform.tsx`         | `'use client'` – Frequency-driven visualizer bars powered by `useAudioAnalyser`                     |
 
 ### No new dependencies
 
@@ -63,10 +63,10 @@ Replace the current hero `IncomingCallButton` with a **visual audio demo** of th
 ```ts
 function useAudioAnalyser(
   audioElement: HTMLAudioElement | null,
-  bands?: number,   // default 5
-  loPass?: number,   // default 100 (frequency bin index)
-  hiPass?: number,   // default 600 (frequency bin index)
-): Float32Array[]
+  bands?: number, // default 5
+  loPass?: number, // default 100 (frequency bin index)
+  hiPass?: number, // default 600 (frequency bin index)
+): Float32Array[];
 ```
 
 Returns an array of `bands` `Float32Array` chunks, each containing normalized frequency values (0–1). When `audioElement` is `null`, returns `[]`.
@@ -92,7 +92,7 @@ Browsers may create `AudioContext` in a `suspended` state. Add a resume call:
 
 ```ts
 const ctx = new AudioContext();
-if (ctx.state === 'suspended') {
+if (ctx.state === "suspended") {
   ctx.resume();
 }
 ```
@@ -129,7 +129,7 @@ const hasAudioEnergy = avgEnergy > 0.15; // tune this threshold
 
 ### 2. Why not just energy alone?
 
-The demo audio contains both the AI agent and a mock user voice. Energy alone can't distinguish who is speaking. For now this is acceptable — the avatar pulses whenever *anyone* speaks. If we later add transcript timing data back, we can gate it: `isAgentSpeaking = hasAudioEnergy && currentSpeaker === 'agent'`.
+The demo audio contains both the AI agent and a mock user voice. Energy alone can't distinguish who is speaking. For now this is acceptable — the avatar pulses whenever _anyone_ speaks. If we later add transcript timing data back, we can gate it: `isAgentSpeaking = hasAudioEnergy && currentSpeaker === 'agent'`.
 
 ---
 
@@ -145,24 +145,24 @@ Props: { lang: Locale }
 - Renders `<DemoCallPlayer />`.
 - This component **replaces** the current `IncomingCallButton` in the hero section of `app/[lang]/page.tsx`.
 
-### 2. `DemoCallPlayer` (Client Component) — *core logic*
+### 2. `DemoCallPlayer` (Client Component) — _core logic_
 
 #### State
 
-| State | Type | Purpose |
-|---|---|---|
-| `selectedCharId` | `string` | Currently selected character key (default: `'ramona'`) |
-| `audioElement` | `HTMLAudioElement \| null` | Current audio element, passed to `useAudioAnalyser` |
-| `isPlaying` | `boolean` | Whether audio is currently playing |
+| State            | Type                       | Purpose                                                |
+| ---------------- | -------------------------- | ------------------------------------------------------ |
+| `selectedCharId` | `string`                   | Currently selected character key (default: `'ramona'`) |
+| `audioElement`   | `HTMLAudioElement \| null` | Current audio element, passed to `useAudioAnalyser`    |
+| `isPlaying`      | `boolean`                  | Whether audio is currently playing                     |
 
 **Derived in render (no state needed):**
 
-| Value | Source | Purpose |
-|---|---|---|
-| `currentTime` | `audioElement?.currentTime ?? 0` | Current playback position |
-| `duration` | `demoCallData[selectedCharId].durationSeconds` | Total duration for timer display |
-| `frequencyBands` | `useAudioAnalyser(audioElement)` | Real frequency data |
-| `avgEnergy` | Computed from `frequencyBands` | Scalar 0–1 for speaking animation |
+| Value            | Source                                         | Purpose                           |
+| ---------------- | ---------------------------------------------- | --------------------------------- |
+| `currentTime`    | `audioElement?.currentTime ?? 0`               | Current playback position         |
+| `duration`       | `demoCallData[selectedCharId].durationSeconds` | Total duration for timer display  |
+| `frequencyBands` | `useAudioAnalyser(audioElement)`               | Real frequency data               |
+| `avgEnergy`      | Computed from `frequencyBands`                 | Scalar 0–1 for speaking animation |
 
 #### Character metadata map
 
@@ -170,10 +170,10 @@ Static map providing display info for the 4 demo characters:
 
 ```ts
 const demoCharacters = [
-  { id: 'ramona', name: 'Ramona', image: 'ramona.webp', accent: 'from-red-500 to-pink-500' },
-  { id: 'miyu',   name: 'Miyu',   image: 'miyu.webp',   accent: 'from-blue-400 to-cyan-400' },
-  { id: 'luna',   name: 'Luna',   image: 'luna.webp',    accent: 'from-amber-400 to-orange-500' },
-  { id: 'rafal',  name: 'Rafal',  image: 'rafal.webp',   accent: 'from-violet-500 to-fuchsia-500' },
+  { id: "ramona", name: "Ramona", image: "ramona.webp", accent: "from-red-500 to-pink-500" },
+  { id: "miyu", name: "Miyu", image: "miyu.webp", accent: "from-blue-400 to-cyan-400" },
+  { id: "luna", name: "Luna", image: "luna.webp", accent: "from-amber-400 to-orange-500" },
+  { id: "rafal", name: "Rafal", image: "rafal.webp", accent: "from-violet-500 to-fuchsia-500" },
 ];
 ```
 
@@ -238,6 +238,7 @@ Props: `{ frequencyBands: Float32Array[]; isActive: boolean }`
 ### What changes in `app/[lang]/page.tsx`
 
 **Remove:**
+
 ```tsx
 <div className="mx-auto">
   <IncomingCallButton animated lang={lang} />
@@ -245,6 +246,7 @@ Props: `{ frequencyBands: Float32Array[]; isActive: boolean }`
 ```
 
 **Replace with:**
+
 ```tsx
 <DemoCallSection lang={lang} />
 ```
@@ -269,7 +271,7 @@ Add the following keys to all 6 dictionary files (`en.json`, `es.json`, `de.json
 {
   "landing": {
     "demoCall": {
-      "playButton": "Play Demo",
+      "playButton": "Call Demo",
       "stopButton": "Stop",
       "pickCharacter": "Pick a character"
     }
@@ -288,7 +290,8 @@ Add to `globals.css`:
 ```css
 /* Speaking pulse ring — CSS fallback if inline energy-driven styles aren't applied */
 @keyframes speaking-pulse {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.7;
   }
@@ -310,6 +313,7 @@ The waveform bars and avatar ring are primarily driven by inline `style` from re
 ## Step-by-step Implementation Order
 
 ### Phase 1: Prep (owner: user)
+
 1. **Convert `.wav` → `.mp3`** for luna, miyu, rafal.
 2. **Create `miyu.webp` and `luna.webp`** character avatars.
 3. **Update `durationSeconds`** in `demo-transcripts.ts`:
@@ -320,6 +324,7 @@ The waveform bars and avatar ring are primarily driven by inline `style` from re
 4. **Update `audioSrc`** paths if filenames change.
 
 ### Phase 2: Hook
+
 5. **`hooks/use-audio-analyser.ts`** — Web Audio API hook. Verify:
    - AudioContext resumes correctly after user click.
    - Frequency bands return non-zero values during playback.
@@ -327,6 +332,7 @@ The waveform bars and avatar ring are primarily driven by inline `style` from re
    - Fresh `Audio()` element per character works without errors.
 
 ### Phase 3: Components (bottom-up)
+
 6. **`DemoWaveform`** — Receives `frequencyBands: Float32Array[]`, maps to bar heights. No internal state.
 7. **`DemoCharacterAvatar`** — Avatar image + energy-driven speaking animation.
 8. **`DemoCallPlayer`** — Wire up:
@@ -339,6 +345,7 @@ The waveform bars and avatar ring are primarily driven by inline `style` from re
 10. **Add i18n keys** to all 6 dictionary files.
 
 ### Phase 4: Integration
+
 11. **Replace `IncomingCallButton`** with `<DemoCallSection lang={lang} />` in the hero section of `app/[lang]/page.tsx`.
 12. **Test across browsers**:
     - Safari: AudioContext resume after user gesture, `.mp3` codec support.
@@ -347,6 +354,7 @@ The waveform bars and avatar ring are primarily driven by inline `style` from re
 13. **Run `pnpm run fixall`** and fix any linting/type issues.
 
 ### Phase 5: Polish (optional)
+
 14. **Tune energy threshold** — play all 4 demo clips and adjust the `0.15` threshold so the speaking animation feels responsive but doesn't flicker during brief pauses.
 15. Animate character switch with a crossfade transition.
 16. Add PostHog analytics event: `demo_call_played { character: string, completed: boolean }`.

@@ -98,7 +98,7 @@
       "signIn": "Log ind"
     },
     "demoCall": {
-      "playButton": "Afspil demo",
+      "playButton": "Ring demo",
       "stopButton": "Stop",
       "pickCharacter": "Vælg en karakter"
     },
@@ -114,6 +114,10 @@
       "security": {
         "title": "Sikkert & privat",
         "description": "Dine stemmedata er beskyttet med sikkerhed på virksomhedsniveau. Fuld kontrol over dit privatliv, profil og historik."
+      },
+      "voiceCalling": {
+        "title": "Live stemmeopkald",
+        "description": "Før telefonsamtaler i realtid med AI-karakterer — naturlige stemmer, øjeblikkelige svar, ingen opsætning nødvendig."
       }
     },
     "cta": {
@@ -121,6 +125,18 @@
       "title": "Klar til at finde din stemme?",
       "subtitle": "Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe realistisk følelsesrig tale.",
       "action": "Opret din første stemme"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Tal med AI-karakterer, live i realtid",
+        "subtitle": "Live AI-telefonopkald med naturlige, udtryksfulde stemmer.\nVælg en karakter og begynd at tale med det samme."
+      },
+      "cta": {
+        "freeCredits": "Start med 10.000 gratis kreditter",
+        "title": "Klar til at høre en stemme komme til live?",
+        "subtitle": "Start et live opkald med en hvilken som helst karakter og oplev en naturlig AI-samtale i realtid.",
+        "action": "Start et stemmeopkald"
+      }
     },
     "generator": {
       "title": "Prøv det nu",
@@ -897,7 +913,8 @@
     "copyright": "SexyVoice.ai. Alle rettigheder forbeholdes.",
     "audioConverter": "Gratis lydkonverter",
     "transcribe": "Gratis lydtransskription",
-    "audioJoiner": "Gratis lydsammenfletning"
+    "audioJoiner": "Gratis lydsammenfletning",
+    "voiceCalling": "AI-stemmeopkald"
   },
   "promos": {
     "halloweenBanner": {

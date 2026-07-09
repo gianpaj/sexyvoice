@@ -71,28 +71,28 @@ export const callAnalysisSchema = z.object({
 export type CallAnalysis = z.infer<typeof callAnalysisSchema>;
 
 export interface CallSessionForAnalysis {
-  id: string;
-  user_id?: string | null;
-  started_at?: string | null;
   duration_seconds?: number | null;
   end_reason?: string | null;
+  id: string;
+  started_at?: string | null;
   transcript: Json | null;
+  user_id?: string | null;
 }
 
 export interface ConversationMessage {
-  role: 'user' | 'assistant';
   content: string;
+  role: 'user' | 'assistant';
   timestamp: string | null;
 }
 
 interface TranscriptTurn {
-  role?: unknown;
   content?: unknown;
-  text?: unknown;
-  transcript?: unknown;
-  timestamp?: unknown;
   created_at?: unknown;
+  role?: unknown;
+  text?: unknown;
   time?: unknown;
+  timestamp?: unknown;
+  transcript?: unknown;
 }
 
 function asString(value: unknown): string {

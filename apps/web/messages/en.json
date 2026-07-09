@@ -114,6 +114,10 @@
       "security": {
         "title": "Secure & Private",
         "description": "Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history."
+      },
+      "voiceCalling": {
+        "title": "Live Voice Calls",
+        "description": "Have real-time phone conversations with AI characters — natural voices, instant responses, no setup required."
       }
     },
     "cta": {
@@ -121,6 +125,18 @@
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Talk to AI Characters, Live in Real Time",
+        "subtitle": "Live AI phone calls with natural, expressive voices.\nPick a character and start talking instantly."
+      },
+      "cta": {
+        "freeCredits": "Start with 10,000 free credits",
+        "title": "Ready to hear a voice come alive?",
+        "subtitle": "Start a live call with any character and experience natural, real-time AI conversation.",
+        "action": "Start a voice call"
+      }
     },
     "generator": {
       "title": "Try it now",
@@ -897,7 +913,8 @@
     "copyright": "SexyVoice.ai. All rights reserved.",
     "audioConverter": "Free Audio Converter",
     "transcribe": "Free Audio Transcription",
-    "audioJoiner": "Free Audio Joiner"
+    "audioJoiner": "Free Audio Joiner",
+    "voiceCalling": "AI Voice Calling"
   },
   "promos": {
     "halloweenBanner": {

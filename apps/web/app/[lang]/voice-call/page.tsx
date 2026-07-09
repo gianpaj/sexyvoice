@@ -50,7 +50,7 @@ export default async function LandingPage(props: {
     placement: 'landing',
   });
 
-  const [firstPart, ...restParts] = dictLanding.hero.title.split(',');
+  const [firstPart, ...restParts] = dictLanding.voiceCall.hero.title.split(',');
   const titleRestParts = restParts.join(',');
 
   const siteUrl = `https://sexyvoice.ai/${lang}`;
@@ -125,7 +125,7 @@ export default async function LandingPage(props: {
                 )}
               </h1>
               <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
-                {dictLanding.hero.subtitle}
+                {dictLanding.voiceCall.hero.subtitle}
               </p>
 
               <DemoCallSection lang={lang} />
@@ -135,13 +135,13 @@ export default async function LandingPage(props: {
             <div className="space-y-8 py-16 text-center">
               <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
                 <Sparkles className="mr-2 size-4" />
-                <span>{dictLanding.cta.freeCredits}</span>
+                <span>{dictLanding.voiceCall.cta.freeCredits}</span>
               </div>
               <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
-                {dictLanding.cta.title}
+                {dictLanding.voiceCall.cta.title}
               </h2>
               <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
-                {dictLanding.cta.subtitle}
+                {dictLanding.voiceCall.cta.subtitle}
               </p>
               <Button
                 asChild
@@ -149,7 +149,7 @@ export default async function LandingPage(props: {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href="/signup">{dictLanding.cta.action}</Link>
+                <Link href="/signup">{dictLanding.voiceCall.cta.action}</Link>
               </Button>
             </div>
           </div>

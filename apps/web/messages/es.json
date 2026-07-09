@@ -98,7 +98,7 @@
       "signIn": "Iniciar Sesión"
     },
     "demoCall": {
-      "playButton": "Reproducir Demo",
+      "playButton": "Llamar demo",
       "stopButton": "Detener",
       "pickCharacter": "Elige un personaje"
     },
@@ -114,6 +114,10 @@
       "security": {
         "title": "Seguro y Privado",
         "description": "Tus datos de voz están protegidos con seguridad de nivel empresarial. Control total sobre la privacidad y el uso."
+      },
+      "voiceCalling": {
+        "title": "Llamadas de Voz en Vivo",
+        "description": "Mantén conversaciones telefónicas en tiempo real con personajes de IA — voces naturales, respuestas instantáneas, sin configuración."
       }
     },
     "cta": {
@@ -121,6 +125,18 @@
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
       "action": "Crea tu primera voz"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Habla con Personajes de IA, en Tiempo Real",
+        "subtitle": "Llamadas telefónicas con IA y voces naturales y expresivas.\nElige un personaje y empieza a hablar al instante."
+      },
+      "cta": {
+        "freeCredits": "Comienza con 10,000 créditos gratis",
+        "title": "¿Listo para escuchar una voz cobrar vida?",
+        "subtitle": "Inicia una llamada en vivo con cualquier personaje y vive una conversación natural con IA en tiempo real.",
+        "action": "Iniciar una llamada de voz"
+      }
     },
     "generator": {
       "title": "Pruébalo ahora",
@@ -897,7 +913,8 @@
     "copyright": "SexyVoice.ai. Todos los derechos reservados.",
     "audioConverter": "Conversor de Audio Gratuito",
     "transcribe": "Transcripción de Audio Gratuita",
-    "audioJoiner": "Unificador de Audio Gratuito"
+    "audioJoiner": "Unificador de Audio Gratuito",
+    "voiceCalling": "Llamadas de Voz con IA"
   },
   "promos": {
     "halloweenBanner": {
