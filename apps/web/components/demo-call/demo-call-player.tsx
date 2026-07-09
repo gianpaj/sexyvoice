@@ -20,13 +20,13 @@ const demoCharacters = [
   {
     id: 'miyu',
     name: 'Miyu',
-    image: 'miyu.webp',
+    image: 'lily.webp',
     accent: 'from-blue-400 to-cyan-400',
   },
   {
     id: 'luna',
     name: 'Luna',
-    image: 'luna.webp',
+    image: 'ramona.webp',
     accent: 'from-amber-400 to-orange-500',
   },
   {
