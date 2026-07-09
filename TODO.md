@@ -1,17 +1,27 @@
 # TODO
 
+- check usage_logs have the correct dollar cost for Grok TTS generate-voice/route.ts
+- api New Key button: add tooltip and crown showing that's for paid users
 - self-host Sentry on Hetzner machine
+- change all `dict...replace()` to use next-intl functions
+- Generate: if a sample contains tags like `<fast>hi</fast>` or `[sigh]`, highlight/style like in the Grok editor itself
+
+- Landing: add character images for each popular voice. Think about a way to generate avatar images
 
 ## Agents
 
 - create CLI for API auth <https://github.com/helius-labs/helius-cli>
+
+## Feedback button
+
+- <https://motion-primitives.com/docs/morphing-popover#morphing-popover-with-textarea>
 
 ## Call
 
 - test and implement text interruptions <https://github.com/livekit/agents-js/pull/998>
 - add duration to generate audios. if there is a high duration and short text, add warning in `usage` JSON col that the audio may be silent for a long time.
 - fix: voice cloning page. audio should stop if sample Marilyn is selected and is hidden / unmounted
-- fix: landing page audios not stopping if another audio is played
+- fix: landing page audios is not stopping if another audio is played
 - Add usage page in Dashboard
 - Update daily-stats API route to include usage and a section for Voice calls. Mins, credits used, Top preset/voice/language and the averages
 - add audio clones demos on landing page
@@ -22,7 +32,7 @@
   - a famous Indian female actor like Aishwarya Rai
   - a famous Indian male actor like Amitabh Bachchan (<https://www.youtube.com/watch?v=6certbViicw>)
 - share link & page after an audio has been generated
-- analyze and remove unused voices and group by male and female (see < CommandGroup>) 
+- analyze and remove unused voices and group by male and female (see < CommandGroup>)
 - Add more GPro female voices: Laomedeia, Leda, Pulcherrima, Vindemiatrix
 - Add presets for GPro voices. Adding a DB table for it.
 - Add a warning that if using `<emotion>` in GPro voices, these will not be generated as expected
@@ -46,7 +56,7 @@
   import { useKrispNoiseFilter } from "@livekit/components-react/krisp";
 
   const { isNoiseFilterEnabled, isNoiseFilterPending, setNoiseFilterEnabled } =
-      useKrispNoiseFilter();
+    useKrispNoiseFilter();
 
   useEffect(() => {
     setNoiseFilterEnabled(true);
@@ -91,7 +101,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Features
 
 - Upload pdf to convert to audio. Long-form context requires splitting into chunks. <https://github.com/Saganaki22/OrpheusTTS-WebUI/blob/b807264412b93f55404d2b50dc0ba8f384585828/orpheus.py#L150>
-<https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
+  <https://github.com/isaiahbjork/orpheus-tts-local/pull/23/files>
 
 ## Tests
 
@@ -111,6 +121,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Research
 
 - Automated Dialogue Replacement (ADR) is a post-production process in filmmaking where actors re-record their dialogue in a studio to improve audio quality or make changes to the script. This technique helps to ensure that the final audio matches the visuals and enhances the overall sound of the film.
+- Sound effects (SFX): <https://fal.ai/models/fal-ai/stable-audio>
 
 ## Emails
 
@@ -119,6 +130,8 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 ## Later
 
 - Multiple API keys functionality. LLM router (<https://github.com/theopenco/llmgateway>, <https://github.com/BerriAI/litellm>)
+- Audio wave preview like <https://www.muna.ai/@kitten-ml/kitten-tts> (canvas)
+- Voice list search and preview like <https://platform.inworld.ai/v2/workspaces/default-g16raugwkppmeeuex7qjla/tts-playground>
 - add a 'Remove background noise' checkbox in the Voice cloning upload step. (Extra 500 credits). 'You can download the cleaned audio after too'.
 
 ## Other Voice cloning demos

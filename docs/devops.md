@@ -7,6 +7,13 @@ for SexyVoice.ai.
 For local development onboarding, see [`README.md`](../README.md).
 For architecture and product context, see [`ARCHITECTURE.md`](../ARCHITECTURE.md).
 
+## Monorepo Layout
+
+- `apps/web` contains the Next.js app package, `@sexyvoice/web`.
+- `apps/docs` contains the Fumadocs docs site for `docs.sexyvoice.ai`.
+- `scripts` contains operational one-off scripts as `@sexyvoice/scripts`.
+- Root package scripts run through Turborepo.
+
 ## Infrastructure Overview
 
 ### Primary Services
@@ -83,6 +90,7 @@ Recommended verification flow:
    ```
 
 Notes:
+
 - `vercel project inspect sexyvoice` currently returns general project metadata such as project ID, owner, root directory, framework preset, and Node.js version.
 - `vercel env ls` confirms you are operating on `gianpaj-projects/sexyvoice`.
 - The tested CLI output did not expose the runtime region list directly.
@@ -95,7 +103,7 @@ Notes:
 1. Copy the example environment file:
 
    ```bash
-   cp .env.example .env.local
+   cp apps/web/.env.example apps/web/.env.local
    ```
 
 2. Fill in all required values for the services you use.
@@ -119,13 +127,14 @@ Notes:
 - If you add, rename, or remove an environment variable, update:
   - `AGENTS.md`
   - `README.md`
-  - `.env.example`
+  - `apps/web/.env.example`
   - this file (`docs/devops.md`) when the change affects deployment,
     operations, security, or runtime setup
 
 ## Environment Variables
 
-Use [`.env.example`](../.env.example) as the canonical template.
+Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical
+template.
 
 ### Core application
 
@@ -136,12 +145,11 @@ Use [`.env.example`](../.env.example) as the canonical template.
 
 ### Redis / caching
 
-- `KV_URL`
 - `KV_REST_API_URL`
 - `KV_REST_API_TOKEN`
-- `KV_REST_API_READ_ONLY_TOKEN`
 
 Used for:
+
 - caching
 - rate limiting
 - fast lookups
@@ -156,21 +164,28 @@ Used for:
 - `R2_ENDPOINT`
 
 Used for:
+
 - dashboard audio storage
 - external API speech output storage
 
 ### AI provider credentials
 
-- `REPLICATE_API_TOKEN`
 - `FAL_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
+- `MISTRAL_API_KEY`
+- `REPLICATE_API_TOKEN`
 - `XAI_API_KEY` if xAI TTS is enabled in the environment
+- `XAI_SUMMARY_MODEL` optional override for the Grok model used to analyze call
+  transcripts (default `grok-4.3`)
 
 Notes:
-- `GOOGLE_GENERATIVE_AI_API_KEY` is the primary Gemini key.
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY` can be used as the alternate key
+
+- `GOOGLE_GENERATIVE_AI_API_KEY` is the Gemini key.
   for free-user Gemini flows where configured in code.
+- `MISTRAL_API_KEY` is required for voice cloning requests that use the
+  Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
+- `XAI_API_KEY` also powers call transcript analysis
+  (`apps/web/lib/ai/analyze-call.ts`), not just Grok TTS.
 
 ### LiveKit real-time calls
 
@@ -182,13 +197,14 @@ Notes:
 - `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
   and used by the frontend to connect to LiveKit rooms.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
-  by `app/api/call-token/route.ts` to mint LiveKit access tokens.
+  by `apps/web/app/api/call-token/route.ts` to mint LiveKit access tokens.
 - These secrets must never be exposed to the client.
 
 ### Authentication / auth monitoring
 
 - `API_KEY_HMAC_SECRET`
 - `OAUTH_CALLBACK_MARKER_SECRET`
+- `CALL_SUMMARY_SECRET`
 
 Notes:
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
@@ -196,6 +212,10 @@ Notes:
   and verifying the short-lived OAuth callback marker cookie.
 - If `OAUTH_CALLBACK_MARKER_SECRET` is unset, code may fall back to
   `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
+- `CALL_SUMMARY_SECRET` authenticates the Supabase Database Webhook that
+  triggers `/api/call-sessions/analyze` on call completion. The same value must
+  be stored in Supabase Vault as `call_summary_secret` (alongside
+  `app_base_url`) so the `pg_net` trigger can call back into this app.
 
 Generate secure secrets with:
 
@@ -207,14 +227,17 @@ openssl rand -hex 32
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
-- `STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_PRICING_ID`
-- `STRIPE_TOPUP_5_PRICE_ID`
-- `STRIPE_TOPUP_10_PRICE_ID`
-- `STRIPE_TOPUP_99_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_5_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_10_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_99_PRICE_ID`
+- `STRIPE_TOPUP_STARTER_PRICE_ID`
+- `STRIPE_TOPUP_STANDARD_PRICE_ID`
+- `STRIPE_TOPUP_PRO_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon
+  applied automatically for eligible first-time subscribers.
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month
+  discount percentage used to display discounted subscription pricing when the
+  coupon is configured.
 
 ### Edge Config
 
@@ -241,7 +264,9 @@ Used for:
 
 ### Promotion / banner configuration
 
-- `NEXT_PUBLIC_PROMO_ENABLED`
+- `NEXT_PUBLIC_PROMO_ENABLED` — enables promo campaign behavior: promo banners, bonus-credit pricing, and promo metadata; does not control announcement banners
+- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` — active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`; only used when `NEXT_PUBLIC_PROMO_ENABLED=true`
+- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` — active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`; works independently of `NEXT_PUBLIC_PROMO_ENABLED`
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
 - `NEXT_PUBLIC_PROMO_TRANSLATIONS`
@@ -258,12 +283,17 @@ Used for:
 
 ## Deployment Notes
 
-### Vercel
+### Docs site (Fumadocs)
 
-- Main app is deployed on Vercel.
-- Preview deployments should receive the minimum required secrets for the flows
-  being tested.
-- Production secrets must be managed in project settings, never committed.
+- The docs site is a Fumadocs (Next.js) app in `apps/docs`, deployed to
+  `docs.sexyvoice.ai` as its own Vercel project (separate from the web app).
+- Set the Vercel project Root Directory to `apps/docs`; the build runs
+  `next build` (which regenerates the OpenAPI reference via
+  `generate-openapi-docs`).
+- `apps/docs/vercel.json` sets an `ignoreCommand` that skips the deploy when the
+  latest commit message contains `skip deploy`, `skip ci`, or `skip docs`.
+- Keep the `docs.sexyvoice.ai` custom domain and the Vercel GitHub App
+  connected to the repository/branch used for docs deployments.
 
 ### Supabase
 
@@ -343,6 +373,91 @@ pnpm check-translations
 pnpm run generate-supabase-types
 ```
 
+## Sentry
+
+### Configuration
+
+- **Org**: `sexyvoiceai`
+- **Project**: `sexyvoice-ai`
+- Sentry is configured in `next.config.js` via `@sentry/nextjs`
+- Client errors are tunneled through `/monitoring` to bypass ad-blockers
+- Source maps are uploaded only in production (`VERCEL_ENV=production`)
+
+### CLI setup
+
+`sentry-cli` authenticates via `~/.sentryclirc` (contains an auth token).
+Verify with:
+
+```bash
+sentry-cli info
+```
+
+### Common commands
+
+List issues:
+
+```bash
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai list
+```
+
+Filter by status:
+
+```bash
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai -s unresolved list
+```
+
+Bulk resolve/mute:
+
+```bash
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai -i <ISSUE_ID> resolve
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai -i <ISSUE_ID> mute
+```
+
+### Fetching event details via the API
+
+`sentry-cli` does not support listing individual events. Use the Sentry REST
+API directly with the auth token from `~/.sentryclirc`:
+
+```bash
+TOKEN=$(grep token ~/.sentryclirc | cut -d= -f2)
+
+# List events for an issue (use the numeric issue ID, not the short ID)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://sentry.io/api/0/organizations/sexyvoiceai/issues/<ISSUE_ID>/events/?full=true&limit=100"
+```
+
+The response is a JSON array of event objects. Useful fields:
+
+- `dateCreated` — event timestamp
+- `tags` — array of `{key, value}` pairs (includes `url`, `browser`,
+  `browser.name`, `os`, `os.name`, `device.family`, `transaction`)
+- `contexts.device` — device family, model, brand
+- `contexts.browser` — browser name and version
+- `contexts.os` — OS name and version
+- `entries` — array containing `breadcrumbs` (with navigation history),
+  `exception` (stack traces), and `request` data
+- `user` — user ID and IP (may be `null` depending on privacy settings)
+
+To extract a summary table from all events, pipe the JSON through a script:
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" \
+  "https://sentry.io/api/0/organizations/sexyvoiceai/issues/<ISSUE_ID>/events/?full=true&limit=100" \
+  | python3 -c "
+import json, sys
+events = json.load(sys.stdin)
+for e in events:
+    tags = {t['key']: t['value'] for t in e.get('tags', [])}
+    print(f\"{e['dateCreated']}  {tags.get('browser', '?')}  {tags.get('os', '?')}  {tags.get('device.family', '?')}  {tags.get('url', '?')}\")
+"
+```
+
+### Finding the numeric issue ID
+
+The Sentry UI uses short IDs like `SEXYVOICE-AI-6C`. The numeric ID is
+visible in the URL when viewing the issue in the Sentry dashboard, or in the
+output of `sentry-cli issues list` (first column).
+
 ## Troubleshooting Checklist
 
 ### OAuth callback/session issues
@@ -376,8 +491,8 @@ Check:
 ### Gemini / voice generation issues
 
 Check:
+
 - `GOOGLE_GENERATIVE_AI_API_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY_SECONDARY`
 - provider quotas
 - request logs
 - R2 upload configuration
@@ -395,7 +510,7 @@ Check:
 
 When environment or deployment behavior changes:
 
-1. Update [`.env.example`](../.env.example)
+1. Update [`apps/web/.env.example`](../apps/web/.env.example)
 2. Update [`README.md`](../README.md)
 3. Update [`AGENTS.md`](../AGENTS.md)
 4. Update this file if the change affects:

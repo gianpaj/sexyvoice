@@ -11,11 +11,13 @@ After reviewing various API specs, including the MiniMax T2A spec alongside Open
 MiniMax uses a `base_resp` object with numeric `status_code` and `status_msg`. This is better than returning just an `error` string. The current plan's `ErrorResponseSchema` should be enhanced:
 
 **Current plan:**
+
 ```json
 { "error": "Invalid request body", "code": "invalid_request" }
 ```
 
 **Recommended (hybrid of MiniMax + OpenAI):**
+
 ```json
 {
   "error": {
@@ -31,19 +33,19 @@ This follows OpenAI's pattern (nested `error` object with `message`, `type`, `pa
 
 **Concrete error codes to define:**
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `invalid_api_key` | 401 | Missing or invalid API key |
-| `api_key_expired` | 403 | API key has expired |
-| `api_key_inactive` | 403 | API key has been revoked |
-| `insufficient_credits` | 402 | Not enough credits |
-| `invalid_request_error` | 400 | General validation failure |
-| `input_too_long` | 400 | Text exceeds character limit |
-| `voice_not_found` | 404 | Voice ID/name doesn't exist |
-| `model_not_found` | 400 | Invalid model name |
-| `content_policy_violation` | 422 | Text flagged by content filter |
-| `rate_limit_exceeded` | 429 | Too many requests |
-| `server_error` | 500 | Internal failure |
+| Code                       | HTTP Status | Description                    |
+| -------------------------- | ----------- | ------------------------------ |
+| `invalid_api_key`          | 401         | Missing or invalid API key     |
+| `api_key_expired`          | 403         | API key has expired            |
+| `api_key_inactive`         | 403         | API key has been revoked       |
+| `insufficient_credits`     | 402         | Not enough credits             |
+| `invalid_request_error`    | 400         | General validation failure     |
+| `input_too_long`           | 400         | Text exceeds character limit   |
+| `voice_not_found`          | 404         | Voice ID/name doesn't exist    |
+| `model_not_found`          | 400         | Invalid model name             |
+| `content_policy_violation` | 422         | Text flagged by content filter |
+| `rate_limit_exceeded`      | 429         | Too many requests              |
+| `server_error`             | 500         | Internal failure               |
 
 #### 2. Usage Tracking in Response
 
@@ -67,6 +69,7 @@ This helps developers track and predict costs. OpenAI similarly returns usage in
 #### 3. OpenAPI 3.1.0 (not 3.0.0)
 
 MiniMax uses OpenAPI 3.1.0 which supports JSON Schema 2020-12 natively. The current plan specifies 3.0.0. Upgrade to **3.1.0** since:
+
 - Better alignment with modern JSON Schema (which Zod schemas map to more naturally)
 - `null` types handled correctly
 - SexyVoice is a new API, so no backwards-compatibility concerns
@@ -82,7 +85,7 @@ examples:
     value:
       model: "gpro"
       input: "Hello, world!"
-      voice: "poe"
+      voice: "kore"
   with_style:
     summary: "Voice generation with emotion"
     value:
@@ -103,8 +106,12 @@ examples:
 Both MiniMax (`speed: [0.5, 2]`) and OpenAI (`speed: [0.25, 4.0]`) support a `speed` parameter. SexyVoice doesn't currently expose this, but the plan's `VoiceGenerationRequestSchema` should include it for future use:
 
 ```ts
-speed: z.number().min(0.5).max(2.0).optional().default(1.0)
-  .describe('Speech speed multiplier. Range: [0.5, 2.0], default: 1.0')
+speed: z.number()
+  .min(0.5)
+  .max(2.0)
+  .optional()
+  .default(1.0)
+  .describe("Speech speed multiplier. Range: [0.5, 2.0], default: 1.0");
 ```
 
 Even if it's not implemented immediately, having it in the schema makes the API forward-compatible. Return a `400` with a clear message if a non-default speed is provided but not yet supported.
@@ -116,6 +123,7 @@ Even if it's not implemented immediately, having it in the schema makes the API 
 #### 6. Binary Audio Streaming Response (Optional Enhancement)
 
 OpenAI returns **raw binary audio** rather than a JSON wrapper with a URL. This is the gold standard for TTS APIs because:
+
 - No base64 overhead (~33% savings)
 - Enables streaming playback
 - Standard HTTP content negotiation
@@ -147,6 +155,7 @@ OpenAI requires only `model`, `input`, `voice`. The current plan matches this. K
 #### 8. Skip Async Task Pattern
 
 MiniMax uses an async `task_id` + polling pattern (`t2a_async_v2`). This adds complexity and is unnecessary for SexyVoice because:
+
 - SexyVoice's text limits are 500-1000 chars (MiniMax supports up to 50,000-100,000)
 - Generation is fast enough for synchronous response
 - The Redis cache makes repeat requests instant
@@ -167,6 +176,7 @@ MiniMax's `pronunciation_dict` is a specialized feature for CJK languages. Not a
 #### 11. Skip Audio Settings (sample_rate, bitrate, channel)
 
 MiniMax exposes `audio_setting` with sample rate, bitrate, and channel configuration. SexyVoice's backend produces fixed-format output:
+
 - Gemini voices: WAV (single format)
 - Replicate voices: MP3 (single format)
 
@@ -180,17 +190,33 @@ Don't expose settings the backend can't fulfill. The `response_format` field in 
 
 ```ts
 export const VoiceGenerationRequestSchema = z.object({
-  model: z.enum(['gpro', 'kokoro']).describe('The voice model to use'),
-  input: z.string().min(1).max(1000)
-    .describe('The text to synthesize (max 1000 chars for gpro, 500 for kokoro)'),
-  voice: z.string().min(1)
-    .describe('The voice name to use (see GET /api/v1/voices for available voices)'),
-  response_format: z.enum(['wav', 'mp3']).optional()
-    .describe('Audio format. Default depends on model: wav for gpro, mp3 for kokoro'),
-  speed: z.number().min(0.5).max(2.0).optional().default(1.0)
-    .describe('Speech speed multiplier. Range: [0.5, 2.0]'),
-  style: z.string().optional()
-    .describe('Emotion/style variant (e.g., "happy", "sad", "whisper"). Available styles vary by voice.')
+  model: z.enum(["gpro", "kokoro"]).describe("The voice model to use"),
+  input: z
+    .string()
+    .min(1)
+    .max(1000)
+    .describe("The text to synthesize (max 1000 chars for gpro, 500 for kokoro)"),
+  voice: z
+    .string()
+    .min(1)
+    .describe("The voice name to use (see GET /api/v1/voices for available voices)"),
+  response_format: z
+    .enum(["wav", "mp3"])
+    .optional()
+    .describe("Audio format. Default depends on model: wav for gpro, mp3 for kokoro"),
+  speed: z
+    .number()
+    .min(0.5)
+    .max(2.0)
+    .optional()
+    .default(1.0)
+    .describe("Speech speed multiplier. Range: [0.5, 2.0]"),
+  style: z
+    .string()
+    .optional()
+    .describe(
+      'Emotion/style variant (e.g., "happy", "sad", "whisper"). Available styles vary by voice.',
+    ),
 });
 ```
 
@@ -198,14 +224,16 @@ export const VoiceGenerationRequestSchema = z.object({
 
 ```ts
 export const VoiceGenerationResponseSchema = z.object({
-  url: z.string().url().describe('URL to the generated audio file'),
-  credits_used: z.number().int().nonnegative().describe('Credits consumed for this generation'),
-  credits_remaining: z.number().int().nonnegative().describe('Remaining credits in account'),
-  cached: z.boolean().describe('Whether result was served from cache'),
-  usage: z.object({
-    input_characters: z.number().int().describe('Number of input characters processed'),
-    model: z.string().describe('Model used for generation'),
-  }).describe('Usage details for billing tracking')
+  url: z.string().url().describe("URL to the generated audio file"),
+  credits_used: z.number().int().nonnegative().describe("Credits consumed for this generation"),
+  credits_remaining: z.number().int().nonnegative().describe("Remaining credits in account"),
+  cached: z.boolean().describe("Whether result was served from cache"),
+  usage: z
+    .object({
+      input_characters: z.number().int().describe("Number of input characters processed"),
+      model: z.string().describe("Model used for generation"),
+    })
+    .describe("Usage details for billing tracking"),
 });
 ```
 
@@ -214,19 +242,24 @@ export const VoiceGenerationResponseSchema = z.object({
 ```ts
 export const ErrorResponseSchema = z.object({
   error: z.object({
-    message: z.string().describe('Human-readable error description'),
-    type: z.enum([
-      'invalid_request_error',
-      'authentication_error', 
-      'permission_error',
-      'not_found_error',
-      'rate_limit_error',
-      'server_error'
-    ]).describe('Error category'),
-    param: z.string().nullable().optional()
-      .describe('The parameter that caused the error, if applicable'),
-    code: z.string().describe('Machine-readable error code')
-  })
+    message: z.string().describe("Human-readable error description"),
+    type: z
+      .enum([
+        "invalid_request_error",
+        "authentication_error",
+        "permission_error",
+        "not_found_error",
+        "rate_limit_error",
+        "server_error",
+      ])
+      .describe("Error category"),
+    param: z
+      .string()
+      .nullable()
+      .optional()
+      .describe("The parameter that caused the error, if applicable"),
+    code: z.string().describe("Machine-readable error code"),
+  }),
 });
 ```
 
@@ -278,18 +311,18 @@ The current plan has a `zodToOpenAPI()` helper that's described as "simplified."
 
 ### Summary of Recommended Plan Changes
 
-| # | Change | Priority | Reason |
-|---|--------|----------|--------|
-| 1 | Structured error response with `type`, `param`, `code` | High | Developer experience, debugging |
-| 2 | Add `usage.input_characters` to response | Medium | Cost prediction for developers |
-| 3 | Upgrade OpenAPI to 3.1.0 | Low | Modern standard, better Zod compatibility |
-| 4 | Multiple request examples in OpenAPI spec | Medium | Better documentation |
-| 5 | Add `speed` parameter (optional, future) | Low | Forward compatibility |
-| 6 | Keep synchronous (skip async task pattern) | High | Simplicity, SexyVoice's text limits don't need it |
-| 7 | Skip voice modification params | High | Don't expose what backend can't do |
-| 8 | Rate limit headers in responses | Medium | Future-proofing |
-| 9 | Add `GET /api/v1/models` endpoint | Medium | Discoverability |
-| 10 | Use `zod-openapi` library | Medium | Reliable schema conversion |
+| #   | Change                                                 | Priority | Reason                                            |
+| --- | ------------------------------------------------------ | -------- | ------------------------------------------------- |
+| 1   | Structured error response with `type`, `param`, `code` | High     | Developer experience, debugging                   |
+| 2   | Add `usage.input_characters` to response               | Medium   | Cost prediction for developers                    |
+| 3   | Upgrade OpenAPI to 3.1.0                               | Low      | Modern standard, better Zod compatibility         |
+| 4   | Multiple request examples in OpenAPI spec              | Medium   | Better documentation                              |
+| 5   | Add `speed` parameter (optional, future)               | Low      | Forward compatibility                             |
+| 6   | Keep synchronous (skip async task pattern)             | High     | Simplicity, SexyVoice's text limits don't need it |
+| 7   | Skip voice modification params                         | High     | Don't expose what backend can't do                |
+| 8   | Rate limit headers in responses                        | Medium   | Future-proofing                                   |
+| 9   | Add `GET /api/v1/models` endpoint                      | Medium   | Discoverability                                   |
+| 10  | Use `zod-openapi` library                              | Medium   | Reliable schema conversion                        |
 
 The current plan is well-structured. These changes refine it by incorporating the best patterns from both OpenAI and MiniMax while avoiding the complexity that doesn't apply to SexyVoice's current capabilities.
 

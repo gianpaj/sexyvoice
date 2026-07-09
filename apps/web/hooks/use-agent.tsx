@@ -1,0 +1,252 @@
+import {
+  useMaybeRoomContext,
+  useVoiceAssistant,
+} from '@livekit/components-react';
+import {
+  type ByteStreamHandler,
+  type Participant,
+  type RemoteParticipant,
+  RoomEvent,
+  type RpcInvocationData,
+  type TrackPublication,
+  type TranscriptionSegment,
+} from 'livekit-client';
+import { useTranslations } from 'next-intl';
+import type React from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
+import { useConnection } from '@/hooks/use-connection';
+import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
+
+interface Transcription {
+  participant?: Participant;
+  publication?: TrackPublication;
+  segment: TranscriptionSegment;
+}
+
+interface GeneratedImage {
+  imageUrl: string;
+  prompt: string;
+  timestamp: number;
+}
+
+interface AgentContextType {
+  agent?: RemoteParticipant;
+  displayTranscriptions: Transcription[];
+  generatedImages: GeneratedImage[];
+}
+
+const AgentContext = createContext<AgentContextType | undefined>(undefined);
+const TOAST_RPC_METHOD = 'pg.toast';
+const ERROR_RPC_METHOD = 'pg.error';
+
+export function AgentProvider({ children }: { children: React.ReactNode }) {
+  const t = useTranslations('call');
+  const room = useMaybeRoomContext();
+  const { shouldConnect, disconnect } = useConnection();
+  const { agent } = useVoiceAssistant();
+  const [rawSegments, setRawSegments] = useState<{
+    [id: string]: Transcription;
+  }>({});
+  const [displayTranscriptions, setDisplayTranscriptions] = useState<
+    Transcription[]
+  >([]);
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
+
+  useEffect(() => {
+    if (!room) {
+      return;
+    }
+    const updateRawSegments = (
+      segments: TranscriptionSegment[],
+      participant?: Participant,
+      publication?: TrackPublication,
+    ) => {
+      setRawSegments((prev) => {
+        const newSegments = { ...prev };
+        for (const segment of segments) {
+          newSegments[segment.id] = { segment, participant, publication };
+        }
+        return newSegments;
+      });
+    };
+    room.on(RoomEvent.TranscriptionReceived, updateRawSegments);
+
+    return () => {
+      room.off(RoomEvent.TranscriptionReceived, updateRawSegments);
+    };
+  }, [room]);
+
+  useEffect(() => {
+    if (!room) {
+      return;
+    }
+    room.unregisterRpcMethod(TOAST_RPC_METHOD);
+    room.unregisterRpcMethod(ERROR_RPC_METHOD);
+
+    room.registerRpcMethod(
+      TOAST_RPC_METHOD,
+      // biome-ignore lint/suspicious/useAwait: fine
+      async (data: RpcInvocationData) => {
+        const { title, description, variant } = JSON.parse(data.payload);
+        console.log(title, description, variant);
+
+        const message = description ? `${title}: ${description}` : title;
+
+        switch (variant) {
+          case 'error':
+            toast.error(message);
+            break;
+          case 'warning':
+            toast.warning(message);
+            break;
+          case 'success':
+            toast.success(message);
+            break;
+          default:
+            toast.info(message);
+        }
+
+        return JSON.stringify({ shown: true });
+      },
+    );
+
+    // Handle agent errors (e.g., active call, insufficient credits)
+    room.registerRpcMethod(
+      ERROR_RPC_METHOD,
+      // biome-ignore lint/suspicious/useAwait: fine
+      async (data: RpcInvocationData) => {
+        const errorData = JSON.parse(data.payload);
+        console.error('Agent error received:', errorData);
+
+        if (errorData.error === 'active_call') {
+          toast.error(t('activeCallError'));
+        } else if (errorData.error === 'insufficient_credits') {
+          toast.error(t('notEnoughCredits', { count: CREDITS_PER_MINUTE }));
+        } else {
+          toast.error(errorData.message || 'An error occurred');
+        }
+
+        disconnect();
+        return JSON.stringify({ handled: true });
+      },
+    );
+
+    return () => {
+      room.unregisterRpcMethod(TOAST_RPC_METHOD);
+      room.unregisterRpcMethod(ERROR_RPC_METHOD);
+    };
+  }, [room, disconnect, t]);
+
+  // Register byte stream handler for images
+  useEffect(() => {
+    if (!(room && shouldConnect)) return;
+
+    const handleByteStream: ByteStreamHandler = async (
+      reader,
+      _participantInfo,
+    ) => {
+      try {
+        console.debug('Byte stream received:', reader.info);
+
+        // Get the prompt from attributes
+        const prompt = reader.info.attributes?.prompt || 'Generated image';
+        const timestamp = reader.info.timestamp || Date.now();
+
+        // Read all chunks from the stream
+        const chunks = await reader.readAll();
+
+        // Create a blob from the chunks
+        const blob = new Blob(chunks as BlobPart[], {
+          type: reader.info.mimeType || 'image/jpeg',
+        });
+        const imageUrl = URL.createObjectURL(blob);
+
+        // Add to generated images
+        setGeneratedImages((prev) => [
+          ...prev,
+          {
+            prompt,
+            imageUrl,
+            timestamp,
+          },
+        ]);
+
+        console.debug('Image received and processed:', prompt);
+      } catch (error) {
+        console.error('Failed to process byte stream:', error);
+      }
+    };
+
+    room.registerByteStreamHandler('grok_image', handleByteStream);
+
+    return () => {
+      room.unregisterByteStreamHandler('grok_image');
+    };
+  }, [room, shouldConnect]);
+
+  useEffect(() => {
+    const sorted = Object.values(rawSegments).sort(
+      (a, b) =>
+        (a.segment.firstReceivedTime ?? 0) - (b.segment.firstReceivedTime ?? 0),
+    );
+    const mergedSorted = sorted.reduce((acc, current) => {
+      if (acc.length === 0) {
+        acc.push(current);
+        return acc;
+      }
+
+      // biome-ignore lint/style/useAtIndex: fine
+      const last = acc[acc.length - 1];
+      if (
+        last.participant === current.participant &&
+        last.participant?.isAgent &&
+        (current.segment.firstReceivedTime ?? 0) -
+          (last.segment.lastReceivedTime ?? 0) <=
+          1000 &&
+        !last.segment.id.startsWith('status-') &&
+        !current.segment.id.startsWith('status-')
+      ) {
+        // Merge segments from the same participant if they're within 1 second of each other
+        acc[acc.length - 1] = {
+          ...current,
+          segment: {
+            ...current.segment,
+            text: `${last.segment.text} ${current.segment.text}`,
+            id: current.segment.id, // Use the id of the latest segment
+            firstReceivedTime: last.segment.firstReceivedTime, // Keep the original start time
+          },
+        };
+        return acc;
+      }
+      acc.push(current);
+      return acc;
+    }, [] as Transcription[]);
+    setDisplayTranscriptions(mergedSorted);
+  }, [rawSegments]);
+
+  useEffect(() => {
+    if (shouldConnect) {
+      setRawSegments({});
+      setDisplayTranscriptions([]);
+      setGeneratedImages([]);
+    }
+  }, [shouldConnect]);
+
+  return (
+    <AgentContext.Provider
+      value={{ displayTranscriptions, agent, generatedImages }}
+    >
+      {children}
+    </AgentContext.Provider>
+  );
+}
+
+export function useAgent() {
+  const context = useContext(AgentContext);
+  if (context === undefined) {
+    throw new Error('useAgent must be used within an AgentProvider');
+  }
+  return context;
+}
