@@ -14,7 +14,6 @@ import { Link } from '@/lib/i18n/navigation';
 // import { PopularAudios } from '@/components/popular-audios';
 
 import { Banner } from '@/components/banner';
-import { DemoCallSection } from '@/components/demo-call/demo-call-section';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -168,8 +167,7 @@ export default async function LandingPage(props: {
                 {dictLanding.hero.subtitle}
               </p>
 
-              <DemoCallSection lang={lang} />
-              <div className="mx-auto flex w-fit flex-col gap-2 pt-8">
+              <div className="mx-auto flex w-fit flex-col gap-2">
                 <Button
                   asChild
                   className="hit-area-4 w-fit self-center"

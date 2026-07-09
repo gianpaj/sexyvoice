@@ -24,7 +24,7 @@ export function DemoWaveform({ frequencyBands, isActive }: DemoWaveformProps) {
   return (
     <div
       aria-hidden="true"
-      className="flex items-center justify-center gap-[3px]"
+      className="flex h-5 items-center justify-center gap-[3px]"
     >
       {Array.from({ length: bandCount }, (_, i) => {
         let height = minHeight;

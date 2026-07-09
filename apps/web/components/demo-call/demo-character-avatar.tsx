@@ -32,17 +32,14 @@ export function DemoCharacterAvatar({
   // Clamp energy to 0–1
   const e = Math.max(0, Math.min(1, energy));
 
-  const ringScale = isSpeaking ? 1 + e * 0.1 : 1;
   const glowOpacity = isSpeaking ? 0.3 + e * 0.5 : 0;
   const glowSpread = isSpeaking ? 4 + Math.round(e * 16) : 0;
 
   return (
     <div className="relative flex flex-col items-center gap-2">
-      {/* Outer ring with gradient + energy-driven scale/glow */}
       <div
-        className={`relative rounded-full bg-gradient-to-tr ${accentGradient} p-[3px]`}
+        className={`relative rounded-full bg-linear-to-tr ${accentGradient} p-[3px]`}
         style={{
-          transform: `scale(${ringScale})`,
           boxShadow: isSpeaking
             ? `0 0 ${glowSpread}px ${glowSpread / 2}px rgba(${glowColor}, ${glowOpacity})`
             : 'none',

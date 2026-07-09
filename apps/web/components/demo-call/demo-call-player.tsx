@@ -1,9 +1,10 @@
 'use client';
 
-import { Pause, Play } from 'lucide-react';
+import { Pause, PhoneCall } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
+import { TranscriptDisplay } from '@/app/[lang]/tools/transcribe/components/transcript-display';
 import { Button } from '@/components/ui/button';
 import { demoCallData } from '@/data/demo-transcripts';
 import { useAudioAnalyser } from '@/hooks/use-audio-analyser';
@@ -19,16 +20,9 @@ const demoCharacters = [
     glowColor: '239, 68, 68',
   },
   {
-    id: 'miyu',
-    name: 'Miyu',
-    image: 'miyu.webp',
-    accent: 'from-blue-400 to-cyan-400',
-    glowColor: '96, 165, 250',
-  },
-  {
-    id: 'luna',
-    name: 'Luna',
-    image: 'luna.webp',
+    id: 'lily',
+    name: 'lily',
+    image: 'lily.webp',
     accent: 'from-amber-400 to-orange-500',
     glowColor: '251, 191, 36',
   },
@@ -205,6 +199,7 @@ export function DemoCallPlayer({
   };
 
   // Cleanup on unmount
+  // biome-ignore lint/correctness/useExhaustiveDependencies: cleanup is handled by stopAudio
   useEffect(
     () => () => {
       stopAudio();
@@ -236,7 +231,7 @@ export function DemoCallPlayer({
               <div
                 className={`relative rounded-full p-[2px] transition-all duration-300 ${
                   isSelected
-                    ? `bg-gradient-to-tr ${char.accent}`
+                    ? `bg-linear-to-tr ${char.accent}`
                     : 'bg-transparent'
                 } group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background`}
               >
@@ -283,6 +278,12 @@ export function DemoCallPlayer({
       {/* Waveform */}
       <DemoWaveform frequencyBands={frequencyBands} isActive={isPlaying} />
 
+      <TranscriptDisplay
+        allowCopy={false}
+        currentTime={currentTime}
+        transcript={charData.transcript}
+      />
+
       {/* Timer */}
       <div
         aria-live="off"
@@ -291,7 +292,7 @@ export function DemoCallPlayer({
         {formatTime(currentTime)} / {formatTime(duration)}
       </div>
 
-      {/* Play / Stop button */}
+      {/* Call / Stop button */}
       <Button
         aria-label={isPlaying ? stopLabel : playLabel}
         className="min-w-[140px] gap-2"
@@ -306,7 +307,7 @@ export function DemoCallPlayer({
           </>
         ) : (
           <>
-            <Play className="size-4" />
+            <PhoneCall className="size-4" />
             {playLabel}
           </>
         )}
