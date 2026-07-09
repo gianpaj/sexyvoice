@@ -97,6 +97,11 @@
       "noCreditCard": "Sin tarjeta de crédito",
       "signIn": "Iniciar Sesión"
     },
+    "demoCall": {
+      "playButton": "Llamar demo",
+      "stopButton": "Detener",
+      "pickCharacter": "Elige un personaje"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voz Naturales",
@@ -109,6 +114,10 @@
       "security": {
         "title": "Seguro y Privado",
         "description": "Tus datos de voz están protegidos con seguridad de nivel empresarial. Control total sobre la privacidad y el uso."
+      },
+      "voiceCalling": {
+        "title": "Llamadas de Voz en Vivo",
+        "description": "Mantén conversaciones telefónicas en tiempo real con personajes de IA — voces naturales, respuestas instantáneas, sin configuración."
       }
     },
     "cta": {
@@ -116,6 +125,18 @@
       "title": "¿Listo para encontrar tu voz?",
       "subtitle": "Únete a miles de creadores que confían en nuestra plataforma para crear voces realistas y llenas de emoción.",
       "action": "Crea tu primera voz"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Habla con Personajes de IA, en Tiempo Real",
+        "subtitle": "Llamadas telefónicas con IA y voces naturales y expresivas.\nElige un personaje y empieza a hablar al instante."
+      },
+      "cta": {
+        "freeCredits": "Comienza con 10,000 créditos gratis",
+        "title": "¿Listo para escuchar una voz cobrar vida?",
+        "subtitle": "Inicia una llamada en vivo con cualquier personaje y vive una conversación natural con IA en tiempo real.",
+        "action": "Iniciar una llamada de voz"
+      }
     },
     "generator": {
       "title": "Pruébalo ahora",
@@ -792,7 +813,10 @@
     "skipToMainContent": "Saltar al contenido principal",
     "descriptionLogin": "Inicia sesión en SexyVoice.ai para acceder a tus proyectos de voz IA, gestionar créditos y generar voz expresiva en múltiples idiomas con clonación avanzada.",
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
+    "titleVoiceCall": "Llamadas de Voz con IA – Habla con Personajes IA en Vivo",
+    "descriptionVoiceCall": "Haz llamadas telefónicas en vivo con IA y tus voces favoritas. Habla en tiempo real con personajes de IA – conversaciones naturales gracias a la tecnología de voz de SexyVoice.ai.",
     "/": "",
+    "/voice-call": "Llamada de Voz",
     "/login": "Iniciar sesión",
     "/signup": "Registrarse con email o Google",
     "/dashboard/call": "Llamar",
@@ -892,7 +916,8 @@
     "copyright": "SexyVoice.ai. Todos los derechos reservados.",
     "audioConverter": "Conversor de Audio Gratuito",
     "transcribe": "Transcripción de Audio Gratuita",
-    "audioJoiner": "Unificador de Audio Gratuito"
+    "audioJoiner": "Unificador de Audio Gratuito",
+    "voiceCalling": "Llamadas de Voz con IA"
   },
   "promos": {
     "halloweenBanner": {

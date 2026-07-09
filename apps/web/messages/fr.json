@@ -97,6 +97,11 @@
       "noCreditCard": "Aucune carte de crédit requise",
       "signIn": "Se connecter"
     },
+    "demoCall": {
+      "playButton": "Appeler la démo",
+      "stopButton": "Arrêter",
+      "pickCharacter": "Choisissez un personnage"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voix naturelles",
@@ -109,6 +114,10 @@
       "security": {
         "title": "Sécurisé et privé",
         "description": "Vos données vocales sont protégées par une sécurité de niveau entreprise. Contrôle total sur votre vie privée, votre profil et votre historique."
+      },
+      "voiceCalling": {
+        "title": "Appels vocaux en direct",
+        "description": "Ayez des conversations téléphoniques en temps réel avec des personnages IA — voix naturelles, réponses instantanées, sans configuration."
       }
     },
     "cta": {
@@ -116,6 +125,18 @@
       "title": "Prêt à trouver votre voix ?",
       "subtitle": "Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour créer des voix réalistes riches en émotions.",
       "action": "Créez votre première voix"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Parlez à des Personnages IA, en Direct",
+        "subtitle": "Appels téléphoniques IA en direct avec des voix naturelles et expressives.\nChoisissez un personnage et commencez à parler instantanément."
+      },
+      "cta": {
+        "freeCredits": "Commencez avec 10 000 crédits gratuits",
+        "title": "Prêt à entendre une voix prendre vie ?",
+        "subtitle": "Démarrez un appel en direct avec n'importe quel personnage et vivez une conversation naturelle avec l'IA en temps réel.",
+        "action": "Démarrer un appel vocal"
+      }
     },
     "generator": {
       "title": "Essayez maintenant",
@@ -792,7 +813,10 @@
     "skipToMainContent": "Aller au contenu principal",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
+    "titleVoiceCall": "Appels Vocaux IA – Parlez en Direct avec des Personnages IA",
+    "descriptionVoiceCall": "Passez des appels téléphoniques IA en direct avec vos voix préférées. Parlez en temps réel avec des personnages IA – des conversations naturelles grâce à la technologie vocale de SexyVoice.ai.",
     "/": "",
+    "/voice-call": "Appel Vocal",
     "/login": "Connexion",
     "/signup": "Inscription avec e-mail ou Google",
     "/dashboard/call": "Appeler",
@@ -892,7 +916,8 @@
     "copyright": "SexyVoice.ai. Tous droits réservés.",
     "audioConverter": "Convertisseur audio gratuit",
     "transcribe": "Transcription audio gratuite",
-    "audioJoiner": "Assembleur audio gratuit"
+    "audioJoiner": "Assembleur audio gratuit",
+    "voiceCalling": "Appels Vocaux IA"
   },
   "promos": {
     "halloweenBanner": {
