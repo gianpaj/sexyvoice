@@ -16,24 +16,28 @@ const demoCharacters = [
     name: 'Ramona',
     image: 'ramona.webp',
     accent: 'from-red-500 to-pink-500',
+    glowColor: '239, 68, 68',
   },
   {
     id: 'miyu',
     name: 'Miyu',
     image: 'lily.webp',
     accent: 'from-blue-400 to-cyan-400',
+    glowColor: '96, 165, 250',
   },
   {
     id: 'luna',
     name: 'Luna',
     image: 'ramona.webp',
     accent: 'from-amber-400 to-orange-500',
+    glowColor: '251, 191, 36',
   },
   {
     id: 'rafal',
     name: 'Rafal',
     image: 'rafal.webp',
     accent: 'from-violet-500 to-fuchsia-500',
+    glowColor: '139, 92, 246',
   },
 ] as const;
 
@@ -270,6 +274,7 @@ export function DemoCallPlayer({
       <DemoCharacterAvatar
         accentGradient={selectedChar.accent}
         energy={avgEnergy}
+        glowColor={selectedChar.glowColor}
         image={selectedChar.image}
         isSpeaking={isPlaying && hasAudioEnergy}
         name={selectedChar.name}

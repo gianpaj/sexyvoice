@@ -5,6 +5,7 @@ import Image from 'next/image';
 interface DemoCharacterAvatarProps {
   accentGradient: string;
   energy: number;
+  glowColor: string;
   image: string;
   isSpeaking: boolean;
   name: string;
@@ -26,6 +27,7 @@ export function DemoCharacterAvatar({
   isSpeaking,
   energy,
   accentGradient,
+  glowColor,
 }: DemoCharacterAvatarProps) {
   // Clamp energy to 0–1
   const e = Math.max(0, Math.min(1, energy));
@@ -42,7 +44,7 @@ export function DemoCharacterAvatar({
         style={{
           transform: `scale(${ringScale})`,
           boxShadow: isSpeaking
-            ? `0 0 ${glowSpread}px ${glowSpread / 2}px rgba(168, 85, 247, ${glowOpacity})`
+            ? `0 0 ${glowSpread}px ${glowSpread / 2}px rgba(${glowColor}, ${glowOpacity})`
             : 'none',
           transition: 'transform 120ms ease-out, box-shadow 120ms ease-out',
         }}
