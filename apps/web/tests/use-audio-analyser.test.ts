@@ -196,8 +196,7 @@ describe('useAudioAnalyser', () => {
 
       expect(result.current.length).toBe(5);
       for (const band of result.current) {
-        expect(band).toBeInstanceOf(Float32Array);
-        expect(band.length).toBeGreaterThan(0);
+        expect(typeof band).toBe('number');
       }
     });
 
@@ -210,10 +209,8 @@ describe('useAudioAnalyser', () => {
       });
 
       for (const band of result.current) {
-        for (let i = 0; i < band.length; i++) {
-          expect(band[i]).toBeGreaterThanOrEqual(0);
-          expect(band[i]).toBeLessThanOrEqual(1);
-        }
+        expect(band).toBeGreaterThanOrEqual(0);
+        expect(band).toBeLessThanOrEqual(1);
       }
     });
 
@@ -382,9 +379,7 @@ describe('useAudioAnalyser', () => {
       });
 
       if (result.current.length > 0) {
-        for (let i = 0; i < result.current[0].length; i++) {
-          expect(result.current[0][i]).toBe(0);
-        }
+        expect(result.current[0]).toBe(0);
       }
     });
 
@@ -405,9 +400,7 @@ describe('useAudioAnalyser', () => {
       });
 
       if (result.current.length > 0) {
-        for (let i = 0; i < result.current[0].length; i++) {
-          expect(result.current[0][i]).toBe(1);
-        }
+        expect(result.current[0]).toBe(1);
       }
     });
 
@@ -428,9 +421,7 @@ describe('useAudioAnalyser', () => {
       });
 
       if (result.current.length > 0) {
-        for (let i = 0; i < result.current[0].length; i++) {
-          expect(result.current[0][i]).toBe(0);
-        }
+        expect(result.current[0]).toBe(0);
       }
     });
 
@@ -451,9 +442,7 @@ describe('useAudioAnalyser', () => {
       });
 
       if (result.current.length > 0) {
-        for (let i = 0; i < result.current[0].length; i++) {
-          expect(result.current[0][i]).toBe(1);
-        }
+        expect(result.current[0]).toBe(1);
       }
     });
 
@@ -474,8 +463,8 @@ describe('useAudioAnalyser', () => {
         await new Promise((resolve) => setTimeout(resolve, 50));
       });
 
-      if (result.current.length > 0 && result.current[0].length > 0) {
-        expect(result.current[0][0]).toBeCloseTo(Math.sqrt(0.5), 4);
+      if (result.current.length > 0) {
+        expect(result.current[0]).toBeCloseTo(Math.sqrt(0.5), 4);
       }
     });
   });

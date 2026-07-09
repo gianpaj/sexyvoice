@@ -1,7 +1,7 @@
 'use client';
 
 interface DemoWaveformProps {
-  frequencyBands: Float32Array[];
+  frequencyBands: number[];
   isActive: boolean;
 }
 
@@ -9,7 +9,7 @@ interface DemoWaveformProps {
  * Frequency-driven visualizer bars powered by `useAudioAnalyser`.
  *
  * Renders one bar per band in `frequencyBands` (typically 5 bars).
- * Each bar's height is mapped from the average value of its Float32Array chunk.
+ * Each bar's height is mapped from the precomputed average band value.
  * Uses inline `style` with CSS transition for smooth interpolation.
  * When `isActive` is false, all bars render at minimum height (4px).
  *
@@ -29,12 +29,8 @@ export function DemoWaveform({ frequencyBands, isActive }: DemoWaveformProps) {
       {Array.from({ length: bandCount }, (_, i) => {
         let height = minHeight;
 
-        if (isActive && frequencyBands[i]) {
-          const band = frequencyBands[i];
-          const avg =
-            band.length > 0
-              ? band.reduce((sum, v) => sum + v, 0) / band.length
-              : 0;
+        if (isActive && frequencyBands[i] !== undefined) {
+          const avg = frequencyBands[i];
           height = Math.max(minHeight, Math.round(avg * maxHeight));
         }
 

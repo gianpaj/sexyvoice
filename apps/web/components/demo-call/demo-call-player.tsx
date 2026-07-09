@@ -73,11 +73,8 @@ export function DemoCallPlayer({
   // Compute average energy from frequency bands for speaking detection
   const avgEnergy =
     frequencyBands.length > 0
-      ? frequencyBands.reduce((sum, band) => {
-          const bandAvg =
-            band.length > 0 ? band.reduce((s, v) => s + v, 0) / band.length : 0;
-          return sum + bandAvg;
-        }, 0) / frequencyBands.length
+      ? frequencyBands.reduce((sum, val) => sum + val, 0) /
+        frequencyBands.length
       : 0;
 
   const hasAudioEnergy = avgEnergy > 0.15;

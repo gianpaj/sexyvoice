@@ -4,22 +4,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Web Audio API hook that analyses an HTMLAudioElement's frequency data
- * and returns multiband Float32Array[] for waveform visualisation and
+ * and returns average normalized band values for waveform visualisation and
  * energy-driven speaking detection.
  *
  * @param audioElement - The audio element to analyse (null = inactive)
  * @param bands - Number of frequency bands to split into (default 5)
  * @param loPass - Low frequency bin index cutoff (default 100)
  * @param hiPass - High frequency bin index cutoff (default 600)
- * @returns Array of Float32Array chunks with normalised 0–1 values per band
+ * @returns Array of normalized 0–1 average values per band
  */
 export function useAudioAnalyser(
   audioElement: HTMLAudioElement | null,
   bands = 5,
   loPass = 100,
   hiPass = 600,
-): Float32Array[] {
-  const [frequencyBands, setFrequencyBands] = useState<Float32Array[]>([]);
+): number[] {
+  const [frequencyBands, setFrequencyBands] = useState<number[]>([]);
 
   // Refs to track Web Audio objects for cleanup
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -112,16 +112,17 @@ export function useAudioAnalyser(
     const sliceLength = hi - lo;
     const bandSize = Math.max(1, Math.floor(sliceLength / bands));
 
-    // rAF loop: sample frequency data and split into bands
+    // rAF loop: sample frequency data and average each band
     const tick = () => {
       analyser.getFloatFrequencyData(dataArray);
 
-      const result: Float32Array[] = [];
+      const result: number[] = new Array(bands);
 
       for (let b = 0; b < bands; b++) {
         const start = lo + b * bandSize;
         const end = Math.min(start + bandSize, hi);
-        const band = new Float32Array(end - start);
+        let sum = 0;
+        const count = end - start;
 
         for (let i = start; i < end; i++) {
           // Raw values are in dB (typically -100 to 0).
@@ -129,10 +130,10 @@ export function useAudioAnalyser(
           const db = dataArray[i];
           const clamped = Math.max(-100, Math.min(-10, db));
           const normalised = (clamped + 100) / 90; // 0–1
-          band[i - start] = Math.sqrt(normalised);
+          sum += Math.sqrt(normalised);
         }
 
-        result.push(band);
+        result[b] = count > 0 ? sum / count : 0;
       }
 
       setFrequencyBands(result);
