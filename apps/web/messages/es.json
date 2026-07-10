@@ -102,6 +102,18 @@
       "stopButton": "Detener",
       "pickCharacter": "Elige un personaje"
     },
+    "demoClone": {
+      "pickSpeaker": "Elige una voz",
+      "pickLanguage": "Elige un idioma",
+      "pickSentence": "Elige una frase",
+      "referenceLabel": "Audio de referencia",
+      "resultLabel": "Voz clonada",
+      "hearResult": "Escuchar el resultado",
+      "playAudio": "Reproducir audio",
+      "preparedExamplesCaption": "Ejemplos preparados. Regístrate para clonar tu propia voz.",
+      "audioError": "No se pudo cargar este audio.",
+      "retry": "Reintentar"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voz Naturales",
@@ -136,6 +148,18 @@
         "title": "¿Listo para escuchar una voz cobrar vida?",
         "subtitle": "Inicia una llamada en vivo con cualquier personaje y vive una conversación natural con IA en tiempo real.",
         "action": "Iniciar una llamada de voz"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Tu voz, en todos los idiomas",
+        "subtitle": "Clona una voz con unos segundos de audio.\nEscúchala hablar con naturalidad en inglés, español e italiano."
+      },
+      "cta": {
+        "freeCredits": "Comienza con 10,000 créditos gratis",
+        "title": "¿Listo para clonar tu propia voz?",
+        "subtitle": "Sube una muestra corta y escúchate hablar en cualquier idioma compatible.",
+        "action": "Clona tu voz"
       }
     },
     "generator": {
@@ -815,6 +839,8 @@
     "descriptionSignup": "Únete a SexyVoice.ai gratis - Recibe 10,000 créditos para crear voces IA realistas con emociones. Texto a voz avanzado y clonación de voz en 24 idiomas.",
     "titleVoiceCall": "Llamadas de Voz con IA – Habla con Personajes IA en Vivo",
     "descriptionVoiceCall": "Haz llamadas telefónicas en vivo con IA y tus voces favoritas. Habla en tiempo real con personajes de IA – conversaciones naturales gracias a la tecnología de voz de SexyVoice.ai.",
+    "titleVoiceCloning": "Clonación de voz con IA",
+    "descriptionVoiceCloning": "Clona una voz con unos segundos de audio y escúchala hablar con naturalidad en inglés, español e italiano.",
     "/": "",
     "/voice-call": "Llamada de Voz",
     "/login": "Iniciar sesión",
@@ -917,7 +943,8 @@
     "audioConverter": "Conversor de Audio Gratuito",
     "transcribe": "Transcripción de Audio Gratuita",
     "audioJoiner": "Unificador de Audio Gratuito",
-    "voiceCalling": "Llamadas de Voz con IA"
+    "voiceCalling": "Llamadas de Voz con IA",
+    "voiceCloning": "Clonación de voz"
   },
   "promos": {
     "halloweenBanner": {

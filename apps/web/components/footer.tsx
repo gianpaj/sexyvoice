@@ -63,6 +63,14 @@ async function Footer({ lang }: { lang: Locale }) {
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
+                  href={`/${lang}/voice-cloning`}
+                >
+                  {dict.voiceCloning}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
                   href={`/${lang}/tools/audio-converter`}
                 >
                   {dict.audioConverter}

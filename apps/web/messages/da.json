@@ -102,6 +102,18 @@
       "stopButton": "Stop",
       "pickCharacter": "Vælg en karakter"
     },
+    "demoClone": {
+      "pickSpeaker": "Vælg en stemme",
+      "pickLanguage": "Vælg et sprog",
+      "pickSentence": "Vælg en sætning",
+      "referenceLabel": "Referencelyd",
+      "resultLabel": "Klonet stemme",
+      "hearResult": "Hør resultatet",
+      "playAudio": "Afspil lyd",
+      "preparedExamplesCaption": "Forberedte eksempler. Tilmeld dig for at klone din egen stemme.",
+      "audioError": "Denne lyd kunne ikke indlæses.",
+      "retry": "Prøv igen"
+    },
     "features": {
       "voiceCloning": {
         "title": "Naturlige stemmer",
@@ -136,6 +148,18 @@
         "title": "Klar til at høre en stemme komme til live?",
         "subtitle": "Start et live opkald med en hvilken som helst karakter og oplev en naturlig AI-samtale i realtid.",
         "action": "Start et stemmeopkald"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Din stemme, på alle sprog",
+        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på engelsk, spansk og italiensk."
+      },
+      "cta": {
+        "freeCredits": "Start med 10.000 gratis kreditter",
+        "title": "Klar til at klone din egen stemme?",
+        "subtitle": "Upload en kort prøve, og hør dig selv tale på ethvert understøttet sprog.",
+        "action": "Klon din stemme"
       }
     },
     "generator": {
@@ -815,6 +839,8 @@
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "titleVoiceCall": "AI-stemmeopkald – Tal live med AI-karakterer",
     "descriptionVoiceCall": "Før live AI-telefonopkald med dine yndlingsstemmer. Tal i realtid med AI-karakterer – naturlige samtaler drevet af SexyVoice.ai's stemmeteknologi.",
+    "titleVoiceCloning": "AI-stemmekloning",
+    "descriptionVoiceCloning": "Klon en stemme ud fra få sekunders lyd, og hør den tale naturligt på engelsk, spansk og italiensk.",
     "/": "",
     "/voice-call": "Stemmeopkald",
     "/login": "Log ind",
@@ -917,7 +943,8 @@
     "audioConverter": "Gratis lydkonverter",
     "transcribe": "Gratis lydtransskription",
     "audioJoiner": "Gratis lydsammenfletning",
-    "voiceCalling": "AI-stemmeopkald"
+    "voiceCalling": "AI-stemmeopkald",
+    "voiceCloning": "Stemmekloning"
   },
   "promos": {
     "halloweenBanner": {
