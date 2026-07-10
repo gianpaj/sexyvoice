@@ -3,6 +3,7 @@
 import { AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 
 import {
   type AudioPlayerControls,
@@ -47,6 +48,16 @@ export function DemoClonePlayer({
 
   const referenceControls = useRef<AudioPlayerControls | null>(null);
   const resultControls = useRef<AudioPlayerControls | null>(null);
+
+  // Warm the HTTP cache for the clip the visitor can play first: the reference
+  // of the speaker they land on (the result sits behind the reveal button).
+  // Keyed off `initialSpeakerId` rather than the live selection so it stays a
+  // one-shot hint and never re-fires as the visitor clicks around. `crossOrigin`
+  // matches the CORS fetch wavesurfer makes, so the bytes are actually reused.
+  ReactDOM.preload(getDemoCloneSpeaker(initialSpeakerId).reference.src, {
+    as: 'audio',
+    crossOrigin: 'anonymous',
+  });
 
   const speaker = getDemoCloneSpeaker(speakerId);
 

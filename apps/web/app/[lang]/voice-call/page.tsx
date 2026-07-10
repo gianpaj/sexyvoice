@@ -6,6 +6,7 @@ import {
   getTranslations,
   setRequestLocale,
 } from 'next-intl/server';
+import ReactDOM from 'react-dom';
 import type { Graph } from 'schema-dts';
 
 import { Banner } from '@/components/banner';
@@ -15,6 +16,7 @@ import { HeaderStatic } from '@/components/header-static';
 import HeroWaveform from '@/components/hero-waveform';
 import { JsonLd } from '@/components/json-ld';
 import { Button } from '@/components/ui/button';
+import { demoCallData } from '@/data/demo-transcripts';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
@@ -77,6 +79,15 @@ export default async function LandingPage(props: Props) {
 
   // Enable static rendering
   setRequestLocale(lang);
+
+  // Warm the HTTP cache for the demo call the visitor is most likely to play:
+  // Ramona is the character selected by default. `crossOrigin` must match the
+  // `<audio crossOrigin="anonymous">` the player creates, or the browser keys
+  // the preload separately and downloads the clip twice.
+  ReactDOM.preload(demoCallData.ramona.audioSrc, {
+    as: 'audio',
+    crossOrigin: 'anonymous',
+  });
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
