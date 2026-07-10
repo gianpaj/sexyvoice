@@ -15,6 +15,7 @@ import {
   type DemoLanguageCode,
   demoCloneSpeakers,
   getDemoCloneSpeaker,
+  getDemoCloneTranscript,
 } from '@/data/demo-clone';
 
 export interface DemoCloneLabels {
@@ -177,7 +178,7 @@ export function DemoClonePlayer({
           data-testid="demo-clone-script"
           lang={speaker.languageCode}
         >
-          &ldquo;{speaker.script}&rdquo;
+          &ldquo;{getDemoCloneTranscript(speaker.script)}&rdquo;
         </blockquote>
 
         {/* Result */}

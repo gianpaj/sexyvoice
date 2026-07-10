@@ -98,6 +98,17 @@ export function getDemoCloneSpeaker(speakerId: string): DemoCloneSpeaker {
   );
 }
 
+/** Matches a single `[energetic]`-style directive plus the space around it. */
+const SCRIPT_DIRECTIVE = /\s*\[[^\]]*\]\s*/g;
+
+/**
+ * Drops the directives the TTS model consumes (e.g. `[energetic]`, `[pause]`),
+ * so the page shows only the words the visitor actually hears.
+ */
+export function getDemoCloneTranscript(script: string): string {
+  return script.replace(SCRIPT_DIRECTIVE, ' ').trim();
+}
+
 export function isDemoLanguageCode(code: string): code is DemoLanguageCode {
   return (DEMO_LANGUAGE_CODES as readonly string[]).includes(code);
 }
