@@ -109,6 +109,7 @@ export function DemoClonePlayer({
               return (
                 <label
                   className="group flex cursor-pointer flex-col items-center gap-1.5"
+                  data-testid={`demo-clone-speaker-${option.id}`}
                   key={option.id}
                 >
                   <input
@@ -195,7 +196,11 @@ export function DemoClonePlayer({
             {languages.map((option) => {
               const isSelected = option.code === languageCode;
               return (
-                <label className="cursor-pointer" key={option.code}>
+                <label
+                  className="cursor-pointer"
+                  data-testid={`demo-clone-language-${option.code}`}
+                  key={option.code}
+                >
                   <input
                     checked={isSelected}
                     className="peer sr-only"
@@ -231,7 +236,11 @@ export function DemoClonePlayer({
             {demoCloneSentences.map((option) => {
               const isSelected = option.id === sentenceId;
               return (
-                <label className="cursor-pointer" key={option.id}>
+                <label
+                  className="cursor-pointer"
+                  data-testid={`demo-clone-sentence-${option.id}`}
+                  key={option.id}
+                >
                   <input
                     checked={isSelected}
                     className="peer sr-only"
