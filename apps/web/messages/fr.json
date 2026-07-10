@@ -104,8 +104,6 @@
     },
     "demoClone": {
       "pickSpeaker": "Choisissez une voix",
-      "pickLanguage": "Choisissez une langue",
-      "pickSentence": "Choisissez une phrase",
       "referenceLabel": "Audio de référence",
       "resultLabel": "Voix clonée",
       "hearResult": "Écouter le résultat",

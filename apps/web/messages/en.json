@@ -104,8 +104,6 @@
     },
     "demoClone": {
       "pickSpeaker": "Pick a voice",
-      "pickLanguage": "Pick a language",
-      "pickSentence": "Pick a sentence",
       "referenceLabel": "Reference audio",
       "resultLabel": "Cloned voice",
       "hearResult": "Hear the result",
@@ -336,9 +334,7 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": [
-          "Everything in Standard, just cheaper"
-        ]
+        "features": ["Everything in Standard, just cheaper"]
       }
     },
     "subscriptionScheduledToCancel": {

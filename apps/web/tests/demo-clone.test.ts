@@ -3,121 +3,92 @@ import { describe, expect, it } from 'vitest';
 import {
   DEMO_FALLBACK_LANGUAGE,
   DEMO_LANGUAGE_CODES,
-  demoCloneClips,
-  demoCloneSentences,
   demoCloneSpeakers,
-  getDemoCloneClip,
-  getDemoCloneClipKey,
+  getDemoCloneSpeaker,
   isDemoLanguageCode,
-  resolveInitialDemoLanguage,
+  resolveInitialDemoSpeakerId,
 } from '@/data/demo-clone';
 
 const WEBSITE_LOCALES = ['en', 'es', 'de', 'da', 'it', 'fr'] as const;
 
-const everyTriple = () =>
-  demoCloneSpeakers.flatMap((speaker) =>
-    DEMO_LANGUAGE_CODES.flatMap((languageCode) =>
-      demoCloneSentences.map((sentence) => ({
-        languageCode,
-        sentenceId: sentence.id,
-        speakerId: speaker.id,
-      })),
-    ),
-  );
-
-describe('demo clone grid', () => {
-  it('resolves a clip for every speaker x language x sentence triple', () => {
-    const missing = everyTriple().filter(
-      ({ speakerId, languageCode, sentenceId }) =>
-        !getDemoCloneClip(speakerId, languageCode, sentenceId),
-    );
-
-    expect(missing).toEqual([]);
-  });
-
-  it('has no orphan clips that no triple can reach', () => {
-    const reachable = new Set(
-      everyTriple().map(({ speakerId, languageCode, sentenceId }) =>
-        getDemoCloneClipKey(speakerId, languageCode, sentenceId),
-      ),
-    );
-
-    const orphans = Object.keys(demoCloneClips).filter(
-      (key) => !reachable.has(key),
-    );
-
-    expect(orphans).toEqual([]);
-  });
-
-  it('has exactly speakers x languages x sentences clips', () => {
-    expect(Object.keys(demoCloneClips)).toHaveLength(
-      demoCloneSpeakers.length *
-        DEMO_LANGUAGE_CODES.length *
-        demoCloneSentences.length,
-    );
-  });
-
-  it('gives every sentence text in every demo language', () => {
-    for (const sentence of demoCloneSentences) {
-      for (const code of DEMO_LANGUAGE_CODES) {
-        expect(sentence.text[code]?.trim()).toBeTruthy();
-      }
+describe('demo clone speakers', () => {
+  it('gives every speaker a reference clip, a result clip, and a script', () => {
+    for (const speaker of demoCloneSpeakers) {
+      expect(speaker.reference.src).toMatch(/^https:\/\//);
+      expect(speaker.result.src).toMatch(/^https:\/\//);
+      expect(speaker.script.trim()).toBeTruthy();
     }
   });
 
-  it('uses unique speaker and sentence ids', () => {
-    const speakerIds = demoCloneSpeakers.map((s) => s.id);
-    const sentenceIds = demoCloneSentences.map((s) => s.id);
-
-    expect(new Set(speakerIds).size).toBe(speakerIds.length);
-    expect(new Set(sentenceIds).size).toBe(sentenceIds.length);
-  });
-
-  it('points every clip and reference at an https URL', () => {
-    const urls = [
-      ...Object.values(demoCloneClips).map((clip) => clip.src),
-      ...demoCloneSpeakers.map((speaker) => speaker.referenceSrc),
-    ];
-
-    for (const url of urls) {
-      expect(url).toMatch(/^https:\/\//);
+  it('gives every clip a positive duration', () => {
+    for (const speaker of demoCloneSpeakers) {
+      expect(speaker.reference.durationSeconds).toBeGreaterThan(0);
+      expect(speaker.result.durationSeconds).toBeGreaterThan(0);
     }
   });
 
-  it('gives every clip and reference a positive duration', () => {
-    const durations = [
-      ...Object.values(demoCloneClips).map((clip) => clip.durationSeconds),
-      ...demoCloneSpeakers.map((speaker) => speaker.referenceDurationSeconds),
-    ];
+  it('uses unique speaker ids', () => {
+    const ids = demoCloneSpeakers.map((speaker) => speaker.id);
 
-    for (const duration of durations) {
-      expect(duration).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('covers each demo language with exactly one speaker', () => {
+    const codes = demoCloneSpeakers.map((speaker) => speaker.languageCode);
+
+    expect([...codes].sort()).toEqual([...DEMO_LANGUAGE_CODES].sort());
+  });
+
+  it('has an English speaker to fall back to', () => {
+    const fallback = demoCloneSpeakers.find(
+      (speaker) => speaker.languageCode === DEMO_FALLBACK_LANGUAGE,
+    );
+
+    expect(fallback).toBeDefined();
+  });
+});
+
+describe('getDemoCloneSpeaker', () => {
+  it('resolves a speaker by id', () => {
+    expect(getDemoCloneSpeaker('heike').id).toBe('heike');
+  });
+
+  it('falls back to the first speaker for an unknown id', () => {
+    expect(getDemoCloneSpeaker('nobody')).toBe(demoCloneSpeakers[0]);
+  });
+});
+
+describe('resolveInitialDemoSpeakerId', () => {
+  it('picks the speaker whose language matches the page locale', () => {
+    expect(resolveInitialDemoSpeakerId('de')).toBe('heike');
+    expect(resolveInitialDemoSpeakerId('en')).toBe('kat');
+  });
+
+  it('falls back to the English speaker for uncovered locales', () => {
+    expect(resolveInitialDemoSpeakerId('es')).toBe('kat');
+    expect(resolveInitialDemoSpeakerId('da')).toBe('kat');
+    expect(resolveInitialDemoSpeakerId('fr')).toBe('kat');
+  });
+
+  it('falls back for an unknown locale', () => {
+    expect(resolveInitialDemoSpeakerId('zz')).toBe('kat');
+  });
+
+  it('resolves every website locale to a real speaker', () => {
+    const ids = new Set(demoCloneSpeakers.map((speaker) => speaker.id));
+
+    for (const locale of WEBSITE_LOCALES) {
+      expect(ids.has(resolveInitialDemoSpeakerId(locale))).toBe(true);
     }
   });
 });
 
-describe('resolveInitialDemoLanguage', () => {
-  it('keeps the page locale when the demo has clips for it', () => {
-    expect(resolveInitialDemoLanguage('it')).toBe('it');
-    expect(resolveInitialDemoLanguage('es')).toBe('es');
-    expect(resolveInitialDemoLanguage('en')).toBe('en');
-  });
-
-  it('falls back to English for website locales outside the grid', () => {
-    expect(resolveInitialDemoLanguage('de')).toBe('en');
-    expect(resolveInitialDemoLanguage('da')).toBe('en');
-    expect(resolveInitialDemoLanguage('fr')).toBe('en');
-  });
-
-  it('resolves every website locale to a language the grid covers', () => {
-    for (const locale of WEBSITE_LOCALES) {
-      const resolved = resolveInitialDemoLanguage(locale);
-
-      expect(isDemoLanguageCode(resolved)).toBe(true);
+describe('isDemoLanguageCode', () => {
+  it('accepts the demo languages and rejects everything else', () => {
+    for (const code of DEMO_LANGUAGE_CODES) {
+      expect(isDemoLanguageCode(code)).toBe(true);
     }
-  });
 
-  it('falls back for an unknown locale', () => {
-    expect(resolveInitialDemoLanguage('zz')).toBe(DEMO_FALLBACK_LANGUAGE);
+    expect(isDemoLanguageCode('zz')).toBe(false);
   });
 });

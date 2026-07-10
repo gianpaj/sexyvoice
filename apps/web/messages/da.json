@@ -104,8 +104,6 @@
     },
     "demoClone": {
       "pickSpeaker": "Vælg en stemme",
-      "pickLanguage": "Vælg et sprog",
-      "pickSentence": "Vælg en sætning",
       "referenceLabel": "Referencelyd",
       "resultLabel": "Klonet stemme",
       "hearResult": "Hør resultatet",
@@ -313,11 +311,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",

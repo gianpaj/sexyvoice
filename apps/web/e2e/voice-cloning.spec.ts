@@ -1,9 +1,9 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The demo widget resolves every selection to a prepared clip; nothing is
- * generated. These tests assert on `data-clip-key` rather than on playback, so
- * they stay valid whether or not the R2 audio objects exist yet.
+ * Each speaker owns its prepared clip; nothing is generated. These tests assert
+ * on `data-speaker-id` rather than on playback, so they stay valid whether or
+ * not the R2 audio objects exist yet.
  */
 
 const RESULT = '[data-testid="demo-clone-result"]';
@@ -20,36 +20,33 @@ test.describe('Voice cloning demo landing page', () => {
     await page.getByTestId('demo-clone-reveal').click();
 
     await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'ava:en:greeting',
+      'data-speaker-id',
+      'kat',
     );
   });
 
-  test('swaps the clip when the selection changes', async ({ page }) => {
+  test('swaps the clip and the script when the speaker changes', async ({
+    page,
+  }) => {
     await page.goto('/en/voice-cloning');
     await page.getByTestId('demo-clone-reveal').click();
 
     await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'ava:en:greeting',
+      'data-speaker-id',
+      'kat',
+    );
+    await expect(page.getByTestId('demo-clone-script')).toContainText(
+      'Downtown Drugstore',
     );
 
-    await page.getByTestId('demo-clone-language-es').click();
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'ava:es:greeting',
-    );
+    await page.getByTestId('demo-clone-speaker-heike').click();
 
-    await page.getByTestId('demo-clone-speaker-leo').click();
     await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'leo:es:greeting',
+      'data-speaker-id',
+      'heike',
     );
-
-    await page.getByTestId('demo-clone-sentence-invitation').click();
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'leo:es:invitation',
+    await expect(page.getByTestId('demo-clone-script')).toContainText(
+      'Der Kasse gleich rechts',
     );
   });
 
@@ -59,41 +56,41 @@ test.describe('Voice cloning demo landing page', () => {
     const reveal = page.getByTestId('demo-clone-reveal');
     await expect(reveal).toBeVisible();
 
-    await page.getByTestId('demo-clone-language-it').click();
+    await page.getByTestId('demo-clone-speaker-heike').click();
     await expect(reveal).toBeVisible();
 
     await reveal.click();
     await expect(reveal).toHaveCount(0);
     await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'ava:it:greeting',
+      'data-speaker-id',
+      'heike',
     );
   });
 
-  test('pre-selects the page locale when the demo covers it', async ({
-    page,
-  }) => {
-    await page.goto('/it/voice-cloning');
-
-    await expect(
-      page.locator('input[name="demo-clone-language"][value="it"]'),
-    ).toBeChecked();
-
-    await page.getByTestId('demo-clone-reveal').click();
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-clip-key',
-      'ava:it:greeting',
-    );
-  });
-
-  test('falls back to English for a locale the demo does not cover', async ({
+  test('pre-selects the speaker whose language the page locale matches', async ({
     page,
   }) => {
     await page.goto('/de/voice-cloning');
 
     await expect(
-      page.locator('input[name="demo-clone-language"][value="en"]'),
+      page.locator('input[name="demo-clone-speaker"][value="heike"]'),
     ).toBeChecked();
+  });
+
+  test('falls back to the English speaker for an uncovered locale', async ({
+    page,
+  }) => {
+    await page.goto('/fr/voice-cloning');
+
+    await expect(
+      page.locator('input[name="demo-clone-speaker"][value="kat"]'),
+    ).toBeChecked();
+  });
+
+  test('never shows the raw TTS directives', async ({ page }) => {
+    await page.goto('/en/voice-cloning');
+
+    await expect(page.getByTestId('demo-clone-script')).not.toContainText('[');
   });
 
   test('never offers to generate or upload', async ({ page }) => {

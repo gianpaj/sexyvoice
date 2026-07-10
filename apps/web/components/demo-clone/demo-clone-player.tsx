@@ -2,7 +2,7 @@
 
 import { AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import {
   type AudioPlayerControls,
@@ -12,17 +12,13 @@ import { AudioProvider } from '@/components/audio-provider';
 import { Button } from '@/components/ui/button';
 import {
   type DemoLanguageCode,
-  demoCloneSentences,
   demoCloneSpeakers,
-  getDemoCloneClip,
-  getDemoCloneClipKey,
+  getDemoCloneSpeaker,
 } from '@/data/demo-clone';
 
 export interface DemoCloneLabels {
   audioError: string;
   hearResult: string;
-  pickLanguage: string;
-  pickSentence: string;
   pickSpeaker: string;
   playAudio: string;
   preparedExamplesCaption: string;
@@ -31,26 +27,19 @@ export interface DemoCloneLabels {
   retry: string;
 }
 
-export interface DemoCloneLanguageOption {
-  code: DemoLanguageCode;
-  label: string;
-}
-
 interface DemoClonePlayerProps {
-  initialLanguageCode: DemoLanguageCode;
+  initialSpeakerId: string;
   labels: DemoCloneLabels;
-  languages: readonly DemoCloneLanguageOption[];
+  /** Localized language names, keyed by the code each speaker is tagged with. */
+  languageLabels: Record<DemoLanguageCode, string>;
 }
 
 export function DemoClonePlayer({
-  initialLanguageCode,
+  initialSpeakerId,
   labels,
-  languages,
+  languageLabels,
 }: DemoClonePlayerProps) {
-  const [speakerId, setSpeakerId] = useState(demoCloneSpeakers[0].id);
-  const [languageCode, setLanguageCode] =
-    useState<DemoLanguageCode>(initialLanguageCode);
-  const [sentenceId, setSentenceId] = useState(demoCloneSentences[0].id);
+  const [speakerId, setSpeakerId] = useState(initialSpeakerId);
   const [resultRevealed, setResultRevealed] = useState(false);
   const [hasAudioError, setHasAudioError] = useState(false);
   // Bumped to remount the players, forcing wavesurfer to refetch after a retry.
@@ -59,35 +48,19 @@ export function DemoClonePlayer({
   const referenceControls = useRef<AudioPlayerControls | null>(null);
   const resultControls = useRef<AudioPlayerControls | null>(null);
 
-  const speaker =
-    demoCloneSpeakers.find((s) => s.id === speakerId) ?? demoCloneSpeakers[0];
-
-  const clip = getDemoCloneClip(speakerId, languageCode, sentenceId);
-  const clipKey = getDemoCloneClipKey(speakerId, languageCode, sentenceId);
-
-  // The grid-totality test guarantees `clip` resolves for every reachable
-  // triple. Retaining the last good clip means that if a speaker or language is
-  // ever added without its audio, the widget degrades to a stale clip plus an
-  // inline error rather than a blank player.
-  const [lastGoodClip, setLastGoodClip] = useState(clip);
-  useEffect(() => {
-    if (clip) {
-      setLastGoodClip(clip);
-    }
-  }, [clip]);
-  const activeClip = clip ?? lastGoodClip;
+  const speaker = getDemoCloneSpeaker(speakerId);
 
   const stopResult = () => resultControls.current?.stop();
   const stopReference = () => referenceControls.current?.stop();
 
-  // Changing any selection pauses playback; the clip swaps in place. Handled
-  // here rather than in an effect because the reference player only remounts on
-  // a speaker change, so a language or sentence change would otherwise leave it
-  // playing.
-  const resetPlayback = () => {
+  // Switching speakers stops playback. Handled here rather than in an effect
+  // because both players remount on the speaker change anyway; the stop calls
+  // silence the outgoing audio before React tears the players down.
+  const handleSpeakerChange = (nextSpeakerId: string) => {
     stopReference();
     stopResult();
     setHasAudioError(false);
+    setSpeakerId(nextSpeakerId);
   };
 
   const handleRetry = () => {
@@ -100,7 +73,7 @@ export function DemoClonePlayer({
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-8">
         {/* Speaker picker */}
         <fieldset className="flex flex-col items-center gap-3 border-none p-0">
-          <legend className="mb-2 text-center text-muted-foreground text-sm">
+          <legend className="mb-2 w-full text-center text-muted-foreground text-sm">
             {labels.pickSpeaker}
           </legend>
           <div className="flex items-center justify-center gap-6">
@@ -116,10 +89,7 @@ export function DemoClonePlayer({
                     checked={isSelected}
                     className="peer sr-only"
                     name="demo-clone-speaker"
-                    onChange={() => {
-                      setSpeakerId(option.id);
-                      resetPlayback();
-                    }}
+                    onChange={() => handleSpeakerChange(option.id)}
                     type="radio"
                     value={option.id}
                   />
@@ -161,6 +131,9 @@ export function DemoClonePlayer({
                   >
                     {option.name}
                   </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {languageLabels[option.languageCode]}
+                  </span>
                 </label>
               );
             })}
@@ -168,7 +141,7 @@ export function DemoClonePlayer({
         </fieldset>
 
         {/* Reference clip */}
-        <div className="flex w-full flex-col items-center gap-2 rounded-lg border bg-muted/30 p-4">
+        <div className="flex w-fit flex-col items-center gap-2 rounded-lg border bg-muted/30 p-4">
           <p className="text-muted-foreground text-sm">
             {labels.referenceLabel}
           </p>
@@ -182,122 +155,48 @@ export function DemoClonePlayer({
             playAudioTitle={labels.playAudio}
             progressColor="#8b5cf6"
             showWaveform
-            url={speaker.referenceSrc}
+            url={speaker.reference.src}
             waveColor="#888888"
           />
         </div>
 
-        {/* Language picker */}
-        <fieldset className="w-full border-none p-0">
-          <legend className="mb-2 text-center text-muted-foreground text-sm">
-            {labels.pickLanguage}
-          </legend>
-          <div className="flex items-center justify-center gap-2">
-            {languages.map((option) => {
-              const isSelected = option.code === languageCode;
-              return (
-                <label
-                  className="cursor-pointer"
-                  data-testid={`demo-clone-language-${option.code}`}
-                  key={option.code}
-                >
-                  <input
-                    checked={isSelected}
-                    className="peer sr-only"
-                    name="demo-clone-language"
-                    onChange={() => {
-                      setLanguageCode(option.code);
-                      resetPlayback();
-                    }}
-                    type="radio"
-                    value={option.code}
-                  />
-                  <span
-                    className={`block rounded-full border px-4 py-1.5 text-sm transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-ring ${
-                      isSelected
-                        ? 'border-transparent bg-blue-600 text-white'
-                        : 'border-input text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    {option.label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        {/* Sentence picker */}
-        <fieldset className="w-full border-none p-0">
-          <legend className="mb-2 text-center text-muted-foreground text-sm">
-            {labels.pickSentence}
-          </legend>
-          <div className="flex flex-col gap-2">
-            {demoCloneSentences.map((option) => {
-              const isSelected = option.id === sentenceId;
-              return (
-                <label
-                  className="cursor-pointer"
-                  data-testid={`demo-clone-sentence-${option.id}`}
-                  key={option.id}
-                >
-                  <input
-                    checked={isSelected}
-                    className="peer sr-only"
-                    name="demo-clone-sentence"
-                    onChange={() => {
-                      setSentenceId(option.id);
-                      resetPlayback();
-                    }}
-                    type="radio"
-                    value={option.id}
-                  />
-                  <span
-                    className={`block rounded-lg border p-3 text-left text-sm transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-ring ${
-                      isSelected
-                        ? 'border-blue-600 bg-blue-600/10 text-foreground'
-                        : 'border-input text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    &ldquo;{option.text[languageCode]}&rdquo;
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
+        {/* Script the cloned voice speaks */}
+        <blockquote
+          className="w-full rounded-lg border border-input p-3 text-left text-muted-foreground text-sm"
+          data-testid="demo-clone-script"
+          lang={speaker.languageCode}
+        >
+          &ldquo;{speaker.script}&rdquo;
+        </blockquote>
 
         {/* Result */}
         {resultRevealed ? (
           <div
-            className="flex w-full flex-col items-center gap-2 rounded-lg border bg-muted/30 p-4"
-            data-clip-key={clipKey}
+            className="flex w-fit flex-col items-center gap-2 rounded-lg border bg-muted/30 p-4"
+            data-speaker-id={speaker.id}
             data-testid="demo-clone-result"
           >
             <p className="text-muted-foreground text-sm">
               {labels.resultLabel}
             </p>
-            {activeClip && (
-              <AudioPlayerWithContext
-                key={`result-${clipKey}-${retryNonce}`}
-                onControlsReady={(controls) => {
-                  resultControls.current = controls;
-                }}
-                onError={() => setHasAudioError(true)}
-                onPlaybackStart={stopReference}
-                playAudioTitle={labels.playAudio}
-                progressColor="#8b5cf6"
-                showWaveform
-                url={activeClip.src}
-                waveColor="#888888"
-              />
-            )}
+            <AudioPlayerWithContext
+              key={`result-${speaker.id}-${retryNonce}`}
+              onControlsReady={(controls) => {
+                resultControls.current = controls;
+              }}
+              onError={() => setHasAudioError(true)}
+              onPlaybackStart={stopReference}
+              playAudioTitle={labels.playAudio}
+              progressColor="#8b5cf6"
+              showWaveform
+              url={speaker.result.src}
+              waveColor="#888888"
+            />
           </div>
         ) : (
           <Button
             className="hit-area-4 w-full bg-blue-600 hover:bg-blue-700"
             data-testid="demo-clone-reveal"
-            disabled={!clip}
             effect="ringHover"
             onClick={() => setResultRevealed(true)}
             size="lg"
