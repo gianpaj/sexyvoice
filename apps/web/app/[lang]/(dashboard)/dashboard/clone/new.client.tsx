@@ -37,6 +37,7 @@ import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { CloneAudioInput } from './clone-audio-input';
 import { CloneConsentFields } from './clone-consent-fields';
@@ -291,9 +292,7 @@ function NewVoiceClientInner({
       value: SUPPORTED_LOCALE_CODES[code] || code,
       name: label,
     }));
-    const current = merged.find((l) => l.code === lang);
-    const rest = merged.filter((l) => l.code !== lang);
-    return current ? [current, ...rest] : merged;
+    return sortByPageLocale(merged, lang);
   })();
 
   const onFilesAdded = useCallback(() => {

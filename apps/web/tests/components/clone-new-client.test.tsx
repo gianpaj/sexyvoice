@@ -7,14 +7,21 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
+import type { Locale } from '@/lib/i18n/i18n-config';
 
-const { fetchMock, mockEnsureLoaded, mockToastError, mockToastSuccess } =
-  vi.hoisted(() => ({
-    fetchMock: vi.fn(),
-    mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
-    mockToastError: vi.fn(),
-    mockToastSuccess: vi.fn(),
-  }));
+const {
+  fetchMock,
+  mockEnsureLoaded,
+  mockLanguageSelect,
+  mockToastError,
+  mockToastSuccess,
+} = vi.hoisted(() => ({
+  fetchMock: vi.fn(),
+  mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
+  mockLanguageSelect: vi.fn(),
+  mockToastError: vi.fn(),
+  mockToastSuccess: vi.fn(),
+}));
 
 const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
   type: 'audio/wav',
@@ -26,6 +33,15 @@ vi.mock('@/components/audio-provider', () => ({
 
 vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/clone-sample-card', () => ({
   default: () => <div data-testid="clone-sample-card" />,
+}));
+
+// Stubbed so the locale ordering computed by new.client.tsx can be asserted on
+// directly, without opening a Radix Select in jsdom.
+vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/clone-language-select', () => ({
+  CloneLanguageSelect: (props: { supportedLocales: { code: string }[] }) => {
+    mockLanguageSelect(props);
+    return <div data-testid="clone-language-select" />;
+  },
 }));
 
 vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
@@ -205,7 +221,7 @@ const dict = {
 const renderClone = (
   props: {
     hasEnoughCredits?: boolean;
-    lang?: 'en';
+    lang?: Locale;
     userHasPaid?: boolean;
   } = {},
 ) =>
@@ -218,6 +234,13 @@ const renderClone = (
       />
     </NextIntlClientProvider>,
   );
+
+const renderedLocaleCodes = () => {
+  const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+    supportedLocales: { code: string }[];
+  };
+  return lastCall.supportedLocales.map((locale) => locale.code);
+};
 
 describe('NewVoiceClient', () => {
   beforeEach(() => {
@@ -238,6 +261,31 @@ describe('NewVoiceClient', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('lists the page locale first in the language select', () => {
+    renderClone({ lang: 'it' });
+
+    expect(renderedLocaleCodes()[0]).toBe('it');
+  });
+
+  it('keeps every supported locale when the page locale is hoisted', () => {
+    renderClone({ lang: 'it' });
+
+    const codes = renderedLocaleCodes();
+    expect(codes).toHaveLength(new Set(codes).size);
+    expect(codes).toContain('en');
+    expect(codes).toContain('es');
+  });
+
+  it('hoists each website locale in turn', () => {
+    for (const lang of ['en', 'es', 'de', 'da', 'it', 'fr'] as const) {
+      mockLanguageSelect.mockClear();
+      const { unmount } = renderClone({ lang });
+
+      expect(renderedLocaleCodes()[0]).toBe(lang);
+      unmount();
+    }
   });
 
   it('renders reference audio enhancement unchecked by default', () => {
