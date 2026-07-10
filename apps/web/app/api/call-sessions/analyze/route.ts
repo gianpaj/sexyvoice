@@ -9,6 +9,7 @@ import {
   MIN_ANALYSIS_CALL_DURATION_SECONDS,
   toAnalysisRow,
 } from '@/lib/ai/analyze-call';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 // Grok structured generation can take several seconds; the default Node runtime
@@ -37,14 +38,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     id = typeof body?.id === 'string' ? body.id : undefined;
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    return APIErrorResponse('Invalid JSON body', 400);
   }
 
   if (!id) {
-    return NextResponse.json(
-      { error: 'Missing call session id' },
-      { status: 400 },
-    );
+    return APIErrorResponse('Missing call session id', 400);
   }
 
   const supabase = createAdminClient();
@@ -59,17 +57,11 @@ export async function POST(request: NextRequest) {
 
   if (selectError) {
     console.error('Error fetching call session:', selectError);
-    return NextResponse.json(
-      { error: 'Failed to fetch call session' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch call session', 500);
   }
 
   if (!session) {
-    return NextResponse.json(
-      { error: 'Call session not found' },
-      { status: 404 },
-    );
+    return APIErrorResponse('Call session not found', 404);
   }
 
   // Idempotency / sanity guards. Webhooks and the backfill script can both fire,
@@ -89,10 +81,7 @@ export async function POST(request: NextRequest) {
 
   if (countError) {
     console.error('Error checking existing analysis:', countError);
-    return NextResponse.json(
-      { error: 'Failed to check existing analysis' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to check existing analysis', 500);
   }
 
   if ((existing ?? 0) > 0) {
@@ -125,9 +114,6 @@ export async function POST(request: NextRequest) {
     // Don't persist an analysis row on failure: with the "row exists" idempotency
     // check above, that would block all retries. Leaving no row lets the next
     // webhook fire or the backfill script reprocess this session.
-    return NextResponse.json(
-      { error: 'Failed to analyze call' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to analyze call', 500);
   }
 }

@@ -6,7 +6,7 @@ import type { ConfigurationFormFieldProps } from './configuration-form.schema';
 // import { MaxOutputTokensSelector } from "./max-output-tokens-selector";
 // import { ModelSelector } from "./model-selector";
 
-export function SessionConfig({ form }: ConfigurationFormFieldProps) {
+export function SessionConfig(_props: ConfigurationFormFieldProps) {
   return (
     <div className="w-1/3">
       {/*<ModelSelector form={form} />*/}

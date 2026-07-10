@@ -166,6 +166,7 @@ interface ParseSseStreamCallbacks {
   onError: (event: SseErrorEvent) => void;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: SSE parser dispatches over buffered event frames with partial-chunk handling
 async function parseSseStream(
   response: Response,
   callbacks: ParseSseStreamCallbacks,
@@ -264,6 +265,7 @@ function handleGenerateVoiceError(t: GenerateTranslator, error: unknown) {
   toast.error(t('error'));
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: top-level generator component wires together streaming, split-mode, estimation, and playback state
 export function AudioGenerator({
   hasEnoughCredits,
   isPaidUser,
@@ -569,7 +571,7 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(t('success'));
-  }, [requestGenerateVoice, selectedVoice, text]);
+  }, [requestGenerateVoice, selectedVoice, t, text]);
 
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
@@ -684,6 +686,7 @@ export function AudioGenerator({
     selectedVoice,
     showGenerationProgressToast,
     splitSegments,
+    t,
   ]);
 
   const handleGenerate = useCallback(async () => {
@@ -727,6 +730,7 @@ export function AudioGenerator({
     selectedVoice,
     shouldUseSplitMode,
     splitSegmentTexts.length,
+    t,
   ]);
 
   const handleCancel = useCallback(() => {
@@ -803,6 +807,7 @@ export function AudioGenerator({
       selectedVoice,
       showGenerationProgressToast,
       splitSegments,
+      t,
     ],
   );
 
@@ -1045,7 +1050,7 @@ export function AudioGenerator({
 
       return value;
     },
-    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice],
+    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice, t],
   );
 
   const handleEstimateCredits = async () => {

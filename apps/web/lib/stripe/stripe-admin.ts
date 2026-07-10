@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/nextjs';
+import { captureException, captureMessage, logger } from '@sentry/nextjs';
 import Stripe from 'stripe';
 
 const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
@@ -13,8 +13,6 @@ const REAL_SUBSCRIPTION_STATUSES = new Set<Stripe.Subscription.Status>([
 import { type CustomerData, setCustomerData } from '../redis/queries';
 import { getUserIdByStripeCustomerId } from '../supabase/queries';
 import { createClient } from '../supabase/server';
-
-const { logger, captureException } = Sentry;
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('STRIPE_SECRET_KEY is not set');
@@ -58,7 +56,7 @@ export async function createOrRetrieveCustomer(
         await stripe.customers.update(customer.id, {
           metadata: { ...metadata, supabaseUUID: userId },
         });
-        Sentry.captureMessage(
+        captureMessage(
           `Updated metadata for Stripe customer ${customer.id} to link to Supabase user ${userId}.`,
           {
             level: 'info',
@@ -95,7 +93,7 @@ export async function createOrRetrieveCustomer(
       if (customer && 'deleted' in customer && customer.deleted) {
         const error = new Error(`Stripe customer ${customerId} is deleted.`);
         console.error(`[STRIPE ADMIN] ${error.message}`);
-        Sentry.captureMessage(error.message, {
+        captureMessage(error.message, {
           level: 'warning',
           user: { id: userId, email },
           extra: { customerId },

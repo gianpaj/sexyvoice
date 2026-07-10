@@ -72,11 +72,13 @@ export function Banner({
       return cookieValues.every((cookieValue) => !cookieValue);
     };
 
-    resolveVisibility().then((visible) => {
-      if (!isCancelled) {
-        setIsVisible(visible);
-      }
-    });
+    resolveVisibility()
+      .then((visible) => {
+        if (!isCancelled) {
+          setIsVisible(visible);
+        }
+      })
+      .catch(() => undefined);
 
     return () => {
       isCancelled = true;

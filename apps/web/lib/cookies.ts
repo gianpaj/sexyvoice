@@ -6,15 +6,6 @@
  * to document.cookie for broader browser compatibility.
  */
 
-interface CookieOptions extends Omit<CookieInit, 'expires'> {
-  expires?: number | Date;
-  maxAge?: number;
-  name: string;
-  path?: string;
-  sameSite?: 'strict' | 'lax' | 'none';
-  value: string;
-}
-
 type WindowWithCookieStore = Window & { cookieStore: CookieStore };
 
 /**
@@ -32,46 +23,6 @@ function getCookieStore(): CookieStore | null {
     return (window as WindowWithCookieStore).cookieStore;
   }
   return null;
-}
-
-/**
- * Build a cookie string for document.cookie
- */
-function buildCookieString(options: CookieOptions): string {
-  const {
-    name,
-    value,
-    expires,
-    maxAge,
-    path = '/',
-    sameSite = 'lax',
-  } = options;
-
-  const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value)}`];
-
-  if (expires) {
-    const expiresDate = expires instanceof Date ? expires : new Date(expires);
-    parts.push(`expires=${expiresDate.toUTCString()}`);
-  }
-
-  if (maxAge !== undefined) {
-    parts.push(`max-age=${maxAge}`);
-  }
-
-  parts.push(`path=${path}`);
-  parts.push(`samesite=${sameSite}`);
-
-  return parts.join('; ');
-}
-
-/**
- * Set cookie using document.cookie (fallback)
- */
-function setDocumentCookie(cookieString: string): void {
-  if (typeof document !== 'undefined') {
-    // biome-ignore lint/suspicious/noDocumentCookie: Fallback for browsers without Cookie Store API
-    document.cookie = cookieString;
-  }
 }
 
 /**

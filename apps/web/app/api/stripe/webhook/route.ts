@@ -1,4 +1,4 @@
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import type Stripe from 'stripe';
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     await doEventProcessing();
   } catch (error) {
     console.error('[STRIPE HOOK] Error processing event', error);
-    Sentry.captureException(error, {
+    captureException(error, {
       tags: {
         section: 'stripe_webhook',
         event_type: 'processing_error',
@@ -104,7 +104,7 @@ async function processEvent(event: Stripe.Event) {
     }
   } catch (error) {
     console.error(`[STRIPE HOOK] Error processing event ${event.type}:`, error);
-    Sentry.captureException(error, {
+    captureException(error, {
       tags: {
         section: 'stripe_webhook',
         event_type: event.type,
@@ -179,7 +179,7 @@ async function handleCheckoutSessionCompleted(
           '[STRIPE HOOK] Missing metadata for topup transaction',
           extra,
         );
-        Sentry.captureException(error, {
+        captureException(error, {
           tags: {
             section: 'stripe_webhook',
             event_type: 'checkout_session_completed',
@@ -219,7 +219,7 @@ async function handleCheckoutSessionCompleted(
           '[STRIPE HOOK] Missing customer or subscription ID in subscription checkout',
           { customerId, subscriptionId },
         );
-        Sentry.captureException(error, {
+        captureException(error, {
           tags: {
             section: 'stripe_webhook',
             event_type: 'checkout_session_completed',
@@ -241,7 +241,7 @@ async function handleCheckoutSessionCompleted(
           `User not found with stripe_id: "${customerId}"`,
         );
         console.error(`User not found with stripe_id: "${customerId}"`);
-        Sentry.captureException(error, {
+        captureException(error, {
           tags: {
             section: 'stripe_webhook',
             event_type: 'checkout_session_completed',
@@ -330,7 +330,7 @@ async function handleCheckoutSessionCompleted(
       '[STRIPE HOOK] Error in handleCheckoutSessionCompleted:',
       extra,
     );
-    Sentry.captureException(error, {
+    captureException(error, {
       tags: {
         section: 'stripe_webhook',
         event_type: 'checkout_session_completed',
@@ -372,7 +372,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     if (!userId) {
       const error = new Error(`User not found with stripe_id: "${customerId}"`);
       console.error(`User not found with stripe_id: "${customerId}"`);
-      Sentry.captureException(error, {
+      captureException(error, {
         tags: {
           section: 'stripe_webhook',
           event_type: 'invoice_payment_succeeded',
@@ -447,7 +447,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       '[STRIPE HOOK] Error in handleInvoicePaymentSucceeded:',
       error,
     );
-    Sentry.captureException(error, {
+    captureException(error, {
       tags: {
         section: 'stripe_webhook',
         event_type: 'invoice_payment_succeeded',
@@ -513,7 +513,7 @@ export async function syncStripeDataToKV(customerId: string) {
     return subData;
   } catch (error) {
     console.error('[STRIPE HOOK] Error in syncStripeDataToKV:', error);
-    Sentry.captureException(error, {
+    captureException(error, {
       tags: {
         section: 'stripe_webhook',
         event_type: 'sync_stripe_data',

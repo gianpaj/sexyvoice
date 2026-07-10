@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
-import PulsatingDots from '@/components/PulsatingDots';
+import PulsatingDots from '@/components/pulsating-dots';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

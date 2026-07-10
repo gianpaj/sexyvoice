@@ -195,7 +195,7 @@ export function ConfigurationForm({
 
     // Set a new timeout to perform the update after 500ms of inactivity
     debounceTimeoutRef.current = setTimeout(() => {
-      updateConfig();
+      updateConfig().catch(() => undefined);
     }, 500); // Adjust delay as needed
   }, [updateConfig]);
 

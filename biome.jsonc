@@ -23,6 +23,15 @@
       "!**/dist",
       "!**/build",
       "!apps/web/components/ui",
+      // Vendored third-party code kept close to upstream (Tiptap UI templates
+      // and the react-textarea-autosize port). Linting these would force us to
+      // diverge from upstream for no product benefit.
+      "!apps/web/components/tiptap",
+      "!apps/web/hooks/tiptap",
+      "!apps/web/lib/react-textarea-autosize",
+      // Large generated data file (disposable-email deny list) that exceeds
+      // Biome's max processed file size; it is data, not source.
+      "!apps/web/lib/disposable-email/deny-domains.json",
       "!apps/web/app/globals.css"
     ]
   },

@@ -61,7 +61,7 @@ async function cleanupTempFiles(ffmpeg: FFmpeg, tempFiles: string[]) {
   for (const fileName of tempFiles) {
     try {
       await ffmpeg.deleteFile(fileName);
-    } catch (_err) {
+    } catch {
       // best-effort cleanup for temp files
     }
   }

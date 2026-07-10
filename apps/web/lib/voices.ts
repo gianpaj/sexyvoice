@@ -34,14 +34,14 @@ export const MODEL_COLORS: Record<VoiceModel, string> = {
 };
 
 /** Minimal shape expected by VoiceSelect — a subset of Tables<'voices'>. */
-export type Voice = {
-  id: string;
-  name: string;
+export interface Voice {
   description: string;
-  model: VoiceModel;
   gender: VoiceGender;
+  id: string;
+  model: VoiceModel;
+  name: string;
   sampleUrl?: string | null;
-};
+}
 
 /** Fallback empty list; callers always pass real voices. */
 export const VOICES: Voice[] = [];

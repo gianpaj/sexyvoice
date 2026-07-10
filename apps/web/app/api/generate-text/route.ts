@@ -1,5 +1,5 @@
 import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
 
@@ -97,7 +97,7 @@ Rules:
   } catch (error) {
     console.error('Text generation error:', error);
 
-    Sentry.captureException(error, {
+    captureException(error, {
       user: { id: user?.id, email: user?.email },
       extra: { prompt },
     });

@@ -56,8 +56,8 @@ export function useSplitSegments({
     }
     setSplitStorageKey('');
     let cancelled = false;
-    buildSplitStorageKey(selectedVoiceName, text, generationContext).then(
-      (key) => {
+    buildSplitStorageKey(selectedVoiceName, text, generationContext)
+      .then((key) => {
         if (!cancelled) {
           // Remove the old localStorage entry when the key changes to prevent
           // unbounded growth from unique text hashes accumulating over time.
@@ -68,8 +68,8 @@ export function useSplitSegments({
           prevSplitStorageKeyRef.current = key;
           setSplitStorageKey(key);
         }
-      },
-    );
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };

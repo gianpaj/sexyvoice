@@ -4,7 +4,7 @@ import {
   type GenerateContentResponse,
   GoogleGenAI,
 } from '@google/genai';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, logger, setUser } from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
@@ -63,8 +63,6 @@ import {
   extractGeminiStreamAudioChunk,
   SSE_HEADERS,
 } from './gemini-tts';
-
-const { logger, captureException } = Sentry;
 
 /**
  * The Google AI SDK wraps native AbortError into a generic Error whose name
@@ -227,6 +225,7 @@ export const maxDuration = 600; // seconds - fluid compute is enabled
 // Initialize Redis
 const redis = Redis.fromEnv();
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: the voice route validates auth, credits, model routing, and multiple provider branches in a single request lifecycle
 export async function POST(request: Request) {
   let text = '';
   let voiceId = '';
@@ -294,7 +293,7 @@ export async function POST(request: Request) {
       return APIErrorResponse('User not found', 401);
     }
 
-    Sentry.setUser({
+    setUser({
       id: user.id,
       email: user.email,
     });
@@ -1235,6 +1234,7 @@ function streamGeminiTtsResponse({
   ) => writer.write(encoder.encode(createSseEvent(event, payload)));
 
   // Run generation asynchronously so we can return the Response immediately.
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: streaming generation coordinates chunk assembly, usage metadata, block-reason handling, and credit reconciliation
   (async () => {
     const audioChunks: string[] = [];
     let mimeType = 'audio/L16;rate=24000';
@@ -1268,6 +1268,7 @@ function streamGeminiTtsResponse({
         : undefined;
     };
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: stream reader branches over audio, usage, and finish/block-reason events per chunk
     const tryStream = async (model: string) => {
       const stream = await ai.models.generateContentStream({
         model,
@@ -1561,7 +1562,7 @@ function streamGeminiTtsResponse({
         // Writer already closed via an early-return path — safe to ignore.
       }
     }
-  })();
+  })().catch(() => undefined);
 
   return new Response(readable, { headers: SSE_HEADERS });
 }

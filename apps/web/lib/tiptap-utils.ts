@@ -84,7 +84,7 @@ export function isNodeTypeSelected(
   nodeTypeNames: string[] = [],
   checkAncestorNodes = false,
 ): boolean {
-  if (!(editor && editor.state.selection)) return false;
+  if (!editor?.state.selection) return false;
 
   const { selection } = editor.state;
   if (selection.empty) return false;

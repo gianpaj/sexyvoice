@@ -89,7 +89,7 @@ export default function AudioJoinerClient() {
     for (const source of playbackSourcesRef.current) {
       try {
         source.stop();
-      } catch (_err) {
+      } catch {
         // no-op: source may already be stopped
       }
     }
@@ -205,7 +205,7 @@ export default function AudioJoinerClient() {
       if (isPlaying) {
         try {
           await schedulePlayback(clamped);
-        } catch (_err) {
+        } catch {
           toast.error(t('errors.previewFailed'));
         }
       } else {
@@ -213,13 +213,7 @@ export default function AudioJoinerClient() {
         stopPlayback(false);
       }
     },
-    [
-      totalDurationSec,
-      isPlaying,
-      schedulePlayback,
-      stopPlayback,
-      t('errors.previewFailed'),
-    ],
+    [totalDurationSec, isPlaying, schedulePlayback, stopPlayback, t],
   );
 
   const handleTogglePlayPause = useCallback(async () => {
@@ -230,7 +224,7 @@ export default function AudioJoinerClient() {
 
     try {
       await schedulePlayback(playbackOffsetRef.current);
-    } catch (_err) {
+    } catch {
       toast.error(t('errors.previewFailed'));
     }
   }, [t, isPlaying, schedulePlayback, stopPlayback]);
@@ -303,7 +297,7 @@ export default function AudioJoinerClient() {
             endSec: durationSec,
             decodedBuffer,
           });
-        } catch (_err) {
+        } catch {
           toast.error(t('errors.decodeFailed', { file: file.name }));
         }
       }

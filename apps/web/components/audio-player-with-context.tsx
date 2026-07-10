@@ -74,12 +74,12 @@ export function AudioPlayerWithContext({
       setWavesurfer(ws);
       setIsWaveformPlaying(false);
       if (autoPlay) {
-        void attemptPlayback(
+        attemptPlayback(
           () => ws.play(),
           () => {
             setIsWaveformPlaying(false);
           },
-        );
+        ).catch(() => undefined);
       }
     },
     [autoPlay],

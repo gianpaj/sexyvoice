@@ -62,14 +62,14 @@ export function AudioInput({
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
-      processFile(file);
+      processFile(file).catch(() => undefined);
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processFile(file);
+      processFile(file).catch(() => undefined);
     }
   };
 

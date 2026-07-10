@@ -8,6 +8,25 @@ import { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
+type PaymentStatusValue = 'success' | 'canceled' | 'error' | null;
+
+function resolvePaymentStatus(
+  success: string | null,
+  canceled: string | null,
+  error: string | null,
+): PaymentStatusValue {
+  if (success === 'true') {
+    return 'success';
+  }
+  if (canceled === 'true') {
+    return 'canceled';
+  }
+  if (error) {
+    return 'error';
+  }
+  return null;
+}
+
 export function PaymentStatus() {
   const t = useTranslations('credits.status');
   const searchParams = useSearchParams();
@@ -17,14 +36,7 @@ export function PaymentStatus() {
   const canceled = searchParams.get('canceled');
   const error = searchParams.get('error');
 
-  const status: 'success' | 'canceled' | 'error' | null =
-    success === 'true'
-      ? 'success'
-      : canceled === 'true'
-        ? 'canceled'
-        : error
-          ? 'error'
-          : null;
+  const status = resolvePaymentStatus(success, canceled, error);
 
   const [isVisible, setIsVisible] = useState(() => status !== null);
 

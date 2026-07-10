@@ -3,7 +3,10 @@ import { useEffect, useReducer } from 'react';
 
 type VisualizerState = 'listening' | 'idle' | 'speaking' | 'thinking';
 
-type ThinkingState = { direction: 'left' | 'right'; index: number };
+interface ThinkingState {
+  direction: 'left' | 'right';
+  index: number;
+}
 type ThinkingAction =
   | { center: number; type: 'reset' }
   | { max: number; type: 'tick' };
@@ -58,6 +61,9 @@ export const MultibandAudioVisualizer = ({
     index: centerIndex,
   });
 
+  // The effect re-runs on each `thinking` change to self-schedule the next
+  // animation tick, so `thinking` is a deliberate trigger, not a body reference.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: thinking is an intentional re-trigger driving the animation loop
   useEffect(() => {
     if (state !== 'thinking') {
       dispatch({ type: 'reset', center: centerIndex });
@@ -67,7 +73,7 @@ export const MultibandAudioVisualizer = ({
       dispatch({ type: 'tick', max: summedFrequencies.length - 1 });
     }, 200);
     return () => clearTimeout(timeout);
-  }, [state, centerIndex, thinking]);
+  }, [state, centerIndex, summedFrequencies.length, thinking]);
 
   return (
     <div

@@ -8,7 +8,6 @@ import { Inngest } from 'inngest';
 //     userId: string;
 //   };
 // }
-// biome-ignore lint/style/useConsistentTypeDefinitions: required by inngest
 // type Events = {
 //   // 'clone-audio/cleanup.scheduled': CloneAudioCleanup;
 // };

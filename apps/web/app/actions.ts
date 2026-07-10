@@ -1,5 +1,5 @@
 'use server';
-import * as Sentry from '@sentry/nextjs';
+import { captureException, logger } from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -8,8 +8,6 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
-
-const { logger, captureException } = Sentry;
 
 const EMAIL_SCHEMA = z.email({ message: 'Invalid email' });
 
@@ -90,6 +88,7 @@ export const updatePasswordAction = async (formData: FormData) => {
   encodedRedirect('success', `/${lang}/dashboard`, 'passwords_updated');
 };
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: account deletion sequences several storage, auth, and DB cleanup steps with independent failure handling
 export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   'use server';
 

@@ -30,7 +30,9 @@ export function usePersistentMediaDevice() {
           (device) => device.deviceId === savedDeviceId,
         );
         if (deviceExists) {
-          deviceSelect.setActiveMediaDevice(savedDeviceId);
+          deviceSelect
+            .setActiveMediaDevice(savedDeviceId)
+            .catch(() => undefined);
         }
       }
       hasInitialized.current = true;
@@ -46,7 +48,7 @@ export function usePersistentMediaDevice() {
    * @param deviceId - The device ID to set as active
    */
   const setPersistentMediaDevice = (deviceId: string) => {
-    deviceSelect.setActiveMediaDevice(deviceId);
+    deviceSelect.setActiveMediaDevice(deviceId).catch(() => undefined);
     localStorage.setItem(AUDIO_DEVICE_STORAGE_KEY, deviceId);
   };
 

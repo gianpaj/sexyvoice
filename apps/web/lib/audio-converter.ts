@@ -396,7 +396,7 @@ export async function convertToWav(
         let opusResult: DecodedAudio | null = null;
         try {
           opusResult = await decodeOggOpus(audioData);
-        } catch (_opusError) {
+        } catch {
           // fall through to Vorbis below
         }
         if (
