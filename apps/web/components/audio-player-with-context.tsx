@@ -20,6 +20,16 @@ interface AudioPlayerWithContextProps {
   buttonClassName?: string;
   className?: string;
   onControlsReady?: (controls: AudioPlayerControls) => void;
+  /**
+   * Called when the audio fails to load or decode. Only fires in waveform mode.
+   */
+  onError?: () => void;
+  /**
+   * Called when playback starts. Only fires in waveform mode, where playback is
+   * driven by wavesurfer rather than the shared `AudioProvider` context — so a
+   * parent rendering two waveform players needs this to pause the other one.
+   */
+  onPlaybackStart?: () => void;
   playAudioTitle: string;
   progressColor?: string;
   showWaveform?: boolean;
@@ -41,6 +51,8 @@ export function AudioPlayerWithContext({
   progressColor = '#7c3aed',
   autoPlay = false,
   onControlsReady,
+  onError,
+  onPlaybackStart,
 }: AudioPlayerWithContextProps) {
   const audio = useAudio();
 
@@ -87,11 +99,17 @@ export function AudioPlayerWithContext({
 
   const onPlay = useCallback(() => {
     setIsWaveformPlaying(true);
-  }, []);
+    onPlaybackStart?.();
+  }, [onPlaybackStart]);
 
   const onPause = useCallback(() => {
     setIsWaveformPlaying(false);
   }, []);
+
+  const onWavesurferError = useCallback(() => {
+    setIsWaveformPlaying(false);
+    onError?.();
+  }, [onError]);
 
   const handlePlayWithWaveform = useCallback(async () => {
     if (!wavesurfer) return;
@@ -172,6 +190,7 @@ export function AudioPlayerWithContext({
           barWidth={2}
           cursorColor="transparent"
           height={waveformHeight}
+          onError={onWavesurferError}
           onPause={onPause}
           onPlay={onPlay}
           onReady={onReady}
