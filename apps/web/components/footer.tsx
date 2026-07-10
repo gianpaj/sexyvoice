@@ -11,7 +11,7 @@ async function Footer({ lang }: { lang: Locale }) {
     <footer className="border-white/5 border-t bg-black">
       <div className="container mx-auto px-6 py-10 md:py-16">
         {/* Top: Brand + Link columns */}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5 lg:gap-12">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6 lg:gap-12">
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <Link
