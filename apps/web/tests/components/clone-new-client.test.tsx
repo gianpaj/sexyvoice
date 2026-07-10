@@ -20,7 +20,7 @@ const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
   type: 'audio/wav',
 });
 
-vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
+vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 

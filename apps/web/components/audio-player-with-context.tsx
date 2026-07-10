@@ -5,7 +5,7 @@ import { Pause, Play } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
-import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { useAudio } from '@/components/audio-provider';
 import { Button } from '@/components/ui/button';
 import { attemptPlayback } from '@/lib/media-playback';
 import { cn } from '@/lib/utils';

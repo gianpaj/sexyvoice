@@ -19,7 +19,7 @@ vi.mock('@ai-sdk/react', () => ({
   }),
 }));
 
-vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
+vi.mock('@/components/audio-provider', () => ({
   useAudio: () => ({
     reset: vi.fn(),
   }),

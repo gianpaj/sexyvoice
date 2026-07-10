@@ -12,6 +12,7 @@ import {
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
+import { AudioProvider } from '@/components/audio-provider';
 import { GenerateButton } from '@/components/generate-button';
 import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -37,7 +38,6 @@ import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import { AudioProvider } from './audio-provider';
 import { CloneAudioInput } from './clone-audio-input';
 import { CloneConsentFields } from './clone-consent-fields';
 import { CloneLanguageSelect } from './clone-language-select';
