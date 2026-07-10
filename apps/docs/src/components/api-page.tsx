@@ -1,11 +1,9 @@
-import { openapi } from '@/lib/openapi';
-import { createAPIPage } from 'fumadocs-openapi/ui';
-
-import { codeUsages } from '@/lib/code-usage';
+import { createAPIPage } from "fumadocs-openapi/ui";
+import { codeUsages } from "@/lib/code-usage";
+import { openapi } from "@/lib/openapi";
 // import { mediaAdapters } from '@/lib/media';
 
-import client from './api-page.client';
-
+import client from "./api-page.client";
 
 export const APIPage = createAPIPage(openapi, {
   client,

@@ -1,17 +1,17 @@
-import { buttonVariants } from 'fumadocs-ui/components/ui/button';
-import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import { MessageCircleIcon } from 'lucide-react';
+import { buttonVariants } from "fumadocs-ui/components/ui/button";
+import { DocsLayout } from "fumadocs-ui/layouts/docs";
+import { MessageCircleIcon } from "lucide-react";
 
 import {
   AISearch,
   AISearchPanel,
   AISearchTrigger,
-} from '@/components/ai/search';
-import { cn } from '@/lib/cn';
-import { baseOptions } from '@/lib/layout.shared';
-import { source } from '@/lib/source';
+} from "@/components/ai/search";
+import { cn } from "@/lib/cn";
+import { baseOptions } from "@/lib/layout.shared";
+import { source } from "@/lib/source";
 
-export default function Layout({ children }: LayoutProps<'/'>) {
+export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <DocsLayout tree={source.getPageTree()} {...baseOptions()}>
       <AISearch>
@@ -19,8 +19,8 @@ export default function Layout({ children }: LayoutProps<'/'>) {
         <AISearchTrigger
           className={cn(
             buttonVariants({
-              variant: 'secondary',
-              className: 'rounded-2xl text-fd-muted-foreground',
+              variant: "secondary",
+              className: "rounded-2xl text-fd-muted-foreground",
             }),
           )}
           position="float"

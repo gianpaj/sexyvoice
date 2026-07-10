@@ -1,8 +1,8 @@
-import defaultMdxComponents from 'fumadocs-ui/mdx';
-import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
-import type { MDXComponents } from 'mdx/types';
+import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
+import defaultMdxComponents from "fumadocs-ui/mdx";
+import type { MDXComponents } from "mdx/types";
 
-import { APIPage } from '@/components/api-page';
+import { APIPage } from "@/components/api-page";
 
 export function getMDXComponents(components?: MDXComponents) {
   return {

@@ -1,27 +1,27 @@
-import { RootProvider } from 'fumadocs-ui/provider/next';
-import './global.css';
-import { Inter } from 'next/font/google';
-import { Metadata } from 'next';
+import { RootProvider } from "fumadocs-ui/provider/next";
+import "./global.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 
 const inter = Inter({
-  subsets: ['latin'],
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://docs.sexyvoice.ai'),
+  metadataBase: new URL("https://docs.sexyvoice.ai"),
   alternates: {
     types: {
-      'application/rss+xml': [
+      "application/rss+xml": [
         {
-          title: 'SexyVoice Docs',
-          url: 'https://docs.sexyvoice.ai/index.xml',
+          title: "SexyVoice Docs",
+          url: "https://docs.sexyvoice.ai/index.xml",
         },
       ],
     },
   },
 };
 
-export default function Layout({ children }: LayoutProps<'/'>) {
+export default function Layout({ children }: LayoutProps<"/">) {
   return (
     <html className={inter.className} lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">

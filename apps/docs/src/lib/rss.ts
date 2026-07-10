@@ -1,19 +1,19 @@
-import { Feed } from 'feed';
+import { Feed } from "feed";
 
-import { source } from '@/lib/source';
+import { source } from "@/lib/source";
 
-const baseUrl = 'https://docs.sexyvoice.ai';
+const baseUrl = "https://docs.sexyvoice.ai";
 
 export function getRSS() {
   const feed = new Feed({
-    title: 'SexyVoice Docs',
+    title: "SexyVoice Docs",
     id: `${baseUrl}`,
     link: `${baseUrl}`,
-    language: 'en',
+    language: "en",
 
     image: `${baseUrl}/banner.png`,
     favicon: `${baseUrl}/icon.png`,
-    copyright: 'All rights reserved 2026, SexyVoice.ai',
+    copyright: "All rights reserved 2026, SexyVoice.ai",
   });
 
   for (const page of source.getPages()) {
@@ -28,7 +28,7 @@ export function getRSS() {
 
       author: [
         {
-          name: 'Gianfranco Palumbo',
+          name: "Gianfranco Palumbo",
         },
       ],
     });

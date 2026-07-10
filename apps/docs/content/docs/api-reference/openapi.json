@@ -161,9 +161,7 @@
                           "name": "achernar",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -171,9 +169,7 @@
                           "name": "zephyr",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -181,9 +177,7 @@
                           "name": "aoede",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -191,9 +185,7 @@
                           "name": "autonoe",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -201,9 +193,7 @@
                           "name": "callirrhoe",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -211,9 +201,7 @@
                           "name": "gacrux",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -221,9 +209,7 @@
                           "name": "despina",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -231,9 +217,7 @@
                           "name": "erinome",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -241,9 +225,7 @@
                           "name": "puck",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -251,9 +233,7 @@
                           "name": "sulafat",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         },
                         {
@@ -261,9 +241,7 @@
                           "name": "kore",
                           "language": "multiple",
                           "model": "gpro",
-                          "formats": [
-                            "wav"
-                          ],
+                          "formats": ["wav"],
                           "supports_style": true
                         }
                       ]
@@ -358,11 +336,7 @@
         "properties": {
           "model": {
             "type": "string",
-            "enum": [
-              "gpro",
-              "orpheus",
-              "xai"
-            ],
+            "enum": ["gpro", "orpheus", "xai"],
             "description": "The voice model to use"
           },
           "input": {
@@ -379,10 +353,7 @@
           "response_format": {
             "description": "Audio format. Default depends on model",
             "type": "string",
-            "enum": [
-              "wav",
-              "mp3"
-            ]
+            "enum": ["wav", "mp3"]
           },
           "style": {
             "description": "Emotion/style variant (e.g., \"happy\", \"sad\", \"whisper\")",
@@ -395,11 +366,7 @@
             "maximum": 9007199254740991
           }
         },
-        "required": [
-          "model",
-          "input",
-          "voice"
-        ],
+        "required": ["model", "input", "voice"],
         "additionalProperties": false
       },
       "VoiceGenerationResponse": {
@@ -436,19 +403,11 @@
                 "description": "Model used for generation"
               }
             },
-            "required": [
-              "input_characters",
-              "model"
-            ],
+            "required": ["input_characters", "model"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "url",
-          "credits_used",
-          "credits_remaining",
-          "usage"
-        ],
+        "required": ["url", "credits_used", "credits_remaining", "usage"],
         "additionalProperties": false
       },
       "ErrorResponse": {
@@ -489,17 +448,11 @@
                 "description": "Machine-readable error code"
               }
             },
-            "required": [
-              "message",
-              "type",
-              "code"
-            ],
+            "required": ["message", "type", "code"],
             "additionalProperties": false
           }
         },
-        "required": [
-          "error"
-        ],
+        "required": ["error"],
         "additionalProperties": false
       },
       "VoicesResponse": {
@@ -521,20 +474,13 @@
                 },
                 "model": {
                   "type": "string",
-                  "enum": [
-                    "gpro",
-                    "orpheus",
-                    "grok"
-                  ]
+                  "enum": ["gpro", "orpheus", "grok"]
                 },
                 "formats": {
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "enum": [
-                      "wav",
-                      "mp3"
-                    ]
+                    "enum": ["wav", "mp3"]
                   }
                 },
                 "supports_style": {
@@ -554,9 +500,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ],
+        "required": ["data"],
         "additionalProperties": false
       },
       "ModelsResponse": {
@@ -569,11 +513,7 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "enum": [
-                    "gpro",
-                    "orpheus",
-                    "grok"
-                  ]
+                  "enum": ["gpro", "orpheus", "grok"]
                 },
                 "name": {
                   "type": "string"
@@ -587,10 +527,7 @@
                   "type": "array",
                   "items": {
                     "type": "string",
-                    "enum": [
-                      "wav",
-                      "mp3"
-                    ]
+                    "enum": ["wav", "mp3"]
                   }
                 },
                 "supported_styles": {
@@ -611,9 +548,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ],
+        "required": ["data"],
         "additionalProperties": false
       },
       "BillingResponse": {
@@ -647,10 +582,7 @@
                   },
                   "type": {
                     "type": "string",
-                    "enum": [
-                      "purchase",
-                      "topup"
-                    ]
+                    "enum": ["purchase", "topup"]
                   },
                   "amount": {
                     "type": "number"

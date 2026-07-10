@@ -1,7 +1,6 @@
-import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-
-import { appName, gitConfig } from './shared';
-import { AudioLinesIcon } from 'lucide-react';
+import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import { AudioLinesIcon } from "lucide-react";
+import { appName, gitConfig } from "./shared";
 
 export function baseOptions(): BaseLayoutProps {
   return {
@@ -13,8 +12,8 @@ export function baseOptions(): BaseLayoutProps {
     links: [
       {
         icon: <AudioLinesIcon />,
-        text: 'SexyVoice.ai',
-        url: 'https://sexyvoice.ai',
+        text: "SexyVoice.ai",
+        url: "https://sexyvoice.ai",
         // secondary items will be displayed differently on navbar
         secondary: false,
       },
