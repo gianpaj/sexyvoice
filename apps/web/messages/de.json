@@ -97,6 +97,11 @@
       "noCreditCard": "Keine Kreditkarte erforderlich⃰*⃰",
       "signIn": "Anmelden"
     },
+    "demoCall": {
+      "playButton": "Demo anrufen",
+      "stopButton": "Stopp",
+      "pickCharacter": "Wähle einen Charakter"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natürliche Stimmen",
@@ -109,6 +114,10 @@
       "security": {
         "title": "Sicher & Privat",
         "description": "Ihre Stimm-Daten sind mit unternehmenstauglicher Sicherheit geschützt. Volle Kontrolle über Datenschutzeinstellungen und Nutzung."
+      },
+      "voiceCalling": {
+        "title": "Live-Sprachanrufe",
+        "description": "Führen Sie Telefongespräche in Echtzeit mit KI-Charakteren — natürliche Stimmen, sofortige Antworten, keine Einrichtung nötig."
       }
     },
     "cta": {
@@ -116,6 +125,18 @@
       "title": "Bereit, Ihre Stimme zu finden?",
       "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
       "action": "Erstellen sie ihre erste stimme"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Sprechen Sie mit KI-Charakteren, live in Echtzeit",
+        "subtitle": "Live-KI-Telefonate mit natürlichen, ausdrucksstarken Stimmen.\nWählen Sie einen Charakter und legen Sie sofort los."
+      },
+      "cta": {
+        "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
+        "title": "Bereit, eine Stimme zum Leben zu erwecken?",
+        "subtitle": "Starten Sie einen Live-Anruf mit einem beliebigen Charakter und erleben Sie eine natürliche KI-Unterhaltung in Echtzeit.",
+        "action": "Sprachanruf starten"
+      }
     },
     "generator": {
       "title": "Probieren Sie es jetzt aus",
@@ -188,10 +209,6 @@
             {
               "question": "Was kostet das?",
               "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
-            },
-            {
-              "question": "Erinnert sich die KI an unsere früheren Gespräche?",
-              "answer": "Nur wenn du die Erinnerungsfunktion aktivierst – sie ist optional und standardmäßig deaktiviert, sodass normalerweise nichts aus deinen Anrufen gespeichert wird. Wenn sie aktiviert ist, merkt sich der Assistent ein paar kurze Angaben (etwa wie du angesprochen werden möchtest und welche Themen dir gefallen), keine vollständigen Aufnahmen oder Transkripte, um beim nächsten Mal nahtlos weiterzumachen. Wir speichern nur deine neuesten Angaben, du kannst jederzeit alles löschen, und beim Löschen deines Kontos werden sie automatisch entfernt."
             }
           ]
         },
@@ -500,6 +517,37 @@
       "splitToggleDisabled": "Das Aufteilen von Text in Audios ist für zahlende Nutzer verfügbar.",
       "tooManySegments": "Aufgeteilter Text darf höchstens __COUNT__ Segmente haben. Kürzen Sie den Text oder führen Sie Segmente vor der Generierung zusammen.",
       "downloadAllFailed": "Alle Segmente konnten nicht heruntergeladen werden."
+    },
+    "advancedSettings": {
+      "trigger": "Erweitert",
+      "activeCount": "{count, plural, one {# geänderte Einstellung} other {# geänderte Einstellungen}}",
+      "title": "Erweiterte Einstellungen",
+      "subtitle": "Optimiere, wie dein Audio erzeugt wird.",
+      "default": "Standard",
+      "reset": "Zurücksetzen",
+      "upgradeToUnlock": "Upgrade zum Freischalten",
+      "noSettings": "Keine erweiterten Einstellungen für diese Stimme.",
+      "seed": {
+        "label": "Seed",
+        "description": "Lege einen festen Seed für reproduzierbare Ergebnisse fest. Leer lassen für einen zufälligen Seed.",
+        "placeholder": "Zufällig",
+        "randomize": "Seed zufällig wählen"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Audio streamen, während es erzeugt wird (nur Gemini 3.1).",
+        "auto": "Auto",
+        "on": "An",
+        "off": "Aus"
+      },
+      "temperature": {
+        "label": "Temperatur",
+        "description": "Höhere Werte machen die Wiedergabe abwechslungsreicher und ausdrucksstärker."
+      },
+      "speed": {
+        "label": "Geschwindigkeit",
+        "description": "Passe an, wie schnell die Stimme spricht."
+      }
     }
   },
   "call": {
@@ -793,7 +841,10 @@
     "skipToMainContent": "Zum Hauptinhalt springen",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie sofort 1.000 Credits, plus 9.000 weitere, wenn Sie eine Karte hinzufügen. Erstellen Sie realistische KI-Stimmen mit Emotionen. Text-zu-Sprache in 24 Sprachen.",
+    "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
+    "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
     "/": "",
+    "/voice-call": "Sprachanruf",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
     "/dashboard/call": "Anruf",
@@ -893,7 +944,8 @@
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
     "audioConverter": "Kostenloser Audio-Konverter",
     "transcribe": "Kostenlose Audio-Transkription",
-    "audioJoiner": "Kostenloser Audio-Zusammenfüger"
+    "audioJoiner": "Kostenloser Audio-Zusammenfüger",
+    "voiceCalling": "KI-Sprachanrufe"
   },
   "promos": {
     "halloweenBanner": {

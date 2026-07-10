@@ -340,7 +340,8 @@ export async function POST(request: Request) {
       return respond(zodErrorToApiError(parsed.error), { status: 400 });
     }
 
-    const { input, response_format, style, seed } = parsed.data;
+    const { input, response_format, style, seed, temperature, speed } =
+      parsed.data;
     const requestedVoice = parsed.data.voice;
     const requestedVoiceId = parsed.data.voiceId;
     let model = parsed.data.model;
@@ -561,6 +562,7 @@ export async function POST(request: Request) {
       const config: GenerateContentConfig = {
         responseModalities: ['AUDIO'],
         ...(seed === undefined ? {} : { seed }),
+        ...(temperature === undefined ? {} : { temperature }),
         speechConfig: {
           voiceConfig: {
             prebuiltVoiceConfig: {
@@ -701,6 +703,7 @@ export async function POST(request: Request) {
           voiceId: voice,
           language: voiceObj.language ?? 'en',
           codec,
+          speed,
         });
         generatedAudioBuffer = audioBuffer;
         generatedAudioMimeType = contentType;

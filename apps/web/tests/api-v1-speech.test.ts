@@ -93,7 +93,7 @@ describe('/api/v1/speech', () => {
     expect(requestId).not.toBe('debug-req-123');
   });
 
-  it('returns 400 when unsupported speed is provided', async () => {
+  it('returns 400 when speed is outside the supported range', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
       headers: {
@@ -101,10 +101,10 @@ describe('/api/v1/speech', () => {
         authorization: TEST_AUTH_HEADER,
       },
       body: JSON.stringify({
-        model: 'orpheus',
+        model: 'xai',
         input: 'Hello world',
-        voice: 'tara',
-        speed: 1.2,
+        voice: 'eve',
+        speed: 2,
       }),
     });
 
@@ -113,7 +113,30 @@ describe('/api/v1/speech', () => {
 
     expect(response.status).toBe(400);
     expect(json.error.code).toBe('invalid_request');
-    expect(json.error.message).toBe('Unrecognized key: "speed"');
+    expect(json.error.param).toBe('speed');
+  });
+
+  it('returns 400 when temperature is outside the supported range', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'Hello world',
+        voice: 'kore',
+        temperature: 3,
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.error.code).toBe('invalid_request');
+    expect(json.error.param).toBe('temperature');
   });
 
   it('returns 400 when voice model does not match requested model', async () => {
@@ -393,6 +416,56 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(200);
     expect(generateContent).toHaveBeenCalled();
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
+  });
+
+  it('passes optional temperature to Gemini provider config', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 11,
+        candidatesTokenCount: 12,
+        totalTokenCount: 23,
+      },
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: {
+        countTokens: vi.fn(),
+        generateContent,
+      },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro',
+        input: 'Hello world',
+        voice: 'kore',
+        temperature: 1.2,
+      }),
+    });
+
+    const response = await POST(request);
+    expect(response.status).toBe(200);
+    expect(generateContent).toHaveBeenCalled();
+    expect(generateContent.mock.calls[0][0].config.temperature).toBe(1.2);
   });
 
   it('accepts achernar with model gpro31 and calls GenAI with gemini-3.1-flash-tts-preview', async () => {

@@ -11,7 +11,7 @@ permissions:
 on:
   schedule:
     # Mondays at 06:00 UTC
-    - cron: '0 6 * * 1'
+    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 concurrency:
@@ -29,14 +29,67 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+        with:
+          version: 10.20.0
+
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 24.9.0
 
-      # The script only needs Node built-ins and git, so no install is required.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter @sexyvoice/scripts
+        env:
+          REDISMS_DISABLE_POSTINSTALL: 1
+
       - name: Regenerate deny list
         run: node scripts/sync-deny-domains.mjs
+
+      - name: Run disposable email impact check
+        continue-on-error: true
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          : > /tmp/check-output.txt
+          set +e
+          node scripts/check-disposable-emails.mjs \
+            --days 7 \
+            --reset-credits \
+            --dry-run \
+            --domains-only \
+            2>&1 | tee /tmp/check-output.txt
+          exit_code=${PIPESTATUS[0]}
+          set -e
+          if [ "$exit_code" -ne 0 ]; then
+            {
+              echo ""
+              echo "(check exited with code $exit_code)"
+            } >> /tmp/check-output.txt
+          fi
+
+      - name: Prepare PR body
+        run: |
+          {
+            printf '%s\n' \
+              'Automated weekly refresh of the disposable email blocklist from' \
+              '[amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains).' \
+              '' \
+              'Review the diff in `apps/web/lib/disposable-email/deny-domains.json`' \
+              'before merging — additions here block matching signups, so watch for' \
+              'any legitimate domains that may have been added upstream.' \
+              '' \
+              '## Disposable email impact (dry run)' \
+              '' \
+              'Preview of flagged signups from the last 7 days and credits that would' \
+              'be reset (`--reset-credits --dry-run --domains-only`):' \
+              '' \
+              '```'
+            cat /tmp/check-output.txt
+            printf '%s\n' '```'
+          } > /tmp/pr-body.md
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@84ae59a2cdc2258d6fa0732dd66352dddae2a412 # v7.0.9
@@ -44,13 +97,7 @@ jobs:
           add-paths: apps/web/lib/disposable-email/deny-domains.json
           branch: chore/sync-deny-domains
           delete-branch: true
-          commit-message: 'chore: sync disposable email deny list'
-          title: 'chore: sync disposable email deny list'
-          body: |
-            Automated weekly refresh of the disposable email blocklist from
-            [amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains).
-
-            Review the diff in `apps/web/lib/disposable-email/deny-domains.json`
-            before merging — additions here block matching signups, so watch for
-            any legitimate domains that may have been added upstream.
+          commit-message: "chore: sync disposable email deny list"
+          title: "chore: sync disposable email deny list"
+          body-path: /tmp/pr-body.md
           labels: dependencies

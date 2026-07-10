@@ -38,8 +38,7 @@ const DEFAULT_VOICES = [
   'zephyr',
 ];
 
-const DEFAULT_TEXT =
-  "O-oh, god, it's so f-fucking deep in me!";
+const DEFAULT_TEXT = "O-oh, god, it's so f-fucking deep in me!";
 const DEFAULT_STYLE = 'warm, confident, and natural';
 
 function printHelp() {
@@ -78,7 +77,7 @@ function readFlag(args, name) {
 
   const index = args.indexOf(name);
   if (index === -1) {
-    return undefined;
+    return;
   }
   return args[index + 1];
 }
@@ -95,11 +94,12 @@ function parseArgs(args) {
   }
 
   const voicesFlag = readFlag(args, '--voices');
-  const voices = voicesFlag
-    && voicesFlag
-        .split(',')
-        .map((voice) => voice.trim())
-        .filter(Boolean);
+  const voices =
+    voicesFlag &&
+    voicesFlag
+      .split(',')
+      .map((voice) => voice.trim())
+      .filter(Boolean);
 
   const voiceId = readFlag(args, '--voiceId');
 
@@ -121,7 +121,9 @@ function parseArgs(args) {
       readFlag(args, '--out') ?? path.join(scriptDir, 'generated-speech'),
     ),
     seed,
-    style: readFlag(args, '--style') ?? process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN,
+    style:
+      readFlag(args, '--style') ??
+      process.env.NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN,
     text: readFlag(args, '--text') ?? DEFAULT_TEXT,
     voices,
     voiceId,
@@ -271,7 +273,7 @@ async function generateForVoice(options, voice, voiceId) {
   const wavPath = path.join(options.outDir, `${basename}.wav`);
   const mp3Path = path.join(options.outDir, `${basename}.mp3`);
 
-  console.log(`\n▶ Generating ${voice||voiceId} (${options.model})`);
+  console.log(`\n▶ Generating ${voice || voiceId} (${options.model})`);
   const result = await postSpeech({ ...options, voice, voiceId });
   console.log(
     `  API ok: ${result.usage?.model ?? options.model}, ${result.credits_used} credits${result.requestId ? `, request-id ${result.requestId}` : ''}`,
@@ -299,10 +301,9 @@ async function main() {
   await assertFfmpegAvailable();
   await mkdir(options.outDir, { recursive: true });
 
-
   if (options.voices) {
     console.log(
-      `Generating ${options.voices.length} sample(s) via ${options.baseUrl}`
+      `Generating ${options.voices.length} sample(s) via ${options.baseUrl}`,
     );
   }
   if (options.voiceId) console.log(`VoiceId: ${options.voiceId}`);

@@ -1,5 +1,12 @@
 import { allPosts } from 'contentlayer/generated';
-import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  Globe2,
+  Mic2,
+  PhoneCall,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
@@ -217,8 +224,30 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="grid gap-6 py-16 md:grid-cols-2 lg:grid-cols-3 xl:px-28">
-              <Card className="group shadow-zinc-950/5">
+            <div className="mx-auto grid max-w-4xl gap-6 py-16 md:grid-cols-2">
+              <Card className="group max-w-sm transition-colors shadow-zinc-950/5 border-fuchsia-800 hover:border-fuchsia-950">
+                <Link href="/voice-call" prefetch>
+                  <CardHeader className="pb-3">
+                    <CardDecorator>
+                      <PhoneCall
+                        aria-hidden
+                        className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
+                      />
+                    </CardDecorator>
+
+                    <h3 className="mt-6 text-balance text-center font-medium transition-colors text-pink-200 group-hover:text-promo-accent/70">
+                      {dictLanding.features.voiceCalling.title}
+                    </h3>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
+                      {dictLanding.features.voiceCalling.description}
+                    </p>
+                  </CardContent>
+                </Link>
+              </Card>
+              <Card className="group max-w-sm shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Shield aria-hidden className="size-6 text-gray-200" />
@@ -234,7 +263,7 @@ export default async function LandingPage(props: {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="group shadow-zinc-950/5">
+              <Card className="group max-w-sm shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Mic2 aria-hidden className="size-6 text-gray-200" />
@@ -252,7 +281,7 @@ export default async function LandingPage(props: {
                 </CardContent>
               </Card>
 
-              <Card className="group shadow-zinc-950/5">
+              <Card className="group max-w-sm shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Globe2 aria-hidden className="size-6 text-gray-200" />

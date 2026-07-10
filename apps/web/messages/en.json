@@ -97,6 +97,11 @@
       "noCreditCard": "No credit card required*⃰",
       "signIn": "Sign In"
     },
+    "demoCall": {
+      "playButton": "Call demo",
+      "stopButton": "Stop",
+      "pickCharacter": "Pick a character"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natural Voices",
@@ -109,6 +114,10 @@
       "security": {
         "title": "Secure & Private",
         "description": "Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history."
+      },
+      "voiceCalling": {
+        "title": "Live Voice Calls",
+        "description": "Have real-time phone conversations with AI characters — natural voices, instant responses, no setup required."
       }
     },
     "cta": {
@@ -116,6 +125,18 @@
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Talk to AI Characters, Live in Real Time",
+        "subtitle": "Live AI phone calls with natural, expressive voices.\nPick a character and start talking instantly."
+      },
+      "cta": {
+        "freeCredits": "Start with 10,000 free credits",
+        "title": "Ready to hear a voice come alive?",
+        "subtitle": "Start a live call with any character and experience natural, real-time AI conversation.",
+        "action": "Start a voice call"
+      }
     },
     "generator": {
       "title": "Try it now",
@@ -188,10 +209,6 @@
             {
               "question": "How much does it cost?",
               "answer": "Live calling costs {count} credits per minute while you're connected."
-            },
-            {
-              "question": "Does the AI remember my previous conversations?",
-              "answer": "Only if you turn on memory — it's optional and off by default, so normally nothing from your calls is stored. When enabled, the assistant keeps a few short details (like how you like to be addressed and topics you enjoy), not full recordings or transcripts, so it can pick up where you left off next time. We keep only your most recent details, you can erase everything at any time, and deleting your account removes them automatically."
             }
           ]
         },
@@ -500,6 +517,37 @@
       "splitToggleDisabled": "Split text audios is available for paid users.",
       "tooManySegments": "Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.",
       "downloadAllFailed": "Failed to download all segments."
+    },
+    "advancedSettings": {
+      "trigger": "Advanced",
+      "activeCount": "{count, plural, one {# changed setting} other {# changed settings}}",
+      "title": "Advanced settings",
+      "subtitle": "Fine-tune how your audio is generated.",
+      "default": "Default",
+      "reset": "Reset",
+      "upgradeToUnlock": "Upgrade to unlock",
+      "noSettings": "No advanced settings for this voice.",
+      "seed": {
+        "label": "Seed",
+        "description": "Pin a seed for reproducible results. Leave empty for a random seed.",
+        "placeholder": "Random",
+        "randomize": "Randomize seed"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Stream audio as it's generated (Gemini 3.1 only).",
+        "auto": "Auto",
+        "on": "On",
+        "off": "Off"
+      },
+      "temperature": {
+        "label": "Temperature",
+        "description": "Higher values make the delivery more varied and expressive."
+      },
+      "speed": {
+        "label": "Speed",
+        "description": "Adjust how fast the voice speaks."
+      }
     }
   },
   "call": {
@@ -793,6 +841,8 @@
     "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 1,000 credits instantly, plus 9,000 more when you add a card. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
+    "titleVoiceCall": "AI Voice Calling – Talk to Live AI Characters",
+    "descriptionVoiceCall": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
     "titleTranscribe": "Free Audio Transcription – 99+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
@@ -801,6 +851,7 @@
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
     "keywordsLanding": "text to speech, AI voice generator, voice cloning, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis",
     "/": "",
+    "/voice-call": "Voice Call",
     "/login": "Sign In",
     "/signup": "Sign Up Free – Up to 10,000 Credits",
     "/dashboard/call": "Call",
@@ -893,7 +944,8 @@
     "copyright": "SexyVoice.ai. All rights reserved.",
     "audioConverter": "Free Audio Converter",
     "transcribe": "Free Audio Transcription",
-    "audioJoiner": "Free Audio Joiner"
+    "audioJoiner": "Free Audio Joiner",
+    "voiceCalling": "AI Voice Calling"
   },
   "promos": {
     "halloweenBanner": {

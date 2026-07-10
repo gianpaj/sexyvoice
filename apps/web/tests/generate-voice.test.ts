@@ -607,7 +607,7 @@ describe('Generate Voice API Route', () => {
           split: false,
           textPreview: 'Hello world',
           textLength: 11,
-          isGeminiVoice: false,
+          duration: '12',
           userHasPaid: false,
           predictionId: null,
         },
@@ -728,7 +728,7 @@ describe('Generate Voice API Route', () => {
           split: false,
           textPreview: 'Hello [laugh]',
           textLength: 13,
-          isGeminiVoice: false,
+          duration: '12',
           userHasPaid: false,
           predictionId: null,
           codec: 'mp3',
@@ -792,7 +792,11 @@ describe('Generate Voice API Route', () => {
   });
 
   describe('Voice Generation - Google Gemini', () => {
-    it('passes optional seed to Gemini provider config', async () => {
+    it('passes optional seed to Gemini provider config for paid users', async () => {
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+      // Seed is a paid-only feature, so it is only honoured for paid users.
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
       const generateContent = vi.fn().mockResolvedValue({
         candidates: [
           {
@@ -838,6 +842,54 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(generateContent).toHaveBeenCalled();
       expect(generateContent.mock.calls[0][0].config.seed).toBe(1_234_567);
+    });
+
+    it('ignores the seed for free users (paid-only feature)', async () => {
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                    mimeType: 'audio/wav',
+                  },
+                },
+              ],
+            },
+            finishReason: 'STOP',
+          },
+        ],
+        usageMetadata: {
+          promptTokenCount: 11,
+          candidatesTokenCount: 12,
+          totalTokenCount: 23,
+        },
+      } as GenerateContentResponse);
+
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent,
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+          seed: 1_234_567,
+        }),
+      });
+
+      const response = await POST(request);
+      expect(response.status).toBe(200);
+      expect(generateContent).toHaveBeenCalled();
+      expect(generateContent.mock.calls[0][0].config.seed).toBeUndefined();
     });
 
     it('should successfully generate voice using Google Gemini', async () => {
@@ -929,7 +981,7 @@ describe('Generate Voice API Route', () => {
           split: false,
           textPreview: text.slice(0, 100),
           textLength: text.length,
-          isGeminiVoice: true,
+          duration: '12',
           userHasPaid: true,
           predictionId: null,
         },
@@ -1718,6 +1770,57 @@ describe('Generate Voice API Route', () => {
             finishReason: FinishReason.STOP,
             model: 'gemini-2.5-flash-preview-tts',
             voice: 'kore',
+          }),
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+          },
+        }),
+      );
+    });
+
+    it('should return 503 without Sentry capture when Gemini finishes with OTHER and no audio data', async () => {
+      setMockGoogleGenAIFactory(() => ({
+        models: {
+          generateContent: vi.fn().mockResolvedValue({
+            candidates: [
+              {
+                finishReason: FinishReason.OTHER,
+                content: {
+                  parts: [],
+                },
+              },
+            ],
+          }),
+        },
+      }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
+      );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini voice generation returned no audio data',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            finishReason: FinishReason.OTHER,
+            model: 'gemini-3.1-flash-tts-preview',
+            voice: 'achernar',
           }),
           user: {
             id: 'test-user-id',
