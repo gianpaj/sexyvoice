@@ -128,6 +128,10 @@
       "voiceCalling": {
         "title": "Live-Sprachanrufe",
         "description": "Führen Sie Telefongespräche in Echtzeit mit KI-Charakteren — natürliche Stimmen, sofortige Antworten, keine Einrichtung nötig."
+      },
+      "voiceCloneDemo": {
+        "title": "Klone deine Stimme",
+        "description": "Teste die Live-Klon-Demo: Höre eine Stimme, die aus wenigen Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht."
       }
     },
     "cta": {

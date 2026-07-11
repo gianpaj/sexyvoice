@@ -1,6 +1,7 @@
 import { allPosts } from 'contentlayer/generated';
 import {
   ArrowRightIcon,
+  AudioLines,
   Globe2,
   Mic2,
   PhoneCall,
@@ -224,8 +225,8 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="mx-auto grid max-w-4xl gap-6 py-16 md:grid-cols-2">
-              <Card className="group max-w-sm transition-colors shadow-zinc-950/5 border-fuchsia-800 hover:border-fuchsia-950">
+            <div className="mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 lg:grid-cols-3">
+              <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
                 <Link href="/voice-call" prefetch>
                   <CardHeader className="pb-3">
                     <CardDecorator>
@@ -235,7 +236,7 @@ export default async function LandingPage(props: {
                       />
                     </CardDecorator>
 
-                    <h3 className="mt-6 text-balance text-center font-medium transition-colors text-pink-200 group-hover:text-promo-accent/70">
+                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
                       {dictLanding.features.voiceCalling.title}
                     </h3>
                   </CardHeader>
@@ -243,6 +244,28 @@ export default async function LandingPage(props: {
                   <CardContent>
                     <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
                       {dictLanding.features.voiceCalling.description}
+                    </p>
+                  </CardContent>
+                </Link>
+              </Card>
+              <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
+                <Link href="/voice-cloning" prefetch>
+                  <CardHeader className="pb-3">
+                    <CardDecorator>
+                      <AudioLines
+                        aria-hidden
+                        className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
+                      />
+                    </CardDecorator>
+
+                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
+                      {dictLanding.features.voiceCloneDemo.title}
+                    </h3>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
+                      {dictLanding.features.voiceCloneDemo.description}
                     </p>
                   </CardContent>
                 </Link>

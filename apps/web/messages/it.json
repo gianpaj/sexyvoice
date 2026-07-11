@@ -128,6 +128,10 @@
       "voiceCalling": {
         "title": "Chiamate vocali dal vivo",
         "description": "Fai conversazioni telefoniche in tempo reale con personaggi IA — voci naturali, risposte istantanee, nessuna configurazione richiesta."
+      },
+      "voiceCloneDemo": {
+        "title": "Clona la tua voce",
+        "description": "Prova la demo di clonazione dal vivo: ascolta una voce ricreata da pochi secondi di audio, che parla in modo naturale in più lingue."
       }
     },
     "cta": {

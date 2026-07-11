@@ -128,6 +128,10 @@
       "voiceCalling": {
         "title": "Live stemmeopkald",
         "description": "Før telefonsamtaler i realtid med AI-karakterer — naturlige stemmer, øjeblikkelige svar, ingen opsætning nødvendig."
+      },
+      "voiceCloneDemo": {
+        "title": "Klon din stemme",
+        "description": "Prøv den live klon-demo: Hør en stemme, der er genskabt ud fra få sekunders lyd og taler naturligt på flere sprog."
       }
     },
     "cta": {

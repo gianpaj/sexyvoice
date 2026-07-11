@@ -128,6 +128,10 @@
       "voiceCalling": {
         "title": "Live Voice Calls",
         "description": "Have real-time phone conversations with AI characters — natural voices, instant responses, no setup required."
+      },
+      "voiceCloneDemo": {
+        "title": "Clone Your Voice",
+        "description": "Try the live cloning demo — hear a voice recreated from seconds of audio, speaking naturally in multiple languages."
       }
     },
     "cta": {
