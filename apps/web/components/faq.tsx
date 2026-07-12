@@ -58,9 +58,29 @@ function renderAnswer(answer: string, link?: FaqLink) {
   );
 }
 
-export const FAQComponent = async ({ lang }: { lang: Locale }) => {
+export const FAQComponent = async ({
+  lang,
+  priorityGroupId,
+}: {
+  lang: Locale;
+  /**
+   * When set, the matching FAQ group is moved to the top of the list and opened
+   * by default (e.g. the voice cloning page surfaces the `voiceCloning` group
+   * first). Falls back to `voiceCreation` on the general landing page.
+   */
+  priorityGroupId?: string;
+}) => {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
     .faq;
+
+  const priorityGroup = priorityGroupId
+    ? dict.groups.find((group) => group.id === priorityGroupId)
+    : undefined;
+  const groups = priorityGroup
+    ? [priorityGroup, ...dict.groups.filter((group) => group !== priorityGroup)]
+    : dict.groups;
+  const defaultGroupId = priorityGroup?.id ?? 'voiceCreation';
+
   return (
     <>
       <div className="mb-12 text-left md:text-center">
@@ -71,10 +91,10 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
       <Accordion
         className="w-full rounded-md border border-gray-500"
         collapsible
-        defaultValue="item-voiceCreation"
+        defaultValue={`item-${defaultGroupId}`}
         type="single"
       >
-        {dict.groups.map((group) => {
+        {groups.map((group) => {
           const Icon = faqIconMap[group.id] ?? Sparkles;
 
           return (

@@ -10,6 +10,7 @@ import type { Graph } from 'schema-dts';
 
 import { Banner } from '@/components/banner';
 import { DemoCloneSection } from '@/components/demo-clone/demo-clone-section';
+import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import HeroWaveform from '@/components/hero-waveform';
@@ -182,6 +183,11 @@ export default async function VoiceCloningPage(props: Props) {
               </p>
 
               <DemoCloneSection lang={lang} />
+            </div>
+
+            {/* FAQ Section */}
+            <div className="mx-auto max-w-3xl py-16">
+              <FAQComponent lang={lang} priorityGroupId="voiceCloning" />
             </div>
 
             {/* CTA Section */}
