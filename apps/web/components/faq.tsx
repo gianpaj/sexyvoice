@@ -32,6 +32,18 @@ const faqIconMap: Record<string, LucideIcon> = {
   pricingAndAccess: Coins,
 };
 
+// Group ids that should be surfaced first, in this order. Any group not listed
+// keeps its original position from the message file (stable sort).
+const faqGroupPriority = ['liveCalling'];
+
+function sortFaqGroups<T extends { id: string }>(groups: readonly T[]): T[] {
+  const priorityIndex = (id: string) => {
+    const index = faqGroupPriority.indexOf(id);
+    return index === -1 ? Number.POSITIVE_INFINITY : index;
+  };
+  return [...groups].sort((a, b) => priorityIndex(a.id) - priorityIndex(b.id));
+}
+
 interface FaqLink {
   text: string;
   url: string;
@@ -61,6 +73,7 @@ function renderAnswer(answer: string, link?: FaqLink) {
 export const FAQComponent = async ({ lang }: { lang: Locale }) => {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
     .faq;
+  const groups = sortFaqGroups(dict.groups);
   return (
     <>
       <div className="mb-12 text-left md:text-center">
@@ -71,10 +84,10 @@ export const FAQComponent = async ({ lang }: { lang: Locale }) => {
       <Accordion
         className="w-full rounded-md border border-gray-500"
         collapsible
-        defaultValue="item-voiceCreation"
+        defaultValue={groups[0] ? `item-${groups[0].id}` : undefined}
         type="single"
       >
-        {dict.groups.map((group) => {
+        {groups.map((group) => {
           const Icon = faqIconMap[group.id] ?? Sparkles;
 
           return (
