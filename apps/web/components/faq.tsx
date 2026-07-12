@@ -32,6 +32,24 @@ const faqIconMap: Record<string, LucideIcon> = {
   pricingAndAccess: Coins,
 };
 
+// Default group ids surfaced first, in this order. Pages reuse this component
+// but each can lead with its own group via the `priorityGroupIds` prop; the
+// general landing page keeps `liveCalling` first.
+const DEFAULT_FAQ_GROUP_PRIORITY = ['liveCalling'];
+
+// Any group not listed in `priority` keeps its original position from the
+// message file (stable sort).
+function sortFaqGroups<T extends { id: string }>(
+  groups: readonly T[],
+  priority: readonly string[],
+): T[] {
+  const priorityIndex = (id: string) => {
+    const index = priority.indexOf(id);
+    return index === -1 ? Number.POSITIVE_INFINITY : index;
+  };
+  return [...groups].sort((a, b) => priorityIndex(a.id) - priorityIndex(b.id));
+}
+
 interface FaqLink {
   text: string;
   url: string;
@@ -60,27 +78,19 @@ function renderAnswer(answer: string, link?: FaqLink) {
 
 export const FAQComponent = async ({
   lang,
-  priorityGroupId,
+  priorityGroupIds = DEFAULT_FAQ_GROUP_PRIORITY,
 }: {
   lang: Locale;
   /**
-   * When set, the matching FAQ group is moved to the top of the list and opened
-   * by default (e.g. the voice cloning page surfaces the `voiceCloning` group
-   * first). Falls back to `voiceCreation` on the general landing page.
+   * Group ids to surface first, in order; the first present group also opens by
+   * default. Lets each page lead with its own group (e.g. the voice cloning
+   * page passes `['voiceCloning']`). Defaults to `liveCalling`.
    */
-  priorityGroupId?: string;
+  priorityGroupIds?: readonly string[];
 }) => {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
     .faq;
-
-  const priorityGroup = priorityGroupId
-    ? dict.groups.find((group) => group.id === priorityGroupId)
-    : undefined;
-  const groups = priorityGroup
-    ? [priorityGroup, ...dict.groups.filter((group) => group !== priorityGroup)]
-    : dict.groups;
-  const defaultGroupId = priorityGroup?.id ?? 'voiceCreation';
-
+  const groups = sortFaqGroups(dict.groups, priorityGroupIds);
   return (
     <>
       <div className="mb-12 text-left md:text-center">
@@ -91,7 +101,7 @@ export const FAQComponent = async ({
       <Accordion
         className="w-full rounded-md border border-gray-500"
         collapsible
-        defaultValue={`item-${defaultGroupId}`}
+        defaultValue={groups[0] ? `item-${groups[0].id}` : undefined}
         type="single"
       >
         {groups.map((group) => {

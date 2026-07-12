@@ -187,7 +187,7 @@ export default async function VoiceCloningPage(props: Props) {
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">
-              <FAQComponent lang={lang} priorityGroupId="voiceCloning" />
+              <FAQComponent lang={lang} priorityGroupIds={['voiceCloning']} />
             </div>
 
             {/* CTA Section */}

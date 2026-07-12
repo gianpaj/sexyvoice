@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       preconnect: 'https://files.sexyvoice.ai',
     },
     openGraph: {
-      title: `${title} | SexyVoice.ai`,
+      title,
       description,
       url,
       siteName: 'SexyVoice.ai',
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${title} | SexyVoice.ai`,
+      title,
       description,
     },
     alternates: {

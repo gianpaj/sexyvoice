@@ -113,7 +113,7 @@ export function DemoCallPlayer({
 
     // Create a fresh Audio element (required for createMediaElementSource)
     const audio = new Audio(data.audioSrc);
-    audio.crossOrigin="anonymous"
+    audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
     audioRef.current = audio;
 
@@ -279,7 +279,6 @@ export function DemoCallPlayer({
       {/* Waveform */}
       <DemoWaveform frequencyBands={frequencyBands} isActive={isPlaying} />
 
-
       {/* Call / Stop button */}
       <Button
         aria-label={isPlaying ? stopLabel : playLabel}
@@ -314,7 +313,6 @@ export function DemoCallPlayer({
       >
         {formatTime(currentTime)} / {formatTime(duration)}
       </div>
-
     </div>
   );
 }
