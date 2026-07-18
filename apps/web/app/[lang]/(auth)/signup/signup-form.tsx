@@ -65,7 +65,7 @@ export function SignUpForm({ lang }: { lang: Locale }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, lang }),
       });
 
       if (res.ok) {

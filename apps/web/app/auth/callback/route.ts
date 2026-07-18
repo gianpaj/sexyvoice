@@ -2,27 +2,20 @@ import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
-import PostHogClient from '@/lib/posthog';
-import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
+import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
 import {
-  createOauthCallbackMarkerValue,
-  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-  verifyOauthCallbackMarkerValue,
-} from '@/lib/supabase/oauth-callback-marker';
+  AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+  createAuthCallbackMarkerValue,
+  verifyAuthCallbackMarkerValue,
+} from '@/lib/supabase/auth-callback-marker';
+import {
+  createAuthRedirectResponse,
+  getLocaleFromRedirectPath,
+  getSafeAuthRedirectPath,
+} from '@/lib/supabase/auth-redirect';
+import { AUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { createClient } from '@/lib/supabase/server';
 import { routing } from '@/src/i18n/routing';
-
-const isSafeRedirectPath = (value: string | null) =>
-  Boolean(value?.startsWith('/') && !value.startsWith('//'));
-
-const getLocaleFromRedirectPath = (redirectPath: string | null) => {
-  const locale = redirectPath?.split('/')[1];
-
-  return routing.locales.includes(locale as (typeof routing.locales)[number])
-    ? locale
-    : routing.defaultLocale;
-};
 
 const getOauthCodeFingerprint = (code: string | null) => {
   if (!code) {
@@ -144,7 +137,7 @@ function getKnownOauthCallbackFailure(error: unknown): {
   return null;
 }
 
-const getOauthCallbackCookieContext = (request: Request) => {
+const getAuthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const cookies = parseCookieHeader(cookieHeader);
   const cookieNames = cookies.map(({ name }) => name);
@@ -152,8 +145,8 @@ const getOauthCallbackCookieContext = (request: Request) => {
     const lowerName = name.toLowerCase();
     return lowerName.startsWith('sb-') || lowerName.includes('supabase');
   });
-  const oauthCallbackMarkerCookie = cookies.find(
-    ({ name }) => name === OAUTH_CALLBACK_COOKIE_NAME,
+  const authCallbackMarkerCookie = cookies.find(
+    ({ name }) => name === AUTH_CALLBACK_COOKIE_NAME,
   );
 
   return {
@@ -166,18 +159,18 @@ const getOauthCallbackCookieContext = (request: Request) => {
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
       name.includes('code-verifier'),
     ),
-    hasOauthCallbackMarkerCookie: cookieNames.includes(
-      OAUTH_CALLBACK_COOKIE_NAME,
+    hasAuthCallbackMarkerCookie: cookieNames.includes(
+      AUTH_CALLBACK_COOKIE_NAME,
     ),
-    hasValidOauthCallbackMarkerCookie: verifyOauthCallbackMarkerValue(
-      oauthCallbackMarkerCookie?.value,
+    hasValidAuthCallbackMarkerCookie: verifyAuthCallbackMarkerValue(
+      authCallbackMarkerCookie?.value,
     ),
   };
 };
 
-const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
+const clearAuthCallbackMarkerCookie = (response: NextResponse) => {
   response.cookies.set({
-    name: OAUTH_CALLBACK_COOKIE_NAME,
+    name: AUTH_CALLBACK_COOKIE_NAME,
     value: '',
     httpOnly: true,
     maxAge: 0,
@@ -189,16 +182,16 @@ const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
   return response;
 };
 
-const createOauthRedirectResponse = (url: string) => {
+const createAuthCallbackRedirectResponse = (url: string) => {
   const response = NextResponse.redirect(url);
-  const markerValue = createOauthCallbackMarkerValue();
+  const markerValue = createAuthCallbackMarkerValue();
 
   if (markerValue) {
     response.cookies.set({
-      name: OAUTH_CALLBACK_COOKIE_NAME,
+      name: AUTH_CALLBACK_COOKIE_NAME,
       value: markerValue,
       httpOnly: true,
-      maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+      maxAge: AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
@@ -208,8 +201,8 @@ const createOauthRedirectResponse = (url: string) => {
   return response;
 };
 
-const createOauthFailureRedirectResponse = (url: string) =>
-  clearOauthCallbackMarkerCookie(NextResponse.redirect(url));
+const createAuthCallbackFailureRedirectResponse = (url: string) =>
+  clearAuthCallbackMarkerCookie(NextResponse.redirect(url));
 
 export async function GET(request: Request) {
   // The `/auth/callback` route is required for the server-side auth flow implemented
@@ -219,14 +212,15 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get('redirect_to');
-  const locale = getLocaleFromRedirectPath(redirectTo);
+  const safeRedirectPath = getSafeAuthRedirectPath(redirectTo, origin);
+  const locale = getLocaleFromRedirectPath(safeRedirectPath);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
-  const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const authCookieContext = getAuthCallbackCookieContext(request);
   const createSafePostAuthRedirectResponse = () =>
-    createOauthRedirectResponse(
-      isSafeRedirectPath(redirectTo)
-        ? `${origin}${redirectTo}`
+    createAuthCallbackRedirectResponse(
+      safeRedirectPath
+        ? `${origin}${safeRedirectPath}`
         : `${origin}/${routing.defaultLocale}/dashboard`,
     );
   const reportKnownOauthCallbackFailure = (
@@ -243,7 +237,7 @@ export async function GET(request: Request) {
           redirectTo,
           locale,
           ...oauthCodeContext,
-          ...oauthCookieContext,
+          ...authCookieContext,
           errorCode: getErrorStringProperty(error, 'code') || null,
           errorMessage: getErrorMessage(error),
           errorName: getErrorStringProperty(error, 'name') || null,
@@ -251,11 +245,12 @@ export async function GET(request: Request) {
       });
     }
 
-    return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+    return createAuthCallbackFailureRedirectResponse(`${origin}${loginPath}`);
   };
+
   try {
     if (!code) {
-      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+      return createAuthCallbackFailureRedirectResponse(`${origin}${loginPath}`);
     }
 
     // Short-circuit a replayed/refreshed callback: the HMAC-signed marker cookie
@@ -266,8 +261,8 @@ export async function GET(request: Request) {
     // cookie was somehow cleared while the marker survived, the dashboard simply
     // redirects back to login — safe either way.
     if (
-      oauthCookieContext.hasValidOauthCallbackMarkerCookie &&
-      !oauthCookieContext.hasSupabaseCodeVerifierCookie
+      authCookieContext.hasValidAuthCallbackMarkerCookie &&
+      !authCookieContext.hasSupabaseCodeVerifierCookie
     ) {
       return createSafePostAuthRedirectResponse();
     }
@@ -298,15 +293,14 @@ export async function GET(request: Request) {
           redirectTo,
           locale,
           ...oauthCodeContext,
-          ...oauthCookieContext,
+          ...authCookieContext,
         },
       });
 
-      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+      return createAuthCallbackFailureRedirectResponse(`${origin}${loginPath}`);
     }
 
-    const email = user?.email;
-    if (!email) {
+    if (!user?.email) {
       captureMessage('OAuth callback completed without a user email.', {
         level: 'error',
         tags: {
@@ -320,42 +314,20 @@ export async function GET(request: Request) {
         },
       });
 
-      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+      return createAuthCallbackFailureRedirectResponse(`${origin}${loginPath}`);
     }
 
-    // Add Stripe customer creation
-    if (user) {
-      const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-      if (!stripe_id) {
-        console.error('Failed to create Stripe customer.');
-        captureMessage('Failed to create Stripe customer.', {
-          level: 'error',
-          user: { id: user.id, email: user.email },
-        });
-      }
+    await recordSignupSideEffects(
+      user,
+      user.app_metadata.provider === 'email' ? 'email' : 'social',
+    );
 
-      const posthog = PostHogClient();
-
-      const login_type =
-        user.app_metadata.provider === 'email' ? 'email' : 'social';
-
-      posthog.capture({
-        distinctId: user.id,
-        event: 'sign-up',
-        properties: {
-          login_type,
-          //   is_free_trial: true,
-        },
-      });
-      await posthog.shutdown();
-    }
-
-    if (isSafeRedirectPath(redirectTo)) {
-      return createOauthRedirectResponse(`${origin}${redirectTo}`);
+    if (safeRedirectPath) {
+      return createAuthRedirectResponse(`${origin}${safeRedirectPath}`);
     }
 
     // URL to redirect to after sign up process completes
-    return createOauthRedirectResponse(
+    return createAuthRedirectResponse(
       `${origin}/${routing.defaultLocale}/dashboard`,
     );
   } catch (error) {
@@ -377,10 +349,10 @@ export async function GET(request: Request) {
         redirectTo,
         locale,
         ...oauthCodeContext,
-        ...oauthCookieContext,
+        ...authCookieContext,
       },
     });
 
-    return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+    return createAuthCallbackFailureRedirectResponse(`${origin}${loginPath}`);
   }
 }
