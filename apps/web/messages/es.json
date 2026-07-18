@@ -779,6 +779,8 @@
         "title": "¿Qué puedes hacer con la API de SexyVoice?",
         "generateTitle": "Generar",
         "generateDescription": "Convierte texto en voz natural con voces de IA. Elige entre varios idiomas y añade expresión emocional (en las voces compatibles).",
+        "cloneTitle": "Clonar",
+        "cloneDescription": "Clona una voz a partir de una breve grabación de referencia y luego sintetiza nueva voz con ella en más de 20 idiomas a través de la API.",
         "cliTitle": "CLI",
         "cliDescription": "Usa la CLI de SexyVoice para iniciar sesión desde el navegador, descubrir voces, generar audio, obtener comandos curl y reproducir audio localmente desde tu terminal.",
         "moreInfo": "Más información:",
