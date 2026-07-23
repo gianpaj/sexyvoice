@@ -102,6 +102,16 @@
       "stopButton": "Stop",
       "pickCharacter": "Pick a character"
     },
+    "demoClone": {
+      "pickSpeaker": "Pick a voice",
+      "referenceLabel": "Reference audio",
+      "resultLabel": "Cloned voice",
+      "hearResult": "Hear the result",
+      "playAudio": "Play audio",
+      "preparedExamplesCaption": "Prepared examples. Sign up to clone your own voice.",
+      "audioError": "This audio could not be loaded.",
+      "retry": "Try again"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natural Voices",
@@ -118,6 +128,10 @@
       "voiceCalling": {
         "title": "Live Voice Calls",
         "description": "Have real-time phone conversations with AI characters — natural voices, instant responses, no setup required."
+      },
+      "voiceCloneDemo": {
+        "title": "Clone Your Voice",
+        "description": "Try the live cloning demo — hear a voice recreated from seconds of audio, speaking naturally in multiple languages."
       }
     },
     "cta": {
@@ -136,6 +150,18 @@
         "title": "Ready to hear a voice come alive?",
         "subtitle": "Start a live call with any character and experience natural, real-time AI conversation.",
         "action": "Start a voice call"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Your voice, in every language",
+        "subtitle": "Clone a voice from a few seconds of audio.\nHear it speak naturally in 9 languages."
+      },
+      "cta": {
+        "freeCredits": "Start with 10,000 free credits",
+        "title": "Ready to clone your own voice?",
+        "subtitle": "Upload a short sample and hear yourself speak in any supported language.",
+        "action": "Clone your voice"
       }
     },
     "generator": {
@@ -312,9 +338,7 @@
         "description": "For bigger creative needs and bolder content.",
         "creditsWithAudio": "{numCredits} credits (~125 minutes of audio)",
         "creditsWithPromo": "{numCredits} credits",
-        "features": [
-          "Everything in Standard, just cheaper"
-        ]
+        "features": ["Everything in Standard, just cheaper"]
       }
     },
     "subscriptionScheduledToCancel": {
@@ -815,6 +839,8 @@
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleVoiceCall": "AI Voice Calling – Talk to Live AI Characters",
     "descriptionVoiceCall": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
+    "titleVoiceCloning": "AI Voice Cloning",
+    "descriptionVoiceCloning": "Clone a voice from a few seconds of audio and hear it speak naturally in 9 languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
     "titleTranscribe": "Free Audio Transcription – 99+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
@@ -907,6 +933,7 @@
   },
   "footer": {
     "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "featuresHeading": "Features",
     "toolsHeading": "Tools",
     "companyHeading": "Company",
     "legalHeading": "Legal",
@@ -917,7 +944,8 @@
     "audioConverter": "Free Audio Converter",
     "transcribe": "Free Audio Transcription",
     "audioJoiner": "Free Audio Joiner",
-    "voiceCalling": "AI Voice Calling"
+    "voiceCalling": "AI Voice Calling",
+    "voiceCloning": "Voice cloning"
   },
   "promos": {
     "halloweenBanner": {

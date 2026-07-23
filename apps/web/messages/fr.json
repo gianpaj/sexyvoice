@@ -102,6 +102,16 @@
       "stopButton": "Arrêter",
       "pickCharacter": "Choisissez un personnage"
     },
+    "demoClone": {
+      "pickSpeaker": "Choisissez une voix",
+      "referenceLabel": "Audio de référence",
+      "resultLabel": "Voix clonée",
+      "hearResult": "Écouter le résultat",
+      "playAudio": "Lire l'audio",
+      "preparedExamplesCaption": "Exemples préparés. Inscrivez-vous pour cloner votre propre voix.",
+      "audioError": "Impossible de charger cet audio.",
+      "retry": "Réessayer"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voix naturelles",
@@ -118,6 +128,10 @@
       "voiceCalling": {
         "title": "Appels vocaux en direct",
         "description": "Ayez des conversations téléphoniques en temps réel avec des personnages IA — voix naturelles, réponses instantanées, sans configuration."
+      },
+      "voiceCloneDemo": {
+        "title": "Clonez votre voix",
+        "description": "Essayez la démo de clonage en direct : écoutez une voix recréée à partir de quelques secondes d’audio, s’exprimant naturellement dans plusieurs langues."
       }
     },
     "cta": {
@@ -136,6 +150,18 @@
         "title": "Prêt à entendre une voix prendre vie ?",
         "subtitle": "Démarrez un appel en direct avec n'importe quel personnage et vivez une conversation naturelle avec l'IA en temps réel.",
         "action": "Démarrer un appel vocal"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Votre voix, dans toutes les langues",
+        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 9 langues."
+      },
+      "cta": {
+        "freeCredits": "Commencez avec 10 000 crédits gratuits",
+        "title": "Prêt à cloner votre propre voix ?",
+        "subtitle": "Importez un court échantillon et écoutez-vous parler dans une langue prise en charge.",
+        "action": "Clonez votre voix"
       }
     },
     "generator": {
@@ -815,6 +841,8 @@
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
     "titleVoiceCall": "Appels Vocaux IA – Parlez en Direct avec des Personnages IA",
     "descriptionVoiceCall": "Passez des appels téléphoniques IA en direct avec vos voix préférées. Parlez en temps réel avec des personnages IA – des conversations naturelles grâce à la technologie vocale de SexyVoice.ai.",
+    "titleVoiceCloning": "Clonage vocal par IA",
+    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 9 langues.",
     "/": "",
     "/voice-call": "Appel Vocal",
     "/login": "Connexion",
@@ -907,6 +935,7 @@
   },
   "footer": {
     "tagline": "Génération vocale par IA. Créez un audio naturel et expressif en quelques secondes.",
+    "featuresHeading": "Fonctionnalités",
     "toolsHeading": "Outils",
     "companyHeading": "Entreprise",
     "legalHeading": "Juridique",
@@ -917,7 +946,8 @@
     "audioConverter": "Convertisseur audio gratuit",
     "transcribe": "Transcription audio gratuite",
     "audioJoiner": "Assembleur audio gratuit",
-    "voiceCalling": "Appels Vocaux IA"
+    "voiceCalling": "Appels Vocaux IA",
+    "voiceCloning": "Clonage vocal"
   },
   "promos": {
     "halloweenBanner": {

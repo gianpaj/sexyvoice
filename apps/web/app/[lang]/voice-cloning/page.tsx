@@ -6,17 +6,16 @@ import {
   getTranslations,
   setRequestLocale,
 } from 'next-intl/server';
-import ReactDOM from 'react-dom';
 import type { Graph } from 'schema-dts';
 
 import { Banner } from '@/components/banner';
-import { DemoCallSection } from '@/components/demo-call/demo-call-section';
+import { DemoCloneSection } from '@/components/demo-clone/demo-clone-section';
+import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import HeroWaveform from '@/components/hero-waveform';
 import { JsonLd } from '@/components/json-ld';
 import { Button } from '@/components/ui/button';
-import { demoCallData } from '@/data/demo-transcripts';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
@@ -31,12 +30,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
   const tHero = await getTranslations({
     locale: lang,
-    namespace: 'landing.voiceCall.hero',
+    namespace: 'landing.voiceCloning.hero',
   });
 
-  const title = tPages('titleVoiceCall') || tHero('title');
-  const description = tPages('descriptionVoiceCall') || tHero('subtitle');
-  const url = `https://sexyvoice.ai/${lang}/voice-call`;
+  const title = tPages('titleVoiceCloning') || tHero('title');
+  const description = tPages('descriptionVoiceCloning') || tHero('subtitle');
+  const url = `https://sexyvoice.ai/${lang}/voice-cloning`;
 
   return {
     title,
@@ -45,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       preconnect: 'https://files.sexyvoice.ai',
     },
     openGraph: {
-      title,
+      title: `${title} | SexyVoice.ai`,
       description,
       url,
       siteName: 'SexyVoice.ai',
@@ -54,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: `${title} | SexyVoice.ai`,
       description,
     },
     alternates: {
@@ -62,14 +61,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       languages: Object.fromEntries(
         routing.locales.map((locale) => [
           locale,
-          `https://sexyvoice.ai/${locale}/voice-call`,
+          `https://sexyvoice.ai/${locale}/voice-cloning`,
         ]),
       ),
     },
   };
 }
 
-export default async function LandingPage(props: Props) {
+export default async function VoiceCloningPage(props: Props) {
   const { lang } = await props.params;
 
   // Validate that the language is a supported locale
@@ -79,15 +78,6 @@ export default async function LandingPage(props: Props) {
 
   // Enable static rendering
   setRequestLocale(lang);
-
-  // Warm the HTTP cache for the demo call the visitor is most likely to play:
-  // Ramona is the character selected by default. `crossOrigin` must match the
-  // `<audio crossOrigin="anonymous">` the player creates, or the browser keys
-  // the preload separately and downloads the clip twice.
-  ReactDOM.preload(demoCallData.ramona.audioSrc, {
-    as: 'audio',
-    crossOrigin: 'anonymous',
-  });
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
@@ -104,10 +94,16 @@ export default async function LandingPage(props: Props) {
     placement: 'landing',
   });
 
-  const [firstPart, ...restParts] = dictLanding.voiceCall.hero.title.split(',');
-  const titleRestParts = restParts.join(',');
+  // Translations are not guaranteed to contain a comma; when they do not, the
+  // whole title renders without the gradient span rather than losing text.
+  const heroTitle = dictLanding.voiceCloning.hero.title;
+  const commaIndex = heroTitle.indexOf(',');
+  const firstPart =
+    commaIndex === -1 ? heroTitle : heroTitle.slice(0, commaIndex);
+  const titleRestParts =
+    commaIndex === -1 ? '' : heroTitle.slice(commaIndex + 1);
 
-  const siteUrl = `https://sexyvoice.ai/${lang}/voice-call`;
+  const siteUrl = `https://sexyvoice.ai/${lang}/voice-cloning`;
 
   const jsonLd: Graph = {
     '@context': 'https://schema.org',
@@ -138,10 +134,10 @@ export default async function LandingPage(props: Props) {
         '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
         url: siteUrl,
-        name: messages.pages.titleVoiceCall || dictLanding.voiceCall.hero.title,
+        name: messages.pages.titleVoiceCloning || heroTitle,
         description:
-          messages.pages.descriptionVoiceCall ||
-          dictLanding.voiceCall.hero.subtitle,
+          messages.pages.descriptionVoiceCloning ||
+          dictLanding.voiceCloning.hero.subtitle,
         isPartOf: {
           '@id': 'https://sexyvoice.ai/#website',
         },
@@ -167,37 +163,44 @@ export default async function LandingPage(props: Props) {
               <HeroWaveform />
               <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
                 <span className="text-white/90">{firstPart}</span>
-                <br />
                 {titleRestParts && (
-                  <span
-                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
-                    }}
-                  >
-                    {titleRestParts}
-                  </span>
+                  <>
+                    <br />
+                    <span
+                      className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent"
+                      style={{
+                        backgroundImage:
+                          'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
+                      }}
+                    >
+                      {titleRestParts}
+                    </span>
+                  </>
                 )}
               </h1>
               <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
-                {dictLanding.voiceCall.hero.subtitle}
+                {dictLanding.voiceCloning.hero.subtitle}
               </p>
 
-              <DemoCallSection lang={lang} />
+              <DemoCloneSection lang={lang} />
+            </div>
+
+            {/* FAQ Section */}
+            <div className="mx-auto max-w-3xl py-16">
+              <FAQComponent lang={lang} priorityGroupIds={['voiceCloning']} />
             </div>
 
             {/* CTA Section */}
             <div className="space-y-8 py-16 text-center">
               <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
                 <Sparkles className="mr-2 size-4" />
-                <span>{dictLanding.voiceCall.cta.freeCredits}</span>
+                <span>{dictLanding.voiceCloning.cta.freeCredits}</span>
               </div>
               <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
-                {dictLanding.voiceCall.cta.title}
+                {dictLanding.voiceCloning.cta.title}
               </h2>
               <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
-                {dictLanding.voiceCall.cta.subtitle}
+                {dictLanding.voiceCloning.cta.subtitle}
               </p>
               <Button
                 asChild
@@ -205,7 +208,9 @@ export default async function LandingPage(props: Props) {
                 effect="ringHover"
                 size="lg"
               >
-                <Link href="/signup">{dictLanding.voiceCall.cta.action}</Link>
+                <Link href="/signup">
+                  {dictLanding.voiceCloning.cta.action}
+                </Link>
               </Button>
             </div>
           </div>

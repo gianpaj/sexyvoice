@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-import { AudioProvider } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { AudioProvider } from '@/components/audio-provider';
 import {
   Card,
   CardContent,

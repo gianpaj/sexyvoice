@@ -102,6 +102,16 @@
       "stopButton": "Stopp",
       "pickCharacter": "Wähle einen Charakter"
     },
+    "demoClone": {
+      "pickSpeaker": "Wähle eine Stimme",
+      "referenceLabel": "Referenz-Audio",
+      "resultLabel": "Geklonte Stimme",
+      "hearResult": "Ergebnis anhören",
+      "playAudio": "Audio abspielen",
+      "preparedExamplesCaption": "Vorbereitete Beispiele. Registriere dich, um deine eigene Stimme zu klonen.",
+      "audioError": "Dieses Audio konnte nicht geladen werden.",
+      "retry": "Erneut versuchen"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natürliche Stimmen",
@@ -118,6 +128,10 @@
       "voiceCalling": {
         "title": "Live-Sprachanrufe",
         "description": "Führen Sie Telefongespräche in Echtzeit mit KI-Charakteren — natürliche Stimmen, sofortige Antworten, keine Einrichtung nötig."
+      },
+      "voiceCloneDemo": {
+        "title": "Klone deine Stimme",
+        "description": "Teste die Live-Klon-Demo: Höre eine Stimme, die aus wenigen Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht."
       }
     },
     "cta": {
@@ -136,6 +150,18 @@
         "title": "Bereit, eine Stimme zum Leben zu erwecken?",
         "subtitle": "Starten Sie einen Live-Anruf mit einem beliebigen Charakter und erleben Sie eine natürliche KI-Unterhaltung in Echtzeit.",
         "action": "Sprachanruf starten"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Deine Stimme, in jeder Sprache",
+        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 9 Sprachen sprechen."
+      },
+      "cta": {
+        "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
+        "title": "Bereit, deine eigene Stimme zu klonen?",
+        "subtitle": "Lade eine kurze Probe hoch und höre dich in jeder unterstützten Sprache sprechen.",
+        "action": "Stimme klonen"
       }
     },
     "generator": {
@@ -815,6 +841,8 @@
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
     "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
     "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
+    "titleVoiceCloning": "KI-Stimmklonen",
+    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 9 Sprachen sprechen.",
     "/": "",
     "/voice-call": "Sprachanruf",
     "/login": "Anmelden",
@@ -907,6 +935,7 @@
   },
   "footer": {
     "tagline": "KI-gestützte Sprachgenerierung. Erstellen Sie natürliches, ausdrucksstarkes Audio in Sekunden.",
+    "featuresHeading": "Funktionen",
     "toolsHeading": "Werkzeuge",
     "companyHeading": "Unternehmen",
     "legalHeading": "Rechtliches",
@@ -917,7 +946,8 @@
     "audioConverter": "Kostenloser Audio-Konverter",
     "transcribe": "Kostenlose Audio-Transkription",
     "audioJoiner": "Kostenloser Audio-Zusammenfüger",
-    "voiceCalling": "KI-Sprachanrufe"
+    "voiceCalling": "KI-Sprachanrufe",
+    "voiceCloning": "Stimmklonen"
   },
   "promos": {
     "halloweenBanner": {

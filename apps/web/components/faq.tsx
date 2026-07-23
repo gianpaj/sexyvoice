@@ -32,13 +32,19 @@ const faqIconMap: Record<string, LucideIcon> = {
   pricingAndAccess: Coins,
 };
 
-// Group ids that should be surfaced first, in this order. Any group not listed
-// keeps its original position from the message file (stable sort).
-const faqGroupPriority = ['liveCalling'];
+// Default group ids surfaced first, in this order. Pages reuse this component
+// but each can lead with its own group via the `priorityGroupIds` prop; the
+// general landing page keeps `liveCalling` first.
+const DEFAULT_FAQ_GROUP_PRIORITY = ['liveCalling'];
 
-function sortFaqGroups<T extends { id: string }>(groups: readonly T[]): T[] {
+// Any group not listed in `priority` keeps its original position from the
+// message file (stable sort).
+function sortFaqGroups<T extends { id: string }>(
+  groups: readonly T[],
+  priority: readonly string[],
+): T[] {
   const priorityIndex = (id: string) => {
-    const index = faqGroupPriority.indexOf(id);
+    const index = priority.indexOf(id);
     return index === -1 ? Number.POSITIVE_INFINITY : index;
   };
   return [...groups].sort((a, b) => priorityIndex(a.id) - priorityIndex(b.id));
@@ -70,10 +76,21 @@ function renderAnswer(answer: string, link?: FaqLink) {
   );
 }
 
-export const FAQComponent = async ({ lang }: { lang: Locale }) => {
+export const FAQComponent = async ({
+  lang,
+  priorityGroupIds = DEFAULT_FAQ_GROUP_PRIORITY,
+}: {
+  lang: Locale;
+  /**
+   * Group ids to surface first, in order; the first present group also opens by
+   * default. Lets each page lead with its own group (e.g. the voice cloning
+   * page passes `['voiceCloning']`). Defaults to `liveCalling`.
+   */
+  priorityGroupIds?: readonly string[];
+}) => {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).landing
     .faq;
-  const groups = sortFaqGroups(dict.groups);
+  const groups = sortFaqGroups(dict.groups, priorityGroupIds);
   return (
     <>
       <div className="mb-12 text-left md:text-center">

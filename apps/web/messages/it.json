@@ -102,6 +102,16 @@
       "stopButton": "Stop",
       "pickCharacter": "Scegli un personaggio"
     },
+    "demoClone": {
+      "pickSpeaker": "Scegli una voce",
+      "referenceLabel": "Audio di riferimento",
+      "resultLabel": "Voce clonata",
+      "hearResult": "Ascolta il risultato",
+      "playAudio": "Riproduci audio",
+      "preparedExamplesCaption": "Esempi preparati. Registrati per clonare la tua voce.",
+      "audioError": "Impossibile caricare questo audio.",
+      "retry": "Riprova"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voci naturali",
@@ -118,6 +128,10 @@
       "voiceCalling": {
         "title": "Chiamate vocali dal vivo",
         "description": "Fai conversazioni telefoniche in tempo reale con personaggi IA — voci naturali, risposte istantanee, nessuna configurazione richiesta."
+      },
+      "voiceCloneDemo": {
+        "title": "Clona la tua voce",
+        "description": "Prova la demo di clonazione dal vivo: ascolta una voce ricreata da pochi secondi di audio, che parla in modo naturale in più lingue."
       }
     },
     "cta": {
@@ -136,6 +150,18 @@
         "title": "Pronto a sentire una voce prendere vita?",
         "subtitle": "Avvia una chiamata dal vivo con qualsiasi personaggio e vivi una conversazione naturale con l'IA in tempo reale.",
         "action": "Avvia una chiamata vocale"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "La tua voce, in ogni lingua",
+        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 9 lingue."
+      },
+      "cta": {
+        "freeCredits": "Inizia con 10.000 crediti gratuiti",
+        "title": "Pronto a clonare la tua voce?",
+        "subtitle": "Carica un breve campione e ascoltati parlare in qualsiasi lingua supportata.",
+        "action": "Clona la tua voce"
       }
     },
     "generator": {
@@ -815,6 +841,8 @@
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
     "titleVoiceCall": "Chiamate Vocali IA – Parla dal Vivo con Personaggi IA",
     "descriptionVoiceCall": "Fai chiamate telefoniche IA dal vivo con le tue voci preferite. Parla in tempo reale con personaggi IA – conversazioni naturali grazie alla tecnologia vocale di SexyVoice.ai.",
+    "titleVoiceCloning": "Clonazione vocale con IA",
+    "descriptionVoiceCloning": "Clona una voce da pochi secondi di audio e ascoltala parlare in modo naturale in 9 lingue.",
     "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",
     "titleTranscribe": "Trascrizione Audio Online Gratuita – Da Voce a Testo in 99+ Lingue",
     "descriptionAudioConverter": "Convertitore audio online gratuito – Converti MP3, WAV, FLAC, OGG, AAC, M4A e altri formati direttamente nel tuo browser. Nessun upload richiesto, 100% privato e offline. Basato su FFmpeg.",
@@ -907,6 +935,7 @@
   },
   "footer": {
     "tagline": "Generazione vocale con IA. Crea audio naturale ed espressivo in pochi secondi.",
+    "featuresHeading": "Funzionalità",
     "toolsHeading": "Strumenti",
     "companyHeading": "Azienda",
     "legalHeading": "Legale",
@@ -917,7 +946,8 @@
     "audioConverter": "Convertitore audio gratuito",
     "transcribe": "Trascrizione audio gratuita",
     "audioJoiner": "Unione audio gratuita",
-    "voiceCalling": "Chiamate Vocali IA"
+    "voiceCalling": "Chiamate Vocali IA",
+    "voiceCloning": "Clonazione vocale"
   },
   "promos": {
     "halloweenBanner": {
