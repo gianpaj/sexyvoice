@@ -47,6 +47,6 @@
   "engines": {
     "node": "24.x"
   },
-  "packageManager": "pnpm@10.20.0",
+  "packageManager": "pnpm@11.16.0",
   "private": true
 }
