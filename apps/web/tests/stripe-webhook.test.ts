@@ -16,9 +16,12 @@ import { POST } from '@/app/api/stripe/webhook/route';
 import { getCustomerData, setTestRedisClient } from '@/lib/redis/queries';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
+  CARD_BONUS_CREDIT_AMOUNT,
   getUserIdByStripeCustomerId,
+  insertCardBonusCreditTransaction,
   insertSubscriptionCreditTransaction,
   insertTopupCreditTransaction,
+  isEligibleForCardBonusOnPayment,
 } from '@/lib/supabase/queries';
 import {
   clearRedis,
@@ -49,14 +52,26 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
       list: vi.fn(),
       retrieve: vi.fn(),
     },
+    setupIntents: {
+      retrieve: vi.fn(),
+    },
+    paymentIntents: {
+      retrieve: vi.fn(),
+    },
+    customers: {
+      update: vi.fn(),
+    },
   },
 }));
 
 // Mock Supabase queries
 vi.mock('@/lib/supabase/queries', () => ({
+  CARD_BONUS_CREDIT_AMOUNT: 9000,
   getUserIdByStripeCustomerId: vi.fn(),
+  insertCardBonusCreditTransaction: vi.fn(),
   insertSubscriptionCreditTransaction: vi.fn(),
   insertTopupCreditTransaction: vi.fn(),
+  isEligibleForCardBonusOnPayment: vi.fn(),
 }));
 
 describe('Stripe Webhook Route', () => {
@@ -74,6 +89,9 @@ describe('Stripe Webhook Route', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    // Default: the card-on-file bonus is NOT auto-granted on payment. Tests
+    // that exercise the grant opt in explicitly.
+    vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(false);
     // Clear Redis data before each test
     await clearRedis();
   });
@@ -222,6 +240,82 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(200);
       expect(Sentry.captureException).toHaveBeenCalled();
     });
+
+    it('should also grant the card-on-file bonus on a first topup for an eligible user', async () => {
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(true);
+      // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      vi.mocked(stripe.paymentIntents.retrieve).mockResolvedValue({
+        id: 'pi_test123',
+        payment_method: { card: { fingerprint: 'fp_abc123' } },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageId: 'starter',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertTopupCreditTransaction).toHaveBeenCalled();
+      expect(isEligibleForCardBonusOnPayment).toHaveBeenCalledWith('user_123');
+      // Uses the payment_intent as reference_id and the card fingerprint for
+      // the global one-card-one-bonus dedupe.
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'pi_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+    });
+
+    it('should not grant the card-on-file bonus on topup when the user is ineligible', async () => {
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(false);
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageId: 'starter',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      await POST(request);
+
+      expect(insertTopupCreditTransaction).toHaveBeenCalled();
+      expect(stripe.paymentIntents.retrieve).not.toHaveBeenCalled();
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('should skip the card-on-file bonus on topup when the payment has no card fingerprint', async () => {
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(true);
+      vi.mocked(stripe.paymentIntents.retrieve).mockResolvedValue({
+        id: 'pi_test123',
+        payment_method: { card: null },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const session = createMockCheckoutSession('payment', {
+        type: 'topup',
+        userId: 'user_123',
+        credits: '5000',
+        dollarAmount: '5.00',
+        packageId: 'starter',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertTopupCreditTransaction).toHaveBeenCalled();
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+    });
   });
 
   describe('Checkout Session - Subscription', () => {
@@ -273,6 +367,44 @@ describe('Stripe Webhook Route', () => {
         subscriptionId,
         28_750, // 25,000 * 1.15 (subscription bonus)
         10,
+      );
+    });
+
+    it('should also grant the card-on-file bonus on an initial subscription for an eligible user', async () => {
+      const paymentIntentId = 'pi_initial_test123';
+
+      const subscription = createMockSubscription(
+        process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID!,
+      );
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      vi.mocked(isEligibleForCardBonusOnPayment).mockResolvedValue(true);
+      vi.mocked(stripe.paymentIntents.retrieve).mockResolvedValue({
+        id: paymentIntentId,
+        payment_method: { card: { fingerprint: 'fp_sub123' } },
+        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
+      } as any);
+
+      const session = createMockCheckoutSession('subscription');
+      session.payment_intent = paymentIntentId;
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertSubscriptionCreditTransaction).toHaveBeenCalled();
+      expect(isEligibleForCardBonusOnPayment).toHaveBeenCalledWith('user_789');
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_789',
+        paymentIntentId,
+        'fp_sub123',
+        CARD_BONUS_CREDIT_AMOUNT,
       );
     });
 
@@ -1106,6 +1238,154 @@ describe('Stripe Webhook Route', () => {
       const json = await response.json();
       expect(json).toEqual({ received: true });
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Card Bonus (Setup Intent)', () => {
+    function mockSetupIntent(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'seti_test123',
+        object: 'setup_intent',
+        customer: 'cus_test123',
+        metadata: { type: 'card_bonus', userId: 'user_123' },
+        payment_method: {
+          id: 'pm_test123',
+          object: 'payment_method',
+          card: { fingerprint: 'fp_abc123' },
+        },
+        ...overrides,
+      } as never;
+    }
+
+    it('grants the bonus on checkout.session.completed (mode: setup)', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent(),
+      );
+
+      const session = createMockCheckoutSession('setup', {
+        type: 'card_bonus',
+        userId: 'user_123',
+      });
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(stripe.setupIntents.retrieve).toHaveBeenCalledWith(
+        'seti_test123',
+        { expand: ['payment_method'] },
+      );
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'seti_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+      expect(stripe.customers.update).toHaveBeenCalledWith('cus_test123', {
+        invoice_settings: { default_payment_method: 'pm_test123' },
+      });
+    });
+
+    it('grants the bonus via the setup_intent.succeeded backup path', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent(),
+      );
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent(),
+      );
+      const response = await POST(request);
+
+      expect(response.status).toBe(200);
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_123',
+        'seti_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+    });
+
+    it('resolves the user via stripe_id when metadata.userId is missing', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_456');
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      await POST(request);
+
+      expect(getUserIdByStripeCustomerId).toHaveBeenCalledWith('cus_test123');
+      expect(insertCardBonusCreditTransaction).toHaveBeenCalledWith(
+        'user_456',
+        'seti_test123',
+        'fp_abc123',
+        CARD_BONUS_CREDIT_AMOUNT,
+      );
+    });
+
+    it('ignores setup intents that are not for the card bonus', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({ metadata: {} }),
+      );
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent({ metadata: {} }),
+      );
+      await POST(request);
+
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+    });
+
+    it('reports a missing card fingerprint to Sentry and skips the grant', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({
+          payment_method: { id: 'pm_test123', object: 'payment_method' },
+        }),
+      );
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent(),
+      );
+      await POST(request);
+
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          tags: expect.objectContaining({
+            event_type: 'card_bonus_setup_intent',
+          }),
+        }),
+      );
+    });
+
+    it('reports an unresolvable user to Sentry and skips the grant', async () => {
+      vi.mocked(stripe.setupIntents.retrieve).mockResolvedValue(
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(undefined);
+
+      const request = createMockRequest(
+        'setup_intent.succeeded',
+        mockSetupIntent({ metadata: { type: 'card_bonus' } }),
+      );
+      await POST(request);
+
+      expect(insertCardBonusCreditTransaction).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(Error),
+        expect.objectContaining({
+          tags: expect.objectContaining({
+            event_type: 'card_bonus_setup_intent',
+          }),
+        }),
+      );
     });
   });
 

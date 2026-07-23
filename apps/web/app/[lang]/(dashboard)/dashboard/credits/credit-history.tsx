@@ -58,10 +58,14 @@ export async function CreditHistory({
                 </time>
               </TableCell>
               <TableCell>{transaction.description}</TableCell>
-              <TableCell className="capitalize">{transaction.type}</TableCell>
+              <TableCell className="capitalize">
+                {t(`historyTypes.${transaction.type}`)}
+              </TableCell>
               <TableCell
                 className={`text-right ${
-                  ['purchase', 'freemium', 'topup'].includes(transaction.type)
+                  ['purchase', 'freemium', 'topup', 'card_bonus'].includes(
+                    transaction.type,
+                  )
                     ? 'text-green-600'
                     : 'text-red-600'
                 }`}

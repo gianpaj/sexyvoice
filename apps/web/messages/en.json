@@ -94,7 +94,7 @@
       "title": "Expressive Voices, Limitless Possibilities",
       "subtitle": "Free AI Text-to-Speech & Voice Generator.\nPerfect for content creators and storytellers.",
       "buttonCTA": "Sign up for Free",
-      "noCreditCard": "No credit card required",
+      "noCreditCard": "No credit card required*⃰",
       "signIn": "Sign In"
     },
     "demoCall": {
@@ -121,7 +121,7 @@
       }
     },
     "cta": {
-      "freeCredits": "Start with 10,000 free credits",
+      "freeCredits": "Start with 10,000 free credits (add a card to unlock them)",
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
@@ -232,7 +232,11 @@
           "questions": [
             {
               "question": "How many credits do I need?",
-              "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 5 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
+              "answer": "About 1,000 credits make 1 minute of audio generation. New users get 1,000 free credits, plus 9,000 more (10,000 total) by adding a card on file – no charge. Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
+            },
+            {
+              "question": "Why do you ask for a credit card?",
+              "answer": "Adding a card is optional and there's no charge — it simply unlocks your bonus credits (9,000 extra, for 10,000 total). Requiring a valid payment method also helps us keep SexyVoice.ai limited to adults (18+) and reduces abuse of our free credits. You're welcome to keep using your 1,000 free credits without ever adding a card."
             },
             {
               "question": "Why choose SexyVoice.ai?",
@@ -262,6 +266,20 @@
     "title": "Purchase credits for creators and businesses of all sizes",
     "description": "Choose the amount of credits that best fits your needs",
     "historyEmpty": "Your credit usage history will appear here",
+    "historyTypes": {
+      "purchase": "Purchase",
+      "freemium": "Freemium",
+      "topup": "Top-up",
+      "refund": "Refund",
+      "card_bonus": "Card bonus"
+    },
+    "cardBonus": {
+      "title": "Add a card, get 9,000 credits",
+      "description": "Add a payment method (no charge) and we'll bump your balance from 1,000 to 10,000 credits.",
+      "cta": "Add card",
+      "processing": "Redirecting…",
+      "error": "Failed to start the card bonus setup. Please try again."
+    },
     "billing": {
       "forever": "(forever)",
       "monthly": "/month",
@@ -362,6 +380,16 @@
       "error": {
         "title": "Payment Failed",
         "description": "There was an issue processing your payment. Please try again or contact support if the problem persists.",
+        "dismiss": "Dismiss"
+      },
+      "cardBonusSuccess": {
+        "title": "Card added!",
+        "description": "9,000 bonus credits have been added to your account.",
+        "dismiss": "Dismiss"
+      },
+      "cardBonusCanceled": {
+        "title": "Card setup canceled",
+        "description": "No card was added, so the bonus credits weren't granted. You can try again anytime.",
         "dismiss": "Dismiss"
       },
       "checkoutError": "Failed to create checkout session"
@@ -812,7 +840,7 @@
     "description": "Generate expressive AI speech with emotions in 24+ languages. Free to try text-to-speech with voice cloning, support & natural speech synthesis. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
-    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
+    "descriptionSignup": "Create a free SexyVoice.ai account – get 1,000 credits instantly, plus 9,000 more when you add a card. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
     "titleVoiceCall": "AI Voice Calling – Talk to Live AI Characters",
     "descriptionVoiceCall": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
@@ -825,7 +853,7 @@
     "/": "",
     "/voice-call": "Voice Call",
     "/login": "Sign In",
-    "/signup": "Sign Up Free – 10,000 Credits",
+    "/signup": "Sign Up Free – Up to 10,000 Credits",
     "/dashboard/call": "Call",
     "/dashboard/generate": "Generate",
     "/dashboard/clone": "Clone",
@@ -961,6 +989,12 @@
       "ctaLoggedIn": "Try voices",
       "ctaLoggedOut": "Log in",
       "ariaLabelDismiss": "Dismiss expressive voices announcement"
+    },
+    "cardBonusBanner": {
+      "text": "Add a card (no charge) and unlock 9,000 bonus credits — 10,000 total.",
+      "ctaLoggedIn": "Add card",
+      "ctaLoggedOut": "Sign up",
+      "ariaLabelDismiss": "Dismiss card bonus announcement"
     }
   },
   "audioConverter": {

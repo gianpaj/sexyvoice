@@ -194,6 +194,7 @@ Notes:
 - `LIVEKIT_API_SECRET`
 
 Notes:
+
 - `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
   and used by the frontend to connect to LiveKit rooms.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
@@ -207,6 +208,7 @@ Notes:
 - `CALL_SUMMARY_SECRET`
 
 Notes:
+
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
 - `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
   and verifying the short-lived OAuth callback marker cookie.
@@ -239,11 +241,35 @@ openssl rand -hex 32
   discount percentage used to display discounted subscription pricing when the
   coupon is configured.
 
+The Stripe Dashboard webhook endpoint (`/api/stripe/webhook`) must have these
+events enabled: `checkout.session.completed`,
+`checkout.session.async_payment_succeeded`, `setup_intent.succeeded`,
+`customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`,
+`invoice.payment_action_required`, `invoice.upcoming`,
+`invoice.marked_uncollectible`, `invoice.payment_succeeded`,
+`payment_intent.succeeded`, `payment_intent.payment_failed`,
+`payment_intent.canceled` (see `allowedEvents` in
+`apps/web/app/api/stripe/webhook/route.ts`). `setup_intent.succeeded` backs
+the card-on-file credit bonus (`mode: 'setup'` Checkout Sessions, no charge)
+and must be added alongside the existing events.
+
+The card-on-file bonus (9,000 credits) is also auto-granted on a new-regime
+user's first **direct payment** — a top-up or an initial subscription — so
+paying customers reach the same 10,000-credit total as users who take the
+"add a card" CTA. The webhook reuses the payment's card fingerprint, so the
+same global one-card-one-bonus dedupe (`card_bonus_claims`) and per-user
+uniqueness guard apply. It runs only when
+`isEligibleForCardBonusOnPayment()` is true (new-regime user, bonus not yet
+granted) and is best-effort: a bonus failure is logged to Sentry but never
+fails the purchase crediting. Non-card payment methods without a fingerprint
+(e.g. some wallets) skip the bonus rather than granting it unguarded.
+
 ### Edge Config
 
 - `EDGE_CONFIG`
 
 Used for:
+
 - dynamic call instructions
 - runtime-configurable behavior without redeploys
 
@@ -463,6 +489,7 @@ output of `sentry-cli issues list` (first column).
 ### OAuth callback/session issues
 
 Check:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
@@ -473,6 +500,7 @@ Check:
 ### LiveKit call issues
 
 Check:
+
 - `LIVEKIT_URL`
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
@@ -482,6 +510,7 @@ Check:
 ### External API issues
 
 Check:
+
 - `API_KEY_HMAC_SECRET`
 - `R2_SPEECH_API_BUCKET_NAME`
 - `R2_SPEECH_API_PUBLIC_URL`
@@ -500,6 +529,7 @@ Check:
 ### Storage issues
 
 Check:
+
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET_NAME`

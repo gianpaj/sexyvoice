@@ -20,7 +20,7 @@ interface CreditTransaction {
     [key: string]: unknown;
   } | null;
   reference_id: string | null;
-  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  type: 'purchase' | 'topup' | 'freemium' | 'refund';
   user_id: string;
 }
 
