@@ -4,11 +4,11 @@
   "dependencies": {
     "@ai-sdk/react": "catalog:",
     "@openrouter/ai-sdk-provider": "^2.5.1",
-    "@radix-ui/react-presence": "^1.1.5",
-    "@takumi-rs/image-response": "^1.0.4",
+    "@radix-ui/react-presence": "^1.1.6",
+    "@takumi-rs/image-response": "^1.0.9",
     "ai": "catalog:",
     "class-variance-authority": "^0.7.1",
-    "feed": "^5.2.0",
+    "feed": "^5.2.1",
     "flexsearch": "^0.8.212",
     "fumadocs-core": "16.7.14",
     "fumadocs-mdx": "14.2.13",
@@ -17,7 +17,7 @@
     "hast-util-to-jsx-runtime": "^2.3.6",
     "lucide-react": "^1.8.0",
     "next": "catalog:",
-    "next-validate-link": "^1.6.4",
+    "next-validate-link": "^1.6.6",
     "react": "catalog:",
     "react-dom": "catalog:",
     "remark": "^15.0.1",
@@ -30,7 +30,6 @@
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
-    
     "@tailwindcss/postcss": "catalog:",
     "@types/hast": "3.0.4",
     "@types/mdx": "2.0.13",
@@ -44,7 +43,7 @@
   },
   "private": true,
   "scripts": {
-    "build": "pnpm run test-links && pnpm run generate-openapi-docs && next build",
+    "build": "fumadocs-mdx && pnpm run test-links && pnpm run generate-openapi-docs && next build",
     "dev": "next dev",
     "format": "biome format --write",
     "generate-openapi-docs": "tsx ./src/scripts/generate-docs.mts",
