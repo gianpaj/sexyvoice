@@ -41,6 +41,7 @@ interface CloneMic {
 
 const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
+const INWORLD_REFERENCE_AUDIO_TRIM_SECONDS = 15;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
 
@@ -77,6 +78,7 @@ export function CloneAudioInput({
   fileActions,
   mic,
   ffmpeg,
+  usesInworld,
   usesVoxtral,
   selectedLocale,
   onSelectSample,
@@ -86,6 +88,7 @@ export function CloneAudioInput({
   fileActions: FileUploadResult[1];
   mic: CloneMic;
   ffmpeg: { error: string | null; loading: boolean };
+  usesInworld: boolean;
   usesVoxtral: boolean;
   selectedLocale: { code: string; value: string };
   onSelectSample: (sample: SampleAudio) => void;
@@ -109,15 +112,26 @@ export function CloneAudioInput({
   const minAudioDuration = usesVoxtral
     ? VOXTRAL_MIN_AUDIO_DURATION_SECONDS
     : DEFAULT_MIN_AUDIO_DURATION_SECONDS;
-  const referenceAudioGuidance = usesVoxtral
-    ? formatCloneMessage(t('referenceAudioGuidanceShort'), {
-        MIN: minAudioDuration,
-        TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
-      })
-    : formatCloneMessage(t('referenceAudioGuidanceLong'), {
-        MIN: minAudioDuration,
-        TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
-      });
+  let referenceAudioTrimSeconds = DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS;
+
+  if (usesVoxtral) {
+    referenceAudioTrimSeconds = VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS;
+  }
+
+  if (usesInworld) {
+    referenceAudioTrimSeconds = INWORLD_REFERENCE_AUDIO_TRIM_SECONDS;
+  }
+
+  const referenceAudioGuidanceKey = usesVoxtral
+    ? 'referenceAudioGuidanceShort'
+    : 'referenceAudioGuidanceLong';
+  const referenceAudioGuidance = formatCloneMessage(
+    t(referenceAudioGuidanceKey),
+    {
+      MIN: minAudioDuration,
+      TRIM_SECONDS: referenceAudioTrimSeconds,
+    },
+  );
 
   return (
     <div className="grid w-full gap-2">

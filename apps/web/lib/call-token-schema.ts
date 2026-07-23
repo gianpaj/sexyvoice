@@ -7,6 +7,8 @@ const sessionConfigSchema = z.object({
   voice: z.string(),
   temperature: z.number().min(0).max(1.2),
   maxOutputTokens: z.number().nullable(),
+  // Present when model is 'inworld-realtime' — an audio_references row id.
+  audioReferenceId: z.string().nullable().optional(),
 });
 
 export const callTokenPlaygroundStateSchema = z.object({

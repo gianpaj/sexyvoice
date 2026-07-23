@@ -16,6 +16,7 @@ import type { z } from 'zod';
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
+import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
@@ -39,7 +40,7 @@ import { SceneSelector } from './scene-selector';
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
-const RECONNECT_REQUIRED_FIELDS = ['voice'];
+const RECONNECT_REQUIRED_FIELDS = ['voice', 'audio_reference_id'];
 
 interface ConfigurationFormProps {
   callVoices?: DBVoice[];
@@ -91,6 +92,7 @@ export function ConfigurationForm({
       instructions: fullInstructions,
       model: values.model,
       voice: values.voice,
+      audio_reference_id: values.audioReferenceId || '',
       temperature: values.temperature,
       max_output_tokens: values.maxOutputTokens || '',
     };
@@ -195,7 +197,7 @@ export function ConfigurationForm({
 
     // Set a new timeout to perform the update after 500ms of inactivity
     debounceTimeoutRef.current = setTimeout(() => {
-      updateConfig();
+      updateConfig().catch(() => undefined);
     }, 500); // Adjust delay as needed
   }, [updateConfig]);
 
@@ -242,6 +244,27 @@ export function ConfigurationForm({
     dispatch({ type: 'SET_LANGUAGE', payload: value as CallLanguage });
   };
   const displayLanguage = true;
+
+  const currentModel = pgState.sessionConfig.model;
+  const isInworld = currentModel === ModelId.INWORLD_REALTIME;
+
+  const handleEngineChange = (value: string) => {
+    if (value === ModelId.INWORLD_REALTIME) {
+      dispatch({
+        type: 'SET_SESSION_CONFIG',
+        payload: { model: ModelId.INWORLD_REALTIME },
+      });
+    } else {
+      // Switching back to Grok clears the Inworld voice selection.
+      dispatch({
+        type: 'SET_SESSION_CONFIG',
+        payload: {
+          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+          audioReferenceId: null,
+        },
+      });
+    }
+  };
 
   return (
     <header

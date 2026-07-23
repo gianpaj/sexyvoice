@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { ModelId } from '@/data/models';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 
@@ -21,6 +22,11 @@ export function ConnectButton() {
   const isCustomCharacter = selectedPreset && !selectedPreset.isPublic;
   const fullInstructions = helpers.getFullInstructions(pgState);
   const hasEmptyInstructions = isCustomCharacter && !fullInstructions.trim();
+
+  // Inworld calls require a saved/cloned voice to be selected first.
+  const needsInworldVoice =
+    pgState.sessionConfig.model === ModelId.INWORLD_REALTIME &&
+    !pgState.sessionConfig.audioReferenceId;
 
   const handleConnectionToggle = async () => {
     if (shouldConnect) {
@@ -65,7 +71,7 @@ export function ConnectButton() {
 
   useEffect(() => {
     if (initiateConnectionFlag) {
-      initiateConnection();
+      initiateConnection().catch(() => undefined);
       setInitiateConnectionFlag(false);
     }
   }, [initiateConnectionFlag, initiateConnection]);
@@ -78,7 +84,8 @@ export function ConnectButton() {
           connecting ||
           shouldConnect ||
           !pgState.selectedPresetId ||
-          hasEmptyInstructions
+          hasEmptyInstructions ||
+          needsInworldVoice
         }
         icon={() =>
           connecting || shouldConnect ? (

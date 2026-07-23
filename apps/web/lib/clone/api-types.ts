@@ -21,9 +21,15 @@ export type CloneRouteErrorCode =
   | 'errors.internalError'
   | 'errors.invalidContentType'
   | 'errors.invalidFileType'
+  | 'errors.audioReferenceNotFound'
+  | 'errors.inworldVoiceRequired'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
   | 'errors.providerUnavailable'
+  | 'errors.providerRequestRejected'
+  | 'errors.providerLocaleUnsupported'
+  | 'errors.voiceNameRequired'
+  | 'errors.voiceNameTooLong'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'
@@ -52,5 +58,7 @@ export const CLONE_FORM_FIELDS = {
   file: 'file',
   text: 'text',
   locale: 'locale',
+  provider: 'provider',
   enhanceReferenceAudio: 'enhanceReferenceAudio',
+  audioReferenceId: 'audioReferenceId',
 } as const;

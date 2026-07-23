@@ -8,6 +8,11 @@ declare type Json =
   | Json[];
 
 declare type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: '12.2.3 (519615d)';
+  };
   graphql_public: {
     Tables: {
       [_ in never]: never;
@@ -190,6 +195,7 @@ declare type Database = {
           created_at: string | null;
           id: string;
           is_paid: boolean;
+          locale: string | null;
           name: string;
           provider: string;
           updated_at: string | null;
@@ -200,6 +206,7 @@ declare type Database = {
           created_at?: string | null;
           id?: string;
           is_paid?: boolean;
+          locale?: string | null;
           name: string;
           provider: string;
           updated_at?: string | null;
@@ -210,6 +217,7 @@ declare type Database = {
           created_at?: string | null;
           id?: string;
           is_paid?: boolean;
+          locale?: string | null;
           name?: string;
           provider?: string;
           updated_at?: string | null;
@@ -776,7 +784,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model: string;
+          model?: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -877,11 +885,7 @@ declare type Database = {
         };
         Returns: {
           content: string;
-          cosine_distance: number;
           memory_type: string;
-          rrf_score: number;
-          text_rank: number;
-          vector_rank: number;
         }[];
       };
       prune_agent_memories_over_cap: {
