@@ -131,6 +131,28 @@
         "title": "Sprechen Sie mit KI-Charakteren, live in Echtzeit",
         "subtitle": "Live-KI-Telefonate mit natürlichen, ausdrucksstarken Stimmen.\nWählen Sie einen Charakter und legen Sie sofort los."
       },
+      "privacy": {
+        "title": "Grenzenlos, verschlüsselt.",
+        "subtitle": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre. Keine Filter, keine Urteile, niemand hört mit.",
+        "unrestricted": {
+          "title": "Kein Thema ist tabu",
+          "description": "Sagen Sie, was Sie wollen, und wie Sie wollen. Ihr Charakter zuckt nicht zusammen und belehrt Sie nicht."
+        },
+        "encrypted": {
+          "title": "Ende-zu-Ende verschlüsselt",
+          "description": "Jeder Anruf wird bei der Übertragung verschlüsselt. Kein Mensch hört Ihre Gespräche mit."
+        },
+        "forgotten": {
+          "title": "Standardmäßig vergessen",
+          "description": "Zwischen den Anrufen bleibt nichts erhalten, solange Sie die Erinnerung nicht selbst aktivieren."
+        }
+      },
+      "customCharacter": {
+        "title": "Erstellen Sie Ihren eigenen Charakter",
+        "subtitle": "Geben Sie ihm einen Namen, eine Persönlichkeit, eine Vorgeschichte und eine Stimme. Rufen Sie ihn dann an, wann immer Sie wollen – er bleibt jedes Mal in seiner Rolle.",
+        "note": "Eigene Charaktere sind in jedem kostenpflichtigen Tarif enthalten.",
+        "action": "Charakter erstellen"
+      },
       "cta": {
         "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
         "title": "Bereit, eine Stimme zum Leben zu erwecken?",

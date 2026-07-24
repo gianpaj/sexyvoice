@@ -131,6 +131,28 @@
         "title": "Habla con Personajes de IA, en Tiempo Real",
         "subtitle": "Llamadas telefónicas con IA y voces naturales y expresivas.\nElige un personaje y empieza a hablar al instante."
       },
+      "privacy": {
+        "title": "Sin límites, cifrado.",
+        "subtitle": "Explora tus deseos más profundos en total privacidad. Sin filtros, sin juicios, sin nadie escuchando.",
+        "unrestricted": {
+          "title": "Ningún tema está prohibido",
+          "description": "Di lo que quieras, como quieras. Tu personaje nunca se incomoda ni te sermonea."
+        },
+        "encrypted": {
+          "title": "Cifrado de extremo a extremo",
+          "description": "Cada llamada se cifra en tránsito. Ninguna persona escucha tus conversaciones."
+        },
+        "forgotten": {
+          "title": "Olvidado por defecto",
+          "description": "No se guarda nada entre llamadas a menos que actives la memoria tú mismo."
+        }
+      },
+      "customCharacter": {
+        "title": "Crea tu personaje personalizado",
+        "subtitle": "Dale un nombre, una personalidad, una historia y una voz. Luego llámalo cuando quieras: siempre responde en su papel.",
+        "note": "Los personajes personalizados están incluidos en todos los planes de pago.",
+        "action": "Crear tu personaje"
+      },
       "cta": {
         "freeCredits": "Comienza con 10,000 créditos gratis",
         "title": "¿Listo para escuchar una voz cobrar vida?",
