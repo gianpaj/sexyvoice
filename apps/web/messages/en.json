@@ -145,6 +145,28 @@
         "title": "Talk to AI Characters, Live in Real Time",
         "subtitle": "Live AI phone calls with natural, expressive voices.\nPick a character and start talking instantly."
       },
+      "privacy": {
+        "title": "Unrestricted, encrypted.",
+        "subtitle": "Explore your deepest desires in total privacy. No filters, no judgment, no one listening in.",
+        "unrestricted": {
+          "title": "No topic off limits",
+          "description": "Say what you want, how you want. Your character never flinches and never lectures you."
+        },
+        "encrypted": {
+          "title": "End-to-end encrypted",
+          "description": "Every call is encrypted in transit. No human ever listens to your conversations."
+        },
+        "forgotten": {
+          "title": "Forgotten by default",
+          "description": "Nothing carries over between calls unless you switch memory on yourself."
+        }
+      },
+      "customCharacter": {
+        "title": "Create your custom character",
+        "subtitle": "Give them a name, a personality, a backstory and a voice. Then call them whenever you want — they pick up in character, every time.",
+        "note": "Custom characters come with every paid plan.",
+        "action": "Create your character"
+      },
       "cta": {
         "freeCredits": "Start with 10,000 free credits",
         "title": "Ready to hear a voice come alive?",

@@ -12,7 +12,6 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -22,6 +21,7 @@ import { Link } from '@/lib/i18n/navigation';
 // import { PopularAudios } from '@/components/popular-audios';
 
 import { Banner } from '@/components/banner';
+import { CardDecorator } from '@/components/card-decorator';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -399,11 +399,3 @@ export default async function LandingPage(props: {
     </>
   );
 }
-
-const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="mx-auto grid size-36 place-items-center">
-    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
-      {children}
-    </div>
-  </div>
-);

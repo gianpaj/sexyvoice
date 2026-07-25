@@ -145,6 +145,28 @@
         "title": "Tal med AI-karakterer, live i realtid",
         "subtitle": "Live AI-telefonopkald med naturlige, udtryksfulde stemmer.\nVælg en karakter og begynd at tale med det samme."
       },
+      "privacy": {
+        "title": "Uden begrænsninger, krypteret.",
+        "subtitle": "Udforsk dine dybeste ønsker i total privatliv. Ingen filtre, ingen fordomme, ingen der lytter med.",
+        "unrestricted": {
+          "title": "Intet emne er forbudt",
+          "description": "Sig hvad du vil, og som du vil. Din karakter viger ikke tilbage og løfter aldrig pegefingeren."
+        },
+        "encrypted": {
+          "title": "End-to-end krypteret",
+          "description": "Hvert opkald krypteres undervejs. Intet menneske lytter til dine samtaler."
+        },
+        "forgotten": {
+          "title": "Glemt som standard",
+          "description": "Intet føres videre mellem opkald, medmindre du selv slår hukommelsen til."
+        }
+      },
+      "customCharacter": {
+        "title": "Skab din egen karakter",
+        "subtitle": "Giv den et navn, en personlighed, en baggrundshistorie og en stemme. Ring så til den, når du vil – den er i rollen hver eneste gang.",
+        "note": "Egne karakterer er inkluderet i alle betalte planer.",
+        "action": "Skab din karakter"
+      },
       "cta": {
         "freeCredits": "Start med 10.000 gratis kreditter",
         "title": "Klar til at høre en stemme komme til live?",
