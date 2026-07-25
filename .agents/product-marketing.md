@@ -1,7 +1,7 @@
 # Product Marketing Context
 
-**Document version:** v2
-**Last updated:** 2026-07-24
+**Document version:** v3
+**Last updated:** 2026-07-25
 
 > Shared positioning context. Other marketing skills read this file automatically.
 > Items marked **[unverified]** are not backed by published site copy, docs, or
@@ -70,7 +70,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 
 - Expressive by default — models interpret emotional and logical context; emotion tags for laughter, sighs, coughs; style prompting ("British accent," "seductive tone")
 - Three modes in one platform and one credit balance: generation, cloning, and live real-time calling
-- Language breadth — 24 locales on Gemini 2.5, 70+ languages / 80+ locales on Gemini 3.1, 23 for cloning, 99 for transcription
+- Language breadth — coverage depends on the feature, and speech generation goes widest: 70+ languages on Gemini 3.1, 24 on Gemini 2.5, fewer on other voice models. Cloning covers 23 languages. See the coverage table under Proof Points before quoting a number.
 - Model choice under one API — Google Gemini (2.5 and 3.1 Flash), xAI Grok, and Replicate/Orpheus
 - Real developer surface — REST API v1, API keys, CLI login, usage/billing dashboards, OpenAPI-generated docs at docs.sexyvoice.ai
 - Transparent credit pricing published on the site; free tier with no card
@@ -140,12 +140,24 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 
 **Metrics:**
 
-- 10,000 free credits ≈ 5 minutes of speech, no card required
+- 10,000 free credits ≈ 10 minutes of speech, no card required
 - ~1,000 credits ≈ 1 minute of generation; live calls 1,000 credits/minute
+- Free-tier live calls are capped at 5 minutes per call (`FREE_USER_CALL_LIMIT_SECONDS`) — a per-call limit, not a total allowance. Don't confuse the two.
 - Pro is 37.5% cheaper per credit than Standard; subscriptions add 15% more credits
 - Voice cloning from as little as 10 seconds of audio
-- 70+ languages across 80+ locales (Gemini 3.1); 23 cloning languages; 99 transcription languages
-- Site available in 6 locales: EN, ES, DE, DA, IT, FR
+- Site available in 6 languages: EN, ES, DE, DA, IT, FR
+
+**Language coverage by feature.** There is no single platform-wide language
+number — always scope the claim to the feature, and to the voice/model where it
+varies. Speech generation is the widest, and Gemini goes furthest.
+
+| Feature | Languages | Notes |
+|---------|-----------|-------|
+| Speech generation — Gemini 3.1 (`gpro31`) | 70+ | Our widest coverage; the number to use when leading on language breadth |
+| Speech generation — Gemini 2.5 (`gpro`) | 24 | Default model |
+| Speech generation — other voices (Grok, Orpheus) | Varies, narrower | Several are single-language; check the voice before quoting |
+| Voice cloning | 23 | One cloned voice reused across all of them |
+| Transcription (Whisper) | **[unverified]** | Page meta says "99+ languages"; the on-page FAQ says the multilingual Whisper models support 32. Pick one and fix the site copy before citing either. |
 
 **Customers:** "Join thousands of creators who trust our platform" — **[unverified]** no supporting figure found in the repo; substantiate or stop using.
 **Testimonials:** None captured yet. Highest-value gap in this document — collect 3–5 with names and use cases.
@@ -154,7 +166,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 | Theme | Proof |
 |-------|-------|
 | Expressive quality | Context-aware models; emotion tags; style prompting; Gemini + Grok voice families |
-| Breadth | 70+ generation languages, 23 cloning languages, 99 transcription languages |
+| Breadth | Up to 70+ speech generation languages (Gemini 3.1); 23 cloning languages |
 | All-in-one | Generation, cloning, and live calling on one balance and one API |
 | Developer-ready | Live API v1, API keys, CLI, OpenAPI docs, usage and billing dashboards |
 | Privacy | Encrypted storage, cloning samples deleted after use, user-controlled deletion, offline browser tools with no upload |
@@ -170,5 +182,6 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 
 *Newest first. One line per revision: what changed and why.*
 
+- v3 (2026-07-25) — Corrected the free tier to ~10 minutes of speech (10,000 credits at ~1,000/min) and split out the 5-minute free-tier *per-call* cap that it was conflated with; replaced scattered per-feature language counts with a single "language coverage by feature" table in Proof Points, since coverage varies by feature and voice model (speech generation widest, Gemini furthest); standardised marketing copy on "languages" instead of "locales"; flagged transcription coverage as unverified because site meta says 99+ while the on-page FAQ says 32.
 - v2 (2026-07-24) — Repositioned lead from "commercial adult content allowed" to expressive voices + live calling + multilingual + developer API, demoting content policy to a secondary, flagged-unverified point; corrected live-call rate to 1,000 credits/min, marked the API live, added Starter/subscription tiers, Grok and Gemini 3.1 models, 70+ language coverage, and the free browser audio tools; replaced the obsolete API-related anti-persona; migrated from the legacy `product-marketing-context.md` filename and added versioning.
 - v1 (2026-02-21) — Initial context.
