@@ -545,6 +545,8 @@
     "configurationUpdated": "Configuration updated",
     "configurationUpdateError": "Error updating configuration",
     "agentUnavailable": "Agent unavailable",
+    "encryptionUnavailable": "This browser does not support encrypted calls. Please update it or try a different browser.",
+    "encryptionError": "Encrypted call error. Please try again.",
     "activeCallError": "You already have an active call in progress",
     "microphonePermissionDenied": "Microphone access denied. Please allow microphone access and try again.",
     "disconnected": "Disconnected",

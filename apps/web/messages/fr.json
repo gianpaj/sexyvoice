@@ -545,6 +545,8 @@
     "configurationUpdated": "Configuration mise à jour",
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
+    "encryptionUnavailable": "Ce navigateur ne prend pas en charge les appels chiffrés. Veuillez le mettre à jour ou essayer un autre navigateur.",
+    "encryptionError": "Erreur lors de l'appel chiffré. Veuillez réessayer.",
     "activeCallError": "Vous avez déjà un appel actif en cours",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "disconnected": "Déconnecté",

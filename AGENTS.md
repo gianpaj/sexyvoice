@@ -193,6 +193,13 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   requirements.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
+- Call media is end-to-end encrypted with a single shared passphrase
+  (`LIVEKIT_E2EE_KEY`) and no rotation. Web helpers live in
+  `apps/web/lib/livekit/e2ee/`; the room is owned by
+  `apps/web/hooks/use-call-room.ts` so encryption is enabled before connecting.
+  The same passphrase must be deployed to the `sexycall` agent, and encryption
+  covers media tracks only - do not switch to `RoomOptions.encryption`, which
+  also encrypts the data channel used by transcriptions and `performRpc`.
 
 ## Banners
 

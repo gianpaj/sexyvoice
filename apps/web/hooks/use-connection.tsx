@@ -21,6 +21,11 @@ export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
 interface TokenGeneratorData {
   connect: ConnectFn;
   disconnect: () => Promise<void>;
+  /**
+   * Shared end-to-end encryption passphrase for the room, or `null` when the
+   * deployment has encryption disabled. Resolved server-side per call token.
+   */
+  e2eeKey: string | null;
   pgState: PlaygroundState;
   shouldConnect: boolean;
   token: string;
@@ -40,9 +45,16 @@ export const ConnectionProvider = ({
   const [connectionDetails, setConnectionDetails] = useState<{
     wsUrl: string;
     token: string;
+    e2eeKey: string | null;
     shouldConnect: boolean;
     voice: string;
-  }>({ wsUrl: '', token: '', shouldConnect: false, voice: 'Ara' });
+  }>({
+    wsUrl: '',
+    token: '',
+    e2eeKey: null,
+    shouldConnect: false,
+    voice: 'Ara',
+  });
 
   const t = useTranslations('call');
   const queryClient = useQueryClient();
@@ -116,11 +128,12 @@ export const ConnectionProvider = ({
       throw new Error('Failed to fetch token');
     }
 
-    const { accessToken, url } = await response.json();
+    const { accessToken, url, e2eeKey } = await response.json();
 
     setConnectionDetails({
       wsUrl: url,
       token: accessToken,
+      e2eeKey: typeof e2eeKey === 'string' && e2eeKey ? e2eeKey : null,
       shouldConnect: true,
       voice: resolvedState.sessionConfig.voice,
     });
@@ -140,6 +153,7 @@ export const ConnectionProvider = ({
       value={{
         wsUrl: connectionDetails.wsUrl,
         token: connectionDetails.token,
+        e2eeKey: connectionDetails.e2eeKey,
         shouldConnect: connectionDetails.shouldConnect,
         voice: connectionDetails.voice,
         pgState,

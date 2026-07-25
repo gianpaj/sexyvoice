@@ -545,6 +545,8 @@
     "configurationUpdated": "Konfiguration aktualisiert",
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
+    "encryptionUnavailable": "Dieser Browser unterstützt keine verschlüsselten Anrufe. Bitte aktualisiere ihn oder nutze einen anderen Browser.",
+    "encryptionError": "Fehler beim verschlüsselten Anruf. Bitte versuche es erneut.",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
     "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "disconnected": "Getrennt",

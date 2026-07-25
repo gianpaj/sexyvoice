@@ -15,6 +15,7 @@ import {
   callTokenPlaygroundStateSchema,
 } from '@/lib/call-token-schema';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getCallE2eeKey } from '@/lib/livekit/e2ee/server';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
   getCredits,
@@ -281,6 +282,10 @@ export async function POST(request: Request) {
       ],
     });
 
+    // Single shared end-to-end encryption key, no rotation. `null` when the
+    // deployment has encryption disabled; the client then connects unencrypted.
+    const e2eeKey = getCallE2eeKey();
+
     logger.info('Generated LiveKit token', {
       user: { id: user.id },
       extra: {
@@ -290,12 +295,14 @@ export async function POST(request: Request) {
         characterId: selectedPresetId,
         voice,
         model,
+        e2ee: e2eeKey !== null,
       },
     });
 
     return NextResponse.json({
       accessToken: await at.toJwt(),
       url: process.env.LIVEKIT_URL,
+      e2eeKey,
     });
   } catch (error) {
     console.error('Error generating token:', error);

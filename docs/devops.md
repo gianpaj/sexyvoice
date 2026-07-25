@@ -192,6 +192,7 @@ Notes:
 - `LIVEKIT_URL`
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
+- `LIVEKIT_E2EE_KEY` (optional)
 
 Notes:
 - `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
@@ -199,6 +200,34 @@ Notes:
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
   by `apps/web/app/api/call-token/route.ts` to mint LiveKit access tokens.
 - These secrets must never be exposed to the client.
+
+#### End-to-end encryption (`LIVEKIT_E2EE_KEY`)
+
+- Enables end-to-end encryption of call media so the LiveKit SFU relays audio
+  it cannot decrypt. A single static passphrase is used for every room; there
+  is **no key rotation**.
+- Generate one with `openssl rand -base64 32`. Avoid whitespace in the value —
+  the web app trims the env var before use, so a passphrase that relies on
+  surrounding whitespace will not match the agent.
+- The **exact same** passphrase must be set on the `sexycall` LiveKit agent
+  (separate repository). Enabling it on only one side breaks audio in both
+  directions, because the receiving side cannot decrypt the frames.
+- Roll it out by deploying the agent and the web app with the value together,
+  and roll back by unsetting it on both. When unset, `/api/call-token` returns
+  `e2eeKey: null` and calls connect unencrypted (the previous behaviour).
+- The passphrase is never bundled into the client. It is returned by
+  `/api/call-token` only after the credit, call-limit and character guard rails
+  pass, so it is readable by any signed-in user with credits — the threat model
+  it addresses is the media server, not other users of the product.
+- Only media tracks are encrypted. Data-channel traffic (agent transcriptions
+  and the `performRpc` configuration updates) stays unencrypted so it keeps
+  interoperating with the agent SDK; see
+  `apps/web/lib/livekit/e2ee/client.ts` for why `RoomOptions.e2ee` is used
+  instead of `RoomOptions.encryption`.
+- Browsers without insertable streams / `RTCRtpScriptTransform` cannot encrypt.
+  When a key is configured and the browser cannot support it, the web app
+  refuses to connect and shows an error rather than starting a call the agent
+  would not be able to hear.
 
 ### Authentication / auth monitoring
 
@@ -478,6 +507,10 @@ Check:
 - `LIVEKIT_API_SECRET`
 - that `/api/call-token` can mint tokens successfully
 - that the LiveKit agent name and room dispatch configuration match the deployed agent setup
+- for silent calls with both participants connected: that `LIVEKIT_E2EE_KEY`
+  matches the passphrase deployed to the `sexycall` agent. A mismatch, or the
+  key being set on only one side, produces a connected room with undecodable
+  audio. Sentry receives `EncryptionError` events from the browser in that case.
 
 ### External API issues
 

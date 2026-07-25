@@ -157,6 +157,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
       - `LIVEKIT_URL`
       - `LIVEKIT_API_KEY`
       - `LIVEKIT_API_SECRET`
+      - `LIVEKIT_E2EE_KEY` - Optional shared passphrase for end-to-end encrypted call media (must match the `sexycall` agent)
    - Stripe
       - `STRIPE_SECRET_KEY`
       - `STRIPE_WEBHOOK_SECRET`

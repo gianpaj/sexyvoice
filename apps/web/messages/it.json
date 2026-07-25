@@ -545,6 +545,8 @@
     "configurationUpdated": "Configurazione aggiornata",
     "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
     "agentUnavailable": "Agente non disponibile",
+    "encryptionUnavailable": "Questo browser non supporta le chiamate crittografate. Aggiornalo o prova con un altro browser.",
+    "encryptionError": "Errore nella chiamata crittografata. Riprova.",
     "activeCallError": "Hai già una chiamata attiva in corso",
     "microphonePermissionDenied": "Accesso al microfono negato. Consenti l'accesso al microfono e riprova.",
     "disconnected": "Disconnesso",

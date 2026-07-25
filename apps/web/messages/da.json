@@ -545,6 +545,8 @@
     "configurationUpdated": "Konfiguration opdateret",
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
+    "encryptionUnavailable": "Denne browser understøtter ikke krypterede opkald. Opdater den, eller prøv en anden browser.",
+    "encryptionError": "Fejl i krypteret opkald. Prøv venligst igen.",
     "activeCallError": "Du har allerede et aktivt opkald i gang",
     "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
     "disconnected": "Afbrudt",

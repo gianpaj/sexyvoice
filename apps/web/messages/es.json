@@ -545,6 +545,8 @@
     "configurationUpdated": "Configuración actualizada",
     "configurationUpdateError": "Error al actualizar la configuración",
     "agentUnavailable": "Agente no disponible",
+    "encryptionUnavailable": "Este navegador no admite llamadas cifradas. Actualízalo o prueba con otro navegador.",
+    "encryptionError": "Error en la llamada cifrada. Inténtalo de nuevo.",
     "activeCallError": "Ya tienes una llamada activa en curso",
     "microphonePermissionDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono e inténtalo de nuevo.",
     "disconnected": "Desconectado",
