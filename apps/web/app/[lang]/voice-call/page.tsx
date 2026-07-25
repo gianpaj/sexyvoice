@@ -238,7 +238,7 @@ export default async function LandingPage(props: Props) {
                   >
                     <Link href="/signup">{dictCustomCharacter.action}</Link>
                   </Button>
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-pretty text-gray-400 text-xs">
                     {dictCustomCharacter.note}
                   </p>
                 </div>
