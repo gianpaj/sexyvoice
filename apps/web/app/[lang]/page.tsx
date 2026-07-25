@@ -241,7 +241,7 @@ export default async function LandingPage(props: {
                   </CardHeader>
 
                   <CardContent>
-                    <p className="text-pretty text-center text-sm transition-colors group-hover:text-promo-accent">
+                    <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
                       {dictLanding.features.voiceCalling.description}
                     </p>
                   </CardContent>
@@ -258,7 +258,7 @@ export default async function LandingPage(props: {
                   </h3>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-pretty text-center text-sm">
+                  <p className="text-justify text-sm">
                     {dictLanding.features.security.description}
                   </p>
                 </CardContent>
@@ -275,7 +275,7 @@ export default async function LandingPage(props: {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-pretty text-center text-sm">
+                  <p className="text-justify text-sm">
                     {dictLanding.features.voiceCloning.description}
                   </p>
                 </CardContent>
@@ -293,7 +293,7 @@ export default async function LandingPage(props: {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-pretty text-center text-sm">
+                  <p className="text-justify text-sm">
                     {dictLanding.features.multiLanguage.description}
                   </p>
                 </CardContent>

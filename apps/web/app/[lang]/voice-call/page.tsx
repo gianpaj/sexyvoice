@@ -210,9 +210,7 @@ export default async function LandingPage(props: Props) {
                       </h3>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-pretty text-center text-sm">
-                        {description}
-                      </p>
+                      <p className="text-justify text-sm">{description}</p>
                     </CardContent>
                   </Card>
                 ))}
