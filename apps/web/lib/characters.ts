@@ -1,3 +1,4 @@
+import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 
 // ─── API response shape (from POST /api/characters) ───────────────────────────
@@ -52,8 +53,7 @@ export function mapApiCharacterToPreset(
     instructions: character.prompts?.prompt ?? '',
     localizedInstructions: character.prompts?.localized_prompts ?? {},
     sessionConfig: {
-      model: (sessionConfig.model ??
-        'grok-voice-think-fast-1.0') as Preset['sessionConfig']['model'],
+      model: normalizeModelId(sessionConfig.model),
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
