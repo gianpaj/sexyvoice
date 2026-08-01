@@ -452,6 +452,24 @@ describe('/api/characters', () => {
       expect(res.status).toBe(201);
       expect(insertedCharacters[0].name).toBe('Padded Name');
     });
+
+    it('upgrades a retired model id before persisting session_config', async () => {
+      // Otherwise a stale client writes the dead id straight back into the
+      // JSONB column after it has been cleaned up.
+      const body = validCreateBody({
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      });
+      const res = await POST(makeRequest(body));
+      expect(res.status).toBe(201);
+      expect(insertedCharacters[0]).toMatchObject({
+        session_config: { model: 'grok-voice-think-fast-2.0' },
+      });
+    });
   });
 
   // ─── POST: update (happy path) ────────────────────────────────────

@@ -40,6 +40,42 @@ describe('call-token API validation', () => {
       expect(result.success).toBe(true);
     });
 
+    it('upgrades a retired model id instead of forwarding it to the agent', () => {
+      // A stale tab or a shared URL can still post 1.0. Forwarding it verbatim
+      // would run the old model while charging the current rate.
+      const payload = {
+        instructions: 'Test instructions',
+        selectedPresetId: null,
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      expect(result.data?.sessionConfig.model).toBe('grok-voice-think-fast-2.0');
+    });
+
+    it('falls back to the default for an unknown model id', () => {
+      const payload = {
+        instructions: 'Test instructions',
+        selectedPresetId: null,
+        sessionConfig: {
+          model: 'totally-made-up-model',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      expect(result.data?.sessionConfig.model).toBe('grok-voice-think-fast-2.0');
+    });
+
     it('should accept a payload with selectedPresetId (UUID)', () => {
       const payload = {
         instructions: 'Test instructions',

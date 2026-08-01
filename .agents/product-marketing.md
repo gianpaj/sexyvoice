@@ -1,7 +1,7 @@
 # Product Marketing Context
 
-**Document version:** v4
-**Last updated:** 2026-07-25
+**Document version:** v5
+**Last updated:** 2026-08-01
 
 > Shared positioning context, written to the canonical path the external
 > product-marketing skill toolchain looks for. No skill checked into this repo
@@ -105,7 +105,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 |-----------|----------|
 | "Will it actually sound natural, or robotic like everything else?" | The models interpret context, not just characters — tone, pacing, and expression. Emotion tags and style prompting are built in. Try it free before paying. |
 | "Is my voice data safe?" | Recordings and generated files are encrypted. Cloning samples are deleted after the voice is built. You can delete generated audio any time. We never share voice data without consent. |
-| "I don't know if I'll use enough to justify paying." | 10,000 free credits, no credit card. ~1,000 credits ≈ 1 minute of generation as a rule of thumb, and live calling is 1,000 credits/minute — so you can do the math before you spend. (Check the burn-rate table under Proof Points before quoting this to a cloning-led audience; cloned voices cost far more per minute.) |
+| "I don't know if I'll use enough to justify paying." | 10,000 free credits, no credit card. ~1,000 credits ≈ 1 minute of generation as a rule of thumb, and live calling is 1,100 credits/minute — so you can do the math before you spend. (Check the burn-rate table under Proof Points before quoting this to a cloning-led audience; cloned voices cost far more per minute.) |
 | "Do I have to rebuild if I need an API later?" | The speech-generation API is live today — keys, CLI, OpenAPI docs — and runs on the same credits as the dashboard. Cloning and live calling are web-app only for now, so don't promise those programmatically. |
 | "Can I use this commercially?" | Yes — you own the audio you generate, including via the API, and may distribute and commercially exploit it (`policies/terms.mdx`, "Ownership and Use of Generated Content"). That grant does not extend to any voice, likeness, or content you aren't authorised to use. |
 
@@ -153,7 +153,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 |------|---------|
 | Credits | Usage unit for all paid features (~1,000 ≈ 1 minute of generation) |
 | Voice cloning | Building a reusable voice model from a sample as short as 10 seconds |
-| Live calling | Real-time two-way AI voice conversation, billed at 1,000 credits/minute |
+| Live calling | Real-time two-way AI voice conversation, billed at 1,100 credits/minute |
 | Emotion tags | Inline markup that triggers laughter, sighs, coughs, and similar in output |
 | Cross-language cloning | One cloned voice generating speech across 23 supported languages |
 | `gpro` / `gpro31` | Gemini 2.5 and Gemini 3.1 Flash voice models |
@@ -170,7 +170,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer *types*, not a
 **Metrics:**
 
 - 10,000 free credits ≈ 10 minutes of speech at the published ~1,000 credits/minute rule of thumb, no card required. Actual burn rate varies a lot by voice and model — see the table below before quoting a duration.
-- Live calls cost 1,000 credits/minute
+- Live calls cost 1,100 credits/minute
 - Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first purchase or top-up (`isFreeUserOverCallLimit` → `hasUserPaid`). The in-product string says it correctly: "Free users are limited to 5 minutes of calls."
 - Pro is 37.5% cheaper per credit than Standard; subscriptions add 15% more credits
 - Voice cloning from as little as 10 seconds of audio
@@ -232,6 +232,7 @@ varies. Speech generation is the widest, and Gemini goes furthest.
 
 *Newest first. One line per revision: what changed and why.*
 
+- v5 (2026-08-01) — Raised the live-call rate from 1,000 to 1,100 credits/minute ($0.55) alongside the upgrade to the grok-voice-think-fast-2.0 voice model. The "~1,000 credits ≈ 1 minute" rule of thumb is unchanged: it is about speech generation, not calls, and the two rates are no longer the same number.
 - v4 (2026-07-25) — Fixed four claims flagged in review. Corrected the free-tier call limit, which v3 got backwards: it is a cumulative 5-minute total across all calls that lifts on first purchase, not a per-call cap. Scoped API positioning to speech generation only, with a capability table — cloning and live calling are web-app features and `/voices` serves public voices only. Withdrew the "our terms prohibit deception and impersonation" claim, which the published terms do not support, and flagged that the live FAQ already makes it. Added a model-dependent credit burn-rate table, since a cloned voice costs ~10× a Gemini voice and the "~1,000 credits/minute" figure is an average no single voice charges. Also corrected the header's claim that skills in this repo read the file.
 - v3 (2026-07-25) — Corrected the free tier to ~10 minutes of speech (10,000 credits at ~1,000/min) and split out the 5-minute free-tier call limit that it was conflated with (mischaracterised as per-call; corrected in v4); replaced scattered per-feature language counts with a single "language coverage by feature" table in Proof Points, since coverage varies by feature and voice model (speech generation widest, Gemini furthest); standardised marketing copy on "languages" instead of "locales"; flagged transcription coverage as unverified because site meta says 99+ while the on-page FAQ says 32.
 - v2 (2026-07-24) — Repositioned lead from "commercial adult content allowed" to expressive voices + live calling + multilingual + developer API, demoting content policy to a secondary, flagged-unverified point; corrected live-call rate to 1,000 credits/min, marked the API live, added Starter/subscription tiers, Grok and Gemini 3.1 models, 70+ language coverage, and the free browser audio tools; replaced the obsolete API-related anti-persona; migrated from the legacy `product-marketing-context.md` filename and added versioning.
