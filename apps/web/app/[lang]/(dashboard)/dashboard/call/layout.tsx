@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { normalizeModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import { ConnectionProvider } from '@/hooks/use-connection';
@@ -89,8 +90,7 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
     instructions: prompts?.prompt ?? '',
     localizedInstructions: prompts?.localized_prompts ?? {},
     sessionConfig: {
-      model: (sessionConfig.model ??
-        'grok-voice-think-fast-1.0') as Preset['sessionConfig']['model'],
+      model: normalizeModelId(sessionConfig.model),
       voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
       temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:

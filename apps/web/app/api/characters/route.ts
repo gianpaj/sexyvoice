@@ -2,6 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { normalizeModelId } from '@/data/models';
 import { APIErrorResponse } from '@/lib/error-ts';
 import {
   countUserCallCharacters,
@@ -17,7 +18,10 @@ const MAX_PROMPT_LENGTH = 5000;
 // ── Zod Schemas ──
 
 const sessionConfigSchema = z.object({
-  model: z.string().min(1, 'Model is required'),
+  // Normalized before it is spread into the session_config JSONB, so a stale
+  // client cannot write a retired model id back into a row that was just
+  // cleaned up.
+  model: z.string().min(1, 'Model is required').transform(normalizeModelId),
   voice: z.string().min(1, 'Voice is required'),
   temperature: z.number().min(0).max(1.2),
   maxOutputTokens: z.number().nullable(),
