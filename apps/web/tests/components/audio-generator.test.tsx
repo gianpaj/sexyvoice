@@ -42,7 +42,7 @@ vi.mock('@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner', () => ({
   }),
 }));
 
-vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/audio-provider', () => ({
+vi.mock('@/components/audio-provider', () => ({
   useAudio: () => ({
     reset: vi.fn(),
   }),

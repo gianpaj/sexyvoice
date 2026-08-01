@@ -30,7 +30,7 @@ vi.mock('@/components/audio-generator', () => ({
   },
 }));
 
-vi.mock('../clone/audio-provider', () => ({
+vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
