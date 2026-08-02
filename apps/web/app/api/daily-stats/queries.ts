@@ -24,7 +24,7 @@ export interface DailyStatsCreditTransaction {
   id: string;
   metadata: Json;
   profiles: DailyStatsProfileRelation;
-  type: 'purchase' | 'freemium' | 'topup' | 'refund';
+  type: Database['public']['Enums']['credit_transaction_type'];
   user_id: string;
 }
 

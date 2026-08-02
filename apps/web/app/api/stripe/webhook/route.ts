@@ -8,9 +8,12 @@ import { type CustomerData, setCustomerData } from '@/lib/redis/queries';
 import { getSubscriptionPackages } from '@/lib/stripe/pricing';
 import { stripe } from '@/lib/stripe/stripe-admin';
 import {
+  CARD_BONUS_CREDIT_AMOUNT,
   getUserIdByStripeCustomerId,
+  insertCardBonusCreditTransaction,
   insertSubscriptionCreditTransaction,
   insertTopupCreditTransaction,
+  isEligibleForCardBonusOnPayment,
 } from '@/lib/supabase/queries';
 
 export async function POST(req: Request) {
@@ -72,6 +75,14 @@ async function processEvent(event: Stripe.Event) {
         break;
       }
 
+      // Backup path for the card-on-file bonus, in case
+      // checkout.session.completed is missed. Idempotent: safe to double-fire.
+      case 'setup_intent.succeeded': {
+        const setupIntent = event.data.object as Stripe.SetupIntent;
+        await grantCardBonusForSetupIntent(setupIntent.id);
+        break;
+      }
+
       // Subscription lifecycle events - only update Redis cache
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
@@ -121,6 +132,7 @@ async function processEvent(event: Stripe.Event) {
 export const allowedEvents = [
   'checkout.session.completed',
   'checkout.session.async_payment_succeeded',
+  'setup_intent.succeeded',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
@@ -158,56 +170,268 @@ const resolvePaymentIntentId = (
     ? paymentIntent
     : (paymentIntent?.id ?? null);
 
+/**
+ * Grants the card-on-file credit bonus for a SetupIntent. Called from both
+ * checkout.session.completed (mode: 'setup') and setup_intent.succeeded, so
+ * it always re-retrieves the SetupIntent with payment_method expanded —
+ * webhook payloads don't support `expand`, and checking
+ * `metadata.type === 'card_bonus'` here (not just on the session) is the
+ * authoritative signal per the implementation plan.
+ */
+async function grantCardBonusForSetupIntent(setupIntentId: string) {
+  const setupIntent = await stripe.setupIntents.retrieve(setupIntentId, {
+    expand: ['payment_method'],
+  });
+
+  if (setupIntent.metadata?.type !== 'card_bonus') {
+    return;
+  }
+
+  const paymentMethod =
+    typeof setupIntent.payment_method === 'string'
+      ? null
+      : setupIntent.payment_method;
+  const paymentMethodId =
+    typeof setupIntent.payment_method === 'string'
+      ? setupIntent.payment_method
+      : setupIntent.payment_method?.id;
+  const customerId =
+    typeof setupIntent.customer === 'string'
+      ? setupIntent.customer
+      : setupIntent.customer?.id;
+
+  const userId =
+    setupIntent.metadata?.userId ||
+    (customerId ? await getUserIdByStripeCustomerId(customerId) : undefined);
+
+  if (!userId) {
+    const error = new Error(
+      'Unable to resolve user for card bonus setup intent',
+    );
+    console.error(
+      '[STRIPE HOOK] Unable to resolve user for card bonus setup intent',
+      { setup_intent_id: setupIntentId, customer_id: customerId },
+    );
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'card_bonus_setup_intent',
+      },
+      extra: { setup_intent_id: setupIntentId, customer_id: customerId },
+    });
+    return;
+  }
+
+  const fingerprint = paymentMethod?.card?.fingerprint;
+  if (!fingerprint) {
+    const error = new Error('Card bonus setup intent missing card fingerprint');
+    console.error(
+      '[STRIPE HOOK] Card bonus setup intent missing card fingerprint',
+      { setup_intent_id: setupIntentId, user_id: userId },
+    );
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'card_bonus_setup_intent',
+      },
+      extra: { setup_intent_id: setupIntentId, user_id: userId },
+    });
+    return;
+  }
+
+  if (customerId && paymentMethodId) {
+    try {
+      await stripe.customers.update(customerId, {
+        invoice_settings: { default_payment_method: paymentMethodId },
+      });
+    } catch (error) {
+      console.error(
+        '[STRIPE HOOK] Failed to set default payment method for card bonus',
+        { setup_intent_id: setupIntentId, customer_id: customerId },
+      );
+      Sentry.captureException(error, {
+        tags: {
+          section: 'stripe_webhook',
+          event_type: 'card_bonus_default_payment_method',
+        },
+        extra: { setup_intent_id: setupIntentId, customer_id: customerId },
+      });
+    }
+  }
+
+  await insertCardBonusCreditTransaction(
+    userId,
+    setupIntentId,
+    fingerprint,
+    CARD_BONUS_CREDIT_AMOUNT,
+  );
+
+  console.log(`[STRIPE HOOK] Card bonus granted to user: ${userId}`);
+}
+
+/**
+ * Auto-grants the one-time card-on-file bonus when a new-regime user makes
+ * their first *direct payment* (top-up or subscription), so paying customers
+ * reach the same 10,000-credit total as users who take the "add a card" CTA.
+ *
+ * Reuses the payment's card fingerprint, so the same global one-card-one-bonus
+ * dedupe and per-user uniqueness guards in `insertCardBonusCreditTransaction`
+ * apply. Best-effort: it never throws, so a bonus hiccup can't fail (or trigger
+ * Stripe to retry) the purchase crediting that already succeeded.
+ */
+async function maybeGrantCardBonusFromPayment({
+  userId,
+  paymentIntentId,
+}: {
+  userId: string;
+  paymentIntentId: string | null;
+}) {
+  try {
+    if (!paymentIntentId) return;
+    if (!(await isEligibleForCardBonusOnPayment(userId))) return;
+
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      paymentIntentId,
+      {
+        expand: ['payment_method'],
+      },
+    );
+    const paymentMethod =
+      typeof paymentIntent.payment_method === 'string'
+        ? null
+        : paymentIntent.payment_method;
+    const fingerprint = paymentMethod?.card?.fingerprint;
+
+    if (!fingerprint) {
+      // Non-card payment method (e.g. some wallets) exposes no reusable card
+      // fingerprint; skip rather than grant the bonus without its anti-abuse
+      // dedupe.
+      console.log(
+        '[STRIPE HOOK] Skipping card bonus on payment: no card fingerprint',
+        { user_id: userId, payment_intent_id: paymentIntentId },
+      );
+      return;
+    }
+
+    await insertCardBonusCreditTransaction(
+      userId,
+      paymentIntentId,
+      fingerprint,
+      CARD_BONUS_CREDIT_AMOUNT,
+    );
+
+    console.log(
+      `[STRIPE HOOK] Card bonus granted on payment to user: ${userId}`,
+    );
+  } catch (error) {
+    console.error('[STRIPE HOOK] Failed to grant card bonus on payment', {
+      user_id: userId,
+      payment_intent_id: paymentIntentId,
+    });
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'card_bonus_on_payment',
+      },
+      extra: { user_id: userId, payment_intent_id: paymentIntentId },
+    });
+  }
+}
+
+async function handleCardBonusSetupCheckoutSession(
+  session: Stripe.Checkout.Session,
+) {
+  const setupIntentId =
+    typeof session.setup_intent === 'string'
+      ? session.setup_intent
+      : session.setup_intent?.id;
+
+  if (!setupIntentId) {
+    const error = new Error(
+      'Missing setup_intent in card bonus checkout session',
+    );
+    console.error(
+      '[STRIPE HOOK] Missing setup_intent in card bonus checkout session',
+      { session_id: session.id },
+    );
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'checkout_session_completed',
+      },
+      extra: { session_id: session.id },
+    });
+    return;
+  }
+
+  await grantCardBonusForSetupIntent(setupIntentId);
+}
+
+async function handleTopupCheckoutSession(session: Stripe.Checkout.Session) {
+  // This is a one-time credit purchase
+  const { userId, packageId, credits, dollarAmount, promo } =
+    session.metadata as unknown as TopupCheckoutMetadata;
+
+  if (!(userId && credits && dollarAmount && session.payment_intent)) {
+    const error = new Error('Missing metadata for topup transaction');
+    const extra = {
+      session_id: session.id,
+      metadata: session.metadata,
+      payment_intent: session.payment_intent,
+    };
+    console.error(
+      '[STRIPE HOOK] Missing metadata for topup transaction',
+      extra,
+    );
+    Sentry.captureException(error, {
+      tags: {
+        section: 'stripe_webhook',
+        event_type: 'checkout_session_completed',
+      },
+      extra,
+    });
+    return;
+  }
+
+  const creditAmount = Number.parseInt(credits, 10);
+  const dollarAmountNum = Number.parseFloat(dollarAmount);
+
+  console.log(
+    `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
+  );
+
+  const paymentIntentId = session.payment_intent.toString();
+
+  await insertTopupCreditTransaction(
+    userId,
+    paymentIntentId,
+    creditAmount,
+    dollarAmountNum,
+    packageId,
+    promo,
+  );
+
+  console.log(
+    `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
+  );
+
+  // A first direct top-up also unlocks the card-on-file bonus for new-regime
+  // users, matching the "add a card" CTA.
+  await maybeGrantCardBonusFromPayment({ userId, paymentIntentId });
+}
+
 // Handles completed Stripe checkout sessions for both one-time credit purchases and subscription checkouts
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session,
 ) {
   try {
     if (session.mode === 'payment' && session.metadata?.type === 'topup') {
-      // This is a one-time credit purchase
-      const { userId, packageId, credits, dollarAmount, promo } =
-        session.metadata as unknown as TopupCheckoutMetadata;
-
-      if (!(userId && credits && dollarAmount && session.payment_intent)) {
-        const error = new Error('Missing metadata for topup transaction');
-        const extra = {
-          session_id: session.id,
-          metadata: session.metadata,
-          payment_intent: session.payment_intent,
-        };
-        console.error(
-          '[STRIPE HOOK] Missing metadata for topup transaction',
-          extra,
-        );
-        Sentry.captureException(error, {
-          tags: {
-            section: 'stripe_webhook',
-            event_type: 'checkout_session_completed',
-          },
-          extra,
-        });
-        return;
-      }
-
-      const creditAmount = Number.parseInt(credits, 10);
-      const dollarAmountNum = Number.parseFloat(dollarAmount);
-
-      console.log(
-        `[STRIPE HOOK] Processing topup: ${creditAmount} credits for user ${userId}`,
-      );
-
-      await insertTopupCreditTransaction(
-        userId,
-        session.payment_intent.toString(),
-        creditAmount,
-        dollarAmountNum,
-        packageId,
-        promo,
-      );
-
-      console.log(
-        `[STRIPE HOOK] Credits added: ${creditAmount} to user: ${userId}`,
-      );
+      await handleTopupCheckoutSession(session);
+    } else if (
+      session.mode === 'setup' &&
+      session.metadata?.type === 'card_bonus'
+    ) {
+      await handleCardBonusSetupCheckoutSession(session);
     } else if (session.mode === 'subscription') {
       // Handle initial subscription checkout
       const customerId = session.customer as string | null;
@@ -319,6 +543,10 @@ async function handleCheckoutSessionCompleted(
       console.log(
         `[STRIPE HOOK] Initial subscription credits added: ${credits} to user: ${userId}`,
       );
+
+      // Subscribing directly also unlocks the card-on-file bonus for
+      // new-regime users, matching the "add a card" CTA.
+      await maybeGrantCardBonusFromPayment({ userId, paymentIntentId });
     }
   } catch (error) {
     const extra = {

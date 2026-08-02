@@ -1,6 +1,7 @@
 'use server';
 
 import { captureException, captureMessage } from '@sentry/nextjs';
+import type { ParamValue } from 'next/dist/server/request/params';
 import type { Stripe } from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
@@ -14,7 +15,7 @@ import {
   isStripeCouponUsable,
   stripe,
 } from '@/lib/stripe/stripe-admin';
-import { getUserById } from '@/lib/supabase/queries';
+import { getUserById, isEligibleForCardBonus } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
@@ -105,6 +106,11 @@ export type CheckoutMetadata =
   | SubscriptionCheckoutMetadata
   | TopupCheckoutMetadata;
 
+export interface CardBonusCheckoutMetadata {
+  type: 'card_bonus';
+  userId: string;
+}
+
 type CheckoutUser = NonNullable<
   Awaited<
     ReturnType<Awaited<ReturnType<typeof createClient>>['auth']['getUser']>
@@ -113,7 +119,7 @@ type CheckoutUser = NonNullable<
 
 async function getCheckoutStripeId(
   user: CheckoutUser,
-  packageId: CheckoutPackageId,
+  packageId: CheckoutPackageId | 'card_bonus',
 ): Promise<string> {
   const userData = await getUserById(user.id);
   // biome-ignore lint/complexity/useOptionalChain: needed
@@ -273,6 +279,99 @@ export async function createCheckoutSession(
         packageId,
         checkout_type: data.get('type') || 'topup',
         ui_mode: data.get('uiMode'),
+        error_message: error instanceof Error ? error.message : String(error),
+      },
+    });
+    throw error;
+  }
+}
+
+export interface CardBonusSessionResult {
+  alreadyClaimed: boolean;
+  client_secret: string | null;
+  url: string | null;
+}
+
+/**
+ * Creates a Stripe Checkout Session in `setup` mode to collect a card on
+ * file (no charge) in exchange for a one-time credit bonus. See
+ * `insertCardBonusCreditTransaction` for the grant + dedupe logic that runs
+ * once the webhook confirms the SetupIntent.
+ */
+export async function createCardBonusSetupSession({
+  lang,
+}: {
+  lang: ParamValue;
+}): Promise<CardBonusSessionResult> {
+  try {
+    if (isE2E()) {
+      return { alreadyClaimed: false, client_secret: null, url: null };
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      const error = new Error('Unauthorized card bonus setup session request');
+      captureException(error, {
+        tags: {
+          section: 'stripe_actions',
+          event_type: 'auth_error',
+        },
+        extra: {
+          authError: authError?.message ?? null,
+        },
+      });
+      throw error;
+    }
+
+    // Enforce full bonus eligibility here — hiding the CTA client-side is not a
+    // security boundary. Any authenticated user could invoke this action
+    // directly, so re-check that they haven't already claimed, haven't paid,
+    // and are a new-regime user before minting a `card_bonus` setup session.
+    if (!(await isEligibleForCardBonus(user.id))) {
+      return { alreadyClaimed: true, client_secret: null, url: null };
+    }
+
+    const stripeId = await getCheckoutStripeId(user, 'card_bonus');
+
+    // Set metadata in BOTH places: setup_intent_data.metadata lands only on
+    // the SetupIntent and is NOT mirrored onto the session, but the webhook's
+    // checkout.session.completed branch needs a session-level signal too.
+    const metadata: CardBonusCheckoutMetadata = {
+      userId: user.id,
+      type: 'card_bonus',
+    };
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'setup',
+      customer: stripeId,
+      payment_method_types: ['card'],
+      metadata: metadata as unknown as Stripe.MetadataParam,
+      setup_intent_data: {
+        metadata: metadata as unknown as Stripe.MetadataParam,
+      },
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?card_bonus=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?card_bonus=canceled`,
+      ui_mode: 'hosted',
+    });
+
+    return {
+      alreadyClaimed: false,
+      client_secret: session.client_secret,
+      url: session.url,
+    };
+  } catch (error) {
+    console.error('Error creating card bonus setup session:', error);
+    captureException(error, {
+      tags: {
+        section: 'stripe_actions',
+        event_type: 'card_bonus_setup_session_creation_error',
+      },
+      extra: {
         error_message: error instanceof Error ? error.message : String(error),
       },
     });

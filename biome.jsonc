@@ -23,7 +23,10 @@
       "!**/dist",
       "!**/build",
       "!apps/web/components/ui",
-      "!apps/web/app/globals.css"
+      "!apps/web/app/globals.css",
+      "!apps/web/lib/supabase/types.d.ts",
+      "!apps/web/lib/disposable-email/deny-domains.json",
+      "!apps/docs/content/docs/api-reference/openapi.json"
     ]
   },
   "formatter": {
@@ -130,8 +133,12 @@
       // Enforce the shared APIErrorResponse helper for error responses in the
       // web app's API route handlers. Scoped here (not global) because other
       // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
-      "includes": ["apps/web/app/api/**"],
-      "plugins": ["./biome-plugins/use-api-error-response.grit"]
+      "includes": [
+        "apps/web/app/api/**"
+      ],
+      "plugins": [
+        "./biome-plugins/use-api-error-response.grit"
+      ]
     }
   ]
 }

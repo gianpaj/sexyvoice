@@ -138,7 +138,7 @@ async function main() {
     const currentCredits = creditsMap.get(userId);
 
     // Find freemium transaction (when they got free credits)
-    const freemiumTx = transactions.find((t) => t.type === 'freemium');
+    // const freemiumTx = transactions.find((t) => t.type === 'freemium');
     const usageTransactions = transactions.filter((t) => t.type === 'usage');
 
     // Calculate total credits received and used

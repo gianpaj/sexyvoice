@@ -114,7 +114,7 @@ echo ""
 
 # Your CSV should have these columns:
 # - created_at      (timestamp: YYYY-MM-DD HH:MM:SS)
-# - type           (string: 'purchase', 'topup', 'usage', 'freemium')
+# - type           (string: 'purchase', 'topup', 'freemium', 'refund')
 # - user_id        (string: unique user identifier)
 # - metadata       (JSON string with dollarAmount field)
 # - amount         (integer: credit amount)

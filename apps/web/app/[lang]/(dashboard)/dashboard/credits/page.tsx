@@ -18,8 +18,12 @@ import {
   isStripeCouponUsable,
   refreshCustomerSubscriptionData,
 } from '@/lib/stripe/stripe-admin';
-import { getUserByIdWithError } from '@/lib/supabase/queries';
+import {
+  getUserByIdWithError,
+  isEligibleForCardBonus,
+} from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { CardBonusCta } from './card-bonus-cta';
 import { CreditHistory } from './credit-history';
 import { PaymentStatus } from './payment-status';
 
@@ -113,6 +117,7 @@ export default async function CreditsPage(props: {
   let shouldShowSubscriptionPlans = false;
   let isEligibleForSubscriptionDiscount = false;
   let scheduledSubscriptionEndDate: string | null = null;
+  let showCardBonusCta = false;
   let existingTransactions:
     | Pick<
         Tables<'credit_transactions'>,
@@ -170,6 +175,8 @@ export default async function CreditsPage(props: {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(100));
+
+    showCardBonusCta = await isEligibleForCardBonus(user.id);
   }
 
   const subscriptionDiscountPercent =
@@ -185,6 +192,7 @@ export default async function CreditsPage(props: {
       <Suspense>
         <PaymentStatus />
       </Suspense>
+      {showCardBonusCta ? <CardBonusCta /> : null}
       <div className="flex flex-col justify-between gap-4 lg:flex-row">
         <div className="w-full lg:w-3/4">
           <h3 className="mb-4 font-semibold text-lg">{t('topup.title')}</h3>

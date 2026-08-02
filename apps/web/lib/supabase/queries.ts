@@ -574,6 +574,115 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
+export const CARD_BONUS_CREDIT_AMOUNT = 9000;
+
+/**
+ * Grants the one-time card-on-file credit bonus.
+ *
+ * Guarded by three layers: a global claim on the card fingerprint
+ * (card_bonus_claims, keyed by fingerprint), a per-user check for an
+ * existing 'card_bonus' transaction, and the DB-level partial unique index
+ * `credit_transactions_one_card_bonus_per_user`. Any 23505 on the
+ * credit_transactions insert below means one of those guards already fired,
+ * so it's treated as "already claimed" rather than an error.
+ */
+export const insertCardBonusCreditTransaction = async (
+  userId: string,
+  setupIntentId: string,
+  fingerprint: string,
+  creditAmount: number = CARD_BONUS_CREDIT_AMOUNT,
+) => {
+  const supabase = createAdminClient();
+
+  const { error: claimError } = await supabase
+    .from('card_bonus_claims')
+    .insert({
+      fingerprint,
+      user_id: userId,
+      setup_intent_id: setupIntentId,
+    });
+
+  if (claimError) {
+    if (claimError.code === '23505') {
+      console.log('Card bonus already claimed for this card', {
+        userId,
+        setupIntentId,
+      });
+      return;
+    }
+
+    console.error('Error inserting card bonus claim:', {
+      userId,
+      setupIntentId,
+      error: claimError.message,
+    });
+    throw claimError;
+  }
+
+  // Check if the user already has a card bonus transaction to prevent
+  // duplicate credits when multiple webhook events fire. Use `.maybeSingle()`:
+  // the Supabase client returns `{ data, error }` rather than throwing, and
+  // `.single()` reports a PGRST116 "no rows" error for the common case of a
+  // first-time claim. `.maybeSingle()` yields `data: null` with no error there,
+  // so a non-null error is a genuine DB failure.
+  const { data: existingTransaction, error: existingError } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'card_bonus')
+    .maybeSingle();
+
+  if (existingError) {
+    // This lookup is only a best-effort early return; the partial unique index
+    // `credit_transactions_one_card_bonus_per_user` on the insert below is the
+    // authoritative dedup guard. Log and continue rather than throw, so a
+    // transient read failure doesn't strand the grant.
+    console.error('Error checking existing card bonus transaction:', {
+      userId,
+      setupIntentId,
+      error: existingError.message,
+    });
+  } else if (existingTransaction) {
+    console.log('Card bonus transaction already exists', {
+      userId,
+      setupIntentId,
+    });
+    return;
+  }
+
+  const { error } = await supabase.from('credit_transactions').insert({
+    user_id: userId,
+    amount: creditAmount,
+    type: 'card_bonus',
+    description: 'Card-on-file bonus',
+    reference_id: setupIntentId,
+    metadata: { fingerprint },
+  });
+
+  if (error) {
+    // Every unique constraint that can fire on this insert means "already
+    // claimed" (the per-user partial index). isCreditTransactionReferenceConflict
+    // doesn't match its name, so check the Postgres error code directly.
+    if (error.code === '23505') {
+      console.log('Card bonus transaction already exists', {
+        userId,
+        setupIntentId,
+      });
+      return;
+    }
+
+    console.error('Error inserting card bonus transaction:', {
+      userId,
+      setupIntentId,
+      error: error.message,
+    });
+    throw error;
+  }
+
+  // Update user's credit balance using the database function
+  await updateUserCredits(userId, creditAmount);
+};
+
 export const isCreditTransactionReferenceConflict = (error: {
   code?: string;
   details?: string;
@@ -628,6 +737,100 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
+};
+
+/**
+ * A user has already been granted the card-on-file bonus if any `card_bonus`
+ * ledger row exists for them.
+ */
+const hasCardBonusTransaction = (
+  transactions: Pick<Tables<'credit_transactions'>, 'type'>[],
+): boolean => transactions.some((t) => t.type === 'card_bonus');
+
+/**
+ * "New-regime" users received the reduced 1,000 freemium signup grant (not the
+ * legacy 10,000). The freemium amount is the sole new-regime signal —
+ * `add_credits_trigger` (which used to write a second, ambiguous freemium row)
+ * was dropped in the same migration that lowered the grant, so a 1,000
+ * freemium row unambiguously means new-regime.
+ */
+const isNewRegimeUser = (
+  transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
+): boolean =>
+  transactions.some((t) => t.type === 'freemium' && Number(t.amount) === 1000);
+
+/**
+ * Eligibility for the card-on-file credit bonus CTA/banner: not yet
+ * claimed, hasn't paid, and is a new-regime user.
+ *
+ * Pure so callers that already have a user's transactions loaded (e.g. the
+ * dashboard layout) can reuse it without an extra query.
+ */
+export function computeCardBonusEligibility(
+  transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
+): boolean {
+  const hasPaid = transactions.some(
+    (t) => t.type === 'purchase' || t.type === 'topup',
+  );
+
+  return (
+    !(hasCardBonusTransaction(transactions) || hasPaid) &&
+    isNewRegimeUser(transactions)
+  );
+}
+
+/**
+ * Eligibility for auto-granting the card-on-file bonus when a new-regime user
+ * makes their first *direct payment* (top-up or subscription), mirroring the
+ * add-a-card CTA. Paying is the trigger here, so — unlike the CTA — a
+ * prior/concurrent payment does NOT disqualify: we only require a new-regime
+ * user who hasn't already been granted the bonus. The global one-card-one-bonus
+ * fingerprint dedupe and the per-user uniqueness guard are enforced downstream
+ * by `insertCardBonusCreditTransaction`.
+ *
+ * Pure so it can be unit-tested and reused without a DB round-trip.
+ */
+export function computeCardBonusOnPaymentEligibility(
+  transactions: Pick<Tables<'credit_transactions'>, 'amount' | 'type'>[],
+): boolean {
+  return (
+    isNewRegimeUser(transactions) && !hasCardBonusTransaction(transactions)
+  );
+}
+
+export const isEligibleForCardBonus = async (
+  userId: string,
+): Promise<boolean> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('type, amount')
+    .eq('user_id', userId)
+    .in('type', ['card_bonus', 'purchase', 'topup', 'freemium']);
+
+  if (error) throw error;
+
+  return computeCardBonusEligibility(data ?? []);
+};
+
+/**
+ * Whether a direct payment should also auto-grant the card-on-file bonus.
+ * Runs from the Stripe webhook (no user session), so it uses the admin client
+ * to read the ledger regardless of RLS.
+ */
+export const isEligibleForCardBonusOnPayment = async (
+  userId: string,
+): Promise<boolean> => {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('type, amount')
+    .eq('user_id', userId)
+    .in('type', ['card_bonus', 'freemium']);
+
+  if (error) throw error;
+
+  return computeCardBonusOnPaymentEligibility(data ?? []);
 };
 
 /**
