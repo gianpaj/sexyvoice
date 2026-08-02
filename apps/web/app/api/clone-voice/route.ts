@@ -24,6 +24,17 @@ import {
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import {
+  INWORLD_MAX_DURATION,
+  INWORLD_MIN_DURATION,
+  INWORLD_OUTPUT_MIME_TYPE,
+  InworldError,
+  synthesizeWithInworld,
+} from '@/lib/clone/inworld';
+import {
+  CLONE_SUPPORTED_LOCALES,
+  isInworldSupportedLocale,
+} from '@/lib/clone/languages';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import {
   getCloneTextMaxLength,
@@ -33,6 +44,7 @@ import PostHogClient from '@/lib/posthog';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
+  getAudioReferenceById,
   getCredits,
   hasUserPaid,
   insertUsageEvent,
@@ -75,35 +87,6 @@ const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
 const REFERENCE_AUDIO_ENHANCEMENT_DOLLARS_PER_SECOND = 0.001;
 
-// Replicate multilinguage supports the following languages
-// https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
-const SUPPORTED_LOCALE_CODES = [
-  { code: 'ar', value: 'arabic' },
-  { code: 'da', value: 'danish' },
-  { code: 'de', value: 'german' },
-  { code: 'el', value: 'greek' },
-  { code: 'en', value: 'english' },
-  { code: 'en-multi', value: 'english' },
-  { code: 'es', value: 'spanish' },
-  { code: 'fi', value: 'finnish' },
-  { code: 'fr', value: 'french' },
-  { code: 'he', value: 'hebrew' },
-  { code: 'hi', value: 'hindi' },
-  { code: 'it', value: 'italian' },
-  { code: 'ja', value: 'japanese' },
-  { code: 'ko', value: 'korean' },
-  { code: 'ms', value: 'malay' },
-  { code: 'nl', value: 'dutch' },
-  { code: 'no', value: 'norwegian' },
-  { code: 'pl', value: 'polish' },
-  { code: 'pt', value: 'portuguese' },
-  { code: 'ru', value: 'russian' },
-  { code: 'sv', value: 'swedish' },
-  { code: 'sw', value: 'swahili' },
-  { code: 'tr', value: 'turkish' },
-  { code: 'zh', value: 'chinese' },
-];
-
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
 // ============================================================================
@@ -136,9 +119,11 @@ interface ProcessedCloneInputAudio {
 }
 
 interface FormInput {
+  audioReferenceId: string | null;
   enhanceReferenceAudio: boolean;
-  file: File;
+  file: File | null;
   locale: string;
+  provider: CloneProvider | null;
   text: string;
 }
 
@@ -288,12 +273,59 @@ async function generateBufferHash(buffer: Buffer): Promise<string> {
 // Validation Functions
 // ============================================================================
 
+const KNOWN_CLONE_PROVIDERS: ReadonlySet<CloneProvider> = new Set([
+  'mistral',
+  'replicate',
+  'inworld',
+]);
+
 function isVoxtralCloneLocale(locale: string): boolean {
   return VOXTRAL_SUPPORTED_LOCALE_CODES.has(locale);
 }
 
-function resolveCloneProvider(locale: string): CloneProvider {
+function parseRequestedProvider(
+  value: FormDataEntryValue | null,
+): CloneProvider | null {
+  if (typeof value !== 'string' || value === '' || value === 'auto') {
+    return null;
+  }
+
+  return KNOWN_CLONE_PROVIDERS.has(value as CloneProvider)
+    ? (value as CloneProvider)
+    : null;
+}
+
+function resolveCloneProvider(
+  locale: string,
+  requested?: CloneProvider | null,
+): CloneProvider {
+  if (requested) {
+    return requested;
+  }
+
   return isVoxtralCloneLocale(locale) ? 'mistral' : 'replicate';
+}
+
+function validateProviderLocale(provider: CloneProvider, locale: string): void {
+  if (provider === 'inworld' && !isInworldSupportedLocale(locale)) {
+    throw createRouteError(
+      `Inworld voice cloning does not support the language: ${locale}`,
+      400,
+      'errors.providerLocaleUnsupported',
+      { provider, locale },
+    );
+  }
+
+  // Mistral (Voxtral) can now be selected explicitly, so reject locales it
+  // does not support instead of failing later / wasting credits.
+  if (provider === 'mistral' && !isVoxtralCloneLocale(locale)) {
+    throw createRouteError(
+      `Mistral voice cloning does not support the language: ${locale}`,
+      400,
+      'errors.providerLocaleUnsupported',
+      { provider, locale },
+    );
+  }
 }
 
 function getCloneProviderConstraints(
@@ -302,6 +334,12 @@ function getCloneProviderConstraints(
   if (provider === 'mistral') {
     return {
       minDurationSeconds: VOXTRAL_MIN_DURATION,
+    };
+  }
+
+  if (provider === 'inworld') {
+    return {
+      minDurationSeconds: INWORLD_MIN_DURATION,
     };
   }
 
@@ -330,6 +368,10 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const textValue = formData.get(CLONE_FORM_FIELDS.text);
   const file = formData.get(CLONE_FORM_FIELDS.file);
   const locale = formData.get(CLONE_FORM_FIELDS.locale);
+  const providerValue = formData.get(CLONE_FORM_FIELDS.provider);
+  const audioReferenceIdValue = formData.get(
+    CLONE_FORM_FIELDS.audioReferenceId,
+  );
 
   const text = typeof textValue === 'string' ? textValue : '';
   const audioFile = file instanceof File ? file : null;
@@ -337,8 +379,22 @@ async function parseFormData(request: Request): Promise<FormInput> {
     typeof enhanceReferenceAudioValue === 'string' &&
     enhanceReferenceAudioValue === 'true';
   const localeStr = typeof locale === 'string' ? locale : '';
+  const requestedProvider = parseRequestedProvider(providerValue);
+  const audioReferenceId =
+    typeof audioReferenceIdValue === 'string' && audioReferenceIdValue.trim()
+      ? audioReferenceIdValue.trim()
+      : null;
 
-  if (!(text && audioFile)) {
+  if (!text) {
+    throw createRouteError(
+      'Missing required parameters: text and audio file',
+      400,
+      'errors.missingRequiredParameters',
+    );
+  }
+
+  // A reference file is required unless reusing an existing saved voice.
+  if (!(audioFile || audioReferenceId)) {
     throw createRouteError(
       'Missing required parameters: text and audio file',
       400,
@@ -358,7 +414,9 @@ async function parseFormData(request: Request): Promise<FormInput> {
     text,
     file: audioFile,
     locale: localeStr,
+    provider: requestedProvider,
     enhanceReferenceAudio: shouldEnhanceReferenceAudio,
+    audioReferenceId,
   };
 }
 
@@ -366,10 +424,11 @@ function validateTextLength(
   text: string,
   locale: string,
   userHasPaid: boolean,
+  provider?: CloneProvider | null,
 ): void {
-  const maxLength = getCloneTextMaxLength(locale, userHasPaid);
+  const maxLength = getCloneTextMaxLength(locale, userHasPaid, provider);
 
-  if (!isCloneTextOverLimit({ text, locale, userHasPaid })) {
+  if (!isCloneTextOverLimit({ text, locale, provider, userHasPaid })) {
     return;
   }
 
@@ -428,7 +487,7 @@ function validateAudioDuration(
   const constraints = getCloneProviderConstraints(provider);
 
   if (duration < constraints.minDurationSeconds) {
-    if (provider === 'mistral') {
+    if (provider === 'mistral' || provider === 'inworld') {
       throw createRouteError(
         `Reference audio must be at least ${constraints.minDurationSeconds} seconds for voice cloning.`,
         400,
@@ -667,10 +726,10 @@ function validateReferenceAudioEnhancementInput(
 }
 
 function validateLocale(locale: string): void {
-  const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
+  const localeConfig = CLONE_SUPPORTED_LOCALES.find((l) => l.code === locale);
   if (!localeConfig) {
     throw createRouteError(
-      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${SUPPORTED_LOCALE_CODES.map((l) => l.code).join(', ')}`,
+      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${CLONE_SUPPORTED_LOCALES.map((l) => l.code).join(', ')}`,
       400,
       'errors.unsupportedLocale',
       { locale },
@@ -684,6 +743,8 @@ async function validateCredits(
   userEmail?: string,
 ): Promise<{ currentAmount: number; estimate: number }> {
   const currentAmount = await getCredits(userId);
+  // Clone credits are product-priced consistently across providers. Provider-specific
+  // dollar costs are tracked separately in usage events.
   const estimate = estimateCredits(text, 'clone');
 
   validateCreditAmount({
@@ -707,6 +768,7 @@ async function processAudioFile(
   enhancementEnabled: boolean,
   locale: string,
   userId: string,
+  provider: CloneProvider,
 ): Promise<ProcessedCloneInputAudio> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -734,14 +796,16 @@ async function processAudioFile(
   let processedMimeType = normalizedMimeType;
   let sourceDuration = await getAudioDuration(buffer, normalizedMimeType);
   let wasTrimmed = false;
-  const provider = resolveCloneProvider(locale);
 
   const canNormalizeToWav = isConversionSupported(
     normalizedMimeType,
     file.name,
   );
   const shouldNormalizeToWav =
-    provider === 'mistral' || enhancementEnabled || canNormalizeToWav;
+    provider === 'mistral' ||
+    provider === 'inworld' ||
+    enhancementEnabled ||
+    canNormalizeToWav;
 
   // Convert to WAV for providers that need normalized reference audio
   if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
@@ -845,10 +909,12 @@ async function processAudioFile(
   let duration = await getAudioDuration(processedBuffer, processedMimeType);
   sourceDuration ??= duration;
 
-  const referenceAudioMaxDuration =
-    provider === 'mistral'
-      ? VOXTRAL_MAX_DURATION
-      : REPLICATE_REFERENCE_AUDIO_MAX_DURATION;
+  let referenceAudioMaxDuration = REPLICATE_REFERENCE_AUDIO_MAX_DURATION;
+  if (provider === 'mistral') {
+    referenceAudioMaxDuration = VOXTRAL_MAX_DURATION;
+  } else if (provider === 'inworld') {
+    referenceAudioMaxDuration = INWORLD_MAX_DURATION;
+  }
 
   if (duration !== null && duration > referenceAudioMaxDuration) {
     const trimmedBuffer = trimWavBuffer(
@@ -874,7 +940,7 @@ async function processAudioFile(
           locale,
         },
       });
-    } else if (provider === 'mistral') {
+    } else if (provider === 'mistral' || provider === 'inworld') {
       throw createRouteError(
         'Failed to trim reference audio for voice cloning.',
         400,
@@ -1043,7 +1109,7 @@ async function cloneVoiceWithReplicate(
   locale: string,
   audioReferenceUrl: string,
 ): Promise<{ blob: Blob; modelUsed: string; requestId: string }> {
-  const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
+  const localeConfig = CLONE_SUPPORTED_LOCALES.find((l) => l.code === locale);
   if (!localeConfig) {
     throw new Error(`Unsupported locale: ${locale}`);
   }
@@ -1137,6 +1203,11 @@ async function uploadGeneratedAudio(
   return url;
 }
 
+// Inworld synthesis returns MP3; the other providers return WAV.
+function getCloneOutputExtension(provider: CloneProvider): 'mp3' | 'wav' {
+  return provider === 'inworld' ? 'mp3' : 'wav';
+}
+
 async function createCloneOutputFilename({
   audioHash,
   basePath,
@@ -1157,7 +1228,7 @@ async function createCloneOutputFilename({
     : `${locale}-${provider}-${text}-${audioHash}`;
   const hash = await generateHash(cacheKeyInput);
 
-  return `${basePath}/${locale}-${provider}-${hash}.wav`;
+  return `${basePath}/${locale}-${provider}-${hash}.${getCloneOutputExtension(provider)}`;
 }
 
 // ============================================================================
@@ -1329,6 +1400,180 @@ async function runBackgroundTasks(
   await posthog.shutdown();
 }
 
+function throwInworldRouteError(error: unknown, locale: string): never {
+  if (error instanceof InworldError) {
+    logger.warn('Inworld voice cloning provider failed', {
+      extra: {
+        locale,
+        status: error.status,
+        transient: error.transient,
+        errorMessage: getUnknownErrorMessage(error),
+      },
+    });
+
+    if (error.status === 403) {
+      throw createRouteError(
+        'This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.',
+        403,
+        'errors.guardrailViolation',
+        { provider: 'inworld' },
+      );
+    }
+
+    // Other 4xx responses are client-side problems (bad reference audio,
+    // unsupported langCode, payload too large) — surface them as non-retryable
+    // instead of "temporarily unavailable", which would invite retries that
+    // keep failing and, on the new-clone path, mint another voice each time.
+    if (error.status >= 400 && error.status < 500) {
+      throw createRouteError(
+        'The voice cloning provider could not process this request. Please try a different reference audio or text.',
+        error.status,
+        'errors.providerRequestRejected',
+        { provider: 'inworld', status: error.status },
+      );
+    }
+
+    throw createProviderUnavailableRouteError('inworld');
+  }
+
+  throw error;
+}
+
+/**
+ * Reuse path: synthesize with a previously-saved Inworld voice. No reference
+ * audio is uploaded and no new Inworld voice is created.
+ */
+async function handleInworldVoiceReuse({
+  audioReferenceId,
+  currentAmount,
+  estimate,
+  locale,
+  text,
+  userHasPaid,
+  userId,
+}: {
+  audioReferenceId: string;
+  currentAmount: number;
+  estimate: number;
+  locale: string;
+  text: string;
+  userHasPaid: boolean;
+  userId: string;
+}): Promise<NextResponse> {
+  const { data: reference, error } = await getAudioReferenceById(
+    audioReferenceId,
+    userId,
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  if (!reference) {
+    throw createRouteError(
+      'The selected saved voice could not be found.',
+      404,
+      'errors.audioReferenceNotFound',
+      { audioReferenceId },
+    );
+  }
+
+  const voiceId = reference.voice_id;
+  const synthesisLocale = reference.locale ?? locale;
+  const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
+  const filename = await createCloneOutputFilename({
+    audioHash: voiceId,
+    basePath,
+    enhancementEnabled: false,
+    locale: synthesisLocale,
+    provider: 'inworld',
+    text,
+  });
+
+  const cachedOutputUrl = await redis.get<string>(filename);
+  if (cachedOutputUrl) {
+    return NextResponse.json(
+      {
+        url: cachedOutputUrl,
+        creditsUsed: 0,
+        creditsRemaining: currentAmount || 0,
+      },
+      { status: 200 },
+    );
+  }
+
+  let result: Awaited<ReturnType<typeof synthesizeWithInworld>>;
+  let outputUrl: string;
+  let reuseCreditsReserved = 0;
+
+  try {
+    await reserveCloneCredits({
+      currentAmount,
+      requiredCredits: estimate,
+      text,
+      userId,
+    });
+    reuseCreditsReserved = estimate;
+
+    result = await synthesizeWithInworld({
+      text,
+      locale: synthesisLocale,
+      voiceId,
+    });
+    outputUrl = await uploadGeneratedAudio(
+      result.buffer,
+      filename,
+      INWORLD_OUTPUT_MIME_TYPE,
+    );
+  } catch (reuseError) {
+    if (reuseCreditsReserved > 0) {
+      await refundReservedCloneCredits({
+        userId,
+        amount: reuseCreditsReserved,
+        context: 'clone_voice_inworld_reuse_failure',
+      });
+    }
+
+    throwInworldRouteError(reuseError, synthesisLocale);
+  }
+
+  const duration =
+    (await getAudioDuration(result.buffer, INWORLD_OUTPUT_MIME_TYPE)) ?? 0;
+  const creditsUsed = estimate;
+
+  after(async () => {
+    await runBackgroundTasks(userId, creditsUsed, 'inworld', {
+      baseCloneCredits: estimate,
+      filename,
+      referenceAudioEnhancementCredits: 0,
+      referenceAudioEnhancementDollarAmount: 0,
+      referenceAudioEnhancementDurationSeconds: null,
+      referenceAudioEnhanced: false,
+      referenceAudioEnhancementModel: null,
+      referenceAudioEnhancementRequestId: null,
+      referenceAudioOriginalDurationSeconds: null,
+      referenceAudioTrimmed: false,
+      text,
+      url: outputUrl,
+      modelUsed: result.modelUsed,
+      requestId: result.requestId,
+      duration,
+      locale: synthesisLocale,
+      referenceAudioFileMimeType: '',
+      referenceAudioProcessedMimeType: INWORLD_OUTPUT_MIME_TYPE,
+    });
+  });
+
+  return NextResponse.json(
+    {
+      url: outputUrl,
+      creditsUsed,
+      creditsRemaining: (currentAmount || 0) - creditsUsed,
+    },
+    { status: 200 },
+  );
+}
+
 // ============================================================================
 // Main Route Handler
 // ============================================================================
@@ -1372,12 +1617,16 @@ export async function POST(request: Request) {
     referenceAudioFile = formInput.file;
 
     // Validate inputs
-    validateFileType(referenceAudioFile);
-    validateFileSize(referenceAudioFile);
     validateLocale(locale);
 
+    const provider = resolveCloneProvider(locale, formInput.provider);
+    validateProviderLocale(provider, locale);
+
+    const isInworldReuse =
+      provider === 'inworld' && Boolean(formInput.audioReferenceId);
+
     const userHasPaid = await hasUserPaid(user.id);
-    validateTextLength(text, locale, userHasPaid);
+    validateTextLength(text, locale, userHasPaid, provider);
 
     // Check credits
     const { currentAmount, estimate } = await validateCredits(
@@ -1386,14 +1635,47 @@ export async function POST(request: Request) {
       user.email,
     );
 
-    // Process audio file
-    const provider = resolveCloneProvider(locale);
+    // Reuse path: synthesize with an existing saved Inworld voice (no upload).
+    if (isInworldReuse && formInput.audioReferenceId) {
+      return await handleInworldVoiceReuse({
+        audioReferenceId: formInput.audioReferenceId,
+        currentAmount,
+        estimate,
+        locale,
+        text,
+        userHasPaid,
+        userId: user.id,
+      });
+    }
 
+    if (provider === 'inworld') {
+      throw createRouteError(
+        'Create or select an Inworld voice before generating audio.',
+        400,
+        'errors.inworldVoiceRequired',
+        { provider },
+      );
+    }
+
+    // New-clone path requires a reference audio file.
+    if (!referenceAudioFile) {
+      throw createRouteError(
+        'Missing required parameters: text and audio file',
+        400,
+        'errors.missingRequiredParameters',
+      );
+    }
+
+    validateFileType(referenceAudioFile);
+    validateFileSize(referenceAudioFile);
+
+    // Process audio file
     const processedAudio = await processAudioFile(
       referenceAudioFile,
       formInput.enhanceReferenceAudio,
       locale,
       user.id,
+      provider,
     );
     let cloneInputAudio = processedAudio;
     let creditsUsed = estimate;
