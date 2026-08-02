@@ -19,6 +19,7 @@ export interface LogFields {
   provider?: string;
   providerCode?: number;
   providerStatus?: string;
+  referenceAudioEnhanced?: boolean;
   status: number;
   textLength?: number;
   userHasPaid?: boolean;

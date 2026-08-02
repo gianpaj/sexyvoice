@@ -5,6 +5,7 @@ import {
   Copy,
   ExternalLink,
   KeyRound,
+  Mic,
   Plus,
   Terminal,
   Trash2,
@@ -321,6 +322,14 @@ export function ApiKeys({ isPaidUser }: { isPaidUser: boolean }) {
               <span className="text-sm">
                 {t('infoCard.generateDescription')}
               </span>
+            </FeatureCard>
+            <FeatureCard
+              external
+              href="https://docs.sexyvoice.ai/api-reference/endpoints/api/v1/clone/post"
+              icon={Mic}
+              title={t('infoCard.cloneTitle')}
+            >
+              <span className="text-sm">{t('infoCard.cloneDescription')}</span>
             </FeatureCard>
             <FeatureCard
               external
