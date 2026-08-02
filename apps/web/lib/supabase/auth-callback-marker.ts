@@ -1,10 +1,10 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { AUTH_CALLBACK_COOKIE_NAME } from './constants';
 
-export const OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS = 60;
+export const AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS = 60;
 
-function getOauthCallbackMarkerSecret(): string | null {
+function getAuthCallbackMarkerSecret(): string | null {
   return (
     process.env.OAUTH_CALLBACK_MARKER_SECRET ??
     process.env.API_KEY_HMAC_SECRET ??
@@ -12,22 +12,20 @@ function getOauthCallbackMarkerSecret(): string | null {
   );
 }
 
-function createOauthCallbackMarkerSignature(expiresAt: number): string | null {
-  const secret = getOauthCallbackMarkerSecret();
+function createAuthCallbackMarkerSignature(expiresAt: number): string | null {
+  const secret = getAuthCallbackMarkerSecret();
   if (!secret) {
     return null;
   }
 
   return createHmac('sha256', secret)
-    .update(`${OAUTH_CALLBACK_COOKIE_NAME}.${expiresAt}`)
+    .update(`${AUTH_CALLBACK_COOKIE_NAME}.${expiresAt}`)
     .digest('hex');
 }
 
-export function createOauthCallbackMarkerValue(
-  now = Date.now(),
-): string | null {
-  const expiresAt = now + OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS * 1000;
-  const signature = createOauthCallbackMarkerSignature(expiresAt);
+export function createAuthCallbackMarkerValue(now = Date.now()): string | null {
+  const expiresAt = now + AUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS * 1000;
+  const signature = createAuthCallbackMarkerSignature(expiresAt);
 
   if (!signature) {
     return null;
@@ -36,7 +34,7 @@ export function createOauthCallbackMarkerValue(
   return `${expiresAt}.${signature}`;
 }
 
-export function verifyOauthCallbackMarkerValue(
+export function verifyAuthCallbackMarkerValue(
   value: string | undefined,
   now = Date.now(),
 ): boolean {
@@ -56,7 +54,7 @@ export function verifyOauthCallbackMarkerValue(
     return false;
   }
 
-  const expectedSignature = createOauthCallbackMarkerSignature(expiresAt);
+  const expectedSignature = createAuthCallbackMarkerSignature(expiresAt);
   if (!expectedSignature) {
     return false;
   }
