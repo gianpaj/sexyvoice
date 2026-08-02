@@ -1,0 +1,286 @@
+import { EyeOff, Lock, MessageCircleOff, Sparkles, Wand2 } from 'lucide-react';
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from 'next-intl/server';
+import ReactDOM from 'react-dom';
+import type { Graph } from 'schema-dts';
+
+import { Banner } from '@/components/banner';
+import { CardDecorator } from '@/components/card-decorator';
+import { DemoCallSection } from '@/components/demo-call/demo-call-section';
+import Footer from '@/components/footer';
+import { HeaderStatic } from '@/components/header-static';
+import HeroWaveform from '@/components/hero-waveform';
+import { JsonLd } from '@/components/json-ld';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { demoCallData } from '@/data/demo-transcripts';
+import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
+import { routing } from '@/src/i18n/routing';
+
+interface Props {
+  params: Promise<{ lang: Locale }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params;
+  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const tHero = await getTranslations({
+    locale: lang,
+    namespace: 'landing.voiceCall.hero',
+  });
+
+  const title = tPages('titleVoiceCall') || tHero('title');
+  const description = tPages('descriptionVoiceCall') || tHero('subtitle');
+  const url = `https://sexyvoice.ai/${lang}/voice-call`;
+
+  return {
+    title,
+    description,
+    other: {
+      preconnect: 'https://files.sexyvoice.ai',
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'SexyVoice.ai',
+      type: 'website',
+      locale: lang,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+    alternates: {
+      canonical: url,
+      languages: Object.fromEntries(
+        routing.locales.map((locale) => [
+          locale,
+          `https://sexyvoice.ai/${locale}/voice-call`,
+        ]),
+      ),
+    },
+  };
+}
+
+export default async function LandingPage(props: Props) {
+  const { lang } = await props.params;
+
+  // Validate that the language is a supported locale
+  if (!routing.locales.includes(lang as Locale)) {
+    redirect(`/${routing.defaultLocale}`);
+  }
+
+  // Enable static rendering
+  setRequestLocale(lang);
+
+  // Warm the HTTP cache for the demo call the visitor is most likely to play:
+  // Ramona is the character selected by default. `crossOrigin` must match the
+  // `<audio crossOrigin="anonymous">` the player creates, or the browser keys
+  // the preload separately and downloads the clip twice.
+  ReactDOM.preload(demoCallData.ramona.audioSrc, {
+    as: 'audio',
+    crossOrigin: 'anonymous',
+  });
+
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const dictLanding = messages.landing;
+  // NOTE: intentionally do NOT read cookies() here. Doing so opts this page into
+  // dynamic rendering (`cache-control: private, no-store`), which both prevents
+  // CDN caching and disqualifies the page from the back/forward cache (bfcache).
+  // The <Banner> client component already re-reads the dismissal cookies on the
+  // client (it starts hidden and only reveals itself when no dismiss cookie is
+  // set), so server-side filtering here is redundant.
+  const activeBanner = resolveActiveBanner({
+    audience: 'loggedOut',
+    lang,
+    messages,
+    placement: 'landing',
+  });
+
+  const [firstPart, ...restParts] = dictLanding.voiceCall.hero.title.split(',');
+  const titleRestParts = restParts.join(',');
+
+  const dictPrivacy = dictLanding.voiceCall.privacy;
+  const dictCustomCharacter = dictLanding.voiceCall.customCharacter;
+  const privacyPoints = [
+    { Icon: MessageCircleOff, ...dictPrivacy.unrestricted },
+    { Icon: Lock, ...dictPrivacy.encrypted },
+    { Icon: EyeOff, ...dictPrivacy.forgotten },
+  ];
+
+  const siteUrl = `https://sexyvoice.ai/${lang}/voice-call`;
+
+  const jsonLd: Graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': 'https://sexyvoice.ai/#organization',
+        name: 'SexyVoice.ai',
+        url: 'https://sexyvoice.ai',
+        logo: 'https://sexyvoice.ai/icon-192x192.png',
+        sameAs: [
+          'https://x.com/sexyvoiceai',
+          'https://instagram.com/sexyvoice_ai',
+        ],
+      },
+      {
+        '@type': 'WebSite',
+        '@id': 'https://sexyvoice.ai/#website',
+        url: 'https://sexyvoice.ai',
+        name: 'SexyVoice.ai',
+        description: messages.pages.description,
+        publisher: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+      {
+        '@type': 'WebPage',
+        '@id': `${siteUrl}/#webpage`,
+        url: siteUrl,
+        name: messages.pages.titleVoiceCall || dictLanding.voiceCall.hero.title,
+        description:
+          messages.pages.descriptionVoiceCall ||
+          dictLanding.voiceCall.hero.subtitle,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        about: {
+          '@id': 'https://sexyvoice.ai/#organization',
+        },
+        inLanguage: lang,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <JsonLd data={jsonLd} />
+
+      {activeBanner && <Banner banner={activeBanner} />}
+      <HeaderStatic />
+      <main id="main-content">
+        <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
+          <div className="container mx-auto px-4">
+            {/* Hero Section */}
+            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
+              <HeroWaveform />
+              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+                <span className="text-white/90">{firstPart}</span>
+                <br />
+                {titleRestParts && (
+                  <span
+                    className="whitespace-break-spaces bg-linear-to-r bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage:
+                        'linear-gradient(146deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-red)) 80%)',
+                    }}
+                  >
+                    {titleRestParts}
+                  </span>
+                )}
+              </h1>
+              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
+                {dictLanding.voiceCall.hero.subtitle}
+              </p>
+
+              <DemoCallSection lang={lang} />
+            </div>
+
+            {/* Privacy Section */}
+            <section className="mx-auto max-w-4xl space-y-6 py-16 text-center">
+              <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
+                {dictPrivacy.title}
+              </h2>
+              <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl leading-8">
+                {dictPrivacy.subtitle}
+              </p>
+              <div className="grid gap-6 pt-4 md:grid-cols-3">
+                {privacyPoints.map(({ Icon, title, description }) => (
+                  <Card
+                    className="mx-auto max-w-sm shadow-zinc-950/5"
+                    key={title}
+                  >
+                    <CardHeader className="pb-3">
+                      <CardDecorator>
+                        <Icon aria-hidden className="size-6 text-gray-200" />
+                      </CardDecorator>
+
+                      <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
+                        {title}
+                      </h3>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-justify text-sm">{description}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            {/* Custom Character Section */}
+            <section className="mx-auto max-w-3xl py-16">
+              <div className="space-y-6 rounded-2xl border border-fuchsia-800/60 bg-white/5 p-8 text-center md:p-12">
+                <div className="inline-flex items-center rounded-full bg-fuchsia-600/20 p-3 text-fuchsia-300">
+                  <Wand2 aria-hidden className="size-6" />
+                </div>
+                <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
+                  {dictCustomCharacter.title}
+                </h2>
+                <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-lg leading-8">
+                  {dictCustomCharacter.subtitle}
+                </p>
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    asChild
+                    className="hit-area-4 bg-fuchsia-600 hover:bg-fuchsia-700"
+                    effect="ringHover"
+                    size="lg"
+                  >
+                    <Link href="/signup">{dictCustomCharacter.action}</Link>
+                  </Button>
+                  <p className="text-pretty text-gray-400 text-xs">
+                    {dictCustomCharacter.note}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* CTA Section */}
+            <div className="space-y-8 py-16 text-center">
+              <div className="mb-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
+                <Sparkles className="mr-2 size-4" />
+                <span>{dictLanding.voiceCall.cta.freeCredits}</span>
+              </div>
+              <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
+                {dictLanding.voiceCall.cta.title}
+              </h2>
+              <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-xl">
+                {dictLanding.voiceCall.cta.subtitle}
+              </p>
+              <Button
+                asChild
+                className="hit-area-4 mt-4 bg-blue-600 hover:bg-blue-700"
+                effect="ringHover"
+                size="lg"
+              >
+                <Link href="/signup">{dictLanding.voiceCall.cta.action}</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer lang={lang} />
+    </>
+  );
+}

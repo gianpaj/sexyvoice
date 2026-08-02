@@ -26,6 +26,8 @@
  *                    `credits` row and inserts an audit `credit_transactions`
  *                    row for each user that has credits remaining.
  *   --dry-run        With --reset-credits, only report what would change.
+ *   --domains-only   In credit-reset logs, print the email domain instead of
+ *                    the full address (useful for CI / shared reports).
  *   --yes            Skip the interactive confirmation for a live reset.
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. These are
@@ -75,6 +77,7 @@ function parseArgs(argv) {
     clone: true,
     resetCredits: false,
     dryRun: false,
+    domainsOnly: false,
     yes: false,
   };
   const rest = [...argv];
@@ -92,6 +95,8 @@ function parseArgs(argv) {
       args.resetCredits = true;
     } else if (arg === '--dry-run') {
       args.dryRun = true;
+    } else if (arg === '--domains-only') {
+      args.domainsOnly = true;
     } else if (arg === '--yes') {
       args.yes = true;
     }
@@ -185,6 +190,10 @@ function csvEscape(value) {
   return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
+function userLabel(flag, domainsOnly) {
+  return domainsOnly ? flag.domain : flag.email;
+}
+
 // ---------------------------------------------------------------------------
 // Credit reset
 // ---------------------------------------------------------------------------
@@ -224,7 +233,7 @@ async function fetchPaidUserIds(supabase, ids) {
  * user that still has a positive balance. Paid users (any purchase/topup
  * transaction) and users already at 0 are skipped.
  */
-async function resetFlaggedCredits(supabase, flagged, dryRun) {
+async function resetFlaggedCredits(supabase, flagged, dryRun, domainsOnly) {
   const byId = new Map(flagged.map((f) => [f.id, f]));
   const ids = [...byId.keys()];
 
@@ -265,13 +274,15 @@ async function resetFlaggedCredits(supabase, flagged, dryRun) {
     const flag = byId.get(id);
     const current = balances.get(id);
 
+    const label = userLabel(flag, domainsOnly);
+
     if (paidIds.has(id)) {
-      console.log(`  💳 ${flag.email}: paid user, skipping`);
+      console.log(`  💳 ${label}: paid user, skipping`);
       result.paid++;
       continue;
     }
     if (current === undefined) {
-      console.log(`  ⏭️  ${flag.email}: no credits row, skipping`);
+      console.log(`  ⏭️  ${label}: no credits row, skipping`);
       result.skipped++;
       continue;
     }
@@ -281,7 +292,7 @@ async function resetFlaggedCredits(supabase, flagged, dryRun) {
     }
 
     if (dryRun) {
-      console.log(`  [DRY RUN] ${flag.email}: ${current} → 0`);
+      console.log(`  [DRY RUN] ${label}: ${current} → 0`);
       result.reset++;
       result.creditsRemoved += current;
       continue;
@@ -289,7 +300,7 @@ async function resetFlaggedCredits(supabase, flagged, dryRun) {
 
     const ok = await zeroUserCredits(supabase, flag, current, ts);
     if (ok) {
-      console.log(`  ✅ ${flag.email}: ${current} → 0`);
+      console.log(`  ✅ ${label}: ${current} → 0`);
       result.reset++;
       result.creditsRemoved += current;
     } else {
@@ -387,7 +398,12 @@ async function handleCreditReset(supabase, flagged) {
     }
   }
 
-  const reset = await resetFlaggedCredits(supabase, flagged, args.dryRun);
+  const reset = await resetFlaggedCredits(
+    supabase,
+    flagged,
+    args.dryRun,
+    args.domainsOnly,
+  );
 
   console.log('\n=== Credit reset summary ===');
   console.log(`  Users reset:       ${reset.reset}`);

@@ -526,6 +526,7 @@
   .animate-incoming-call {
     animation: incoming-call 2s ease-in-out infinite;
   }
+
 }
 
 /* Added incoming call animation */
@@ -577,6 +578,21 @@
   100% {
     transform: scale(1) rotate(0deg);
     box-shadow: 0 0 0 0 rgba(var(--incoming-call-color, 34, 197, 94), 0);
+  }
+}
+
+/* Speaking pulse ring — CSS fallback if inline energy-driven styles aren't applied */
+@keyframes speaking-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
   }
 }
 

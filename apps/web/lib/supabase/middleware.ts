@@ -37,6 +37,8 @@ const publicRoutes = [
     '/login',
     '/reset-password',
     '/cli/login',
+    '/voice-call',
+    '/voice-cloning',
   ]),
 ];
 

@@ -2,7 +2,7 @@ import { ModelId } from './models';
 import type { SessionConfig } from './session-config';
 
 export const defaultSessionConfig: SessionConfig = {
-  model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+  model: ModelId.GROK_VOICE_THINK_FAST_2_0,
   voice: 'Ara',
   temperature: 0.8,
   maxOutputTokens: null,

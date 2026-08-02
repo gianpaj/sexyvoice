@@ -45,12 +45,11 @@ export async function generateMetadata(
   const pageTitle =
     pagePath in pages ? pages[pagePath as keyof typeof pages] : undefined;
   const title = pageTitle || pages.defaultTitle;
-  const description =
-    pagePath === '/login'
-      ? pages.descriptionLogin || pages.description
-      : pagePath === '/signup'
-        ? pages.descriptionSignup || pages.description
-        : pages.description;
+  const descriptionOverrides: Partial<Record<string, string>> = {
+    '/login': pages.descriptionLogin,
+    '/signup': pages.descriptionSignup,
+  };
+  const description = descriptionOverrides[pagePath] || pages.description;
   const keywords =
     pagePath === '/' && pages.keywordsLanding
       ? pages.keywordsLanding.split(',').map((keyword) => keyword.trim())

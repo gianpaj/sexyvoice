@@ -97,6 +97,21 @@
       "noCreditCard": "Nessuna carta di credito richiesta",
       "signIn": "Accedi"
     },
+    "demoCall": {
+      "playButton": "Chiama demo",
+      "stopButton": "Stop",
+      "pickCharacter": "Scegli un personaggio"
+    },
+    "demoClone": {
+      "pickSpeaker": "Scegli una voce",
+      "referenceLabel": "Audio di riferimento",
+      "resultLabel": "Voce clonata",
+      "hearResult": "Ascolta il risultato",
+      "playAudio": "Riproduci audio",
+      "preparedExamplesCaption": "Esempi preparati. Registrati per clonare la tua voce.",
+      "audioError": "Impossibile caricare questo audio.",
+      "retry": "Riprova"
+    },
     "features": {
       "voiceCloning": {
         "title": "Voci naturali",
@@ -109,6 +124,14 @@
       "security": {
         "title": "Sicuro e privato",
         "description": "I tuoi dati vocali sono protetti con sicurezza di livello aziendale. Controllo completo sulla tua privacy, profilo e cronologia."
+      },
+      "voiceCalling": {
+        "title": "Chiamate vocali dal vivo",
+        "description": "Fai conversazioni telefoniche in tempo reale con personaggi IA — voci naturali, risposte istantanee, nessuna configurazione richiesta."
+      },
+      "voiceCloneDemo": {
+        "title": "Clona la tua voce",
+        "description": "Prova la demo di clonazione dal vivo: ascolta una voce ricreata da pochi secondi di audio, che parla in modo naturale in più lingue."
       }
     },
     "cta": {
@@ -116,6 +139,52 @@
       "title": "Pronto a trovare la tua voce?",
       "subtitle": "Unisciti a migliaia di creatori che si affidano alla nostra piattaforma per creare voci realistiche ricche di emozioni.",
       "action": "Crea la tua prima voce"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Parla con Personaggi IA, dal Vivo in Tempo Reale",
+        "subtitle": "Chiamate telefoniche IA dal vivo con voci naturali ed espressive.\nScegli un personaggio e inizia subito a parlare."
+      },
+      "privacy": {
+        "title": "Senza limiti, crittografato.",
+        "subtitle": "Esplora i tuoi desideri più profondi in totale privacy. Nessun filtro, nessun giudizio, nessuno in ascolto.",
+        "unrestricted": {
+          "title": "Nessun argomento è vietato",
+          "description": "Di' quello che vuoi, come vuoi. Il tuo personaggio non si imbarazza e non ti fa la predica."
+        },
+        "encrypted": {
+          "title": "Crittografia end-to-end",
+          "description": "Ogni chiamata è crittografata in transito. Nessuna persona ascolta le tue conversazioni."
+        },
+        "forgotten": {
+          "title": "Dimenticato per impostazione predefinita",
+          "description": "Non resta nulla da una chiamata all'altra, a meno che non attivi tu stesso la memoria."
+        }
+      },
+      "customCharacter": {
+        "title": "Crea il tuo personaggio personalizzato",
+        "subtitle": "Dagli un nome, una personalità, un passato e una voce. Poi chiamalo quando vuoi: risponde sempre restando nel personaggio.",
+        "note": "I personaggi personalizzati sono inclusi in tutti i piani a pagamento.",
+        "action": "Crea il tuo personaggio"
+      },
+      "cta": {
+        "freeCredits": "Inizia con 10.000 crediti gratuiti",
+        "title": "Pronto a sentire una voce prendere vita?",
+        "subtitle": "Avvia una chiamata dal vivo con qualsiasi personaggio e vivi una conversazione naturale con l'IA in tempo reale.",
+        "action": "Avvia una chiamata vocale"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "La tua voce, in ogni lingua",
+        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 9 lingue."
+      },
+      "cta": {
+        "freeCredits": "Inizia con 10.000 crediti gratuiti",
+        "title": "Pronto a clonare la tua voce?",
+        "subtitle": "Carica un breve campione e ascoltati parlare in qualsiasi lingua supportata.",
+        "action": "Clona la tua voce"
+      }
     },
     "generator": {
       "title": "Provalo ora",
@@ -188,10 +257,6 @@
             {
               "question": "Quanto costa?",
               "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
-            },
-            {
-              "question": "L'IA ricorda le nostre conversazioni precedenti?",
-              "answer": "Solo se attivi la memoria: è facoltativa e disattivata per impostazione predefinita, quindi di norma non viene memorizzato nulla delle tue chiamate. Quando è attiva, l'assistente conserva alcuni brevi dettagli (come il modo in cui preferisci essere chiamato e gli argomenti che ti piacciono), non registrazioni o trascrizioni complete, per riprendere da dove avevi lasciato. Conserviamo solo i tuoi dettagli più recenti, puoi cancellare tutto in qualsiasi momento e l'eliminazione dell'account li rimuove automaticamente."
             }
           ]
         },
@@ -835,6 +900,10 @@
     "skipToMainContent": "Vai al contenuto principale",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
+    "titleVoiceCall": "Chiamate Vocali IA – Parla dal Vivo con Personaggi IA",
+    "descriptionVoiceCall": "Fai chiamate telefoniche IA dal vivo con le tue voci preferite. Parla in tempo reale con personaggi IA – conversazioni naturali grazie alla tecnologia vocale di SexyVoice.ai.",
+    "titleVoiceCloning": "Clonazione vocale con IA",
+    "descriptionVoiceCloning": "Clona una voce da pochi secondi di audio e ascoltala parlare in modo naturale in 9 lingue.",
     "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",
     "titleTranscribe": "Trascrizione Audio Online Gratuita – Da Voce a Testo in 99+ Lingue",
     "descriptionAudioConverter": "Convertitore audio online gratuito – Converti MP3, WAV, FLAC, OGG, AAC, M4A e altri formati direttamente nel tuo browser. Nessun upload richiesto, 100% privato e offline. Basato su FFmpeg.",
@@ -843,6 +912,7 @@
     "keywordsTranscribe": "trascrizione audio gratuita, trascrivere audio, riconoscimento vocale, audio in testo, trascrizione whisper, openai whisper, trascrizione offline, trascrizione nel browser, voce in testo, riconoscimento vocale gratuito, trascrizione audio online, trascrivere video, trascrizione 99 lingue, trascrizione privata",
     "keywordsLanding": "sintesi vocale, generatore di voci IA, clonazione vocale, sintesi vocale IA, generazione vocale, TTS gratuito, voci IA espressive, clone vocale IA, sintesi del parlato",
     "/": "",
+    "/voice-call": "Chiamata Vocale",
     "/login": "Accedi",
     "/signup": "Registrati con email o Google",
     "/dashboard/call": "Chiama",
@@ -926,6 +996,7 @@
   },
   "footer": {
     "tagline": "Generazione vocale con IA. Crea audio naturale ed espressivo in pochi secondi.",
+    "featuresHeading": "Funzionalità",
     "toolsHeading": "Strumenti",
     "companyHeading": "Azienda",
     "legalHeading": "Legale",
@@ -935,7 +1006,9 @@
     "copyright": "SexyVoice.ai. Tutti i diritti riservati.",
     "audioConverter": "Convertitore audio gratuito",
     "transcribe": "Trascrizione audio gratuita",
-    "audioJoiner": "Unione audio gratuita"
+    "audioJoiner": "Unione audio gratuita",
+    "voiceCalling": "Chiamate Vocali IA",
+    "voiceCloning": "Clonazione vocale"
   },
   "promos": {
     "halloweenBanner": {

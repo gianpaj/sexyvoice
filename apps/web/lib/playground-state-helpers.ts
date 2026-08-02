@@ -1,4 +1,5 @@
 import { defaultSessionConfig } from '@/data/default-config';
+import { normalizeModelId } from '@/data/models';
 import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
@@ -87,7 +88,9 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
                 value === 'null' ? null : Number(value);
               break;
             case 'model':
-              sessionConfig.model = value as SessionConfig['model'];
+              // A shared/bookmarked URL can carry a retired id indefinitely;
+              // unnormalized it would also fail ConfigurationFormSchema's enum.
+              sessionConfig.model = normalizeModelId(value);
               break;
             case 'temperature':
               sessionConfig.temperature = Number(value);
