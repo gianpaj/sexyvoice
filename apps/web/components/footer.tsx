@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getMessages } from 'next-intl/server';
 
+import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 async function Footer({ lang }: { lang: Locale }) {
@@ -60,14 +61,16 @@ async function Footer({ lang }: { lang: Locale }) {
                   {dict.voiceCalling}
                 </Link>
               </li>
-              <li>
-                <Link
-                  className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
-                  href={`/${lang}/voice-cloning`}
-                >
-                  {dict.voiceCloning}
-                </Link>
-              </li>
+              {VOICE_CLONING_PAGE_ENABLED && (
+                <li>
+                  <Link
+                    className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
+                    href={`/${lang}/voice-cloning`}
+                  >
+                    {dict.voiceCloning}
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

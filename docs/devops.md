@@ -283,6 +283,27 @@ Used for:
 
 ## Deployment Notes
 
+### Feature gates
+
+Pages that are merged but not ready to ship are gated by constants in
+`apps/web/lib/features.ts` rather than by an environment variable, so the state
+is visible in code review and cannot drift between Vercel projects.
+
+- `VOICE_CLONING_PAGE_ENABLED` — the public `/[lang]/voice-cloning` landing
+  page. Currently `process.env.VERCEL_ENV !== 'production'`: reviewable on
+  previews and locally, `404` in production, because the demo audio is still
+  TTS-generated placeholder material rather than real cloned output.
+
+Each gate must cover every entry point, otherwise a "hidden" page stays
+reachable. For `VOICE_CLONING_PAGE_ENABLED` that is: the page itself
+(`notFound()`), the landing page feature card and its grid column count, the
+footer Features link, and the `app/sitemap.ts` glob — the sitemap discovers
+pages from the filesystem, so a gated page is advertised to search engines
+unless it is excluded there too.
+
+To ship a gated page, set the constant to `true` and remove the gate in a
+follow-up cleanup.
+
 ### Docs site (Fumadocs)
 
 - The docs site is a Fumadocs (Next.js) app in `apps/docs`, deployed to

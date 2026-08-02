@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import {
   getMessages,
   getTranslations,
@@ -17,6 +17,7 @@ import HeroWaveform from '@/components/hero-waveform';
 import { JsonLd } from '@/components/json-ld';
 import { Button } from '@/components/ui/button';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { routing } from '@/src/i18n/routing';
@@ -69,6 +70,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function VoiceCloningPage(props: Props) {
+  if (!VOICE_CLONING_PAGE_ENABLED) {
+    notFound();
+  }
+
   const { lang } = await props.params;
 
   // Validate that the language is a supported locale
