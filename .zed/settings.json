@@ -7,6 +7,20 @@
   },
   "format_on_save": "on",
   "languages": {
+    "JSON": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
+    "JSONC": {
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
     "JavaScript": {
       "formatter": {
         "language_server": {

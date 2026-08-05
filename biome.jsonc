@@ -22,8 +22,11 @@
       "!**/.next",
       "!**/dist",
       "!**/build",
+      "!**/.claude",
       "!apps/web/components/ui",
-      "!apps/web/app/globals.css"
+      "!apps/web/app/globals.css",
+      "!apps/web/lib/disposable-email/deny-domains.json",
+      "!apps/web/next-env.d.ts"
     ]
   },
   "formatter": {
@@ -147,12 +150,8 @@
       // Enforce the shared APIErrorResponse helper for error responses in the
       // web app's API route handlers. Scoped here (not global) because other
       // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
-      "includes": [
-        "apps/web/app/api/**"
-      ],
-      "plugins": [
-        "./biome-plugins/use-api-error-response.grit"
-      ]
+      "includes": ["apps/web/app/api/**"],
+      "plugins": ["./biome-plugins/use-api-error-response.grit"]
     }
   ]
 }

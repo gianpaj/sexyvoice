@@ -40,7 +40,10 @@ export const handlers = [
     }
     const requestId = new URL(request.url).searchParams.get('request_id');
     if (!requestId) {
-      return HttpResponse.json({ error: 'Missing request_id' }, { status: 400 });
+      return HttpResponse.json(
+        { error: 'Missing request_id' },
+        { status: 400 },
+      );
     }
     return HttpResponse.json({
       billing_events: [
@@ -625,28 +628,29 @@ export const mockCountTokens = vi.fn().mockResolvedValue({ totalTokens: 123 });
 const DEFAULT_MOCK_AUDIO_DATA =
   'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 
-const createDefaultStreamChunk = (): GenerateContentResponse => ({
-  candidates: [
-    {
-      content: {
-        parts: [
-          {
-            inlineData: {
-              data: DEFAULT_MOCK_AUDIO_DATA,
-              mimeType: 'audio/L16;rate=24000',
+const createDefaultStreamChunk = (): GenerateContentResponse =>
+  ({
+    candidates: [
+      {
+        content: {
+          parts: [
+            {
+              inlineData: {
+                data: DEFAULT_MOCK_AUDIO_DATA,
+                mimeType: 'audio/L16;rate=24000',
+              },
             },
-          },
-        ],
-      },
-      finishReason: 'STOP',
-    } as any,
-  ],
-  usageMetadata: {
-    promptTokenCount: 11,
-    candidatesTokenCount: 12,
-    totalTokenCount: 23,
-  },
-} as GenerateContentResponse);
+          ],
+        },
+        finishReason: 'STOP',
+      } as any,
+    ],
+    usageMetadata: {
+      promptTokenCount: 11,
+      candidatesTokenCount: 12,
+      totalTokenCount: 23,
+    },
+  }) as GenerateContentResponse;
 
 // Create a configurable mock instance that tests can modify
 const createDefaultGoogleGenAIInstance = () => ({
