@@ -166,12 +166,9 @@
       }
     },
     {
-      // Zod field order determines the JSON Schema generation sequence, so raw
-      // call observations must remain ahead of derived analysis fields.
-      "includes": [
-        "apps/web/lib/ai/analyze-call.ts",
-        "apps/web/tests/analyze-call.test.ts"
-      ],
+      // Keep the LLM schema aligned with the prompt and script. Evidence-first
+      // ordering is an intentional model hint, not a JSON output contract.
+      "includes": ["apps/web/lib/ai/analyze-call.ts"],
       "assist": {
         "actions": {
           "source": {

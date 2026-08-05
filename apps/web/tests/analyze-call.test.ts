@@ -19,18 +19,18 @@ vi.mock('@ai-sdk/xai', () => ({
 }));
 
 describe('callAnalysisSchema', () => {
-  it('keeps observations ahead of derived analysis fields', () => {
-    expect(Object.keys(callAnalysisSchema.shape)).toEqual([
+  it('defines the complete analysis field set', () => {
+    expect(Object.keys(callAnalysisSchema.shape).toSorted()).toEqual([
+      'ai_compliance_issues',
+      'conversation_quality',
+      'key_user_requests',
       'language',
+      'notable_patterns',
       'topic_category',
       'topic_subcategory',
       'user_engagement_level',
-      'conversation_quality',
-      'where_conversation_died',
       'user_sentiment',
-      'key_user_requests',
-      'ai_compliance_issues',
-      'notable_patterns',
+      'where_conversation_died',
     ]);
   });
 });
@@ -43,8 +43,8 @@ describe('extractMessages()', () => {
 
   it('handles a bare array of { role, content }', () => {
     const messages = extractMessages([
-      { role: 'assistant', content: 'hi', timestamp: '2026-01-01T00:00:01Z' },
-      { role: 'user', content: 'hello', timestamp: '2026-01-01T00:00:00Z' },
+      { content: 'hi', role: 'assistant', timestamp: '2026-01-01T00:00:01Z' },
+      { content: 'hello', role: 'user', timestamp: '2026-01-01T00:00:00Z' },
     ]);
     // sorted chronologically
     expect(messages.map((m) => m.role)).toEqual(['user', 'assistant']);
@@ -61,21 +61,21 @@ describe('extractMessages()', () => {
         },
       ],
       user_transcriptions: [
-        { transcript: 'I need help', timestamp: '2026-01-01T00:00:01Z' },
+        { timestamp: '2026-01-01T00:00:01Z', transcript: 'I need help' },
       ],
     } as never);
     expect(messages).toHaveLength(2);
-    expect(messages[0]).toMatchObject({ role: 'user', content: 'I need help' });
+    expect(messages[0]).toMatchObject({ content: 'I need help', role: 'user' });
     expect(messages[1]).toMatchObject({
-      role: 'assistant',
       content: 'welcome',
+      role: 'assistant',
     });
   });
 
   it('drops empty content', () => {
     const messages = extractMessages([
       { role: 'user' },
-      { role: 'assistant', content: 'ok' },
+      { content: 'ok', role: 'assistant' },
     ]);
     expect(messages).toHaveLength(1);
     expect(messages[0].content).toBe('ok');
@@ -85,13 +85,13 @@ describe('extractMessages()', () => {
 describe('buildConversationSummary()', () => {
   it('formats USER:/AI: lines and truncates', () => {
     const summary = buildConversationSummary([
-      { role: 'user', content: 'hi', timestamp: null },
-      { role: 'assistant', content: 'hello', timestamp: null },
+      { content: 'hi', role: 'user', timestamp: null },
+      { content: 'hello', role: 'assistant', timestamp: null },
     ]);
     expect(summary).toBe('USER: hi\nAI: hello\n');
 
     const truncated = buildConversationSummary(
-      [{ role: 'user', content: 'x'.repeat(100), timestamp: null }],
+      [{ content: 'x'.repeat(100), role: 'user', timestamp: null }],
       20,
     );
     expect(truncated).toContain('[... conversation truncated ...]');
@@ -102,34 +102,34 @@ describe('toAnalysisRow()', () => {
   it('maps LLM keys to call_session_analysis columns', () => {
     const row = toAnalysisRow(
       {
-        id: 's1',
-        user_id: 'u1',
-        started_at: 't',
         duration_seconds: 200,
         end_reason: 'user_disconnect',
+        id: 's1',
+        started_at: 't',
         transcript: [],
+        user_id: 'u1',
       },
       {
+        ai_compliance_issues: null,
+        conversation_quality: 'flowing',
+        key_user_requests: ['tell a joke'],
         language: 'en',
+        notable_patterns: null,
         topic_category: 'casual_chat',
         topic_subcategory: 'smalltalk',
         user_engagement_level: 'high',
-        conversation_quality: 'flowing',
-        where_conversation_died: null,
         user_sentiment: 'engaged',
-        key_user_requests: ['tell a joke'],
-        ai_compliance_issues: null,
-        notable_patterns: null,
+        where_conversation_died: null,
       },
     );
     expect(row).toMatchObject({
+      ai_issues: null,
+      engagement_level: 'high',
+      error: null,
+      key_requests: ['tell a joke'],
       session_id: 's1',
       user_id: 'u1',
-      engagement_level: 'high',
       where_died: null,
-      key_requests: ['tell a joke'],
-      ai_issues: null,
-      error: null,
     });
     expect(typeof row.analyzed_at).toBe('string');
   });
@@ -150,24 +150,24 @@ describe('analyzeTranscript()', () => {
   it('returns the model object and notes missing user transcription', async () => {
     generateObjectMock.mockResolvedValue({
       object: {
+        ai_compliance_issues: null,
+        conversation_quality: 'flowing',
+        key_user_requests: [],
         language: 'en',
+        notable_patterns: null,
         topic_category: 'casual_chat',
         topic_subcategory: 'smalltalk',
         user_engagement_level: 'medium',
-        conversation_quality: 'flowing',
-        where_conversation_died: null,
         user_sentiment: 'engaged',
-        key_user_requests: [],
-        ai_compliance_issues: null,
-        notable_patterns: null,
+        where_conversation_died: null,
       },
     });
 
     // assistant-only transcript → notable_patterns should be backfilled
     const result = await analyzeTranscript({
-      id: 's1',
       duration_seconds: 200,
-      transcript: [{ role: 'assistant', content: 'hello there' }],
+      id: 's1',
+      transcript: [{ content: 'hello there', role: 'assistant' }],
     });
 
     expect(result.language).toBe('en');
