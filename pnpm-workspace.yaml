@@ -91,5 +91,5 @@ allowBuilds:
   msw: true
   onnxruntime-node: true
   protobufjs: true
-  redis-memory-server: true
+  redis-memory-server: false
   sharp: true
