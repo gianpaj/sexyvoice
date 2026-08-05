@@ -1,6 +1,31 @@
 {
   "name": "@sexyvoice/web",
   "version": "2026.4.7",
+  "private": true,
+  "scripts": {
+    "analyze": "next experimental-analyze",
+    "prebuild": "pnpm run check-translations && pnpm run build:content",
+    "build": "next build",
+    "build:content": "contentlayer2 build",
+    "check:fix": "biome check ./app components hooks lib proxy.ts --write",
+    "check-translations": "node scripts/check-translations.mjs",
+    "clean": "knip",
+    "dev": "PORTLESS_TLD=dev portless sv next dev",
+    "dev:content": "contentlayer2 dev",
+    "fixall": "pnpm run lint:write; pnpm run format:write; pnpm run check:fix",
+    "format": "biome format ./app components hooks lib proxy.ts",
+    "format:write": "pnpm run format --write",
+    "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && biome format lib/supabase/types.d.ts --write",
+    "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
+    "lint": "biome lint ./app components hooks lib proxy.ts",
+    "lint:write": "pnpm run lint --write",
+    "start": "next start",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "test:ui": "vitest --ui",
+    "type-check": "tsgo --noEmit"
+  },
   "browserslist": [
     "chrome >0 and last 2.5 years",
     "edge >0 and last 2.5 years",
@@ -124,30 +149,5 @@
   },
   "engines": {
     "node": "24.x"
-  },
-  "private": true,
-  "scripts": {
-    "analyze": "next experimental-analyze",
-    "build": "next build",
-    "build:content": "contentlayer2 build",
-    "check-translations": "node scripts/check-translations.mjs",
-    "check:fix": "biome check ./app components hooks lib proxy.ts --write",
-    "clean": "knip",
-    "dev": "PORTLESS_TLD=dev portless sv next dev",
-    "dev:content": "contentlayer2 dev",
-    "fixall": "pnpm run lint:write; pnpm run format:write; pnpm run check:fix",
-    "format": "biome format ./app components hooks lib proxy.ts",
-    "format:write": "pnpm run format --write",
-    "generate-supabase-types": "sed 's/export/declare/g' <(supabase gen types typescript --project-id bfaqdyadcpaetelvpbva) > lib/supabase/types.d.ts && biome format lib/supabase/types.d.ts --write",
-    "generate-supabase-types:local": "sed 's/export/declare/g' <(supabase gen types typescript --local) > lib/supabase/types.d.ts && pnpm run format:write",
-    "lint": "biome lint ./app components hooks lib proxy.ts",
-    "lint:write": "pnpm run lint --write",
-    "prebuild": "pnpm run check-translations && pnpm run build:content",
-    "start": "next start",
-    "test": "vitest",
-    "test:e2e": "playwright test",
-    "test:coverage": "vitest --coverage",
-    "test:ui": "vitest --ui",
-    "type-check": "tsgo --noEmit"
   }
 }
