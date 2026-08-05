@@ -57,7 +57,6 @@ import {
 // (query_canceled) error rather than a Vercel timeout.
 export const maxDuration = 300;
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
 
@@ -494,22 +493,22 @@ export async function GET(request: NextRequest) {
   // checks so we never persist a partial/failed response to disk
   if (!(isProd || loadedFromValidCache)) {
     const cacheData = {
-      reportDate: cacheReportDate,
-      audioYesterdayResult,
-      audio14dResult,
-      audioTotalCountResult,
-      clonesResult,
-      profilesRecentResult,
-      profilesTotalCountResult,
-      apiKeysYesterdayResult,
+      activeSubscribersCount,
       allCreditTransactions,
       allTimePurchaseTransactions,
-      activeSubscribersCount,
-      subscriptionsMrr,
-      nextSubscriptionDueForPayment,
+      apiKeysYesterdayResult,
+      audio14dResult,
+      audioTotalCountResult,
+      audioYesterdayResult,
       callSessions14dResult,
-      callSessionsTotalCountResult,
       callSessionsAllTimeDurationResult,
+      callSessionsTotalCountResult,
+      clonesResult,
+      nextSubscriptionDueForPayment,
+      profilesRecentResult,
+      profilesTotalCountResult,
+      reportDate: cacheReportDate,
+      subscriptionsMrr,
       usageEvents14dResult,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
@@ -674,9 +673,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
     await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
 
     Sentry.captureCheckIn({
@@ -858,9 +857,9 @@ export async function GET(request: NextRequest) {
   // Calculate total spending per customer for sorting
   const customerTotals = [...customerTransactions.entries()].map(
     ([userId, transactions]) => ({
-      userId,
       total: transactions.reduce((sum, t) => sum + t.amount, 0),
       transactions,
+      userId,
       username: transactions[0].username,
     }),
   );
@@ -1069,12 +1068,12 @@ export async function GET(request: NextRequest) {
 
   // Calculate usage breakdown by source_type
   const sourceTypeLabels: Partial<Record<UsageSourceType, string>> = {
-    tts: 'TTS',
-    voice_cloning: 'Cloning',
-    live_call: 'Calls',
-    audio_processing: 'Processing',
     api_tts: 'API TTS',
     api_voice_cloning: 'API Cloning',
+    audio_processing: 'Processing',
+    live_call: 'Calls',
+    tts: 'TTS',
+    voice_cloning: 'Cloning',
   };
 
   const getSourceTypeLabel = (sourceType: string): string =>
@@ -1334,36 +1333,36 @@ export async function GET(request: NextRequest) {
 
   const featureHealthItems = [
     {
+      detail: `${formatCompactNumber(usageYesterdayBreakdown.get('tts') ?? 0)} credits`,
       label: 'TTS',
       status: getFeatureHealthStatus(
         usageYesterdayBreakdown.get('tts') ?? 0,
         (usage14dBreakdown.get('tts') ?? 0) / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${formatCompactNumber(usageYesterdayBreakdown.get('tts') ?? 0)} credits`,
     },
     {
+      detail: `${formatCompactNumber(apiTtsCreditsYesterday)} credits`,
       label: 'API TTS',
       status: getFeatureHealthStatus(
         apiTtsCreditsYesterday,
         (usage14dBreakdown.get('api_tts') ?? 0) / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${formatCompactNumber(apiTtsCreditsYesterday)} credits`,
     },
     {
+      detail: `${callsYesterdayCount} calls, ${formatDuration(callsDurationYesterday)}`,
       label: 'Calls',
       status: getFeatureHealthStatus(
         callsYesterdayCount,
         calls14dCount / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${callsYesterdayCount} calls, ${formatDuration(callsDurationYesterday)}`,
     },
     {
+      detail: `${clonePrevCount} clones`,
       label: 'Cloning',
       status: getFeatureHealthStatus(
         clonePrevCount,
         clone14dCount / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${clonePrevCount} clones`,
     },
   ];
 
@@ -1487,12 +1486,12 @@ export async function GET(request: NextRequest) {
       return new NextResponse(message);
     }
     await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: '202637584',
         text: message,
       }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
     Sentry.captureCheckIn({
       // Make sure this variable is named `checkInId`

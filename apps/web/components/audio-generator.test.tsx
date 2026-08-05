@@ -8,8 +8,8 @@ import { AudioGenerator } from '@/components/audio-generator';
 
 const mockToastFn = vi.hoisted(() =>
   Object.assign(vi.fn(), {
-    success: vi.fn(),
     error: vi.fn(),
+    success: vi.fn(),
   }),
 );
 
@@ -34,6 +34,9 @@ vi.mock('@/components/audio-player-with-context', () => ({
 }));
 
 vi.mock('@/lib/ai', () => ({
+  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
+  GEMINI_CHARS_PER_TOKEN: 4,
+  GEMINI_STREAMING_ENABLED: false,
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
     if (model === 'gpro') {
       return isPaidUser ? 2000 : 1000;
@@ -45,15 +48,12 @@ vi.mock('@/lib/ai', () => ({
 
     return isPaidUser ? 1000 : 500;
   }),
-  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 2500 : 1000,
-  ),
   getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
     isPaidUser ? 8192 : 400,
   ),
-  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
-  GEMINI_CHARS_PER_TOKEN: 4,
-  GEMINI_STREAMING_ENABLED: false,
+  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 2500 : 1000,
+  ),
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -65,65 +65,65 @@ vi.mock('@/lib/react-textarea-autosize', () => ({
 }));
 
 const baseDict = {
-  title: 'Generate audio',
-  textAreaPlaceholder: 'Enter text',
-  estimateCreditsButton: 'Estimate credits',
-  ctaButton: 'Generate',
-  generating: 'Generating',
   cancel: 'Cancel',
-  playAudio: 'Play audio',
-  resetPlayer: 'Reset player',
+  ctaButton: 'Generate',
+  dailyLimitError: 'Daily limit reached (__COUNT__)',
   downloadAudio: 'Download audio',
-  notEnoughCredits: 'Not enough credits',
-  success: 'Success',
   error: 'Something went wrong',
   errorEstimating: 'Failed to estimate credits',
-  dailyLimitError: 'Daily limit reached (__COUNT__)',
+  estimateCreditsButton: 'Estimate credits',
+  generating: 'Generating',
   grok: {
-    languageLabel: 'Language',
-    languageSelectPlaceholder: 'Select a language',
-    langAutomatic: 'Automatic',
-    langEnglish: 'English',
+    effects: {
+      breath: 'Breath',
+      chuckle: 'Chuckle',
+      cry: 'Cry',
+      exhale: 'Exhale',
+      giggle: 'Giggle',
+      humTune: 'Hum tune',
+      inhale: 'Inhale',
+      laugh: 'Laugh',
+      lipSmack: 'Lip smack',
+      longPause: 'Long pause',
+      pause: 'Pause',
+      sigh: 'Sigh',
+      tongueClick: 'Tongue click',
+      tsk: 'Tsk',
+    },
+    formatPlaceholder: 'Select format',
     helperText: 'Use Grok tags to control delivery.',
     inlineEffectPlaceholder: 'Insert inline effect',
+    langAutomatic: 'Automatic',
+    langEnglish: 'English',
+    languageLabel: 'Language',
+    languageSelectPlaceholder: 'Select a language',
     wrappingEffectPlaceholder: 'Wrap selected text',
-    formatPlaceholder: 'Select format',
-    effects: {
-      pause: 'Pause',
-      longPause: 'Long pause',
-      humTune: 'Hum tune',
-      laugh: 'Laugh',
-      chuckle: 'Chuckle',
-      giggle: 'Giggle',
-      cry: 'Cry',
-      tsk: 'Tsk',
-      tongueClick: 'Tongue click',
-      lipSmack: 'Lip smack',
-      breath: 'Breath',
-      inhale: 'Inhale',
-      exhale: 'Exhale',
-      sigh: 'Sigh',
-    },
   },
+  notEnoughCredits: 'Not enough credits',
+  playAudio: 'Play audio',
+  resetPlayer: 'Reset player',
+  success: 'Success',
+  textAreaPlaceholder: 'Enter text',
+  title: 'Generate audio',
 } as const;
 
 function createVoice(
   overrides: Partial<Tables<'voices'>> = {},
 ): Tables<'voices'> {
   return {
+    created_at: null,
+    description: null,
+    feature: 'tts',
     id: 'voice-id',
-    name: 'tara',
     language: 'en',
     model:
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-    description: null,
-    type: null,
-    sort_order: 0,
-    feature: 'tts',
-    sample_url: null,
+    name: 'tara',
     sample_prompt: null,
+    sample_url: null,
+    sort_order: 0,
+    type: null,
     user_id: null,
-    created_at: null,
     ...overrides,
   } as Tables<'voices'>;
 }
@@ -156,8 +156,8 @@ describe('AudioGenerator', () => {
   it('shows the Grok language selector with Automatic first and English second', async () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'grok',
+        name: 'eve',
       }),
     });
 
@@ -189,15 +189,15 @@ describe('AudioGenerator', () => {
 
   it('submits the selected Grok language in the generation request', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: 'https://example.com/audio.mp3' }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'grok',
+        name: 'eve',
       }),
     });
 
@@ -223,8 +223,8 @@ describe('AudioGenerator', () => {
     editor?.dispatchEvent(
       new InputEvent('input', {
         bubbles: true,
-        inputType: 'insertText',
         data: 'مرحبا',
+        inputType: 'insertText',
       }),
     );
 
@@ -235,16 +235,16 @@ describe('AudioGenerator', () => {
       expect(fetchMock).toHaveBeenCalledWith(
         '/api/generate-voice',
         expect.objectContaining({
-          method: 'POST',
+          body: JSON.stringify({
+            language: 'ar-EG',
+            styleVariant: '',
+            text: 'مرحبا',
+            voice: 'eve',
+          }),
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            text: 'مرحبا',
-            voice: 'eve',
-            styleVariant: '',
-            language: 'ar-EG',
-          }),
+          method: 'POST',
           signal: expect.any(AbortSignal),
         }),
       );
@@ -254,8 +254,8 @@ describe('AudioGenerator', () => {
   it('hides Gemini estimate credits UI for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'grok',
+        name: 'eve',
       }),
     });
 
@@ -267,8 +267,8 @@ describe('AudioGenerator', () => {
   it('hides the AI enhance button for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'grok',
+        name: 'eve',
       }),
     });
 
@@ -283,8 +283,8 @@ describe('AudioGenerator', () => {
   it('shows Grok TTS editor for Grok voices', async () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'grok',
+        name: 'eve',
       }),
     });
 
@@ -305,9 +305,9 @@ describe('AudioGenerator', () => {
   it('does not show Grok TTS editor for Replicate voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'tara',
         model:
           'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        name: 'tara',
       }),
     });
 

@@ -26,19 +26,11 @@ declare module '@tiptap/core' {
 
 export const defaultUiState: UiState = {
   commentInputVisible: false,
-  lockDragHandle: false,
   isDragging: false,
+  lockDragHandle: false,
 } as const;
 
 export const UiState = Extension.create<UiState>({
-  name: 'uiState',
-
-  addStorage() {
-    return {
-      ...defaultUiState,
-    };
-  },
-
   addCommands() {
     const createBooleanSetter =
       (key: keyof UiState) => (value: boolean) => () => {
@@ -52,23 +44,30 @@ export const UiState = Extension.create<UiState>({
     };
 
     return {
+      commentInputHide: createToggle('commentInputVisible', false),
       // AI Generation commands
 
       // Comment input commands
       commentInputShow: createToggle('commentInputVisible', true),
-      commentInputHide: createToggle('commentInputVisible', false),
-
-      // Drag handle commands
-      setLockDragHandle: createBooleanSetter('lockDragHandle'),
-      setIsDragging: createBooleanSetter('isDragging'),
 
       // Reset command
       resetUiState: () => () => {
         Object.assign(this.storage, { ...defaultUiState });
         return true;
       },
+      setIsDragging: createBooleanSetter('isDragging'),
+
+      // Drag handle commands
+      setLockDragHandle: createBooleanSetter('lockDragHandle'),
     };
   },
+
+  addStorage() {
+    return {
+      ...defaultUiState,
+    };
+  },
+  name: 'uiState',
 
   onCreate() {
     Object.assign(this.storage, { ...defaultUiState });

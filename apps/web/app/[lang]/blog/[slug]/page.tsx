@@ -67,41 +67,6 @@ export async function generateMetadata({
   const postUrl = `https://sexyvoice.ai/${post.locale}/blog/${post.slug}`;
 
   return {
-    title: `${post.title} - SexyVoice.ai`,
-    description: post.description,
-    keywords: post.keywords || [
-      'AI voice generation',
-      'voice cloning',
-      'text-to-speech',
-      'voice synthesis',
-      'AI voice call',
-    ],
-    authors: [{ name: 'SexyVoice.ai' }],
-    openGraph: {
-      title: post.title,
-      description: post.description,
-      url: postUrl,
-      siteName: 'SexyVoice.ai',
-      images: [
-        {
-          url: post.image || '/sexyvoice.ai-og-image.jpg',
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-      locale: post.locale,
-      type: 'article',
-      publishedTime: post.date,
-      section: 'Technology',
-      tags: ['Voice AI', 'Voice Cloning', 'Speech Synthesis'],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: post.title,
-      description: post.description,
-      images: [post.image || '/sexyvoice.ai-og-image.jpg'],
-    },
     alternates: {
       canonical: postUrl,
       // Only advertise hreflang alternates for locales that actually have a
@@ -116,6 +81,41 @@ export async function generateMetadata({
           )
           .map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
       ),
+    },
+    authors: [{ name: 'SexyVoice.ai' }],
+    description: post.description,
+    keywords: post.keywords || [
+      'AI voice generation',
+      'voice cloning',
+      'text-to-speech',
+      'voice synthesis',
+      'AI voice call',
+    ],
+    openGraph: {
+      description: post.description,
+      images: [
+        {
+          alt: post.title,
+          height: 630,
+          url: post.image || '/sexyvoice.ai-og-image.jpg',
+          width: 1200,
+        },
+      ],
+      locale: post.locale,
+      publishedTime: post.date,
+      section: 'Technology',
+      siteName: 'SexyVoice.ai',
+      tags: ['Voice AI', 'Voice Cloning', 'Speech Synthesis'],
+      title: post.title,
+      type: 'article',
+      url: postUrl,
+    },
+    title: `${post.title} - SexyVoice.ai`,
+    twitter: {
+      card: 'summary_large_image',
+      description: post.description,
+      images: [post.image || '/sexyvoice.ai-og-image.jpg'],
+      title: post.title,
     },
   };
 }
@@ -171,33 +171,33 @@ const PostLayout = async (props: {
       <JsonLd
         data={{
           ...articleSchema,
-          wordCount,
-          timeRequired: `PT${readingTime}M`,
           about: [
             {
               '@type': 'Thing',
-              name: 'AI Voice Cloning',
               description:
                 'Artificial intelligence technology for replicating human voices',
+              name: 'AI Voice Cloning',
             },
             {
               '@type': 'Thing',
-              name: 'Speech Synthesis',
               description: 'Computer generation of human-like speech from text',
+              name: 'Speech Synthesis',
             },
             {
               '@type': 'Thing',
-              name: 'Machine Learning',
               description: 'AI algorithms that learn patterns from data',
+              name: 'Machine Learning',
             },
           ],
           mainEntity: {
             '@type': 'TechArticle',
-            name: post.title,
-            description: post.description,
-            proficiencyLevel: 'Beginner to Advanced',
             dependencies: 'Basic understanding of AI concepts',
+            description: post.description,
+            name: post.title,
+            proficiencyLevel: 'Beginner to Advanced',
           },
+          timeRequired: `PT${readingTime}M`,
+          wordCount,
         }}
         id="article-schema"
       />

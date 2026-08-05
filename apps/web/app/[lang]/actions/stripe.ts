@@ -53,15 +53,15 @@ function reportCheckoutSetupError(
     shouldReportInvalidCheckoutPackageId()
   ) {
     captureMessage('Invalid checkout package id submitted.', {
+      extra: {
+        available_packages: CHECKOUT_PACKAGE_IDS,
+        packageId,
+        vercelEnv: process.env.VERCEL_ENV ?? null,
+      },
       level: 'info',
       tags: {
-        section: 'stripe_actions',
         event_type: 'invalid_package_id',
-      },
-      extra: {
-        packageId,
-        available_packages: CHECKOUT_PACKAGE_IDS,
-        vercelEnv: process.env.VERCEL_ENV ?? null,
+        section: 'stripe_actions',
       },
     });
   }
@@ -71,14 +71,14 @@ function reportCheckoutSetupError(
     shouldReportCheckoutConfigurationError()
   ) {
     captureException(error, {
-      tags: {
-        section: 'stripe_actions',
-        event_type: 'missing_price_id',
-      },
       extra: {
-        packageId,
         available_packages: Object.keys(getTopupPackages('en')),
+        packageId,
         vercelEnv: process.env.VERCEL_ENV ?? null,
+      },
+      tags: {
+        event_type: 'missing_price_id',
+        section: 'stripe_actions',
       },
     });
   }
@@ -120,16 +120,16 @@ async function getCheckoutStripeId(
   if (!(userData && userData.stripe_id)) {
     const error = new Error('User not found or Stripe ID missing');
     captureException(error, {
-      user: { id: user.id, email: user.email },
-      tags: {
-        section: 'stripe_actions',
-        event_type: 'user_validation_error',
-      },
       extra: {
-        has_user_data: !!userData,
         has_stripe_id: !!userData?.stripe_id,
+        has_user_data: !!userData,
         packageId,
       },
+      tags: {
+        event_type: 'user_validation_error',
+        section: 'stripe_actions',
+      },
+      user: { email: user.email, id: user.id },
     });
     throw error;
   }
@@ -137,7 +137,6 @@ async function getCheckoutStripeId(
   return userData.stripe_id;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's okay
 export async function createCheckoutSession(
   data: FormData,
   packageId: CheckoutPackageId,
@@ -184,14 +183,14 @@ export async function createCheckoutSession(
     if (authError || !user) {
       const error = new Error('Unauthorized checkout session request');
       captureException(error, {
-        tags: {
-          section: 'stripe_actions',
-          event_type: 'auth_error',
-        },
         extra: {
           authError: authError?.message ?? null,
-          packageId,
           checkoutType,
+          packageId,
+        },
+        tags: {
+          event_type: 'auth_error',
+          section: 'stripe_actions',
         },
       });
       throw error;
@@ -210,19 +209,19 @@ export async function createCheckoutSession(
     const metadata: CheckoutMetadata =
       checkoutType === 'subscription'
         ? {
-            userId: user.id,
             packageId,
             type: 'subscription',
+            userId: user.id,
             ...(shouldApplySubscriptionDiscount && {
               subscriptionDiscountCouponId,
             }),
           }
         : {
-            userId: user.id,
-            packageId,
             credits: package_.credits.toString(),
             dollarAmount: package_.dollarAmount.toString(),
+            packageId,
             type: 'topup',
+            userId: user.id,
             ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
               promo: process.env.NEXT_PUBLIC_PROMO_ID,
             }),
@@ -230,14 +229,14 @@ export async function createCheckoutSession(
 
     const checkoutSession: Stripe.Checkout.Session =
       await stripe.checkout.sessions.create({
-        mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
         customer: stripeId,
         line_items: [
           {
-            quantity: 1,
             price: package_.priceId,
+            quantity: 1,
           },
         ],
+        mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
         ...(shouldApplySubscriptionDiscount && {
           discounts: [
             {
@@ -246,11 +245,11 @@ export async function createCheckoutSession(
           ],
         }),
         ...(ui_mode === 'hosted' && {
-          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
           cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
+          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
         }),
-        ui_mode,
         metadata: metadata as unknown as Stripe.MetadataParam,
+        ui_mode,
       });
 
     return {
@@ -265,15 +264,15 @@ export async function createCheckoutSession(
     }
 
     captureException(error, {
-      tags: {
-        section: 'stripe_actions',
-        event_type: 'checkout_session_creation_error',
-      },
       extra: {
-        packageId,
         checkout_type: data.get('type') || 'topup',
-        ui_mode: data.get('uiMode'),
         error_message: error instanceof Error ? error.message : String(error),
+        packageId,
+        ui_mode: data.get('uiMode'),
+      },
+      tags: {
+        event_type: 'checkout_session_creation_error',
+        section: 'stripe_actions',
       },
     });
     throw error;

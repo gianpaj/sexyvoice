@@ -81,10 +81,6 @@ function useTooltip({
   const setOpen = setControlledOpen ?? setUncontrolledOpen;
 
   const data = useFloating({
-    placement,
-    open,
-    onOpenChange: setOpen,
-    whileElementsMounted: autoUpdate,
     middleware: [
       offset(4),
       flip({
@@ -94,21 +90,27 @@ function useTooltip({
       }),
       shift({ padding: 4 }),
     ],
+    onOpenChange: setOpen,
+    open,
+    placement,
+    whileElementsMounted: autoUpdate,
   });
 
   const context = data.context;
 
+  const isUncontrolled =
+    controlledOpen === undefined || controlledOpen === null;
   const hover = useHover(context, {
-    mouseOnly: true,
-    move: false,
-    restMs: delay,
-    enabled: controlledOpen == null,
     delay: {
       close: closeDelay,
     },
+    enabled: isUncontrolled,
+    mouseOnly: true,
+    move: false,
+    restMs: delay,
   });
   const focus = useFocus(context, {
-    enabled: controlledOpen == null,
+    enabled: isUncontrolled,
   });
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: 'tooltip' });
@@ -128,7 +130,7 @@ const TooltipContext = createContext<TooltipContextValue | null>(null);
 function useTooltipContext() {
   const context = useContext(TooltipContext);
 
-  if (context == null) {
+  if (context === null) {
     throw new Error(
       'Tooltip components must be wrapped in <TooltipProvider />',
     );
@@ -150,7 +152,7 @@ export function Tooltip({ children, ...props }: TooltipProviderProps) {
 
   return (
     <FloatingDelayGroup
-      delay={{ open: props.delay ?? 0, close: props.closeDelay ?? 0 }}
+      delay={{ close: props.closeDelay ?? 0, open: props.delay ?? 0 }}
       timeoutMs={props.timeout}
     >
       <TooltipContext.Provider value={tooltip}>
@@ -163,13 +165,16 @@ export function Tooltip({ children, ...props }: TooltipProviderProps) {
 export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
   function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
     const context = useTooltipContext();
-    const childrenRef = isValidElement(children)
-      ? Number.parseInt(version, 10) >= 19
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (children as { props: { ref?: React.Ref<any> } }).props.ref
-        : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (children as any).ref
-      : undefined;
+    let childrenRef: React.Ref<HTMLElement> | undefined;
+
+    if (isValidElement<{ ref?: React.Ref<HTMLElement> }>(children)) {
+      childrenRef =
+        Number.parseInt(version, 10) >= 19
+          ? children.props.ref
+          : (children as typeof children & { ref?: React.Ref<HTMLElement> })
+              .ref;
+    }
+
     const ref = useMergeRefs([context.refs.setReference, propRef, childrenRef]);
 
     if (asChild && isValidElement(children)) {

@@ -107,16 +107,14 @@ export function useColumns({
   return useMemo(() => {
     const baseColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
       {
-        id: 'file name',
         accessorKey: 'storage_key',
-        header: 'File Name',
         cell: ({ row }) =>
           row.original.storage_key.replace('audio/', '') || 'Unknown',
+        header: 'File Name',
+        id: 'file name',
       },
       {
-        id: 'voice',
         accessorKey: 'voices.name',
-        header: 'Voice',
         cell: ({ row }) => {
           const voiceName = row.original.voices?.name || 'Unknown';
 
@@ -131,11 +129,11 @@ export function useColumns({
             </div>
           );
         },
+        header: 'Voice',
+        id: 'voice',
       },
       {
-        id: 'text',
         accessorKey: 'text_content',
-        header: 'Text',
         cell: ({ row }) => (
           <div className="flex max-w-[300px] items-center gap-2">
             <span
@@ -146,10 +144,12 @@ export function useColumns({
             </span>
           </div>
         ),
+        header: 'Text',
+        id: 'text',
       },
       {
-        id: 'created at',
         accessorKey: 'created_at',
+        cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
         header: ({ column }) => (
           <Button
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -159,20 +159,18 @@ export function useColumns({
             <ArrowUpDown className="ml-2 size-4" />
           </Button>
         ),
-        cell: ({ row }) => <DateTimeCell value={row.original.created_at!} />,
+        id: 'created at',
       },
       {
-        id: 'Preview',
-        header: 'Preview',
         cell: ({ row }) => (
           <div className="flex justify-center gap-2">
             <AudioPlayer url={row.original.url} />
           </div>
         ),
+        header: 'Preview',
+        id: 'Preview',
       },
       {
-        id: 'Download',
-        header: 'Download',
         cell: ({ row }) => (
           <Button
             className="ml-2"
@@ -184,11 +182,13 @@ export function useColumns({
             <Download className="size-4" />
           </Button>
         ),
+        header: 'Download',
+        id: 'Download',
       },
       {
-        id: 'Credits',
-        header: 'Credits',
         accessorKey: 'credits_used',
+        header: 'Credits',
+        id: 'Credits',
       },
     ];
 
@@ -196,18 +196,16 @@ export function useColumns({
       return [
         ...baseColumns,
         {
-          id: 'actions',
-          header: 'Actions',
           cell: ({ row }) => <ActionsCell file={row.original} />,
+          header: 'Actions',
+          id: 'actions',
         },
       ];
     }
 
     const apiColumns: ColumnDef<AudioFileAndVoicesRes>[] = [
       {
-        id: 'api source',
         accessorFn: (row) => getUsageData(row.usage)?.sourceType ?? null,
-        header: 'API Source',
         cell: ({ row }) => {
           const usage = getUsageData(row.original.usage);
           const sourceType = usage?.sourceType;
@@ -216,11 +214,11 @@ export function useColumns({
           }
           return <Badge variant="secondary">TTS</Badge>;
         },
+        header: 'API Source',
+        id: 'api source',
       },
       {
-        id: 'api key',
         accessorFn: (row) => getUsageData(row.usage)?.apiKeyId ?? null,
-        header: 'API Key',
         cell: ({ row }) => {
           const usage = getUsageData(row.original.usage);
           const apiKeyId = usage?.apiKeyId;
@@ -234,6 +232,8 @@ export function useColumns({
             </code>
           );
         },
+        header: 'API Key',
+        id: 'api key',
       },
     ];
 
@@ -241,9 +241,9 @@ export function useColumns({
       ...baseColumns,
       ...apiColumns,
       {
-        id: 'actions',
-        header: 'Actions',
         cell: ({ row }) => <ActionsCell file={row.original} />,
+        header: 'Actions',
+        id: 'actions',
       },
     ];
   }, [showApiColumns, t]);

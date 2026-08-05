@@ -31,6 +31,7 @@ function getFormatArgs(outputFormat: JoinerOutputFormat, outputName: string) {
   const joinedWavName = 'joined.wav';
 
   const args: Record<JoinerOutputFormat, string[]> = {
+    m4a: ['-i', joinedWavName, '-codec:a', 'aac', '-b:a', '192k', outputName],
     mp3: [
       '-i',
       joinedWavName,
@@ -41,7 +42,6 @@ function getFormatArgs(outputFormat: JoinerOutputFormat, outputName: string) {
       outputName,
     ],
     wav: ['-i', joinedWavName, '-codec:a', 'pcm_s16le', outputName],
-    m4a: ['-i', joinedWavName, '-codec:a', 'aac', '-b:a', '192k', outputName],
   };
 
   return args[outputFormat];
@@ -49,9 +49,9 @@ function getFormatArgs(outputFormat: JoinerOutputFormat, outputName: string) {
 
 function getMimeType(outputFormat: JoinerOutputFormat) {
   const mimeTypes: Record<JoinerOutputFormat, string> = {
+    m4a: 'audio/mp4',
     mp3: 'audio/mpeg',
     wav: 'audio/wav',
-    m4a: 'audio/mp4',
   };
 
   return mimeTypes[outputFormat];
@@ -61,7 +61,7 @@ async function cleanupTempFiles(ffmpeg: FFmpeg, tempFiles: string[]) {
   for (const fileName of tempFiles) {
     try {
       await ffmpeg.deleteFile(fileName);
-    } catch (_err) {
+    } catch {
       // best-effort cleanup for temp files
     }
   }
@@ -246,11 +246,11 @@ export function useFFmpegJoiner() {
       ffmpeg.on('progress', onProgress);
 
       await trimSegmentsToWav({
+        cancelRequestedRef,
         ffmpeg,
         segments,
-        tempFiles,
-        cancelRequestedRef,
         setProgress,
+        tempFiles,
       });
 
       const concatListName = await concatSegments(ffmpeg, segments);
@@ -262,7 +262,7 @@ export function useFFmpegJoiner() {
       return outputBlob;
     } catch (err) {
       if (cancelRequestedRef.current) {
-        throw new Error(CANCELLED_ERROR);
+        throw new Error(CANCELLED_ERROR, { cause: err });
       }
 
       const message = err instanceof Error ? err.message : 'Join failed';
@@ -275,12 +275,12 @@ export function useFFmpegJoiner() {
   };
 
   return {
-    ensureLoaded,
-    join,
     cancel,
+    ensureLoaded,
+    error,
     isLoading,
     isProcessing,
+    join,
     progress,
-    error,
   };
 }

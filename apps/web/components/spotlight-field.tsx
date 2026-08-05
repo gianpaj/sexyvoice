@@ -92,7 +92,7 @@ export function SpotlightField({ children }: SpotlightFieldProps) {
       onPointerEnter={handleMouseEnter}
       onPointerLeave={() => setIsHovered(false)}
       onPointerMoveCapture={handleMouseMove}
-      transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+      transition={{ damping: 28, stiffness: 260, type: 'spring' }}
     >
       {!shouldReduceMotion && (
         <motion.div

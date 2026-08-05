@@ -1,7 +1,7 @@
 // https://github.com/Andarist/react-textarea-autosize/blob/ed1894cd8611d99fbea1c47adcf6ee522b1030fd/src/calculateNodeHeight.ts
 
-import forceHiddenStyles from './forceHiddenStyles';
-import type { SizingData } from './getSizingData';
+import forceHiddenStyles from './force-hidden-styles';
+import type { SizingData } from './get-sizing-data';
 
 // TODO: use labeled tuples once they are available:
 //   export type CalculatedNodeHeights = [height: number, rowHeight: number];

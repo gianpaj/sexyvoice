@@ -92,54 +92,54 @@ export default async function LandingPage(props: {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
         '@id': 'https://sexyvoice.ai/#organization',
-        name: 'SexyVoice.ai',
-        url: 'https://sexyvoice.ai',
+        '@type': 'Organization',
         logo: 'https://sexyvoice.ai/icon-192x192.png',
+        name: 'SexyVoice.ai',
         sameAs: [
           'https://x.com/sexyvoiceai',
           'https://instagram.com/sexyvoice_ai',
         ],
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebSite',
         '@id': 'https://sexyvoice.ai/#website',
-        url: 'https://sexyvoice.ai',
-        name: 'SexyVoice.ai',
+        '@type': 'WebSite',
         description: messages.pages.description,
+        inLanguage: lang,
+        name: 'SexyVoice.ai',
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
-        inLanguage: lang,
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
-        url: siteUrl,
-        name: messages.pages.defaultTitle,
-        description: messages.pages.description,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
+        '@type': 'WebPage',
         about: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+        description: messages.pages.description,
         inLanguage: lang,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        name: messages.pages.defaultTitle,
+        url: siteUrl,
       },
       {
-        '@type': 'FAQPage',
         '@id': `${siteUrl}/#faq`,
+        '@type': 'FAQPage',
         isPartOf: {
           '@id': `${siteUrl}/#webpage`,
         },
         mainEntity: faqQuestions.map((q) => ({
           '@type': 'Question' as const,
-          name: q.question,
           acceptedAnswer: {
             '@type': 'Answer' as const,
             text: q.answer,
           },
+          name: q.question,
         })),
       },
     ],
@@ -362,7 +362,7 @@ export default async function LandingPage(props: {
                           loading="lazy"
                           priority={false}
                           src={post.image}
-                          style={{ width: '100%', height: 'auto' }}
+                          style={{ height: 'auto', width: '100%' }}
                           width={300}
                         />
                       )}

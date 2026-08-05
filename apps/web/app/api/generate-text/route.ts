@@ -73,24 +73,24 @@ Rules:
 6. Return only the enhanced text with emotion tags, no explanations`;
 
     const result = streamText({
-      model,
-      system,
-      prompt,
-      // temperature: 0.7,
-      maxOutputTokens: 500,
       experimental_telemetry: {
         isEnabled: true,
         recordInputs: true,
         recordOutputs: true,
       },
+      // temperature: 0.7,
+      maxOutputTokens: 500,
+      model,
+      prompt,
       providerOptions: {
         google: {
           thinkingConfig: {
-            thinkingLevel: 'low',
             includeThoughts: false,
+            thinkingLevel: 'low',
           },
         } satisfies GoogleLanguageModelOptions,
       },
+      system,
     });
 
     return result.toTextStreamResponse();
@@ -98,8 +98,8 @@ Rules:
     console.error('Text generation error:', error);
 
     Sentry.captureException(error, {
-      user: { id: user?.id, email: user?.email },
       extra: { prompt },
+      user: { email: user?.email, id: user?.id },
     });
 
     if (Error.isError(error)) {

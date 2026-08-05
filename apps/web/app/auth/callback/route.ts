@@ -27,19 +27,19 @@ const getLocaleFromRedirectPath = (redirectPath: string | null) => {
 const getOauthCodeFingerprint = (code: string | null) => {
   if (!code) {
     return {
-      hasCode: false,
-      codeLength: 0,
       codeFingerprint: null,
+      codeLength: 0,
+      hasCode: false,
     };
   }
 
   return {
-    hasCode: true,
-    codeLength: code.length,
     codeFingerprint: createHash('sha256')
       .update(code)
       .digest('hex')
       .slice(0, 12),
+    codeLength: code.length,
+    hasCode: true,
   };
 };
 
@@ -157,33 +157,33 @@ const getOauthCallbackCookieContext = (request: Request) => {
   );
 
   return {
-    hasCookieHeader: Boolean(cookieHeader),
     cookieCount: cookieNames.length,
-    supabaseCookieCount: supabaseCookieNames.length,
+    hasCookieHeader: Boolean(cookieHeader),
+    hasOauthCallbackMarkerCookie: cookieNames.includes(
+      OAUTH_CALLBACK_COOKIE_NAME,
+    ),
     hasSupabaseAuthCookie: supabaseCookieNames.some((name) =>
       name.includes('auth-token'),
     ),
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
       name.includes('code-verifier'),
     ),
-    hasOauthCallbackMarkerCookie: cookieNames.includes(
-      OAUTH_CALLBACK_COOKIE_NAME,
-    ),
     hasValidOauthCallbackMarkerCookie: verifyOauthCallbackMarkerValue(
       oauthCallbackMarkerCookie?.value,
     ),
+    supabaseCookieCount: supabaseCookieNames.length,
   };
 };
 
 const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
   response.cookies.set({
-    name: OAUTH_CALLBACK_COOKIE_NAME,
-    value: '',
     httpOnly: true,
     maxAge: 0,
+    name: OAUTH_CALLBACK_COOKIE_NAME,
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
+    value: '',
   });
 
   return response;
@@ -195,13 +195,13 @@ const createOauthRedirectResponse = (url: string) => {
 
   if (markerValue) {
     response.cookies.set({
-      name: OAUTH_CALLBACK_COOKIE_NAME,
-      value: markerValue,
       httpOnly: true,
       maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+      name: OAUTH_CALLBACK_COOKIE_NAME,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
+      value: markerValue,
     });
   }
 
@@ -238,16 +238,16 @@ export async function GET(request: Request) {
       console.warn(message, {
         area: 'auth',
         errorType,
-        flow: 'oauth-callback',
         extra: {
-          redirectTo,
           locale,
+          redirectTo,
           ...oauthCodeContext,
           ...oauthCookieContext,
           errorCode: getErrorStringProperty(error, 'code') || null,
           errorMessage: getErrorMessage(error),
           errorName: getErrorStringProperty(error, 'name') || null,
         },
+        flow: 'oauth-callback',
       });
     }
 
@@ -290,15 +290,15 @@ export async function GET(request: Request) {
       }
 
       captureException(exchangeError, {
+        extra: {
+          locale,
+          redirectTo,
+          ...oauthCodeContext,
+          ...oauthCookieContext,
+        },
         tags: {
           area: 'auth',
           flow: 'oauth-callback',
-        },
-        extra: {
-          redirectTo,
-          locale,
-          ...oauthCodeContext,
-          ...oauthCookieContext,
         },
       });
 
@@ -308,15 +308,15 @@ export async function GET(request: Request) {
     const email = user?.email;
     if (!email) {
       captureMessage('OAuth callback completed without a user email.', {
+        extra: {
+          locale,
+          redirectTo,
+          userId: user?.id ?? null,
+        },
         level: 'error',
         tags: {
           area: 'auth',
           flow: 'oauth-callback',
-        },
-        extra: {
-          redirectTo,
-          locale,
-          userId: user?.id ?? null,
         },
       });
 
@@ -330,7 +330,7 @@ export async function GET(request: Request) {
         console.error('Failed to create Stripe customer.');
         captureMessage('Failed to create Stripe customer.', {
           level: 'error',
-          user: { id: user.id, email: user.email },
+          user: { email: user.email, id: user.id },
         });
       }
 
@@ -369,15 +369,15 @@ export async function GET(request: Request) {
     }
 
     captureException(error, {
+      extra: {
+        locale,
+        redirectTo,
+        ...oauthCodeContext,
+        ...oauthCookieContext,
+      },
       tags: {
         area: 'auth',
         flow: 'oauth-callback',
-      },
-      extra: {
-        redirectTo,
-        locale,
-        ...oauthCodeContext,
-        ...oauthCookieContext,
       },
     });
 

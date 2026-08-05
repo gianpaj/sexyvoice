@@ -14,7 +14,7 @@ export interface InstructionsEditorProps {
 export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
-  const { pgState, dispatch } = usePlaygroundState();
+  const { dispatch } = usePlaygroundState();
   const t = useTranslations('call');
   const [inputValue, setInputValue] = useState(instructions || '');
 
@@ -23,7 +23,7 @@ export function InstructionsEditor({ instructions }: InstructionsEditorProps) {
     setInputValue(newValue);
 
     // Dispatch immediately so the connect button reacts without waiting for blur
-    dispatch({ type: 'SET_INSTRUCTIONS', payload: newValue });
+    dispatch({ payload: newValue, type: 'SET_INSTRUCTIONS' });
   };
 
   useEffect(() => {

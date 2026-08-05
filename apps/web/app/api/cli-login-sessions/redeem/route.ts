@@ -84,8 +84,8 @@ export async function POST(request: Request) {
   const { data: updated, error: updateError } = await admin
     .from('cli_login_sessions')
     .update({
-      redeemed_at: new Date().toISOString(),
       encrypted_api_key: null,
+      redeemed_at: new Date().toISOString(),
     })
     .eq('id', session.id)
     .is('redeemed_at', null)
@@ -114,6 +114,6 @@ export async function POST(request: Request) {
       api_key_id: session.new_api_key_id,
       key: apiKey,
     },
-    { status: 200, headers },
+    { headers, status: 200 },
   );
 }

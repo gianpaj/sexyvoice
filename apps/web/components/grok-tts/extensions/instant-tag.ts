@@ -21,13 +21,13 @@ export const InstantTag = Node.create({
     };
   },
 
+  atom: true,
+
   group: 'inline',
 
   inline: true,
 
   marks: '_',
-
-  atom: true,
 
   name: 'instantTag',
 
@@ -43,9 +43,9 @@ export const InstantTag = Node.create({
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
-        'data-grok-instant-tag': '',
         class: GROK_TAG_CHIP_CLASS,
         contenteditable: 'false',
+        'data-grok-instant-tag': '',
       }),
       HTMLAttributes.tag,
     ];

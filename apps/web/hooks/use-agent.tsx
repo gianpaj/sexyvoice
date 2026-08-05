@@ -66,7 +66,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
       setRawSegments((prev) => {
         const newSegments = { ...prev };
         for (const segment of segments) {
-          newSegments[segment.id] = { segment, participant, publication };
+          newSegments[segment.id] = { participant, publication, segment };
         }
         return newSegments;
       });
@@ -167,8 +167,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
         setGeneratedImages((prev) => [
           ...prev,
           {
-            prompt,
             imageUrl,
+            prompt,
             timestamp,
           },
         ]);
@@ -213,9 +213,9 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
           ...current,
           segment: {
             ...current.segment,
-            text: `${last.segment.text} ${current.segment.text}`,
-            id: current.segment.id, // Use the id of the latest segment
             firstReceivedTime: last.segment.firstReceivedTime, // Keep the original start time
+            id: current.segment.id, // Use the id of the latest segment
+            text: `${last.segment.text} ${current.segment.text}`,
           },
         };
         return acc;
@@ -236,7 +236,7 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AgentContext.Provider
-      value={{ displayTranscriptions, agent, generatedImages }}
+      value={{ agent, displayTranscriptions, generatedImages }}
     >
       {children}
     </AgentContext.Provider>

@@ -69,11 +69,11 @@ export function AudioPreviewCard({
         >
           <AnimatePresence initial={false} mode="popLayout">
             <motion.span
-              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
-              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
+              exit={{ filter: 'blur(4px)', opacity: 0, scale: 0.25 }}
+              initial={{ filter: 'blur(4px)', opacity: 0, scale: 0.25 }}
               key={isPlaying ? 'pause' : 'play'}
-              transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
+              transition={{ bounce: 0, duration: 0.3, type: 'spring' }}
             >
               {isPlaying ? (
                 <Pause className="size-4" />

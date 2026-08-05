@@ -56,8 +56,8 @@ export function generateApiKey(): {
 } {
   const key = `${API_KEY_PREFIX}${createRandomAlphaNumeric(API_KEY_RANDOM_LENGTH)}`;
   return {
-    key,
     hash: hashApiKey(key),
+    key,
     prefix: key.slice(0, API_KEY_PREFIX_LENGTH),
   };
 }
@@ -95,9 +95,9 @@ export async function validateApiKey(authHeader: string): Promise<{
   }
 
   return {
-    userId: data.user_id,
     apiKeyId: data.id,
     keyHash,
+    userId: data.user_id,
   };
 }
 

@@ -56,7 +56,9 @@ describe('call-token API validation', () => {
 
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
-      expect(result.data?.sessionConfig.model).toBe('grok-voice-think-fast-2.0');
+      expect(result.data?.sessionConfig.model).toBe(
+        'grok-voice-think-fast-2.0',
+      );
     });
 
     it('falls back to the default for an unknown model id', () => {
@@ -73,7 +75,9 @@ describe('call-token API validation', () => {
 
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
-      expect(result.data?.sessionConfig.model).toBe('grok-voice-think-fast-2.0');
+      expect(result.data?.sessionConfig.model).toBe(
+        'grok-voice-think-fast-2.0',
+      );
     });
 
     it('should accept a payload with selectedPresetId (UUID)', () => {

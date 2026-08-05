@@ -11,7 +11,6 @@ export function resolveExternalModelId(
   if (mapped && Object.hasOwn(EXTERNAL_API_MODELS, mapped)) {
     return mapped as ExternalApiModelId;
   }
-  return;
 }
 
 export function isModelCompatibleWithVoice(
@@ -37,8 +36,8 @@ export function isFormatSupported(
 export function getModelCatalogResponse() {
   return Object.values(EXTERNAL_API_MODELS).map((model) => ({
     id: model.id,
-    name: model.name,
     max_input_length: model.maxInputLength,
+    name: model.name,
     supported_formats: [...model.supportedFormats],
   }));
 }

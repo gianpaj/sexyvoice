@@ -210,13 +210,13 @@ function NewVoiceClientInner({
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
     if (usesVoxtral) {
-      dispatch({ type: 'patch', patch: { ffmpegError: null } });
+      dispatch({ patch: { ffmpegError: null }, type: 'patch' });
       ensureLoaded().catch((error) => {
         const errorMsg =
           error instanceof Error
             ? error.message
             : t('failedToLoadAudioProcessor');
-        dispatch({ type: 'patch', patch: { ffmpegError: errorMsg } });
+        dispatch({ patch: { ffmpegError: errorMsg }, type: 'patch' });
         console.error('FFmpeg preload error:', error);
       });
     }
@@ -224,7 +224,7 @@ function NewVoiceClientInner({
 
   const handleStartRecording = async () => {
     try {
-      dispatch({ type: 'patch', patch: { ffmpegError: null } });
+      dispatch({ patch: { ffmpegError: null }, type: 'patch' });
       // Preload FFmpeg before recording if needed for this locale
       if (usesVoxtral) {
         await ensureLoaded();
@@ -236,13 +236,13 @@ function NewVoiceClientInner({
           ? error.message
           : t('failedToLoadAudioProcessor');
       dispatch({
-        type: 'patch',
         patch: {
-          ffmpegError: errorMsg,
           errorMessage: formatCloneMessage(t('failedToStartRecording'), {
             ERROR: errorMsg,
           }),
+          ffmpegError: errorMsg,
         },
+        type: 'patch',
       });
     }
   };
@@ -258,29 +258,29 @@ function NewVoiceClientInner({
     getMediaStream,
   } = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
-    onStop: (blob) => {
-      // Store the raw blob - conversion will happen at generation time based on the locale
-      dispatch({ type: 'patch', patch: { micBlob: blob } });
-    },
     onError: (err) => {
       console.error(err);
       dispatch({
-        type: 'patch',
         patch: {
           ffmpegError:
             err instanceof Error ? err.message : t('microphoneError'),
         },
+        type: 'patch',
       });
     },
     onStart: () => {
       dispatch({
-        type: 'patch',
         patch: {
-          micRecording: true,
-          micBlob: null,
           ffmpegError: null,
+          micBlob: null,
+          micRecording: true,
         },
+        type: 'patch',
       });
+    },
+    onStop: (blob) => {
+      // Store the raw blob - conversion will happen at generation time based on the locale
+      dispatch({ patch: { micBlob: blob }, type: 'patch' });
     },
   });
 
@@ -289,29 +289,29 @@ function NewVoiceClientInner({
     const translated = getTranslatedLanguages(lang, codes);
     const merged = translated.map(({ value: code, label }) => ({
       code,
-      value: SUPPORTED_LOCALE_CODES[code] || code,
       name: label,
+      value: SUPPORTED_LOCALE_CODES[code] || code,
     }));
     return sortByPageLocale(merged, lang);
   })();
 
   const onFilesAdded = useCallback(() => {
     dispatch({
-      type: 'patch',
       patch: {
-        status: 'idle',
         errorMessage: '',
+        status: 'idle',
       },
+      type: 'patch',
     });
   }, []);
 
   const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
 
   const [fileState, fileActions] = useFileUpload({
-    onFilesAdded,
-    maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
+    maxSize: CLONING_FILE_MAX_SIZE,
     multiple: false,
+    onFilesAdded,
   });
   const { files, errors } = fileState;
   const { clearErrors } = fileActions;
@@ -321,32 +321,31 @@ function NewVoiceClientInner({
   // Clear custom error message when file upload errors change
   useEffect(() => {
     if (errors.length > 0) {
-      dispatch({ type: 'patch', patch: { errorMessage: '' } });
+      dispatch({ patch: { errorMessage: '' }, type: 'patch' });
     }
   }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
   const handleGenerate = async () => {
     if (!(file || micBlob)) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.noAudioFile'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
 
     if (!text.trim()) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.noText'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
@@ -354,11 +353,11 @@ function NewVoiceClientInner({
     // Clear both custom errors and file upload errors
     clearErrors();
     dispatch({
-      type: 'patch',
       patch: {
         errorMessage: '',
         status: 'generating',
       },
+      type: 'patch',
     });
 
     let voiceRes: Response | undefined;
@@ -371,8 +370,8 @@ function NewVoiceClientInner({
 
         if (shouldConvertMicAudio) {
           dispatch({
-            type: 'patch',
             patch: { convertingMicAudio: true },
+            type: 'patch',
           });
         }
 
@@ -389,7 +388,6 @@ function NewVoiceClientInner({
           console.error('WebM to WAV conversion error:', convertError);
           // TODO send logs to Sentry
           dispatch({
-            type: 'patch',
             patch: {
               errorMessage:
                 convertError instanceof Error
@@ -399,13 +397,14 @@ function NewVoiceClientInner({
                   : t('audioConversionFailed'),
               status: 'error',
             },
+            type: 'patch',
           });
           return;
         } finally {
           if (shouldConvertMicAudio) {
             dispatch({
-              type: 'patch',
               patch: { convertingMicAudio: false },
+              type: 'patch',
             });
           }
         }
@@ -413,11 +412,11 @@ function NewVoiceClientInner({
 
       if (!audioToProcess) {
         dispatch({
-          type: 'patch',
           patch: {
             errorMessage: t('errors.noAudioFile'),
             status: 'error',
           },
+          type: 'patch',
         });
         return;
       }
@@ -433,8 +432,8 @@ function NewVoiceClientInner({
       );
 
       voiceRes = await fetch('/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
         signal: abortController.current.signal,
       });
 
@@ -464,11 +463,11 @@ function NewVoiceClientInner({
         }
 
         dispatch({
-          type: 'patch',
           patch: {
             errorMessage,
             status: 'error',
           },
+          type: 'patch',
         });
         return;
       }
@@ -478,12 +477,12 @@ function NewVoiceClientInner({
       toast.success(t('success'));
 
       dispatch({
-        type: 'patch',
         patch: {
           activeTab: 'preview',
           generatedAudioUrl: voiceResult.url,
           status: 'complete',
         },
+        type: 'patch',
       });
     } catch (err) {
       if (
@@ -499,18 +498,18 @@ function NewVoiceClientInner({
         errorMsg = err.message;
       }
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: errorMsg || t('unexpectedError'),
           status: 'error',
         },
+        type: 'patch',
       });
     }
   };
 
   const handleCancel = useCallback(() => {
     abortController.current?.abort();
-    dispatch({ type: 'patch', patch: { status: 'idle' } });
+    dispatch({ patch: { status: 'idle' }, type: 'patch' });
   }, []);
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
@@ -552,11 +551,11 @@ function NewVoiceClientInner({
 
   const onSelectSample = (sample: SampleAudio) => {
     dispatch({
-      type: 'patch',
       patch: {
         selectedLocale: { code: 'en', value: 'english' },
         text: sample.prompt,
       },
+      type: 'patch',
     });
   };
 
@@ -575,12 +574,12 @@ function NewVoiceClientInner({
     clearMediaStream();
     clearMediaBlob();
     dispatch({
-      type: 'patch',
       patch: {
         ffmpegError: null,
         micBlob: null,
         micRecording: false,
       },
+      type: 'patch',
     });
   };
 
@@ -593,10 +592,10 @@ function NewVoiceClientInner({
           className="w-full"
           onValueChange={(nextTab) => {
             dispatch({
-              type: 'patch',
               patch: {
                 activeTab: nextTab === 'preview' ? 'preview' : 'upload',
               },
+              type: 'patch',
             });
           }}
           value={activeTab}

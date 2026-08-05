@@ -37,12 +37,15 @@ vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/clone-sample-card', () => ({
 
 // Stubbed so the locale ordering computed by new.client.tsx can be asserted on
 // directly, without opening a Radix Select in jsdom.
-vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/clone-language-select', () => ({
-  CloneLanguageSelect: (props: { supportedLocales: { code: string }[] }) => {
-    mockLanguageSelect(props);
-    return <div data-testid="clone-language-select" />;
-  },
-}));
+vi.mock(
+  '@/app/[lang]/(dashboard)/dashboard/clone/clone-language-select',
+  () => ({
+    CloneLanguageSelect: (props: { supportedLocales: { code: string }[] }) => {
+      mockLanguageSelect(props);
+      return <div data-testid="clone-language-select" />;
+    },
+  }),
+);
 
 vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({

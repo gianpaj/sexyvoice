@@ -181,8 +181,6 @@ export function useMenuNavigation<T>({
         );
       };
     }
-
-    return;
   }, [
     editor,
     containerRef,

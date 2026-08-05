@@ -44,7 +44,7 @@ async function validateRequestBody(
       };
     }
 
-    return { ok: true, data: { text, voiceId, styleVariant } };
+    return { data: { styleVariant, text, voiceId }, ok: true };
   } catch (error) {
     if (error instanceof SyntaxError) {
       return {
@@ -68,7 +68,7 @@ async function validateUser(): Promise<ValidationResult<{ id: string }>> {
     };
   }
 
-  return { ok: true, data: user };
+  return { data: user, ok: true };
 }
 
 async function validateVoice(
@@ -95,7 +95,7 @@ async function validateVoice(
     };
   }
 
-  return { ok: true, data: voiceObj };
+  return { data: voiceObj, ok: true };
 }
 
 function validateTextLength(
@@ -115,7 +115,7 @@ function validateTextLength(
     };
   }
 
-  return { ok: true, data: null };
+  return { data: null, ok: true };
 }
 
 function validateApiKey(): ValidationResult<string> {
@@ -128,7 +128,7 @@ function validateApiKey(): ValidationResult<string> {
     };
   }
 
-  return { ok: true, data: apiKey };
+  return { data: apiKey, ok: true };
 }
 
 export async function POST(request: Request) {
@@ -174,7 +174,7 @@ export async function POST(request: Request) {
     // Build the exact same prompt and target the same model the generation
     // route will use, so the token count reflects the real request. The model
     // and prompt format differ by voice (gpro31 vs gpro) and by user tier.
-    const finalText = buildGeminiTtsPrompt({ model, text, styleVariant });
+    const finalText = buildGeminiTtsPrompt({ model, styleVariant, text });
     const estimateModel = resolveGeminiTtsModel({
       model,
       userHasPaid: isPaidUser,
@@ -182,8 +182,8 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
 
     const tokenResponse = await ai.models.countTokens({
-      model: estimateModel,
       contents: [{ parts: [{ text: finalText }], role: 'user' }],
+      model: estimateModel,
     });
 
     const inputTokens = tokenResponse.totalTokens ?? 0;
@@ -216,8 +216,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      tokens: totalEstimatedTokens,
       estimatedCredits: credits,
+      tokens: totalEstimatedTokens,
     });
   } catch (error) {
     console.error('Estimate credits error:', error);

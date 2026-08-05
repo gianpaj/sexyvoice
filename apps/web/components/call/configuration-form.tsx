@@ -60,9 +60,9 @@ export function ConfigurationForm({
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
   const form = useForm<z.infer<typeof ConfigurationFormSchema>>({
-    resolver: zodResolver(ConfigurationFormSchema),
     defaultValues: { ...defaultSessionConfig },
     mode: 'onChange',
+    resolver: zodResolver(ConfigurationFormSchema),
   });
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const formValues = form.watch();
@@ -89,10 +89,10 @@ export function ConfigurationForm({
     const fullInstructions = helpers.getFullInstructions(pgState);
     const attributes: { [key: string]: string | number | boolean } = {
       instructions: fullInstructions,
-      model: values.model,
-      voice: values.voice,
-      temperature: values.temperature,
       max_output_tokens: values.maxOutputTokens || '',
+      model: values.model,
+      temperature: values.temperature,
+      voice: values.voice,
     };
     if (!agent?.identity) {
       return;
@@ -195,7 +195,7 @@ export function ConfigurationForm({
 
     // Set a new timeout to perform the update after 500ms of inactivity
     debounceTimeoutRef.current = setTimeout(() => {
-      updateConfig();
+      updateConfig().catch(() => undefined);
     }, 500); // Adjust delay as needed
   }, [updateConfig]);
 
@@ -211,8 +211,8 @@ export function ConfigurationForm({
   useEffect(() => {
     if (form.formState.isValid && form.formState.isDirty) {
       dispatch({
-        type: 'SET_SESSION_CONFIG',
         payload: formValues,
+        type: 'SET_SESSION_CONFIG',
       });
     }
   }, [formValues, dispatch, form]);
@@ -239,7 +239,7 @@ export function ConfigurationForm({
   // };
 
   const handleLanguageChange = (value: string) => {
-    dispatch({ type: 'SET_LANGUAGE', payload: value as CallLanguage });
+    dispatch({ payload: value as CallLanguage, type: 'SET_LANGUAGE' });
   };
   const displayLanguage = true;
 

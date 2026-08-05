@@ -3,12 +3,11 @@
 @import "fumadocs-ui/css/preset.css";
 @import "fumadocs-openapi/css/preset.css";
 
-
 html {
   scrollbar-gutter: stable;
 }
 
-html>body[data-scroll-locked] {
+html > body[data-scroll-locked] {
   --removed-body-scroll-bar-size: 0px !important;
   margin-right: 0px !important;
 }

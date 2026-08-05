@@ -42,7 +42,7 @@ export const ConnectionProvider = ({
     token: string;
     shouldConnect: boolean;
     voice: string;
-  }>({ wsUrl: '', token: '', shouldConnect: false, voice: 'Ara' });
+  }>({ shouldConnect: false, token: '', voice: 'Ara', wsUrl: '' });
 
   const t = useTranslations('call');
   const queryClient = useQueryClient();
@@ -74,11 +74,11 @@ export const ConnectionProvider = ({
       voiceDirty && pendingVoiceName
         ? {
             ...selectedPreset,
-            voiceName: pendingVoiceName,
             sessionConfig: {
               ...selectedPreset.sessionConfig,
               voice: pendingVoiceName,
             },
+            voiceName: pendingVoiceName,
           }
         : selectedPreset;
 
@@ -94,7 +94,7 @@ export const ConnectionProvider = ({
       throw new Error(result.error);
     }
 
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
+    dispatch({ payload: result.preset, type: 'SAVE_CUSTOM_CHARACTER' });
   };
 
   const connect: ConnectFn = async (pendingVoiceName) => {
@@ -102,9 +102,9 @@ export const ConnectionProvider = ({
 
     const resolvedState = helpers.getStateWithFullInstructions(pgState);
     const response = await fetch('/api/call-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(resolvedState),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
 
     if (!response.ok) {
@@ -119,10 +119,10 @@ export const ConnectionProvider = ({
     const { accessToken, url } = await response.json();
 
     setConnectionDetails({
-      wsUrl: url,
-      token: accessToken,
       shouldConnect: true,
+      token: accessToken,
       voice: resolvedState.sessionConfig.voice,
+      wsUrl: url,
     });
   };
 
@@ -138,13 +138,13 @@ export const ConnectionProvider = ({
   return (
     <ConnectionContext.Provider
       value={{
-        wsUrl: connectionDetails.wsUrl,
-        token: connectionDetails.token,
-        shouldConnect: connectionDetails.shouldConnect,
-        voice: connectionDetails.voice,
-        pgState,
         connect,
         disconnect,
+        pgState,
+        shouldConnect: connectionDetails.shouldConnect,
+        token: connectionDetails.token,
+        voice: connectionDetails.voice,
+        wsUrl: connectionDetails.wsUrl,
       }}
     >
       {children}

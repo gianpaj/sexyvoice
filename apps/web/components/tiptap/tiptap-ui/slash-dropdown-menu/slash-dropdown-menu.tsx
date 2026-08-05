@@ -148,7 +148,7 @@ const List = ({
     items.forEach((item, index) => {
       const groupLabel = item.group || '';
       if (!groups[groupLabel]) {
-        groups[groupLabel] = { items: [], indices: [] };
+        groups[groupLabel] = { indices: [], items: [] };
       }
       groups[groupLabel].items.push(item);
       groups[groupLabel].indices.push(index);

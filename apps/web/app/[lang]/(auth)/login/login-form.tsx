@@ -59,10 +59,10 @@ export function LoginForm({ lang }: { lang: Locale }) {
 
     const callbackUrl = `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
       options: {
         redirectTo: callbackUrl,
       },
+      provider: 'google',
     });
 
     if (error) {

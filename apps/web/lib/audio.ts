@@ -11,9 +11,9 @@ function parseMimeType(mimeType: string): WavConversionOptions {
   const [_, format] = fileType.split('/');
 
   const options: WavConversionOptions = {
+    bitsPerSample: 16,
     numChannels: 1,
     sampleRate: 24_000,
-    bitsPerSample: 16,
   };
 
   if (format?.startsWith('L')) {

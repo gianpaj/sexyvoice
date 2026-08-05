@@ -32,13 +32,16 @@ const DEFAULT_XAI_TTS_CODEC: XaiTtsCodec = 'mp3';
 
 const XAI_LANGUAGE_MAP: Record<string, string> = {
   ar: 'ar-SA',
+  'ar-ae': 'ar-AE',
   'ar-eg': 'ar-EG',
   'ar-sa': 'ar-SA',
-  'ar-ae': 'ar-AE',
   bn: 'bn',
-  zh: 'zh',
-  fr: 'fr',
   de: 'de',
+  en: 'en',
+  es: 'es-ES',
+  'es-es': 'es-ES',
+  'es-mx': 'es-MX',
+  fr: 'fr',
   hi: 'hi',
   id: 'id',
   it: 'it',
@@ -48,12 +51,9 @@ const XAI_LANGUAGE_MAP: Record<string, string> = {
   'pt-br': 'pt-BR',
   'pt-pt': 'pt-PT',
   ru: 'ru',
-  es: 'es-ES',
-  'es-es': 'es-ES',
-  'es-mx': 'es-MX',
   tr: 'tr',
   vi: 'vi',
-  en: 'en',
+  zh: 'zh',
 };
 
 export function normalizeXaiTtsCodec(codec?: string): XaiTtsCodec {
@@ -123,20 +123,20 @@ export async function generateXaiTts({
   const normalizedSpeed = normalizeXaiTtsSpeed(speed);
 
   const response = await fetch(XAI_TTS_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({
-      text,
-      voice_id: voiceId,
       language: normalizedLanguage,
       output_format: {
         codec: normalizedCodec,
       },
+      text,
+      voice_id: voiceId,
       ...(normalizedSpeed === undefined ? {} : { speed: normalizedSpeed }),
     }),
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
     signal,
   });
 

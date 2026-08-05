@@ -165,8 +165,8 @@ export function PricingCards({
                   >
                     {creditsT('topup.cheaperBadge', {
                       percent: format.number(PRO_TOPUP_DISCOUNT_VS_STANDARD, {
-                        style: 'percent',
                         maximumFractionDigits: 1,
+                        style: 'percent',
                       }),
                     })}
                   </Badge>

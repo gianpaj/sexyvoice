@@ -39,24 +39,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = `https://sexyvoice.ai/${lang}/voice-cloning`;
 
   return {
-    title,
-    description,
-    other: {
-      preconnect: 'https://files.sexyvoice.ai',
-    },
-    openGraph: {
-      title: `${title} | SexyVoice.ai`,
-      description,
-      url,
-      siteName: 'SexyVoice.ai',
-      type: 'website',
-      locale: lang,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${title} | SexyVoice.ai`,
-      description,
-    },
     alternates: {
       canonical: url,
       languages: Object.fromEntries(
@@ -65,6 +47,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           `https://sexyvoice.ai/${locale}/voice-cloning`,
         ]),
       ),
+    },
+    description,
+    openGraph: {
+      description,
+      locale: lang,
+      siteName: 'SexyVoice.ai',
+      title: `${title} | SexyVoice.ai`,
+      type: 'website',
+      url,
+    },
+    other: {
+      preconnect: 'https://files.sexyvoice.ai',
+    },
+    title,
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      title: `${title} | SexyVoice.ai`,
     },
   };
 }
@@ -114,42 +114,42 @@ export default async function VoiceCloningPage(props: Props) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
         '@id': 'https://sexyvoice.ai/#organization',
-        name: 'SexyVoice.ai',
-        url: 'https://sexyvoice.ai',
+        '@type': 'Organization',
         logo: 'https://sexyvoice.ai/icon-192x192.png',
+        name: 'SexyVoice.ai',
         sameAs: [
           'https://x.com/sexyvoiceai',
           'https://instagram.com/sexyvoice_ai',
         ],
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebSite',
         '@id': 'https://sexyvoice.ai/#website',
-        url: 'https://sexyvoice.ai',
-        name: 'SexyVoice.ai',
+        '@type': 'WebSite',
         description: messages.pages.description,
+        inLanguage: lang,
+        name: 'SexyVoice.ai',
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
-        inLanguage: lang,
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
-        url: siteUrl,
-        name: messages.pages.titleVoiceCloning || heroTitle,
-        description:
-          messages.pages.descriptionVoiceCloning ||
-          dictLanding.voiceCloning.hero.subtitle,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
+        '@type': 'WebPage',
         about: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+        description:
+          messages.pages.descriptionVoiceCloning ||
+          dictLanding.voiceCloning.hero.subtitle,
         inLanguage: lang,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        name: messages.pages.titleVoiceCloning || heroTitle,
+        url: siteUrl,
       },
     ],
   };

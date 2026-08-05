@@ -96,26 +96,26 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
     await ffmpeg.writeFile(inputName, await fetchFile(file));
 
     const formatArgs: Record<AudioFormat, string[]> = {
-      mp3: ['-i', inputName, '-codec:a', 'libmp3lame', '-q:a', '2', outputName],
-      wav: ['-i', inputName, '-codec:a', 'pcm_s16le', outputName],
-      ogg: ['-i', inputName, '-codec:a', 'libvorbis', '-q:a', '4', outputName],
       aac: ['-i', inputName, '-codec:a', 'aac', '-b:a', '192k', outputName],
       flac: ['-i', inputName, '-codec:a', 'flac', outputName],
       m4a: ['-i', inputName, '-codec:a', 'aac', '-b:a', '192k', outputName],
+      mp3: ['-i', inputName, '-codec:a', 'libmp3lame', '-q:a', '2', outputName],
       mp4: ['-i', inputName, '-codec:a', 'aac', '-b:a', '192k', outputName],
+      ogg: ['-i', inputName, '-codec:a', 'libvorbis', '-q:a', '4', outputName],
+      wav: ['-i', inputName, '-codec:a', 'pcm_s16le', outputName],
     };
 
     await ffmpeg.exec(formatArgs[outputFormat]);
 
     const data = await ffmpeg.readFile(outputName);
     const mimeTypes: Record<AudioFormat, string> = {
-      mp3: 'audio/mpeg',
-      wav: 'audio/wav',
-      ogg: 'audio/ogg',
       aac: 'audio/aac',
       flac: 'audio/flac',
       m4a: 'audio/mp4',
+      mp3: 'audio/mpeg',
       mp4: 'audio/mp4',
+      ogg: 'audio/ogg',
+      wav: 'audio/wav',
     };
 
     await ffmpeg.deleteFile(inputName);
@@ -131,7 +131,7 @@ export function useFFmpeg(options?: UseFFmpegOptions) {
   return {
     convert,
     ensureLoaded,
-    isLoading,
     error,
+    isLoading,
   };
 }

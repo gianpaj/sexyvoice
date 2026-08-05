@@ -313,25 +313,25 @@ export default function useMediaRecorder({
   }, [mediaStreamConstraints, mediaRecorderOptions, recordScreen]);
 
   return {
-    error: errorCache,
-    status,
-    mediaBlob: mediaBlobCache,
-    mediaStream: mediaStream.current,
-    isAudioMuted: isAudioMutedCache,
-    stopRecording,
-    getMediaStream,
-    startRecording,
-    pauseRecording,
-    resumeRecording,
-    clearMediaStream,
     clearMediaBlob,
-    muteAudio: () => muteAudio(true),
-    unMuteAudio: () => muteAudio(false),
+    clearMediaStream,
+    error: errorCache,
+    getMediaStream,
+    isAudioMuted: isAudioMutedCache,
     get liveStream() {
       if (mediaStream.current) {
         return new MediaStream(mediaStream.current.getTracks());
       }
       return null;
     },
+    mediaBlob: mediaBlobCache,
+    mediaStream: mediaStream.current,
+    muteAudio: () => muteAudio(true),
+    pauseRecording,
+    resumeRecording,
+    startRecording,
+    status,
+    stopRecording,
+    unMuteAudio: () => muteAudio(false),
   };
 }

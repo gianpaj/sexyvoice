@@ -1,14 +1,14 @@
 const HIDDEN_TEXTAREA_STYLE = {
-  'min-height': '0',
-  'max-height': 'none',
+  display: 'block',
   height: '0',
-  visibility: 'hidden',
+  'max-height': 'none',
+  'min-height': '0',
   overflow: 'hidden',
   position: 'absolute',
-  'z-index': '-1000',
-  top: '0',
   right: '0',
-  display: 'block',
+  top: '0',
+  visibility: 'hidden',
+  'z-index': '-1000',
 } as const;
 
 const forceHiddenStyles = (node: HTMLElement) => {

@@ -149,7 +149,7 @@ export const config = {
     // Note: api/ is excluded above so next-intl never locale-redirects fetch calls
   ],
   missing: [
-    { type: 'header', key: 'next-router-prefetch' },
-    { type: 'header', key: 'purpose', value: 'prefetch' },
+    { key: 'next-router-prefetch', type: 'header' },
+    { key: 'purpose', type: 'header', value: 'prefetch' },
   ],
 };

@@ -40,19 +40,19 @@ function createVoice(
   overrides: Partial<Tables<'voices'>> = {},
 ): Tables<'voices'> {
   return {
+    created_at: null,
+    description: null,
+    feature: 'tts',
     id: 'voice-id',
-    name: 'tara',
     language: 'en',
     model:
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-    description: null,
-    type: null,
-    sort_order: 1,
-    feature: 'tts',
-    sample_url: null,
+    name: 'tara',
     sample_prompt: null,
+    sample_url: null,
+    sort_order: 1,
+    type: null,
     user_id: null,
-    created_at: null,
     ...overrides,
   } as Tables<'voices'>;
 }
@@ -67,8 +67,8 @@ describe('GenerateUI', () => {
   it('passes Gemini style state to both child components for Gemini voices', () => {
     const geminiVoice = createVoice({
       id: 'voice-gemini',
-      name: 'kore',
       model: 'gpro',
+      name: 'kore',
     });
 
     renderGenerateUI([geminiVoice]);
@@ -78,15 +78,15 @@ describe('GenerateUI', () => {
 
     expect(mockVoiceSelector).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: geminiVoice,
         selectedStyle: expect.anything(),
+        selectedVoice: geminiVoice,
       }),
     );
 
     expect(mockAudioGenerator).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: geminiVoice,
         selectedStyle: expect.anything(),
+        selectedVoice: geminiVoice,
       }),
     );
   });
@@ -94,23 +94,23 @@ describe('GenerateUI', () => {
   it('omits Gemini style and passes Grok codec only to audio generator for Grok voices', () => {
     const grokVoice = createVoice({
       id: 'voice-grok',
-      name: 'eve',
       model: 'grok',
+      name: 'eve',
     });
 
     renderGenerateUI([grokVoice]);
 
     expect(mockVoiceSelector).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: grokVoice,
         selectedStyle: undefined,
+        selectedVoice: grokVoice,
       }),
     );
 
     expect(mockAudioGenerator).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: grokVoice,
         selectedStyle: undefined,
+        selectedVoice: grokVoice,
       }),
     );
   });
@@ -118,24 +118,24 @@ describe('GenerateUI', () => {
   it('omits Gemini style and Grok codec for Replicate voices', () => {
     const replicateVoice = createVoice({
       id: 'voice-replicate',
-      name: 'tara',
       model:
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      name: 'tara',
     });
 
     renderGenerateUI([replicateVoice]);
 
     expect(mockVoiceSelector).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: replicateVoice,
         selectedStyle: undefined,
+        selectedVoice: replicateVoice,
       }),
     );
 
     expect(mockAudioGenerator).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: replicateVoice,
         selectedStyle: undefined,
+        selectedVoice: replicateVoice,
       }),
     );
   });
@@ -143,20 +143,20 @@ describe('GenerateUI', () => {
   it('uses the featured voice as the initial selected voice when present', () => {
     const firstVoice = createVoice({
       id: 'voice-first',
-      name: 'tara',
       model:
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      name: 'tara',
     });
     const featuredVoice = createVoice({
       id: 'voice-featured',
-      name: 'eve',
       model: 'grok',
+      name: 'eve',
       sort_order: 0,
     });
     const thirdVoice = createVoice({
       id: 'voice-third',
-      name: 'kore',
       model: 'gpro',
+      name: 'kore',
     });
 
     renderGenerateUI([firstVoice, featuredVoice, thirdVoice]);
@@ -177,14 +177,14 @@ describe('GenerateUI', () => {
   it('uses the first public voice as the initial selected voice when no featured voice is present', () => {
     const firstVoice = createVoice({
       id: 'voice-first',
-      name: 'tara',
       model:
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      name: 'tara',
     });
     const secondVoice = createVoice({
       id: 'voice-second',
-      name: 'kore',
       model: 'gpro',
+      name: 'kore',
     });
 
     renderGenerateUI([firstVoice, secondVoice]);
@@ -207,15 +207,15 @@ describe('GenerateUI', () => {
 
     expect(mockVoiceSelector).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: undefined,
         selectedStyle: undefined,
+        selectedVoice: undefined,
       }),
     );
 
     expect(mockAudioGenerator).toHaveBeenCalledWith(
       expect.objectContaining({
-        selectedVoice: undefined,
         selectedStyle: undefined,
+        selectedVoice: undefined,
       }),
     );
   });

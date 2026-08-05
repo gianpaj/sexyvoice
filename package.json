@@ -1,17 +1,7 @@
 {
-  "devDependencies": {
-    "@biomejs/biome": "catalog:",
-    "husky": "9.1.7",
-    "lint-staged": "17.2.0",
-    "turbo": "2.9.18",
-    "ultracite": "7.8.3"
-  },
-  "lint-staged": {
-    "*.{js,cjs,ts,tsx,json,jsonc,css,md,mdx}": [
-      "pnpm dlx ultracite fix"
-    ]
-  },
   "name": "sexyvoice",
+  "version": "2026.4.7",
+  "private": true,
   "scripts": {
     "analyze-call-sessions": "pnpm --filter @sexyvoice/scripts analyze-call-sessions",
     "analyze-free-users": "pnpm --filter @sexyvoice/scripts analyze-free-users",
@@ -19,34 +9,44 @@
     "backfill-free-call": "pnpm --filter @sexyvoice/scripts backfill-free-call",
     "build": "turbo run build",
     "build:content": "turbo run build:content --filter=@sexyvoice/web",
+    "check": "ultracite check",
     "check-translations": "turbo run check-translations --filter=@sexyvoice/web",
     "clean": "turbo run clean",
+    "compile-dispute-evidence": "pnpm --filter @sexyvoice/scripts compile-dispute-evidence",
     "dev": "turbo run dev --filter=@sexyvoice/web",
+    "fix": "ultracite fix",
     "fixall": "turbo run fixall",
     "format": "turbo run format",
     "generate-gemini-speech-samples": "pnpm --filter @sexyvoice/scripts generate-gemini-speech-samples",
-    "generate-xai-speech-samples": "pnpm --filter @sexyvoice/scripts generate-xai-speech-samples",
     "generate-supabase-types": "pnpm --filter @sexyvoice/web generate-supabase-types",
     "generate-supabase-types:local": "pnpm --filter @sexyvoice/web generate-supabase-types:local",
+    "generate-xai-speech-samples": "pnpm --filter @sexyvoice/scripts generate-xai-speech-samples",
     "lint": "turbo run lint",
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "compile-dispute-evidence": "pnpm --filter @sexyvoice/scripts compile-dispute-evidence",
     "refund-credits": "pnpm --filter @sexyvoice/scripts refund-credits",
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
     "test": "turbo run test",
-    "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
-    "type-check": "turbo run type-check",
-    "check": "ultracite check",
-    "fix": "ultracite fix"
+    "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
+    "type-check": "turbo run type-check"
   },
-  "version": "2026.4.7",
+  "lint-staged": {
+    "*.{js,cjs,ts,tsx,json,jsonc,css,md,mdx}": [
+      "pnpm exec ultracite fix"
+    ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "husky": "9.1.7",
+    "lint-staged": "17.2.0",
+    "turbo": "2.9.18",
+    "ultracite": "7.10.0"
+  },
+  "packageManager": "pnpm@11.16.0",
   "engines": {
     "node": "24.x"
-  },
-  "packageManager": "pnpm@10.20.0",
-  "private": true
+  }
 }

@@ -193,8 +193,8 @@ export function PresetSelector({
     if (isConnected) return;
 
     dispatch({
-      type: 'SET_SELECTED_PRESET_ID',
       payload: presetId,
+      type: 'SET_SELECTED_PRESET_ID',
     });
 
     // Update URL with preset
@@ -216,16 +216,16 @@ export function PresetSelector({
 
   const handleCreateCharacter = async (payload: NewCharacterPayload) => {
     const response = await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: payload.name,
         localizedDescriptions: { [pgState.language]: payload.description },
-        prompt: payload.prompt,
         localizedPrompts: {},
+        name: payload.name,
+        prompt: payload.prompt,
         sessionConfig: { ...defaultSessionConfig, ...pgState.sessionConfig },
         voiceName: payload.voiceName,
       }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
 
     const result = await response.json();
@@ -235,8 +235,8 @@ export function PresetSelector({
     }
 
     const newPreset = mapApiCharacterToPreset(result);
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: newPreset });
-    dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: newPreset.id });
+    dispatch({ payload: newPreset, type: 'SAVE_CUSTOM_CHARACTER' });
+    dispatch({ payload: newPreset.id, type: 'SET_SELECTED_PRESET_ID' });
     toast.success(tPresetSelector('characterCreated'));
   };
 
@@ -281,11 +281,11 @@ export function PresetSelector({
         ...selectedPreset.sessionConfig,
         voice: newVoiceName,
       },
-      voiceName: newVoiceName,
       voiceId: updatedVoice?.id,
+      voiceName: newVoiceName,
       voiceSampleUrl: updatedVoice?.sample_url ?? undefined,
     };
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: updatedPreset });
+    dispatch({ payload: updatedPreset, type: 'SAVE_CUSTOM_CHARACTER' });
   };
 
   // Clear pending voice when switching characters
@@ -325,10 +325,10 @@ export function PresetSelector({
 
     const saveResult = await saveCharacter({
       id: selectedPreset.id,
-      name: newName,
       localizedDescriptions: newDescriptions ?? {},
-      prompt: selectedPreset.instructions,
       localizedPrompts: selectedPreset.localizedInstructions ?? {},
+      name: newName,
+      prompt: selectedPreset.instructions,
       sessionConfig: selectedPreset.sessionConfig,
       voiceName: selectedPreset.voiceName ?? selectedPreset.sessionConfig.voice,
     });
@@ -337,7 +337,7 @@ export function PresetSelector({
       return;
     }
 
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: saveResult.preset });
+    dispatch({ payload: saveResult.preset, type: 'SAVE_CUSTOM_CHARACTER' });
     toast.success(tPresetSelector('characterUpdated'));
 
     setIsEditingName(false);
@@ -376,9 +376,9 @@ export function PresetSelector({
     }
 
     const response = await fetch('/api/characters', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: characterToDelete.id }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'DELETE',
     });
     const result = await response.json();
     if (!response.ok) {
@@ -391,8 +391,8 @@ export function PresetSelector({
     }
 
     dispatch({
-      type: 'DELETE_CUSTOM_CHARACTER',
       payload: characterToDelete.id,
+      type: 'DELETE_CUSTOM_CHARACTER',
     });
     setShowDeleteDialog(false);
     setCharacterToDelete(null);

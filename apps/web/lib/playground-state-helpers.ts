@@ -19,61 +19,6 @@ export interface CallTokenPlaygroundState {
 
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
-    getSelectedPreset: (state: PlaygroundState) =>
-      [...defaultPresets, ...state.customCharacters].find(
-        (preset) => preset.id === state.selectedPresetId,
-      ),
-    getDefaultPresets: () => defaultPresets,
-    getAllPresets: (state: PlaygroundState) => [
-      ...defaultPresets,
-      ...state.customCharacters,
-    ],
-
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: fine
-    encodeToUrlParams: (state: PlaygroundState): string => {
-      // Preserve existing search params from the current URL
-      const existingParams =
-        typeof window === 'undefined'
-          ? new URLSearchParams()
-          : new URLSearchParams(window.location.search);
-      const params = new URLSearchParams(existingParams);
-
-      let isDefaultPreset = false;
-      const selectedPreset = helpers.getSelectedPreset(state);
-      if (selectedPreset) {
-        params.set('preset', selectedPreset.id);
-        isDefaultPreset = defaultPresets.some(
-          (p) => p.id === selectedPreset.id,
-        );
-      }
-
-      if (!isDefaultPreset) {
-        if (state.instructions) {
-          params.set('instructions', state.instructions);
-        }
-
-        if (selectedPreset) {
-          params.set('presetName', selectedPreset.name);
-          const presetDescription =
-            selectedPreset.localizedDescriptions?.[state.language] ??
-            selectedPreset.localizedDescriptions?.en;
-          if (presetDescription) {
-            params.set('presetDescription', presetDescription);
-          }
-        }
-
-        if (state.sessionConfig) {
-          for (const [key, value] of Object.entries(state.sessionConfig)) {
-            if (value !== defaultSessionConfig[key as keyof SessionConfig]) {
-              params.set(`sessionConfig.${key}`, String(value));
-            }
-          }
-        }
-      }
-
-      return params.toString();
-    },
-
     decodeFromURLParams: (
       urlParams: string,
     ): { state: Partial<PlaygroundState>; preset?: Partial<Preset> } => {
@@ -125,10 +70,10 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
         const presetDescription = params.get('presetDescription') || undefined;
         returnValue.preset = {
           id: presetId,
-          name: params.get('presetName') || undefined,
           localizedDescriptions: presetDescription
             ? { en: presetDescription }
             : undefined,
+          name: params.get('presetName') || undefined,
         };
         returnValue.state.selectedPresetId = presetId;
       }
@@ -136,13 +81,54 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       return returnValue;
     },
 
-    updateBrowserUrl: (state: PlaygroundState) => {
-      if (typeof window !== 'undefined') {
-        const params = helpers.encodeToUrlParams(state);
-        const newUrl = `${window.location.origin}${window.location.pathname}${params ? `?${params}` : ''}`;
-        window.history.replaceState({}, '', newUrl);
+    encodeToUrlParams: (state: PlaygroundState): string => {
+      // Preserve existing search params from the current URL
+      const existingParams =
+        typeof window === 'undefined'
+          ? new URLSearchParams()
+          : new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(existingParams);
+
+      let isDefaultPreset = false;
+      const selectedPreset = helpers.getSelectedPreset(state);
+      if (selectedPreset) {
+        params.set('preset', selectedPreset.id);
+        isDefaultPreset = defaultPresets.some(
+          (p) => p.id === selectedPreset.id,
+        );
       }
+
+      if (!isDefaultPreset) {
+        if (state.instructions) {
+          params.set('instructions', state.instructions);
+        }
+
+        if (selectedPreset) {
+          params.set('presetName', selectedPreset.name);
+          const presetDescription =
+            selectedPreset.localizedDescriptions?.[state.language] ??
+            selectedPreset.localizedDescriptions?.en;
+          if (presetDescription) {
+            params.set('presetDescription', presetDescription);
+          }
+        }
+
+        if (state.sessionConfig) {
+          for (const [key, value] of Object.entries(state.sessionConfig)) {
+            if (value !== defaultSessionConfig[key as keyof SessionConfig]) {
+              params.set(`sessionConfig.${key}`, String(value));
+            }
+          }
+        }
+      }
+
+      return params.toString();
     },
+    getAllPresets: (state: PlaygroundState) => [
+      ...defaultPresets,
+      ...state.customCharacters,
+    ],
+    getDefaultPresets: () => defaultPresets,
 
     /**
      * Gets the full instructions for the current state.
@@ -155,6 +141,10 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
 
       return `${state.instructions.trim()}\n\nScene instructions:\n${sceneInstructions}`.trim();
     },
+    getSelectedPreset: (state: PlaygroundState) =>
+      [...defaultPresets, ...state.customCharacters].find(
+        (preset) => preset.id === state.selectedPresetId,
+      ),
 
     /**
      * Returns a new state object with full instructions,
@@ -193,6 +183,14 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
           voice: state.sessionConfig.voice,
         },
       };
+    },
+
+    updateBrowserUrl: (state: PlaygroundState) => {
+      if (typeof window !== 'undefined') {
+        const params = helpers.encodeToUrlParams(state);
+        const newUrl = `${window.location.origin}${window.location.pathname}${params ? `?${params}` : ''}`;
+        window.history.replaceState({}, '', newUrl);
+      }
     },
   };
 

@@ -138,8 +138,8 @@ export function extractMessages(
       (turn): turn is TranscriptTurn => !!turn && typeof turn === 'object',
     )
     .map((turn) => ({
-      role: (asString(turn.role) || 'assistant') as 'user' | 'assistant',
       content: (asString(turn.content) || asString(turn.text)).trim(),
+      role: (asString(turn.role) || 'assistant') as 'user' | 'assistant',
       timestamp: pickTimestamp(turn),
     }))
     .filter((msg) => msg.content);
@@ -149,12 +149,12 @@ export function extractMessages(
       (turn): turn is TranscriptTurn => !!turn && typeof turn === 'object',
     )
     .map((turn) => ({
-      role: 'user' as const,
       content: (
         asString(turn.content) ||
         asString(turn.text) ||
         asString(turn.transcript)
       ).trim(),
+      role: 'user' as const,
       timestamp: pickTimestamp(turn),
     }))
     .filter((msg) => msg.content);
@@ -213,13 +213,16 @@ export async function analyzeTranscript(
   const modelId = process.env.XAI_SUMMARY_MODEL ?? DEFAULT_MODEL;
 
   const { object } = await generateObject({
+    // Disable AI-SDK telemetry for this call: the prompt embeds the verbatim
+    // (intimate/adult) transcript, and the global Sentry vercelAIIntegration is
+    // configured with recordInputs/recordOutputs = true. Emitting no telemetry
+    // span here guarantees the conversation is never shipped to Sentry.
+    experimental_telemetry: {
+      isEnabled: false,
+      recordInputs: false,
+      recordOutputs: false,
+    },
     model: xai(modelId),
-    schema: callAnalysisSchema,
-    system:
-      'You analyse transcripts of AI voice calls between a user and an AI voice ' +
-      'agent. Produce an accurate, structured analysis. Do not invent details ' +
-      'not present in the transcript. When user transcription is missing, infer ' +
-      'from context and mention it in notable_patterns.',
     prompt: `Analyze this AI voice call conversation.
 
 CONVERSATION:
@@ -230,15 +233,12 @@ CONTEXT:
 - End reason: ${session.end_reason || 'unknown'}
 - Total messages: ${messages.length}
 ${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}`,
-    // Disable AI-SDK telemetry for this call: the prompt embeds the verbatim
-    // (intimate/adult) transcript, and the global Sentry vercelAIIntegration is
-    // configured with recordInputs/recordOutputs = true. Emitting no telemetry
-    // span here guarantees the conversation is never shipped to Sentry.
-    experimental_telemetry: {
-      isEnabled: false,
-      recordInputs: false,
-      recordOutputs: false,
-    },
+    schema: callAnalysisSchema,
+    system:
+      'You analyse transcripts of AI voice calls between a user and an AI voice ' +
+      'agent. Produce an accurate, structured analysis. Do not invent details ' +
+      'not present in the transcript. When user transcription is missing, infer ' +
+      'from context and mention it in notable_patterns.',
   });
 
   if (assistantOnlyNote) {
@@ -256,22 +256,22 @@ export function toAnalysisRow(
   analysis: CallAnalysis,
 ) {
   return {
-    session_id: session.id,
-    user_id: session.user_id ?? null,
-    started_at: session.started_at ?? null,
+    ai_issues: analysis.ai_compliance_issues,
+    analyzed_at: new Date().toISOString(),
+    conversation_quality: analysis.conversation_quality,
     duration_seconds: session.duration_seconds ?? null,
     end_reason: session.end_reason ?? null,
+    engagement_level: analysis.user_engagement_level,
+    error: null,
+    key_requests: analysis.key_user_requests,
     language: analysis.language,
+    notable_patterns: analysis.notable_patterns,
+    session_id: session.id,
+    started_at: session.started_at ?? null,
     topic_category: analysis.topic_category,
     topic_subcategory: analysis.topic_subcategory,
-    engagement_level: analysis.user_engagement_level,
-    conversation_quality: analysis.conversation_quality,
-    where_died: analysis.where_conversation_died,
+    user_id: session.user_id ?? null,
     user_sentiment: analysis.user_sentiment,
-    key_requests: analysis.key_user_requests,
-    ai_issues: analysis.ai_compliance_issues,
-    notable_patterns: analysis.notable_patterns,
-    error: null,
-    analyzed_at: new Date().toISOString(),
+    where_died: analysis.where_conversation_died,
   };
 }

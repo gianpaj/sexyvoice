@@ -1,5 +1,22 @@
 {
   "name": "@sexyvoice/scripts",
+  "private": true,
+  "scripts": {
+    "analyze-call-sessions": "node analyze-call-sessions.mjs",
+    "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
+    "backfill-call-analysis": "node backfill-call-analysis.mjs",
+    "backfill-free-call": "tsx backfill-free-call.mts",
+    "batch-refund-credits": "tsx batch-refund-credits.mts",
+    "check-disposable-emails": "node check-disposable-emails.mjs",
+    "compile-dispute-evidence": "tsx compile-dispute-evidence.mts",
+    "find-truncated-gemini31-tts": "node find-truncated-gemini31-tts.mjs",
+    "generate-gemini-speech-samples": "node generate-gemini-speech-samples.mjs",
+    "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
+    "refund-credits": "tsx refund-credits.mts",
+    "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
+    "sync-deny-domains": "node sync-deny-domains.mjs",
+    "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs"
+  },
   "dependencies": {
     "@ai-sdk/xai": "3.0.96",
     "@google/genai": "1.19.0",
@@ -10,22 +27,5 @@
   },
   "devDependencies": {
     "tsx": "catalog:"
-  },
-  "private": true,
-  "scripts": {
-    "analyze-call-sessions": "node analyze-call-sessions.mjs",
-    "backfill-call-analysis": "node backfill-call-analysis.mjs",
-    "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
-    "find-truncated-gemini31-tts": "node find-truncated-gemini31-tts.mjs",
-    "generate-gemini-speech-samples": "node generate-gemini-speech-samples.mjs",
-    "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
-    "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",
-    "check-disposable-emails": "node check-disposable-emails.mjs",
-    "compile-dispute-evidence": "tsx compile-dispute-evidence.mts",
-    "backfill-free-call": "tsx backfill-free-call.mts",
-    "batch-refund-credits": "tsx batch-refund-credits.mts",
-    "refund-credits": "tsx refund-credits.mts",
-    "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
-    "sync-deny-domains": "node sync-deny-domains.mjs"
   }
 }

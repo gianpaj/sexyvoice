@@ -49,7 +49,7 @@ async function loadModel({
     const options: PretrainedModelOptions = {
       dtype: quantized ? 'q8' : 'fp32',
       progress_callback: (data: Record<string, unknown>) => {
-        self.postMessage({ type: 'download', data });
+        self.postMessage({ data, type: 'download' });
       },
     };
     transcriber = await createPipeline(
@@ -60,8 +60,8 @@ async function loadModel({
     self.postMessage({ type: 'ready' });
   } catch (error) {
     self.postMessage({
-      type: 'error',
       data: error instanceof Error ? error.message : 'Failed to load the model',
+      type: 'error',
     });
   }
 }
@@ -77,31 +77,31 @@ async function transcribe({
 }) {
   if (!transcriber) {
     self.postMessage({
-      type: 'error',
       data: 'Model not loaded. Please load a model first.',
+      type: 'error',
     });
     return;
   }
 
   try {
     const result = (await transcriber(audio, {
-      language,
-      task: subtask,
-      chunk_length_s: 30,
-      stride_length_s: 5,
-      return_timestamps: true,
       // callback_function is supported at runtime but not included in the
       // generated type definitions for AutomaticSpeechRecognitionConfig.
       callback_function: (data: AutomaticSpeechRecognitionOutput) => {
-        self.postMessage({ type: 'update', data });
+        self.postMessage({ data, type: 'update' });
       },
+      chunk_length_s: 30,
+      language,
+      return_timestamps: true,
+      stride_length_s: 5,
+      task: subtask,
     } as Record<string, unknown>)) as AutomaticSpeechRecognitionOutput;
 
-    self.postMessage({ type: 'complete', data: result });
+    self.postMessage({ data: result, type: 'complete' });
   } catch (error) {
     self.postMessage({
-      type: 'error',
       data: error instanceof Error ? error.message : 'Transcription failed',
+      type: 'error',
     });
   }
 }

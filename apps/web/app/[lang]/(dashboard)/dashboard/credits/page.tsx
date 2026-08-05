@@ -84,28 +84,28 @@ export default async function CreditsPage(props: {
   if (userDataError) {
     const error = new Error('Credits page profile lookup failed');
     captureException(error, {
-      level: 'error',
-      user: { id: user.id, email: user.email },
       extra: {
-        route: `/${lang}/dashboard/credits`,
         profileLookupError: {
           code: userDataError.code,
           details: userDataError.details,
           hint: userDataError.hint,
           message: userDataError.message,
         },
+        route: `/${lang}/dashboard/credits`,
       },
+      level: 'error',
+      user: { email: user.email, id: user.id },
     });
     throw error;
   }
 
   if (!userData) {
     captureException(new Error('Credits page profile not found'), {
-      level: 'warning',
-      user: { id: user.id, email: user.email },
       extra: {
         route: `/${lang}/dashboard/credits`,
       },
+      level: 'warning',
+      user: { email: user.email, id: user.id },
     });
     redirect(`/${lang}/dashboard/generate`);
   }
@@ -134,7 +134,7 @@ export default async function CreditsPage(props: {
       console.error(error.message);
       captureException(error, {
         level: 'error',
-        user: { id: user.id, email: user.email },
+        user: { email: user.email, id: user.id },
       });
       throw error;
     }

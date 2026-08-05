@@ -15,10 +15,10 @@ import { AudioGenerator } from '@/components/audio-generator';
 
 const mockToastFn = vi.hoisted(() =>
   Object.assign(vi.fn(), {
-    success: vi.fn(),
+    dismiss: vi.fn(),
     error: vi.fn(),
     loading: vi.fn(() => 'toast-id'),
-    dismiss: vi.fn(),
+    success: vi.fn(),
   }),
 );
 const mockJoinSegments = vi.hoisted(() =>
@@ -119,6 +119,9 @@ vi.mock('@/components/grok-tts-editor', () => ({
 }));
 
 vi.mock('@/lib/ai', () => ({
+  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
+  GEMINI_CHARS_PER_TOKEN: 4,
+  GEMINI_STREAMING_ENABLED: false,
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
     if (model === 'gpro') {
       return isPaidUser ? 1000 : 500;
@@ -130,15 +133,12 @@ vi.mock('@/lib/ai', () => ({
 
     return 500;
   }),
-  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 2500 : 1000,
-  ),
   getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
     isPaidUser ? 8192 : 400,
   ),
-  estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
-  GEMINI_CHARS_PER_TOKEN: 4,
-  GEMINI_STREAMING_ENABLED: false,
+  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
+    isPaidUser ? 2500 : 1000,
+  ),
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -150,63 +150,44 @@ vi.mock('@/lib/react-textarea-autosize', () => ({
 }));
 
 const baseDict = {
-  title: 'Generate audio',
-  textAreaPlaceholder: 'Enter text',
-  estimateCreditsButton: 'Estimate credits',
-  languageLabel: 'Language',
-  languageSelectPlaceholder: 'Select a language',
-  langAutomatic: 'Automatic',
+  cancel: 'Cancel',
   ctaButton: 'Generate',
   ctaButtonPlural: 'Generate audios',
-  generating: 'Generating',
-  cancel: 'Cancel',
-  playAudio: 'Play audio',
-  resetPlayer: 'Reset player',
+  dailyLimitError: 'Daily limit reached (__COUNT__)',
   downloadAudio: 'Download audio',
   enhanceTextTitle: 'Enhance text with AI emotion tags',
-  notEnoughCredits: 'Not enough credits',
-  fullscreenTitle: 'Fullscreen',
-  paidCharacterLimitTooltip: 'Paid users enjoy 2× character limit',
-  upgradeCharacterLimitTooltip: 'Upgrade to a paid plan for 2× character limit',
-  success: 'Success',
   error: 'Something went wrong',
   errorEstimating: 'Failed to estimate credits',
-  dailyLimitError: 'Daily limit reached (__COUNT__)',
-  split: {
-    segmentCannotBeEmpty: 'Segment cannot be empty',
-    segmentFailed: 'Segment __INDEX__ failed',
-    segmentRetryFailed: 'Retry failed for segment __INDEX__',
-    segmentGenerated: 'Segment __INDEX__ generated',
-    splitToggleLabel: 'Split long text',
-    splitToggleDisabled: 'Split text audios is available for paid users.',
-    tooManySegments:
-      'Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.',
-    downloadAllFailed: 'Failed to download all segments',
-    segmentPreviews: 'Segment previews',
-    downloadAll: 'Download all',
-    joiningWav: 'Joining audio',
-    preparingJoiner: 'Preparing joiner',
-    segmentLabel: 'Segment __INDEX__',
-    retry: 'Retry',
-    statusGenerated: 'Generated',
-    statusGenerating: 'Generating',
-    statusFailed: 'Failed',
-    statusPending: 'Pending',
-    progressSegment: 'Segment __CURRENT__/__TOTAL__',
-    progressTitle: 'Audio generation',
-    progressTitleWithVoice: '__VOICE__ generation',
-  },
+  estimateCreditsButton: 'Estimate credits',
+  fullscreenTitle: 'Fullscreen',
+  generating: 'Generating',
   grok: {
+    effects: {
+      breath: 'Breath',
+      chuckle: 'Chuckle',
+      cry: 'Cry',
+      exhale: 'Exhale',
+      giggle: 'Giggle',
+      humTune: 'Hum tune',
+      inhale: 'Inhale',
+      laugh: 'Laugh',
+      lipSmack: 'Lip smack',
+      longPause: 'Long pause',
+      pause: 'Pause',
+      sigh: 'Sigh',
+      tongueClick: 'Tongue click',
+      tsk: 'Tsk',
+    },
+    formatPlaceholder: 'Select format',
     helperText: 'Use Grok tags to control delivery.',
-    languageLabel: 'Language',
-    languageSelectPlaceholder: 'Select a language',
-    langAutomatic: 'Automatic',
-    langEnglish: 'English',
+    inlineEffectPlaceholder: 'Insert tags',
     langArabicEgypt: 'Arabic (Egypt)',
     langArabicSaudiArabia: 'Arabic (Saudi Arabia)',
     langArabicUnitedArabEmirates: 'Arabic (United Arab Emirates)',
+    langAutomatic: 'Automatic',
     langBengali: 'Bengali',
     langChinese: 'Chinese',
+    langEnglish: 'English',
     langFrench: 'French',
     langGerman: 'German',
     langHindi: 'Hindi',
@@ -217,49 +198,68 @@ const baseDict = {
     langPortugueseBrazil: 'Portuguese (Brazil)',
     langPortuguesePortugal: 'Portuguese (Portugal)',
     langRussian: 'Russian',
-    langSpanishSpain: 'Spanish (Spain)',
     langSpanishMexico: 'Spanish (Mexico)',
+    langSpanishSpain: 'Spanish (Spain)',
     langTurkish: 'Turkish',
+    languageLabel: 'Language',
+    languageSelectPlaceholder: 'Select a language',
     langVietnamese: 'Vietnamese',
-    inlineEffectPlaceholder: 'Insert tags',
     wrappingEffectPlaceholder: 'Wrap selected text',
-    formatPlaceholder: 'Select format',
-    effects: {
-      pause: 'Pause',
-      longPause: 'Long pause',
-      humTune: 'Hum tune',
-      laugh: 'Laugh',
-      chuckle: 'Chuckle',
-      giggle: 'Giggle',
-      cry: 'Cry',
-      tsk: 'Tsk',
-      tongueClick: 'Tongue click',
-      lipSmack: 'Lip smack',
-      breath: 'Breath',
-      inhale: 'Inhale',
-      exhale: 'Exhale',
-      sigh: 'Sigh',
-    },
   },
+  langAutomatic: 'Automatic',
+  languageLabel: 'Language',
+  languageSelectPlaceholder: 'Select a language',
+  notEnoughCredits: 'Not enough credits',
+  paidCharacterLimitTooltip: 'Paid users enjoy 2× character limit',
+  playAudio: 'Play audio',
+  resetPlayer: 'Reset player',
+  split: {
+    downloadAll: 'Download all',
+    downloadAllFailed: 'Failed to download all segments',
+    joiningWav: 'Joining audio',
+    preparingJoiner: 'Preparing joiner',
+    progressSegment: 'Segment __CURRENT__/__TOTAL__',
+    progressTitle: 'Audio generation',
+    progressTitleWithVoice: '__VOICE__ generation',
+    retry: 'Retry',
+    segmentCannotBeEmpty: 'Segment cannot be empty',
+    segmentFailed: 'Segment __INDEX__ failed',
+    segmentGenerated: 'Segment __INDEX__ generated',
+    segmentLabel: 'Segment __INDEX__',
+    segmentPreviews: 'Segment previews',
+    segmentRetryFailed: 'Retry failed for segment __INDEX__',
+    splitToggleDisabled: 'Split text audios is available for paid users.',
+    splitToggleLabel: 'Split long text',
+    statusFailed: 'Failed',
+    statusGenerated: 'Generated',
+    statusGenerating: 'Generating',
+    statusPending: 'Pending',
+    tooManySegments:
+      'Split text can have at most __COUNT__ segments. Shorten the text or combine segments before generating.',
+  },
+  success: 'Success',
+  textAreaPlaceholder: 'Enter text',
+  title: 'Generate audio',
+  upgradeCharacterLimitTooltip: 'Upgrade to a paid plan for 2× character limit',
 } as const;
 
 function createVoice(
   overrides: Partial<Tables<'voices'>> = {},
 ): Tables<'voices'> {
   return {
+    created_at: null,
+    description: null,
+    feature: 'tts',
     id: 'voice-id',
-    name: 'tara',
     language: 'en',
     model:
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-    description: null,
-    type: null,
-    sort_order: 0,
-    feature: 'tts',
-    sample_url: null,
+    name: 'tara',
     sample_prompt: null,
+    sample_url: null,
+    sort_order: 0,
+    type: null,
     user_id: null,
-    created_at: null,
     ...overrides,
   } as Tables<'voices'>;
 }
@@ -349,8 +349,8 @@ describe('AudioGenerator', () => {
   it('shows the Grok language selector with Automatic first and English second', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -381,15 +381,15 @@ describe('AudioGenerator', () => {
   it('submits the selected Grok language in the generation request', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: 'https://example.com/audio.mp3' }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -417,31 +417,34 @@ describe('AudioGenerator', () => {
     await user.click(screen.getByTestId('generate-button'));
 
     await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledWith(
-        '/api/generate-voice',
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            text: 'مرحبا',
-            voiceId: 'voice-id',
-            styleVariant: '',
-            language: 'ar-EG',
-            split: false,
-          }),
-          signal: expect.any(AbortSignal),
-        }),
-      );
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    const [url, request] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/generate-voice');
+    expect(request).toEqual(
+      expect.objectContaining({
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        signal: expect.any(AbortSignal),
+      }),
+    );
+    expect(JSON.parse(String(request?.body))).toEqual({
+      language: 'ar-EG',
+      split: false,
+      styleVariant: '',
+      text: 'مرحبا',
+      voiceId: 'voice-id',
     });
   });
 
   it('shows estimate credits UI for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -453,8 +456,8 @@ describe('AudioGenerator', () => {
   it('hides the AI enhance button for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -469,8 +472,8 @@ describe('AudioGenerator', () => {
   it('shows Grok TTS editor for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -486,9 +489,9 @@ describe('AudioGenerator', () => {
   it('does not show Grok TTS editor for Replicate voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'tara',
         model:
           'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        name: 'tara',
       }),
     });
 
@@ -536,8 +539,8 @@ describe('AudioGenerator', () => {
     const user = userEvent.setup();
     const shortText = 'Short text that should generate as one audio.';
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: 'https://example.com/audio.mp3' }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -567,10 +570,10 @@ describe('AudioGenerator', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
-      text: shortText,
-      voiceId: 'voice-id',
       split: false,
       styleVariant: '',
+      text: shortText,
+      voiceId: 'voice-id',
     });
     // A single segment doesn't warrant a progress modal.
     expect(mockToastFn.loading).not.toHaveBeenCalled();
@@ -579,8 +582,8 @@ describe('AudioGenerator', () => {
   it('does not show the progress modal for non-split single generation', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: 'https://example.com/audio.mp3' }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -610,7 +613,7 @@ describe('AudioGenerator', () => {
   it('disables split mode for free users', () => {
     renderAudioGenerator({
       isPaidUser: false,
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     expect(
@@ -627,7 +630,7 @@ describe('AudioGenerator', () => {
     const user = userEvent.setup();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
@@ -648,8 +651,8 @@ describe('AudioGenerator', () => {
   it('enables split mode for paid Grok users', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -665,8 +668,8 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -692,12 +695,12 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/segment-1.mp3' }),
+        ok: true,
       })
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/segment-2.mp3' }),
+        ok: true,
       });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -726,16 +729,16 @@ describe('AudioGenerator', () => {
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      split: true,
+      styleVariant: '',
       text: firstSegment,
       voiceId: 'voice-id',
-      split: true,
-      styleVariant: '',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
-      text: secondSegment,
-      voiceId: 'voice-id',
       split: true,
       styleVariant: '',
+      text: secondSegment,
+      voiceId: 'voice-id',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
     // Multiple segments show the progress modal, reaching completion on the
@@ -754,7 +757,7 @@ describe('AudioGenerator', () => {
     ).join(' ');
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     await user.click(
@@ -786,20 +789,20 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
+        ok: true,
       })
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
+        ok: true,
       });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedStyle: 'Read this in a dramatic whisper',
       selectedVoice: createVoice({
-        name: 'achernar',
         model: 'gpro',
+        name: 'achernar',
       }),
     });
 
@@ -826,16 +829,16 @@ describe('AudioGenerator', () => {
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      split: true,
+      styleVariant: 'Read this in a dramatic whisper',
       text: firstSegment,
       voiceId: 'voice-id',
-      split: true,
-      styleVariant: 'Read this in a dramatic whisper',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
-      text: secondSegment,
-      voiceId: 'voice-id',
       split: true,
       styleVariant: 'Read this in a dramatic whisper',
+      text: secondSegment,
+      voiceId: 'voice-id',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
   });
@@ -846,15 +849,15 @@ describe('AudioGenerator', () => {
     const secondSegment = `${'B'.repeat(300)}.`;
     const longText = `${firstSegment} ${secondSegment}`;
     const fetchMock = vi.fn().mockResolvedValueOnce({
+      json: async () => ({ error: 'Server error' }),
       ok: false,
       status: 500,
-      json: async () => ({ error: 'Server error' }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedStyle: 'calm',
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -886,16 +889,16 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
+        json: async () => ({ error: 'Server error' }),
         ok: false,
         status: 500,
-        json: async () => ({ error: 'Server error' }),
       })
       .mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedStyle: 'calm',
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -942,25 +945,25 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
+        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
         ok: true,
         status: 200,
-        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
       })
       .mockResolvedValueOnce({
+        json: async () => ({ error: 'Server error' }),
         ok: false,
         status: 500,
-        json: async () => ({ error: 'Server error' }),
       })
       .mockResolvedValueOnce({
+        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
         ok: true,
         status: 200,
-        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
       });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedStyle: 'dramatic',
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -990,10 +993,10 @@ describe('AudioGenerator', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
-      text: secondSegment,
-      voiceId: 'voice-id',
       split: true,
       styleVariant: 'dramatic',
+      text: secondSegment,
+      voiceId: 'voice-id',
     });
   });
 
@@ -1005,25 +1008,25 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
+        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
         ok: true,
         status: 200,
-        json: async () => ({ url: 'https://example.com/gemini-1.wav' }),
       })
       .mockResolvedValueOnce({
+        json: async () => ({ error: 'Server error' }),
         ok: false,
         status: 500,
-        json: async () => ({ error: 'Server error' }),
       })
       .mockResolvedValueOnce({
+        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
         ok: true,
         status: 200,
-        json: async () => ({ url: 'https://example.com/gemini-2.wav' }),
       });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedStyle: 'dramatic',
-      selectedVoice: createVoice({ name: 'achernar', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
     });
 
     fireEvent.change(
@@ -1063,13 +1066,13 @@ describe('AudioGenerator', () => {
     const firstSegment = `${'A'.repeat(300)}.`;
     const secondSegment = `${'B'.repeat(300)}.`;
     const longText = `${firstSegment} ${secondSegment}`;
-    const selectedVoice = createVoice({ name: 'achernar', model: 'gpro' });
+    const selectedVoice = createVoice({ model: 'gpro', name: 'achernar' });
     const fetchMock = vi.fn(async () => ({
-      ok: true,
-      status: 200,
       json: async () => ({
         url: `https://example.com/gemini-${fetchMock.mock.calls.length}.wav`,
       }),
+      ok: true,
+      status: 200,
     }));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -1117,16 +1120,16 @@ describe('AudioGenerator', () => {
       expect(fetchMock).toHaveBeenCalledTimes(4);
     });
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
+      split: true,
+      styleVariant: 'calm',
       text: firstSegment,
       voiceId: 'voice-id',
-      split: true,
-      styleVariant: 'calm',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
-      text: secondSegment,
-      voiceId: 'voice-id',
       split: true,
       styleVariant: 'calm',
+      text: secondSegment,
+      voiceId: 'voice-id',
     });
   });
 
@@ -1138,17 +1141,17 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-fr-1.mp3' }),
+        ok: true,
       })
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-fr-2.mp3' }),
+        ok: true,
       });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
     });
 
     const languageLabel = screen.getByText(baseDict.grok.languageLabel);
@@ -1174,18 +1177,18 @@ describe('AudioGenerator', () => {
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      language: 'en',
+      split: true,
+      styleVariant: '',
       text: firstSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'en',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      language: 'en',
+      split: true,
+      styleVariant: '',
       text: secondSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'en',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
   });
@@ -1196,14 +1199,14 @@ describe('AudioGenerator', () => {
     const secondSegment = `${'B'.repeat(300)}.`;
     const longText = `${firstSegment} ${secondSegment}`;
     const fetchMock = vi.fn().mockResolvedValueOnce({
+      json: async () => ({ error: 'Rate limit exceeded' }),
       ok: false,
       status: 500,
-      json: async () => ({ error: 'Rate limit exceeded' }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
     });
 
     fireEvent.change(
@@ -1237,24 +1240,24 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
+        json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
         ok: true,
         status: 200,
-        json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
       })
       .mockResolvedValueOnce({
+        json: async () => ({ error: 'Server error' }),
         ok: false,
         status: 500,
-        json: async () => ({ error: 'Server error' }),
       })
       .mockResolvedValueOnce({
+        json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
         ok: true,
         status: 200,
-        json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
       });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
     });
 
     fireEvent.change(
@@ -1283,11 +1286,11 @@ describe('AudioGenerator', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
+      language: 'auto',
+      split: true,
+      styleVariant: '',
       text: secondSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'auto',
     });
   });
 
@@ -1297,16 +1300,16 @@ describe('AudioGenerator', () => {
     const secondSegment = `${'B'.repeat(300)}.`;
     const longText = `${firstSegment} ${secondSegment}`;
     const fetchMock = vi.fn(async () => ({
-      ok: true,
-      status: 200,
       json: async () => ({
         url: `https://example.com/grok-${fetchMock.mock.calls.length}.mp3`,
       }),
+      ok: true,
+      status: 200,
     }));
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
     });
 
     const languageLabel = screen.getByText(baseDict.grok.languageLabel);
@@ -1344,18 +1347,18 @@ describe('AudioGenerator', () => {
       expect(fetchMock).toHaveBeenCalledTimes(4);
     });
     expect(getFetchRequestBody(fetchMock, 2)).toEqual({
+      language: 'ar-EG',
+      split: true,
+      styleVariant: '',
       text: firstSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'ar-EG',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
+      language: 'ar-EG',
+      split: true,
+      styleVariant: '',
       text: secondSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'ar-EG',
     });
   });
 
@@ -1368,16 +1371,16 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
+        ok: true,
       })
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
+        ok: true,
       })
       .mockResolvedValue({
-        ok: true,
         blob: async () => grokAudioBlob,
+        ok: true,
       });
     vi.stubGlobal('fetch', fetchMock);
     stubAudioMetadata();
@@ -1396,8 +1399,8 @@ describe('AudioGenerator', () => {
 
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -1448,23 +1451,23 @@ describe('AudioGenerator', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-1.mp3' }),
+        ok: true,
       })
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-2.mp3' }),
+        ok: true,
       })
       .mockResolvedValueOnce({
-        ok: true,
         json: async () => ({ url: 'https://example.com/grok-3.mp3' }),
+        ok: true,
       });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
       selectedVoice: createVoice({
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -1496,25 +1499,25 @@ describe('AudioGenerator', () => {
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      language: 'auto',
+      split: true,
+      styleVariant: '',
       text: firstSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      language: 'auto',
+      split: true,
+      styleVariant: '',
       text: wrappedSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'auto',
     });
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
+      language: 'auto',
+      split: true,
+      styleVariant: '',
       text: lastSegment,
       voiceId: 'voice-id',
-      styleVariant: '',
-      split: true,
-      language: 'auto',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
   });
@@ -1532,10 +1535,10 @@ describe('AudioGenerator', () => {
       },
     });
     return {
-      ok: true,
-      headers: new Headers({ 'content-type': 'text/event-stream' }),
       body: readable,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
       json: async () => ({}),
+      ok: true,
     };
   }
 
@@ -1543,7 +1546,7 @@ describe('AudioGenerator', () => {
   // 4 zero bytes → 2 Int16 PCM samples → valid for Int16Array
   const SSE_AUDIO_FRAME =
     'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
-  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ url: R2_AUDIO_URL, creditsUsed: 26, creditsRemaining: 974 })}\n\n`;
+  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ creditsRemaining: 974, creditsUsed: 26, url: R2_AUDIO_URL })}\n\n`;
   const SSE_ERROR_FRAME =
     'event: error\ndata: {"error":"Voice generation blocked"}\n\n';
 
@@ -1577,10 +1580,10 @@ describe('AudioGenerator', () => {
 
     return {
       MockAudioContext,
+      mockClose,
       mockCreateBuffer,
       mockCreateBufferSource,
       mockStart,
-      mockClose,
     };
   }
 
@@ -1595,7 +1598,7 @@ describe('AudioGenerator', () => {
     setupAudioContextMock();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
     });
 
     const textarea = await screen.findByPlaceholderText(
@@ -1618,13 +1621,13 @@ describe('AudioGenerator', () => {
   it('omits stream for Gemini voice when text is at or below threshold', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: R2_AUDIO_URL }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
     });
 
     const textarea = await screen.findByPlaceholderText(
@@ -1648,13 +1651,13 @@ describe('AudioGenerator', () => {
     // clip at once, so it must stay on the JSON path regardless of length.
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: R2_AUDIO_URL }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro' }),
+      selectedVoice: createVoice({ model: 'gpro', name: 'kore' }),
     });
 
     const textarea = await screen.findByPlaceholderText(
@@ -1676,13 +1679,13 @@ describe('AudioGenerator', () => {
   it('omits stream for Grok voice regardless of text length', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
       json: async () => ({ url: R2_AUDIO_URL }),
+      ok: true,
     });
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'eve', model: 'xai' }),
+      selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
     });
 
     const textarea = screen.getByRole('textbox', {
@@ -1714,7 +1717,7 @@ describe('AudioGenerator', () => {
       setupAudioContextMock();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
     });
 
     const textarea = await screen.findByPlaceholderText(
@@ -1759,7 +1762,7 @@ describe('AudioGenerator', () => {
     setupAudioContextMock();
 
     renderAudioGenerator({
-      selectedVoice: createVoice({ name: 'kore', model: 'gpro31' }),
+      selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
     });
 
     const textarea = await screen.findByPlaceholderText(

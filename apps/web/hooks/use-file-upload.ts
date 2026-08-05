@@ -84,13 +84,13 @@ export const useFileUpload = (
   } = options;
 
   const [state, setState] = useState<FileUploadState>({
+    errors: [],
     files: initialFiles.map((file) => ({
       file,
       id: file.id,
       preview: file.url,
     })),
     isDragging: false,
-    errors: [],
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -133,7 +133,7 @@ export const useFileUpload = (
 
   const generateUniqueId = (file: File | FileMetadata): string => {
     if (file instanceof File) {
-      return `${file.name}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      return `${file.name}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     }
     return file.id;
   };
@@ -157,8 +157,8 @@ export const useFileUpload = (
 
       const newState = {
         ...prev,
-        files: [],
         errors: [],
+        files: [],
       };
 
       onFilesChange?.(newState.files);
@@ -240,8 +240,8 @@ export const useFileUpload = (
         onFilesChange?.(newFiles);
         return {
           ...prev,
-          files: newFiles,
           errors,
+          files: newFiles,
         };
       });
     } else if (errors.length > 0) {
@@ -273,8 +273,8 @@ export const useFileUpload = (
 
       return {
         ...prev,
-        files: newFiles,
         errors: [],
+        files: newFiles,
       };
     });
   };
@@ -345,27 +345,27 @@ export const useFileUpload = (
     props: InputHTMLAttributes<HTMLInputElement> = {},
   ) => ({
     ...props,
-    type: 'file' as const,
-    onChange: handleFileChange,
     accept: props.accept || accept,
     multiple: props.multiple === undefined ? multiple : props.multiple,
+    onChange: handleFileChange,
     ref: inputRef,
+    type: 'file' as const,
   });
 
   return [
     state,
     {
       addFiles,
-      removeFile,
-      clearFiles,
       clearErrors,
+      clearFiles,
+      getInputProps,
       handleDragEnter,
       handleDragLeave,
       handleDragOver,
       handleDrop,
       handleFileChange,
       openFileDialog,
-      getInputProps,
+      removeFile,
     },
   ];
 };
