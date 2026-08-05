@@ -152,6 +152,18 @@
       // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
       "includes": ["apps/web/app/api/**"],
       "plugins": ["./biome-plugins/use-api-error-response.grit"]
+    },
+    {
+      // Package map insertion order controls checkout telemetry and remains part
+      // of the exported pricing API, so product tier order is intentional.
+      "includes": ["apps/web/lib/stripe/pricing.ts"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
     }
   ]
 }

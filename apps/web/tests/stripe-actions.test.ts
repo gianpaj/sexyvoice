@@ -146,11 +146,7 @@ describe('createCheckoutSession()', () => {
       'Invalid checkout package id submitted.',
       expect.objectContaining({
         extra: expect.objectContaining({
-          available_packages: expect.arrayContaining([
-            'starter',
-            'standard',
-            'pro',
-          ]),
+          available_packages: ['starter', 'standard', 'pro'],
           packageId: 'free',
           vercelEnv: 'production',
         }),
