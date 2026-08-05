@@ -43,13 +43,19 @@ export function SummaryCard({
   sourceTypeLabels,
   noDataLabel,
 }: SummaryCardProps) {
-  // Filter out source types with no usage
   const activeSourceTypes = (
     Object.entries(bySourceType) as [
       UsageSourceType,
       { credits: number; count: number },
     ][]
-  ).filter(([, data]) => data.count > 0);
+  )
+    .filter(([, data]) => data.count > 0)
+    .sort(
+      ([sourceTypeA, dataA], [sourceTypeB, dataB]) =>
+        dataB.credits - dataA.credits ||
+        dataB.count - dataA.count ||
+        sourceTypeA.localeCompare(sourceTypeB),
+    );
 
   return (
     <Card>
