@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   analyzeTranscript,
   buildConversationSummary,
+  callAnalysisSchema,
   extractMessages,
   toAnalysisRow,
 } from '@/lib/ai/analyze-call';
@@ -16,6 +17,23 @@ vi.mock('ai', () => ({
 vi.mock('@ai-sdk/xai', () => ({
   xai: (modelId: string) => ({ modelId }),
 }));
+
+describe('callAnalysisSchema', () => {
+  it('keeps observations ahead of derived analysis fields', () => {
+    expect(Object.keys(callAnalysisSchema.shape)).toEqual([
+      'language',
+      'topic_category',
+      'topic_subcategory',
+      'user_engagement_level',
+      'conversation_quality',
+      'where_conversation_died',
+      'user_sentiment',
+      'key_user_requests',
+      'ai_compliance_issues',
+      'notable_patterns',
+    ]);
+  });
+});
 
 describe('extractMessages()', () => {
   it('returns an empty array for null/empty transcripts', () => {

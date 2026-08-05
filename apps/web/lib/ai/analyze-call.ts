@@ -16,27 +16,11 @@ const MAX_CONVERSATION_CHARS = 4000;
 // LLM-facing schema. Keys match the prompt and the analyze-call-sessions.mjs
 // script; `toAnalysisRow` maps them onto the call_session_analysis columns.
 export const callAnalysisSchema = z.object({
-  ai_compliance_issues: z
-    .string()
-    .nullable()
-    .describe(
-      'Any issues with AI responses (too loud, wrong tone, etc.) or null',
-    ),
-  conversation_quality: z.enum(['flowing', 'choppy', 'one_sided', 'dying']),
-  key_user_requests: z
-    .array(z.string())
-    .describe('Main things the user asked for or wanted'),
   language: z
     .string()
     .describe(
       'ISO 639-1 two-letter code of the primary language used by the USER when ' +
         'user messages are available; otherwise infer from the overall context',
-    ),
-  notable_patterns: z
-    .string()
-    .nullable()
-    .describe(
-      'Notable patterns or insights, including missing user transcription',
     ),
   topic_category: z.enum([
     'roleplay_intimate',
@@ -53,6 +37,13 @@ export const callAnalysisSchema = z.object({
       "More specific topic (e.g. 'daddy_dom', 'girlfriend_experience', 'meditation')",
     ),
   user_engagement_level: z.enum(['high', 'medium', 'low', 'minimal']),
+  conversation_quality: z.enum(['flowing', 'choppy', 'one_sided', 'dying']),
+  where_conversation_died: z
+    .string()
+    .nullable()
+    .describe(
+      'What caused disengagement, or null if the conversation flowed well',
+    ),
   user_sentiment: z.enum([
     'satisfied',
     'frustrated',
@@ -60,11 +51,20 @@ export const callAnalysisSchema = z.object({
     'engaged',
     'confused',
   ]),
-  where_conversation_died: z
+  key_user_requests: z
+    .array(z.string())
+    .describe('Main things the user asked for or wanted'),
+  ai_compliance_issues: z
     .string()
     .nullable()
     .describe(
-      'What caused disengagement, or null if the conversation flowed well',
+      'Any issues with AI responses (too loud, wrong tone, etc.) or null',
+    ),
+  notable_patterns: z
+    .string()
+    .nullable()
+    .describe(
+      'Notable patterns or insights, including missing user transcription',
     ),
 });
 
