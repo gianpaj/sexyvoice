@@ -17,7 +17,7 @@
  *   node check-disposable-emails.mjs --days 30
  *
  * Options:
- *   --limit <n>      Number of most-recent profiles to fetch (default: 1000).
+ *   --limit <n>      Number of most-recent profiles to fetch (default: 10000).
  *   --days <n>       Only consider profiles created in the last <n> days
  *                    (applied in addition to --limit).
  *   --out <dir>      Output directory for the summary / CSV (default: cwd).
@@ -71,7 +71,7 @@ if (!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)) {
 // ---------------------------------------------------------------------------
 function parseArgs(argv) {
   const args = {
-    limit: 1000,
+    limit: 10_000,
     days: null,
     out: process.cwd(),
     clone: true,
