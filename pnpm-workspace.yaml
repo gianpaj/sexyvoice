@@ -35,13 +35,13 @@ minimumReleaseAgeExclude:
   - ws@8.20.1 || 8.21.0
   - uuid@11.1.1
   - qs@6.15.2
-  - '@grpc/grpc-js@1.13.5 || 1.14.4'
+  - "@grpc/grpc-js@1.13.5 || 1.14.4"
   - tmp@0.2.6
   - esbuild@0.28.1
-  - '@opentelemetry/core@2.8.0'
+  - "@opentelemetry/core@2.8.0"
   - js-yaml@3.15.0 || 4.1.2 || 4.3.0
-  - '@babel/core@7.29.1'
-  - '@opentelemetry/propagator-jaeger@2.9.0'
+  - "@babel/core@7.29.1"
+  - "@opentelemetry/propagator-jaeger@2.9.0"
   - svgo@4.0.2
   - sharp@0.35.0
 
@@ -81,15 +81,15 @@ overrides:
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
-  '@parcel/watcher': true
-  '@sentry/cli': true
-  '@swc/core': true
+  "@parcel/watcher": true
+  "@sentry/cli": true
+  "@swc/core": true
   contentlayer2: true
   core-js: true
   core-js-pure: true
   esbuild: true
   msw: true
-  onnxruntime-node: true
+  onnxruntime-node: false
   protobufjs: true
   redis-memory-server: false
   sharp: true
