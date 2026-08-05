@@ -62,7 +62,7 @@ Contentlayer2, Inngest, and `next-intl`.
 Runtime and tooling:
 
 - Node.js `24.x` (see `engines.node` in each `package.json`).
-- Package manager: `pnpm@10.20.0` (see `packageManager`). Always use `pnpm`,
+- Package manager: `pnpm@11.16.0` (see `packageManager`). Always use `pnpm`,
   never `npm` or `yarn`.
 - Type checks run on the TypeScript native preview (`tsgo --noEmit`).
 

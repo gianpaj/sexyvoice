@@ -1,6 +1,7 @@
 import { allPosts } from 'contentlayer/generated';
 import {
   ArrowRightIcon,
+  AudioLines,
   Globe2,
   Mic2,
   PhoneCall,
@@ -11,7 +12,6 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -21,6 +21,7 @@ import { Link } from '@/lib/i18n/navigation';
 // import { PopularAudios } from '@/components/popular-audios';
 
 import { Banner } from '@/components/banner';
+import { CardDecorator } from '@/components/card-decorator';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -31,6 +32,7 @@ import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import { routing } from '@/src/i18n/routing';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
@@ -224,7 +226,11 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="mx-auto grid max-w-4xl gap-6 py-16 md:grid-cols-2">
+            <div
+              className={`mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 ${
+                VOICE_CLONING_PAGE_ENABLED ? 'lg:grid-cols-3' : 'lg:grid-cols-2'
+              }`}
+            >
               <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
                 <Link href="/voice-call" prefetch>
                   <CardHeader className="pb-3">
@@ -247,6 +253,30 @@ export default async function LandingPage(props: {
                   </CardContent>
                 </Link>
               </Card>
+              {VOICE_CLONING_PAGE_ENABLED && (
+                <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
+                  <Link href="/voice-cloning" prefetch>
+                    <CardHeader className="pb-3">
+                      <CardDecorator>
+                        <AudioLines
+                          aria-hidden
+                          className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
+                        />
+                      </CardDecorator>
+
+                      <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
+                        {dictLanding.features.voiceCloneDemo.title}
+                      </h3>
+                    </CardHeader>
+
+                    <CardContent>
+                      <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
+                        {dictLanding.features.voiceCloneDemo.description}
+                      </p>
+                    </CardContent>
+                  </Link>
+                </Card>
+              )}
               <Card className="group max-w-sm shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
@@ -376,11 +406,3 @@ export default async function LandingPage(props: {
     </>
   );
 }
-
-const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="mx-auto grid size-36 place-items-center">
-    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
-      {children}
-    </div>
-  </div>
-);

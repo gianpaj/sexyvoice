@@ -5,6 +5,7 @@ import { allPosts } from 'contentlayer/generated';
 import { globby } from 'globby';
 import type { MetadataRoute } from 'next';
 
+import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import { routing } from '@/src/i18n/routing';
 
 const BASE_URL = 'https://sexyvoice.ai';
@@ -65,6 +66,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '!app/[lang]/**/protected/**',
     '!app/[lang]/**/dashboard/**',
     '!app/[lang]/blog/[slug]/**',
+    // Gated pages must not be advertised while they 404 in production.
+    ...(VOICE_CLONING_PAGE_ENABLED ? [] : ['!app/[lang]/voice-cloning/**']),
   ]);
 
   const routes: MetadataRoute.Sitemap = [];

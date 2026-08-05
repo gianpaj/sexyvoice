@@ -39,7 +39,7 @@ const fakeUserCharacter = {
   voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
   localized_descriptions: {},
   session_config: {
-    model: 'grok-voice-think-fast-1.0',
+    model: 'grok-voice-think-fast-2.0',
     voice: 'Ara',
     temperature: 0.8,
     maxOutputTokens: null,
@@ -286,7 +286,7 @@ function validCreateBody(overrides: Record<string, unknown> = {}) {
     prompt: 'You are a helpful test character.',
     voiceName: 'Ara',
     sessionConfig: {
-      model: 'grok-voice-think-fast-1.0',
+      model: 'grok-voice-think-fast-2.0',
       voice: 'Ara',
       temperature: 0.8,
       maxOutputTokens: null,
@@ -451,6 +451,24 @@ describe('/api/characters', () => {
       const res = await POST(makeRequest(body));
       expect(res.status).toBe(201);
       expect(insertedCharacters[0].name).toBe('Padded Name');
+    });
+
+    it('upgrades a retired model id before persisting session_config', async () => {
+      // Otherwise a stale client writes the dead id straight back into the
+      // JSONB column after it has been cleaned up.
+      const body = validCreateBody({
+        sessionConfig: {
+          model: 'grok-voice-think-fast-1.0',
+          voice: 'Ara',
+          temperature: 0.8,
+          maxOutputTokens: null,
+        },
+      });
+      const res = await POST(makeRequest(body));
+      expect(res.status).toBe(201);
+      expect(insertedCharacters[0]).toMatchObject({
+        session_config: { model: 'grok-voice-think-fast-2.0' },
+      });
     });
   });
 

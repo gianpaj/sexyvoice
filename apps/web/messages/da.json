@@ -102,6 +102,16 @@
       "stopButton": "Stop",
       "pickCharacter": "Vælg en karakter"
     },
+    "demoClone": {
+      "pickSpeaker": "Vælg en stemme",
+      "referenceLabel": "Referencelyd",
+      "resultLabel": "Klonet stemme",
+      "hearResult": "Hør resultatet",
+      "playAudio": "Afspil lyd",
+      "preparedExamplesCaption": "Forberedte eksempler. Tilmeld dig for at klone din egen stemme.",
+      "audioError": "Denne lyd kunne ikke indlæses.",
+      "retry": "Prøv igen"
+    },
     "features": {
       "voiceCloning": {
         "title": "Naturlige stemmer",
@@ -118,6 +128,10 @@
       "voiceCalling": {
         "title": "Live stemmeopkald",
         "description": "Før telefonsamtaler i realtid med AI-karakterer — naturlige stemmer, øjeblikkelige svar, ingen opsætning nødvendig."
+      },
+      "voiceCloneDemo": {
+        "title": "Klon din stemme",
+        "description": "Prøv den live klon-demo: Hør en stemme, der er genskabt ud fra få sekunders lyd og taler naturligt på flere sprog."
       }
     },
     "cta": {
@@ -131,11 +145,45 @@
         "title": "Tal med AI-karakterer, live i realtid",
         "subtitle": "Live AI-telefonopkald med naturlige, udtryksfulde stemmer.\nVælg en karakter og begynd at tale med det samme."
       },
+      "privacy": {
+        "title": "Uden begrænsninger, krypteret.",
+        "subtitle": "Udforsk dine dybeste ønsker i total privatliv. Ingen filtre, ingen fordomme, ingen der lytter med.",
+        "unrestricted": {
+          "title": "Intet emne er forbudt",
+          "description": "Sig hvad du vil, og som du vil. Din karakter viger ikke tilbage og løfter aldrig pegefingeren."
+        },
+        "encrypted": {
+          "title": "End-to-end krypteret",
+          "description": "Hvert opkald krypteres undervejs. Intet menneske lytter til dine samtaler."
+        },
+        "forgotten": {
+          "title": "Glemt som standard",
+          "description": "Intet føres videre mellem opkald, medmindre du selv slår hukommelsen til."
+        }
+      },
+      "customCharacter": {
+        "title": "Skab din egen karakter",
+        "subtitle": "Giv den et navn, en personlighed, en baggrundshistorie og en stemme. Ring så til den, når du vil – den er i rollen hver eneste gang.",
+        "note": "Egne karakterer er inkluderet i alle betalte planer.",
+        "action": "Skab din karakter"
+      },
       "cta": {
         "freeCredits": "Start med 10.000 gratis kreditter",
         "title": "Klar til at høre en stemme komme til live?",
         "subtitle": "Start et live opkald med en hvilken som helst karakter og oplev en naturlig AI-samtale i realtid.",
         "action": "Start et stemmeopkald"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Din stemme, på alle sprog",
+        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på 23 sprog."
+      },
+      "cta": {
+        "freeCredits": "Start med 10.000 gratis kreditter",
+        "title": "Klar til at klone din egen stemme?",
+        "subtitle": "Upload en kort prøve, og hør dig selv tale på ethvert understøttet sprog.",
+        "action": "Klon din stemme"
       }
     },
     "generator": {
@@ -289,11 +337,7 @@
       "starter": {
         "name": "Starter",
         "description": "For afslappede brugere, der udforsker AI-lyd.",
-        "features": [
-          "Alt i Gratis",
-          "2× længere tekstgenerering",
-          "API-adgang"
-        ]
+        "features": ["Alt i Gratis", "2× længere tekstgenerering", "API-adgang"]
       },
       "standard": {
         "name": "Standard",
@@ -815,6 +859,8 @@
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
     "titleVoiceCall": "AI-stemmeopkald – Tal live med AI-karakterer",
     "descriptionVoiceCall": "Før live AI-telefonopkald med dine yndlingsstemmer. Tal i realtid med AI-karakterer – naturlige samtaler drevet af SexyVoice.ai's stemmeteknologi.",
+    "titleVoiceCloning": "AI-stemmekloning",
+    "descriptionVoiceCloning": "Klon en stemme ud fra få sekunders lyd, og hør den tale naturligt på 23 sprog.",
     "/": "",
     "/voice-call": "Stemmeopkald",
     "/login": "Log ind",
@@ -907,6 +953,7 @@
   },
   "footer": {
     "tagline": "AI-drevet stemmegenerering. Skab naturlig, udtryksfuld lyd på sekunder.",
+    "featuresHeading": "Funktioner",
     "toolsHeading": "Værktøjer",
     "companyHeading": "Virksomhed",
     "legalHeading": "Juridisk",
@@ -917,7 +964,8 @@
     "audioConverter": "Gratis lydkonverter",
     "transcribe": "Gratis lydtransskription",
     "audioJoiner": "Gratis lydsammenfletning",
-    "voiceCalling": "AI-stemmeopkald"
+    "voiceCalling": "AI-stemmeopkald",
+    "voiceCloning": "Stemmekloning"
   },
   "promos": {
     "halloweenBanner": {

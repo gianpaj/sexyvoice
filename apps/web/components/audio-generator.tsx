@@ -15,8 +15,8 @@ import {
   useState,
 } from 'react';
 
-import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
 import { useFFmpegJoiner } from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
+import { useAudio } from '@/components/audio-provider';
 import { toast } from '@/components/services/toast';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';

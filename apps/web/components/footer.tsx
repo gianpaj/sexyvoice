@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getMessages } from 'next-intl/server';
 
+import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 async function Footer({ lang }: { lang: Locale }) {
@@ -11,7 +12,7 @@ async function Footer({ lang }: { lang: Locale }) {
     <footer className="border-white/5 border-t bg-black">
       <div className="container mx-auto px-6 py-10 md:py-16">
         {/* Top: Brand + Link columns */}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5 lg:gap-12">
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-6 lg:gap-12">
           {/* Brand column */}
           <div className="col-span-2 sm:col-span-3 lg:col-span-2">
             <Link
@@ -46,10 +47,10 @@ async function Footer({ lang }: { lang: Locale }) {
             </div>
           </div>
 
-          {/* Tools column */}
+          {/* Features column */}
           <div>
             <h3 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
-              {dict.toolsHeading}
+              {dict.featuresHeading}
             </h3>
             <ul className="space-y-2.5">
               <li>
@@ -60,6 +61,25 @@ async function Footer({ lang }: { lang: Locale }) {
                   {dict.voiceCalling}
                 </Link>
               </li>
+              {VOICE_CLONING_PAGE_ENABLED && (
+                <li>
+                  <Link
+                    className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"
+                    href={`/${lang}/voice-cloning`}
+                  >
+                    {dict.voiceCloning}
+                  </Link>
+                </li>
+              )}
+            </ul>
+          </div>
+
+          {/* Tools column */}
+          <div>
+            <h3 className="mb-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">
+              {dict.toolsHeading}
+            </h3>
+            <ul className="space-y-2.5">
               <li>
                 <Link
                   className="hit-area-y-1 text-gray-400 text-sm transition-colors hover:text-foreground"

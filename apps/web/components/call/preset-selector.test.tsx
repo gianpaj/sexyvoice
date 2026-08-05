@@ -69,7 +69,7 @@ beforeEach(() => {
           localized_descriptions: { en: 'A new custom character.' },
           image: null,
           session_config: {
-            model: 'grok-voice-think-fast-1.0',
+            model: 'grok-voice-think-fast-2.0',
             voice: 'Ara',
             temperature: 0.8,
             maxOutputTokens: null,
