@@ -113,5 +113,5 @@ export function decodePcmBase64(base64: string): {
   for (let i = 0; i < int16.length; i++) {
     float32[i] = int16[i] / 32_768;
   }
-  return { int16, float32 };
+  return { float32, int16 };
 }

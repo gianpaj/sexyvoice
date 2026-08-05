@@ -11,14 +11,14 @@ export const ErrorTypeSchema = z.enum([
 
 export const ErrorResponseSchema = z.object({
   error: z.object({
+    code: z.string().describe('Machine-readable error code'),
     message: z.string().describe('Human-readable error description'),
-    type: ErrorTypeSchema.describe('Error category'),
     param: z
       .string()
       .nullable()
       .optional()
       .describe('The parameter that caused the error, if applicable'),
-    code: z.string().describe('Machine-readable error code'),
+    type: ErrorTypeSchema.describe('Error category'),
   }),
 });
 
@@ -26,15 +26,46 @@ const ExternalApiModelSchema = z.enum(['gpro', 'gpro31', 'orpheus', 'xai']);
 
 export const VoiceGenerationRequestSchema = z
   .strictObject({
-    model: ExternalApiModelSchema.optional().describe(
-      'The voice model to use when selecting a voice by name. Omit when using voiceId.',
-    ),
     input: z
       .string()
       .min(1)
       .max(1000)
       .describe(
         'The text to synthesize (max 1000 chars for gpro/gpro31/xai, 500 for orpheus)',
+      ),
+    model: ExternalApiModelSchema.optional().describe(
+      'The voice model to use when selecting a voice by name. Omit when using voiceId.',
+    ),
+    response_format: z
+      .enum(['wav', 'mp3'])
+      .optional()
+      .describe('Audio format. Default depends on model'),
+    seed: z
+      .number()
+      .int()
+      .optional()
+      .describe(
+        'Optional deterministic seed for providers that support it (e.g. Gemini)',
+      ),
+    speed: z
+      .number()
+      .min(0.7)
+      .max(1.5)
+      .optional()
+      .describe(
+        'Speech speed multiplier for Grok (xai) voices. Range 0.7-1.5. Ignored by other models.',
+      ),
+    style: z
+      .string()
+      .optional()
+      .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
+    temperature: z
+      .number()
+      .min(0)
+      .max(2)
+      .optional()
+      .describe(
+        'Sampling temperature for Gemini voices (gpro/gpro31). Range 0-2; higher is more expressive. Ignored by other models.',
       ),
     voice: z
       .string()
@@ -49,37 +80,6 @@ export const VoiceGenerationRequestSchema = z
       .optional()
       .describe(
         'Voice ID from GET /api/v1/voices. Use instead of voice + model.',
-      ),
-    response_format: z
-      .enum(['wav', 'mp3'])
-      .optional()
-      .describe('Audio format. Default depends on model'),
-    style: z
-      .string()
-      .optional()
-      .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
-    seed: z
-      .number()
-      .int()
-      .optional()
-      .describe(
-        'Optional deterministic seed for providers that support it (e.g. Gemini)',
-      ),
-    temperature: z
-      .number()
-      .min(0)
-      .max(2)
-      .optional()
-      .describe(
-        'Sampling temperature for Gemini voices (gpro/gpro31). Range 0-2; higher is more expressive. Ignored by other models.',
-      ),
-    speed: z
-      .number()
-      .min(0.7)
-      .max(1.5)
-      .optional()
-      .describe(
-        'Speech speed multiplier for Grok (xai) voices. Range 0.7-1.5. Ignored by other models.',
       ),
   })
   .superRefine((data, ctx) => {
@@ -116,17 +116,17 @@ export const VoiceGenerationRequestSchema = z
 export const VoiceGenerationRequestOpenApiSchema = VoiceGenerationRequestSchema;
 
 export const VoiceGenerationResponseSchema = z.object({
-  url: z.url().describe('URL to generated audio'),
-  credits_used: z
-    .number()
-    .int()
-    .nonnegative()
-    .describe('Credits consumed for this generation'),
   credits_remaining: z
     .number()
     .int()
     .nonnegative()
     .describe('Remaining credits'),
+  credits_used: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe('Credits consumed for this generation'),
+  url: z.url().describe('URL to generated audio'),
   usage: z.object({
     input_characters: z.number().int().describe('Input characters processed'),
     model: z.string().describe('Model used for generation'),
@@ -134,11 +134,11 @@ export const VoiceGenerationResponseSchema = z.object({
 });
 
 export const VoiceInfoSchema = z.object({
+  formats: z.array(z.enum(['wav', 'mp3'])),
   id: z.string(),
-  name: z.string(),
   language: z.string(),
   model: z.enum(['gpro', 'gpro31', 'orpheus', 'xai']),
-  formats: z.array(z.enum(['wav', 'mp3'])),
+  name: z.string(),
   supports_style: z
     .boolean()
     .describe('Whether this voice accepts the freeform `style` parameter'),
@@ -150,8 +150,8 @@ export const VoicesResponseSchema = z.object({
 
 export const ModelInfoSchema = z.object({
   id: z.enum(['gpro', 'gpro31', 'orpheus', 'xai']),
-  name: z.string(),
   max_input_length: z.number().int().positive(),
+  name: z.string(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),
 });
 
@@ -160,19 +160,19 @@ export const ModelsResponseSchema = z.object({
 });
 
 export const BillingTransactionSchema = z.object({
-  id: z.string(),
-  type: z.enum(['purchase', 'topup']),
   amount: z.number(),
-  description: z.string(),
   created_at: z.string(),
+  description: z.string(),
+  id: z.string(),
+  metadata: z.unknown().nullable().optional(),
   reference_id: z.string().nullable(),
   subscription_id: z.string().nullable(),
-  metadata: z.unknown().nullable().optional(),
+  type: z.enum(['purchase', 'topup']),
 });
 
 export const BillingResponseSchema = z.object({
   creditsLeft: z.number().int().nonnegative(),
+  lastBillingTransaction: BillingTransactionSchema.nullable(),
   lastUpdated: z.string().nullable(),
   userId: z.string(),
-  lastBillingTransaction: BillingTransactionSchema.nullable(),
 });

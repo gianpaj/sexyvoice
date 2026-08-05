@@ -62,17 +62,17 @@ interface BillingUsageResponse {
 }
 
 const chartConfig = {
-  requests: {
-    label: 'Requests',
-    color: 'hsl(var(--chart-1))',
+  cost: {
+    color: 'hsl(var(--chart-3))',
+    label: 'Cost (USD)',
   },
   credits: {
-    label: 'Credits',
     color: 'hsl(var(--chart-2))',
+    label: 'Credits',
   },
-  cost: {
-    label: 'Cost (USD)',
-    color: 'hsl(var(--chart-3))',
+  requests: {
+    color: 'hsl(var(--chart-1))',
+    label: 'Requests',
   },
 } satisfies ChartConfig;
 
@@ -158,9 +158,9 @@ export function BillingUsageChart() {
   const hasDateRange = !!(endingBefore && startingOn);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['billing-usage', queryString],
-    queryFn: () => fetchBillingUsage(queryString),
     enabled: hasDateRange,
+    queryFn: () => fetchBillingUsage(queryString),
+    queryKey: ['billing-usage', queryString],
   });
 
   // Until the default date range is resolved the query is disabled, so treat
@@ -191,7 +191,7 @@ export function BillingUsageChart() {
         accumulator.credits += result.total_credits_used;
         return accumulator;
       },
-      { requests: 0, cost: 0, credits: 0 },
+      { cost: 0, credits: 0, requests: 0 },
     );
     byDate.set(date, totals);
   }
@@ -204,7 +204,7 @@ export function BillingUsageChart() {
   );
   const bucketTotals = spine.map((date) => ({
     date,
-    ...(byDate.get(date) ?? { requests: 0, cost: 0, credits: 0 }),
+    ...(byDate.get(date) ?? { cost: 0, credits: 0, requests: 0 }),
   }));
 
   return (

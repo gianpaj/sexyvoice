@@ -76,9 +76,9 @@ export async function GET(request: NextRequest) {
       allTimeSummary?: Awaited<ReturnType<typeof getAllTimeUsageSummary>>;
     } = {
       data,
-      totalCount,
       page,
       pageSize,
+      totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
     };
 

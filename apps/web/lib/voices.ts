@@ -34,14 +34,14 @@ export const MODEL_COLORS: Record<VoiceModel, string> = {
 };
 
 /** Minimal shape expected by VoiceSelect — a subset of Tables<'voices'>. */
-export type Voice = {
-  id: string;
-  name: string;
+export interface Voice {
   description: string;
-  model: VoiceModel;
   gender: VoiceGender;
+  id: string;
+  model: VoiceModel;
+  name: string;
   sampleUrl?: string | null;
-};
+}
 
 /** Fallback empty list; callers always pass real voices. */
 export const VOICES: Voice[] = [];
@@ -57,11 +57,11 @@ export function getDisplayModel(dbModel: string): VoiceModel {
 /** Converts a Supabase voices row to the VoiceSelect Voice shape. */
 export function toVoice(voice: Tables<'voices'>): Voice {
   return {
-    id: voice.id,
-    name: voice.name,
     description: voice.description ?? '',
-    model: getDisplayModel(voice.model),
     gender: (voice.type as VoiceGender | null) ?? 'Neutral',
+    id: voice.id,
+    model: getDisplayModel(voice.model),
+    name: voice.name,
     sampleUrl: voice.sample_url,
   };
 }

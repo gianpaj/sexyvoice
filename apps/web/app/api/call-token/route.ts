@@ -37,7 +37,6 @@ function appendSceneInstructions(
   return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: token endpoint validates multiple guard rails
 export async function POST(request: Request) {
   let user: User | null = null;
   try {
@@ -59,8 +58,8 @@ export async function POST(request: Request) {
 
     if (currentAmount < MINIMUM_CREDITS_FOR_CALL) {
       logger.info('Insufficient credits', {
-        user: { id: user.id, email: user.email },
         extra: { currentCreditsAmount: currentAmount },
+        user: { email: user.email, id: user.id },
       });
       return APIErrorResponse('Insufficient credits', 402);
     }
@@ -68,7 +67,7 @@ export async function POST(request: Request) {
     // Check if free user has exceeded the 5-minute call limit
     if (isOverCallLimit) {
       logger.info('Free user exceeded call limit', {
-        user: { id: user.id, email: user.email },
+        user: { email: user.email, id: user.id },
       });
       return APIErrorResponse(
         'Free users are limited to 5 minutes of calls. Please upgrade to continue.',
@@ -193,9 +192,9 @@ export async function POST(request: Request) {
       } catch (error) {
         captureException(error, {
           extra: {
+            context: 'resolveCharacterPrompt',
             selectedPresetId,
             userId: user.id,
-            context: 'resolveCharacterPrompt',
           },
         });
         return APIErrorResponse('Failed to resolve character prompt', 500);
@@ -231,28 +230,29 @@ export async function POST(request: Request) {
       (s) => s.id === selectedSceneId,
     )?.text;
     const sceneModified =
-      selectedSceneId != null &&
+      selectedSceneId !== null &&
+      selectedSceneId !== undefined &&
       (sceneInstructions?.trim() ?? '') !== (defaultSceneText?.trim() ?? '');
 
     // Create metadata for agent to start with
     const metadata = {
-      instructions: resolvedInstructions,
-      model,
-      voice: voiceObj.id,
-      temperature,
-      max_output_tokens: maxOutputTokens,
-      language: selectedLanguage,
+      character_id: selectedPresetId,
       initial_instruction:
         languageInitialInstructions[selectedLanguage] ||
         languageInitialInstructions[defaultLanguage],
-      user_id: user.id,
-      character_id: selectedPresetId,
-      scene_id: selectedSceneId ?? null,
-      scene_modified: sceneModified,
+      instructions: resolvedInstructions,
+      language: selectedLanguage,
+      max_output_tokens: maxOutputTokens,
       // Long-term memory opt-in (paid users only). Absent/false → the agent
       // stores nothing. Scope is per-user only for now (sexycall defaults
       // memory_scope to "user"); per-character scope is deferred.
       memory: memoryEnabled,
+      model,
+      scene_id: selectedSceneId ?? null,
+      scene_modified: sceneModified,
+      temperature,
+      user_id: user.id,
+      voice: voiceObj.id,
     };
 
     // Create access token
@@ -263,34 +263,34 @@ export async function POST(request: Request) {
 
     // Add room grants
     at.addGrant({
-      room: roomName,
-      roomJoin: true,
       canPublish: true,
       canPublishData: true,
       canSubscribe: true,
       canUpdateOwnMetadata: true,
+      room: roomName,
+      roomJoin: true,
     });
 
     // Create room configuration + dispatch agent
     at.roomConfig = new RoomConfiguration({
-      name: roomName,
       agents: [
         new RoomAgentDispatch({
           agentName: 'sexycall',
         }),
       ],
+      name: roomName,
     });
 
     logger.info('Generated LiveKit token', {
-      user: { id: user.id },
       extra: {
+        characterId: selectedPresetId,
+        model,
         roomName,
         selectedPresetId,
         selectedSceneId,
-        characterId: selectedPresetId,
         voice,
-        model,
       },
+      user: { id: user.id },
     });
 
     return NextResponse.json({
@@ -300,7 +300,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error generating token:', error);
     captureException(error, {
-      user: user ? { id: user.id, email: user.email } : undefined,
+      user: user ? { email: user.email, id: user.id } : undefined,
     });
     return APIErrorResponse('Error generating token', 500, {
       details: Error.isError(error) ? error.message : JSON.stringify(error),

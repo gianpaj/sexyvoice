@@ -47,25 +47,25 @@ export function mapApiCharacterToPreset(
 
   return {
     id: character.id,
-    name: character.name,
-    localizedDescriptions: character.localized_descriptions ?? {},
     image: character.image ?? undefined,
     instructions: character.prompts?.prompt ?? '',
+    isPublic: character.is_public,
+    localizedDescriptions: character.localized_descriptions ?? {},
     localizedInstructions: character.prompts?.localized_prompts ?? {},
+    name: character.name,
+    promptId: character.prompt_id,
     sessionConfig: {
-      model: normalizeModelId(sessionConfig.model),
-      voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
-      temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
         null,
+      model: normalizeModelId(sessionConfig.model),
+      temperature: sessionConfig.temperature ?? 0.8,
+      voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
     },
-    promptId: character.prompt_id,
     voiceId: character.voice_id,
     voiceName: character.voices?.name ?? undefined,
     voiceSampleUrl: character.voices?.sample_url ?? undefined,
-    isPublic: character.is_public,
   };
 }
 
@@ -89,13 +89,13 @@ export function buildSaveCharacterPayload(
 
   return {
     id: preset.id,
-    name: preset.name,
     localizedDescriptions: filterDefined(preset.localizedDescriptions),
-    prompt: instructions,
     localizedPrompts: {
       ...filterDefined(preset.localizedInstructions),
       [language]: instructions,
     },
+    name: preset.name,
+    prompt: instructions,
     sessionConfig: preset.sessionConfig,
     voiceName: preset.voiceName ?? preset.sessionConfig.voice,
   };
@@ -116,21 +116,21 @@ export async function saveCharacter(
 ): Promise<SaveCharacterResult> {
   try {
     const response = await fetch('/api/characters', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
 
     const data: ApiCharacterResponse & { error?: string } =
       await response.json();
 
     if (!response.ok) {
-      return { ok: false, error: data.error ?? 'Failed to save character' };
+      return { error: data.error ?? 'Failed to save character', ok: false };
     }
 
     return { ok: true, preset: mapApiCharacterToPreset(data) };
   } catch {
-    return { ok: false, error: 'Failed to save character' };
+    return { error: 'Failed to save character', ok: false };
   }
 }
 

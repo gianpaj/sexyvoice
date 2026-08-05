@@ -27,12 +27,12 @@ function creditsHref(lang: Locale) {
 
 const bannerRegistry = {
   blackFridayBanner: {
+    countdown: {
+      endDateEnvVar: 'NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE',
+    },
     cta: {
       loggedInHref: creditsHref,
       loggedOutHref: signupHref,
-    },
-    countdown: {
-      endDateEnvVar: 'NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE',
     },
     dismiss: getPromoDismiss('banner-black-friday-dismissed'),
     id: 'blackFridayBanner',

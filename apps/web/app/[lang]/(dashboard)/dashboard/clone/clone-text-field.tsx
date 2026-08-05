@@ -52,8 +52,8 @@ export function CloneTextField({
             maxLength={textMaxLength + 30}
             onChange={(e) => {
               dispatch({
-                type: 'patch',
                 patch: { text: e.target.value },
+                type: 'patch',
               });
             }}
             placeholder={t('textAreaPlaceholder')}

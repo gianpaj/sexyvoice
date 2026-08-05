@@ -61,13 +61,24 @@
         "useImportType": "error",
         "useExportType": "error",
         "noUselessElse": "error",
-        "useShorthandFunctionType": "error"
+        "useShorthandFunctionType": "error",
+        // These syntax preferences create broad churn without improving safety.
+        "noIncrementDecrement": "off",
+        "useDestructuring": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off",
         "noUnknownAtRules": "off",
         "noShadow": "off",
-        "noLeakedRender": "off"
+        "noLeakedRender": "off",
+        // Runtime data can violate TypeScript's static guarantees, so defensive
+        // null and exhaustiveness checks are intentional throughout the app.
+        "noUnnecessaryConditions": "off"
+      },
+      "complexity": {
+        // Existing generation and audio flows are intentionally orchestration-heavy.
+        // Refactor them independently rather than as part of a lint upgrade.
+        "noExcessiveCognitiveComplexity": "off"
       },
       "correctness": {
         "useUniqueElementIds": "off",
@@ -78,6 +89,12 @@
         "noMisusedPromises": "error"
       },
       "performance": {
+        // React Compiler handles function identity optimization where useful.
+        "noJsxPropsBind": "off",
+        // Pagination and media-processing loops often require ordered awaits.
+        "noAwaitInLoops": "off",
+        // Tiptap primitives intentionally expose small public entry points.
+        "noBarrelFile": "off",
         "noNamespaceImport": "warn",
         "useTopLevelRegex": "off"
       }
@@ -130,8 +147,12 @@
       // Enforce the shared APIErrorResponse helper for error responses in the
       // web app's API route handlers. Scoped here (not global) because other
       // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
-      "includes": ["apps/web/app/api/**"],
-      "plugins": ["./biome-plugins/use-api-error-response.grit"]
+      "includes": [
+        "apps/web/app/api/**"
+      ],
+      "plugins": [
+        "./biome-plugins/use-api-error-response.grit"
+      ]
     }
   ]
 }

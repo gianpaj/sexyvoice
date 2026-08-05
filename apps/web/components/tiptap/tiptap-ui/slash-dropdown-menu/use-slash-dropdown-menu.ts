@@ -22,11 +22,11 @@ const texts = {
 
   // Style
   text: {
-    title: 'Text',
-    subtext: 'Regular text paragraph',
-    keywords: ['p', 'paragraph', 'text'],
     badge: TypeIcon,
     group: 'Style',
+    keywords: ['p', 'paragraph', 'text'],
+    subtext: 'Regular text paragraph',
+    title: 'Text',
   },
 
   // Insert
@@ -40,10 +40,10 @@ const getItemImplementations = () => {
 
     // Style
     text: {
-      check: (editor: Editor) => isNodeInSchema('paragraph', editor),
       action: ({ editor }: { editor: Editor }) => {
         editor.chain().focus().setParagraph().run();
       },
+      check: (editor: Editor) => isNodeInSchema('paragraph', editor),
     },
     // Insert
 
@@ -121,7 +121,7 @@ export function useSlashDropdownMenu(config?: SlashMenuConfig) {
   };
 
   return {
-    getSlashMenuItems,
     config,
+    getSlashMenuItems,
   };
 }

@@ -10,7 +10,14 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import * as React from 'react';
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,12 +37,12 @@ import {
   type VoiceModel,
 } from '@/lib/voices';
 
-type VoiceSelectProps = {
-  voices?: Tables<'voices'>[];
-  value?: string;
-  onValueChange?: (voiceId: string) => void;
+interface VoiceSelectProps {
   className?: string;
-};
+  onValueChange?: (voiceId: string) => void;
+  value?: string;
+  voices?: Tables<'voices'>[];
+}
 
 function ModelDot({
   model,
@@ -60,7 +67,7 @@ function FilterChip({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -86,25 +93,21 @@ export function VoiceSelect({
   className,
 }: VoiceSelectProps) {
   const t = useTranslations('generate.voiceSelector');
-  const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState('');
-  const [modelFilter, setModelFilter] = React.useState<VoiceModel | null>(null);
-  const [genderFilter, setGenderFilter] = React.useState<VoiceGender | null>(
-    null,
-  );
-  const [internalValue, setInternalValue] = React.useState<string | undefined>(
-    value,
-  );
-  const [playingId, setPlayingId] = React.useState<string | null>(null);
-  const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
-  const audioRef = React.useRef<HTMLAudioElement | null>(null);
-  const listRef = React.useRef<HTMLUListElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [modelFilter, setModelFilter] = useState<VoiceModel | null>(null);
+  const [genderFilter, setGenderFilter] = useState<VoiceGender | null>(null);
+  const [internalValue, setInternalValue] = useState<string | undefined>(value);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
 
   const selectedId = value ?? internalValue;
   const selected = voices.find((v) => v.id === selectedId);
 
   // Start / stop audio preview when playingId changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!playingId) {
       audioRef.current?.pause();
       audioRef.current = null;
@@ -125,7 +128,7 @@ export function VoiceSelect({
   }, [playingId, voices]);
 
   // Stop audio when popover closes; reset highlight
-  React.useEffect(() => {
+  useEffect(() => {
     if (!open) {
       setPlayingId(null);
       setHighlightedIndex(-1);
@@ -138,32 +141,25 @@ export function VoiceSelect({
     setOpen(false);
   };
 
-  const togglePreview = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+  const togglePreview = (id: string) => {
     setPlayingId((prev) => (prev === id ? null : id));
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setHighlightedIndex((prev) =>
-          filtered.length === 0
-            ? -1
-            : prev < filtered.length - 1
-              ? prev + 1
-              : 0,
-        );
+        setHighlightedIndex((prev) => {
+          if (filtered.length === 0) return -1;
+          return prev < filtered.length - 1 ? prev + 1 : 0;
+        });
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setHighlightedIndex((prev) =>
-          filtered.length === 0
-            ? -1
-            : prev > 0
-              ? prev - 1
-              : filtered.length - 1,
-        );
+        setHighlightedIndex((prev) => {
+          if (filtered.length === 0) return -1;
+          return prev > 0 ? prev - 1 : filtered.length - 1;
+        });
         break;
       case 'Enter':
         e.preventDefault();
@@ -183,10 +179,12 @@ export function VoiceSelect({
         e.preventDefault();
         if (filtered.length > 0) setHighlightedIndex(filtered.length - 1);
         break;
+      default:
+        break;
     }
   };
 
-  const filtered = React.useMemo(() => {
+  const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return voices.filter((v) => {
       const displayModel = getDisplayModel(v.model);
@@ -204,12 +202,12 @@ export function VoiceSelect({
   }, [voices, query, modelFilter, genderFilter]);
 
   // Reset highlight whenever the filtered list changes
-  React.useEffect(() => {
+  useEffect(() => {
     setHighlightedIndex(-1);
-  }, [filtered]);
+  }, []);
 
   // Scroll highlighted item into view
-  React.useEffect(() => {
+  useEffect(() => {
     if (highlightedIndex < 0 || !listRef.current) return;
     const items =
       listRef.current.querySelectorAll<HTMLElement>('[data-voice-item]');
@@ -224,7 +222,7 @@ export function VoiceSelect({
   };
 
   // Only show model filter chips that are represented in the voices list
-  const presentModels = React.useMemo(
+  const presentModels = useMemo(
     () =>
       VOICE_MODELS.filter((m) =>
         voices.some((v) => getDisplayModel(v.model) === m),
@@ -232,7 +230,7 @@ export function VoiceSelect({
     [voices],
   );
 
-  const presentGenders = React.useMemo(
+  const presentGenders = useMemo(
     () => VOICE_GENDERS.filter((g) => voices.some((v) => v.type === g)),
     [voices],
   );
@@ -373,7 +371,7 @@ export function VoiceSelect({
               </p>
             </div>
           ) : (
-            <ul
+            <div
               aria-label={t('voiceListLabel')}
               className="p-1"
               id="voice-select-listbox"
@@ -387,50 +385,54 @@ export function VoiceSelect({
                 const displayModel = getDisplayModel(voice.model);
                 const hasSample = Boolean(voice.sample_url);
                 return (
-                  <li
+                  <div
                     aria-selected={isSelected}
+                    className={cn(
+                      'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 transition-colors',
+                      isSelected || isHighlighted
+                        ? 'bg-accent'
+                        : 'hover:bg-accent',
+                    )}
                     data-voice-item
                     id={`voice-item-${voice.id}`}
                     key={voice.id}
                     role="option"
+                    tabIndex={-1}
                   >
+                    {hasSample ? (
+                      <button
+                        aria-label={
+                          isPlaying
+                            ? t('stopPreview', { name: voice.name })
+                            : t('previewVoice', { name: voice.name })
+                        }
+                        className={cn(
+                          'flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          isPlaying
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'bg-background text-foreground hover:border-primary hover:text-primary',
+                        )}
+                        onClick={() => togglePreview(voice.id)}
+                        type="button"
+                      >
+                        {isPlaying ? (
+                          <Pause aria-hidden className="size-3.5" />
+                        ) : (
+                          <Play
+                            aria-hidden
+                            className="size-3.5 translate-x-px"
+                          />
+                        )}
+                      </button>
+                    ) : (
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent" />
+                    )}
+
                     <button
-                      className={cn(
-                        'group flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors',
-                        isSelected || isHighlighted
-                          ? 'bg-accent'
-                          : 'hover:bg-accent',
-                      )}
+                      className="flex min-w-0 flex-1 items-center text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => handleSelect(voice.id)}
                       type="button"
                     >
-                      {hasSample ? (
-                        <span
-                          aria-label={
-                            isPlaying
-                              ? t('stopPreview', { name: voice.name })
-                              : t('previewVoice', { name: voice.name })
-                          }
-                          className={cn(
-                            'flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors',
-                            isPlaying
-                              ? 'border-primary bg-primary text-primary-foreground'
-                              : 'bg-background text-foreground hover:border-primary hover:text-primary',
-                          )}
-                          onClick={(e) => togglePreview(e, voice.id)}
-                          role="button"
-                          tabIndex={-1}
-                        >
-                          {isPlaying ? (
-                            <Pause className="size-3.5" />
-                          ) : (
-                            <Play className="size-3.5 translate-x-px" />
-                          )}
-                        </span>
-                      ) : (
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent" />
-                      )}
-
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex items-center gap-2">
                           <span className="truncate font-medium text-sm">
@@ -455,16 +457,17 @@ export function VoiceSelect({
                       </span>
 
                       <Check
+                        aria-hidden
                         className={cn(
                           'size-4 shrink-0 text-primary transition-opacity',
                           isSelected ? 'opacity-100' : 'opacity-0',
                         )}
                       />
                     </button>
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
+            </div>
           )}
         </ScrollArea>
 

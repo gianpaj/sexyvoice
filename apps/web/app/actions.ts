@@ -144,10 +144,10 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         captureException(
           new Error(result.reason || 'Failed to delete file from R2 storage.'),
           {
-            user: { id: user.id, email: user.email },
             extra: {
               file,
             },
+            user: { email: user.email, id: user.id },
           },
         );
         console.error(
@@ -161,8 +161,8 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
   const { error: deleteError, data: deleteData } = await supabase
     .from('audio_files')
     .update({
-      status: 'deleted',
       deleted_at: deletedAtIso,
+      status: 'deleted',
     })
     .eq('user_id', user.id)
     .select();
@@ -192,11 +192,11 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
 
       if (deletePromptsError) {
         captureException(deletePromptsError, {
-          user: { id: user.id, email: user.email },
           extra: {
-            promptIds,
             context: 'custom character prompt cleanup during account deletion',
+            promptIds,
           },
+          user: { email: user.email, id: user.id },
         });
       }
     }
@@ -211,19 +211,19 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     throw new Error('User deletion failed');
   }
   logger.info('User deleted', {
-    userId: user.id,
+    apiKeysDeleted: apiKeys ? apiKeys.length : 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    apiKeysDeleted: apiKeys ? apiKeys.length : 0,
     usageEventsDeleted: usageEventsCount ?? 0,
+    userId: user.id,
   });
 
   console.log('User deleted', {
-    userId: user.id,
+    apiKeysDeleted: apiKeys?.length ?? 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    apiKeysDeleted: apiKeys?.length ?? 0,
     usageEventsDeleted: usageEventsCount ?? 0,
+    userId: user.id,
   });
   await supabase.auth.signOut();
 

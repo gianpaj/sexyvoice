@@ -15,13 +15,13 @@ const routesPerLocale = (routes: string[]): string[] =>
 
 const clearOauthCallbackCookie = (response: NextResponse) => {
   response.cookies.set({
-    name: OAUTH_CALLBACK_COOKIE_NAME,
-    value: '',
     httpOnly: true,
     maxAge: 0,
+    name: OAUTH_CALLBACK_COOKIE_NAME,
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
+    value: '',
   });
 
   return response;
@@ -92,14 +92,14 @@ export const updateSession = async (
         captureMessage(
           'OAuth callback completed but dashboard session was missing.',
           {
+            extra: {
+              locale,
+              pathname,
+            },
             level: 'error',
             tags: {
               area: 'auth',
               flow: 'oauth-callback',
-            },
-            extra: {
-              pathname,
-              locale,
             },
           },
         );
@@ -110,11 +110,11 @@ export const updateSession = async (
       console.log(
         'Dashboard request missing user without valid OAuth callback marker',
         {
-          pathname,
-          locale,
-          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
-          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
           hasOauthCallbackMarker,
+          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+          locale,
+          pathname,
+          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
         },
       );
 

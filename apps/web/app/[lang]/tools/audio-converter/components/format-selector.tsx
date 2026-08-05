@@ -20,13 +20,13 @@ interface Props {
 }
 
 const formats: { value: AudioFormat; label: string }[] = [
-  { value: 'mp3', label: 'MP3' },
-  { value: 'wav', label: 'WAV' },
-  { value: 'aac', label: 'AAC' },
-  { value: 'ogg', label: 'OGG' },
-  { value: 'flac', label: 'FLAC' },
-  { value: 'm4a', label: 'M4A' },
-  { value: 'mp4', label: 'MP4' },
+  { label: 'MP3', value: 'mp3' },
+  { label: 'WAV', value: 'wav' },
+  { label: 'AAC', value: 'aac' },
+  { label: 'OGG', value: 'ogg' },
+  { label: 'FLAC', value: 'flac' },
+  { label: 'M4A', value: 'm4a' },
+  { label: 'MP4', value: 'mp4' },
 ];
 
 export function FormatSelector({ value, onChange, disabled }: Props) {

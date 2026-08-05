@@ -31,13 +31,13 @@ export const handleDeleteAction = async (id: string) => {
 
     if (fetchError) {
       captureException(fetchError, {
-        user: {
-          id: user.id,
-          email: user.email,
-        },
         extra: {
           audioId: id,
           errorData: fetchError,
+        },
+        user: {
+          email: user.email,
+          id: user.id,
         },
       });
       throw new Error('Audio file not found');
@@ -51,8 +51,8 @@ export const handleDeleteAction = async (id: string) => {
     const { error: deleteError } = await supabase
       .from('audio_files')
       .update({
-        status: 'deleted',
         deleted_at: new Date().toISOString(),
+        status: 'deleted',
       })
       .eq('id', id)
       .eq('user_id', user.id);
@@ -74,10 +74,10 @@ export const handleDeleteAction = async (id: string) => {
 
     if (deleteError) {
       captureException(deleteError, {
-        user: { id: user.id, email: user.email },
         extra: {
           audioId: id,
         },
+        user: { email: user.email, id: user.id },
       });
       throw new Error('Failed to delete audio file');
     }

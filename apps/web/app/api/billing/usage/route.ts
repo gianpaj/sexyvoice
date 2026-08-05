@@ -58,7 +58,6 @@ function bucketStart(date: Date, start: Date, widthDays: number): Date {
   return addDays(start, bucketOffset);
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Endpoint supports multiple filter/group/bucket query modes.
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
   const {
@@ -174,9 +173,9 @@ export async function GET(request: NextRequest) {
 
     if (!bucketMap.has(bucketKey)) {
       bucketMap.set(bucketKey, {
-        start: currentBucketStart,
         end: currentBucketEnd,
         groups: new Map(),
+        start: currentBucketStart,
       });
     }
 
@@ -189,15 +188,15 @@ export async function GET(request: NextRequest) {
 
     if (!bucket.groups.has(groupKey)) {
       bucket.groups.set(groupKey, {
-        source_type: groupBy === 'source_type' ? row.source_type : null,
         api_key_id: groupBy === 'api_key_id' ? row.api_key_id : null,
         model: groupBy === 'model' ? row.model : null,
         requests: 0,
+        source_type: groupBy === 'source_type' ? row.source_type : null,
+        total_credits_used: 0,
+        total_dollar_amount: 0,
+        total_duration_seconds: 0,
         total_input_chars: 0,
         total_output_chars: 0,
-        total_duration_seconds: 0,
-        total_dollar_amount: 0,
-        total_credits_used: 0,
       });
     }
 
@@ -215,24 +214,24 @@ export async function GET(request: NextRequest) {
   }
 
   const buckets = Array.from(bucketMap.values()).map((bucket) => ({
-    object: 'bucket' as const,
-    start_time: Math.floor(bucket.start.getTime() / 1000),
     end_time: Math.floor(bucket.end.getTime() / 1000),
-    start_time_iso: bucket.start.toISOString(),
     end_time_iso: bucket.end.toISOString(),
+    object: 'bucket' as const,
     results: Array.from(bucket.groups.values()),
+    start_time: Math.floor(bucket.start.getTime() / 1000),
+    start_time_iso: bucket.start.toISOString(),
   }));
 
   return NextResponse.json({
-    object: 'list',
+    api_key_id: apiKeyId,
     bucket_width: bucketWidth,
-    start_time: Math.floor(start.getTime() / 1000),
+    data: buckets,
     end_time: Math.floor(end.getTime() / 1000),
-    start_time_iso: start.toISOString(),
     end_time_iso: end.toISOString(),
     group_by: groupBy,
+    object: 'list',
     source_type: sourceType ?? null,
-    api_key_id: apiKeyId,
-    data: buckets,
+    start_time: Math.floor(start.getTime() / 1000),
+    start_time_iso: start.toISOString(),
   });
 }

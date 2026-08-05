@@ -23,6 +23,12 @@ export function buildGeminiTtsConfig({
     responseModalities: ['AUDIO'],
     ...(seed === undefined ? {} : { seed }),
     ...(temperature === undefined ? {} : { temperature }),
+    safetySettings: [
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+    ],
     speechConfig: {
       voiceConfig: {
         prebuiltVoiceConfig: {
@@ -30,12 +36,6 @@ export function buildGeminiTtsConfig({
         },
       },
     },
-    safetySettings: [
-      {
-        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: HarmBlockThreshold.BLOCK_NONE,
-      },
-    ],
   };
 }
 
@@ -84,8 +84,8 @@ export function createSseEvent(
 }
 
 export const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
   'Cache-Control': 'no-cache, no-transform',
   Connection: 'keep-alive',
+  'Content-Type': 'text/event-stream',
   'X-Accel-Buffering': 'no',
 } as const;

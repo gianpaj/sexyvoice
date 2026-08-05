@@ -64,15 +64,15 @@ export async function GET(request: NextRequest) {
     const subscriptionTransactions = subscriptions.data.map((subscription) => {
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       return {
-        id: subscription.id,
         amount: subscription.items.data[0]?.price?.unit_amount || 0,
-        type: 'subscription',
-        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
         created: subscription.created,
-        status: subscription.status,
         current_period_end: subscription.current_period_end,
         current_period_start: subscription.current_period_start,
+        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
+        id: subscription.id,
         invoice_id: typeof invoice === 'object' ? invoice.id : invoice,
+        status: subscription.status,
+        type: 'subscription',
       };
     });
 

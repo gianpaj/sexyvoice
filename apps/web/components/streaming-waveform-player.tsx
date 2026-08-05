@@ -68,16 +68,16 @@ export function StreamingWaveformPlayer({
   useEffect(() => {
     if (!containerRef.current) return;
     const ws = WaveSurfer.create({
-      container: containerRef.current,
-      height: waveformHeight,
-      waveColor,
-      progressColor,
-      cursorColor: 'transparent',
       barGap: 2,
       barRadius: 2,
       barWidth: 2,
-      peaks: [[0, 0]],
+      container: containerRef.current,
+      cursorColor: 'transparent',
       duration: 1,
+      height: waveformHeight,
+      peaks: [[0, 0]],
+      progressColor,
+      waveColor,
     });
     wsRef.current = ws;
     setIsWsReady(true);
@@ -164,10 +164,10 @@ export function StreamingWaveformPlayer({
           ws.setTime(time);
         }
         if (wasPlaying) {
-          attemptPlayback(
+          return attemptPlayback(
             () => ws.play(),
             () => setIsWsPlaying(false),
-          ).catch(() => undefined);
+          );
         }
       })
       .catch(() => undefined);

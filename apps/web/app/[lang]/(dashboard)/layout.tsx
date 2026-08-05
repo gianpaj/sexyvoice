@@ -7,7 +7,7 @@ import {
 import { cookies } from 'next/headers';
 import { getMessages } from 'next-intl/server';
 
-import { ReactQueryClientProvider } from '@/components/ReactQueryClientProvider';
+import { ReactQueryClientProvider } from '@/components/react-query-client-provider';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';

@@ -55,10 +55,10 @@ export function PresetSave() {
   const handleSaveAsNew = async () => {
     const result = await saveCharacter({
       id: '',
-      name,
       localizedDescriptions: { [pgState.language]: description },
-      prompt: pgState.instructions,
       localizedPrompts: { [pgState.language]: pgState.instructions },
+      name,
+      prompt: pgState.instructions,
       sessionConfig: pgState.sessionConfig,
       voiceName: pgState.sessionConfig.voice,
     });
@@ -67,8 +67,8 @@ export function PresetSave() {
       return;
     }
 
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
-    dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: result.preset.id });
+    dispatch({ payload: result.preset, type: 'SAVE_CUSTOM_CHARACTER' });
+    dispatch({ payload: result.preset.id, type: 'SET_SELECTED_PRESET_ID' });
     setOpen(false);
     toast.success(t('characterCreated'));
   };
@@ -95,7 +95,7 @@ export function PresetSave() {
       return;
     }
 
-    dispatch({ type: 'SAVE_CUSTOM_CHARACTER', payload: result.preset });
+    dispatch({ payload: result.preset, type: 'SAVE_CUSTOM_CHARACTER' });
     toast.success(t('characterSaved'));
   };
 

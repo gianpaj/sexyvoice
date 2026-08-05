@@ -127,12 +127,11 @@ export const SuggestionMenu = ({
     internalDecorationNode,
     1000,
     {
-      placement: 'bottom-start',
       middleware: [
         offset(10),
         flip({
-          mainAxis: true,
           crossAxis: false,
+          mainAxis: true,
         }),
         shift(),
         size({
@@ -152,9 +151,10 @@ export const SuggestionMenu = ({
       ],
       onOpenChange(open) {
         if (!open) {
-          dispatch({ type: 'set-open', payload: false });
+          dispatch({ payload: false, type: 'set-open' });
         }
       },
+      placement: 'bottom-start',
       ...floatingOptions,
     },
   );
@@ -216,9 +216,6 @@ export const SuggestionMenu = ({
     }
 
     const suggestion = Suggestion({
-      pluginKey: normalizedPluginKey,
-      editor,
-
       command({ editor, range, props }) {
         if (!range) {
           return;
@@ -249,20 +246,33 @@ export const SuggestionMenu = ({
           rangeToUse.to += 1;
         }
 
-        props.onSelect({ editor, range: rangeToUse, context: props.context });
+        props.onSelect({ context: props.context, editor, range: rangeToUse });
       },
+      editor,
+      pluginKey: normalizedPluginKey,
 
       render: () => ({
+        onExit: () => {
+          resetMenuState();
+        },
+
+        onKeyDown: (props: SuggestionKeyDownProps) => {
+          if (props.event.key === 'Escape') {
+            closePopup();
+            return true;
+          }
+          return false;
+        },
         onStart: (props: SuggestionProps<SuggestionItem>) => {
           dispatch({
-            type: 'update',
             payload: {
-              decorationNode: (props.decorationNode as HTMLElement) ?? null,
               command: props.command,
+              decorationNode: (props.decorationNode as HTMLElement) ?? null,
               items: props.items,
               query: props.query,
               show: true,
             },
+            type: 'update',
           });
         },
 
@@ -278,26 +288,14 @@ export const SuggestionMenu = ({
           }
 
           dispatch({
-            type: 'update',
             payload: {
-              decorationNode: (props.decorationNode as HTMLElement) ?? null,
               command: props.command,
+              decorationNode: (props.decorationNode as HTMLElement) ?? null,
               items: props.items,
               query: props.query,
             },
+            type: 'update',
           });
-        },
-
-        onKeyDown: (props: SuggestionKeyDownProps) => {
-          if (props.event.key === 'Escape') {
-            closePopup();
-            return true;
-          }
-          return false;
-        },
-
-        onExit: () => {
-          resetMenuState();
         },
       }),
       ...internalSuggestionPropsRef.current,
@@ -325,10 +323,10 @@ export const SuggestionMenu = ({
 
   const { selectedIndex } = useMenuNavigation({
     editor,
-    query: internalQuery,
     items: internalItems,
-    onSelect,
     onClose: closePopup,
+    onSelect,
+    query: internalQuery,
   });
 
   if (!(isMounted && show && editor)) {
@@ -348,8 +346,8 @@ export const SuggestionMenu = ({
     >
       {children({
         items: internalItems,
-        selectedIndex,
         onSelect,
+        selectedIndex,
       })}
     </div>
   );

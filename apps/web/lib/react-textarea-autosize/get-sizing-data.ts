@@ -1,8 +1,7 @@
 // import isBrowser from '#is-browser';
 // export const noop = () => {};
 
-// biome-ignore lint/suspicious/noExplicitAny: it's grand
-const pick = <Obj extends { [key: string]: any }, Key extends keyof Obj>(
+const pick = <Obj extends object, Key extends keyof Obj>(
   props: Key[],
   obj: Obj,
 ): Pick<Obj, Key> =>
@@ -58,7 +57,7 @@ export interface SizingData {
 const isIE =
   typeof window === 'undefined'
     ? false
-    : !!(document.documentElement as any).currentStyle;
+    : 'currentStyle' in document.documentElement;
 
 const getSizingData = (node: HTMLElement): SizingData | null => {
   const style = window.getComputedStyle(node);
@@ -96,9 +95,9 @@ const getSizingData = (node: HTMLElement): SizingData | null => {
     Number.parseFloat(sizingStyle.borderTopWidth!);
 
   return {
-    sizingStyle,
-    paddingSize,
     borderSize,
+    paddingSize,
+    sizingStyle,
   };
 };
 

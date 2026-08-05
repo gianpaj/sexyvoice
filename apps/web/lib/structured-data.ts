@@ -10,31 +10,24 @@ export const createArticleSchema = (
 ): WithContext<Article> => ({
   '@context': 'https://schema.org',
   '@type': 'TechArticle',
-  headline: title,
-  description,
-  author: {
-    '@type': 'Organization',
-    name: 'SexyVoice.ai',
-    url: 'https://sexyvoice.ai',
-  },
-  publisher: {
-    '@type': 'Organization',
-    name: 'SexyVoice.ai',
-    logo: {
-      '@type': 'ImageObject',
-      url: 'https://sexyvoice.ai/sexyvoice.png',
-    },
-  },
-  datePublished,
-  dateModified: datePublished,
-  url: `https://sexyvoice.ai/${locale}/blog/${slug}`,
-  inLanguage: locale,
   about: [
     'Voice Cloning',
     'Artificial Intelligence',
     'Speech Synthesis',
     'Machine Learning',
   ],
+  articleSection: 'Technology',
+  author: {
+    '@type': 'Organization',
+    name: 'SexyVoice.ai',
+    url: 'https://sexyvoice.ai',
+  },
+  dateModified: datePublished,
+  datePublished,
+  description,
+  headline: title,
+  inLanguage: locale,
+  isAccessibleForFree: true,
   keywords: [
     'AI voice cloning',
     'voice synthesis',
@@ -43,15 +36,22 @@ export const createArticleSchema = (
     'speech generation',
     'voice technology',
   ],
-  articleSection: 'Technology',
-  wordCount: 2000,
-  isAccessibleForFree: true,
   mainEntity: {
     '@type': 'Thing',
-    name: 'AI Voice Cloning Technology',
     description:
       'Advanced artificial intelligence technology for replicating and synthesizing human voices',
+    name: 'AI Voice Cloning Technology',
   },
+  publisher: {
+    '@type': 'Organization',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://sexyvoice.ai/sexyvoice.png',
+    },
+    name: 'SexyVoice.ai',
+  },
+  url: `https://sexyvoice.ai/${locale}/blog/${slug}`,
+  wordCount: 2000,
 });
 
 // Breadcrumb schema generator
@@ -62,8 +62,8 @@ export const createBreadcrumbSchema = (
   '@type': 'BreadcrumbList',
   itemListElement: items.map((item, index) => ({
     '@type': 'ListItem',
-    position: index + 1,
-    name: item.name,
     item: item.url,
+    name: item.name,
+    position: index + 1,
   })),
 });
