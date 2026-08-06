@@ -18,7 +18,11 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link className="z-10 flex items-end gap-0" href="/">
+        <Link
+          className="z-10 flex items-end gap-0"
+          data-visual-test="transparent"
+          href="/"
+        >
           <div className="aspect-square">
             <Image
               alt="Logo"
