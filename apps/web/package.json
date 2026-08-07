@@ -107,7 +107,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "^7.71.2",
-    "recharts": "2.15.4",
+    "recharts": "3.8.0",
     "rehype-highlight": "^7.0.2",
     "rehype-highlight-code-lines": "^1.2.2",
     "remark-gfm": "^4.0.1",
