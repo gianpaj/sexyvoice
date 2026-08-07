@@ -6,13 +6,9 @@ permissions:
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches:
-      - main
-      - develop
+    branches: [main]
   push:
-    branches:
-      - main
-      - develop
+    branches: [main]
   # Allow manual trigger
   workflow_dispatch:
 

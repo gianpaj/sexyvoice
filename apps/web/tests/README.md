@@ -12,7 +12,8 @@ pnpm add -D vitest @vitest/ui msw @types/supertest supertest @vitest/coverage-v8
 
 ## Test Structure
 
-### Files:
+### Files
+
 - `setup.ts` - Test environment setup with MSW mocking
 - `generate-voice.test.ts` - Comprehensive tests for the generate voice API route
 - `clone-voice.test.ts` - Comprehensive tests for the voice cloning API route
@@ -25,31 +26,38 @@ pnpm add -D vitest @vitest/ui msw @types/supertest supertest @vitest/coverage-v8
 The test setup includes comprehensive mocks for all external services:
 
 #### Supabase
+
 - User authentication
 - Database operations (credits, voices, audio_files)
 - Row Level Security (RLS) policies
 
 #### Redis (Upstash)
+
 - GET/SET operations for audio caching
 - Cache hit/miss scenarios
 
 #### AI Services
+
 - **Replicate API**: Voice generation with prediction handling
 - **Google Generative AI**: TTS with pro/flash model fallback
 - **Mistral**: Voice cloning with `voxtral-mini-tts-2603` for supported locales
 - **Replicate**: Voice cloning with `resemble-ai/chatterbox-multilingual` for other supported locales
 
 #### Storage
+
 - **Cloudflare R2**: Audio file upload and storage
 
 #### Analytics & Monitoring
+
 - **PostHog**: Event tracking
 - **Sentry**: Error logging and monitoring
 
 #### Background Jobs
+
 - **Inngest**: Scheduled cleanup tasks for uploaded audio files
 
 #### Stripe (for webhook tests)
+
 - **Webhook signature verification**: Using `stripe.webhooks.generateTestHeaderString()`
 - **Event processing**: Checkout sessions, subscriptions, invoices, payment intents
 - **Customer data syncing**: Redis/KV storage updates
@@ -80,43 +88,51 @@ pnpm test:legacy
 The voice generation tests cover:
 
 ### Input Validation
+
 - Empty request body
 - Missing required parameters (text, voice)
 - Text length limits (500 chars for both Replicate and Gemini)
 - Invalid voice names
 
 ### Authentication & Authorization
+
 - Unauthenticated users
 - User session validation
 
 ### Credit System
+
 - Insufficient credits scenarios
 - Credit estimation and deduction
 - Credit transaction logging
 
 ### Voice Generation
+
 - Replicate API integration
 - Google Gemini API integration (with fallback)
 - Audio format handling (ReadableStream, buffers)
 - Error handling for AI service failures
 
 ### Caching
+
 - Redis cache hits/misses
 - Hash generation consistency
 - Cache invalidation
 
 ### Audio Processing
+
 - WAV conversion
 - Blob storage upload
 - URL generation and caching
 
 ### Error Handling
+
 - Network failures
 - API quota limits (429 errors)
 - General server errors (500s)
 - Request abortion handling
 
 ### Analytics Integration
+
 - PostHog event tracking
 - Sentry error reporting
 
@@ -127,6 +143,7 @@ The voice generation tests cover:
 The voice cloning tests cover:
 
 ### Input Validation
+
 - Content-Type verification (multipart/form-data required)
 - Missing required parameters (text, audio file)
 - Text length limits (500 characters max)
@@ -136,16 +153,19 @@ The voice cloning tests cover:
 - Audio duration detection failures
 
 ### Authentication & Authorization
+
 - Unauthenticated users
 - User session validation
 
 ### Credit System
+
 - Insufficient credits scenarios
 - Credit estimation for voice cloning (higher cost than regular generation)
 - Credit deduction after successful cloning
 - Credit transaction logging
 
 ### Voice Cloning
+
 - Mistral API integration (`voxtral-mini-tts-2603`) for supported locales
 - Replicate API integration (`resemble-ai/chatterbox-multilingual`) for other supported locales
 - Audio file upload and processing
@@ -154,23 +174,27 @@ The voice cloning tests cover:
 - Error handling for AI service failures
 
 ### Caching
+
 - Redis cache hits/misses for generated audio
 - Hash generation based on locale + text + audio blob URL
 - Cache invalidation
 - Reuse of existing uploaded audio files
 
 ### Audio File Management
+
 - Audio file upload to Cloudflare R2 storage
 - Input audio file caching and reuse
 - Output audio file generation and storage
 - Filename sanitization (special characters, unicode)
 
 ### Background Tasks
+
 - Inngest cleanup scheduling
 - Audio file deletion after 1 hour
 - Event payload validation
 
 ### Error Handling
+
 - Network failures
 - API errors from Mistral or Replicate
 - Cloudflare R2 storage failures
@@ -178,11 +202,13 @@ The voice cloning tests cover:
 - Request abortion handling
 
 ### Analytics Integration
+
 - PostHog event tracking
 - Sentry error reporting
 - Event tracking for cached results (0 credits)
 
 ### Audio Format Support
+
 - MP3 file handling
 - WAV file handling
 - OGG file handling
@@ -195,12 +221,14 @@ The voice cloning tests cover:
 The Stripe webhook tests cover:
 
 ### Signature Verification
+
 - Missing signature header validation
 - Invalid signature handling
 - Valid signature verification using Stripe's official `generateTestHeaderString` method
 - Authentic webhook signature generation
 
 ### Checkout Session Events
+
 - One-time topup purchases (mode: 'payment')
   - Credit awarding
   - Transaction recording
@@ -214,18 +242,21 @@ The Stripe webhook tests cover:
 The Stripe admin tests cover the `createOrRetrieveCustomer()` function:
 
 #### Happy Path
+
 - Retrieve existing customer by Stripe ID with correct metadata
 - Find customer by supabaseUUID metadata when not found by ID
 - Find customer by email when not found by UUID or existing Stripe ID
 - Create new customer when none exists
 
 #### Metadata Handling
+
 - Update metadata when supabaseUUID is missing
 - Update metadata when supabaseUUID differs from userId
 - Preserve existing metadata when updating
 - Handle null or missing metadata
 
 #### Error Handling
+
 - Customer retrieval errors with graceful fallback
 - Metadata update failures with Sentry logging
 - Deleted customer handling
@@ -233,17 +264,20 @@ The Stripe admin tests cover the `createOrRetrieveCustomer()` function:
 - Database update errors in Supabase
 
 #### Multiple Customers Handling
+
 - Use first customer when multiple found by UUID
 - Use first customer when multiple found by email
 - Log warning messages for duplicate customers
 - Handle edge cases with empty customer lists
 
 #### Database Updates
+
 - Update stripe_id in profiles table
 - Handle database connection failures
 - Ensure proper Supabase query chaining
 
 #### Edge Cases
+
 - Handle customer with null metadata
 - Handle undefined existingStripeId parameter
 - Handle null existingStripeId parameter
@@ -251,6 +285,7 @@ The Stripe admin tests cover the `createOrRetrieveCustomer()` function:
 - Handle special characters in email addresses
 
 #### Logging and Monitoring
+
 - Log info messages when creating new customers
 - Capture warning messages for multiple customers
 - Send error context to Sentry with full metadata
@@ -258,25 +293,26 @@ The Stripe admin tests cover the `createOrRetrieveCustomer()` function:
 ## Mock Setup for Stripe Admin Tests
 
 ### Overview
+
 The `stripe-admin.test.ts` file uses Vitest with comprehensive mocking for Stripe, Supabase, and Sentry. All external API calls are mocked to ensure tests are fast, reliable, and don't depend on external services.
 
 ### Stripe Mock Setup
 
 ```typescript
-vi.mock('@/lib/stripe/stripe-admin', async () => {
-  const actual = await vi.importActual<
-    typeof import('@/lib/stripe/stripe-admin')
-  >('@/lib/stripe/stripe-admin');
+vi.mock("@/lib/stripe/stripe-admin", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/stripe/stripe-admin")>(
+    "@/lib/stripe/stripe-admin",
+  );
 
   return {
     ...actual,
     stripe: {
       customers: {
-        retrieve: vi.fn(),      // Fetch existing customer by ID
-        search: vi.fn(),        // Search customers by metadata or other criteria
-        list: vi.fn(),          // List customers by email or other filters
-        update: vi.fn(),        // Update customer properties (e.g., metadata)
-        create: vi.fn(),        // Create new customer
+        retrieve: vi.fn(), // Fetch existing customer by ID
+        search: vi.fn(), // Search customers by metadata or other criteria
+        list: vi.fn(), // List customers by email or other filters
+        update: vi.fn(), // Update customer properties (e.g., metadata)
+        create: vi.fn(), // Create new customer
       },
     },
   };
@@ -284,6 +320,7 @@ vi.mock('@/lib/stripe/stripe-admin', async () => {
 ```
 
 Each mocked method returns a Vitest spy function (`vi.fn()`) that you can:
+
 - Control the return value with `.mockResolvedValue()`
 - Simulate errors with `.mockRejectedValue()`
 - Verify it was called with `.toHaveBeenCalledWith()`
@@ -291,7 +328,7 @@ Each mocked method returns a Vitest spy function (`vi.fn()`) that you can:
 ### Supabase Mock Setup
 
 ```typescript
-vi.mock('@/lib/supabase/server', () => ({
+vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(),
 }));
 ```
@@ -311,17 +348,15 @@ beforeEach(() => {
 ```
 
 This allows testing the Supabase query chain:
+
 ```typescript
-await supabase
-  .from('profiles')
-  .update({ stripe_id: customerId })
-  .eq('id', userId);
+await supabase.from("profiles").update({ stripe_id: customerId }).eq("id", userId);
 ```
 
 ### Sentry Mock Setup
 
 ```typescript
-vi.mock('@sentry/nextjs', () => ({
+vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
   logger: {
@@ -338,7 +373,7 @@ This allows verifying error handling:
 expect(Sentry.captureException).toHaveBeenCalledWith(
   error,
   expect.objectContaining({
-    level: 'error',
+    level: "error",
     extra: { customerId, email, userId },
   }),
 );
@@ -350,10 +385,10 @@ expect(Sentry.captureException).toHaveBeenCalledWith(
 
 ```typescript
 const customer: Stripe.Customer = {
-  id: 'cus_123',
-  object: 'customer',
+  id: "cus_123",
+  object: "customer",
   metadata: { supabaseUUID: userId },
-  email: 'test@example.com',
+  email: "test@example.com",
 } as Stripe.Customer;
 
 vi.mocked(stripe.customers.retrieve).mockResolvedValue(customer);
@@ -363,17 +398,17 @@ vi.mocked(stripe.customers.retrieve).mockResolvedValue(customer);
 
 ```typescript
 vi.mocked(stripe.customers.search).mockResolvedValue({
-  object: 'search_result',
+  object: "search_result",
   data: [customer1, customer2],
   has_more: false,
-  url: '',
+  url: "",
 });
 ```
 
 #### Mocking API Errors
 
 ```typescript
-const error = new Error('API Rate Limit Exceeded');
+const error = new Error("API Rate Limit Exceeded");
 vi.mocked(stripe.customers.retrieve).mockRejectedValue(error);
 ```
 
@@ -381,17 +416,17 @@ vi.mocked(stripe.customers.retrieve).mockRejectedValue(error);
 
 ```typescript
 vi.mocked(stripe.customers.search).mockResolvedValue({
-  object: 'search_result',
+  object: "search_result",
   data: [],
   has_more: false,
-  url: '',
+  url: "",
 });
 ```
 
 ### Test Structure Template
 
 ```typescript
-describe('Feature or Function', () => {
+describe("Feature or Function", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset mocks before each test
@@ -402,7 +437,7 @@ describe('Feature or Function', () => {
     // Clean up after each test
   });
 
-  it('should do something when condition is met', async () => {
+  it("should do something when condition is met", async () => {
     // Arrange: Set up mocks
     vi.mocked(stripe.customers.retrieve).mockResolvedValue(customer);
 
@@ -453,11 +488,11 @@ expect(stripe.customers.update).toHaveBeenCalledWith(
 
 ```typescript
 expect(Sentry.logger.info).toHaveBeenCalledWith(
-  'Created new Stripe customer',
+  "Created new Stripe customer",
   expect.objectContaining({
-    customerId: 'cus_123',
-    email: 'test@example.com',
-    userId: 'user_123',
+    customerId: "cus_123",
+    email: "test@example.com",
+    userId: "user_123",
   }),
 );
 ```
@@ -488,20 +523,21 @@ Special attention is given to testing audio buffer handling:
 Instead of manually mocking webhook signatures, we use Stripe's built-in testing helper:
 
 ```typescript
-import Stripe from 'stripe';
+import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy', {
-  apiVersion: '2025-02-24.acacia',
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
+  apiVersion: "2025-02-24.acacia",
 });
 
 // Generate valid test signature
 const signature = stripe.webhooks.generateTestHeaderString({
   payload: JSON.stringify(event),
-  secret: 'whsec_test_secret',
+  secret: "whsec_test_secret",
 });
 ```
 
 **Benefits:**
+
 - ✅ Official Stripe-maintained method
 - ✅ Realistic signature validation
 - ✅ Accurate webhook secret matching
@@ -511,10 +547,10 @@ const signature = stripe.webhooks.generateTestHeaderString({
 ### Example Usage
 
 ```typescript
-it('should process webhook with valid signature', async () => {
+it("should process webhook with valid signature", async () => {
   const event = {
-    id: 'evt_test_123',
-    type: 'checkout.session.completed',
+    id: "evt_test_123",
+    type: "checkout.session.completed",
     data: { object: checkoutSession },
     // ... other event properties
   };
@@ -528,7 +564,7 @@ it('should process webhook with valid signature', async () => {
   const request = {
     text: async () => payload,
     headers: {
-      get: (name) => name === 'Stripe-Signature' ? signature : null,
+      get: (name) => (name === "Stripe-Signature" ? signature : null),
     },
   };
 
@@ -540,6 +576,7 @@ it('should process webhook with valid signature', async () => {
 ## Environment Variables
 
 All required environment variables are mocked in `setup.ts`:
+
 - Supabase configuration
 - AI service API keys
 - Redis connection details
@@ -559,6 +596,7 @@ When adding new tests:
 ## Performance Considerations
 
 The tests are designed to be fast and reliable:
+
 - All external services are mocked
 - No real network requests
 - Minimal test data setup
@@ -567,6 +605,7 @@ The tests are designed to be fast and reliable:
 ## CI/CD Integration
 
 These tests are designed to work in CI/CD environments:
+
 - No external dependencies (all services mocked)
 - Deterministic mock responses
 - Comprehensive error scenario coverage
@@ -579,19 +618,23 @@ The project includes automated CI/CD workflows in `.github/workflows/`:
 
 #### `tests.yml` - Automated Test Runner
 
-Runs automatically on every PR and commit to `main`/`develop` branches:
+Runs automatically on every PR and commit to `main` branch:
+
 ## Additional Resources
 
 ### Documentation
+
 - `CLAUDE.md` - Project-wide guidelines and architecture
 - [Stripe Testing Guide](https://stripe.com/docs/testing)
 - [Stripe Webhook Testing](https://stripe.com/docs/webhooks/test)
 - [MSW Documentation](https://mswjs.io/)
 
 ### Reference Implementations
+
 - `generate-voice.test.ts` - Example of comprehensive API route testing with MSW
 - `stripe-webhook.test.ts` - Stripe webhook testing with official signature generation
 - `setup.ts` - Centralized mock configuration for all tests
 
 ### Workflow Files
+
 - `.github/workflows/tests.yml` - Main test automation workflow
