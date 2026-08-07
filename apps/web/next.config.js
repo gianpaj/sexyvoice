@@ -31,60 +31,15 @@ const cspHeader = `
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
-  reactCompiler: true,
+  allowedDevOrigins: ['sv.dev', '*.sv.dev'],
   experimental: {
     // Enable filesystem caching for `next dev`
     // turbopackFileSystemCacheForDev: true,
+    useTypeScriptCli: true,
   },
-  images: {
-    formats: ['image/avif', 'image/webp'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'avatars.githubusercontent.com',
-        port: '',
-        pathname: '**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.sexyvoice.ai',
-        port: '',
-        pathname: '**',
-      },
-    ],
-  },
-  // do not bundle these packages and instead load them as external Node.js modules at runtime, which avoids the Turbopack dynamic import resolution issue
-  serverExternalPackages: [
-    'ogg-opus-decoder',
-    'mpg123-decoder',
-    '@wasm-audio-decoders/ogg-vorbis',
-  ],
-  // images: { unoptimized: true },
-
-  async rewrites() {
-    return {
-      afterFiles: [
-        {
-          source: '/seguimiento/static/:path*',
-          destination: 'https://eu-assets.i.posthog.com/static/:path*',
-        },
-        {
-          source: '/seguimiento/:path*',
-          destination: 'https://eu.i.posthog.com/:path*',
-        },
-        {
-          source: '/seguimiento/decide',
-          destination: 'https://eu.i.posthog.com/decide',
-        },
-      ],
-    };
-  },
-  // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
-  skipTrailingSlashRedirect: true,
   async headers() {
     return [
       {
-        source: '/:path*',
         headers: [
           {
             key: 'Content-Security-Policy',
@@ -102,10 +57,56 @@ let nextConfig = {
           //   value: 'max-age=63072000; includeSubDomains; preload',
           // },
         ],
+        source: '/:path*',
       },
     ];
   },
-  allowedDevOrigins: ['sv.dev', '*.sv.dev'],
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        hostname: 'avatars.githubusercontent.com',
+        pathname: '**',
+        port: '',
+        protocol: 'https',
+      },
+      {
+        hostname: 'images.sexyvoice.ai',
+        pathname: '**',
+        port: '',
+        protocol: 'https',
+      },
+    ],
+  },
+  reactCompiler: true,
+  // images: { unoptimized: true },
+
+  async rewrites() {
+    return {
+      afterFiles: [
+        {
+          destination: 'https://eu-assets.i.posthog.com/static/:path*',
+          source: '/seguimiento/static/:path*',
+        },
+        {
+          destination: 'https://eu.i.posthog.com/:path*',
+          source: '/seguimiento/:path*',
+        },
+        {
+          destination: 'https://eu.i.posthog.com/decide',
+          source: '/seguimiento/decide',
+        },
+      ],
+    };
+  },
+  // do not bundle these packages and instead load them as external Node.js modules at runtime, which avoids the Turbopack dynamic import resolution issue
+  serverExternalPackages: [
+    'ogg-opus-decoder',
+    'mpg123-decoder',
+    '@wasm-audio-decoders/ogg-vorbis',
+  ],
+  // prevents Next.js from redirecting URLs with trailing slashes. PostHog's API uses trailing slashes (like `/e/`), and without this setting, Next.js would redirect them and break event capture
+  skipTrailingSlashRedirect: true,
 };
 
 if (process.env.ANALYZE === 'true') {
@@ -130,23 +131,23 @@ if (process.env.NODE_ENV === 'production') {
 
     // Only print logs for uploading source maps in CI
     silent: !process.env.CI,
-
-    telemetry: process.env.VERCEL_ENV === 'production',
     sourcemaps: {
       disable: process.env.VERCEL_ENV !== 'production',
     },
 
-    // For all available options, see:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-    // Upload a larger set of source maps for prettier stack traces (increases build time)
-    widenClientFileUpload: true,
+    telemetry: process.env.VERCEL_ENV === 'production',
 
     // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
     // This can increase your server load as well as your hosting bill.
     // Note: Check that the configured route will not match with your Next.js proxy, otherwise reporting of client-
     // side errors will fail.
     tunnelRoute: '/monitoring',
+
+    // For all available options, see:
+    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+
+    // Upload a larger set of source maps for prettier stack traces (increases build time)
+    widenClientFileUpload: true,
   });
 }
 

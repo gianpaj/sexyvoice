@@ -64,7 +64,7 @@ Runtime and tooling:
 - Node.js `24.x` (see `engines.node` in each `package.json`).
 - Package manager: `pnpm@11.16.0` (see `packageManager`). Always use `pnpm`,
   never `npm` or `yarn`.
-- Type checks run on the TypeScript native preview (`tsgo --noEmit`).
+- Type checks run on the TypeScript native preview (`tsc --noEmit`).
 
 ## High-Value Paths
 
@@ -100,7 +100,7 @@ pnpm --filter @sexyvoice/web test -- <file>   # Run a focused test file
 pnpm --filter @sexyvoice/web test:e2e         # Run Playwright e2e tests
 pnpm test:coverage       # Vitest coverage for the web app
 pnpm test:ui             # Vitest UI for the web app
-pnpm type-check          # TypeScript checks (tsgo)
+pnpm type-check          # TypeScript checks (tsc)
 pnpm lint                # Biome lint check
 pnpm format              # Biome format check
 pnpm fixall              # lint:write + format:write + check:fix
