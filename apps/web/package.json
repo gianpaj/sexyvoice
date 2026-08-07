@@ -24,7 +24,7 @@
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
-    "type-check": "tsgo --noEmit"
+    "type-check": "tsc --noEmit"
   },
   "browserslist": [
     "chrome >0 and last 2.5 years",
@@ -57,6 +57,7 @@
     "@livekit/krisp-noise-filter": "^0.3.4",
     "@livekit/protocol": "1.48.2",
     "@mistralai/mistralai": "^2.1.2",
+    "@next/bundle-analyzer": "16.3.0",
     "@sentry/nextjs": "10.45.0",
     "@supabase-cache-helpers/postgrest-react-query": "^1.13.8",
     "@supabase/ssr": "^0.8.0",
@@ -133,7 +134,6 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@typescript/native-preview": "7.0.0-dev.20260606.1",
     "@vitest/coverage-v8": "4.1.4",
     "autoprefixer": "10.4.27",
     "dotenv": "16.6.1",

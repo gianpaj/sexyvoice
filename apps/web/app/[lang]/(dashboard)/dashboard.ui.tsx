@@ -143,6 +143,7 @@ export default function DashboardUI({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                  data-visual-test="transparent"
                   size="lg"
                 >
                   <div className="aspect-square group-data-[collapsible=icon]:size-9">
