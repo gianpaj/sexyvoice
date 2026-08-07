@@ -7,7 +7,7 @@ const config = {
   experimental: {
     useTypeScriptCli: true,
   },
-  serverExternalPackages: ['@takumi-rs/image-response'],
+  serverExternalPackages: ['@takumi-rs/core', '@takumi-rs/image-response'],
   reactStrictMode: true,
 };
 
