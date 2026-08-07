@@ -851,7 +851,7 @@
     }
   },
   "apiBilling": {
-    "description": "Monitor API usage, requests, and costs over time."
+    "description": "Monitor API usage and requests over time."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator",

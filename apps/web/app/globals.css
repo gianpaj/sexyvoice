@@ -56,11 +56,11 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-1: var(--chart-1);
   --color-chart-2: hsl(var(--brand-red));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   /* TODO: migrate all color variables to not use hsl(var(--)) */
   --color-sidebar: var(--sidebar);
@@ -374,11 +374,13 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+
+    /* Recharts consumes these tokens directly, so they must be complete colors. */
+    --chart-1: hsl(220 70% 50%);
+    --chart-2: hsl(160 60% 45%);
+    --chart-3: hsl(30 80% 55%);
+    --chart-4: hsl(280 65% 60%);
+    --chart-5: hsl(340 75% 55%);
     --brand-purple: 254 100% 70%;
     --brand-red: 345 100% 60%;
     --sidebar: hsl(222.2 84% 4.9%);

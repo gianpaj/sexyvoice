@@ -26,7 +26,6 @@ const mockBillingUsageResponse = {
           total_input_chars: 1200,
           total_output_chars: 0,
           total_duration_seconds: 0,
-          total_dollar_amount: 1.25,
           total_credits_used: 42,
         },
       ],
@@ -58,7 +57,7 @@ test.describe('API Billing Dashboard - Authenticated User', () => {
       page.getByRole('heading', { name: /api billing/i }),
     ).toBeVisible();
     await expect(
-      page.getByText(/monitor api usage, requests, and costs/i),
+      page.getByText(/monitor api usage and requests/i),
     ).toBeVisible();
     await expect(page.getByText('From', { exact: true })).toBeVisible();
     await expect(page.getByText('To', { exact: true })).toBeVisible();

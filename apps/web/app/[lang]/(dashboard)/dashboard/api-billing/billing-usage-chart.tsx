@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { type ComponentType, type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -28,24 +28,12 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type RechartsComponent = ComponentType<
-  Record<string, unknown> & { children?: ReactNode }
->;
-
-const BillingBar = Bar as unknown as RechartsComponent;
-const BillingCartesianGrid = CartesianGrid as unknown as RechartsComponent;
-const BillingComposedChart = ComposedChart as unknown as RechartsComponent;
-const BillingLine = Line as unknown as RechartsComponent;
-const BillingXAxis = XAxis as unknown as RechartsComponent;
-const BillingYAxis = YAxis as unknown as RechartsComponent;
-
 interface BillingUsageResult {
   api_key_id: string | null;
   model: string | null;
   requests: number;
   source_type: string | null;
   total_credits_used: number;
-  total_dollar_amount: number;
   total_duration_seconds: number;
   total_input_chars: number;
   total_output_chars: number;
@@ -62,16 +50,12 @@ interface BillingUsageResponse {
 }
 
 const chartConfig = {
-  cost: {
-    color: 'hsl(var(--chart-3))',
-    label: 'Cost (USD)',
-  },
   credits: {
-    color: 'hsl(var(--chart-2))',
+    color: 'var(--chart-2)',
     label: 'Credits',
   },
   requests: {
-    color: 'hsl(var(--chart-1))',
+    color: 'var(--chart-1)',
     label: 'Requests',
   },
 } satisfies ChartConfig;
@@ -178,20 +162,16 @@ export function BillingUsageChart() {
   };
 
   // Build a lookup from date → aggregated totals from the API response.
-  const byDate = new Map<
-    string,
-    { requests: number; cost: number; credits: number }
-  >();
+  const byDate = new Map<string, { requests: number; credits: number }>();
   for (const bucket of data?.data ?? []) {
     const date = bucket.start_time_iso.slice(0, 10);
     const totals = bucket.results.reduce(
       (accumulator, result) => {
         accumulator.requests += result.requests;
-        accumulator.cost += result.total_dollar_amount;
         accumulator.credits += result.total_credits_used;
         return accumulator;
       },
-      { cost: 0, credits: 0, requests: 0 },
+      { credits: 0, requests: 0 },
     );
     byDate.set(date, totals);
   }
@@ -204,7 +184,7 @@ export function BillingUsageChart() {
   );
   const bucketTotals = spine.map((date) => ({
     date,
-    ...(byDate.get(date) ?? { cost: 0, credits: 0, requests: 0 }),
+    ...(byDate.get(date) ?? { credits: 0, requests: 0 }),
   }));
 
   return (
@@ -289,22 +269,22 @@ export function BillingUsageChart() {
 
       {isPendingData || error ? null : (
         <ChartContainer className="h-[320px] w-full" config={chartConfig}>
-          <BillingComposedChart accessibilityLayer data={bucketTotals}>
-            <BillingCartesianGrid vertical={false} />
-            <BillingXAxis
+          <ComposedChart accessibilityLayer data={bucketTotals}>
+            <CartesianGrid vertical={false} />
+            <XAxis
               axisLine={false}
               dataKey="date"
               minTickGap={20}
               tickLine={false}
               tickMargin={8}
             />
-            <BillingYAxis
+            <YAxis
               axisLine={false}
               tickLine={false}
               tickMargin={8}
               yAxisId="left"
             />
-            <BillingYAxis
+            <YAxis
               axisLine={false}
               orientation="right"
               tickLine={false}
@@ -312,22 +292,15 @@ export function BillingUsageChart() {
               yAxisId="right"
             />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <BillingBar
+            <Bar
               dataKey="requests"
               fill="var(--color-requests)"
               name="Requests"
               radius={4}
               yAxisId="left"
             />
-            <BillingLine
-              dataKey="cost"
-              dot={false}
-              name="Cost (USD)"
-              stroke="var(--color-cost)"
-              strokeWidth={2}
-              yAxisId="right"
-            />
-            <BillingLine
+
+            <Line
               dataKey="credits"
               dot={false}
               name="Credits"
@@ -335,7 +308,7 @@ export function BillingUsageChart() {
               strokeWidth={2}
               yAxisId="right"
             />
-          </BillingComposedChart>
+          </ComposedChart>
         </ChartContainer>
       )}
     </div>

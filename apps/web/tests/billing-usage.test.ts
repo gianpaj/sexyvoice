@@ -68,6 +68,9 @@ describe('/api/billing/usage', () => {
     expect(json.data).toHaveLength(1);
     expect(json.data[0].results[0].api_key_id).toBe('key-1');
     expect(json.data[0].results[0].requests).toBe(2);
+    expect(json.data[0].results[0]).not.toHaveProperty(
+      'total_dollar_amount',
+    );
   });
 
   it('accepts api_voice_cloning as source_type filter', async () => {

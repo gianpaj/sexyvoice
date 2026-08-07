@@ -853,7 +853,7 @@
     }
   },
   "apiBilling": {
-    "description": "Monitorea el uso de la API, las solicitudes y los costos a lo largo del tiempo."
+    "description": "Monitorea el uso de la API y las solicitudes a lo largo del tiempo."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis y texto a voz",

@@ -14,7 +14,6 @@ interface ApiUsageDailyRow {
   requests: number;
   source_type: string;
   total_credits_used: number;
-  total_dollar_amount: number;
   total_duration_seconds: number;
   total_input_chars: number;
   total_output_chars: number;
@@ -121,7 +120,9 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('api_usage_daily')
-    .select('*')
+    .select(
+      'api_key_id, model, requests, source_type, total_credits_used, total_duration_seconds, total_input_chars, total_output_chars, usage_date, user_id',
+    )
     .eq('user_id', user.id)
     .gte('usage_date', start.toISOString())
     .lt('usage_date', end.toISOString());
@@ -158,7 +159,6 @@ export async function GET(request: NextRequest) {
           total_input_chars: number;
           total_output_chars: number;
           total_duration_seconds: number;
-          total_dollar_amount: number;
           total_credits_used: number;
         }
       >;
@@ -193,7 +193,6 @@ export async function GET(request: NextRequest) {
         requests: 0,
         source_type: groupBy === 'source_type' ? row.source_type : null,
         total_credits_used: 0,
-        total_dollar_amount: 0,
         total_duration_seconds: 0,
         total_input_chars: 0,
         total_output_chars: 0,
@@ -209,7 +208,6 @@ export async function GET(request: NextRequest) {
     group.total_input_chars += row.total_input_chars;
     group.total_output_chars += row.total_output_chars;
     group.total_duration_seconds += row.total_duration_seconds;
-    group.total_dollar_amount += row.total_dollar_amount;
     group.total_credits_used += row.total_credits_used;
   }
 
