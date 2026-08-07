@@ -853,7 +853,7 @@
     }
   },
   "apiBilling": {
-    "description": "Surveillez l'utilisation de l'API, les requêtes et les coûts au fil du temps."
+    "description": "Surveillez l'utilisation de l'API et les requêtes au fil du temps."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & générateur de voix",

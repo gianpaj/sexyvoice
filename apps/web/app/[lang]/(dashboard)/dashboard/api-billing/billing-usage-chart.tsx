@@ -34,7 +34,6 @@ interface BillingUsageResult {
   requests: number;
   source_type: string | null;
   total_credits_used: number;
-  total_dollar_amount: number;
   total_duration_seconds: number;
   total_input_chars: number;
   total_output_chars: number;
@@ -51,10 +50,6 @@ interface BillingUsageResponse {
 }
 
 const chartConfig = {
-  cost: {
-    color: 'var(--chart-3)',
-    label: 'Cost (USD)',
-  },
   credits: {
     color: 'var(--chart-2)',
     label: 'Credits',
@@ -167,20 +162,16 @@ export function BillingUsageChart() {
   };
 
   // Build a lookup from date → aggregated totals from the API response.
-  const byDate = new Map<
-    string,
-    { requests: number; cost: number; credits: number }
-  >();
+  const byDate = new Map<string, { requests: number; credits: number }>();
   for (const bucket of data?.data ?? []) {
     const date = bucket.start_time_iso.slice(0, 10);
     const totals = bucket.results.reduce(
       (accumulator, result) => {
         accumulator.requests += result.requests;
-        accumulator.cost += result.total_dollar_amount;
         accumulator.credits += result.total_credits_used;
         return accumulator;
       },
-      { cost: 0, credits: 0, requests: 0 },
+      { credits: 0, requests: 0 },
     );
     byDate.set(date, totals);
   }
@@ -193,7 +184,7 @@ export function BillingUsageChart() {
   );
   const bucketTotals = spine.map((date) => ({
     date,
-    ...(byDate.get(date) ?? { cost: 0, credits: 0, requests: 0 }),
+    ...(byDate.get(date) ?? { credits: 0, requests: 0 }),
   }));
 
   return (
@@ -308,14 +299,7 @@ export function BillingUsageChart() {
               radius={4}
               yAxisId="left"
             />
-            <Line
-              dataKey="cost"
-              dot={false}
-              name="Cost (USD)"
-              stroke="var(--color-cost)"
-              strokeWidth={2}
-              yAxisId="right"
-            />
+
             <Line
               dataKey="credits"
               dot={false}

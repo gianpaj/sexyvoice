@@ -849,7 +849,7 @@
     }
   },
   "apiBilling": {
-    "description": "Overvåg API-brug, anmodninger og omkostninger over tid."
+    "description": "Overvåg API-brug og anmodninger over tid."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator",

@@ -853,7 +853,7 @@
     }
   },
   "apiBilling": {
-    "description": "API-Nutzung, Anfragen und Kosten im Zeitverlauf überwachen."
+    "description": "API-Nutzung und Anfragen im Zeitverlauf überwachen."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Kostenloser KI-Text-zu-Sprache- & Stimmengenerator",
