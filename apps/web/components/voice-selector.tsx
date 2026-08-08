@@ -71,7 +71,7 @@ export function VoiceSelector({
 
   return (
     <Card>
-      <CardHeader className="p-4 pt-6 sm:p-6 sm:pb-2">
+      <CardHeader>
         <CardTitle className="flex flex-row">
           {t('voiceSelector.title')}
           <TooltipProvider>
@@ -100,7 +100,7 @@ export function VoiceSelector({
         </CardTitle>
         <CardDescription>{t('voiceSelector.description')}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6 p-4 sm:p-6">
+      <CardContent className="space-y-6 px-4 sm:px-6">
         <VoiceSelect
           onValueChange={setSelectedVoice}
           value={selectedVoice?.id}
