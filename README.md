@@ -137,8 +137,8 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
    [`apps/web/.env.example`](apps/web/.env.example):
    - Supabase
       - `NEXT_PUBLIC_SUPABASE_URL`
-      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+      - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database access remains controlled by RLS
+      - `SUPABASE_SECRET_KEY` - Server-only admin key that bypasses RLS; never expose it to clients or use a `NEXT_PUBLIC_` prefix
    - Your Redis (Upstash)
       - `KV_REST_API_URL`
       - `KV_REST_API_TOKEN`
