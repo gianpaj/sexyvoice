@@ -157,7 +157,7 @@ export default async function LandingPage(props: {
             {/* Hero Section */}
             <div className="z-10 space-y-6 py-20 text-center md:pb-32">
               <HeroWaveform />
-              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+              <h1 className="text-balance font-bold text-5xl leading-14 sm:leading-16 md:text-6xl">
                 <span className="text-white/90">{firstPart}</span>
                 <br />
                 {titleRestParts && (
@@ -334,7 +334,7 @@ export default async function LandingPage(props: {
               <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
                 {messages.credits.pricingPlan}
               </h2>
-              <PricingTable className="py-4 pb-16" lang={lang} />
+              <PricingTable className="py-4 pb-16 xl:px-10" lang={lang} />
             </div>
 
             {/* FAQ Section */}
