@@ -78,13 +78,11 @@ export default async function GeneratePage(props: {
         />
       </div>
 
-      <div className="grid gap-6 pb-16">
-        <GenerateUI
-          hasEnoughCredits={hasEnoughCredits}
-          isPaidUser={isPaidUser}
-          publicVoices={publicVoices}
-        />
-      </div>
+      <GenerateUI
+        hasEnoughCredits={hasEnoughCredits}
+        isPaidUser={isPaidUser}
+        publicVoices={publicVoices}
+      />
     </div>
   );
 }
