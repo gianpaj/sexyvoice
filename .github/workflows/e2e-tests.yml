@@ -85,7 +85,6 @@ jobs:
           # Analytics (stubbed)
           NEXT_PUBLIC_POSTHOG_KEY: "phc_test"
           NEXT_PUBLIC_POSTHOG_HOST: "https://app.posthog.com"
-          SKIP_ENV_VALIDATION: true
 
       - name: Run Playwright tests
         working-directory: apps/web
