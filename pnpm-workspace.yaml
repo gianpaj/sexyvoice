@@ -29,8 +29,7 @@ minimumReleaseAgeExclude:
   # Renovate security update: postcss@8.5.23
   - postcss@8.5.23
   - immutable@5.1.5 || 5.1.8
-  - dompurify@3.3.4 || 3.4.0 || 3.4.6 || 3.4.7 || 3.4.8 || 3.4.9 || 3.4.11 ||
-    3.4.12
+  - dompurify@3.3.4 || 3.4.0 || 3.4.6 || 3.4.7 || 3.4.8 || 3.4.9 || 3.4.11 || 3.4.12
   - fast-uri@3.1.1 || 3.1.2 || 3.1.3 || 3.1.4
   - fast-xml-builder@1.1.7
   - ws@8.20.1 || 8.21.0
@@ -45,8 +44,6 @@ minimumReleaseAgeExclude:
   - "@opentelemetry/propagator-jaeger@2.9.0"
   - svgo@4.0.2
   - sharp@0.35.0
-  # Renovate security update: nanoid@5.1.16
-  - nanoid@5.1.16
 
 catalog:
   "@ai-sdk/react": "3.0.118"
