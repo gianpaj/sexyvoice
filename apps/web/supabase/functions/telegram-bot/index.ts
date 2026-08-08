@@ -8,14 +8,52 @@ import {
   Bot,
   webhookCallback,
 } from 'https://deno.land/x/grammy@v1.36.3/mod.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.99.2';
+
+function getDefaultSupabaseSecretKey(): string {
+  const rawSecretKeys = Deno.env.get('SUPABASE_SECRET_KEYS');
+  if (!rawSecretKeys) {
+    throw new Error('Missing env.SUPABASE_SECRET_KEYS');
+  }
+
+  let secretKeys: unknown;
+  try {
+    secretKeys = JSON.parse(rawSecretKeys);
+  } catch {
+    throw new Error(
+      'Invalid env.SUPABASE_SECRET_KEYS: expected a JSON dictionary',
+    );
+  }
+
+  if (
+    !secretKeys ||
+    typeof secretKeys !== 'object' ||
+    Array.isArray(secretKeys)
+  ) {
+    throw new Error(
+      'Invalid env.SUPABASE_SECRET_KEYS: expected a JSON dictionary',
+    );
+  }
+
+  const defaultSecretKey = (secretKeys as Record<string, unknown>).default;
+  if (
+    typeof defaultSecretKey !== 'string' ||
+    defaultSecretKey.trim().length === 0
+  ) {
+    throw new Error(
+      'Invalid env.SUPABASE_SECRET_KEYS: missing non-empty default key',
+    );
+  }
+
+  return defaultSecretKey;
+}
 
 const bot = new Bot(Deno.env.get('TELEGRAM_BOT_TOKEN') || '');
 
 // Initialize Supabase client with admin access
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') || '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+  getDefaultSupabaseSecretKey(),
   {
     auth: {
       autoRefreshToken: false,

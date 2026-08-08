@@ -53,7 +53,7 @@
  * credit amount + reason interactively, so each command is annotated with the
  * exact values to enter at its prompts.
  *
- * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (read-only use).
+ * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (read-only use).
  */
 
 import { writeFileSync } from 'node:fs';
@@ -131,11 +131,11 @@ function parseArgs(argv) {
 
 function createSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY;
   if (!(url && key)) {
     console.error('Missing required environment variables:');
     console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-    console.error('  - SUPABASE_SERVICE_ROLE_KEY');
+    console.error('  - SUPABASE_SECRET_KEY');
     process.exit(1);
   }
   return createClient(url, key, {

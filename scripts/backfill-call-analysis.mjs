@@ -25,7 +25,7 @@
  *
  * Environment variables required:
  *   - NEXT_PUBLIC_SUPABASE_URL
- *   - SUPABASE_SERVICE_ROLE_KEY
+ *   - SUPABASE_SECRET_KEY
  *   - XAI_API_KEY
  *   - XAI_SUMMARY_MODEL (optional; defaults to grok-4.3)
  */

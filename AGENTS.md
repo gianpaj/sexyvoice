@@ -59,6 +59,9 @@ Core integrations: Supabase, Cloudflare R2, Upstash Redis, Replicate, fal.ai,
 Google Generative AI, xAI Grok TTS, LiveKit, Stripe, Sentry, PostHog, Axiom,
 Contentlayer2, Inngest, and `next-intl`.
 
+Supabase access uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser clients
+and `SUPABASE_SECRET_KEY` for privileged server operations.
+
 Runtime and tooling:
 
 - Node.js `24.x` (see `engines.node` in each `package.json`).
@@ -146,8 +149,11 @@ Use package filters when you only want one app, e.g.
 
 - Use the SSR client from `apps/web/lib/supabase/server.ts` for session-scoped server
   code.
-- Use `createAdminClient()` only for server-side operations that require service
-  role access, and never expose service role data to the client.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for browser clients; RLS still
+  controls their database access.
+- Use `createAdminClient()` only for server-side operations that require
+  `SUPABASE_SECRET_KEY`. This key bypasses RLS; never expose it to clients or
+  place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 - Keep RLS in mind for all table access.
 - Database functions should default to `SECURITY INVOKER`, set
   `search_path = ''`, and use fully qualified names.
@@ -221,7 +227,7 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 - Validate and sanitize API inputs.
 - Preserve structured error handling and status codes.
-- Protect service role secrets, API key hashes, payment data, and generated
+- Protect Supabase secret keys, API key hashes, payment data, and generated
   audio access.
 - Respect voice rights and user privacy when working on cloning, public/private
   voices, retention, or moderation.
