@@ -283,6 +283,15 @@ vi.mock('@sentry/nextjs', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
+      getClaims: vi.fn().mockResolvedValue({
+        data: {
+          claims: {
+            sub: 'test-user-id',
+            email: 'test@example.com',
+          },
+        },
+        error: null,
+      }),
       getUser: vi.fn().mockResolvedValue({
         data: {
           user: {

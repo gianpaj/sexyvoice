@@ -12,6 +12,7 @@ import {
   getCallInstructionConfig,
 } from '@/lib/edge-config/call-instructions';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getPublicCallCharacters,
   getUserCallCharacters,
@@ -119,16 +120,15 @@ export default async function CallLayout({
     await getCallInstructionConfig();
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
 
   const [publicCharacters, isPaidUser] = await Promise.all([
     getPublicCallCharacters(),
-    user ? hasUserPaid(user.id) : Promise.resolve(false),
+    userId ? hasUserPaid(userId) : Promise.resolve(false),
   ]);
   const userCharacters =
-    user && isPaidUser ? await getUserCallCharacters(user.id) : [];
+    userId && isPaidUser ? await getUserCallCharacters(userId) : [];
 
   const baseDefaultPresets: Preset[] = (publicCharacters ?? []).map(
     (character) => mapCharacterToPreset(character as CharacterRow),

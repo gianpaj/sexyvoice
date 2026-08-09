@@ -5,6 +5,7 @@ import { Chat } from '@/components/call/chat';
 import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 // import { PresetShare } from "@/components/preset-share";
@@ -21,11 +22,9 @@ export default async function Call(props: {
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (!user || error) {
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) {
     return <div>{dict.profile.notLoggedIn}</div>;
   }
 
@@ -34,9 +33,9 @@ export default async function Call(props: {
       supabase
         .from('credit_transactions')
         .select('amount')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false }),
-      hasUserPaid(user.id),
+      hasUserPaid(userId),
       getCallVoices(),
     ]);
 
@@ -48,7 +47,7 @@ export default async function Call(props: {
           doNotToggleSidebar
           lang={lang}
           showMinutes
-          userId={user.id}
+          userId={userId}
         />
       </div>
       <div className="my-6 flex w-full px-0 md:px-4">
