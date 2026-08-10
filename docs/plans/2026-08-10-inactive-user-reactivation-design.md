@@ -12,10 +12,11 @@ who still have the untouched 10,000-credit signup grant.
 
 ## Reactivation Boundary
 
-The dashboard layout will ensure that the authenticated user has an application
-profile before it reads credits, transactions, or other profile-dependent data.
-This boundary covers Google and password login because both flows enter the
-dashboard. It also repairs an orphaned user who still has a valid session.
+The request Proxy will ensure that an authenticated dashboard user has an
+application profile before Next.js renders any route segment. This boundary
+covers Google and password login because both flows enter the dashboard. It
+also repairs an orphaned user who still has a valid session. A layout cannot
+provide this ordering because Next.js renders layouts and pages in parallel.
 
 A server-only helper will first look up the profile with the Supabase admin
 client. Existing profiles require no writes. A missing profile will cause the
@@ -60,19 +61,19 @@ profile deletion will cascade to the freemium transaction. It will retain
 
 ## Tests and Verification
 
-Focused tests will verify that the dashboard:
+Focused tests will verify that the dashboard request boundary:
 
 - leaves an existing profile unchanged;
-- restores a missing profile before profile-dependent queries;
+- completes restoration before route rendering continues;
 - passes the original Auth creation timestamp to restoration;
 - stops before dashboard data reads when restoration fails; and
 - reports a successful restoration.
 
-Database-level verification will inspect the migration for service-role-only
-execution, transactional inserts, preserved creation timestamps, and
-idempotency. Retention-query tests will verify that only untouched free-tier
-accounts qualify and that changed balances or extra transactions disqualify an
-account.
+Database-level pgTAP verification will exercise service-role-only execution,
+preserved creation timestamps, restored profile and credit rows, and
+idempotency. The retention preview must be reviewed before running the
+destructive block to confirm that changed balances and extra transactions are
+excluded.
 
 Before completion, the focused tests, `pnpm fixall`, and `pnpm type-check` must
 pass.

@@ -1,8 +1,10 @@
 import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { ensureUserApplicationState } from './ensure-user-application-state';
 import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 import { createClient } from './server';
 
@@ -120,6 +122,14 @@ export const updateSession = async (
 
       // no user, potentially respond by redirecting the user to the login page
       return redirectResponse;
+    }
+
+    if (user && dashboardPath && !isE2E()) {
+      await ensureUserApplicationState({
+        createdAt: user.created_at,
+        email: user.email,
+        id: user.id,
+      });
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);

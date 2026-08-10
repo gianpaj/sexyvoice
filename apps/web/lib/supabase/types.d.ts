@@ -888,6 +888,14 @@ declare type Database = {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
         Returns: number;
       };
+      restore_inactive_user: {
+        Args: {
+          p_auth_created_at: string;
+          p_email: string;
+          p_user_id: string;
+        };
+        Returns: boolean;
+      };
       update_api_key_last_used: {
         Args: { p_key_hash: string };
         Returns: undefined;
