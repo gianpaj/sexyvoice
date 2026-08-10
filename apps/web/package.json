@@ -22,6 +22,7 @@
     "start": "next start",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
+    "test:db": "supabase test db",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
     "type-check": "tsc --noEmit"

@@ -14,6 +14,9 @@ Nested guidance:
 - All of `pnpm fixall` and `pnpm type-check` must pass before considering tasks completed.
 - When you touch the web app's tests or shared code, also run `pnpm test`
   (or the focused file) and make sure the suite is green.
+- When you change Supabase migrations or pgTAP tests, run `pnpm test:db`
+  against a local database with all pending migrations applied. Agents must not
+  apply migrations; ask the user to apply them when necessary.
 
 ## Mandatory Rules
 
@@ -99,6 +102,7 @@ Runtime and tooling:
 pnpm dev                 # Start the web app dev server (filtered to @sexyvoice/web)
 pnpm build               # Production build (all apps via Turborepo)
 pnpm test                # Run all Vitest tests
+pnpm test:db             # Run Supabase pgTAP tests against the local database
 pnpm --filter @sexyvoice/web test -- <file>   # Run a focused test file
 pnpm --filter @sexyvoice/web test:e2e         # Run Playwright e2e tests
 pnpm test:coverage       # Vitest coverage for the web app
