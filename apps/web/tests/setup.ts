@@ -195,8 +195,8 @@ afterAll(() => {
 
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';
-process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
+process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test';
+process.env.SUPABASE_SECRET_KEY = 'sb_secret_test';
 process.env.GOOGLE_GENERATIVE_AI_API_KEY = 'test-gemini-key';
 process.env.REPLICATE_API_TOKEN = 'test-replicate-token';
 process.env.MISTRAL_API_KEY = 'test-mistral-api-key';

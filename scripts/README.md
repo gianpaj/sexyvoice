@@ -161,7 +161,7 @@ pnpm backfill-free-call
 
 ### Notes
 
-- Requires `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- Requires `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
 - Output timestamps are normalized to second precision
 
 ---
@@ -242,7 +242,7 @@ Shared by both scripts:
 Requires `.env` or `.env.local` with:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `XAI_API_KEY`
 - `XAI_SUMMARY_MODEL` (optional; defaults to `grok-4.3`)
 - `XAI_API_BASE_URL` (optional; defaults to `https://api.x.ai`)
@@ -333,7 +333,7 @@ rather than passed as flags. See [Refund Credits Script](#refund-credits-script)
 ### Requirements
 
 - `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and
-  `SUPABASE_SERVICE_ROLE_KEY` (read-only usage).
+  `SUPABASE_SECRET_KEY` (read-only usage).
 
 ---
 
@@ -381,7 +381,7 @@ pnpm refund-credits
 
 ### Requirements
 
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
 - User must have `purchase` or `topup` transactions with `metadata.dollarAmount`
 - Freemium-only users cannot be refunded
 
@@ -541,7 +541,7 @@ Each refund transaction is recorded with:
 
 ### Requirements
 
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
 
 ---
 
@@ -606,7 +606,7 @@ chargeback), the `usage_events` + `audio_files` data is strong evidence to
 
 ### Requirements
 
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
 
 ---
 
@@ -692,7 +692,7 @@ For each user that is reset, the script:
 
 ### Requirements
 
-- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` — read
+- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` — read
   automatically from `apps/web/.env.local` (then `scripts/.env`)
 - `git` (for cloning the amieiro list on first run)
 
