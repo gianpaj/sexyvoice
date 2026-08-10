@@ -2,7 +2,7 @@
 --
 -- Run against the local Supabase database with:
 --
---   supabase --workdir apps/web test db
+--   pnpm test:db
 
 begin;
 
@@ -101,6 +101,7 @@ select is(
     select count(*)::integer
     from (
       values
+        ('SELECT'),
         ('INSERT'),
         ('UPDATE'),
         ('DELETE'),
@@ -115,7 +116,7 @@ select is(
     )
   ),
   0,
-  'anon has no direct credit mutation privileges'
+  'anon has no credit table privileges'
 );
 
 select is(
