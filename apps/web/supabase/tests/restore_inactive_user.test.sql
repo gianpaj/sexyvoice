@@ -35,29 +35,12 @@ select ok(
   'anonymous users cannot execute restore_inactive_user'
 );
 
--- Insert only the retained Auth identity. User triggers are disabled for this
--- statement so the fixture starts in the state produced by the retention job.
-alter table auth.users disable trigger user;
-
-insert into auth.users (
-  instance_id,
-  id,
-  aud,
-  role,
-  email,
-  created_at,
-  updated_at
-) values (
-  '00000000-0000-0000-0000-000000000000',
-  '22222222-2222-4222-8222-222222222222',
-  'authenticated',
-  'authenticated',
-  'pgtap-returning-user@example.com',
-  '2025-08-29 11:38:46.727344+00',
-  '2026-08-04 04:25:01.270378+00'
-);
-
-alter table auth.users enable trigger user;
+-- Defer the Auth-user reference so the fixture can start with no application
+-- rows without altering auth.users or invoking signup triggers. This test is
+-- rolled back before PostgreSQL checks the deferred constraint.
+alter table public.profiles
+  alter constraint profiles_id_fkey
+  deferrable initially deferred;
 
 set local role service_role;
 
