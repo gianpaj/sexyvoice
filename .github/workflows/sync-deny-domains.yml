@@ -87,6 +87,13 @@ jobs:
               '```'
             cat /tmp/check-output.txt
             printf '%s\n' '```'
+            printf '%s\n' '```' \
+              '' \
+              'To actually reset credits for the flagged users, run:' \
+              '' \
+              '```' \
+              'node scripts/check-disposable-emails.mjs --days 10 --reset-credits --domains-only' \
+              '```'
           } > /tmp/pr-body.md
 
       - name: Create Pull Request
@@ -95,7 +102,7 @@ jobs:
           add-paths: apps/web/lib/disposable-email/deny-domains.json
           branch: chore/sync-deny-domains
           delete-branch: true
-          commit-message: "chore: sync disposable email deny list"
+          commit-message: "chore: sync disposable email deny list [skip docs]"
           title: "chore: sync disposable email deny list"
           body-path: /tmp/pr-body.md
           labels: dependencies
