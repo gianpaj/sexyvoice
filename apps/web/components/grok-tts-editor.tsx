@@ -378,7 +378,9 @@ export function GrokTTSEditor({
         : fullText;
 
       if (text !== fullText) {
-        nextEditor.commands.setContent(plainTextToDoc(text));
+        nextEditor.commands.setContent(plainTextToDoc(text), {
+          emitUpdate: false,
+        });
         const resetSelection = moveEditorSelectionToEnd(nextEditor);
         lastSelectionRef.current = resetSelection;
         contentResetSelectionRef.current = resetSelection;
@@ -400,7 +402,7 @@ export function GrokTTSEditor({
       return;
     }
 
-    editor.commands.setContent(plainTextToDoc(value));
+    editor.commands.setContent(plainTextToDoc(value), { emitUpdate: false });
     const resetSelection = moveEditorSelectionToEnd(editor);
     lastSelectionRef.current = resetSelection;
     contentResetSelectionRef.current = resetSelection;

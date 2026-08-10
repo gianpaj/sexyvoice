@@ -191,6 +191,49 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('17 / 500')).toBeInTheDocument();
   });
 
+  it('synchronizes an external value without emitting onChange', async () => {
+    const onChange = vi.fn();
+    const rendered = renderEditor({ onChange, value: 'Initial value' });
+    const editor = await findEditor();
+
+    onChange.mockClear();
+    rendered.rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <GrokTTSEditor
+          charactersLimit={500}
+          onChange={onChange}
+          placeholder={messages.generate.textAreaPlaceholder}
+          selectedGrokLanguage="auto"
+          setSelectedGrokLanguage={vi.fn()}
+          value="External value"
+        />
+      </NextIntlClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent('External value');
+      expect(screen.getByText('14 / 500')).toBeInTheDocument();
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('emits one clamped value when pasted text exceeds the character limit', async () => {
+    const onChange = vi.fn();
+    const pastedText = 'A'.repeat(20);
+
+    renderEditor({ charactersLimit: 5, onChange });
+
+    const editor = await findEditor();
+    onChange.mockClear();
+    pasteIntoEditor(editor, pastedText);
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent('A'.repeat(15));
+      expect(onChange).toHaveBeenCalledWith('A'.repeat(15));
+    });
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
   it('opens the effects popover and shows available effect actions', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
