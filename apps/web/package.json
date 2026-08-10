@@ -22,6 +22,7 @@
     "start": "next start",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
+    "test:db": "supabase test db",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
     "type-check": "tsc --noEmit"
@@ -97,7 +98,7 @@
     "motion": "^12.38.0",
     "mpg123-decoder": "^1.0.3",
     "music-metadata": "11.12.3",
-    "nanoid": "5.1.11",
+    "nanoid": "5.1.16",
     "next": "catalog:",
     "next-contentlayer2": "^0.5.8",
     "next-intl": "^4.9.2",

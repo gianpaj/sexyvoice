@@ -246,6 +246,7 @@ Only one banner is shown at a time, and each banner has its own dismiss cookie.
 | `pnpm --filter @sexyvoice/web dev` | Start only the web app dev server |
 | `pnpm build`              | Build workspace apps with Turbo         |
 | `pnpm test`               | Run test suites                         |
+| `pnpm test:db`            | Run Supabase pgTAP tests locally        |
 | `pnpm test:ui`            | Run Vitest UI for the web app           |
 | `pnpm lint`               | Lint codebase with Biome                |
 | `pnpm type-check`         | Run TypeScript type checking            |
@@ -261,6 +262,13 @@ Run the test suite:
 
 ```bash
 pnpm test
+```
+
+After applying pending migrations to the local Supabase database, run the
+pgTAP database tests:
+
+```bash
+pnpm test:db
 ```
 
 For the Vitest UI during development:
