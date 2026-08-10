@@ -26,8 +26,16 @@ The following environment variables are required:
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 FUNCTION_SECRET=your_webhook_secret_here
 SUPABASE_URL=your_supabase_project_url
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+SUPABASE_SECRET_KEYS='{"default":"sb_secret_xxx"}'
 ```
+
+Supabase-hosted Edge Functions receive `SUPABASE_URL` and
+`SUPABASE_SECRET_KEYS` by default. `SUPABASE_SECRET_KEYS` is a JSON dictionary,
+and this function uses its `default` key.
+
+For local development or Deno Deploy, set `SUPABASE_SECRET_KEYS` to the same
+JSON shape shown above. The `default` value must be a non-empty Supabase secret
+key.
 
 ### Deployment
 

@@ -29,6 +29,7 @@
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
+    "test:db": "turbo run test:db --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
     "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
     "type-check": "turbo run type-check"

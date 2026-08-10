@@ -36,6 +36,9 @@
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
+    "test:db": {
+      "cache": false
+    },
     "test:ui": {
       "cache": false,
       "persistent": true

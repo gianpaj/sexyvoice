@@ -36,7 +36,7 @@ audiences at once:
   `readline/promises` (same fallback pattern as `refund-credits.mts`).
 - Reuse the `createAdminClient()` + `config({ path: ['.env', '.env.local'] })`
   pattern verbatim. Requires `NEXT_PUBLIC_SUPABASE_URL` and
-  `SUPABASE_SERVICE_ROLE_KEY`.
+  `SUPABASE_SECRET_KEY`.
 - Log whether the local (`127.0.0.1`) or production Supabase URL is in use,
   matching the existing warning in `refund-credits.mts`.
 

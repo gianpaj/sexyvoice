@@ -140,8 +140,10 @@ template.
 
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database
+  access remains controlled by RLS.
+- `SUPABASE_SECRET_KEY` - Server-only key that bypasses RLS; never expose it to
+  clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 
 ### Redis / caching
 
@@ -319,7 +321,10 @@ follow-up cleanup.
 ### Supabase
 
 - Supabase powers auth and database access.
-- `SUPABASE_SERVICE_ROLE_KEY` is privileged and must remain server-only.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for browser clients and remains
+  subject to RLS.
+- `SUPABASE_SECRET_KEY` is server-only and bypasses RLS. Never expose it to
+  clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 - Be careful with migrations and generated types.
 
 ### Edge Config
@@ -485,8 +490,8 @@ output of `sentry-cli issues list` (first column).
 
 Check:
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `OAUTH_CALLBACK_MARKER_SECRET`
 - redirect URL configuration in Supabase / OAuth provider
 - Sentry events tagged for OAuth callback flow
