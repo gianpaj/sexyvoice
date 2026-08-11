@@ -74,6 +74,15 @@ type InstantTagDef = (typeof INSTANT_TAGS)[number];
 type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
 type TagDef = InstantTagDef | WrapperTagDef;
 
+/**
+ * Extra characters tolerated above `charactersLimit` before the editor clamps
+ * its own content. The counter turns red as soon as `charactersLimit` is
+ * exceeded, so this grace window lets a slightly-too-long paste land in the
+ * document — and stay visible and editable — instead of being cut at the exact
+ * limit while the user is still typing.
+ */
+export const GROK_CHARACTERS_LIMIT_GRACE = 10;
+
 const KNOWN_INSTANT_TAGS = new Set(GROK_INSTANT_TAGS);
 
 function isKnownInstantTag(tag: string): tag is GrokInstantTag {
@@ -207,6 +216,44 @@ function moveEditorSelectionToEnd(
   return selection;
 }
 
+function clampTextToCharactersLimit(
+  text: string,
+  charactersLimit: number,
+  enforceCharactersLimit: boolean,
+): string {
+  return enforceCharactersLimit
+    ? text.slice(0, charactersLimit + GROK_CHARACTERS_LIMIT_GRACE)
+    : text;
+}
+
+interface AppliedEditorContent {
+  selection: EditorSelectionSnapshot;
+  text: string;
+}
+
+/**
+ * Replaces the document without re-entering `onUpdate`, and reports what the
+ * editor actually ended up with.
+ *
+ * `plainTextToDoc(text)` is only a request: ProseMirror coerces it to the
+ * schema and `AutoConvertGrokTags` can rewrite it again in an appended
+ * transaction, so the round trip is not guaranteed to be the identity. Because
+ * `emitUpdate: false` suppresses the update that used to report the result,
+ * callers must reconcile against the returned `text` rather than assume the
+ * text they passed in was applied verbatim.
+ */
+function applyEditorContent(
+  editor: EditorInstance,
+  text: string,
+): AppliedEditorContent {
+  editor.commands.setContent(plainTextToDoc(text), { emitUpdate: false });
+
+  return {
+    selection: moveEditorSelectionToEnd(editor),
+    text: grokTipTapDocToText(editor.getJSON()),
+  };
+}
+
 interface GrokSlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
@@ -297,6 +344,7 @@ export function GrokTTSEditor({
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
+  const onChangeRef = useRef(onChange);
   const contentResetSelectionRef = useRef<EditorSelectionSnapshot | null>(null);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
@@ -307,7 +355,8 @@ export function GrokTTSEditor({
   useEffect(() => {
     charactersLimitRef.current = charactersLimit;
     enforceCharactersLimitRef.current = enforceCharactersLimit;
-  }, [charactersLimit, enforceCharactersLimit]);
+    onChangeRef.current = onChange;
+  }, [charactersLimit, enforceCharactersLimit, onChange]);
 
   const editor = useEditor({
     content: plainTextToDoc(value),
@@ -373,17 +422,18 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const text = enforceCharactersLimitRef.current
-        ? fullText.slice(0, charactersLimitRef.current + 10)
-        : fullText;
+      const clampedText = clampTextToCharactersLimit(
+        fullText,
+        charactersLimitRef.current,
+        enforceCharactersLimitRef.current,
+      );
+      let text = fullText;
 
-      if (text !== fullText) {
-        nextEditor.commands.setContent(plainTextToDoc(text), {
-          emitUpdate: false,
-        });
-        const resetSelection = moveEditorSelectionToEnd(nextEditor);
-        lastSelectionRef.current = resetSelection;
-        contentResetSelectionRef.current = resetSelection;
+      if (clampedText !== fullText) {
+        const applied = applyEditorContent(nextEditor, clampedText);
+        lastSelectionRef.current = applied.selection;
+        contentResetSelectionRef.current = applied.selection;
+        text = applied.text;
       }
 
       setCurrentLength(text.length);
@@ -402,11 +452,31 @@ export function GrokTTSEditor({
       return;
     }
 
-    editor.commands.setContent(plainTextToDoc(value), { emitUpdate: false });
-    const resetSelection = moveEditorSelectionToEnd(editor);
-    lastSelectionRef.current = resetSelection;
-    contentResetSelectionRef.current = resetSelection;
-    setCurrentLength(value.length);
+    const applied = applyEditorContent(
+      editor,
+      clampTextToCharactersLimit(
+        value,
+        charactersLimitRef.current,
+        enforceCharactersLimitRef.current,
+      ),
+    );
+    lastSelectionRef.current = applied.selection;
+    contentResetSelectionRef.current = applied.selection;
+    setCurrentLength(applied.text.length);
+
+    // `applyEditorContent` suppresses the update that used to push the applied
+    // text back out, so reconcile here instead: when the editor clamps or
+    // normalizes what it was handed, the parent would otherwise keep a value
+    // that no longer matches the visible document. `applied.text` was read back
+    // from the editor, so the next pass hits the early return above and this
+    // settles after one extra render.
+    //
+    // Read through the ref rather than depending on `onChange`, so an inline
+    // parent callback cannot make this effect re-run — and reset the document
+    // and caret — on renders where `value` did not change.
+    if (applied.text !== value) {
+      onChangeRef.current(applied.text);
+    }
   }, [editor, value]);
 
   const insertInstantTag = (tag: InstantTagDef) => {
