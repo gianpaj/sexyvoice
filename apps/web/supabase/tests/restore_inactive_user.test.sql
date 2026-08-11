@@ -145,11 +145,11 @@ select ok(
   (
     select amount = 10000
       and type = 'freemium'
-      and description = 'Initial user credits'
+      and description = 'Restored initial user credits'
     from public.credit_transactions
     where user_id = '22222222-2222-4222-8222-222222222222'
   ),
-  'the restored transaction matches the initial free grant'
+  'the restored transaction identifies the restored free grant'
 );
 
 select is(

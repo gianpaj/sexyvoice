@@ -125,11 +125,16 @@ export const updateSession = async (
     }
 
     if (user && dashboardPath && !isE2E()) {
-      await ensureUserApplicationState({
-        createdAt: user.created_at,
-        email: user.email,
-        id: user.id,
-      });
+      try {
+        await ensureUserApplicationState({
+          createdAt: user.created_at,
+          email: user.email,
+          id: user.id,
+        });
+      } catch {
+        // Restoration failures are reported to Sentry inside the helper.
+        // Never block dashboard access on this best-effort repair.
+      }
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);

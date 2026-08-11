@@ -190,6 +190,7 @@ declare type Database = {
           created_at: string | null;
           id: string;
           is_paid: boolean;
+          locale: string | null;
           name: string;
           provider: string;
           updated_at: string | null;
@@ -200,6 +201,7 @@ declare type Database = {
           created_at?: string | null;
           id?: string;
           is_paid?: boolean;
+          locale?: string | null;
           name: string;
           provider: string;
           updated_at?: string | null;
@@ -210,6 +212,7 @@ declare type Database = {
           created_at?: string | null;
           id?: string;
           is_paid?: boolean;
+          locale?: string | null;
           name?: string;
           provider?: string;
           updated_at?: string | null;
@@ -386,35 +389,6 @@ declare type Database = {
             columns: ['voice_id'];
             isOneToOne: false;
             referencedRelation: 'voices';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
-      card_bonus_claims: {
-        Row: {
-          created_at: string;
-          fingerprint: string;
-          setup_intent_id: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          fingerprint: string;
-          setup_intent_id: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          fingerprint?: string;
-          setup_intent_id?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'card_bonus_claims_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -609,7 +583,7 @@ declare type Database = {
           {
             foreignKeyName: 'credits_user_id_fkey';
             columns: ['user_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
@@ -889,11 +863,7 @@ declare type Database = {
         Returns: number;
       };
       restore_inactive_user: {
-        Args: {
-          p_auth_created_at: string;
-          p_email: string;
-          p_user_id: string;
-        };
+        Args: { p_auth_created_at: string; p_email: string; p_user_id: string };
         Returns: boolean;
       };
       update_api_key_last_used: {
@@ -902,12 +872,7 @@ declare type Database = {
       };
     };
     Enums: {
-      credit_transaction_type:
-        | 'purchase'
-        | 'freemium'
-        | 'topup'
-        | 'refund'
-        | 'card_bonus';
+      credit_transaction_type: 'purchase' | 'freemium' | 'topup' | 'refund';
       feature_type: 'tts' | 'call';
       usage_source_type:
         | 'tts'
@@ -1050,13 +1015,7 @@ declare const Constants = {
   },
   public: {
     Enums: {
-      credit_transaction_type: [
-        'purchase',
-        'freemium',
-        'topup',
-        'refund',
-        'card_bonus',
-      ],
+      credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],
       feature_type: ['tts', 'call'],
       usage_source_type: [
         'tts',

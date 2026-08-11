@@ -1,5 +1,7 @@
 -- Restore application state for retained Auth users whose inactive, empty
--- profiles were removed by the database-retention workflow.
+-- profiles were removed by scripts/inactive-empty-user-profiles-retention.sql.
+-- Any future workflow that retains auth.users while deleting profiles must use
+-- a different recovery path rather than treating a missing profile as unused.
 CREATE OR REPLACE FUNCTION public.restore_inactive_user(
   p_user_id uuid,
   p_email text,
@@ -55,7 +57,7 @@ BEGIN
     p_user_id,
     10000,
     'freemium',
-    'Initial user credits',
+    'Restored initial user credits',
     p_auth_created_at,
     restored_at
   );
@@ -84,4 +86,4 @@ GRANT EXECUTE ON FUNCTION public.restore_inactive_user(uuid, text, timestamp wit
 TO service_role;
 
 COMMENT ON FUNCTION public.restore_inactive_user(uuid, text, timestamp with time zone) IS
-'Atomically restores the profile and untouched signup credits for a retained inactive Auth user.';
+'Atomically restores an unused profile removed only by the inactive-account retention workflow.';
