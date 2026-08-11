@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
@@ -115,6 +116,43 @@ async function settleEffects() {
   await act(async () => {
     await Promise.resolve();
   });
+}
+
+/**
+ * A controlled parent that stores whatever the editor emits, the way
+ * `audio-generator.tsx` does. The other tests pass a bare mock that never
+ * feeds the value back, so only this harness can show that the editor's
+ * reconciliation reaches a fixed point instead of driving the parent in a
+ * loop — the failure mode this component's `emitUpdate: false` exists to stop.
+ */
+function ControlledEditorHarness({
+  externalValue,
+  onChange,
+}: {
+  externalValue: string;
+  onChange: (text: string) => void;
+}) {
+  const [value, setValue] = useState('');
+
+  return (
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <GrokTTSEditor
+        charactersLimit={500}
+        onChange={(text) => {
+          onChange(text);
+          setValue(text);
+        }}
+        placeholder={messages.generate.textAreaPlaceholder}
+        selectedGrokLanguage="auto"
+        setSelectedGrokLanguage={vi.fn()}
+        value={value}
+      />
+      <button onClick={() => setValue(externalValue)} type="button">
+        set external value
+      </button>
+      <output data-testid="parent-value">{value}</output>
+    </NextIntlClientProvider>
+  );
 }
 
 function selectEditorText(editor: HTMLElement, text: string) {
@@ -270,6 +308,37 @@ describe('GrokTTSEditor', () => {
     );
   });
 
+  it('settles after one emission when a controlled parent stores the result', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <ControlledEditorHarness
+        externalValue={`Hello${GROK_EMPTY_WRAPPING_TEXT}world`}
+        onChange={onChange}
+      />,
+    );
+
+    await findEditor();
+    await user.click(
+      screen.getByRole('button', { name: 'set external value' }),
+    );
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('Helloworld');
+    });
+    await settleEffects();
+
+    // The parent now holds exactly what the editor contains, so the next pass
+    // takes the `current === value` early return rather than emitting again.
+    // A second emission here would mean the reconciliation never converges.
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('parent-value')).toHaveTextContent('Helloworld');
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      '10 / 500',
+    );
+  });
+
   // The character limit guards what the user types or pastes; it never rewrites
   // text handed down from the parent. These two cases must agree, because
   // audio-generator.tsx shares one `text` state across voices, so over-limit
@@ -331,6 +400,7 @@ describe('GrokTTSEditor', () => {
       expect(editor).toHaveTextContent(clampedText);
       expect(onChange).toHaveBeenCalledWith(clampedText);
     });
+    await settleEffects();
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
