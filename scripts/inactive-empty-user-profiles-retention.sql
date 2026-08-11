@@ -8,6 +8,10 @@
 -- - "Empty profile" means the user still has one untouched 10,000-credit
 --   signup grant and has no generated audio files, call sessions, usage events,
 --   custom voices, prompts, characters, or API keys.
+-- - Legacy profiles with missing credit rows or duplicate signup grants are
+--   intentionally excluded. Restoration can only reproduce one 10,000-credit
+--   balance and one freemium transaction, so under-deletion is safer than
+--   rewriting ambiguous account history.
 --
 -- Run the SELECT queries in the Supabase SQL editor first. The DELETE block at
 -- the bottom is commented out by default because it permanently deletes rows.
