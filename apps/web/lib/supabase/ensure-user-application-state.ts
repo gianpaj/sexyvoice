@@ -51,6 +51,17 @@ export async function ensureUserApplicationState(
     return 'existing';
   }
 
+  if (!user.email) {
+    const error = new Error(
+      'Cannot restore inactive user application state without an email.',
+    );
+    captureException(error, {
+      extra: { authCreatedAt: user.createdAt },
+      ...getTelemetryContext(user),
+    });
+    throw error;
+  }
+
   const { data: restored, error: restoreError } = await admin.rpc(
     'restore_inactive_user',
     {

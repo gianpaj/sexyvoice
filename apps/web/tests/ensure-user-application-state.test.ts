@@ -1,8 +1,8 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ensureUserApplicationState } from '@/lib/supabase/ensure-user-application-state';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { ensureUserApplicationState } from '@/lib/supabase/ensure-user-application-state';
 
 vi.mock('server-only', () => ({}));
 
@@ -56,6 +56,43 @@ describe('ensureUserApplicationState', () => {
     expect(captureMessage).not.toHaveBeenCalled();
   });
 
+  it('accepts an existing profile when the Auth user has no email', async () => {
+    const userWithoutEmail = { ...user, email: null };
+    const admin = createAdminMock({
+      profile: { id: user.id },
+    });
+    vi.mocked(createAdminClient).mockReturnValue(admin as never);
+
+    await expect(ensureUserApplicationState(userWithoutEmail)).resolves.toBe(
+      'existing',
+    );
+
+    expect(admin.rpc).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('requires an email only when the profile is missing', async () => {
+    const userWithoutEmail = { ...user, email: null };
+    const admin = createAdminMock({
+      profile: null,
+    });
+    vi.mocked(createAdminClient).mockReturnValue(admin as never);
+
+    await expect(ensureUserApplicationState(userWithoutEmail)).rejects.toThrow(
+      'Cannot restore inactive user application state without an email.',
+    );
+
+    expect(admin.rpc).not.toHaveBeenCalled();
+    expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
+      extra: { authCreatedAt: user.createdAt },
+      tags: {
+        area: 'auth',
+        flow: 'inactive-user-reactivation',
+      },
+      user: { email: undefined, id: user.id },
+    });
+  });
+
   it('atomically restores a missing profile with the original Auth date', async () => {
     const admin = createAdminMock({
       profile: null,
@@ -96,12 +133,14 @@ describe('ensureUserApplicationState', () => {
     expect(captureMessage).not.toHaveBeenCalled();
   });
 
-  it('reports restoration failures and throws before callers continue', async () => {
+  it('reports username collisions for manual resolution', async () => {
     const restoreError = {
       code: '23505',
-      details: 'Key (username) already exists.',
-      hint: null,
-      message: 'duplicate key value violates unique constraint',
+      details:
+        'The Auth email is already assigned to another profiles.username value.',
+      hint: 'Resolve the conflicting profile username, then retry restoration.',
+      message:
+        'Inactive user profile restoration requires manual username conflict resolution',
     };
     const admin = createAdminMock({
       profile: null,
@@ -121,6 +160,7 @@ describe('ensureUserApplicationState', () => {
       tags: {
         area: 'auth',
         flow: 'inactive-user-reactivation',
+        reason: 'username-conflict',
       },
       user: { email: user.email, id: user.id },
     });
