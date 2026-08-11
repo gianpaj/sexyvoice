@@ -266,22 +266,43 @@ describe('GrokTTSEditor', () => {
     );
   });
 
-  it('clamps an external value that exceeds the character limit', async () => {
+  // The character limit guards what the user types or pastes; it never rewrites
+  // text handed down from the parent. These two cases must agree, because
+  // audio-generator.tsx shares one `text` state across voices, so over-limit
+  // text can arrive either on mount or through a prop change.
+  it('mounts with an over-limit value without clamping it', async () => {
     const onChange = vi.fn();
-    const clampedLength = 5 + GROK_CHARACTERS_LIMIT_GRACE;
+    const overLimitValue = 'A'.repeat(40);
+
+    renderEditor({ charactersLimit: 5, onChange, value: overLimitValue });
+
+    const editor = await findEditor();
+    await settleEffects();
+
+    expect(editor).toHaveTextContent(overLimitValue);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      '40 / 5',
+    );
+  });
+
+  it('applies an over-limit external value without clamping it', async () => {
+    const onChange = vi.fn();
+    const overLimitValue = 'A'.repeat(40);
     const rendered = renderEditor({ charactersLimit: 5, onChange, value: '' });
     const editor = await findEditor();
 
     onChange.mockClear();
-    rendered.rerenderWith({ value: 'A'.repeat(40) });
+    rendered.rerenderWith({ value: overLimitValue });
 
     await waitFor(() => {
-      expect(onChange).toHaveBeenCalledWith('A'.repeat(clampedLength));
+      expect(editor).toHaveTextContent(overLimitValue);
     });
     await settleEffects();
-    expect(onChange).toHaveBeenCalledTimes(1);
-    expect(editor).toHaveTextContent('A'.repeat(clampedLength));
-    expect(screen.getByText(`${clampedLength} / 5`)).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      '40 / 5',
+    );
   });
 
   it('emits one clamped value when pasted text exceeds the character limit', async () => {

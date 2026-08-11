@@ -75,11 +75,15 @@ type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
 type TagDef = InstantTagDef | WrapperTagDef;
 
 /**
- * Extra characters tolerated above `charactersLimit` before the editor clamps
- * its own content. The counter turns red as soon as `charactersLimit` is
- * exceeded, so this grace window lets a slightly-too-long paste land in the
- * document — and stay visible and editable — instead of being cut at the exact
- * limit while the user is still typing.
+ * Extra characters tolerated above `charactersLimit` before `onUpdate` clamps
+ * what the user typed or pasted. The counter turns red as soon as
+ * `charactersLimit` is exceeded, so this grace window lets a slightly-too-long
+ * edit land in the document — and stay visible and editable — instead of being
+ * cut at the exact limit mid-keystroke.
+ *
+ * This is a guard on user input only, mirroring `maxLength` on the non-Grok
+ * textarea: neither clamps text that arrives from the parent. See the content
+ * synchronization effect below.
  */
 export const GROK_CHARACTERS_LIMIT_GRACE = 10;
 
@@ -214,16 +218,6 @@ function moveEditorSelectionToEnd(
   editor.commands.setTextSelection(selection.from);
 
   return selection;
-}
-
-function clampTextToCharactersLimit(
-  text: string,
-  charactersLimit: number,
-  enforceCharactersLimit: boolean,
-): string {
-  return enforceCharactersLimit
-    ? text.slice(0, charactersLimit + GROK_CHARACTERS_LIMIT_GRACE)
-    : text;
 }
 
 interface AppliedEditorContent {
@@ -422,11 +416,12 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const clampedText = clampTextToCharactersLimit(
-        fullText,
-        charactersLimitRef.current,
-        enforceCharactersLimitRef.current,
-      );
+      const clampedText = enforceCharactersLimitRef.current
+        ? fullText.slice(
+            0,
+            charactersLimitRef.current + GROK_CHARACTERS_LIMIT_GRACE,
+          )
+        : fullText;
       let text = fullText;
 
       if (clampedText !== fullText) {
@@ -452,14 +447,15 @@ export function GrokTTSEditor({
       return;
     }
 
-    const applied = applyEditorContent(
-      editor,
-      clampTextToCharactersLimit(
-        value,
-        charactersLimitRef.current,
-        enforceCharactersLimitRef.current,
-      ),
-    );
+    // Applied as given, deliberately not clamped. `useEditor`'s initial
+    // `content` above cannot clamp either, and `audio-generator.tsx` shares one
+    // `text` state between this editor and the non-Grok one, so switching from
+    // a higher-limit voice mounts this editor with over-limit text. Clamping
+    // here would truncate that text on the sync path but not on mount, and
+    // would silently destroy input the user can still see. Over-limit text is
+    // surfaced by the red counter and blocks generation through
+    // `textIsOverLimit` in the parent.
+    const applied = applyEditorContent(editor, value);
     lastSelectionRef.current = applied.selection;
     contentResetSelectionRef.current = applied.selection;
     setCurrentLength(applied.text.length);
