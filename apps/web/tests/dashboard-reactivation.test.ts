@@ -111,7 +111,7 @@ describe('dashboard inactive-user reactivation boundary', () => {
     expect(ensureUserApplicationState).not.toHaveBeenCalled();
   });
 
-  it('redirects without continuing when restoration fails', async () => {
+  it('continues to the dashboard when restoration fails', async () => {
     vi.mocked(ensureUserApplicationState).mockRejectedValue(
       new Error('restoration failed'),
     );
@@ -121,7 +121,8 @@ describe('dashboard inactive-user reactivation boundary', () => {
       'en',
     );
 
-    expect(response.headers.get('location')).toBe('https://sexyvoice.ai/en');
-    expect(nextResponseMocks.redirect).toHaveBeenCalled();
+    expect(response.headers.get('location')).toBeNull();
+    expect(NextResponse.next).toHaveBeenCalled();
+    expect(nextResponseMocks.redirect).not.toHaveBeenCalled();
   });
 });
