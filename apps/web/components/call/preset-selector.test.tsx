@@ -73,7 +73,7 @@ beforeEach(() => {
           prompts: { localized_prompts: {}, prompt: '' },
           session_config: {
             maxOutputTokens: null,
-            model: 'grok-voice-think-fast-2.0',
+            model: 'grok-voice-think-fast-1.0',
             temperature: 0.8,
             voice: 'Ara',
           },
