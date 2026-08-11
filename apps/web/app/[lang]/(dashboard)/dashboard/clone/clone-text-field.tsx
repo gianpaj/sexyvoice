@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID } from '@/lib/clone/constants';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { type CloneStateAction, formatCloneMessage } from './clone-state';
 
@@ -49,7 +50,7 @@ export function CloneTextField({
             data-testid="clone-text-input"
             disabled={disabled}
             id="text-to-convert"
-            maxLength={textMaxLength + 30}
+            maxLength={textMaxLength + CHARACTERS_LIMIT_GRACE}
             onChange={(e) => {
               dispatch({
                 patch: { text: e.target.value },

@@ -49,6 +49,7 @@ import {
   grokTextToTipTapDoc,
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
@@ -73,19 +74,6 @@ const WRAPPING_TAGS = GROK_WRAPPING_TAG_DEFINITIONS.map(
 type InstantTagDef = (typeof INSTANT_TAGS)[number];
 type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
 type TagDef = InstantTagDef | WrapperTagDef;
-
-/**
- * Extra characters tolerated above `charactersLimit` before `onUpdate` clamps
- * what the user typed or pasted. The counter turns red as soon as
- * `charactersLimit` is exceeded, so this grace window lets a slightly-too-long
- * edit land in the document — and stay visible and editable — instead of being
- * cut at the exact limit mid-keystroke.
- *
- * This is a guard on user input only, mirroring `maxLength` on the non-Grok
- * textarea: neither clamps text that arrives from the parent. See the content
- * synchronization effect below.
- */
-export const GROK_CHARACTERS_LIMIT_GRACE = 10;
 
 const KNOWN_INSTANT_TAGS = new Set(GROK_INSTANT_TAGS);
 
@@ -416,11 +404,11 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
+      // Clamps user input only, mirroring `maxLength` on the other limited
+      // textareas. Text arriving from the parent is applied as given — see the
+      // content synchronization effect below.
       const clampedText = enforceCharactersLimitRef.current
-        ? fullText.slice(
-            0,
-            charactersLimitRef.current + GROK_CHARACTERS_LIMIT_GRACE,
-          )
+        ? fullText.slice(0, charactersLimitRef.current + CHARACTERS_LIMIT_GRACE)
         : fullText;
       let text = fullText;
 

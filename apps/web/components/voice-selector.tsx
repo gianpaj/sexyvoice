@@ -20,6 +20,7 @@ import {
 import { VoiceSelect } from '@/components/voice-select';
 import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
@@ -163,7 +164,7 @@ export function VoiceSelector({
             <Textarea
               className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
               data-testid="generate-style-textarea"
-              maxLength={styleCharacterLimit + 30}
+              maxLength={styleCharacterLimit + CHARACTERS_LIMIT_GRACE}
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={t('voiceSelector.selectStyleTextareaPlaceholder')}
               ref={textareaRef}

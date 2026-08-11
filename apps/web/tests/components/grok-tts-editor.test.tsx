@@ -12,11 +12,9 @@ import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  GROK_CHARACTERS_LIMIT_GRACE,
-  GrokTTSEditor,
-} from '@/components/grok-tts-editor';
+import { GrokTTSEditor } from '@/components/grok-tts-editor';
 import { GROK_EMPTY_WRAPPING_TEXT } from '@/lib/tts-editor';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import messages from '@/messages/en.json';
 
 const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
@@ -27,6 +25,12 @@ const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
 ] as const;
 const SUPPORTED_GROK_TAG_CHIP_SELECTOR =
   '[data-grok-instant-tag], [data-grok-wrapper-boundary-node]';
+
+const TEST_LIMIT = 5;
+// Where `onUpdate` cuts user input, and the threshold over-limit text must
+// clear for the no-clamping assertions to mean anything.
+const CLAMP_THRESHOLD = TEST_LIMIT + CHARACTERS_LIMIT_GRACE;
+const OVER_LIMIT_TEXT = 'A'.repeat(CLAMP_THRESHOLD + 5);
 
 function findEditor() {
   return screen.findByText(
@@ -269,48 +273,55 @@ describe('GrokTTSEditor', () => {
   // The character limit guards what the user types or pastes; it never rewrites
   // text handed down from the parent. These two cases must agree, because
   // audio-generator.tsx shares one `text` state across voices, so over-limit
-  // text can arrive either on mount or through a prop change.
+  // text can arrive either on mount or through a prop change. Both values are
+  // past the clamp threshold, so a regression that clamps them would show up.
   it('mounts with an over-limit value without clamping it', async () => {
     const onChange = vi.fn();
-    const overLimitValue = 'A'.repeat(40);
 
-    renderEditor({ charactersLimit: 5, onChange, value: overLimitValue });
+    renderEditor({
+      charactersLimit: TEST_LIMIT,
+      onChange,
+      value: OVER_LIMIT_TEXT,
+    });
 
     const editor = await findEditor();
     await settleEffects();
 
-    expect(editor).toHaveTextContent(overLimitValue);
+    expect(editor).toHaveTextContent(OVER_LIMIT_TEXT);
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      '40 / 5',
+      `${OVER_LIMIT_TEXT.length} / ${TEST_LIMIT}`,
     );
   });
 
   it('applies an over-limit external value without clamping it', async () => {
     const onChange = vi.fn();
-    const overLimitValue = 'A'.repeat(40);
-    const rendered = renderEditor({ charactersLimit: 5, onChange, value: '' });
+    const rendered = renderEditor({
+      charactersLimit: TEST_LIMIT,
+      onChange,
+      value: '',
+    });
     const editor = await findEditor();
 
     onChange.mockClear();
-    rendered.rerenderWith({ value: overLimitValue });
+    rendered.rerenderWith({ value: OVER_LIMIT_TEXT });
 
     await waitFor(() => {
-      expect(editor).toHaveTextContent(overLimitValue);
+      expect(editor).toHaveTextContent(OVER_LIMIT_TEXT);
     });
     await settleEffects();
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      '40 / 5',
+      `${OVER_LIMIT_TEXT.length} / ${TEST_LIMIT}`,
     );
   });
 
   it('emits one clamped value when pasted text exceeds the character limit', async () => {
     const onChange = vi.fn();
-    const pastedText = 'A'.repeat(20);
-    const clampedText = 'A'.repeat(5 + GROK_CHARACTERS_LIMIT_GRACE);
+    const pastedText = OVER_LIMIT_TEXT;
+    const clampedText = 'A'.repeat(CLAMP_THRESHOLD);
 
-    renderEditor({ charactersLimit: 5, onChange });
+    renderEditor({ charactersLimit: TEST_LIMIT, onChange });
 
     const editor = await findEditor();
     onChange.mockClear();
