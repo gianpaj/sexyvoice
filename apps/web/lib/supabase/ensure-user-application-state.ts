@@ -12,6 +12,9 @@ interface ApplicationStateUser {
 
 export type ApplicationStateStatus = 'existing' | 'restored';
 
+const MANUAL_USERNAME_CONFLICT_MESSAGE =
+  'Inactive user profile restoration requires manual username conflict resolution';
+
 const getTelemetryContext = (user: ApplicationStateUser) => ({
   tags: {
     area: 'auth',
@@ -23,17 +26,6 @@ const getTelemetryContext = (user: ApplicationStateUser) => ({
 export async function ensureUserApplicationState(
   user: ApplicationStateUser,
 ): Promise<ApplicationStateStatus> {
-  if (!user.email) {
-    const error = new Error(
-      'Cannot restore inactive user application state without an email.',
-    );
-    captureException(error, {
-      extra: { authCreatedAt: user.createdAt },
-      ...getTelemetryContext(user),
-    });
-    throw error;
-  }
-
   const admin = createAdminClient();
   const { data: profile, error: profileError } = await admin
     .from('profiles')
@@ -73,12 +65,23 @@ export async function ensureUserApplicationState(
       'Failed to restore inactive user application state.',
       { cause: restoreError },
     );
+    const telemetryContext = getTelemetryContext(user);
+    const requiresManualUsernameResolution =
+      restoreError.code === '23505' &&
+      restoreError.message === MANUAL_USERNAME_CONFLICT_MESSAGE;
+
     captureException(error, {
       extra: {
         authCreatedAt: user.createdAt,
         restoreError,
       },
-      ...getTelemetryContext(user),
+      ...telemetryContext,
+      tags: {
+        ...telemetryContext.tags,
+        ...(requiresManualUsernameResolution
+          ? { reason: 'username-conflict' }
+          : {}),
+      },
     });
     throw error;
   }

@@ -6,7 +6,7 @@
 
 begin;
 
-select plan(17);
+select plan(19);
 
 select ok(
   has_function_privilege(
@@ -47,6 +47,49 @@ select ok(
 alter table public.profiles
   alter constraint profiles_id_fkey
   deferrable initially deferred;
+
+insert into public.profiles (id, username)
+values (
+  '33333333-3333-4333-8333-333333333333',
+  'pgtap-returning-user@example.com'
+);
+
+set local role service_role;
+
+select throws_ok(
+  $$select public.restore_inactive_user(
+    '22222222-2222-4222-8222-222222222222',
+    'pgtap-returning-user@example.com',
+    '2025-08-29 11:38:46.727344+00'
+  )$$,
+  '23505',
+  'Inactive user profile restoration requires manual username conflict resolution',
+  'a username conflict requires manual resolution'
+);
+
+reset role;
+
+select ok(
+  not exists (
+    select 1
+    from public.profiles
+    where id = '22222222-2222-4222-8222-222222222222'
+  )
+  and not exists (
+    select 1
+    from public.credits
+    where user_id = '22222222-2222-4222-8222-222222222222'
+  )
+  and not exists (
+    select 1
+    from public.credit_transactions
+    where user_id = '22222222-2222-4222-8222-222222222222'
+  ),
+  'a username conflict leaves no partial application state'
+);
+
+delete from public.profiles
+where id = '33333333-3333-4333-8333-333333333333';
 
 set local role service_role;
 

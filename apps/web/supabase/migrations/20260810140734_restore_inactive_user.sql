@@ -15,6 +15,7 @@ AS $function$
 DECLARE
   profile_was_inserted boolean;
   restored_at timestamp with time zone := now();
+  violated_constraint text;
 BEGIN
   IF p_user_id IS NULL THEN
     RAISE EXCEPTION 'User ID is required';
@@ -28,19 +29,36 @@ BEGIN
     RAISE EXCEPTION 'Auth creation timestamp is required';
   END IF;
 
-  INSERT INTO public.profiles (
-    id,
-    username,
-    created_at,
-    updated_at
-  ) VALUES (
-    p_user_id,
-    p_email,
-    p_auth_created_at,
-    restored_at
-  )
-  ON CONFLICT (id) DO NOTHING
-  RETURNING true INTO profile_was_inserted;
+  BEGIN
+    INSERT INTO public.profiles (
+      id,
+      username,
+      created_at,
+      updated_at
+    ) VALUES (
+      p_user_id,
+      p_email,
+      p_auth_created_at,
+      restored_at
+    )
+    ON CONFLICT (id) DO NOTHING
+    RETURNING true INTO profile_was_inserted;
+  EXCEPTION
+    WHEN unique_violation THEN
+      GET STACKED DIAGNOSTICS
+        violated_constraint = CONSTRAINT_NAME;
+
+      IF violated_constraint = 'profiles_username_key' THEN
+        RAISE EXCEPTION
+          'Inactive user profile restoration requires manual username conflict resolution'
+          USING
+            ERRCODE = '23505',
+            DETAIL = 'The Auth email is already assigned to another profiles.username value.',
+            HINT = 'Resolve the conflicting profile username, then retry restoration.';
+      END IF;
+
+      RAISE;
+  END;
 
   IF NOT COALESCE(profile_was_inserted, false) THEN
     RETURN false;
