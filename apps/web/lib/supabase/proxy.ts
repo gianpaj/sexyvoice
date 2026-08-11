@@ -1,10 +1,10 @@
 import { captureMessage } from '@sentry/nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { routing } from '@/src/i18n/routing';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
-import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] =>
   routing.locales.flatMap((locale) =>
@@ -46,6 +46,51 @@ const isDashboardPath = (pathname: string, locale: string) =>
   pathname === `/${locale}/dashboard` ||
   pathname.startsWith(`/${locale}/dashboard/`);
 
+const copyResponseState = (source: NextResponse, target: NextResponse) => {
+  const sourceOverrideHeaders = source.headers
+    .get('x-middleware-override-headers')
+    ?.split(',')
+    .map((header) => header.trim())
+    .filter(Boolean);
+  const targetOverrideHeaders = target.headers
+    .get('x-middleware-override-headers')
+    ?.split(',')
+    .map((header) => header.trim())
+    .filter(Boolean);
+
+  for (const [key, value] of source.headers.entries()) {
+    const normalizedKey = key.toLowerCase();
+
+    if (
+      normalizedKey === 'set-cookie' ||
+      normalizedKey === 'x-middleware-override-headers' ||
+      normalizedKey === 'x-middleware-request-cookie'
+    ) {
+      continue;
+    }
+
+    target.headers.set(key, value);
+  }
+
+  const overrideHeaders = new Set([
+    ...(sourceOverrideHeaders ?? []),
+    ...(targetOverrideHeaders ?? []),
+  ]);
+
+  if (overrideHeaders.size > 0) {
+    target.headers.set(
+      'x-middleware-override-headers',
+      [...overrideHeaders].join(','),
+    );
+  }
+
+  for (const cookie of source.cookies.getAll()) {
+    target.cookies.set(cookie);
+  }
+
+  return target;
+};
+
 const redirectWithSupabaseCookies = (
   url: URL,
   supabaseResponse: NextResponse,
@@ -64,9 +109,10 @@ export const updateSession = async (
   locale: string,
   response: NextResponse = NextResponse.next({ request }),
 ) => {
+  let supabaseResponse = response;
+
   try {
     const { pathname } = request.nextUrl;
-    const supabaseResponse = response;
     const rawOauthCallbackMarker = request.cookies.get(
       OAUTH_CALLBACK_COOKIE_NAME,
     )?.value;
@@ -74,15 +120,43 @@ export const updateSession = async (
       rawOauthCallbackMarker,
     );
 
-    const supabase = await createClient();
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            for (const { name, value } of cookiesToSet) {
+              request.cookies.set(name, value);
+            }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+            const refreshedResponse = copyResponseState(
+              supabaseResponse,
+              NextResponse.next({ request }),
+            );
+
+            for (const { name, value, options } of cookiesToSet) {
+              refreshedResponse.cookies.set(name, value, options);
+            }
+
+            supabaseResponse = refreshedResponse;
+          },
+        },
+      },
+    );
+
+    // Keep this call immediately after creating the request-scoped client.
+    // It refreshes near-expiry tokens and verifies JWT signatures.
+    const { data, error } = await supabase.auth.getClaims();
+    const claims = error ? null : data?.claims;
+    const isAuthenticated = Boolean(claims?.sub);
 
     const dashboardPath = isDashboardPath(pathname, locale);
 
-    if (!user && dashboardPath) {
+    if (!isAuthenticated && dashboardPath) {
       const redirectResponse = redirectWithSupabaseCookies(
         new URL(`/${locale}/login`, request.url),
         supabaseResponse,
@@ -124,7 +198,7 @@ export const updateSession = async (
 
     const isPublicRoute = publicRoutes.includes(pathname);
 
-    if (!(user || isPublicRoute)) {
+    if (!(isAuthenticated || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
       return redirectWithSupabaseCookies(
         new URL(`/${locale}`, request.url),
@@ -134,7 +208,7 @@ export const updateSession = async (
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
 
-    if (user && authRoutes.includes(pathname)) {
+    if (isAuthenticated && authRoutes.includes(pathname)) {
       return redirectWithSupabaseCookies(
         new URL(`/${locale}/dashboard`, request.url),
         supabaseResponse,
@@ -160,10 +234,10 @@ export const updateSession = async (
 
     return supabaseResponse;
   } catch (e) {
-    console.error('Middleware error:', e);
+    console.error('Proxy error:', e);
     return redirectWithSupabaseCookies(
       new URL(`/${locale}`, request.url),
-      response,
+      supabaseResponse,
     );
   }
 };

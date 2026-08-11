@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
@@ -14,15 +15,13 @@ export default async function NewVoicePage(props: {
     props.params,
     createClient(),
   ]);
-  const [
-    {
-      data: { user },
-      error,
-    },
-    t,
-  ] = await Promise.all([supabase.auth.getUser(), getTranslations('clone')]);
+  const [claims, t] = await Promise.all([
+    getVerifiedClaims(supabase),
+    getTranslations('clone'),
+  ]);
+  const userId = claims?.sub;
 
-  if (!user || error) {
+  if (!userId) {
     return <div>Not logged in</div>;
   }
 
@@ -31,15 +30,15 @@ export default async function NewVoicePage(props: {
       supabase
         .from('credits')
         .select('amount')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single()
         .then((res) => res ?? { data: { amount: 0 } }),
       supabase
         .from('credit_transactions')
         .select('amount')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false }),
-      hasUserPaid(user.id),
+      hasUserPaid(userId),
     ]);
 
   const credits = creditsData || { amount: 0 };
@@ -57,7 +56,7 @@ export default async function NewVoicePage(props: {
           creditTransactions={creditTransactions}
           doNotToggleSidebar
           lang={lang}
-          userId={user.id}
+          userId={userId}
         />
       </div>
       <NewVoiceClient

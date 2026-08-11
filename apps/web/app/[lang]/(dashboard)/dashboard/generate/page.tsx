@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
@@ -15,13 +16,9 @@ export default async function GeneratePage(props: {
   const t = await getTranslations('generate');
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  const userId = user?.id;
-  if (!userId || error) {
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) {
     redirect(`/${lang}/login`);
   }
 
@@ -34,7 +31,7 @@ export default async function GeneratePage(props: {
   const isPlaywrightCreditsBypassEnabled =
     process.env.E2E_TEST_MODE === 'true' &&
     !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
-    user?.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
+    claims.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
   const hasEnoughCredits =
     credits.amount >= 10 || isPlaywrightCreditsBypassEnabled;
 
