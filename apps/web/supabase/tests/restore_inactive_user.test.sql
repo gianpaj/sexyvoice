@@ -6,7 +6,7 @@
 
 begin;
 
-select plan(16);
+select plan(17);
 
 select ok(
   has_function_privilege(
@@ -33,6 +33,12 @@ select ok(
     'EXECUTE'
   ),
   'anonymous users cannot execute restore_inactive_user'
+);
+
+select ok(
+  has_table_privilege('service_role', 'public.profiles', 'SELECT')
+    and has_table_privilege('service_role', 'public.profiles', 'INSERT'),
+  'service_role can read and restore profiles'
 );
 
 -- Defer the Auth-user reference so the fixture can start with no application
