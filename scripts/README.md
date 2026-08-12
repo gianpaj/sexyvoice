@@ -249,44 +249,254 @@ Requires `.env` or `.env.local` with:
 
 ---
 
+## Investigate Gemini TTS Errors and Credit Charges
+
+Use this runbook when a user reports that Gemini speech requests failed,
+returned defective audio, or consumed credits unexpectedly. It is the canonical
+workflow for humans and coding agents. The companion agent instructions are in
+`skills/investigate-gemini-tts-credit-report/SKILL.md`.
+
+The investigation is read-only. Do not run refund scripts, database mutations,
+Supabase RPCs, or any other production write while following it. A refund is a
+separate action that requires explicit human approval after the evidence and
+amount have been reviewed.
+
+### Inputs and scope
+
+Collect:
+
+- the user's UUID;
+- the start and end timestamps in UTC, including enough buffer to catch retries;
+- any generation IDs, request IDs, filenames, screenshots, or exact error text;
+- whether the complaint concerns an error response, the delivered audio, or
+  both.
+
+Do not infer a narrow time window from the report when one can be obtained from
+the user or production records. State any assumed window in the final report.
+Use a temporary directory outside the repository for logs, downloaded audio,
+environment files, and generated reports. These artifacts may contain user text,
+email addresses, signed URLs, or other production data.
+
+### 1. Establish the ledger baseline
+
+Run the read-only dispute evidence script to reconcile the complete account
+ledger:
+
+```bash
+pnpm --filter @sexyvoice/scripts compile-dispute-evidence -- <user-id>
+```
+
+The expected balance is:
+
+```text
+purchased + freemium + refund adjustments - usage = expected balance
+current balance - expected balance = unexplained delta
+```
+
+A zero delta means the stored credit balance agrees with the stored ledger. It
+does not prove that every delivered artifact was usable. A non-zero delta is a
+billing-integrity finding that must be explained before considering any refund.
+
+The script writes a Markdown report containing production account data. Move it
+to the temporary investigation directory and remove it after the investigation.
+Do not paste irrelevant PII into tickets or the final report.
+
+If the script does not expose a required detail, use the configured Supabase CLI
+or database client only for scoped `SELECT`/read-only queries. Inspect the query
+before execution. Never use `INSERT`, `UPDATE`, `DELETE`, DDL, RPC calls, or a
+script with a write mode during an investigation.
+
+### 2. Correlate Sentry application logs
+
+Use Sentry as the primary source for application errors and handled Gemini
+failures. Query the production project across the exact UTC window:
+
+```bash
+sentry-cli logs list \
+  --org sexyvoiceai \
+  --project 4509116876193872 \
+  --max-rows 1000 \
+  --query 'timestamp:>=<start-iso> timestamp:<=<end-iso> user.id:<user-id>'
+```
+
+Start without a level filter. The generation route records several handled
+Gemini failures as `warn`, including provider unavailability, rejected input,
+quota exhaustion, and responses with no audio. Add terms to `--query` to refine
+the results by `level`, message, model, provider response ID, or refund context.
+Useful messages include:
+
+- `Gemini voice generation succeeded`;
+- `Gemini voice generation returned no audio data`;
+- `Gemini voice generation failed`;
+- `Gemini provider temporarily unavailable`;
+- `Gemini rejected TTS request`;
+- `Failed to restore reserved credits`;
+- `Failed to refund unused reserved credits`.
+
+`--log-level` controls `sentry-cli`'s own output verbosity; it does not filter
+the returned application logs. Filter application levels inside `--query`, such
+as `level:error` or `level:warn`.
+
+The `sentry-cli logs` command is beta and may change. Confirm the installed
+syntax before adapting a command:
+
+```bash
+sentry-cli logs list --org sexyvoiceai --project 4509116876193872 --help
+```
+
+Use an existing authenticated CLI configuration with read access to the project;
+do not put an auth token in commands, reports, or shared notes. If the first
+query returns no rows, keep the same UTC window and broaden the Sentry search by
+removing `user.id` and using a supplied response ID, known message, or model.
+Narrow busy windows instead of assuming that the 1000-row result cap contains
+every matching attempt.
+
+Correlate attempts by `user.id`, timestamp, message, model, response ID,
+artifact ID, and credit reservation or refund context. Read the current
+generation route before relying on historical message names or refund behavior.
+
+### Vercel fallback
+
+Use Vercel only when Sentry has no matching evidence, the request may have
+failed before application logging, or platform HTTP/request metadata is needed:
+
+```bash
+vercel logs --environment production --since <start-iso> --until <end-iso> --limit 1000 --json
+vercel logs --environment production --since <start-iso> --until <end-iso> --query '<user-id>' --json
+vercel logs --environment production --request-id <request-id> --json
+```
+
+Label Vercel-only timestamp correlations as inferences unless a request ID,
+response ID, or artifact ID joins them to Sentry or database evidence.
+
+Classify each relevant attempt as one of:
+
+- failed before delivery and refunded;
+- failed before delivery with no matching refund evidence;
+- successful with a persisted delivered artifact;
+- successful but the delivered artifact is disputed;
+- inconclusive because the log or database evidence is incomplete.
+
+Do not equate an error log or HTTP status with a credit loss, or a success log
+with usable audio.
+
+### 3. Inspect delivered Gemini 3.1 artifacts
+
+Run the transcript-duration detector for the exact UTC window:
+
+```bash
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+  --user <user-id> \
+  --since <start-iso> \
+  --until <end-iso> \
+  --out <temporary-directory>/truncation-candidates.json
+```
+
+The detector produces candidates, not confirmed defects. For each disputed or
+flagged artifact, compare its database status, credits, model, transcript,
+duration, provider token metadata, storage object, and the matching request log.
+Download audio only when necessary and keep it in the temporary directory.
+
+Confirm a delivered-audio defect with independent evidence such as listening to
+the complete artifact, verifying that transcript content is missing, or finding
+that the file is empty, corrupt, or materially shorter than its transcript can
+support. One heuristic alone must not determine a refund.
+
+### Audio energy and “silence”
+
+`ffmpeg`'s `silencedetect` filter finds intervals below a selected amplitude
+threshold for a minimum duration. It does not prove that those intervals are
+inaudible. Quiet speech, room tone, compression artifacts, fades, and poor
+recording levels can all fall below the threshold while remaining audible.
+
+For example:
+
+```bash
+ffmpeg -i <audio-file> -af silencedetect=noise=-40dB:d=0.5 -f null -
+```
+
+Report this result as “approximately N seconds below -40 dBFS for at least 0.5
+seconds,” not “N seconds of silence.” Always state the threshold and minimum
+duration. Do not use low-energy duration by itself to classify audio as broken
+or to calculate a refund.
+
+### 4. Separate findings from hypotheses
+
+Use these evidence classes:
+
+- **Proven billing defect:** a debit or usage charge lacks the expected delivery
+  or refund and creates an explainable credit shortfall.
+- **Confirmed delivered-audio defect:** the artifact was billed and delivered,
+  but independent inspection confirms missing, corrupt, or unusable output.
+- **Suspected quality defect:** a heuristic or subjective review raises concern,
+  but the expected content may still be audible or present.
+- **No discrepancy found:** the ledger reconciles, failures were refunded, and
+  no delivered artifact was independently confirmed defective.
+- **Inconclusive:** required logs or artifacts are unavailable.
+
+Keep these claims separate. In particular, a reconciled ledger rules out an
+unexplained balance mismatch, but it does not rule out compensation for a
+confirmed defective artifact.
+
+### 5. Report and clean up
+
+Return:
+
+1. user ID and UTC investigation window;
+2. data sources and exact commands used;
+3. ledger equation, current balance, expected balance, and delta;
+4. request counts by outcome, with request IDs when available;
+5. delivered artifacts reviewed and their evidence;
+6. proven findings, suspected issues, and confidence labels;
+7. proposed credit adjustment, if supported, without executing it;
+8. missing evidence and recommended next action.
+
+Before finishing, remove or move to the system Trash all temporary environment
+files, logs, reports, signed URLs, and downloaded user audio. State what was
+cleaned up and whether anything remains recoverable in Trash.
+
+---
+
 ## Find Truncated Gemini 3.1 Flash TTS Script
 
-Read-only Node.js script that finds `gemini-3.1-flash-tts-preview` `audio_files`
-whose audio was truncated — the model rendered only a few seconds of a much
-longer transcript, yet the user was billed for the full input text. Use it to
-size and issue refunds when a user reports "the audio wasn't generated properly
-and I was charged too many credits."
+Read-only Node.js script that flags `gemini-3.1-flash-tts-preview`
+`audio_files` whose stored transcript is unusually long for the measured audio
+duration. Use it as one signal in the broader
+[Gemini TTS investigation](#investigate-gemini-tts-errors-and-credit-charges),
+not as proof of truncation or authorization for a refund.
 
-### Why these are over-charges
+### Why truncation can cause an overcharge
 
 Gemini TTS credits are `ceil(totalTokenCount * 1.1 * multiplier)` where
 `totalTokenCount = promptTokenCount + candidatesTokenCount` (see
-`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). When the model fails to
-voice the whole script, `promptTokenCount` (the input it read) is still large,
-so the user pays for text that was never turned into audio.
+`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). If the model reads a
+long prompt but produces only part of the requested speech, the prompt tokens
+can still contribute to the charge.
 
-### Detection signal
+### Detection signal and limits
 
 The transcript stored in `audio_files.text_content` (everything after the
 `## TRANSCRIPT` marker, see `apps/web/lib/tts/gemini-prompt.ts`) is the text that
-_should_ have been spoken. Dividing its character count by the audio `duration`
-gives chars-per-second. Natural speech tops out around ~25 cps, so any file well
-above the threshold was truncated:
+should have been spoken. Dividing its character count by `duration` gives
+characters per second. An extreme mismatch is a useful truncation signal:
 
-- bad : `~2400 spoken chars / 7.08s ≈ 340 cps` → truncated
-- good: `~1050 spoken chars / 70.24s ≈ 15 cps` → normal
+- strong candidate: `~2400 spoken chars / 7.08s ≈ 340 cps`;
+- typical example: `~1050 spoken chars / 70.24s ≈ 15 cps`.
 
-Rows with `duration = -1` (the "couldn't measure" sentinel) are listed
-separately as `unknown-duration` and are not flagged.
+Speech rate and stored prompt structure vary. The detector does not verify the
+spoken words, audio quality, low-energy passages, or whether the user considers
+the artifact usable. Rows with `duration = -1` (the “couldn't measure” sentinel)
+are listed as `unknown-duration` and are not judged.
 
 ### Quick Start
 
 ```bash
-# Scan just the complaining user
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
+# Scan one user in an exact UTC window
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+  --user <user-id> --since <start-iso> --until <end-iso>
 
-# Scope to files created since a date
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id> --since 2026-06-01
+# Scan the user's complete history for this model
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
 
 # Scan all users
 pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
@@ -295,40 +505,32 @@ pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
 ### CLI Options
 
 - `--user <uuid>` — only scan this `user_id` (default: all users)
-- `--threshold <cps>` — flag when spoken chars-per-second exceeds this
-  (default: `30`, comfortably above natural speech)
-- `--min-chars <n>` — ignore clips whose transcript is shorter than this, to
-  avoid noise on tiny generations (default: `150`)
-- `--normal-cps <cps>` — assumed natural rate used to compute the expected
-  duration and the "delivered %" column (default: `15`)
+- `--threshold <cps>` — flag when spoken characters per second exceed this
+  heuristic threshold (default: `30`)
+- `--min-chars <n>` — ignore clips whose transcript is shorter than this
+  (default: `150`)
+- `--normal-cps <cps>` — comparison rate used to estimate duration and the
+  “delivered %” column (default: `15`); this is not measured transcript coverage
 - `--active-only` — skip soft-deleted rows (`deleted_at` not null)
-- `--since <date>` — only scan files created on/after this date/timestamp
-  (ISO-parseable, e.g. `2026-06-01` or `2026-06-01T00:00:00Z`); default scans
-  the user's entire history for the model
-- `--paid-only` — only scan users who have paid (have a `purchase`/`topup`
-  credit transaction, matching `hasUserPaid`). Freemium-only users can't be
-  refunded, so this keeps the refund commands runnable
+- `--since <date>` — only scan files created on or after this ISO date/timestamp
+- `--until <date>` — only scan files created on or before this ISO date/timestamp
+- `--paid-only` — only scan users with a `purchase` or `topup` transaction
 - `--out <path>` — JSON report path (default: `./truncated-gemini31-tts.json`)
-- `--reason <text>` — refund reason printed in the generated refund commands
+- `--reason <text>` — reason included in conditional refund instructions
 
 ### Output
 
-- A per-file table (worst first) with chars/sec, duration, spoken chars,
-  delivered %, credits billed, and the audio-out/text-in token ratio.
-- A **refund exposure by user** rollup (total credits billed for truncated
-  files).
-- A **refund commands** block: one ready-to-run
-  `pnpm --filter @sexyvoice/scripts refund-credits -- <user-id>` per affected
-  user, annotated with the exact prompt answers to issue a credits-only
-  ("platform bug") refund — press Enter to skip transaction selection (no USD
-  refund), enter the total credits, then the reason.
-- A JSON report (`report.byUser[]` carries the `command`, `credits`, `reason`,
-  and file `ids`) plus the full `truncated` and `unknownDuration` lists.
+- A candidate table with characters per second, duration, transcript length,
+  estimated delivered percentage, credits, and output/input token ratio.
+- Candidate credit exposure by user. This is not a confirmed refund amount.
+- Conditional refund commands retained for a human-approved follow-up. Never
+  run them based only on this detector.
+- A JSON report with the candidates, unknown-duration rows, time bounds, and
+  explicit heuristic/approval warnings.
 
-Review the flagged rows before refunding, then run the printed commands. Because
-`refund-credits.mts` takes only the user id on the CLI and asks for the credit
-amount and reason interactively, the amount/reason are printed as annotations
-rather than passed as flags. See [Refund Credits Script](#refund-credits-script).
+Independently inspect every candidate and reconcile the account ledger before
+proposing a refund. See [Refund Credits Script](#refund-credits-script) only
+after a human has approved a confirmed amount.
 
 ### Requirements
 
