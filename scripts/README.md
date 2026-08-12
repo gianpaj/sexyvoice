@@ -392,10 +392,12 @@ pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
   --out <temporary-directory>/truncation-candidates.json
 ```
 
-The detector produces candidates, not confirmed defects. For each disputed or
-flagged artifact, compare its database status, credits, model, transcript,
-duration, provider token metadata, storage object, and the matching request log.
-Download audio only when necessary and keep it in the temporary directory.
+The detector produces short-output candidates and review-only long-output
+anomalies, not confirmed defects. Long-output anomalies must not enter refund
+calculations. For each disputed or flagged artifact, compare its database
+status, credits, model, transcript, duration, provider token metadata, storage
+object, and the matching request log. Download audio only when necessary and
+keep it in the temporary directory.
 
 Confirm a delivered-audio defect with independent evidence such as listening to
 the complete artifact, verifying that transcript content is missing, or finding
@@ -460,8 +462,8 @@ cleaned up and whether anything remains recoverable in Trash.
 ## Find Truncated Gemini 3.1 Flash TTS Script
 
 Read-only Node.js script that flags `gemini-3.1-flash-tts-preview`
-`audio_files` whose stored transcript is unusually long for the measured audio
-duration. Use it as one signal in the broader
+`audio_files` whose measured duration is unusually short or long for the stored
+transcript. Use it as one signal in the broader
 [Gemini TTS investigation](#investigate-gemini-tts-errors-and-credit-charges),
 not as proof of truncation or authorization for a refund.
 
@@ -488,12 +490,28 @@ spoken words, audio quality, low-energy passages, or whether the user considers
 the artifact usable. Rows with `duration = -1` (the “couldn't measure” sentinel)
 are listed as `unknown-duration` and are not judged.
 
+The detector also reports review-only long outputs when:
+
+```text
+actual duration > expected duration * long factor
+expected duration = spoken characters / normal cps
+```
+
+The default long factor is `2`. The check applies only when the transcript meets
+`--min-chars`. It records the actual-to-expected duration ratio for review.
+Long-output anomalies are quality signals; they do not contribute to candidate
+credit exposure or refund commands.
+
 ### Quick Start
 
 ```bash
 # Scan one user in an exact UTC window
 pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
   --user <user-id> --since <start-iso> --until <end-iso>
+
+# Use a stricter long-output review threshold
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+  --user <user-id> --long-factor 2.5
 
 # Scan the user's complete history for this model
 pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
@@ -511,6 +529,8 @@ pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
   (default: `150`)
 - `--normal-cps <cps>` — comparison rate used to estimate duration and the
   “delivered %” column (default: `15`); this is not measured transcript coverage
+- `--long-factor <n>` — report output longer than expected by this factor
+  (default: `2`; must be greater than `1`)
 - `--active-only` — skip soft-deleted rows (`deleted_at` not null)
 - `--since <date>` — only scan files created on or after this ISO date/timestamp
 - `--until <date>` — only scan files created on or before this ISO date/timestamp
@@ -522,11 +542,15 @@ pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
 
 - A candidate table with characters per second, duration, transcript length,
   estimated delivered percentage, credits, and output/input token ratio.
+- A separate `REVIEW-ONLY LONG OUTPUTS` table with actual duration, expected
+  duration, and the actual-to-expected ratio. These rows never enter refund
+  exposure or refund commands.
 - Candidate credit exposure by user. This is not a confirmed refund amount.
 - Conditional refund commands retained for a human-approved follow-up. Never
   run them based only on this detector.
-- A JSON report with the candidates, unknown-duration rows, time bounds, and
-  explicit heuristic/approval warnings.
+- A JSON report with `candidates`, `abnormallyLong`, `unknownDuration`, the
+  `summary.abnormallyLong` count, time bounds, thresholds, and explicit
+  heuristic/approval warnings.
 
 Independently inspect every candidate and reconcile the account ledger before
 proposing a refund. See [Refund Credits Script](#refund-credits-script) only

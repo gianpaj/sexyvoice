@@ -2,8 +2,9 @@
 
 /**
  * Find `gemini-3.1-flash-tts-preview` audio_files whose audio duration is a
- * possible mismatch for the stored transcript. This is a triage heuristic, not
- * proof that the model truncated the audio or that a refund is due.
+ * possible mismatch for the stored transcript. Short outputs are truncation
+ * candidates. Abnormally long outputs are review-only quality signals. Neither
+ * heuristic proves that a refund is due.
  *
  * Why this happens
  * ----------------
@@ -25,6 +26,10 @@
  *   - strong candidate: ~2400 spoken chars /  7.08s ≈ 340 cps
  *   - not flagged:      ~1050 spoken chars / 70.24s ≈  15 cps
  *
+ * The script also flags audio longer than `expected duration * --long-factor`,
+ * where expected duration is `spoken chars / --normal-cps`. Long outputs never
+ * enter refund exposure or refund commands.
+ *
  * Usage
  * -----
  *   node --env-file=.env scripts/find-truncated-gemini31-tts.mjs [options]
@@ -39,6 +44,8 @@
  *                       avoid noise on tiny generations (default: 150).
  *   --normal-cps <cps>  Assumed natural rate used to compute the "expected"
  *                       duration and the delivered fraction (default: 15).
+ *   --long-factor <n>   Review output longer than expected by this factor
+ *                       (default: 2; must be greater than 1).
  *   --active-only       Skip soft-deleted rows (deleted_at not null).
  *   --since <date>      Only scan files created on/after this date/timestamp,
  *                       ISO-parseable (e.g. 2026-06-01 or 2026-06-01T00:00:00Z).
@@ -48,14 +55,16 @@
  *   --out <path>        JSON report path (default: ./truncated-gemini31-tts.json).
  *   --reason <text>     Refund reason printed in the generated refund commands.
  *
- * The report includes conditional `refund-credits.mts` commands for a human to
- * use only after independent evidence confirms the affected files and refund
- * amount. Running this script never authorizes a refund.
+ * The report includes a separate `REVIEW-ONLY LONG OUTPUTS` table and an
+ * `abnormallyLong` JSON array. It also includes conditional `refund-credits.mts`
+ * commands for short-output candidates only. A human must independently confirm
+ * affected files and approve any refund amount.
  *
  * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (read-only use).
  */
 
 import { writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 
@@ -71,6 +80,7 @@ const PAGE_SIZE = 1000;
 function parseArgs(argv) {
   const opts = {
     activeOnly: false,
+    longFactor: 2,
     minChars: 150,
     normalCps: 15,
     out: './truncated-gemini31-tts.json',
@@ -101,6 +111,9 @@ function parseArgs(argv) {
       case '--normal-cps':
         opts.normalCps = Number(next());
         break;
+      case '--long-factor':
+        opts.longFactor = Number(next());
+        break;
       case '--active-only':
         opts.activeOnly = true;
         break;
@@ -122,7 +135,7 @@ function parseArgs(argv) {
       case '--help':
       case '-h':
         console.log(
-          'See the header of this file for options. Common: --user <uuid> --since <iso> --until <iso>',
+          'See the header of this file for options. Common: --user <uuid> --since <iso> --until <iso> --long-factor <n>',
         );
         process.exit(0);
         break;
@@ -191,6 +204,13 @@ function normalizeTimeBound(value, option) {
   return date.toISOString();
 }
 
+function validateLongFactor(value) {
+  if (!(Number.isFinite(value) && value > 1)) {
+    console.error('--long-factor must be a number greater than 1.');
+    process.exit(1);
+  }
+}
+
 async function fetchAllRows(supabase, opts) {
   const rows = [];
   let from = 0;
@@ -253,7 +273,7 @@ async function fetchPaidUserIds(supabase, userIds) {
   return paid;
 }
 
-function analyzeRow(row, opts) {
+export function analyzeRow(row, opts) {
   const spoken = extractSpokenText(row.text_content);
   const spokenChars = spoken.length;
   const duration = toNumber(row.duration);
@@ -270,6 +290,7 @@ function analyzeRow(row, opts) {
   const expectedDuration = spokenChars > 0 ? spokenChars / opts.normalCps : 0;
 
   const base = {
+    actualToExpectedRatio: null,
     candidateTokens,
     createdAt: row.created_at,
     creditsUsed: toNumber(row.credits_used),
@@ -296,6 +317,7 @@ function analyzeRow(row, opts) {
   if (duration <= 0) {
     return {
       ...base,
+      actualToExpectedRatio: expectedDuration > 0 ? 0 : null,
       category: 'candidate',
       charsPerSec: spokenChars > 0 ? Number.POSITIVE_INFINITY : 0,
       deliveredPct: 0,
@@ -303,6 +325,8 @@ function analyzeRow(row, opts) {
   }
 
   const charsPerSec = spokenChars / duration;
+  const actualToExpectedRatio =
+    expectedDuration > 0 ? duration / expectedDuration : null;
   const deliveredPct =
     expectedDuration > 0
       ? Math.min(100, Math.round((duration / expectedDuration) * 100))
@@ -310,10 +334,24 @@ function analyzeRow(row, opts) {
 
   const isCandidate =
     spokenChars >= opts.minChars && charsPerSec > opts.threshold;
+  const isAbnormallyLong =
+    spokenChars >= opts.minChars &&
+    actualToExpectedRatio !== null &&
+    actualToExpectedRatio > opts.longFactor;
+  let category = 'not-flagged';
+  if (isCandidate) {
+    category = 'candidate';
+  } else if (isAbnormallyLong) {
+    category = 'abnormally-long';
+  }
 
   return {
     ...base,
-    category: isCandidate ? 'candidate' : 'not-flagged',
+    actualToExpectedRatio:
+      actualToExpectedRatio === null
+        ? null
+        : Number(actualToExpectedRatio.toFixed(2)),
+    category,
     charsPerSec: Number(charsPerSec.toFixed(1)),
     deliveredPct,
   };
@@ -336,6 +374,7 @@ function printScanHeader(opts) {
   console.log(
     `  normal rate:  ${opts.normalCps} chars/sec (for expected duration)`,
   );
+  console.log(`  long factor:  > ${opts.longFactor}x expected duration`);
   console.log(`  active only:  ${opts.activeOnly}`);
   console.log(`  since:        ${opts.since ?? 'beginning'}`);
   console.log(`  until:        ${opts.until ?? 'now'}`);
@@ -363,6 +402,29 @@ function printCandidateTable(candidates) {
     );
   }
   console.log('');
+}
+
+function printAbnormallyLongTable(abnormallyLong, opts) {
+  console.log(RULE);
+  console.log(
+    `REVIEW-ONLY LONG OUTPUTS (duration exceeds expected by ${opts.longFactor}x)`,
+  );
+  console.log(RULE);
+  if (abnormallyLong.length === 0) {
+    console.log('None found with the current long-output factor.\n');
+    return;
+  }
+  console.log(
+    `${'actual/expected'.padStart(15)}  ${'dur(s)'.padStart(8)}  ${'expect(s)'.padStart(9)}  ${'chars'.padStart(6)}  ${'credits'.padStart(7)}  id`,
+  );
+  for (const row of abnormallyLong) {
+    console.log(
+      `${fmt(`${row.actualToExpectedRatio}x`, 15)}  ${fmt(row.durationSeconds, 8)}  ${fmt(row.expectedDurationSeconds, 9)}  ${fmt(row.spokenChars, 6)}  ${fmt(row.creditsUsed ?? '?', 7)}  ${row.id}`,
+    );
+  }
+  console.log(
+    '\nReview these artifacts manually. Long-output anomalies are not included in refund exposure or refund commands.\n',
+  );
 }
 
 /**
@@ -420,7 +482,13 @@ function printConditionalRefundCommands(reviewPlans) {
   }
 }
 
-function printSummary(analyzed, notFlaggedCount, candidates, unknownDuration) {
+function printSummary(
+  analyzed,
+  notFlaggedCount,
+  candidates,
+  abnormallyLong,
+  unknownDuration,
+) {
   const candidateCredits = candidates.reduce(
     (sum, row) => sum + (row.creditsUsed ?? 0),
     0,
@@ -431,6 +499,7 @@ function printSummary(analyzed, notFlaggedCount, candidates, unknownDuration) {
   console.log(`  scanned:            ${analyzed.length}`);
   console.log(`  not flagged:        ${notFlaggedCount}`);
   console.log(`  candidates:         ${candidates.length}`);
+  console.log(`  review-only long:   ${abnormallyLong.length}`);
   console.log(
     `  unknown duration:   ${unknownDuration.length} (duration = -1, not judged)`,
   );
@@ -463,8 +532,30 @@ function rollupByUser(candidates) {
   return byUser;
 }
 
+/** Separate review-only anomalies from candidates that may affect refunds. */
+export function partitionAnalyzed(analyzed) {
+  const candidates = analyzed
+    .filter((row) => row.category === 'candidate')
+    // Worst first: highest chars/sec (Infinity sorts to the top).
+    .sort((a, b) => (b.charsPerSec ?? 0) - (a.charsPerSec ?? 0));
+  const abnormallyLong = analyzed
+    .filter((row) => row.category === 'abnormally-long')
+    .sort(
+      (a, b) => (b.actualToExpectedRatio ?? 0) - (a.actualToExpectedRatio ?? 0),
+    );
+  const notFlaggedCount = analyzed.filter(
+    (row) => row.category === 'not-flagged',
+  ).length;
+  const unknownDuration = analyzed.filter(
+    (row) => row.category === 'unknown-duration',
+  );
+
+  return { abnormallyLong, candidates, notFlaggedCount, unknownDuration };
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
+  validateLongFactor(opts.longFactor);
   opts.since = normalizeTimeBound(opts.since, '--since');
   opts.until = normalizeTimeBound(opts.until, '--until');
   if (opts.since && opts.until && opts.since > opts.until) {
@@ -482,35 +573,31 @@ async function main() {
   console.log('');
 
   const analyzed = scanRows.map((row) => analyzeRow(row, opts));
-
-  const candidates = analyzed
-    .filter((r) => r.category === 'candidate')
-    // Worst first: highest chars/sec (Infinity sorts to the top).
-    .sort((a, b) => (b.charsPerSec ?? 0) - (a.charsPerSec ?? 0));
-  const unknownDuration = analyzed.filter(
-    (r) => r.category === 'unknown-duration',
-  );
-  const notFlaggedCount = analyzed.filter(
-    (r) => r.category === 'not-flagged',
-  ).length;
+  const { abnormallyLong, candidates, notFlaggedCount, unknownDuration } =
+    partitionAnalyzed(analyzed);
 
   const reviewPlans = buildReviewPlans(rollupByUser(candidates), opts);
 
   printCandidateTable(candidates);
+  printAbnormallyLongTable(abnormallyLong, opts);
   printCandidateExposure(reviewPlans);
   printConditionalRefundCommands(reviewPlans);
   const candidateCredits = printSummary(
     analyzed,
     notFlaggedCount,
     candidates,
+    abnormallyLong,
     unknownDuration,
   );
 
   const report = {
+    abnormallyLong,
     candidates,
     generatedFor: opts.user ?? 'ALL',
     interpretation: {
       heuristicOnly: true,
+      longOutputsExcludedFromRefundPlans: true,
+      longOutputsReviewOnly: true,
       requiresHumanApprovalBeforeRefund: true,
       requiresIndependentConfirmation: true,
     },
@@ -519,6 +606,7 @@ async function main() {
     reviewPlansByUser: reviewPlans,
     since: opts.since,
     summary: {
+      abnormallyLong: abnormallyLong.length,
       candidateCredits,
       candidates: candidates.length,
       notFlagged: notFlaggedCount,
@@ -527,6 +615,7 @@ async function main() {
     },
     thresholds: {
       charsPerSecMax: opts.threshold,
+      longFactor: opts.longFactor,
       minChars: opts.minChars,
       normalCps: opts.normalCps,
     },
@@ -537,11 +626,16 @@ async function main() {
   writeFileSync(opts.out, JSON.stringify(report, null, 2));
   console.log(`Detailed report written to: ${opts.out}`);
   console.log(
-    'Treat flagged rows as candidates. Confirm each artifact independently before proposing a refund for human approval.',
+    'Confirm short-output candidates independently before proposing a refund for human approval. Treat long-output anomalies as review-only.',
   );
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isMain =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMain) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
