@@ -32,7 +32,7 @@
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "@tailwindcss/postcss": "catalog:",
-    "@types/hast": "3.0.4",
+    "@types/hast": "3.0.5",
     "@types/mdx": "2.0.13",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
