@@ -5,6 +5,7 @@ import {
   handleDeleteAction,
   handleDeleteAllAction,
 } from '@/app/[lang]/(dashboard)/dashboard/history/actions';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 const mocks = vi.hoisted(() => ({
@@ -24,6 +25,10 @@ vi.mock('@upstash/redis', () => ({
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(),
 }));
 
 interface AudioFileRow {
@@ -48,14 +53,16 @@ function createSupabaseMock({
   query.eq.mockReturnValue(query);
   query.update.mockReturnValue(query);
 
-  const supabase = {
+  const sessionSupabase = {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user } }),
     },
+  };
+  const adminSupabase = {
     from: vi.fn().mockReturnValue(query),
   };
 
-  return { query, supabase };
+  return { adminSupabase, query, sessionSupabase };
 }
 
 describe('history deletion actions', () => {
@@ -69,15 +76,18 @@ describe('history deletion actions', () => {
       { id: 'audio-1', storage_key: 'audio/one.mp3' },
       { id: 'audio-2', storage_key: 'audio/two.mp3' },
     ];
-    const { query, supabase } = createSupabaseMock({ deletedAudioFiles });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    const { adminSupabase, query, sessionSupabase } = createSupabaseMock({
+      deletedAudioFiles,
+    });
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
 
     await expect(handleDeleteAllAction()).resolves.toEqual({
       deletedCount: 2,
       success: true,
     });
 
-    expect(supabase.from).toHaveBeenCalledWith('audio_files');
+    expect(adminSupabase.from).toHaveBeenCalledWith('audio_files');
     expect(query.update).toHaveBeenCalledWith({
       deleted_at: expect.any(String),
       status: 'deleted',
@@ -94,10 +104,11 @@ describe('history deletion actions', () => {
   });
 
   it('keeps single-file deletion scoped to the requested file', async () => {
-    const { query, supabase } = createSupabaseMock({
+    const { adminSupabase, query, sessionSupabase } = createSupabaseMock({
       deletedAudioFiles: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
     });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
 
     await handleDeleteAction('audio-1');
 
@@ -115,21 +126,22 @@ describe('history deletion actions', () => {
   });
 
   it('does not access audio files without an authenticated user', async () => {
-    const { supabase } = createSupabaseMock({ user: null });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    const { sessionSupabase } = createSupabaseMock({ user: null });
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
 
     await expect(handleDeleteAllAction()).rejects.toThrow('User not found');
 
-    expect(supabase.from).not.toHaveBeenCalled();
+    expect(createAdminClient).not.toHaveBeenCalled();
     expect(mocks.redisDel).not.toHaveBeenCalled();
   });
 
   it('does not turn a completed soft delete into a failure when Redis is down', async () => {
     const cacheError = new Error('Redis unavailable');
-    const { supabase } = createSupabaseMock({
+    const { adminSupabase, sessionSupabase } = createSupabaseMock({
       deletedAudioFiles: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
     });
-    vi.mocked(createClient).mockResolvedValue(supabase as never);
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
     mocks.redisDel.mockRejectedValue(cacheError);
 
     await expect(handleDeleteAllAction()).resolves.toEqual({

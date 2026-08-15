@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis';
 import { after } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 const redis = Redis.fromEnv();
@@ -30,7 +31,10 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     throw new Error('User not found');
   }
 
-  let deleteQuery = supabase
+  // The tracked audio_files RLS policies are read-only. Authenticate with the
+  // session client, then keep this privileged write scoped to the user's rows.
+  const admin = createAdminClient();
+  let deleteQuery = admin
     .from('audio_files')
     .update({
       deleted_at: new Date().toISOString(),
