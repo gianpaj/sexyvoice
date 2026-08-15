@@ -216,7 +216,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     deletedCustomCharacters: customCharacters?.length ?? 0,
     // usage_events is an immutable audit log protected from deletion by the
     // database. Report retained rows instead of claiming they were removed.
-    usageEventsRetained: retainedUsageEventsCount ?? 0,
+    usageEventsRetained: retainedUsageEventsCount,
     userId: user.id,
   });
 
@@ -224,7 +224,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     apiKeysDeleted: apiKeys?.length ?? 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    usageEventsRetained: retainedUsageEventsCount ?? 0,
+    usageEventsRetained: retainedUsageEventsCount,
     userId: user.id,
   });
   await supabase.auth.signOut();

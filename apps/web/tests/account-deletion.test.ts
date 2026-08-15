@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/nextjs';
+import { captureException, logger } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleDeleteAccountAction } from '@/app/actions';
@@ -104,5 +104,9 @@ describe('account deletion', () => {
       level: 'warning',
       user: { email: 'user@example.com', id: 'user-1' },
     });
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ usageEventsRetained: null }),
+    );
   });
 });
