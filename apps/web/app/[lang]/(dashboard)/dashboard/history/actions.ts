@@ -80,7 +80,9 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
       index + CACHE_DELETE_BATCH_SIZE,
     );
     try {
-      // Clear generated-audio cache entries so deleted audio can be regenerated.
+      // Cache keys are shared across users. Match the existing single-delete
+      // regeneration behavior even though another user's identical request
+      // may need to regenerate after this eviction.
       await redis.del(...storageKeyBatch);
     } catch (cacheError) {
       // The database is authoritative. A cache outage must not report a
