@@ -154,4 +154,22 @@ describe('history deletion actions', () => {
       expect.objectContaining({ level: 'warning' }),
     );
   });
+
+  it('deduplicates and batches cache invalidation for large histories', async () => {
+    const deletedAudioFiles = Array.from({ length: 102 }, (_, index) => ({
+      id: `audio-${index}`,
+      storage_key: `audio/${index === 101 ? 0 : index}.mp3`,
+    }));
+    const { adminSupabase, sessionSupabase } = createSupabaseMock({
+      deletedAudioFiles,
+    });
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
+
+    await handleDeleteAllAction();
+
+    expect(mocks.redisDel).toHaveBeenCalledTimes(2);
+    expect(mocks.redisDel.mock.calls[0]).toHaveLength(100);
+    expect(mocks.redisDel.mock.calls[1]).toEqual(['audio/100.mp3']);
+  });
 });

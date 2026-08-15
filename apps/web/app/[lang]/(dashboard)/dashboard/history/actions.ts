@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 const redis = Redis.fromEnv();
+const CACHE_DELETE_BATCH_SIZE = 100;
 
 type DeleteAudioFilesOptions =
   | { scope: 'all' }
@@ -58,18 +59,29 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     throw new Error('Audio file not found or unauthorized');
   }
 
-  const storageKeys = deletedAudioFiles.map(({ storage_key }) => storage_key);
+  const storageKeys = [
+    ...new Set(deletedAudioFiles.map(({ storage_key }) => storage_key)),
+  ];
 
-  if (storageKeys.length > 0) {
+  for (
+    let index = 0;
+    index < storageKeys.length;
+    index += CACHE_DELETE_BATCH_SIZE
+  ) {
+    const storageKeyBatch = storageKeys.slice(
+      index,
+      index + CACHE_DELETE_BATCH_SIZE,
+    );
     try {
       // Clear generated-audio cache entries so deleted audio can be regenerated.
-      await redis.del(...storageKeys);
+      await redis.del(...storageKeyBatch);
     } catch (cacheError) {
       // The database is authoritative. A cache outage must not report a
       // successful soft delete as failed.
       captureException(cacheError, {
         extra: {
-          audioIds: deletedAudioFiles.map(({ id: audioId }) => audioId),
+          deletedCount: deletedAudioFiles.length,
+          storageKeys: storageKeyBatch,
         },
         level: 'warning',
         user: { email: user.email, id: user.id },
