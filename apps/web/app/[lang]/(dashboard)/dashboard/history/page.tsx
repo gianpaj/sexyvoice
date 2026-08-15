@@ -28,10 +28,23 @@ export default async function HistoryPage(props: {
   // In E2E mode serve deterministic data: the table is hydrated from this RSC
   // query and the client never refetches, so live rows would otherwise leak
   // into the Argos screenshot. Pin apiKeysCount to 0 to hide the API columns.
-  const [{ data: audioFiles }, { count: apiKeysCount }] = isE2E()
-    ? [{ data: E2E_AUDIO_FILES }, { count: 0 }]
+  const [
+    { data: audioFiles },
+    { count: totalAudioFilesCount },
+    { count: apiKeysCount },
+  ] = isE2E()
+    ? [
+        { data: E2E_AUDIO_FILES },
+        { count: E2E_AUDIO_FILES.length },
+        { count: 0 },
+      ]
     : await Promise.all([
         getMyAudioFilesQuery(supabase, user.id),
+        supabase
+          .from('audio_files')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'active'),
         supabase
           .from('api_keys')
           .select('id', { count: 'exact', head: true })
@@ -44,7 +57,11 @@ export default async function HistoryPage(props: {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="container mx-auto pb-10">
         <h2 className="mb-4 font-bold text-2xl">{t('header')}</h2>
-        <DataTable showApiColumns={(apiKeysCount ?? 0) > 0} userId={user.id} />
+        <DataTable
+          showApiColumns={(apiKeysCount ?? 0) > 0}
+          totalCount={totalAudioFilesCount ?? 0}
+          userId={user.id}
+        />
       </div>
     </HydrationBoundary>
   );

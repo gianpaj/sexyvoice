@@ -42,10 +42,15 @@ import { DeleteAllButton } from './delete-all-button';
 
 interface DataTableProps {
   showApiColumns: boolean;
+  totalCount: number;
   userId: string;
 }
 
-export function DataTable({ userId, showApiColumns }: DataTableProps) {
+export function DataTable({
+  userId,
+  showApiColumns,
+  totalCount,
+}: DataTableProps) {
   const t = useTranslations('history');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -96,8 +101,8 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
         </div>
         <div className="flex items-center gap-2">
           <DeleteAllButton
-            count={data?.length ?? 0}
-            disabled={(data?.length ?? 0) === 0}
+            count={totalCount}
+            disabled={totalCount === 0}
             userId={userId}
           />
           <DropdownMenu>
