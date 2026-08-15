@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ export function DeleteAllButton({
 }: DeleteAllButtonProps) {
   const t = useTranslations('history.delete');
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -45,6 +47,7 @@ export function DeleteAllButton({
         ['audio_files', userId],
         [],
       );
+      router.refresh();
       setIsOpen(false);
       toast.success(t('all.success'));
     } catch (error) {

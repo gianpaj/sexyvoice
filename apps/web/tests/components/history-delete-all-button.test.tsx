@@ -11,8 +11,16 @@ import { handleDeleteAllAction } from '@/app/[lang]/(dashboard)/dashboard/histor
 import { DeleteAllButton } from '@/app/[lang]/(dashboard)/dashboard/history/delete-all-button';
 import messages from '@/messages/en.json';
 
+const mocks = vi.hoisted(() => ({
+  refresh: vi.fn(),
+}));
+
 vi.mock('@/app/[lang]/(dashboard)/dashboard/history/actions', () => ({
   handleDeleteAllAction: vi.fn(),
+}));
+
+vi.mock('next/navigation', () => ({
+  useRouter: vi.fn(() => ({ refresh: mocks.refresh })),
 }));
 
 vi.mock('sonner', () => ({
@@ -82,6 +90,7 @@ describe('DeleteAllButton', () => {
 
     await waitFor(() => expect(handleDeleteAllAction).toHaveBeenCalledOnce());
     expect(queryClient.getQueryData(['audio_files', 'user-1'])).toEqual([]);
+    expect(mocks.refresh).toHaveBeenCalledOnce();
     expect(toast.success).toHaveBeenCalledWith('All audio files deleted');
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
@@ -109,6 +118,7 @@ describe('DeleteAllButton', () => {
       { id: 'audio-1' },
       { id: 'audio-2' },
     ]);
+    expect(mocks.refresh).not.toHaveBeenCalled();
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
