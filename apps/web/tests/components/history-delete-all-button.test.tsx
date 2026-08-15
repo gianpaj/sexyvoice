@@ -111,6 +111,8 @@ describe('DeleteAllButton', () => {
   it('is disabled when there is no history', () => {
     renderDeleteAllButton({ disabled: true });
 
-    expect(screen.getByRole('button', { name: 'Delete all' })).toBeDisabled();
+    const button = screen.getByRole('button', { name: 'Delete all' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('data-size', 'sm');
   });
 });

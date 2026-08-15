@@ -61,6 +61,7 @@ export function DeleteAllButton({ disabled, userId }: DeleteAllButtonProps) {
         <Button
           aria-label={t('all.trigger')}
           disabled={disabled}
+          size="sm"
           type="button"
           variant="destructive"
         >
