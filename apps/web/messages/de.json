@@ -906,6 +906,26 @@
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
     "downloadError": "Audio konnte nicht heruntergeladen werden",
+    "delete": {
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "single": {
+        "trigger": "Löschen",
+        "title": "Audiodatei löschen?",
+        "description": "Diese Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirm": "Löschen",
+        "success": "Audiodatei gelöscht",
+        "error": "Die Audiodatei konnte nicht gelöscht werden. Bitte versuche es erneut."
+      },
+      "all": {
+        "trigger": "Alle löschen",
+        "title": "Alle Audiodateien löschen?",
+        "description": "Alle Audiodateien werden aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirm": "Alle löschen",
+        "success": "Alle Audiodateien gelöscht",
+        "error": "Die Audiodateien konnten nicht gelöscht werden. Bitte versuche es erneut."
+      }
+    },
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",

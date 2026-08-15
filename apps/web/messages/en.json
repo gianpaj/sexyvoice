@@ -904,6 +904,26 @@
     "header": "Generation History",
     "empty": "No history yet",
     "downloadError": "Failed to download audio",
+    "delete": {
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "single": {
+        "trigger": "Delete",
+        "title": "Delete audio file?",
+        "description": "This audio file will be removed from your history. This action cannot be undone.",
+        "confirm": "Delete",
+        "success": "Audio file deleted",
+        "error": "Failed to delete the audio file. Please try again."
+      },
+      "all": {
+        "trigger": "Delete all",
+        "title": "Delete all audio files?",
+        "description": "Every audio file will be removed from your history. This action cannot be undone.",
+        "confirm": "Delete all",
+        "success": "All audio files deleted",
+        "error": "Failed to delete all audio files. Please try again."
+      }
+    },
     "ui": {
       "filterText": "Filter text...",
       "customizeColumns": "Customize Columns",

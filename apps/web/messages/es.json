@@ -906,6 +906,26 @@
     "header": "Historial de Generación",
     "empty": "Sin historial aún",
     "downloadError": "Error al descargar el audio",
+    "delete": {
+      "cancel": "Cancelar",
+      "deleting": "Eliminando...",
+      "single": {
+        "trigger": "Eliminar",
+        "title": "¿Eliminar el archivo de audio?",
+        "description": "Este archivo de audio se eliminará de tu historial. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar",
+        "success": "Archivo de audio eliminado",
+        "error": "No se pudo eliminar el archivo de audio. Inténtalo de nuevo."
+      },
+      "all": {
+        "trigger": "Eliminar todo",
+        "title": "¿Eliminar todos los archivos de audio?",
+        "description": "Todos los archivos de audio se eliminarán de tu historial. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar todo",
+        "success": "Todos los archivos de audio se eliminaron",
+        "error": "No se pudieron eliminar todos los archivos de audio. Inténtalo de nuevo."
+      }
+    },
     "ui": {
       "filterText": "Filtrar texto...",
       "customizeColumns": "Personalizar Columnas",

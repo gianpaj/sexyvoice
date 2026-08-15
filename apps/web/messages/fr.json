@@ -906,6 +906,26 @@
     "header": "Historique des générations",
     "empty": "Aucun historique pour le moment",
     "downloadError": "Échec du téléchargement de l'audio",
+    "delete": {
+      "cancel": "Annuler",
+      "deleting": "Suppression...",
+      "single": {
+        "trigger": "Supprimer",
+        "title": "Supprimer le fichier audio ?",
+        "description": "Ce fichier audio sera supprimé de votre historique. Cette action est irréversible.",
+        "confirm": "Supprimer",
+        "success": "Fichier audio supprimé",
+        "error": "Impossible de supprimer le fichier audio. Veuillez réessayer."
+      },
+      "all": {
+        "trigger": "Tout supprimer",
+        "title": "Supprimer tous les fichiers audio ?",
+        "description": "Tous les fichiers audio seront supprimés de votre historique. Cette action est irréversible.",
+        "confirm": "Tout supprimer",
+        "success": "Tous les fichiers audio ont été supprimés",
+        "error": "Impossible de supprimer tous les fichiers audio. Veuillez réessayer."
+      }
+    },
     "ui": {
       "filterText": "Filtrer le texte...",
       "customizeColumns": "Personnaliser les colonnes",

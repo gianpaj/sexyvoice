@@ -38,6 +38,7 @@ import {
   getMyAudioFiles,
 } from '@/lib/supabase/queries.client';
 import { useColumns } from './columns';
+import { DeleteAllButton } from './delete-all-button';
 
 interface DataTableProps {
   showApiColumns: boolean;
@@ -94,6 +95,10 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <DeleteAllButton
+            disabled={(data?.length ?? 0) === 0}
+            userId={userId}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">
