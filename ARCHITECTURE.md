@@ -251,7 +251,7 @@ flowchart TD
     C --> D["Check minimum credits and free-user lifetime call limit"]
     D --> E["Validate configuration and normalize the call model"]
     E --> F["Resolve character prompt from PostgreSQL"]
-    F --> G["Authorize paid custom-character, scene, and memory features"]
+    F --> G["Authorize paid custom-character and scene features"]
     G --> H["Resolve voice ID"]
     H --> I["Mint LiveKit token with server-resolved metadata"]
     I --> J["Dispatch the sexycall agent"]
@@ -269,9 +269,11 @@ rate is 1,000 credits per minute.
 
 Public character prompt text never reaches the browser. The token route loads
 it with an admin query, chooses the requested localized prompt or English
-fallback, and places the result in LiveKit token metadata. Custom characters,
-custom scenes, and the long-term memory backend require a paid account. Memory
-is off by default, and its UI toggle is currently hidden.
+fallback, and places the result in LiveKit token metadata. Custom characters
+and custom scenes require a paid account. Long-term memory is on by default for
+every call on both free and paid plans; only a client that explicitly sends
+`memory: false` turns it off, and its UI toggle is currently hidden. Users can
+erase everything stored for them with `DELETE /api/memories`.
 
 ### Call Configuration
 
@@ -283,7 +285,7 @@ is off by default, and its UI toggle is currently hidden.
 | Max output tokens | Nullable; defaults to the agent's model behavior |
 | Instructions | Edge Config defaults for non-character calls; database prompts for characters |
 | Language | 20 supported call languages; English fallback |
-| Memory | Paid, opt-in backend; off by default |
+| Memory | On by default for all calls, free and paid; opt-out only |
 
 Completed calls of at least 120 seconds with a transcript are eligible for
 structured analysis. A Supabase Database Webhook authenticates to

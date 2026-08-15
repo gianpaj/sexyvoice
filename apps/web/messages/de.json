@@ -157,8 +157,8 @@
           "description": "Jeder Anruf wird bei der Übertragung verschlüsselt. Kein Mensch hört Ihre Gespräche mit."
         },
         "forgotten": {
-          "title": "Standardmäßig vergessen",
-          "description": "Zwischen den Anrufen bleibt nichts erhalten, solange Sie die Erinnerung nicht selbst aktivieren."
+          "title": "Erinnerung unter Ihrer Kontrolle",
+          "description": "Die Charaktere erinnern sich standardmäßig zwischen den Anrufen an Sie. Deaktivieren Sie die Erinnerung jederzeit oder löschen Sie alles in Ihrem Profil."
         }
       },
       "customCharacter": {
@@ -577,8 +577,7 @@
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
     "memoryLabel": "Erinnerung",
-    "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Es wird nichts gespeichert, sofern es nicht aktiviert ist.",
-    "memoryUpgradeTooltip": "Wechsle zu einem kostenpflichtigen Tarif, damit die Charaktere sich zwischen Anrufen an dich erinnern.",
+    "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Standardmäßig aktiviert – schalte sie aus, und es wird nichts gespeichert.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",
@@ -842,7 +841,7 @@
     },
     "memory": {
       "title": "Sprachanruf-Erinnerung",
-      "description": "Wenn du die Erinnerungsfunktion während Anrufen aktivierst, merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
+      "description": "Die Erinnerungsfunktion ist bei Anrufen standardmäßig aktiviert, daher merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
       "button": "Alle Erinnerungen löschen",
       "confirmTitle": "Alle Sprachanruf-Erinnerungen löschen?",
       "confirmDescription": "Dadurch wird dauerhaft alles gelöscht, was sich die Charaktere aus früheren Anrufen über dich gemerkt haben. Dies kann nicht rückgängig gemacht werden.",

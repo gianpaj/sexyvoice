@@ -157,8 +157,8 @@
           "description": "Every call is encrypted in transit. No human ever listens to your conversations."
         },
         "forgotten": {
-          "title": "Forgotten by default",
-          "description": "Nothing carries over between calls unless you switch memory on yourself."
+          "title": "Memory you control",
+          "description": "Characters remember you between calls by default. Switch memory off any time, or erase everything from your profile."
         }
       },
       "customCharacter": {
@@ -575,8 +575,7 @@
     "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
     "configurationTitle": "Configuration",
     "memoryLabel": "Memory",
-    "memoryDescription": "Let the characters remember you between calls. Nothing is stored unless it's on.",
-    "memoryUpgradeTooltip": "Upgrade to a paid plan to let the characters remember you between calls.",
+    "memoryDescription": "Let the characters remember you between calls. On by default — switch it off and nothing is stored.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
@@ -840,7 +839,7 @@
     },
     "memory": {
       "title": "Voice Call Memory",
-      "description": "If you turn on memory during calls, the characters remember a few details about you to keep continuity. You can erase all of it here.",
+      "description": "Memory is on by default during calls, so the characters remember a few details about you to keep continuity. You can erase all of it here.",
       "button": "Delete all memories",
       "confirmTitle": "Delete all voice call memories?",
       "confirmDescription": "This permanently erases everything the characters have remembered about you from past calls. This cannot be undone.",

@@ -215,17 +215,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Long-term memory is a paid-only feature. Enforce server-side so a stale
-    // or tampered client can't enable it for a free user. Reuse the lazily
-    // resolved paid-status flag to avoid an extra query when possible.
-    let memoryEnabled = false;
-    if (memory) {
-      if (isPaidUser === undefined) {
-        isPaidUser = await hasUserPaid(user.id);
-      }
-      memoryEnabled = isPaidUser;
-    }
-
     const defaultSceneText = callScenes.find(
       (s) => s.id === selectedSceneId,
     )?.text;
@@ -243,10 +232,12 @@ export async function POST(request: Request) {
       instructions: resolvedInstructions,
       language: selectedLanguage,
       max_output_tokens: maxOutputTokens,
-      // Long-term memory opt-in (paid users only). Absent/false → the agent
-      // stores nothing. Scope is per-user only for now (sexycall defaults
-      // memory_scope to "user"); per-character scope is deferred.
-      memory: memoryEnabled,
+      // Long-term memory is on for every call, on free and paid plans alike.
+      // The schema defaults an absent flag to true, so only a client that
+      // explicitly sends `memory: false` makes the agent store nothing. Scope
+      // is per-user only for now (sexycall defaults memory_scope to "user");
+      // per-character scope is deferred.
+      memory,
       model,
       scene_id: selectedSceneId ?? null,
       scene_modified: sceneModified,

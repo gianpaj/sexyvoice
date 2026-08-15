@@ -157,8 +157,8 @@
           "description": "Ogni chiamata è crittografata in transito. Nessuna persona ascolta le tue conversazioni."
         },
         "forgotten": {
-          "title": "Dimenticato per impostazione predefinita",
-          "description": "Non resta nulla da una chiamata all'altra, a meno che non attivi tu stesso la memoria."
+          "title": "Una memoria che controlli tu",
+          "description": "Per impostazione predefinita i personaggi ti ricordano da una chiamata all'altra. Disattiva la memoria quando vuoi o cancella tutto dal tuo profilo."
         }
       },
       "customCharacter": {
@@ -577,8 +577,7 @@
     "freeUserCallLimitExceeded": "Gli utenti gratuiti sono limitati a 5 minuti di chiamate. Effettua l'upgrade per continuare.",
     "configurationTitle": "Configurazione",
     "memoryLabel": "Memoria",
-    "memoryDescription": "Lascia che i personaggi ti ricordino tra una chiamata e l’altra. Non viene memorizzato nulla a meno che non sia attivo.",
-    "memoryUpgradeTooltip": "Passa a un piano a pagamento per far sì che i personaggi ti ricordino tra una chiamata e l’altra.",
+    "memoryDescription": "Lascia che i personaggi ti ricordino tra una chiamata e l’altra. Attiva per impostazione predefinita: disattivala e non viene memorizzato nulla.",
     "languageLabel": "Lingua",
     "languagePlaceholder": "Scegli la lingua",
     "sceneLabel": "Scena",
@@ -842,7 +841,7 @@
     },
     "memory": {
       "title": "Memoria delle chiamate vocali",
-      "description": "Se attivi la memoria durante le chiamate, i personaggi ricordano alcuni dettagli su di te per mantenere la continuità. Qui puoi cancellare tutto.",
+      "description": "La memoria è attiva per impostazione predefinita durante le chiamate, così i personaggi ricordano alcuni dettagli su di te per mantenere la continuità. Qui puoi cancellare tutto.",
       "button": "Elimina tutte le memorie",
       "confirmTitle": "Eliminare tutte le memorie delle chiamate vocali?",
       "confirmDescription": "Questa operazione cancella in modo permanente tutto ciò che i personaggi hanno ricordato di te dalle chiamate precedenti. Non può essere annullata.",

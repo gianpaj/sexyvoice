@@ -280,36 +280,25 @@ export function ConfigurationForm({
           </div>
         )}
 
-        {/* Memory opt-in (paid users only) */}
-        {/*<Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div className="flex w-full items-center justify-between gap-4 border-separator1 border-b px-4 py-4 md:px-1">
-              <label className="flex flex-col gap-1" htmlFor="memory-toggle">
-                <span className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                  {t('memoryLabel')}
-                </span>
-                <span className="text-neutral-300 text-xs normal-case">
-                  {t('memoryDescription')}
-                </span>
-              </label>
-              <Switch
-                checked={isPaidUser && pgState.memory}
-                disabled={
-                  !isPaidUser || connectionState === ConnectionState.Connected
-                }
-                id="memory-toggle"
-                onCheckedChange={(checked) =>
-                  dispatch({ type: 'SET_MEMORY', payload: checked })
-                }
-              />
-            </div>
-          </TooltipTrigger>
-          {!isPaidUser && (
-            <TooltipContent className="TooltipContent">
-              <p>{t('memoryUpgradeTooltip')}</p>
-            </TooltipContent>
-          )}
-        </Tooltip>*/}
+        {/* Memory switch (on by default, free and paid alike) */}
+        {/*<div className="flex w-full items-center justify-between gap-4 border-separator1 border-b px-4 py-4 md:px-1">
+          <label className="flex flex-col gap-1" htmlFor="memory-toggle">
+            <span className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+              {t('memoryLabel')}
+            </span>
+            <span className="text-neutral-300 text-xs normal-case">
+              {t('memoryDescription')}
+            </span>
+          </label>
+          <Switch
+            checked={pgState.memory}
+            disabled={connectionState === ConnectionState.Connected}
+            id="memory-toggle"
+            onCheckedChange={(checked) =>
+              dispatch({ type: 'SET_MEMORY', payload: checked })
+            }
+          />
+        </div>*/}
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
