@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
@@ -158,14 +159,15 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     });
   }
 
-  const { error: deleteError, data: deleteData } = await supabase
+  const admin = createAdminClient();
+  const { error: deleteError, data: deleteData } = await admin
     .from('audio_files')
     .update({
       deleted_at: deletedAtIso,
       status: 'deleted',
     })
     .eq('user_id', user.id)
-    .select();
+    .select('id');
 
   if (customCharacters && customCharacters.length > 0) {
     const characterIds = customCharacters.map((character) => character.id);
