@@ -125,6 +125,19 @@ describe('history deletion actions', () => {
     expect(mocks.redisDel).not.toHaveBeenCalled();
   });
 
+  it('rejects a single delete when no active audio file matches', async () => {
+    const { adminSupabase, sessionSupabase } = createSupabaseMock({});
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
+
+    await expect(handleDeleteAction('missing-audio')).rejects.toThrow(
+      'Audio file not found or unauthorized',
+    );
+
+    expect(mocks.redisDel).not.toHaveBeenCalled();
+    expect(mocks.after).not.toHaveBeenCalled();
+  });
+
   it('does not access audio files without an authenticated user', async () => {
     const { sessionSupabase } = createSupabaseMock({ user: null });
     vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
