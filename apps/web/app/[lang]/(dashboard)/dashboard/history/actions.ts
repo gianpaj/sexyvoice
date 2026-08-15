@@ -96,18 +96,20 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     }
   }
 
-  after(async () => {
-    const posthog = PostHogClient();
-    posthog.capture({
-      distinctId: user.id,
-      event: options.scope === 'single' ? 'delete-audio' : 'delete-all-audio',
-      properties:
-        options.scope === 'single'
-          ? { id: options.id }
-          : { count: deletedAudioFiles.length },
+  if (deletedAudioFiles.length > 0) {
+    after(async () => {
+      const posthog = PostHogClient();
+      posthog.capture({
+        distinctId: user.id,
+        event: options.scope === 'single' ? 'delete-audio' : 'delete-all-audio',
+        properties:
+          options.scope === 'single'
+            ? { id: options.id }
+            : { count: deletedAudioFiles.length },
+      });
+      await posthog.shutdown();
     });
-    await posthog.shutdown();
-  });
+  }
 
   // R2 objects are intentionally retained for potential recovery.
   return { deletedCount: deletedAudioFiles.length, success: true };

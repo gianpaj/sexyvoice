@@ -153,6 +153,20 @@ describe('history deletion actions', () => {
     });
   });
 
+  it('does not invalidate cache or track analytics when no rows match', async () => {
+    const { adminSupabase, sessionSupabase } = createSupabaseMock({});
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
+
+    await expect(handleDeleteAllAction()).resolves.toEqual({
+      deletedCount: 0,
+      success: true,
+    });
+
+    expect(mocks.redisDel).not.toHaveBeenCalled();
+    expect(mocks.after).not.toHaveBeenCalled();
+  });
+
   it('does not turn a completed soft delete into a failure when Redis is down', async () => {
     const cacheError = new Error('Redis unavailable');
     const { adminSupabase, sessionSupabase } = createSupabaseMock({
