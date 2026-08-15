@@ -1,5 +1,7 @@
 import { parseBuffer } from 'music-metadata';
 
+import { sha256Hex } from '@/lib/sha256';
+
 interface WavConversionOptions {
   bitsPerSample: number;
   numChannels: number;
@@ -70,14 +72,8 @@ export function convertToWav(rawData: string, mimeType: string): Buffer {
 }
 
 export async function generateHash(input: string) {
-  const textEncoder = new TextEncoder();
-  const data = textEncoder.encode(input);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 8);
+  const data = new TextEncoder().encode(input);
+  return (await sha256Hex(data)).slice(0, 8);
 }
 
 /**
