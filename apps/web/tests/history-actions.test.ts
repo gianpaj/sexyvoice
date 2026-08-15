@@ -135,6 +135,24 @@ describe('history deletion actions', () => {
     expect(mocks.redisDel).not.toHaveBeenCalled();
   });
 
+  it('captures database failures with user and raw error context', async () => {
+    const databaseError = new Error('permission denied');
+    const { adminSupabase, sessionSupabase } = createSupabaseMock({
+      error: databaseError,
+    });
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+    vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
+
+    await expect(handleDeleteAllAction()).rejects.toThrow(
+      'Failed to delete audio files',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(databaseError, {
+      extra: { errorData: databaseError, scope: 'all' },
+      user: { email: 'user@example.com', id: 'user-1' },
+    });
+  });
+
   it('does not turn a completed soft delete into a failure when Redis is down', async () => {
     const cacheError = new Error('Redis unavailable');
     const { adminSupabase, sessionSupabase } = createSupabaseMock({

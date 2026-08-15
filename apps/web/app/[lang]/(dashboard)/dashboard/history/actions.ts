@@ -52,6 +52,13 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     await deleteQuery.select('id, storage_key');
 
   if (error) {
+    captureException(error, {
+      extra:
+        options.scope === 'single'
+          ? { audioId: options.id, errorData: error }
+          : { errorData: error, scope: 'all' },
+      user: { email: user.email, id: user.id },
+    });
     throw new Error('Failed to delete audio files', { cause: error });
   }
 
