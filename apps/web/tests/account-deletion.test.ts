@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleDeleteAccountAction } from '@/app/actions';
@@ -44,7 +45,11 @@ describe('account deletion', () => {
     });
     const charactersRead = createReadQuery({ data: [], error: null });
     const apiKeysRead = createReadQuery({ data: [], error: null });
-    const usageRead = createReadQuery({ count: 0, error: null });
+    const usageCountError = new Error('Count unavailable');
+    const usageRead = createReadQuery({
+      count: null,
+      error: usageCountError,
+    });
     const sessionSupabase = {
       auth: {
         getUser: vi.fn().mockResolvedValue({
@@ -94,5 +99,10 @@ describe('account deletion', () => {
         ([table]) => table === 'usage_events',
       ),
     ).toHaveLength(1);
+    expect(captureException).toHaveBeenCalledWith(usageCountError, {
+      extra: { context: 'retained usage event count during account deletion' },
+      level: 'warning',
+      user: { email: 'user@example.com', id: 'user-1' },
+    });
   });
 });

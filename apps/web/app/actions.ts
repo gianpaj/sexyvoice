@@ -125,13 +125,16 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       .eq('user_id', user.id),
   ]);
 
-  if (
-    audioFilesError ||
-    customCharactersError ||
-    apiKeysError ||
-    usageEventsError
-  ) {
+  if (audioFilesError || customCharactersError || apiKeysError) {
     throw new Error('User deletion failed');
+  }
+
+  if (usageEventsError) {
+    captureException(usageEventsError, {
+      extra: { context: 'retained usage event count during account deletion' },
+      level: 'warning',
+      user: { email: user.email, id: user.id },
+    });
   }
 
   if (audio_files) {
