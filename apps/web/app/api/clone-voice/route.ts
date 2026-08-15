@@ -30,6 +30,7 @@ import {
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
 import PostHogClient from '@/lib/posthog';
+import { sha256Hex } from '@/lib/sha256';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
@@ -272,16 +273,13 @@ const sanitizeFilename = (filename: string): string => {
     .replace(/[^a-zA-Z0-9.-]/g, '_'); // Replace special chars with underscore
 };
 
-async function generateBufferHash(buffer: Buffer): Promise<string> {
+function generateBufferHash(buffer: Buffer): Promise<string> {
   // Use a content-based SHA-256 hash so identical uploads produce the same cache key.
   // This allows R2/Redis entries to be reused deterministically instead of depending on timestamps.
   // `new Uint8Array(buffer)` creates a view over the existing Buffer data here, so it does not
   // materially increase memory usage beyond hashing the already in-memory upload.
   const data = new Uint8Array(buffer);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+  return sha256Hex(data);
 }
 
 // ============================================================================
