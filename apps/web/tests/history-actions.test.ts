@@ -105,6 +105,15 @@ describe('history deletion actions', () => {
     expect(query.eq).toHaveBeenCalledWith('id', 'audio-1');
   });
 
+  it('rejects an empty single-file ID before accessing the database', async () => {
+    await expect(handleDeleteAction('')).rejects.toThrow(
+      'Audio file not found or unauthorized',
+    );
+
+    expect(createClient).not.toHaveBeenCalled();
+    expect(mocks.redisDel).not.toHaveBeenCalled();
+  });
+
   it('does not access audio files without an authenticated user', async () => {
     const { supabase } = createSupabaseMock({ user: null });
     vi.mocked(createClient).mockResolvedValue(supabase as never);

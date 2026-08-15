@@ -9,11 +9,18 @@ import { createClient } from '@/lib/supabase/server';
 
 const redis = Redis.fromEnv();
 
-interface DeleteAudioFilesOptions {
-  id?: string;
-}
+type DeleteAudioFilesOptions =
+  | { scope: 'all' }
+  | { id: string; scope: 'single' };
 
-async function deleteAudioFiles({ id }: DeleteAudioFilesOptions = {}) {
+async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
+  if (
+    options.scope === 'single' &&
+    (typeof options.id !== 'string' || options.id.length === 0)
+  ) {
+    throw new Error('Audio file not found or unauthorized');
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,8 +39,8 @@ async function deleteAudioFiles({ id }: DeleteAudioFilesOptions = {}) {
     .eq('user_id', user.id)
     .eq('status', 'active');
 
-  if (id) {
-    deleteQuery = deleteQuery.eq('id', id);
+  if (options.scope === 'single') {
+    deleteQuery = deleteQuery.eq('id', options.id);
   }
 
   const { data: deletedAudioFiles, error } =
@@ -43,7 +50,7 @@ async function deleteAudioFiles({ id }: DeleteAudioFilesOptions = {}) {
     throw new Error('Failed to delete audio files', { cause: error });
   }
 
-  if (id && deletedAudioFiles.length === 0) {
+  if (options.scope === 'single' && deletedAudioFiles.length === 0) {
     throw new Error('Audio file not found or unauthorized');
   }
 
@@ -70,8 +77,11 @@ async function deleteAudioFiles({ id }: DeleteAudioFilesOptions = {}) {
     const posthog = PostHogClient();
     posthog.capture({
       distinctId: user.id,
-      event: id ? 'delete-audio' : 'delete-all-audio',
-      properties: id ? { id } : { count: deletedAudioFiles.length },
+      event: options.scope === 'single' ? 'delete-audio' : 'delete-all-audio',
+      properties:
+        options.scope === 'single'
+          ? { id: options.id }
+          : { count: deletedAudioFiles.length },
     });
     await posthog.shutdown();
   });
@@ -82,7 +92,7 @@ async function deleteAudioFiles({ id }: DeleteAudioFilesOptions = {}) {
 
 export const handleDeleteAction = async (id: string) => {
   try {
-    return await deleteAudioFiles({ id });
+    return await deleteAudioFiles({ id, scope: 'single' });
   } catch (error) {
     captureException(error, { extra: { audioId: id } });
     console.error('Error deleting audio file:', error);
@@ -92,7 +102,7 @@ export const handleDeleteAction = async (id: string) => {
 
 export const handleDeleteAllAction = async () => {
   try {
-    return await deleteAudioFiles();
+    return await deleteAudioFiles({ scope: 'all' });
   } catch (error) {
     captureException(error, { extra: { scope: 'all' } });
     console.error('Error deleting all audio files:', error);
