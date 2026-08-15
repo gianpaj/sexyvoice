@@ -81,8 +81,8 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     );
     try {
       // Cache keys are shared across users. Match the existing single-delete
-      // regeneration behavior even though another user's identical request
-      // may need to regenerate after this eviction.
+      // behavior even though another user's identical request may become a
+      // cache miss and consume credits after this eviction.
       await redis.del(...storageKeyBatch);
     } catch (cacheError) {
       // The database is authoritative. A cache outage must not report a
