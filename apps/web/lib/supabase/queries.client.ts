@@ -45,6 +45,15 @@ export async function getMyAudioFiles(
   return data;
 }
 
+export async function getMyAudioFilesCount(
+  client: TypedSupabaseClient,
+  userId: string,
+) {
+  const { count, error } = await getMyAudioFilesCountQuery(client, userId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 // For server-side prefetching with supabase-cache-helpers
 export function getCreditsQuery(client: TypedSupabaseClient, userId: string) {
   return client

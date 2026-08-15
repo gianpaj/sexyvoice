@@ -36,21 +36,17 @@ import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
   getMyAudioFiles,
+  getMyAudioFilesCount,
 } from '@/lib/supabase/queries.client';
 import { useColumns } from './columns';
 import { DeleteAllButton } from './delete-all-button';
 
 interface DataTableProps {
   showApiColumns: boolean;
-  totalCount: number;
   userId: string;
 }
 
-export function DataTable({
-  userId,
-  showApiColumns,
-  totalCount,
-}: DataTableProps) {
+export function DataTable({ userId, showApiColumns }: DataTableProps) {
   const t = useTranslations('history');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -61,6 +57,11 @@ export function DataTable({
     enabled: !!userId,
     queryFn: () => getMyAudioFiles(supabase, userId),
     queryKey: ['audio_files', userId],
+  });
+  const { data: totalCount = 0 } = useQuery({
+    enabled: !!userId,
+    queryFn: () => getMyAudioFilesCount(supabase, userId),
+    queryKey: ['audio_files_count', userId],
   });
   const columns = useColumns({ showApiColumns });
 

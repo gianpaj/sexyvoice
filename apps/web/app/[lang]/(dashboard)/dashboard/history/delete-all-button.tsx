@@ -47,6 +47,7 @@ export function DeleteAllButton({
         ['audio_files', userId],
         [],
       );
+      queryClient.setQueryData(['audio_files_count', userId], 0);
       router.refresh();
       setIsOpen(false);
       toast.success(t('all.success'));

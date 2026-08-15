@@ -51,16 +51,16 @@ export default async function HistoryPage(props: {
       ]);
 
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
+  queryClient.setQueryData(
+    ['audio_files_count', user.id],
+    totalAudioFilesCount ?? 0,
+  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="container mx-auto pb-10">
         <h2 className="mb-4 font-bold text-2xl">{t('header')}</h2>
-        <DataTable
-          showApiColumns={(apiKeysCount ?? 0) > 0}
-          totalCount={totalAudioFilesCount ?? 0}
-          userId={user.id}
-        />
+        <DataTable showApiColumns={(apiKeysCount ?? 0) > 0} userId={user.id} />
       </div>
     </HydrationBoundary>
   );

@@ -36,6 +36,7 @@ function renderDeleteAllButton({ count = 2, disabled = false } = {}) {
     ['audio_files', 'user-1'],
     [{ id: 'audio-1' }, { id: 'audio-2' }],
   );
+  queryClient.setQueryData(['audio_files_count', 'user-1'], count);
 
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -90,6 +91,7 @@ describe('DeleteAllButton', () => {
 
     await waitFor(() => expect(handleDeleteAllAction).toHaveBeenCalledOnce());
     expect(queryClient.getQueryData(['audio_files', 'user-1'])).toEqual([]);
+    expect(queryClient.getQueryData(['audio_files_count', 'user-1'])).toBe(0);
     expect(mocks.refresh).toHaveBeenCalledOnce();
     expect(toast.success).toHaveBeenCalledWith('All audio files deleted');
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
