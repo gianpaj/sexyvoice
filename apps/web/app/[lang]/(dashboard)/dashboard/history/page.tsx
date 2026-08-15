@@ -7,7 +7,10 @@ import { getTranslations } from 'next-intl/server';
 
 import { E2E_AUDIO_FILES, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { getMyAudioFilesQuery } from '@/lib/supabase/queries.client';
+import {
+  getMyAudioFilesCountQuery,
+  getMyAudioFilesQuery,
+} from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 import { DataTable } from './data-table';
 
@@ -40,11 +43,7 @@ export default async function HistoryPage(props: {
       ]
     : await Promise.all([
         getMyAudioFilesQuery(supabase, user.id),
-        supabase
-          .from('audio_files')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('status', 'active'),
+        getMyAudioFilesCountQuery(supabase, user.id),
         supabase
           .from('api_keys')
           .select('id', { count: 'exact', head: true })
