@@ -920,7 +920,7 @@
       "all": {
         "trigger": "Tout supprimer",
         "title": "Supprimer tous les fichiers audio ?",
-        "description": "Tous les fichiers audio seront supprimés de votre historique. Cette action est irréversible.",
+        "description": "{count, plural, one {Le fichier audio sera supprimé de votre historique. Cette action est irréversible.} other {Les # fichiers audio seront supprimés de votre historique. Cette action est irréversible.}}",
         "confirm": "Tout supprimer",
         "success": "Tous les fichiers audio ont été supprimés",
         "error": "Impossible de supprimer tous les fichiers audio. Veuillez réessayer."

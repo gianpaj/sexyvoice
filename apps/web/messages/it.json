@@ -920,7 +920,7 @@
       "all": {
         "trigger": "Elimina tutto",
         "title": "Eliminare tutti i file audio?",
-        "description": "Tutti i file audio verranno rimossi dalla cronologia. Questa azione non può essere annullata.",
+        "description": "{count, plural, one {Il file audio verrà rimosso dalla cronologia. Questa azione non può essere annullata.} other {Tutti i # file audio verranno rimossi dalla cronologia. Questa azione non può essere annullata.}}",
         "confirm": "Elimina tutto",
         "success": "Tutti i file audio sono stati eliminati",
         "error": "Impossibile eliminare tutti i file audio. Riprova."

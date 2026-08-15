@@ -920,7 +920,7 @@
       "all": {
         "trigger": "Alle löschen",
         "title": "Alle Audiodateien löschen?",
-        "description": "Alle Audiodateien werden aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "description": "{count, plural, one {Die Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.} other {Alle # Audiodateien werden aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.}}",
         "confirm": "Alle löschen",
         "success": "Alle Audiodateien gelöscht",
         "error": "Die Audiodateien konnten nicht gelöscht werden. Bitte versuche es erneut."

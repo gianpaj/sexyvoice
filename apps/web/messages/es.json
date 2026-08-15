@@ -920,7 +920,7 @@
       "all": {
         "trigger": "Eliminar todo",
         "title": "¿Eliminar todos los archivos de audio?",
-        "description": "Todos los archivos de audio se eliminarán de tu historial. Esta acción no se puede deshacer.",
+        "description": "{count, plural, one {El archivo de audio se eliminará de tu historial. Esta acción no se puede deshacer.} other {Los # archivos de audio se eliminarán de tu historial. Esta acción no se puede deshacer.}}",
         "confirm": "Eliminar todo",
         "success": "Todos los archivos de audio se eliminaron",
         "error": "No se pudieron eliminar todos los archivos de audio. Inténtalo de nuevo."

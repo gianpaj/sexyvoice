@@ -22,14 +22,17 @@ vi.mock('sonner', () => ({
   },
 }));
 
-function renderDeleteAllButton({ disabled = false } = {}) {
+function renderDeleteAllButton({ count = 2, disabled = false } = {}) {
   const queryClient = new QueryClient();
-  queryClient.setQueryData(['audio_files', 'user-1'], [{ id: 'audio-1' }]);
+  queryClient.setQueryData(
+    ['audio_files', 'user-1'],
+    [{ id: 'audio-1' }, { id: 'audio-2' }],
+  );
 
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
       <QueryClientProvider client={queryClient}>
-        <DeleteAllButton disabled={disabled} userId="user-1" />
+        <DeleteAllButton count={count} disabled={disabled} userId="user-1" />
       </QueryClientProvider>
     </NextIntlClientProvider>,
   );
@@ -60,7 +63,7 @@ describe('DeleteAllButton', () => {
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(
-        'Every audio file will be removed from your history. This action cannot be undone.',
+        'All 2 audio files will be removed from your history. This action cannot be undone.',
       ),
     ).toBeInTheDocument();
     expect(handleDeleteAllAction).not.toHaveBeenCalled();
@@ -104,12 +107,13 @@ describe('DeleteAllButton', () => {
     );
     expect(queryClient.getQueryData(['audio_files', 'user-1'])).toEqual([
       { id: 'audio-1' },
+      { id: 'audio-2' },
     ]);
     expect(screen.getByRole('alertdialog')).toBeInTheDocument();
   });
 
   it('is disabled when there is no history', () => {
-    renderDeleteAllButton({ disabled: true });
+    renderDeleteAllButton({ count: 0, disabled: true });
 
     const button = screen.getByRole('button', { name: 'Delete all' });
     expect(button).toBeDisabled();

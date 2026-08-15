@@ -918,7 +918,7 @@
       "all": {
         "trigger": "Delete all",
         "title": "Delete all audio files?",
-        "description": "Every audio file will be removed from your history. This action cannot be undone.",
+        "description": "{count, plural, one {The audio file will be removed from your history. This action cannot be undone.} other {All # audio files will be removed from your history. This action cannot be undone.}}",
         "confirm": "Delete all",
         "success": "All audio files deleted",
         "error": "Failed to delete all audio files. Please try again."

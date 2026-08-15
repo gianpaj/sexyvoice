@@ -916,7 +916,7 @@
       "all": {
         "trigger": "Slet alle",
         "title": "Slet alle lydfiler?",
-        "description": "Alle lydfiler bliver fjernet fra din historik. Handlingen kan ikke fortrydes.",
+        "description": "{count, plural, one {Lydfilen bliver fjernet fra din historik. Handlingen kan ikke fortrydes.} other {Alle # lydfiler bliver fjernet fra din historik. Handlingen kan ikke fortrydes.}}",
         "confirm": "Slet alle",
         "success": "Alle lydfiler er slettet",
         "error": "Alle lydfiler kunne ikke slettes. Prøv igen."

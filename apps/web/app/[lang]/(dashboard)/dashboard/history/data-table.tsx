@@ -96,6 +96,7 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
         </div>
         <div className="flex items-center gap-2">
           <DeleteAllButton
+            count={data?.length ?? 0}
             disabled={(data?.length ?? 0) === 0}
             userId={userId}
           />

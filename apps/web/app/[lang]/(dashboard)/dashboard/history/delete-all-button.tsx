@@ -21,11 +21,16 @@ import type { AudioFileAndVoicesRes } from '@/lib/supabase/queries.client';
 import { handleDeleteAllAction } from './actions';
 
 interface DeleteAllButtonProps {
+  count: number;
   disabled: boolean;
   userId: string;
 }
 
-export function DeleteAllButton({ disabled, userId }: DeleteAllButtonProps) {
+export function DeleteAllButton({
+  count,
+  disabled,
+  userId,
+}: DeleteAllButtonProps) {
   const t = useTranslations('history.delete');
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -73,7 +78,7 @@ export function DeleteAllButton({ disabled, userId }: DeleteAllButtonProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>{t('all.title')}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t('all.description')}
+            {t('all.description', { count })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
