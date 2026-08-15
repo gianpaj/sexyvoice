@@ -45,13 +45,6 @@ describe('account deletion', () => {
     const charactersRead = createReadQuery({ data: [], error: null });
     const apiKeysRead = createReadQuery({ data: [], error: null });
     const usageRead = createReadQuery({ count: 0, error: null });
-    const usageDelete = {
-      delete: vi.fn(),
-      eq: vi.fn().mockResolvedValue({ error: null }),
-    };
-    usageDelete.delete.mockReturnValue(usageDelete);
-
-    const usageQueries = [usageRead, usageDelete];
     const sessionSupabase = {
       auth: {
         getUser: vi.fn().mockResolvedValue({
@@ -64,7 +57,7 @@ describe('account deletion', () => {
         if (table === 'audio_files') return audioRead;
         if (table === 'characters') return charactersRead;
         if (table === 'api_keys') return apiKeysRead;
-        if (table === 'usage_events') return usageQueries.shift();
+        if (table === 'usage_events') return usageRead;
         throw new Error(`Unexpected table: ${table}`);
       }),
     };
@@ -96,5 +89,10 @@ describe('account deletion', () => {
     expect(audioUpdate.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(audioUpdate.select).toHaveBeenCalledWith('id');
     expect(deleteFileFromR2).toHaveBeenCalledWith('audio/one.mp3');
+    expect(
+      sessionSupabase.from.mock.calls.filter(
+        ([table]) => table === 'usage_events',
+      ),
+    ).toHaveLength(1);
   });
 });

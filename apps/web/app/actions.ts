@@ -114,7 +114,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     { data: audio_files, error: audioFilesError },
     { data: customCharacters, error: customCharactersError },
     { data: apiKeys, error: apiKeysError },
-    { count: usageEventsCount, error: usageEventsError },
+    { count: retainedUsageEventsCount, error: usageEventsError },
   ] = await Promise.all([
     supabase.from('audio_files').select().eq('user_id', user.id),
     supabase.from('characters').select('id, prompt_id').eq('user_id', user.id),
@@ -204,19 +204,16 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     }
   }
 
-  const { error: deleteUsageEventsError } = await supabase
-    .from('usage_events')
-    .delete()
-    .eq('user_id', user.id);
-
-  if (error || deleteError || deleteUsageEventsError) {
+  if (error || deleteError) {
     throw new Error('User deletion failed');
   }
   logger.info('User deleted', {
     apiKeysDeleted: apiKeys ? apiKeys.length : 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    usageEventsDeleted: usageEventsCount ?? 0,
+    // usage_events is an immutable audit log protected from deletion by the
+    // database. Report retained rows instead of claiming they were removed.
+    usageEventsRetained: retainedUsageEventsCount ?? 0,
     userId: user.id,
   });
 
@@ -224,7 +221,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     apiKeysDeleted: apiKeys?.length ?? 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    usageEventsDeleted: usageEventsCount ?? 0,
+    usageEventsRetained: retainedUsageEventsCount ?? 0,
     userId: user.id,
   });
   await supabase.auth.signOut();
