@@ -47,10 +47,12 @@ function createSupabaseMock({
 }) {
   const query = {
     eq: vi.fn(),
+    match: vi.fn(),
     select: vi.fn().mockResolvedValue({ data: deletedAudioFiles, error }),
     update: vi.fn(),
   };
   query.eq.mockReturnValue(query);
+  query.match.mockReturnValue(query);
   query.update.mockReturnValue(query);
 
   const sessionSupabase = {
@@ -92,8 +94,10 @@ describe('history deletion actions', () => {
       deleted_at: expect.any(String),
       status: 'deleted',
     });
-    expect(query.eq).toHaveBeenCalledWith('user_id', 'user-1');
-    expect(query.eq).toHaveBeenCalledWith('status', 'active');
+    expect(query.match).toHaveBeenCalledWith({
+      status: 'active',
+      user_id: 'user-1',
+    });
     expect(query.eq).not.toHaveBeenCalledWith('id', expect.any(String));
     expect(query.select).toHaveBeenCalledWith('id, storage_key');
     expect(mocks.redisDel).toHaveBeenCalledWith(
@@ -112,7 +116,10 @@ describe('history deletion actions', () => {
 
     await handleDeleteAction('audio-1');
 
-    expect(query.eq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(query.match).toHaveBeenCalledWith({
+      status: 'active',
+      user_id: 'user-1',
+    });
     expect(query.eq).toHaveBeenCalledWith('id', 'audio-1');
   });
 

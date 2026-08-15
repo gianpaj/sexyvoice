@@ -4,7 +4,7 @@ export type AudioFileAndVoicesRes = Tables<'audio_files'> & {
   voices: Tables<'voices'>;
 };
 
-function getMyActiveAudioFilesFilter(userId: string) {
+export function getMyActiveAudioFilesFilter(userId: string) {
   return { status: 'active' as const, user_id: userId };
 }
 

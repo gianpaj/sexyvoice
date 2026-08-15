@@ -6,6 +6,7 @@ import { after } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getMyActiveAudioFilesFilter } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
 const redis = Redis.fromEnv();
@@ -41,8 +42,7 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
       deleted_at: new Date().toISOString(),
       status: 'deleted',
     })
-    .eq('user_id', user.id)
-    .eq('status', 'active');
+    .match(getMyActiveAudioFilesFilter(user.id));
 
   if (options.scope === 'single') {
     deleteQuery = deleteQuery.eq('id', options.id);
