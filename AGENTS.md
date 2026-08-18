@@ -218,6 +218,11 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 ## Documentation Rules
 
+- For commits that change only repository documentation, such as `AGENTS.md`,
+  `README.md`, `ARCHITECTURE.md`, `docs/`, `plans/`, or `.agents/notes/`, append
+  `[skip deploy]` to the commit subject so both Vercel projects skip deployment.
+  Do not use the marker when the commit also changes runtime code or deployed
+  content.
 - Update docs when changing APIs, workflows, environment variables, or
   operational behavior.
 - For environment variable changes, update `AGENTS.md`, `README.md`,
