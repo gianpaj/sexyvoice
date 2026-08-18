@@ -124,6 +124,8 @@ export function AgentProvider({ children }: { children: React.ReactNode }) {
           toast.error(t('activeCallError'));
         } else if (errorData.error === 'insufficient_credits') {
           toast.error(t('notEnoughCredits', { count: CREDITS_PER_MINUTE }));
+        } else if (errorData.error === 'instructions_rejected') {
+          toast.error(t('instructionsRejected'));
         } else {
           toast.error(errorData.message || 'An error occurred');
         }

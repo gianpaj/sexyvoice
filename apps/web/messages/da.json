@@ -590,6 +590,7 @@
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
     "activeCallError": "Du har allerede et aktivt opkald i gang",
+    "instructionsRejected": "Opkaldet kunne ikke starte, fordi karakteren eller scenen ikke bestod AI-udbyderens sikkerhedstjek. Rediger karakteren eller scenen, og prøv igen.",
     "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
