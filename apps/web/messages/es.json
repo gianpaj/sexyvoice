@@ -594,6 +594,7 @@
     "configurationUpdateError": "Error al actualizar la configuración",
     "agentUnavailable": "Agente no disponible",
     "activeCallError": "Ya tienes una llamada activa en curso",
+    "instructionsRejected": "Esta llamada no pudo iniciarse porque el personaje o la escena no superaron las comprobaciones de seguridad del proveedor de IA. Edita el personaje o la escena e inténtalo de nuevo.",
     "microphonePermissionDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono e inténtalo de nuevo.",
     "disconnected": "Desconectado",
     "chooseCharacter": "¿Con quién quieres hablar?",

@@ -594,6 +594,7 @@
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
+    "instructionsRejected": "Dieser Anruf konnte nicht gestartet werden, weil der Charakter oder die Szene die Sicherheitsprüfungen des KI-Anbieters nicht bestanden haben. Bearbeite den Charakter oder die Szene und versuche es erneut.",
     "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",

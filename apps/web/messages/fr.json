@@ -594,6 +594,7 @@
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
     "activeCallError": "Vous avez déjà un appel actif en cours",
+    "instructionsRejected": "Cet appel n’a pas pu démarrer, car le personnage ou la scène n’ont pas passé les contrôles de sécurité du fournisseur d’IA. Modifiez le personnage ou la scène, puis réessayez.",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "disconnected": "Déconnecté",
     "chooseCharacter": "À qui voulez-vous parler ?",
