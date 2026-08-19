@@ -903,6 +903,26 @@
     "header": "Genereringshistorik",
     "empty": "Ingen historik endnu",
     "downloadError": "Kunne ikke downloade lyd",
+    "delete": {
+      "cancel": "Annuller",
+      "deleting": "Sletter...",
+      "single": {
+        "trigger": "Slet",
+        "title": "Slet lydfil?",
+        "description": "Denne lydfil bliver fjernet fra din historik. Handlingen kan ikke fortrydes.",
+        "confirm": "Slet",
+        "success": "Lydfilen er slettet",
+        "error": "Lydfilen kunne ikke slettes. Prøv igen."
+      },
+      "all": {
+        "trigger": "Slet alle",
+        "title": "Slet alle lydfiler?",
+        "description": "{count, plural, one {Lydfilen bliver fjernet fra din historik. Handlingen kan ikke fortrydes.} other {Alle # lydfiler bliver fjernet fra din historik. Handlingen kan ikke fortrydes.}}",
+        "confirm": "Slet alle",
+        "success": "Alle lydfiler er slettet",
+        "error": "Alle lydfiler kunne ikke slettes. Prøv igen."
+      }
+    },
     "ui": {
       "filterText": "Filtrer tekst...",
       "customizeColumns": "Tilpas kolonner",
