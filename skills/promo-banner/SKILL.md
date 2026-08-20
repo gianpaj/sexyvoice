@@ -103,6 +103,14 @@ registry entry does not require another banner component.
 Add page wiring only when introducing a new placement. Resolve the banner on
 the server and render the shared `Banner` component.
 
+The landing, voice-cloning, and voice-call pages omit request cookies to keep
+their static caching. On those pages, the client can hide a dismissed banner,
+but it cannot replace it with the next eligible banner because the server sent
+only the highest-priority banner. If a promo and announcement are active
+together, dismissing the promo leaves the banner slot empty on those pages.
+Blog and dashboard pages pass dismissal cookies to the resolver, so they can
+fall back to the announcement.
+
 ## Theme colors
 
 Set `NEXT_PUBLIC_PROMO_THEME` to `pink`, `orange`, or `blue`. Theme variables
@@ -134,4 +142,5 @@ cookie name from `NEXT_PUBLIC_PROMO_ID`.
    the campaign needs them.
 6. Run `pnpm check-translations`, `pnpm fixall`, and the focused banner tests.
 7. Verify dismissal, logged-in and logged-out CTAs, supported placements, and
-   countdown expiry before deployment.
+   countdown expiry before deployment. When a promo and announcement overlap,
+   verify the dismissal result on both cacheable and cookie-aware pages.
