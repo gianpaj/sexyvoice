@@ -54,8 +54,8 @@ export interface ResolvedBanner {
   dismiss: {
     cookieKey: string;
     days: number;
+    legacyCookieKeys: string[];
   };
-  dismissCookieKeys: string[];
   dismissible: boolean;
   id: string;
   kind: BannerKind;

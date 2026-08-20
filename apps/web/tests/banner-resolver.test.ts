@@ -104,6 +104,7 @@ describe('resolveActiveBanner', () => {
       dismiss: {
         cookieKey: 'banner-expressive-voices-launch-dismissed',
         days: 14,
+        legacyCookieKeys: [],
       },
       id: 'expressiveVoicesLaunch',
       theme: 'blue',

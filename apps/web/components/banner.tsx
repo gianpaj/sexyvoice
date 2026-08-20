@@ -60,12 +60,17 @@ export function Banner({
     setIsVisible(false);
 
     const resolveVisibility = async () => {
-      if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
+      const dismissCookieKeys = [
+        banner.dismiss.cookieKey,
+        ...banner.dismiss.legacyCookieKeys,
+      ];
+
+      if (!(banner.dismissible && dismissCookieKeys.length > 0)) {
         return true;
       }
 
       const cookieValues = await Promise.all(
-        banner.dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
+        dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
       );
 
       return cookieValues.every((cookieValue) => !cookieValue);
@@ -82,7 +87,11 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [banner.dismissCookieKeys, banner.dismissible]);
+  }, [
+    banner.dismiss.cookieKey,
+    banner.dismiss.legacyCookieKeys,
+    banner.dismissible,
+  ]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {

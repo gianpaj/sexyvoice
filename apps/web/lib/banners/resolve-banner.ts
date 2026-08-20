@@ -104,11 +104,8 @@ function resolveBanner(
     dismiss: {
       cookieKey: definition.dismiss.cookieKey,
       days: definition.dismiss.days,
+      legacyCookieKeys: definition.dismiss.legacyCookieKeys || [],
     },
-    dismissCookieKeys: [
-      definition.dismiss.cookieKey,
-      ...(definition.dismiss.legacyCookieKeys || []),
-    ],
     dismissible: definition.dismissible ?? true,
     id: definition.id,
     kind: definition.kind,
