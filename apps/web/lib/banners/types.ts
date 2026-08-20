@@ -32,7 +32,6 @@ export interface BannerDefinition {
   dismiss: {
     cookieKey: string;
     days: number;
-    legacyCookieKeys?: string[];
   };
   dismissible?: boolean;
   id: string;
@@ -54,7 +53,6 @@ export interface ResolvedBanner {
   dismiss: {
     cookieKey: string;
     days: number;
-    legacyCookieKeys: string[];
   };
   dismissible: boolean;
   id: string;

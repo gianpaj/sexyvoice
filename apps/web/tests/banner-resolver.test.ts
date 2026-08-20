@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 
@@ -104,7 +104,6 @@ describe('resolveActiveBanner', () => {
       dismiss: {
         cookieKey: 'banner-expressive-voices-launch-dismissed',
         days: 14,
-        legacyCookieKeys: [],
       },
       id: 'expressiveVoicesLaunch',
       theme: 'blue',
@@ -147,6 +146,27 @@ describe('resolveActiveBanner', () => {
       id: 'expressiveVoicesLaunch',
       theme: 'blue',
     });
+  });
+
+  it('ignores expired legacy promo dismissal cookies', async () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
+    process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER = undefined;
+    process.env.NEXT_PUBLIC_PROMO_ID = 'legacy-promo';
+    vi.resetModules();
+    const { resolveActiveBanner: resolveWithPromoId } = await import(
+      '@/lib/banners/resolve-banner'
+    );
+
+    const banner = resolveWithPromoId({
+      audience: 'loggedOut',
+      dismissedCookieKeys: ['legacy-promo-dismissed'],
+      lang: 'en',
+      messages,
+      placement: 'landing',
+    });
+
+    expect(banner?.id).toBe('blackFridayBanner');
   });
 
   it.skip('returns null when the active banner is not allowed for the current placement', () => {

@@ -104,7 +104,6 @@ function resolveBanner(
     dismiss: {
       cookieKey: definition.dismiss.cookieKey,
       days: definition.dismiss.days,
-      legacyCookieKeys: definition.dismiss.legacyCookieKeys || [],
     },
     dismissible: definition.dismissible ?? true,
     id: definition.id,
@@ -129,18 +128,7 @@ export function resolveActiveBanner(
       (banner): banner is NonNullable<ReturnType<typeof getBannerDefinition>> =>
         Boolean(banner),
     )
-    .filter((banner) => {
-      const bannerCookieKeys = [
-        banner.dismiss.cookieKey,
-        ...('legacyCookieKeys' in banner.dismiss
-          ? banner.dismiss.legacyCookieKeys || []
-          : []),
-      ];
-
-      return bannerCookieKeys.every(
-        (cookieKey) => !dismissedCookieKeys.has(cookieKey),
-      );
-    })
+    .filter((banner) => !dismissedCookieKeys.has(banner.dismiss.cookieKey))
     .map((banner) => ({
       banner: resolveBanner(banner, options),
       priority: banner.priority,

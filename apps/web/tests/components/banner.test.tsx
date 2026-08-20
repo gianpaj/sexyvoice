@@ -16,7 +16,6 @@ const banner = {
   dismiss: {
     cookieKey: DISMISS_COOKIE,
     days: 14,
-    legacyCookieKeys: [],
   },
   dismissible: true,
   id: 'expressiveVoicesLaunch',
