@@ -514,13 +514,16 @@ describe('AudioGenerator', () => {
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    for (const _character of prompt) {
-      await user.keyboard('{Backspace}');
-    }
+    try {
+      for (const _character of prompt) {
+        await user.keyboard('{Backspace}');
+      }
 
-    expect(textarea).toHaveValue('');
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
+      expect(textarea).toHaveValue('');
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   it('enables split mode for paid Replicate users and shows segment previews', async () => {
