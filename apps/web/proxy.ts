@@ -146,11 +146,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      missing: [
-        { key: 'next-action', type: 'header' },
-        { key: 'next-router-prefetch', type: 'header' },
-        { key: 'purpose', type: 'header', value: 'prefetch' },
-      ],
+      missing: [{ key: 'next-action', type: 'header' }],
       source:
         '/((?!api/|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
     },
