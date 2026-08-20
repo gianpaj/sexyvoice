@@ -90,6 +90,7 @@ export async function setCookie(
         ...(expires ? { expires: expires.getTime() } : {}),
         name,
         path,
+        sameSite: 'lax',
         value,
       });
       return;
@@ -105,6 +106,7 @@ export async function setCookie(
   const cookieParts = [
     `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
     `path=${path}`,
+    'SameSite=Lax',
   ];
 
   if (expires) {
