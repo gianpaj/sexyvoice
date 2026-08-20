@@ -157,8 +157,8 @@
           "description": "Cada llamada se cifra en tránsito. Ninguna persona escucha tus conversaciones."
         },
         "forgotten": {
-          "title": "Olvidado por defecto",
-          "description": "No se guarda nada entre llamadas a menos que actives la memoria tú mismo."
+          "title": "Una memoria que controlas tú",
+          "description": "Los personajes te recuerdan entre llamadas de forma predeterminada. Desactiva la memoria cuando quieras o bórralo todo desde tu perfil."
         }
       },
       "customCharacter": {
@@ -577,8 +577,7 @@
     "freeUserCallLimitExceeded": "Los usuarios gratuitos están limitados a 5 minutos de llamadas. Por favor, actualiza tu cuenta para continuar.",
     "configurationTitle": "Configuración",
     "memoryLabel": "Memoria",
-    "memoryDescription": "Deja que los personajes te recuerden entre llamadas. No se guarda nada a menos que esté activado.",
-    "memoryUpgradeTooltip": "Actualiza a un plan de pago para que los personajes te recuerden entre llamadas.",
+    "memoryDescription": "Deja que los personajes te recuerden entre llamadas. Activada de forma predeterminada: desactívala y no se guarda nada.",
     "languageLabel": "Idioma",
     "languagePlaceholder": "Elige un idioma",
     "sceneLabel": "Escena",
@@ -843,7 +842,7 @@
     },
     "memory": {
       "title": "Memoria de llamadas de voz",
-      "description": "Si activas la memoria durante las llamadas, los personajes recuerdan algunos datos sobre ti para mantener la continuidad. Aquí puedes borrarlo todo.",
+      "description": "La memoria está activada de forma predeterminada durante las llamadas, así que los personajes recuerdan algunos datos sobre ti para mantener la continuidad. Aquí puedes borrarlo todo.",
       "button": "Eliminar todas las memorias",
       "confirmTitle": "¿Eliminar todas las memorias de las llamadas de voz?",
       "confirmDescription": "Esto borra de forma permanente todo lo que los personajes han recordado sobre ti en llamadas anteriores. No se puede deshacer.",

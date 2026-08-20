@@ -79,8 +79,8 @@ export interface PlaygroundState {
   initialInstruction: string;
   instructions: string;
   language: CallLanguage;
-  /** Long-term memory opt-in. When true, the agent remembers distilled facts
-   * about the user across calls; off (default) stores nothing. */
+  /** Long-term memory. On by default: the agent remembers distilled facts
+   * about the user across calls. When switched off, nothing is stored. */
   memory: boolean;
   sceneInstructions: string;
   selectedPresetId: string | null;
@@ -99,7 +99,7 @@ export const defaultPlaygroundState: PlaygroundState = {
   sceneInstructions: '',
   instructions,
   language: defaultLanguage,
-  memory: false,
+  memory: true,
   initialInstruction,
   defaultPresets: [], // Now populated from DB via SSR props
 };
