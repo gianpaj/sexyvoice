@@ -145,11 +145,15 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
+    {
+      missing: [
+        { key: 'next-action', type: 'header' },
+        { key: 'next-router-prefetch', type: 'header' },
+        { key: 'purpose', type: 'header', value: 'prefetch' },
+      ],
+      source:
+        '/((?!api/|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
+    },
     // Note: api/ is excluded above so next-intl never locale-redirects fetch calls
-  ],
-  missing: [
-    { key: 'next-router-prefetch', type: 'header' },
-    { key: 'purpose', type: 'header', value: 'prefetch' },
   ],
 };

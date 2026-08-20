@@ -191,6 +191,32 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('17 / 500')).toBeInTheDocument();
   });
 
+  it('keeps rapid Tiptap deletion local', async () => {
+    const onChange = vi.fn();
+    const prompt = 'Delete this quickly';
+
+    renderEditor({ onChange, value: prompt });
+
+    const editor = await findEditor();
+    const paragraph = editor.querySelector('p');
+
+    if (!paragraph) {
+      throw new Error('Expected editor to contain a paragraph');
+    }
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    for (let remaining = prompt.length - 1; remaining >= 0; remaining--) {
+      paragraph.textContent = prompt.slice(0, remaining);
+      fireEvent.input(editor, { inputType: 'deleteContentBackward' });
+    }
+
+    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(''));
+    expect(editor).toHaveTextContent('');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it('opens the effects popover and shows available effect actions', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

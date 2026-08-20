@@ -500,6 +500,29 @@ describe('AudioGenerator', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('keeps rapid native-textarea deletion local', async () => {
+    const user = userEvent.setup();
+
+    renderAudioGenerator();
+
+    const textarea = await screen.findByPlaceholderText(
+      baseDict.textAreaPlaceholder,
+    );
+    const prompt = 'Delete this quickly';
+
+    await user.type(textarea, prompt);
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    for (const _character of prompt) {
+      await user.keyboard('{Backspace}');
+    }
+
+    expect(textarea).toHaveValue('');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
   it('enables split mode for paid Replicate users and shows segment previews', async () => {
     const user = userEvent.setup();
     const longText = `${'A'.repeat(300)}. ${'B'.repeat(300)}.`;
