@@ -206,15 +206,18 @@ describe('GrokTTSEditor', () => {
 
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    for (let remaining = prompt.length - 1; remaining >= 0; remaining--) {
-      paragraph.textContent = prompt.slice(0, remaining);
-      fireEvent.input(editor, { inputType: 'deleteContentBackward' });
-    }
+    try {
+      for (let remaining = prompt.length - 1; remaining >= 0; remaining--) {
+        paragraph.textContent = prompt.slice(0, remaining);
+        fireEvent.input(editor, { inputType: 'deleteContentBackward' });
+      }
 
-    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(''));
-    expect(editor).toHaveTextContent('');
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
+      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(''));
+      expect(editor).toHaveTextContent('');
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
   });
 
   it('opens the effects popover and shows available effect actions', async () => {
