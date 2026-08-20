@@ -408,6 +408,13 @@ pnpm run generate-supabase-types
 - Sentry is configured in `next.config.js` via `@sentry/nextjs`
 - Client errors are tunneled through `/monitoring` to bypass ad-blockers
 - Source maps are uploaded only in production (`VERCEL_ENV=production`)
+- Web production builds use Webpack (`next build --webpack`) so Sentry can
+  produce and upload client source maps. Local development still uses
+  Turbopack.
+- Keep the Webpack override until Sentry supports client source maps for
+  Next.js Turbopack builds and a deployed test event resolves to application
+  source. Track support in the
+  [Sentry JavaScript issue](https://github.com/getsentry/sentry-javascript/issues/8105).
 
 ### CLI setup
 
