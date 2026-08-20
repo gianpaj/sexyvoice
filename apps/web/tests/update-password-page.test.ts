@@ -52,4 +52,24 @@ describe('UpdatePasswordPage auth guard', () => {
 
     expect(navigationMocks.redirect).toHaveBeenCalledWith('/en');
   });
+
+  it('renders for a caller with a Supabase session', async () => {
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-1' } },
+          error: null,
+        }),
+      },
+    } as never);
+
+    await expect(
+      UpdatePasswordPage({
+        params: Promise.resolve({ lang: 'en' }),
+        searchParams: Promise.resolve({ message: '' }),
+      }),
+    ).resolves.toBeDefined();
+
+    expect(navigationMocks.redirect).not.toHaveBeenCalled();
+  });
 });
