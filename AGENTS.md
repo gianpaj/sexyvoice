@@ -215,6 +215,7 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`.
 - Localized copy lives under `promos` or `announcements` in every
   `apps/web/messages/*.json` file.
+- Promo setup guidance lives in `skills/promo-banner/SKILL.md`.
 - Only one banner should be visible at a time.
 
 ## Documentation Rules
