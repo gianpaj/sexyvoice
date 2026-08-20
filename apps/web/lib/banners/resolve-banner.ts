@@ -101,6 +101,10 @@ function resolveBanner(
       options.audience === 'loggedIn'
         ? translation.ctaLoggedIn
         : translation.ctaLoggedOut,
+    dismiss: {
+      cookieKey: definition.dismiss.cookieKey,
+      days: definition.dismiss.days,
+    },
     dismissCookieKeys: [
       definition.dismiss.cookieKey,
       ...(definition.dismiss.legacyCookieKeys || []),

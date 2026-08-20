@@ -51,6 +51,10 @@ export interface ResolvedBanner {
   };
   ctaLink: string;
   ctaText: string;
+  dismiss: {
+    cookieKey: string;
+    days: number;
+  };
   dismissCookieKeys: string[];
   dismissible: boolean;
   id: string;

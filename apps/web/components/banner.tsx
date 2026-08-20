@@ -4,10 +4,9 @@ import { XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useEffect, useState } from 'react';
 
-import { dismissBannerAction } from '@/app/[lang]/actions/banners';
 import { Button } from '@/components/ui/button';
 import type { ResolvedBanner } from '@/lib/banners/types';
-import { getCookie } from '@/lib/cookies';
+import { getCookie, setCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
 interface TimeRemaining {
@@ -124,8 +123,16 @@ export function Banner({
   }, [banner.countdown?.enabled, banner.countdown?.endDate]);
 
   const handleDismissBanner = async () => {
-    await dismissBannerAction(banner.id);
+    const expiryDate = new Date();
+    expiryDate.setTime(
+      expiryDate.getTime() + banner.dismiss.days * 24 * 60 * 60 * 1000,
+    );
+
     setIsVisible(false);
+    await setCookie(banner.dismiss.cookieKey, 'true', {
+      expires: expiryDate,
+      path: '/',
+    });
   };
 
   if (!isVisible) {

@@ -101,6 +101,10 @@ describe('resolveActiveBanner', () => {
     expect(banner).toMatchObject({
       ctaLink: '/en/login',
       ctaText: 'Log in',
+      dismiss: {
+        cookieKey: 'banner-expressive-voices-launch-dismissed',
+        days: 14,
+      },
       id: 'expressiveVoicesLaunch',
       theme: 'blue',
     });
