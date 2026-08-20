@@ -1,7 +1,9 @@
+import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { Header } from '@/components/header';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { createClient } from '@/lib/supabase/server';
 import type { Message } from '../../reset-password/reset-password-form';
 import { UpdatePasswordForm } from './update-password-form';
 
@@ -13,6 +15,15 @@ export default async function UpdatePasswordPage(props: {
     props.params,
     props.searchParams,
   ]);
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/${lang}`);
+  }
+
   const t = await getTranslations({
     locale: lang,
     namespace: 'auth.updatePassword',
