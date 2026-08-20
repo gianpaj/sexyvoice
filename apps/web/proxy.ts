@@ -149,9 +149,9 @@ export const config = {
       // This header is client-controlled. Protected routes and Server Actions
       // must enforce their own authorization instead of relying on the Proxy.
       missing: [{ key: 'next-action', type: 'header' }],
+      // Exclude API routes so next-intl never locale-redirects fetch calls.
       source:
         '/((?!api/|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
     },
-    // Note: api/ is excluded above so next-intl never locale-redirects fetch calls
   ],
 };
