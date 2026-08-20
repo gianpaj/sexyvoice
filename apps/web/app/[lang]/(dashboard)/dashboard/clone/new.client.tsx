@@ -587,7 +587,7 @@ function NewVoiceClientInner({
 
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <Tabs
           className="w-full"
           onValueChange={(nextTab) => {
