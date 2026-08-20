@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 
 const mockToastFn = vi.hoisted(() =>
   Object.assign(vi.fn(), {
@@ -623,7 +624,7 @@ describe('AudioGenerator', () => {
     ).toBeDisabled();
     expect(
       screen.getByPlaceholderText(baseDict.textAreaPlaceholder),
-    ).toHaveAttribute('maxlength', '510');
+    ).toHaveAttribute('maxlength', String(500 + CHARACTERS_LIMIT_GRACE));
   });
 
   it('removes the paid non-Grok character limit when split audios is enabled', async () => {
@@ -634,7 +635,10 @@ describe('AudioGenerator', () => {
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
-    expect(input).toHaveAttribute('maxlength', '1010');
+    expect(input).toHaveAttribute(
+      'maxlength',
+      String(1000 + CHARACTERS_LIMIT_GRACE),
+    );
 
     await user.click(
       screen.getByRole('checkbox', {
