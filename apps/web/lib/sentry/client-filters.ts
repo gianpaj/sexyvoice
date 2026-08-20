@@ -35,6 +35,8 @@ const reactHydrationRecoverablePattern =
 const rscConnectionClosedPattern = /^Connection closed\.$/i;
 const nextClientTransientPattern =
   /^(?:Error\s+)?(Connection closed\.|An unexpected response was received from the server\.)$/i;
+const nextResponseFailurePattern =
+  /^(?:Error\s+)?An unexpected response was received from the server\.$/i;
 const reactRenderLifecycleNoisePattern =
   /Maximum update depth exceeded|Rendered more hooks than during the previous render/i;
 
@@ -192,11 +194,17 @@ function isNextClientTransientException(exception: SentryException): boolean {
   }
 
   const frames = exception.stacktrace?.frames ?? [];
+  if (!framesHaveNoLocalAppFrame(frames)) {
+    return false;
+  }
+
+  if (frames.length === 0 || frames.some(frameMatchesNextClientFramework)) {
+    return true;
+  }
+
   return (
-    framesHaveNoLocalAppFrame(frames) &&
-    (frames.length === 0 ||
-      frames.some(frameMatchesNextClientFramework) ||
-      frames.every(frameMatchesNextImmutableChunk))
+    nextResponseFailurePattern.test(exceptionText) &&
+    frames.every(frameMatchesNextImmutableChunk)
   );
 }
 

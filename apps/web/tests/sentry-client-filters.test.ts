@@ -191,7 +191,7 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(true);
   });
 
-  it('drops Next response failures from opaque immutable chunks', () => {
+  it('only drops Next response failures from opaque immutable chunks', () => {
     expect(
       shouldDropClientSentryEvent({
         exception: {
@@ -214,6 +214,29 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'Error',
+              value: 'Connection closed.',
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'app:///_next/static/immutable/chunks/3lowvp2xns3dx.js',
+                    function: 'M',
+                    module: 'immutable/chunks/3lowvp2xns3dx',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
   });
 
   it('keeps Next client transient exceptions with app frames', () => {
