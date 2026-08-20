@@ -211,7 +211,8 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 - Banner definitions live in `apps/web/lib/banners/registry.ts`.
 - Banner resolution lives in `apps/web/lib/banners/resolve-banner.ts`.
-- Dismissal actions live in `apps/web/app/[lang]/actions/banners.ts`.
+- Banner dismissal writes a client-side cookie through
+  `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`.
 - Localized copy lives under `promos` or `announcements` in every
   `apps/web/messages/*.json` file.
 - Only one banner should be visible at a time.
