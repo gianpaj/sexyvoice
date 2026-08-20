@@ -5,7 +5,7 @@
   "scripts": {
     "analyze": "next experimental-analyze",
     "prebuild": "pnpm run check-translations && pnpm run build:content",
-    "build": "next build",
+    "build": "next build --webpack",
     "build:content": "contentlayer2 build",
     "check:fix": "biome check ./app components hooks lib proxy.ts --write",
     "check-translations": "node scripts/check-translations.mjs",
