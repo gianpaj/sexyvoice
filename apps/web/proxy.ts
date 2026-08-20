@@ -146,6 +146,8 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     {
+      // This header is client-controlled. Protected routes and Server Actions
+      // must enforce their own authorization instead of relying on the Proxy.
       missing: [{ key: 'next-action', type: 'header' }],
       source:
         '/((?!api/|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
