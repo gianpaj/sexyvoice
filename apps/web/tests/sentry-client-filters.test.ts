@@ -191,6 +191,31 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(true);
   });
 
+  it('drops Next response failures from opaque immutable chunks', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              type: 'Error',
+              value: 'An unexpected response was received from the server.',
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'app:///_next/static/immutable/chunks/3lowvp2xns3dx.js',
+                    function: 'M',
+                    module: 'immutable/chunks/3lowvp2xns3dx',
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
   it('keeps Next client transient exceptions with app frames', () => {
     expect(
       shouldDropClientSentryEvent({

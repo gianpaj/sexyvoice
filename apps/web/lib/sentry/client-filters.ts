@@ -45,6 +45,7 @@ const nextClientFrameworkFramePattern =
 const thirdPartyScriptFramePattern = /posthog-recorder\.js|addEL_hook/i;
 const localAppFramePattern = /apps\/web|\/_next\/static\/chunks\/app\//i;
 const nextSharedChunkFramePattern = /\/_next\/static\/chunks\/(?!app\/)/i;
+const nextImmutableChunkFramePattern = /\/_next\/static\/immutable\/chunks\//i;
 const browserMediaNoisePattern =
   /Track has ended|WASM_OR_WORKER_NOT_READY|Wasm SIMD unsupported|Lock was stolen by another request/i;
 const opaqueBrowserEventRejectionPattern =
@@ -95,6 +96,10 @@ function frameMatchesLocalApp(frame: SentryStackFrame): boolean {
 
 function frameMatchesNextSharedChunk(frame: SentryStackFrame): boolean {
   return nextSharedChunkFramePattern.test(getFrameText(frame));
+}
+
+function frameMatchesNextImmutableChunk(frame: SentryStackFrame): boolean {
+  return nextImmutableChunkFramePattern.test(getFrameText(frame));
 }
 
 function frameMatchesProsemirror(frame: SentryStackFrame): boolean {
@@ -189,7 +194,9 @@ function isNextClientTransientException(exception: SentryException): boolean {
   const frames = exception.stacktrace?.frames ?? [];
   return (
     framesHaveNoLocalAppFrame(frames) &&
-    (frames.length === 0 || frames.some(frameMatchesNextClientFramework))
+    (frames.length === 0 ||
+      frames.some(frameMatchesNextClientFramework) ||
+      frames.every(frameMatchesNextImmutableChunk))
   );
 }
 
