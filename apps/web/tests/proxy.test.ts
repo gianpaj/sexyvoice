@@ -32,4 +32,14 @@ describe('proxy matcher', () => {
       }),
     ).toBe(true);
   });
+
+  it('still matches router prefetch requests', () => {
+    expect(
+      unstable_doesMiddlewareMatch({
+        config,
+        headers: { 'next-router-prefetch': '1' },
+        url: dashboardUrl,
+      }),
+    ).toBe(true);
+  });
 });
