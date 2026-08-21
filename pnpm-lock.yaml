@@ -433,7 +433,7 @@ importers:
         version: 7.0.2
       rehype-highlight-code-lines:
         specifier: ^1.2.2
-        version: 1.2.2(unified@11.0.5)
+        version: 1.2.5(unified@11.0.5)
       remark-gfm:
         specifier: ^4.0.1
         version: 4.0.1(supports-color@8.1.1)
@@ -5883,9 +5883,6 @@ packages:
   '@types/mdast@4.0.4':
     resolution: {integrity: sha512-kGaNbPh1k7AFzgpud/gMdvIm5xuECykRR+JnWKQno9TAXVa6WIVCGTPvYGekIDL4uwCZQSYbUxNBSb1aUo79oA==}
 
-  '@types/mdx@2.0.13':
-    resolution: {integrity: sha512-+OWZQfAYyio6YkJb3HLxDrvnx6SWWDbC0zVPfBRzUk0/nqoDyf6dNxQi3eArPe8rJ473nobTMQ/8Zk+LxJ+Yuw==}
-
   '@types/mdx@2.0.14':
     resolution: {integrity: sha512-T48PeuJtvLosNTPVhfnIp3i/n3a4g4Bad7YCq5k64D4u7NwDrAotikQ+5+sjtUvBmxCMlbo3dVL+C2dP0rWHzg==}
 
@@ -9099,8 +9096,8 @@ packages:
   regex@6.1.0:
     resolution: {integrity: sha512-6VwtthbV4o/7+OaAF9I5L5V3llLEsoPyq9P1JVXkedTP33c7MfCG0/5NOPcSJn0TzXcG9YUrR0gQSWioew3LDg==}
 
-  rehype-highlight-code-lines@1.2.2:
-    resolution: {integrity: sha512-YSaYmaVpuW1dwlzUYxI/FiEoG2gVBi1MyYh1aYW1RHm9ojQGRy6ODimdxz8QZRi9rUhMlVmz3ONCO/gbVs5Jfw==}
+  rehype-highlight-code-lines@1.2.5:
+    resolution: {integrity: sha512-Wjac+gxptQ3XocUQEXPqI4Qt5ssr0JEDIIAy7ua+XO7yBemxZS0fbPH/80qbB6CNHfw1FrCydgo0rYW+NtU9Gw==}
     peerDependencies:
       unified: ^11
 
@@ -11873,7 +11870,7 @@ snapshots:
       '@types/estree': 1.0.9
       '@types/estree-jsx': 1.0.5
       '@types/hast': 3.0.5
-      '@types/mdx': 2.0.13
+      '@types/mdx': 2.0.14
       acorn: 8.17.0
       collapse-white-space: 2.1.0
       devlop: 1.1.0
@@ -15879,8 +15876,6 @@ snapshots:
     dependencies:
       '@types/unist': 3.0.3
 
-  '@types/mdx@2.0.13': {}
-
   '@types/mdx@2.0.14': {}
 
   '@types/memcached@2.2.10':
@@ -19584,7 +19579,7 @@ snapshots:
     dependencies:
       regex-utilities: 2.3.0
 
-  rehype-highlight-code-lines@1.2.2(unified@11.0.5):
+  rehype-highlight-code-lines@1.2.5(unified@11.0.5):
     dependencies:
       '@types/hast': 3.0.5
       parse-numeric-range: 1.3.0
