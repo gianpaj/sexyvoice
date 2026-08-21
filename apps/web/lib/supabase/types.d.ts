@@ -329,7 +329,7 @@ declare type Database = {
           created_at: string | null;
           credits_used: number;
           duration_seconds: number;
-          end_reason: string | null;
+          end_reason: string;
           ended_at: string | null;
           free_call: boolean | null;
           id: string;
@@ -352,7 +352,7 @@ declare type Database = {
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
-          end_reason?: string | null;
+          end_reason?: string;
           ended_at?: string | null;
           free_call?: boolean | null;
           id?: string;
@@ -375,7 +375,7 @@ declare type Database = {
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
-          end_reason?: string | null;
+          end_reason?: string;
           ended_at?: string | null;
           free_call?: boolean | null;
           id?: string;
