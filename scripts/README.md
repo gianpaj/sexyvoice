@@ -1107,8 +1107,13 @@ but from a freemium grant, so not revenue) and `end_reason = 'credit_limit'` row
 over-reports against the ledger). Query 1 excludes `credit_limit` and reports
 `free_call` as a column; query 2 reports the free/paid split.
 
-The file contains five queries. The first runs as-is; the rest are commented
-out so you can run them one at a time:
+The file contains six queries. Query 1 runs as-is; the rest are commented out so
+you can run them one at a time. **Start with query 0** — it establishes whether
+free calls are actually charged, which decides whether queries 1, 2 and 4 need a
+`free_call` filter:
+
+0. Free vs paid: call counts, zero-credit counts, and average credits. Settles
+   the free-call question with data before anything else is interpreted.
 
 1. Per-call charged vs expected, outside a 5% tolerance, worst first.
 2. Per-user rollup with the effective credits/min each account actually paid.

@@ -38,6 +38,18 @@
 --   The taxonomy is documented and enforced by code review, not by the
 --   database.
 --
+-- Ordering relative to the sexycall deploy
+--   Safe to apply at any time; no agent change is required first. A column
+--   default only applies when the key is ABSENT from the insert - PostgREST
+--   forwards an explicit JSON null as a literal NULL, which would violate the
+--   new constraint. Checked the agent's actual insert shape rather than assuming
+--   it: sexycall's `create_call_session` builds a fixed dict that does not
+--   contain an `end_reason` key at all, so the default applies and every new
+--   row satisfies NOT NULL.
+--
+--   The constraint this creates for sexycall: never add `end_reason` to that
+--   insert with a None value. Set a real reason or omit the key.
+--
 -- Backfill
 --   The UPDATE below is not a data fix; `set not null` cannot be applied while
 --   NULLs remain, so it is a precondition of the DDL and belongs here. Historic
@@ -51,8 +63,14 @@
 --
 -- Note on in-progress calls
 --   A call that has not ended yet now reads 'unknown' rather than NULL. Use
---   `status = 'active'` or `ended_at is null` to identify those; do not read
---   'unknown' as "ended for an unknown reason" without checking one of them.
+--   `status = 'active'` to identify those; do not read 'unknown' as "ended for
+--   an unknown reason" without checking it.
+--
+--   Use status, NOT `ended_at is null`. The manual cleanup SQL documented in
+--   20260604104100_call_sessions_fractional_mins.sql moves rows out of 'active'
+--   while setting status and end_reason but never ended_at, so a terminal row
+--   can carry a NULL ended_at. Conversely nothing writes ended_at while a call
+--   is still running. "Not active" is the reliable test in both directions.
 --
 -- Note for writers: `coalesce(end_reason, ...)` is now dead code
 --   Any cleanup SQL of the form

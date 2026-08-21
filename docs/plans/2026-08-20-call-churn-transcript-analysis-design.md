@@ -320,8 +320,8 @@ New script `scripts/analyze-call-churn.mjs`, importing the existing helpers from
 `analyze-call-sessions.mjs` (client creation, batch submission, paging, CSV).
 Fix blocker 1 in the shared `extractMessages` so both paths benefit. Flags:
 `--users=paid`, `--last-n=5`, `--min-duration=0`,
-`--statuses=completed,disconnected,error`, `--cohort=exit|retained|both`,
-`--dry-run`. Output: CSV + insights JSON + a markdown brief per user, written
+`--include-unfinished` (terminal calls are `status <> 'active'`; see blocker 3 —
+do not enumerate statuses), `--cohort=exit|retained|both`, `--dry-run`. Output: CSV + insights JSON + a markdown brief per user, written
 locally. Nothing is written to the database.
 
 Deliverable: a ranked table of friction types split by exit vs retained cohort,
@@ -443,9 +443,11 @@ shrink the `Unknown` count. Keeping the name would need a denormalised snapshot,
 which is user-authored content and carries the privacy constraints sexycall#55
 already flags.
 
-`prompt_id` is not worth adding: it is reachable by join from `character_id`,
-and duplicating it would violate the same "queries, not columns" rule applied
-below.
+`prompt_id` is not worth adding as a column: it is reachable by join from
+`character_id`, and duplicating it would violate the same "queries, not columns"
+rule applied below. (Distinct from the privacy recommendation further down, which
+is about storing a `prompt_id` reference *instead of* verbatim prompt text —
+that argues against a `custom_prompt_text` column, not for a `prompt_id` one.)
 
 **`stt_ms` / `llm_ms` / `tts_ms` "if cheaply available".** They are not available
 at any price. We run a speech-to-speech realtime model
@@ -536,7 +538,9 @@ we already have. This is what tells us why the top user left.
 1. `end_reason`: document the existing taxonomy, make it `not null default
    'unknown'`, backfill historical rows to `unknown` (do not guess from duration —
    the issue is right about that).
-2. `character_id` + `prompt_id` FKs on `call_sessions`.
+2. A `character_id` FK on `call_sessions`. Not `prompt_id` — it is reachable by
+   join, and the privacy point below is about *not* storing prompt text, which
+   is a different question from adding a second FK.
 3. Persist the `RealtimeModelMetrics` we already receive — a narrow `call_turns`
    table of 4-5 fields, buffered in memory and flushed at call end, never
    blocking the audio path. Not the 11-field version.

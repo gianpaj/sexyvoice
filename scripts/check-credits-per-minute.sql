@@ -45,6 +45,31 @@
 -- Usage: run in the Supabase SQL editor. Read-only; nothing here writes.
 
 -- ---------------------------------------------------------------------------
+-- 0. Are free calls actually charged? Run this first.
+-- ---------------------------------------------------------------------------
+-- Reading the code, free_call only marks users who have never paid - those calls
+-- are still metered and still debit credits, from a freemium grant. If that is
+-- right, free calls are not zero-credit rows and will not distort anything
+-- below. Two reviewers assumed the opposite, so settle it with data rather than
+-- with either reading:
+--
+--   select
+--     coalesce(free_call, false)                     as free_call,
+--     count(*)                                       as calls,
+--     count(*) filter (where credits_used = 0)       as zero_credit_calls,
+--     round(avg(credits_used))                       as avg_credits,
+--     round(avg(duration_seconds))                   as avg_seconds
+--   from public.call_sessions
+--   where duration_seconds >= 10
+--   group by 1;
+--
+-- If zero_credit_calls is ~0 for free_call = true, the queries below need no
+-- free-call filter. If it is large, free calls are genuinely uncharged: add
+-- `and coalesce(free_call, false) = false` to queries 1, 2 and 4 before drawing
+-- any conclusion, because they would then read as 100% under-billing.
+
+
+-- ---------------------------------------------------------------------------
 -- 1. Per-call: charged vs expected, worst offenders first
 -- ---------------------------------------------------------------------------
 with expected as (
@@ -159,11 +184,14 @@ limit 100;
 -- we record the same charge against each other. A call present in one and not
 -- the other is a lost or duplicated write, not a rounding difference.
 --
--- Terminal calls are selected by `ended_at is not null`, not by a list of
--- statuses. The status vocabulary in the original schema comment ('disconnected',
--- 'error') is aspirational - nothing in either repo has ever written those two -
--- so an allow-list would silently miss any status added later, which is exactly
--- the population an integrity check exists to catch.
+-- Terminal calls are selected as "not active", which is forward-compatible in
+-- both directions. An allow-list of terminal statuses silently misses any status
+-- added later. `ended_at is not null` misses the opposite population: the manual
+-- cleanup SQL documented in 20260604104100_call_sessions_fractional_mins.sql
+-- sets status and end_reason but never ended_at, so rows closed that way are
+-- terminal with a NULL ended_at - and those are precisely the calls the INTEGER
+-- billed_minutes crash left behind, the cohort this file exists to examine.
+-- Excluding only 'active' has neither failure mode.
 --
 -- select
 --   cs.id                                as session_id,
@@ -178,7 +206,7 @@ limit 100;
 -- left join public.usage_events ue
 --   on ue.source_type = 'live_call'
 --  and ue.source_id = cs.id
--- where cs.ended_at is not null
+-- where cs.status is distinct from 'active'
 --   and cs.duration_seconds >= 10
 -- group by cs.id, cs.user_id, cs.started_at, cs.status, cs.end_reason,
 --          cs.credits_used
@@ -203,6 +231,8 @@ limit 100;
 --     else 'after numeric fix'
 --   end                                       as era,
 --   count(*)                                  as calls,
+--   count(*) filter (where coalesce(cs.free_call, false))
+--                                             as free_calls,
 --   round(sum(cs.duration_seconds) / 60.0, 1) as total_minutes,
 --   sum(cs.credits_used)                      as total_credits,
 --   round(
