@@ -17,7 +17,7 @@ interface ResolveActiveBannerOptions {
   placement: BannerPlacement;
 }
 
-function getActivePromoBannerId() {
+export function getActivePromoBannerId() {
   if (process.env.NEXT_PUBLIC_PROMO_ENABLED !== 'true') {
     return null;
   }

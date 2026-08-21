@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import {
+  getActivePromoBannerId,
+  resolveActiveBanner,
+} from '@/lib/banners/resolve-banner';
 
 const originalEnv = {
   NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER:
@@ -55,6 +58,20 @@ afterEach(() => {
   process.env.NEXT_PUBLIC_PROMO_THEME = originalEnv.NEXT_PUBLIC_PROMO_THEME;
   process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS =
     originalEnv.NEXT_PUBLIC_PROMO_TRANSLATIONS;
+});
+
+describe('getActivePromoBannerId', () => {
+  it('uses the active banner id before the legacy translation id', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'currentPromo';
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS = 'legacyPromo';
+
+    expect(getActivePromoBannerId()).toBe('currentPromo');
+
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = '';
+
+    expect(getActivePromoBannerId()).toBe('legacyPromo');
+  });
 });
 
 describe('resolveActiveBanner', () => {
