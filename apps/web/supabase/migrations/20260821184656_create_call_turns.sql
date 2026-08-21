@@ -82,6 +82,15 @@ alter table public.call_turns enable row level security;
 
 -- No policies: service-role only, matching call_session_analysis.
 
+-- RLS with zero policies already blocks row access, but it is not the only
+-- layer. Supabase grants ALL on new public tables to anon, authenticated and
+-- service_role via ALTER DEFAULT PRIVILEGES (this project does not set
+-- auto_expose_new_tables = false), so without this revoke the table privilege
+-- stays granted and "service-role only" is an assertion rather than a fact.
+-- Matches how credit_transactions (20260810113124) and credits (20260810120809)
+-- earned the same property.
+revoke all privileges on table public.call_turns from anon, authenticated;
+
 commit;
 
 

@@ -32,8 +32,10 @@
 --     * end_reason = 'credit_limit'. The wallet ran dry mid-call. The residual
 --       debit at finalization fails and is deliberately tolerated, while
 --       credits_used still records the full computed charge - so these rows
---       OVER-report against the ledger. They look correct in query 1 and only
---       show up in query 3.
+--       OVER-report against the ledger, and query 3 is where that shows up.
+--       Against the duration formula they should agree, since credits_used is
+--       written from that same formula; query 1 filters only the direction that
+--       is explainable if they do not, and deliberately keeps the other.
 --
 -- Known cause to rule out first: billed_minutes was INTEGER until
 -- 20260604104100_call_sessions_fractional_mins.sql, while 30-second bucket
@@ -112,10 +114,13 @@ from expected
 where expected_credits > 0
   -- the 5% tolerance asked for in sexycall#55
   and abs(credits_used - expected_credits)::numeric / expected_credits > 0.05
-  -- Calls that ended because the wallet ran dry are expected to differ; keeping
-  -- them here would crowd out the unexplained rows this query exists to surface.
-  -- Drop this line to see them.
-  and end_reason is distinct from 'credit_limit'
+  -- A call that ended when the wallet ran dry can legitimately be charged LESS
+  -- than its duration implies. It cannot legitimately be charged MORE - and
+  -- scripts/README.md records a real duplicate-billing incident (72000 credits)
+  -- whose end_reason was credit_limit - so keep that direction visible. A
+  -- blanket filter here would hide double charges in the only query in this
+  -- file that runs uncommented.
+  and not (end_reason = 'credit_limit' and credits_used < expected_credits)
 order by abs(credits_used - expected_credits) desc
 limit 100;
 

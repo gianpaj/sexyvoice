@@ -106,15 +106,17 @@ select is(
 -- The upsert in sexycall's CallTurnCollector targets this key so a retried
 -- flush replaces a call's turns instead of duplicating them. Without the
 -- constraint the upsert silently becomes an insert and turns accumulate.
-select ok(
-  exists (
-    select 1
-    from pg_catalog.pg_constraint
-    where conrelid = 'public.call_turns'::pg_catalog.regclass
-      and contype = 'u'
-      and array_length(conkey, 1) = 2
-  ),
-  'call_turns has a two-column unique constraint (session_id, turn_index)'
+-- Assert the column set by name. Checking only the arity would pass just as
+-- happily against `unique (session_id, request_id)` - a test that survives the
+-- bug it exists to catch. Order-insensitive on purpose: Postgres matches an
+-- `on conflict` target by column set, not declared order, so upsert correctness
+-- does not depend on it (the declared order still shapes the index, but that is
+-- a migration concern, not this assertion's).
+select col_is_unique(
+  'public',
+  'call_turns',
+  array['session_id', 'turn_index'],
+  'call_turns has a unique constraint on (session_id, turn_index)'
 );
 
 select * from finish();
