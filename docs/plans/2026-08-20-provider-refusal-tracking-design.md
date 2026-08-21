@@ -12,7 +12,8 @@ Record every time a third-party provider refuses, blocks, or fails to return
 audio for a speech generation or voice cloning request, in a queryable table,
 so we can:
 
-1. Measure refusal rate by provider, model, voice, language, and user tier.
+1. Measure refusal rate by provider, model, voice, language, and user tier,
+   charted against successful generations in the admin dashboard.
 2. Debug a specific incident from the full (redacted) provider payload instead
    of reconstructing it from Sentry breadcrumbs.
 3. Build a **prompt corpus of things our providers refuse**, and replay that
@@ -51,6 +52,24 @@ Three gaps:
   is extracted first (`CLAUDE.md` → Maintainability).
 - **Cloning refusals are second-class.** The Mistral guardrail block is logged
   at `info` with no text, no voice, and no user tier.
+
+## What this table does not catch
+
+A refusal is an *error path*. The streaming corruption that forced
+`GEMINI_STREAMING_ENABLED = false` (`apps/web/lib/ai.ts:82`) was the
+opposite: HTTP 200, audio returned, credits charged, and the audio was bad.
+Nothing throws, so nothing lands here.
+
+That is a **silent quality failure**, and it needs its own signal — the
+existing `scripts/find-truncated-gemini31-tts.mjs` is the current stopgap.
+Tracking it means comparing expected duration against delivered duration on the
+success path, which is a different feature with a different table. Keep it out
+of scope here, but do not let the refusal dashboard imply "no refusals = healthy
+output": those are different questions.
+
+The one thing this table *can* contribute when streaming is re-enabled is the
+`stream` column — if streaming also raises the `no_audio` or `other_block` rate,
+that shows up here immediately, and it is a cheap early warning during rollout.
 
 ## Why a new table and not `usage_events`
 
@@ -136,7 +155,8 @@ create table public.generation_refusals (
 
   -- generation knobs, as actually sent to the provider
   seed bigint,                      -- null when the request sent none
-  generation_params jsonb not null default '{}'::jsonb,  -- temperature, speed, codec, split, stream
+  stream boolean not null default false,   -- Gemini 3.1 progressive streaming path
+  generation_params jsonb not null default '{}'::jsonb,  -- temperature, speed, codec, split
 
   -- what came back
   category   public.refusal_category not null,
@@ -175,7 +195,8 @@ addition earns its place against a question we already ask during incidents:
 | `text_sha256` | "How many distinct prompts, not attempts?" Retries of one blocked prompt otherwise inflate every rate. Also the join key for the eval corpus. |
 | `style_prompt` | Gemini blocks are frequently caused by the style prompt, not the transcript. Storing only the transcript would make blocks unreproducible. |
 | `seed` | Without it a replay is not the same request. Also the only way to tell a *deterministic* refusal from a flaky one: same `text_sha256`, different `seed`, different outcome. |
-| `generation_params` | `temperature` shifts Gemini across the refusal boundary; `speed`, `codec`, `split`, `stream` change the code path. Kept as `jsonb` because the set differs per provider and none of them is a grouping dimension. |
+| `stream` | Its own column, not a `generation_params` key: streaming is a different code path with a known history of bad output, so refusal rate sliced by streaming on/off is a chart we will want the day it is re-enabled. |
+| `generation_params` | `temperature` shifts Gemini across the refusal boundary; `speed`, `codec`, `split` change the code path. Kept as `jsonb` because the set differs per provider and none of them is a grouping dimension. |
 | `attempt` | `generate-voice` retries pro→flash (`:621-682`). Counting both attempts double-counts one user-visible refusal. |
 | `provider_request_id` | The only key that lets support pull the provider's own trace |
 | `request_id` | Joins a refusal to its `usage_events` row and its Axiom log line |
@@ -210,6 +231,12 @@ losing the discrepancy.
 
 `seed` is `bigint`, not `integer`: `generate-voice` accepts any
 `Number.isSafeInteger` value, which overflows `int4`.
+
+`stream` records the *effective* path (`shouldStream`), not `body.stream`.
+While `GEMINI_STREAMING_ENABLED` is `false` the two differ: a stale client that
+sends `stream: true` is rejected with a 409 before any provider call
+(`generate-voice/route.ts:332-340`), so it is not a refusal and must not be
+recorded as one.
 
 The three request surfaces differ in what they accept — `/api/v1/speech` takes
 `seed`, `temperature`, `speed`, `style`, and `response_format`
@@ -367,15 +394,11 @@ Two rules for the call sites:
    asserting `anon`/`authenticated` cannot select or insert.
 7. `pnpm fixall`, `pnpm type-check`, `pnpm test`, `pnpm test:db`.
 
-**Phase 2 — visibility.**
-- View `public.refusal_stats_daily` (`security_invoker = on`, service-role
-  grant only): day × surface × provider × model × category × `is_paid_user` →
-  `count(*)`, `count(distinct text_sha256)`, `count(distinct user_id)`.
-- Extend `scripts/` with `analyze-refusals.mts` (the workspace already has
-  `analyze-call-sessions.mjs`, `analyze-credit-transactions.py` as precedent).
-- Optional: refusal rate needs a denominator. Total attempts per
-  provider/model/day already exist in `usage_events`; join on
-  `(model, occurred_at::date)` rather than adding a second counter.
+**Phase 2 — visibility.** Ship the `get_generation_outcomes_daily` RPC below,
+plus `scripts/analyze-refusals.mts` for ad-hoc digging (the workspace already
+has `analyze-call-sessions.mjs` and `analyze-credit-transactions.py` as
+precedent). The admin dashboard is a separate deliverable in the
+`sexyvoice-admin` repo — see the next section.
 
 **Phase 3 — the evaluation loop (the actual goal).**
 - `scripts/export-refusal-corpus.mts`: dedupe by `text_sha256`, filter to
@@ -392,6 +415,161 @@ Two rules for the call sites:
 - Keep evaluation results in files, not the database, until we run enough
   evaluations that a `provider_evaluations` table earns itself.
 
+## Admin dashboard (`gianpaj/sexyvoice-admin`)
+
+Separate deliverable, separate repo, handed to another agent. This section is
+the contract it builds against.
+
+### Can we get refusals vs successes from the current schema?
+
+Yes — but the denominator needs care, and two dimensions are missing today.
+
+**Use `usage_events` as the denominator, never `audio_files`.** Both hold one
+row per successful generation, but `audio_files` rows for free accounts are
+**hard-deleted after 45 days** by the `delete-old-free-user-audio-files` pg_cron
+job. Refusals are retained for 400 days. Charting one against the other means
+successes evaporate from the older half of every window while refusals remain —
+the refusal rate would appear to spike the further back you look, entirely as an
+artifact. `usage_events` is never deleted, which is exactly the property a
+denominator needs.
+
+**Cache hits are correctly excluded from both sides.** `generate-voice` returns
+at the Redis hit (`route.ts:510-540`) before any credit reservation, so it
+writes no `usage_events` row and no `audio_files` row — only a PostHog event. So
+`usage_events` counts *provider attempts*, not user requests, which is the
+denominator we want. Worth stating on the dashboard, because totals will not
+match PostHog and someone will ask why.
+
+**The dimensions mostly line up already.** The success path writes rich
+metadata:
+
+| Dimension | `tts` (`generate-voice:1014-1026`) | `api_tts` (`v1/speech:874-885`) | `generation_refusals` |
+| --- | --- | --- | --- |
+| model | `metadata.model` + `model` column | both | column |
+| provider | `metadata.provider` | **missing** (only `isGeminiVoice`/`isGrokVoice`) | column |
+| voice | `metadata.voiceId` / `voiceName` | same | columns |
+| paid tier | `metadata.userHasPaid` | same | column |
+| seed | **missing** | `metadata.seed` | column |
+| language | **missing** (join `voices` via `voiceId`) | **missing** | column |
+| stream | **missing** | n/a | column |
+
+So the core chart — refusals vs successes over time, sliced by
+surface/provider/model/voice/tier — works today. Slicing by **language** or
+**stream** does not, on the success side only.
+
+**Close the gaps in phase 2** by adding `provider`, `language`, and `stream` to
+the `tts` metadata and `provider` + `language` to `api_tts`. That is a
+three-line change to two `insertUsageEvent` calls, it is additive to a `jsonb`
+column, and it costs nothing. Do it in the same PR as the refusal table so both
+sides speak the same vocabulary from day one. Rows written before that change
+simply have `null` for those keys, which the dashboard should render as
+"unknown" rather than dropping.
+
+### Surface ↔ source_type mapping
+
+The join key. Fix it once, here, so both repos agree:
+
+| `generation_refusals.surface` | `usage_events.source_type` |
+| --- | --- |
+| `dashboard_tts` | `tts` |
+| `api_tts` | `api_tts` |
+| `dashboard_clone` | `voice_cloning` |
+| `reference_audio_enhancement` | `audio_processing` |
+
+### Ship an RPC, not raw table access
+
+Two things in the admin repo make a pre-aggregated RPC the right interface
+rather than letting the dashboard query the tables directly:
+
+1. **It aggregates in JavaScript.** `src/lib/data/voices.ts` pulls every row via
+   `fetchAllPages` and counts into a `Map`. That is fine for a voice list; for
+   refusal-vs-success over 90 days it means paging two large tables into Node on
+   every render.
+2. **It excludes internal users from a hardcoded list.**
+   `src/lib/data/internal-users.ts` resolves `INTERNAL_USERNAMES` →
+   `profiles.id` at query time and applies `NOT IN`. A plain view cannot know
+   that list, so the exclusion has to be a parameter.
+
+Hence a set-returning function, following the `get_usage_summary` precedent in
+`20260127063200_create_usage_summary_rpc.sql` and the conventions in
+`.agents/rules/create-db-functions.md` (`security invoker`, `set search_path =
+''`, fully qualified names):
+
+```sql
+create or replace function public.get_generation_outcomes_daily(
+  p_start_date       timestamptz default null,
+  p_end_date         timestamptz default null,
+  p_exclude_user_ids uuid[] default '{}'
+)
+returns table (
+  day          date,
+  surface      text,
+  provider     text,
+  model        text,
+  is_paid_user boolean,
+  outcome      text,     -- 'success' | 'refusal'
+  category     text,     -- refusal_category, null for successes
+  attempts     bigint,
+  distinct_users   bigint,
+  distinct_prompts bigint   -- null for successes; count(distinct text_sha256)
+)
+```
+
+The body is a `union all` of two grouped selects — successes from
+`usage_events` (mapping `source_type` → `surface` per the table above, reading
+`provider`/`userHasPaid` out of `metadata`), refusals from
+`generation_refusals`. Both filter `user_id <> all(p_exclude_user_ids)` *before*
+grouping.
+
+Grant `execute` to `service_role` only. The admin app uses `createAdminClient()`
+(per its own `CLAUDE.md`), which bypasses RLS — so the refusal table needing
+service-role access is not an obstacle for this dashboard, and the raw prompt
+text still never reaches a browser.
+
+One RPC call replaces two paged table scans, and the dashboard never has to
+learn the `metadata` jsonb shape — which is the point, because that shape will
+keep drifting.
+
+### Spec for the dashboard agent
+
+Follow the repo's existing page conventions exactly:
+
+- Route: `src/app/admin/(dashboard)/refusals/page.tsx`, components under
+  `refusals/components/` — mirroring `voices/`, `api/`, `calls/`.
+- Data: `src/lib/data/refusals.ts`, `createAdminClient()`, calling
+  `get_generation_outcomes_daily` via `supabase.rpc(...)`. Pass the internal IDs
+  from `fetchInternalUserIds()` as `p_exclude_user_ids` — do not re-implement
+  the exclusion.
+- Charts: recharts through the existing `src/components/ui/chart.tsx` wrapper,
+  matching `voice-charts.tsx` in structure.
+- Types: derive from the generated `Database` types, and extend
+  `src/lib/usage-source-types.ts` rather than hand-writing string unions — its
+  `AGENTS.md` calls this out specifically.
+- Run `pnpm fixall`, `pnpm typecheck`, `pnpm test` (note: `typecheck`, not
+  `type-check` — the admin repo's script name differs from the main repo's).
+
+Charts worth building, in priority order:
+
+1. **Stacked area, refusals vs successes per day** — the headline. Absolute
+   counts, not just rate, so a refusal spike caused by a traffic spike is
+   distinguishable from a real regression.
+2. **Refusal rate by provider × model** — the provider comparison that motivates
+   the whole feature.
+3. **Refusal rate by category, stacked** — separates `content_policy` from
+   `provider_unavailable`. If this is not on the page, the first outage will be
+   read as a content-policy crisis.
+4. **Free vs paid refusal rate** — different prompts, likely different rates.
+5. **Top refused voices and languages** — a table, not a chart. `voice_name` and
+   `language` come straight off the refusal rows.
+6. **Distinct prompts vs total refusals** — the gap is retry behaviour. A large
+   gap means users are hammering a blocked prompt, which is a UX problem, not a
+   provider problem.
+
+A drill-down from any chart into individual refusal rows (prompt text, payload,
+seed, provider ids) is the highest-value follow-up, but note it needs a
+deliberate decision about showing user prompt text in the admin UI. Ship the
+aggregates first.
+
 ## Documentation
 
 - `docs/devops.md` — the two pg_cron jobs, retention windows, where the corpus
@@ -400,6 +578,9 @@ Two rules for the call sites:
   are recorded via `lib/refusals/record.ts`; add new provider classifications to
   `classify.ts`, not inline in routes.
 - `scripts/README.md` — the two new scripts.
+- `gianpaj/sexyvoice-admin` — its own `AGENTS.md` table of database tables needs
+  a `generation_refusals` row and a note that the refusals page reads the
+  `get_generation_outcomes_daily` RPC rather than the tables directly.
 - No new environment variables, so no `.env.example` / README changes.
 - Docs-only commits get `[skip deploy]`; the code commits do not.
 
