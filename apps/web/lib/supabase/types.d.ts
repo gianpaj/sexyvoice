@@ -409,6 +409,50 @@ declare type Database = {
           },
         ];
       };
+      call_turns: {
+        Row: {
+          cancelled: boolean;
+          created_at: string;
+          duration_ms: number | null;
+          id: number;
+          request_id: string | null;
+          response_created_at: string | null;
+          session_id: string;
+          ttft_ms: number | null;
+          turn_index: number;
+        };
+        Insert: {
+          cancelled?: boolean;
+          created_at?: string;
+          duration_ms?: number | null;
+          id?: never;
+          request_id?: string | null;
+          response_created_at?: string | null;
+          session_id: string;
+          ttft_ms?: number | null;
+          turn_index: number;
+        };
+        Update: {
+          cancelled?: boolean;
+          created_at?: string;
+          duration_ms?: number | null;
+          id?: never;
+          request_id?: string | null;
+          response_created_at?: string | null;
+          session_id?: string;
+          ttft_ms?: number | null;
+          turn_index?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'call_turns_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'call_sessions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       characters: {
         Row: {
           created_at: string | null;
