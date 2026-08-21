@@ -1104,8 +1104,11 @@ mispricing. For real money, use query 3 and the credits ledger. And two
 populations deviate legitimately: `free_call` rows (still metered, still debited,
 but from a freemium grant, so not revenue) and `end_reason = 'credit_limit'` rows
 (the residual debit is tolerated when the wallet runs dry, so `credits_used`
-over-reports against the ledger). Query 1 excludes `credit_limit` and reports
-`free_call` as a column; query 2 reports the free/paid split.
+over-reports against the ledger). Query 1 filters only the *under-charged*
+`credit_limit` rows — the direction a dry wallet explains — and deliberately
+keeps over-charged ones visible, since that is the duplicate-billing shape this
+README documents an incident for above. It reports `free_call` as a column;
+query 2 reports the free/paid split.
 
 The file contains six queries. Query 1 runs as-is; the rest are commented out so
 you can run them one at a time. **Start with query 0** — it establishes whether

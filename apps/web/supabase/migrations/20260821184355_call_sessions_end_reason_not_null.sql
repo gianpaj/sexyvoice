@@ -104,7 +104,7 @@ alter table public.call_sessions
   alter column end_reason set not null;
 
 comment on column public.call_sessions.end_reason is
-  'Why the call ended. One of: user_disconnect, credit_limit, duration_limit, billing_error, instructions_rejected, stale_session, unknown. Older rows may also hold error/agent_unavailable/timeout. Defaults to ''unknown'' at insert and is overwritten when the call is finalized, so check status/ended_at before reading ''unknown'' as a real outcome.';
+  'Why the call ended. One of: user_disconnect, credit_limit, duration_limit, billing_error, instructions_rejected, stale_session, unknown. Older rows may also hold error/agent_unavailable/timeout. Defaults to ''unknown'' at insert and is overwritten when the call is finalized, so check status before reading ''unknown'' as a real outcome.';
 
 commit;
 

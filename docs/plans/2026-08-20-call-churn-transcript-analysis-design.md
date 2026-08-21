@@ -95,9 +95,10 @@ either repo has ever written them. The statuses that actually occur are
 stale-session sweep for calls the agent never finalized, which is precisely the
 "it died and we don't know why" bucket.
 
-**Fix:** select terminal calls by `ended_at is not null` rather than by a status
-allow-list, so a status added later is picked up automatically instead of
-silently dropped.
+**Fix:** select terminal calls as `status is distinct from 'active'` rather than
+by a status allow-list. That avoids both failure modes: it does not miss a status
+added later, and — unlike `ended_at is not null` — it does not miss terminal rows
+that the documented manual cleanup left with a NULL `ended_at`.
 
 ### 4. There is no "did they come back" label anywhere
 

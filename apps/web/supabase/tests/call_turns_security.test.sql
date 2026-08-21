@@ -108,10 +108,14 @@ select is(
 -- constraint the upsert silently becomes an insert and turns accumulate.
 -- Assert the column set by name. Checking only the arity would pass just as
 -- happily against `unique (session_id, request_id)` - a test that survives the
--- bug it exists to catch. Order-insensitive on purpose: Postgres matches an
--- `on conflict` target by column set, not declared order, so upsert correctness
--- does not depend on it (the declared order still shapes the index, but that is
--- a migration concern, not this assertion's).
+-- bug it exists to catch.
+--
+-- The array order must match the constraint's declared order: col_is_unique
+-- compares name[] arrays with plain equality, which is positional. Upsert
+-- correctness itself does not depend on that order (Postgres matches an
+-- `on conflict` target by column set), so a reorder in the migration is not a
+-- bug - but it will fail here, and that is the intent: the declared order is
+-- what makes "all turns for this call, in order" a range scan on the index.
 select col_is_unique(
   'public',
   'call_turns',

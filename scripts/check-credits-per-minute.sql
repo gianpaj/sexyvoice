@@ -120,7 +120,19 @@ where expected_credits > 0
   -- whose end_reason was credit_limit - so keep that direction visible. A
   -- blanket filter here would hide double charges in the only query in this
   -- file that runs uncommented.
-  and not (end_reason = 'credit_limit' and credits_used < expected_credits)
+  --
+  -- `is distinct from` rather than `=`: end_reason is nullable until
+  -- 20260821184355 is applied, and `end_reason = 'credit_limit'` evaluates to
+  -- NULL on those rows. `not (NULL and true)` is NULL, which WHERE discards -
+  -- so a plain equality test would silently drop every under-charged row with a
+  -- NULL end_reason while keeping the over-charged ones. That is exactly
+  -- backwards: the crash-era rows this file exists to investigate are
+  -- under-billed, and many were written by a handler that died before setting
+  -- end_reason at all.
+  and (
+    end_reason is distinct from 'credit_limit'
+    or credits_used > expected_credits
+  )
 order by abs(credits_used - expected_credits) desc
 limit 100;
 
