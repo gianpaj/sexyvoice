@@ -12,10 +12,18 @@
 --   type safety. Any call whose character row has since disappeared joins to
 --   nothing and renders as "Unknown".
 --
---   Characters cascade-delete with their owner (`characters.user_id references
---   auth.users(id) on delete cascade`), so the population of dangling ids grows
---   every time an account is removed. That is the most likely source of the
---   growing "Unknown" character counts on the calls dashboard.
+--   Characters outlive nothing: the account-deletion flow explicitly hard-deletes
+--   a user's `characters` rows (apps/web/app/actions.ts:181-185) while retaining
+--   their call rows, and users can delete their own characters directly. Either
+--   path leaves call rows pointing at ids that resolve to nothing, and the
+--   population grows over time. That is the most likely source of the growing
+--   "Unknown" character counts on the calls dashboard.
+--
+--   Note it is NOT an auth.users cascade, even though `characters.user_id` is
+--   declared `on delete cascade`. `call_sessions.user_id` references
+--   auth.users(id) with no `on delete` clause, so it defaults to NO ACTION and
+--   deleting an auth.users row is blocked outright while that user has calls.
+--   Account deletion here is a soft delete that flags user_metadata instead.
 --
 -- Affected objects
 --   public.call_sessions - adds character_id, scene_id, scene_modified
@@ -23,8 +31,20 @@
 -- Design notes
 --   * character_id is a real foreign key with `on delete set null`, so a
 --     deleted character now reads as NULL ("this character no longer exists")
---     rather than as a uuid that silently fails to join. The original value
---     stays in `metadata` as the historical record, so nothing is lost.
+--     rather than as a uuid that silently fails to join.
+--
+--     Be clear about what this does and does not buy: a deleted character still
+--     produces no name on the calls dashboard. This makes the gap diagnosable -
+--     NULL is an answer, a dangling uuid is not - it does not reduce the
+--     "Unknown" count. Showing which character a historical call ran after the
+--     character is gone would need a denormalised name snapshot, which is a
+--     deliberate non-goal here (see the privacy note in sexycall#55: character
+--     names on custom characters are user-authored content).
+--
+--     The original value stays in `metadata`, which remains the only historical
+--     record of a deleted character. That holds only while sexycall keeps
+--     writing metadata.character_id alongside the column - a cross-repo
+--     constraint, noted in Ordering below.
 --   * scene_id is text and deliberately NOT a foreign key: scenes are a static
 --     list in application code (apps/web/data/call-scenes.ts) with slug ids
 --     such as 'bartender-after-closing'. There is no scenes table to point at.
@@ -38,10 +58,16 @@
 --     are row-scoped (`auth.uid() = user_id`), so they cover new columns
 --     automatically.
 --
--- Ordering
---   Apply this BEFORE deploying the sexycall change that writes these columns.
---   The agent inserts a fixed dict, so writing an unknown column would fail the
---   insert and break call creation.
+-- Ordering and cross-repo constraints
+--   * Apply this BEFORE deploying the sexycall change that writes these columns.
+--     The agent inserts a fixed dict, so writing an unknown column would fail
+--     the insert and break call creation.
+--   * sexycall must keep writing metadata.character_id alongside the column. It
+--     is the only surviving record once a character row is deleted.
+--   * The new foreign key adds an insert-time failure mode: a character deleted
+--     between token issuance and the agent's insert makes that insert fail with
+--     23503 and takes the whole call down. The agent guards against this by
+--     retrying once with character_id = NULL.
 -- =============================================================================
 
 begin;
@@ -89,6 +115,23 @@ commit;
 --     and column_name in ('character_id', 'scene_id', 'scene_modified');
 --
 -- Expected: character_id uuid YES, scene_id text YES, scene_modified boolean YES.
+--
+-- Check the foreign key separately - do not assume it from the column. If
+-- character_id already existed in this environment (partial application, a
+-- manual pre-add), `add column if not exists` skips the ENTIRE statement
+-- including `references ... on delete set null`, while `create index if not
+-- exists` still succeeds. The result is an indexed column with no constraint,
+-- which the query above cannot distinguish from a correct apply:
+--
+--   select conname, confdeltype from pg_constraint
+--   where conrelid = 'public.call_sessions'::regclass and contype = 'f';
+--
+-- Expected: call_sessions_character_id_fkey present with confdeltype = 'n'
+-- ('n' = set null). If it is missing, add it explicitly:
+--   alter table public.call_sessions
+--     add constraint call_sessions_character_id_fkey
+--     foreign key (character_id) references public.characters (id)
+--     on delete set null;
 
 
 -- --- Backfill (run manually, after applying) ---------------------------------

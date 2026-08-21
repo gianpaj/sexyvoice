@@ -53,6 +53,22 @@
 --   A call that has not ended yet now reads 'unknown' rather than NULL. Use
 --   `status = 'active'` or `ended_at is null` to identify those; do not read
 --   'unknown' as "ended for an unknown reason" without checking one of them.
+--
+-- Note for writers: `coalesce(end_reason, ...)` is now dead code
+--   Any cleanup SQL of the form
+--       set end_reason = coalesce(end_reason, 'billing_error')
+--   becomes a silent no-op after this migration - end_reason is never NULL, so
+--   the coalesce always keeps the existing 'unknown' and the intended label is
+--   never applied. No error is raised, which is what makes it dangerous.
+--   20260604104100_call_sessions_fractional_mins.sql carries exactly such a
+--   snippet in its commented cleanup block.
+--
+--   Rewrite those as an explicit `where end_reason = 'unknown'` guard:
+--       update public.call_sessions
+--       set status = 'completed', end_reason = 'billing_error'
+--       where status = 'active'
+--         and end_reason = 'unknown'
+--         and started_at < now() - interval '15 minutes';
 -- =============================================================================
 
 begin;

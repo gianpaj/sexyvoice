@@ -1097,6 +1097,16 @@ dips below 1000 on accounts with many very short calls even when every charge is
 correct. Query 2 excludes free seconds from the denominator and reports them
 separately.
 
+Two things to know before reading the output. `call_sessions.credits_used` is
+computed by the agent with the same bucket formula the script uses, so query 1
+compares a formula against itself — it detects **writes that never landed**, not
+mispricing. For real money, use query 3 and the credits ledger. And two
+populations deviate legitimately: `free_call` rows (still metered, still debited,
+but from a freemium grant, so not revenue) and `end_reason = 'credit_limit'` rows
+(the residual debit is tolerated when the wallet runs dry, so `credits_used`
+over-reports against the ledger). Query 1 excludes `credit_limit` and reports
+`free_call` as a column; query 2 reports the free/paid split.
+
 The file contains five queries. The first runs as-is; the rest are commented
 out so you can run them one at a time:
 

@@ -423,10 +423,25 @@ captured — the web app puts them in the LiveKit token metadata
 untyped jsonb blob with no column, no index, and **no foreign key**.
 
 That last part is almost certainly the root cause of the growing `Unknown`
-character names. `characters.user_id` cascades from `auth.users`, so every
-deleted account silently orphans that user's characters — and the call rows keep
-pointing at uuids that no longer resolve. Promoting these to real columns with a
-proper FK is the single highest-value schema change in the issue.
+character names. The account-deletion flow explicitly hard-deletes a user's
+`characters` rows (`apps/web/app/actions.ts:181-185`) while retaining their call
+rows, and users can delete their own characters directly. Either path orphans
+the ids the call rows are still pointing at, and the population only grows.
+Promoting these to real columns with a proper FK is the single highest-value
+schema change in the issue.
+
+It is *not* an `auth.users` cascade, despite `characters.user_id` being declared
+`on delete cascade` — `call_sessions.user_id` references `auth.users(id)` with no
+`on delete` clause, so it defaults to `NO ACTION` and blocks the delete outright
+while the user has calls. Account deletion here is a soft delete that flags
+`user_metadata`. Worth stating precisely, because "there's a cascade" sends the
+next reader looking for something that cannot fire.
+
+Note what the FK does and does not fix: a deleted character still shows no name.
+`on delete set null` makes the gap *diagnosable* rather than silent; it does not
+shrink the `Unknown` count. Keeping the name would need a denormalised snapshot,
+which is user-authored content and carries the privacy constraints sexycall#55
+already flags.
 
 `prompt_id` is not worth adding: it is reachable by join from `character_id`,
 and duplicating it would violate the same "queries, not columns" rule applied

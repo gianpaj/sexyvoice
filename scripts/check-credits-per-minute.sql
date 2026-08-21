@@ -15,6 +15,26 @@
 -- rate computed over total duration can dip under 1000 on an account where
 -- every charge was correct.
 --
+-- What each query can actually detect
+--   `call_sessions.credits_used` is COMPUTED by the agent with the same bucket
+--   formula this file uses, so query 1 is not a pricing check - it compares a
+--   formula against itself. What it catches is rows where the write never
+--   landed, which is exactly the failure below. For real money, use query 3
+--   (usage_events) and the credits ledger, not credits_used.
+--
+--   Two populations legitimately deviate and are NOT bugs:
+--     * free_call = true. These are calls by users who have never paid. They
+--       are still metered and still debit credits, from a freemium grant - so
+--       they are not zero-cost rows, but they are not revenue either. Query 2
+--       reports them separately rather than excluding them, because the billing
+--       math should hold for them too; exclude them only when you want a
+--       paid-revenue rate.
+--     * end_reason = 'credit_limit'. The wallet ran dry mid-call. The residual
+--       debit at finalization fails and is deliberately tolerated, while
+--       credits_used still records the full computed charge - so these rows
+--       OVER-report against the ledger. They look correct in query 1 and only
+--       show up in query 3.
+--
 -- Known cause to rule out first: billed_minutes was INTEGER until
 -- 20260604104100_call_sessions_fractional_mins.sql, while 30-second bucket
 -- billing writes 0.5-minute increments. Postgres rejected those writes, which
@@ -34,6 +54,7 @@ with expected as (
     cs.started_at,
     cs.status,
     cs.end_reason,
+    coalesce(cs.free_call, false) as free_call,
     cs.duration_seconds,
     cs.billed_minutes,
     cs.credits_used,
@@ -51,6 +72,7 @@ select
   started_at,
   status,
   end_reason,
+  free_call,
   duration_seconds,
   billed_minutes,
   credits_used,
@@ -65,6 +87,10 @@ from expected
 where expected_credits > 0
   -- the 5% tolerance asked for in sexycall#55
   and abs(credits_used - expected_credits)::numeric / expected_credits > 0.05
+  -- Calls that ended because the wallet ran dry are expected to differ; keeping
+  -- them here would crowd out the unexplained rows this query exists to surface.
+  -- Drop this line to see them.
+  and end_reason is distinct from 'credit_limit'
 order by abs(credits_used - expected_credits) desc
 limit 100;
 
@@ -86,6 +112,7 @@ limit 100;
 --   select
 --     cs.user_id,
 --     count(*)                                                as calls,
+--     count(*) filter (where coalesce(cs.free_call, false))   as free_calls,
 --     sum(cs.duration_seconds)                                as total_seconds,
 --     sum(cs.duration_seconds) filter (where cs.duration_seconds >= 10)
 --                                                             as billable_seconds,
@@ -105,6 +132,7 @@ limit 100;
 -- select
 --   user_id,
 --   calls,
+--   free_calls,
 --   round(total_seconds / 60.0, 1)                            as total_minutes,
 --   round(coalesce(free_seconds, 0) / 60.0, 1)                as free_minutes,
 --   total_credits,
@@ -168,7 +196,10 @@ limit 100;
 --
 -- select
 --   case
---     when cs.started_at < '2026-06-04'::timestamptz then 'before numeric fix'
+--     -- pinned to UTC: a bare '2026-06-04' resolves in the session timezone and
+--     -- would shift the boundary by hours, filing calls into the wrong era
+--     when cs.started_at < '2026-06-04 00:00:00+00'::timestamptz
+--       then 'before numeric fix'
 --     else 'after numeric fix'
 --   end                                       as era,
 --   count(*)                                  as calls,
