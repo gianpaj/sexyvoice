@@ -325,6 +325,7 @@ declare type Database = {
       call_sessions: {
         Row: {
           billed_minutes: number;
+          character_id: string | null;
           created_at: string | null;
           credits_used: number;
           duration_seconds: number;
@@ -336,6 +337,8 @@ declare type Database = {
           max_output_tokens: number | null;
           metadata: Json | null;
           model: string;
+          scene_id: string | null;
+          scene_modified: boolean | null;
           started_at: string;
           status: string;
           transcript: Json | null;
@@ -345,6 +348,7 @@ declare type Database = {
         };
         Insert: {
           billed_minutes?: number;
+          character_id?: string | null;
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
@@ -356,6 +360,8 @@ declare type Database = {
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model: string;
+          scene_id?: string | null;
+          scene_modified?: boolean | null;
           started_at?: string;
           status?: string;
           transcript?: Json | null;
@@ -365,6 +371,7 @@ declare type Database = {
         };
         Update: {
           billed_minutes?: number;
+          character_id?: string | null;
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
@@ -376,6 +383,8 @@ declare type Database = {
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model?: string;
+          scene_id?: string | null;
+          scene_modified?: boolean | null;
           started_at?: string;
           status?: string;
           transcript?: Json | null;
@@ -384,6 +393,13 @@ declare type Database = {
           voice_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'call_sessions_character_id_fkey';
+            columns: ['character_id'];
+            isOneToOne: false;
+            referencedRelation: 'characters';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'call_sessions_voice_id_fkey';
             columns: ['voice_id'];

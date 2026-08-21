@@ -407,13 +407,22 @@ Not true. `call_sessions.end_reason` exists today
 that this taxonomy is undocumented, nullable, has no `unknown` default, and
 differs from the one proposed. That is a hardening job, not a new column.
 
-**"`scene_id` should already exist."** It does not. `call_sessions` has no
-`character_id`, `prompt_id`, or `scene_id` column at all — only `model`,
-`voice_id`, and a free-form `metadata` jsonb. This is almost certainly the root
-cause of the growing `Unknown` character names the issue flags: there is no join
-to break, because there is no foreign key. Adding `character_id` and `prompt_id`
-FKs to `call_sessions` is the single highest-value schema change in the whole
-issue, and it is the one line the issue assumes is already done.
+**"`scene_id` should already exist."** Half true, and the half that's missing is
+the interesting one. `character_id`, `scene_id` and `scene_modified` are all
+captured — the web app puts them in the LiveKit token metadata
+(`apps/web/app/api/call-token/route.ts:238`) and the agent persists them into
+`call_sessions.metadata` (`sexycall:src/agent.py:590`). But they live in an
+untyped jsonb blob with no column, no index, and **no foreign key**.
+
+That last part is almost certainly the root cause of the growing `Unknown`
+character names. `characters.user_id` cascades from `auth.users`, so every
+deleted account silently orphans that user's characters — and the call rows keep
+pointing at uuids that no longer resolve. Promoting these to real columns with a
+proper FK is the single highest-value schema change in the issue.
+
+`prompt_id` is not worth adding: it is reachable by join from `character_id`,
+and duplicating it would violate the same "queries, not columns" rule applied
+below.
 
 **`stt_ms` / `llm_ms` / `tts_ms` "if cheaply available".** They are not available
 at any price. We run a speech-to-speech realtime model
