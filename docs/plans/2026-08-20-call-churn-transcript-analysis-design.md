@@ -85,11 +85,19 @@ for this analysis path.
 
 ### 3. Only `status = 'completed'` is analysed
 
-The fetch also filters `.eq('status','completed')`. Sessions that ended as
-`error` or `disconnected` — the actual failures the issue asks about — are never
-looked at.
+The fetch also filters `.eq('status','completed')`, so any call that did not end
+cleanly is never looked at — which is the population the issue is about.
 
-**Fix:** `--statuses=completed,disconnected,error`.
+Worth knowing before writing that filter: the `disconnected` and `error`
+statuses named in the original schema comment are aspirational. Nothing in
+either repo has ever written them. The statuses that actually occur are
+`active`, `completed`, and `completed-manually` — the last written by the
+stale-session sweep for calls the agent never finalized, which is precisely the
+"it died and we don't know why" bucket.
+
+**Fix:** select terminal calls by `ended_at is not null` rather than by a status
+allow-list, so a status added later is picked up automatically instead of
+silently dropped.
 
 ### 4. There is no "did they come back" label anywhere
 

@@ -1089,9 +1089,13 @@ Billing rules it encodes (source of truth: `sexycall/src/billing.py`): 1000
 credits per minute, billed in 30-second buckets **rounded up** (500 credits per
 bucket), calls under 10 seconds free.
 
-Because buckets round up, the effective rate can only ever be at or above 1000
-credits/min. A rate materially below that is a bug; a rate above it means
-double-charging, which is the worse direction.
+Because buckets round up, the effective rate **over billable seconds** can only
+ever be at or above 1000 credits/min. A rate materially below that is a bug; a
+rate above it means double-charging, which is the worse direction. The qualifier
+matters: calls under 10 seconds are free, so a rate computed over total duration
+dips below 1000 on accounts with many very short calls even when every charge is
+correct. Query 2 excludes free seconds from the denominator and reports them
+separately.
 
 The file contains five queries. The first runs as-is; the rest are commented
 out so you can run them one at a time:

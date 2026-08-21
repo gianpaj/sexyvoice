@@ -9,8 +9,11 @@
 --   - billed in 30-second buckets, ALWAYS ROUNDED UP -> 500 credits per bucket
 --   - calls shorter than 10 seconds are free
 --
--- Because buckets round up, the effective rate can only ever be >= 1000
--- credits/min. Anything materially BELOW that is a bug, not a rounding effect.
+-- Because buckets round up, the effective rate over BILLABLE seconds can only
+-- ever be >= 1000 credits/min. Anything materially BELOW that is a bug, not a
+-- rounding effect. The qualifier matters: sub-10-second calls are free, so a
+-- rate computed over total duration can dip under 1000 on an account where
+-- every charge was correct.
 --
 -- Known cause to rule out first: billed_minutes was INTEGER until
 -- 20260604104100_call_sessions_fractional_mins.sql, while 30-second bucket
@@ -72,18 +75,29 @@ limit 100;
 -- A rate well under 1000 means we gave minutes away. Well over means we
 -- double-charged - check that direction too, it is the worse failure.
 --
+-- The rate is computed over BILLABLE seconds only. Calls under 10 seconds are
+-- free by design, so counting their duration in the denominator while charging
+-- nothing for them in the numerator would drag the rate below 1000 on accounts
+-- where every single charge was correct - a false positive on exactly the
+-- invariant this file leans on. free_seconds is reported alongside so a user
+-- with a lot of very short calls is still visible.
+--
 -- with per_user as (
 --   select
 --     cs.user_id,
---     count(*)                                as calls,
---     sum(cs.duration_seconds)                as total_seconds,
---     sum(cs.credits_used)                    as total_credits,
+--     count(*)                                                as calls,
+--     sum(cs.duration_seconds)                                as total_seconds,
+--     sum(cs.duration_seconds) filter (where cs.duration_seconds >= 10)
+--                                                             as billable_seconds,
+--     sum(cs.duration_seconds) filter (where cs.duration_seconds < 10)
+--                                                             as free_seconds,
+--     sum(cs.credits_used)                                    as total_credits,
 --     sum(
 --       case
 --         when cs.duration_seconds < 10 then 0
 --         else ceil(cs.duration_seconds::numeric / 30)
 --       end * 500
---     )                                       as expected_credits
+--     )                                                       as expected_credits
 --   from public.call_sessions cs
 --   where cs.duration_seconds > 0
 --   group by cs.user_id
@@ -91,15 +105,19 @@ limit 100;
 -- select
 --   user_id,
 --   calls,
---   round(total_seconds / 60.0, 1)                          as total_minutes,
+--   round(total_seconds / 60.0, 1)                            as total_minutes,
+--   round(coalesce(free_seconds, 0) / 60.0, 1)                as free_minutes,
 --   total_credits,
 --   expected_credits,
---   round(total_credits / nullif(total_seconds / 60.0, 0), 0) as effective_credits_per_min,
+--   round(
+--     total_credits / nullif(coalesce(billable_seconds, 0) / 60.0, 0),
+--     0
+--   )                                                         as effective_credits_per_min,
 --   round(
 --     (total_credits - expected_credits)::numeric
 --       / nullif(expected_credits, 0) * 100,
 --     1
---   )                                                        as delta_pct
+--   )                                                         as delta_pct
 -- from per_user
 -- where total_seconds > 600   -- ignore accounts too small to be meaningful
 -- order by abs(total_credits - expected_credits) desc
@@ -113,10 +131,18 @@ limit 100;
 -- we record the same charge against each other. A call present in one and not
 -- the other is a lost or duplicated write, not a rounding difference.
 --
+-- Terminal calls are selected by `ended_at is not null`, not by a list of
+-- statuses. The status vocabulary in the original schema comment ('disconnected',
+-- 'error') is aspirational - nothing in either repo has ever written those two -
+-- so an allow-list would silently miss any status added later, which is exactly
+-- the population an integrity check exists to catch.
+--
 -- select
 --   cs.id                                as session_id,
 --   cs.user_id,
 --   cs.started_at,
+--   cs.status,
+--   cs.end_reason,
 --   cs.credits_used                      as call_credits,
 --   coalesce(sum(ue.credits_used), 0)    as usage_event_credits,
 --   cs.credits_used - coalesce(sum(ue.credits_used), 0) as delta
@@ -124,9 +150,10 @@ limit 100;
 -- left join public.usage_events ue
 --   on ue.source_type = 'live_call'
 --  and ue.source_id = cs.id
--- where cs.status in ('completed', 'completed-manually')
+-- where cs.ended_at is not null
 --   and cs.duration_seconds >= 10
--- group by cs.id, cs.user_id, cs.started_at, cs.credits_used
+-- group by cs.id, cs.user_id, cs.started_at, cs.status, cs.end_reason,
+--          cs.credits_used
 -- having cs.credits_used <> coalesce(sum(ue.credits_used), 0)
 -- order by abs(cs.credits_used - coalesce(sum(ue.credits_used), 0)) desc
 -- limit 100;
