@@ -1075,3 +1075,56 @@ python visualize-transactions.py path/to/credit_transactions.csv
 python clean-transactions.py path/to/raw_transactions.csv
 python analyze-credit-transactions.py path/to/raw_transactions_cleaned.csv
 ```
+
+---
+
+## Credits-Per-Minute Integrity Check
+
+`check-credits-per-minute.sql` compares what each voice call was charged
+against what its duration says it should have been charged, and cross-checks
+`call_sessions` against `usage_events`. Read-only; run it in the Supabase SQL
+editor.
+
+Billing rules it encodes (source of truth: `sexycall/src/billing.py`): 1000
+credits per minute, billed in 30-second buckets **rounded up** (500 credits per
+bucket), calls under 10 seconds free.
+
+Because buckets round up, the effective rate **over billable seconds** can only
+ever be at or above 1000 credits/min. A rate materially below that is a bug; a
+rate above it means double-charging, which is the worse direction. The qualifier
+matters: calls under 10 seconds are free, so a rate computed over total duration
+dips below 1000 on accounts with many very short calls even when every charge is
+correct. Query 2 excludes free seconds from the denominator and reports them
+separately.
+
+Two things to know before reading the output. `call_sessions.credits_used` is
+computed by the agent with the same bucket formula the script uses, so query 1
+compares a formula against itself — it detects **writes that never landed**, not
+mispricing. For real money, use query 3 and the credits ledger. And two
+populations deviate legitimately: `free_call` rows (still metered, still debited,
+but from a freemium grant, so not revenue) and `end_reason = 'credit_limit'` rows
+(the residual debit is tolerated when the wallet runs dry, so `credits_used`
+over-reports against the ledger). Query 1 filters only the *under-charged*
+`credit_limit` rows — the direction a dry wallet explains — and deliberately
+keeps over-charged ones visible, since that is the duplicate-billing shape this
+README documents an incident for above. It reports `free_call` as a column;
+query 2 reports the free/paid split.
+
+The file contains six queries. Query 1 runs as-is; the rest are commented out so
+you can run them one at a time. **Start with query 0** — it establishes whether
+free calls are actually charged, which decides whether queries 1, 2 and 4 need a
+`free_call` filter:
+
+0. Free vs paid: call counts, zero-credit counts, and average credits. Settles
+   the free-call question with data before anything else is interpreted.
+
+1. Per-call charged vs expected, outside a 5% tolerance, worst first.
+2. Per-user rollup with the effective credits/min each account actually paid.
+3. Ledger vs call log — calls where `usage_events` and `call_sessions` disagree.
+4. Split before/after `2026-06-04`. `billed_minutes` was `INTEGER` until
+   `20260604104100_call_sessions_fractional_mins.sql` while bucket billing
+   writes `0.5` increments, so Postgres rejected those writes and crashed
+   metering mid-call. **Run this before concluding anything** — if the
+   discrepancy sits almost entirely before that date, it is historical and the
+   current code is fine.
+5. Calls left stuck in `active` by the same crash, never fully billed.
