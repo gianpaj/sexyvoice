@@ -134,6 +134,10 @@ create table public.generation_refusals (
   text_sha256  text,                -- dedupe + group without scanning text
   style_prompt text,                -- Gemini styleVariant / director's notes
 
+  -- generation knobs, as actually sent to the provider
+  seed bigint,                      -- null when the request sent none
+  generation_params jsonb not null default '{}'::jsonb,  -- temperature, speed, codec, split, stream
+
   -- what came back
   category   public.refusal_category not null,
   error_code text not null,         -- ERROR_CODES value, e.g. 'PROHIBITED_CONTENT'
@@ -170,6 +174,8 @@ addition earns its place against a question we already ask during incidents:
 | `category` + `error_code` | Separates *content refusal* (product signal) from *provider outage* (ops noise). Without this the table is 90% timeouts. |
 | `text_sha256` | "How many distinct prompts, not attempts?" Retries of one blocked prompt otherwise inflate every rate. Also the join key for the eval corpus. |
 | `style_prompt` | Gemini blocks are frequently caused by the style prompt, not the transcript. Storing only the transcript would make blocks unreproducible. |
+| `seed` | Without it a replay is not the same request. Also the only way to tell a *deterministic* refusal from a flaky one: same `text_sha256`, different `seed`, different outcome. |
+| `generation_params` | `temperature` shifts Gemini across the refusal boundary; `speed`, `codec`, `split`, `stream` change the code path. Kept as `jsonb` because the set differs per provider and none of them is a grouping dimension. |
 | `attempt` | `generate-voice` retries pro→flash (`:621-682`). Counting both attempts double-counts one user-visible refusal. |
 | `provider_request_id` | The only key that lets support pull the provider's own trace |
 | `request_id` | Joins a refusal to its `usage_events` row and its Axiom log line |
@@ -181,6 +187,35 @@ addition earns its place against a question we already ask during incidents:
 
 `is_paid_user` is denormalized deliberately: `hasUserPaid()` is a point-in-time
 fact, and a user who upgrades later must not retroactively rewrite history.
+
+#### Record effective values, not requested ones
+
+`seed` and `generation_params` must hold what was **actually sent to the
+provider**, after gating and clamping — otherwise a replay reproduces a request
+we never made:
+
+- `generate-voice/route.ts:349-352` drops `seed` and `temperature` entirely for
+  free users, so a free-tier row's `seed` is `null` even if the client sent one.
+- `speed` is clamped by `normalizeXaiTtsSpeed()` to 0.7–1.5 before it reaches
+  the provider *or* the cache key.
+- The clone path does not accept these from the client at all: Replicate's seed
+  (`0`), temperature (`0.8`), `cfg_weight`, and `exaggeration` are hardcoded at
+  `clone-voice/route.ts:1064-1072`. Record them anyway — they are constants
+  today, and the day we tune them we will want to know which rows predate the
+  change. Mistral Voxtral takes none, so the column stays `{}`.
+
+The raw request as the client sent it is already preserved in
+`payload.request`, so the promoted columns can be the effective values without
+losing the discrepancy.
+
+`seed` is `bigint`, not `integer`: `generate-voice` accepts any
+`Number.isSafeInteger` value, which overflows `int4`.
+
+The three request surfaces differ in what they accept — `/api/v1/speech` takes
+`seed`, `temperature`, `speed`, `style`, and `response_format`
+(`lib/api/schemas.ts:43-69`); `/api/generate-voice` takes those plus `split` and
+`stream`; cloning takes none — so `generation_params` is populated per surface
+rather than from one shared shape.
 
 ### Indexes
 
@@ -312,6 +347,8 @@ Each is a one-line `void recordGenerationRefusal({…})` next to the existing
 Two rules for the call sites:
 
 - Record **after** the refund path runs, so `credits_refunded` is accurate.
+- Read `seed`/`temperature`/`speed` from the variables that were passed to the
+  provider call, not from `body.*`.
 - Do not `await` in a way that can delay the error response — use the same
   detached pattern as the existing PostHog/Axiom calls, with a `.catch()`.
 
@@ -343,7 +380,9 @@ Two rules for the call sites:
 **Phase 3 — the evaluation loop (the actual goal).**
 - `scripts/export-refusal-corpus.mts`: dedupe by `text_sha256`, filter to
   `category = 'content_policy'`, emit JSONL of
-  `{ text, style_prompt, language, voice_name, refused_by: [provider/model], count }`.
+  `{ text, style_prompt, language, voice_name, seed, generation_params,
+  refused_by: [provider/model], count }` — carrying the knobs through is what
+  makes the replay a like-for-like test rather than a fresh roll of the dice.
 - `scripts/evaluate-provider-refusals.mts`: replay that JSONL against a
   candidate provider and report pass/refuse per prompt, alongside a control set
   of prompts that currently succeed (to catch a provider that accepts
