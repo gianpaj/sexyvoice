@@ -1075,3 +1075,34 @@ python visualize-transactions.py path/to/credit_transactions.csv
 python clean-transactions.py path/to/raw_transactions.csv
 python analyze-credit-transactions.py path/to/raw_transactions_cleaned.csv
 ```
+
+---
+
+## Credits-Per-Minute Integrity Check
+
+`check-credits-per-minute.sql` compares what each voice call was charged
+against what its duration says it should have been charged, and cross-checks
+`call_sessions` against `usage_events`. Read-only; run it in the Supabase SQL
+editor.
+
+Billing rules it encodes (source of truth: `sexycall/src/billing.py`): 1000
+credits per minute, billed in 30-second buckets **rounded up** (500 credits per
+bucket), calls under 10 seconds free.
+
+Because buckets round up, the effective rate can only ever be at or above 1000
+credits/min. A rate materially below that is a bug; a rate above it means
+double-charging, which is the worse direction.
+
+The file contains five queries. The first runs as-is; the rest are commented
+out so you can run them one at a time:
+
+1. Per-call charged vs expected, outside a 5% tolerance, worst first.
+2. Per-user rollup with the effective credits/min each account actually paid.
+3. Ledger vs call log — calls where `usage_events` and `call_sessions` disagree.
+4. Split before/after `2026-06-04`. `billed_minutes` was `INTEGER` until
+   `20260604104100_call_sessions_fractional_mins.sql` while bucket billing
+   writes `0.5` increments, so Postgres rejected those writes and crashed
+   metering mid-call. **Run this before concluding anything** — if the
+   discrepancy sits almost entirely before that date, it is historical and the
+   current code is fine.
+5. Calls left stuck in `active` by the same crash, never fully billed.
