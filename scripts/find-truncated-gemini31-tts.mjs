@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Find `gemini-3.1-flash-tts-preview` audio_files whose audio duration does not
- * match a normally generated file — i.e. the model truncated the audio and only
- * rendered a few seconds of a much longer transcript, yet the user was still
- * billed for the full input text.
+ * Find `gemini-3.1-flash-tts-preview` audio_files whose audio duration is a
+ * possible mismatch for the stored transcript. Short outputs are truncation
+ * candidates. Abnormally long outputs are review-only quality signals. Neither
+ * heuristic proves that a refund is due.
  *
  * Why this happens
  * ----------------
@@ -19,11 +19,16 @@
  * The transcript stored in `text_content` (everything after the `## TRANSCRIPT`
  * marker, see apps/web/lib/tts/gemini-prompt.ts) is the text that *should* have
  * been spoken. Dividing its character count by the audio `duration` gives
- * chars-per-second. Natural speech tops out around ~25 cps, so any file whose
- * spoken text would need far more seconds than the audio actually lasts was
- * truncated. Example rows from the reported user:
- *   - bad : ~2400 spoken chars /  7.08s  ≈ 340 cps  -> truncated
- *   - good: ~1050 spoken chars / 70.24s  ≈  15 cps  -> normal
+ * chars-per-second. A very high value can identify audio that is far too short
+ * for its transcript. Speech rate, prompt structure, metadata quality, and
+ * delivery defects can all affect the result, so independently inspect every
+ * flagged artifact. Example rows from a prior report:
+ *   - strong candidate: ~2400 spoken chars /  7.08s ≈ 340 cps
+ *   - not flagged:      ~1050 spoken chars / 70.24s ≈  15 cps
+ *
+ * The script also flags audio longer than `expected duration * --long-factor`,
+ * where expected duration is `spoken chars / --normal-cps`. Long outputs never
+ * enter refund exposure or refund commands.
  *
  * Usage
  * -----
@@ -39,24 +44,27 @@
  *                       avoid noise on tiny generations (default: 150).
  *   --normal-cps <cps>  Assumed natural rate used to compute the "expected"
  *                       duration and the delivered fraction (default: 15).
+ *   --long-factor <n>   Review output longer than expected by this factor
+ *                       (default: 2; must be greater than 1).
  *   --active-only       Skip soft-deleted rows (deleted_at not null).
  *   --since <date>      Only scan files created on/after this date/timestamp,
  *                       ISO-parseable (e.g. 2026-06-01 or 2026-06-01T00:00:00Z).
+ *   --until <date>      Only scan files created on/before this date/timestamp.
  *   --paid-only         Only scan users who have paid (a purchase/topup credit
  *                       transaction). Freemium-only users can't be refunded.
  *   --out <path>        JSON report path (default: ./truncated-gemini31-tts.json).
  *   --reason <text>     Refund reason printed in the generated refund commands.
  *
- * The report ends with ready-to-run `refund-credits.mts` commands — one per
- * affected user — that issue a credits-only ("platform bug") refund with a
- * reason. `refund-credits.mts` takes the user id on the CLI and asks for the
- * credit amount + reason interactively, so each command is annotated with the
- * exact values to enter at its prompts.
+ * The report includes a separate `REVIEW-ONLY LONG OUTPUTS` table and an
+ * `abnormallyLong` JSON array. It also includes conditional `refund-credits.mts`
+ * commands for short-output candidates only. A human must independently confirm
+ * affected files and approve any refund amount.
  *
- * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (read-only use).
+ * Requires: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SECRET_KEY (read-only use).
  */
 
 import { writeFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
 
@@ -71,22 +79,26 @@ const PAGE_SIZE = 1000;
 
 function parseArgs(argv) {
   const opts = {
-    user: null,
-    threshold: 30,
+    activeOnly: false,
+    longFactor: 2,
     minChars: 150,
     normalCps: 15,
-    activeOnly: false,
-    since: null,
-    paidOnly: false,
     out: './truncated-gemini31-tts.json',
+    paidOnly: false,
     reason:
       'Truncated Gemini 3.1 Flash TTS: billed for the full transcript but only a few seconds of audio were generated',
+    since: null,
+    threshold: 30,
+    until: null,
+    user: null,
   };
   let i = 0;
   while (i < argv.length) {
     const arg = argv[i];
     const next = () => argv[++i];
     switch (arg) {
+      case '--':
+        break;
       case '--user':
         opts.user = next();
         break;
@@ -99,11 +111,17 @@ function parseArgs(argv) {
       case '--normal-cps':
         opts.normalCps = Number(next());
         break;
+      case '--long-factor':
+        opts.longFactor = Number(next());
+        break;
       case '--active-only':
         opts.activeOnly = true;
         break;
       case '--since':
         opts.since = next();
+        break;
+      case '--until':
+        opts.until = next();
         break;
       case '--paid-only':
         opts.paidOnly = true;
@@ -117,7 +135,7 @@ function parseArgs(argv) {
       case '--help':
       case '-h':
         console.log(
-          'See the header of this file for options. Common: --user <uuid> --threshold <cps>',
+          'See the header of this file for options. Common: --user <uuid> --since <iso> --until <iso> --long-factor <n>',
         );
         process.exit(0);
         break;
@@ -131,11 +149,11 @@ function parseArgs(argv) {
 
 function createSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SECRET_KEY;
   if (!(url && key)) {
     console.error('Missing required environment variables:');
     console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-    console.error('  - SUPABASE_SERVICE_ROLE_KEY');
+    console.error('  - SUPABASE_SECRET_KEY');
     process.exit(1);
   }
   return createClient(url, key, {
@@ -173,17 +191,24 @@ function toNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Validate --since and normalize it to an ISO string for the query. */
-function normalizeSince(value) {
+/** Validate a time bound and normalize it to an ISO string for the query. */
+function normalizeTimeBound(value, option) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     console.error(
-      `Invalid --since date: "${value}". Use an ISO date/timestamp, e.g. 2026-06-01.`,
+      `Invalid ${option} date: "${value}". Use an ISO date/timestamp, e.g. 2026-06-01.`,
     );
     process.exit(1);
   }
   return date.toISOString();
+}
+
+function validateLongFactor(value) {
+  if (!(Number.isFinite(value) && value > 1)) {
+    console.error('--long-factor must be a number greater than 1.');
+    process.exit(1);
+  }
 }
 
 async function fetchAllRows(supabase, opts) {
@@ -202,6 +227,7 @@ async function fetchAllRows(supabase, opts) {
     if (opts.user) query = query.eq('user_id', opts.user);
     if (opts.activeOnly) query = query.is('deleted_at', null);
     if (opts.since) query = query.gte('created_at', opts.since);
+    if (opts.until) query = query.lte('created_at', opts.until);
 
     const { data, error } = await query;
     if (error) {
@@ -247,7 +273,7 @@ async function fetchPaidUserIds(supabase, userIds) {
   return paid;
 }
 
-function analyzeRow(row, opts) {
+export function analyzeRow(row, opts) {
   const spoken = extractSpokenText(row.text_content);
   const spokenChars = spoken.length;
   const duration = toNumber(row.duration);
@@ -257,29 +283,30 @@ function analyzeRow(row, opts) {
   const candidateTokens = toNumber(usage.candidatesTokenCount);
   const totalTokens = toNumber(usage.totalTokenCount);
   // Audio-output vs input-text token ratio: a full generation voices far more
-  // than it reads (>2), a truncated one collapses toward/under ~1.
+  // than it reads (>2); a truncation candidate may collapse toward/under ~1.
   const tokenOutInRatio =
     promptTokens && candidateTokens ? candidateTokens / promptTokens : null;
 
   const expectedDuration = spokenChars > 0 ? spokenChars / opts.normalCps : 0;
 
   const base = {
-    id: row.id,
-    userId: row.user_id,
-    voiceId: row.voice_id,
-    storageKey: row.storage_key,
-    createdAt: row.created_at,
-    status: row.status,
-    deletedAt: row.deleted_at,
-    creditsUsed: toNumber(row.credits_used),
-    durationSeconds: duration,
-    spokenChars,
-    promptTokens,
+    actualToExpectedRatio: null,
     candidateTokens,
-    totalTokens,
+    createdAt: row.created_at,
+    creditsUsed: toNumber(row.credits_used),
+    deletedAt: row.deleted_at,
+    durationSeconds: duration,
+    expectedDurationSeconds: Number(expectedDuration.toFixed(1)),
+    id: row.id,
+    promptTokens,
+    spokenChars,
+    status: row.status,
+    storageKey: row.storage_key,
     tokenOutInRatio:
       tokenOutInRatio === null ? null : Number(tokenOutInRatio.toFixed(2)),
-    expectedDurationSeconds: Number(expectedDuration.toFixed(1)),
+    totalTokens,
+    userId: row.user_id,
+    voiceId: row.voice_id,
   };
 
   // Duration was never measured — can't judge, report separately.
@@ -290,24 +317,41 @@ function analyzeRow(row, opts) {
   if (duration <= 0) {
     return {
       ...base,
-      category: 'truncated',
+      actualToExpectedRatio: expectedDuration > 0 ? 0 : null,
+      category: 'candidate',
       charsPerSec: spokenChars > 0 ? Number.POSITIVE_INFINITY : 0,
       deliveredPct: 0,
     };
   }
 
   const charsPerSec = spokenChars / duration;
+  const actualToExpectedRatio =
+    expectedDuration > 0 ? duration / expectedDuration : null;
   const deliveredPct =
     expectedDuration > 0
       ? Math.min(100, Math.round((duration / expectedDuration) * 100))
       : 100;
 
-  const truncated =
+  const isCandidate =
     spokenChars >= opts.minChars && charsPerSec > opts.threshold;
+  const isAbnormallyLong =
+    spokenChars >= opts.minChars &&
+    actualToExpectedRatio !== null &&
+    actualToExpectedRatio > opts.longFactor;
+  let category = 'not-flagged';
+  if (isCandidate) {
+    category = 'candidate';
+  } else if (isAbnormallyLong) {
+    category = 'abnormally-long';
+  }
 
   return {
     ...base,
-    category: truncated ? 'truncated' : 'normal',
+    actualToExpectedRatio:
+      actualToExpectedRatio === null
+        ? null
+        : Number(actualToExpectedRatio.toFixed(2)),
+    category,
     charsPerSec: Number(charsPerSec.toFixed(1)),
     deliveredPct,
   };
@@ -320,7 +364,9 @@ function fmt(n, width) {
 const RULE = '='.repeat(110);
 
 function printScanHeader(opts) {
-  console.log('Scanning audio_files for truncated Gemini 3.1 Flash TTS output');
+  console.log(
+    'Scanning audio_files for possible Gemini 3.1 Flash TTS duration mismatches',
+  );
   console.log(`  model:        ${MODEL}`);
   console.log(`  user:         ${opts.user ?? 'ALL'}`);
   console.log(`  threshold:    > ${opts.threshold} chars/sec`);
@@ -328,25 +374,27 @@ function printScanHeader(opts) {
   console.log(
     `  normal rate:  ${opts.normalCps} chars/sec (for expected duration)`,
   );
+  console.log(`  long factor:  > ${opts.longFactor}x expected duration`);
   console.log(`  active only:  ${opts.activeOnly}`);
   console.log(`  since:        ${opts.since ?? 'beginning'}`);
+  console.log(`  until:        ${opts.until ?? 'now'}`);
   console.log(`  paid only:    ${opts.paidOnly}\n`);
 }
 
-function printTruncatedTable(truncated) {
+function printCandidateTable(candidates) {
   console.log(RULE);
   console.log(
-    'TRUNCATED / MISMATCHED FILES (audio far too short for the transcript)',
+    'TRUNCATION CANDIDATES (duration is short for the stored transcript)',
   );
   console.log(RULE);
-  if (truncated.length === 0) {
+  if (candidates.length === 0) {
     console.log('None found with the current threshold.\n');
     return;
   }
   console.log(
     `${'chars/s'.padStart(8)}  ${'dur(s)'.padStart(8)}  ${'chars'.padStart(6)}  ${'deliv%'.padStart(6)}  ${'credits'.padStart(7)}  ${'out/in'.padStart(6)}  id`,
   );
-  for (const r of truncated) {
+  for (const r of candidates) {
     const cps =
       r.charsPerSec === Number.POSITIVE_INFINITY ? '∞' : r.charsPerSec;
     console.log(
@@ -356,48 +404,71 @@ function printTruncatedTable(truncated) {
   console.log('');
 }
 
+function printAbnormallyLongTable(abnormallyLong, opts) {
+  console.log(RULE);
+  console.log(
+    `REVIEW-ONLY LONG OUTPUTS (duration exceeds expected by ${opts.longFactor}x)`,
+  );
+  console.log(RULE);
+  if (abnormallyLong.length === 0) {
+    console.log('None found with the current long-output factor.\n');
+    return;
+  }
+  console.log(
+    `${'actual/expected'.padStart(15)}  ${'dur(s)'.padStart(8)}  ${'expect(s)'.padStart(9)}  ${'chars'.padStart(6)}  ${'credits'.padStart(7)}  id`,
+  );
+  for (const row of abnormallyLong) {
+    console.log(
+      `${fmt(`${row.actualToExpectedRatio}x`, 15)}  ${fmt(row.durationSeconds, 8)}  ${fmt(row.expectedDurationSeconds, 9)}  ${fmt(row.spokenChars, 6)}  ${fmt(row.creditsUsed ?? '?', 7)}  ${row.id}`,
+    );
+  }
+  console.log(
+    '\nReview these artifacts manually. Long-output anomalies are not included in refund exposure or refund commands.\n',
+  );
+}
+
 /**
- * One credits-only refund per user: refund the total credits billed for that
- * user's truncated files, with a reason. `refund-credits.mts` only takes the
- * user id on the CLI; the credit amount + reason are entered interactively.
+ * Build conditional review plans. The human-approved follow-up can use the
+ * included command only after the candidate files and credit amount are
+ * independently confirmed.
  */
-function buildRefundPlans(byUser, opts) {
+function buildReviewPlans(byUser, opts) {
   return [...byUser.entries()]
     .sort((a, b) => b[1].credits - a[1].credits)
     .map(([userId, acc]) => ({
-      userId,
-      files: acc.count,
+      command: `pnpm --filter @sexyvoice/scripts refund-credits -- ${userId}`,
       credits: acc.credits,
+      files: acc.count,
       ids: acc.ids,
       reason: `${opts.reason} (${acc.count} file${acc.count === 1 ? '' : 's'})`,
-      command: `pnpm --filter @sexyvoice/scripts refund-credits -- ${userId}`,
+      userId,
     }));
 }
 
-function printRefundExposure(refundPlans) {
+function printCandidateExposure(reviewPlans) {
   console.log(RULE);
-  console.log(
-    'REFUND EXPOSURE BY USER (credits billed for the truncated files)',
-  );
+  console.log('CANDIDATE CREDIT EXPOSURE (not a confirmed refund amount)');
   console.log(RULE);
-  for (const p of refundPlans) {
+  for (const p of reviewPlans) {
     console.log(`${p.userId}  files=${p.files}  credits=${p.credits}`);
   }
   console.log('');
 }
 
-function printRefundCommands(refundPlans) {
+function printConditionalRefundCommands(reviewPlans) {
   console.log(RULE);
   console.log(
-    'REFUND COMMANDS (credits-only "platform bug" refund via refund-credits.mts)',
+    'CONDITIONAL REFUND COMMANDS (require confirmation and human approval)',
   );
   console.log(RULE);
-  if (refundPlans.length === 0) {
-    console.log('Nothing to refund.\n');
+  if (reviewPlans.length === 0) {
+    console.log('No candidate commands.\n');
     return;
   }
-  console.log('Run one per user, answering the prompts as annotated:\n');
-  for (const plan of refundPlans) {
+  console.log(
+    'Do not run these from this heuristic alone. After independent confirmation and explicit human approval, run one per user:\n',
+  );
+  for (const plan of reviewPlans) {
     console.log(
       `# ${plan.userId} — ${plan.files} file${plan.files === 1 ? '' : 's'}, refund ${plan.credits} credits`,
     );
@@ -411,19 +482,29 @@ function printRefundCommands(refundPlans) {
   }
 }
 
-function printSummary(analyzed, normalCount, truncated, unknownDuration) {
-  const totalCredits = truncated.reduce((s, r) => s + (r.creditsUsed ?? 0), 0);
+function printSummary(
+  analyzed,
+  notFlaggedCount,
+  candidates,
+  abnormallyLong,
+  unknownDuration,
+) {
+  const candidateCredits = candidates.reduce(
+    (sum, row) => sum + (row.creditsUsed ?? 0),
+    0,
+  );
   console.log(RULE);
   console.log('SUMMARY');
   console.log(RULE);
   console.log(`  scanned:            ${analyzed.length}`);
-  console.log(`  normal:             ${normalCount}`);
-  console.log(`  truncated:          ${truncated.length}`);
+  console.log(`  not flagged:        ${notFlaggedCount}`);
+  console.log(`  candidates:         ${candidates.length}`);
+  console.log(`  review-only long:   ${abnormallyLong.length}`);
   console.log(
     `  unknown duration:   ${unknownDuration.length} (duration = -1, not judged)`,
   );
-  console.log(`  total credits on truncated files: ${totalCredits}\n`);
-  return totalCredits;
+  console.log(`  candidate credits requiring review: ${candidateCredits}\n`);
+  return candidateCredits;
 }
 
 /** When --paid-only, drop rows whose user has no purchase/topup transaction. */
@@ -438,10 +519,10 @@ async function filterPaidOnly(supabase, rows, opts) {
   return scanRows;
 }
 
-/** Roll the flagged rows up per user for the refund exposure. */
-function rollupByUser(truncated) {
+/** Roll the candidate rows up per user for human review. */
+function rollupByUser(candidates) {
   const byUser = new Map();
-  for (const r of truncated) {
+  for (const r of candidates) {
     const acc = byUser.get(r.userId) ?? { count: 0, credits: 0, ids: [] };
     acc.count += 1;
     acc.credits += r.creditsUsed ?? 0;
@@ -451,9 +532,36 @@ function rollupByUser(truncated) {
   return byUser;
 }
 
+/** Separate review-only anomalies from candidates that may affect refunds. */
+export function partitionAnalyzed(analyzed) {
+  const candidates = analyzed
+    .filter((row) => row.category === 'candidate')
+    // Worst first: highest chars/sec (Infinity sorts to the top).
+    .sort((a, b) => (b.charsPerSec ?? 0) - (a.charsPerSec ?? 0));
+  const abnormallyLong = analyzed
+    .filter((row) => row.category === 'abnormally-long')
+    .sort(
+      (a, b) => (b.actualToExpectedRatio ?? 0) - (a.actualToExpectedRatio ?? 0),
+    );
+  const notFlaggedCount = analyzed.filter(
+    (row) => row.category === 'not-flagged',
+  ).length;
+  const unknownDuration = analyzed.filter(
+    (row) => row.category === 'unknown-duration',
+  );
+
+  return { abnormallyLong, candidates, notFlaggedCount, unknownDuration };
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
-  opts.since = normalizeSince(opts.since);
+  validateLongFactor(opts.longFactor);
+  opts.since = normalizeTimeBound(opts.since, '--since');
+  opts.until = normalizeTimeBound(opts.until, '--until');
+  if (opts.since && opts.until && opts.since > opts.until) {
+    console.error('--since must be earlier than or equal to --until.');
+    process.exit(1);
+  }
 
   printScanHeader(opts);
 
@@ -465,58 +573,69 @@ async function main() {
   console.log('');
 
   const analyzed = scanRows.map((row) => analyzeRow(row, opts));
+  const { abnormallyLong, candidates, notFlaggedCount, unknownDuration } =
+    partitionAnalyzed(analyzed);
 
-  const truncated = analyzed
-    .filter((r) => r.category === 'truncated')
-    // Worst first: highest chars/sec (Infinity sorts to the top).
-    .sort((a, b) => (b.charsPerSec ?? 0) - (a.charsPerSec ?? 0));
-  const unknownDuration = analyzed.filter(
-    (r) => r.category === 'unknown-duration',
-  );
-  const normalCount = analyzed.filter((r) => r.category === 'normal').length;
+  const reviewPlans = buildReviewPlans(rollupByUser(candidates), opts);
 
-  const refundPlans = buildRefundPlans(rollupByUser(truncated), opts);
-
-  printTruncatedTable(truncated);
-  printRefundExposure(refundPlans);
-  printRefundCommands(refundPlans);
-  const totalTruncatedCredits = printSummary(
+  printCandidateTable(candidates);
+  printAbnormallyLongTable(abnormallyLong, opts);
+  printCandidateExposure(reviewPlans);
+  printConditionalRefundCommands(reviewPlans);
+  const candidateCredits = printSummary(
     analyzed,
-    normalCount,
-    truncated,
+    notFlaggedCount,
+    candidates,
+    abnormallyLong,
     unknownDuration,
   );
 
   const report = {
+    abnormallyLong,
+    candidates,
     generatedFor: opts.user ?? 'ALL',
-    since: opts.since,
-    paidOnly: opts.paidOnly,
+    interpretation: {
+      heuristicOnly: true,
+      longOutputsExcludedFromRefundPlans: true,
+      longOutputsReviewOnly: true,
+      requiresHumanApprovalBeforeRefund: true,
+      requiresIndependentConfirmation: true,
+    },
     model: MODEL,
+    paidOnly: opts.paidOnly,
+    reviewPlansByUser: reviewPlans,
+    since: opts.since,
+    summary: {
+      abnormallyLong: abnormallyLong.length,
+      candidateCredits,
+      candidates: candidates.length,
+      notFlagged: notFlaggedCount,
+      scanned: analyzed.length,
+      unknownDuration: unknownDuration.length,
+    },
     thresholds: {
       charsPerSecMax: opts.threshold,
+      longFactor: opts.longFactor,
       minChars: opts.minChars,
       normalCps: opts.normalCps,
     },
-    summary: {
-      scanned: analyzed.length,
-      normal: normalCount,
-      truncated: truncated.length,
-      unknownDuration: unknownDuration.length,
-      totalTruncatedCredits,
-    },
-    byUser: refundPlans,
-    truncated,
     unknownDuration,
+    until: opts.until,
   };
 
   writeFileSync(opts.out, JSON.stringify(report, null, 2));
   console.log(`Detailed report written to: ${opts.out}`);
   console.log(
-    'Review the flagged rows, then run the REFUND COMMANDS above (also in report.byUser).',
+    'Confirm short-output candidates independently before proposing a refund for human approval. Treat long-output anomalies as review-only.',
   );
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const isMain =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMain) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

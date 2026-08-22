@@ -52,12 +52,12 @@ export default async function UsagePage(props: {
 
   // Source type labels for display
   const sourceTypeLabels: Record<UsageSourceType, string> = {
-    tts: t('summary.byType.tts'),
-    voice_cloning: t('summary.byType.voice_cloning'),
-    live_call: t('summary.byType.live_call'),
-    audio_processing: t('summary.byType.audio_processing'),
     api_tts: 'API TTS',
     api_voice_cloning: 'API Voice Cloning',
+    audio_processing: t('summary.byType.audio_processing'),
+    live_call: t('summary.byType.live_call'),
+    tts: t('summary.byType.tts'),
+    voice_cloning: t('summary.byType.voice_cloning'),
   };
 
   return (

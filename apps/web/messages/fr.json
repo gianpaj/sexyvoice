@@ -177,7 +177,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Votre voix, dans toutes les langues",
-        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 9 langues."
+        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 23 langues."
       },
       "cta": {
         "freeCredits": "Commencez avec 10 000 crédits gratuits",
@@ -605,6 +605,7 @@
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
     "activeCallError": "Vous avez déjà un appel actif en cours",
+    "instructionsRejected": "Cet appel n’a pas pu démarrer, car le personnage ou la scène n’ont pas passé les contrôles de sécurité du fournisseur d’IA. Modifiez le personnage ou la scène, puis réessayez.",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "disconnected": "Déconnecté",
     "chooseCharacter": "À qui voulez-vous parler ?",
@@ -892,7 +893,7 @@
     }
   },
   "apiBilling": {
-    "description": "Surveillez l'utilisation de l'API, les requêtes et les coûts au fil du temps."
+    "description": "Surveillez l'utilisation de l'API et les requêtes au fil du temps."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & générateur de voix",
@@ -903,7 +904,7 @@
     "titleVoiceCall": "Appels Vocaux IA – Parlez en Direct avec des Personnages IA",
     "descriptionVoiceCall": "Passez des appels téléphoniques IA en direct avec vos voix préférées. Parlez en temps réel avec des personnages IA – des conversations naturelles grâce à la technologie vocale de SexyVoice.ai.",
     "titleVoiceCloning": "Clonage vocal par IA",
-    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 9 langues.",
+    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 23 langues.",
     "/": "",
     "/voice-call": "Appel Vocal",
     "/login": "Connexion",
@@ -945,6 +946,26 @@
     "header": "Historique des générations",
     "empty": "Aucun historique pour le moment",
     "downloadError": "Échec du téléchargement de l'audio",
+    "delete": {
+      "cancel": "Annuler",
+      "deleting": "Suppression...",
+      "single": {
+        "trigger": "Supprimer",
+        "title": "Supprimer le fichier audio ?",
+        "description": "Ce fichier audio sera supprimé de votre historique. Cette action est irréversible.",
+        "confirm": "Supprimer",
+        "success": "Fichier audio supprimé",
+        "error": "Impossible de supprimer le fichier audio. Veuillez réessayer."
+      },
+      "all": {
+        "trigger": "Tout supprimer",
+        "title": "Supprimer tous les fichiers audio ?",
+        "description": "{count, plural, one {Le fichier audio sera supprimé de votre historique. Cette action est irréversible.} other {Les # fichiers audio seront supprimés de votre historique. Cette action est irréversible.}}",
+        "confirm": "Tout supprimer",
+        "success": "Tous les fichiers audio ont été supprimés",
+        "error": "Impossible de supprimer tous les fichiers audio. Veuillez réessayer."
+      }
+    },
     "ui": {
       "filterText": "Filtrer le texte...",
       "customizeColumns": "Personnaliser les colonnes",

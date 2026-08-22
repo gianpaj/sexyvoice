@@ -34,10 +34,10 @@ export function CloneCheckboxes({
             id="reference-audio-enhancement"
             onCheckedChange={(checked) => {
               dispatch({
-                type: 'patch',
                 patch: {
                   referenceAudioEnhancementEnabled: checked === true,
                 },
+                type: 'patch',
               });
             }}
           />
@@ -64,8 +64,8 @@ export function CloneCheckboxes({
             id="legal-consent"
             onCheckedChange={(checked) => {
               dispatch({
-                type: 'patch',
                 patch: { legalConsentChecked: checked === true },
+                type: 'patch',
               });
             }}
           />

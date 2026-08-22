@@ -1,4 +1,4 @@
-import { argosScreenshot } from '@argos-ci/playwright';
+import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
 
 import { CallPage } from './pages/call.page';

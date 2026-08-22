@@ -55,10 +55,10 @@ export interface CloneSuccessResponse {
 
 /** Names of the multipart form fields accepted by `POST /api/clone-voice`. */
 export const CLONE_FORM_FIELDS = {
+  audioReferenceId: 'audioReferenceId',
+  enhanceReferenceAudio: 'enhanceReferenceAudio',
   file: 'file',
-  text: 'text',
   locale: 'locale',
   provider: 'provider',
-  enhanceReferenceAudio: 'enhanceReferenceAudio',
-  audioReferenceId: 'audioReferenceId',
+  text: 'text',
 } as const;

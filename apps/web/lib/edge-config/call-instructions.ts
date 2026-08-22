@@ -27,8 +27,8 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
     if (shouldReportEdgeConfigError() && !hasReportedMissingEdgeConfig) {
       hasReportedMissingEdgeConfig = true;
       captureMessage('Edge Config connection string missing.', {
-        level: 'warning',
         fingerprint: ['edge-config-missing'],
+        level: 'warning',
         tags: {
           area: 'edge-config',
           config: 'call-instructions',
@@ -53,10 +53,10 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
     if (shouldReportEdgeConfigError() && !hasReportedEdgeConfigLoadFailure) {
       hasReportedEdgeConfigLoadFailure = true;
       captureException(error, {
-        fingerprint: ['edge-config-load-failure'],
         extra: {
           message: 'Failed to load "call-instructions" from Edge Config',
         },
+        fingerprint: ['edge-config-load-failure'],
       });
     }
 

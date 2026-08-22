@@ -177,7 +177,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Deine Stimme, in jeder Sprache",
-        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 9 Sprachen sprechen."
+        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 23 Sprachen sprechen."
       },
       "cta": {
         "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
@@ -605,6 +605,7 @@
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
+    "instructionsRejected": "Dieser Anruf konnte nicht gestartet werden, weil der Charakter oder die Szene die Sicherheitsprüfungen des KI-Anbieters nicht bestanden haben. Bearbeite den Charakter oder die Szene und versuche es erneut.",
     "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",
@@ -892,7 +893,7 @@
     }
   },
   "apiBilling": {
-    "description": "API-Nutzung, Anfragen und Kosten im Zeitverlauf überwachen."
+    "description": "API-Nutzung und Anfragen im Zeitverlauf überwachen."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Kostenloser KI-Text-zu-Sprache- & Stimmengenerator",
@@ -903,7 +904,7 @@
     "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
     "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
     "titleVoiceCloning": "KI-Stimmklonen",
-    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 9 Sprachen sprechen.",
+    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 23 Sprachen sprechen.",
     "/": "",
     "/voice-call": "Sprachanruf",
     "/login": "Anmelden",
@@ -945,6 +946,26 @@
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
     "downloadError": "Audio konnte nicht heruntergeladen werden",
+    "delete": {
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "single": {
+        "trigger": "Löschen",
+        "title": "Audiodatei löschen?",
+        "description": "Diese Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirm": "Löschen",
+        "success": "Audiodatei gelöscht",
+        "error": "Die Audiodatei konnte nicht gelöscht werden. Bitte versuche es erneut."
+      },
+      "all": {
+        "trigger": "Alle löschen",
+        "title": "Alle Audiodateien löschen?",
+        "description": "{count, plural, one {Die Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.} other {Alle # Audiodateien werden aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.}}",
+        "confirm": "Alle löschen",
+        "success": "Alle Audiodateien gelöscht",
+        "error": "Die Audiodateien konnten nicht gelöscht werden. Bitte versuche es erneut."
+      }
+    },
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",

@@ -61,21 +61,21 @@ export function SignUpForm({ lang }: { lang: Locale }) {
       }
 
       const res = await fetch('/auth/signup', {
-        method: 'POST',
+        body: JSON.stringify({ email, password }),
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        method: 'POST',
       });
 
       if (res.ok) {
         toast.success(t('signupSuccess'), {
-          duration: 60_000,
           cancel: (
             <Button onClick={() => toast.dismiss()} size="sm" variant="outline">
               Ok
             </Button>
           ),
+          duration: 60_000,
         });
         return;
       }
@@ -90,7 +90,6 @@ export function SignUpForm({ lang }: { lang: Locale }) {
         } else {
           setError(resolveSignUpErrorMessage(signUpError ?? {}));
         }
-        return;
       }
     } catch (_error) {
       console.error(_error);
@@ -108,16 +107,15 @@ export function SignUpForm({ lang }: { lang: Locale }) {
     const redirectTo = encodeURIComponent(`/${lang}/dashboard`);
 
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback?redirect_to=${redirectTo}`,
       },
+      provider: 'google',
     });
 
     if (error) {
       setError(error.message || t('error'));
       setIsLoading(false);
-      return;
     }
   };
 

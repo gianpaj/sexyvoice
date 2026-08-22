@@ -99,7 +99,6 @@ export function DataTable() {
 
   // Fetch data with react-query
   const { data, isLoading, error } = useQuery({
-    queryKey: ['usage_events', currentPage, currentPageSize, currentSourceType],
     queryFn: () =>
       fetchUsageEvents(
         currentPage,
@@ -107,6 +106,7 @@ export function DataTable() {
         currentSourceType,
         currentPage === 1, // Include summary only on first page
       ),
+    queryKey: ['usage_events', currentPage, currentPageSize, currentSourceType],
     // Don't retry on failure — errors are surfaced immediately.
     // The API is a first-party server; transient failures are rare and
     // retrying with exponential back-off just delays the error UI by ~7 s.
@@ -117,19 +117,19 @@ export function DataTable() {
 
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable({
-    data: data?.data ?? [],
     columns,
+    data: data?.data ?? [],
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
     manualPagination: true,
+    onSortingChange: setSorting,
     pageCount: data?.totalPages ?? 0,
     state: {
-      sorting,
       pagination: {
         pageIndex: currentPage - 1,
         pageSize: currentPageSize,
       },
+      sorting,
     },
   });
 

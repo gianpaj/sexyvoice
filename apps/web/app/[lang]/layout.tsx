@@ -56,35 +56,17 @@ export async function generateMetadata(
       : undefined;
 
   return {
+    description,
     metadataBase: new URL(
       process.env.NODE_ENV === 'production'
         ? 'https://sexyvoice.ai'
         : 'http://localhost:3000',
     ),
     title: {
-      template: parentTitle?.template || '%s | SexyVoice.ai',
       default: title,
+      template: parentTitle?.template || '%s | SexyVoice.ai',
     },
-    description,
     ...(keywords ? { keywords } : {}),
-    openGraph: {
-      title: {
-        template: '%s | SexyVoice.ai',
-        default: pages.defaultTitle,
-      },
-      description,
-      siteName: 'SexyVoice.ai',
-      ...(openGraph?.url ? { url: openGraph.url } : {}),
-      ...(openGraph?.images ? { images: openGraph.images } : {}),
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: {
-        template: '%s | SexyVoice.ai',
-        default: pages.defaultTitle,
-      },
-      description,
-    },
     alternates: {
       canonical: './',
       languages: {
@@ -92,6 +74,24 @@ export async function generateMetadata(
         ...Object.fromEntries(
           routing.locales.map((locale) => [locale, `./${locale}`]),
         ),
+      },
+    },
+    openGraph: {
+      description,
+      siteName: 'SexyVoice.ai',
+      title: {
+        default: pages.defaultTitle,
+        template: '%s | SexyVoice.ai',
+      },
+      ...(openGraph?.url ? { url: openGraph.url } : {}),
+      ...(openGraph?.images ? { images: openGraph.images } : {}),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      title: {
+        default: pages.defaultTitle,
+        template: '%s | SexyVoice.ai',
       },
     },
   };

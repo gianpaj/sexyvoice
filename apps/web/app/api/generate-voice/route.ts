@@ -116,10 +116,9 @@ async function refundReservedCredits({
   }
 
   try {
-    await restoreCredits({ userId, amount });
+    await restoreCredits({ amount, userId });
   } catch (refundError) {
     logger.error('Failed to restore reserved credits', {
-      user: { id: userId },
       extra: {
         amount,
         context,
@@ -128,6 +127,7 @@ async function refundReservedCredits({
             ? refundError.message
             : String(refundError),
       },
+      user: { id: userId },
     });
     captureException(refundError, {
       extra: { amount, context },
@@ -154,11 +154,10 @@ async function reconcileReservedCredits({
   if (actualCredits < reservedCredits) {
     const refundAmount = reservedCredits - actualCredits;
     try {
-      await restoreCredits({ userId, amount: refundAmount });
+      await restoreCredits({ amount: refundAmount, userId });
       return actualCredits;
     } catch (refundError) {
       logger.error('Failed to refund unused reserved credits', {
-        user: { id: userId },
         extra: {
           actualCredits,
           context,
@@ -169,6 +168,7 @@ async function reconcileReservedCredits({
           refundAmount,
           reservedCredits,
         },
+        user: { id: userId },
       });
       captureException(refundError, {
         extra: { actualCredits, context, refundAmount, reservedCredits },
@@ -181,14 +181,13 @@ async function reconcileReservedCredits({
   const additionalCredits = actualCredits - reservedCredits;
   try {
     const additionalCreditsDebited = await reduceCreditsUpTo({
-      userId,
       amount: additionalCredits,
+      userId,
     });
     const totalCreditsDebited = reservedCredits + additionalCreditsDebited;
 
     if (additionalCreditsDebited < additionalCredits) {
       logger.warn('Partially debited additional reserved credits', {
-        user: { id: userId },
         extra: {
           actualCredits,
           additionalCredits,
@@ -197,13 +196,13 @@ async function reconcileReservedCredits({
           reservedCredits,
           totalCreditsDebited,
         },
+        user: { id: userId },
       });
     }
 
     return totalCreditsDebited;
   } catch (debitError) {
     logger.error('Failed to debit additional reserved credits', {
-      user: { id: userId },
       extra: {
         actualCredits,
         additionalCredits,
@@ -212,6 +211,7 @@ async function reconcileReservedCredits({
           debitError instanceof Error ? debitError.message : String(debitError),
         reservedCredits,
       },
+      user: { id: userId },
     });
     captureException(debitError, {
       extra: { actualCredits, additionalCredits, context, reservedCredits },
@@ -295,15 +295,15 @@ export async function POST(request: Request) {
     }
 
     Sentry.setUser({
-      id: user.id,
       email: user.email,
+      id: user.id,
     });
 
     const voiceObj = await getVoiceById(voiceId);
 
     if (!voiceObj) {
       const error = new Error('Voice not found');
-      captureException(error, { extra: { voiceId, text } });
+      captureException(error, { extra: { text, voiceId } });
       return APIErrorResponse('Voice not found', 404);
     }
 
@@ -331,8 +331,8 @@ export async function POST(request: Request) {
     // to pick up the non-streaming bundle.
     if (clientRequestedStream && !shouldStream) {
       logger.warn('Rejected stream request while streaming is disabled', {
+        extra: { model: voiceObj.model, voice: voiceObj.name },
         user: { id: user.id },
-        extra: { voice: voiceObj.name, model: voiceObj.model },
       });
       return APIErrorResponse(
         'Streaming is temporarily disabled. Please refresh the page and try again.',
@@ -373,8 +373,8 @@ export async function POST(request: Request) {
       );
       if (estimatedTokens > combinedTokenLimit) {
         logger.error('Gemini 3.1 input exceeds token limit', {
-          estimatedTokens,
           combinedTokenLimit,
+          estimatedTokens,
         });
         return APIErrorResponse(
           `Text and style exceed the maximum of ${combinedTokenLimit} tokens`,
@@ -385,8 +385,8 @@ export async function POST(request: Request) {
       const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
       if (text.length > maxLength) {
         logger.error('Text exceeds maximum length', {
-          textLength: text.length,
           maxLength,
+          textLength: text.length,
         });
         return APIErrorResponse(
           `Text exceeds the maximum length of ${maxLength} characters`,
@@ -417,8 +417,8 @@ export async function POST(request: Request) {
     if (isGeminiVoice && styleVariant) {
       text = buildGeminiTtsPrompt({
         model: voiceObj.model,
-        text,
         styleVariant,
+        text,
       });
     }
 
@@ -449,13 +449,13 @@ export async function POST(request: Request) {
 
     if (currentAmount < estimate) {
       logger.info('Insufficient credits', {
-        user: { id: user.id, email: user.email },
         extra: {
-          voiceName: voiceObj.name,
-          textLength: text.length,
-          estimate,
           currentCreditsAmount: currentAmount,
+          estimate,
+          textLength: text.length,
+          voiceName: voiceObj.name,
         },
+        user: { email: user.email, id: user.id },
       });
       return APIErrorResponse('Insufficient credits', 402);
     }
@@ -492,13 +492,13 @@ export async function POST(request: Request) {
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {
-        user: {
-          id: user?.id,
-        },
         extra: {
           hash,
-          voiceName: voiceObj.name,
           text,
+          voiceName: voiceObj.name,
+        },
+        user: {
+          id: user?.id,
         },
       });
       abortController.abort();
@@ -511,26 +511,26 @@ export async function POST(request: Request) {
 
     if (result) {
       logger.info('Cache hit - returning existing audio', {
-        filename,
-        url: result,
         creditsUsed: 0,
+        filename,
         stream: shouldStream,
+        url: result,
       });
       await sendPosthogEvent({
-        userId: user.id,
-        text,
-        voiceId: voiceObj.id,
         creditUsed: 0,
         model: effectiveModel,
         split: isSplit,
+        text,
+        userId: user.id,
+        voiceId: voiceObj.id,
       });
 
       if (shouldStream) {
         const body = createSseEvent('done', {
-          url: result,
-          creditsUsed: 0,
-          creditsRemaining: currentAmount,
           cached: true,
+          creditsRemaining: currentAmount,
+          creditsUsed: 0,
+          url: result,
         });
         return new Response(body, { headers: SSE_HEADERS });
       }
@@ -547,7 +547,7 @@ export async function POST(request: Request) {
     let generatedAudioBuffer: Buffer | undefined;
     let generatedAudioMimeType: string | undefined;
 
-    await reduceCredits({ userId: user.id, amount: estimate });
+    await reduceCredits({ amount: estimate, userId: user.id });
     reservedCredits = estimate;
 
     if (isGeminiVoice) {
@@ -556,27 +556,27 @@ export async function POST(request: Request) {
       });
 
       const geminiTTSConfig = buildGeminiTtsConfig({
-        voiceName: voiceObj.name,
+        abortSignal: abortController.signal,
         seed,
         temperature,
-        abortSignal: abortController.signal,
+        voiceName: voiceObj.name,
       });
 
       if (shouldStream) {
         return streamGeminiTtsResponse({
           ai,
-          text,
           config: geminiTTSConfig,
-          voiceObj,
-          user,
-          userHasPaid,
-          filename,
-          estimate,
           currentAmount,
-          styleVariant,
+          estimate,
+          filename,
           provider,
           requestSignal: request.signal,
           reservedCredits: estimate,
+          styleVariant,
+          text,
+          user,
+          userHasPaid,
+          voiceObj,
         });
       }
 
@@ -588,18 +588,18 @@ export async function POST(request: Request) {
           });
 
           genAIResponse = await ai.models.generateContent({
-            model: modelUsed,
-            contents: [{ role: 'user', parts: [{ text }] }],
             config: geminiTTSConfig,
+            contents: [{ parts: [{ text }], role: 'user' }],
+            model: modelUsed,
           });
         } catch (error) {
           console.warn(error);
           if (error instanceof Error && error.name === 'AbortError') {
             console.info('Gemini voice generation aborted');
             await refundReservedCredits({
-              userId: user.id,
               amount: reservedCredits,
               context: 'gemini_generate_abort',
+              userId: user.id,
             });
             reservedCredits = 0;
             return APIErrorResponse('Request aborted', 499);
@@ -608,74 +608,74 @@ export async function POST(request: Request) {
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
           const geminiRequestContext = {
-            voice: voiceObj.name,
-            styleVariant,
             provider,
-            textLength: text.length,
-            textPreview: text.slice(0, 500),
             requestedOutputCodec: outputCodec || null,
             responseModalities: geminiTTSConfig.responseModalities,
             speechConfig: geminiTTSConfig.speechConfig,
+            styleVariant,
+            textLength: text.length,
+            textPreview: text.slice(0, 500),
+            voice: voiceObj.name,
           };
 
           logger.warn(
             `${modelUsed} failed, retrying with gemini-2.5-flash-preview-tts`,
             {
-              user: {
-                id: user.id,
-                email: user.email,
-              },
               extra: {
                 ...geminiRequestContext,
-                model: modelUsed,
-                errorMessage: proErrorMessage,
                 errorCause: error instanceof Error ? error.cause : undefined,
+                errorMessage: proErrorMessage,
+                model: modelUsed,
+              },
+              user: {
+                email: user.email,
+                id: user.id,
               },
             },
           );
           modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
           try {
             genAIResponse = await ai.models.generateContent({
-              model: modelUsed,
-              contents: [{ role: 'user', parts: [{ text }] }],
               config: geminiTTSConfig,
+              contents: [{ parts: [{ text }], role: 'user' }],
+              model: modelUsed,
             });
 
             logger.info('Gemini flash fallback succeeded after pro failure', {
-              user: {
-                id: user.id,
-                email: user.email,
-              },
               extra: {
                 ...geminiRequestContext,
+                fallbackModel: modelUsed,
                 originalModel: resolveGeminiTtsModel({
                   model: voiceObj.model,
                   userHasPaid,
                 }),
-                fallbackModel: modelUsed,
                 proErrorMessage,
+              },
+              user: {
+                email: user.email,
+                id: user.id,
               },
             });
           } catch (flashError) {
             logger.error('Gemini flash fallback failed after pro failure', {
-              user: {
-                id: user.id,
-                email: user.email,
-              },
               extra: {
                 ...geminiRequestContext,
-                originalModel: resolveGeminiTtsModel({
-                  model: voiceObj.model,
-                  userHasPaid,
-                }),
                 fallbackModel: modelUsed,
-                proErrorMessage,
+                flashErrorCause:
+                  flashError instanceof Error ? flashError.cause : undefined,
                 flashErrorMessage:
                   flashError instanceof Error
                     ? flashError.message
                     : String(flashError),
-                flashErrorCause:
-                  flashError instanceof Error ? flashError.cause : undefined,
+                originalModel: resolveGeminiTtsModel({
+                  model: voiceObj.model,
+                  userHasPaid,
+                }),
+                proErrorMessage,
+              },
+              user: {
+                email: user.email,
+                id: user.id,
               },
             });
             throw flashError;
@@ -687,9 +687,9 @@ export async function POST(request: Request) {
           userHasPaid,
         });
         genAIResponse = await ai.models.generateContent({
-          model: modelUsed,
-          contents: [{ role: 'user', parts: [{ text }] }],
           config: geminiTTSConfig,
+          contents: [{ parts: [{ text }], role: 'user' }],
+          model: modelUsed,
         });
       }
       const { data, mimeType } = extractInlineAudio(genAIResponse);
@@ -708,62 +708,62 @@ export async function POST(request: Request) {
       if (finishReason !== FinishReason.STOP || !data || !mimeType) {
         if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
-            user: { id: user.id, email: user.email },
             extra: {
-              voice: voiceObj.name,
-              styleVariant,
-              model: modelUsed,
-              provider,
-              textLength: text.length,
-              textPreview: text.slice(0, 500),
-              responseId: genAIResponse?.responseId,
               blockReason,
               finishReason,
+              model: modelUsed,
+              provider,
+              responseId: genAIResponse?.responseId,
+              styleVariant,
+              textLength: text.length,
+              textPreview: text.slice(0, 500),
+              voice: voiceObj.name,
             },
+            user: { email: user.email, id: user.id },
           });
         } else if (isNoAudioData) {
           logger.warn('Gemini voice generation returned no audio data', {
-            user: { id: user.id, email: user.email },
             extra: {
-              voice: voiceName,
-              styleVariant,
+              blockReason,
+              finishReason,
               model: modelUsed,
               provider,
+              responseId: genAIResponse?.responseId,
+              styleVariant,
               textLength: text.length,
               textPreview: text.slice(0, 500),
-              responseId: genAIResponse?.responseId,
-              finishReason,
-              blockReason,
+              voice: voiceName,
             },
+            user: { email: user.email, id: user.id },
           });
         } else {
           logger.error('Gemini voice generation failed', {
-            user: { id: user.id, email: user.email },
             extra: {
-              voice: voiceObj.name,
-              styleVariant,
-              model: modelUsed,
-              provider,
-              textLength: text.length,
-              textPreview: text.slice(0, 500),
-              responseId: genAIResponse?.responseId,
+              blockReason,
               error: finishReason,
               finishReason,
-              blockReason,
               hasData: !!data,
               mimeType,
+              model: modelUsed,
+              provider,
               response: genAIResponse,
+              responseId: genAIResponse?.responseId,
+              styleVariant,
+              textLength: text.length,
+              textPreview: text.slice(0, 500),
+              voice: voiceObj.name,
             },
+            user: { email: user.email, id: user.id },
           });
           if (process.env.NODE_ENV === 'development') {
             console.dir(
               {
-                error: finishReason,
                 blockReason,
+                error: finishReason,
                 hasData: !!data,
                 mimeType,
-                response: genAIResponse,
                 model: modelUsed,
+                response: genAIResponse,
               },
               { depth: null },
             );
@@ -774,11 +774,11 @@ export async function POST(request: Request) {
         if (!(isProhibitedContent || isNoAudioData)) {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
-              finishReason,
               blockReason,
+              finishReason,
               hasData: !!data,
-              mimeType,
               isNoAudioData,
+              mimeType,
               model: modelUsed,
               textPreview: text.slice(0, 200),
               voice: voiceObj.name,
@@ -797,18 +797,18 @@ export async function POST(request: Request) {
         });
       }
       logger.info('Gemini voice generation succeeded', {
-        user: {
-          id: user.id,
-          email: user.email,
-        },
         extra: {
-          voice: voiceObj.name,
-          styleVariant,
           model: modelUsed,
           provider,
           responseId: genAIResponse!.responseId,
+          styleVariant,
           textLength: text.length,
           textPreview: text.slice(0, 500),
+          voice: voiceObj.name,
+        },
+        user: {
+          email: user.email,
+          id: user.id,
         },
       });
 
@@ -821,12 +821,12 @@ export async function POST(request: Request) {
 
       try {
         const { audioBuffer, codec, contentType } = await generateXaiTts({
+          codec: outputCodec,
+          language: selectedLanguage || voiceObj.language,
+          signal: abortController.signal,
+          speed,
           text,
           voiceId: voiceObj.name,
-          language: selectedLanguage || voiceObj.language,
-          codec: outputCodec,
-          speed,
-          signal: abortController.signal,
         });
         selectedGrokCodec = codec;
         generatedAudioBuffer = audioBuffer;
@@ -834,36 +834,39 @@ export async function POST(request: Request) {
         uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
       } catch (error) {
         const errorObj = {
+          codec: outputCodec,
+          errorData: error,
+          language: selectedLanguage || voiceObj.language,
+          model: voiceObj.model,
           text,
           voice: voiceObj.name,
-          model: voiceObj.model,
-          codec: outputCodec,
-          language: selectedLanguage || voiceObj.language,
-          errorData: error,
         };
         logger.error('Grok TTS generation failed', {
-          user: {
-            id: user.id,
-            email: user.email,
-          },
           extra: {
-            voice: voiceObj.name,
-            text,
-            model: voiceObj.model,
             codec: outputCodec,
-            language: selectedLanguage || voiceObj.language,
-            errorMessage: Error.isError(error) ? error.message : String(error),
             errorCause: Error.isError(error) ? error.cause : undefined,
+            errorMessage: Error.isError(error) ? error.message : String(error),
+            language: selectedLanguage || voiceObj.language,
+            model: voiceObj.model,
+            text,
+            voice: voiceObj.name,
+          },
+          user: {
+            email: user.email,
+            id: user.id,
           },
         });
         captureException(error, {
           extra: errorObj,
-          user: { id: user.id, email: user.email },
+          user: { email: user.email, id: user.id },
         });
         console.error('Grok TTS generation failed', errorObj);
-        throw new Error(getErrorMessage('XAI_TTS_ERROR', 'voice-generation'), {
-          cause: 'XAI_TTS_ERROR',
-        });
+        throw Object.assign(
+          new Error(getErrorMessage('XAI_TTS_ERROR', 'voice-generation'), {
+            cause: error,
+          }),
+          { voiceGenerationErrorCode: 'XAI_TTS_ERROR' },
+        );
       }
     } else {
       // uses REPLICATE_API_TOKEN
@@ -880,17 +883,17 @@ export async function POST(request: Request) {
 
       if ('error' in output) {
         const errorObj = {
+          errorData: output.error,
+          model: voiceObj.model,
           text,
           voice: voiceObj.name,
-          model: voiceObj.model,
-          errorData: output.error,
         };
         const error = new Error('Voice generation failed', {
           cause: 'REPLICATE_ERROR',
         });
         captureException(error, {
           extra: errorObj,
-          user: { id: user.id, email: user.email },
+          user: { email: user.email, id: user.id },
         });
         console.error(errorObj);
         throw new Error(
@@ -930,29 +933,29 @@ export async function POST(request: Request) {
     }
 
     const creditsDebited = await reconcileReservedCredits({
-      userId: user.id,
-      reservedCredits,
       actualCredits: creditsUsed,
       context: 'generate_voice_success',
+      reservedCredits,
+      userId: user.id,
     });
     reservedCredits = 0;
 
     let dollarAmount: number | undefined;
     if (isGrokVoice) {
       dollarAmount = calculateGenerateApiDollarAmount({
-        sourceType: 'tts',
-        provider: 'xai',
-        model: modelUsed,
         inputChars: text.length,
+        model: modelUsed,
+        provider: 'xai',
+        sourceType: 'tts',
       });
     } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
       dollarAmount = calculateGenerateApiDollarAmount({
-        sourceType: 'tts',
-        provider: 'google',
-        model: modelUsed,
-        inputChars: text.length,
-        promptTokenCount: usage.promptTokenCount,
         candidatesTokenCount: usage.candidatesTokenCount,
+        inputChars: text.length,
+        model: modelUsed,
+        promptTokenCount: usage.promptTokenCount,
+        provider: 'google',
+        sourceType: 'tts',
       });
     }
 
@@ -968,29 +971,29 @@ export async function POST(request: Request) {
       );
 
       const audioFileDBResult = await saveAudioFile({
-        userId: user.id,
+        credits_used: creditsDebited,
+        duration,
         filename,
-        text,
-        url: uploadUrl,
+        isPublic: false,
         model: modelUsed,
         predictionId: replicateResponse?.id,
-        isPublic: false,
-        voiceId: voiceObj.id,
-        duration,
-        credits_used: creditsDebited,
+        text,
+        url: uploadUrl,
         usage: {
           ...usage,
-          userHasPaid,
           split: isSplit,
+          userHasPaid,
         },
+        userId: user.id,
+        voiceId: voiceObj.id,
       });
 
       if (audioFileDBResult.error) {
         const errorObj = {
+          errorData: audioFileDBResult.error,
+          model: modelUsed,
           text,
           voice: voiceObj.name,
-          model: modelUsed,
-          errorData: audioFileDBResult.error,
         };
         const error = new Error('Failed to insert audio file row');
         captureException(error, {
@@ -1001,61 +1004,61 @@ export async function POST(request: Request) {
 
       // Insert usage event for tracking (non-blocking)
       await insertUsageEvent({
-        userId: user.id,
-        sourceType: 'tts',
-        sourceId: audioFileDBResult.data?.id,
-        unit: 'chars',
-        quantity: text.length,
         creditsUsed: creditsDebited,
+        quantity: text.length,
+        sourceId: audioFileDBResult.data?.id,
+        sourceType: 'tts',
+        unit: 'chars',
+        userId: user.id,
         ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
+          duration,
+          model: modelUsed,
+          predictionId: replicateResponse?.id ?? null,
+          provider,
+          split: isSplit,
+          textLength: text.length,
+          textPreview: text.slice(0, 100),
+          userHasPaid,
           voiceId: voiceObj.id,
           voiceName: voiceObj.name,
-          model: modelUsed,
-          provider,
-          textPreview: text.slice(0, 100),
-          textLength: text.length,
-          duration,
-          userHasPaid,
-          split: isSplit,
-          predictionId: replicateResponse?.id ?? null,
           ...(isGrokVoice ? { codec: selectedGrokCodec } : {}),
         },
       });
 
       await sendPosthogEvent({
-        userId: user.id,
-        predictionId: replicateResponse?.id,
-        text,
-        voiceId: voiceObj.id,
         creditUsed: creditsDebited,
         model: modelUsed,
+        predictionId: replicateResponse?.id,
         split: isSplit,
+        text,
+        userId: user.id,
+        voiceId: voiceObj.id,
       });
     });
 
     return NextResponse.json(
       {
-        url: uploadUrl,
-        creditsUsed: creditsDebited,
         creditsRemaining: (currentAmount || 0) - creditsDebited,
+        creditsUsed: creditsDebited,
+        url: uploadUrl,
       },
       { status: 200 },
     );
   } catch (error) {
     if (reservedCredits > 0 && user) {
       await refundReservedCredits({
-        userId: user.id,
         amount: reservedCredits,
         context: 'generate_voice_failure',
+        userId: user.id,
       });
       reservedCredits = 0;
     }
 
     if (isInsufficientCreditsError(error)) {
       logger.info('Insufficient credits during reservation', {
-        user: user ? { id: user.id, email: user.email } : undefined,
-        extra: { voiceName, textLength: text.length },
+        extra: { textLength: text.length, voiceName },
+        user: user ? { email: user.email, id: user.id } : undefined,
       });
       return APIErrorResponse('Insufficient credits', 402);
     }
@@ -1095,13 +1098,13 @@ export async function POST(request: Request) {
       const googleStatus = getGoogleApiErrorStatus(googleApiError);
       if (isGoogleQuotaError(googleApiError)) {
         logger.warn('Gemini quota exhausted', {
-          user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
+            googleCode: googleApiError.code,
+            googleStatus,
             textLength: text.length,
             voice: voiceName,
-            googleStatus,
-            googleCode: googleApiError.code,
           },
+          user: user ? { email: user.email, id: user.id } : undefined,
         });
 
         return APIErrorResponse(
@@ -1117,13 +1120,13 @@ export async function POST(request: Request) {
 
       if (isGoogleTransientProviderError(googleApiError)) {
         logger.warn('Gemini provider temporarily unavailable', {
-          user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
+            googleCode: googleApiError.code,
+            googleStatus,
             textLength: text.length,
             voice: voiceName,
-            googleStatus,
-            googleCode: googleApiError.code,
           },
+          user: user ? { email: user.email, id: user.id } : undefined,
         });
 
         return APIErrorResponse(
@@ -1137,13 +1140,13 @@ export async function POST(request: Request) {
 
       if (googleStatus === 'INVALID_ARGUMENT') {
         logger.warn('Gemini rejected TTS request', {
-          user: user ? { id: user.id, email: user.email } : undefined,
           extra: {
+            googleCode: googleApiError.code,
+            googleStatus,
             textLength: text.length,
             voice: voiceName,
-            googleStatus,
-            googleCode: googleApiError.code,
           },
+          user: user ? { email: user.email, id: user.id } : undefined,
         });
 
         if (isGeminiInputTooLongError(error)) {
@@ -1164,25 +1167,28 @@ export async function POST(request: Request) {
     }
 
     const errorObj = {
+      errorData: error,
       text,
       voice: voiceName,
-      errorData: error,
     };
     captureException(error, {
       extra: errorObj,
-      user: user ? { id: user.id, email: user.email } : undefined,
+      user: user ? { email: user.email, id: user.id } : undefined,
     });
     console.error(errorObj);
     console.error('Voice generation error:', error);
 
-    if (
-      Error.isError(error) &&
-      Object.keys(ERROR_CODES).includes(String(error.cause))
-    ) {
-      return APIErrorResponse(
-        error.message || 'Voice generation failed, please retry',
-        getErrorStatusCode(error.cause),
-      );
+    if (Error.isError(error)) {
+      const errorCode =
+        'voiceGenerationErrorCode' in error
+          ? error.voiceGenerationErrorCode
+          : error.cause;
+      if (Object.keys(ERROR_CODES).includes(String(errorCode))) {
+        return APIErrorResponse(
+          error.message || 'Voice generation failed, please retry',
+          getErrorStatusCode(errorCode),
+        );
+      }
     }
 
     return APIErrorResponse('Failed to generate voice', 500);
@@ -1270,9 +1276,9 @@ function streamGeminiTtsResponse({
 
     const tryStream = async (model: string) => {
       const stream = await ai.models.generateContentStream({
-        model,
-        contents: [{ parts: [{ text }] }],
         config,
+        contents: [{ parts: [{ text }] }],
+        model,
       });
 
       for await (const chunk of stream) {
@@ -1304,8 +1310,8 @@ function streamGeminiTtsResponse({
 
     try {
       logger.info('Gemini stream requested', {
-        user: { id: user.id, email: user.email },
-        extra: { model: selectedModel, textLength: text.length, stream: true },
+        extra: { model: selectedModel, stream: true, textLength: text.length },
+        user: { email: user.email, id: user.id },
       });
 
       try {
@@ -1345,13 +1351,13 @@ function streamGeminiTtsResponse({
         logger.warn(
           `${selectedModel} stream failed before first chunk, retrying with gemini-2.5-flash-preview-tts`,
           {
-            user: { id: user.id, email: user.email },
             extra: {
-              originalModel: selectedModel,
               errorMessage: proErrorMessage,
+              originalModel: selectedModel,
               stream: true,
               voice: voiceObj.name,
             },
+            user: { email: user.email, id: user.id },
           },
         );
         modelUsed = 'gemini-2.5-flash-preview-tts';
@@ -1372,8 +1378,8 @@ function streamGeminiTtsResponse({
           throw streamBlockError;
         }
         logger.error('Gemini stream completed with no audio chunks', {
-          user: { id: user.id, email: user.email },
-          extra: { model: modelUsed, textLength: text.length, stream: true },
+          extra: { model: modelUsed, stream: true, textLength: text.length },
+          user: { email: user.email, id: user.id },
         });
         captureException(new Error('Gemini stream — no audio chunks'), {
           extra: { model: modelUsed, voice: voiceObj.name },
@@ -1387,8 +1393,8 @@ function streamGeminiTtsResponse({
 
       // Build final WAV and persist.
       logger.info('Gemini stream completed, uploading WAV', {
-        user: { id: user.id, email: user.email },
-        extra: { model: modelUsed, chunks: audioChunks.length, stream: true },
+        extra: { chunks: audioChunks.length, model: modelUsed, stream: true },
+        user: { email: user.email, id: user.id },
       });
 
       const wavBuffer = convertAudioChunksToWav(audioChunks, mimeType);
@@ -1409,10 +1415,10 @@ function streamGeminiTtsResponse({
         );
       }
       const creditsDebited = await reconcileReservedCredits({
-        userId: user.id,
-        reservedCredits,
         actualCredits: creditsUsed,
         context: 'generate_voice_stream_success',
+        reservedCredits,
+        userId: user.id,
       });
       // Reconcile has settled the balance — clear the reservation so a later
       // failure (e.g. posthog flush) doesn't trigger a double-refund in the
@@ -1422,32 +1428,32 @@ function streamGeminiTtsResponse({
       const streamUsage: Record<string, string | number | boolean> =
         streamUsageMetadata
           ? {
-              promptTokenCount: String(
-                streamUsageMetadata.promptTokenCount ?? '',
-              ),
               candidatesTokenCount: String(
                 streamUsageMetadata.candidatesTokenCount ?? '',
               ),
+              promptTokenCount: String(
+                streamUsageMetadata.promptTokenCount ?? '',
+              ),
+              stream: true,
               totalTokenCount: String(
                 streamUsageMetadata.totalTokenCount ?? '',
               ),
               userHasPaid,
-              stream: true,
             }
-          : { userHasPaid, stream: true };
+          : { stream: true, userHasPaid };
 
       const audioFileDBResult = await saveAudioFile({
-        userId: user.id,
+        credits_used: creditsDebited,
+        duration,
         filename,
-        text,
-        url: uploadUrl,
+        isPublic: false,
         model: modelUsed,
         predictionId: undefined,
-        isPublic: false,
-        voiceId: voiceObj.id,
-        duration,
-        credits_used: creditsDebited,
+        text,
+        url: uploadUrl,
         usage: streamUsage,
+        userId: user.id,
+        voiceId: voiceObj.id,
       });
 
       if (audioFileDBResult.error) {
@@ -1460,44 +1466,44 @@ function streamGeminiTtsResponse({
       }
 
       await insertUsageEvent({
-        userId: user.id,
-        sourceType: 'tts',
-        sourceId: audioFileDBResult.data?.id,
-        unit: 'chars',
-        quantity: text.length,
         creditsUsed: creditsDebited,
         metadata: {
+          duration,
+          model: modelUsed,
+          predictionId: null,
+          provider,
+          stream: true,
+          textLength: text.length,
+          textPreview: text.slice(0, 100),
+          userHasPaid,
           voiceId: voiceObj.id,
           voiceName: voiceObj.name,
-          model: modelUsed,
-          provider,
-          textPreview: text.slice(0, 100),
-          textLength: text.length,
-          duration,
-          userHasPaid,
-          predictionId: null,
-          stream: true,
         },
+        quantity: text.length,
+        sourceId: audioFileDBResult.data?.id,
+        sourceType: 'tts',
+        unit: 'chars',
+        userId: user.id,
       });
 
       await sendPosthogEvent({
-        userId: user.id,
-        text,
-        voiceId: voiceObj.id,
         creditUsed: creditsDebited,
         model: modelUsed,
+        text,
+        userId: user.id,
+        voiceId: voiceObj.id,
       });
 
       logger.info('Gemini stream done', {
-        user: { id: user.id, email: user.email },
-        extra: { model: modelUsed, creditsUsed: creditsDebited, stream: true },
+        extra: { creditsUsed: creditsDebited, model: modelUsed, stream: true },
+        user: { email: user.email, id: user.id },
       });
 
       completed = true;
       await enqueue('done', {
-        url: uploadUrl,
-        creditsUsed: creditsDebited,
         creditsRemaining: (currentAmount || 0) - creditsDebited,
+        creditsUsed: creditsDebited,
+        url: uploadUrl,
       });
     } catch (error) {
       if (requestSignal.aborted || isAbortError(error)) {
@@ -1524,23 +1530,23 @@ function streamGeminiTtsResponse({
         );
       }
       logger.error('Gemini stream failed', {
-        user: { id: user.id, email: user.email },
         extra: {
-          model: modelUsed,
           audioStarted,
           errorMessage: rawMessage,
+          model: modelUsed,
           stream: true,
-          voice: voiceObj.name,
           styleVariant,
           textLength: text.length,
+          voice: voiceObj.name,
         },
+        user: { email: user.email, id: user.id },
       });
 
       const isProhibitedContent =
         Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
       if (!(audioStarted || isProhibitedContent)) {
         captureException(error, {
-          extra: { model: modelUsed, voice: voiceObj.name, stream: true },
+          extra: { model: modelUsed, stream: true, voice: voiceObj.name },
           user: { id: user.id },
         });
       }
@@ -1549,9 +1555,9 @@ function streamGeminiTtsResponse({
     } finally {
       if (!completed) {
         await refundReservedCredits({
-          userId: user.id,
           amount: reservedCredits,
           context: 'generate_voice_stream_failure',
+          userId: user.id,
         });
       }
 
@@ -1561,7 +1567,20 @@ function streamGeminiTtsResponse({
         // Writer already closed via an early-return path — safe to ignore.
       }
     }
-  })();
+  })().catch((error) => {
+    logger.error('Gemini stream task failed', {
+      extra: {
+        errorMessage: Error.isError(error) ? error.message : String(error),
+        model: selectedModel,
+        stream: true,
+      },
+      user: { email: user.email, id: user.id },
+    });
+    captureException(error, {
+      extra: { model: selectedModel, stream: true, voice: voiceObj.name },
+      user: { id: user.id },
+    });
+  });
 
   return new Response(readable, { headers: SSE_HEADERS });
 }
@@ -1588,14 +1607,14 @@ async function sendPosthogEvent({
     distinctId: userId,
     event: 'generate-voice',
     properties: {
+      credits_used: creditUsed,
+      model,
       // duration,
       predictionId,
-      model,
-      text,
-      voiceId,
-      credits_used: creditUsed,
-      textLength: text.length,
       split,
+      text,
+      textLength: text.length,
+      voiceId,
     },
   });
   await posthog.shutdown();

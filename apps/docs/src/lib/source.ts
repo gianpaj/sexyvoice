@@ -13,13 +13,13 @@ export const source = loader({
   source: docs.toFumadocsSource(),
   plugins: [lucideIconsPlugin(), openapiPlugin()],
   icon(icon) {
-      if (!icon) {
-        // You may set a default icon
-        return;
-      }
+    if (!icon) {
+      // You may set a default icon
+      return;
+    }
 
-      if (icon in icons) return createElement(icons[icon as keyof typeof icons]);
-    },
+    if (icon in icons) return createElement(icons[icon as keyof typeof icons]);
+  },
 });
 
 export function getPageImage(page: InferPageType<typeof source>) {

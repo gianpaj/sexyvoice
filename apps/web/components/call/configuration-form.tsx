@@ -61,9 +61,9 @@ export function ConfigurationForm({
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
   const form = useForm<z.infer<typeof ConfigurationFormSchema>>({
-    resolver: zodResolver(ConfigurationFormSchema),
     defaultValues: { ...defaultSessionConfig },
     mode: 'onChange',
+    resolver: zodResolver(ConfigurationFormSchema),
   });
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const formValues = form.watch();
@@ -89,12 +89,12 @@ export function ConfigurationForm({
     const values = pgState.sessionConfig;
     const fullInstructions = helpers.getFullInstructions(pgState);
     const attributes: { [key: string]: string | number | boolean } = {
-      instructions: fullInstructions,
-      model: values.model,
-      voice: values.voice,
       audio_reference_id: values.audioReferenceId || '',
-      temperature: values.temperature,
+      instructions: fullInstructions,
       max_output_tokens: values.maxOutputTokens || '',
+      model: values.model,
+      temperature: values.temperature,
+      voice: values.voice,
     };
     if (!agent?.identity) {
       return;
@@ -213,8 +213,8 @@ export function ConfigurationForm({
   useEffect(() => {
     if (form.formState.isValid && form.formState.isDirty) {
       dispatch({
-        type: 'SET_SESSION_CONFIG',
         payload: formValues,
+        type: 'SET_SESSION_CONFIG',
       });
     }
   }, [formValues, dispatch, form]);
@@ -241,27 +241,33 @@ export function ConfigurationForm({
   // };
 
   const handleLanguageChange = (value: string) => {
-    dispatch({ type: 'SET_LANGUAGE', payload: value as CallLanguage });
+    dispatch({ payload: value as CallLanguage, type: 'SET_LANGUAGE' });
   };
   const displayLanguage = true;
 
   const currentModel = pgState.sessionConfig.model;
+  // The Engine Selection block that rendered these was dropped by an earlier
+  // `Merge branch 'main'` on this branch (873e15af); the server-side
+  // inworld-realtime plumbing it drives is still in place. Kept so the UI can
+  // be restored once the out-of-repo sexycall agent handles the model.
+  // biome-ignore lint/correctness/noUnusedVariables: see above
   const isInworld = currentModel === ModelId.INWORLD_REALTIME;
 
+  // biome-ignore lint/correctness/noUnusedVariables: see above
   const handleEngineChange = (value: string) => {
     if (value === ModelId.INWORLD_REALTIME) {
       dispatch({
-        type: 'SET_SESSION_CONFIG',
         payload: { model: ModelId.INWORLD_REALTIME },
+        type: 'SET_SESSION_CONFIG',
       });
     } else {
       // Switching back to Grok clears the Inworld voice selection.
       dispatch({
-        type: 'SET_SESSION_CONFIG',
         payload: {
-          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
           audioReferenceId: null,
+          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
         },
+        type: 'SET_SESSION_CONFIG',
       });
     }
   };

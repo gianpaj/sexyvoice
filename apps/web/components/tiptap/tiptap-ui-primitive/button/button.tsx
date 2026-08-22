@@ -20,16 +20,22 @@ export interface ButtonProps
 }
 
 const buttonVariants = {
-  primary: 'bg-primary text-white hover:bg-primary-active',
   ghost: 'bg-transparent hover:bg-gray-800 text-gray-300 hover:text-white',
+  primary: 'bg-primary text-white hover:bg-primary-active',
   secondary: 'bg-gray-800 text-gray-100 hover:bg-gray-700',
 };
 
 const buttonSizes = {
-  small: 'h-6 px-1 text-xs rounded-md [&_svg]:h-3.5 [&_svg]:w-3.5',
-  medium: 'h-8 px-2 text-sm rounded-lg [&_svg]:h-4 [&_svg]:w-4',
   large: 'h-10 px-2.5 text-base rounded-lg [&_svg]:h-5 [&_svg]:w-5',
+  medium: 'h-8 px-2 text-sm rounded-lg [&_svg]:h-4 [&_svg]:w-4',
+  small: 'h-6 px-1 text-xs rounded-md [&_svg]:h-3.5 [&_svg]:w-3.5',
 };
+
+interface LegacyButtonDataAttributes {
+  'data-appearence'?: unknown;
+  'data-size'?: unknown;
+  'data-style'?: unknown;
+}
 
 const ShortcutDisplay: React.FC<{ shortcuts: string[] }> = ({ shortcuts }) => {
   if (shortcuts.length === 0) return null;
@@ -66,13 +72,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const shortcuts = parseShortcutKeys({ shortcutKeys });
 
     // Handle data-style and data-size props from legacy code if passed
-    const finalVariant = (props as any)['data-style'] || variant;
-    const finalSize = (props as any)['data-size'] || size;
+    const legacyProps = props as typeof props & LegacyButtonDataAttributes;
+    const finalVariant = legacyProps['data-style'] || variant;
+    const finalSize = legacyProps['data-size'] || size;
 
     // Map legacy 'subdued' appearance or ghost style to ghost variant
     const isGhost =
-      finalVariant === 'ghost' ||
-      (props as any)['data-appearence'] === 'subdued';
+      finalVariant === 'ghost' || legacyProps['data-appearence'] === 'subdued';
     const computedVariantClass = isGhost
       ? buttonVariants.ghost
       : buttonVariants[finalVariant as keyof typeof buttonVariants] ||
@@ -128,6 +134,7 @@ export const ButtonGroup = forwardRef<
     orientation?: 'horizontal' | 'vertical';
   }
 >(({ className, children, orientation = 'vertical', ...props }, ref) => (
+  // biome-ignore lint/a11y/useSemanticElements: Preserve the div-based public ref and layout contract.
   <div
     className={cn(
       'flex',

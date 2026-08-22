@@ -45,8 +45,8 @@ export async function DELETE(
       await deleteInworldVoice(reference.voice_id);
     } catch (deleteError) {
       captureException(deleteError, {
-        user: { id: user.id },
         extra: { voiceId: reference.voice_id },
+        user: { id: user.id },
       });
       return APIErrorResponse(
         'Failed to delete the voice from the provider. Please try again.',

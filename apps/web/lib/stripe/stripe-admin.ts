@@ -44,11 +44,11 @@ export async function createOrRetrieveCustomer(
       );
       console.error(`[STRIPE ADMIN] ${error.message}`);
       captureException(error, {
-        user: { id: userId, email },
         extra: {
           customerId: customer.id,
           metadataUuid,
         },
+        user: { email, id: userId },
       });
       throw error;
     }
@@ -61,11 +61,11 @@ export async function createOrRetrieveCustomer(
         Sentry.captureMessage(
           `Updated metadata for Stripe customer ${customer.id} to link to Supabase user ${userId}.`,
           {
-            level: 'info',
-            user: { id: userId, email },
             extra: {
               customerId: customer.id,
             },
+            level: 'info',
+            user: { email, id: userId },
           },
         );
       } catch (error) {
@@ -74,10 +74,10 @@ export async function createOrRetrieveCustomer(
           error,
         );
         captureException(error, {
-          user: { id: userId, email },
           extra: {
             customerId: customer.id,
           },
+          user: { email, id: userId },
         });
         throw error;
       }
@@ -96,9 +96,9 @@ export async function createOrRetrieveCustomer(
         const error = new Error(`Stripe customer ${customerId} is deleted.`);
         console.error(`[STRIPE ADMIN] ${error.message}`);
         Sentry.captureMessage(error.message, {
-          level: 'warning',
-          user: { id: userId, email },
           extra: { customerId },
+          level: 'warning',
+          user: { email, id: userId },
         });
         return null;
       }
@@ -109,8 +109,8 @@ export async function createOrRetrieveCustomer(
         error,
       );
       captureException(error, {
-        user: { id: userId, email },
         extra: { customerId },
+        user: { email, id: userId },
       });
       return null;
     }
@@ -134,9 +134,9 @@ export async function createOrRetrieveCustomer(
     );
     console.warn(`[STRIPE ADMIN] ${error.message}`);
     logger.warn('Multiple Stripe customers found for Supabase user', {
-      user: { id: userId, email },
       customerCount: customersResults.data.length,
       customerIds: customersResults.data.map((customer) => customer.id),
+      user: { email, id: userId },
     });
   }
 
@@ -155,9 +155,9 @@ export async function createOrRetrieveCustomer(
     );
     console.warn(error.message);
     logger.warn('Multiple Stripe customers found for email', {
-      user: { id: userId, email },
       customerCount: customers.data.length,
       customerIds: customers.data.map((customer) => customer.id),
+      user: { email, id: userId },
     });
   }
 
@@ -255,12 +255,12 @@ export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
     return coupon.valid;
   } catch (error) {
     captureException(error, {
-      tags: {
-        section: 'stripe_admin',
-        event_type: 'coupon_validation_error',
-      },
       extra: {
         coupon_id: couponId,
+      },
+      tags: {
+        event_type: 'coupon_validation_error',
+        section: 'stripe_admin',
       },
     });
     return false;
@@ -273,9 +273,9 @@ export async function refreshCustomerSubscriptionData(
   try {
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
+      expand: ['data.default_payment_method'],
       limit: 1,
       status: 'all',
-      expand: ['data.default_payment_method'],
     });
 
     if (subscriptions.data.length === 0) {
@@ -286,12 +286,9 @@ export async function refreshCustomerSubscriptionData(
 
     const subscription = subscriptions.data[0];
     const subData: CustomerData = {
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      priceId: subscription.items.data[0].price.id,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodEnd: subscription.current_period_end,
       currentPeriodStart: subscription.current_period_start,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&
         typeof subscription.default_payment_method !== 'string'
@@ -300,6 +297,9 @@ export async function refreshCustomerSubscriptionData(
               last4: subscription.default_payment_method.card?.last4 ?? null,
             }
           : null,
+      priceId: subscription.items.data[0].price.id,
+      status: subscription.status,
+      subscriptionId: subscription.id,
     };
 
     await setCustomerData(customerId, subData);
@@ -312,8 +312,8 @@ export async function refreshCustomerSubscriptionData(
     );
     const userId = await getUserIdByStripeCustomerId(customerId);
     captureException(error, {
-      user: userId ? { id: userId } : undefined,
       extra: { customerId },
+      user: userId ? { id: userId } : undefined,
     });
     throw error;
   }

@@ -25,16 +25,16 @@ export function useTiptapEditor(providedEditor?: Editor | null): {
     selector(context) {
       if (!context.editor) {
         return {
+          canCommand: undefined,
           editor: null,
           editorState: undefined,
-          canCommand: undefined,
         };
       }
 
       return {
+        canCommand: context.editor.can,
         editor: context.editor,
         editorState: context.editor.state,
-        canCommand: context.editor.can,
       };
     },
   });

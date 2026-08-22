@@ -81,25 +81,25 @@ function isKnownInstantTag(tag: string): tag is GrokInstantTag {
 }
 
 const XAI_LANGUAGE_OPTIONS = [
-  { value: 'ar-EG', label: 'langArabicEgypt' },
-  { value: 'ar-SA', label: 'langArabicSaudiArabia' },
-  { value: 'ar-AE', label: 'langArabicUnitedArabEmirates' },
-  { value: 'bn', label: 'langBengali' },
-  { value: 'zh', label: 'langChinese' },
-  { value: 'fr', label: 'langFrench' },
-  { value: 'de', label: 'langGerman' },
-  { value: 'hi', label: 'langHindi' },
-  { value: 'id', label: 'langIndonesian' },
-  { value: 'it', label: 'langItalian' },
-  { value: 'ja', label: 'langJapanese' },
-  { value: 'ko', label: 'langKorean' },
-  { value: 'pt-BR', label: 'langPortugueseBrazil' },
-  { value: 'pt-PT', label: 'langPortuguesePortugal' },
-  { value: 'ru', label: 'langRussian' },
-  { value: 'es-ES', label: 'langSpanishSpain' },
-  { value: 'es-MX', label: 'langSpanishMexico' },
-  { value: 'tr', label: 'langTurkish' },
-  { value: 'vi', label: 'langVietnamese' },
+  { label: 'langArabicEgypt', value: 'ar-EG' },
+  { label: 'langArabicSaudiArabia', value: 'ar-SA' },
+  { label: 'langArabicUnitedArabEmirates', value: 'ar-AE' },
+  { label: 'langBengali', value: 'bn' },
+  { label: 'langChinese', value: 'zh' },
+  { label: 'langFrench', value: 'fr' },
+  { label: 'langGerman', value: 'de' },
+  { label: 'langHindi', value: 'hi' },
+  { label: 'langIndonesian', value: 'id' },
+  { label: 'langItalian', value: 'it' },
+  { label: 'langJapanese', value: 'ja' },
+  { label: 'langKorean', value: 'ko' },
+  { label: 'langPortugueseBrazil', value: 'pt-BR' },
+  { label: 'langPortuguesePortugal', value: 'pt-PT' },
+  { label: 'langRussian', value: 'ru' },
+  { label: 'langSpanishSpain', value: 'es-ES' },
+  { label: 'langSpanishMexico', value: 'es-MX' },
+  { label: 'langTurkish', value: 'tr' },
+  { label: 'langVietnamese', value: 'vi' },
 ] as const;
 
 interface GrokTTSEditorProps {
@@ -223,10 +223,10 @@ function createInstantTagSuggestionItem(
   onSelect: () => void,
 ): SuggestionItem {
   return {
-    title: tag.label,
-    subtext: tag.description,
     keywords: [tag.label, tag.tag, tag.description],
     onSelect,
+    subtext: tag.description,
+    title: tag.label,
   };
 }
 
@@ -235,10 +235,10 @@ function createWrapperTagSuggestionItem(
   onSelect: () => void,
 ): SuggestionItem {
   return {
-    title: tag.label,
-    subtext: tag.description,
     keywords: [tag.label, tag.tag, tag.closeTag, tag.description],
     onSelect,
+    subtext: tag.description,
+    title: tag.label,
   };
 }
 
@@ -310,7 +310,23 @@ export function GrokTTSEditor({
   }, [charactersLimit, enforceCharactersLimit]);
 
   const editor = useEditor({
-    immediatelyRender: false,
+    content: plainTextToDoc(value),
+    editorProps: {
+      attributes: {
+        'aria-label': placeholder ?? 'TTS editor',
+        'aria-multiline': 'true',
+        autoCorrect: 'false',
+        class:
+          'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
+        'data-testid': 'generate-textarea',
+        role: 'textbox',
+        spellCheck: 'false',
+      },
+      handleDOMEvents: {
+        keydown: () => false,
+      },
+      handleTextInput: () => false,
+    },
     extensions: [
       StarterKit.configure({
         blockquote: false,
@@ -328,8 +344,8 @@ export function GrokTTSEditor({
         strike: false,
       }),
       Placeholder.configure({
-        placeholder,
         emptyNodeClass: 'is-empty with-slash',
+        placeholder,
       }),
       InstantTag,
       WrapperBoundary,
@@ -337,23 +353,7 @@ export function GrokTTSEditor({
       AutoConvertGrokTags,
       UiState,
     ],
-    content: plainTextToDoc(value),
-    editorProps: {
-      attributes: {
-        'data-testid': 'generate-textarea',
-        'aria-label': placeholder ?? 'TTS editor',
-        role: 'textbox',
-        'aria-multiline': 'true',
-        class:
-          'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
-        autoCorrect: 'false',
-        spellCheck: 'false',
-      },
-      handleDOMEvents: {
-        keydown: () => false,
-      },
-      handleTextInput: () => false,
-    },
+    immediatelyRender: false,
     onCreate: ({ editor: nextEditor }) => {
       lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
@@ -545,11 +545,11 @@ export function GrokTTSEditor({
   }, [handleInsertTag]);
 
   const translatedGrokLanguages = [
-    { value: 'auto', label: t('langAutomatic') },
-    { value: 'en', label: t('langEnglish') },
+    { label: t('langAutomatic'), value: 'auto' },
+    { label: t('langEnglish'), value: 'en' },
     ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
-      value,
       label: t(label as Parameters<typeof t>[0]),
+      value,
     })),
   ];
 

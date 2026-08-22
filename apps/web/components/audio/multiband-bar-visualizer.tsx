@@ -49,10 +49,6 @@ export const MultibandAudioVisualizer = ({
             key={`frequency-${index}`}
             style={{
               backgroundColor: barColor,
-              height: `${minBarHeight + frequency * (maxBarHeight - minBarHeight)}px`,
-              width: `${barWidth}px`,
-              transition:
-                'background-color 0.35s ease-out, transform 0.25s ease-out',
               // transform,
               borderRadius: `${borderRadius}px`,
               boxShadow:
@@ -61,6 +57,10 @@ export const MultibandAudioVisualizer = ({
                   : `${0.1 * barWidth}px ${
                       0.1 * barWidth
                     }px 0px 0px rgba(0, 0, 0, 0.1)`,
+              height: `${minBarHeight + frequency * (maxBarHeight - minBarHeight)}px`,
+              transition:
+                'background-color 0.35s ease-out, transform 0.25s ease-out',
+              width: `${barWidth}px`,
             }}
           />
         );

@@ -59,20 +59,19 @@ export const getTopupPackages = (lang: Locale) => {
 
   // Get promo bonuses
   const promoBonuses = {
-    starter: isPromoEnabled
-      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER || '0', 10)
+    pro: isPromoEnabled
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0', 10)
       : 0,
     standard: isPromoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STANDARD || '0', 10)
       : 0,
-    pro: isPromoEnabled
-      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0', 10)
+    starter: isPromoEnabled
+      ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_STARTER || '0', 10)
       : 0,
   };
 
   return {
     free: {
-      priceId: '',
       baseCredits: 10_000,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -81,10 +80,10 @@ export const getTopupPackages = (lang: Locale) => {
         return this.baseCredits;
       },
       dollarAmount: 0,
+      priceId: '',
     },
     // not shown on landing page, only in /credits page
     starter: {
-      priceId: process.env.STRIPE_TOPUP_STARTER_PRICE_ID,
       baseCredits: 10_000,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -95,12 +94,12 @@ export const getTopupPackages = (lang: Locale) => {
           ? this.baseCredits + promoBonuses.starter // 12_000
           : this.baseCredits;
       },
-      promoBonus: promoBonuses.starter.toLocaleString(lang),
       // pricePer1kCredits: isPromoEnabled ? 0.4166 : 0.5,
       dollarAmount: 5, // $5.00
+      priceId: process.env.STRIPE_TOPUP_STARTER_PRICE_ID,
+      promoBonus: promoBonuses.starter.toLocaleString(lang),
     },
     standard: {
-      priceId: process.env.STRIPE_TOPUP_STANDARD_PRICE_ID,
       baseCredits: STANDARD_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -111,15 +110,15 @@ export const getTopupPackages = (lang: Locale) => {
           ? this.baseCredits + promoBonuses.standard // 32_500
           : this.baseCredits;
       },
+      dollarAmount: STANDARD_TOPUP_DOLLAR_AMOUNT, // $10.00
+      priceId: process.env.STRIPE_TOPUP_STANDARD_PRICE_ID,
       // pricePer1kCredits: isPromoEnabled ? 0.3076 : 0.4, //
       get pricePer1kCredits() {
         return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.308 : $0.4
       },
       promoBonus: promoBonuses.standard.toLocaleString(lang),
-      dollarAmount: STANDARD_TOPUP_DOLLAR_AMOUNT, // $10.00
     },
     pro: {
-      priceId: process.env.STRIPE_TOPUP_PRO_PRICE_ID,
       baseCredits: PRO_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -130,12 +129,13 @@ export const getTopupPackages = (lang: Locale) => {
           ? this.baseCredits + promoBonuses.pro // 405_000
           : this.baseCredits;
       },
+      dollarAmount: PRO_TOPUP_DOLLAR_AMOUNT, // $75.00
+      priceId: process.env.STRIPE_TOPUP_PRO_PRICE_ID,
       // pricePer1kCredits: isPromoEnabled ? 0.2444 : 0.33, // -20.54% : -17.5% from previous plan
       get pricePer1kCredits() {
         return trimTrailingZeros((this.dollarAmount / this.credits) * 1000); // isPromoEnabled ? $0.244 : 0.33
       },
       promoBonus: promoBonuses.pro.toLocaleString(lang),
-      dollarAmount: PRO_TOPUP_DOLLAR_AMOUNT, // $75.00
     },
   } as const;
 };
@@ -158,7 +158,6 @@ export const getSubscriptionPackages = (
 
   return {
     starter: {
-      priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
       baseCredits: topup.starter.baseCredits,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -168,23 +167,23 @@ export const getSubscriptionPackages = (
           topup.starter.credits * SUBSCRIPTION_BONUS_MULTIPLIER,
         );
       },
+      get creditsLocale() {
+        return this.credits.toLocaleString(lang);
+      },
+      dollarAmount: roundCurrency(
+        topup.starter.dollarAmount * firstMonthDiscountMultiplier,
+      ),
+      priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
+      promoBonus: topup.starter.promoBonus,
+      recurringDollarAmount: topup.starter.dollarAmount,
       get subscriptionBonus() {
         return this.credits - topup.starter.credits;
       },
       get subscriptionBonusLocale() {
         return this.subscriptionBonus.toLocaleString(lang);
       },
-      get creditsLocale() {
-        return this.credits.toLocaleString(lang);
-      },
-      promoBonus: topup.starter.promoBonus,
-      dollarAmount: roundCurrency(
-        topup.starter.dollarAmount * firstMonthDiscountMultiplier,
-      ),
-      recurringDollarAmount: topup.starter.dollarAmount,
     },
     standard: {
-      priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
       baseCredits: topup.standard.baseCredits,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -194,26 +193,26 @@ export const getSubscriptionPackages = (
           topup.standard.credits * SUBSCRIPTION_BONUS_MULTIPLIER,
         );
       },
+      get creditsLocale() {
+        return this.credits.toLocaleString(lang);
+      },
+      dollarAmount: roundCurrency(
+        topup.standard.dollarAmount * firstMonthDiscountMultiplier,
+      ),
+      priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
+      get pricePer1kCredits() {
+        return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
+      },
+      promoBonus: topup.standard.promoBonus,
+      recurringDollarAmount: topup.standard.dollarAmount,
       get subscriptionBonus() {
         return this.credits - topup.standard.credits;
       },
       get subscriptionBonusLocale() {
         return this.subscriptionBonus.toLocaleString(lang);
       },
-      get creditsLocale() {
-        return this.credits.toLocaleString(lang);
-      },
-      get pricePer1kCredits() {
-        return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
-      },
-      promoBonus: topup.standard.promoBonus,
-      dollarAmount: roundCurrency(
-        topup.standard.dollarAmount * firstMonthDiscountMultiplier,
-      ),
-      recurringDollarAmount: topup.standard.dollarAmount,
     },
     pro: {
-      priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
       baseCredits: topup.pro.baseCredits,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
@@ -221,23 +220,24 @@ export const getSubscriptionPackages = (
       get credits() {
         return Math.round(topup.pro.credits * SUBSCRIPTION_BONUS_MULTIPLIER);
       },
+      get creditsLocale() {
+        return this.credits.toLocaleString(lang);
+      },
+      dollarAmount: roundCurrency(
+        topup.pro.dollarAmount * firstMonthDiscountMultiplier,
+      ),
+      priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
+      get pricePer1kCredits() {
+        return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
+      },
+      promoBonus: topup.pro.promoBonus,
+      recurringDollarAmount: topup.pro.dollarAmount,
       get subscriptionBonus() {
         return this.credits - topup.pro.credits;
       },
       get subscriptionBonusLocale() {
         return this.subscriptionBonus.toLocaleString(lang);
       },
-      get creditsLocale() {
-        return this.credits.toLocaleString(lang);
-      },
-      get pricePer1kCredits() {
-        return trimTrailingZeros2((this.dollarAmount / this.credits) * 1000);
-      },
-      promoBonus: topup.pro.promoBonus,
-      dollarAmount: roundCurrency(
-        topup.pro.dollarAmount * firstMonthDiscountMultiplier,
-      ),
-      recurringDollarAmount: topup.pro.dollarAmount,
     },
   } as const;
 };

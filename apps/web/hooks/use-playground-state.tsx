@@ -143,10 +143,10 @@ function playgroundStateReducer(
 
       return {
         ...state,
-        selectedSceneId: action.payload,
         sceneInstructions: isTextModified
           ? state.sceneInstructions
           : (selectedScene?.text ?? ''),
+        selectedSceneId: action.payload,
       };
     }
     case 'SET_MEMORY':
@@ -221,11 +221,11 @@ function playgroundStateReducer(
 
       return {
         ...state,
-        language: newLanguage,
-        instructions: newInstructions,
         initialInstruction:
           languageInitialInstructions[newLanguage] ||
           languageInitialInstructions.en,
+        instructions: newInstructions,
+        language: newLanguage,
       };
     }
     default:
@@ -279,8 +279,8 @@ export const PlaygroundStateProvider = ({
   );
   const mergedInitialState: PlaygroundState = {
     ...defaultPlaygroundState,
-    defaultPresets: mergedDefaultPresets,
     customCharacters: initialCustomCharacters,
+    defaultPresets: mergedDefaultPresets,
     ...initialState,
     sessionConfig: {
       ...defaultPlaygroundState.sessionConfig,
@@ -303,7 +303,7 @@ export const PlaygroundStateProvider = ({
         .find((preset) => preset.id === urlData.state.selectedPresetId);
 
       if (defaultPreset) {
-        dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: defaultPreset.id });
+        dispatch({ payload: defaultPreset.id, type: 'SET_SELECTED_PRESET_ID' });
         // Don't clear the URL for default presets
         return;
       }
@@ -312,9 +312,9 @@ export const PlaygroundStateProvider = ({
       if (urlData.preset?.name) {
         const newCharacter: Preset = {
           id: urlData.state.selectedPresetId,
-          name: urlData.preset.name || 'Shared Character',
-          localizedDescriptions: urlData.preset.localizedDescriptions,
           instructions: urlData.state.instructions || '',
+          localizedDescriptions: urlData.preset.localizedDescriptions,
+          name: urlData.preset.name || 'Shared Character',
           sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
         };
 
@@ -323,12 +323,12 @@ export const PlaygroundStateProvider = ({
           newCharacter,
         ];
         dispatch({
-          type: 'SET_CUSTOM_CHARACTERS',
           payload: updatedCustomCharacters,
+          type: 'SET_CUSTOM_CHARACTERS',
         });
         dispatch({
-          type: 'SET_SELECTED_PRESET_ID',
           payload: newCharacter.id,
+          type: 'SET_SELECTED_PRESET_ID',
         });
       }
 
@@ -340,9 +340,9 @@ export const PlaygroundStateProvider = ({
   return (
     <PlaygroundStateContext.Provider
       value={{
-        pgState: state,
         dispatch,
         helpers,
+        pgState: state,
       }}
     >
       {children}

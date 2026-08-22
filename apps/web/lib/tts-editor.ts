@@ -35,9 +35,9 @@ export const GROK_WRAPPING_TAGS = [
 ] as const;
 
 export const GROK_INSTANT_TAG_DEFINITIONS = GROK_INSTANT_TAGS.map((tag) => ({
-  tag,
-  label: tag.slice(1, -1),
   description: tag.slice(1, -1),
+  label: tag.slice(1, -1),
+  tag,
 })) as readonly {
   tag: (typeof GROK_INSTANT_TAGS)[number];
   label: string;
@@ -46,10 +46,10 @@ export const GROK_INSTANT_TAG_DEFINITIONS = GROK_INSTANT_TAGS.map((tag) => ({
 
 export const GROK_WRAPPING_TAG_DEFINITIONS = GROK_WRAPPING_TAGS.map(
   ([openTag, closeTag]) => ({
-    openTag,
     closeTag,
-    label: openTag.slice(1, -1),
     description: openTag.slice(1, -1),
+    label: openTag.slice(1, -1),
+    openTag,
   }),
 ) as readonly {
   openTag: (typeof GROK_WRAPPING_TAGS)[number][0];

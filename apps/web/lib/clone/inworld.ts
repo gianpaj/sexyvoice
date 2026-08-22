@@ -91,11 +91,6 @@ export async function createInworldVoice({
   }
 
   const cloneResponse = await fetch(INWORLD_CLONE_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: getInworldAuthHeader(),
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify({
       description,
       displayName,
@@ -106,6 +101,11 @@ export async function createInworldVoice({
         },
       ],
     }),
+    headers: {
+      Authorization: getInworldAuthHeader(),
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
   });
 
   if (!cloneResponse.ok) {
@@ -152,21 +152,21 @@ export async function synthesizeWithInworld({
   }
 
   const synthesizeResponse = await fetch(INWORLD_SYNTHESIZE_URL, {
-    method: 'POST',
+    body: JSON.stringify({
+      audioConfig: {
+        speakingRate: 1,
+      },
+      deliveryMode: 'CREATIVE',
+      language: langConfig.language,
+      modelId: INWORLD_MODEL_ID,
+      text,
+      voiceId,
+    }),
     headers: {
       Authorization: getInworldAuthHeader(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      text,
-      voiceId,
-      modelId: INWORLD_MODEL_ID,
-      deliveryMode: 'CREATIVE',
-      language: langConfig.language,
-      audioConfig: {
-        speakingRate: 1,
-      },
-    }),
+    method: 'POST',
   });
 
   if (!synthesizeResponse.ok) {
@@ -225,10 +225,10 @@ export async function cloneVoiceWithInworld({
   voiceId: string;
 }> {
   const { voiceId } = await createInworldVoice({
+    description: userId,
     displayName,
     locale,
     referenceAudioBuffer,
-    description: userId,
   });
 
   try {
@@ -242,8 +242,8 @@ export async function cloneVoiceWithInworld({
       console.error(
         'Failed to roll back Inworld voice after synthesis error:',
         {
-          voiceId,
           rollbackError,
+          voiceId,
         },
       );
     }
@@ -307,10 +307,10 @@ export async function deleteInworldVoice(voiceId: string): Promise<void> {
   const response = await fetch(
     `${INWORLD_VOICES_URL}/${encodeURIComponent(voiceId)}`,
     {
-      method: 'DELETE',
       headers: {
         Authorization: getInworldAuthHeader(),
       },
+      method: 'DELETE',
     },
   );
 

@@ -63,54 +63,54 @@ export default function DashboardUI({
 
   const navigation = [
     {
-      name: t('/dashboard/generate'),
+      current: pathname === `/${lang}/dashboard/generate`,
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
-      current: pathname === `/${lang}/dashboard/generate`,
+      name: t('/dashboard/generate'),
     },
     {
-      name: t('/dashboard/clone'),
+      current: pathname === `/${lang}/dashboard/clone`,
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
-      current: pathname === `/${lang}/dashboard/clone`,
+      name: t('/dashboard/clone'),
     },
     {
-      name: t('/dashboard/call'),
+      current: pathname === `/${lang}/dashboard/call`,
       href: `/${lang}/dashboard/call`,
       icon: PhoneIcon,
-      current: pathname === `/${lang}/dashboard/call`,
+      name: t('/dashboard/call'),
     },
     {
-      name: t('/dashboard/credits'),
+      current: pathname === `/${lang}/dashboard/credits`,
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
-      current: pathname === `/${lang}/dashboard/credits`,
+      name: t('/dashboard/credits'),
     },
     {
-      name: t('/dashboard/history'),
+      current: pathname === `/${lang}/dashboard/history`,
       href: `/${lang}/dashboard/history`,
       icon: FileClock,
-      current: pathname === `/${lang}/dashboard/history`,
+      name: t('/dashboard/history'),
     },
     {
-      name: t('/dashboard/usage'),
+      current: pathname === `/${lang}/dashboard/usage`,
       href: `/${lang}/dashboard/usage`,
       icon: BarChart3,
-      current: pathname === `/${lang}/dashboard/usage`,
+      name: t('/dashboard/usage'),
     },
     {
-      name: t('/dashboard/api-keys'),
+      current: pathname === `/${lang}/dashboard/api-keys`,
       href: `/${lang}/dashboard/api-keys`,
       icon: KeyRound,
-      current: pathname === `/${lang}/dashboard/api-keys`,
+      name: t('/dashboard/api-keys'),
     },
     ...(isPaidUser
       ? [
           {
-            name: t('/dashboard/api-billing'),
+            current: pathname === `/${lang}/dashboard/api-billing`,
             href: `/${lang}/dashboard/api-billing`,
             icon: ReceiptText,
-            current: pathname === `/${lang}/dashboard/api-billing`,
+            name: t('/dashboard/api-billing'),
           },
         ]
       : []),
@@ -118,19 +118,19 @@ export default function DashboardUI({
 
   const freeTools = [
     {
-      name: t('/tools/audio-converter'),
       href: `/${lang}/tools/audio-converter`,
       icon: FileAudio,
+      name: t('/tools/audio-converter'),
     },
     {
-      name: t('/tools/transcribe'),
       href: `/${lang}/tools/transcribe`,
       icon: FileText,
+      name: t('/tools/transcribe'),
     },
     {
-      name: t('/tools/audio-joiner'),
       href: `/${lang}/tools/audio-joiner`,
       icon: Scissors,
+      name: t('/tools/audio-joiner'),
     },
   ];
 
@@ -143,6 +143,7 @@ export default function DashboardUI({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                  data-visual-test="transparent"
                   size="lg"
                 >
                   <div className="aspect-square group-data-[collapsible=icon]:size-9">

@@ -17,7 +17,7 @@ function getMDXComponent(
   code: string,
   globals: Record<string, unknown> = {},
 ): React.ComponentType<Record<string, unknown>> {
-  const scope = { React, ReactDOM, _jsx_runtime, ...globals };
+  const scope = { _jsx_runtime, React, ReactDOM, ...globals };
   // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const fn = new Function(...Object.keys(scope), code);
   return fn(...Object.values(scope)).default;

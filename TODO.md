@@ -117,6 +117,7 @@ Ciao, mi chiamo Carlo, <gasp> , e sono un modello di generazione vocale che può
 
 - add Global error handling <https://nextjs.org/docs/app/api-reference/file-conventions/error>
 - Sentry monitoring with Posthog error linking <https://posthog.com/docs/libraries/node#sentry-integration>
+- On user deletion (`scripts/inactive-empty-user-profiles-retention.sql`), `credits` row should be automatically must be deleted on foreign key cascade.
 
 ## Research
 

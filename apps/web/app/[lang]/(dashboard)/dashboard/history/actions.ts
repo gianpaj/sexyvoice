@@ -5,92 +5,134 @@ import { Redis } from '@upstash/redis';
 import { after } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getMyActiveAudioFilesFilter } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
-// Initialize Redis
 const redis = Redis.fromEnv();
+const CACHE_DELETE_BATCH_SIZE = 100;
 
-export const handleDeleteAction = async (id: string) => {
-  try {
-    const supabase = await createClient();
+type DeleteAudioFilesOptions =
+  | { scope: 'all' }
+  | { id: string; scope: 'single' };
 
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
+  if (
+    options.scope === 'single' &&
+    (typeof options.id !== 'string' || options.id.length === 0)
+  ) {
+    throw new Error('Audio file not found or unauthorized');
+  }
 
-    if (!user) {
-      throw new Error('User not found');
-    }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    // First, get the audio file to ensure it exists and belongs to the user
-    const { data: audioFile, error: fetchError } = await supabase
-      .from('audio_files')
-      .select('url, storage_key')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single();
+  if (!user) {
+    throw new Error('User not found');
+  }
 
-    if (fetchError) {
-      captureException(fetchError, {
-        user: {
-          id: user.id,
-          email: user.email,
-        },
+  // The tracked audio_files RLS policies are read-only. Authenticate with the
+  // session client, then keep this privileged write scoped to the user's rows.
+  const admin = createAdminClient();
+  let deleteQuery = admin
+    .from('audio_files')
+    .update({
+      deleted_at: new Date().toISOString(),
+      status: 'deleted',
+    })
+    .match(getMyActiveAudioFilesFilter(user.id));
+
+  if (options.scope === 'single') {
+    deleteQuery = deleteQuery.eq('id', options.id);
+  }
+
+  const { data: deletedAudioFiles, error } =
+    await deleteQuery.select('id, storage_key');
+
+  if (error) {
+    captureException(error, {
+      extra:
+        options.scope === 'single'
+          ? { audioId: options.id, errorData: error }
+          : { errorData: error, scope: 'all' },
+      user: { email: user.email, id: user.id },
+    });
+    throw new Error('Failed to delete audio files', { cause: error });
+  }
+
+  if (options.scope === 'single' && deletedAudioFiles.length === 0) {
+    throw new Error('Audio file not found or unauthorized');
+  }
+
+  const storageKeys = [
+    ...new Set(deletedAudioFiles.map(({ storage_key }) => storage_key)),
+  ];
+
+  for (
+    let index = 0;
+    index < storageKeys.length;
+    index += CACHE_DELETE_BATCH_SIZE
+  ) {
+    const storageKeyBatch = storageKeys.slice(
+      index,
+      index + CACHE_DELETE_BATCH_SIZE,
+    );
+    try {
+      // Cache keys are shared across users. Match the existing single-delete
+      // behavior even though another user's identical request may become a
+      // cache miss and consume credits after this eviction.
+      await redis.del(...storageKeyBatch);
+    } catch (cacheError) {
+      // The database is authoritative. A cache outage must not report a
+      // successful soft delete as failed.
+      captureException(cacheError, {
         extra: {
-          audioId: id,
-          errorData: fetchError,
+          deletedCount: deletedAudioFiles.length,
+          storageKeys: storageKeyBatch,
         },
+        level: 'warning',
+        user: { email: user.email, id: user.id },
       });
-      throw new Error('Audio file not found');
     }
+  }
 
-    if (!audioFile) {
-      throw new Error('Audio file not found or unauthorized');
-    }
-
-    // Soft delete: update status to 'deleted' and set deleted_at timestamp
-    const { error: deleteError } = await supabase
-      .from('audio_files')
-      .update({
-        status: 'deleted',
-        deleted_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    // allow for regeneration of audio
-    await redis.del(audioFile.storage_key);
-
+  if (deletedAudioFiles.length > 0) {
     after(async () => {
       const posthog = PostHogClient();
       posthog.capture({
         distinctId: user.id,
-        event: 'delete-audio',
-        properties: {
-          id,
-        },
+        event: options.scope === 'single' ? 'delete-audio' : 'delete-all-audio',
+        properties:
+          options.scope === 'single'
+            ? { id: options.id }
+            : { count: deletedAudioFiles.length },
       });
       await posthog.shutdown();
     });
+  }
 
-    if (deleteError) {
-      captureException(deleteError, {
-        user: { id: user.id, email: user.email },
-        extra: {
-          audioId: id,
-        },
-      });
-      throw new Error('Failed to delete audio file');
-    }
+  // R2 objects are intentionally retained for potential recovery.
+  return { deletedCount: deletedAudioFiles.length, success: true };
+}
 
-    // Note: We keep the file in R2 storage for potential recovery
-    // In the future, we could implement a cleanup job to remove old deleted files
-
-    return { success: true };
+export const handleDeleteAction = async (id: string) => {
+  try {
+    return await deleteAudioFiles({ id, scope: 'single' });
   } catch (error) {
-    captureException(error, {
-      extra: { audioId: id },
-    });
+    captureException(error, { extra: { audioId: id } });
     console.error('Error deleting audio file:', error);
+    throw error;
+  }
+};
+
+export const handleDeleteAllAction = async () => {
+  try {
+    return await deleteAudioFiles({ scope: 'all' });
+  } catch (error) {
+    captureException(error, { extra: { scope: 'all' } });
+    console.error('Error deleting all audio files:', error);
     throw error;
   }
 };

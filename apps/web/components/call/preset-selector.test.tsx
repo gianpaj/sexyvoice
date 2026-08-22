@@ -43,8 +43,8 @@ beforeEach(() => {
   // jsdom doesn't provide crypto.randomUUID — stub it so handleAddCharacter works
   if (!globalThis.crypto.randomUUID) {
     Object.defineProperty(globalThis.crypto, 'randomUUID', {
-      value: () => '00000000-0000-4000-a000-000000000099',
       configurable: true,
+      value: () => '00000000-0000-4000-a000-000000000099',
     });
   }
   vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
@@ -65,21 +65,21 @@ beforeEach(() => {
       return new Response(
         JSON.stringify({
           id: '00000000-0000-4000-a000-000000000099',
-          name,
-          localized_descriptions: { en: 'A new custom character.' },
           image: null,
+          is_public: false,
+          localized_descriptions: { en: 'A new custom character.' },
+          name,
+          prompt_id: 'ee000000-0000-4000-a000-000000000099',
+          prompts: { localized_prompts: {}, prompt: '' },
           session_config: {
-            model: 'grok-voice-think-fast-2.0',
-            voice: 'Ara',
-            temperature: 0.8,
             maxOutputTokens: null,
+            model: 'grok-voice-think-fast-1.0',
+            temperature: 0.8,
+            voice: 'Ara',
           },
           sort_order: 0,
-          is_public: false,
           voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
           voices: { name: 'Ara', sample_url: null },
-          prompt_id: 'ee000000-0000-4000-a000-000000000099',
-          prompts: { prompt: '', localized_prompts: {} },
         }),
         { status: 201 },
       );
@@ -145,8 +145,8 @@ describe('PresetSelector', () => {
       await user.click(screen.getByRole('button', { name: /lily/i }));
 
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'SET_SELECTED_PRESET_ID',
         payload: 'lily',
+        type: 'SET_SELECTED_PRESET_ID',
       });
     });
 
@@ -205,8 +205,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'custom-1',
-            name: 'MyChar',
             localizedDescriptions: { en: 'A custom character' },
+            name: 'MyChar',
           }),
         ],
       });
@@ -222,13 +222,13 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'custom-1',
-            name: 'AlphaChar',
             localizedDescriptions: { en: 'Custom character 1' },
+            name: 'AlphaChar',
           }),
           makePreset({
             id: 'custom-2',
-            name: 'BetaChar',
             localizedDescriptions: { en: 'Custom character 2' },
+            name: 'BetaChar',
           }),
         ],
       });
@@ -287,8 +287,8 @@ describe('PresetSelector', () => {
       await user.click(alphaCharacterButton as HTMLElement);
 
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'SET_SELECTED_PRESET_ID',
         payload: 'custom-1',
+        type: 'SET_SELECTED_PRESET_ID',
       });
     });
   });
@@ -301,8 +301,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'custom-del',
-            name: 'ToDelete',
             localizedDescriptions: { en: 'Will be deleted' },
+            name: 'ToDelete',
           }),
         ],
       });
@@ -347,8 +347,8 @@ describe('PresetSelector', () => {
       );
 
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'DELETE_CUSTOM_CHARACTER',
         payload: 'custom-del',
+        type: 'DELETE_CUSTOM_CHARACTER',
       });
       expect(mockToastInfo).toHaveBeenCalledWith('Character removed');
     });
@@ -356,14 +356,14 @@ describe('PresetSelector', () => {
     it('selects the first default character when the currently selected custom character is deleted', async () => {
       const user = userEvent.setup();
       mockPgStateRef.current = createDefaultPgState({
-        selectedPresetId: 'custom-del',
         customCharacters: [
           makePreset({
             id: 'custom-del',
-            name: 'ToDelete',
             localizedDescriptions: { en: 'Selected & deleted' },
+            name: 'ToDelete',
           }),
         ],
+        selectedPresetId: 'custom-del',
       });
       render(<PresetSelector />);
       await user.click(screen.getByLabelText('Delete ToDelete'));
@@ -375,22 +375,22 @@ describe('PresetSelector', () => {
 
       // Should dispatch SET_SELECTED_PRESET_ID to fall back to first default
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'SET_SELECTED_PRESET_ID',
         payload: 'ramona',
+        type: 'SET_SELECTED_PRESET_ID',
       });
     });
 
     it('does NOT change selected preset when deleting a non-selected custom character', async () => {
       const user = userEvent.setup();
       mockPgStateRef.current = createDefaultPgState({
-        selectedPresetId: 'ramona',
         customCharacters: [
           makePreset({
             id: 'custom-del',
-            name: 'ToDelete',
             localizedDescriptions: { en: 'Not selected' },
+            name: 'ToDelete',
           }),
         ],
+        selectedPresetId: 'ramona',
       });
       render(<PresetSelector />);
       await user.click(screen.getByLabelText('Delete ToDelete'));
@@ -422,16 +422,16 @@ describe('PresetSelector', () => {
     it('shows the selected custom character bio with editable name and description', () => {
       mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
-        selectedPresetId: 'custom-bio',
         customCharacters: [
           makePreset({
             id: 'custom-bio',
-            name: 'Zara',
             localizedDescriptions: {
               en: 'A mysterious traveler from the desert.',
             },
+            name: 'Zara',
           }),
         ],
+        selectedPresetId: 'custom-bio',
       });
       render(<PresetSelector isPaidUser />);
       // For custom characters, name and description are separate editable elements
@@ -452,8 +452,8 @@ describe('PresetSelector', () => {
       // Click Rafal
       await user.click(screen.getByRole('button', { name: /rafal/i }));
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'SET_SELECTED_PRESET_ID',
         payload: 'rafal',
+        type: 'SET_SELECTED_PRESET_ID',
       });
     });
   });
@@ -466,8 +466,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'John Doe',
             localizedDescriptions: { en: 'Two words' },
+            name: 'John Doe',
           }),
         ],
       });
@@ -481,8 +481,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'Ava',
             localizedDescriptions: { en: 'One word' },
+            name: 'Ava',
           }),
         ],
       });
@@ -496,8 +496,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'Anna Belle Catherine',
             localizedDescriptions: { en: 'Three words' },
+            name: 'Anna Belle Catherine',
           }),
         ],
       });
@@ -514,8 +514,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'EmptyParam',
             localizedDescriptions: { en: 'test' },
+            name: 'EmptyParam',
           }),
         ],
       });
@@ -530,8 +530,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'TrueParam',
             localizedDescriptions: { en: 'test' },
+            name: 'TrueParam',
           }),
         ],
       });
@@ -545,8 +545,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'FalseParam',
             localizedDescriptions: { en: 'test' },
+            name: 'FalseParam',
           }),
         ],
       });
@@ -572,9 +572,9 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'custom-img',
-            name: 'WithImage',
-            localizedDescriptions: { en: 'Has an image' },
             image: 'custom-avatar.webp',
+            localizedDescriptions: { en: 'Has an image' },
+            name: 'WithImage',
           }),
         ],
       });
@@ -590,8 +590,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'TestChar',
             localizedDescriptions: { en: 'test' },
+            name: 'TestChar',
           }),
         ],
       });
@@ -616,8 +616,8 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'Existing',
             localizedDescriptions: { en: 'test' },
+            name: 'Existing',
           }),
         ],
       });
@@ -708,8 +708,8 @@ describe('PresetSelector', () => {
       const maxCustom: Preset[] = Array.from({ length: 10 }, (_, i) =>
         makePreset({
           id: `c-${i}`,
-          name: `Char${i}`,
           localizedDescriptions: { en: `desc ${i}` },
+          name: `Char${i}`,
         }),
       );
       mockPgStateRef.current = createDefaultPgState({
@@ -727,13 +727,13 @@ describe('PresetSelector', () => {
         customCharacters: [
           makePreset({
             id: 'c1',
-            name: 'Character 1',
             localizedDescriptions: { en: 'first' },
+            name: 'Character 1',
           }),
           makePreset({
             id: 'c2',
-            name: 'Character 2',
             localizedDescriptions: { en: 'second' },
+            name: 'Character 2',
           }),
         ],
       });

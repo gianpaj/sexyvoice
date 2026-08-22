@@ -39,30 +39,6 @@ export async function generateMetadata({
   const pageUrl = `https://sexyvoice.ai/${lang}/blog`;
 
   return {
-    title: { absolute: titleStr },
-    description,
-    openGraph: {
-      title: titleStr,
-      description,
-      url: pageUrl,
-      siteName: 'SexyVoice.ai',
-      images: [
-        {
-          url: '/sexyvoice.ai-og-image.jpg',
-          width: 1200,
-          height: 630,
-          alt: 'SexyVoice.ai Blog',
-        },
-      ],
-      locale: lang,
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: titleStr,
-      description,
-      images: ['/sexyvoice.ai-og-image.jpg'],
-    },
     alternates: {
       canonical: pageUrl,
       languages: {
@@ -71,6 +47,30 @@ export async function generateMetadata({
         ),
         'x-default': `/${i18n.defaultLocale}/blog`,
       },
+    },
+    description,
+    openGraph: {
+      description,
+      images: [
+        {
+          alt: 'SexyVoice.ai Blog',
+          height: 630,
+          url: '/sexyvoice.ai-og-image.jpg',
+          width: 1200,
+        },
+      ],
+      locale: lang,
+      siteName: 'SexyVoice.ai',
+      title: titleStr,
+      type: 'website',
+      url: pageUrl,
+    },
+    title: { absolute: titleStr },
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      images: ['/sexyvoice.ai-og-image.jpg'],
+      title: titleStr,
     },
   };
 }
@@ -132,15 +132,15 @@ export default async function BlogIndexPage(props: {
   const itemListSchema = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    name: pageTitle,
-    url: `https://sexyvoice.ai/${lang}/blog`,
-    numberOfItems: posts.length,
     itemListElement: posts.map((post, index) => ({
       '@type': 'ListItem',
+      name: post.title,
       position: index + 1,
       url: `https://sexyvoice.ai/${lang}${post.url}`,
-      name: post.title,
     })),
+    name: pageTitle,
+    numberOfItems: posts.length,
+    url: `https://sexyvoice.ai/${lang}/blog`,
   };
 
   const breadcrumbSchema = {
@@ -149,15 +149,15 @@ export default async function BlogIndexPage(props: {
     itemListElement: [
       {
         '@type': 'ListItem',
-        position: 1,
-        name: dictLanding.homeLabel,
         item: `https://sexyvoice.ai/${lang}`,
+        name: dictLanding.homeLabel,
+        position: 1,
       },
       {
         '@type': 'ListItem',
-        position: 2,
-        name: dictLanding.blogLabel,
         item: `https://sexyvoice.ai/${lang}/blog`,
+        name: dictLanding.blogLabel,
+        position: 2,
       },
     ],
   };

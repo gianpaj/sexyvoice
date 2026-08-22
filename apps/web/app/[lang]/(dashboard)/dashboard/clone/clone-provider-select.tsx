@@ -21,10 +21,10 @@ const PROVIDER_OPTIONS: {
     | 'providerMistral'
     | 'providerInworld';
 }[] = [
-  { value: 'auto', labelKey: 'providerAuto' },
-  { value: 'replicate', labelKey: 'providerReplicate' },
-  { value: 'mistral', labelKey: 'providerMistral' },
-  { value: 'inworld', labelKey: 'providerInworld' },
+  { labelKey: 'providerAuto', value: 'auto' },
+  { labelKey: 'providerReplicate', value: 'replicate' },
+  { labelKey: 'providerMistral', value: 'mistral' },
+  { labelKey: 'providerInworld', value: 'inworld' },
 ];
 
 export function CloneProviderSelect({
@@ -45,10 +45,10 @@ export function CloneProviderSelect({
         disabled={disabled}
         onValueChange={(value) =>
           dispatch({
-            type: 'patch',
             patch: {
               selectedProvider: value as CloneProviderSelection,
             },
+            type: 'patch',
           })
         }
         value={selectedProvider}

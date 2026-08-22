@@ -15,13 +15,13 @@ function loadPostHog() {
         { AnalyticsExtensions, SessionReplayExtensions },
       ]) => {
         posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-          api_host: '/seguimiento',
-          ui_host: 'https://eu.posthog.com',
-          defaults: '2026-01-30',
           __extensionClasses: {
             ...SessionReplayExtensions,
             ...AnalyticsExtensions,
           },
+          api_host: '/seguimiento',
+          defaults: '2026-01-30',
+          ui_host: 'https://eu.posthog.com',
         });
 
         return posthog;

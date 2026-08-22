@@ -49,7 +49,9 @@ export function TranscriptDisplay({
   const displayText = transcript?.text || partialTranscript;
 
   const activeChunkIndex =
-    currentTime != null && transcript?.chunks?.length
+    currentTime !== null &&
+    currentTime !== undefined &&
+    transcript?.chunks?.length
       ? findActiveChunkIndex(transcript.chunks, currentTime)
       : -1;
 

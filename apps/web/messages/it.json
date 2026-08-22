@@ -177,7 +177,7 @@
     "voiceCloning": {
       "hero": {
         "title": "La tua voce, in ogni lingua",
-        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 9 lingue."
+        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 23 lingue."
       },
       "cta": {
         "freeCredits": "Inizia con 10.000 crediti gratuiti",
@@ -605,6 +605,7 @@
     "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
     "agentUnavailable": "Agente non disponibile",
     "activeCallError": "Hai già una chiamata attiva in corso",
+    "instructionsRejected": "Impossibile avviare la chiamata perché il personaggio o la scena non hanno superato i controlli di sicurezza del provider di IA. Modifica il personaggio o la scena e riprova.",
     "microphonePermissionDenied": "Accesso al microfono negato. Consenti l'accesso al microfono e riprova.",
     "disconnected": "Disconnesso",
     "chooseCharacter": "Con chi vuoi parlare?",
@@ -892,7 +893,7 @@
     }
   },
   "apiBilling": {
-    "description": "Monitora l'utilizzo dell'API, le richieste e i costi nel tempo."
+    "description": "Monitora l'utilizzo dell'API e le richieste nel tempo."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Sintesi vocale IA gratuita & generatore di voci",
@@ -903,7 +904,7 @@
     "titleVoiceCall": "Chiamate Vocali IA – Parla dal Vivo con Personaggi IA",
     "descriptionVoiceCall": "Fai chiamate telefoniche IA dal vivo con le tue voci preferite. Parla in tempo reale con personaggi IA – conversazioni naturali grazie alla tecnologia vocale di SexyVoice.ai.",
     "titleVoiceCloning": "Clonazione vocale con IA",
-    "descriptionVoiceCloning": "Clona una voce da pochi secondi di audio e ascoltala parlare in modo naturale in 9 lingue.",
+    "descriptionVoiceCloning": "Clona una voce da pochi secondi di audio e ascoltala parlare in modo naturale in 23 lingue.",
     "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",
     "titleTranscribe": "Trascrizione Audio Online Gratuita – Da Voce a Testo in 99+ Lingue",
     "descriptionAudioConverter": "Convertitore audio online gratuito – Converti MP3, WAV, FLAC, OGG, AAC, M4A e altri formati direttamente nel tuo browser. Nessun upload richiesto, 100% privato e offline. Basato su FFmpeg.",
@@ -945,6 +946,26 @@
     "header": "Cronologia generazioni",
     "empty": "Nessuna cronologia ancora",
     "downloadError": "Impossibile scaricare l'audio",
+    "delete": {
+      "cancel": "Annulla",
+      "deleting": "Eliminazione...",
+      "single": {
+        "trigger": "Elimina",
+        "title": "Eliminare il file audio?",
+        "description": "Questo file audio verrà rimosso dalla cronologia. Questa azione non può essere annullata.",
+        "confirm": "Elimina",
+        "success": "File audio eliminato",
+        "error": "Impossibile eliminare il file audio. Riprova."
+      },
+      "all": {
+        "trigger": "Elimina tutto",
+        "title": "Eliminare tutti i file audio?",
+        "description": "{count, plural, one {Il file audio verrà rimosso dalla cronologia. Questa azione non può essere annullata.} other {Tutti i # file audio verranno rimossi dalla cronologia. Questa azione non può essere annullata.}}",
+        "confirm": "Elimina tutto",
+        "success": "Tutti i file audio sono stati eliminati",
+        "error": "Impossibile eliminare tutti i file audio. Riprova."
+      }
+    },
     "ui": {
       "filterText": "Filtra testo...",
       "customizeColumns": "Personalizza colonne",

@@ -97,7 +97,7 @@ export const AudioProvider = ({ children }: AudioProviderProps) => {
 
   return (
     <AudioContext.Provider
-      value={{ setUrlAndPlay, pause, play, reset, url, isPlaying }}
+      value={{ isPlaying, pause, play, reset, setUrlAndPlay, url }}
     >
       {children}
     </AudioContext.Provider>

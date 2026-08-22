@@ -27,8 +27,8 @@ export function CloneVoiceNameField({
         maxLength={60}
         onChange={(event) =>
           dispatch({
-            type: 'patch',
             patch: { voiceName: event.target.value },
+            type: 'patch',
           })
         }
         placeholder={t('voiceNamePlaceholder')}

@@ -59,11 +59,11 @@ export async function GET(request: Request) {
       }
       return [
         {
+          formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
           id: voice.id,
-          name: voice.name,
           language: voice.language,
           model,
-          formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
+          name: voice.name,
           supports_style: model === 'gpro' || model === 'gpro31',
         },
       ];
@@ -78,8 +78,8 @@ export async function GET(request: Request) {
   } catch (error) {
     captureException(error, {
       extra: {
-        requestId,
         endpoint: '/api/v1/voices',
+        requestId,
         userId: authResult.userId,
       },
     });

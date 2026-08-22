@@ -13,25 +13,25 @@ import { DemoWaveform } from './demo-waveform';
 
 const demoCharacters = [
   {
-    id: 'ramona',
-    name: 'Ramona',
-    image: 'ramona.webp',
     accent: 'from-red-500 to-pink-500',
     glowColor: '239, 68, 68',
+    id: 'ramona',
+    image: 'ramona.webp',
+    name: 'Ramona',
   },
   {
-    id: 'lily',
-    name: 'Lily',
-    image: 'lily.webp',
     accent: 'from-amber-400 to-orange-500',
     glowColor: '251, 191, 36',
+    id: 'lily',
+    image: 'lily.webp',
+    name: 'Lily',
   },
   {
-    id: 'rafal',
-    name: 'Rafal',
-    image: 'rafal.webp',
     accent: 'from-violet-500 to-fuchsia-500',
     glowColor: '139, 92, 246',
+    id: 'rafal',
+    image: 'rafal.webp',
+    name: 'Rafal',
   },
 ] as const;
 

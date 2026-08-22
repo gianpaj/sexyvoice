@@ -47,8 +47,8 @@ export function InworldVoiceSection() {
   const setAudioReferenceId = useCallback(
     (id: string | null) => {
       dispatch({
-        type: 'SET_SESSION_CONFIG',
         payload: { audioReferenceId: id },
+        type: 'SET_SESSION_CONFIG',
       });
     },
     [dispatch],
@@ -64,13 +64,13 @@ export function InworldVoiceSection() {
       const json = (await res.json()) as { data: AudioReferenceRow[] };
       setVoices(
         (json.data ?? []).map((row) => ({
+          createdAt: row.created_at,
           id: row.id,
+          isPaid: row.is_paid,
+          locale: row.locale,
+          name: row.name,
           provider: row.provider,
           voiceId: row.voice_id,
-          name: row.name,
-          locale: row.locale,
-          isPaid: row.is_paid,
-          createdAt: row.created_at,
         })),
       );
     } catch (error) {
@@ -108,8 +108,8 @@ export function InworldVoiceSection() {
       formData.append('locale', 'en');
 
       const res = await fetch('/api/audio-references', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
       const json = (await res.json()) as {
         data?: AudioReferenceRow;

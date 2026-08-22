@@ -35,7 +35,7 @@ export async function DELETE() {
   }
 
   return NextResponse.json(
-    { success: true, deleted: data?.length ?? 0 },
+    { deleted: data?.length ?? 0, success: true },
     { status: 200 },
   );
 }

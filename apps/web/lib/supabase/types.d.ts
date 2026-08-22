@@ -398,35 +398,6 @@ declare type Database = {
           },
         ];
       };
-      card_bonus_claims: {
-        Row: {
-          created_at: string;
-          fingerprint: string;
-          setup_intent_id: string;
-          user_id: string;
-        };
-        Insert: {
-          created_at?: string;
-          fingerprint: string;
-          setup_intent_id: string;
-          user_id: string;
-        };
-        Update: {
-          created_at?: string;
-          fingerprint?: string;
-          setup_intent_id?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'card_bonus_claims_user_id_fkey';
-            columns: ['user_id'];
-            isOneToOne: false;
-            referencedRelation: 'profiles';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       characters: {
         Row: {
           created_at: string | null;
@@ -617,7 +588,7 @@ declare type Database = {
           {
             foreignKeyName: 'credits_user_id_fkey';
             columns: ['user_id'];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
@@ -784,7 +755,7 @@ declare type Database = {
           is_nsfw?: boolean | null;
           is_public?: boolean | null;
           language: string;
-          model?: string;
+          model: string;
           name: string;
           sample_prompt?: string | null;
           sample_url?: string | null;
@@ -885,12 +856,20 @@ declare type Database = {
         };
         Returns: {
           content: string;
+          cosine_distance: number;
           memory_type: string;
+          rrf_score: number;
+          text_rank: number;
+          vector_rank: number;
         }[];
       };
       prune_agent_memories_over_cap: {
         Args: { p_character_id?: string; p_keep?: number; p_user_id: string };
         Returns: number;
+      };
+      restore_inactive_user: {
+        Args: { p_auth_created_at: string; p_email: string; p_user_id: string };
+        Returns: boolean;
       };
       update_api_key_last_used: {
         Args: { p_key_hash: string };
@@ -898,12 +877,7 @@ declare type Database = {
       };
     };
     Enums: {
-      credit_transaction_type:
-        | 'purchase'
-        | 'freemium'
-        | 'topup'
-        | 'refund'
-        | 'card_bonus';
+      credit_transaction_type: 'purchase' | 'freemium' | 'topup' | 'refund';
       feature_type: 'tts' | 'call';
       usage_source_type:
         | 'tts'
@@ -1046,13 +1020,7 @@ declare const Constants = {
   },
   public: {
     Enums: {
-      credit_transaction_type: [
-        'purchase',
-        'freemium',
-        'topup',
-        'refund',
-        'card_bonus',
-      ],
+      credit_transaction_type: ['purchase', 'freemium', 'topup', 'refund'],
       feature_type: ['tts', 'call'],
       usage_source_type: [
         'tts',

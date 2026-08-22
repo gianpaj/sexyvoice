@@ -36,8 +36,10 @@ import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
   getMyAudioFiles,
+  getMyAudioFilesCount,
 } from '@/lib/supabase/queries.client';
 import { useColumns } from './columns';
+import { DeleteAllButton } from './delete-all-button';
 
 interface DataTableProps {
   showApiColumns: boolean;
@@ -52,28 +54,33 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
 
   const supabase = useSupabaseBrowser();
   const { data } = useQuery({
-    queryKey: ['audio_files', userId],
-    queryFn: () => getMyAudioFiles(supabase, userId),
     enabled: !!userId,
+    queryFn: () => getMyAudioFiles(supabase, userId),
+    queryKey: ['audio_files', userId],
+  });
+  const { data: totalCount = 0 } = useQuery({
+    enabled: !!userId,
+    queryFn: () => getMyAudioFilesCount(supabase, userId),
+    queryKey: ['audio_files_count', userId],
   });
   const columns = useColumns({ showApiColumns });
 
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const table = useReactTable<AudioFileAndVoicesRes>({
-    data: (data as AudioFileAndVoicesRes[]) ?? [],
     columns,
+    data: (data as AudioFileAndVoicesRes[]) ?? [],
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
     state: {
-      sorting,
-      columnVisibility,
       columnFilters,
+      columnVisibility,
+      sorting,
     },
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
@@ -94,6 +101,11 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <DeleteAllButton
+            count={totalCount}
+            disabled={totalCount === 0}
+            userId={userId}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">

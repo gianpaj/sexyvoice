@@ -3,8 +3,7 @@ import type { PluginKey } from '@tiptap/pm/state';
 import type { Editor, Range } from '@tiptap/react';
 import type { SuggestionOptions } from '@tiptap/suggestion';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type DefaultContext = any;
+type DefaultContext = unknown;
 
 type IconProps = React.SVGProps<SVGSVGElement>;
 type IconComponent = ({ className, ...props }: IconProps) => React.ReactElement;

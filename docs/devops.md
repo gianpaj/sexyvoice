@@ -140,8 +140,10 @@ template.
 
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database
+  access remains controlled by RLS.
+- `SUPABASE_SECRET_KEY` - Server-only key that bypasses RLS; never expose it to
+  clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 
 ### Redis / caching
 
@@ -283,6 +285,27 @@ Used for:
 
 ## Deployment Notes
 
+### Feature gates
+
+Pages that are merged but not ready to ship are gated by constants in
+`apps/web/lib/features.ts` rather than by an environment variable, so the state
+is visible in code review and cannot drift between Vercel projects.
+
+- `VOICE_CLONING_PAGE_ENABLED` — the public `/[lang]/voice-cloning` landing
+  page. Currently `process.env.VERCEL_ENV !== 'production'`: reviewable on
+  previews and locally, `404` in production, because the demo audio is still
+  TTS-generated placeholder material rather than real cloned output.
+
+Each gate must cover every entry point, otherwise a "hidden" page stays
+reachable. For `VOICE_CLONING_PAGE_ENABLED` that is: the page itself
+(`notFound()`), the landing page feature card and its grid column count, the
+footer Features link, and the `app/sitemap.ts` glob — the sitemap discovers
+pages from the filesystem, so a gated page is advertised to search engines
+unless it is excluded there too.
+
+To ship a gated page, set the constant to `true` and remove the gate in a
+follow-up cleanup.
+
 ### Docs site (Fumadocs)
 
 - The docs site is a Fumadocs (Next.js) app in `apps/docs`, deployed to
@@ -298,7 +321,10 @@ Used for:
 ### Supabase
 
 - Supabase powers auth and database access.
-- `SUPABASE_SERVICE_ROLE_KEY` is privileged and must remain server-only.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for browser clients and remains
+  subject to RLS.
+- `SUPABASE_SECRET_KEY` is server-only and bypasses RLS. Never expose it to
+  clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 - Be careful with migrations and generated types.
 
 ### Edge Config
@@ -464,8 +490,8 @@ output of `sentry-cli issues list` (first column).
 
 Check:
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `OAUTH_CALLBACK_MARKER_SECRET`
 - redirect URL configuration in Supabase / OAuth provider
 - Sentry events tagged for OAuth callback flow

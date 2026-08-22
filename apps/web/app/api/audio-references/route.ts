@@ -45,7 +45,6 @@ export async function GET(request: Request) {
 }
 
 // Mint a reusable Inworld voice from an uploaded sample (no text/synthesis).
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: linear validate → process → mint → persist flow
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -149,26 +148,26 @@ export async function POST(request: Request) {
     }
 
     const inserted = await insertAudioReference({
-      userId: user.id,
-      provider: 'inworld',
-      voiceId,
-      name,
-      locale,
       isPaid: true,
+      locale,
+      name,
+      provider: 'inworld',
+      userId: user.id,
+      voiceId,
     });
 
     if (inserted.error) {
       captureException(inserted.error, {
-        user: { id: user.id },
         extra: { voiceId },
+        user: { id: user.id },
       });
       // Roll back the remote voice so it isn't orphaned/untracked.
       try {
         await deleteInworldVoice(voiceId);
       } catch (rollbackError) {
         captureException(rollbackError, {
+          extra: { reason: 'rollback_after_insert_failure', voiceId },
           user: { id: user.id },
-          extra: { voiceId, reason: 'rollback_after_insert_failure' },
         });
       }
       return APIErrorResponse('Failed to save the voice', 500);

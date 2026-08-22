@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
@@ -113,7 +114,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     { data: audio_files, error: audioFilesError },
     { data: customCharacters, error: customCharactersError },
     { data: apiKeys, error: apiKeysError },
-    { count: usageEventsCount, error: usageEventsError },
+    { count: retainedUsageEventsCount, error: usageEventsError },
   ] = await Promise.all([
     supabase.from('audio_files').select().eq('user_id', user.id),
     supabase.from('characters').select('id, prompt_id').eq('user_id', user.id),
@@ -124,13 +125,16 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       .eq('user_id', user.id),
   ]);
 
-  if (
-    audioFilesError ||
-    customCharactersError ||
-    apiKeysError ||
-    usageEventsError
-  ) {
+  if (audioFilesError || customCharactersError || apiKeysError) {
     throw new Error('User deletion failed');
+  }
+
+  if (usageEventsError) {
+    captureException(usageEventsError, {
+      extra: { context: 'retained usage event count during account deletion' },
+      level: 'warning',
+      user: { email: user.email, id: user.id },
+    });
   }
 
   if (audio_files) {
@@ -144,10 +148,10 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         captureException(
           new Error(result.reason || 'Failed to delete file from R2 storage.'),
           {
-            user: { id: user.id, email: user.email },
             extra: {
               file,
             },
+            user: { email: user.email, id: user.id },
           },
         );
         console.error(
@@ -158,14 +162,15 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     });
   }
 
-  const { error: deleteError, data: deleteData } = await supabase
+  const admin = createAdminClient();
+  const { error: deleteError, data: deleteData } = await admin
     .from('audio_files')
     .update({
-      status: 'deleted',
       deleted_at: deletedAtIso,
+      status: 'deleted',
     })
     .eq('user_id', user.id)
-    .select();
+    .select('id');
 
   if (customCharacters && customCharacters.length > 0) {
     const characterIds = customCharacters.map((character) => character.id);
@@ -192,38 +197,35 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
 
       if (deletePromptsError) {
         captureException(deletePromptsError, {
-          user: { id: user.id, email: user.email },
           extra: {
-            promptIds,
             context: 'custom character prompt cleanup during account deletion',
+            promptIds,
           },
+          user: { email: user.email, id: user.id },
         });
       }
     }
   }
 
-  const { error: deleteUsageEventsError } = await supabase
-    .from('usage_events')
-    .delete()
-    .eq('user_id', user.id);
-
-  if (error || deleteError || deleteUsageEventsError) {
+  if (error || deleteError) {
     throw new Error('User deletion failed');
   }
   logger.info('User deleted', {
-    userId: user.id,
+    apiKeysDeleted: apiKeys ? apiKeys.length : 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    apiKeysDeleted: apiKeys ? apiKeys.length : 0,
-    usageEventsDeleted: usageEventsCount ?? 0,
+    // usage_events is an immutable audit log protected from deletion by the
+    // database. Report retained rows instead of claiming they were removed.
+    usageEventsRetained: retainedUsageEventsCount,
+    userId: user.id,
   });
 
   console.log('User deleted', {
-    userId: user.id,
+    apiKeysDeleted: apiKeys?.length ?? 0,
     deleted: deleteData?.length,
     deletedCustomCharacters: customCharacters?.length ?? 0,
-    apiKeysDeleted: apiKeys?.length ?? 0,
-    usageEventsDeleted: usageEventsCount ?? 0,
+    usageEventsRetained: retainedUsageEventsCount,
+    userId: user.id,
   });
   await supabase.auth.signOut();
 

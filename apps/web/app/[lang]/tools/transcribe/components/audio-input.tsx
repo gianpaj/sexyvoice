@@ -62,14 +62,18 @@ export function AudioInput({
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file?.type.startsWith('audio/') || file?.type.startsWith('video/')) {
-      processFile(file);
+      processFile(file).catch((error) => {
+        console.error('Failed to process dropped audio file:', error);
+      });
     }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processFile(file);
+      processFile(file).catch((error) => {
+        console.error('Failed to process selected audio file:', error);
+      });
     }
   };
 
@@ -193,9 +197,6 @@ export function AudioInput({
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (disabled) {
-            return;
-          }
         }}
         onDrop={(e) => {
           e.preventDefault();

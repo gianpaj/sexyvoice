@@ -39,12 +39,12 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('[STRIPE HOOK] Error processing event', error);
     Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_webhook',
-        event_type: 'processing_error',
-      },
       extra: {
         body_length: body?.length || 0,
+      },
+      tags: {
+        event_type: 'processing_error',
+        section: 'stripe_webhook',
       },
     });
   }
@@ -105,13 +105,13 @@ async function processEvent(event: Stripe.Event) {
   } catch (error) {
     console.error(`[STRIPE HOOK] Error processing event ${event.type}:`, error);
     Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_webhook',
-        event_type: event.type,
-      },
       extra: {
-        event_id: event.id,
         event_data: event.data,
+        event_id: event.id,
+      },
+      tags: {
+        event_type: event.type,
+        section: 'stripe_webhook',
       },
     });
     throw error;
@@ -171,20 +171,20 @@ async function handleCheckoutSessionCompleted(
       if (!(userId && credits && dollarAmount && session.payment_intent)) {
         const error = new Error('Missing metadata for topup transaction');
         const extra = {
-          session_id: session.id,
           metadata: session.metadata,
           payment_intent: session.payment_intent,
+          session_id: session.id,
         };
         console.error(
           '[STRIPE HOOK] Missing metadata for topup transaction',
           extra,
         );
         Sentry.captureException(error, {
-          tags: {
-            section: 'stripe_webhook',
-            event_type: 'checkout_session_completed',
-          },
           extra,
+          tags: {
+            event_type: 'checkout_session_completed',
+            section: 'stripe_webhook',
+          },
         });
         return;
       }
@@ -220,12 +220,12 @@ async function handleCheckoutSessionCompleted(
           { customerId, subscriptionId },
         );
         Sentry.captureException(error, {
-          tags: {
-            section: 'stripe_webhook',
-            event_type: 'checkout_session_completed',
-          },
           extra: {
             session_id: session.id,
+          },
+          tags: {
+            event_type: 'checkout_session_completed',
+            section: 'stripe_webhook',
           },
         });
         return;
@@ -242,12 +242,12 @@ async function handleCheckoutSessionCompleted(
         );
         console.error(`User not found with stripe_id: "${customerId}"`);
         Sentry.captureException(error, {
-          tags: {
-            section: 'stripe_webhook',
-            event_type: 'checkout_session_completed',
-          },
           extra: {
             customer_id: customerId,
+          },
+          tags: {
+            event_type: 'checkout_session_completed',
+            section: 'stripe_webhook',
           },
         });
         return;
@@ -322,20 +322,20 @@ async function handleCheckoutSessionCompleted(
     }
   } catch (error) {
     const extra = {
+      metadata: session.metadata,
       session_id: session.id,
       session_mode: session.mode,
-      metadata: session.metadata,
     };
     console.error(
       '[STRIPE HOOK] Error in handleCheckoutSessionCompleted:',
       extra,
     );
     Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_webhook',
-        event_type: 'checkout_session_completed',
-      },
       extra,
+      tags: {
+        event_type: 'checkout_session_completed',
+        section: 'stripe_webhook',
+      },
     });
     throw error;
   }
@@ -373,13 +373,13 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       const error = new Error(`User not found with stripe_id: "${customerId}"`);
       console.error(`User not found with stripe_id: "${customerId}"`);
       Sentry.captureException(error, {
-        tags: {
-          section: 'stripe_webhook',
-          event_type: 'invoice_payment_succeeded',
-        },
         extra: {
           customer_id: customerId,
           invoice_id: invoice.id,
+        },
+        tags: {
+          event_type: 'invoice_payment_succeeded',
+          section: 'stripe_webhook',
         },
       });
       return;
@@ -448,14 +448,14 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       error,
     );
     Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_webhook',
-        event_type: 'invoice_payment_succeeded',
-      },
       extra: {
+        customer_id: invoice.customer,
         invoice_id: invoice.id,
         subscription_id: invoice.subscription,
-        customer_id: invoice.customer,
+      },
+      tags: {
+        event_type: 'invoice_payment_succeeded',
+        section: 'stripe_webhook',
       },
     });
     throw error;
@@ -469,9 +469,9 @@ export async function syncStripeDataToKV(customerId: string) {
     // Fetch latest subscription data from Stripe
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
+      expand: ['data.default_payment_method'],
       limit: 1,
       status: 'all',
-      expand: ['data.default_payment_method'],
     });
 
     if (subscriptions.data.length === 0) {
@@ -485,12 +485,9 @@ export async function syncStripeDataToKV(customerId: string) {
 
     // Store complete subscription state
     const subData = {
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      priceId: subscription.items.data[0].price.id,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodEnd: subscription.current_period_end,
       currentPeriodStart: subscription.current_period_start,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&
         typeof subscription.default_payment_method !== 'string'
@@ -499,6 +496,9 @@ export async function syncStripeDataToKV(customerId: string) {
               last4: subscription.default_payment_method.card?.last4 ?? null,
             }
           : null,
+      priceId: subscription.items.data[0].price.id,
+      status: subscription.status,
+      subscriptionId: subscription.id,
     };
 
     // Store the data in Redis KV
@@ -514,12 +514,12 @@ export async function syncStripeDataToKV(customerId: string) {
   } catch (error) {
     console.error('[STRIPE HOOK] Error in syncStripeDataToKV:', error);
     Sentry.captureException(error, {
-      tags: {
-        section: 'stripe_webhook',
-        event_type: 'sync_stripe_data',
-      },
       extra: {
         customer_id: customerId,
+      },
+      tags: {
+        event_type: 'sync_stripe_data',
+        section: 'stripe_webhook',
       },
     });
     throw error;

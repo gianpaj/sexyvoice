@@ -8,14 +8,52 @@ import {
   Bot,
   webhookCallback,
 } from 'https://deno.land/x/grammy@v1.36.3/mod.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.99.2';
+
+function getDefaultSupabaseSecretKey(): string {
+  const rawSecretKeys = Deno.env.get('SUPABASE_SECRET_KEYS');
+  if (!rawSecretKeys) {
+    throw new Error('Missing env.SUPABASE_SECRET_KEYS');
+  }
+
+  let secretKeys: unknown;
+  try {
+    secretKeys = JSON.parse(rawSecretKeys);
+  } catch {
+    throw new Error(
+      'Invalid env.SUPABASE_SECRET_KEYS: expected a JSON dictionary',
+    );
+  }
+
+  if (
+    !secretKeys ||
+    typeof secretKeys !== 'object' ||
+    Array.isArray(secretKeys)
+  ) {
+    throw new Error(
+      'Invalid env.SUPABASE_SECRET_KEYS: expected a JSON dictionary',
+    );
+  }
+
+  const defaultSecretKey = (secretKeys as Record<string, unknown>).default;
+  if (
+    typeof defaultSecretKey !== 'string' ||
+    defaultSecretKey.trim().length === 0
+  ) {
+    throw new Error(
+      'Invalid env.SUPABASE_SECRET_KEYS: missing non-empty default key',
+    );
+  }
+
+  return defaultSecretKey;
+}
 
 const bot = new Bot(Deno.env.get('TELEGRAM_BOT_TOKEN') || '');
 
 // Initialize Supabase client with admin access
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') || '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '',
+  getDefaultSupabaseSecretKey(),
   {
     auth: {
       autoRefreshToken: false,
@@ -69,7 +107,7 @@ function formatCurrencyChange(current: number, previous: number): string {
     return `↑$${current.toFixed(2)} (new)`;
   }
   const pct = (diff / previous) * 100;
-  const arrow = diff >= 0 ? "↑" : "↓";
+  const arrow = diff >= 0 ? '↑' : '↓';
 
   return `${arrow}$${Math.abs(diff).toFixed(2)} (${arrow}${Math.abs(pct).toFixed(0)}%)`;
 }
@@ -224,7 +262,11 @@ async function generateTodayStats(): Promise<string> {
     const fetchAudioFilesToday = async (): Promise<
       { id: string; created_at: string; model: string | null }[]
     > => {
-      const allAudio: { id: string; created_at: string; model: string | null }[] = [];
+      const allAudio: {
+        id: string;
+        created_at: string;
+        model: string | null;
+      }[] = [];
       const pageSize = 1000;
       let offset = 0;
       let hasMore = true;
@@ -252,8 +294,14 @@ async function generateTodayStats(): Promise<string> {
     const fetchProfilesInRange = async (
       start: Date,
       end: Date,
-    ): Promise<{ id: string; created_at: string; username: string | null }[]> => {
-      const allProfiles: { id: string; created_at: string; username: string | null }[] = [];
+    ): Promise<
+      { id: string; created_at: string; username: string | null }[]
+    > => {
+      const allProfiles: {
+        id: string;
+        created_at: string;
+        username: string | null;
+      }[] = [];
       const pageSize = 1000;
       let offset = 0;
       let hasMore = true;
@@ -278,16 +326,18 @@ async function generateTodayStats(): Promise<string> {
       return allProfiles;
     };
 
-    const fetchCreditTransactions = async (): Promise<{
-      id: string;
-      user_id: string;
-      created_at: string;
-      type: string;
-      description: string | null;
-      // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
-      metadata: any;
-      profiles: { username: string } | null;
-    }[]> => {
+    const fetchCreditTransactions = async (): Promise<
+      {
+        id: string;
+        user_id: string;
+        created_at: string;
+        type: string;
+        description: string | null;
+        // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
+        metadata: any;
+        profiles: { username: string } | null;
+      }[]
+    > => {
       const allTransactions: {
         id: string;
         user_id: string;
@@ -355,7 +405,12 @@ async function generateTodayStats(): Promise<string> {
       return allEvents;
     };
 
-    const [audioTodayData, profilesRecentData, allCreditTransactions, allUsageEvents] = await Promise.all([
+    const [
+      audioTodayData,
+      profilesRecentData,
+      allCreditTransactions,
+      allUsageEvents,
+    ] = await Promise.all([
       fetchAudioFilesToday(),
       fetchProfilesInRange(sevenDaysAgo, now),
       fetchCreditTransactions(),
@@ -558,7 +613,8 @@ async function generateTodayStats(): Promise<string> {
     // Burn rate: paid user usage (dollars) vs revenue purchased today
     const revenuePurchasedToday = purchaseTodayData.reduce(
       (sum: number, t: any) =>
-        sum + ((t.metadata as { dollarAmount?: number } | null)?.dollarAmount || 0),
+        sum +
+        ((t.metadata as { dollarAmount?: number } | null)?.dollarAmount || 0),
       0,
     );
 
@@ -674,17 +730,17 @@ async function generateTodayStats(): Promise<string> {
       otherModels.length === 0
         ? 'none'
         : otherModels
-          .slice(0, 10)
-          .map(([modelName, count]) => `${modelName} (${count})`)
-          .join(', ');
+            .slice(0, 10)
+            .map(([modelName, count]) => `${modelName} (${count})`)
+            .join(', ');
 
     const topModelList =
       modelCounts.size === 0
         ? 'N/A'
         : [
-          ...topModels.map(([modelName, count]) => `${modelName} (${count})`),
-          `other models (${otherModelsCount}: ${otherModelsPreview})`,
-        ].join(', ');
+            ...topModels.map(([modelName, count]) => `${modelName} (${count})`),
+            `other models (${otherModelsCount}: ${otherModelsPreview})`,
+          ].join(', ');
 
     // Top Customers
     let hasInvalidMetadata = false;
@@ -738,29 +794,29 @@ async function generateTodayStats(): Promise<string> {
       topCustomers.length === 0
         ? 'N/A'
         : topCustomers
-          .map(({ username, transactions }) => {
-            const maskedUsername = maskUsername(username);
-            const allSameType =
-              transactions.length > 1 &&
-              transactions.every((t) => t.type === transactions[0].type);
+            .map(({ username, transactions }) => {
+              const maskedUsername = maskUsername(username);
+              const allSameType =
+                transactions.length > 1 &&
+                transactions.every((t) => t.type === transactions[0].type);
 
-            let amountDisplay: string;
-            if (transactions.length === 1) {
-              const t = transactions[0];
-              amountDisplay = `$${t.amount} - ${t.type}`;
-            } else if (allSameType) {
-              const amounts = transactions
-                .map((t) => `$${t.amount}`)
-                .join('+');
-              amountDisplay = `${amounts} ${transactions[0].type}`;
-            } else {
-              amountDisplay = transactions
-                .map((t) => `$${t.amount} ${t.type}`)
-                .join(' + ');
-            }
-            return `${maskedUsername} (${amountDisplay})`;
-          })
-          .join(', ');
+              let amountDisplay: string;
+              if (transactions.length === 1) {
+                const t = transactions[0];
+                amountDisplay = `$${t.amount} - ${t.type}`;
+              } else if (allSameType) {
+                const amounts = transactions
+                  .map((t) => `$${t.amount}`)
+                  .join('+');
+                amountDisplay = `${amounts} ${transactions[0].type}`;
+              } else {
+                amountDisplay = transactions
+                  .map((t) => `$${t.amount} ${t.type}`)
+                  .join(' + ');
+              }
+              return `${maskedUsername} (${amountDisplay})`;
+            })
+            .join(', ');
 
     const topCustomerProfilesCount =
       topCustomers.length > 0 ? topCustomers.length.toString() : 'customers';
@@ -787,13 +843,13 @@ async function generateTodayStats(): Promise<string> {
       topUsageUsers.length === 0
         ? 'No usage'
         : topUsageUsers
-          .map(([userId, credits]) => {
-            const username = userIdToUsername.get(userId) ?? 'Unknown';
-            const maskedName = maskUsername(username);
-            const dollarValue = (credits * LRCV).toFixed(2);
-            return `${maskedName} (${formatCompactNumber(credits)} ≈ $${dollarValue})`;
-          })
-          .join(', ');
+            .map(([userId, credits]) => {
+              const username = userIdToUsername.get(userId) ?? 'Unknown';
+              const maskedName = maskUsername(username);
+              const dollarValue = (credits * LRCV).toFixed(2);
+              return `${maskedName} (${formatCompactNumber(credits)} ≈ $${dollarValue})`;
+            })
+            .join(', ');
 
     const message = [
       `📊 Daily Stats — ${today.toISOString().slice(0, 10)} (Today)`,
@@ -820,12 +876,12 @@ async function generateTodayStats(): Promise<string> {
       '',
       ...(refundsTodayCount > 0
         ? [
-          `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
-          `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Today: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
-        ]
+            `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
+            `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Today: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
+          ]
         : [
-          `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
-        ]),
+            `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
+          ]),
       '',
       '🔌 API:',
       `  - Used Keys (new): ${usedNewApiKeysCount}`,
@@ -843,10 +899,7 @@ async function generateTodayStats(): Promise<string> {
       // Subscribers info not available in Deno without extra implementation
       '',
       ...(hasInvalidMetadata
-        ? [
-          '‼️ Info',
-          '  - Invalid Metadata in credit_transactions',
-        ]
+        ? ['‼️ Info', '  - Invalid Metadata in credit_transactions']
         : []),
     ];
 

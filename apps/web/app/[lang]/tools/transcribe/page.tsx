@@ -39,32 +39,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = `https://sexyvoice.ai/${lang}/tools/transcribe`;
 
   return {
-    title,
-    description,
-    keywords: keywordsArray,
-    authors: [{ name: 'SexyVoice.ai' }],
-    openGraph: {
-      title: `${title} | SexyVoice.ai`,
-      description,
-      url,
-      siteName: 'SexyVoice.ai',
-      type: 'website',
-      locale: lang,
-      images: [
-        {
-          url: 'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${title} | SexyVoice.ai`,
-      description,
-      images: ['https://sexyvoice.ai/posts/free-audio-transcription-tool.webp'],
-    },
     alternates: {
       canonical: url,
       languages: Object.fromEntries(
@@ -73,6 +47,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           `https://sexyvoice.ai/${locale}/tools/transcribe`,
         ]),
       ),
+    },
+    authors: [{ name: 'SexyVoice.ai' }],
+    description,
+    keywords: keywordsArray,
+    openGraph: {
+      description,
+      images: [
+        {
+          alt: title,
+          height: 630,
+          url: 'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
+          width: 1200,
+        },
+      ],
+      locale: lang,
+      siteName: 'SexyVoice.ai',
+      title: `${title} | SexyVoice.ai`,
+      type: 'website',
+      url,
+    },
+    title,
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      images: ['https://sexyvoice.ai/posts/free-audio-transcription-tool.webp'],
+      title: `${title} | SexyVoice.ai`,
     },
   };
 }
@@ -95,94 +95,94 @@ export default async function TranscribePage({ params }: Props) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'WebApplication',
         '@id': `${url}/#webapp`,
-        name: title,
-        description,
-        url,
+        '@type': 'WebApplication',
         applicationCategory: 'MultimediaApplication',
         applicationSubCategory: 'Audio Transcription',
-        operatingSystem: 'Any',
         browserRequirements:
           'Requires a modern browser with WebAssembly support',
+        description,
         featureList:
           'Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English',
-        screenshot:
-          'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
+        inLanguage: lang,
+        isAccessibleForFree: true,
+        name: title,
         offers: {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
         },
-        isAccessibleForFree: true,
-        inLanguage: lang,
+        operatingSystem: 'Any',
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+        screenshot:
+          'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
+        url,
       },
       {
-        '@type': 'HowTo',
         '@id': `${url}/#howto`,
-        name: title,
+        '@type': 'HowTo',
         description,
         inLanguage: lang,
-        totalTime: 'PT2M',
+        name: title,
         step: [
           {
             '@type': 'HowToStep',
-            position: 1,
             name: 'Open the transcription tool',
+            position: 1,
             text: 'Navigate to the free audio transcription tool on SexyVoice.ai.',
             url,
           },
           {
             '@type': 'HowToStep',
-            position: 2,
             name: 'Add your audio',
+            position: 2,
             text: 'Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.',
             url,
           },
           {
             '@type': 'HowToStep',
-            position: 3,
             name: 'Choose a Whisper model',
+            position: 3,
             text: 'Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.',
             url,
           },
           {
             '@type': 'HowToStep',
-            position: 4,
             name: 'Select language and task',
+            position: 4,
             text: 'Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.',
             url,
           },
           {
             '@type': 'HowToStep',
-            position: 5,
             name: 'Transcribe',
+            position: 5,
             text: 'Click "Load Model & Transcribe". The model downloads once and is cached for future use.',
             url,
           },
           {
             '@type': 'HowToStep',
-            position: 6,
             name: 'Copy your transcript',
+            position: 6,
             text: 'Your timestamped transcript appears instantly. Copy it with one click.',
             url,
           },
         ],
+        totalTime: 'PT2M',
       },
       {
-        '@type': 'FAQPage',
         '@id': `${url}/#faq`,
+        '@type': 'FAQPage',
         inLanguage: lang,
         mainEntity: faqItems.map((item) => ({
           '@type': 'Question',
-          name: item.question,
           acceptedAnswer: {
             '@type': 'Answer',
             text: item.answer,
           },
+          name: item.question,
         })),
       },
       {
@@ -190,15 +190,15 @@ export default async function TranscribePage({ params }: Props) {
         itemListElement: [
           {
             '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
             item: `https://sexyvoice.ai/${lang}`,
+            name: 'Home',
+            position: 1,
           },
           {
             '@type': 'ListItem',
-            position: 2,
-            name: tPages('/tools/transcribe') || 'Audio Transcription',
             item: url,
+            name: tPages('/tools/transcribe') || 'Audio Transcription',
+            position: 2,
           },
         ],
       },

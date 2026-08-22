@@ -388,9 +388,9 @@ export function AudioGenerator({
   } = useSplitSegments({
     generationContext: splitGenerationContext,
     selectedVoiceName: selectedVoice?.name,
-    text,
     shouldUseSplitMode,
     splitSegmentTexts: previewSplitSegmentTexts,
+    text,
   });
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
     useGenerationProgressToast(selectedVoice?.name);
@@ -422,13 +422,11 @@ export function AudioGenerator({
         seed ?? (isGeminiVoice ? (settings.seed ?? undefined) : undefined);
 
       const response = await fetch('/api/generate-voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          language: isGrokVoice ? selectedGrokLanguage : undefined,
+          styleVariant: isGeminiVoice ? selectedStyle : '',
           text: segmentText,
           voiceId: selectedVoice.id,
-          styleVariant: isGeminiVoice ? selectedStyle : '',
-          language: isGrokVoice ? selectedGrokLanguage : undefined,
           ...(effectiveSeed === undefined ? {} : { seed: effectiveSeed }),
           ...(isGeminiVoice && settings.temperature !== null
             ? { temperature: settings.temperature }
@@ -438,6 +436,8 @@ export function AudioGenerator({
             : {}),
           split,
         }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
         signal,
       });
 
@@ -468,18 +468,18 @@ export function AudioGenerator({
       }
 
       const response = await fetch('/api/generate-voice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
+          styleVariant: selectedStyle ?? '',
           text: segmentText,
           voiceId: selectedVoice.id,
-          styleVariant: selectedStyle ?? '',
-          stream: true,
           ...(settings.seed === null ? {} : { seed: settings.seed }),
           ...(settings.temperature === null
             ? {}
             : { temperature: settings.temperature }),
         }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
         signal,
       });
 
@@ -569,9 +569,8 @@ export function AudioGenerator({
     );
     setAudioURL(url);
     toast.success(t('success'));
-  }, [requestGenerateVoice, selectedVoice, text]);
+  }, [requestGenerateVoice, selectedVoice, text, t]);
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: sequential fail-fast flow
   const generateSplitAudios = useCallback(async () => {
     if (!(selectedVoice && splitSegments.length > 0)) return;
 
@@ -613,7 +612,7 @@ export function AudioGenerator({
 
       latestSegments = latestSegments.map((segment, segmentIndex) =>
         segmentIndex === index
-          ? { ...segment, status: 'generating', audioUrl: '' }
+          ? { ...segment, audioUrl: '', status: 'generating' }
           : segment,
       );
       markSegmentGenerating(index);
@@ -632,7 +631,7 @@ export function AudioGenerator({
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
           segmentIndex === index
-            ? { ...segment, status: 'success', audioUrl: generatedUrl }
+            ? { ...segment, audioUrl: generatedUrl, status: 'success' }
             : segment,
         );
         markSegmentSuccess(index, currentSegmentTexts[index], generatedUrl);
@@ -647,7 +646,7 @@ export function AudioGenerator({
         if (error instanceof DOMException && error.name === 'AbortError') {
           latestSegments = latestSegments.map((segment, segmentIndex) =>
             segmentIndex === index
-              ? { ...segment, status: 'idle', audioUrl: '' }
+              ? { ...segment, audioUrl: '', status: 'idle' }
               : segment,
           );
           markSegmentIdle(index);
@@ -684,6 +683,7 @@ export function AudioGenerator({
     selectedVoice,
     showGenerationProgressToast,
     splitSegments,
+    t,
   ]);
 
   const handleGenerate = useCallback(async () => {
@@ -727,6 +727,7 @@ export function AudioGenerator({
     selectedVoice,
     shouldUseSplitMode,
     splitSegmentTexts.length,
+    t,
   ]);
 
   const handleCancel = useCallback(() => {
@@ -803,6 +804,7 @@ export function AudioGenerator({
       selectedVoice,
       showGenerationProgressToast,
       splitSegments,
+      t,
     ],
   );
 
@@ -934,9 +936,9 @@ export function AudioGenerator({
         const durationSec = await getAudioDurationSeconds(file);
 
         segmentInputs.push({
+          endSec: durationSec,
           file,
           startSec: 0,
-          endSec: durationSec,
         });
       }
 
@@ -1021,15 +1023,15 @@ export function AudioGenerator({
       }
 
       const response = await fetch('/api/estimate-credits', {
-        method: 'POST',
+        body: JSON.stringify({
+          styleVariant: isGeminiVoice ? selectedStyle : '',
+          text: textToEstimate,
+          voiceId: selectedVoice.id,
+        }),
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text: textToEstimate,
-          voiceId: selectedVoice.id,
-          styleVariant: isGeminiVoice ? selectedStyle : '',
-        }),
+        method: 'POST',
       });
 
       const data = await response.json();
@@ -1045,7 +1047,7 @@ export function AudioGenerator({
 
       return value;
     },
-    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice],
+    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice, t],
   );
 
   const handleEstimateCredits = async () => {

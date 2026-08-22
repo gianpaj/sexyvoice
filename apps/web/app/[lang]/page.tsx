@@ -32,6 +32,7 @@ import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import { routing } from '@/src/i18n/routing';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
@@ -91,54 +92,54 @@ export default async function LandingPage(props: {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
         '@id': 'https://sexyvoice.ai/#organization',
-        name: 'SexyVoice.ai',
-        url: 'https://sexyvoice.ai',
+        '@type': 'Organization',
         logo: 'https://sexyvoice.ai/icon-192x192.png',
+        name: 'SexyVoice.ai',
         sameAs: [
           'https://x.com/sexyvoiceai',
           'https://instagram.com/sexyvoice_ai',
         ],
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebSite',
         '@id': 'https://sexyvoice.ai/#website',
-        url: 'https://sexyvoice.ai',
-        name: 'SexyVoice.ai',
+        '@type': 'WebSite',
         description: messages.pages.description,
+        inLanguage: lang,
+        name: 'SexyVoice.ai',
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
-        inLanguage: lang,
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
-        url: siteUrl,
-        name: messages.pages.defaultTitle,
-        description: messages.pages.description,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
+        '@type': 'WebPage',
         about: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+        description: messages.pages.description,
         inLanguage: lang,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        name: messages.pages.defaultTitle,
+        url: siteUrl,
       },
       {
-        '@type': 'FAQPage',
         '@id': `${siteUrl}/#faq`,
+        '@type': 'FAQPage',
         isPartOf: {
           '@id': `${siteUrl}/#webpage`,
         },
         mainEntity: faqQuestions.map((q) => ({
           '@type': 'Question' as const,
-          name: q.question,
           acceptedAnswer: {
             '@type': 'Answer' as const,
             text: q.answer,
           },
+          name: q.question,
         })),
       },
     ],
@@ -225,7 +226,11 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 lg:grid-cols-3">
+            <div
+              className={`mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 ${
+                VOICE_CLONING_PAGE_ENABLED ? 'lg:grid-cols-3' : 'lg:grid-cols-2'
+              }`}
+            >
               <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
                 <Link href="/voice-call" prefetch>
                   <CardHeader className="pb-3">
@@ -248,28 +253,30 @@ export default async function LandingPage(props: {
                   </CardContent>
                 </Link>
               </Card>
-              <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
-                <Link href="/voice-cloning" prefetch>
-                  <CardHeader className="pb-3">
-                    <CardDecorator>
-                      <AudioLines
-                        aria-hidden
-                        className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
-                      />
-                    </CardDecorator>
+              {VOICE_CLONING_PAGE_ENABLED && (
+                <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
+                  <Link href="/voice-cloning" prefetch>
+                    <CardHeader className="pb-3">
+                      <CardDecorator>
+                        <AudioLines
+                          aria-hidden
+                          className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
+                        />
+                      </CardDecorator>
 
-                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
-                      {dictLanding.features.voiceCloneDemo.title}
-                    </h3>
-                  </CardHeader>
+                      <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
+                        {dictLanding.features.voiceCloneDemo.title}
+                      </h3>
+                    </CardHeader>
 
-                  <CardContent>
-                    <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
-                      {dictLanding.features.voiceCloneDemo.description}
-                    </p>
-                  </CardContent>
-                </Link>
-              </Card>
+                    <CardContent>
+                      <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
+                        {dictLanding.features.voiceCloneDemo.description}
+                      </p>
+                    </CardContent>
+                  </Link>
+                </Card>
+              )}
               <Card className="group max-w-sm shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
@@ -355,7 +362,7 @@ export default async function LandingPage(props: {
                           loading="lazy"
                           priority={false}
                           src={post.image}
-                          style={{ width: '100%', height: 'auto' }}
+                          style={{ height: 'auto', width: '100%' }}
                           width={300}
                         />
                       )}

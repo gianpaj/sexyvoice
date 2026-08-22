@@ -177,7 +177,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Tu voz, en todos los idiomas",
-        "subtitle": "Clona una voz con unos segundos de audio.\nEscúchala hablar con naturalidad en 9 idiomas."
+        "subtitle": "Clona una voz con unos segundos de audio.\nEscúchala hablar con naturalidad en 23 idiomas."
       },
       "cta": {
         "freeCredits": "Comienza con 10,000 créditos gratis",
@@ -605,6 +605,7 @@
     "configurationUpdateError": "Error al actualizar la configuración",
     "agentUnavailable": "Agente no disponible",
     "activeCallError": "Ya tienes una llamada activa en curso",
+    "instructionsRejected": "Esta llamada no pudo iniciarse porque el personaje o la escena no superaron las comprobaciones de seguridad del proveedor de IA. Edita el personaje o la escena e inténtalo de nuevo.",
     "microphonePermissionDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono e inténtalo de nuevo.",
     "disconnected": "Desconectado",
     "chooseCharacter": "¿Con quién quieres hablar?",
@@ -892,7 +893,7 @@
     }
   },
   "apiBilling": {
-    "description": "Monitorea el uso de la API, las solicitudes y los costos a lo largo del tiempo."
+    "description": "Monitorea el uso de la API y las solicitudes a lo largo del tiempo."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Generador de voz IA gratis y texto a voz",
@@ -903,7 +904,7 @@
     "titleVoiceCall": "Llamadas de Voz con IA – Habla con Personajes IA en Vivo",
     "descriptionVoiceCall": "Haz llamadas telefónicas en vivo con IA y tus voces favoritas. Habla en tiempo real con personajes de IA – conversaciones naturales gracias a la tecnología de voz de SexyVoice.ai.",
     "titleVoiceCloning": "Clonación de voz con IA",
-    "descriptionVoiceCloning": "Clona una voz con unos segundos de audio y escúchala hablar con naturalidad en 9 idiomas.",
+    "descriptionVoiceCloning": "Clona una voz con unos segundos de audio y escúchala hablar con naturalidad en 23 idiomas.",
     "/": "",
     "/voice-call": "Llamada de Voz",
     "/login": "Iniciar sesión",
@@ -945,6 +946,26 @@
     "header": "Historial de Generación",
     "empty": "Sin historial aún",
     "downloadError": "Error al descargar el audio",
+    "delete": {
+      "cancel": "Cancelar",
+      "deleting": "Eliminando...",
+      "single": {
+        "trigger": "Eliminar",
+        "title": "¿Eliminar el archivo de audio?",
+        "description": "Este archivo de audio se eliminará de tu historial. Esta acción no se puede deshacer.",
+        "confirm": "Eliminar",
+        "success": "Archivo de audio eliminado",
+        "error": "No se pudo eliminar el archivo de audio. Inténtalo de nuevo."
+      },
+      "all": {
+        "trigger": "Eliminar todo",
+        "title": "¿Eliminar todos los archivos de audio?",
+        "description": "{count, plural, one {El archivo de audio se eliminará de tu historial. Esta acción no se puede deshacer.} other {Los # archivos de audio se eliminarán de tu historial. Esta acción no se puede deshacer.}}",
+        "confirm": "Eliminar todo",
+        "success": "Todos los archivos de audio se eliminaron",
+        "error": "No se pudieron eliminar todos los archivos de audio. Inténtalo de nuevo."
+      }
+    },
     "ui": {
       "filterText": "Filtrar texto...",
       "customizeColumns": "Personalizar Columnas",

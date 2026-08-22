@@ -25,11 +25,11 @@ import {
 } from './ui/accordion';
 
 const faqIconMap: Record<string, LucideIcon> = {
-  liveCalling: PhoneCall,
-  voiceCreation: Sparkles,
   languages: Languages,
-  trustAndPolicies: ShieldCheck,
+  liveCalling: PhoneCall,
   pricingAndAccess: Coins,
+  trustAndPolicies: ShieldCheck,
+  voiceCreation: Sparkles,
 };
 
 // Default group ids surfaced first, in this order. Pages reuse this component

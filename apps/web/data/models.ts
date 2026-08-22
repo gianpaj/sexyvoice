@@ -1,5 +1,6 @@
 export const ModelId = {
   // Grok Voice Agent model
+  GROK_VOICE_THINK_FAST_1_0: 'grok-voice-think-fast-1.0',
   GROK_VOICE_THINK_FAST_2_0: 'grok-voice-think-fast-2.0',
   // Inworld realtime voice model (uses a cloned audio_references voice)
   INWORLD_REALTIME: 'inworld-realtime',
@@ -7,7 +8,7 @@ export const ModelId = {
 
 export type ModelIdValue = (typeof ModelId)[keyof typeof ModelId];
 
-export const DEFAULT_MODEL_ID: ModelIdValue = ModelId.GROK_VOICE_THINK_FAST_2_0;
+export const DEFAULT_MODEL_ID: ModelIdValue = ModelId.GROK_VOICE_THINK_FAST_1_0;
 
 /**
  * Model ids that are no longer offered, mapped to their replacement. Rows in
@@ -15,7 +16,8 @@ export const DEFAULT_MODEL_ID: ModelIdValue = ModelId.GROK_VOICE_THINK_FAST_2_0;
  * every read path normalizes instead of trusting the stored value.
  */
 const REPLACED_MODEL_IDS: Record<string, ModelIdValue> = {
-  'grok-voice-think-fast-1.0': ModelId.GROK_VOICE_THINK_FAST_2_0,
+  'grok-voice-think-fast-1.0': ModelId.GROK_VOICE_THINK_FAST_1_0,
+  'grok-voice-think-fast-2.0': ModelId.GROK_VOICE_THINK_FAST_1_0,
 };
 
 const SUPPORTED_MODEL_IDS = new Set<string>(Object.values(ModelId));

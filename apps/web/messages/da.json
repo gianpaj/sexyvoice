@@ -177,7 +177,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Din stemme, på alle sprog",
-        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på 9 sprog."
+        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på 23 sprog."
       },
       "cta": {
         "freeCredits": "Start med 10.000 gratis kreditter",
@@ -601,6 +601,7 @@
     "configurationUpdateError": "Fejl ved opdatering af konfiguration",
     "agentUnavailable": "Agenten er ikke tilgængelig",
     "activeCallError": "Du har allerede et aktivt opkald i gang",
+    "instructionsRejected": "Opkaldet kunne ikke starte, fordi karakteren eller scenen ikke bestod AI-udbyderens sikkerhedstjek. Rediger karakteren eller scenen, og prøv igen.",
     "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
@@ -888,7 +889,7 @@
     }
   },
   "apiBilling": {
-    "description": "Overvåg API-brug, anmodninger og omkostninger over tid."
+    "description": "Overvåg API-brug og anmodninger over tid."
   },
   "pages": {
     "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator",
@@ -899,7 +900,7 @@
     "titleVoiceCall": "AI-stemmeopkald – Tal live med AI-karakterer",
     "descriptionVoiceCall": "Før live AI-telefonopkald med dine yndlingsstemmer. Tal i realtid med AI-karakterer – naturlige samtaler drevet af SexyVoice.ai's stemmeteknologi.",
     "titleVoiceCloning": "AI-stemmekloning",
-    "descriptionVoiceCloning": "Klon en stemme ud fra få sekunders lyd, og hør den tale naturligt på 9 sprog.",
+    "descriptionVoiceCloning": "Klon en stemme ud fra få sekunders lyd, og hør den tale naturligt på 23 sprog.",
     "/": "",
     "/voice-call": "Stemmeopkald",
     "/login": "Log ind",
@@ -941,6 +942,26 @@
     "header": "Genereringshistorik",
     "empty": "Ingen historik endnu",
     "downloadError": "Kunne ikke downloade lyd",
+    "delete": {
+      "cancel": "Annuller",
+      "deleting": "Sletter...",
+      "single": {
+        "trigger": "Slet",
+        "title": "Slet lydfil?",
+        "description": "Denne lydfil bliver fjernet fra din historik. Handlingen kan ikke fortrydes.",
+        "confirm": "Slet",
+        "success": "Lydfilen er slettet",
+        "error": "Lydfilen kunne ikke slettes. Prøv igen."
+      },
+      "all": {
+        "trigger": "Slet alle",
+        "title": "Slet alle lydfiler?",
+        "description": "{count, plural, one {Lydfilen bliver fjernet fra din historik. Handlingen kan ikke fortrydes.} other {Alle # lydfiler bliver fjernet fra din historik. Handlingen kan ikke fortrydes.}}",
+        "confirm": "Slet alle",
+        "success": "Alle lydfiler er slettet",
+        "error": "Alle lydfiler kunne ikke slettes. Prøv igen."
+      }
+    },
     "ui": {
       "filterText": "Filtrer tekst...",
       "customizeColumns": "Tilpas kolonner",

@@ -40,9 +40,9 @@ function CreditsSection({
     ) || 0;
 
   const { data: creditsData } = useQuery({
-    queryKey: ['credits', userId],
     enabled: !!userId,
     queryFn: () => getCredits(supabase, userId),
+    queryKey: ['credits', userId],
   });
 
   useEffect(() => {
@@ -71,9 +71,9 @@ function CreditsSection({
       initPostHog()
         .then((posthog) => {
           posthog?.identify(user.id, {
+            creditsLeft,
             email: user.email,
             name: user.user_metadata.full_name || user.user_metadata.username,
-            creditsLeft,
             userHasPaid,
           });
         })
@@ -98,8 +98,8 @@ function CreditsSection({
       }
 
       Crisp.session.setData({
-        user_id: user.id,
         creditsLeft,
+        user_id: user.id,
         userHasPaid,
       });
     };

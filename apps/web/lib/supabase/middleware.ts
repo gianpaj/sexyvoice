@@ -1,8 +1,10 @@
 import { captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { ensureUserApplicationState } from './ensure-user-application-state';
 import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 import { createClient } from './server';
 
@@ -15,13 +17,13 @@ const routesPerLocale = (routes: string[]): string[] =>
 
 const clearOauthCallbackCookie = (response: NextResponse) => {
   response.cookies.set({
-    name: OAUTH_CALLBACK_COOKIE_NAME,
-    value: '',
     httpOnly: true,
     maxAge: 0,
+    name: OAUTH_CALLBACK_COOKIE_NAME,
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
+    value: '',
   });
 
   return response;
@@ -92,14 +94,14 @@ export const updateSession = async (
         captureMessage(
           'OAuth callback completed but dashboard session was missing.',
           {
+            extra: {
+              locale,
+              pathname,
+            },
             level: 'error',
             tags: {
               area: 'auth',
               flow: 'oauth-callback',
-            },
-            extra: {
-              pathname,
-              locale,
             },
           },
         );
@@ -110,16 +112,29 @@ export const updateSession = async (
       console.log(
         'Dashboard request missing user without valid OAuth callback marker',
         {
-          pathname,
-          locale,
-          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
-          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
           hasOauthCallbackMarker,
+          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+          locale,
+          pathname,
+          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
         },
       );
 
       // no user, potentially respond by redirecting the user to the login page
       return redirectResponse;
+    }
+
+    if (user && dashboardPath && !isE2E()) {
+      try {
+        await ensureUserApplicationState({
+          createdAt: user.created_at,
+          email: user.email,
+          id: user.id,
+        });
+      } catch {
+        // Restoration failures are reported to Sentry inside the helper.
+        // Never block dashboard access on this best-effort repair.
+      }
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);

@@ -235,8 +235,8 @@ function VoiceSetupStepContent({
             loading={inworldVoicesLoading}
             onChange={(value) =>
               dispatch({
-                type: 'patch',
                 patch: { selectedAudioReferenceId: value },
+                type: 'patch',
               })
             }
             onVoiceDeleted={onVoiceDeleted}
@@ -302,8 +302,8 @@ function InworldVoiceSetupActions({
         onClick={() => {
           if (isReusingVoice) {
             dispatch({
-              type: 'patch',
               patch: { activeTab: 'generate' },
+              type: 'patch',
             });
             return;
           }
@@ -490,7 +490,7 @@ function NewVoiceClientInner({
 
   // Load the user's saved Inworld voices when the Inworld engine is selected.
   const loadInworldVoices = useCallback(async () => {
-    dispatch({ type: 'patch', patch: { inworldVoicesLoading: true } });
+    dispatch({ patch: { inworldVoicesLoading: true }, type: 'patch' });
     try {
       const res = await fetch('/api/audio-references?provider=inworld');
       if (!res.ok) {
@@ -508,24 +508,24 @@ function NewVoiceClientInner({
         }[];
       };
       dispatch({
-        type: 'patch',
         patch: {
           inworldVoices: (json.data ?? []).map((row) => ({
+            createdAt: row.created_at,
             id: row.id,
+            isPaid: row.is_paid,
+            locale: row.locale,
+            name: row.name,
             provider: row.provider,
             voiceId: row.voice_id,
-            name: row.name,
-            locale: row.locale,
-            isPaid: row.is_paid,
-            createdAt: row.created_at,
           })),
         },
+        type: 'patch',
       });
     } catch (error) {
       console.error('Failed to load Inworld voices:', error);
       toast.error(t('errors.failedToLoadVoices'));
     } finally {
-      dispatch({ type: 'patch', patch: { inworldVoicesLoading: false } });
+      dispatch({ patch: { inworldVoicesLoading: false }, type: 'patch' });
     }
   }, [t]);
 
@@ -536,20 +536,20 @@ function NewVoiceClientInner({
   }, [usesInworld, loadInworldVoices]);
 
   const onVoiceDeleted = useCallback(() => {
-    dispatch({ type: 'patch', patch: { selectedAudioReferenceId: 'new' } });
+    dispatch({ patch: { selectedAudioReferenceId: 'new' }, type: 'patch' });
     loadInworldVoices().catch(() => undefined);
   }, [loadInworldVoices]);
 
   // Preload FFmpeg when a provider that needs WAV reference audio is selected
   useEffect(() => {
     if (needsWavPreload) {
-      dispatch({ type: 'patch', patch: { ffmpegError: null } });
+      dispatch({ patch: { ffmpegError: null }, type: 'patch' });
       ensureLoaded().catch((error) => {
         const errorMsg =
           error instanceof Error
             ? error.message
             : t('failedToLoadAudioProcessor');
-        dispatch({ type: 'patch', patch: { ffmpegError: errorMsg } });
+        dispatch({ patch: { ffmpegError: errorMsg }, type: 'patch' });
         console.error('FFmpeg preload error:', error);
       });
     }
@@ -557,7 +557,7 @@ function NewVoiceClientInner({
 
   const handleStartRecording = async () => {
     try {
-      dispatch({ type: 'patch', patch: { ffmpegError: null } });
+      dispatch({ patch: { ffmpegError: null }, type: 'patch' });
       // Preload FFmpeg before recording if needed for this locale/provider
       if (needsWavPreload) {
         await ensureLoaded();
@@ -569,13 +569,13 @@ function NewVoiceClientInner({
           ? error.message
           : t('failedToLoadAudioProcessor');
       dispatch({
-        type: 'patch',
         patch: {
-          ffmpegError: errorMsg,
           errorMessage: formatCloneMessage(t('failedToStartRecording'), {
             ERROR: errorMsg,
           }),
+          ffmpegError: errorMsg,
         },
+        type: 'patch',
       });
     }
   };
@@ -591,29 +591,29 @@ function NewVoiceClientInner({
     getMediaStream,
   } = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
-    onStop: (blob) => {
-      // Store the raw blob - conversion will happen at generation time based on the locale
-      dispatch({ type: 'patch', patch: { micBlob: blob } });
-    },
     onError: (err) => {
       console.error(err);
       dispatch({
-        type: 'patch',
         patch: {
           ffmpegError:
             err instanceof Error ? err.message : t('microphoneError'),
         },
+        type: 'patch',
       });
     },
     onStart: () => {
       dispatch({
-        type: 'patch',
         patch: {
-          micRecording: true,
-          micBlob: null,
           ffmpegError: null,
+          micBlob: null,
+          micRecording: true,
         },
+        type: 'patch',
       });
+    },
+    onStop: (blob) => {
+      // Store the raw blob - conversion will happen at generation time based on the locale
+      dispatch({ patch: { micBlob: blob }, type: 'patch' });
     },
   });
 
@@ -627,10 +627,10 @@ function NewVoiceClientInner({
     const translated = getTranslatedLanguages(lang, codes);
     const merged = translated.map(({ value: code, label }) => ({
       code,
+      name: label,
       value:
         supportedLocaleOptions.find((locale) => locale.code === code)?.value ||
         code,
-      name: label,
     }));
     return sortByPageLocale(merged, lang);
   })();
@@ -650,23 +650,23 @@ function NewVoiceClientInner({
     }
 
     dispatch({
-      type: 'patch',
       patch: {
         selectedLocale: {
           code: fallbackLocale.code,
           value: fallbackLocale.value,
         },
       },
+      type: 'patch',
     });
   }, [selectedLocale.code, supportedLocales]);
 
   const onFilesAdded = useCallback(() => {
     dispatch({
-      type: 'patch',
       patch: {
-        status: 'idle',
         errorMessage: '',
+        status: 'idle',
       },
+      type: 'patch',
     });
   }, []);
 
@@ -677,10 +677,10 @@ function NewVoiceClientInner({
   );
 
   const [fileState, fileActions] = useFileUpload({
-    onFilesAdded,
-    maxSize: CLONING_FILE_MAX_SIZE,
     accept: ALLOWED_TYPES,
+    maxSize: CLONING_FILE_MAX_SIZE,
     multiple: false,
+    onFilesAdded,
   });
   const { files, errors } = fileState;
   const { clearErrors } = fileActions;
@@ -690,43 +690,42 @@ function NewVoiceClientInner({
   // Clear custom error message when file upload errors change
   useEffect(() => {
     if (errors.length > 0) {
-      dispatch({ type: 'patch', patch: { errorMessage: '' } });
+      dispatch({ patch: { errorMessage: '' }, type: 'patch' });
     }
   }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Existing generation flow handles file, microphone, conversion, API, and error states together.
   const handleGenerate = async () => {
     if (!(isReusingVoice || file || micBlob)) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.noAudioFile'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
 
     if (!text.trim()) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.noText'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
 
     if (usesInworld && !isReusingVoice) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.inworldVoiceRequired'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
@@ -734,11 +733,11 @@ function NewVoiceClientInner({
     // Clear both custom errors and file upload errors
     clearErrors();
     dispatch({
-      type: 'patch',
       patch: {
         errorMessage: '',
         status: 'generating',
       },
+      type: 'patch',
     });
 
     let voiceRes: Response | undefined;
@@ -765,8 +764,8 @@ function NewVoiceClientInner({
 
           if (shouldConvertMicAudio) {
             dispatch({
-              type: 'patch',
               patch: { convertingMicAudio: true },
+              type: 'patch',
             });
           }
 
@@ -783,7 +782,6 @@ function NewVoiceClientInner({
             console.error('WebM to WAV conversion error:', convertError);
             // TODO send logs to Sentry
             dispatch({
-              type: 'patch',
               patch: {
                 errorMessage:
                   convertError instanceof Error
@@ -796,13 +794,14 @@ function NewVoiceClientInner({
                     : t('audioConversionFailed'),
                 status: 'error',
               },
+              type: 'patch',
             });
             return;
           } finally {
             if (shouldConvertMicAudio) {
               dispatch({
-                type: 'patch',
                 patch: { convertingMicAudio: false },
+                type: 'patch',
               });
             }
           }
@@ -810,11 +809,11 @@ function NewVoiceClientInner({
 
         if (!audioToProcess) {
           dispatch({
-            type: 'patch',
             patch: {
               errorMessage: t('errors.noAudioFile'),
               status: 'error',
             },
+            type: 'patch',
           });
           return;
         }
@@ -827,8 +826,8 @@ function NewVoiceClientInner({
       }
 
       voiceRes = await fetch('/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
         signal: abortController.current.signal,
       });
 
@@ -858,11 +857,11 @@ function NewVoiceClientInner({
         }
 
         dispatch({
-          type: 'patch',
           patch: {
             errorMessage,
             status: 'error',
           },
+          type: 'patch',
         });
         return;
       }
@@ -872,12 +871,12 @@ function NewVoiceClientInner({
       toast.success(t('success'));
 
       dispatch({
-        type: 'patch',
         patch: {
           activeTab: 'preview',
           generatedAudioUrl: voiceResult.url,
           status: 'complete',
         },
+        type: 'patch',
       });
 
       // A new Inworld voice was just saved — refresh the reusable-voice list.
@@ -898,46 +897,45 @@ function NewVoiceClientInner({
         errorMsg = err.message;
       }
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: errorMsg || t('unexpectedError'),
           status: 'error',
         },
+        type: 'patch',
       });
     }
   };
 
-  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Inworld voice creation handles validation, microphone conversion, upload, API errors, and state transitions together.
   const handleCreateInworldVoice = async () => {
     if (!(file || micBlob)) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.noAudioFile'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
 
     if (!voiceName.trim()) {
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: t('errors.voiceNameRequired'),
           status: 'error',
         },
+        type: 'patch',
       });
       return;
     }
 
     clearErrors();
     dispatch({
-      type: 'patch',
       patch: {
         errorMessage: '',
         status: 'generating',
       },
+      type: 'patch',
     });
 
     let voiceRes: Response | undefined;
@@ -950,8 +948,8 @@ function NewVoiceClientInner({
 
         if (shouldConvertMicAudio) {
           dispatch({
-            type: 'patch',
             patch: { convertingMicAudio: true },
+            type: 'patch',
           });
         }
 
@@ -967,7 +965,6 @@ function NewVoiceClientInner({
         } catch (convertError) {
           console.error('WebM to WAV conversion error:', convertError);
           dispatch({
-            type: 'patch',
             patch: {
               errorMessage:
                 convertError instanceof Error
@@ -977,13 +974,14 @@ function NewVoiceClientInner({
                   : t('audioConversionFailed'),
               status: 'error',
             },
+            type: 'patch',
           });
           return;
         } finally {
           if (shouldConvertMicAudio) {
             dispatch({
-              type: 'patch',
               patch: { convertingMicAudio: false },
+              type: 'patch',
             });
           }
         }
@@ -991,11 +989,11 @@ function NewVoiceClientInner({
 
       if (!audioToProcess) {
         dispatch({
-          type: 'patch',
           patch: {
             errorMessage: t('errors.noAudioFile'),
             status: 'error',
           },
+          type: 'patch',
         });
         return;
       }
@@ -1006,8 +1004,8 @@ function NewVoiceClientInner({
       formData.append('name', voiceName);
 
       voiceRes = await fetch('/api/audio-references', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
         signal: abortController.current.signal,
       });
 
@@ -1024,11 +1022,11 @@ function NewVoiceClientInner({
         errorMessage = voiceResult?.error || errorMessage;
 
         dispatch({
-          type: 'patch',
           patch: {
             errorMessage,
             status: 'error',
           },
+          type: 'patch',
         });
         return;
       }
@@ -1039,13 +1037,13 @@ function NewVoiceClientInner({
 
       toast.success(t('voiceCreated'));
       dispatch({
-        type: 'patch',
         patch: {
           activeTab: 'generate',
           errorMessage: '',
           selectedAudioReferenceId: voiceResult.data.id,
           status: 'idle',
         },
+        type: 'patch',
       });
       loadInworldVoices().catch(() => undefined);
     } catch (err) {
@@ -1062,18 +1060,18 @@ function NewVoiceClientInner({
         errorMsg = err.message;
       }
       dispatch({
-        type: 'patch',
         patch: {
           errorMessage: errorMsg || t('unexpectedError'),
           status: 'error',
         },
+        type: 'patch',
       });
     }
   };
 
   const handleCancel = useCallback(() => {
     abortController.current?.abort();
-    dispatch({ type: 'patch', patch: { status: 'idle' } });
+    dispatch({ patch: { status: 'idle' }, type: 'patch' });
   }, []);
 
   const textIsOverLimit = text.length > textMaxLength;
@@ -1125,11 +1123,11 @@ function NewVoiceClientInner({
 
   const onSelectSample = (sample: SampleAudio) => {
     dispatch({
-      type: 'patch',
       patch: {
         selectedLocale: { code: 'en', value: 'english' },
         text: sample.prompt,
       },
+      type: 'patch',
     });
   };
 
@@ -1148,18 +1146,18 @@ function NewVoiceClientInner({
     clearMediaStream();
     clearMediaBlob();
     dispatch({
-      type: 'patch',
       patch: {
         ffmpegError: null,
         micBlob: null,
         micRecording: false,
       },
+      type: 'patch',
     });
   };
 
   useEffect(() => {
     if (!usesInworld && activeTab === 'generate') {
-      dispatch({ type: 'patch', patch: { activeTab: 'upload' } });
+      dispatch({ patch: { activeTab: 'upload' }, type: 'patch' });
     }
   }, [activeTab, usesInworld]);
 
@@ -1173,10 +1171,10 @@ function NewVoiceClientInner({
     }
 
     dispatch({
-      type: 'patch',
       patch: {
         activeTab: nextActiveTab,
       },
+      type: 'patch',
     });
   };
 

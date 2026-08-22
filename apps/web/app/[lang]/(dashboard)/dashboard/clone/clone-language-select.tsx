@@ -39,7 +39,6 @@ export function CloneLanguageSelect({
         disabled={disabled}
         onValueChange={(code) =>
           dispatch({
-            type: 'patch',
             patch: {
               selectedLocale: {
                 code,
@@ -47,6 +46,7 @@ export function CloneLanguageSelect({
                   supportedLocales.find((c) => c.code === code)?.value || '',
               },
             },
+            type: 'patch',
           })
         }
         value={selectedLocale.code}

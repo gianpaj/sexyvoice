@@ -17,7 +17,7 @@
  *   node check-disposable-emails.mjs --days 30
  *
  * Options:
- *   --limit <n>      Number of most-recent profiles to fetch (default: 1000).
+ *   --limit <n>      Number of most-recent profiles to fetch (default: 10000).
  *   --days <n>       Only consider profiles created in the last <n> days
  *                    (applied in addition to --limit).
  *   --out <dir>      Output directory for the summary / CSV (default: cwd).
@@ -30,7 +30,7 @@
  *                    the full address (useful for CI / shared reports).
  *   --yes            Skip the interactive confirmation for a live reset.
  *
- * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY. These are
+ * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY. These are
  * read from apps/web/.env.local (then scripts/.env) automatically.
  */
 
@@ -54,12 +54,12 @@ loadEnv({ path: join(__dirname, '../apps/web/.env.local') });
 loadEnv({ path: join(__dirname, '.env') });
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
-if (!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)) {
+if (!(SUPABASE_URL && SUPABASE_SECRET_KEY)) {
   console.error('Missing required environment variables:');
   console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-  console.error('  - SUPABASE_SERVICE_ROLE_KEY');
+  console.error('  - SUPABASE_SECRET_KEY');
   console.error(
     '\nThey are read from apps/web/.env.local or scripts/.env. Add them and retry.',
   );
@@ -71,7 +71,7 @@ if (!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)) {
 // ---------------------------------------------------------------------------
 function parseArgs(argv) {
   const args = {
-    limit: 1000,
+    limit: 10_000,
     days: null,
     out: process.cwd(),
     clone: true,
@@ -511,7 +511,7 @@ async function main() {
   const denySet = ensureAmieiroList();
   console.log(`amieiro denyDomains.txt: ${denySet.size} domains loaded\n`);
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

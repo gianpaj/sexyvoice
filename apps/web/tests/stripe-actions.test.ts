@@ -11,9 +11,9 @@ import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('@sentry/nextjs', () => ({
-  default: {},
   captureException: vi.fn(),
   captureMessage: vi.fn(),
+  default: {},
 }));
 
 vi.mock('@/lib/stripe/stripe-admin', () => ({
@@ -145,16 +145,16 @@ describe('createCheckoutSession()', () => {
     expect(captureMessage).toHaveBeenCalledWith(
       'Invalid checkout package id submitted.',
       expect.objectContaining({
-        level: 'info',
-        tags: {
-          section: 'stripe_actions',
-          event_type: 'invalid_package_id',
-        },
         extra: expect.objectContaining({
-          packageId: 'free',
           available_packages: ['starter', 'standard', 'pro'],
+          packageId: 'free',
           vercelEnv: 'production',
         }),
+        level: 'info',
+        tags: {
+          event_type: 'invalid_package_id',
+          section: 'stripe_actions',
+        },
       }),
     );
   });
@@ -205,14 +205,14 @@ describe('createCheckoutSession()', () => {
         message: 'Checkout package missing price ID',
       }),
       expect.objectContaining({
-        tags: {
-          section: 'stripe_actions',
-          event_type: 'missing_price_id',
-        },
         extra: expect.objectContaining({
           packageId: 'starter',
           vercelEnv: 'production',
         }),
+        tags: {
+          event_type: 'missing_price_id',
+          section: 'stripe_actions',
+        },
       }),
     );
   });

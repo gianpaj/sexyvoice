@@ -236,8 +236,8 @@ export async function reduceCredits({
 
   // Decrement user credits by the specified amount using an RPC call
   const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
-    user_id_var: userId,
     credit_amount_var: Math.abs(amount),
+    user_id_var: userId,
   });
 
   if (creditsError) throw toCreditDebitError(creditsError);
@@ -257,8 +257,8 @@ export async function reduceCreditsUpTo({
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc('decrement_user_credits_up_to', {
-    user_id_var: userId,
     credit_amount_var: creditAmount,
+    user_id_var: userId,
   });
 
   if (error) throw toCreditDebitError(error);
@@ -311,17 +311,17 @@ export async function saveAudioFile({
   return supabase
     .from('audio_files')
     .insert({
-      user_id: userId,
+      credits_used,
+      duration: Number.parseFloat(duration),
+      is_public: isPublic,
+      model,
+      prediction_id: predictionId,
       storage_key: filename,
       text_content: text,
       url,
-      model,
-      prediction_id: predictionId,
-      is_public: isPublic,
-      voice_id: voiceId,
-      duration: Number.parseFloat(duration),
-      credits_used,
       usage,
+      user_id: userId,
+      voice_id: voiceId,
     })
     .select('id')
     .single();
@@ -352,12 +352,12 @@ export async function insertAudioReference({
   return supabase
     .from('audio_references')
     .insert({
-      user_id: userId,
-      provider,
-      voice_id: voiceId,
-      name,
-      locale,
       is_paid: isPaid,
+      locale,
+      name,
+      provider,
+      user_id: userId,
+      voice_id: voiceId,
     })
     .select(AUDIO_REFERENCE_COLUMNS)
     .single();
@@ -417,20 +417,20 @@ export const insertUsageEvent = async (
     const { data, error } = await supabase
       .from('usage_events')
       .insert({
-        user_id: params.userId,
-        source_type: params.sourceType,
+        api_key_id: params.apiKeyId ?? null,
+        credits_used: params.creditsUsed,
+        dollar_amount: params.dollarAmount ?? null,
+        duration_seconds: params.durationSeconds ?? null,
+        input_chars: params.inputChars ?? null,
+        metadata: (params.metadata ?? {}) as Json,
+        model: params.model ?? null,
+        output_chars: params.outputChars ?? null,
+        quantity: params.quantity,
         request_id: params.requestId ?? null,
         source_id: params.sourceId ?? null,
-        api_key_id: params.apiKeyId ?? null,
-        model: params.model ?? null,
-        input_chars: params.inputChars ?? null,
-        output_chars: params.outputChars ?? null,
-        duration_seconds: params.durationSeconds ?? null,
-        dollar_amount: params.dollarAmount ?? null,
+        source_type: params.sourceType,
         unit: params.unit,
-        quantity: params.quantity,
-        credits_used: params.creditsUsed,
-        metadata: (params.metadata ?? {}) as Json,
+        user_id: params.userId,
       })
       .select('id')
       .single();
@@ -438,8 +438,8 @@ export const insertUsageEvent = async (
     if (error) {
       captureException(error, {
         extra: {
-          params,
           context: 'insertUsageEvent',
+          params,
         },
       });
       console.error('Failed to insert usage event:', error);
@@ -450,8 +450,8 @@ export const insertUsageEvent = async (
   } catch (error) {
     captureException(error, {
       extra: {
-        params,
         context: 'insertUsageEvent',
+        params,
       },
     });
     console.error('Failed to insert usage event:', error);
@@ -515,10 +515,10 @@ export const insertSubscriptionCreditTransaction = async (
 
     if (data) {
       console.log('Subscription transaction already exists', {
-        userId,
+        data,
         paymentIntentId,
         subscriptionId,
-        data,
+        userId,
       });
       return;
     }
@@ -539,33 +539,33 @@ export const insertSubscriptionCreditTransaction = async (
 
   // Insert the transaction with reference_id (payment_intent)
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
-    reference_id: paymentIntentId,
-    subscription_id: subscriptionId,
     amount: creditAmount,
-    type: 'purchase',
     description: `Subscription payment - $${dollarAmount} (includes ${Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}% bonus)`,
     metadata: {
       dollarAmount,
       isFirstSubscription,
     },
+    reference_id: paymentIntentId,
+    subscription_id: subscriptionId,
+    type: 'purchase',
+    user_id: userId,
   });
 
   if (error) {
     if (isCreditTransactionReferenceConflict(error)) {
       console.log('Subscription transaction already exists', {
-        userId,
         paymentIntentId,
         subscriptionId,
+        userId,
       });
       return;
     }
 
     console.error('Error inserting subscription transaction:', {
-      userId,
-      subscriptionId,
-      paymentIntentId,
       error: error.message,
+      paymentIntentId,
+      subscriptionId,
+      userId,
     });
     throw error;
   }
@@ -595,9 +595,9 @@ export const insertTopupCreditTransaction = async (
 
     if (data) {
       console.log('Topup transaction already exists', {
-        userId,
-        paymentIntentId,
         data,
+        paymentIntentId,
+        userId,
       });
       return;
     }
@@ -617,24 +617,24 @@ export const insertTopupCreditTransaction = async (
 
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
     amount: creditAmount,
-    type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
-    reference_id: paymentIntentId,
     metadata: {
-      packageId,
       dollarAmount,
       isFirstTopup,
+      packageId,
       ...(promo && { promo }),
     },
+    reference_id: paymentIntentId,
+    type: 'topup',
+    user_id: userId,
   });
 
   if (error) {
     if (isCreditTransactionReferenceConflict(error)) {
       console.log('Topup transaction already exists', {
-        userId,
         paymentIntentId,
+        userId,
       });
       return;
     }
@@ -663,8 +663,8 @@ const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
-    user_id_var: userId,
     credit_amount_var: creditAmount,
+    user_id_var: userId,
   });
 
   if (error) throw error;
@@ -718,7 +718,7 @@ export const getTotalCallDurationSeconds = async (
 
   if (error) {
     captureException(error, {
-      extra: { userId, context: 'getTotalCallDurationSeconds' },
+      extra: { context: 'getTotalCallDurationSeconds', userId },
     });
     throw error;
   }
@@ -810,8 +810,8 @@ export async function reduceCreditsAdmin({
 }) {
   const admin = createAdminClient();
   const { error } = await admin.rpc('decrement_user_credits', {
-    user_id_var: userId,
     credit_amount_var: Math.abs(amount),
+    user_id_var: userId,
   });
 
   if (error) throw toCreditDebitError(error);
@@ -831,8 +831,8 @@ export async function reduceCreditsUpToAdmin({
 
   const admin = createAdminClient();
   const { data, error } = await admin.rpc('decrement_user_credits_up_to', {
-    user_id_var: userId,
     credit_amount_var: creditAmount,
+    user_id_var: userId,
   });
 
   if (error) throw toCreditDebitError(error);
@@ -858,17 +858,17 @@ export async function saveAudioFileAdmin(params: {
   return admin
     .from('audio_files')
     .insert({
-      user_id: params.userId,
+      credits_used: params.credits_used,
+      duration: Number.parseFloat(params.duration),
+      is_public: params.isPublic,
+      model: params.model,
+      prediction_id: params.predictionId,
       storage_key: params.filename,
       text_content: params.text,
       url: params.url,
-      model: params.model,
-      prediction_id: params.predictionId,
-      is_public: params.isPublic,
-      voice_id: params.voiceId,
-      duration: Number.parseFloat(params.duration),
-      credits_used: params.credits_used,
       usage: params.usage,
+      user_id: params.userId,
+      voice_id: params.voiceId,
     })
     .select('id')
     .single();

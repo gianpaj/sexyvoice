@@ -14,6 +14,9 @@ Nested guidance:
 - All of `pnpm fixall` and `pnpm type-check` must pass before considering tasks completed.
 - When you touch the web app's tests or shared code, also run `pnpm test`
   (or the focused file) and make sure the suite is green.
+- When you change Supabase migrations or pgTAP tests, run `pnpm test:db`
+  against a local database with all pending migrations applied. Agents must not
+  apply migrations; ask the user to apply them when necessary.
 
 ## Mandatory Rules
 
@@ -59,12 +62,15 @@ Core integrations: Supabase, Cloudflare R2, Upstash Redis, Replicate, fal.ai,
 Google Generative AI, xAI Grok TTS, LiveKit, Stripe, Sentry, PostHog, Axiom,
 Contentlayer2, Inngest, and `next-intl`.
 
+Supabase access uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` for browser clients
+and `SUPABASE_SECRET_KEY` for privileged server operations.
+
 Runtime and tooling:
 
 - Node.js `24.x` (see `engines.node` in each `package.json`).
-- Package manager: `pnpm@10.20.0` (see `packageManager`). Always use `pnpm`,
+- Package manager: `pnpm@11.16.0` (see `packageManager`). Always use `pnpm`,
   never `npm` or `yarn`.
-- Type checks run on the TypeScript native preview (`tsgo --noEmit`).
+- Type checks run on the TypeScript native preview (`tsc --noEmit`).
 
 ## High-Value Paths
 
@@ -96,11 +102,12 @@ Runtime and tooling:
 pnpm dev                 # Start the web app dev server (filtered to @sexyvoice/web)
 pnpm build               # Production build (all apps via Turborepo)
 pnpm test                # Run all Vitest tests
+pnpm test:db             # Run Supabase pgTAP tests against the local database
 pnpm --filter @sexyvoice/web test -- <file>   # Run a focused test file
 pnpm --filter @sexyvoice/web test:e2e         # Run Playwright e2e tests
 pnpm test:coverage       # Vitest coverage for the web app
 pnpm test:ui             # Vitest UI for the web app
-pnpm type-check          # TypeScript checks (tsgo)
+pnpm type-check          # TypeScript checks (tsc)
 pnpm lint                # Biome lint check
 pnpm format              # Biome format check
 pnpm fixall              # lint:write + format:write + check:fix
@@ -146,8 +153,11 @@ Use package filters when you only want one app, e.g.
 
 - Use the SSR client from `apps/web/lib/supabase/server.ts` for session-scoped server
   code.
-- Use `createAdminClient()` only for server-side operations that require service
-  role access, and never expose service role data to the client.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for browser clients; RLS still
+  controls their database access.
+- Use `createAdminClient()` only for server-side operations that require
+  `SUPABASE_SECRET_KEY`. This key bypasses RLS; never expose it to clients or
+  place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 - Keep RLS in mind for all table access.
 - Database functions should default to `SECURITY INVOKER`, set
   `search_path = ''`, and use fully qualified names.
@@ -182,6 +192,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 ## Voice and Call Flows
 
+- For Gemini TTS error or credit complaints, follow
+  `skills/investigate-gemini-tts-credit-report/SKILL.md`; keep the investigation
+  read-only and require separate human approval for any refund.
 - Dashboard TTS may use Redis URL caching; external API speech must not.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
@@ -205,6 +218,11 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 ## Documentation Rules
 
+- For commits that change only repository documentation, such as `AGENTS.md`,
+  `README.md`, `ARCHITECTURE.md`, `docs/`, `plans/`, or `.agents/notes/`, append
+  `[skip deploy]` to the commit subject so both Vercel projects skip deployment.
+  Do not use the marker when the commit also changes runtime code or deployed
+  content.
 - Update docs when changing APIs, workflows, environment variables, or
   operational behavior.
 - For environment variable changes, update `AGENTS.md`, `README.md`,
@@ -221,7 +239,7 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 - Validate and sanitize API inputs.
 - Preserve structured error handling and status codes.
-- Protect service role secrets, API key hashes, payment data, and generated
+- Protect Supabase secret keys, API key hashes, payment data, and generated
   audio access.
 - Respect voice rights and user privacy when working on cloning, public/private
   voices, retention, or moderation.

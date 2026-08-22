@@ -22,8 +22,11 @@
       "!**/.next",
       "!**/dist",
       "!**/build",
+      "!**/.claude",
       "!apps/web/components/ui",
-      "!apps/web/app/globals.css"
+      "!apps/web/app/globals.css",
+      "!apps/web/lib/disposable-email/deny-domains.json",
+      "!apps/web/next-env.d.ts"
     ]
   },
   "formatter": {
@@ -61,13 +64,24 @@
         "useImportType": "error",
         "useExportType": "error",
         "noUselessElse": "error",
-        "useShorthandFunctionType": "error"
+        "useShorthandFunctionType": "error",
+        // These syntax preferences create broad churn without improving safety.
+        "noIncrementDecrement": "off",
+        "useDestructuring": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off",
         "noUnknownAtRules": "off",
         "noShadow": "off",
-        "noLeakedRender": "off"
+        "noLeakedRender": "off",
+        // Runtime data can violate TypeScript's static guarantees, so defensive
+        // null and exhaustiveness checks are intentional throughout the app.
+        "noUnnecessaryConditions": "off"
+      },
+      "complexity": {
+        // Existing generation and audio flows are intentionally orchestration-heavy.
+        // Refactor them independently rather than as part of a lint upgrade.
+        "noExcessiveCognitiveComplexity": "off"
       },
       "correctness": {
         "useUniqueElementIds": "off",
@@ -78,6 +92,12 @@
         "noMisusedPromises": "error"
       },
       "performance": {
+        // React Compiler handles function identity optimization where useful.
+        "noJsxPropsBind": "off",
+        // Pagination and media-processing loops often require ordered awaits.
+        "noAwaitInLoops": "off",
+        // Tiptap primitives intentionally expose small public entry points.
+        "noBarrelFile": "off",
         "noNamespaceImport": "warn",
         "useTopLevelRegex": "off"
       }
@@ -132,6 +152,30 @@
       // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
       "includes": ["apps/web/app/api/**"],
       "plugins": ["./biome-plugins/use-api-error-response.grit"]
+    },
+    {
+      // Package map insertion order controls checkout telemetry and remains part
+      // of the exported pricing API, so product tier order is intentional.
+      "includes": ["apps/web/lib/stripe/pricing.ts"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
+    },
+    {
+      // Keep the LLM schema aligned with the prompt and script. Evidence-first
+      // ordering is an intentional model hint, not a JSON output contract.
+      "includes": ["apps/web/lib/ai/analyze-call.ts"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
     }
   ]
 }

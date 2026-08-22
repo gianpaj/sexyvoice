@@ -12,14 +12,14 @@ export interface SampleAudio {
 
 const sampleAudios: readonly SampleAudio[] = [
   {
+    audioSrc: 'sal-chocolates.mp3',
+    dir: 'ltr',
     id: 1,
+    lang: 'en',
     name: 'Sal (Grok) 🇺🇸',
     prompt:
       "Life is like a box of chocolates, [laugh] you never know what you're gonna get.",
-    audioSrc: 'sal-chocolates.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
-    lang: 'en',
-    dir: 'ltr',
   },
   // {
   //   id: 2,
@@ -48,14 +48,14 @@ const sampleAudios: readonly SampleAudio[] = [
   //     showOnSiteLangs: ['es'],
   //   },
   {
+    audioSrc: 'sulafat-2f87b6cb.mp3',
+    dir: 'ltr',
     id: 5,
+    lang: 'en',
     name: 'Sulafat (Gemini) 🇺🇸',
     prompt:
       "[custom style] Oh, Paris—the City of Light, they call it, but to me, it's the city of shadows and secrets, where every cobblestone street whispers promises of forbidden delight.",
-    audioSrc: 'sulafat-2f87b6cb.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
-    lang: 'en',
-    dir: 'ltr',
   },
   // {
   //   id: 6,
@@ -142,7 +142,10 @@ const sampleAudios: readonly SampleAudio[] = [
   //     dir: 'ltr',
   //   },
   {
+    audioSrc: 'ara-mission.mp3',
+    dir: 'ltr',
     id: 10,
+    lang: 'en',
     name: 'Ara (Grok) 🇺🇸',
     prompt: `The mission was supposed to be simple.[pause]
 A relay station inside a cathedral on the eastern ridge, one of Lilith's communication towers feeding signals to three occupied districts.[pause]
@@ -150,13 +153,13 @@ Take it down, go dark, be back before sunrise. It was the kind of operation the 
 Clean in, clean out, no engagement unless forced.[long-pause]
 <emphasis>Unfortunately for your team she was waiting.</emphasis>[long-pause]
 Not her lieutenants, not her ground units <lower-pitch>Lilith herself,</lower-pitch> stood in the center of the cathedral.`,
-    audioSrc: 'ara-mission.mp3',
     showOnSiteLangs: ['en', 'es', 'de'],
-    lang: 'en',
-    dir: 'ltr',
   },
   {
+    audioSrc: 'eve-mission-de.mp3',
+    dir: 'ltr',
     id: 11,
+    lang: 'de',
     name: 'Eve (Grok) 🇩🇪',
     prompt: `Die Mission sollte eigentlich einfach sein.[pause]
 Eine Relaisstation in einer Kathedrale auf dem östlichen Bergrücken, einer von Liliths Kommunikationstürmen, der Signale an drei besetzte Distrikte übermittelte.[pause]
@@ -164,10 +167,7 @@ Nehmt sie aus, geht dunkel, seid zurück vor Sonnenaufgang. Es war die Art von O
 Sauber rein, sauber raus, kein Engagement, es sei denn, es wurde erzwungen.[long-pause]
 <emphasis>Unglücklicherweise für euer Team wartete sie.</emphasis>[long-pause]
 Nicht ihre Leutnants, nicht ihre Bodeneinheiten <lower-pitch>Lilith selbst,</lower-pitch> stand im Zentrum der Kathedrale.`,
-    audioSrc: 'eve-mission-de.mp3',
     showOnSiteLangs: ['de', 'es', 'en'],
-    lang: 'de',
-    dir: 'ltr',
   },
 ];
 

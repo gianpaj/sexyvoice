@@ -85,26 +85,26 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
 
   return {
     id: character.id,
-    name: character.name,
-    localizedDescriptions: toStringRecord(character.localized_descriptions),
+    image: character.image ?? undefined,
     instructions: prompts?.prompt ?? '',
+    isPublic: character.is_public ?? undefined,
+    localizedDescriptions: toStringRecord(character.localized_descriptions),
     localizedInstructions: prompts?.localized_prompts ?? {},
+    name: character.name,
+    promptId: character.prompt_id ?? undefined,
+    promptType: prompts?.type ?? undefined,
     sessionConfig: {
-      model: normalizeModelId(sessionConfig.model),
-      voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
-      temperature: sessionConfig.temperature ?? 0.8,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
         null,
+      model: normalizeModelId(sessionConfig.model),
+      temperature: sessionConfig.temperature ?? 0.8,
+      voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
     },
-    image: character.image ?? undefined,
-    promptId: character.prompt_id ?? undefined,
-    promptType: prompts?.type ?? undefined,
     voiceId: character.voice_id ?? undefined,
     voiceName: voice?.name ?? undefined,
     voiceSampleUrl: voice?.sample_url ?? undefined,
-    isPublic: character.is_public ?? undefined,
   };
 }
 
@@ -149,10 +149,10 @@ export default async function CallLayout({
       defaultPresets={defaultPresets}
       initialCustomCharacters={initialCustomCharacters}
       initialState={{
-        selectedPresetId: defaultPresets[0]?.id ?? null,
-        instructions: defaultInstructions,
         initialInstruction,
+        instructions: defaultInstructions,
         language: lang as CallLanguage,
+        selectedPresetId: defaultPresets[0]?.id ?? null,
       }}
     >
       <ConnectionProvider>
