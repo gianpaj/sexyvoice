@@ -3,19 +3,7 @@ import { normalizeModelId } from '@/data/models';
 import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
-
-export interface CallTokenPlaygroundState {
-  instructions: string;
-  language: PlaygroundState['language'];
-  memory: PlaygroundState['memory'];
-  sceneInstructions: string | null;
-  selectedPresetId: PlaygroundState['selectedPresetId'];
-  selectedSceneId: PlaygroundState['selectedSceneId'];
-  sessionConfig: Pick<
-    SessionConfig,
-    'maxOutputTokens' | 'model' | 'temperature' | 'voice'
-  >;
-}
+import type { CallTokenPlaygroundState } from './call-token-schema';
 
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
@@ -54,6 +42,9 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
               break;
             case 'voice':
               sessionConfig.voice = value;
+              break;
+            case 'audioReferenceId':
+              sessionConfig.audioReferenceId = value === 'null' ? null : value;
               break;
             default:
               break;
@@ -177,6 +168,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
         selectedPresetId: state.selectedPresetId,
         selectedSceneId: state.selectedSceneId,
         sessionConfig: {
+          audioReferenceId: state.sessionConfig.audioReferenceId ?? null,
           maxOutputTokens: state.sessionConfig.maxOutputTokens,
           model: state.sessionConfig.model,
           temperature: state.sessionConfig.temperature,

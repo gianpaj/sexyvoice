@@ -1,33 +1,6 @@
 // https://github.com/livekit-examples/realtime-playground/blob/9c091a4e220c4d4410bcb62b9f9ee3fe15e7c152/web/src/components/agent/visualizers/multiband-bar-visualizer.tsx
-import { useEffect, useReducer } from 'react';
 
 type VisualizerState = 'listening' | 'idle' | 'speaking' | 'thinking';
-
-interface ThinkingState {
-  direction: 'left' | 'right';
-  index: number;
-}
-type ThinkingAction =
-  | { center: number; type: 'reset' }
-  | { max: number; type: 'tick' };
-
-function thinkingReducer(
-  state: ThinkingState,
-  action: ThinkingAction,
-): ThinkingState {
-  if (action.type === 'reset') {
-    return { direction: 'right', index: action.center };
-  }
-  const { direction, index } = state;
-  if (direction === 'right') {
-    return index === action.max
-      ? { direction: 'left', index: index - 1 }
-      : { direction: 'right', index: index + 1 };
-  }
-  return index === 0
-    ? { direction: 'right', index: index + 1 }
-    : { direction: 'left', index: index - 1 };
-}
 
 interface MultibandAudioVisualizerProps {
   barColor?: string;
@@ -56,21 +29,6 @@ export const MultibandAudioVisualizer = ({
   });
 
   const centerIndex = Math.floor(summedFrequencies.length / 2);
-  const [_thinking, dispatch] = useReducer(thinkingReducer, {
-    direction: 'right',
-    index: centerIndex,
-  });
-
-  useEffect(() => {
-    if (state !== 'thinking') {
-      dispatch({ center: centerIndex, type: 'reset' });
-      return;
-    }
-    const timeout = setTimeout(() => {
-      dispatch({ max: summedFrequencies.length - 1, type: 'tick' });
-    }, 200);
-    return () => clearTimeout(timeout);
-  }, [state, centerIndex, summedFrequencies.length]);
 
   return (
     <div
@@ -80,7 +38,7 @@ export const MultibandAudioVisualizer = ({
       }}
     >
       {summedFrequencies.map((frequency, index) => {
-        const isCenter = index === Math.floor(summedFrequencies.length / 2);
+        const isCenter = index === centerIndex;
         // let transform;
 
         return (
