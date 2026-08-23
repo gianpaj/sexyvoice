@@ -9,26 +9,28 @@ import {
   analyzeInventory,
   buildAllowedLocations,
   type CleanupConfig,
-  type CleanupR2Client,
   createManifest,
   deleteCandidatesInBatches,
-  downloadWithoutOverwrite,
   fetchAllStorageKeys,
   filterAllowedInventoryObjects,
   findAllowedLocation,
   findOrphanCandidates,
   isAtLeastDaysOld,
-  listAllObjects,
-  parseByteSize,
   parseCleanupCliArgs,
-  type R2ObjectMetadata,
   recheckCandidates,
-  resolveLocalObjectPath,
-  selectByDownloadLimit,
-  simpleEtagMd5,
   summarizeBuckets,
   validateManifest,
 } from './lib/r2-orphan-audio-cleanup.mts';
+import {
+  downloadWithoutOverwrite,
+  listAllObjects,
+  parseByteSize,
+  type R2Client,
+  type R2ObjectMetadata,
+  resolveLocalObjectPath,
+  selectByDownloadLimit,
+  simpleEtagMd5,
+} from './lib/r2-transfer.mts';
 
 const config: CleanupConfig = {
   apiBucket: 'api-audio',
@@ -56,13 +58,16 @@ async function* byteStream(...chunks: Uint8Array[]) {
   yield* chunks;
 }
 
-function mockR2(overrides: Partial<CleanupR2Client> = {}): CleanupR2Client {
+function mockR2(overrides: Partial<R2Client> = {}): R2Client {
   return {
     deleteObjects(_bucket, keys) {
       return Promise.resolve({ deleted: keys, errors: [] });
     },
     getObject() {
-      return Promise.resolve(byteStream(new Uint8Array()));
+      return Promise.resolve({
+        body: byteStream(new Uint8Array()),
+        status: 'ok' as const,
+      });
     },
     headObject(_bucket, key) {
       return Promise.resolve({
@@ -409,19 +414,17 @@ describe('manifest and CLI validation', () => {
 });
 
 describe('local backup safety', () => {
-  it('rejects path traversal', () => {
-    assert.throws(
-      () =>
-        resolveLocalObjectPath(
-          '/tmp/backups',
-          'main-audio',
-          'generated-audio-free/../../outside.mp3',
-        ),
+  it('rejects path traversal', async () => {
+    await assert.rejects(
+      resolveLocalObjectPath(
+        '/tmp/backups',
+        'main-audio',
+        'generated-audio-free/../../outside.mp3',
+      ),
       /Unsafe R2 key/,
     );
-    assert.throws(
-      () =>
-        resolveLocalObjectPath('/tmp/backups', 'main-audio', '/outside.mp3'),
+    await assert.rejects(
+      resolveLocalObjectPath('/tmp/backups', 'main-audio', '/outside.mp3'),
       /Unsafe R2 key/,
     );
   });
@@ -446,14 +449,17 @@ describe('local backup safety', () => {
       const result = await downloadWithoutOverwrite(
         mockR2({
           getObject() {
-            return Promise.resolve(byteStream(contents));
+            return Promise.resolve({
+              body: byteStream(contents),
+              status: 'ok' as const,
+            });
           },
         }),
         item,
         directory,
       );
 
-      assert.equal(result.status, 'unverifiable');
+      assert.equal(result.status, 'downloaded-size');
       assert.deepEqual(await readFile(result.destination), contents);
     } finally {
       await rm(directory, { force: true, recursive: true });
@@ -470,14 +476,17 @@ describe('local backup safety', () => {
       const result = await downloadWithoutOverwrite(
         mockR2({
           getObject() {
-            return Promise.resolve(byteStream(Buffer.from('too large')));
+            return Promise.resolve({
+              body: byteStream(Buffer.from('too large')),
+              status: 'ok' as const,
+            });
           },
         }),
         item,
         directory,
       );
 
-      assert.equal(result.status, 'failed');
+      assert.equal(result.status, 'download-failure');
       assert.match(result.reason ?? '', /exceeded the expected size/);
       await assert.rejects(readFile(result.destination), /ENOENT/);
     } finally {
@@ -493,7 +502,7 @@ describe('local backup safety', () => {
         etag: createHash('md5').update(contents).digest('hex'),
         size: contents.length,
       });
-      const destination = resolveLocalObjectPath(
+      const destination = await resolveLocalObjectPath(
         directory,
         item.bucket,
         item.key,
@@ -505,14 +514,17 @@ describe('local backup safety', () => {
         mockR2({
           getObject() {
             getCalls += 1;
-            return Promise.resolve(byteStream(Buffer.from('replacement')));
+            return Promise.resolve({
+              body: byteStream(Buffer.from('replacement')),
+              status: 'ok' as const,
+            });
           },
         }),
         item,
         directory,
       );
 
-      assert.equal(result.status, 'exists');
+      assert.equal(result.status, 'existing-checksum');
       assert.equal(getCalls, 0);
       assert.deepEqual(await readFile(destination), contents);
     } finally {

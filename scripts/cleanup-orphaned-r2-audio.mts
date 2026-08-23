@@ -1,41 +1,37 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  DeleteObjectsCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  ListObjectsV2Command,
-  S3Client,
-} from '@aws-sdk/client-s3';
 
 import { loadScriptEnv } from './lib/env.mts';
+import { createR2Client } from './lib/r2-client.mts';
 import {
   analyzeInventory,
-  buildAllowedLocations,
   type BucketSummary,
+  buildAllowedLocations,
   type CleanupConfig,
-  type CleanupR2Client,
   createManifest,
   deleteCandidatesInBatches,
-  downloadWithoutOverwrite,
   fetchAllStorageKeys,
   filterAllowedInventoryObjects,
   type InventorySummaryEntry,
-  listAllObjects,
   MINIMUM_AGE_DAYS,
   objectIdentity,
   parseCleanupCliArgs,
-  type R2DeleteResponse,
-  type R2ObjectMetadata,
   recheckCandidates,
-  resolveLocalObjectPath,
   type StorageKeyPageSource,
-  selectByDownloadLimit,
   summarizeBuckets,
   validateManifest,
-  verifyLocalFile,
 } from './lib/r2-orphan-audio-cleanup.mts';
+import {
+  downloadWithoutOverwrite,
+  formatBytes,
+  listAllObjects,
+  type R2Client,
+  type R2ObjectMetadata,
+  resolveLocalObjectPath,
+  selectByDownloadLimit,
+  verifyLocalFile,
+} from './lib/r2-transfer.mts';
 import { createScriptAdminClient } from './lib/supabase.mts';
 
 loadScriptEnv();
@@ -128,95 +124,6 @@ function readConfig(): CleanupConfig {
   };
 }
 
-function createR2Client(): CleanupR2Client {
-  const client = new S3Client({
-    credentials: {
-      accessKeyId: requiredEnv('R2_ACCESS_KEY_ID'),
-      secretAccessKey: requiredEnv('R2_SECRET_ACCESS_KEY'),
-    },
-    endpoint: requiredEnv('R2_ENDPOINT'),
-    region: 'auto',
-  });
-
-  return {
-    async deleteObjects(bucket, keys): Promise<R2DeleteResponse> {
-      const response = await client.send(
-        new DeleteObjectsCommand({
-          Bucket: bucket,
-          Delete: {
-            Objects: keys.map((Key) => ({ Key })),
-            Quiet: false,
-          },
-        }),
-      );
-
-      return {
-        deleted: (response.Deleted ?? [])
-          .map((object) => object.Key)
-          .filter((key): key is string => Boolean(key)),
-        errors: (response.Errors ?? [])
-          .filter((error) => Boolean(error.Key))
-          .map((error) => ({
-            code: error.Code,
-            key: error.Key as string,
-            message: error.Message,
-          })),
-      };
-    },
-
-    async getObject(bucket, key, expectedEtag) {
-      const response = await client.send(
-        new GetObjectCommand({
-          Bucket: bucket,
-          IfMatch: `"${expectedEtag}"`,
-          Key: key,
-        }),
-      );
-      if (!(response.Body && Symbol.asyncIterator in response.Body)) {
-        throw new Error(`R2 returned no streaming body for ${bucket}/${key}`);
-      }
-      return response.Body as AsyncIterable<Uint8Array>;
-    },
-
-    async headObject(bucket, key) {
-      try {
-        const response = await client.send(
-          new HeadObjectCommand({ Bucket: bucket, Key: key }),
-        );
-        return {
-          etag: response.ETag,
-          lastModified: response.LastModified,
-          size: response.ContentLength,
-        };
-      } catch (error) {
-        if (isNotFound(error)) {
-          return null;
-        }
-        throw error;
-      }
-    },
-
-    async listObjects(bucket, prefix, continuationToken) {
-      const response = await client.send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          ContinuationToken: continuationToken,
-          Prefix: prefix,
-        }),
-      );
-      return {
-        nextContinuationToken: response.NextContinuationToken,
-        objects: (response.Contents ?? []).map((object) => ({
-          etag: object.ETag,
-          key: object.Key,
-          lastModified: object.LastModified,
-          size: object.Size,
-        })),
-      };
-    },
-  };
-}
-
 function createStorageKeySource(): ScriptStorageKeySource {
   const supabase = createScriptAdminClient();
 
@@ -253,7 +160,7 @@ function createStorageKeySource(): ScriptStorageKeySource {
 
 async function runInventory(
   config: CleanupConfig,
-  r2: CleanupR2Client,
+  r2: R2Client,
 ): Promise<void> {
   const now = new Date();
   const locations = buildAllowedLocations(config);
@@ -297,7 +204,7 @@ async function runInventory(
 async function runAction(
   options: ReturnType<typeof parseCleanupCliArgs>,
   config: CleanupConfig,
-  r2: CleanupR2Client,
+  r2: R2Client,
 ): Promise<void> {
   const manifestPath = await resolveExistingInputPath(
     options.manifest as string,
@@ -310,7 +217,7 @@ async function runAction(
 
   if (options.download) {
     for (const candidate of manifest.candidates) {
-      resolveLocalObjectPath(
+      await resolveLocalObjectPath(
         options.downloadDir as string,
         candidate.bucket,
         candidate.key,
@@ -360,7 +267,7 @@ async function runAction(
     const missingLocally: R2ObjectMetadata[] = [];
 
     for (const candidate of eligible) {
-      const destination = resolveLocalObjectPath(
+      const destination = await resolveLocalObjectPath(
         options.downloadDir as string,
         candidate.bucket,
         candidate.key,
@@ -378,7 +285,7 @@ async function runAction(
         continue;
       }
 
-      if (verification.status === 'verified') {
+      if (verification.status === 'verified-checksum') {
         backedUp.push(candidate);
         results.set(objectIdentity(candidate), {
           ...candidate,
@@ -394,7 +301,7 @@ async function runAction(
           destination,
           reason: verification.reason,
           status:
-            verification.status === 'unverifiable'
+            verification.status === 'verified-size'
               ? 'unverifiable-checksum'
               : 'local-mismatch',
         });
@@ -418,26 +325,40 @@ async function runAction(
         candidate,
         options.downloadDir as string,
       );
-      if (download.status === 'downloaded' || download.status === 'exists') {
+      if (
+        download.status === 'downloaded-checksum' ||
+        download.status === 'existing-checksum'
+      ) {
         backedUp.push(candidate);
         results.set(objectIdentity(candidate), {
           ...candidate,
-          backup: download.status === 'downloaded' ? 'downloaded' : 'existing',
+          backup:
+            download.status === 'downloaded-checksum'
+              ? 'downloaded'
+              : 'existing',
           destination: download.destination,
           status:
-            download.status === 'downloaded'
+            download.status === 'downloaded-checksum'
               ? 'verified-download'
               : 'verified-existing-file',
         });
       } else {
+        let status: ActionStatus = 'download-failure';
+        if (
+          download.status === 'downloaded-size' ||
+          download.status === 'existing-size'
+        ) {
+          status = 'unverifiable-checksum';
+        } else if (download.status === 'changed-in-r2') {
+          status = 'changed-in-r2';
+        } else if (download.status === 'missing-from-r2') {
+          status = 'missing-from-r2';
+        }
         results.set(objectIdentity(candidate), {
           ...candidate,
           destination: download.destination,
           reason: download.reason,
-          status:
-            download.status === 'unverifiable'
-              ? 'unverifiable-checksum'
-              : 'download-failure',
+          status,
         });
       }
     }
@@ -477,14 +398,17 @@ async function runAction(
           continue;
         }
 
-        if (verification.status !== 'verified') {
+        if (verification.status !== 'verified-checksum') {
           results.set(identity, {
             ...candidate,
             backup: previous?.backup,
             destination,
-            reason: verification.reason,
+            reason:
+              'reason' in verification
+                ? verification.reason
+                : 'Local backup is missing',
             status:
-              verification.status === 'unverifiable'
+              verification.status === 'verified-size'
                 ? 'unverifiable-checksum'
                 : 'local-mismatch',
           });
@@ -701,22 +625,6 @@ function printActionSummary(report: ActionReport): void {
   }
 }
 
-function formatBytes(bytes: number): string {
-  const units = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
-  let value = bytes;
-  let unit = units[0];
-
-  for (const candidate of units) {
-    unit = candidate;
-    if (value < 1024 || candidate === units.at(-1)) {
-      break;
-    }
-    value /= 1024;
-  }
-
-  return `${value.toFixed(value >= 10 || unit === 'B' ? 0 : 1)} ${unit}`;
-}
-
 function fileTimestamp(date: Date): string {
   return date.toISOString().replace(/[:.]/g, '-');
 }
@@ -729,27 +637,11 @@ function requiredEnv(name: string): string {
   return value;
 }
 
-function isNotFound(error: unknown): boolean {
-  if (!isRecord(error)) {
-    return false;
-  }
-  const metadata = isRecord(error.$metadata) ? error.$metadata : undefined;
-  return (
-    error.name === 'NotFound' ||
-    error.name === 'NoSuchKey' ||
-    metadata?.httpStatusCode === 404
-  );
-}
-
 function isNodeError(
   error: unknown,
   code: string,
 ): error is NodeJS.ErrnoException {
   return error instanceof Error && 'code' in error && error.code === code;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 async function main(): Promise<void> {

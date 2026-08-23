@@ -29,4 +29,6 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 
 ## Verification record
 
-Record focused and repository checks here as each work chunk lands. Do not run a full backup.
+- Shared extraction: cleanup tests pass, scripts type-check passes, and focused Biome checks pass.
+
+Do not run a full backup.
