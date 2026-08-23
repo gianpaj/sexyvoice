@@ -340,6 +340,43 @@ describe('local transfer safety', () => {
 });
 
 describe('backup planning and reporting', () => {
+  it('rejects a zero transfer cap from direct callers', async () => {
+    await withTempDirectory(async (directory) => {
+      const item = object('missing.wav');
+      await assert.rejects(
+        runBackup(
+          {
+            downloadDir: path.join(directory, 'download'),
+            dryRun: true,
+            help: false,
+            maxDownloadBytes: 0,
+          },
+          [{ bucket: 'audio', prefix: '' }],
+          {
+            client: mockR2({
+              listObjects() {
+                return Promise.resolve({
+                  objects: [
+                    {
+                      etag: item.etag,
+                      key: item.key,
+                      lastModified: new Date(item.lastModified),
+                      size: item.size,
+                    },
+                  ],
+                });
+              },
+            }),
+            interactive: false,
+            log: () => undefined,
+            reportDirectory: path.join(directory, 'reports'),
+          },
+        ),
+        /positive, safe integer/,
+      );
+    });
+  });
+
   it('plans a dry run without downloading or creating missing files', async () => {
     await withTempDirectory(async (directory) => {
       const downloadDir = path.join(directory, 'download');

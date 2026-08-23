@@ -332,13 +332,14 @@ export async function runBackup(
     }
   }
 
-  const selection = options.maxDownloadBytes
-    ? selectByDownloadLimit(missing, options.maxDownloadBytes)
-    : {
-        deferred: [],
-        selected: missing,
-        transferBytes: totalBytes(missing),
-      };
+  const selection =
+    options.maxDownloadBytes === undefined
+      ? {
+          deferred: [],
+          selected: missing,
+          transferBytes: totalBytes(missing),
+        }
+      : selectByDownloadLimit(missing, options.maxDownloadBytes);
 
   for (const object of selection.deferred) {
     results.set(objectIdentity(object), {
