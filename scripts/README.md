@@ -1,5 +1,39 @@
 # Scripts
 
+## R2 audio backup
+
+This command copies missing R2 objects to a local drive. It never deletes R2
+objects or local files, and it never overwrites an existing local path.
+
+Back up both complete configured buckets:
+
+```bash
+pnpm backup-r2-audio -- \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket
+```
+
+Limit the scan to one or more exact bucket prefixes:
+
+```bash
+pnpm backup-r2-audio -- \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
+  --source sv-audio-files/generated-audio/,sv-api-speech-audio-files
+```
+
+Use `--dry-run` to list, compare, and report without downloading. Use
+`--max-download-size 20GB` to cap new transfers. The command selects missing
+objects from oldest to newest and can fit a later small object when an older
+object exceeds the remaining cap.
+
+Files keep their full bucket and key under the destination. Existing files with
+a simple ETag receive size and MD5 verification. Files with opaque or multipart
+ETags receive size-only verification. A mismatch is reported and left untouched.
+
+The command writes `scripts/backups/r2-audio-backup-<timestamp>.json`. It
+requires `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`. Default
+sources also require `R2_BUCKET_NAME` and `R2_SPEECH_API_BUCKET_NAME`. The R2
+credentials need list and read access.
+
 ## R2 orphan audio cleanup
 
 This command inventories free-user audio objects that are at least 45 days old

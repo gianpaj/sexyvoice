@@ -84,9 +84,11 @@ Preserve the literal bucket name and complete R2 key:
 A prefix limits the remote listing. It does not get removed from the local
 path.
 
-Reject an empty key, absolute key, `..` segment, path that escapes its bucket
-directory, or symlinked path component beneath that directory. This check must
-run before reading or writing the destination.
+Reject an empty key, absolute key, empty or `.` or `..` segment, backslash,
+path that escapes its bucket directory, or symlinked path component beneath
+that directory. Empty segments include repeated and trailing slashes. These
+keys cannot map to a local path without normalization or platform-dependent
+collisions. Run this check before reading or writing the destination.
 
 Never overwrite an existing local path. A mismatch is an error for the user to
 resolve.

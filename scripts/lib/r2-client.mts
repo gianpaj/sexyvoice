@@ -25,6 +25,12 @@ export function createR2Client(
     region: 'auto',
   });
 
+  return createR2ClientAdapter(client);
+}
+
+export function createR2ClientAdapter(
+  client: Pick<S3Client, 'send'>,
+): R2Client {
   return {
     async deleteObjects(bucket, keys): Promise<R2DeleteResponse> {
       const response = await client.send(

@@ -6,6 +6,7 @@
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
     "backfill-call-analysis": "node backfill-call-analysis.mjs",
     "backfill-free-call": "tsx backfill-free-call.mts",
+    "backup-r2-audio": "tsx backup-r2-audio.mts",
     "batch-refund-credits": "tsx batch-refund-credits.mts",
     "check-disposable-emails": "node check-disposable-emails.mjs",
     "cleanup-orphaned-r2-audio": "tsx cleanup-orphaned-r2-audio.mts",
@@ -16,7 +17,7 @@
     "refund-credits": "tsx refund-credits.mts",
     "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
     "sync-deny-domains": "node sync-deny-domains.mjs",
-    "test": "tsx --test r2-orphan-audio-cleanup.test.mts",
+    "test": "tsx --test *r2*.test.mts",
     "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",
     "type-check": "tsc --noEmit"
   },
@@ -27,7 +28,9 @@
     "@supabase/supabase-js": "catalog:",
     "ai": "catalog:",
     "disposable-email-domains-js": "^1.21.0",
-    "dotenv": "^16.6.1"
+    "dotenv": "^16.6.1",
+    "effect": "catalog:",
+    "effective-progress": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

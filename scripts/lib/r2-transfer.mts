@@ -8,6 +8,13 @@ import { pipeline } from 'node:stream/promises';
 const SIMPLE_ETAG_PATTERN = /^[a-f\d]{32}$/i;
 const SIZE_PATTERN = /^(\d+(?:\.\d+)?)\s*(KB|MB|GB|TB|KiB|MiB|GiB|TiB)$/i;
 
+export class UnsafeLocalPathError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnsafeLocalPathError';
+  }
+}
+
 export interface R2Location {
   bucket: string;
   prefix: string;
@@ -93,6 +100,18 @@ export interface DownloadResult {
     | 'existing-checksum'
     | 'existing-size'
     | 'missing-from-r2';
+}
+
+export function assertR2BucketName(bucket: string): void {
+  if (
+    !bucket ||
+    bucket === '.' ||
+    bucket === '..' ||
+    bucket.includes('/') ||
+    bucket.includes('\\')
+  ) {
+    throw new UnsafeLocalPathError(`Unsafe R2 bucket name: ${bucket}`);
+  }
 }
 
 export function parseByteSize(input: string): number {
@@ -197,7 +216,7 @@ export async function listAllObjects(
   client: Pick<R2Client, 'listObjects'>,
   location: R2Location,
 ): Promise<R2ObjectMetadata[]> {
-  assertBucketName(location.bucket);
+  assertR2BucketName(location.bucket);
 
   const objects: R2ObjectMetadata[] = [];
   const seenTokens = new Set<string>();
@@ -261,14 +280,18 @@ export async function resolveLocalObjectPath(
   bucket: string,
   key: string,
 ): Promise<string> {
-  assertBucketName(bucket);
+  assertR2BucketName(bucket);
+  const keySegments = key.split('/');
   if (
     !key ||
     path.isAbsolute(key) ||
     path.win32.isAbsolute(key) ||
-    key.split(/[\\/]/).some((segment) => segment === '..')
+    key.includes('\\') ||
+    keySegments.some(
+      (segment) => segment.length === 0 || segment === '.' || segment === '..',
+    )
   ) {
-    throw new Error(`Unsafe R2 key: ${key}`);
+    throw new UnsafeLocalPathError(`Unsafe R2 key: ${key}`);
   }
 
   const rootDirectory = path.resolve(downloadDir);
@@ -277,10 +300,10 @@ export async function resolveLocalObjectPath(
   const relative = path.relative(bucketDirectory, destination);
 
   if (!relative || relative === '..' || relative.startsWith(`..${path.sep}`)) {
-    throw new Error(`Unsafe R2 key: ${key}`);
+    throw new UnsafeLocalPathError(`Unsafe R2 key: ${key}`);
   }
   if (path.isAbsolute(relative)) {
-    throw new Error(`Unsafe R2 key: ${key}`);
+    throw new UnsafeLocalPathError(`Unsafe R2 key: ${key}`);
   }
 
   await assertNoSymlinkComponents(rootDirectory, destination);
@@ -374,10 +397,18 @@ export async function downloadWithoutOverwrite(
       signal,
     );
     if (response.status === 'changed') {
-      return { destination, status: 'changed-in-r2' };
+      return {
+        destination,
+        reason: 'R2 object changed after it was listed',
+        status: 'changed-in-r2',
+      };
     }
     if (response.status === 'missing') {
-      return { destination, status: 'missing-from-r2' };
+      return {
+        destination,
+        reason: 'R2 object disappeared after it was listed',
+        status: 'missing-from-r2',
+      };
     }
 
     await pipeline(
@@ -437,7 +468,9 @@ async function assertNoSymlinkComponents(
     try {
       const currentStats = await lstat(current);
       if (currentStats.isSymbolicLink()) {
-        throw new Error(`Unsafe symlink in local backup path: ${current}`);
+        throw new UnsafeLocalPathError(
+          `Unsafe symlink in local backup path: ${current}`,
+        );
       }
     } catch (error) {
       if (isNodeError(error, 'ENOENT')) {
@@ -445,18 +478,6 @@ async function assertNoSymlinkComponents(
       }
       throw error;
     }
-  }
-}
-
-function assertBucketName(bucket: string): void {
-  if (
-    !bucket ||
-    bucket === '.' ||
-    bucket === '..' ||
-    bucket.includes('/') ||
-    bucket.includes('\\')
-  ) {
-    throw new Error(`Unsafe R2 bucket name: ${bucket}`);
   }
 }
 

@@ -7,6 +7,7 @@
     "analyze-free-users": "pnpm --filter @sexyvoice/scripts analyze-free-users",
     "backfill-call-analysis": "pnpm --filter @sexyvoice/scripts backfill-call-analysis",
     "backfill-free-call": "pnpm --filter @sexyvoice/scripts backfill-free-call",
+    "backup-r2-audio": "pnpm --filter @sexyvoice/scripts backup-r2-audio",
     "build": "turbo run build",
     "build:content": "turbo run build:content --filter=@sexyvoice/web",
     "check": "ultracite check",

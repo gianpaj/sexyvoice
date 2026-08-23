@@ -23,12 +23,15 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 
 - Shared metadata stores normalized ETags. The AWS adapter adds quotes for `If-Match`.
 - The adapter classifies conditional GET failures as `changed` or `missing`; other failures reject.
-- Safe path resolution must inspect existing components with `lstat`, not only reject lexical traversal.
+- Safe path resolution inspects existing components with `lstat` and rejects keys with empty or dot segments or backslashes because filesystem normalization could collapse distinct R2 keys.
+- Node does not expose an `openat`-style API for no-follow directory traversal. The command rechecks path components before writes and finalization, but it assumes no hostile process mutates the destination tree during a run.
 - `effective-progress@0.12.0` does not support `mode: 'result'` on `Progress.forEach`. It supports that mode on `Progress.all`. Use `Progress.all` for TTY runs and `Effect.all` for non-TTY runs so all downloads finish and the progress bar reports success and failure counts accurately.
 - The approved spec was moved by the user from `docs/superpowers/specs/` to `docs/plans/`; preserve the move.
+- Effect's optional `msgpackr-extract` dependency does not need native acceleration for this command, so its install script is disabled in `allowBuilds`.
 
 ## Verification record
 
 - Shared extraction: cleanup tests pass, scripts type-check passes, and focused Biome checks pass.
+- Backup implementation: 39 offline tests pass, scripts type-check passes, and focused Biome checks pass.
 
 Do not run a full backup.
