@@ -1,5 +1,61 @@
 # Scripts
 
+## R2 orphan audio cleanup
+
+This command inventories free-user audio objects that are at least 45 days old
+and have no matching `audio_files.storage_key`. It scans only the configured
+`generated-audio-free/` and `cloned-audio-free/` locations.
+
+Create an inventory manifest first:
+
+```bash
+pnpm cleanup-orphaned-r2-audio
+```
+
+Review the JSON under `scripts/backups/`. The inventory reports total objects and
+bytes for each configured bucket. It also reports scanned objects, objects younger
+than 45 days, old objects still referenced by the database, and orphan candidates
+for every allowed cleanup prefix.
+
+R2 has no aggregate bucket-size response. Inventory paginates all object metadata
+to calculate bucket totals. It does not download object contents, and objects
+outside the cleanup prefixes can never become candidates.
+
+Download one bounded batch to an external drive with:
+
+```bash
+pnpm cleanup-orphaned-r2-audio -- \
+  --manifest scripts/backups/r2-orphan-candidates-<timestamp>.json \
+  --download \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
+  --max-download-size 20GB
+```
+
+Add `--delete --yes` to delete only objects with verified local copies. To
+delete without downloading, use `--delete --force --yes`. `--force` skips only
+the local backup check. The command still validates the manifest, checks the
+allowlist, refetches database keys, and compares live R2 metadata.
+
+The command requires:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
+- `R2_ENDPOINT`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_SPEECH_API_BUCKET_NAME`
+
+R2 credentials need list, read, and head access. Deletion mode also needs delete
+access.
+
+## TypeScript maintenance scripts
+
+New TypeScript maintenance scripts must call `loadScriptEnv()` from
+`lib/env.mts` and create privileged Supabase clients with
+`createScriptAdminClient()` from `lib/supabase.mts`. Keep command-specific
+warnings and confirmation policy in the command.
+
 ## Generate Gemini Speech Samples Script
 
 Generates speech samples through the public `/api/v1/speech` endpoint and saves
