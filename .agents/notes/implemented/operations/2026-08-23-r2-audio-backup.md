@@ -39,6 +39,7 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Cleanup deletion stays sequential by design. Batching would widen the gap between each final database check and its R2 deletion.
 - Effect result order is load-bearing because report entries map outcomes back to selected objects by index; tests force out-of-order completion and assert input-order results.
 - Checksum tests include equal-size wrong-content files because this MD5 branch controls cleanup deletion eligibility.
+- `runAction()` validates its options at the exported orchestration boundary so direct callers cannot bypass the CLI's destructive gates.
 
 ## Verification record
 
@@ -47,6 +48,6 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Repository gates: `pnpm fixall` passes with five existing Sentry namespace-import warnings. `pnpm type-check` passes.
 - Full tests: all 45 scripts tests and 62 of 63 web test files pass. The 35 Stripe webhook tests fail on the existing closed Redis connection in `tests/utils/redis-test-utils.ts`; the focused file fails for the same reason.
 - Production dry run: `sv-api-speech-audio-files/generated-audio/` lists 5,132 objects and 2.1 GiB, selects all objects without downloading, and writes the ignored report.
-- Review fixes: 46 scripts tests pass, repository type-check passes, focused Biome checks pass, and `Redis.fromEnv()` accepts the project's `KV_REST_API_URL` and `KV_REST_API_TOKEN` variables.
+- Review fixes: 47 scripts tests pass, repository type-check passes, focused Biome checks pass, and `Redis.fromEnv()` accepts the project's `KV_REST_API_URL` and `KV_REST_API_TOKEN` variables.
 
 Do not run a full backup.

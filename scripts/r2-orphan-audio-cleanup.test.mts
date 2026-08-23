@@ -681,6 +681,52 @@ describe('paginated reads and live checks', () => {
 });
 
 describe('cleanup action orchestration', () => {
+  it('validates destructive options for direct callers before work', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
+    try {
+      const manifestPath = await writeManifest(directory, []);
+      let reportWrites = 0;
+      let storageReads = 0;
+      const dependencies = {
+        client: mockR2(),
+        storageKeys: {
+          hasStorageKey() {
+            return Promise.resolve(false);
+          },
+          listStorageKeys() {
+            storageReads += 1;
+            return Promise.resolve([]);
+          },
+        },
+        writeReport() {
+          reportWrites += 1;
+          return Promise.resolve();
+        },
+      };
+
+      await assert.rejects(
+        runAction(
+          actionOptions(manifestPath, { force: false }),
+          config,
+          dependencies,
+        ),
+        /--delete requires --download or --force/,
+      );
+      await assert.rejects(
+        runAction(
+          actionOptions(manifestPath, { yes: false }),
+          config,
+          dependencies,
+        ),
+        /--delete requires --yes/,
+      );
+      assert.equal(storageReads, 0);
+      assert.equal(reportWrites, 0);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
   it('checks live state before deleting, then evicts and reports', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
     try {

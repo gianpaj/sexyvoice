@@ -24,6 +24,7 @@ import {
   recheckCandidates,
   type StorageKeyPageSource,
   summarizeBuckets,
+  validateCleanupCliOptions,
   validateManifest,
 } from './lib/r2-orphan-audio-cleanup.mts';
 import {
@@ -235,6 +236,8 @@ export async function runAction(
   config: CleanupConfig,
   dependencies: ActionDependencies,
 ): Promise<ActionRunResult> {
+  validateCleanupCliOptions(options);
+
   const r2 = dependencies.client;
   const now = dependencies.now ?? (() => new Date());
   const manifestPath = await resolveExistingInputPath(
