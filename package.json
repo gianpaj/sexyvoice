@@ -12,6 +12,7 @@
     "check": "ultracite check",
     "check-translations": "turbo run check-translations --filter=@sexyvoice/web",
     "clean": "turbo run clean",
+    "cleanup-orphaned-r2-audio": "pnpm --filter @sexyvoice/scripts cleanup-orphaned-r2-audio",
     "compile-dispute-evidence": "pnpm --filter @sexyvoice/scripts compile-dispute-evidence",
     "dev": "turbo run dev --filter=@sexyvoice/web",
     "fix": "ultracite fix",
