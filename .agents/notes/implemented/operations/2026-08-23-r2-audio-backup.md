@@ -34,6 +34,7 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Database inventory orders by `storage_key` and then `id` so duplicate content-derived keys cannot make offset pages ambiguous.
 - `runBackup()` treats every defined transfer cap as a cap, so a direct caller cannot turn zero into an uncapped run.
 - Manifest path resolution checks access without reading the document; validation performs the only full manifest read.
+- Cleanup manifests are approval artifacts, not editable candidate lists. Derived totals make any hand-edited subset invalid.
 
 ## Verification record
 

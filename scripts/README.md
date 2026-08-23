@@ -46,10 +46,12 @@ Create an inventory manifest first:
 pnpm cleanup-orphaned-r2-audio
 ```
 
-Review the JSON under `scripts/backups/`. The inventory reports total objects and
-bytes for each configured bucket. It also reports scanned objects, objects younger
-than 45 days, old objects still referenced by the database, and orphan candidates
-for every allowed cleanup prefix.
+Review the JSON under `scripts/backups/` without editing it. The action command
+validates the candidate list and all derived totals, so use the manifest as
+generated or reject the run. The inventory reports total objects and bytes for
+each configured bucket. It also reports scanned objects, objects younger than 45
+days, old objects still referenced by the database, and orphan candidates for
+every allowed cleanup prefix.
 
 R2 has no aggregate bucket-size response. Inventory paginates all object metadata
 to calculate bucket totals. It does not download object contents, and objects
