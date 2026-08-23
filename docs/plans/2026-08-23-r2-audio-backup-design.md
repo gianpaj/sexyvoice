@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved design. Implementation requires a separate plan and review.
+Implemented.
 
 ## Problem
 
@@ -23,7 +23,8 @@ Add this root command, delegated to `@sexyvoice/scripts`:
 pnpm backup-r2-audio -- [options]
 ```
 
-A normal backup requires a destination:
+A normal backup requires an existing destination directory with write and
+traversal access:
 
 ```bash
 pnpm backup-r2-audio -- \
@@ -54,7 +55,7 @@ same object from being listed, checked, downloaded, and reported twice.
 Support these options:
 
 ```text
---download-dir <path>       Required local backup directory
+--download-dir <path>       Required destination; must exist for downloads
 --source <locations>        Comma-separated bucket or bucket/prefix sources
 --max-download-size <size>  Optional cap for new transfers
 --dry-run                   Scan and compare without downloading
@@ -72,6 +73,12 @@ When `--source` is present, require `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and
 The command has no deletion or force flags.
 
 ## Local layout and safety
+
+Before a normal run lists R2, require the exact download directory to exist and
+check its write and traversal access. Do not create the download root. This
+makes an unmounted removable volume fail at startup instead of creating its
+mount path on the internal disk. A dry run does not create or require the
+root directory.
 
 Preserve the literal bucket name and complete R2 key:
 
@@ -188,6 +195,11 @@ Progress.all(objects.map(downloadObject), {
 and failed object counts. Use the built-in progress bar, elapsed time, and ETA.
 Include the total selected bytes in the description. Do not add nested per-file
 tasks, custom columns, or manual per-chunk progress.
+
+Run the backup package command with `NODE_ENV=production` so Ink loads React's
+production reconciler. React's development reconciler retains performance
+measurements on every Ink render and can exhaust the V8 heap during a long
+transfer.
 
 Mount the Ink renderer only when `process.stdout.isTTY` is true. For redirected
 output and CI, run the same effects with `Effect.all()` at concurrency four and
@@ -318,6 +330,7 @@ filesystem interfaces. Cover:
 - partial download cleanup;
 - four-object concurrency;
 - dry-run behavior;
+- missing and read-only download roots that fail before R2 listing;
 - listing failures that prevent all downloads;
 - mixed download results that continue processing;
 - report totals and exit-code decisions; and
@@ -368,6 +381,8 @@ pnpm backup-r2-audio -- \
 - An optional cap limits new transfer bytes and prioritizes older objects.
 - Interactive runs use `effective-progress`; redirected output has no Ink
   rendering.
+- Normal runs require an existing writable and traversable download root before
+  R2 listing.
 - Every listed object receives one final report status.
 - The cleanup command keeps its allowlist, database, age, manifest, and deletion
   protections after generic R2 code moves out.

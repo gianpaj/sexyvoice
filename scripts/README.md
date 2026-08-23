@@ -5,6 +5,12 @@
 This command copies missing R2 objects to a local drive. It never deletes R2
 objects or local files, and it never overwrites an existing local path.
 
+A normal run requires the exact download directory to exist with write and
+traversal access. Mount the external volume and create the backup directory
+before running the command. The startup check happens before R2 listing, so a
+missing volume cannot become a directory on the internal disk. A dry run does
+not create or require the download directory.
+
 Back up both complete configured buckets:
 
 ```bash
@@ -24,6 +30,10 @@ Use `--dry-run` to list, compare, and report without downloading. Use
 `--max-download-size 20GB` to cap new transfers. The command selects missing
 objects from oldest to newest and can fit a later small object when an older
 object exceeds the remaining cap.
+
+The package command sets `NODE_ENV=production` before loading Ink. React's
+development reconciler retains performance measurements on every Ink render and
+can exhaust the V8 heap during long transfers.
 
 Files keep their full bucket and key under the destination. Existing files with
 a simple ETag receive size and MD5 verification. Files with opaque or multipart
