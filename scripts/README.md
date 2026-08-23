@@ -87,8 +87,10 @@ The command requires:
 - `KV_REST_API_TOKEN` (deletion mode)
 
 R2 credentials need list, read, and head access. Deletion mode also needs delete
-access. After deleting an object from the main dashboard bucket, the command
-evicts the matching Redis URL cache entry.
+access. The destructive loop rechecks and deletes one object at a time to keep
+the gap between the final database check and deletion small. After deleting an
+object from the main dashboard bucket, the command evicts the matching Redis URL
+cache entry.
 
 ## TypeScript maintenance scripts
 
