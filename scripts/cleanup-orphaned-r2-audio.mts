@@ -166,6 +166,7 @@ function createStorageKeySource(): ScriptStorageKeySource {
         .from('audio_files')
         .select('storage_key')
         .order('storage_key', { ascending: true })
+        .order('id', { ascending: true })
         .range(from, to);
 
       if (error) {
