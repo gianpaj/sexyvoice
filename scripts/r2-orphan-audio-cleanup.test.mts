@@ -745,6 +745,61 @@ describe('cleanup action orchestration', () => {
     }
   });
 
+  it('reports earlier deletions when a later candidate throws', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
+    try {
+      const first = candidate('generated-audio-free/first.wav');
+      const second = candidate('generated-audio-free/second.wav');
+      const manifestPath = await writeManifest(directory, [first, second]);
+      let nowCalls = 0;
+      const output = await runAction(actionOptions(manifestPath), config, {
+        audioUrlCache: {
+          deleteKey() {
+            return Promise.resolve();
+          },
+        },
+        client: mockR2({
+          headObject(_bucket, key) {
+            const item = key === first.key ? first : second;
+            return Promise.resolve({
+              etag: item.etag,
+              lastModified: new Date(item.lastModified),
+              size: item.size,
+            });
+          },
+        }),
+        log: () => undefined,
+        now: () => {
+          nowCalls += 1;
+          if (nowCalls === 3) {
+            throw new Error('clock failed');
+          }
+          return now;
+        },
+        storageKeys: {
+          hasStorageKey() {
+            return Promise.resolve(false);
+          },
+          listStorageKeys() {
+            return Promise.resolve([]);
+          },
+        },
+        writeReport() {
+          return Promise.resolve();
+        },
+      });
+
+      assert.deepEqual(
+        output.report.results.map((result) => result.status),
+        ['deleted', 'deletion-failure'],
+      );
+      assert.match(output.report.results[1].reason ?? '', /clock failed/);
+      assert.equal(output.exitCode, 1);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
   it('deletes only checksum-backed objects in download mode', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
     try {

@@ -410,53 +410,121 @@ export async function runAction(
       const identity = objectIdentity(candidate);
       const previous = results.get(identity);
 
-      if (options.download) {
-        const destination = previous?.destination;
-        if (!destination) {
-          results.set(identity, {
-            ...candidate,
-            backup: previous?.backup,
-            reason: 'Verified backup path is missing from the action state',
-            status: 'deletion-failure',
-          });
-          continue;
+      try {
+        if (options.download) {
+          const destination = previous?.destination;
+          if (!destination) {
+            results.set(identity, {
+              ...candidate,
+              backup: previous?.backup,
+              reason: 'Verified backup path is missing from the action state',
+              status: 'deletion-failure',
+            });
+            continue;
+          }
+
+          let verification: Awaited<ReturnType<typeof verifyLocalFile>>;
+          try {
+            verification = await verifyLocalFile(destination, candidate);
+          } catch (error) {
+            results.set(identity, {
+              ...candidate,
+              backup: previous?.backup,
+              destination,
+              reason: error instanceof Error ? error.message : String(error),
+              status: 'deletion-failure',
+            });
+            continue;
+          }
+
+          if (verification.status !== 'verified-checksum') {
+            results.set(identity, {
+              ...candidate,
+              backup: previous?.backup,
+              destination,
+              reason:
+                'reason' in verification
+                  ? verification.reason
+                  : 'Local backup is missing',
+              status:
+                verification.status === 'verified-size'
+                  ? 'unverifiable-checksum'
+                  : 'local-mismatch',
+            });
+            continue;
+          }
         }
 
-        let verification: Awaited<ReturnType<typeof verifyLocalFile>>;
+        let referenced: boolean;
         try {
-          verification = await verifyLocalFile(destination, candidate);
+          referenced = await storageKeys.hasStorageKey(candidate.key);
         } catch (error) {
           results.set(identity, {
             ...candidate,
             backup: previous?.backup,
-            destination,
+            destination: previous?.destination,
             reason: error instanceof Error ? error.message : String(error),
             status: 'deletion-failure',
           });
           continue;
         }
 
-        if (verification.status !== 'verified-checksum') {
+        if (referenced) {
           results.set(identity, {
             ...candidate,
             backup: previous?.backup,
-            destination,
-            reason:
-              'reason' in verification
-                ? verification.reason
-                : 'Local backup is missing',
-            status:
-              verification.status === 'verified-size'
-                ? 'unverifiable-checksum'
-                : 'local-mismatch',
+            destination: previous?.destination,
+            status: 'referenced-by-database',
           });
           continue;
         }
-      }
 
-      let referenced: boolean;
-      try {
-        referenced = await storageKeys.hasStorageKey(candidate.key);
+        const [check] = await recheckCandidates(
+          [candidate],
+          new Set(),
+          r2,
+          locations,
+          now(),
+        );
+        if (check.status !== 'eligible') {
+          results.set(identity, {
+            ...candidate,
+            backup: previous?.backup,
+            destination: previous?.destination,
+            reason: check.reason,
+            status: check.status,
+          });
+          continue;
+        }
+
+        const [deletion] = await deleteCandidatesInBatches(r2, [candidate], 1);
+        if (deletion.status === 'deleted') {
+          try {
+            await evictDeletedAudioCache(
+              candidate,
+              config.mainBucket,
+              audioUrlCache,
+            );
+          } catch (error) {
+            results.set(identity, {
+              ...candidate,
+              backup: previous?.backup,
+              destination: previous?.destination,
+              reason: `R2 object was deleted, but Redis cache eviction failed: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+              status: 'deletion-failure',
+            });
+            continue;
+          }
+        }
+        results.set(identity, {
+          ...candidate,
+          backup: previous?.backup,
+          destination: previous?.destination,
+          reason: deletion.reason,
+          status: deletion.status,
+        });
       } catch (error) {
         results.set(identity, {
           ...candidate,
@@ -465,65 +533,7 @@ export async function runAction(
           reason: error instanceof Error ? error.message : String(error),
           status: 'deletion-failure',
         });
-        continue;
       }
-
-      if (referenced) {
-        results.set(identity, {
-          ...candidate,
-          backup: previous?.backup,
-          destination: previous?.destination,
-          status: 'referenced-by-database',
-        });
-        continue;
-      }
-
-      const [check] = await recheckCandidates(
-        [candidate],
-        new Set(),
-        r2,
-        locations,
-        now(),
-      );
-      if (check.status !== 'eligible') {
-        results.set(identity, {
-          ...candidate,
-          backup: previous?.backup,
-          destination: previous?.destination,
-          reason: check.reason,
-          status: check.status,
-        });
-        continue;
-      }
-
-      const [deletion] = await deleteCandidatesInBatches(r2, [candidate], 1);
-      if (deletion.status === 'deleted') {
-        try {
-          await evictDeletedAudioCache(
-            candidate,
-            config.mainBucket,
-            audioUrlCache,
-          );
-        } catch (error) {
-          results.set(identity, {
-            ...candidate,
-            backup: previous?.backup,
-            destination: previous?.destination,
-            reason: `R2 object was deleted, but Redis cache eviction failed: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
-            status: 'deletion-failure',
-          });
-          continue;
-        }
-      }
-      results.set(identity, {
-        ...candidate,
-        backup: previous?.backup,
-        destination: previous?.destination,
-        reason: deletion.reason,
-        status: deletion.status,
-      });
     }
   }
 
