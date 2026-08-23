@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Redis } from '@upstash/redis';
@@ -620,7 +620,7 @@ function actionReportPath(manifestPath: string, now: Date): string {
 
 async function resolveExistingInputPath(input: string): Promise<string> {
   if (path.isAbsolute(input)) {
-    await readFile(input);
+    await access(input);
     return input;
   }
 
@@ -630,7 +630,7 @@ async function resolveExistingInputPath(input: string): Promise<string> {
   ];
   for (const candidate of new Set(candidates)) {
     try {
-      await readFile(candidate);
+      await access(candidate);
       return candidate;
     } catch (error) {
       if (!isNodeError(error, 'ENOENT')) {
