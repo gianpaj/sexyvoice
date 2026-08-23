@@ -195,7 +195,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - For Gemini TTS error or credit complaints, follow
   `skills/investigate-gemini-tts-credit-report/SKILL.md`; keep the investigation
   read-only and require separate human approval for any refund.
-- Dashboard TTS may use Redis URL caching; external API speech must not.
+- Dashboard TTS may use Redis URL caching; external API speech must not. R2
+  cleanup deletion must evict the matching dashboard Redis cache key after it
+  deletes a main-bucket object.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
 - Voice generation can involve Replicate, Google Gemini TTS (models `gpro` for

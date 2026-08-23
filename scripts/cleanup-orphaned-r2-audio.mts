@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Redis } from '@upstash/redis';
 
 import { loadScriptEnv } from './lib/env.mts';
 import { createR2Client } from './lib/r2-client.mts';
@@ -11,6 +12,7 @@ import {
   type CleanupConfig,
   createManifest,
   deleteCandidatesInBatches,
+  evictDeletedAudioCache,
   fetchAllStorageKeys,
   filterAllowedInventoryObjects,
   type InventorySummaryEntry,
@@ -367,6 +369,12 @@ async function runAction(
   if (options.delete) {
     const requestedDeletes = options.download ? backedUp : eligible;
     const storageKeys = createStorageKeySource();
+    const redis = Redis.fromEnv();
+    const audioUrlCache = {
+      async deleteKey(key: string): Promise<void> {
+        await redis.del(key);
+      },
+    };
 
     for (const candidate of requestedDeletes) {
       const identity = objectIdentity(candidate);
@@ -459,6 +467,26 @@ async function runAction(
       }
 
       const [deletion] = await deleteCandidatesInBatches(r2, [candidate], 1);
+      if (deletion.status === 'deleted') {
+        try {
+          await evictDeletedAudioCache(
+            candidate,
+            config.mainBucket,
+            audioUrlCache,
+          );
+        } catch (error) {
+          results.set(identity, {
+            ...candidate,
+            backup: previous?.backup,
+            destination: previous?.destination,
+            reason: `R2 object was deleted, but Redis cache eviction failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+            status: 'deletion-failure',
+          });
+          continue;
+        }
+      }
       results.set(identity, {
         ...candidate,
         backup: previous?.backup,

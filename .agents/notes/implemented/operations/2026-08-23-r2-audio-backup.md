@@ -28,6 +28,7 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - `effective-progress@0.12.0` does not support `mode: 'result'` on `Progress.forEach`. It supports that mode on `Progress.all`. Use `Progress.all` for TTY runs and `Effect.all` for non-TTY runs so all downloads finish and the progress bar reports success and failure counts accurately.
 - The approved spec was moved by the user from `docs/superpowers/specs/` to `docs/plans/`; preserve the move.
 - Effect's optional `msgpackr-extract` dependency does not need native acceleration for this command, so its install script is disabled in `allowBuilds`.
+- Main-bucket cleanup deletion evicts the object's Redis URL cache key after R2 confirms deletion. Cache eviction failures return a nonzero result because a stale URL would break repeated generation requests.
 
 ## Verification record
 
@@ -36,5 +37,6 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Repository gates: `pnpm fixall` passes with five existing Sentry namespace-import warnings. `pnpm type-check` passes.
 - Full tests: all 39 scripts tests and 62 of 63 web test files pass. The 35 Stripe webhook tests fail on the existing closed Redis connection in `tests/utils/redis-test-utils.ts`; the focused file fails for the same reason.
 - Production dry run: `sv-api-speech-audio-files/generated-audio/` lists 5,132 objects and 2.1 GiB, selects all objects without downloading, and writes the ignored report.
+- Review fix: 41 scripts tests pass, scripts type-check passes, focused Biome checks pass, and `Redis.fromEnv()` accepts the project's `KV_REST_API_URL` and `KV_REST_API_TOKEN` variables.
 
 Do not run a full backup.

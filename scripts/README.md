@@ -79,9 +79,12 @@ The command requires:
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET_NAME`
 - `R2_SPEECH_API_BUCKET_NAME`
+- `KV_REST_API_URL` (deletion mode)
+- `KV_REST_API_TOKEN` (deletion mode)
 
 R2 credentials need list, read, and head access. Deletion mode also needs delete
-access.
+access. After deleting an object from the main dashboard bucket, the command
+evicts the matching Redis URL cache entry.
 
 ## TypeScript maintenance scripts
 

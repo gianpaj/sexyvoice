@@ -53,6 +53,7 @@ catalog:
   "@types/node": "24.10.4"
   "@types/react": "19.2.16"
   "@types/react-dom": "19.2.3"
+  "@upstash/redis": "1.37.0"
   "ai": "6.0.116"
   "effective-progress": "0.12.0"
   "effect": "4.0.0-rc.111"

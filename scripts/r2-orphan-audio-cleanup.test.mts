@@ -11,6 +11,7 @@ import {
   type CleanupConfig,
   createManifest,
   deleteCandidatesInBatches,
+  evictDeletedAudioCache,
   fetchAllStorageKeys,
   filterAllowedInventoryObjects,
   findAllowedLocation,
@@ -649,6 +650,40 @@ describe('paginated reads and live checks', () => {
 });
 
 describe('deletion results', () => {
+  it('evicts dashboard cache keys only for the main bucket', async () => {
+    const deletedKeys: string[] = [];
+    const cache = {
+      deleteKey(key: string) {
+        deletedKeys.push(key);
+        return Promise.resolve();
+      },
+    };
+    const mainCandidate = candidate('generated-audio-free/main.wav');
+    const apiCandidate = candidate('generated-audio-free/api.wav', {
+      bucket: config.apiBucket,
+    });
+
+    await evictDeletedAudioCache(mainCandidate, config.mainBucket, cache);
+    await evictDeletedAudioCache(apiCandidate, config.mainBucket, cache);
+
+    assert.deepEqual(deletedKeys, [mainCandidate.key]);
+  });
+
+  it('reports cache eviction failures to the caller', async () => {
+    await assert.rejects(
+      evictDeletedAudioCache(
+        candidate('generated-audio-free/main.wav'),
+        config.mainBucket,
+        {
+          deleteKey() {
+            return Promise.reject(new Error('Redis unavailable'));
+          },
+        },
+      ),
+      /Redis unavailable/,
+    );
+  });
+
   it('records partial deletion failures without retrying successes', async () => {
     const first = candidate('generated-audio-free/first.mp3');
     const second = candidate('generated-audio-free/second.mp3');

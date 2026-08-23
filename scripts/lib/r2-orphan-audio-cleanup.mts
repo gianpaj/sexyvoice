@@ -87,6 +87,10 @@ export interface StorageKeyPageSource {
   listStorageKeys: (from: number, to: number) => Promise<string[]>;
 }
 
+export interface AudioUrlCache {
+  deleteKey: (key: string) => Promise<void>;
+}
+
 export type RecheckStatus =
   | 'changed-in-r2'
   | 'eligible'
@@ -542,6 +546,16 @@ export async function recheckCandidates(
   }
 
   return results;
+}
+
+export async function evictDeletedAudioCache(
+  candidate: R2ObjectMetadata,
+  mainBucket: string,
+  cache: AudioUrlCache,
+): Promise<void> {
+  if (candidate.bucket === mainBucket) {
+    await cache.deleteKey(candidate.key);
+  }
 }
 
 export async function deleteCandidatesInBatches(

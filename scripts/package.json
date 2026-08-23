@@ -26,6 +26,7 @@
     "@aws-sdk/client-s3": "3.1011.0",
     "@google/genai": "1.19.0",
     "@supabase/supabase-js": "catalog:",
+    "@upstash/redis": "catalog:",
     "ai": "catalog:",
     "disposable-email-domains-js": "^1.21.0",
     "dotenv": "^16.6.1",
