@@ -68,7 +68,9 @@ pnpm cleanup-orphaned-r2-audio -- \
 Add `--delete --yes` to delete only objects with verified local copies. To
 delete without downloading, use `--delete --force --yes`. `--force` skips only
 the local backup check. The command still validates the manifest, checks the
-allowlist, refetches database keys, and compares live R2 metadata.
+allowlist, refetches database keys, and compares live R2 metadata. Soft-deleted
+`audio_files` rows intentionally remain references and continue to protect their
+R2 objects.
 
 The command requires:
 

@@ -144,6 +144,8 @@ function readConfig(): CleanupConfig {
 function createStorageKeySource(): ScriptStorageKeySource {
   const supabase = createScriptAdminClient();
 
+  // audio_files uses soft deletion. Keep every row in these checks so a future
+  // status filter cannot turn user-deleted history into cleanup candidates.
   return {
     async hasStorageKey(key) {
       const { data, error } = await supabase

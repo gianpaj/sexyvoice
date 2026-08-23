@@ -30,6 +30,7 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Effect's optional `msgpackr-extract` dependency does not need native acceleration for this command, so its install script is disabled in `allowBuilds`.
 - Main-bucket cleanup deletion evicts the object's Redis URL cache key after R2 confirms deletion. Cache eviction failures return a nonzero result because a stale URL would break repeated generation requests.
 - The cleanup entry point is import-safe. `runAction()` accepts injected R2, database, cache, clock, logging, and report dependencies so tests cover destructive ordering and backup eligibility.
+- Soft-deleted `audio_files` rows remain references. Cleanup must not add an active-status filter because user-deleted history still protects its R2 key.
 
 ## Verification record
 
