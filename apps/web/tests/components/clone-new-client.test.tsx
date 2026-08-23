@@ -74,6 +74,7 @@ vi.mock('@/hooks/use-file-upload', () => ({
   formatBytes: () => '1 MB',
   useFileUpload: () => [
     {
+      errors: [],
       files: [
         {
           file: selectedFile,
@@ -81,32 +82,31 @@ vi.mock('@/hooks/use-file-upload', () => ({
         },
       ],
       isDragging: false,
-      errors: [],
     },
     {
+      addFiles: vi.fn(),
+      clearErrors: vi.fn(),
+      getInputProps: vi.fn(() => ({})),
       handleDragEnter: vi.fn(),
       handleDragLeave: vi.fn(),
       handleDragOver: vi.fn(),
       handleDrop: vi.fn(),
       openFileDialog: vi.fn(),
       removeFile: vi.fn(),
-      getInputProps: vi.fn(() => ({})),
-      clearErrors: vi.fn(),
-      addFiles: vi.fn(),
     },
   ],
 }));
 
 vi.mock('@/hooks/use-media-recorder', () => ({
   default: () => ({
-    status: 'idle',
-    startRecording: vi.fn(),
-    stopRecording: vi.fn(),
-    clearMediaStream: vi.fn(),
     clearMediaBlob: vi.fn(),
-    mediaStream: null,
-    mediaBlob: null,
+    clearMediaStream: vi.fn(),
     getMediaStream: vi.fn(),
+    mediaBlob: null,
+    mediaStream: null,
+    startRecording: vi.fn(),
+    status: 'idle',
+    stopRecording: vi.fn(),
   }),
 }));
 
@@ -123,66 +123,26 @@ vi.mock('@/lib/i18n/get-translated-languages', () => ({
 }));
 
 const dict = {
-  audioFileLabel: 'Audio File',
-  cancelButton: 'Cancel',
-  ctaButton: 'Generate Audio',
-  downloadAudio: 'Download Audio',
-  dragDropText: 'Drag & drop or click to browse',
-  errorCloning: 'Failed to clone voice',
-  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
-  errorTooLarge: 'File size too large. Please use a smaller audio file.',
-  errorTitle: 'Error',
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
   audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
   audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
   audioDurationInvalidVoxtral:
     'Reference audio must be at least __MIN__ seconds for voice cloning.',
   audioDurationUnknown: 'Could not determine audio duration.',
+  audioFileLabel: 'Audio File',
   audioProcessorError: 'Audio Processor Error',
+  cancelButton: 'Cancel',
   convertingAudio: 'Converting audio',
-  failedToLoadAudioProcessor: 'Failed to load audio processor',
-  failedToStartRecording: 'Failed to start recording: __ERROR__',
-  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
-  generating: 'Generating',
-  languageLabel: 'Language',
-  languageSelectPlaceholder: 'Select a language',
-  legalConsentCheckbox:
-    'By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.',
-  notEnoughCredits: "You don't have enough credits to generate audio.",
-  orUseMicrophone: 'or use your microphone',
-  playAudio: 'Play Audio',
-  loadingAudioProcessor: 'Loading audio processor...',
-  microphoneError: 'Microphone error',
-  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
-  previewTitle: 'Generated Voice Preview',
-  referenceAudioGuidanceLong:
-    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
-  referenceAudioGuidanceShort:
-    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
-  paidTextLimitTooltip:
-    'Paid users can clone longer speech with up to __MAX__ characters.',
-  upgradeTextLimitTooltip:
-    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
-  referenceAudioEnhancementHelp:
-    'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
-  referenceAudioEnhancementLabel: 'Reference audio enhancement',
-  removeFile: 'Remove file',
-  sampleCard: {
-    exampleOutput: 'Example',
-    loadSource: 'Load source',
-    sourceAudio: 'Source audio',
+  crossLanguageInfo: {
+    description: '',
+    example: '',
+    title: '',
   },
-  subtitle:
-    'Upload an audio file and enter text to create a voice clone and generate speech in one step',
-  success: 'Audio generated successfully!',
-  tabPreview: 'Preview',
-  tabUpload: 'Upload',
-  textAreaPlaceholder: 'Enter the text you want to convert to speech...',
-  textToConvertLabel: 'Enter text to generate speech',
-  title: 'Clone a Voice',
-  tryDemo: 'Or try with a demo:',
-  unexpectedError: 'Unexpected error occurred',
-  uploadAudioFile: 'Upload audio file',
+  ctaButton: 'Generate Audio',
+  downloadAudio: 'Download Audio',
+  dragDropText: 'Drag & drop or click to browse',
+  errorCloning: 'Failed to clone voice',
+  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errors: {
     audioConversionFailed:
       'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
@@ -214,11 +174,51 @@ const dict = {
     unsupportedLocale: 'This language is not supported for voice cloning.',
     userNotFound: 'Please sign in to clone a voice.',
   },
-  crossLanguageInfo: {
-    description: '',
-    example: '',
-    title: '',
+  errorTitle: 'Error',
+  errorTooLarge: 'File size too large. Please use a smaller audio file.',
+  failedToLoadAudioProcessor: 'Failed to load audio processor',
+  failedToStartRecording: 'Failed to start recording: __ERROR__',
+  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
+  generating: 'Generating',
+  languageLabel: 'Language',
+  languageSelectPlaceholder: 'Select a language',
+  legalConsentCheckbox:
+    'By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.',
+  loadingAudioProcessor: 'Loading audio processor...',
+  microphoneError: 'Microphone error',
+  notEnoughCredits: "You don't have enough credits to generate audio.",
+  orUseMicrophone: 'or use your microphone',
+  paidTextLimitTooltip:
+    'Paid users can clone longer speech with up to __MAX__ characters.',
+  playAudio: 'Play Audio',
+  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
+  previewTitle: 'Generated Voice Preview',
+  referenceAudioEnhancementHelp:
+    'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
+  referenceAudioEnhancementLabel: 'Reference audio enhancement',
+  referenceAudioGuidanceLong:
+    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+  referenceAudioGuidanceShort:
+    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+  removeFile: 'Remove file',
+  sampleCard: {
+    exampleOutput: 'Example',
+    loadSource: 'Load source',
+    sourceAudio: 'Source audio',
   },
+  subtitle:
+    'Upload an audio file and enter text to create a voice clone and generate speech in one step',
+  success: 'Audio generated successfully!',
+  tabPreview: 'Preview',
+  tabUpload: 'Upload',
+  textAreaPlaceholder: 'Enter the text you want to convert to speech...',
+  textToConvertLabel: 'Enter text to generate speech',
+  title: 'Clone a Voice',
+  tryDemo: 'Or try with a demo:',
+  unexpectedError: 'Unexpected error occurred',
+  upgradeTextLimitTooltip:
+    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
+  uploadAudioFile: 'Upload audio file',
 } as const;
 
 const renderClone = (
@@ -252,10 +252,10 @@ describe('NewVoiceClient', () => {
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
         {
-          status: 200,
           headers: {
             'content-type': 'application/json',
           },
+          status: 200,
         },
       ),
     );
@@ -368,10 +368,10 @@ describe('NewVoiceClient', () => {
             'Insufficient credits. You need 252 credits to clone this audio',
         }),
         {
-          status: 402,
           headers: {
             'content-type': 'application/json',
           },
+          status: 402,
         },
       ),
     );

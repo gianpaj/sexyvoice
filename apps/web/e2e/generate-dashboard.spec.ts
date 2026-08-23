@@ -1,6 +1,5 @@
 import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
-
 import {
   handleGenerateVoiceError,
   handleInsufficientCreditsError,
@@ -160,13 +159,13 @@ test.describe('Generate Dashboard - Authenticated User', () => {
       // Delay for 5 seconds to give time to cancel
       await new Promise((resolve) => setTimeout(resolve, 5000));
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({
-          url: 'https://files.sexyvoice.ai/test.wav',
-          creditsUsed: 12,
           creditsRemaining: 988,
+          creditsUsed: 12,
+          url: 'https://files.sexyvoice.ai/test.wav',
         }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
 
@@ -262,13 +261,13 @@ test.describe('Generate Dashboard - Split Mode', () => {
     await page.route('**/api/generate-voice', async (route) => {
       generatedUrls.push(route.request().postDataJSON()?.text ?? '');
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({
-          url: `https://files.sexyvoice.ai/segment-${generatedUrls.length}.wav`,
-          creditsUsed: 5,
           creditsRemaining: 995,
+          creditsUsed: 5,
+          url: `https://files.sexyvoice.ai/segment-${generatedUrls.length}.wav`,
         }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
 
@@ -294,17 +293,17 @@ test.describe('Generate Dashboard - Split Mode', () => {
     await page.route('**/api/generate-voice', async (route) => {
       const body = route.request().postDataJSON();
       generatedRequests.push({
-        text: body?.text ?? '',
         language: body?.language ?? '',
+        text: body?.text ?? '',
       });
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({
-          url: `https://files.sexyvoice.ai/grok-segment-${generatedRequests.length}.mp3`,
-          creditsUsed: 5,
           creditsRemaining: 995,
+          creditsUsed: 5,
+          url: `https://files.sexyvoice.ai/grok-segment-${generatedRequests.length}.mp3`,
         }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
 
@@ -332,13 +331,13 @@ test.describe('Generate Dashboard - Split Mode', () => {
       const body = route.request().postDataJSON();
       capturedLanguages.push(body?.language ?? '');
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({
-          url: `https://files.sexyvoice.ai/grok-fr-${capturedLanguages.length}.mp3`,
-          creditsUsed: 5,
           creditsRemaining: 995,
+          creditsUsed: 5,
+          url: `https://files.sexyvoice.ai/grok-fr-${capturedLanguages.length}.mp3`,
         }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
 
@@ -384,9 +383,9 @@ test.describe('Generate Dashboard - Error Scenarios', () => {
     await page.route('**/api/generate-voice', handleInsufficientCreditsError);
     await page.route('**/api/estimate-credits', async (route) => {
       await route.fulfill({
-        status: 200,
+        body: JSON.stringify({ estimatedCredits: 15, tokens: 150 }),
         contentType: 'application/json',
-        body: JSON.stringify({ tokens: 150, estimatedCredits: 15 }),
+        status: 200,
       });
     });
 
@@ -412,9 +411,9 @@ test.describe('Generate Dashboard - Error Scenarios', () => {
     });
     await page.route('**/api/estimate-credits', async (route) => {
       await route.fulfill({
-        status: 200,
+        body: JSON.stringify({ estimatedCredits: 15, tokens: 150 }),
         contentType: 'application/json',
-        body: JSON.stringify({ tokens: 150, estimatedCredits: 15 }),
+        status: 200,
       });
     });
 

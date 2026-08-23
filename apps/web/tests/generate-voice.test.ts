@@ -48,8 +48,8 @@ describe('Generate Voice API Route', () => {
   describe('Input Validation', () => {
     it('should return 400 when request body is null', async () => {
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
         body: null,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -61,11 +61,11 @@ describe('Generate Voice API Route', () => {
 
     it('should return 400 when text is missing', async () => {
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -77,11 +77,11 @@ describe('Generate Voice API Route', () => {
 
     it('should return 400 when voice is missing', async () => {
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -95,11 +95,11 @@ describe('Generate Voice API Route', () => {
       const longText = 'a'.repeat(501); // Exceeds 500 char limit
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: longText, voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: longText, voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -113,11 +113,11 @@ describe('Generate Voice API Route', () => {
       const longText = 'a'.repeat(501); // Exceeds 500 char limit
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: longText, voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: longText, voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -134,15 +134,15 @@ describe('Generate Voice API Route', () => {
       const longStyle = 'b'.repeat(1001); // exceeds the 1000-char free style limit
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          styleVariant: longStyle,
+          text: shortText,
+          voiceId: 'voice-kore-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: shortText,
-          voiceId: 'voice-kore-id',
-          styleVariant: longStyle,
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -156,15 +156,15 @@ describe('Generate Voice API Route', () => {
       // A short transcript with an in-limit style must pass validation (it fails
       // later for other reasons, but not with a length error).
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          styleVariant: 'b'.repeat(1000),
+          text: 'a'.repeat(10),
+          voiceId: 'voice-kore-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'a'.repeat(10),
-          voiceId: 'voice-kore-id',
-          styleVariant: 'b'.repeat(1000),
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -179,9 +179,9 @@ describe('Generate Voice API Route', () => {
       const { getVoiceById } = await import('@/lib/supabase/queries');
       vi.mocked(getVoiceById).mockResolvedValueOnce({
         id: 'voice-gpro31-id',
-        name: 'kore',
         language: 'en',
         model: 'gpro31',
+        name: 'kore',
       });
 
       // HOTFIX: streaming is disabled, so gpro31 uses the standard per-tier
@@ -189,11 +189,11 @@ describe('Generate Voice API Route', () => {
       const longText = 'a'.repeat(501);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: longText, voiceId: 'voice-gpro31-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: longText, voiceId: 'voice-gpro31-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -210,11 +210,11 @@ describe('Generate Voice API Route', () => {
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: longText, voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: longText, voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -232,11 +232,11 @@ describe('Generate Voice API Route', () => {
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: longText, voiceId: 'voice-eve-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: longText, voiceId: 'voice-eve-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -261,11 +261,11 @@ describe('Generate Voice API Route', () => {
       } as unknown as Awaited<ReturnType<typeof createClient>>);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -285,14 +285,14 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text: 'Hello world',
           voiceId: 'voice-nonexistent-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -310,14 +310,14 @@ describe('Generate Voice API Route', () => {
       vi.mocked(queries.getCredits).mockResolvedValueOnce(10);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text: 'Hello world this is a test',
           voiceId: 'voice-tara-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -335,14 +335,14 @@ describe('Generate Voice API Route', () => {
       vi.mocked(queries.getCredits).mockResolvedValueOnce(estimate - 1);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text,
           voiceId: 'voice-eve-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -361,14 +361,14 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text: 'Hello world this is a test',
           voiceId: 'voice-tara-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -390,11 +390,11 @@ describe('Generate Voice API Route', () => {
       mockRedisGet.mockResolvedValueOnce(cachedUrl);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -421,11 +421,11 @@ describe('Generate Voice API Route', () => {
       mockRedisGet.mockResolvedValueOnce(cachedUrl);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -457,11 +457,11 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -491,15 +491,15 @@ describe('Generate Voice API Route', () => {
       mockRedisGet.mockResolvedValueOnce(cachedUrl);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          outputCodec: 'mp3',
+          text: 'Hello world',
+          voiceId: 'voice-eve-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-eve-id',
-          outputCodec: 'mp3',
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -524,17 +524,17 @@ describe('Generate Voice API Route', () => {
       // API model ID), so restore the original Replicate versioned model for tara.
       vi.mocked(getVoiceById).mockResolvedValueOnce({
         id: 'voice-tara-id',
-        name: 'tara',
         language: 'en',
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+        name: 'tara',
       });
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       // Mock Replicate.run to return a ReadableStream
@@ -580,37 +580,37 @@ describe('Generate Voice API Route', () => {
         isPublic: false,
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
-        usage: { split: false, userHasPaid: false },
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/tara-[a-f0-9]+\.wav$/,
         ),
+        usage: { split: false, userHasPaid: false },
         userId: 'test-user-id',
         voiceId: 'voice-tara-id',
       });
 
       // Verify usage event was logged
       expect(insertUsageEvent).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        sourceType: 'tts',
-        sourceId: 'test-audio-file-id',
-        unit: 'chars',
-        quantity: 11, // "Hello world".length
         creditsUsed: 48,
         metadata: {
-          voiceId: 'voice-tara-id',
-          voiceName: 'tara',
+          duration: '12',
           model:
             'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          predictionId: null,
           provider: 'replicate',
           split: false,
-          textPreview: 'Hello world',
           textLength: 11,
-          duration: '12',
+          textPreview: 'Hello world',
           userHasPaid: false,
-          predictionId: null,
+          voiceId: 'voice-tara-id',
+          voiceName: 'tara',
         },
+        quantity: 11, // "Hello world".length
+        sourceId: 'test-audio-file-id',
+        sourceType: 'tts',
+        unit: 'chars',
+        userId: 'test-user-id',
       });
 
       expect(json.url).toContain('files.sexyvoice.ai');
@@ -622,11 +622,11 @@ describe('Generate Voice API Route', () => {
       });
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -669,16 +669,16 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          outputCodec: 'mp3',
+          styleVariant: 'ignored style prompt',
+          text: 'Hello [laugh]',
+          voiceId: 'voice-eve-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'Hello [laugh]',
-          voiceId: 'voice-eve-id',
-          outputCodec: 'mp3',
-          styleVariant: 'ignored style prompt',
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -702,37 +702,37 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model: 'xai',
-        usage: { split: false, userHasPaid: false },
         predictionId: undefined,
         text: 'Hello [laugh]',
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
         ),
+        usage: { split: false, userHasPaid: false },
         userId: 'test-user-id',
         voiceId: 'voice-eve-id',
       });
 
       expect(insertUsageEvent).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        sourceType: 'tts',
-        sourceId: 'test-audio-file-id',
-        unit: 'chars',
-        quantity: 13,
         creditsUsed: 100,
         dollarAmount: 0.000_055,
         metadata: {
-          voiceId: 'voice-eve-id',
-          voiceName: 'eve',
+          codec: 'mp3',
+          duration: '12',
           model: 'xai',
+          predictionId: null,
           provider: 'grok',
           split: false,
-          textPreview: 'Hello [laugh]',
           textLength: 13,
-          duration: '12',
+          textPreview: 'Hello [laugh]',
           userHasPaid: false,
-          predictionId: null,
-          codec: 'mp3',
+          voiceId: 'voice-eve-id',
+          voiceName: 'eve',
         },
+        quantity: 13,
+        sourceId: 'test-audio-file-id',
+        sourceType: 'tts',
+        unit: 'chars',
+        userId: 'test-user-id',
       });
     });
 
@@ -741,14 +741,14 @@ describe('Generate Voice API Route', () => {
       delete process.env.XAI_API_KEY;
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text: 'Hello world',
           voiceId: 'voice-eve-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -773,14 +773,14 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text: 'Hello world',
           voiceId: 'voice-eve-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -814,8 +814,8 @@ describe('Generate Voice API Route', () => {
           },
         ],
         usageMetadata: {
-          promptTokenCount: 11,
           candidatesTokenCount: 12,
+          promptTokenCount: 11,
           totalTokenCount: 23,
         },
       } as GenerateContentResponse);
@@ -827,15 +827,15 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          seed: 1_234_567,
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-kore-id',
-          seed: 1_234_567,
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -862,8 +862,8 @@ describe('Generate Voice API Route', () => {
           },
         ],
         usageMetadata: {
-          promptTokenCount: 11,
           candidatesTokenCount: 12,
+          promptTokenCount: 11,
           totalTokenCount: 23,
         },
       } as GenerateContentResponse);
@@ -875,15 +875,15 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          seed: 1_234_567,
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-kore-id',
-          seed: 1_234_567,
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -910,11 +910,11 @@ describe('Generate Voice API Route', () => {
       const reservedCredits = estimateCredits(text, 'kore', 'gpro');
       const actualCredits = calculateCreditsFromTokens(23);
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -927,12 +927,12 @@ describe('Generate Voice API Route', () => {
 
       // Verify credits were consumed
       expect(reduceCredits).toHaveBeenNthCalledWith(1, {
-        userId: 'test-user-id',
         amount: reservedCredits,
+        userId: 'test-user-id',
       });
       expect(reduceCreditsUpTo).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: actualCredits - reservedCredits,
+        userId: 'test-user-id',
       });
       expect(saveAudioFile).toHaveBeenCalledOnce();
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
@@ -948,43 +948,43 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model: 'gemini-2.5-pro-preview-tts',
-        usage: {
-          split: false,
-          promptTokenCount: '11',
-          candidatesTokenCount: '12',
-          totalTokenCount: '23',
-          userHasPaid: true,
-        },
         predictionId: undefined,
         text,
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
+        usage: {
+          candidatesTokenCount: '12',
+          promptTokenCount: '11',
+          split: false,
+          totalTokenCount: '23',
+          userHasPaid: true,
+        },
         userId: 'test-user-id',
         voiceId: 'voice-kore-id',
       });
 
       // Verify usage event was logged for Gemini voice
       expect(insertUsageEvent).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        sourceType: 'tts',
-        sourceId: 'test-audio-file-id',
-        unit: 'chars',
-        quantity: text.length,
         creditsUsed: 26,
         dollarAmount: 0.000_251,
         metadata: {
-          voiceId: 'voice-kore-id',
-          voiceName: 'kore',
+          duration: '12',
           model: 'gemini-2.5-pro-preview-tts',
+          predictionId: null,
           provider: 'gemini',
           split: false,
-          textPreview: text.slice(0, 100),
           textLength: text.length,
-          duration: '12',
+          textPreview: text.slice(0, 100),
           userHasPaid: true,
-          predictionId: null,
+          voiceId: 'voice-kore-id',
+          voiceName: 'kore',
         },
+        quantity: text.length,
+        sourceId: 'test-audio-file-id',
+        sourceType: 'tts',
+        unit: 'chars',
+        userId: 'test-user-id',
       });
 
       expect(json.url).toContain('files.sexyvoice.ai');
@@ -1006,11 +1006,11 @@ describe('Generate Voice API Route', () => {
       const reservedCredits = estimateCredits(text, 'kore', 'gpro');
       const actualCredits = calculateCreditsFromTokens(23);
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1021,12 +1021,12 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsRemaining).toBe(1000 - actualCredits);
       expect(reduceCredits).toHaveBeenCalledOnce();
       expect(reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: reservedCredits,
+        userId: 'test-user-id',
       });
       expect(restoreCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: reservedCredits - actualCredits,
+        userId: 'test-user-id',
       });
 
       await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
@@ -1060,11 +1060,11 @@ describe('Generate Voice API Route', () => {
       vi.mocked(reduceCreditsUpTo).mockResolvedValueOnce(availableExtraCredits);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1074,12 +1074,12 @@ describe('Generate Voice API Route', () => {
       expect(json.creditsUsed).toBe(creditsDebited);
       expect(json.creditsRemaining).toBe(0);
       expect(reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: reservedCredits,
+        userId: 'test-user-id',
       });
       expect(reduceCreditsUpTo).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: actualCredits - reservedCredits,
+        userId: 'test-user-id',
       });
 
       await vi.waitFor(() => expect(insertUsageEvent).toHaveBeenCalled());
@@ -1094,69 +1094,72 @@ describe('Generate Voice API Route', () => {
     it.each([
       ['voice-kore-id', 'gemini-2.5-pro-preview-tts'],
       ['voice-achernar-31-id', 'gemini-3.1-flash-tts-preview'],
-    ] as const)('should select %s for paid Gemini users based on voiceId', async (testVoiceId, expectedModel) => {
-      const { hasUserPaid, saveAudioFile } = await import(
-        '@/lib/supabase/queries'
-      );
-      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+    ] as const)(
+      'should select %s for paid Gemini users based on voiceId',
+      async (testVoiceId, expectedModel) => {
+        const { hasUserPaid, saveAudioFile } = await import(
+          '@/lib/supabase/queries'
+        );
+        vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      const generateContent = vi.fn().mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  inlineData: {
-                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
-                    mimeType: 'audio/wav',
+        const generateContent = vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                      mimeType: 'audio/wav',
+                    },
                   },
-                },
-              ],
+                ],
+              },
+              finishReason: 'STOP',
             },
-            finishReason: 'STOP',
+          ],
+          usageMetadata: {
+            candidatesTokenCount: 12,
+            promptTokenCount: 11,
+            totalTokenCount: 23,
           },
-        ],
-        usageMetadata: {
-          promptTokenCount: 11,
-          candidatesTokenCount: 12,
-          totalTokenCount: 23,
-        },
-      } as GenerateContentResponse);
+        } as GenerateContentResponse);
 
-      setMockGoogleGenAIFactory(() => ({
-        models: {
-          generateContent,
-        },
-      }));
+        setMockGoogleGenAIFactory(() => ({
+          models: {
+            generateContent,
+          },
+        }));
 
-      const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: testVoiceId,
-        }),
-      });
+        const request = new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: testVoiceId,
+          }),
+          headers: {
+            'content-type': 'application/json',
+          },
+          method: 'POST',
+        });
 
-      const response = await POST(request);
+        const response = await POST(request);
 
-      expect(response.status).toBe(200);
-      expect(generateContent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          model: expectedModel,
-          contents: [{ parts: [{ text: 'Hello world' }], role: 'user' }],
-        }),
-      );
-      await vi.waitFor(() => expect(saveAudioFile).toHaveBeenCalled());
-      expect(saveAudioFile).toHaveBeenCalledWith(
-        expect.objectContaining({
-          model: expectedModel,
-          text: 'Hello world',
-        }),
-      );
-    });
+        expect(response.status).toBe(200);
+        expect(generateContent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            contents: [{ parts: [{ text: 'Hello world' }], role: 'user' }],
+            model: expectedModel,
+          }),
+        );
+        await vi.waitFor(() => expect(saveAudioFile).toHaveBeenCalled());
+        expect(saveAudioFile).toHaveBeenCalledWith(
+          expect.objectContaining({
+            model: expectedModel,
+            text: 'Hello world',
+          }),
+        );
+      },
+    );
 
     it('should use flash model directly for free Gemini users', async () => {
       const { insertUsageEvent, saveAudioFile } = await import(
@@ -1188,8 +1191,8 @@ describe('Generate Voice API Route', () => {
                 },
               ],
               usageMetadata: {
-                promptTokenCount: 11,
                 candidatesTokenCount: 12,
+                promptTokenCount: 11,
                 totalTokenCount: 23,
               },
             } as GenerateContentResponse;
@@ -1198,11 +1201,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1221,18 +1224,18 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
-        usage: {
-          split: false,
-          promptTokenCount: '11',
-          candidatesTokenCount: '12',
-          totalTokenCount: '23',
-          userHasPaid: false,
-        },
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/kore-[a-f0-9]+\.wav$/,
         ),
+        usage: {
+          candidatesTokenCount: '12',
+          promptTokenCount: '11',
+          split: false,
+          totalTokenCount: '23',
+          userHasPaid: false,
+        },
         userId: 'test-user-id',
         voiceId: 'voice-kore-id',
       });
@@ -1279,8 +1282,8 @@ describe('Generate Voice API Route', () => {
           },
         ],
         usageMetadata: {
-          promptTokenCount: 11,
           candidatesTokenCount: 12,
+          promptTokenCount: 11,
           totalTokenCount: 23,
         },
       } as GenerateContentResponse);
@@ -1290,12 +1293,12 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1317,13 +1320,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1372,8 +1375,8 @@ describe('Generate Voice API Route', () => {
                 },
               ],
               usageMetadata: {
-                promptTokenCount: 11,
                 candidatesTokenCount: 12,
+                promptTokenCount: 11,
                 totalTokenCount: 23,
               },
             } as GenerateContentResponse;
@@ -1382,11 +1385,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1402,18 +1405,18 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model: 'gemini-2.5-flash-preview-tts',
-        usage: {
-          split: false,
-          promptTokenCount: '11',
-          candidatesTokenCount: '12',
-          totalTokenCount: '23',
-          userHasPaid: true,
-        },
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
+        usage: {
+          candidatesTokenCount: '12',
+          promptTokenCount: '11',
+          split: false,
+          totalTokenCount: '23',
+          userHasPaid: true,
+        },
         userId: 'test-user-id',
         voiceId: 'voice-kore-id',
       });
@@ -1426,38 +1429,38 @@ describe('Generate Voice API Route', () => {
       expect(Sentry.logger.warn).toHaveBeenCalledWith(
         'gemini-2.5-pro-preview-tts failed, retrying with gemini-2.5-flash-preview-tts',
         expect.objectContaining({
-          user: {
-            id: 'test-user-id',
-            email: 'test@example.com',
-          },
           extra: expect.objectContaining({
-            voice: 'kore',
-            styleVariant: '',
+            errorMessage: 'Pro model failed',
             model: 'gemini-2.5-pro-preview-tts',
             provider: 'gemini',
+            requestedOutputCodec: 'mp3',
+            styleVariant: '',
             textLength: 11,
             textPreview: 'Hello world',
-            requestedOutputCodec: 'mp3',
-            errorMessage: 'Pro model failed',
+            voice: 'kore',
           }),
+          user: {
+            email: 'test@example.com',
+            id: 'test-user-id',
+          },
         }),
       );
 
       expect(Sentry.logger.info).toHaveBeenCalledWith(
         'Gemini flash fallback succeeded after pro failure',
         expect.objectContaining({
-          user: {
-            id: 'test-user-id',
-            email: 'test@example.com',
-          },
           extra: expect.objectContaining({
-            voice: 'kore',
-            styleVariant: '',
-            provider: 'gemini',
-            originalModel: 'gemini-2.5-pro-preview-tts',
             fallbackModel: 'gemini-2.5-flash-preview-tts',
+            originalModel: 'gemini-2.5-pro-preview-tts',
             proErrorMessage: 'Pro model failed',
+            provider: 'gemini',
+            styleVariant: '',
+            voice: 'kore',
           }),
+          user: {
+            email: 'test@example.com',
+            id: 'test-user-id',
+          },
         }),
       );
 
@@ -1487,15 +1490,15 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          styleVariant: 'dramatic',
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-kore-id',
-          styleVariant: 'dramatic',
-        }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1514,8 +1517,8 @@ describe('Generate Voice API Route', () => {
             voice: 'kore',
           }),
           user: {
-            id: 'test-user-id',
             email: 'test@example.com',
+            id: 'test-user-id',
           },
         }),
       );
@@ -1538,10 +1541,10 @@ describe('Generate Voice API Route', () => {
     it('should return 422 without Sentry capture when Gemini rejects a TTS request as invalid', async () => {
       const invalidArgumentError: GoogleApiErrorWithStatus = {
         code: 400,
+        details: [],
         message:
           'Model tried to generate text, but it should only be used for TTS.',
         status: 'INVALID_ARGUMENT',
-        details: [],
       };
 
       setMockGoogleGenAIFactory(() => ({
@@ -1553,11 +1556,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1578,8 +1581,8 @@ describe('Generate Voice API Route', () => {
             voice: 'kore',
           }),
           user: {
-            id: 'test-user-id',
             email: 'test@example.com',
+            id: 'test-user-id',
           },
         }),
       );
@@ -1588,10 +1591,10 @@ describe('Generate Voice API Route', () => {
     it('should return 400 with a clean message when Gemini rejects the input as too long', async () => {
       const tokenLimitError: GoogleApiErrorWithStatus = {
         code: 400,
+        details: [],
         message:
           'The input token count exceeds the maximum number of tokens allowed (8192).',
         status: 'INVALID_ARGUMENT',
-        details: [],
       };
 
       setMockGoogleGenAIFactory(() => ({
@@ -1603,11 +1606,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1627,17 +1630,14 @@ describe('Generate Voice API Route', () => {
             // Both pro and flash models will throw the same quota error
             const apiError: GoogleApiErrorWithStatus = {
               code: 429,
-              message:
-                'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
-              status: 'RESOURCE_EXHAUSTED',
               details: [
                 {
                   '@type': 'type.googleapis.com/google.rpc.QuotaFailure',
                   violations: [
                     {
+                      quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
                       quotaMetric:
                         'generativelanguage.googleapis.com/generate_requests_per_model_per_day',
-                      quotaId: 'GenerateRequestsPerDayPerProjectPerModel',
                     },
                   ],
                 },
@@ -1651,6 +1651,9 @@ describe('Generate Voice API Route', () => {
                   ],
                 },
               ],
+              message:
+                'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_requests_per_model_per_day, limit: 0',
+              status: 'RESOURCE_EXHAUSTED',
             };
             throw new Error(JSON.stringify({ error: apiError }));
           }),
@@ -1658,11 +1661,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1683,11 +1686,11 @@ describe('Generate Voice API Route', () => {
       vi.mocked(queries.isFreemiumUserOverLimit).mockResolvedValueOnce(true);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1714,11 +1717,11 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1737,10 +1740,10 @@ describe('Generate Voice API Route', () => {
           generateContent: vi.fn().mockResolvedValue({
             candidates: [
               {
-                finishReason: FinishReason.STOP,
                 content: {
                   parts: [],
                 },
+                finishReason: FinishReason.STOP,
               },
             ],
           }),
@@ -1748,11 +1751,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1772,8 +1775,8 @@ describe('Generate Voice API Route', () => {
             voice: 'kore',
           }),
           user: {
-            id: 'test-user-id',
             email: 'test@example.com',
+            id: 'test-user-id',
           },
         }),
       );
@@ -1785,10 +1788,10 @@ describe('Generate Voice API Route', () => {
           generateContent: vi.fn().mockResolvedValue({
             candidates: [
               {
-                finishReason: FinishReason.OTHER,
                 content: {
                   parts: [],
                 },
+                finishReason: FinishReason.OTHER,
               },
             ],
           }),
@@ -1796,14 +1799,14 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
         body: JSON.stringify({
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
         }),
+        headers: {
+          'content-type': 'application/json',
+        },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1823,8 +1826,8 @@ describe('Generate Voice API Route', () => {
             voice: 'achernar',
           }),
           user: {
-            id: 'test-user-id',
             email: 'test@example.com',
+            id: 'test-user-id',
           },
         }),
       );
@@ -1854,11 +1857,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1918,11 +1921,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1963,10 +1966,10 @@ describe('Generate Voice API Route', () => {
           generateContent: vi.fn().mockResolvedValue({
             candidates: [
               {
-                finishReason: 'PROHIBITED_CONTENT',
                 content: {
                   parts: [],
                 },
+                finishReason: 'PROHIBITED_CONTENT',
               },
             ],
           }),
@@ -1974,11 +1977,11 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2002,15 +2005,15 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({
+          styleVariant: 'Excited',
+          text: 'Hello world',
+          voiceId: 'voice-tara-id',
+        }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-tara-id',
-          styleVariant: 'Excited',
-        }),
+        method: 'POST',
       });
 
       // We can't easily check the final text without more complex mocking,
@@ -2035,9 +2038,9 @@ describe('Generate Voice API Route', () => {
       controller.abort(); // abort before the request is even created
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
         signal: controller.signal,
       });
 
@@ -2063,9 +2066,9 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2094,9 +2097,9 @@ describe('Generate Voice API Route', () => {
       }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2116,11 +2119,11 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2138,11 +2141,11 @@ describe('Generate Voice API Route', () => {
       vi.mocked(queries.getVoiceById).mockRejectedValueOnce(error);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2159,19 +2162,19 @@ describe('Generate Voice API Route', () => {
       // We can verify that the same input produces the same cache key
 
       const request1 = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       const request2 = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        method: 'POST',
       });
 
       // Both requests should use the same cache key
@@ -2191,13 +2194,13 @@ describe('Generate Voice API Route', () => {
       const { reduceCredits } = await import('@/lib/supabase/queries');
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2241,13 +2244,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text,
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2262,12 +2265,12 @@ describe('Generate Voice API Route', () => {
       expect(body).toContain('files.sexyvoice.ai');
       expect(mockUploadFileToR2).toHaveBeenCalledOnce();
       expect(reduceCredits).toHaveBeenNthCalledWith(1, {
-        userId: 'test-user-id',
         amount: reservedCredits,
+        userId: 'test-user-id',
       });
       expect(reduceCreditsUpTo).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: actualCredits - reservedCredits,
+        userId: 'test-user-id',
       });
       expect(saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -2294,13 +2297,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2327,13 +2330,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text,
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2341,12 +2344,12 @@ describe('Generate Voice API Route', () => {
 
       expect(body).toContain('event: done');
       expect(reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: reservedCredits,
+        userId: 'test-user-id',
       });
       expect(restoreCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: reservedCredits - actualCredits,
+        userId: 'test-user-id',
       });
       expect(body).toContain(`"creditsUsed":${actualCredits}`);
       expect(body).toContain(`"creditsRemaining":${1000 - actualCredits}`);
@@ -2362,13 +2365,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2395,13 +2398,13 @@ describe('Generate Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-eve-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2414,13 +2417,13 @@ describe('Generate Voice API Route', () => {
 
     it('ignores stream: true for Replicate voices and returns JSON', async () => {
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-tara-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2439,13 +2442,13 @@ describe('Generate Voice API Route', () => {
       vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-kore-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2474,13 +2477,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2506,8 +2509,8 @@ describe('Generate Voice API Route', () => {
           yield {
             candidates: [{ content: { parts: [{}] }, finishReason: 'STOP' }],
             usageMetadata: {
-              promptTokenCount: 100,
               candidatesTokenCount: 200,
+              promptTokenCount: 100,
               totalTokenCount: 300,
             },
           };
@@ -2520,13 +2523,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2563,13 +2566,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2599,50 +2602,50 @@ describe('Generate Voice API Route', () => {
           promptFeedback: { blockReason: 'SAFETY' },
         },
       },
-    ])('does not retry a $name from the primary stream', async ({
-      errorCode,
-      terminalChunk,
-    }) => {
-      const { hasUserPaid, reduceCredits, restoreCredits } = await import(
-        '@/lib/supabase/queries'
-      );
-      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+    ])(
+      'does not retry a $name from the primary stream',
+      async ({ errorCode, terminalChunk }) => {
+        const { hasUserPaid, reduceCredits, restoreCredits } = await import(
+          '@/lib/supabase/queries'
+        );
+        vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
 
-      let callCount = 0;
-      const generateContentStream = vi.fn().mockImplementation(function* () {
-        callCount++;
-        yield terminalChunk;
-      });
-      setMockGoogleGenAIFactory(() => ({
-        models: { generateContentStream },
-      }));
+        let callCount = 0;
+        const generateContentStream = vi.fn().mockImplementation(function* () {
+          callCount++;
+          yield terminalChunk;
+        });
+        setMockGoogleGenAIFactory(() => ({
+          models: { generateContentStream },
+        }));
 
-      const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-achernar-31-id',
-          stream: true,
-        }),
-      });
+        const request = new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            stream: true,
+            text: 'Hello world',
+            voiceId: 'voice-achernar-31-id',
+          }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        });
 
-      const response = await POST(request);
-      const body = await readSseBody(response);
+        const response = await POST(request);
+        const body = await readSseBody(response);
 
-      expect(body).toContain('event: error');
-      expect(body).toContain(getErrorMessage(errorCode, 'voice-generation'));
-      expect(body).not.toContain('event: done');
-      expect(callCount).toBe(1);
-      expect(reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        amount: expect.any(Number),
-      });
-      expect(restoreCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
-        amount: expect.any(Number),
-      });
-    });
+        expect(body).toContain('event: error');
+        expect(body).toContain(getErrorMessage(errorCode, 'voice-generation'));
+        expect(body).not.toContain('event: done');
+        expect(callCount).toBe(1);
+        expect(reduceCredits).toHaveBeenCalledWith({
+          amount: expect.any(Number),
+          userId: 'test-user-id',
+        });
+        expect(restoreCredits).toHaveBeenCalledWith({
+          amount: expect.any(Number),
+          userId: 'test-user-id',
+        });
+      },
+    );
 
     it('emits error event after audio started and refunds reserved credits when stream throws mid-flight', async () => {
       const { hasUserPaid, reduceCredits, restoreCredits } = await import(
@@ -2659,13 +2662,13 @@ describe('Generate Voice API Route', () => {
       setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
 
       const request = new Request('http://localhost/api/generate-voice', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
+          stream: true,
           text: 'Hello world',
           voiceId: 'voice-achernar-31-id',
-          stream: true,
         }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2675,12 +2678,12 @@ describe('Generate Voice API Route', () => {
       expect(body).toContain('event: error');
       expect(body).not.toContain('event: done');
       expect(reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: expect.any(Number),
+        userId: 'test-user-id',
       });
       expect(restoreCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: expect.any(Number),
+        userId: 'test-user-id',
       });
     });
   });
@@ -2689,11 +2692,11 @@ describe('Generate Voice API Route', () => {
 describe('Integration Tests', () => {
   it('should complete full voice generation flow for Replicate', async () => {
     const request = new Request('http://localhost/api/generate-voice', {
-      method: 'POST',
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -2708,18 +2711,18 @@ describe('Integration Tests', () => {
   it('should complete full voice generation flow for Gemini', async () => {
     // Set up mock Redis data for Gemini API keys
     const mockApiKeyData = JSON.stringify({
-      id: 'test-key',
       apiKey: 'test-gemini-key',
-      requestsPerMinute: 0,
-      tokensPerMinute: 0,
-      requestsPerDay: 0,
+      failureCount: 0,
+      id: 'test-key',
+      isActive: true,
+      lastDayReset: Date.now(),
+      lastMinuteReset: Date.now(),
+      maxRequestsPerDay: 1500,
       maxRequestsPerMinute: 15,
       maxTokensPerMinute: 1_000_000,
-      maxRequestsPerDay: 1500,
-      lastMinuteReset: Date.now(),
-      lastDayReset: Date.now(),
-      isActive: true,
-      failureCount: 0,
+      requestsPerDay: 0,
+      requestsPerMinute: 0,
+      tokensPerMinute: 0,
     });
 
     // Mock Redis to return API key data
@@ -2732,11 +2735,11 @@ describe('Integration Tests', () => {
     });
 
     const request = new Request('http://localhost/api/generate-voice', {
-      method: 'POST',
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);

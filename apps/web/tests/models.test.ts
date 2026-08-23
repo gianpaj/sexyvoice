@@ -30,10 +30,10 @@ describe('mapApiCharacterToPreset', () => {
       id: '00000000-0000-4000-a000-000000000201',
       name: 'Legacy character',
       session_config: {
-        model: 'grok-voice-think-fast-1.0',
-        voice: 'Eve',
-        temperature: 0.8,
         maxOutputTokens: null,
+        model: 'grok-voice-think-fast-1.0',
+        temperature: 0.8,
+        voice: 'Eve',
       },
     });
 

@@ -7,8 +7,8 @@ describe('credit transaction reference conflicts', () => {
     expect(
       isCreditTransactionReferenceConflict({
         code: '23505',
-        message: 'duplicate key value violates unique constraint',
         details: 'Key (reference_id)=(pi_123) already exists.',
+        message: 'duplicate key value violates unique constraint',
       }),
     ).toBe(true);
   });
@@ -17,9 +17,9 @@ describe('credit transaction reference conflicts', () => {
     expect(
       isCreditTransactionReferenceConflict({
         code: '23505',
+        details: 'Key (email)=(person@example.com) already exists.',
         message:
           'duplicate key value violates unique constraint users_email_key',
-        details: 'Key (email)=(person@example.com) already exists.',
       }),
     ).toBe(false);
   });

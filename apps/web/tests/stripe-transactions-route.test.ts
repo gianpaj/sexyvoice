@@ -30,8 +30,8 @@ describe('/api/stripe/transactions', () => {
         getUser: vi.fn().mockResolvedValue({
           data: {
             user: {
-              id: 'user_123',
               email: 'user@example.com',
+              id: 'user_123',
             },
           },
           error: null,
@@ -44,12 +44,10 @@ describe('/api/stripe/transactions', () => {
     vi.mocked(stripe.subscriptions.list).mockResolvedValue({
       data: [
         {
-          id: 'sub_123',
           created: 1_700_000_000,
           current_period_end: 1_700_086_400,
           current_period_start: 1_700_000_000,
-          latest_invoice: { id: 'in_123' },
-          status: 'active',
+          id: 'sub_123',
           items: {
             data: [
               {
@@ -60,6 +58,8 @@ describe('/api/stripe/transactions', () => {
               },
             ],
           },
+          latest_invoice: { id: 'in_123' },
+          status: 'active',
         },
       ],
     } as never);
@@ -92,9 +92,9 @@ describe('/api/stripe/transactions', () => {
     });
     expect(json).toEqual([
       expect.objectContaining({
-        id: 'sub_123',
         amount: 900,
         description: 'Subscription: Starter (active)',
+        id: 'sub_123',
         invoice_id: 'in_123',
       }),
     ]);

@@ -8,8 +8,8 @@ import { mockCountTokens } from './setup';
 describe('Estimate Credits API Route', () => {
   it('returns 400 when request body is null', async () => {
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
       body: null,
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -21,11 +21,11 @@ describe('Estimate Credits API Route', () => {
 
   it('returns 400 when required parameters are missing', async () => {
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({}),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({}),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -45,11 +45,11 @@ describe('Estimate Credits API Route', () => {
     } as never);
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -63,11 +63,11 @@ describe('Estimate Credits API Route', () => {
     vi.mocked(queries.getVoiceIdByName).mockResolvedValueOnce(null as any);
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'unknown' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voiceId: 'unknown' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -79,11 +79,11 @@ describe('Estimate Credits API Route', () => {
 
   it('returns 400 when the voice model is not supported for estimation', async () => {
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -100,15 +100,15 @@ describe('Estimate Credits API Route', () => {
     mockCountTokens.mockResolvedValueOnce({ totalTokens: 360 });
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
       body: JSON.stringify({
         styleVariant: 'emotion_intensity high',
         text: 'Hello world',
         voiceId: 'voice-kore-id',
       }),
+      headers: {
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -124,11 +124,11 @@ describe('Estimate Credits API Route', () => {
     mockCountTokens.mockClear();
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-sal-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-sal-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -145,11 +145,11 @@ describe('Estimate Credits API Route', () => {
     const excessiveText = 'a'.repeat(501);
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-kore-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-kore-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -165,11 +165,11 @@ describe('Estimate Credits API Route', () => {
     const excessiveText = 'a'.repeat(1001);
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-kore-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-kore-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -184,11 +184,11 @@ describe('Estimate Credits API Route', () => {
     const excessiveText = 'a'.repeat(501);
 
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-sal-id' }),
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify({ text: excessiveText, voiceId: 'voice-sal-id' }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -201,11 +201,11 @@ describe('Estimate Credits API Route', () => {
 
   it('returns 400 when request body has malformed JSON', async () => {
     const request = new Request('http://localhost/api/estimate-credits', {
-      method: 'POST',
+      body: 'not valid json {]',
       headers: {
         'content-type': 'application/json',
       },
-      body: 'not valid json {]',
+      method: 'POST',
     });
 
     const response = await POST(request);

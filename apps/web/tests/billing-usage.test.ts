@@ -29,28 +29,28 @@ describe('/api/billing/usage', () => {
         }),
       },
       from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         gte: vi.fn().mockReturnThis(),
         lt: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: [
             {
-              user_id: 'test-user-id',
-              usage_date: '2026-02-25T00:00:00.000Z',
-              source_type: 'api_tts',
               api_key_id: 'key-1',
               model: 'gpro',
               requests: 2,
+              source_type: 'api_tts',
+              total_credits_used: 40,
+              total_dollar_amount: 0.05,
+              total_duration_seconds: 0,
               total_input_chars: 200,
               total_output_chars: 0,
-              total_duration_seconds: 0,
-              total_dollar_amount: 0.05,
-              total_credits_used: 40,
+              usage_date: '2026-02-25T00:00:00.000Z',
+              user_id: 'test-user-id',
             },
           ],
           error: null,
         }),
+        select: vi.fn().mockReturnThis(),
       })),
     } as never);
 
@@ -68,9 +68,7 @@ describe('/api/billing/usage', () => {
     expect(json.data).toHaveLength(1);
     expect(json.data[0].results[0].api_key_id).toBe('key-1');
     expect(json.data[0].results[0].requests).toBe(2);
-    expect(json.data[0].results[0]).not.toHaveProperty(
-      'total_dollar_amount',
-    );
+    expect(json.data[0].results[0]).not.toHaveProperty('total_dollar_amount');
   });
 
   it('accepts api_voice_cloning as source_type filter', async () => {
@@ -82,7 +80,6 @@ describe('/api/billing/usage', () => {
         }),
       },
       from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         gte: vi.fn().mockReturnThis(),
         lt: vi.fn().mockReturnThis(),
@@ -90,6 +87,7 @@ describe('/api/billing/usage', () => {
           data: [],
           error: null,
         }),
+        select: vi.fn().mockReturnThis(),
       })),
     } as never);
 

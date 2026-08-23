@@ -55,12 +55,12 @@ import {
   getErrorMessage,
   getTtsProvider,
 } from '@/lib/utils';
+import { parseGoogleApiError } from '@/utils/google-errors';
 import {
   getGoogleApiErrorStatus,
   isGoogleQuotaError,
   isGoogleTransientProviderError,
 } from '@/utils/google-rpc-status';
-import { parseGoogleApiError } from '@/utils/googleErrors';
 
 const ENDPOINT = '/api/v1/speech';
 
