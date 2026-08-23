@@ -284,6 +284,44 @@ describe('local transfer safety', () => {
     });
   });
 
+  it('rejects same-size files with the wrong MD5', async () => {
+    await withTempDirectory(async (directory) => {
+      const expected = Buffer.from('right');
+      const existing = Buffer.from('wrong');
+      const item = object('generated/mismatch.wav', {
+        etag: createHash('md5').update(expected).digest('hex'),
+        size: expected.length,
+      });
+      const destination = await resolveLocalObjectPath(
+        directory,
+        item.bucket,
+        item.key,
+      );
+      await mkdir(path.dirname(destination), { recursive: true });
+      await writeFile(destination, existing);
+      let getCalls = 0;
+
+      const result = await downloadWithoutOverwrite(
+        mockR2({
+          getObject() {
+            getCalls += 1;
+            return Promise.resolve({
+              body: byteStream(expected),
+              status: 'ok' as const,
+            });
+          },
+        }),
+        item,
+        directory,
+      );
+
+      assert.equal(result.status, 'download-failure');
+      assert.match(result.reason ?? '', /Local MD5 .* does not match R2 ETag/);
+      assert.equal(getCalls, 0);
+      assert.deepEqual(await readFile(destination), existing);
+    });
+  });
+
   it('classifies changed and missing remote objects', async () => {
     await withTempDirectory(async (directory) => {
       const changed = await downloadWithoutOverwrite(

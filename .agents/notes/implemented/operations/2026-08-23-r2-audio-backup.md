@@ -38,6 +38,7 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Each destructive candidate has an outer error boundary. Unexpected per-object errors become `deletion-failure`, later candidates continue, and the final report retains earlier confirmed deletions.
 - Cleanup deletion stays sequential by design. Batching would widen the gap between each final database check and its R2 deletion.
 - Effect result order is load-bearing because report entries map outcomes back to selected objects by index; tests force out-of-order completion and assert input-order results.
+- Checksum tests include equal-size wrong-content files because this MD5 branch controls cleanup deletion eligibility.
 
 ## Verification record
 
