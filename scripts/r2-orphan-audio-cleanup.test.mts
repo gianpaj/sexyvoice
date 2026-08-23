@@ -5,9 +5,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, it } from 'node:test';
 
+import { runAction } from './cleanup-orphaned-r2-audio.mts';
 import {
   analyzeInventory,
   buildAllowedLocations,
+  type CleanupCliOptions,
   type CleanupConfig,
   createManifest,
   deleteCandidatesInBatches,
@@ -38,6 +40,35 @@ const config: CleanupConfig = {
   mainBucket: 'main-audio',
 };
 const now = new Date('2026-08-22T12:00:00.000Z');
+
+function actionOptions(
+  manifest: string,
+  overrides: Partial<CleanupCliOptions> = {},
+): CleanupCliOptions {
+  return {
+    delete: true,
+    download: false,
+    downloadDir: undefined,
+    force: true,
+    help: false,
+    manifest,
+    maxDownloadBytes: undefined,
+    yes: true,
+    ...overrides,
+  };
+}
+
+async function writeManifest(
+  directory: string,
+  candidates: R2ObjectMetadata[],
+): Promise<string> {
+  const manifestPath = path.join(directory, 'manifest.json');
+  await writeFile(
+    manifestPath,
+    `${JSON.stringify(createManifest(candidates, config, now), null, 2)}\n`,
+  );
+  return manifestPath;
+}
 
 function candidate(
   key: string,
@@ -646,6 +677,145 @@ describe('paginated reads and live checks', () => {
       results.map((result) => result.status),
       ['referenced-by-database', 'changed-in-r2', 'missing-from-r2'],
     );
+  });
+});
+
+describe('cleanup action orchestration', () => {
+  it('checks live state before deleting, then evicts and reports', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
+    try {
+      const item = candidate('generated-audio-free/delete.wav');
+      const manifestPath = await writeManifest(directory, [item]);
+      const events: string[] = [];
+      const writtenReports: unknown[] = [];
+      const output = await runAction(actionOptions(manifestPath), config, {
+        audioUrlCache: {
+          deleteKey() {
+            events.push('cache');
+            return Promise.resolve();
+          },
+        },
+        client: mockR2({
+          deleteObjects(_bucket, keys) {
+            events.push('delete');
+            return Promise.resolve({ deleted: keys, errors: [] });
+          },
+          headObject() {
+            events.push('head');
+            return Promise.resolve({
+              etag: item.etag,
+              lastModified: new Date(item.lastModified),
+              size: item.size,
+            });
+          },
+        }),
+        log: () => undefined,
+        now: () => now,
+        storageKeys: {
+          hasStorageKey() {
+            events.push('has');
+            return Promise.resolve(false);
+          },
+          listStorageKeys() {
+            events.push('list');
+            return Promise.resolve([]);
+          },
+        },
+        writeReport(_reportPath, report) {
+          events.push('report');
+          writtenReports.push(report);
+          return Promise.resolve();
+        },
+      });
+
+      assert.deepEqual(events, [
+        'list',
+        'head',
+        'has',
+        'head',
+        'delete',
+        'cache',
+        'report',
+      ]);
+      assert.equal(output.exitCode, 0);
+      assert.equal(output.report.results[0].status, 'deleted');
+      assert.equal(writtenReports[0], output.report);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
+  it('deletes only checksum-backed objects in download mode', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
+    try {
+      const checksum = candidate('generated-audio-free/checksum.wav');
+      const opaque = candidate('generated-audio-free/opaque.wav', {
+        etag: 'opaque-2',
+      });
+      const manifestPath = await writeManifest(directory, [checksum, opaque]);
+      const downloadDir = path.join(directory, 'downloads');
+      for (const item of [checksum, opaque]) {
+        const destination = await resolveLocalObjectPath(
+          downloadDir,
+          item.bucket,
+          item.key,
+        );
+        await mkdir(path.dirname(destination), { recursive: true });
+        await writeFile(destination, new Uint8Array());
+      }
+      const deletedKeys: string[] = [];
+      const output = await runAction(
+        actionOptions(manifestPath, {
+          download: true,
+          downloadDir,
+          force: false,
+          maxDownloadBytes: 1,
+        }),
+        config,
+        {
+          audioUrlCache: {
+            deleteKey() {
+              return Promise.resolve();
+            },
+          },
+          client: mockR2({
+            deleteObjects(_bucket, keys) {
+              deletedKeys.push(...keys);
+              return Promise.resolve({ deleted: keys, errors: [] });
+            },
+            headObject(_bucket, key) {
+              const item = key === checksum.key ? checksum : opaque;
+              return Promise.resolve({
+                etag: item.etag,
+                lastModified: new Date(item.lastModified),
+                size: item.size,
+              });
+            },
+          }),
+          log: () => undefined,
+          now: () => now,
+          storageKeys: {
+            hasStorageKey() {
+              return Promise.resolve(false);
+            },
+            listStorageKeys() {
+              return Promise.resolve([]);
+            },
+          },
+          writeReport() {
+            return Promise.resolve();
+          },
+        },
+      );
+
+      assert.deepEqual(deletedKeys, [checksum.key]);
+      assert.deepEqual(
+        output.report.results.map((result) => result.status),
+        ['deleted', 'unverifiable-checksum'],
+      );
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
   });
 });
 

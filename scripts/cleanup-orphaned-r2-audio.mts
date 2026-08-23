@@ -1,14 +1,16 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Redis } from '@upstash/redis';
 
 import { loadScriptEnv } from './lib/env.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
+  type AudioUrlCache,
   analyzeInventory,
   type BucketSummary,
   buildAllowedLocations,
+  type CleanupCliOptions,
   type CleanupConfig,
   createManifest,
   deleteCandidatesInBatches,
@@ -36,8 +38,6 @@ import {
 } from './lib/r2-transfer.mts';
 import { createScriptAdminClient } from './lib/supabase.mts';
 
-loadScriptEnv();
-
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = path.resolve(SCRIPT_DIRECTORY, '..');
 
@@ -63,11 +63,11 @@ type ActionStatus =
   | 'verified-download'
   | 'verified-existing-file';
 
-interface ScriptStorageKeySource extends StorageKeyPageSource {
+export interface ScriptStorageKeySource extends StorageKeyPageSource {
   hasStorageKey: (key: string) => Promise<boolean>;
 }
 
-interface ActionReport {
+export interface ActionReport {
   createdAt: string;
   manifest: string;
   requested: {
@@ -85,6 +85,21 @@ interface ActionReport {
     prefix: string;
     status: ActionStatus;
   }>;
+}
+
+export interface ActionDependencies {
+  audioUrlCache?: AudioUrlCache;
+  client: R2Client;
+  log?: (message: string) => void;
+  now?: () => Date;
+  storageKeys: ScriptStorageKeySource;
+  writeReport?: (reportPath: string, report: ActionReport) => Promise<void>;
+}
+
+export interface ActionRunResult {
+  exitCode: 0 | 1;
+  report: ActionReport;
+  reportPath: string;
 }
 
 function printHelp(): void {
@@ -160,7 +175,16 @@ function createStorageKeySource(): ScriptStorageKeySource {
   };
 }
 
-async function runInventory(
+function createAudioUrlCache(): AudioUrlCache {
+  const redis = Redis.fromEnv();
+  return {
+    async deleteKey(key): Promise<void> {
+      await redis.del(key);
+    },
+  };
+}
+
+export async function runInventory(
   config: CleanupConfig,
   r2: R2Client,
 ): Promise<void> {
@@ -203,11 +227,13 @@ async function runInventory(
   printInventorySummary(inventory.summary);
 }
 
-async function runAction(
-  options: ReturnType<typeof parseCleanupCliArgs>,
+export async function runAction(
+  options: CleanupCliOptions,
   config: CleanupConfig,
-  r2: R2Client,
-): Promise<void> {
+  dependencies: ActionDependencies,
+): Promise<ActionRunResult> {
+  const r2 = dependencies.client;
+  const now = dependencies.now ?? (() => new Date());
   const manifestPath = await resolveExistingInputPath(
     options.manifest as string,
   );
@@ -230,7 +256,7 @@ async function runAction(
   const results = new Map<string, ActionReportEntry>();
   let databaseKeys: Set<string>;
   try {
-    databaseKeys = await fetchAllStorageKeys(createStorageKeySource());
+    databaseKeys = await fetchAllStorageKeys(dependencies.storageKeys);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     const failedResults = manifest.candidates.map((candidate) => ({
@@ -238,9 +264,12 @@ async function runAction(
       reason,
       status: 'database-check-failure' as const,
     }));
-    await writeActionReport(manifestPath, options, failedResults);
-    process.exitCode = 1;
-    return;
+    return writeActionReport(
+      manifestPath,
+      options,
+      failedResults,
+      dependencies,
+    );
   }
 
   const initialChecks = await recheckCandidates(
@@ -248,7 +277,7 @@ async function runAction(
     databaseKeys,
     r2,
     locations,
-    new Date(),
+    now(),
   );
   const eligible: R2ObjectMetadata[] = [];
 
@@ -368,13 +397,11 @@ async function runAction(
 
   if (options.delete) {
     const requestedDeletes = options.download ? backedUp : eligible;
-    const storageKeys = createStorageKeySource();
-    const redis = Redis.fromEnv();
-    const audioUrlCache = {
-      async deleteKey(key: string): Promise<void> {
-        await redis.del(key);
-      },
-    };
+    const storageKeys = dependencies.storageKeys;
+    const audioUrlCache = dependencies.audioUrlCache;
+    if (!audioUrlCache) {
+      throw new Error('Delete actions require an audio URL cache client');
+    }
 
     for (const candidate of requestedDeletes) {
       const identity = objectIdentity(candidate);
@@ -453,7 +480,7 @@ async function runAction(
         new Set(),
         r2,
         locations,
-        new Date(),
+        now(),
       );
       if (check.status !== 'eligible') {
         results.set(identity, {
@@ -506,20 +533,23 @@ async function runAction(
     }
     return result;
   });
-  await writeActionReport(manifestPath, options, orderedResults);
+  return writeActionReport(manifestPath, options, orderedResults, dependencies);
 }
 
 async function writeActionReport(
   manifestPath: string,
-  options: ReturnType<typeof parseCleanupCliArgs>,
+  options: CleanupCliOptions,
   results: ActionReportEntry[],
-): Promise<void> {
-  const report = createActionReport(manifestPath, options, results);
-  const reportPath = actionReportPath(manifestPath, new Date());
-  await writeJson(reportPath, report);
+  dependencies: Pick<ActionDependencies, 'log' | 'now' | 'writeReport'>,
+): Promise<ActionRunResult> {
+  const createdAt = dependencies.now?.() ?? new Date();
+  const report = createActionReport(manifestPath, options, results, createdAt);
+  const reportPath = actionReportPath(manifestPath, createdAt);
+  await (dependencies.writeReport ?? writeJson)(reportPath, report);
 
-  console.log(`Report: ${path.relative(REPOSITORY_ROOT, reportPath)}`);
-  printActionSummary(report);
+  const log = dependencies.log ?? console.log;
+  log(`Report: ${path.relative(REPOSITORY_ROOT, reportPath)}`);
+  printActionSummary(report, log);
 
   const failureStatuses = new Set<ActionStatus>([
     'database-check-failure',
@@ -528,15 +558,17 @@ async function writeActionReport(
     'local-mismatch',
     'r2-check-failure',
   ]);
-  if (results.some((result) => failureStatuses.has(result.status))) {
-    process.exitCode = 1;
-  }
+  const exitCode = results.some((result) => failureStatuses.has(result.status))
+    ? 1
+    : 0;
+  return { exitCode, report, reportPath };
 }
 
 function createActionReport(
   manifestPath: string,
-  options: ReturnType<typeof parseCleanupCliArgs>,
+  options: CleanupCliOptions,
   results: ActionReportEntry[],
+  createdAt: Date,
 ): ActionReport {
   const groups = new Map<string, ActionReport['summary'][number]>();
 
@@ -555,7 +587,7 @@ function createActionReport(
   }
 
   return {
-    createdAt: new Date().toISOString(),
+    createdAt: createdAt.toISOString(),
     manifest: path.relative(REPOSITORY_ROOT, manifestPath),
     requested: {
       delete: options.delete,
@@ -645,9 +677,12 @@ function formatTotals(totals: { bytes: number; count: number }): string {
   return `${totals.count} objects, ${formatBytes(totals.bytes)}`;
 }
 
-function printActionSummary(report: ActionReport): void {
+function printActionSummary(
+  report: ActionReport,
+  log: (message: string) => void,
+): void {
   for (const row of report.summary) {
-    console.log(
+    log(
       `${row.bucket}/${row.prefix} ${row.status}: ${row.count} objects, ${formatBytes(row.bytes)}`,
     );
   }
@@ -673,6 +708,7 @@ function isNodeError(
 }
 
 async function main(): Promise<void> {
+  loadScriptEnv();
   const options = parseCleanupCliArgs(process.argv.slice(2));
   if (options.help) {
     printHelp();
@@ -686,14 +722,24 @@ async function main(): Promise<void> {
     if (options.download && options.force) {
       console.log('--force is ignored because --download is active.');
     }
-    await runAction(options, config, r2);
+    const result = await runAction(options, config, {
+      audioUrlCache: options.delete ? createAudioUrlCache() : undefined,
+      client: r2,
+      storageKeys: createStorageKeySource(),
+    });
+    process.exitCode = result.exitCode;
     return;
   }
 
   await runInventory(config, r2);
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+const entryPoint = process.argv[1]
+  ? pathToFileURL(path.resolve(process.argv[1])).href
+  : undefined;
+if (entryPoint === import.meta.url) {
+  main().catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exitCode = 1;
+  });
+}
