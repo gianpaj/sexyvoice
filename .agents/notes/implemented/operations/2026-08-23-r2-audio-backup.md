@@ -33,5 +33,8 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 
 - Shared extraction: cleanup tests pass, scripts type-check passes, and focused Biome checks pass.
 - Backup implementation: 39 offline tests pass, scripts type-check passes, and focused Biome checks pass.
+- Repository gates: `pnpm fixall` passes with five existing Sentry namespace-import warnings. `pnpm type-check` passes.
+- Full tests: all 39 scripts tests and 62 of 63 web test files pass. The 35 Stripe webhook tests fail on the existing closed Redis connection in `tests/utils/redis-test-utils.ts`; the focused file fails for the same reason.
+- Production dry run: `sv-api-speech-audio-files/generated-audio/` lists 5,132 objects and 2.1 GiB, selects all objects without downloading, and writes the ignored report.
 
 Do not run a full backup.
