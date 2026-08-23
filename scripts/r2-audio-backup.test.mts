@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   access,
+  chmod,
   mkdir,
   mkdtemp,
   readdir,
@@ -406,35 +407,38 @@ describe('backup planning and reporting', () => {
     });
   });
 
-  it('rejects an unusable download directory before listing', async () => {
+  it('rejects a read-only download directory before listing', {
+    skip: process.getuid?.() === 0,
+  }, async () => {
     await withTempDirectory(async (directory) => {
-      const blockedPath = path.join(directory, 'blocked');
-      await writeFile(blockedPath, 'not a directory');
+      const downloadDir = path.join(directory, 'read-only');
+      await mkdir(downloadDir);
+      await chmod(downloadDir, 0o555);
       let listed = false;
 
-      await assert.rejects(
-        runBackup(
-          {
-            downloadDir: path.join(blockedPath, 'download'),
-            dryRun: false,
-            help: false,
-          },
-          [{ bucket: 'audio', prefix: '' }],
-          {
-            client: mockR2({
-              listObjects() {
-                listed = true;
-                return Promise.resolve({ objects: [] });
-              },
-            }),
-            interactive: false,
-            log: () => undefined,
-            reportDirectory: path.join(directory, 'reports'),
-          },
-        ),
-        /EEXIST|ENOTDIR/,
-      );
-      assert.equal(listed, false);
+      try {
+        await assert.rejects(
+          runBackup(
+            { downloadDir, dryRun: false, help: false },
+            [{ bucket: 'audio', prefix: '' }],
+            {
+              client: mockR2({
+                listObjects() {
+                  listed = true;
+                  return Promise.resolve({ objects: [] });
+                },
+              }),
+              interactive: false,
+              log: () => undefined,
+              reportDirectory: path.join(directory, 'reports'),
+            },
+          ),
+          /EACCES/,
+        );
+        assert.equal(listed, false);
+      } finally {
+        await chmod(downloadDir, 0o755);
+      }
     });
   });
 
