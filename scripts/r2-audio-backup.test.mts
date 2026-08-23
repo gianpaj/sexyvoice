@@ -638,16 +638,19 @@ describe('download scheduler', () => {
     let maxActive = 0;
     const outcomes = await runDownloadEffects(
       items,
-      async (_item, signal) => {
+      async (item, signal) => {
         assert.ok(signal);
         active += 1;
         maxActive = Math.max(maxActive, active);
-        await new Promise((resolve) => setTimeout(resolve, 5));
+        const index = items.indexOf(item);
+        await new Promise((resolve) =>
+          setTimeout(resolve, (items.length - index) * 2),
+        );
         active -= 1;
         return {
           destination: '',
-          reason: active === 1 ? 'failure' : undefined,
-          status: active === 1 ? 'download-failure' : 'downloaded-checksum',
+          reason: item.key,
+          status: index === 3 ? 'download-failure' : 'downloaded-checksum',
         };
       },
       100,
@@ -656,6 +659,10 @@ describe('download scheduler', () => {
 
     assert.equal(maxActive, 4);
     assert.equal(outcomes.length, items.length);
+    assert.deepEqual(
+      outcomes.map((outcome) => outcome.reason),
+      items.map((item) => item.key),
+    );
     assert.ok(
       outcomes.some((outcome) => outcome.status === 'download-failure'),
     );
