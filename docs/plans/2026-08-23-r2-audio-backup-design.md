@@ -170,26 +170,27 @@ Before downloading, print total objects and bytes for each source. Then print
 counts and bytes for existing, missing, deferred, and selected objects.
 
 Use `effective-progress` for an interactive download run. Wrap each Promise
-based download with `Effect.tryPromise()` and run the effects through
-`Progress.forEach()`:
+based download with `Effect.tryPromise()`, build one effect per object, and run
+the effects through `Progress.all()`:
 
 ```ts
-Progress.forEach(objects, downloadObject, {
+Progress.all(objects.map(downloadObject), {
   concurrency: 4,
   description: 'Downloading R2 objects',
   mode: 'result',
 });
 ```
 
-`mode: 'result'` runs every download and displays successful and failed object
-counts. Use the built-in progress bar, elapsed time, and ETA. Include the total
-selected bytes in the description. Do not add nested per-file tasks, custom
-columns, or manual per-chunk progress.
+`effective-progress@0.12.0` supports `mode: 'result'` on `Progress.all()`, not
+`Progress.forEach()`. Result mode runs every download and displays successful
+and failed object counts. Use the built-in progress bar, elapsed time, and ETA.
+Include the total selected bytes in the description. Do not add nested per-file
+tasks, custom columns, or manual per-chunk progress.
 
 Mount the Ink renderer only when `process.stdout.isTTY` is true. For redirected
-output and CI, run the same effects with `Effect.forEach()` at concurrency four.
-Print the plan, individual failures, and completion summary without ANSI
-rendering.
+output and CI, run the same effects with `Effect.all()` at concurrency four and
+`mode: 'result'`. Print the plan, individual failures, and completion summary
+without ANSI rendering.
 
 At completion, print:
 
