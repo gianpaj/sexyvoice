@@ -1,4 +1,5 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { access, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -219,6 +220,12 @@ export async function runBackup(
 ): Promise<{ exitCode: number; report: BackupReport; reportPath: string }> {
   if (!options.downloadDir) {
     throw new Error('--download-dir is required');
+  }
+
+  if (!options.dryRun) {
+    await mkdir(options.downloadDir, { recursive: true });
+    await access(options.downloadDir, constants.W_OK);
+    await access(options.downloadDir, constants.X_OK);
   }
 
   const startedAt = dependencies.now?.() ?? new Date();

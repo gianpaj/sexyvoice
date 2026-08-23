@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
+  access,
   mkdir,
   mkdtemp,
   readdir,
@@ -378,6 +379,82 @@ describe('local transfer safety', () => {
 });
 
 describe('backup planning and reporting', () => {
+  it('creates the download directory before listing', async () => {
+    await withTempDirectory(async (directory) => {
+      const downloadDir = path.join(directory, 'nested', 'download');
+      let listed = false;
+      const output = await runBackup(
+        { downloadDir, dryRun: false, help: false },
+        [{ bucket: 'audio', prefix: '' }],
+        {
+          client: mockR2({
+            async listObjects() {
+              await access(downloadDir);
+              listed = true;
+              return { objects: [] };
+            },
+          }),
+          interactive: false,
+          log: () => undefined,
+          reportDirectory: path.join(directory, 'reports'),
+        },
+      );
+
+      assert.equal(listed, true);
+      assert.equal(output.exitCode, 0);
+    });
+  });
+
+  it('rejects an unusable download directory before listing', async () => {
+    await withTempDirectory(async (directory) => {
+      const blockedPath = path.join(directory, 'blocked');
+      await writeFile(blockedPath, 'not a directory');
+      let listed = false;
+
+      await assert.rejects(
+        runBackup(
+          {
+            downloadDir: path.join(blockedPath, 'download'),
+            dryRun: false,
+            help: false,
+          },
+          [{ bucket: 'audio', prefix: '' }],
+          {
+            client: mockR2({
+              listObjects() {
+                listed = true;
+                return Promise.resolve({ objects: [] });
+              },
+            }),
+            interactive: false,
+            log: () => undefined,
+            reportDirectory: path.join(directory, 'reports'),
+          },
+        ),
+        /EEXIST|ENOTDIR/,
+      );
+      assert.equal(listed, false);
+    });
+  });
+
+  it('does not create the download directory during a dry run', async () => {
+    await withTempDirectory(async (directory) => {
+      const downloadDir = path.join(directory, 'download');
+      await runBackup(
+        { downloadDir, dryRun: true, help: false },
+        [{ bucket: 'audio', prefix: '' }],
+        {
+          client: mockR2(),
+          interactive: false,
+          log: () => undefined,
+          reportDirectory: path.join(directory, 'reports'),
+        },
+      );
+
+      await assert.rejects(access(downloadDir), /ENOENT/);
+    });
+  });
+
   it('rejects a zero transfer cap from direct callers', async () => {
     await withTempDirectory(async (directory) => {
       const item = object('missing.wav');

@@ -6,7 +6,7 @@
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
     "backfill-call-analysis": "node backfill-call-analysis.mjs",
     "backfill-free-call": "tsx backfill-free-call.mts",
-    "backup-r2-audio": "tsx backup-r2-audio.mts",
+    "backup-r2-audio": "NODE_ENV=production tsx backup-r2-audio.mts",
     "batch-refund-credits": "tsx batch-refund-credits.mts",
     "check-disposable-emails": "node check-disposable-emails.mjs",
     "cleanup-orphaned-r2-audio": "tsx cleanup-orphaned-r2-audio.mts",
