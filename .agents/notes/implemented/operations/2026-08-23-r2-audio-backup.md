@@ -40,7 +40,7 @@ Implement the approved design in `docs/plans/2026-08-23-r2-audio-backup-design.m
 - Effect result order is load-bearing because report entries map outcomes back to selected objects by index; tests force out-of-order completion and assert input-order results.
 - Checksum tests include equal-size wrong-content files because this MD5 branch controls cleanup deletion eligibility.
 - `runAction()` validates its options at the exported orchestration boundary so direct callers cannot bypass the CLI's destructive gates.
-- Real backup runs create and check the download directory before listing R2. Dry runs remain non-mutating.
+- Real backup runs require and check an existing download directory before listing R2. This prevents an unmounted removable volume from being replaced by a directory on the internal disk. Dry runs remain non-mutating.
 - Run the interactive backup with `NODE_ENV=production`. Ink 7.1.1 otherwise uses React's development reconciler, which retains performance measurements on every render and can exhaust the V8 heap during long transfers.
 
 ## Verification record

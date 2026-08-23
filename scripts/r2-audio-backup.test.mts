@@ -379,29 +379,30 @@ describe('local transfer safety', () => {
 });
 
 describe('backup planning and reporting', () => {
-  it('creates the download directory before listing', async () => {
+  it('rejects a missing download directory before listing', async () => {
     await withTempDirectory(async (directory) => {
-      const downloadDir = path.join(directory, 'nested', 'download');
+      const downloadDir = path.join(directory, 'missing');
       let listed = false;
-      const output = await runBackup(
-        { downloadDir, dryRun: false, help: false },
-        [{ bucket: 'audio', prefix: '' }],
-        {
-          client: mockR2({
-            async listObjects() {
-              await access(downloadDir);
-              listed = true;
-              return { objects: [] };
-            },
-          }),
-          interactive: false,
-          log: () => undefined,
-          reportDirectory: path.join(directory, 'reports'),
-        },
-      );
 
-      assert.equal(listed, true);
-      assert.equal(output.exitCode, 0);
+      await assert.rejects(
+        runBackup(
+          { downloadDir, dryRun: false, help: false },
+          [{ bucket: 'audio', prefix: '' }],
+          {
+            client: mockR2({
+              listObjects() {
+                listed = true;
+                return Promise.resolve({ objects: [] });
+              },
+            }),
+            interactive: false,
+            log: () => undefined,
+            reportDirectory: path.join(directory, 'reports'),
+          },
+        ),
+        /ENOENT/,
+      );
+      assert.equal(listed, false);
     });
   });
 
@@ -591,10 +592,12 @@ describe('backup planning and reporting', () => {
 
   it('makes no downloads when any source listing fails', async () => {
     await withTempDirectory(async (directory) => {
+      const downloadDir = path.join(directory, 'download');
+      await mkdir(downloadDir);
       let downloadsStarted = false;
       const output = await runBackup(
         {
-          downloadDir: path.join(directory, 'download'),
+          downloadDir,
           dryRun: false,
           help: false,
         },
@@ -630,6 +633,8 @@ describe('backup planning and reporting', () => {
 
   it('records every mixed download result and returns a failure', async () => {
     await withTempDirectory(async (directory) => {
+      const downloadDir = path.join(directory, 'download');
+      await mkdir(downloadDir);
       const items = [
         object('one.wav'),
         object('two.wav'),
@@ -646,7 +651,7 @@ describe('backup planning and reporting', () => {
       ] as const;
       const output = await runBackup(
         {
-          downloadDir: path.join(directory, 'download'),
+          downloadDir,
           dryRun: false,
           help: false,
         },

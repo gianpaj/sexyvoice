@@ -223,7 +223,6 @@ export async function runBackup(
   }
 
   if (!options.dryRun) {
-    await mkdir(options.downloadDir, { recursive: true });
     await access(options.downloadDir, constants.W_OK);
     await access(options.downloadDir, constants.X_OK);
   }
