@@ -28,6 +28,7 @@ import {
   validateManifest,
 } from './lib/r2-orphan-audio-cleanup.mts';
 import {
+  assertUsableDownloadRoot,
   downloadWithoutOverwrite,
   formatBytes,
   listAllObjects,
@@ -237,6 +238,9 @@ export async function runAction(
   dependencies: ActionDependencies,
 ): Promise<ActionRunResult> {
   validateCleanupCliOptions(options);
+  if (options.download) {
+    await assertUsableDownloadRoot(options.downloadDir as string);
+  }
 
   const r2 = dependencies.client;
   const now = dependencies.now ?? (() => new Date());

@@ -1,6 +1,14 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { constants, createReadStream, createWriteStream } from 'node:fs';
-import { copyFile, link, lstat, mkdir, rm, stat } from 'node:fs/promises';
+import {
+  access,
+  copyFile,
+  link,
+  lstat,
+  mkdir,
+  rm,
+  stat,
+} from 'node:fs/promises';
 import path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -273,6 +281,13 @@ export async function listAllObjects(
   }
 
   return objects;
+}
+
+export async function assertUsableDownloadRoot(
+  downloadDir: string,
+): Promise<void> {
+  await access(downloadDir, constants.W_OK);
+  await access(downloadDir, constants.X_OK);
 }
 
 export async function resolveLocalObjectPath(

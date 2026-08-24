@@ -67,6 +67,12 @@ R2 has no aggregate bucket-size response. Inventory paginates all object metadat
 to calculate bucket totals. It does not download object contents, and objects
 outside the cleanup prefixes can never become candidates.
 
+A cleanup action with `--download` requires the exact download directory to
+exist with write and traversal access. Mount the external volume and prepare
+that directory before running the action. Cleanup checks it before reading the
+manifest or touching R2, so a missing volume cannot become a backup on the
+internal disk.
+
 Download one bounded batch to an external drive with:
 
 ```bash

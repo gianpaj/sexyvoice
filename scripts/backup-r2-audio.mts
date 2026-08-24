@@ -1,5 +1,4 @@
-import { constants } from 'node:fs';
-import { access, mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -10,6 +9,7 @@ import { loadScriptEnv } from './lib/env.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
   assertR2BucketName,
+  assertUsableDownloadRoot,
   compareR2ObjectsOldestFirst,
   type DownloadResult,
   downloadWithoutOverwrite,
@@ -223,8 +223,7 @@ export async function runBackup(
   }
 
   if (!options.dryRun) {
-    await access(options.downloadDir, constants.W_OK);
-    await access(options.downloadDir, constants.X_OK);
+    await assertUsableDownloadRoot(options.downloadDir);
   }
 
   const startedAt = dependencies.now?.() ?? new Date();

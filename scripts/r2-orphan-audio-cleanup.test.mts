@@ -727,6 +727,55 @@ describe('cleanup action orchestration', () => {
     }
   });
 
+  it('rejects a missing download root before reading the manifest', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
+    try {
+      const downloadDir = path.join(directory, 'missing-download');
+      const manifestPath = path.join(directory, 'missing-manifest.json');
+      let deletes = 0;
+      let storageReads = 0;
+
+      await assert.rejects(
+        runAction(
+          actionOptions(manifestPath, {
+            download: true,
+            downloadDir,
+            force: false,
+            maxDownloadBytes: 1,
+          }),
+          config,
+          {
+            client: mockR2({
+              deleteObjects() {
+                deletes += 1;
+                return Promise.resolve({ deleted: [], errors: [] });
+              },
+            }),
+            storageKeys: {
+              hasStorageKey() {
+                storageReads += 1;
+                return Promise.resolve(false);
+              },
+              listStorageKeys() {
+                storageReads += 1;
+                return Promise.resolve([]);
+              },
+            },
+          },
+        ),
+        (error: NodeJS.ErrnoException) => {
+          assert.equal(error.code, 'ENOENT');
+          assert.equal(error.path, downloadDir);
+          return true;
+        },
+      );
+      assert.equal(storageReads, 0);
+      assert.equal(deletes, 0);
+    } finally {
+      await rm(directory, { force: true, recursive: true });
+    }
+  });
+
   it('checks live state before deleting, then evicts and reports', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'r2-cleanup-action-'));
     try {

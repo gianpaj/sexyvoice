@@ -16,6 +16,7 @@ The cleanup command and shared script helpers are implemented. The approved plan
 - Existing local files are never overwritten. Finalization uses an atomic no-clobber hard link, with exclusive copy as a fallback for filesystems without hard links. POSIX `rename` can replace an existing destination.
 - Objects with opaque or multipart ETags may be downloaded, but they remain ineligible for normal deletion because the local copy cannot be verified against an MD5 checksum.
 - Downloads send `If-Match` and stop writing if R2 exceeds the manifest size. This keeps changed objects from consuming the rest of the drive.
+- Download actions require an existing writable and traversable root before reading the manifest or touching R2. A missing removable volume cannot be replaced by a directory on the internal disk.
 - Deletion handles one object at a time. It verifies the local checksum first, then performs an exact database key lookup and a fresh `HeadObject` immediately before the delete request.
 - R2 documents conditional reads but not conditional deletes. A replacement or new database reference can still appear in the short gap between the final checks and deletion. Removing that race requires a server-side conditional delete or a coordinated retention state in the database.
 - Shared script modules stay narrow: environment loading, Supabase client creation, and R2 cleanup logic.
@@ -28,7 +29,7 @@ The cleanup command and shared script helpers are implemented. The approved plan
 
 ## Verification
 
-- `pnpm --filter @sexyvoice/scripts test` passes 23 tests.
+- `pnpm --filter @sexyvoice/scripts test` passes 51 tests.
 - `pnpm --filter @sexyvoice/scripts type-check` passes.
 - The focused Biome check for the cleanup command, helpers, and tests passes.
 - `pnpm fixall` passes with five existing Sentry namespace-import warnings.

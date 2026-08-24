@@ -83,6 +83,11 @@ pnpm cleanup-orphaned-r2-audio -- \
 `--max-download-size`. Reject `--download-dir` and `--max-download-size` when
 `--download` is absent.
 
+Require the exact download directory to exist with write and traversal access
+before reading the manifest or touching R2. Do not create the download root.
+This makes an unmounted removable volume fail at startup instead of creating
+its mount path on the internal disk.
+
 Accept decimal units `KB`, `MB`, `GB`, and `TB`, plus binary units `KiB`, `MiB`,
 `GiB`, and `TiB`.
 
