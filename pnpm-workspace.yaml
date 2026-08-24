@@ -46,7 +46,7 @@ minimumReleaseAgeExclude:
   - sharp@0.35.0
 
 catalog:
-  "@ai-sdk/react": "3.0.118"
+  "@ai-sdk/react": "3.0.262"
   "@biomejs/biome": "2.5.8"
   "@supabase/supabase-js": "2.99.2"
   "@tailwindcss/postcss": "4.2.2"
@@ -64,11 +64,6 @@ catalog:
   "zod": "4.4.3"
 
 overrides:
-  # `@ai-sdk/react` pins an exact `ai` version. Without this override, pnpm
-  # installs a second copy of `ai` and the `UIMessage` types of the two copies
-  # are not assignable to each other (e.g. `useChat<ChatUIMessage>` fails to
-  # type check). Keep this in sync with the `ai` catalog entry above.
-  "@ai-sdk/react>ai": "6.0.259"
   "@babel/runtime@<7.26.10": ">=7.26.10"
   "@opentelemetry/auto-instrumentations-node": "0.76.0"
   "@opentelemetry/exporter-prometheus": "0.218.0"

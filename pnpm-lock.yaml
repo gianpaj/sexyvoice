@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@ai-sdk/react':
-      specifier: 3.0.118
-      version: 3.0.118
+      specifier: 3.0.262
+      version: 3.0.262
     '@biomejs/biome':
       specifier: 2.5.8
       version: 2.5.8
@@ -56,7 +56,6 @@ catalogs:
       version: 4.4.3
 
 overrides:
-  '@ai-sdk/react>ai': 6.0.259
   '@babel/runtime@<7.26.10': '>=7.26.10'
   '@opentelemetry/auto-instrumentations-node': 0.76.0
   '@opentelemetry/exporter-prometheus': 0.218.0
@@ -97,7 +96,7 @@ importers:
     dependencies:
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 3.0.118(react@19.2.7)(zod@4.4.3)
+        version: 3.0.262(react@19.2.7)(zod@4.4.3)
       '@openrouter/ai-sdk-provider':
         specifier: ^2.5.1
         version: 2.5.1(ai@6.0.259(zod@4.4.3))(zod@4.4.3)
@@ -215,7 +214,7 @@ importers:
         version: 3.0.43(zod@4.4.3)
       '@ai-sdk/react':
         specifier: 'catalog:'
-        version: 3.0.118(react@19.2.7)(zod@4.4.3)
+        version: 3.0.262(react@19.2.7)(zod@4.4.3)
       '@ai-sdk/xai':
         specifier: 3.0.96
         version: 3.0.96(zod@4.4.3)
@@ -617,8 +616,8 @@ packages:
     resolution: {integrity: sha512-oGMAgGoQdBXbZqNG0Ze56CHjDZ1IDYOwGYxYjO5KLSlz5HiNQ9udIXsPZ61VWaHGZ5XW/jyjmr6t2xz2jGVwbQ==}
     engines: {node: '>=18'}
 
-  '@ai-sdk/react@3.0.118':
-    resolution: {integrity: sha512-fBAix8Jftxse6/2YJnOFkwW1/O6EQK4DK68M9DlFmZGAzBmsaHXEPVS77sVIlkaOWCy11bE7434NAVXRY+3OsQ==}
+  '@ai-sdk/react@3.0.262':
+    resolution: {integrity: sha512-hCQPiNZVP1xhtIXgPMlQ9ayMb4HkAyL1T4OsnLE8dPAkiFv55UW3d4erFJN2xrkGp+RGndKkPq6zxUMlrKqV2Q==}
     engines: {node: '>=18'}
     peerDependencies:
       react: ^18 || ~19.0.1 || ~19.1.2 || ^19.2.1
@@ -10246,9 +10245,9 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@3.0.118(react@19.2.7)(zod@4.4.3)':
+  '@ai-sdk/react@3.0.262(react@19.2.7)(zod@4.4.3)':
     dependencies:
-      '@ai-sdk/provider-utils': 4.0.19(zod@4.4.3)
+      '@ai-sdk/provider-utils': 4.0.46(zod@4.4.3)
       ai: 6.0.259(zod@4.4.3)
       react: 19.2.7
       swr: 2.4.1(react@19.2.7)
