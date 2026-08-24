@@ -1,4 +1,5 @@
 'use server';
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';

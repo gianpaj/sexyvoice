@@ -2,6 +2,7 @@
 // The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({

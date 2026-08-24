@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/estimate-credits/route';
+// biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { mockCountTokens } from './setup';

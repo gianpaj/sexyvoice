@@ -1,4 +1,5 @@
 import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';

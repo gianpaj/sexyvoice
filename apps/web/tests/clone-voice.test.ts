@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/clone-voice/route';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+// biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,

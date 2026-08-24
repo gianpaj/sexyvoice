@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noNamespaceImport: tests assert across the mocked Sentry module
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import {
