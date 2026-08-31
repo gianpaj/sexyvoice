@@ -1,0 +1,25 @@
+# Provider error localization
+
+## State
+
+Implementation follows the approved plan in
+`plans/2026-08-31-provider-error-localization.md`.
+
+## Decisions
+
+- Keep provider IDs lowercase in route control flow and logs.
+- Validate provider IDs at the response boundary and expose fixed brand names.
+- Keep one English fallback template in `messages/en.json`.
+- Keep the client resolver independent of React and `next-intl` so malformed
+  payload behavior can be tested directly.
+- Preserve the external API's public `provider_unavailable` code.
+- Preserve clone response field compatibility by returning the shared code in
+  `code`, while dashboard routes continue to use `errorCode`.
+
+## Findings
+
+- Pending code inspection.
+
+## Verification
+
+- Pending implementation.
