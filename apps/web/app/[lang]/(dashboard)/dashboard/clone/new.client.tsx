@@ -21,6 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import { resolveErrorMessage } from '@/lib/api/resolve-error-message';
 import {
   CLONE_FORM_FIELDS,
   type CloneErrorResponseBody,
@@ -90,20 +91,32 @@ type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
 };
 
 type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
+type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
 
 const getCloneErrorMessage = (
   t: CloneTranslator,
+  translateErrorCode: ErrorCodesTranslator,
   code?: CloneRouteErrorCode,
   fallbackMessage?: string,
   details?: RouteErrorDetails,
 ): string => {
+  const serverFallback = fallbackMessage || t('errorCloning');
+  if (code === 'PROVIDER_UNAVAILABLE') {
+    return resolveErrorMessage(
+      translateErrorCode,
+      code,
+      details,
+      serverFallback,
+    );
+  }
+
   if (!code) {
-    return fallbackMessage || t('errorCloning');
+    return serverFallback;
   }
 
   const messageKey = code as Parameters<CloneTranslator>[0];
   if (!t.has(messageKey)) {
-    return fallbackMessage || t('errorCloning');
+    return serverFallback;
   }
 
   const message = t(messageKey);
@@ -181,6 +194,7 @@ function NewVoiceClientInner({
   userHasPaid: boolean;
 }) {
   const t = useTranslations('clone');
+  const translateErrorCode = useTranslations('errorCodes');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -453,6 +467,7 @@ function NewVoiceClientInner({
         } else {
           errorMessage = getCloneErrorMessage(
             t,
+            translateErrorCode,
             voiceResult?.code,
             voiceResult?.message ||
               voiceResult?.serverMessage ||

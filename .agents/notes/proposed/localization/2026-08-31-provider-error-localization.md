@@ -32,6 +32,10 @@ Implementation follows the approved plan in
   to Next.js builds but not the test runtime.
 - Expected Grok provider warnings omit raw transcript text and retain provider,
   model, language, voice, and error metadata.
+- Dashboard errors keep the existing `APIError` status suffix. Clone alerts keep
+  their existing message-only presentation.
+- Global provider codes resolve before feature-specific keys. Unknown dashboard
+  codes still use `generate`, and clone validation still uses `clone.errors`.
 
 ## Verification
 
@@ -41,3 +45,5 @@ Implementation follows the approved plan in
 - The focused clone, dashboard generation, and external speech route run passes
   181 tests with 17 parked tests skipped.
 - `pnpm --filter @sexyvoice/web type-check` passes after the server changes.
+- The focused AudioGenerator and clone client run passes 44 tests with 3 parked
+  streaming tests skipped.

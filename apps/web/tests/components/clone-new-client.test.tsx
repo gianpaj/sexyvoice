@@ -122,6 +122,11 @@ vi.mock('@/lib/i18n/get-translated-languages', () => ({
     })),
 }));
 
+const errorCodesDict = {
+  PROVIDER_UNAVAILABLE:
+    '{provider} no está disponible temporalmente. Inténtalo de nuevo.',
+} as const;
+
 const dict = {
   audioFileLabel: 'Audio File',
   cancelButton: 'Cancel',
@@ -229,7 +234,10 @@ const renderClone = (
   } = {},
 ) =>
   render(
-    <NextIntlClientProvider locale="en" messages={{ clone: dict }}>
+    <NextIntlClientProvider
+      locale="es"
+      messages={{ clone: dict, errorCodes: errorCodesDict }}
+    >
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
         lang={props.lang ?? 'en'}
@@ -356,6 +364,53 @@ describe('NewVoiceClient', () => {
     expect(formData.get('enhanceReferenceAudio')).toBe('true');
     expect(mockToastSuccess).toHaveBeenCalledWith(dict.success);
   });
+
+  it.each(['Mistral', 'Replicate'] as const)(
+    'renders localized %s provider errors',
+    async (provider) => {
+      const user = userEvent.setup();
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 'PROVIDER_UNAVAILABLE',
+            details: { provider },
+            error: `${provider} is temporarily unavailable. Please retry. (503)`,
+            serverMessage: `${provider} is temporarily unavailable. Please retry.`,
+            status: 503,
+          }),
+          {
+            status: 503,
+            headers: {
+              'content-type': 'application/json',
+            },
+          },
+        ),
+      );
+
+      renderClone();
+
+      await user.type(
+        screen.getByLabelText(dict.textToConvertLabel),
+        'Hello world',
+      );
+      await user.click(
+        screen.getByRole('checkbox', {
+          name: dict.legalConsentCheckbox,
+        }),
+      );
+      await user.click(
+        screen.getByRole('button', {
+          name: /generate audio/i,
+        }),
+      );
+
+      expect(
+        await screen.findByText(
+          `${provider} no está disponible temporalmente. Inténtalo de nuevo.`,
+        ),
+      ).toBeInTheDocument();
+    },
+  );
 
   it('renders translated clone errors from API error codes', async () => {
     const user = userEvent.setup();

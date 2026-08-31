@@ -36,6 +36,7 @@ import {
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
 } from '@/lib/ai';
+import { resolveErrorMessage } from '@/lib/api/resolve-error-message';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
@@ -157,7 +158,10 @@ interface SseDoneEvent {
 }
 
 interface SseErrorEvent {
+  details?: unknown;
   error: string;
+  errorCode?: string;
+  serverMessage?: string;
 }
 
 interface ParseSseStreamCallbacks {
@@ -226,17 +230,33 @@ interface AudioGeneratorProps {
   settings?: GenerationSettings;
 }
 
+type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
 type GenerateTranslator = ReturnType<typeof useTranslations<'generate'>>;
 
 function throwGenerateVoiceError(
   t: GenerateTranslator,
+  translateErrorCode: ErrorCodesTranslator,
   data: {
+    details?: unknown;
     error?: string;
     errorCode?: string;
     serverMessage?: string;
   },
   response: Response,
 ): never {
+  const serverFallback = data.error || data.serverMessage || t('error');
+  if (data.errorCode === 'PROVIDER_UNAVAILABLE') {
+    throw new APIError(
+      resolveErrorMessage(
+        translateErrorCode,
+        data.errorCode,
+        data.details,
+        serverFallback,
+      ),
+      response,
+    );
+  }
+
   if (data.errorCode) {
     const messageKey = data.errorCode as Parameters<typeof t>[0];
     if (t.has(messageKey)) {
@@ -248,7 +268,7 @@ function throwGenerateVoiceError(
     }
   }
 
-  throw new APIError(data.error || data.serverMessage || t('error'), response);
+  throw new APIError(serverFallback, response);
 }
 
 function handleGenerateVoiceError(t: GenerateTranslator, error: unknown) {
@@ -272,6 +292,7 @@ export function AudioGenerator({
   settings = DEFAULT_GENERATION_SETTINGS,
 }: AudioGeneratorProps) {
   const t = useTranslations('generate');
+  const translateErrorCode = useTranslations('errorCodes');
   const [text, setText] = useState('');
   const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -443,13 +464,14 @@ export function AudioGenerator({
 
       const data = await response.json();
       if (!response.ok) {
-        throwGenerateVoiceError(t, data, response);
+        throwGenerateVoiceError(t, translateErrorCode, data, response);
       }
 
       return data.url as string;
     },
     [
       t,
+      translateErrorCode,
       isGeminiVoice,
       isGrokVoice,
       selectedGrokLanguage,
@@ -485,7 +507,7 @@ export function AudioGenerator({
 
       if (!response.ok) {
         const data = await response.json();
-        throwGenerateVoiceError(t, data, response);
+        throwGenerateVoiceError(t, translateErrorCode, data, response);
       }
 
       // The streaming player owns the Web Audio engine, peak accumulation, and
@@ -504,15 +526,27 @@ export function AudioGenerator({
             finalizeStream();
             resolve(url);
           },
-          onError: ({ error }) => {
+          onError: ({ details, error, errorCode, serverMessage }) => {
             resetStream();
-            reject(new APIError(error, new Response(null, { status: 500 })));
+            const serverFallback = error || serverMessage || t('error');
+            reject(
+              new APIError(
+                resolveErrorMessage(
+                  translateErrorCode,
+                  errorCode,
+                  details,
+                  serverFallback,
+                ),
+                new Response(null, { status: 500 }),
+              ),
+            );
           },
         }).catch(reject);
       });
     },
     [
       t,
+      translateErrorCode,
       finalizeStream,
       pushStreamChunk,
       resetStream,
