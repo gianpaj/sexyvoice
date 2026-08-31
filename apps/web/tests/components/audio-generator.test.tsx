@@ -627,6 +627,28 @@ describe('AudioGenerator', () => {
     ).toHaveAttribute('maxlength', String(500 + CHARACTERS_LIMIT_GRACE));
   });
 
+  it('clamps non-Grok text to the character limit plus grace', async () => {
+    const user = userEvent.setup();
+    const charactersLimit = 500;
+    const maximumLength = charactersLimit + CHARACTERS_LIMIT_GRACE;
+
+    renderAudioGenerator({
+      isPaidUser: false,
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+    });
+
+    const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
+    await user.type(input, 'A'.repeat(maximumLength + 10));
+
+    expect(input).toHaveValue('A'.repeat(maximumLength));
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      `${maximumLength} / ${charactersLimit}`,
+    );
+    expect(screen.getByTestId('generate-character-count')).toHaveClass(
+      'text-red-500',
+    );
+  });
+
   it('removes the paid non-Grok character limit when split audios is enabled', async () => {
     const user = userEvent.setup();
 

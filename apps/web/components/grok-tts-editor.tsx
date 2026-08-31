@@ -435,14 +435,12 @@ export function GrokTTSEditor({
       return;
     }
 
-    // Applied as given, deliberately not clamped. `useEditor`'s initial
-    // `content` above cannot clamp either, and `audio-generator.tsx` shares one
-    // `text` state between this editor and the non-Grok one, so switching from
-    // a higher-limit voice mounts this editor with over-limit text. Clamping
-    // here would truncate that text on the sync path but not on mount, and
-    // would silently destroy input the user can still see. Over-limit text is
-    // surfaced by the red counter and blocks generation through
-    // `textIsOverLimit` in the parent.
+    // Apply external values without character-limit clamping. audio-generator.tsx
+    // shares one text state between this editor and the non-Grok editor, and
+    // Split mode can temporarily disable enforcement. The red counter shows
+    // the overage, while textIsOverLimit in the parent blocks generation.
+    // The next user edit passes through onUpdate and clamps the document to the
+    // active limit plus grace.
     const applied = applyEditorContent(editor, value);
     lastSelectionRef.current = applied.selection;
     contentResetSelectionRef.current = applied.selection;
