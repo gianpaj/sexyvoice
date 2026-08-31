@@ -16,8 +16,11 @@ describe('classifyGeminiTtsResponse', () => {
   it.each([
     { finishReason: FinishReason.SAFETY },
     { finishReason: FinishReason.PROHIBITED_CONTENT },
+    { finishReason: FinishReason.BLOCKLIST },
+    { finishReason: FinishReason.SPII },
     { blockReason: 'SAFETY' },
     { blockReason: 'PROHIBITED_CONTENT' },
+    { blockReason: 'BLOCKLIST' },
   ])('classifies $finishReason$blockReason as content blocked', (response) => {
     expect(
       classifyGeminiTtsResponse({

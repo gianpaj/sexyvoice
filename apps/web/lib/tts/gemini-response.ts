@@ -18,8 +18,11 @@ export function classifyGeminiTtsResponse({
   if (
     finishReason === FinishReason.SAFETY ||
     finishReason === FinishReason.PROHIBITED_CONTENT ||
+    finishReason === FinishReason.BLOCKLIST ||
+    finishReason === FinishReason.SPII ||
     blockReason === 'SAFETY' ||
-    blockReason === 'PROHIBITED_CONTENT'
+    blockReason === 'PROHIBITED_CONTENT' ||
+    blockReason === 'BLOCKLIST'
   ) {
     return 'content_blocked';
   }
