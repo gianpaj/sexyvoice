@@ -1,7 +1,4 @@
-import { Extension } from '@tiptap/core';
-import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
-import { Decoration, DecorationSet } from '@tiptap/pm/view';
+import { Decoration, type Editor, Extension } from '@tiptap/core';
 
 import { isKnownGrokTag } from '@/lib/tts-editor';
 
@@ -55,10 +52,14 @@ export function findUnsupportedGrokTagMatches(
   return matches.sort((a, b) => a.start - b.start);
 }
 
-function createUnsupportedGrokTagDecorations(doc: ProseMirrorNode) {
+function createUnsupportedGrokTagDecorations(
+  state: Editor['state'],
+  from: number,
+  to: number,
+) {
   const decorations: Decoration[] = [];
 
-  doc.descendants((node, pos) => {
+  state.doc.nodesBetween(from, to, (node, pos) => {
     if (!(node.isText && node.text)) {
       return;
     }
@@ -66,29 +67,32 @@ function createUnsupportedGrokTagDecorations(doc: ProseMirrorNode) {
     const matches = findUnsupportedGrokTagMatches(node.text);
 
     for (const match of matches) {
+      const matchFrom = pos + match.start;
+
+      if (matchFrom < from || matchFrom >= to) {
+        continue;
+      }
+
       decorations.push(
-        Decoration.inline(pos + match.start, pos + match.end, {
+        Decoration.Inline(matchFrom, pos + match.end, {
           class: UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASS,
         }),
       );
     }
   });
 
-  return DecorationSet.create(doc, decorations);
+  return decorations;
 }
 
 export const UnsupportedGrokTagHighlight = Extension.create({
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: new PluginKey('unsupportedGrokTagHighlight'),
-        props: {
-          decorations(state) {
-            return createUnsupportedGrokTagDecorations(state.doc);
-          },
-        },
-      }),
-    ];
+  addDecorations() {
+    return {
+      create: ({ state }) =>
+        createUnsupportedGrokTagDecorations(state, 0, state.doc.content.size),
+      createInRange: ({ state, from, to }) =>
+        createUnsupportedGrokTagDecorations(state, from, to),
+      update: 'changedRanges',
+    };
   },
 
   name: 'unsupportedGrokTagHighlight',
