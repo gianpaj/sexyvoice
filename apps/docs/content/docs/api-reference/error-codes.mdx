@@ -1,6 +1,6 @@
 ---
-title: 'Error Codes'
-description: 'Centralized error response format and code semantics for API.'
+title: "Error Codes"
+description: "Centralized error response format and code semantics for API."
 ---
 
 All errors return this shape:
@@ -27,21 +27,21 @@ All errors return this shape:
 
 ## Common Codes
 
-| Code | Type | Meaning |
-| --- | --- | --- |
-| `invalid_request` | `invalid_request_error` | Request body failed validation.
-| `unsupported_parameter` | `invalid_request_error` | Parameter is not supported.
-| `unsupported_response_format` | `invalid_request_error` | Requested format is unsupported for selected model.
-| `input_too_long` | `invalid_request_error` | Input exceeds model limits.
-| `model_not_found` | `invalid_request_error` | Voice and model combination is invalid.
-| `voice_not_found` | `not_found_error` | Voice name does not exist.
-| `invalid_api_key` | `authentication_error` | Bearer key missing/invalid/inactive.
-| `insufficient_credits` | `permission_error` | Account balance is too low.
-| `rate_limit_exceeded` | `rate_limit_error` | Too many requests.
-| `provider_quota_exceeded` | `rate_limit_error` | Provider quota or billing is temporarily exhausted.
-| `content_policy_violation` | `invalid_request_error` | Content blocked by provider safety policy.
-| `provider_unavailable` | `server_error` | Upstream provider is temporarily unavailable; retry later.
-| `server_error` | `server_error` | Internal service/provider failure.
+| Code                          | Type                    | Meaning                                                                                                |
+| ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `invalid_request`             | `invalid_request_error` | Request body failed validation.                                                                        |
+| `unsupported_parameter`       | `invalid_request_error` | Parameter is not supported.                                                                            |
+| `unsupported_response_format` | `invalid_request_error` | Requested format is unsupported for selected model.                                                    |
+| `input_too_long`              | `invalid_request_error` | Input exceeds model limits.                                                                            |
+| `model_not_found`             | `invalid_request_error` | Voice and model combination is invalid.                                                                |
+| `voice_not_found`             | `not_found_error`       | Voice name does not exist.                                                                             |
+| `invalid_api_key`             | `authentication_error`  | Bearer key missing/invalid/inactive.                                                                   |
+| `insufficient_credits`        | `permission_error`      | Account balance is too low.                                                                            |
+| `rate_limit_exceeded`         | `rate_limit_error`      | Too many requests.                                                                                     |
+| `provider_quota_exceeded`     | `rate_limit_error`      | Provider quota or billing is temporarily exhausted.                                                    |
+| `content_policy_violation`    | `invalid_request_error` | Content blocked by provider safety policy.                                                             |
+| `provider_unavailable`        | `server_error`          | Upstream provider is temporarily unavailable; retry later.                                             |
+| `server_error`                | `server_error`          | Internal service or provider failure. Responses use HTTP 500 or 503; retry 503 responses with backoff. |
 
 ## Debugging with request-id
 

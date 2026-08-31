@@ -40,6 +40,10 @@ import {
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import {
+  classifyGeminiTtsResponse,
+  geminiOutcomeToErrorCode,
+} from '@/lib/tts/gemini-response';
 import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -695,17 +699,15 @@ export async function POST(request: Request) {
       const { data, mimeType } = extractInlineAudio(genAIResponse);
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
       const blockReason = genAIResponse?.promptFeedback?.blockReason;
-      const isProhibitedContent =
-        finishReason === FinishReason.PROHIBITED_CONTENT ||
-        blockReason === 'PROHIBITED_CONTENT';
-      // Finished without audio — transient provider glitch rather than a content
-      // block, so surface it as retryable. Gemini 3.1 may report this as OTHER.
-      const isNoAudioData =
-        (finishReason === FinishReason.STOP ||
-          finishReason === FinishReason.OTHER) &&
-        !(data && mimeType);
+      const responseOutcome = classifyGeminiTtsResponse({
+        blockReason,
+        finishReason,
+        hasAudio: Boolean(data && mimeType),
+      });
+      const isProhibitedContent = responseOutcome === 'content_blocked';
+      const isNoAudioData = responseOutcome === 'no_audio';
 
-      if (finishReason !== FinishReason.STOP || !data || !mimeType) {
+      if (responseOutcome !== 'success' || !data || !mimeType) {
         if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
             extra: {
@@ -716,7 +718,6 @@ export async function POST(request: Request) {
               responseId: genAIResponse?.responseId,
               styleVariant,
               textLength: text.length,
-              textPreview: text.slice(0, 500),
               voice: voiceObj.name,
             },
             user: { email: user.email, id: user.id },
@@ -769,8 +770,7 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Only capture unexpected Gemini blocks to Sentry. PROHIBITED_CONTENT
-        // and no-audio STOP responses are handled user/provider states.
+        // Capture only response shapes that the classifier does not recognize.
         if (!(isProhibitedContent || isNoAudioData)) {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
@@ -786,14 +786,10 @@ export async function POST(request: Request) {
             user: { id: user.id },
           });
         }
-        let noAudioErrorCode: keyof typeof ERROR_CODES = 'OTHER_GEMINI_BLOCK';
-        if (isProhibitedContent) {
-          noAudioErrorCode = 'PROHIBITED_CONTENT';
-        } else if (isNoAudioData) {
-          noAudioErrorCode = 'NO_AUDIO_DATA';
-        }
-        throw new Error(getErrorMessage(noAudioErrorCode, 'voice-generation'), {
-          cause: noAudioErrorCode,
+        const errorCode =
+          geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
+        throw new Error(getErrorMessage(errorCode, 'voice-generation'), {
+          cause: errorCode,
         });
       }
       logger.info('Gemini voice generation succeeded', {
@@ -1252,20 +1248,22 @@ function streamGeminiTtsResponse({
     let streamBlockReason: string | undefined;
     let audioStarted = false;
     let completed = false;
+    let fallbackAttempted = false;
 
     const getStreamBlockError = () => {
-      let errorCode: keyof typeof ERROR_CODES | undefined;
-      if (
-        streamFinishReason === FinishReason.PROHIBITED_CONTENT ||
-        streamBlockReason === 'PROHIBITED_CONTENT'
-      ) {
-        errorCode = 'PROHIBITED_CONTENT';
-      } else if (
-        (streamFinishReason && streamFinishReason !== FinishReason.STOP) ||
-        streamBlockReason
-      ) {
-        errorCode = 'OTHER_GEMINI_BLOCK';
+      if (!(streamFinishReason || streamBlockReason)) {
+        return;
       }
+
+      const responseOutcome = classifyGeminiTtsResponse({
+        blockReason: streamBlockReason,
+        finishReason: streamFinishReason,
+        hasAudio: audioChunks.length > 0,
+      });
+      const errorCode =
+        streamFinishReason === FinishReason.OTHER
+          ? 'OTHER_GEMINI_BLOCK'
+          : geminiOutcomeToErrorCode(responseOutcome);
 
       return errorCode
         ? new Error(getErrorMessage(errorCode, 'voice-generation'), {
@@ -1331,6 +1329,8 @@ function streamGeminiTtsResponse({
           return;
         }
 
+        // NO_AUDIO_DATA stays retryable because STOP without chunks can be a
+        // transient model failure. Policy and unknown terminal blocks cannot.
         if (
           Error.isError(primaryError) &&
           (primaryError.cause === 'PROHIBITED_CONTENT' ||
@@ -1360,6 +1360,7 @@ function streamGeminiTtsResponse({
             user: { email: user.email, id: user.id },
           },
         );
+        fallbackAttempted = true;
         modelUsed = 'gemini-2.5-flash-preview-tts';
         audioChunks.length = 0;
         streamUsageMetadata = undefined;
@@ -1544,9 +1545,19 @@ function streamGeminiTtsResponse({
 
       const isProhibitedContent =
         Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
-      if (!(audioStarted || isProhibitedContent)) {
+      const isNoAudioData =
+        Error.isError(error) && error.cause === 'NO_AUDIO_DATA';
+      const shouldCaptureException =
+        !(audioStarted || isProhibitedContent) &&
+        (!isNoAudioData || fallbackAttempted);
+      if (shouldCaptureException) {
         captureException(error, {
-          extra: { model: modelUsed, stream: true, voice: voiceObj.name },
+          extra: {
+            fallbackAttempted,
+            model: modelUsed,
+            stream: true,
+            voice: voiceObj.name,
+          },
           user: { id: user.id },
         });
       }
