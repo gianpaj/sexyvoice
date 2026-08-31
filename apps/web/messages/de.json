@@ -1199,6 +1199,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
-    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
+    "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
   }
 }

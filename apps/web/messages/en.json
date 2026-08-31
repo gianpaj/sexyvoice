@@ -1197,6 +1197,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
-    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds."
+    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds.",
+    "PROVIDER_UNAVAILABLE": "{provider} is temporarily unavailable. Please retry."
   }
 }

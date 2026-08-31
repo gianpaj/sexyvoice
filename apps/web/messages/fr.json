@@ -1199,6 +1199,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
-    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes."
+    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes.",
+    "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez."
   }
 }

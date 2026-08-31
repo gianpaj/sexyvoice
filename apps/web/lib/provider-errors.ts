@@ -4,6 +4,67 @@ const PROVIDER_STATUS_PROPERTIES = [
   'raw_status_code',
 ] as const;
 
+const PROVIDER_IDS = ['gemini', 'grok', 'mistral', 'replicate'] as const;
+const PROVIDER_DISPLAY_NAMES = [
+  'Gemini',
+  'Grok',
+  'Mistral',
+  'Replicate',
+] as const;
+
+export type ProviderId = (typeof PROVIDER_IDS)[number];
+export type ProviderDisplayName = (typeof PROVIDER_DISPLAY_NAMES)[number];
+export interface ProviderUnavailableDetails {
+  provider: ProviderDisplayName;
+}
+
+export function isProviderId(provider: unknown): provider is ProviderId {
+  return (
+    typeof provider === 'string' &&
+    PROVIDER_IDS.includes(provider as ProviderId)
+  );
+}
+
+export function isProviderDisplayName(
+  provider: unknown,
+): provider is ProviderDisplayName {
+  return (
+    typeof provider === 'string' &&
+    PROVIDER_DISPLAY_NAMES.includes(provider as ProviderDisplayName)
+  );
+}
+
+export function formatProviderDisplayName(
+  provider: unknown,
+): ProviderDisplayName | null {
+  if (!isProviderId(provider)) {
+    return null;
+  }
+
+  return `${provider.charAt(0).toUpperCase()}${provider.slice(1)}` as ProviderDisplayName;
+}
+
+export function getProviderUnavailableDetails(
+  provider: ProviderId,
+): ProviderUnavailableDetails {
+  const displayName = formatProviderDisplayName(provider);
+  if (!displayName) {
+    throw new TypeError(`Unsupported provider: ${String(provider)}`);
+  }
+
+  return { provider: displayName };
+}
+
+export function isProviderUnavailableDetails(
+  details: unknown,
+): details is ProviderUnavailableDetails {
+  return (
+    !!details &&
+    typeof details === 'object' &&
+    isProviderDisplayName((details as Record<string, unknown>).provider)
+  );
+}
+
 export function getProviderErrorMessage(error: unknown): string {
   return Error.isError(error) ? error.message : String(error);
 }

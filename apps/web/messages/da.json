@@ -1195,6 +1195,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
-    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder."
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder.",
+    "PROVIDER_UNAVAILABLE": "{provider} er midlertidigt utilgængelig. Prøv igen."
   }
 }

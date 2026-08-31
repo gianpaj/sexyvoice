@@ -1199,6 +1199,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Las direcciones de correo desechables no están permitidas",
-    "AUTH_PROVIDER_RATELIMIT": "Por razones de seguridad, solo puedes solicitar esto después de {time} segundos."
+    "AUTH_PROVIDER_RATELIMIT": "Por razones de seguridad, solo puedes solicitar esto después de {time} segundos.",
+    "PROVIDER_UNAVAILABLE": "{provider} no está disponible temporalmente. Inténtalo de nuevo."
   }
 }

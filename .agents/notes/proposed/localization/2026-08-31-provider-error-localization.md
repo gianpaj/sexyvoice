@@ -18,8 +18,17 @@ Implementation follows the approved plan in
 
 ## Findings
 
-- Pending code inspection.
+- `APIErrorResponse` already accepts extra response fields, so dashboard JSON
+  responses need no shared response refactor.
+- Clone route errors already carry provider details. Their response boundary
+  needs the shared code and display-name conversion.
+- Gemini streaming failures are in-band SSE events on an established HTTP 200
+  response. The event can carry the shared code and details, but cannot change
+  the response status.
+- `messages/en.json` defines the `next-intl` message schema for every locale.
 
 ## Verification
 
-- Pending implementation.
+- `pnpm check-translations` passes.
+- `pnpm --filter @sexyvoice/web exec vitest run tests/provider-errors.test.ts`
+  passes 17 tests.
