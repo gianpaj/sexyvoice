@@ -107,14 +107,14 @@ Update the clone client to:
 
 Add `errorCodes.PROVIDER_UNAVAILABLE` to every locale:
 
-| Locale | Translation |
-| --- | --- |
-| `en` | `{provider} is temporarily unavailable. Please retry.` |
-| `es` | `{provider} no está disponible temporalmente. Inténtalo de nuevo.` |
-| `de` | `{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut.` |
-| `da` | `{provider} er midlertidigt utilgængelig. Prøv igen.` |
-| `it` | `{provider} non è temporaneamente disponibile. Riprova.` |
-| `fr` | `{provider} est temporairement indisponible. Réessayez.` |
+| Locale | Translation                                                               |
+| ------ | ------------------------------------------------------------------------- |
+| `en`   | `{provider} is temporarily unavailable. Please retry.`                    |
+| `es`   | `{provider} no está disponible temporalmente. Inténtalo de nuevo.`        |
+| `de`   | `{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut.` |
+| `da`   | `{provider} er midlertidigt utilgængelig. Prøv igen.`                     |
+| `it`   | `{provider} non è disponibile al momento. Riprova.`                       |
+| `fr`   | `{provider} est temporairement indisponible. Réessayez.`                  |
 
 Provider brand names remain unchanged in every locale.
 

@@ -9,7 +9,8 @@ Implemented according to
 
 - Keep provider IDs lowercase in route control flow and logs.
 - Validate provider IDs at the response boundary and expose fixed brand names.
-- Keep one English fallback template in `messages/en.json`.
+- Keep one canonical English fallback constant in the server helper and assert
+  that `messages/en.json` matches it.
 - Keep the client resolver independent of React and `next-intl` so malformed
   payload behavior can be tested directly.
 - Preserve the external API's public `provider_unavailable` code.
@@ -36,15 +37,21 @@ Implemented according to
   their existing message-only presentation.
 - Global provider codes resolve before feature-specific keys. Unknown dashboard
   codes still use `generate`, and clone validation still uses `clone.errors`.
+- `replicate@1.4.0` rejects `run()` when a prediction fails. Routes classify the
+  rejection itself instead of accepting an impossible `{ error }` result shape.
+- Grok classification wraps only `generateXaiTts()`. R2 upload failures remain
+  platform errors and follow the generic Sentry path.
+- Dashboard captures the original non-transient Grok error with codec, language,
+  model, voice, text, and user context before returning its existing 500 error.
+- The approved plan and this note remain separate. The plan defines scope; this
+  note records the live mechanism and verification.
+- The external API error-code documentation already describes
+  `provider_unavailable`; these corrections do not change that contract.
 
 ## Verification
 
 - `pnpm check-translations` passes.
 - The seven focused provider, clone, dashboard generation, external speech, and
-  React test files pass 242 tests with 20 parked tests skipped.
+  React test files pass 247 tests with 20 parked tests skipped.
 - `pnpm fixall` passes with five existing Sentry namespace-import warnings.
 - `pnpm type-check` passes in every workspace package.
-- `CI=1 pnpm test` passes all 51 script tests and 67 web test files. All 35 tests
-  in `tests/stripe-webhook.test.ts` fail during Redis cleanup because the shared
-  client is closed at `tests/utils/redis-test-utils.ts:97`. A standalone rerun
-  fails at the same cleanup step.
