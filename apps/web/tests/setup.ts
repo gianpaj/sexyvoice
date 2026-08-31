@@ -215,6 +215,9 @@ process.env.FAL_ADMIN_KEY = 'test-fal-admin-key';
 process.env.CLI_LOGIN_ENCRYPTION_SECRET =
   'test-cli-login-secret-do-not-use-in-production';
 
+// Server-only modules are valid route dependencies but have no Vitest runtime.
+vi.mock('server-only', () => ({}));
+
 // Mock Axiom so tests never attempt a real network flush
 vi.mock('@axiomhq/js', () => ({
   Axiom: class MockAxiom {

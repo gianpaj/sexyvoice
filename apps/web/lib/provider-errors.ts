@@ -16,6 +16,7 @@ export type ProviderId = (typeof PROVIDER_IDS)[number];
 export type ProviderDisplayName = (typeof PROVIDER_DISPLAY_NAMES)[number];
 export interface ProviderUnavailableDetails {
   provider: ProviderDisplayName;
+  [key: string]: ProviderDisplayName;
 }
 
 export function isProviderId(provider: unknown): provider is ProviderId {

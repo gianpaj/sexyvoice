@@ -5,6 +5,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
+import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
 import { generateHash, getAudioDuration } from '@/lib/audio';
 import {
   AudioDecodeError,
@@ -34,6 +35,7 @@ import {
   getProviderErrorMessage,
   getProviderErrorName,
   getProviderStatusCode,
+  getProviderUnavailableDetails,
   isTransientProviderFailure,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
@@ -48,12 +50,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import {
-  ERROR_CODES,
-  estimateCredits,
-  getDollarCost,
-  getErrorMessage,
-} from '@/lib/utils';
+import { estimateCredits, getDollarCost } from '@/lib/utils';
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -223,10 +220,10 @@ function createProviderUnavailableRouteError(
   provider: CloneProvider,
 ): RouteError {
   return createRouteError(
-    getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-cloning'),
+    getProviderUnavailableMessage(provider),
     503,
-    'errors.providerUnavailable',
-    { provider },
+    'PROVIDER_UNAVAILABLE',
+    getProviderUnavailableDetails(provider),
   );
 }
 

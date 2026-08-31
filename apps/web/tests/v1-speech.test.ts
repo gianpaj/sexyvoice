@@ -533,7 +533,7 @@ describe('V1 Speech API Route', () => {
       expect(response.status).toBe(503);
       expect(json.error.code).toBe('provider_unavailable');
       expect(json.error.message).toBe(
-        'Voice generation service temporarily unavailable. Please retry.',
+        'Grok is temporarily unavailable. Please retry.',
       );
       expect(captureException).not.toHaveBeenCalled();
     });

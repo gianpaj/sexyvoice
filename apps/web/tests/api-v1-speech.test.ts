@@ -1032,7 +1032,11 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(503);
     expect(json.error.type).toBe('server_error');
     expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Gemini is temporarily unavailable. Please retry.',
+    );
     expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(restoreCredits).toHaveBeenCalledOnce();
     expect(captureException).not.toHaveBeenCalled();
   });
 
@@ -1068,7 +1072,7 @@ describe('/api/v1/speech', () => {
     expect(json.error.type).toBe('server_error');
     expect(json.error.code).toBe('provider_unavailable');
     expect(json.error.message).toBe(
-      'Voice generation service temporarily unavailable. Please retry.',
+      'Grok is temporarily unavailable. Please retry.',
     );
     expect(restoreCredits).toHaveBeenCalledOnce();
     expect(restoreCredits).toHaveBeenCalledWith({
@@ -1103,7 +1107,7 @@ describe('/api/v1/speech', () => {
     expect(json.error.type).toBe('server_error');
     expect(json.error.code).toBe('provider_unavailable');
     expect(json.error.message).toBe(
-      'Voice generation service temporarily unavailable. Please retry.',
+      'Replicate is temporarily unavailable. Please retry.',
     );
     expect(restoreCredits).toHaveBeenCalledOnce();
     expect(restoreCredits).toHaveBeenCalledWith({

@@ -23,6 +23,7 @@ import {
   resolveExternalModelId,
 } from '@/lib/api/model';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
+import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
@@ -114,10 +115,7 @@ function getGeminiProviderFailure(
       code: 'provider_unavailable',
       googleCode: transientError.code,
       googleStatus: getGoogleApiErrorStatus(transientError),
-      message: getErrorMessage(
-        ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
-        'voice-generation',
-      ),
+      message: getProviderUnavailableMessage('gemini'),
       status: 503,
       type: 'server_error',
     };
@@ -564,11 +562,9 @@ export async function POST(request: Request) {
     const respondWithProviderUnavailable = async (
       context: string,
       error: unknown,
+      providerId: 'grok' | 'replicate',
     ) => {
-      const message = getErrorMessage(
-        ERROR_CODES.PROVIDER_UNAVAILABLE,
-        'voice-generation',
-      );
+      const message = getProviderUnavailableMessage(providerId);
       await refundReservedCredits(context);
       await log({
         apiKeyId: authResult.apiKeyId,
@@ -755,6 +751,7 @@ export async function POST(request: Request) {
           return respondWithProviderUnavailable(
             'xai_provider_unavailable',
             error,
+            'grok',
           );
         }
 
@@ -803,6 +800,7 @@ export async function POST(request: Request) {
         return respondWithProviderUnavailable(
           'replicate_provider_unavailable',
           error,
+          'replicate',
         );
       }
 
@@ -810,6 +808,7 @@ export async function POST(request: Request) {
         return respondWithProviderUnavailable(
           'replicate_provider_unavailable',
           output.error,
+          'replicate',
         );
       }
 

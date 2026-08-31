@@ -635,8 +635,10 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(503);
       expect(json.error).toBe(
-        'Voice generation service temporarily unavailable. Please retry.',
+        'Replicate is temporarily unavailable. Please retry.',
       );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Replicate' });
       expect(mockReplicateRun).toHaveBeenCalled();
       expect(restoreCredits).toHaveBeenCalledOnce();
       expect(restoreCredits).toHaveBeenCalledWith({
@@ -808,8 +810,10 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(503);
       expect(json.error).toBe(
-        'Voice generation service temporarily unavailable. Please retry.',
+        'Grok is temporarily unavailable. Please retry.',
       );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Grok' });
       expect(restoreCredits).toHaveBeenCalledOnce();
       expect(restoreCredits).toHaveBeenCalledWith({
         amount: expect.any(Number),
@@ -1508,6 +1512,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('returns 503 without Sentry capture when flash model has a transient provider failure', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       const flashError = new Error(
         JSON.stringify({
           error: {
@@ -1545,7 +1550,13 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Gemini is temporarily unavailable. Please retry.',
+      );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Gemini' });
       expect(callCount).toBe(1);
+      expect(restoreCredits).toHaveBeenCalledOnce();
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(Sentry.logger.warn).toHaveBeenCalledWith(
         'Gemini provider temporarily unavailable',
@@ -1574,7 +1585,7 @@ describe('Generate Voice API Route', () => {
       );
 
       expect(json.error).toBe(
-        'Voice generation service temporarily unavailable. Please retry.',
+        'Gemini is temporarily unavailable. Please retry.',
       );
     });
 
@@ -2176,6 +2187,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should return 503 when both Gemini pro and flash models fail with a transient error (SEXYVOICE-AI-4F)', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       // Both models throw a generic (non-googleapis) internal error — simulates
       // a transient Google outage. The route should return 503 with a friendly
       // message rather than crashing into the outer catch.
@@ -2206,7 +2218,13 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
-      expect(json.error).toContain('temporarily unavailable');
+      expect(json.error).toBe(
+        'Gemini is temporarily unavailable. Please retry.',
+      );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Gemini' });
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
 
@@ -2648,6 +2666,57 @@ describe('Generate Voice API Route', () => {
         }),
       );
       expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    it('emits structured provider details for transient stream failures', async () => {
+      const { hasUserPaid, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const transientError = new Error(
+        JSON.stringify({
+          error: {
+            code: 503,
+            message: 'Provider unavailable',
+            status: 'UNAVAILABLE',
+          },
+        }),
+      );
+      const generateContentStream = vi.fn().mockRejectedValue(transientError);
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(
+        'Gemini is temporarily unavailable. Please retry.',
+      );
+      expect(body).toContain('"errorCode":"PROVIDER_UNAVAILABLE"');
+      expect(body).toContain('"details":{"provider":"Gemini"}');
+      expect(generateContentStream).toHaveBeenCalledTimes(2);
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini stream provider temporarily unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            stream: true,
+            voice: 'achernar',
+          }),
+        }),
+      );
     });
 
     it('reports persistent no-audio after fallback and skips billing', async () => {

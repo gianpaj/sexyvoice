@@ -19,13 +19,17 @@ import {
   getGeminiStyleCharacterLimit,
 } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
+import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import { APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';
 import {
   getProviderErrorMessage,
   getProviderErrorName,
+  getProviderUnavailableDetails,
+  isProviderId,
   isTransientProviderFailure,
+  type ProviderId,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
@@ -87,13 +91,27 @@ function isAbortError(error: unknown): boolean {
   return /\babort(?:ed| ?error)\b/.test(msg);
 }
 
-function createProviderUnavailableError(cause: unknown): Error {
+function providerUnavailableResponse(provider: ProviderId): Response {
+  return APIErrorResponse(
+    getProviderUnavailableMessage(provider),
+    getErrorStatusCode(ERROR_CODES.PROVIDER_UNAVAILABLE),
+    {
+      details: getProviderUnavailableDetails(provider),
+      errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
+    },
+  );
+}
+
+function createProviderUnavailableError(
+  provider: ProviderId,
+  cause: unknown,
+): Error {
   return Object.assign(
-    new Error(
-      getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-generation'),
-      { cause },
-    ),
-    { voiceGenerationErrorCode: ERROR_CODES.PROVIDER_UNAVAILABLE },
+    new Error(getProviderUnavailableMessage(provider), { cause }),
+    {
+      provider,
+      voiceGenerationErrorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
+    },
   );
 }
 
@@ -852,7 +870,6 @@ export async function POST(request: Request) {
               errorName: getProviderErrorName(error),
               language: selectedLanguage || voiceObj.language,
               model: voiceObj.model,
-              text,
               voice: voiceObj.name,
             },
             user: {
@@ -860,7 +877,7 @@ export async function POST(request: Request) {
               id: user.id,
             },
           });
-          throw createProviderUnavailableError(error);
+          throw createProviderUnavailableError('grok', error);
         }
 
         logger.error('Grok TTS generation failed', {
@@ -910,7 +927,7 @@ export async function POST(request: Request) {
             },
             user: { email: user.email, id: user.id },
           });
-          throw createProviderUnavailableError(error);
+          throw createProviderUnavailableError('replicate', error);
         }
 
         throw error;
@@ -925,7 +942,10 @@ export async function POST(request: Request) {
           },
           user: { email: user.email, id: user.id },
         });
-        throw createProviderUnavailableError(new Error(output.error));
+        throw createProviderUnavailableError(
+          'replicate',
+          new Error(output.error),
+        );
       }
 
       // Convert ReadableStream to Buffer before uploading
@@ -1120,13 +1140,11 @@ export async function POST(request: Request) {
     if (
       Error.isError(error) &&
       'voiceGenerationErrorCode' in error &&
-      error.voiceGenerationErrorCode === ERROR_CODES.PROVIDER_UNAVAILABLE
+      error.voiceGenerationErrorCode === ERROR_CODES.PROVIDER_UNAVAILABLE &&
+      'provider' in error &&
+      isProviderId(error.provider)
     ) {
-      return APIErrorResponse(
-        error.message ||
-          getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-generation'),
-        503,
-      );
+      return providerUnavailableResponse(error.provider);
     }
 
     const googleApiError = parseGoogleApiError(error);
@@ -1165,13 +1183,7 @@ export async function POST(request: Request) {
           user: user ? { email: user.email, id: user.id } : undefined,
         });
 
-        return APIErrorResponse(
-          getErrorMessage(
-            ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
-            'voice-generation',
-          ),
-          503,
-        );
+        return providerUnavailableResponse('gemini');
       }
 
       if (googleStatus === 'INVALID_ARGUMENT') {
@@ -1258,7 +1270,7 @@ function streamGeminiTtsResponse({
   estimate: number;
   currentAmount: number;
   styleVariant: string;
-  provider: string;
+  provider: ProviderId;
   requestSignal: AbortSignal;
   reservedCredits: number;
 }): Response {
@@ -1563,10 +1575,7 @@ function streamGeminiTtsResponse({
       // provider JSON (e.g. Gemini's nested INVALID_ARGUMENT token-limit error).
       let clientMessage = rawMessage;
       if (isTransientProviderError) {
-        clientMessage = getErrorMessage(
-          ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
-          'voice-generation',
-        );
+        clientMessage = getProviderUnavailableMessage('gemini');
       } else if (isGeminiInputTooLongError(error)) {
         clientMessage = getErrorMessage(
           ERROR_CODES.GEMINI_INPUT_TOO_LONG,
@@ -1618,7 +1627,15 @@ function streamGeminiTtsResponse({
         });
       }
 
-      await enqueue('error', { error: clientMessage });
+      await enqueue('error', {
+        error: clientMessage,
+        ...(isTransientProviderError
+          ? {
+              details: getProviderUnavailableDetails('gemini'),
+              errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
+            }
+          : {}),
+      });
     } finally {
       if (!completed) {
         await refundReservedCredits({
