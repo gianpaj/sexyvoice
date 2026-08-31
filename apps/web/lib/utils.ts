@@ -399,6 +399,8 @@ export const getErrorMessage = (
       default: 'Provider is temporarily unavailable. Please try again.',
       'voice-cloning':
         'Voice cloning provider is temporarily unavailable. Please try again.',
+      'voice-generation':
+        'Voice generation service temporarily unavailable. Please retry.',
     },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',

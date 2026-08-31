@@ -32,6 +32,10 @@ import {
   formatDurationSeconds,
   getAudioDuration,
 } from '@/lib/audio';
+import {
+  getProviderErrorMessage,
+  isTransientProviderFailure,
+} from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -553,6 +557,37 @@ export async function POST(request: Request) {
     let geminiResponse: GenerateContentResponse | null = null;
     let generatedAudioBuffer: Buffer | undefined;
     let generatedAudioMimeType: string | undefined;
+    const respondWithProviderUnavailable = async (
+      context: string,
+      error: unknown,
+    ) => {
+      const message = getErrorMessage(
+        ERROR_CODES.PROVIDER_UNAVAILABLE,
+        'voice-generation',
+      );
+      await refundReservedCredits(context);
+      await log({
+        apiKeyId: authResult.apiKeyId,
+        error: getProviderErrorMessage(error),
+        errorCode: 'provider_unavailable',
+        isGeminiVoice,
+        isGrokVoice,
+        model: modelUsed,
+        provider,
+        status: 503,
+        textLength: finalText.length,
+        userId,
+        voice,
+      });
+      return respond(
+        createApiError({
+          code: 'provider_unavailable',
+          message,
+          type: 'server_error',
+        }),
+        { status: 503 },
+      );
+    };
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -715,6 +750,13 @@ export async function POST(request: Request) {
           process.env.R2_SPEECH_API_PUBLIC_URL,
         );
       } catch (error) {
+        if (isTransientProviderFailure(error)) {
+          return respondWithProviderUnavailable(
+            'xai_provider_unavailable',
+            error,
+          );
+        }
+
         captureException(error, {
           extra: { codec, model: modelUsed, requestId, voice },
         });
@@ -743,36 +785,30 @@ export async function POST(request: Request) {
       }
     } else {
       const replicate = new Replicate();
-      const output = (await replicate.run(
-        voiceObj.model as `${string}/${string}`,
-        { input: { text: finalText, voice } },
-        (prediction: Prediction) => {
-          replicateResponse = prediction;
-        },
-      )) as ReadableStream | { error: string };
+      let output: ReadableStream | { error: string };
+      try {
+        output = (await replicate.run(
+          voiceObj.model as `${string}/${string}`,
+          { input: { text: finalText, voice } },
+          (prediction: Prediction) => {
+            replicateResponse = prediction;
+          },
+        )) as ReadableStream | { error: string };
+      } catch (error) {
+        if (!isTransientProviderFailure(error)) {
+          throw error;
+        }
+
+        return respondWithProviderUnavailable(
+          'replicate_provider_unavailable',
+          error,
+        );
+      }
 
       if ('error' in output) {
-        const message = getErrorMessage('REPLICATE_ERROR', 'voice-generation');
-        await refundReservedCredits('replicate_error');
-        await log({
-          apiKeyId: authResult.apiKeyId,
-          error: message,
-          errorCode: 'replicate_error',
-          isGeminiVoice,
-          model: modelUsed,
-          provider,
-          status: 500,
-          textLength: finalText.length,
-          userId,
-          voice,
-        });
-        return respond(
-          createApiError({
-            code: 'server_error',
-            message,
-            type: 'server_error',
-          }),
-          { status: 500 },
+        return respondWithProviderUnavailable(
+          'replicate_provider_unavailable',
+          output.error,
         );
       }
 

@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -514,7 +515,7 @@ describe('V1 Speech API Route', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should return 500 when xAI TTS request fails', async () => {
+    it('returns provider unavailable without capture when xAI TTS fails', async () => {
       server.use(
         http.post('https://api.x.ai/v1/tts', () =>
           HttpResponse.json(
@@ -529,8 +530,12 @@ describe('V1 Speech API Route', () => {
       );
       const json = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(json.error.code).toBe('server_error');
+      expect(response.status).toBe(503);
+      expect(json.error.code).toBe('provider_unavailable');
+      expect(json.error.message).toBe(
+        'Voice generation service temporarily unavailable. Please retry.',
+      );
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should include rate limit headers in response', async () => {

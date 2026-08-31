@@ -1173,6 +1173,67 @@ describe('Clone Voice API Route', () => {
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
+    it('returns a typed 503 without Sentry capture for Mistral failures', async () => {
+      const { captureException, logger } = await import('@sentry/nextjs');
+      const providerError = Object.assign(
+        new Error(
+          'API error occurred: Status 503. Body: upstream connect error or disconnect/reset before headers. reset reason: overflow',
+        ),
+        {
+          name: 'SDKError',
+          statusCode: 503,
+        },
+      );
+      mockMistralSpeechComplete.mockRejectedValueOnce(providerError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1'),
+        'en',
+      );
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Voice cloning provider is temporarily unavailable. Please try again. (503)',
+      );
+      expect(json.code).toBe('errors.providerUnavailable');
+      expect(json.details).toEqual({ provider: 'mistral' });
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Mistral voice cloning provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorName: 'SDKError',
+            model: 'voxtral-mini-tts-2603',
+            statusCode: 503,
+          }),
+        }),
+      );
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extra: expect.objectContaining({ text: expect.anything() }),
+        }),
+      );
+    });
+
     it('should optionally enhance reference audio before cloning with Mistral', async () => {
       const formData = createFormDataWithAudio(
         'Hello world',

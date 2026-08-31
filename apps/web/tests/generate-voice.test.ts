@@ -616,7 +616,8 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('should throw error when Replicate output contains error property', async () => {
+    it('returns 503 without Sentry capture when Replicate reports a failure', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       mockReplicateRun.mockResolvedValueOnce({
         error: 'Model execution failed due to timeout',
       });
@@ -632,9 +633,26 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Voice generation service temporarily unavailable. Please retry.',
+      );
       expect(mockReplicateRun).toHaveBeenCalled();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: 48,
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Replicate voice generation provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            model: expect.stringContaining('lucataco/orpheus'),
+            voice: 'tara',
+          }),
+        }),
+      );
     });
   });
 
@@ -758,9 +776,11 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBe('Voice generation failed, please retry');
+      expect(Sentry.captureException).toHaveBeenCalled();
     });
 
-    it('should return 500 when xAI TTS request fails', async () => {
+    it('returns 503 without Sentry capture when xAI TTS is unavailable', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       server.use(
         http.post('https://api.x.ai/v1/tts', () =>
           HttpResponse.json(
@@ -786,8 +806,31 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Voice generation service temporarily unavailable. Please retry.',
+      );
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: expect.any(Number),
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Grok TTS provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            model: 'xai',
+            voice: 'eve',
+          }),
+        }),
+      );
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extra: expect.objectContaining({ text: expect.anything() }),
+        }),
+      );
     });
   });
 

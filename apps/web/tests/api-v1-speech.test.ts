@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
@@ -14,9 +15,11 @@ import {
 } from '@/lib/supabase/queries';
 import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
 import {
+  mockReplicateRun,
   mockRatelimitLimit,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
+  server,
   setMockGoogleGenAIFactory,
 } from './setup';
 
@@ -915,6 +918,83 @@ describe('/api/v1/speech', () => {
     expect(json.error.type).toBe('server_error');
     expect(json.error.code).toBe('provider_unavailable');
     expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns provider unavailable from transient Grok errors without capture', async () => {
+    server.use(
+      http.post('https://api.x.ai/v1/tts', () =>
+        HttpResponse.json(
+          { error: 'provider failure' },
+          {
+            status: 503,
+          },
+        ),
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'xai',
+        input: 'Hello world',
+        voice: 'eve',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Voice generation service temporarily unavailable. Please retry.',
+    );
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledWith({
+      amount: expect.any(Number),
+      userId: 'test-user-id',
+    });
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns provider unavailable when Replicate reports a failure', async () => {
+    mockReplicateRun.mockResolvedValueOnce({
+      error: 'Model execution failed due to timeout',
+    });
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'orpheus',
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Voice generation service temporarily unavailable. Please retry.',
+    );
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledWith({
+      amount: expect.any(Number),
+      userId: 'test-user-id',
+    });
     expect(captureException).not.toHaveBeenCalled();
   });
 
