@@ -2,7 +2,7 @@
 
 ## State
 
-Implementation follows the approved plan in
+Implemented according to
 `plans/2026-08-31-provider-error-localization.md`.
 
 ## Decisions
@@ -40,10 +40,11 @@ Implementation follows the approved plan in
 ## Verification
 
 - `pnpm check-translations` passes.
-- `pnpm --filter @sexyvoice/web exec vitest run tests/provider-errors.test.ts`
-  passes 17 tests.
-- The focused clone, dashboard generation, and external speech route run passes
-  181 tests with 17 parked tests skipped.
-- `pnpm --filter @sexyvoice/web type-check` passes after the server changes.
-- The focused AudioGenerator and clone client run passes 44 tests with 3 parked
-  streaming tests skipped.
+- The seven focused provider, clone, dashboard generation, external speech, and
+  React test files pass 242 tests with 20 parked tests skipped.
+- `pnpm fixall` passes with five existing Sentry namespace-import warnings.
+- `pnpm type-check` passes in every workspace package.
+- `CI=1 pnpm test` passes all 51 script tests and 67 web test files. All 35 tests
+  in `tests/stripe-webhook.test.ts` fail during Redis cleanup because the shared
+  client is closed at `tests/utils/redis-test-utils.ts:97`. A standalone rerun
+  fails at the same cleanup step.
