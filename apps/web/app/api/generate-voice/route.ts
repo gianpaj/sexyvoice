@@ -848,8 +848,9 @@ export async function POST(request: Request) {
     } else if (isGrokVoice) {
       modelUsed = voiceObj.model;
 
+      let xaiResult: Awaited<ReturnType<typeof generateXaiTts>>;
       try {
-        const { audioBuffer, codec, contentType } = await generateXaiTts({
+        xaiResult = await generateXaiTts({
           codec: outputCodec,
           language: selectedLanguage || voiceObj.language,
           signal: abortController.signal,
@@ -857,10 +858,6 @@ export async function POST(request: Request) {
           text,
           voiceId: voiceObj.name,
         });
-        selectedGrokCodec = codec;
-        generatedAudioBuffer = audioBuffer;
-        generatedAudioMimeType = contentType;
-        uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
       } catch (error) {
         if (isTransientProviderFailure(error)) {
           logger.warn('Grok TTS provider unavailable', {
@@ -880,11 +877,9 @@ export async function POST(request: Request) {
           throw createProviderUnavailableError('grok', error);
         }
 
-        logger.error('Grok TTS generation failed', {
+        const sentryContext = {
           extra: {
             codec: outputCodec,
-            errorCause: Error.isError(error) ? error.cause : undefined,
-            errorMessage: getProviderErrorMessage(error),
             language: selectedLanguage || voiceObj.language,
             model: voiceObj.model,
             text,
@@ -894,7 +889,16 @@ export async function POST(request: Request) {
             email: user.email,
             id: user.id,
           },
+        };
+        logger.error('Grok TTS generation failed', {
+          extra: {
+            ...sentryContext.extra,
+            errorCause: Error.isError(error) ? error.cause : undefined,
+            errorMessage: getProviderErrorMessage(error),
+          },
+          user: sentryContext.user,
         });
+        captureException(error, sentryContext);
         throw Object.assign(
           new Error(getErrorMessage('XAI_TTS_ERROR', 'voice-generation'), {
             cause: error,
@@ -902,6 +906,12 @@ export async function POST(request: Request) {
           { voiceGenerationErrorCode: 'XAI_TTS_ERROR' },
         );
       }
+
+      const { audioBuffer, codec, contentType } = xaiResult;
+      selectedGrokCodec = codec;
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = contentType;
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
     } else {
       // uses REPLICATE_API_TOKEN
       modelUsed = voiceObj.model;

@@ -1082,6 +1082,48 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
+  it('keeps Grok R2 failures on the platform error path', async () => {
+    const uploadError = new Error('Internal Server Error');
+    mockUploadFileToR2.mockRejectedValueOnce(uploadError);
+    server.use(
+      http.post('https://api.x.ai/v1/tts', () =>
+        HttpResponse.arrayBuffer(new Uint8Array([10, 20, 30, 40]).buffer, {
+          headers: { 'Content-Type': 'audio/mpeg' },
+        }),
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'xai',
+        input: 'Hello world',
+        voice: 'eve',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(uploadError, {
+      extra: {
+        apiKeyId: 'test-api-key-id',
+        endpoint: '/api/v1/speech',
+        requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
+        userId: 'test-user-id',
+      },
+    });
+  });
+
   it('returns provider unavailable when Replicate reports a failure', async () => {
     mockReplicateRun.mockResolvedValueOnce({
       error: 'Model execution failed due to timeout',

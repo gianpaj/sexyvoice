@@ -778,7 +778,19 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBe('Voice generation failed, please retry');
-      expect(Sentry.captureException).toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Missing XAI_API_KEY' }),
+        {
+          extra: {
+            codec: 'mp3',
+            language: 'en',
+            model: 'xai',
+            text: 'Hello world',
+            voice: 'eve',
+          },
+          user: { email: 'test@example.com', id: 'test-user-id' },
+        },
+      );
     });
 
     it('returns 503 without Sentry capture when xAI TTS is unavailable', async () => {
@@ -834,6 +846,50 @@ describe('Generate Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({ text: expect.anything() }),
         }),
+      );
+    });
+
+    it('keeps Grok R2 failures on the platform error path', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      const uploadError = new Error('Internal Server Error');
+      mockUploadFileToR2.mockRejectedValueOnce(uploadError);
+      server.use(
+        http.post('https://api.x.ai/v1/tts', () =>
+          HttpResponse.arrayBuffer(new Uint8Array([10, 20, 30, 40]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-eve-id',
+        }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Failed to generate voice');
+      expect(json.errorCode).toBeUndefined();
+      expect(json.details).toBeUndefined();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledWith(uploadError, {
+        extra: {
+          errorData: uploadError,
+          text: 'Hello world',
+          voice: 'eve',
+        },
+        user: { email: 'test@example.com', id: 'test-user-id' },
+      });
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        'Grok TTS provider unavailable',
+        expect.anything(),
       );
     });
   });

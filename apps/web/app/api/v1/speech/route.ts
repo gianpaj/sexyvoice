@@ -729,23 +729,15 @@ export async function POST(request: Request) {
       modelUsed = voiceObj.model;
       const codec = normalizeXaiTtsCodec(chosenFormat);
 
+      let xaiResult: Awaited<ReturnType<typeof generateXaiTts>>;
       try {
-        const { audioBuffer, contentType } = await generateXaiTts({
+        xaiResult = await generateXaiTts({
           codec,
           language: voiceObj.language ?? 'en',
           speed,
           text: finalText,
           voiceId: voice,
         });
-        generatedAudioBuffer = audioBuffer;
-        generatedAudioMimeType = contentType;
-        uploadUrl = await uploadFileToR2(
-          filename,
-          audioBuffer,
-          contentType,
-          speechApiBucket,
-          process.env.R2_SPEECH_API_PUBLIC_URL,
-        );
       } catch (error) {
         if (isTransientProviderFailure(error)) {
           return respondWithProviderUnavailable(
@@ -781,6 +773,17 @@ export async function POST(request: Request) {
           { status: 500 },
         );
       }
+
+      const { audioBuffer, contentType } = xaiResult;
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = contentType;
+      uploadUrl = await uploadFileToR2(
+        filename,
+        audioBuffer,
+        contentType,
+        speechApiBucket,
+        process.env.R2_SPEECH_API_PUBLIC_URL,
+      );
     } else {
       const replicate = new Replicate();
       let output: ReadableStream | { error: string };
