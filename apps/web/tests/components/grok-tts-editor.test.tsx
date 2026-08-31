@@ -433,6 +433,29 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it('preserves multiline pasted text while converting supported Grok tags', async () => {
+    const onChange = vi.fn();
+    const pastedText = 'First line\n[pause]\n<soft>Third line</soft>';
+
+    renderEditor({ onChange });
+
+    const editor = await findEditor();
+
+    pasteIntoEditor(editor, pastedText);
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith(pastedText);
+    });
+    expect(
+      Array.from(editor.querySelectorAll('p')).map(
+        (paragraph) => paragraph.textContent,
+      ),
+    ).toEqual(['First line', '[pause]', '<soft>Third line</soft>']);
+    expect(
+      editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
+    ).toHaveLength(3);
+  });
+
   it('opens the effects popover and shows available effect actions', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -777,6 +800,31 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenLastCalledWith('');
   });
 
+  it('dismisses the < suggestion menu and Filter decoration on Escape', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    renderEditor({ onChange });
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '<');
+
+    const listbox = await screen.findByRole('listbox');
+    expect(
+      within(listbox).getByRole('button', { name: 'soft' }),
+    ).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith('');
+  });
+
   it('keeps page focus in the suggestion menu when navigating with ArrowDown', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -959,6 +1007,57 @@ describe('GrokTTSEditor', () => {
     ).toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello <emphasis>');
   });
+
+  it.each([
+    {
+      closingKey: '{]}',
+      completeText: 'Hello [breath]',
+      name: 'instant tag',
+      partialText: 'Hello [breath',
+      selector: '[data-grok-instant-tag][tag="[breath]"]',
+    },
+    {
+      closingKey: '>',
+      completeText: 'Hello <emphasis>',
+      name: 'wrapper tag',
+      partialText: 'Hello <emphasis',
+      selector:
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<emphasis>"]',
+    },
+  ])(
+    'undoes and redoes $name conversion',
+    async ({ closingKey, completeText, partialText, selector }) => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      const onChange = vi.fn();
+
+      renderEditor({ onChange, value: partialText });
+
+      const editor = await findEditor();
+
+      await user.click(editor);
+      placeCaretAtEnd(editor);
+      await user.keyboard(closingKey);
+
+      await waitFor(() => {
+        expect(editor.querySelector(selector)).toBeInTheDocument();
+        expect(onChange).toHaveBeenLastCalledWith(completeText);
+      });
+
+      await user.keyboard('{Control>}z{/Control}');
+
+      await waitFor(() => {
+        expect(editor.querySelector(selector)).not.toBeInTheDocument();
+        expect(onChange).toHaveBeenLastCalledWith(partialText);
+      });
+
+      await user.keyboard('{Control>}y{/Control}');
+
+      await waitFor(() => {
+        expect(editor.querySelector(selector)).toBeInTheDocument();
+        expect(onChange).toHaveBeenLastCalledWith(completeText);
+      });
+    },
+  );
 
   it('does not open the < suggestion flow when typing < before existing partial wrapper text', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
