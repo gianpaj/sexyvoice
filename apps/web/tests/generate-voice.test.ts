@@ -1999,6 +1999,66 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it.each([
+      {
+        name: 'candidate finish reason',
+        response: {
+          candidates: [
+            {
+              content: { parts: [] },
+              finishReason: FinishReason.SAFETY,
+            },
+          ],
+        },
+      },
+      {
+        name: 'prompt block reason',
+        response: {
+          candidates: [],
+          promptFeedback: { blockReason: 'SAFETY' },
+        },
+      },
+    ])(
+      'should return 422 and refund credits for a Gemini SAFETY $name',
+      async ({ response: geminiResponse }) => {
+        const { restoreCredits } = await import('@/lib/supabase/queries');
+        setMockGoogleGenAIFactory(() => ({
+          models: {
+            generateContent: vi.fn().mockResolvedValue(geminiResponse),
+          },
+        }));
+
+        const request = new Request('http://localhost/api/generate-voice', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: 'voice-achernar-31-id',
+          }),
+        });
+
+        const response = await POST(request);
+        const json = await response.json();
+
+        expect(response.status).toBe(422);
+        expect(json.error).toBe(
+          getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
+        );
+        expect(restoreCredits).toHaveBeenCalledTimes(1);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(Sentry.logger.warn).toHaveBeenCalledWith(
+          'Content generation prohibited by Gemini',
+          expect.objectContaining({
+            extra: expect.objectContaining({
+              model: 'gemini-3.1-flash-tts-preview',
+            }),
+          }),
+        );
+      },
+    );
+
     it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
       // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
       setMockGoogleGenAIFactory(() => ({
@@ -2587,9 +2647,10 @@ describe('Generate Voice API Route', () => {
           usage: { stream: true, userHasPaid: true },
         }),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
-    it('emits error event and skips billing when stream yields no audio chunks', async () => {
+    it('reports persistent no-audio after fallback and skips billing', async () => {
       const { hasUserPaid, reduceCredits } = await import(
         '@/lib/supabase/queries'
       );
@@ -2622,6 +2683,68 @@ describe('Generate Voice API Route', () => {
       expect(body).not.toContain('event: done');
       expect(callCount).toBe(2);
       expect(reduceCredits).toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cause: 'NO_AUDIO_DATA',
+          message: getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            fallbackAttempted: true,
+            model: 'gemini-2.5-flash-preview-tts',
+            stream: true,
+          }),
+        }),
+      );
+    });
+
+    it('does not retry an OTHER finish from the primary stream', async () => {
+      const { hasUserPaid, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        yield {
+          candidates: [
+            { content: { parts: [] }, finishReason: FinishReason.OTHER },
+          ],
+        };
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+      expect(body).not.toContain('event: done');
+      expect(callCount).toBe(1);
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: expect.any(Number),
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ cause: 'OTHER_GEMINI_BLOCK' }),
+        expect.objectContaining({
+          extra: expect.objectContaining({ fallbackAttempted: false }),
+        }),
+      );
     });
 
     it.each([
@@ -2635,7 +2758,7 @@ describe('Generate Voice API Route', () => {
         },
       },
       {
-        errorCode: 'OTHER_GEMINI_BLOCK' as const,
+        errorCode: 'PROHIBITED_CONTENT' as const,
         name: 'safety prompt block',
         terminalChunk: {
           candidates: [],
@@ -2685,6 +2808,7 @@ describe('Generate Voice API Route', () => {
         userId: 'test-user-id',
         amount: expect.any(Number),
       });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('emits error event after audio started and refunds reserved credits when stream throws mid-flight', async () => {

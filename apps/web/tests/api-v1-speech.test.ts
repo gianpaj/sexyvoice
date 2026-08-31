@@ -811,6 +811,121 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
+  it('returns a content-policy error and refunds a Gemini SAFETY response', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'SAFETY',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(json.error.type).toBe('invalid_request_error');
+    expect(json.error.code).toBe('content_policy_violation');
+    expect(json.error.param).toBe('input');
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(restoreCredits).toHaveBeenCalledTimes(1);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and refunds when Gemini returns no audio', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'STOP',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(json.error.param).toBeNull();
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(restoreCredits).toHaveBeenCalledTimes(1);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('labels failed policy refunds as content blocked', async () => {
+    const refundError = new Error('Refund failed');
+    vi.mocked(restoreCredits).mockRejectedValueOnce(refundError);
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'SAFETY',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(422);
+    expect(captureException).toHaveBeenCalledWith(
+      refundError,
+      expect.objectContaining({
+        extra: expect.objectContaining({ context: 'gemini_content_blocked' }),
+      }),
+    );
+  });
+
   it('falls back to gemini-2.5-flash-preview-tts when gpro31 primary call fails', async () => {
     let callCount = 0;
     const generateContent = vi.fn().mockImplementation(() => {
