@@ -69,10 +69,6 @@ function createUnsupportedGrokTagDecorations(
     for (const match of matches) {
       const matchFrom = pos + match.start;
 
-      if (matchFrom < from || matchFrom >= to) {
-        continue;
-      }
-
       decorations.push(
         Decoration.Inline(matchFrom, pos + match.end, {
           class: UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASS,

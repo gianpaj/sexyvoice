@@ -131,6 +131,10 @@ describe('grok suggestion lifecycle', () => {
     expect(suggestion.onStart).toHaveBeenCalledWith(
       expect.objectContaining({ query: '', text: '[' }),
     );
+    expect(suggestion.onUpdate).toHaveBeenCalledTimes(1);
+    expect(suggestion.onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ loading: true, query: '', text: '[' }),
+    );
 
     editor.destroy();
   });
@@ -150,6 +154,10 @@ describe('grok suggestion lifecycle', () => {
     expect(suggestion.onStart).toHaveBeenCalledTimes(1);
     expect(suggestion.onStart).toHaveBeenCalledWith(
       expect.objectContaining({ query: '', text: '<' }),
+    );
+    expect(suggestion.onUpdate).toHaveBeenCalledTimes(1);
+    expect(suggestion.onUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ loading: true, query: '', text: '<' }),
     );
 
     editor.destroy();

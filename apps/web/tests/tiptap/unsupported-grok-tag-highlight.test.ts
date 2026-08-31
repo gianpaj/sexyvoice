@@ -42,6 +42,10 @@ describe('UnsupportedGrokTagHighlight', () => {
     expect(editor.getText({ blockSeparator: '\n' })).toBe('[first\n[second]');
     expect(getHighlightedTags(editor)).toEqual(['[second]']);
 
+    editor.commands.insertContentAt(closingBracketPosition, ']');
+
+    expect(getHighlightedTags(editor)).toEqual([firstTag, '[second]']);
+
     editor.destroy();
   });
 });
