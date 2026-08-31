@@ -302,6 +302,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
             enabledItems: [],
             showGroups: false,
           }}
+          deleteQueryOnEscape={false}
           key={menu.pluginKey}
           pluginKey={menu.pluginKey}
         />

@@ -797,7 +797,8 @@ describe('GrokTTSEditor', () => {
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
     expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
-    expect(onChange).toHaveBeenLastCalledWith('');
+    expect(editor).toHaveTextContent('[');
+    expect(onChange).toHaveBeenLastCalledWith('[');
   });
 
   it('dismisses the < suggestion menu and Filter decoration on Escape', async () => {
@@ -822,7 +823,8 @@ describe('GrokTTSEditor', () => {
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
     expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
-    expect(onChange).toHaveBeenLastCalledWith('');
+    expect(editor).toHaveTextContent('<');
+    expect(onChange).toHaveBeenLastCalledWith('<');
   });
 
   it('keeps page focus in the suggestion menu when navigating with ArrowDown', async () => {
