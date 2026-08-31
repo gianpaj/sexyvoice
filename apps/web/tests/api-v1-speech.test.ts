@@ -1124,10 +1124,10 @@ describe('/api/v1/speech', () => {
     });
   });
 
-  it('returns provider unavailable when Replicate reports a failure', async () => {
-    mockReplicateRun.mockResolvedValueOnce({
-      error: 'Model execution failed due to timeout',
-    });
+  it('returns provider unavailable for a transient Replicate rejection', async () => {
+    mockReplicateRun.mockRejectedValueOnce(
+      new Error('Replicate request failed with status 503'),
+    );
 
     const request = new Request('http://localhost/api/v1/speech', {
       method: 'POST',
@@ -1157,6 +1157,41 @@ describe('/api/v1/speech', () => {
       userId: 'test-user-id',
     });
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns server error for a non-transient Replicate rejection', async () => {
+    const modelError = new Error('Model execution failed: invalid input');
+    mockReplicateRun.mockRejectedValueOnce(modelError);
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'orpheus',
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(modelError, {
+      extra: {
+        apiKeyId: 'test-api-key-id',
+        endpoint: '/api/v1/speech',
+        requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
+        userId: 'test-user-id',
+      },
+    });
   });
 
   it('always generates fresh audio (no caching)', async () => {

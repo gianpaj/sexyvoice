@@ -616,11 +616,11 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('returns 503 without Sentry capture when Replicate reports a failure', async () => {
+    it('returns 503 without Sentry capture for a transient Replicate rejection', async () => {
       const { restoreCredits } = await import('@/lib/supabase/queries');
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Model execution failed due to timeout',
-      });
+      mockReplicateRun.mockRejectedValueOnce(
+        new Error('Replicate request failed with status 503'),
+      );
 
       const request = new Request('http://localhost/api/generate-voice', {
         method: 'POST',
@@ -654,6 +654,39 @@ describe('Generate Voice API Route', () => {
             voice: 'tara',
           }),
         }),
+      );
+    });
+
+    it('returns 500 and captures a non-transient Replicate rejection', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      const modelError = new Error('Model execution failed: invalid input');
+      mockReplicateRun.mockRejectedValueOnce(modelError);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(json.errorCode).toBeUndefined();
+      expect(json.details).toBeUndefined();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledWith(modelError, {
+        extra: {
+          model: expect.stringContaining('lucataco/orpheus'),
+          text: 'Hello world',
+          voice: 'tara',
+        },
+        user: { email: 'test@example.com', id: 'test-user-id' },
+      });
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        'Replicate voice generation provider unavailable',
+        expect.anything(),
       );
     });
   });

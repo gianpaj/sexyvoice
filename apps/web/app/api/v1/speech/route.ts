@@ -786,7 +786,7 @@ export async function POST(request: Request) {
       );
     } else {
       const replicate = new Replicate();
-      let output: ReadableStream | { error: string };
+      let output: ReadableStream;
       try {
         output = (await replicate.run(
           voiceObj.model as `${string}/${string}`,
@@ -794,7 +794,7 @@ export async function POST(request: Request) {
           (prediction: Prediction) => {
             replicateResponse = prediction;
           },
-        )) as ReadableStream | { error: string };
+        )) as ReadableStream;
       } catch (error) {
         if (!isTransientProviderFailure(error)) {
           throw error;
@@ -803,14 +803,6 @@ export async function POST(request: Request) {
         return respondWithProviderUnavailable(
           'replicate_provider_unavailable',
           error,
-          'replicate',
-        );
-      }
-
-      if ('error' in output) {
-        return respondWithProviderUnavailable(
-          'replicate_provider_unavailable',
-          output.error,
           'replicate',
         );
       }

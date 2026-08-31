@@ -919,13 +919,13 @@ export async function POST(request: Request) {
       const onProgress = (prediction: Prediction) => {
         replicateResponse = prediction;
       };
-      let output: ReadableStream | { error: string };
+      let output: ReadableStream;
       try {
         output = (await replicate.run(
           voiceObj.model as `${string}/${string}`,
           { input: { text, voice: voiceObj.name }, signal: request.signal },
           onProgress,
-        )) as ReadableStream | { error: string };
+        )) as ReadableStream;
       } catch (error) {
         if (isTransientProviderFailure(error)) {
           logger.warn('Replicate voice generation provider unavailable', {
@@ -940,21 +940,15 @@ export async function POST(request: Request) {
           throw createProviderUnavailableError('replicate', error);
         }
 
-        throw error;
-      }
-
-      if ('error' in output) {
-        logger.warn('Replicate voice generation provider unavailable', {
-          extra: {
-            errorMessage: output.error,
-            model: voiceObj.model,
-            voice: voiceObj.name,
-          },
+        captureException(error, {
+          extra: { model: voiceObj.model, text, voice: voiceObj.name },
           user: { email: user.email, id: user.id },
         });
-        throw createProviderUnavailableError(
-          'replicate',
-          new Error(output.error),
+        throw Object.assign(
+          new Error(getErrorMessage('REPLICATE_ERROR', 'voice-generation'), {
+            cause: error,
+          }),
+          { voiceGenerationErrorCode: 'REPLICATE_ERROR' },
         );
       }
 
