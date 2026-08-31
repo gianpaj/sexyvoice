@@ -1956,6 +1956,66 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it.each([
+      {
+        name: 'candidate finish reason',
+        response: {
+          candidates: [
+            {
+              content: { parts: [] },
+              finishReason: FinishReason.SAFETY,
+            },
+          ],
+        },
+      },
+      {
+        name: 'prompt block reason',
+        response: {
+          candidates: [],
+          promptFeedback: { blockReason: 'SAFETY' },
+        },
+      },
+    ])(
+      'should return 422 and refund credits for a Gemini SAFETY $name',
+      async ({ response: geminiResponse }) => {
+        const { restoreCredits } = await import('@/lib/supabase/queries');
+        setMockGoogleGenAIFactory(() => ({
+          models: {
+            generateContent: vi.fn().mockResolvedValue(geminiResponse),
+          },
+        }));
+
+        const request = new Request('http://localhost/api/generate-voice', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: 'voice-achernar-31-id',
+          }),
+        });
+
+        const response = await POST(request);
+        const json = await response.json();
+
+        expect(response.status).toBe(422);
+        expect(json.error).toBe(
+          getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
+        );
+        expect(restoreCredits).toHaveBeenCalledTimes(1);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(Sentry.logger.warn).toHaveBeenCalledWith(
+          'Content generation prohibited by Gemini',
+          expect.objectContaining({
+            extra: expect.objectContaining({
+              model: 'gemini-3.1-flash-tts-preview',
+            }),
+          }),
+        );
+      },
+    );
+
     it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
       // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
       setMockGoogleGenAIFactory(() => ({
@@ -2592,7 +2652,7 @@ describe('Generate Voice API Route', () => {
         },
       },
       {
-        errorCode: 'OTHER_GEMINI_BLOCK' as const,
+        errorCode: 'PROHIBITED_CONTENT' as const,
         name: 'safety prompt block',
         terminalChunk: {
           candidates: [],
@@ -2642,6 +2702,7 @@ describe('Generate Voice API Route', () => {
         userId: 'test-user-id',
         amount: expect.any(Number),
       });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('emits error event after audio started and refunds reserved credits when stream throws mid-flight', async () => {

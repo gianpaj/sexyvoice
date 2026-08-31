@@ -1,5 +1,4 @@
 import {
-  FinishReason,
   type GenerateContentConfig,
   type GenerateContentResponse,
   GoogleGenAI,
@@ -46,6 +45,7 @@ import {
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import { buildGeminiTtsPrompt } from '@/lib/tts/gemini-prompt';
+import { classifyGeminiTtsResponse } from '@/lib/tts/gemini-response';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -638,15 +638,15 @@ export async function POST(request: Request) {
       const { data, mimeType } = extractInlineAudio(geminiResponse);
       const finishReason = geminiResponse?.candidates?.[0]?.finishReason;
       const blockReason = geminiResponse?.promptFeedback?.blockReason;
-      const isProhibitedContent =
-        finishReason === FinishReason.PROHIBITED_CONTENT ||
-        blockReason === 'PROHIBITED_CONTENT';
-      // Finished normally but no audio came back — transient provider glitch
-      // rather than a content block, so surface it as retryable.
-      const isNoAudioData =
-        finishReason === FinishReason.STOP && !(data && mimeType);
+      const responseOutcome = classifyGeminiTtsResponse({
+        blockReason,
+        finishReason,
+        hasAudio: Boolean(data && mimeType),
+      });
+      const isProhibitedContent = responseOutcome === 'content_blocked';
+      const isNoAudioData = responseOutcome === 'no_audio';
 
-      if (finishReason !== FinishReason.STOP || !data || !mimeType) {
+      if (responseOutcome !== 'success' || !data || !mimeType) {
         const code = isProhibitedContent
           ? 'content_policy_violation'
           : 'server_error';

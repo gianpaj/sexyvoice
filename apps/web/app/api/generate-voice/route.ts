@@ -1,5 +1,5 @@
 import {
-  FinishReason,
+  type FinishReason,
   type GenerateContentConfig,
   type GenerateContentResponse,
   GoogleGenAI,
@@ -40,6 +40,7 @@ import {
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import { classifyGeminiTtsResponse } from '@/lib/tts/gemini-response';
 import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -695,17 +696,15 @@ export async function POST(request: Request) {
       const { data, mimeType } = extractInlineAudio(genAIResponse);
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
       const blockReason = genAIResponse?.promptFeedback?.blockReason;
-      const isProhibitedContent =
-        finishReason === FinishReason.PROHIBITED_CONTENT ||
-        blockReason === 'PROHIBITED_CONTENT';
-      // Finished without audio — transient provider glitch rather than a content
-      // block, so surface it as retryable. Gemini 3.1 may report this as OTHER.
-      const isNoAudioData =
-        (finishReason === FinishReason.STOP ||
-          finishReason === FinishReason.OTHER) &&
-        !(data && mimeType);
+      const responseOutcome = classifyGeminiTtsResponse({
+        blockReason,
+        finishReason,
+        hasAudio: Boolean(data && mimeType),
+      });
+      const isProhibitedContent = responseOutcome === 'content_blocked';
+      const isNoAudioData = responseOutcome === 'no_audio';
 
-      if (finishReason !== FinishReason.STOP || !data || !mimeType) {
+      if (responseOutcome !== 'success' || !data || !mimeType) {
         if (isProhibitedContent) {
           logger.warn('Content generation prohibited by Gemini', {
             extra: {
@@ -716,7 +715,6 @@ export async function POST(request: Request) {
               responseId: genAIResponse?.responseId,
               styleVariant,
               textLength: text.length,
-              textPreview: text.slice(0, 500),
               voice: voiceObj.name,
             },
             user: { email: user.email, id: user.id },
@@ -769,8 +767,7 @@ export async function POST(request: Request) {
             );
           }
         }
-        // Only capture unexpected Gemini blocks to Sentry. PROHIBITED_CONTENT
-        // and no-audio STOP responses are handled user/provider states.
+        // Capture only response shapes that the classifier does not recognize.
         if (!(isProhibitedContent || isNoAudioData)) {
           captureException(new Error('Gemini 200 — no audio data'), {
             extra: {
@@ -1254,15 +1251,19 @@ function streamGeminiTtsResponse({
     let completed = false;
 
     const getStreamBlockError = () => {
+      const responseOutcome = classifyGeminiTtsResponse({
+        blockReason: streamBlockReason,
+        finishReason: streamFinishReason,
+        hasAudio: audioChunks.length > 0,
+      });
       let errorCode: keyof typeof ERROR_CODES | undefined;
-      if (
-        streamFinishReason === FinishReason.PROHIBITED_CONTENT ||
-        streamBlockReason === 'PROHIBITED_CONTENT'
-      ) {
+      if (responseOutcome === 'content_blocked') {
         errorCode = 'PROHIBITED_CONTENT';
+      } else if (responseOutcome === 'no_audio') {
+        errorCode = 'NO_AUDIO_DATA';
       } else if (
-        (streamFinishReason && streamFinishReason !== FinishReason.STOP) ||
-        streamBlockReason
+        responseOutcome === 'unexpected' &&
+        (streamFinishReason || streamBlockReason)
       ) {
         errorCode = 'OTHER_GEMINI_BLOCK';
       }
@@ -1544,7 +1545,9 @@ function streamGeminiTtsResponse({
 
       const isProhibitedContent =
         Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
-      if (!(audioStarted || isProhibitedContent)) {
+      const isNoAudioData =
+        Error.isError(error) && error.cause === 'NO_AUDIO_DATA';
+      if (!(audioStarted || isProhibitedContent || isNoAudioData)) {
         captureException(error, {
           extra: { model: modelUsed, stream: true, voice: voiceObj.name },
           user: { id: user.id },
