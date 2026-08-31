@@ -4,6 +4,8 @@ import { callScenes } from '@/data/call-scenes';
 import { normalizeModelId } from '@/data/models';
 
 const sessionConfigSchema = z.object({
+  // Present when model is 'inworld-realtime' — an audio_references row id.
+  audioReferenceId: z.string().nullable().optional(),
   maxOutputTokens: z.number().nullable(),
   // Normalized at the trust boundary: this value is forwarded verbatim into the
   // LiveKit token metadata and is what the agent runs on, while credits are

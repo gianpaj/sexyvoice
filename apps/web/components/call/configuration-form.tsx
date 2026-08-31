@@ -16,6 +16,7 @@ import type { z } from 'zod';
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
 import { defaultSessionConfig } from '@/data/default-config';
+import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
 import { callLanguages as callLanguageCodes } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
@@ -39,7 +40,7 @@ import { SceneSelector } from './scene-selector';
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
-const RECONNECT_REQUIRED_FIELDS = ['voice'];
+const RECONNECT_REQUIRED_FIELDS = ['voice', 'audio_reference_id'];
 
 interface ConfigurationFormProps {
   callVoices?: DBVoice[];
@@ -88,6 +89,7 @@ export function ConfigurationForm({
     const values = pgState.sessionConfig;
     const fullInstructions = helpers.getFullInstructions(pgState);
     const attributes: { [key: string]: string | number | boolean } = {
+      audio_reference_id: values.audioReferenceId || '',
       instructions: fullInstructions,
       max_output_tokens: values.maxOutputTokens || '',
       model: values.model,
@@ -242,6 +244,33 @@ export function ConfigurationForm({
     dispatch({ payload: value as CallLanguage, type: 'SET_LANGUAGE' });
   };
   const displayLanguage = true;
+
+  const currentModel = pgState.sessionConfig.model;
+  // The Engine Selection block that rendered these was dropped by an earlier
+  // `Merge branch 'main'` on this branch (873e15af); the server-side
+  // inworld-realtime plumbing it drives is still in place. Kept so the UI can
+  // be restored once the out-of-repo sexycall agent handles the model.
+  // biome-ignore lint/correctness/noUnusedVariables: see above
+  const isInworld = currentModel === ModelId.INWORLD_REALTIME;
+
+  // biome-ignore lint/correctness/noUnusedVariables: see above
+  const handleEngineChange = (value: string) => {
+    if (value === ModelId.INWORLD_REALTIME) {
+      dispatch({
+        payload: { model: ModelId.INWORLD_REALTIME },
+        type: 'SET_SESSION_CONFIG',
+      });
+    } else {
+      // Switching back to Grok clears the Inworld voice selection.
+      dispatch({
+        payload: {
+          audioReferenceId: null,
+          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+        },
+        type: 'SET_SESSION_CONFIG',
+      });
+    }
+  };
 
   return (
     <header

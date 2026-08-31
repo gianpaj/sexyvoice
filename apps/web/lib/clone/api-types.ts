@@ -21,9 +21,15 @@ export type CloneRouteErrorCode =
   | 'errors.internalError'
   | 'errors.invalidContentType'
   | 'errors.invalidFileType'
+  | 'errors.audioReferenceNotFound'
+  | 'errors.inworldVoiceRequired'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
   | 'errors.providerUnavailable'
+  | 'errors.providerRequestRejected'
+  | 'errors.providerLocaleUnsupported'
+  | 'errors.voiceNameRequired'
+  | 'errors.voiceNameTooLong'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'
@@ -49,8 +55,10 @@ export interface CloneSuccessResponse {
 
 /** Names of the multipart form fields accepted by `POST /api/clone-voice`. */
 export const CLONE_FORM_FIELDS = {
+  audioReferenceId: 'audioReferenceId',
   enhanceReferenceAudio: 'enhanceReferenceAudio',
   file: 'file',
   locale: 'locale',
+  provider: 'provider',
   text: 'text',
 } as const;

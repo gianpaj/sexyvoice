@@ -10,11 +10,13 @@ export function GenerateButton({
   isGenerating,
   ctaText,
   generatingText,
+  showShortcut = true,
   ...rest
 }: ButtonIconProps & {
-  isGenerating: boolean;
-  generatingText: string;
   ctaText: string;
+  generatingText: string;
+  isGenerating: boolean;
+  showShortcut?: boolean;
 }) {
   const [shortcutKey, setShortcutKey] = useState('⌘+Enter');
 
@@ -43,9 +45,11 @@ export function GenerateButton({
       ) : (
         <span className="flex items-center gap-2">
           {ctaText}
-          <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
-            {shortcutKey}
-          </span>
+          {showShortcut && (
+            <span className="rounded-sm border border-gray-400 p-1 text-gray-300 text-xs opacity-70">
+              {shortcutKey}
+            </span>
+          )}
         </span>
       )}
     </Button>
