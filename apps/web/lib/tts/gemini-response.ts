@@ -6,6 +6,27 @@ export type GeminiTtsResponseOutcome =
   | 'success'
   | 'unexpected';
 
+export type GeminiTtsErrorCode =
+  | 'NO_AUDIO_DATA'
+  | 'OTHER_GEMINI_BLOCK'
+  | 'PROHIBITED_CONTENT';
+
+const GEMINI_OUTCOME_ERROR_CODES: Record<
+  GeminiTtsResponseOutcome,
+  GeminiTtsErrorCode | undefined
+> = {
+  content_blocked: 'PROHIBITED_CONTENT',
+  no_audio: 'NO_AUDIO_DATA',
+  success: undefined,
+  unexpected: 'OTHER_GEMINI_BLOCK',
+};
+
+export function geminiOutcomeToErrorCode(
+  outcome: GeminiTtsResponseOutcome,
+): GeminiTtsErrorCode | undefined {
+  return GEMINI_OUTCOME_ERROR_CODES[outcome];
+}
+
 export function classifyGeminiTtsResponse({
   blockReason,
   finishReason,

@@ -2604,9 +2604,10 @@ describe('Generate Voice API Route', () => {
           usage: { stream: true, userHasPaid: true },
         }),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
-    it('emits error event and skips billing when stream yields no audio chunks', async () => {
+    it('reports persistent no-audio after fallback and skips billing', async () => {
       const { hasUserPaid, reduceCredits } = await import(
         '@/lib/supabase/queries'
       );
@@ -2639,6 +2640,68 @@ describe('Generate Voice API Route', () => {
       expect(body).not.toContain('event: done');
       expect(callCount).toBe(2);
       expect(reduceCredits).toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cause: 'NO_AUDIO_DATA',
+          message: getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            fallbackAttempted: true,
+            model: 'gemini-2.5-flash-preview-tts',
+            stream: true,
+          }),
+        }),
+      );
+    });
+
+    it('does not retry an OTHER finish from the primary stream', async () => {
+      const { hasUserPaid, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        yield {
+          candidates: [
+            { content: { parts: [] }, finishReason: FinishReason.OTHER },
+          ],
+        };
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+          stream: true,
+        }),
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+      expect(body).not.toContain('event: done');
+      expect(callCount).toBe(1);
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: expect.any(Number),
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ cause: 'OTHER_GEMINI_BLOCK' }),
+        expect.objectContaining({
+          extra: expect.objectContaining({ fallbackAttempted: false }),
+        }),
+      );
     });
 
     it.each([

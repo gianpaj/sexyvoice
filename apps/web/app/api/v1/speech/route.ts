@@ -45,7 +45,10 @@ import {
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import { buildGeminiTtsPrompt } from '@/lib/tts/gemini-prompt';
-import { classifyGeminiTtsResponse } from '@/lib/tts/gemini-response';
+import {
+  classifyGeminiTtsResponse,
+  geminiOutcomeToErrorCode,
+} from '@/lib/tts/gemini-response';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -53,6 +56,7 @@ import {
   estimateCredits,
   extractMetadata,
   getErrorMessage,
+  getErrorStatusCode,
   getTtsProvider,
 } from '@/lib/utils';
 import {
@@ -644,21 +648,18 @@ export async function POST(request: Request) {
         hasAudio: Boolean(data && mimeType),
       });
       const isProhibitedContent = responseOutcome === 'content_blocked';
-      const isNoAudioData = responseOutcome === 'no_audio';
 
       if (responseOutcome !== 'success' || !data || !mimeType) {
         const code = isProhibitedContent
           ? 'content_policy_violation'
           : 'server_error';
-        let noAudioErrorCode: keyof typeof ERROR_CODES = 'OTHER_GEMINI_BLOCK';
-        if (isProhibitedContent) {
-          noAudioErrorCode = 'PROHIBITED_CONTENT';
-        } else if (isNoAudioData) {
-          noAudioErrorCode = 'NO_AUDIO_DATA';
-        }
-        const message = getErrorMessage(noAudioErrorCode, 'voice-generation');
-        const httpStatus = isProhibitedContent ? 422 : 500;
-        await refundReservedCredits('gemini_no_audio');
+        const errorCode =
+          geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
+        const message = getErrorMessage(errorCode, 'voice-generation');
+        const httpStatus = getErrorStatusCode(errorCode);
+        await refundReservedCredits(
+          isProhibitedContent ? 'gemini_content_blocked' : 'gemini_no_audio',
+        );
         await log({
           apiKeyId: authResult.apiKeyId,
           error: message,

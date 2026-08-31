@@ -1,5 +1,5 @@
 import {
-  type FinishReason,
+  FinishReason,
   type GenerateContentConfig,
   type GenerateContentResponse,
   GoogleGenAI,
@@ -40,7 +40,10 @@ import {
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
-import { classifyGeminiTtsResponse } from '@/lib/tts/gemini-response';
+import {
+  classifyGeminiTtsResponse,
+  geminiOutcomeToErrorCode,
+} from '@/lib/tts/gemini-response';
 import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -783,14 +786,10 @@ export async function POST(request: Request) {
             user: { id: user.id },
           });
         }
-        let noAudioErrorCode: keyof typeof ERROR_CODES = 'OTHER_GEMINI_BLOCK';
-        if (isProhibitedContent) {
-          noAudioErrorCode = 'PROHIBITED_CONTENT';
-        } else if (isNoAudioData) {
-          noAudioErrorCode = 'NO_AUDIO_DATA';
-        }
-        throw new Error(getErrorMessage(noAudioErrorCode, 'voice-generation'), {
-          cause: noAudioErrorCode,
+        const errorCode =
+          geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
+        throw new Error(getErrorMessage(errorCode, 'voice-generation'), {
+          cause: errorCode,
         });
       }
       logger.info('Gemini voice generation succeeded', {
@@ -1249,24 +1248,22 @@ function streamGeminiTtsResponse({
     let streamBlockReason: string | undefined;
     let audioStarted = false;
     let completed = false;
+    let fallbackAttempted = false;
 
     const getStreamBlockError = () => {
+      if (!(streamFinishReason || streamBlockReason)) {
+        return;
+      }
+
       const responseOutcome = classifyGeminiTtsResponse({
         blockReason: streamBlockReason,
         finishReason: streamFinishReason,
         hasAudio: audioChunks.length > 0,
       });
-      let errorCode: keyof typeof ERROR_CODES | undefined;
-      if (responseOutcome === 'content_blocked') {
-        errorCode = 'PROHIBITED_CONTENT';
-      } else if (responseOutcome === 'no_audio') {
-        errorCode = 'NO_AUDIO_DATA';
-      } else if (
-        responseOutcome === 'unexpected' &&
-        (streamFinishReason || streamBlockReason)
-      ) {
-        errorCode = 'OTHER_GEMINI_BLOCK';
-      }
+      const errorCode =
+        streamFinishReason === FinishReason.OTHER
+          ? 'OTHER_GEMINI_BLOCK'
+          : geminiOutcomeToErrorCode(responseOutcome);
 
       return errorCode
         ? new Error(getErrorMessage(errorCode, 'voice-generation'), {
@@ -1332,6 +1329,8 @@ function streamGeminiTtsResponse({
           return;
         }
 
+        // NO_AUDIO_DATA stays retryable because STOP without chunks can be a
+        // transient model failure. Policy and unknown terminal blocks cannot.
         if (
           Error.isError(primaryError) &&
           (primaryError.cause === 'PROHIBITED_CONTENT' ||
@@ -1361,6 +1360,7 @@ function streamGeminiTtsResponse({
             user: { email: user.email, id: user.id },
           },
         );
+        fallbackAttempted = true;
         modelUsed = 'gemini-2.5-flash-preview-tts';
         audioChunks.length = 0;
         streamUsageMetadata = undefined;
@@ -1547,9 +1547,17 @@ function streamGeminiTtsResponse({
         Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
       const isNoAudioData =
         Error.isError(error) && error.cause === 'NO_AUDIO_DATA';
-      if (!(audioStarted || isProhibitedContent || isNoAudioData)) {
+      const shouldCaptureException =
+        !(audioStarted || isProhibitedContent) &&
+        (!isNoAudioData || fallbackAttempted);
+      if (shouldCaptureException) {
         captureException(error, {
-          extra: { model: modelUsed, stream: true, voice: voiceObj.name },
+          extra: {
+            fallbackAttempted,
+            model: modelUsed,
+            stream: true,
+            voice: voiceObj.name,
+          },
           user: { id: user.id },
         });
       }
