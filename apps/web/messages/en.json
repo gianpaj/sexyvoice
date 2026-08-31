@@ -592,6 +592,7 @@
     "configurationUpdateError": "Error updating configuration",
     "agentUnavailable": "Agent unavailable",
     "activeCallError": "You already have an active call in progress",
+    "instructionsRejected": "This call couldn't start because the character or scene didn't pass the AI provider's safety checks. Edit the character or scene and try again.",
     "microphonePermissionDenied": "Microphone access denied. Please allow microphone access and try again.",
     "disconnected": "Disconnected",
     "chooseCharacter": "Who do you want to talk to?",
@@ -854,8 +855,8 @@
     "description": "Monitor API usage and requests over time."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator",
-    "description": "Generate expressive AI speech with emotions in 24+ languages. Free to try text-to-speech with voice cloning, support & natural speech synthesis. Start with free credits – no card required.",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
+    "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
@@ -904,6 +905,26 @@
     "header": "Generation History",
     "empty": "No history yet",
     "downloadError": "Failed to download audio",
+    "delete": {
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "single": {
+        "trigger": "Delete",
+        "title": "Delete audio file?",
+        "description": "This audio file will be removed from your history. This action cannot be undone.",
+        "confirm": "Delete",
+        "success": "Audio file deleted",
+        "error": "Failed to delete the audio file. Please try again."
+      },
+      "all": {
+        "trigger": "Delete all",
+        "title": "Delete all audio files?",
+        "description": "{count, plural, one {The audio file will be removed from your history. This action cannot be undone.} other {All # audio files will be removed from your history. This action cannot be undone.}}",
+        "confirm": "Delete all",
+        "success": "All audio files deleted",
+        "error": "Failed to delete all audio files. Please try again."
+      }
+    },
     "ui": {
       "filterText": "Filter text...",
       "customizeColumns": "Customize Columns",

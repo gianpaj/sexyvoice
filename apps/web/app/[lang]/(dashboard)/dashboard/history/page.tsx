@@ -7,7 +7,10 @@ import { getTranslations } from 'next-intl/server';
 
 import { E2E_AUDIO_FILES, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { getMyAudioFilesQuery } from '@/lib/supabase/queries.client';
+import {
+  getMyAudioFilesCountQuery,
+  getMyAudioFilesQuery,
+} from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 import { DataTable } from './data-table';
 
@@ -28,10 +31,19 @@ export default async function HistoryPage(props: {
   // In E2E mode serve deterministic data: the table is hydrated from this RSC
   // query and the client never refetches, so live rows would otherwise leak
   // into the Argos screenshot. Pin apiKeysCount to 0 to hide the API columns.
-  const [{ data: audioFiles }, { count: apiKeysCount }] = isE2E()
-    ? [{ data: E2E_AUDIO_FILES }, { count: 0 }]
+  const [
+    { data: audioFiles },
+    { count: totalAudioFilesCount },
+    { count: apiKeysCount },
+  ] = isE2E()
+    ? [
+        { data: E2E_AUDIO_FILES },
+        { count: E2E_AUDIO_FILES.length },
+        { count: 0 },
+      ]
     : await Promise.all([
         getMyAudioFilesQuery(supabase, user.id),
+        getMyAudioFilesCountQuery(supabase, user.id),
         supabase
           .from('api_keys')
           .select('id', { count: 'exact', head: true })
@@ -39,6 +51,10 @@ export default async function HistoryPage(props: {
       ]);
 
   queryClient.setQueryData(['audio_files', user.id], audioFiles);
+  queryClient.setQueryData(
+    ['audio_files_count', user.id],
+    totalAudioFilesCount ?? 0,
+  );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

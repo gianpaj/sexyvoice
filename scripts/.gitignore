@@ -10,5 +10,6 @@ generated-speech/
 
 *.json
 !package.json
+!tsconfig.json
 
 dispute*.md

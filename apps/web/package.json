@@ -73,7 +73,7 @@
     "@tiptap/starter-kit": "3.30.5",
     "@tiptap/suggestion": "3.30.5",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "1.37.0",
+    "@upstash/redis": "catalog:",
     "@vercel/analytics": "^1.6.1",
     "@vercel/edge-config": "^1.4.3",
     "@vercel/speed-insights": "2.0.0",

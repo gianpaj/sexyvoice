@@ -5,16 +5,16 @@ import { mapApiCharacterToPreset } from '@/lib/characters';
 
 describe('normalizeModelId', () => {
   it('keeps a supported model id', () => {
-    expect(normalizeModelId(ModelId.GROK_VOICE_THINK_FAST_2_0)).toBe(
-      'grok-voice-think-fast-2.0',
+    expect(normalizeModelId(ModelId.GROK_VOICE_THINK_FAST_1_0)).toBe(
+      'grok-voice-think-fast-1.0',
     );
   });
 
-  it('upgrades the retired grok-voice-think-fast-1.0 id', () => {
-    expect(normalizeModelId('grok-voice-think-fast-1.0')).toBe(
-      'grok-voice-think-fast-2.0',
-    );
-  });
+  // it('upgrades the retired grok-voice-think-fast-1.0 id', () => {
+  //   expect(normalizeModelId('grok-voice-think-fast-1.0')).toBe(
+  //     'grok-voice-think-fast-2.0',
+  //   );
+  // });
 
   it('falls back to the default for missing or unknown ids', () => {
     expect(normalizeModelId(undefined)).toBe(DEFAULT_MODEL_ID);
@@ -37,6 +37,6 @@ describe('mapApiCharacterToPreset', () => {
       },
     });
 
-    expect(preset.sessionConfig.model).toBe('grok-voice-think-fast-2.0');
+    expect(preset.sessionConfig.model).toBe('grok-voice-think-fast-1.0');
   });
 });

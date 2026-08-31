@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { normalizeModelId } from '@/data/models';
+import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
 import {
   countUserCallCharacters,
@@ -11,7 +12,6 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-const MAX_CUSTOM_CHARACTERS = 10;
 const MAX_NAME_LENGTH = 50;
 const MAX_PROMPT_LENGTH = 5000;
 

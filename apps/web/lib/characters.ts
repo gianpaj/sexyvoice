@@ -1,6 +1,8 @@
 import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 
+export const MAX_CUSTOM_CHARACTERS = 10;
+
 // ─── API response shape (from POST /api/characters) ───────────────────────────
 
 export interface ApiCharacterResponse {

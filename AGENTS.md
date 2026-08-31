@@ -192,7 +192,12 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 ## Voice and Call Flows
 
-- Dashboard TTS may use Redis URL caching; external API speech must not.
+- For Gemini TTS error or credit complaints, follow
+  `skills/investigate-gemini-tts-credit-report/SKILL.md`; keep the investigation
+  read-only and require separate human approval for any refund.
+- Dashboard TTS may use Redis URL caching; external API speech must not. R2
+  cleanup deletion must evict the matching dashboard Redis cache key after it
+  deletes a main-bucket object.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
 - Voice generation can involve Replicate, Google Gemini TTS (models `gpro` for
@@ -208,13 +213,20 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 - Banner definitions live in `apps/web/lib/banners/registry.ts`.
 - Banner resolution lives in `apps/web/lib/banners/resolve-banner.ts`.
-- Dismissal actions live in `apps/web/app/[lang]/actions/banners.ts`.
+- Banner dismissal writes a client-side cookie through
+  `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`.
 - Localized copy lives under `promos` or `announcements` in every
   `apps/web/messages/*.json` file.
+- Promo setup guidance lives in `skills/promo-banner/SKILL.md`.
 - Only one banner should be visible at a time.
 
 ## Documentation Rules
 
+- For commits that change only repository documentation, such as `AGENTS.md`,
+  `README.md`, `ARCHITECTURE.md`, `docs/`, `plans/`, or `.agents/notes/`, append
+  `[skip deploy]` to the commit subject so both Vercel projects skip deployment.
+  Do not use the marker when the commit also changes runtime code or deployed
+  content.
 - Update docs when changing APIs, workflows, environment variables, or
   operational behavior.
 - For environment variable changes, update `AGENTS.md`, `README.md`,

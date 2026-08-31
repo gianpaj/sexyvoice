@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Mock variables – declared before vi.mock() so factories can reference them
 // ---------------------------------------------------------------------------
 const mockUser = {
-  id: 'a1b2c3d4-5678-4abc-9def-012345678901',
   email: 'test@example.com',
+  id: 'a1b2c3d4-5678-4abc-9def-012345678901',
 };
 let mockIsAuthenticated = true;
 let mockHasUserPaid = true;
@@ -23,31 +23,31 @@ const deletedPromptIds: string[] = [];
 // Fake character/prompt data returned by queries
 const fakePublicCharacter = {
   id: 'b0000000-0000-4000-a000-000000000001',
-  prompt_id: 'a0000000-0000-4000-a000-000000000001',
-  user_id: 'ad000000-0000-4000-a000-000000000000',
   is_public: true,
   name: 'Ramona',
+  prompt_id: 'a0000000-0000-4000-a000-000000000001',
+  user_id: 'ad000000-0000-4000-a000-000000000000',
   voice_id: 'f832da16-5fe7-4823-9c99-b0f738e39b68',
 };
 
 const fakeUserCharacter = {
   id: 'dd000000-0000-4000-a000-000000000099',
-  prompt_id: 'ee000000-0000-4000-a000-000000000099',
-  user_id: mockUser.id,
+  image: null,
   is_public: false,
-  name: 'My Custom Char',
-  voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
   localized_descriptions: {},
+  name: 'My Custom Char',
+  prompt_id: 'ee000000-0000-4000-a000-000000000099',
+  prompts: { localized_prompts: {}, prompt: 'Be nice' },
   session_config: {
-    model: 'grok-voice-think-fast-2.0',
-    voice: 'Ara',
-    temperature: 0.8,
     maxOutputTokens: null,
+    model: 'grok-voice-think-fast-1.0',
+    temperature: 0.8,
+    voice: 'Ara',
   },
   sort_order: 0,
-  image: null,
+  user_id: mockUser.id,
+  voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
   voices: { name: 'Ara', sample_url: 'https://files.sexyvoice.ai/ara.mp3' },
-  prompts: { prompt: 'Be nice', localized_prompts: {} },
 };
 
 const fakeOtherUserCharacter = {
@@ -150,8 +150,8 @@ function createQueryBuilder(tableName: string) {
         const returnData = {
           ..._insertData,
           id: 'new-char-id-0000-0000-000000000000',
+          prompts: { localized_prompts: {}, prompt: _insertData!.prompt || '' },
           voices: { name: 'Ara', sample_url: null },
-          prompts: { prompt: _insertData!.prompt || '', localized_prompts: {} },
         };
         return { data: returnData, error: null };
       }
@@ -176,7 +176,7 @@ function createQueryBuilder(tableName: string) {
       if (_operation === 'select') {
         // Count query
         if (_countMode) {
-          return { data: null, error: null, count: mockCustomCharacterCount };
+          return { count: mockCustomCharacterCount, data: null, error: null };
         }
 
         // Single character lookup
@@ -245,19 +245,19 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 vi.mock('@/lib/supabase/queries', () => ({
-  hasUserPaid: vi.fn(async () => mockHasUserPaid),
+  countUserCallCharacters: vi.fn(async () => mockCustomCharacterCount),
+  // Re-export other functions that might be imported
+  getCredits: vi.fn(),
   getVoiceIdByName: vi.fn(async (name: string, _isPublic: boolean) => {
     if (!mockVoiceExists) throw new Error('Voice not found');
     return {
       id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
-      name,
       language: 'multiple',
       model: 'xai',
+      name,
     };
   }),
-  countUserCallCharacters: vi.fn(async () => mockCustomCharacterCount),
-  // Re-export other functions that might be imported
-  getCredits: vi.fn(),
+  hasUserPaid: vi.fn(async () => mockHasUserPaid),
   isFreeUserOverCallLimit: vi.fn(),
   resolveCharacterPrompt: vi.fn(),
 }));
@@ -274,9 +274,9 @@ import { DELETE, POST } from '@/app/api/characters/route';
 
 function makeRequest(body: Record<string, unknown>, method = 'POST'): Request {
   return new Request('http://localhost/api/characters', {
-    method,
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    headers: { 'Content-Type': 'application/json' },
+    method,
   });
 }
 
@@ -284,13 +284,13 @@ function validCreateBody(overrides: Record<string, unknown> = {}) {
   return {
     name: 'Test Character',
     prompt: 'You are a helpful test character.',
-    voiceName: 'Ara',
     sessionConfig: {
-      model: 'grok-voice-think-fast-2.0',
-      voice: 'Ara',
-      temperature: 0.8,
       maxOutputTokens: null,
+      model: 'grok-voice-think-fast-1.0',
+      temperature: 0.8,
+      voice: 'Ara',
     },
+    voiceName: 'Ara',
     ...overrides,
   };
 }
@@ -391,9 +391,9 @@ describe('/api/characters', () => {
 
     it('returns 400 with invalid JSON body', async () => {
       const request = new Request('http://localhost/api/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: 'not json',
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
       });
       const res = await POST(request);
       expect(res.status).toBe(400);
@@ -423,18 +423,18 @@ describe('/api/characters', () => {
       // Verify prompt was inserted
       expect(insertedPrompts).toHaveLength(1);
       expect(insertedPrompts[0]).toMatchObject({
-        user_id: mockUser.id,
-        type: 'call',
         is_public: false,
         prompt: body.prompt,
+        type: 'call',
+        user_id: mockUser.id,
       });
 
       // Verify character was inserted
       expect(insertedCharacters).toHaveLength(1);
       expect(insertedCharacters[0]).toMatchObject({
-        user_id: mockUser.id,
         is_public: false,
         name: body.name,
+        user_id: mockUser.id,
       });
     });
 
@@ -458,16 +458,16 @@ describe('/api/characters', () => {
       // JSONB column after it has been cleaned up.
       const body = validCreateBody({
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       });
       const res = await POST(makeRequest(body));
       expect(res.status).toBe(201);
       expect(insertedCharacters[0]).toMatchObject({
-        session_config: { model: 'grok-voice-think-fast-2.0' },
+        session_config: { model: 'grok-voice-think-fast-1.0' },
       });
     });
   });
@@ -485,14 +485,14 @@ describe('/api/characters', () => {
 
       expect(updatedPrompts).toHaveLength(1);
       expect(updatedPrompts[0]).toMatchObject({
-        prompt: 'Updated prompt text',
         id: fakeUserCharacter.prompt_id,
+        prompt: 'Updated prompt text',
       });
 
       expect(updatedCharacters).toHaveLength(1);
       expect(updatedCharacters[0]).toMatchObject({
-        name: 'Updated Name',
         id: fakeUserCharacter.id,
+        name: 'Updated Name',
       });
     });
 
@@ -572,9 +572,9 @@ describe('/api/characters', () => {
 
     it('returns 400 with invalid JSON body', async () => {
       const request = new Request('http://localhost/api/characters', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: 'not json',
+        headers: { 'Content-Type': 'application/json' },
+        method: 'DELETE',
       });
       const res = await DELETE(request);
       expect(res.status).toBe(400);
