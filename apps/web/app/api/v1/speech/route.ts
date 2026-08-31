@@ -23,7 +23,7 @@ import {
   resolveExternalModelId,
 } from '@/lib/api/model';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
+import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';

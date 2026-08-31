@@ -19,7 +19,7 @@ import {
   getGeminiStyleCharacterLimit,
 } from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
+import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import { APIErrorResponse } from '@/lib/error-ts';
 import PostHogClient from '@/lib/posthog';

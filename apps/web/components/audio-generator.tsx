@@ -36,7 +36,7 @@ import {
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
 } from '@/lib/ai';
-import { resolveErrorMessage } from '@/lib/api/resolve-error-message';
+import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';

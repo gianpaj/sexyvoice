@@ -5,7 +5,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
+import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { generateHash, getAudioDuration } from '@/lib/audio';
 import {
   AudioDecodeError,
@@ -223,7 +223,7 @@ function createProviderUnavailableRouteError(
     getProviderUnavailableMessage(provider),
     503,
     'PROVIDER_UNAVAILABLE',
-    getProviderUnavailableDetails(provider),
+    { provider: getProviderUnavailableDetails(provider).provider },
   );
 }
 

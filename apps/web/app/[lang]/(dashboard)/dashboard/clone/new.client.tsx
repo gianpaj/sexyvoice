@@ -21,7 +21,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
-import { resolveErrorMessage } from '@/lib/api/resolve-error-message';
+import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import {
   CLONE_FORM_FIELDS,
   type CloneErrorResponseBody,

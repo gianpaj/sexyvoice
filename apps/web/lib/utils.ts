@@ -356,6 +356,8 @@ export const getErrorMessage = (
   errorCode: keyof typeof ERROR_CODES | unknown,
   service: string,
 ) => {
+  // PROVIDER_UNAVAILABLE is intentionally absent because its message requires
+  // provider interpolation. Server routes use getProviderUnavailableMessage().
   const errorMessages: Partial<
     Record<keyof typeof ERROR_CODES, { [key: string]: string }>
   > = {

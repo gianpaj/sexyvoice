@@ -1,8 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { getProviderUnavailableMessage } from '@/lib/api/provider-unavailable-message';
-import { resolveErrorMessage } from '@/lib/api/resolve-error-message';
-import type { ProviderUnavailableDetails } from '@/lib/provider-errors';
+import messages from '@/messages/en.json';
+import {
+  getProviderUnavailableMessage,
+  PROVIDER_UNAVAILABLE_TEMPLATE,
+} from '@/lib/errors/provider-unavailable-message';
+import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import {
   formatProviderDisplayName,
   getProviderUnavailableDetails,
@@ -21,7 +24,7 @@ const providers = [
 
 function createTranslator(hasKey = true) {
   return Object.assign(
-    (_key: 'PROVIDER_UNAVAILABLE', details: ProviderUnavailableDetails) =>
+    (_key: 'PROVIDER_UNAVAILABLE', details: Record<string, string>) =>
       `${details.provider} is unavailable in this locale.`,
     {
       has: (_key: 'PROVIDER_UNAVAILABLE') => hasKey,
@@ -50,6 +53,12 @@ describe('provider metadata', () => {
 });
 
 describe('getProviderUnavailableMessage', () => {
+  it('matches the English locale catalog', () => {
+    expect(messages.errorCodes.PROVIDER_UNAVAILABLE).toBe(
+      PROVIDER_UNAVAILABLE_TEMPLATE,
+    );
+  });
+
   it.each(providers)(
     'formats the English fallback for %s',
     (providerId, displayName) => {

@@ -1,9 +1,10 @@
-import type { ProviderUnavailableDetails } from '@/lib/provider-errors';
 import { isProviderUnavailableDetails } from '@/lib/provider-errors';
+
+type TranslationValues = Record<string, string>;
 
 interface ErrorCodesTranslator {
   has: (key: 'PROVIDER_UNAVAILABLE') => boolean;
-  (key: 'PROVIDER_UNAVAILABLE', values: ProviderUnavailableDetails): string;
+  (key: 'PROVIDER_UNAVAILABLE', values: TranslationValues): string;
 }
 
 export function resolveErrorMessage(
@@ -20,5 +21,5 @@ export function resolveErrorMessage(
     return serverFallback;
   }
 
-  return translateErrorCode(errorCode, details);
+  return translateErrorCode(errorCode, { provider: details.provider });
 }
