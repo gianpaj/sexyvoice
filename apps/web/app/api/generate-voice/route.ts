@@ -21,7 +21,16 @@ import {
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import PostHogClient from '@/lib/posthog';
+import {
+  getProviderErrorMessage,
+  getProviderErrorName,
+  getProviderUnavailableDetails,
+  isProviderId,
+  isTransientProviderFailure,
+  type ProviderId,
+} from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCredits,
@@ -80,6 +89,30 @@ function isAbortError(error: unknown): boolean {
   if (error.name === 'AbortError') return true;
   const msg = error.message.toLowerCase();
   return /\babort(?:ed| ?error)\b/.test(msg);
+}
+
+function providerUnavailableResponse(provider: ProviderId): Response {
+  return APIErrorResponse(
+    getProviderUnavailableMessage(provider),
+    getErrorStatusCode(ERROR_CODES.PROVIDER_UNAVAILABLE),
+    {
+      details: getProviderUnavailableDetails(provider),
+      errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
+    },
+  );
+}
+
+function createProviderUnavailableError(
+  provider: ProviderId,
+  cause: unknown,
+): Error {
+  return Object.assign(
+    new Error(getProviderUnavailableMessage(provider), { cause }),
+    {
+      provider,
+      voiceGenerationErrorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
+    },
+  );
 }
 
 /**
@@ -242,6 +275,7 @@ export async function POST(request: Request) {
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
+  let modelUsed = '';
   let reservedCredits = 0;
   try {
     if (request.body === null) {
@@ -545,7 +579,6 @@ export async function POST(request: Request) {
 
     let replicateResponse: Prediction | undefined;
     let genAIResponse: GenerateContentResponse | null = null;
-    let modelUsed = '';
     let uploadUrl = '';
     let selectedGrokCodec = outputCodec;
     let generatedAudioBuffer: Buffer | undefined;
@@ -815,8 +848,9 @@ export async function POST(request: Request) {
     } else if (isGrokVoice) {
       modelUsed = voiceObj.model;
 
+      let xaiResult: Awaited<ReturnType<typeof generateXaiTts>>;
       try {
-        const { audioBuffer, codec, contentType } = await generateXaiTts({
+        xaiResult = await generateXaiTts({
           codec: outputCodec,
           language: selectedLanguage || voiceObj.language,
           signal: abortController.signal,
@@ -824,24 +858,28 @@ export async function POST(request: Request) {
           text,
           voiceId: voiceObj.name,
         });
-        selectedGrokCodec = codec;
-        generatedAudioBuffer = audioBuffer;
-        generatedAudioMimeType = contentType;
-        uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
       } catch (error) {
-        const errorObj = {
-          codec: outputCodec,
-          errorData: error,
-          language: selectedLanguage || voiceObj.language,
-          model: voiceObj.model,
-          text,
-          voice: voiceObj.name,
-        };
-        logger.error('Grok TTS generation failed', {
+        if (isTransientProviderFailure(error)) {
+          logger.warn('Grok TTS provider unavailable', {
+            extra: {
+              codec: outputCodec,
+              errorMessage: getProviderErrorMessage(error),
+              errorName: getProviderErrorName(error),
+              language: selectedLanguage || voiceObj.language,
+              model: voiceObj.model,
+              voice: voiceObj.name,
+            },
+            user: {
+              email: user.email,
+              id: user.id,
+            },
+          });
+          throw createProviderUnavailableError('grok', error);
+        }
+
+        const sentryContext = {
           extra: {
             codec: outputCodec,
-            errorCause: Error.isError(error) ? error.cause : undefined,
-            errorMessage: Error.isError(error) ? error.message : String(error),
             language: selectedLanguage || voiceObj.language,
             model: voiceObj.model,
             text,
@@ -851,12 +889,16 @@ export async function POST(request: Request) {
             email: user.email,
             id: user.id,
           },
+        };
+        logger.error('Grok TTS generation failed', {
+          extra: {
+            ...sentryContext.extra,
+            errorCause: Error.isError(error) ? error.cause : undefined,
+            errorMessage: getProviderErrorMessage(error),
+          },
+          user: sentryContext.user,
         });
-        captureException(error, {
-          extra: errorObj,
-          user: { email: user.email, id: user.id },
-        });
-        console.error('Grok TTS generation failed', errorObj);
+        captureException(error, sentryContext);
         throw Object.assign(
           new Error(getErrorMessage('XAI_TTS_ERROR', 'voice-generation'), {
             cause: error,
@@ -864,6 +906,12 @@ export async function POST(request: Request) {
           { voiceGenerationErrorCode: 'XAI_TTS_ERROR' },
         );
       }
+
+      const { audioBuffer, codec, contentType } = xaiResult;
+      selectedGrokCodec = codec;
+      generatedAudioBuffer = audioBuffer;
+      generatedAudioMimeType = contentType;
+      uploadUrl = await uploadFileToR2(filename, audioBuffer, contentType);
     } else {
       // uses REPLICATE_API_TOKEN
       modelUsed = voiceObj.model;
@@ -871,32 +919,32 @@ export async function POST(request: Request) {
       const onProgress = (prediction: Prediction) => {
         replicateResponse = prediction;
       };
-      const output = (await replicate.run(
-        voiceObj.model as `${string}/${string}`,
-        { input: { text, voice: voiceObj.name }, signal: request.signal },
-        onProgress,
-      )) as ReadableStream;
+      let output: ReadableStream;
+      try {
+        output = (await replicate.run(
+          voiceObj.model as `${string}/${string}`,
+          { input: { text, voice: voiceObj.name }, signal: request.signal },
+          onProgress,
+        )) as ReadableStream;
+      } catch (error) {
+        if (isTransientProviderFailure(error)) {
+          logger.warn('Replicate voice generation provider unavailable', {
+            extra: {
+              errorMessage: getProviderErrorMessage(error),
+              errorName: getProviderErrorName(error),
+              model: voiceObj.model,
+              voice: voiceObj.name,
+            },
+            user: { email: user.email, id: user.id },
+          });
+          throw createProviderUnavailableError('replicate', error);
+        }
 
-      if ('error' in output) {
-        const errorObj = {
-          errorData: output.error,
-          model: voiceObj.model,
-          text,
-          voice: voiceObj.name,
-        };
-        const error = new Error('Voice generation failed', {
-          cause: 'REPLICATE_ERROR',
-        });
-        captureException(error, {
-          extra: errorObj,
-          user: { email: user.email, id: user.id },
-        });
-        console.error(errorObj);
-        throw new Error(
-          getErrorMessage('REPLICATE_ERROR', 'voice-generation'),
-          {
-            cause: 'REPLICATE_ERROR',
-          },
+        throw Object.assign(
+          new Error(getErrorMessage('REPLICATE_ERROR', 'voice-generation'), {
+            cause: error,
+          }),
+          { voiceGenerationErrorCode: 'REPLICATE_ERROR' },
         );
       }
 
@@ -1089,6 +1137,16 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      Error.isError(error) &&
+      'voiceGenerationErrorCode' in error &&
+      error.voiceGenerationErrorCode === ERROR_CODES.PROVIDER_UNAVAILABLE &&
+      'provider' in error &&
+      isProviderId(error.provider)
+    ) {
+      return providerUnavailableResponse(error.provider);
+    }
+
     const googleApiError = parseGoogleApiError(error);
     if (googleApiError) {
       const googleStatus = getGoogleApiErrorStatus(googleApiError);
@@ -1125,13 +1183,7 @@ export async function POST(request: Request) {
           user: user ? { email: user.email, id: user.id } : undefined,
         });
 
-        return APIErrorResponse(
-          getErrorMessage(
-            ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
-            'voice-generation',
-          ),
-          503,
-        );
+        return providerUnavailableResponse('gemini');
       }
 
       if (googleStatus === 'INVALID_ARGUMENT') {
@@ -1164,6 +1216,7 @@ export async function POST(request: Request) {
 
     const errorObj = {
       errorData: error,
+      ...(modelUsed ? { model: modelUsed } : {}),
       text,
       voice: voiceName,
     };
@@ -1218,7 +1271,7 @@ function streamGeminiTtsResponse({
   estimate: number;
   currentAmount: number;
   styleVariant: string;
-  provider: string;
+  provider: ProviderId;
   requestSignal: AbortSignal;
   reservedCredits: number;
 }): Response {
@@ -1514,23 +1567,28 @@ function streamGeminiTtsResponse({
         return;
       }
 
-      const rawMessage =
-        error instanceof Error ? error.message : 'Voice generation failed';
+      const rawMessage = getProviderErrorMessage(error);
+      const googleApiError = parseGoogleApiError(error);
+      const isTransientProviderError =
+        googleApiError !== null &&
+        isGoogleTransientProviderError(googleApiError);
       // Send a clean, user-facing message to the client instead of the raw
       // provider JSON (e.g. Gemini's nested INVALID_ARGUMENT token-limit error).
       let clientMessage = rawMessage;
-      if (isGeminiInputTooLongError(error)) {
+      if (isTransientProviderError) {
+        clientMessage = getProviderUnavailableMessage('gemini');
+      } else if (isGeminiInputTooLongError(error)) {
         clientMessage = getErrorMessage(
           ERROR_CODES.GEMINI_INPUT_TOO_LONG,
           'voice-generation',
         );
-      } else if (parseGoogleApiError(error)) {
+      } else if (googleApiError) {
         clientMessage = getErrorMessage(
           'OTHER_GEMINI_BLOCK',
           'voice-generation',
         );
       }
-      logger.error('Gemini stream failed', {
+      const logContext = {
         extra: {
           audioStarted,
           errorMessage: rawMessage,
@@ -1541,14 +1599,22 @@ function streamGeminiTtsResponse({
           voice: voiceObj.name,
         },
         user: { email: user.email, id: user.id },
-      });
+      };
+      if (isTransientProviderError) {
+        logger.warn(
+          'Gemini stream provider temporarily unavailable',
+          logContext,
+        );
+      } else {
+        logger.error('Gemini stream failed', logContext);
+      }
 
       const isProhibitedContent =
         Error.isError(error) && error.cause === 'PROHIBITED_CONTENT';
       const isNoAudioData =
         Error.isError(error) && error.cause === 'NO_AUDIO_DATA';
       const shouldCaptureException =
-        !(audioStarted || isProhibitedContent) &&
+        !(audioStarted || isProhibitedContent || isTransientProviderError) &&
         (!isNoAudioData || fallbackAttempted);
       if (shouldCaptureException) {
         captureException(error, {
@@ -1562,7 +1628,15 @@ function streamGeminiTtsResponse({
         });
       }
 
-      await enqueue('error', { error: clientMessage });
+      await enqueue('error', {
+        error: clientMessage,
+        ...(isTransientProviderError
+          ? {
+              details: getProviderUnavailableDetails('gemini'),
+              errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
+            }
+          : {}),
+      });
     } finally {
       if (!completed) {
         await refundReservedCredits({

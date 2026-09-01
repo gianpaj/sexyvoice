@@ -29,7 +29,15 @@ import {
   getCloneTextMaxLength,
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
+import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import PostHogClient from '@/lib/posthog';
+import {
+  getProviderErrorMessage,
+  getProviderErrorName,
+  getProviderStatusCode,
+  getProviderUnavailableDetails,
+  isTransientProviderFailure,
+} from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
@@ -42,12 +50,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import {
-  ERROR_CODES,
-  estimateCredits,
-  getDollarCost,
-  getErrorMessage,
-} from '@/lib/utils';
+import { estimateCredits, getDollarCost } from '@/lib/utils';
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -213,49 +216,14 @@ function routeErrorResponse(
   );
 }
 
-function getUnknownErrorName(error: unknown): string {
-  return Error.isError(error) ? error.name : typeof error;
-}
-
-function getUnknownErrorMessage(error: unknown): string {
-  return Error.isError(error) ? error.message : String(error);
-}
-
-function getNumericErrorProperty(
-  error: unknown,
-  property: 'raw_status_code' | 'status' | 'statusCode',
-): number | null {
-  if (!(error && typeof error === 'object' && property in error)) {
-    return null;
-  }
-
-  const value = (error as Record<string, unknown>)[property];
-  return typeof value === 'number' ? value : null;
-}
-
-function isTransientProviderFailure(error: unknown): boolean {
-  const statusCode =
-    getNumericErrorProperty(error, 'status') ??
-    getNumericErrorProperty(error, 'statusCode') ??
-    getNumericErrorProperty(error, 'raw_status_code');
-  const message = getUnknownErrorMessage(error).toLowerCase();
-
-  return (
-    (typeof statusCode === 'number' && statusCode >= 500) ||
-    /status 5\d\d|bad gateway|internal server error|service unavailable|gateway timeout/.test(
-      message,
-    )
-  );
-}
-
 function createProviderUnavailableRouteError(
   provider: CloneProvider,
 ): RouteError {
   return createRouteError(
-    getErrorMessage(ERROR_CODES.PROVIDER_UNAVAILABLE, 'voice-cloning'),
+    getProviderUnavailableMessage(provider),
     503,
-    'errors.providerUnavailable',
-    { provider },
+    'PROVIDER_UNAVAILABLE',
+    { provider: getProviderUnavailableDetails(provider).provider },
   );
 }
 
@@ -521,7 +489,7 @@ async function getFalBillingEventCost(
     return nanoUsd / 1_000_000_000;
   } catch (err) {
     logger.warn('Failed to fetch Fal billing event cost', {
-      extra: { errorMessage: getUnknownErrorMessage(err), requestId },
+      extra: { errorMessage: getProviderErrorMessage(err), requestId },
     });
     return null;
   }
@@ -952,8 +920,8 @@ function isMistralGuardrailError(error: unknown): boolean {
 }
 
 function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
-  const errorName = getUnknownErrorName(error);
-  const errorMessage = getUnknownErrorMessage(error).toLowerCase();
+  const errorName = getProviderErrorName(error);
+  const errorMessage = getProviderErrorMessage(error).toLowerCase();
 
   return (
     errorName === 'TimeoutError' ||
@@ -1002,6 +970,18 @@ async function generateVoiceWithMistral(
         'errors.guardrailViolation',
         { provider: 'mistral' },
       );
+    }
+
+    if (isTransientProviderFailure(error)) {
+      logger.warn('Mistral voice cloning provider unavailable', {
+        extra: {
+          errorMessage: getProviderErrorMessage(error),
+          errorName: getProviderErrorName(error),
+          model,
+          statusCode: getProviderStatusCode(error),
+        },
+      });
+      throw createProviderUnavailableRouteError('mistral');
     }
 
     throw error;
@@ -1082,8 +1062,8 @@ async function cloneVoiceWithReplicate(
     if (isTransientProviderFailure(error)) {
       logger.warn('Replicate voice cloning provider unavailable', {
         extra: {
-          errorMessage: getUnknownErrorMessage(error),
-          errorName: getUnknownErrorName(error),
+          errorMessage: getProviderErrorMessage(error),
+          errorName: getProviderErrorName(error),
           language,
           locale,
           model,
@@ -1491,8 +1471,8 @@ export async function POST(request: Request) {
           'Reference audio enhancement failed; using original audio',
           {
             extra: {
-              errorMessage: getUnknownErrorMessage(enhancementError),
-              errorName: getUnknownErrorName(enhancementError),
+              errorMessage: getProviderErrorMessage(enhancementError),
+              errorName: getProviderErrorName(enhancementError),
               expectedEnhancementFailure,
               filename: referenceAudioFile.name,
               locale,

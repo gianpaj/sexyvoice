@@ -35,6 +35,7 @@ import {
 } from '@/lib/clone/microphone-reference-audio';
 import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
+import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
@@ -90,20 +91,32 @@ type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
 };
 
 type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
+type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
 
 const getCloneErrorMessage = (
   t: CloneTranslator,
+  translateErrorCode: ErrorCodesTranslator,
   code?: CloneRouteErrorCode,
   fallbackMessage?: string,
   details?: RouteErrorDetails,
 ): string => {
+  const serverFallback = fallbackMessage || t('errorCloning');
+  if (code === 'PROVIDER_UNAVAILABLE') {
+    return resolveErrorMessage(
+      translateErrorCode,
+      code,
+      details,
+      serverFallback,
+    );
+  }
+
   if (!code) {
-    return fallbackMessage || t('errorCloning');
+    return serverFallback;
   }
 
   const messageKey = code as Parameters<CloneTranslator>[0];
   if (!t.has(messageKey)) {
-    return fallbackMessage || t('errorCloning');
+    return serverFallback;
   }
 
   const message = t(messageKey);
@@ -181,6 +194,7 @@ function NewVoiceClientInner({
   userHasPaid: boolean;
 }) {
   const t = useTranslations('clone');
+  const translateErrorCode = useTranslations('errorCodes');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -453,6 +467,7 @@ function NewVoiceClientInner({
         } else {
           errorMessage = getCloneErrorMessage(
             t,
+            translateErrorCode,
             voiceResult?.code,
             voiceResult?.message ||
               voiceResult?.serverMessage ||
