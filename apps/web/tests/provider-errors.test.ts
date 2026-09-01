@@ -1,6 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import messages from '@/messages/en.json';
 import {
   getProviderUnavailableMessage,
   PROVIDER_UNAVAILABLE_TEMPLATE,
@@ -12,8 +11,7 @@ import {
   isProviderDisplayName,
   isProviderId,
 } from '@/lib/provider-errors';
-
-vi.mock('server-only', () => ({}));
+import messages from '@/messages/en.json';
 
 const providers = [
   ['gemini', 'Gemini'],

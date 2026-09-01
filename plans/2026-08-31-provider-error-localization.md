@@ -71,7 +71,7 @@ Add this key to `apps/web/messages/en.json`:
 }
 ```
 
-Add a server-only helper under `apps/web/lib/api/` that reads this English
+Add a server-only helper under `apps/web/lib/errors/` that reads this English
 template and substitutes the validated display name. Server routes use this
 helper for fallback messages. This removes provider-unavailable prose from
 `apps/web/lib/utils.ts` without importing the full locale catalog into client
