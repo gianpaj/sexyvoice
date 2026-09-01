@@ -1126,7 +1126,9 @@ describe('/api/v1/speech', () => {
 
   it('returns provider unavailable for a transient Replicate rejection', async () => {
     mockReplicateRun.mockRejectedValueOnce(
-      new Error('Replicate request failed with status 503'),
+      new Error(
+        'Request to https://api.replicate.com/v1/predictions failed with status 503 Service Unavailable: upstream unavailable',
+      ),
     );
 
     const request = new Request('http://localhost/api/v1/speech', {

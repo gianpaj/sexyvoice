@@ -619,7 +619,9 @@ describe('Generate Voice API Route', () => {
     it('returns 503 without Sentry capture for a transient Replicate rejection', async () => {
       const { restoreCredits } = await import('@/lib/supabase/queries');
       mockReplicateRun.mockRejectedValueOnce(
-        new Error('Replicate request failed with status 503'),
+        new Error(
+          'Request to https://api.replicate.com/v1/predictions failed with status 503 Service Unavailable: upstream unavailable',
+        ),
       );
 
       const request = new Request('http://localhost/api/generate-voice', {
