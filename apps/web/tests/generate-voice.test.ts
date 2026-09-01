@@ -676,8 +676,15 @@ describe('Generate Voice API Route', () => {
       expect(json.errorCode).toBeUndefined();
       expect(json.details).toBeUndefined();
       expect(restoreCredits).toHaveBeenCalledOnce();
-      expect(Sentry.captureException).toHaveBeenCalledWith(modelError, {
+      const capturedError = expect.objectContaining({
+        cause: modelError,
+        message: 'Voice generation failed, please retry',
+        voiceGenerationErrorCode: 'REPLICATE_ERROR',
+      });
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledWith(capturedError, {
         extra: {
+          errorData: capturedError,
           model: expect.stringContaining('lucataco/orpheus'),
           text: 'Hello world',
           voice: 'tara',
@@ -913,6 +920,7 @@ describe('Generate Voice API Route', () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(uploadError, {
         extra: {
           errorData: uploadError,
+          model: 'xai',
           text: 'Hello world',
           voice: 'eve',
         },

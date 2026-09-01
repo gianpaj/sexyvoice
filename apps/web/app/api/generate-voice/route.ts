@@ -275,6 +275,7 @@ export async function POST(request: Request) {
   const outputCodec = 'mp3';
   let user: User | null = null;
   let userHasPaid = false;
+  let modelUsed = '';
   let reservedCredits = 0;
   try {
     if (request.body === null) {
@@ -578,7 +579,6 @@ export async function POST(request: Request) {
 
     let replicateResponse: Prediction | undefined;
     let genAIResponse: GenerateContentResponse | null = null;
-    let modelUsed = '';
     let uploadUrl = '';
     let selectedGrokCodec = outputCodec;
     let generatedAudioBuffer: Buffer | undefined;
@@ -940,10 +940,6 @@ export async function POST(request: Request) {
           throw createProviderUnavailableError('replicate', error);
         }
 
-        captureException(error, {
-          extra: { model: voiceObj.model, text, voice: voiceObj.name },
-          user: { email: user.email, id: user.id },
-        });
         throw Object.assign(
           new Error(getErrorMessage('REPLICATE_ERROR', 'voice-generation'), {
             cause: error,
@@ -1220,6 +1216,7 @@ export async function POST(request: Request) {
 
     const errorObj = {
       errorData: error,
+      ...(modelUsed ? { model: modelUsed } : {}),
       text,
       voice: voiceName,
     };
