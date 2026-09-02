@@ -1,5 +1,120 @@
 # Scripts
 
+## R2 audio backup
+
+This command copies missing R2 objects to a local drive. It never deletes R2
+objects or local files, and it never overwrites an existing local path.
+
+A normal run requires the exact download directory to exist with write and
+traversal access. Mount the external volume and create the backup directory
+before running the command. The startup check happens before R2 listing, so a
+missing volume cannot become a directory on the internal disk. A dry run does
+not create or require the download directory.
+
+Back up both complete configured buckets:
+
+```bash
+pnpm backup-r2-audio -- \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket
+```
+
+Limit the scan to one or more exact bucket prefixes:
+
+```bash
+pnpm backup-r2-audio -- \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
+  --source sv-audio-files/generated-audio/,sv-api-speech-audio-files
+```
+
+Use `--dry-run` to list, compare, and report without downloading. Use
+`--max-download-size 20GB` to cap new transfers. The command selects missing
+objects from oldest to newest and can fit a later small object when an older
+object exceeds the remaining cap.
+
+The package command sets `NODE_ENV=production` before loading Ink. React's
+development reconciler retains performance measurements on every Ink render and
+can exhaust the V8 heap during long transfers.
+
+Files keep their full bucket and key under the destination. Existing files with
+a simple ETag receive size and MD5 verification. Files with opaque or multipart
+ETags receive size-only verification. A mismatch is reported and left untouched.
+
+The command writes `scripts/backups/r2-audio-backup-<timestamp>.json`. It
+requires `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`. Default
+sources also require `R2_BUCKET_NAME` and `R2_SPEECH_API_BUCKET_NAME`. The R2
+credentials need list and read access.
+
+## R2 orphan audio cleanup
+
+This command inventories free-user audio objects that are at least 45 days old
+and have no matching `audio_files.storage_key`. It scans only the configured
+`generated-audio-free/` and `cloned-audio-free/` locations.
+
+Create an inventory manifest first:
+
+```bash
+pnpm cleanup-orphaned-r2-audio
+```
+
+Review the JSON under `scripts/backups/` without editing it. The action command
+validates the candidate list and all derived totals, so use the manifest as
+generated or reject the run. The inventory reports total objects and bytes for
+each configured bucket. It also reports scanned objects, objects younger than 45
+days, old objects still referenced by the database, and orphan candidates for
+every allowed cleanup prefix.
+
+R2 has no aggregate bucket-size response. Inventory paginates all object metadata
+to calculate bucket totals. It does not download object contents, and objects
+outside the cleanup prefixes can never become candidates.
+
+A cleanup action with `--download` requires the exact download directory to
+exist with write and traversal access. Mount the external volume and prepare
+that directory before running the action. Cleanup checks it before reading the
+manifest or touching R2, so a missing volume cannot become a backup on the
+internal disk.
+
+Download one bounded batch to an external drive with:
+
+```bash
+pnpm cleanup-orphaned-r2-audio -- \
+  --manifest scripts/backups/r2-orphan-candidates-<timestamp>.json \
+  --download \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
+  --max-download-size 20GB
+```
+
+Add `--delete --yes` to delete only objects with verified local copies. To
+delete without downloading, use `--delete --force --yes`. `--force` skips only
+the local backup check. The command still validates the manifest, checks the
+allowlist, refetches database keys, and compares live R2 metadata. Soft-deleted
+`audio_files` rows intentionally remain references and continue to protect their
+R2 objects.
+
+The command requires:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
+- `R2_ENDPOINT`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_SPEECH_API_BUCKET_NAME`
+- `KV_REST_API_URL` (deletion mode)
+- `KV_REST_API_TOKEN` (deletion mode)
+
+R2 credentials need list, read, and head access. Deletion mode also needs delete
+access. The destructive loop rechecks and deletes one object at a time to keep
+the gap between the final database check and deletion small. After deleting an
+object from the main dashboard bucket, the command evicts the matching Redis URL
+cache entry.
+
+## TypeScript maintenance scripts
+
+New TypeScript maintenance scripts must call `loadScriptEnv()` from
+`lib/env.mts` and create privileged Supabase clients with
+`createScriptAdminClient()` from `lib/supabase.mts`. Keep command-specific
+warnings and confirmation policy in the command.
+
 ## Generate Gemini Speech Samples Script
 
 Generates speech samples through the public `/api/v1/speech` endpoint and saves

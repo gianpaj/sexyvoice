@@ -155,6 +155,7 @@ Used for:
 - caching
 - rate limiting
 - fast lookups
+- evicting dashboard audio URL cache entries after R2 cleanup deletion
 
 ### Cloudflare R2
 

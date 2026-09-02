@@ -231,7 +231,8 @@ The app uses a shared banner system for both promotions and announcements:
 - `apps/web/components/banner.tsx` renders the banner UI
 - `apps/web/lib/banners/registry.ts` defines supported banners
 - `apps/web/lib/banners/resolve-banner.ts` resolves the single visible banner per placement
-- `apps/web/app/[lang]/actions/banners.ts` handles dismissal cookies
+- `apps/web/components/banner.tsx` writes dismissal cookies through
+  `apps/web/lib/cookies.ts`
 
 Banner copy is localized in `apps/web/messages/*.json`.
 Only one banner is shown at a time, and each banner has its own dismiss cookie.
