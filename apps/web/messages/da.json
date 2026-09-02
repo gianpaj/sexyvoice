@@ -159,8 +159,8 @@
           "description": "Hvert opkald krypteres undervejs. Intet menneske lytter til dine samtaler."
         },
         "forgotten": {
-          "title": "Glemt som standard",
-          "description": "Intet føres videre mellem opkald, medmindre du selv slår hukommelsen til."
+          "title": "Hukommelse, du styrer",
+          "description": "Karaktererne husker dig mellem opkald som standard. Slå hukommelsen fra når som helst, eller slet det hele fra din profil."
         }
       },
       "customCharacter": {
@@ -575,8 +575,7 @@
     "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
     "configurationTitle": "Konfiguration",
     "memoryLabel": "Hukommelse",
-    "memoryDescription": "Lad karaktererne huske dig mellem opkald. Der gemmes intet, medmindre det er slået til.",
-    "memoryUpgradeTooltip": "Opgrader til en betalt plan, så karaktererne kan huske dig mellem opkald.",
+    "memoryDescription": "Lad karaktererne huske dig mellem opkald. Slået til som standard – slå den fra, så gemmes der intet.",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
     "sceneLabel": "Scene",
@@ -840,7 +839,7 @@
     },
     "memory": {
       "title": "Hukommelse for stemmeopkald",
-      "description": "Hvis du slår hukommelse til under opkald, husker karaktererne nogle få oplysninger om dig for at bevare sammenhængen. Du kan slette det hele her.",
+      "description": "Hukommelse er slået til som standard under opkald, så karaktererne husker nogle få oplysninger om dig for at bevare sammenhængen. Du kan slette det hele her.",
       "button": "Slet al hukommelse",
       "confirmTitle": "Slet al hukommelse fra stemmeopkald?",
       "confirmDescription": "Dette sletter permanent alt, hvad karaktererne har husket om dig fra tidligere opkald. Det kan ikke fortrydes.",
