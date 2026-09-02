@@ -34,8 +34,8 @@ catalogs:
       specifier: 6.0.116
       version: 6.0.116
     effect:
-      specifier: 4.0.0-rc.111
-      version: 4.0.0-rc.111
+      specifier: 4.0.0-rc.112
+      version: 4.0.0-rc.112
     effective-progress:
       specifier: 0.12.0
       version: 0.12.0
@@ -368,6 +368,9 @@ importers:
       disposable-email-domains-js:
         specifier: ^1.21.0
         version: 1.21.0
+      effect:
+        specifier: 'catalog:'
+        version: 4.0.0-rc.112
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.7)
@@ -572,10 +575,10 @@ importers:
         version: 16.6.1
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.111
+        version: 4.0.0-rc.112
       effective-progress:
         specifier: 'catalog:'
-        version: 0.12.0(@types/react@19.2.16)(effect@4.0.0-rc.111)
+        version: 0.12.0(@types/react@19.2.16)(effect@4.0.0-rc.112)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -6772,8 +6775,8 @@ packages:
   ecdsa-sig-formatter@1.0.11:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
 
-  effect@4.0.0-rc.111:
-    resolution: {integrity: sha512-ASd5L58EIR0CUNueZNKKjSsyOCd+2alxOAIaTcHaqkJkPsaYSsw5Cg/cfANk5K4Jr2YsX756xvX11shzqsreWA==}
+  effect@4.0.0-rc.112:
+    resolution: {integrity: sha512-wXxwuh1Ywnv4cPRM3Wfa0vDwuOHnZ1TsTgHJkG9XgzND6inhBH9n1vBxhg3iIXOia/OrpmvVmd3lrD4vq6bF3A==}
 
   effective-progress@0.12.0:
     resolution: {integrity: sha512-CLTUDirKVckMr1FgqFgmRXf8OHmdlhUdEFrrZRLc2FQzRfZiCXbuW52LTNm67kLJc5UGcsVTf5Ij1jE3Axfk9Q==}
@@ -16496,16 +16499,15 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  effect@4.0.0-rc.111:
+  effect@4.0.0-rc.112:
     dependencies:
-      '@standard-schema/spec': 1.1.0
       fast-check: 4.9.0
       msgpackr: 2.0.5
 
-  effective-progress@0.12.0(@types/react@19.2.16)(effect@4.0.0-rc.111):
+  effective-progress@0.12.0(@types/react@19.2.16)(effect@4.0.0-rc.112):
     dependencies:
       cli-spinners: 3.4.0
-      effect: 4.0.0-rc.111
+      effect: 4.0.0-rc.112
       fast-string-width: 3.0.2
       ink: 7.1.1(@types/react@19.2.16)(react@19.2.7)
       react: 19.2.7

@@ -56,7 +56,7 @@ catalog:
   "@upstash/redis": "1.37.0"
   "ai": "6.0.116"
   "effective-progress": "0.12.0"
-  "effect": "4.0.0-rc.111"
+  "effect": "4.0.0-rc.112"
   "next": "16.3.0"
   "postcss": "8.5.23"
   "react": "19.2.7"
