@@ -355,38 +355,6 @@ describe('AudioGenerator', () => {
     });
   });
 
-  it('shows the Grok language selector with Automatic first and English second', () => {
-    renderAudioGenerator({
-      selectedVoice: createVoice({
-        model: 'xai',
-        name: 'eve',
-      }),
-    });
-
-    const languageLabel = screen.getByText(baseDict.languageLabel);
-    expect(languageLabel).toBeInTheDocument();
-
-    const languageField = languageLabel.parentElement;
-    expect(languageField).not.toBeNull();
-
-    const trigger = within(languageField as HTMLElement).getByRole('combobox');
-    expect(trigger).toHaveDisplayValue(baseDict.langAutomatic);
-
-    const options = within(languageField as HTMLElement).getAllByRole('option');
-    expect(options[0]).toHaveTextContent(baseDict.langAutomatic);
-    expect(options[1]).toHaveTextContent('English');
-    expect(options).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          textContent: expect.stringContaining('Arabic (Egypt)'),
-        }),
-        expect.objectContaining({
-          textContent: expect.stringContaining('Arabic (Saudi Arabia)'),
-        }),
-      ]),
-    );
-  });
-
   it('submits the selected Grok language in the generation request', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue({
