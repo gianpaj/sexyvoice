@@ -886,43 +886,42 @@ describe('AudioGenerator', () => {
       name: 'tara',
       provider: 'Replicate',
     },
-  ])('localizes $provider JSON provider failures', async ({
-    model,
-    name,
-    provider,
-  }) => {
-    const user = userEvent.setup();
-    const fetchMock = vi.fn().mockResolvedValue({
-      json: async () => ({
-        details: { provider },
-        error: `${provider} is temporarily unavailable. Please retry.`,
-        errorCode: 'PROVIDER_UNAVAILABLE',
-      }),
-      ok: false,
-      status: 503,
-    });
-    vi.stubGlobal('fetch', fetchMock);
+  ])(
+    'localizes $provider JSON provider failures',
+    async ({ model, name, provider }) => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({
+          details: { provider },
+          error: `${provider} is temporarily unavailable. Please retry.`,
+          errorCode: 'PROVIDER_UNAVAILABLE',
+        }),
+        ok: false,
+        status: 503,
+      });
+      vi.stubGlobal('fetch', fetchMock);
 
-    renderAudioGenerator({
-      selectedVoice: createVoice({ model, name }),
-    });
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model, name }),
+      });
 
-    const input =
-      model === 'xai'
-        ? screen.getByRole('textbox', {
-            name: baseDict.textAreaPlaceholder,
-          })
-        : await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
-    await user.type(input, 'Hello world');
-    await user.click(screen.getByTestId('generate-button'));
+      const input =
+        model === 'xai'
+          ? screen.getByRole('textbox', {
+              name: baseDict.textAreaPlaceholder,
+            })
+          : await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+      await user.type(input, 'Hello world');
+      await user.click(screen.getByTestId('generate-button'));
 
-    await waitFor(() => {
-      expect(mockToastFn.error).toHaveBeenCalledWith(
-        `${provider} no está disponible temporalmente. Inténtalo de nuevo. (503)`,
-      );
-    });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
+      await waitFor(() => {
+        expect(mockToastFn.error).toHaveBeenCalledWith(
+          `${provider} no está disponible temporalmente. Inténtalo de nuevo. (503)`,
+        );
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('generates Gemini split segments and stops on first failure', async () => {
     const user = userEvent.setup();

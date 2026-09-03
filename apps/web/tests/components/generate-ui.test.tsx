@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GenerateUI } from './generateui.client';
+import { GenerateUI } from '@/app/[lang]/(dashboard)/dashboard/generate/generateui.client';
 
 const mockVoiceSelector = vi.fn();
 const mockAudioGenerator = vi.fn();
@@ -28,6 +28,10 @@ vi.mock('@/components/audio-generator', () => ({
     mockAudioGenerator(props);
     return <div data-testid="audio-generator" />;
   },
+}));
+
+vi.mock('@/components/generation-settings-panel', () => ({
+  GenerationSettingsPanel: () => null,
 }));
 
 vi.mock('@/components/audio-provider', () => ({
@@ -64,6 +68,10 @@ function renderGenerateUI(publicVoices: Tables<'voices'>[]) {
 }
 
 describe('GenerateUI', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('passes Gemini style state to both child components for Gemini voices', () => {
     const geminiVoice = createVoice({
       id: 'voice-gemini',
@@ -76,25 +84,29 @@ describe('GenerateUI', () => {
     expect(screen.getByTestId('voice-selector')).toBeInTheDocument();
     expect(screen.getByTestId('audio-generator')).toBeInTheDocument();
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    act(() => {
+      mockVoiceSelector.mock.calls[0][0].setSelectedStyle('Speak warmly');
+    });
+
+    expect(mockVoiceSelector).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        selectedStyle: expect.anything(),
+        selectedStyle: 'Speak warmly',
         selectedVoice: geminiVoice,
       }),
     );
 
-    expect(mockAudioGenerator).toHaveBeenCalledWith(
+    expect(mockAudioGenerator).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        selectedStyle: expect.anything(),
+        selectedStyle: 'Speak warmly',
         selectedVoice: geminiVoice,
       }),
     );
   });
 
-  it('omits Gemini style and passes Grok codec only to audio generator for Grok voices', () => {
+  it('omits Gemini style for Grok voices', () => {
     const grokVoice = createVoice({
       id: 'voice-grok',
-      model: 'grok',
+      model: 'xai',
       name: 'eve',
     });
 
@@ -115,7 +127,7 @@ describe('GenerateUI', () => {
     );
   });
 
-  it('omits Gemini style and Grok codec for Replicate voices', () => {
+  it('omits Gemini style for Replicate voices', () => {
     const replicateVoice = createVoice({
       id: 'voice-replicate',
       model:

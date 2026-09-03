@@ -639,9 +639,11 @@ describe('PresetSelector', () => {
       ).toBeEnabled();
     });
 
-    it('does show a premium badge for paid users', () => {
+    it('does not show a premium badge for paid users', () => {
       render(<PresetSelector isPaidUser />);
-      expect(screen.queryByLabelText('Premium feature')).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText('Premium feature'),
+      ).not.toBeInTheDocument();
     });
 
     it('opens create character dialog when clicked by a paid user', async () => {
