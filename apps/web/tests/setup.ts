@@ -312,12 +312,10 @@ const mockSupabaseGetUser = vi.hoisted(() =>
   }),
 );
 
-export function mockSupabaseUnauthenticatedUserOnce(
-  error: { message: string } | null = null,
-) {
+export function mockSupabaseUnauthenticatedUserOnce() {
   mockSupabaseGetUser.mockResolvedValueOnce({
     data: { user: null },
-    error,
+    error: { message: 'Not authenticated' },
   });
 }
 

@@ -180,7 +180,7 @@ describe('/api/api-keys routes', () => {
   });
 
   it('returns 401 when user is not authenticated', async () => {
-    mockSupabaseUnauthenticatedUserOnce({ message: 'Not authenticated' });
+    mockSupabaseUnauthenticatedUserOnce();
 
     const response = await DELETE(new Request('http://localhost'), {
       params: Promise.resolve({ id: 'key-1' }),

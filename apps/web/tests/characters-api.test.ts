@@ -232,9 +232,12 @@ vi.mock('@/lib/supabase/server', () => ({
     auth: {
       getUser: vi.fn(async () => {
         if (!mockIsAuthenticated) {
-          return { data: { user: null } };
+          return {
+            data: { user: null },
+            error: { message: 'Not authenticated' },
+          };
         }
-        return { data: { user: mockUser } };
+        return { data: { user: mockUser }, error: null };
       }),
     },
     from: (table: string) => createQueryBuilder(table),

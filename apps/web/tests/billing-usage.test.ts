@@ -9,7 +9,7 @@ describe('/api/billing/usage', () => {
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: null },
-          error: null,
+          error: { message: 'Not authenticated' },
         }),
       },
     } as never);
