@@ -6,6 +6,7 @@
       "email": "Adresse e-mail",
       "password": "Mot de passe",
       "submit": "Se connecter",
+      "loading": "Chargement...",
       "forgotPassword": "Mot de passe oublié ?",
       "signInWithGoogle": "Se connecter avec Google",
       "noAccount": "Vous n'avez pas de compte ?",
@@ -20,6 +21,7 @@
       "username": "Nom d'utilisateur",
       "fullName": "Nom complet",
       "submit": "S'inscrire",
+      "loading": "Chargement...",
       "hasAccount": "Vous avez déjà un compte ?",
       "signIn": "Se connecter",
       "error": "Erreur lors de la création du compte",
@@ -708,7 +710,6 @@
       "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
       "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
       "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
-      "providerUnavailable": "Le fournisseur de clonage vocal est temporairement indisponible. Veuillez réessayer.",
       "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
       "missingLocale": "Veuillez sélectionner une langue.",
@@ -857,8 +858,8 @@
     "description": "Surveillez l'utilisation de l'API et les requêtes au fil du temps."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & générateur de voix",
-    "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues. Essayez gratuitement la synthèse vocale avec clonage vocal et synthèse naturelle de la parole. Commencez avec des crédits gratuits – aucune carte requise.",
+    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel",
+    "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise.",
     "skipToMainContent": "Aller au contenu principal",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
@@ -1199,6 +1200,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
-    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes."
+    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes.",
+    "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez."
   }
 }

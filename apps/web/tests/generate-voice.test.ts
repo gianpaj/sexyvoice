@@ -617,10 +617,13 @@ describe('Generate Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
     });
 
-    it('should throw error when Replicate output contains error property', async () => {
-      mockReplicateRun.mockResolvedValueOnce({
-        error: 'Model execution failed due to timeout',
-      });
+    it('returns 503 without Sentry capture for a transient Replicate rejection', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      mockReplicateRun.mockRejectedValueOnce(
+        new Error(
+          'Request to https://api.replicate.com/v1/predictions failed with status 503 Service Unavailable: upstream unavailable',
+        ),
+      );
 
       const request = new Request('http://localhost/api/generate-voice', {
         body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
@@ -633,9 +636,68 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Replicate is temporarily unavailable. Please retry.',
+      );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Replicate' });
+      expect(mockReplicateRun).toHaveBeenCalled();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: 48,
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Replicate voice generation provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            model: expect.stringContaining('lucataco/orpheus'),
+            voice: 'tara',
+          }),
+        }),
+      );
+    });
+
+    it('returns 500 and captures a non-transient Replicate rejection', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      const modelError = new Error('Model execution failed: invalid input');
+      mockReplicateRun.mockRejectedValueOnce(modelError);
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
       expect(response.status).toBe(500);
       expect(json.error).toBe('Voice generation failed, please retry');
-      expect(mockReplicateRun).toHaveBeenCalled();
+      expect(json.errorCode).toBeUndefined();
+      expect(json.details).toBeUndefined();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      const capturedError = expect.objectContaining({
+        cause: modelError,
+        message: 'Voice generation failed, please retry',
+        voiceGenerationErrorCode: 'REPLICATE_ERROR',
+      });
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledWith(capturedError, {
+        extra: {
+          errorData: capturedError,
+          model: expect.stringContaining('lucataco/orpheus'),
+          text: 'Hello world',
+          voice: 'tara',
+        },
+        user: { email: 'test@example.com', id: 'test-user-id' },
+      });
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        'Replicate voice generation provider unavailable',
+        expect.anything(),
+      );
     });
   });
 
@@ -759,9 +821,23 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(500);
       expect(json.error).toBe('Voice generation failed, please retry');
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Missing XAI_API_KEY' }),
+        {
+          extra: {
+            codec: 'mp3',
+            language: 'en',
+            model: 'xai',
+            text: 'Hello world',
+            voice: 'eve',
+          },
+          user: { email: 'test@example.com', id: 'test-user-id' },
+        },
+      );
     });
 
-    it('should return 500 when xAI TTS request fails', async () => {
+    it('returns 503 without Sentry capture when xAI TTS is unavailable', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       server.use(
         http.post('https://api.x.ai/v1/tts', () =>
           HttpResponse.json(
@@ -787,8 +863,76 @@ describe('Generate Voice API Route', () => {
       const response = await POST(request);
       const json = await response.json();
 
+      expect(response.status).toBe(503);
+      expect(json.error).toBe('Grok is temporarily unavailable. Please retry.');
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Grok' });
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: expect.any(Number),
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Grok TTS provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            model: 'xai',
+            voice: 'eve',
+          }),
+        }),
+      );
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extra: expect.objectContaining({ text: expect.anything() }),
+        }),
+      );
+    });
+
+    it('keeps Grok R2 failures on the platform error path', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      const uploadError = new Error('Internal Server Error');
+      mockUploadFileToR2.mockRejectedValueOnce(uploadError);
+      server.use(
+        http.post('https://api.x.ai/v1/tts', () =>
+          HttpResponse.arrayBuffer(new Uint8Array([10, 20, 30, 40]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          }),
+        ),
+      );
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        body: JSON.stringify({
+          text: 'Hello world',
+          voiceId: 'voice-eve-id',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
       expect(response.status).toBe(500);
-      expect(json.error).toBe('Voice generation failed, please retry');
+      expect(json.error).toBe('Failed to generate voice');
+      expect(json.errorCode).toBeUndefined();
+      expect(json.details).toBeUndefined();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).toHaveBeenCalledWith(uploadError, {
+        extra: {
+          errorData: uploadError,
+          model: 'xai',
+          text: 'Hello world',
+          voice: 'eve',
+        },
+        user: { email: 'test@example.com', id: 'test-user-id' },
+      });
+      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+        'Grok TTS provider unavailable',
+        expect.anything(),
+      );
     });
   });
 
@@ -1469,6 +1613,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('returns 503 without Sentry capture when flash model has a transient provider failure', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       const flashError = new Error(
         JSON.stringify({
           error: {
@@ -1506,7 +1651,13 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Gemini is temporarily unavailable. Please retry.',
+      );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Gemini' });
       expect(callCount).toBe(1);
+      expect(restoreCredits).toHaveBeenCalledOnce();
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(Sentry.logger.warn).toHaveBeenCalledWith(
         'Gemini provider temporarily unavailable',
@@ -1535,7 +1686,7 @@ describe('Generate Voice API Route', () => {
       );
 
       expect(json.error).toBe(
-        'Voice generation service temporarily unavailable. Please retry.',
+        'Gemini is temporarily unavailable. Please retry.',
       );
     });
 
@@ -1960,6 +2111,66 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it.each([
+      {
+        name: 'candidate finish reason',
+        response: {
+          candidates: [
+            {
+              content: { parts: [] },
+              finishReason: FinishReason.SAFETY,
+            },
+          ],
+        },
+      },
+      {
+        name: 'prompt block reason',
+        response: {
+          candidates: [],
+          promptFeedback: { blockReason: 'SAFETY' },
+        },
+      },
+    ])(
+      'should return 422 and refund credits for a Gemini SAFETY $name',
+      async ({ response: geminiResponse }) => {
+        const { restoreCredits } = await import('@/lib/supabase/queries');
+        setMockGoogleGenAIFactory(() => ({
+          models: {
+            generateContent: vi.fn().mockResolvedValue(geminiResponse),
+          },
+        }));
+
+        const request = new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: 'voice-achernar-31-id',
+          }),
+          headers: {
+            'content-type': 'application/json',
+          },
+          method: 'POST',
+        });
+
+        const response = await POST(request);
+        const json = await response.json();
+
+        expect(response.status).toBe(422);
+        expect(json.error).toBe(
+          getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
+        );
+        expect(restoreCredits).toHaveBeenCalledTimes(1);
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(Sentry.logger.warn).toHaveBeenCalledWith(
+          'Content generation prohibited by Gemini',
+          expect.objectContaining({
+            extra: expect.objectContaining({
+              model: 'gemini-3.1-flash-tts-preview',
+            }),
+          }),
+        );
+      },
+    );
+
     it('should throw error when Gemini response has PROHIBITED_CONTENT finish reason', async () => {
       // Mock Gemini to return response with PROHIBITED_CONTENT finish reason
       setMockGoogleGenAIFactory(() => ({
@@ -2077,6 +2288,7 @@ describe('Generate Voice API Route', () => {
     });
 
     it('should return 503 when both Gemini pro and flash models fail with a transient error (SEXYVOICE-AI-4F)', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
       // Both models throw a generic (non-googleapis) internal error — simulates
       // a transient Google outage. The route should return 503 with a friendly
       // message rather than crashing into the outer catch.
@@ -2107,7 +2319,13 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
-      expect(json.error).toContain('temporarily unavailable');
+      expect(json.error).toBe(
+        'Gemini is temporarily unavailable. Please retry.',
+      );
+      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Gemini' });
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
 
@@ -2548,9 +2766,61 @@ describe('Generate Voice API Route', () => {
           usage: { stream: true, userHasPaid: true },
         }),
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
-    it('emits error event and skips billing when stream yields no audio chunks', async () => {
+    it('emits structured provider details for transient stream failures', async () => {
+      const { hasUserPaid, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      const transientError = new Error(
+        JSON.stringify({
+          error: {
+            code: 503,
+            message: 'Provider unavailable',
+            status: 'UNAVAILABLE',
+          },
+        }),
+      );
+      const generateContentStream = vi.fn().mockRejectedValue(transientError);
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        body: JSON.stringify({
+          stream: true,
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(
+        'Gemini is temporarily unavailable. Please retry.',
+      );
+      expect(body).toContain('"errorCode":"PROVIDER_UNAVAILABLE"');
+      expect(body).toContain('"details":{"provider":"Gemini"}');
+      expect(generateContentStream).toHaveBeenCalledTimes(2);
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(Sentry.logger.warn).toHaveBeenCalledWith(
+        'Gemini stream provider temporarily unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            stream: true,
+            voice: 'achernar',
+          }),
+        }),
+      );
+    });
+
+    it('reports persistent no-audio after fallback and skips billing', async () => {
       const { hasUserPaid, reduceCredits } = await import(
         '@/lib/supabase/queries'
       );
@@ -2583,6 +2853,68 @@ describe('Generate Voice API Route', () => {
       expect(body).not.toContain('event: done');
       expect(callCount).toBe(2);
       expect(reduceCredits).toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cause: 'NO_AUDIO_DATA',
+          message: getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
+        }),
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            fallbackAttempted: true,
+            model: 'gemini-2.5-flash-preview-tts',
+            stream: true,
+          }),
+        }),
+      );
+    });
+
+    it('does not retry an OTHER finish from the primary stream', async () => {
+      const { hasUserPaid, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+
+      let callCount = 0;
+      const generateContentStream = vi.fn().mockImplementation(function* () {
+        callCount++;
+        yield {
+          candidates: [
+            { content: { parts: [] }, finishReason: FinishReason.OTHER },
+          ],
+        };
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const request = new Request('http://localhost/api/generate-voice', {
+        body: JSON.stringify({
+          stream: true,
+          text: 'Hello world',
+          voiceId: 'voice-achernar-31-id',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      });
+
+      const response = await POST(request);
+      const body = await readSseBody(response);
+
+      expect(body).toContain('event: error');
+      expect(body).toContain(
+        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+      );
+      expect(body).not.toContain('event: done');
+      expect(callCount).toBe(1);
+      expect(restoreCredits).toHaveBeenCalledWith({
+        amount: expect.any(Number),
+        userId: 'test-user-id',
+      });
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.objectContaining({ cause: 'OTHER_GEMINI_BLOCK' }),
+        expect.objectContaining({
+          extra: expect.objectContaining({ fallbackAttempted: false }),
+        }),
+      );
     });
 
     it.each([
@@ -2596,7 +2928,7 @@ describe('Generate Voice API Route', () => {
         },
       },
       {
-        errorCode: 'OTHER_GEMINI_BLOCK' as const,
+        errorCode: 'PROHIBITED_CONTENT' as const,
         name: 'safety prompt block',
         terminalChunk: {
           candidates: [],
@@ -2645,6 +2977,7 @@ describe('Generate Voice API Route', () => {
           amount: expect.any(Number),
           userId: 'test-user-id',
         });
+        expect(Sentry.captureException).not.toHaveBeenCalled();
       },
     );
 

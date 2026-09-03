@@ -1174,6 +1174,70 @@ describe('Clone Voice API Route', () => {
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
     });
 
+    it('returns a typed 503 without Sentry capture for Mistral failures', async () => {
+      const { captureException, logger } = await import('@sentry/nextjs');
+      const providerError = Object.assign(
+        new Error(
+          'API error occurred: Status 503. Body: upstream connect error or disconnect/reset before headers. reset reason: overflow',
+        ),
+        {
+          name: 'SDKError',
+          statusCode: 503,
+        },
+      );
+      mockMistralSpeechComplete.mockRejectedValueOnce(providerError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1'),
+        'en',
+      );
+      const request = new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Mistral is temporarily unavailable. Please retry. (503)',
+      );
+      expect(json.serverMessage).toBe(
+        'Mistral is temporarily unavailable. Please retry.',
+      );
+      expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Mistral' });
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        userId: 'test-user-id',
+        amount: 132,
+      });
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Mistral voice cloning provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorName: 'SDKError',
+            model: 'voxtral-mini-tts-2603',
+            statusCode: 503,
+          }),
+        }),
+      );
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extra: expect.objectContaining({ text: expect.anything() }),
+        }),
+      );
+    });
+
     it('should optionally enhance reference audio before cloning with Mistral', async () => {
       const formData = createFormDataWithAudio(
         'Hello world',
@@ -1411,6 +1475,7 @@ describe('Clone Voice API Route', () => {
     });
 
     it('should handle Replicate API errors gracefully', async () => {
+      const { captureException, logger } = await import('@sentry/nextjs');
       // Mock Replicate to return an error for a fallback locale
       mockReplicateRun.mockResolvedValueOnce({
         error: 'API quota exceeded',
@@ -1432,14 +1497,29 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(503);
       expect(json.error).toBe(
-        'Voice cloning provider is temporarily unavailable. Please try again. (503)',
+        'Replicate is temporarily unavailable. Please retry. (503)',
       );
-      expect(json.code).toBe('errors.providerUnavailable');
-      expect(json.details).toEqual({ provider: 'replicate' });
+      expect(json.serverMessage).toBe(
+        'Replicate is temporarily unavailable. Please retry.',
+      );
+      expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Replicate' });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Replicate voice cloning provider failed',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorMessage: 'API quota exceeded',
+            language: 'ja',
+            locale: 'ja',
+          }),
+        }),
+      );
     });
 
     it('returns a typed 503 without Sentry capture for Replicate 5xx failures', async () => {
-      const { captureException } = await import('@sentry/nextjs');
+      const { captureException, logger } = await import('@sentry/nextjs');
       mockReplicateRun.mockRejectedValueOnce(
         new Error(
           'Request to https://api.replicate.com/v1/predictions failed with status 502 Bad Gateway',
@@ -1461,9 +1541,23 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
-      expect(json.code).toBe('errors.providerUnavailable');
-      expect(json.details).toEqual({ provider: 'replicate' });
+      expect(json.error).toBe(
+        'Replicate is temporarily unavailable. Please retry. (503)',
+      );
+      expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Replicate' });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
       expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Replicate voice cloning provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorName: 'Error',
+            language: 'ja',
+            locale: 'ja',
+          }),
+        }),
+      );
     });
 
     it('should handle request abortion gracefully', async () => {

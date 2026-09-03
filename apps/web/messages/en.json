@@ -6,6 +6,7 @@
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
+      "loading": "Loading...",
       "forgotPassword": "Forgot your password?",
       "signInWithGoogle": "Sign in with Google",
       "noAccount": "Don't have an account?",
@@ -20,6 +21,7 @@
       "username": "Username",
       "fullName": "Full name",
       "submit": "Sign up",
+      "loading": "Loading...",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
       "error": "Error creating account",
@@ -706,7 +708,6 @@
       "guardrailViolation": "This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.",
       "insufficientCredits": "You need __CREDITS__ credits to clone this audio.",
       "internalError": "Failed to clone voice. Please try again.",
-      "providerUnavailable": "Voice cloning provider is temporarily unavailable. Please try again.",
       "invalidContentType": "The upload request is invalid. Please try again.",
       "invalidFileType": "Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.",
       "missingLocale": "Please select a language.",
@@ -855,8 +856,8 @@
     "description": "Monitor API usage and requests over time."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator",
-    "description": "Generate expressive AI speech with emotions in 24+ languages. Free to try text-to-speech with voice cloning, support & natural speech synthesis. Start with free credits – no card required.",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
+    "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
     "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
     "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
@@ -1197,6 +1198,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
-    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds."
+    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds.",
+    "PROVIDER_UNAVAILABLE": "{provider} is temporarily unavailable. Please retry."
   }
 }

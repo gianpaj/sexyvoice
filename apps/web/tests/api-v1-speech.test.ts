@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
@@ -14,9 +15,11 @@ import {
 } from '@/lib/supabase/queries';
 import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
 import {
+  mockReplicateRun,
   mockRatelimitLimit,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
+  server,
   setMockGoogleGenAIFactory,
 } from './setup';
 
@@ -808,6 +811,121 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
+  it('returns a content-policy error and refunds a Gemini SAFETY response', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'SAFETY',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(json.error.type).toBe('invalid_request_error');
+    expect(json.error.code).toBe('content_policy_violation');
+    expect(json.error.param).toBe('input');
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(restoreCredits).toHaveBeenCalledTimes(1);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and refunds when Gemini returns no audio', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'STOP',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(json.error.param).toBeNull();
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(restoreCredits).toHaveBeenCalledTimes(1);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('labels failed policy refunds as content blocked', async () => {
+    const refundError = new Error('Refund failed');
+    vi.mocked(restoreCredits).mockRejectedValueOnce(refundError);
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'SAFETY',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'gpro31',
+        input: 'Hello world',
+        voice: 'achernar',
+      }),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(422);
+    expect(captureException).toHaveBeenCalledWith(
+      refundError,
+      expect.objectContaining({
+        extra: expect.objectContaining({ context: 'gemini_content_blocked' }),
+      }),
+    );
+  });
+
   it('falls back to gemini-2.5-flash-preview-tts when gpro31 primary call fails', async () => {
     let callCount = 0;
     const generateContent = vi.fn().mockImplementation(() => {
@@ -914,8 +1032,168 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(503);
     expect(json.error.type).toBe('server_error');
     expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Gemini is temporarily unavailable. Please retry.',
+    );
     expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(restoreCredits).toHaveBeenCalledOnce();
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns provider unavailable from transient Grok errors without capture', async () => {
+    server.use(
+      http.post('https://api.x.ai/v1/tts', () =>
+        HttpResponse.json(
+          { error: 'provider failure' },
+          {
+            status: 503,
+          },
+        ),
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'xai',
+        input: 'Hello world',
+        voice: 'eve',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Grok is temporarily unavailable. Please retry.',
+    );
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledWith({
+      amount: expect.any(Number),
+      userId: 'test-user-id',
+    });
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('keeps Grok R2 failures on the platform error path', async () => {
+    const uploadError = new Error('Internal Server Error');
+    mockUploadFileToR2.mockRejectedValueOnce(uploadError);
+    server.use(
+      http.post('https://api.x.ai/v1/tts', () =>
+        HttpResponse.arrayBuffer(new Uint8Array([10, 20, 30, 40]).buffer, {
+          headers: { 'Content-Type': 'audio/mpeg' },
+        }),
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'xai',
+        input: 'Hello world',
+        voice: 'eve',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(uploadError, {
+      extra: {
+        apiKeyId: 'test-api-key-id',
+        endpoint: '/api/v1/speech',
+        requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
+        userId: 'test-user-id',
+      },
+    });
+  });
+
+  it('returns provider unavailable for a transient Replicate rejection', async () => {
+    mockReplicateRun.mockRejectedValueOnce(
+      new Error(
+        'Request to https://api.replicate.com/v1/predictions failed with status 503 Service Unavailable: upstream unavailable',
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'orpheus',
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Replicate is temporarily unavailable. Please retry.',
+    );
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledWith({
+      amount: expect.any(Number),
+      userId: 'test-user-id',
+    });
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns server error for a non-transient Replicate rejection', async () => {
+    const modelError = new Error('Model execution failed: invalid input');
+    mockReplicateRun.mockRejectedValueOnce(modelError);
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: TEST_AUTH_HEADER,
+      },
+      body: JSON.stringify({
+        model: 'orpheus',
+        input: 'Hello world',
+        voice: 'tara',
+      }),
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(modelError, {
+      extra: {
+        apiKeyId: 'test-api-key-id',
+        endpoint: '/api/v1/speech',
+        requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
+        userId: 'test-user-id',
+      },
+    });
   });
 
   it('always generates fresh audio (no caching)', async () => {

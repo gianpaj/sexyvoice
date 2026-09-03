@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ensureUserApplicationState } from '@/lib/supabase/ensure-user-application-state';
 
-vi.mock('server-only', () => ({}));
-
 const user = {
   createdAt: '2025-08-29T11:38:46.727Z',
   email: 'returning@example.com',

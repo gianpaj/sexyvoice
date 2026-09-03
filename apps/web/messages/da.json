@@ -6,6 +6,7 @@
       "email": "E-mailadresse",
       "password": "Adgangskode",
       "submit": "Log ind",
+      "loading": "Indlæser...",
       "forgotPassword": "Glemt din adgangskode?",
       "signInWithGoogle": "Log ind med Google",
       "noAccount": "Har du ikke en konto?",
@@ -20,6 +21,7 @@
       "username": "Brugernavn",
       "fullName": "Fulde navn",
       "submit": "Opret konto",
+      "loading": "Indlæser...",
       "hasAccount": "Har du allerede en konto?",
       "signIn": "Log ind",
       "error": "Fejl ved oprettelse af konto",
@@ -704,7 +706,6 @@
       "guardrailViolation": "Denne anmodning blev blokeret af en tredjeparts sikkerhedspolitik for stemmekloning. Prøv med en anden tekst eller en anden referencelyd.",
       "insufficientCredits": "Du skal bruge __CREDITS__ kreditter for at klone denne lyd.",
       "internalError": "Kunne ikke klone stemmen. Prøv igen.",
-      "providerUnavailable": "Udbyderen af stemmekloning er midlertidigt utilgængelig. Prøv igen.",
       "invalidContentType": "Uploadanmodningen er ugyldig. Prøv igen.",
       "invalidFileType": "Ugyldig filtype. Upload MP3, OGG, Opus, M4A, WAV eller WebM.",
       "missingLocale": "Vælg et sprog.",
@@ -853,8 +854,8 @@
     "description": "Overvåg API-brug og anmodninger over tid."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmegenerator",
-    "description": "Generer udtryksfuld AI-tale med følelser på 24+ sprog. Prøv gratis tekst-til-tale med stemmekloning og naturlig talesyntese. Start med gratis credits – intet kort påkrævet.",
+    "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmeopkald i realtid",
+    "description": "Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet.",
     "skipToMainContent": "Spring til hovedindhold",
     "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
     "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
@@ -1195,6 +1196,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
-    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder."
+    "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder.",
+    "PROVIDER_UNAVAILABLE": "{provider} er midlertidigt utilgængelig. Prøv igen."
   }
 }

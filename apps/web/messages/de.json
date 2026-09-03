@@ -6,6 +6,7 @@
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "submit": "Anmelden",
+      "loading": "Wird geladen...",
       "forgotPassword": "Passwort vergessen?",
       "signInWithGoogle": "Über Google anmelden",
       "noAccount": "Haben Sie noch kein Konto?",
@@ -20,6 +21,7 @@
       "username": "Benutzername",
       "fullName": "Vollständiger Name",
       "submit": "Registrieren",
+      "loading": "Wird geladen...",
       "hasAccount": "Haben Sie bereits ein Konto?",
       "signIn": "Anmelden",
       "error": "Fehler beim Erstellen des Kontos",
@@ -708,7 +710,6 @@
       "guardrailViolation": "Diese Anfrage wurde durch die Sicherheitsrichtlinie eines Drittanbieters für das Klonen von Stimmen blockiert. Bitte versuchen Sie es mit anderem Text oder anderem Referenz-Audio.",
       "insufficientCredits": "Sie benötigen __CREDITS__ Credits, um dieses Audio zu klonen.",
       "internalError": "Die Stimme konnte nicht geklont werden. Bitte versuchen Sie es erneut.",
-      "providerUnavailable": "Der Anbieter für das Klonen von Stimmen ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
       "invalidContentType": "Die Upload-Anfrage ist ungültig. Bitte versuchen Sie es erneut.",
       "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
       "missingLocale": "Bitte wählen Sie eine Sprache.",
@@ -857,8 +858,8 @@
     "description": "API-Nutzung und Anfragen im Zeitverlauf überwachen."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Kostenloser KI-Text-zu-Sprache- & Stimmengenerator",
-    "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen. Probieren Sie kostenlos Text-zu-Sprache mit Stimmenklonung und natürlicher Sprachsynthese aus. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+    "defaultTitle": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe",
+    "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
     "skipToMainContent": "Zum Hauptinhalt springen",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
@@ -1199,6 +1200,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
-    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
+    "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
   }
 }

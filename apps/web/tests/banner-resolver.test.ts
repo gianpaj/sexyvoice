@@ -1,6 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
+import {
+  getActivePromoBannerId,
+  resolveActiveBanner,
+} from '@/lib/banners/resolve-banner';
 
 const originalEnv = {
   NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER:
@@ -57,6 +60,20 @@ afterEach(() => {
     originalEnv.NEXT_PUBLIC_PROMO_TRANSLATIONS;
 });
 
+describe('getActivePromoBannerId', () => {
+  it('uses the active banner id before the legacy translation id', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'currentPromo';
+    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS = 'legacyPromo';
+
+    expect(getActivePromoBannerId()).toBe('currentPromo');
+
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = '';
+
+    expect(getActivePromoBannerId()).toBe('legacyPromo');
+  });
+});
+
 describe('resolveActiveBanner', () => {
   it('returns the active promo banner for the landing page', () => {
     process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
@@ -101,6 +118,10 @@ describe('resolveActiveBanner', () => {
     expect(banner).toMatchObject({
       ctaLink: '/en/login',
       ctaText: 'Log in',
+      dismiss: {
+        cookieKey: 'banner-expressive-voices-launch-dismissed',
+        days: 14,
+      },
       id: 'expressiveVoicesLaunch',
       theme: 'blue',
     });
@@ -142,6 +163,27 @@ describe('resolveActiveBanner', () => {
       id: 'expressiveVoicesLaunch',
       theme: 'blue',
     });
+  });
+
+  it('ignores expired legacy promo dismissal cookies', async () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
+    process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER = undefined;
+    process.env.NEXT_PUBLIC_PROMO_ID = 'legacy-promo';
+    vi.resetModules();
+    const { resolveActiveBanner: resolveWithPromoId } = await import(
+      '@/lib/banners/resolve-banner'
+    );
+
+    const banner = resolveWithPromoId({
+      audience: 'loggedOut',
+      dismissedCookieKeys: ['legacy-promo-dismissed'],
+      lang: 'en',
+      messages,
+      placement: 'landing',
+    });
+
+    expect(banner?.id).toBe('blackFridayBanner');
   });
 
   it.skip('returns null when the active banner is not allowed for the current placement', () => {

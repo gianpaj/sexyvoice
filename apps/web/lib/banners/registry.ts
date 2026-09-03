@@ -1,19 +1,10 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
 import type { BannerDefinition } from './types';
 
-function getLegacyPromoCookieKeys() {
-  if (!process.env.NEXT_PUBLIC_PROMO_ID) {
-    return [];
-  }
-
-  return [`${process.env.NEXT_PUBLIC_PROMO_ID}-dismissed`];
-}
-
 function getPromoDismiss(cookieKey: string) {
   return {
     cookieKey,
     days: 30,
-    legacyCookieKeys: getLegacyPromoCookieKeys(),
   };
 }
 

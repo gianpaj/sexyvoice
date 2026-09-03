@@ -34,7 +34,7 @@ jobs:
           persist-credentials: false
 
       - name: PR Review with Progress Tracking
-        uses: anthropics/claude-code-action@9d7150bc8a3dae8149739a88019d192b579ad90c # v1
+        uses: anthropics/claude-code-action@8251c103ac8c1d761882c86aba1412c7f583c844 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           track_progress: true
@@ -58,20 +58,38 @@ jobs:
       issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
+    env:
+      # Unit tests use the Redis service below, so skip redis-memory-server's
+      # binary download when Claude runs `pnpm install`.
+      REDISMS_DISABLE_POSTINSTALL: 1
     steps:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          fetch-depth: 1
           persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24.x
+          cache: "pnpm"
+
+      # Unit tests connect to Redis on localhost when CI is set.
+      - name: Start Redis
+        uses: supercharge/redis-github-action@bc274cb7238cd63a45029db04ee48c07a72609fd # 1.8.1
+        with:
+          redis-version: 7
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@9d7150bc8a3dae8149739a88019d192b579ad90c # v1
+        uses: anthropics/claude-code-action@8251c103ac8c1d761882c86aba1412c7f583c844 # v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Trigger when specific user is assigned to an issue
           assignee_trigger: "claude-bot"
           claude_args: |
-            --allowedTools "Bash(pnpm install),Bash(pnpm test:*),Bash(pnpm fixall),Bash(pnpm type-check),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Bash(pnpm:*),Bash(git:*),mcp__github_inline_comment__create_inline_comment"
             --model "claude-opus-5"

@@ -314,7 +314,6 @@ export function extractMetadata(
 export const ERROR_CODES = {
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
   GEMINI_INPUT_TOO_LONG: 'GEMINI_INPUT_TOO_LONG',
-  GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
   NO_AUDIO_DATA: 'NO_AUDIO_DATA',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
@@ -334,7 +333,6 @@ export const ERROR_CODES = {
 const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   FREE_QUOTA_EXCEEDED: 503,
   GEMINI_INPUT_TOO_LONG: 400,
-  GEMINI_PROVIDER_UNAVAILABLE: 503,
   INTERNAL_SERVER_ERROR: 500,
   NO_AUDIO_DATA: 503,
   OTHER_GEMINI_BLOCK: 500,
@@ -358,9 +356,10 @@ export const getErrorMessage = (
   errorCode: keyof typeof ERROR_CODES | unknown,
   service: string,
 ) => {
-  const errorMessages: Record<
-    keyof typeof ERROR_CODES,
-    { [key: string]: string }
+  // PROVIDER_UNAVAILABLE is intentionally absent because its message requires
+  // provider interpolation. Server routes use getProviderUnavailableMessage().
+  const errorMessages: Partial<
+    Record<keyof typeof ERROR_CODES, { [key: string]: string }>
   > = {
     FREE_QUOTA_EXCEEDED: {
       default:
@@ -369,10 +368,6 @@ export const getErrorMessage = (
     GEMINI_INPUT_TOO_LONG: {
       default:
         'Your text is too long for this voice. Please shorten it or use Split mode.',
-    },
-    GEMINI_PROVIDER_UNAVAILABLE: {
-      default:
-        'Voice generation service temporarily unavailable. Please retry.',
     },
     INTERNAL_SERVER_ERROR: {
       default: 'An internal server error occurred. Please try again later.',
@@ -394,11 +389,6 @@ export const getErrorMessage = (
     PROHIBITED_CONTENT: {
       default:
         'Content generation prohibited. Please modify your text input and try again',
-    },
-    PROVIDER_UNAVAILABLE: {
-      default: 'Provider is temporarily unavailable. Please try again.',
-      'voice-cloning':
-        'Voice cloning provider is temporarily unavailable. Please try again.',
     },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',

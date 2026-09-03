@@ -381,6 +381,14 @@ export function createExternalApiOpenApiDocument() {
               },
               description: 'Server error',
             },
+            503: {
+              content: {
+                'application/json': {
+                  schema: ErrorResponseSchema,
+                },
+              },
+              description: 'Upstream service temporarily unavailable',
+            },
           },
           security: [{ BearerAuth: [] }],
           summary: 'Generate speech audio',

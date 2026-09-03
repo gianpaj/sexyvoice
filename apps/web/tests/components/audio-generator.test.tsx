@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 
 const mockToastFn = vi.hoisted(() =>
   Object.assign(vi.fn(), {
@@ -149,6 +150,11 @@ vi.mock('@/lib/react-textarea-autosize', () => ({
   resizeTextarea: vi.fn(),
 }));
 
+const errorCodesDict = {
+  PROVIDER_UNAVAILABLE:
+    '{provider} no está disponible temporalmente. Inténtalo de nuevo.',
+} as const;
+
 const baseDict = {
   cancel: 'Cancel',
   ctaButton: 'Generate',
@@ -275,7 +281,10 @@ function renderAudioGenerator(
   };
 
   return render(
-    <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+    <NextIntlClientProvider
+      locale="es"
+      messages={{ errorCodes: errorCodesDict, generate: baseDict }}
+    >
       <AudioGenerator {...defaultProps} {...overrides} />
     </NextIntlClientProvider>,
   );
@@ -623,7 +632,29 @@ describe('AudioGenerator', () => {
     ).toBeDisabled();
     expect(
       screen.getByPlaceholderText(baseDict.textAreaPlaceholder),
-    ).toHaveAttribute('maxlength', '510');
+    ).toHaveAttribute('maxlength', String(500 + CHARACTERS_LIMIT_GRACE));
+  });
+
+  it('clamps non-Grok text to the character limit plus grace', async () => {
+    const user = userEvent.setup();
+    const charactersLimit = 500;
+    const maximumLength = charactersLimit + CHARACTERS_LIMIT_GRACE;
+
+    renderAudioGenerator({
+      isPaidUser: false,
+      selectedVoice: createVoice({ model: 'gpro', name: 'achernar' }),
+    });
+
+    const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
+    await user.type(input, 'A'.repeat(maximumLength + 10));
+
+    expect(input).toHaveValue('A'.repeat(maximumLength));
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      `${maximumLength} / ${charactersLimit}`,
+    );
+    expect(screen.getByTestId('generate-character-count')).toHaveClass(
+      'text-red-500',
+    );
   });
 
   it('removes the paid non-Grok character limit when split audios is enabled', async () => {
@@ -634,7 +665,10 @@ describe('AudioGenerator', () => {
     });
 
     const input = screen.getByPlaceholderText(baseDict.textAreaPlaceholder);
-    expect(input).toHaveAttribute('maxlength', '1010');
+    expect(input).toHaveAttribute(
+      'maxlength',
+      String(1000 + CHARACTERS_LIMIT_GRACE),
+    );
 
     await user.click(
       screen.getByRole('checkbox', {
@@ -841,6 +875,53 @@ describe('AudioGenerator', () => {
       voiceId: 'voice-id',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+  });
+
+  it.each([
+    { model: 'gpro', name: 'achernar', provider: 'Gemini' },
+    { model: 'xai', name: 'eve', provider: 'Grok' },
+    {
+      model:
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      name: 'tara',
+      provider: 'Replicate',
+    },
+  ])('localizes $provider JSON provider failures', async ({
+    model,
+    name,
+    provider,
+  }) => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({
+        details: { provider },
+        error: `${provider} is temporarily unavailable. Please retry.`,
+        errorCode: 'PROVIDER_UNAVAILABLE',
+      }),
+      ok: false,
+      status: 503,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderAudioGenerator({
+      selectedVoice: createVoice({ model, name }),
+    });
+
+    const input =
+      model === 'xai'
+        ? screen.getByRole('textbox', {
+            name: baseDict.textAreaPlaceholder,
+          })
+        : await screen.findByPlaceholderText(baseDict.textAreaPlaceholder);
+    await user.type(input, 'Hello world');
+    await user.click(screen.getByTestId('generate-button'));
+
+    await waitFor(() => {
+      expect(mockToastFn.error).toHaveBeenCalledWith(
+        `${provider} no está disponible temporalmente. Inténtalo de nuevo. (503)`,
+      );
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('generates Gemini split segments and stops on first failure', async () => {
@@ -1547,8 +1628,11 @@ describe('AudioGenerator', () => {
   const SSE_AUDIO_FRAME =
     'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
   const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ creditsRemaining: 974, creditsUsed: 26, url: R2_AUDIO_URL })}\n\n`;
-  const SSE_ERROR_FRAME =
-    'event: error\ndata: {"error":"Voice generation blocked"}\n\n';
+  const SSE_ERROR_FRAME = `event: error\ndata: ${JSON.stringify({
+    details: { provider: 'Gemini' },
+    error: 'Gemini is temporarily unavailable. Please retry.',
+    errorCode: 'PROVIDER_UNAVAILABLE',
+  })}\n\n`;
 
   const LONG_TEXT = 'a'.repeat(301);
   const SHORT_TEXT = 'a'.repeat(10);
@@ -1777,7 +1861,7 @@ describe('AudioGenerator', () => {
 
     await waitFor(() =>
       expect(mockToastFn.error).toHaveBeenCalledWith(
-        'Voice generation blocked (500)',
+        'Gemini no está disponible temporalmente. Inténtalo de nuevo. (500)',
       ),
     );
   });
