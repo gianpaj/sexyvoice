@@ -226,6 +226,21 @@
           }
         }
       }
+    },
+    {
+      // Object order carries prose meaning in these files: comments stay beside
+      // their settings, and scene labels precede the long prompt text.
+      "includes": [
+        "apps/web/data/call-scenes.ts",
+        "apps/web/playwright.config.ts"
+      ],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
     }
   ]
 }

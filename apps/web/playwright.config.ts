@@ -35,10 +35,57 @@ const PLAYWRIGHT_BROWSER_CHANNEL = process.env
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  testDir: './e2e',
   /* Run tests in files in parallel */
   fullyParallel: true,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  /* Retry on CI only */
+  retries: process.env.CI ? 2 : 0,
+  // Each test runs in its own browser context/page, so React state is fully
+  // isolated between workers — no race conditions possible.
+  // Use more workers in CI (production server handles concurrency well) and
+  // a conservative count locally (dev server is single-threaded for compiles).
+  workers: process.env.CI ? 4 : 2,
+  // reporter: 'html',
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: [
+    // Use "dot" reporter on CI, "list" otherwise (Playwright default).
+    process.env.CI ? ['dot'] : ['list'],
+    // Add Argos reporter.
+    [
+      '@argos-ci/playwright/reporter',
+      createArgosReporterOptions({
+        // Upload to Argos on CI only.
+        uploadToArgos: !!process.env.CI,
+
+        // Set your Argos token (required if not using GitHub Actions).
+        token: process.env.ARGOS_TOKEN,
+      }),
+    ],
+  ],
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: PLAYWRIGHT_BASE_URL,
+    ...(PLAYWRIGHT_BROWSER_CHANNEL
+      ? { channel: PLAYWRIGHT_BROWSER_CHANNEL }
+      : {}),
+
+    /* Pin timezone + locale so date/time formatting is identical across CI
+       and local dev — required for Argos pixel comparisons on date columns. */
+    locale: 'en-US',
+    timezoneId: 'UTC',
+
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+
+    /* Take screenshot only on failure */
+    screenshot: 'only-on-failure',
+
+    /* Avoid Playwright's bundled ffmpeg download/lookup in CI. */
+    video: process.env.CI ? 'off' : 'retain-on-failure',
+  },
 
   /* Configure projects for major browsers */
   projects: [
@@ -50,13 +97,13 @@ export default defineConfig({
 
     // Main tests that depend on authentication
     {
-      dependencies: ['setup'],
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
         // Use prepared auth state
         storageState: '.auth/user.json',
       },
+      dependencies: ['setup'],
     },
 
     // Uncomment to test on other browsers
@@ -116,47 +163,6 @@ export default defineConfig({
     //   dependencies: ['setup'],
     // },
   ],
-  // reporter: 'html',
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [
-    // Use "dot" reporter on CI, "list" otherwise (Playwright default).
-    process.env.CI ? ['dot'] : ['list'],
-    // Add Argos reporter.
-    [
-      '@argos-ci/playwright/reporter',
-      createArgosReporterOptions({
-        // Set your Argos token (required if not using GitHub Actions).
-        token: process.env.ARGOS_TOKEN,
-        // Upload to Argos on CI only.
-        uploadToArgos: !!process.env.CI,
-      }),
-    ],
-  ],
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  testDir: './e2e',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: PLAYWRIGHT_BASE_URL,
-    ...(PLAYWRIGHT_BROWSER_CHANNEL
-      ? { channel: PLAYWRIGHT_BROWSER_CHANNEL }
-      : {}),
-
-    /* Pin timezone + locale so date/time formatting is identical across CI
-       and local dev — required for Argos pixel comparisons on date columns. */
-    locale: 'en-US',
-
-    /* Take screenshot only on failure */
-    screenshot: 'only-on-failure',
-    timezoneId: 'UTC',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
-
-    /* Avoid Playwright's bundled ffmpeg download/lookup in CI. */
-    video: process.env.CI ? 'off' : 'retain-on-failure',
-  },
 
   /* Run your local dev server before starting the tests */
   webServer: process.env.CI
@@ -165,16 +171,11 @@ export default defineConfig({
         // server here. Locally, keep building first so `pnpm run test:e2e` works
         // without requiring a manual build step.
         command: `pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
+        url: PLAYWRIGHT_BASE_URL,
+        timeout: 300 * 1000,
         // Pin Node process TZ so RSC date formatting (date-fns runs in the
         // server process) matches the browser timezoneId pinned above.
         env: { TZ: 'UTC' },
-        timeout: 300 * 1000,
-        url: PLAYWRIGHT_BASE_URL,
       }
     : undefined,
-  // Each test runs in its own browser context/page, so React state is fully
-  // isolated between workers — no race conditions possible.
-  // Use more workers in CI (production server handles concurrency well) and
-  // a conservative count locally (dev server is single-threaded for compiles).
-  workers: process.env.CI ? 4 : 2,
 });
