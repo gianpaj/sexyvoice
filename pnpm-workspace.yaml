@@ -47,7 +47,7 @@ minimumReleaseAgeExclude:
 
 catalog:
   "@ai-sdk/react": "3.0.262"
-  "@biomejs/biome": "2.5.8"
+  "@biomejs/biome": "2.5.11"
   "@supabase/supabase-js": "2.99.2"
   "@tailwindcss/postcss": "4.2.2"
   "@types/node": "24.10.4"
