@@ -15,8 +15,8 @@ import {
 } from '@/lib/supabase/queries';
 import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
 import {
-  mockReplicateRun,
   mockRatelimitLimit,
+  mockReplicateRun,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
   server,
@@ -825,16 +825,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -863,16 +863,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -903,16 +903,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -1053,16 +1053,16 @@ describe('/api/v1/speech', () => {
     );
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'xai',
         input: 'Hello world',
+        model: 'xai',
         voice: 'eve',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -1094,16 +1094,16 @@ describe('/api/v1/speech', () => {
     );
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'xai',
         input: 'Hello world',
+        model: 'xai',
         voice: 'eve',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -1132,16 +1132,16 @@ describe('/api/v1/speech', () => {
     );
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -1166,16 +1166,16 @@ describe('/api/v1/speech', () => {
     mockReplicateRun.mockRejectedValueOnce(modelError);
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);

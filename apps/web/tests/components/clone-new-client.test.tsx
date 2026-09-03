@@ -379,10 +379,10 @@ describe('NewVoiceClient', () => {
             status: 503,
           }),
           {
-            status: 503,
             headers: {
               'content-type': 'application/json',
             },
+            status: 503,
           },
         ),
       );

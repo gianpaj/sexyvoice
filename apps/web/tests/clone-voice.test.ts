@@ -1193,8 +1193,8 @@ describe('Clone Voice API Route', () => {
         'en',
       );
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1210,13 +1210,13 @@ describe('Clone Voice API Route', () => {
       expect(json.code).toBe('PROVIDER_UNAVAILABLE');
       expect(json.details).toEqual({ provider: 'Mistral' });
       expect(queries.reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: 132,
+        userId: 'test-user-id',
       });
       expect(queries.restoreCredits).toHaveBeenCalledOnce();
       expect(queries.restoreCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: 132,
+        userId: 'test-user-id',
       });
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
       expect(captureException).not.toHaveBeenCalled();
