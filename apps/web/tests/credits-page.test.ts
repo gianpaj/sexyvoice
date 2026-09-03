@@ -96,7 +96,7 @@ describe('CreditsPage auth/profile guards', () => {
   });
 
   it('captures missing profile rows and redirects without crashing the page', async () => {
-    const user = { id: 'user-1', email: 'user@example.com' };
+    const user = { email: 'user@example.com', id: 'user-1' };
     vi.mocked(createClient).mockResolvedValue(createSupabaseMock({ user }));
     vi.mocked(getUserByIdWithError).mockResolvedValue({
       count: null,
@@ -112,11 +112,11 @@ describe('CreditsPage auth/profile guards', () => {
 
     expect(getUserByIdWithError).toHaveBeenCalledWith('user-1');
     expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
-      level: 'warning',
-      user,
       extra: {
         route: '/en/dashboard/credits',
       },
+      level: 'warning',
+      user,
     });
     expect(navigationMocks.redirect).toHaveBeenCalledWith(
       '/en/dashboard/generate',
@@ -124,7 +124,7 @@ describe('CreditsPage auth/profile guards', () => {
   });
 
   it('captures profile lookup errors as errors and does not redirect as missing profile', async () => {
-    const user = { id: 'user-1', email: 'user@example.com' };
+    const user = { email: 'user@example.com', id: 'user-1' };
     const profileLookupError = {
       code: '42501',
       details: '',
@@ -146,17 +146,17 @@ describe('CreditsPage auth/profile guards', () => {
     ).rejects.toThrow('Credits page profile lookup failed');
 
     expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
-      level: 'error',
-      user,
       extra: {
-        route: '/en/dashboard/credits',
         profileLookupError: {
           code: profileLookupError.code,
           details: profileLookupError.details,
           hint: profileLookupError.hint,
           message: profileLookupError.message,
         },
+        route: '/en/dashboard/credits',
       },
+      level: 'error',
+      user,
     });
     expect(navigationMocks.redirect).not.toHaveBeenCalledWith(
       '/en/dashboard/generate',

@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AgentProvider } from '@/hooks/use-agent';
 
 const mocks = vi.hoisted(() => {
-  const rpcHandlers = new Map<string, (data: { payload: string }) => Promise<string>>();
+  const rpcHandlers = new Map<
+    string,
+    (data: { payload: string }) => Promise<string>
+  >();
 
   return {
     disconnect: vi.fn(async () => undefined),

@@ -66,6 +66,7 @@ export function AISearchPanelHeader({
         )}
         onClick={() => setOpen(false)}
         tabIndex={-1}
+        type="button"
       >
         <X />
       </button>
@@ -298,6 +299,7 @@ function Message({
   }
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: this handler only stops event propagation.
     <div onClick={(e) => e.stopPropagation()} {...props}>
       <p
         className={cn(
@@ -403,6 +405,7 @@ export function AISearchPanel() {
         }`}
       </style>
       <Presence present={open}>
+        {/* biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: Escape and the close button provide keyboard access. */}
         <div
           className="fixed inset-0 z-30 bg-fd-overlay backdrop-blur-xs data-[state=closed]:animate-fd-fade-out data-[state=open]:animate-fd-fade-in lg:hidden"
           data-state={open ? 'open' : 'closed'}
@@ -457,6 +460,7 @@ export function AISearchPanelList({
       {messages.length === 0 ? (
         <div className="flex size-full flex-col items-center justify-center gap-2 text-center text-fd-muted-foreground/80 text-sm">
           <MessageCircleIcon fill="currentColor" stroke="none" />
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: this handler only stops event propagation. */}
           <p onClick={(e) => e.stopPropagation()}>Start a new chat below.</p>
         </div>
       ) : (

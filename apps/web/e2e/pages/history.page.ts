@@ -74,10 +74,10 @@ export class HistoryPage {
 
     // Pagination
     this.previousButton = page.getByRole('button', {
-      name: 'Previous',
       exact: true,
+      name: 'Previous',
     });
-    this.nextButton = page.getByRole('button', { name: 'Next', exact: true });
+    this.nextButton = page.getByRole('button', { exact: true, name: 'Next' });
   }
 
   /**

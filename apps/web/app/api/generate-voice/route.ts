@@ -4,6 +4,7 @@ import {
   type GenerateContentResponse,
   GoogleGenAI,
 } from '@google/genai';
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
@@ -63,12 +64,12 @@ import {
   getErrorStatusCode,
   getTtsProvider,
 } from '@/lib/utils';
+import { parseGoogleApiError } from '@/utils/google-errors';
 import {
   getGoogleApiErrorStatus,
   isGoogleQuotaError,
   isGoogleTransientProviderError,
 } from '@/utils/google-rpc-status';
-import { parseGoogleApiError } from '@/utils/googleErrors';
 import {
   buildGeminiTtsConfig,
   convertAudioChunksToWav,

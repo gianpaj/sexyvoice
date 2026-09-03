@@ -18,8 +18,8 @@ export const handlers = [
   http.post('https://api.replicate.com/v1/predictions', () =>
     HttpResponse.json({
       id: 'test-prediction-id',
-      status: 'succeeded',
       output: 'https://example.com/audio.mp3',
+      status: 'succeeded',
     }),
   ),
   // Replicate audio file fetch mock
@@ -48,17 +48,17 @@ export const handlers = [
     return HttpResponse.json({
       billing_events: [
         {
-          request_id: requestId,
+          cost_estimate_nano_usd: 2_600_646,
           endpoint_id: 'fal-ai/deepfilternet3',
-          timestamp: '2026-06-13T03:44:17.164745000Z',
-          output_units: 2.6006458333333335,
-          unit_price: 0.001,
+          output_units: 2.600_645_833_333_333_5,
           percent_discount: 0,
-          cost_estimate_nano_usd: 2600646,
+          request_id: requestId,
+          timestamp: '2026-06-13T03:44:17.164745000Z',
+          unit_price: 0.001,
         },
       ],
-      next_cursor: null,
       has_more: false,
+      next_cursor: null,
     });
   }),
   // fal.ai audio file fetch mock
@@ -116,14 +116,14 @@ beforeAll(() => {
   ) {
     window.matchMedia = (query: string) =>
       ({
+        addEventListener: () => {},
+        addListener: () => {},
+        dispatchEvent: () => false,
         matches: false,
         media: query,
         onchange: null,
-        addEventListener: () => {},
         removeEventListener: () => {},
-        addListener: () => {},
         removeListener: () => {},
-        dispatchEvent: () => false,
       }) as MediaQueryList;
   }
 
@@ -145,8 +145,8 @@ beforeAll(() => {
       if (typeof rangePrototype.getClientRects !== 'function') {
         rangePrototype.getClientRects = () =>
           ({
-            length: 0,
             item: () => null,
+            length: 0,
             *[Symbol.iterator]() {},
           }) as DOMRectList;
       }
@@ -160,7 +160,10 @@ beforeAll(() => {
       | (HTMLElement & {
           getClientRects?: () => DOMRectList;
           getBoundingClientRect?: () => DOMRect;
+          hasPointerCapture?: (pointerId: number) => boolean;
+          releasePointerCapture?: (pointerId: number) => void;
           scrollIntoView?: () => void;
+          setPointerCapture?: (pointerId: number) => void;
         })
       | undefined;
 
@@ -168,8 +171,8 @@ beforeAll(() => {
       if (typeof elementPrototype.getClientRects !== 'function') {
         elementPrototype.getClientRects = () =>
           ({
-            length: 0,
             item: () => null,
+            length: 0,
             *[Symbol.iterator]() {},
           }) as DOMRectList;
       }
@@ -178,8 +181,20 @@ beforeAll(() => {
         elementPrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
       }
 
+      if (typeof elementPrototype.hasPointerCapture !== 'function') {
+        elementPrototype.hasPointerCapture = () => false;
+      }
+
+      if (typeof elementPrototype.releasePointerCapture !== 'function') {
+        elementPrototype.releasePointerCapture = vi.fn();
+      }
+
       if (typeof elementPrototype.scrollIntoView !== 'function') {
         elementPrototype.scrollIntoView = vi.fn();
+      }
+
+      if (typeof elementPrototype.setPointerCapture !== 'function') {
+        elementPrototype.setPointerCapture = vi.fn();
       }
     }
   }
@@ -251,6 +266,11 @@ vi.mock('next/dynamic', () => ({
 
 // Mock Next.js modules that aren't available in test environment
 vi.mock('next/server', () => ({
+  after: async (fn: () => Promise<void>) => {
+    // In tests, execute immediately and return a promise
+    // This ensures the callback runs before test assertions
+    await fn();
+  },
   NextResponse: {
     json: (data: any, init?: any) => {
       const response = new Response(JSON.stringify(data), {
@@ -263,49 +283,55 @@ vi.mock('next/server', () => ({
       return response;
     },
   },
-  after: async (fn: () => Promise<void>) => {
-    // In tests, execute immediately and return a promise
-    // This ensures the callback runs before test assertions
-    await fn();
-  },
 }));
 
 // Mock Sentry
 vi.mock('@sentry/nextjs', () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
-  setUser: vi.fn(),
   logger: {
+    error: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn(),
   },
+  setUser: vi.fn(),
 }));
 
 // Mock Supabase client
+const mockSupabaseGetUser = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    data: {
+      user: {
+        app_metadata: {},
+        email: 'test@example.com',
+        id: 'test-user-id',
+        user_metadata: {},
+      },
+    },
+    error: null,
+  }),
+);
+
+export function mockSupabaseUnauthenticatedUserOnce() {
+  mockSupabaseGetUser.mockResolvedValueOnce({
+    data: { user: null },
+    error: { message: 'Not authenticated' },
+  });
+}
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: {
-          user: {
-            id: 'test-user-id',
-            email: 'test@example.com',
-            app_metadata: {},
-            user_metadata: {},
-          },
-        },
-        error: null,
-      }),
+      getUser: mockSupabaseGetUser,
     },
     from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
         data: null,
         error: null,
       }),
-      insert: vi.fn().mockReturnThis(),
       update: vi.fn().mockReturnThis(),
       upsert: vi.fn().mockReturnThis(),
     })),
@@ -317,19 +343,19 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 const mockAdminFrom = vi.fn(() => ({
-  select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
-  or: vi.fn().mockReturnThis(),
   maybeSingle: vi.fn().mockResolvedValue({
     data: {
-      id: 'test-api-key-id',
-      user_id: 'test-user-id',
-      key_hash: 'test-key-hash',
-      is_active: true,
       expires_at: null,
+      id: 'test-api-key-id',
+      is_active: true,
+      key_hash: 'test-key-hash',
+      user_id: 'test-user-id',
     },
     error: null,
   }),
+  or: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
 }));
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -346,82 +372,50 @@ vi.mock('@/lib/supabase/queries', async () => {
   );
   return {
     ...actual,
-    getVoiceIdByName: vi.fn((voiceName: string) => {
-      if (voiceName === 'tara') {
-        return Promise.resolve({
-          id: 'voice-tara-id',
-          name: 'tara',
-          language: 'en',
-          model:
-            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-        });
-      }
-      if (voiceName === 'kore') {
-        return Promise.resolve({
-          id: 'voice-kore-id',
-          name: 'kore',
-          language: 'en',
-          model: 'gpro',
-        });
-      }
-      if (voiceName === 'eve') {
-        return Promise.resolve({
-          id: 'voice-eve-id',
-          name: 'eve',
-          language: 'en',
-          model: 'xai',
-        });
-      }
-      if (voiceName === 'sal') {
-        return Promise.resolve({
-          id: 'voice-sal-id',
-          name: 'sal',
-          language: 'es-ES',
-          model: 'xai',
-        });
-      }
-      return Promise.resolve(null);
-    }),
+    getCredits: vi.fn().mockResolvedValue(1000),
+    getCreditsAdmin: vi.fn().mockResolvedValue(1000),
+    getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
+    getUserEmailAdmin: vi.fn().mockResolvedValue('test@example.com'),
     getVoiceById: vi.fn((voiceId: string) => {
       if (voiceId === 'voice-tara-id') {
         return Promise.resolve({
           id: 'voice-tara-id',
-          name: 'tara',
           language: 'en',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'tara',
         });
       }
       if (voiceId === 'voice-kore-id') {
         return Promise.resolve({
           id: 'voice-kore-id',
-          name: 'kore',
           language: 'en',
           model: 'gpro',
+          name: 'kore',
         });
       }
       if (voiceId === 'voice-achernar-31-id') {
         return Promise.resolve({
           id: 'voice-achernar-31-id',
-          name: 'achernar',
           language: 'multiple',
           model: 'gpro31',
+          name: 'achernar',
         });
       }
       if (voiceId === 'voice-eve-id') {
         return Promise.resolve({
           id: 'voice-eve-id',
-          name: 'eve',
           language: 'en',
           model: 'xai',
+          name: 'eve',
         });
       }
       if (voiceId === 'voice-sal-id') {
         return Promise.resolve({
           id: 'voice-sal-id',
-          name: 'sal',
           language: 'es-ES',
           model: 'xai',
+          name: 'sal',
         });
       }
       return Promise.resolve(null);
@@ -430,42 +424,78 @@ vi.mock('@/lib/supabase/queries', async () => {
       if (voiceId === 'voice-tara-id') {
         return Promise.resolve({
           id: 'voice-tara-id',
-          name: 'tara',
           language: 'en',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'tara',
         });
       }
       if (voiceId === 'voice-kore-id') {
         return Promise.resolve({
           id: 'voice-kore-id',
-          name: 'kore',
           language: 'en',
           model: 'gpro',
+          name: 'kore',
         });
       }
       if (voiceId === 'voice-achernar-31-id') {
         return Promise.resolve({
           id: 'voice-achernar-31-id',
-          name: 'achernar',
           language: 'multiple',
           model: 'gpro31',
+          name: 'achernar',
         });
       }
       if (voiceId === 'voice-eve-id') {
         return Promise.resolve({
           id: 'voice-eve-id',
-          name: 'eve',
           language: 'en',
           model: 'xai',
+          name: 'eve',
         });
       }
       if (voiceId === 'voice-sal-id') {
         return Promise.resolve({
           id: 'voice-sal-id',
-          name: 'sal',
           language: 'es-ES',
           model: 'xai',
+          name: 'sal',
+        });
+      }
+      return Promise.resolve(null);
+    }),
+    getVoiceIdByName: vi.fn((voiceName: string) => {
+      if (voiceName === 'tara') {
+        return Promise.resolve({
+          id: 'voice-tara-id',
+          language: 'en',
+          model:
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'tara',
+        });
+      }
+      if (voiceName === 'kore') {
+        return Promise.resolve({
+          id: 'voice-kore-id',
+          language: 'en',
+          model: 'gpro',
+          name: 'kore',
+        });
+      }
+      if (voiceName === 'eve') {
+        return Promise.resolve({
+          id: 'voice-eve-id',
+          language: 'en',
+          model: 'xai',
+          name: 'eve',
+        });
+      }
+      if (voiceName === 'sal') {
+        return Promise.resolve({
+          id: 'voice-sal-id',
+          language: 'es-ES',
+          model: 'xai',
+          name: 'sal',
         });
       }
       return Promise.resolve(null);
@@ -474,48 +504,51 @@ vi.mock('@/lib/supabase/queries', async () => {
       if (voiceName === 'tara') {
         return Promise.resolve({
           id: 'voice-tara-id',
-          name: 'tara',
           language: 'en',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'tara',
         });
       }
       if (voiceName === 'kore') {
         return Promise.resolve({
           id: 'voice-kore-id',
-          name: 'kore',
           language: 'en',
           model: 'gpro',
+          name: 'kore',
         });
       }
       if (voiceName === 'achernar') {
         return Promise.resolve({
           id: 'voice-achernar-31-id',
-          name: 'achernar',
           language: 'multiple',
           model: 'gpro31',
+          name: 'achernar',
         });
       }
       if (voiceName === 'eve') {
         return Promise.resolve({
           id: 'voice-eve-id',
-          name: 'eve',
           language: 'en',
           model: 'xai',
+          name: 'eve',
         });
       }
       if (voiceName === 'sal') {
         return Promise.resolve({
           id: 'voice-sal-id',
-          name: 'sal',
           language: 'es-ES',
           model: 'xai',
+          name: 'sal',
         });
       }
       return Promise.resolve(null);
     }),
-    getCredits: vi.fn().mockResolvedValue(1000),
-    getCreditsAdmin: vi.fn().mockResolvedValue(1000),
+    hasUserPaid: vi.fn().mockResolvedValue(false),
+    hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
+    insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
+    isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
+    markCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(undefined),
     reduceCredits: vi.fn().mockResolvedValue(true),
     reduceCreditsAdmin: vi.fn().mockResolvedValue(true),
     reduceCreditsUpTo: vi.fn(({ amount }: { amount: number }) =>
@@ -524,6 +557,7 @@ vi.mock('@/lib/supabase/queries', async () => {
     reduceCreditsUpToAdmin: vi.fn(({ amount }: { amount: number }) =>
       Promise.resolve(Math.abs(amount)),
     ),
+    reserveCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(true),
     restoreCredits: vi.fn().mockResolvedValue(true),
     saveAudioFile: vi.fn().mockResolvedValue({
       data: { id: 'test-audio-file-id' },
@@ -533,14 +567,6 @@ vi.mock('@/lib/supabase/queries', async () => {
       data: { id: 'test-audio-file-id' },
       error: null,
     }),
-    insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
-    isFreemiumUserOverLimit: vi.fn().mockResolvedValue(false),
-    hasUserPaid: vi.fn().mockResolvedValue(false),
-    hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
-    getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
-    reserveCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(true),
-    markCreditAllowanceAlertEmailAdmin: vi.fn().mockResolvedValue(undefined),
-    getUserEmailAdmin: vi.fn().mockResolvedValue('test@example.com'),
   };
 });
 
@@ -554,20 +580,20 @@ const mockRedisExpire = vi.fn().mockResolvedValue(1);
 const mockRedisTtl = vi.fn().mockResolvedValue(60);
 
 const mockRedisInstance = {
-  get: mockRedisGet,
-  set: mockRedisSet,
   del: mockRedisDel,
-  keys: mockRedisKeys,
-  incr: mockRedisIncr,
   expire: mockRedisExpire,
+  get: mockRedisGet,
+  incr: mockRedisIncr,
+  keys: mockRedisKeys,
+  set: mockRedisSet,
   ttl: mockRedisTtl,
 };
 
 const mockRatelimitLimit = vi.fn().mockResolvedValue({
-  success: true,
   limit: 60,
   remaining: 59,
   reset: Date.now() + 60_000,
+  success: true,
 });
 
 vi.mock('@upstash/redis', () => ({
@@ -579,7 +605,6 @@ vi.mock('@upstash/redis', () => ({
 vi.mock('@upstash/ratelimit', () => ({
   Ratelimit: class MockRatelimit {
     static tokenBucket = vi.fn(() => 'token_bucket_limiter');
-    // biome-ignore lint/correctness/noUnusedFunctionParameters: Mirrors SDK constructor shape for tests.
     constructor(_config: unknown) {}
     limit(identifier: string) {
       return mockRatelimitLimit(identifier);
@@ -649,8 +674,8 @@ const createDefaultStreamChunk = (): GenerateContentResponse =>
       } as any,
     ],
     usageMetadata: {
-      promptTokenCount: 11,
       candidatesTokenCount: 12,
+      promptTokenCount: 11,
       totalTokenCount: 23,
     },
   }) as GenerateContentResponse;
@@ -676,8 +701,8 @@ const createDefaultGoogleGenAIInstance = () => ({
         },
       ],
       usageMetadata: {
-        promptTokenCount: 11,
         candidatesTokenCount: 12,
+        promptTokenCount: 11,
         totalTokenCount: 23,
       },
     } as GenerateContentResponse),
@@ -704,8 +729,6 @@ export { createDefaultStreamChunk, DEFAULT_MOCK_AUDIO_DATA };
 vi.mock('@google/genai', async () => {
   const genai = await import('@google/genai');
   return {
-    HarmBlockThreshold: genai.HarmBlockThreshold,
-    HarmCategory: genai.HarmCategory,
     FinishReason: genai.FinishReason,
     GoogleGenAI: class MockGoogleGenAI {
       models: any;
@@ -714,6 +737,8 @@ vi.mock('@google/genai', async () => {
         this.models = instance.models;
       }
     },
+    HarmBlockThreshold: genai.HarmBlockThreshold,
+    HarmCategory: genai.HarmCategory,
   };
 });
 
@@ -725,9 +750,9 @@ Object.defineProperty(global, 'crypto', {
         // Generate a simple hash based on the input data
         const view = new Uint8Array(data);
         let hash = 0;
-        for (let i = 0; i < view.length; i++) {
+        for (const byte of view) {
           // 31 is a common prime number used in hash functions for good distribution
-          hash = (hash * 31 + view[i]) & 0xff_ff_ff_ff;
+          hash = (hash * 31 + byte) & 0xff_ff_ff_ff;
         }
         // Create a Uint8Array with the hash value
         const hashArray = new Uint8Array(16);
@@ -744,12 +769,12 @@ const mockReplicateRun = vi.fn().mockImplementation((model: string) => {
   // For chatterbox models (voice cloning), return an object with blob() method
   if (model.includes('chatterbox')) {
     return {
-      url: () => 'https://replicate.delivery/pbxt/test-audio-output.mp3',
       blob: () => {
         // Return a minimal audio blob
         const audioBuffer = new ArrayBuffer(1024);
         return Promise.resolve(new Blob([audioBuffer], { type: 'audio/wav' }));
       },
+      url: () => 'https://replicate.delivery/pbxt/test-audio-output.mp3',
     };
   }
   // For other models (generate-voice), return a ReadableStream
@@ -777,10 +802,10 @@ export { mockReplicateRun };
 const mockFalSubscribe = vi.fn().mockImplementation(async () => ({
   data: {
     audio_file: {
-      url: 'https://fal-cdn.com/test-enhanced-audio.wav',
       content_type: 'audio/wav',
       file_name: 'enhanced.wav',
       file_size: 1024,
+      url: 'https://fal-cdn.com/test-enhanced-audio.wav',
     },
   },
   requestId: 'test-fal-request-id',
@@ -831,10 +856,10 @@ const mockParseBuffer = vi.fn().mockResolvedValue({
 });
 
 vi.mock('music-metadata', async () => ({
-  parseBuffer: mockParseBuffer,
   default: {
     parseBuffer: mockParseBuffer,
   },
+  parseBuffer: mockParseBuffer,
 }));
 
 export { mockParseBuffer };

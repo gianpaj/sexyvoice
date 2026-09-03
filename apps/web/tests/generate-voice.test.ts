@@ -1,10 +1,10 @@
 import { FinishReason, type GenerateContentResponse } from '@google/genai';
+// biome-ignore lint/performance/noNamespaceImport: tests assert across the mocked Sentry module
 import * as Sentry from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import { createClient } from '@/lib/supabase/server';
 import {
   calculateCreditsFromTokens,
   estimateCredits,
@@ -17,6 +17,7 @@ import {
   mockRedisKeys,
   mockRedisSet,
   mockReplicateRun,
+  mockSupabaseUnauthenticatedUserOnce,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
   server,
@@ -249,16 +250,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
-      vi.mocked(createClient).mockResolvedValueOnce({
-        auth: {
-          getUser: vi.fn().mockResolvedValue({
-            data: {
-              user: null,
-            },
-            error: null,
-          }),
-        },
-      } as unknown as Awaited<ReturnType<typeof createClient>>);
+      mockSupabaseUnauthenticatedUserOnce();
 
       const request = new Request('http://localhost/api/generate-voice', {
         body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),

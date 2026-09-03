@@ -53,37 +53,37 @@ export interface DemoCloneSpeaker {
 // Voice assets and their `ffprobe` durations.
 export const demoCloneSpeakers: readonly DemoCloneSpeaker[] = [
   {
-    id: 'kat',
-    name: 'Kat',
-    image: '/demo-clones/kat.webp',
     accent: 'from-violet-500 to-fuchsia-500',
     glowColor: '139, 92, 246',
+    id: 'kat',
+    image: '/demo-clones/kat.webp',
     languageCode: 'en',
+    name: 'Kat',
     reference: {
-      src: `${R2_BASE}/kat-reference.mp3`,
       durationSeconds: 30,
+      src: `${R2_BASE}/kat-reference.mp3`,
     },
     result: {
-      src: `${R2_BASE}/inworld-tts-2_kat-downtown-drugstore-en.mp3`,
       durationSeconds: 30,
+      src: `${R2_BASE}/inworld-tts-2_kat-downtown-drugstore-en.mp3`,
     },
     script:
       "Downtown Drugstore had a bell on the door that made a single tank sound when you opened it. Oxford Pharmacy had two bells on its doors, so it was more of a tutank, though nothing to startle over. But the Gathrite Reed Drug Company door bore a footlong strip of brass sleigh bells on its knob, which, when turned, sent metal balls [energetic] clanging to announce somebody's coming in the dang store [emphasis] so you better turn around and look see who it is.",
   },
   {
-    id: 'heike',
-    name: 'Heike',
-    image: '/demo-clones/heike.webp',
     accent: 'from-amber-400 to-orange-500',
     glowColor: '251, 191, 36',
+    id: 'heike',
+    image: '/demo-clones/heike.webp',
     languageCode: 'de',
+    name: 'Heike',
     reference: {
-      src: `${R2_BASE}/heike-reference.mp3`,
       durationSeconds: 30,
+      src: `${R2_BASE}/heike-reference.mp3`,
     },
     result: {
-      src: `${R2_BASE}/inworld-tts-2_heike-kasse-de.mp3`,
       durationSeconds: 30,
+      src: `${R2_BASE}/inworld-tts-2_heike-kasse-de.mp3`,
     },
     script:
       'Der Kasse gleich rechts wollte eine kräftige Frau gerade etwas bezahlen. Es war Prip, die neue Gierigste von den vielen Freunden in meiner Schwester. Ihre Blondebrockfrisur orientiert sich an diesem feuchten September morgen [pause] mehr zu den Seiten hin als nach unten. [emphasis] Börde, ich lang nicht gesehen, sagte sie, sie bezahlt einen Parallel-Strumpfe, zwei für losgrößere, alles besseren extra',

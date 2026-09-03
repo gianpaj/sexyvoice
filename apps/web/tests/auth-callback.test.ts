@@ -30,10 +30,10 @@ vi.mock('next/server', () => ({
       const responseInit = typeof init === 'object' ? init : undefined;
       const response = new Response(null, {
         ...responseInit,
-        status: typeof init === 'number' ? init : (responseInit?.status ?? 307),
         headers: {
           location: String(url),
         },
+        status: typeof init === 'number' ? init : (responseInit?.status ?? 307),
       }) as Response & {
         cookies: {
           set: typeof responseCookieSetMock;
@@ -96,26 +96,26 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'pkce-code-verifier-missing',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
-          redirectTo: '/en/dashboard',
-          locale: 'en',
-          hasCode: true,
           codeLength: 6,
-          hasCookieHeader: true,
           cookieCount: 2,
-          supabaseCookieCount: 1,
+          errorMessage: 'PKCE code verifier not found in storage.',
+          hasCode: true,
+          hasCookieHeader: true,
+          hasOauthCallbackMarkerCookie: true,
           hasSupabaseAuthCookie: true,
           hasSupabaseCodeVerifierCookie: false,
-          hasOauthCallbackMarkerCookie: true,
-          errorMessage: 'PKCE code verifier not found in storage.',
+          locale: 'en',
+          redirectTo: '/en/dashboard',
+          supabaseCookieCount: 1,
         }),
+        flow: 'oauth-callback',
       },
     );
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
         maxAge: 0,
+        name: OAUTH_CALLBACK_COOKIE_NAME,
       }),
     );
   });
@@ -154,8 +154,8 @@ describe('OAuth callback route', () => {
     expect(captureMessage).not.toHaveBeenCalled();
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
         maxAge: 0,
+        name: OAUTH_CALLBACK_COOKIE_NAME,
         secure: true,
       }),
     );
@@ -183,8 +183,8 @@ describe('OAuth callback route', () => {
     expect(createClient).not.toHaveBeenCalled();
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
         maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+        name: OAUTH_CALLBACK_COOKIE_NAME,
       }),
     );
   });
@@ -223,15 +223,15 @@ describe('OAuth callback route', () => {
     expect(captureException).toHaveBeenCalledWith(
       exchangeError,
       expect.objectContaining({
-        tags: {
-          area: 'auth',
-          flow: 'oauth-callback',
-        },
         extra: expect.objectContaining({
           hasSupabaseAuthCookie: true,
           hasSupabaseCodeVerifierCookie: true,
           supabaseCookieCount: 2,
         }),
+        tags: {
+          area: 'auth',
+          flow: 'oauth-callback',
+        },
       }),
     );
   });
@@ -273,13 +273,13 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'flow-state-expired',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorMessage: 'invalid flow state, flow state has expired',
           hasSupabaseCodeVerifierCookie: true,
           locale: 'es',
           redirectTo: '/es/dashboard',
         }),
+        flow: 'oauth-callback',
       },
     );
   });
@@ -318,10 +318,10 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'flow-state-expired',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorName: 'AuthApiError',
         }),
+        flow: 'oauth-callback',
       },
     );
   });
@@ -363,12 +363,12 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'code-challenge-mismatch',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorName: 'AuthApiError',
           hasSupabaseCodeVerifierCookie: true,
           locale: 'en',
         }),
+        flow: 'oauth-callback',
       },
     );
   });

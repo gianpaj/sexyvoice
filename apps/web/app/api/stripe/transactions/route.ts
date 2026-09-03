@@ -20,9 +20,8 @@ export async function GET(request: NextRequest) {
     // Check if user is authenticated
     const {
       data: { user },
-      error,
     } = await supabase.auth.getUser();
-    if (!user || error) {
+    if (!user) {
       return APIErrorResponse('Unauthorized', 401);
     }
 

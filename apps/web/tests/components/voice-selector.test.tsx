@@ -32,25 +32,25 @@ vi.mock('@/lib/react-textarea-autosize', () => ({
 const baseDict = {
   playAudio: 'Play audio',
   voiceSelector: {
-    title: 'Choose voice',
+    clearFilters: 'Clear',
     description: 'Pick a voice for generation',
-    geminiInfo: 'Gemini voice info',
-    grokInfo: 'Grok voice info',
-    toolTipEmotionTags: 'Emotion tags',
-    selectStyleTextareaPlaceholder: 'Describe the speaking style',
     featuredBadge: 'Featured',
     featuredGroupLabel: 'Featured',
-    multilingualGroupLabel: 'Gemini',
-    selectVoicePlaceholder: 'Select a voice...',
-    searchPlaceholder: 'Search name, style, or model...',
-    filterModelLabel: 'Model',
     filterGenderLabel: 'Gender',
-    clearFilters: 'Clear',
+    filterModelLabel: 'Model',
+    footerCount: '{filtered} of {total} voices',
+    geminiInfo: 'Gemini voice info',
+    grokInfo: 'Grok voice info',
+    multilingualGroupLabel: 'Gemini',
     noVoicesFound: 'No voices found',
     noVoicesFoundHint: 'Try a different search or clear the filters.',
     previewVoice: 'Preview {name}',
+    searchPlaceholder: 'Search name, style, or model...',
+    selectStyleTextareaPlaceholder: 'Describe the speaking style',
+    selectVoicePlaceholder: 'Select a voice...',
     stopPreview: 'Stop preview of {name}',
-    footerCount: '{filtered} of {total} voices',
+    title: 'Choose voice',
+    toolTipEmotionTags: 'Emotion tags',
     voiceListLabel: 'Voices',
   },
 } as const;
@@ -59,19 +59,19 @@ function createVoice(
   overrides: Partial<Tables<'voices'>> = {},
 ): Tables<'voices'> {
   return {
+    created_at: null,
+    description: null,
+    feature: 'tts',
     id: 'voice-id',
-    name: 'tara',
     language: 'en',
     model:
       'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-    description: null,
-    type: null,
-    sort_order: 1,
-    feature: 'tts',
-    sample_url: null,
+    name: 'tara',
     sample_prompt: null,
+    sample_url: null,
+    sort_order: 1,
+    type: null,
     user_id: null,
-    created_at: null,
     ...overrides,
   } as Tables<'voices'>;
 }
@@ -82,22 +82,22 @@ function renderVoiceSelector(
   const publicVoices = [
     createVoice({
       id: 'voice-replicate',
-      name: 'tara',
       language: 'en',
       model:
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      name: 'tara',
     }),
     createVoice({
       id: 'voice-gemini',
-      name: 'kore',
       language: 'en',
       model: 'gpro',
+      name: 'kore',
     }),
     createVoice({
       id: 'voice-grok',
-      name: 'eve',
       language: 'en',
       model: 'xai',
+      name: 'eve',
     }),
   ];
 
@@ -119,12 +119,12 @@ function renderVoiceSelector(
 describe('VoiceSelector', () => {
   it('renders the style textarea for Gemini voices', () => {
     renderVoiceSelector({
+      selectedStyle: 'warm and intimate',
       selectedVoice: createVoice({
         id: 'voice-gemini',
-        name: 'kore',
         model: 'gpro',
+        name: 'kore',
       }),
-      selectedStyle: 'warm and intimate',
     });
 
     expect(
@@ -136,12 +136,12 @@ describe('VoiceSelector', () => {
 
   it('hides the style textarea for Grok voices', () => {
     renderVoiceSelector({
+      selectedStyle: 'should not render',
       selectedVoice: createVoice({
         id: 'voice-grok',
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
-      selectedStyle: 'should not render',
     });
 
     expect(
@@ -153,13 +153,13 @@ describe('VoiceSelector', () => {
 
   it('hides the style textarea for Replicate voices', () => {
     renderVoiceSelector({
+      selectedStyle: 'should not render',
       selectedVoice: createVoice({
         id: 'voice-replicate',
-        name: 'tara',
         model:
           'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        name: 'tara',
       }),
-      selectedStyle: 'should not render',
     });
 
     expect(
@@ -175,8 +175,8 @@ describe('VoiceSelector', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-grok',
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
       }),
     });
 
@@ -196,8 +196,8 @@ describe('VoiceSelector', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-gemini',
-        name: 'kore',
         model: 'gpro',
+        name: 'kore',
       }),
     });
 
@@ -217,9 +217,9 @@ describe('VoiceSelector', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-replicate',
-        name: 'tara',
         model:
           'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+        name: 'tara',
       }),
     });
 
@@ -242,8 +242,8 @@ describe('VoiceSelector', () => {
     renderVoiceSelector({
       selectedVoice: createVoice({
         id: 'voice-grok',
-        name: 'eve',
         model: 'xai',
+        name: 'eve',
         sort_order: 0,
       }),
     });
@@ -256,46 +256,46 @@ describe('VoiceSelector', () => {
       [
         createVoice({
           id: 'voice-featured-zephyr',
-          name: 'zephyr',
           language: 'multiple',
           model: 'gpro',
+          name: 'zephyr',
           sort_order: 0,
         }),
         createVoice({
           id: 'voice-featured-achernar',
-          name: 'achernar',
           language: 'multiple',
           model: 'gpro',
+          name: 'achernar',
           sort_order: 0,
         }),
         createVoice({
           id: 'voice-grok-sal',
-          name: 'sal',
           language: 'multiple',
           model: 'xai',
+          name: 'sal',
           sort_order: 1,
         }),
         createVoice({
           id: 'voice-grok-ara',
-          name: 'ara',
           language: 'multiple',
           model: 'xai',
+          name: 'ara',
           sort_order: 1,
         }),
         createVoice({
           id: 'voice-replicate-dan',
-          name: 'dan',
           language: 'en-GB 🇬🇧',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'dan',
           sort_order: 2,
         }),
         createVoice({
           id: 'voice-replicate-emma',
-          name: 'emma',
           language: 'en-US 🇺🇸',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'emma',
           sort_order: 2,
         }),
       ],
@@ -321,24 +321,24 @@ describe('VoiceSelector', () => {
       publicVoices: [
         createVoice({
           id: 'voice-replicate',
-          name: 'tara',
           language: 'en',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+          name: 'tara',
         }),
         createVoice({
           id: 'voice-grok',
-          name: 'eve',
           language: 'en',
           model: 'xai',
+          name: 'eve',
           sort_order: 0,
         }),
       ],
       selectedVoice: createVoice({
         id: 'voice-grok',
-        name: 'eve',
         language: 'en',
         model: 'xai',
+        name: 'eve',
         sort_order: 0,
       }),
     });

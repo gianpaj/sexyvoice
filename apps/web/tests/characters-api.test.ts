@@ -13,10 +13,10 @@ let mockCustomCharacterCount = 0;
 let mockVoiceExists = true;
 
 // Track DB operations for assertions
-const insertedPrompts: Array<Record<string, unknown>> = [];
-const insertedCharacters: Array<Record<string, unknown>> = [];
-const updatedPrompts: Array<Record<string, unknown>> = [];
-const updatedCharacters: Array<Record<string, unknown>> = [];
+const insertedPrompts: Record<string, unknown>[] = [];
+const insertedCharacters: Record<string, unknown>[] = [];
+const updatedPrompts: Record<string, unknown>[] = [];
+const updatedCharacters: Record<string, unknown>[] = [];
 const deletedCharacterIds: string[] = [];
 const deletedPromptIds: string[] = [];
 
@@ -204,9 +204,6 @@ function createQueryBuilder(tableName: string) {
     return { data: null, error: null };
   }
 
-  // Terminal methods that aren't .single()
-  const originalResolve = () => resolveQuery();
-
   // Make the builder thenable so `await supabase.from(...).select(...)` works
   builder.then = (
     resolve: (v: unknown) => void,
@@ -235,9 +232,12 @@ vi.mock('@/lib/supabase/server', () => ({
     auth: {
       getUser: vi.fn(async () => {
         if (!mockIsAuthenticated) {
-          return { data: { user: null } };
+          return {
+            data: { user: null },
+            error: { message: 'Not authenticated' },
+          };
         }
-        return { data: { user: mockUser } };
+        return { data: { user: mockUser }, error: null };
       }),
     },
     from: (table: string) => createQueryBuilder(table),

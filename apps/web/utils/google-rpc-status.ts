@@ -1,4 +1,4 @@
-import type { GoogleApiError } from './googleErrors';
+import type { GoogleApiError } from './google-errors';
 
 export type GoogleRpcStatus =
   | 'INVALID_ARGUMENT'

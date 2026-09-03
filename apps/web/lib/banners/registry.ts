@@ -70,6 +70,6 @@ const bannerRegistry = {
   },
 } satisfies Record<string, BannerDefinition>;
 
-export function getBannerDefinition(id: string) {
+export function getBannerDefinition(id: string): BannerDefinition | undefined {
   return bannerRegistry[id as keyof typeof bannerRegistry];
 }

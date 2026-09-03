@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noNamespaceImport: tests assert across the mocked Sentry module
 import * as Sentry from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,11 +9,11 @@ import { createClient } from '@/lib/supabase/server';
 vi.mock('stripe', () => {
   const mockStripe = {
     customers: {
+      create: vi.fn(),
+      list: vi.fn(),
       retrieve: vi.fn(),
       search: vi.fn(),
-      list: vi.fn(),
       update: vi.fn(),
-      create: vi.fn(),
     },
   };
   return {
@@ -38,8 +39,8 @@ describe('createOrRetrieveCustomer()', () => {
     // Setup Supabase mock
     mockSupabase = {
       from: vi.fn().mockReturnValue({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+        update: vi.fn().mockReturnThis(),
       }),
     };
 
@@ -54,10 +55,10 @@ describe('createOrRetrieveCustomer()', () => {
     it('should return existing Stripe customer ID when metadata matches', async () => {
       const existingCustomer = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: {
           supabaseUUID: userId,
         },
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.retrieve).mockResolvedValue(existingCustomer);
@@ -76,8 +77,8 @@ describe('createOrRetrieveCustomer()', () => {
     it('should update metadata and return ID when metadata is missing', async () => {
       const customerWithoutMetadata = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: {},
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.retrieve).mockResolvedValue(
@@ -113,10 +114,10 @@ describe('createOrRetrieveCustomer()', () => {
       const differentUserId = 'user_456';
       const customerWithDifferentMetadata = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: {
           supabaseUUID: differentUserId,
         },
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.retrieve).mockResolvedValue(
@@ -134,30 +135,30 @@ describe('createOrRetrieveCustomer()', () => {
 
     it('should handle deleted Stripe customer gracefully', async () => {
       vi.mocked(stripe.customers.retrieve).mockResolvedValue({
+        deleted: true,
         id: stripeCustomerId,
         object: 'customer',
-        deleted: true,
       } as unknown as any);
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: 'cus_new_123',
-        object: 'customer',
         email,
+        id: 'cus_new_123',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(
@@ -175,24 +176,24 @@ describe('createOrRetrieveCustomer()', () => {
 
       vi.mocked(stripe.customers.retrieve).mockRejectedValue(apiError);
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: 'cus_new_123',
-        object: 'customer',
         email,
+        id: 'cus_new_123',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(
@@ -210,17 +211,17 @@ describe('createOrRetrieveCustomer()', () => {
     it('should find customer by supabaseUUID metadata', async () => {
       const existingCustomer = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: {
           supabaseUUID: userId,
         },
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [existingCustomer],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [existingCustomer],
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email);
@@ -234,20 +235,20 @@ describe('createOrRetrieveCustomer()', () => {
     it('should log warning when multiple customers found by metadata', async () => {
       const customer1 = {
         id: 'cus_1',
-        object: 'customer',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any;
       const customer2 = {
         id: 'cus_2',
-        object: 'customer',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [customer1, customer2],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [customer1, customer2],
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email);
@@ -259,7 +260,7 @@ describe('createOrRetrieveCustomer()', () => {
         expect.objectContaining({
           customerCount: 2,
           customerIds: ['cus_1', 'cus_2'],
-          user: { id: userId, email },
+          user: { email, id: userId },
         }),
       );
     });
@@ -268,24 +269,24 @@ describe('createOrRetrieveCustomer()', () => {
   describe('Search by email', () => {
     it('should find customer by email when metadata search fails', async () => {
       const existingCustomer = {
-        id: stripeCustomerId,
-        object: 'customer',
         email,
+        id: stripeCustomerId,
         metadata: {},
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [existingCustomer],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [existingCustomer],
       } as unknown as any);
 
       vi.mocked(stripe.customers.update).mockResolvedValue({
@@ -304,30 +305,30 @@ describe('createOrRetrieveCustomer()', () => {
 
     it('should log warning when multiple customers found by email', async () => {
       const customer1 = {
-        id: 'cus_email_1',
-        object: 'customer',
         email,
+        id: 'cus_email_1',
         metadata: {},
+        object: 'customer',
       } as unknown as any;
       const customer2 = {
-        id: 'cus_email_2',
-        object: 'customer',
         email,
+        id: 'cus_email_2',
         metadata: {},
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [customer1, customer2],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [customer1, customer2],
       } as unknown as any);
 
       vi.mocked(stripe.customers.update).mockResolvedValue({
@@ -347,7 +348,7 @@ describe('createOrRetrieveCustomer()', () => {
         expect.objectContaining({
           customerCount: 2,
           customerIds: ['cus_email_1', 'cus_email_2'],
-          user: { id: userId, email },
+          user: { email, id: userId },
         }),
       );
     });
@@ -358,24 +359,24 @@ describe('createOrRetrieveCustomer()', () => {
       const newCustomerId = 'cus_new_456';
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: newCustomerId,
-        object: 'customer',
         email,
+        id: newCustomerId,
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email);
@@ -395,32 +396,32 @@ describe('createOrRetrieveCustomer()', () => {
       const newCustomerId = 'cus_new_789';
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: newCustomerId,
-        object: 'customer',
         email,
+        id: newCustomerId,
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const mockUpdate = vi.fn().mockReturnThis();
       const mockEq = vi.fn().mockResolvedValue({ data: null, error: null });
 
       mockSupabase.from.mockReturnValue({
-        update: mockUpdate,
         eq: mockEq,
+        update: mockUpdate,
       });
 
       const result = await createOrRetrieveCustomer(userId, email);
@@ -442,17 +443,17 @@ describe('createOrRetrieveCustomer()', () => {
     it('should handle errors when updating customer metadata', async () => {
       const customerWithoutMetadata = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: {},
+        object: 'customer',
       } as unknown as any;
 
       const updateError = new Error('Failed to update customer metadata');
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [customerWithoutMetadata],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [customerWithoutMetadata],
       } as unknown as any);
 
       vi.mocked(stripe.customers.update).mockRejectedValue(updateError);
@@ -467,17 +468,17 @@ describe('createOrRetrieveCustomer()', () => {
     it('should preserve existing metadata when updating', async () => {
       const customerWithExistingMetadata = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: {
           existingKey: 'existingValue',
         },
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [customerWithExistingMetadata],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [customerWithExistingMetadata],
       } as unknown as any);
 
       vi.mocked(stripe.customers.update).mockResolvedValue({
@@ -503,24 +504,24 @@ describe('createOrRetrieveCustomer()', () => {
   describe('Edge cases', () => {
     it('should handle empty existing Stripe ID', async () => {
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: 'cus_new_123',
-        object: 'customer',
         email,
+        id: 'cus_new_123',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email, null);
@@ -530,24 +531,24 @@ describe('createOrRetrieveCustomer()', () => {
 
     it('should handle undefined existing Stripe ID', async () => {
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: 'cus_new_123',
-        object: 'customer',
         email,
+        id: 'cus_new_123',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email, undefined);
@@ -560,29 +561,29 @@ describe('createOrRetrieveCustomer()', () => {
       const supabaseError = new Error('Database connection failed');
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: newCustomerId,
-        object: 'customer',
         email,
+        id: newCustomerId,
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       mockSupabase.from.mockReturnValue({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockResolvedValue({ data: null, error: supabaseError }),
+        update: vi.fn().mockReturnThis(),
       });
 
       const result = await createOrRetrieveCustomer(userId, email);
@@ -595,24 +596,24 @@ describe('createOrRetrieveCustomer()', () => {
       const newCustomerId = 'cus_special_123';
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: newCustomerId,
-        object: 'customer',
         email: specialEmail,
+        id: newCustomerId,
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, specialEmail);
@@ -631,26 +632,26 @@ describe('createOrRetrieveCustomer()', () => {
 
       // First call: metadata search returns nothing
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       // Second call: email search returns nothing
       vi.mocked(stripe.customers.list).mockResolvedValue({
+        data: [],
+        has_more: false,
         object: 'list',
         url: '/v1/customers',
-        has_more: false,
-        data: [],
       } as unknown as any);
 
       // Create new customer
       vi.mocked(stripe.customers.create).mockResolvedValue({
-        id: newCustomerId,
-        object: 'customer',
         email,
+        id: newCustomerId,
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email);
@@ -664,15 +665,15 @@ describe('createOrRetrieveCustomer()', () => {
     it('should skip email search if metadata search succeeds', async () => {
       const existingCustomer = {
         id: stripeCustomerId,
-        object: 'customer',
         metadata: { supabaseUUID: userId },
+        object: 'customer',
       } as unknown as any;
 
       vi.mocked(stripe.customers.search).mockResolvedValue({
+        data: [existingCustomer],
+        has_more: false,
         object: 'search_result_list',
         url: '/v1/customers/search',
-        has_more: false,
-        data: [existingCustomer],
       } as unknown as any);
 
       const result = await createOrRetrieveCustomer(userId, email);

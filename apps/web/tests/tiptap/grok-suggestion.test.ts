@@ -16,8 +16,8 @@ const GROK_WRAPPER_TAG_MENU_PLUGIN_KEY = new PluginKey('grokWrapperTagMenu');
 
 function createItems(tags: readonly string[]) {
   return tags.map((tag) => ({
-    title: tag,
     onSelect: vi.fn(),
+    title: tag,
   }));
 }
 
@@ -64,22 +64,24 @@ function createGrokSuggestionExtension(options: {
   } = options;
 
   const extension = Extension.create({
-    name: `grok-suggestion-${char === '[' ? 'instant' : 'wrapper'}`,
     addProseMirrorPlugins() {
       return [
         Suggestion({
-          editor: this.editor,
-          char,
-          pluginKey,
-          items: ({ query }) =>
-            items.filter((item) =>
-              item.title.toLowerCase().includes(query.toLowerCase()),
-            ),
           allow: shouldAllow
             ? ({ editor, range, state }) =>
                 shouldAllow({ editor, range, state })
             : undefined,
+          char,
+          editor: this.editor,
+          items: ({ query }) =>
+            items.filter((item) =>
+              item.title.toLowerCase().includes(query.toLowerCase()),
+            ),
+          pluginKey,
           render: () => ({
+            onExit: (props) => {
+              onExit(props);
+            },
             onStart: (props) => {
               onStart(props);
             },
@@ -90,13 +92,11 @@ function createGrokSuggestionExtension(options: {
                 exitSuggestion(this.editor.view, pluginKey);
               }
             },
-            onExit: (props) => {
-              onExit(props);
-            },
           }),
         }),
       ];
     },
+    name: `grok-suggestion-${char === '[' ? 'instant' : 'wrapper'}`,
   });
 
   return {
@@ -109,8 +109,8 @@ function createGrokSuggestionExtension(options: {
 
 function createEditor(extensions: Extension[], content = '<p></p>') {
   return new Editor({
-    extensions: [StarterKit, ...extensions],
     content,
+    extensions: [StarterKit, ...extensions],
   });
 }
 

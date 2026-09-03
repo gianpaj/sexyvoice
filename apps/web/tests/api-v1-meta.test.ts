@@ -12,8 +12,8 @@ const TEST_AUTH_HEADER = `Bearer ${TEST_API_KEY}`;
 describe('/api/v1 metadata endpoints', () => {
   it('returns model catalog', async () => {
     const request = new Request('http://localhost/api/v1/models', {
-      method: 'GET',
       headers: { authorization: TEST_AUTH_HEADER },
+      method: 'GET',
     });
 
     const response = await getModels(request);
@@ -31,37 +31,37 @@ describe('/api/v1 metadata endpoints', () => {
     const voicesQuery = {
       data: [
         {
+          feature: 'tts',
           id: 'voice-kore-id',
-          name: 'kore',
+          is_public: true,
           language: 'en',
           model: 'gpro',
-          feature: 'tts',
-          is_public: true,
+          name: 'kore',
         },
         {
+          feature: 'tts',
           id: 'voice-achernar-31-id',
-          name: 'achernar',
+          is_public: true,
           language: 'multiple',
           model: 'gpro31',
-          feature: 'tts',
-          is_public: true,
+          name: 'achernar',
         },
         {
+          feature: 'tts',
           id: 'voice-tara-id',
-          name: 'tara',
+          is_public: true,
           language: 'en',
           model:
             'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-          feature: 'tts',
-          is_public: true,
+          name: 'tara',
         },
         {
+          feature: 'tts',
           id: 'voice-eve-id',
-          name: 'eve',
+          is_public: true,
           language: 'en',
           model: 'xai',
-          feature: 'tts',
-          is_public: true,
+          name: 'eve',
         },
       ],
       eq: vi.fn(),
@@ -78,8 +78,8 @@ describe('/api/v1 metadata endpoints', () => {
     } as never);
 
     const request = new Request('http://localhost/api/v1/voices', {
-      method: 'GET',
       headers: { authorization: TEST_AUTH_HEADER },
+      method: 'GET',
     });
 
     const response = await getVoices(request);
@@ -94,8 +94,8 @@ describe('/api/v1 metadata endpoints', () => {
     expect(json.data[1].supports_style).toBe(true);
     expect(json.data[2].supports_style).toBe(false);
     expect(json.data[3]).toMatchObject({
-      model: 'xai',
       formats: ['mp3', 'wav'],
+      model: 'xai',
       supports_style: false,
     });
     expect(voicesQuery.order).toHaveBeenNthCalledWith(1, 'sort_order');
@@ -110,9 +110,9 @@ describe('/api/v1 metadata endpoints', () => {
     expect(response.status).toBe(200);
     expect(json.openapi).toBe('3.1.0');
     expect(json.paths['/api/v1/speech']).toBeDefined();
-    expect(
-      json.paths['/api/v1/speech'].post.responses[503].description,
-    ).toBe('Upstream service temporarily unavailable');
+    expect(json.paths['/api/v1/speech'].post.responses[503].description).toBe(
+      'Upstream service temporarily unavailable',
+    );
     expect(json.paths['/api/v1/billing']).toBeDefined();
     expect(
       json.paths['/api/v1/speech'].post.requestBody.content['application/json']

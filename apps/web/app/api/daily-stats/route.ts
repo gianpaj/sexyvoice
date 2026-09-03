@@ -1,6 +1,7 @@
-/** biome-ignore-all lint/performance/noNamespaceImport: it's fine */
+// biome-ignore lint/performance/noNamespaceImport: cache operations use the grouped file-system API
 import * as fs from 'node:fs';
 import { join } from 'node:path';
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
