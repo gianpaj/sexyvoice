@@ -160,7 +160,10 @@ beforeAll(() => {
       | (HTMLElement & {
           getClientRects?: () => DOMRectList;
           getBoundingClientRect?: () => DOMRect;
+          hasPointerCapture?: (pointerId: number) => boolean;
+          releasePointerCapture?: (pointerId: number) => void;
           scrollIntoView?: () => void;
+          setPointerCapture?: (pointerId: number) => void;
         })
       | undefined;
 
@@ -178,8 +181,20 @@ beforeAll(() => {
         elementPrototype.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
       }
 
+      if (typeof elementPrototype.hasPointerCapture !== 'function') {
+        elementPrototype.hasPointerCapture = () => false;
+      }
+
+      if (typeof elementPrototype.releasePointerCapture !== 'function') {
+        elementPrototype.releasePointerCapture = vi.fn();
+      }
+
       if (typeof elementPrototype.scrollIntoView !== 'function') {
         elementPrototype.scrollIntoView = vi.fn();
+      }
+
+      if (typeof elementPrototype.setPointerCapture !== 'function') {
+        elementPrototype.setPointerCapture = vi.fn();
       }
     }
   }

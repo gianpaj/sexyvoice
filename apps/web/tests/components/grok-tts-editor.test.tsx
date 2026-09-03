@@ -249,6 +249,40 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('0 / 500')).toBeInTheDocument();
   });
 
+  it('shows Automatic first and English second in the language selector', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    const languageLabel = screen.getByText(
+      messages.generate.grok.languageLabel,
+    );
+    const languageField = languageLabel.parentElement;
+    expect(languageField).not.toBeNull();
+
+    const trigger = within(languageField as HTMLElement).getByRole('combobox');
+    expect(trigger).toHaveTextContent(messages.generate.grok.langAutomatic);
+
+    await user.click(trigger);
+
+    const options = await screen.findAllByRole('option');
+    expect(options[0]).toHaveTextContent(messages.generate.grok.langAutomatic);
+    expect(options[1]).toHaveTextContent(messages.generate.grok.langEnglish);
+    expect(options).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          textContent: expect.stringContaining(
+            messages.generate.grok.langArabicEgypt,
+          ),
+        }),
+        expect.objectContaining({
+          textContent: expect.stringContaining(
+            messages.generate.grok.langArabicSaudiArabia,
+          ),
+        }),
+      ]),
+    );
+  });
+
   it('renders multiline paragraphs in the ProseMirror editor', async () => {
     const onChange = vi.fn();
 
