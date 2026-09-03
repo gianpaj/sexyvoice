@@ -20,11 +20,6 @@ Nested guidance:
 
 ## Mandatory Rules
 
-- Search: Use `ck` for codebase search. Prefer `ck --regex -n` for exact text,
-  `ck -l` for filenames only, `ck --sem` for conceptual matches,
-  `ck --hybrid` when unsure, and `ck --jsonl --no-snippet` for tooling.
-  Use `--topk` and `--threshold` to refine semantic results. Use `ck -h` only
-  if you need the short help.
 - Read relevant files before changing code. Follow existing patterns and keep
   edits scoped.
 - When writing or changing a test, run the test file or the smallest relevant
