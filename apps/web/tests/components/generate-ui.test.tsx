@@ -161,7 +161,7 @@ describe('GenerateUI', () => {
     });
     const featuredVoice = createVoice({
       id: 'voice-featured',
-      model: 'grok',
+      model: 'xai',
       name: 'eve',
       sort_order: 0,
     });
