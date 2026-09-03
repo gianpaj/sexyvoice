@@ -298,20 +298,31 @@ vi.mock('@sentry/nextjs', () => ({
 }));
 
 // Mock Supabase client
+const mockSupabaseGetUser = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    data: {
+      user: {
+        app_metadata: {},
+        email: 'test@example.com',
+        id: 'test-user-id',
+        user_metadata: {},
+      },
+    },
+    error: null,
+  }),
+);
+
+export function mockSupabaseUnauthenticatedUserOnce() {
+  mockSupabaseGetUser.mockResolvedValueOnce({
+    data: { user: null },
+    error: null,
+  });
+}
+
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: {
-          user: {
-            app_metadata: {},
-            email: 'test@example.com',
-            id: 'test-user-id',
-            user_metadata: {},
-          },
-        },
-        error: null,
-      }),
+      getUser: mockSupabaseGetUser,
     },
     from: vi.fn(() => ({
       eq: vi.fn().mockReturnThis(),

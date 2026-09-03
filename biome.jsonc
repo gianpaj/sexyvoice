@@ -157,7 +157,7 @@
           "suspicious": {
             "noEmptyBlockStatements": "off",
             "noMisplacedAssertion": "off",
-            "noSkippedTests": "off",
+            "noSkippedTests": "info",
             "noThenProperty": "off",
             "useAwait": "off"
           }

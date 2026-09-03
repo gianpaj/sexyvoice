@@ -12,6 +12,7 @@ import {
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
+  mockSupabaseUnauthenticatedUserOnce,
   mockUploadFileToR2,
   server,
 } from './setup';
@@ -658,14 +659,9 @@ describe('Clone Voice API Route', () => {
     });
   });
 
-  describe.skip('Authentication', () => {
+  describe('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
-      // Mock unauthenticated user
-      server.use(
-        http.get('https://*.supabase.co/auth/v1/user', () =>
-          HttpResponse.json({ user: null }),
-        ),
-      );
+      mockSupabaseUnauthenticatedUserOnce();
 
       const formData = createFormDataWithAudio('Hello world');
 

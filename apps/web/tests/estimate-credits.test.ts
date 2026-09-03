@@ -3,8 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/estimate-credits/route';
 // biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
-import { createClient } from '@/lib/supabase/server';
-import { mockCountTokens } from './setup';
+import { mockCountTokens, mockSupabaseUnauthenticatedUserOnce } from './setup';
 
 describe('Estimate Credits API Route', () => {
   it('returns 400 when request body is null', async () => {
@@ -37,13 +36,7 @@ describe('Estimate Credits API Route', () => {
   });
 
   it('returns 401 when user is not authenticated', async () => {
-    vi.mocked(createClient).mockReturnValueOnce({
-      auth: {
-        getUser: vi
-          .fn()
-          .mockResolvedValue({ data: { user: null }, error: null }),
-      },
-    } as never);
+    mockSupabaseUnauthenticatedUserOnce();
 
     const request = new Request('http://localhost/api/estimate-credits', {
       body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-kore-id' }),

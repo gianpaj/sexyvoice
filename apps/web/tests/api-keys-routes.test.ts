@@ -4,6 +4,7 @@ import { DELETE } from '@/app/api/api-keys/[id]/route';
 import { GET, POST } from '@/app/api/api-keys/route';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { mockSupabaseUnauthenticatedUserOnce } from './setup';
 
 describe('/api/api-keys routes', () => {
   it('lists current user API keys', async () => {
@@ -179,15 +180,7 @@ describe('/api/api-keys routes', () => {
   });
 
   it('returns 401 when user is not authenticated', async () => {
-    vi.mocked(createClient).mockResolvedValueOnce({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: null },
-          error: { message: 'Not authenticated' },
-        }),
-      },
-      from: vi.fn(),
-    } as never);
+    mockSupabaseUnauthenticatedUserOnce();
 
     const response = await DELETE(new Request('http://localhost'), {
       params: Promise.resolve({ id: 'key-1' }),
