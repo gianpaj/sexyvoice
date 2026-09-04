@@ -45,7 +45,7 @@
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
     "lint-staged": "17.2.0",
-    "turbo": "2.9.18",
+    "turbo": "2.10.12",
     "ultracite": "7.10.0"
   },
   "packageManager": "pnpm@11.16.0",
