@@ -197,6 +197,7 @@ Notes:
 - `LIVEKIT_API_SECRET`
 
 Notes:
+
 - `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
   and used by the frontend to connect to LiveKit rooms.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
@@ -210,6 +211,7 @@ Notes:
 - `CALL_SUMMARY_SECRET`
 
 Notes:
+
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
 - `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
   and verifying the short-lived OAuth callback marker cookie.
@@ -247,6 +249,7 @@ openssl rand -hex 32
 - `EDGE_CONFIG`
 
 Used for:
+
 - dynamic call instructions
 - runtime-configurable behavior without redeploys
 
@@ -380,6 +383,11 @@ pnpm run format
 
 ### Run tests
 
+`pnpm test` runs all package test suites. The unit-test workflow in
+`.github/workflows/tests.yml` uses `pnpm test:affected` to select changed
+packages and their dependents through Turbo. To inspect that selection without
+running tests, use `pnpm test:affected --dry=json`.
+
 ```bash
 pnpm test
 pnpm test:watch
@@ -490,6 +498,7 @@ output of `sentry-cli issues list` (first column).
 ### OAuth callback/session issues
 
 Check:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SECRET_KEY`
@@ -500,6 +509,7 @@ Check:
 ### LiveKit call issues
 
 Check:
+
 - `LIVEKIT_URL`
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
@@ -509,6 +519,7 @@ Check:
 ### External API issues
 
 Check:
+
 - `API_KEY_HMAC_SECRET`
 - `R2_SPEECH_API_BUCKET_NAME`
 - `R2_SPEECH_API_PUBLIC_URL`
@@ -527,6 +538,7 @@ Check:
 ### Storage issues
 
 Check:
+
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET_NAME`

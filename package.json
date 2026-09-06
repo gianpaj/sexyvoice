@@ -30,6 +30,7 @@
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
     "test": "turbo run test",
+    "test:affected": "turbo run test --affected",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
     "test:db": "turbo run test:db --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
@@ -45,7 +46,7 @@
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
     "lint-staged": "17.2.0",
-    "turbo": "2.9.18",
+    "turbo": "2.10.12",
     "ultracite": "7.10.0"
   },
   "packageManager": "pnpm@11.16.0",
