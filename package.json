@@ -30,6 +30,7 @@
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
     "test": "turbo run test",
+    "test:affected": "turbo run test --affected",
     "test:coverage": "turbo run test:coverage --filter=@sexyvoice/web",
     "test:db": "turbo run test:db --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",

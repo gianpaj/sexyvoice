@@ -49,4 +49,4 @@ jobs:
           redis-version: 7
 
       - name: Run tests
-        run: pnpm exec turbo run test --affected
+        run: pnpm test:affected

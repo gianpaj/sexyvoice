@@ -4,7 +4,12 @@
     "build": {
       "dependsOn": ["^build"],
       "env": ["OPENROUTER_API_KEY", "OPENROUTER_MODEL"],
-      "outputs": [".next/**", "!.next/cache/**", ".contentlayer/**"]
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        ".contentlayer/**"
+      ]
     },
     "build:content": {
       "outputs": [".contentlayer/**"]

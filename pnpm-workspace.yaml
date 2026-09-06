@@ -76,6 +76,7 @@ overrides:
   "immutable@>=5.0.0-beta.1 <5.1.8": "5.1.8"
   "protobufjs@<7.5.8": "7.6.5"
   "protobufjs@>=8.0.0 <8.2.0": "8.4.0"
+  # Scope the TOML security fix to this consumer to avoid forcing a major bump on others.
   "remark-mdx-frontmatter>toml": "4.2.0"
   "require-in-the-middle": "7.5.2"
   "undici@<5.28.4": ">=5.28.4"
