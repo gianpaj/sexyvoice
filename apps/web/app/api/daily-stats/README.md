@@ -3,6 +3,13 @@
 `route.ts` sends the daily Telegram report. `contribution.ts` calculates usage
 contribution for yesterday and the last 30 complete UTC days.
 
+## Completed calls
+
+The completed-call line matches the admin dashboard: `status = 'completed'`
+and `duration_seconds > 10`, regardless of end reason. It counts calls
+by `started_at` for yesterday and 14 complete UTC days. Total calls and usage
+costs include other sessions. Short calls alone do not establish a failure.
+
 ## Usage contribution
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,
@@ -41,6 +48,6 @@ remain in the aggregation result.
 
 ## Verification
 
-Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts`.
+Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts`.
 Use read-only queries to investigate actual records. Do not invoke the production
 GET handler for verification; it sends the Telegram report.

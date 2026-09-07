@@ -254,3 +254,37 @@ export function getCallSessionDurationsBefore(
       }));
   });
 }
+
+export function getCallSessionsInRange(
+  supabase: DailyStatsSupabaseClient,
+  start: Date,
+  end: Date,
+  excludeUserIds: readonly string[] = [],
+) {
+  return fetchAllPages<
+    Pick<
+      Tables<'call_sessions'>,
+      | 'id'
+      | 'started_at'
+      | 'duration_seconds'
+      | 'credits_used'
+      | 'status'
+      | 'free_call'
+      | 'end_reason'
+    >
+  >((offset) => {
+    let query = supabase
+      .from('call_sessions')
+      .select(
+        'id, started_at, duration_seconds, credits_used, status, free_call, end_reason',
+      )
+      .gte('started_at', start.toISOString())
+      .lt('started_at', end.toISOString());
+    if (excludeUserIds.length > 0)
+      query = query.notIn('user_id', excludeUserIds);
+    return query
+      .order('started_at')
+      .order('id')
+      .range(offset, offset + PAGE_SIZE - 1);
+  });
+}

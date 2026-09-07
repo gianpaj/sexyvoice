@@ -2,7 +2,10 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, test } from 'vitest';
 
 import { getContributionData } from '../app/api/daily-stats/contribution-queries';
-import { getCreditTransactionsInRange } from '../app/api/daily-stats/queries';
+import {
+  getCallSessionsInRange,
+  getCreditTransactionsInRange,
+} from '../app/api/daily-stats/queries';
 
 // A thenable PostgREST builder with scripted responses, without network access.
 function database(
@@ -115,6 +118,33 @@ describe('contribution reads', () => {
     expect(
       requests.find((request) => request.table === 'audio_files')?.operations,
     ).toContainEqual(['select', ['id, usage']]);
+  });
+  test('call activity reads include end reasons and paginate past 1000 calls', async () => {
+    const { client, requests } = database((_table, ops) => {
+      const offset = ops.find(([method]) => method === 'range')?.[1][0];
+      return {
+        data: Array.from({ length: offset === 0 ? 1000 : 1 }, (_, id) => ({
+          id: `${offset}-${id}`,
+        })),
+        error: null,
+      };
+    });
+    const calls = await getCallSessionsInRange(client, start, end, [
+      'internal',
+    ]);
+    expect(calls).toHaveLength(1001);
+    expect(requests).toHaveLength(2);
+    expect(requests[0].operations).toContainEqual([
+      'notIn',
+      ['user_id', ['internal']],
+    ]);
+    expect(requests[0].operations).toContainEqual([
+      'select',
+      [
+        'id, started_at, duration_seconds, credits_used, status, free_call, end_reason',
+      ],
+    ]);
+    expect(requests[1].operations).toContainEqual(['range', [1000, 1999]]);
   });
   test('cash reads retain null descriptions while excluding manual grants', async () => {
     const { client, requests } = database(() => ({ data: [], error: null }));

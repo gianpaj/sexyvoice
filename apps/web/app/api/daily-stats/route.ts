@@ -27,6 +27,7 @@ import {
   formatIdList,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
+  getCallSessionsInRange,
   getClonedAudioFilesInRange,
   getCreditTransactionsInRange,
   getInternalUserIds,
@@ -45,6 +46,7 @@ import {
   formatDuration,
   getFeatureHealthStatus,
   getProfileUsername,
+  isCompletedUserCall,
   maskUsername,
   normalizeModelName,
   reduceAmountUsd,
@@ -167,9 +169,9 @@ export async function GET(request: NextRequest) {
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (cached.version !== 2 || typeof cached.reportDate !== 'string') {
+    if (cached.version !== 3 || typeof cached.reportDate !== 'string') {
       console.log(
-        '♻️ Ignoring legacy cache without reportDate:',
+        '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
         '(forcing refresh)',
       );
@@ -311,20 +313,12 @@ export async function GET(request: NextRequest) {
       findNextSubscriptionDueForPayment(),
       getActiveSubscriptionsMrr(),
 
-      // (callSessions14dResult) Call sessions last 14 days with duration info
-      (() => {
-        let q = supabase
-          .from('call_sessions')
-          .select(
-            'id, started_at, duration_seconds, credits_used, status, free_call',
-          )
-          .gte('started_at', fourteenDaysAgo.toISOString())
-          .lt('started_at', today.toISOString());
-        if (hasInternalUserIds) {
-          q = q.notIn('user_id', internalUserIds);
-        }
-        return q;
-      })(),
+      getCallSessionsInRange(
+        supabase,
+        fourteenDaysAgo,
+        today,
+        internalUserIds,
+      ).then((data) => ({ data, error: null })),
 
       // (callSessionsTotalCountResult) Total call sessions count
       (() => {
@@ -513,7 +507,7 @@ export async function GET(request: NextRequest) {
       reportDate: cacheReportDate,
       subscriptionsMrr,
       usageEvents14dResult,
-      version: 2,
+      version: 3,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -586,6 +580,10 @@ export async function GET(request: NextRequest) {
   >(callSessions14dData, previousDay, today, 'started_at');
   const callsYesterdayCount = callSessionsYesterdayData.length;
   const calls14dCount = callSessions14dData.length;
+  const completedCallsYesterday =
+    callSessionsYesterdayData.filter(isCompletedUserCall).length;
+  const completedCalls14d =
+    callSessions14dData.filter(isCompletedUserCall).length;
 
   // Calculate total duration for yesterday and the rolling 14-day window
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
@@ -1470,6 +1468,7 @@ export async function GET(request: NextRequest) {
     `  - Top models: ${topVoiceList}`,
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
+    `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
     `  - Estimated usage cost: $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
