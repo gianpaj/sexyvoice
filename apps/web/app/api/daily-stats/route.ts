@@ -1166,24 +1166,6 @@ export async function GET(request: NextRequest) {
         )
       : '0';
 
-  // Comparison: Paid user usage (dollars) vs. Revenue purchased yesterday
-  // If users are burning more value than they are buying, that's a signal (burn rate > 100%)
-  const revenuePurchasedYesterday = purchasePrevDayData.reduce(
-    (sum, t) =>
-      sum +
-      ((t.metadata as { dollarAmount?: number } | null)?.dollarAmount || 0),
-    0,
-  );
-
-  // Both sides are in dollars: usageValueYesterday vs revenuePurchasedYesterday
-  // If purchase is 0, ratio is infinite if usage > 0.
-  let burnRateRatio = 0;
-  if (revenuePurchasedYesterday > 0) {
-    burnRateRatio = usageValueYesterday / revenuePurchasedYesterday;
-  } else if (usageValueYesterday > 0) {
-    burnRateRatio = Number.POSITIVE_INFINITY;
-  }
-
   // DEBUG: Credit calculation verification
   if (!isProd && process.env.DEBUG) {
     console.log('\n💰 DEBUG: Credit Calculation Verification');
@@ -1199,13 +1181,7 @@ export async function GET(request: NextRequest) {
       `  - Usage value ${ROLLING_WINDOW_LABEL}: $`,
       usageValue14d.toFixed(2),
     );
-    // console.log('  - Anomaly ratio:', usageAnomalyRatio.toFixed(2));
-    console.log(
-      '  - Burn rate ratio:',
-      burnRateRatio === Number.POSITIVE_INFINITY
-        ? 'Infinite'
-        : burnRateRatio.toFixed(2),
-    );
+
     console.log(
       '  - Breakdown yesterday:',
       Object.fromEntries(usageYesterdayBreakdown),
