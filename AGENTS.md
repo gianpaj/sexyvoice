@@ -146,6 +146,13 @@ Use package filters when you only want one app, e.g.
 
 ## Supabase and Database
 
+- Derive database row types from the generated `Tables<'table_name'>` types in
+  `apps/web/lib/supabase/types.d.ts`. Use `Pick` for selected columns rather than
+  repeating field types, so enums and nullability stay aligned with the schema.
+  Keep names close to the tables, such as `UsageEvent`, `CallSession`, and
+  `CreditTransaction`. Use separate types for calculated results and joined
+  relation shapes.
+
 - Use the SSR client from `apps/web/lib/supabase/server.ts` for session-scoped server
   code.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for browser clients; RLS still
