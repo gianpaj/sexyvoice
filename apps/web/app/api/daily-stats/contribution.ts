@@ -1,34 +1,32 @@
 import {
-  type CostUsage,
   costMetadata,
   resolveUsageCost,
   type UsageCost,
+  type UsageEventCostInput,
 } from '@/lib/usage-costs';
 import { classifyRefund } from './utils';
 
-export interface ContributionEvent extends CostUsage {
-  credits_used: number;
-  id: string;
-  occurred_at: string;
-  source_id: string | null;
-  user_id: string | null;
-}
-export interface ContributionCall {
-  duration_seconds: number | null;
-  ended_at: string | null;
-  id: string;
-  model: string | null;
-  started_at: string;
-  status: string;
-  user_id: string | null;
-}
-export interface ContributionTransaction {
-  created_at: string;
-  description: string | null;
-  metadata: Json;
-  type: string;
-  user_id: string;
-}
+export type UsageEvent = UsageEventCostInput &
+  Pick<
+    Tables<'usage_events'>,
+    'credits_used' | 'id' | 'occurred_at' | 'source_id' | 'user_id'
+  >;
+
+export type CallSession = Pick<
+  Tables<'call_sessions'>,
+  | 'duration_seconds'
+  | 'ended_at'
+  | 'id'
+  | 'model'
+  | 'started_at'
+  | 'status'
+  | 'user_id'
+>;
+
+export type CreditTransaction = Pick<
+  Tables<'credit_transactions'>,
+  'created_at' | 'description' | 'metadata' | 'type' | 'user_id'
+>;
 interface CostRecord {
   at: string;
   cost: UsageCost;
@@ -40,8 +38,8 @@ interface CostRecord {
 }
 export interface ContributionData {
   audioUsage: Record<string, unknown>;
-  calls: ContributionCall[];
-  events: ContributionEvent[];
+  calls: CallSession[];
+  events: UsageEvent[];
   linkedCallIds: string[];
 }
 export function buildCostRecords(data: ContributionData): CostRecord[] {
@@ -92,22 +90,22 @@ export function buildCostRecords(data: ContributionData): CostRecord[] {
   }
   return records;
 }
-function isFinalCall(call: ContributionCall) {
+function isFinalCall(call: CallSession) {
   return (
     call.ended_at !== null ||
     ['completed', 'failed', 'error', 'disconnected'].includes(call.status)
   );
 }
-function cash(transaction: ContributionTransaction): number {
+function cash(transaction: CreditTransaction): number {
   const value = costMetadata(transaction.metadata).dollarAmount;
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
-function eligible(transaction: ContributionTransaction) {
+function eligible(transaction: CreditTransaction) {
   return !transaction.description?.toLowerCase().includes('manual');
 }
 export function summarizeContribution(
   data: ContributionData,
-  transactions: ContributionTransaction[],
+  transactions: CreditTransaction[],
   start: Date,
   end: Date,
 ) {

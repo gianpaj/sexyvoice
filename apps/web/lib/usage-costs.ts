@@ -1,19 +1,19 @@
 import { calculateGenerateApiDollarAmount } from './api/pricing';
 
-export interface CostUsage {
-  dollar_amount: number | null;
-  duration_seconds: number | null;
-  input_chars: number | null;
-  metadata: unknown;
-  model: string | null;
-  source_type: string;
-}
-export interface CallCostInput {
-  duration_seconds: number | null;
-  ended_at?: string | null;
-  model: string | null;
-  started_at?: string;
-}
+export type UsageEventCostInput = Pick<
+  Tables<'usage_events'>,
+  | 'dollar_amount'
+  | 'duration_seconds'
+  | 'input_chars'
+  | 'metadata'
+  | 'model'
+  | 'source_type'
+>;
+export type CallSessionCostInput = Pick<
+  Tables<'call_sessions'>,
+  'duration_seconds' | 'model'
+> &
+  Partial<Pick<Tables<'call_sessions'>, 'started_at' | 'ended_at'>>;
 export interface UsageCost {
   amount: number;
   basis: 'recorded' | 'estimated' | 'unknown';
@@ -43,8 +43,8 @@ const GEMINI_MODELS = new Set([
 ]);
 
 export function resolveUsageCost(
-  event: CostUsage,
-  call?: CallCostInput,
+  event: UsageEventCostInput,
+  call?: CallSessionCostInput,
   audioUsage?: unknown,
 ): UsageCost {
   if (

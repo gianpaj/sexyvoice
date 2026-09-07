@@ -2,16 +2,19 @@ import { describe, expect, test } from 'vitest';
 
 import {
   type ContributionData,
-  type ContributionEvent,
-  type ContributionTransaction,
+  type CreditTransaction,
   formatContribution,
   summarizeContribution,
+  type UsageEvent,
 } from '../app/api/daily-stats/contribution';
-import { resolveUsageCost } from '../lib/usage-costs';
+import {
+  type CallSessionCostInput,
+  resolveUsageCost,
+} from '../lib/usage-costs';
 
 const start = new Date('2026-09-05T00:00:00Z');
 const end = new Date('2026-09-06T00:00:00Z');
-function event(overrides: Partial<ContributionEvent> = {}): ContributionEvent {
+function event(overrides: Partial<UsageEvent> = {}): UsageEvent {
   return {
     credits_used: 100,
     dollar_amount: 15,
@@ -27,12 +30,12 @@ function event(overrides: Partial<ContributionEvent> = {}): ContributionEvent {
     ...overrides,
   };
 }
-function data(events: ContributionEvent[] = []): ContributionData {
+function data(events: UsageEvent[] = []): ContributionData {
   return { audioUsage: {}, calls: [], events, linkedCallIds: [] };
 }
 function purchase(
-  overrides: Partial<ContributionTransaction> = {},
-): ContributionTransaction {
+  overrides: Partial<CreditTransaction> = {},
+): CreditTransaction {
   return {
     created_at: '2026-09-05T00:00:00Z',
     description: 'Purchase',
@@ -125,8 +128,13 @@ describe('cash contribution', () => {
     expect(result.coverage).toBeNull();
   });
   test('missing costs and identities make coverage incomplete', () => {
+    // Exercise malformed input despite the database's NOT NULL constraint.
+    const malformedEvent = {
+      ...event(),
+      user_id: null,
+    } as unknown as UsageEvent;
     const result = summarizeContribution(
-      data([event({ dollar_amount: -1 }), event({ user_id: null })]),
+      data([event({ dollar_amount: -1 }), malformedEvent]),
       [],
       start,
       end,
@@ -228,9 +236,12 @@ describe('call supplementation', () => {
       (5 / 60) * 0.05,
       10,
     );
-    expect(
-      resolveUsageCost(usage, { ...timestamps, duration_seconds: null }).basis,
-    ).toBe('unknown');
+    // The database disallows null; retain coverage for malformed input.
+    const malformedCall = {
+      ...timestamps,
+      duration_seconds: null,
+    } as unknown as CallSessionCostInput;
+    expect(resolveUsageCost(usage, malformedCall).basis).toBe('unknown');
     expect(
       resolveUsageCost(
         { ...usage, dollar_amount: 0.1 },

@@ -17,41 +17,34 @@ export const INTERNAL_USER_EMAILS = [
 
 export const formatIdList = (ids: readonly string[]) => `(${ids.join(',')})`;
 
-export interface DailyStatsCreditTransaction {
-  amount: number;
-  created_at: string;
-  description: string | null;
-  id: string;
-  metadata: Json;
-  profiles: DailyStatsProfileRelation;
-  type: 'purchase' | 'freemium' | 'topup' | 'refund';
-  user_id: string;
-}
+export type DailyStatsCreditTransaction = Pick<
+  Tables<'credit_transactions'>,
+  | 'amount'
+  | 'created_at'
+  | 'description'
+  | 'id'
+  | 'metadata'
+  | 'type'
+  | 'user_id'
+> & { profiles: DailyStatsProfileRelation };
 
-export interface DailyStatsUsageEvent {
-  credits_used: number;
-  id: string;
-  occurred_at: string;
-  profiles: DailyStatsProfileRelation;
-  source_type: string;
-  user_id: string;
-}
+export type DailyStatsUsageEvent = Pick<
+  Tables<'usage_events'>,
+  'credits_used' | 'id' | 'occurred_at' | 'source_type' | 'user_id'
+> & { profiles: DailyStatsProfileRelation };
 
-export interface DailyStatsAudioFile {
-  created_at: string | null;
-  id: string;
-  model: string | null;
-}
-
-export interface DailyStatsProfile {
-  created_at: string | null;
-  id: string;
-  username: string | null;
-}
-
-export interface DailyStatsCallSessionDuration {
-  duration_seconds: number;
-}
+export type DailyStatsAudioFile = Pick<
+  Tables<'audio_files'>,
+  'created_at' | 'id' | 'model'
+>;
+export type DailyStatsProfile = Pick<
+  Tables<'profiles'>,
+  'created_at' | 'id' | 'username'
+>;
+export type DailyStatsCallSessionDuration = Pick<
+  Tables<'call_sessions'>,
+  'duration_seconds'
+>;
 
 type DailyStatsSupabaseClient = SupabaseClient;
 

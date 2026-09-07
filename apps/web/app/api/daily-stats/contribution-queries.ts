@@ -1,10 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type {
-  ContributionCall,
-  ContributionData,
-  ContributionEvent,
-} from './contribution';
+import type { CallSession, ContributionData, UsageEvent } from './contribution';
 import { fetchAllPages, PAGE_SIZE } from './utils';
 
 const CALL_COLUMNS =
@@ -17,7 +13,7 @@ export async function getContributionData(
   internalIds: string[],
 ): Promise<ContributionData> {
   const [events, windowCalls] = await Promise.all([
-    fetchAllPages<ContributionEvent>((offset) => {
+    fetchAllPages<UsageEvent>((offset) => {
       let query = client
         .from('usage_events')
         .select(
@@ -31,7 +27,7 @@ export async function getContributionData(
         .order('id')
         .range(offset, offset + PAGE_SIZE - 1);
     }),
-    fetchAllPages<ContributionCall>((offset) => {
+    fetchAllPages<CallSession>((offset) => {
       let query = client
         .from('call_sessions')
         .select(CALL_COLUMNS)
@@ -59,7 +55,7 @@ export async function getContributionData(
     ),
   ];
   for (let i = 0; i < missingIds.length; i += 100) {
-    const rows = await fetchAllPages<ContributionCall>((offset) =>
+    const rows = await fetchAllPages<CallSession>((offset) =>
       client
         .from('call_sessions')
         .select(CALL_COLUMNS)
@@ -74,16 +70,19 @@ export async function getContributionData(
   const linkedCallIds: string[] = [];
   const sessionIds = [...calls.keys()];
   for (let i = 0; i < sessionIds.length; i += 100) {
-    const rows = await fetchAllPages<{ source_id: string }>((offset) =>
-      client
-        .from('usage_events')
-        .select('source_id')
-        .eq('source_type', 'live_call')
-        .in('source_id', sessionIds.slice(i, i + 100))
-        .order('id')
-        .range(offset, offset + PAGE_SIZE - 1),
+    const rows = await fetchAllPages<Pick<Tables<'usage_events'>, 'source_id'>>(
+      (offset) =>
+        client
+          .from('usage_events')
+          .select('source_id')
+          .eq('source_type', 'live_call')
+          .in('source_id', sessionIds.slice(i, i + 100))
+          .order('id')
+          .range(offset, offset + PAGE_SIZE - 1),
     );
-    linkedCallIds.push(...rows.map((row) => row.source_id));
+    linkedCallIds.push(
+      ...rows.flatMap((row) => (row.source_id ? [row.source_id] : [])),
+    );
   }
   const audioIds = [
     ...new Set(
@@ -99,7 +98,9 @@ export async function getContributionData(
   ];
   const audioUsage: Record<string, unknown> = {};
   for (let i = 0; i < audioIds.length; i += 100) {
-    const rows = await fetchAllPages<{ id: string; usage: unknown }>((offset) =>
+    const rows = await fetchAllPages<
+      Pick<Tables<'audio_files'>, 'id' | 'usage'>
+    >((offset) =>
       client
         .from('audio_files')
         .select('id, usage')
