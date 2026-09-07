@@ -969,7 +969,9 @@ export async function GET(request: NextRequest) {
   const creditsTodayCount = purchasePrevDayData.length;
   const refundsTodayCount = refundsPrevDayData.length;
 
-  // Contribution reads are fresh even when the local activity cache is used.
+  // Contribution uses fresh usage and payment history together. Cached purchases
+  // could misclassify fresh usage or understate collections; cached activity
+  // metrics are only for local debugging and do not feed this calculation.
   const contributionData = await getContributionData(
     supabase,
     thirtyDaysAgo,
@@ -1304,7 +1306,7 @@ export async function GET(request: NextRequest) {
     clonePrevCount === 0 ? 'Voice cloning had no usage yesterday' : null,
     apiTtsCreditsYesterday === 0 ? 'API TTS had no usage yesterday' : null,
     creditsTodayCount === 0 ? 'No purchases yesterday' : null,
-    contributionYesterday.incomplete
+    contributionYesterday.coverageAlert
       ? 'Usage cost coverage is incomplete'
       : null,
     !contributionYesterday.incomplete && contributionYesterday.contribution < 0

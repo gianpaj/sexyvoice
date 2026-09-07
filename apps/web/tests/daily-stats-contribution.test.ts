@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import {
   type ContributionData,
@@ -7,6 +7,8 @@ import {
   summarizeContribution,
   type UsageEvent,
 } from '../app/api/daily-stats/contribution';
+// biome-ignore lint/performance/noNamespaceImport: spy on pricing inputs without changing production rates
+import * as pricing from '../lib/api/pricing';
 import {
   type CallSessionCostInput,
   resolveUsageCost,
@@ -61,7 +63,6 @@ describe('cash contribution', () => {
     );
     expect(result.contribution).toBe(60);
     expect(result.coverage).toBe(5);
-    expect(result.freeFeatures.tts).toEqual({ cost: 15, credits: 100 });
     expect(formatContribution('Yesterday', result).join('\n')).toContain(
       '5.00x',
     );
@@ -79,6 +80,31 @@ describe('cash contribution', () => {
       '- Yesterday: $100.00 net − $15.00 usage = $85.00 left',
     );
     expect(lines.join('\n')).not.toMatch(/Cost records|Session-only|Free tts/);
+  });
+  test.each([0, 1, 5, 6, 100])(
+    'alerts only when more than 5%% of records are unpriced: %s',
+    (unknownCount) => {
+      const events = Array.from({ length: 100 }, (_, index) =>
+        event({
+          dollar_amount: index < unknownCount ? null : 1,
+          id: `${index}`,
+        }),
+      );
+      const result = summarizeContribution(data(events), [], start, end);
+      expect(result.incomplete).toBe(unknownCount > 0);
+      expect(result.coverageAlert).toBe(unknownCount > 5);
+      if (unknownCount > 0) expect(result.coverage).toBeNull();
+    },
+  );
+  test('unclassified usage alerts regardless of the unpriced share', () => {
+    const malformedEvent = {
+      ...event(),
+      user_id: null,
+    } as unknown as UsageEvent;
+    expect(
+      summarizeContribution(data([malformedEvent]), [], start, end)
+        .coverageAlert,
+    ).toBe(true);
   });
   test('classifies at purchase time and recognizes old purchasers', () => {
     const result = summarizeContribution(
@@ -162,10 +188,9 @@ describe('cash contribution', () => {
     );
     expect(result.contribution).toBe(-30);
     expect(result.coverage).toBe(0);
-    expect(Object.keys(result.freeFeatures)).toEqual([
-      'api_tts',
-      'audio_processing',
-    ]);
+    expect(formatContribution('Yesterday', result)[0]).toContain(
+      '= -$30.00 left',
+    );
   });
 });
 describe('call supplementation', () => {
@@ -186,8 +211,6 @@ describe('call supplementation', () => {
       end,
     );
     expect(result.callCost).toBeCloseTo((5 / 60) * 0.05);
-    expect(result.shortCalls).toBe(1);
-    expect(result.freeFeatures.live_call.credits).toBe(0);
   });
   test('prices a zero-duration session from its sub-second timestamps', () => {
     const result = summarizeContribution(
@@ -209,7 +232,6 @@ describe('call supplementation', () => {
     expect(result.bases.estimated).toBe(1);
     expect(result.bases.unknown).toBe(0);
     expect(result.incomplete).toBe(false);
-    expect(result.freeFeatures.live_call.credits).toBe(0);
   });
   test.each([
     undefined,
@@ -268,7 +290,6 @@ describe('call supplementation', () => {
       end,
     );
     expect(result.callCost).toBe(30);
-    expect(result.shortCalls).toBe(0);
     expect(result.totals.free).toBe(15);
     expect(result.totals.paid).toBe(15);
   });
@@ -282,15 +303,38 @@ describe('call supplementation', () => {
       ).callCost,
     ).toBe(0);
   });
-  test('10 seconds is a missing insertion, not a below-threshold call', () => {
+  test('attributes cross-midnight call cost exactly once by event date', () => {
+    const linkedEvent = event({
+      dollar_amount: 0.2,
+      occurred_at: end.toISOString(),
+      source_id: call.id,
+      source_type: 'live_call',
+    });
+    const before = summarizeContribution(
+      { ...data(), calls: [call], linkedCallIds: [call.id] },
+      [],
+      start,
+      end,
+    );
+    const after = summarizeContribution(
+      { ...data([linkedEvent]), calls: [call] },
+      [],
+      end,
+      new Date('2026-09-07T00:00:00Z'),
+    );
+    expect(before.callCost).toBe(0);
+    expect(after.callCost).toBe(0.2);
+    expect(before.callCost + after.callCost).toBe(0.2);
+  });
+  test('estimates missing-event costs from the stored duration', () => {
     expect(
       summarizeContribution(
         { ...data(), calls: [{ ...call, duration_seconds: 10 }] },
         [],
         start,
         end,
-      ).missingCalls,
-    ).toBe(1);
+      ).callCost,
+    ).toBeCloseTo((10 / 60) * 0.05, 10);
   });
   test('ongoing sessions do not add finalized cost', () => {
     const result = summarizeContribution(
@@ -300,7 +344,6 @@ describe('call supplementation', () => {
       end,
     );
     expect(result.callCost).toBe(0);
-    expect(result.pendingCalls).toBe(1);
   });
   test('UTC windows exclude their end and include legacy terminal sessions', () => {
     const result = summarizeContribution(
@@ -312,7 +355,6 @@ describe('call supplementation', () => {
       start,
       end,
     );
-    expect(result.legacyCalls).toBe(1);
     expect(result.bases.recorded).toBe(0);
   });
 });
@@ -348,6 +390,52 @@ describe('cost provenance', () => {
       }).amount,
     ).toBeCloseTo(0.010_05);
     expect(resolveUsageCost(usage).basis).toBe('unknown');
+  });
+  test.each(['tts', 'api_tts'] as const)(
+    'preserves the %s source when estimating Gemini cost',
+    (source_type) => {
+      const spy = vi.spyOn(pricing, 'calculateGenerateApiDollarAmount');
+      try {
+        resolveUsageCost(
+          event({
+            dollar_amount: null,
+            model: 'gemini-2.5-pro-preview-tts',
+            source_type,
+          }),
+          undefined,
+          { candidatesTokenCount: 1000, promptTokenCount: 100 },
+        );
+        expect(spy).toHaveBeenCalledWith(
+          expect.objectContaining({ sourceType: source_type }),
+        );
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
+  test('linked provider token counts override conflicting event metadata', () => {
+    const result = resolveUsageCost(
+      event({
+        dollar_amount: null,
+        metadata: { candidatesTokenCount: 9000, promptTokenCount: 900 },
+        model: 'gemini-2.5-pro-preview-tts',
+      }),
+      undefined,
+      { candidatesTokenCount: 1000, promptTokenCount: 100 },
+    );
+    expect(result.amount).toBeCloseTo(0.0201);
+  });
+  test('invalid linked token counts fall back to valid event metadata', () => {
+    const result = resolveUsageCost(
+      event({
+        dollar_amount: null,
+        metadata: { candidatesTokenCount: 1000, promptTokenCount: 100 },
+        model: 'gemini-2.5-pro-preview-tts',
+      }),
+      undefined,
+      { candidatesTokenCount: null, promptTokenCount: 'invalid' },
+    );
+    expect(result.amount).toBeCloseTo(0.0201);
   });
   test('unknown call models do not inherit a legacy price', () => {
     expect(

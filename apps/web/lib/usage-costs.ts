@@ -72,9 +72,12 @@ export function resolveUsageCost(
   const metadata = costMetadata(event.metadata);
   const model =
     event.model ?? (typeof metadata.model === 'string' ? metadata.model : null);
-  const tokens = { ...costMetadata(audioUsage), ...metadata };
-  const input = dimension(tokens.promptTokenCount);
-  const output = dimension(tokens.candidatesTokenCount);
+  const tokens = costMetadata(audioUsage);
+  const input =
+    dimension(tokens.promptTokenCount) ?? dimension(metadata.promptTokenCount);
+  const output =
+    dimension(tokens.candidatesTokenCount) ??
+    dimension(metadata.candidatesTokenCount);
   if (
     ['tts', 'api_tts'].includes(event.source_type) &&
     model &&
@@ -89,7 +92,7 @@ export function resolveUsageCost(
         model,
         promptTokenCount: input,
         provider: 'google',
-        sourceType: 'tts',
+        sourceType: event.source_type === 'api_tts' ? 'api_tts' : 'tts',
       }),
       basis: 'estimated',
     };

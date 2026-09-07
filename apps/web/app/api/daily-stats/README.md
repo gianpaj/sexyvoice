@@ -21,6 +21,9 @@ Estimated contribution equals net collections minus all measured usage costs.
 Free coverage equals net collections minus paid usage costs, divided by free
 usage costs. Zero free cost renders coverage N/A. Unpriced or unclassified
 records mark coverage incomplete; displayed dollars include only priced records.
+The separate coverage alert fires when more than 5% of records are unpriced, or
+any usage is unclassified. Record share controls alert noise, not cost accuracy;
+one expensive unknown record can matter even below that threshold.
 
 This is a cash-period comparison before payment fees and fixed costs, not
 accounting profit. Taxes, final dispute losses, unlogged provider attempts,
@@ -31,7 +34,10 @@ retries, and ancillary infrastructure can be absent from the inputs.
 `contribution-queries.ts` reads usage events and supplements finalized calls
 missing an event. Cross-window ID lookups prevent duplicate call estimates.
 Events use `occurred_at`; supplemental sessions use `ended_at`, falling back to
-`started_at` for terminal legacy rows. Supplemental records add no credits.
+`started_at` for terminal legacy rows. A linked event outside the window belongs
+to the period containing its `occurred_at`, rather than the session's end date.
+ID lookups use 100-ID batches, with at most four concurrent batches per lookup,
+and skip link checks for sessions already matched to an in-window event.
 
 `apps/web/lib/usage-costs.ts` prefers positive recorded costs and uses supported
 model-specific estimates when data permits. Recorded costs are not necessarily
@@ -43,8 +49,13 @@ customer billing buckets rather than provider-billed time.
 Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
 
-The report prints two lines per period. Detailed feature and diagnostic totals
-remain in the aggregation result.
+The report prints two lines per period. Aggregation retains the costs and
+coverage counts used by the report. Linked audio token counts take precedence
+over event metadata; valid event counts remain a fallback for missing values.
+
+Contribution reads both usage and transactions fresh, even during local cached
+activity debugging, so customer classification and collections use fresh payment
+history. This intentionally requires an all-time transaction read on that path.
 
 ## Verification
 

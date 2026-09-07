@@ -270,13 +270,12 @@ export function getCallSessionsInRange(
       | 'credits_used'
       | 'status'
       | 'free_call'
-      | 'end_reason'
     >
   >((offset) => {
     let query = supabase
       .from('call_sessions')
       .select(
-        'id, started_at, duration_seconds, credits_used, status, free_call, end_reason',
+        'id, started_at, duration_seconds, credits_used, status, free_call',
       )
       .gte('started_at', start.toISOString())
       .lt('started_at', end.toISOString());

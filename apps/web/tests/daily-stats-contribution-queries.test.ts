@@ -7,12 +7,17 @@ import {
   getCreditTransactionsInRange,
 } from '../app/api/daily-stats/queries';
 
+interface QueryResult {
+  data: unknown[] | null;
+  error: unknown;
+}
+
 // A thenable PostgREST builder with scripted responses, without network access.
 function database(
   respond: (
     table: string,
     operations: [string, unknown[]][],
-  ) => { data: unknown[] | null; error: unknown },
+  ) => QueryResult | Promise<QueryResult>,
 ) {
   const requests: Array<{
     table: string;
@@ -119,7 +124,7 @@ describe('contribution reads', () => {
       requests.find((request) => request.table === 'audio_files')?.operations,
     ).toContainEqual(['select', ['id, usage']]);
   });
-  test('call activity reads include end reasons and paginate past 1000 calls', async () => {
+  test('call activity reads paginate past 1000 calls', async () => {
     const { client, requests } = database((_table, ops) => {
       const offset = ops.find(([method]) => method === 'range')?.[1][0];
       return {
@@ -140,11 +145,42 @@ describe('contribution reads', () => {
     ]);
     expect(requests[0].operations).toContainEqual([
       'select',
-      [
-        'id, started_at, duration_seconds, credits_used, status, free_call, end_reason',
-      ],
+      ['id, started_at, duration_seconds, credits_used, status, free_call'],
     ]);
     expect(requests[1].operations).toContainEqual(['range', [1000, 1999]]);
+  });
+  test('runs ID lookups concurrently with at most four batches and skips known links', async () => {
+    let active = 0;
+    let peak = 0;
+    const events = Array.from({ length: 450 }, (_, id) => ({
+      dollar_amount: 1,
+      id: `event-${id}`,
+      source_id: `call-${id}`,
+      source_type: 'live_call',
+    }));
+    const { client, requests } = database(async (table, ops) => {
+      if (table === 'usage_events') return { data: events, error: null };
+      const ids = ops.find(([method]) => method === 'in')?.[1][1] as
+        | string[]
+        | undefined;
+      if (!ids) return { data: [], error: null };
+      active++;
+      peak = Math.max(peak, active);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      active--;
+      return { data: ids.map((id) => ({ id, user_id: 'user' })), error: null };
+    });
+    const result = await getContributionData(client, start, end, []);
+    expect(result.calls).toHaveLength(450);
+    expect(peak).toBe(4);
+    expect(
+      requests.filter((request) =>
+        request.operations.some(([method]) => method === 'in'),
+      ),
+    ).toHaveLength(5);
+    expect(
+      requests.filter((request) => request.table === 'usage_events'),
+    ).toHaveLength(1);
   });
   test('cash reads retain null descriptions while excluding manual grants', async () => {
     const { client, requests } = database(() => ({ data: [], error: null }));

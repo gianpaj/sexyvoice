@@ -30,10 +30,7 @@ export type CreditTransaction = Pick<
 interface CostRecord {
   at: string;
   cost: UsageCost;
-  credits: number;
   feature: string;
-  legacy: boolean;
-  supplemental: 'short' | 'missing' | null;
   userId: string | null;
 }
 export interface ContributionData {
@@ -57,10 +54,7 @@ export function buildCostRecords(data: ContributionData): CostRecord[] {
       calls.get(event.source_id ?? ''),
       data.audioUsage[event.source_id ?? ''],
     ),
-    credits: event.credits_used,
     feature: event.source_type,
-    legacy: false,
-    supplemental: null,
     userId: event.user_id,
   }));
   for (const call of data.calls) {
@@ -78,13 +72,7 @@ export function buildCostRecords(data: ContributionData): CostRecord[] {
         },
         call,
       ),
-      credits: 0,
       feature: 'live_call',
-      legacy: call.ended_at === null,
-      supplemental:
-        call.duration_seconds !== null && call.duration_seconds < 10
-          ? 'short'
-          : 'missing',
       userId: call.user_id,
     });
   }
@@ -135,13 +123,8 @@ export function summarizeContribution(
   }
   const totals = { free: 0, paid: 0, unclassified: 0 };
   const bases = { estimated: 0, recorded: 0, unknown: 0 };
-  const basisCosts = { estimated: 0, recorded: 0, unknown: 0 };
-  const freeFeatures: Record<string, { credits: number; cost: number }> = {};
   let unclassified = 0;
   let callCost = 0;
-  let shortCalls = 0;
-  let missingCalls = 0;
-  let legacyCalls = 0;
   for (const record of buildCostRecords(data)) {
     if (!inPeriod(record.at)) continue;
     let cohort: 'paid' | 'free' | 'unclassified' = 'unclassified';
@@ -154,39 +137,26 @@ export function summarizeContribution(
     }
     totals[cohort] += record.cost.amount;
     bases[record.cost.basis]++;
-    basisCosts[record.cost.basis] += record.cost.amount;
     if (cohort === 'unclassified') unclassified++;
     if (record.feature === 'live_call') callCost += record.cost.amount;
-    if (record.supplemental === 'short') shortCalls++;
-    if (record.supplemental === 'missing') missingCalls++;
-    if (record.legacy) legacyCalls++;
-    if (cohort === 'free') {
-      const feature = freeFeatures[record.feature] ?? { cost: 0, credits: 0 };
-      feature.credits += record.credits;
-      feature.cost += record.cost.amount;
-      freeFeatures[record.feature] = feature;
-    }
   }
   const totalCost = totals.paid + totals.free + totals.unclassified;
   const incomplete = bases.unknown > 0 || unclassified > 0;
+  const recordCount = bases.recorded + bases.estimated + bases.unknown;
+  // Alert volume is distinct from coverage: small gaps still remain visible.
+  const coverageAlert =
+    unclassified > 0 || (recordCount > 0 && bases.unknown / recordCount > 0.05);
   return {
     bases,
-    basisCosts,
     callCost,
     contribution: netCollections - totalCost,
     coverage:
       incomplete || totals.free === 0
         ? null
         : (netCollections - totals.paid) / totals.free,
-    freeFeatures,
+    coverageAlert,
     incomplete,
-    legacyCalls,
-    missingCalls,
     netCollections,
-    pendingCalls: data.calls.filter(
-      (call) => !isFinalCall(call) && inPeriod(call.started_at),
-    ).length,
-    shortCalls,
     totalCost,
     totals,
     unclassified,
@@ -196,10 +166,13 @@ export function formatContribution(
   label: string,
   summary: ReturnType<typeof summarizeContribution>,
 ): string[] {
-  const usd = (value: number) => `$${value.toFixed(2)}`;
-  let coverage =
-    summary.coverage === null ? 'N/A' : `${summary.coverage.toFixed(2)}x`;
-  if (summary.incomplete) coverage = 'incomplete';
+  const usd = (value: number) =>
+    `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
+  let coverage = 'incomplete';
+  if (!summary.incomplete) {
+    coverage =
+      summary.coverage === null ? 'N/A' : `${summary.coverage.toFixed(2)}x`;
+  }
   const gaps = [
     summary.bases.unknown > 0 ? `${summary.bases.unknown} unpriced` : null,
     summary.unclassified > 0 ? `${summary.unclassified} unclassified` : null,
