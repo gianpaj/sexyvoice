@@ -10,7 +10,9 @@ export interface CostUsage {
 }
 export interface CallCostInput {
   duration_seconds: number | null;
+  ended_at?: string | null;
   model: string | null;
+  started_at?: string;
 }
 export interface UsageCost {
   amount: number;
@@ -54,7 +56,14 @@ export function resolveUsageCost(
   }
   if (event.source_type === 'live_call') {
     const rate = CALL_RATES[call?.model ?? event.model ?? ''];
-    const seconds = dimension(call?.duration_seconds ?? event.duration_seconds);
+    let seconds = dimension(call?.duration_seconds ?? event.duration_seconds);
+    // The call service truncates duration to whole seconds. Recover only the
+    // sub-second interval that explains a stored zero, not larger discrepancies.
+    if (call?.duration_seconds === 0 && call.started_at && call.ended_at) {
+      const elapsed =
+        (Date.parse(call.ended_at) - Date.parse(call.started_at)) / 1000;
+      if (elapsed > 0 && elapsed < 1) seconds = elapsed;
+    }
     if (rate !== undefined && seconds !== null && seconds > 0) {
       return { amount: (seconds / 60) * rate, basis: 'estimated' };
     }

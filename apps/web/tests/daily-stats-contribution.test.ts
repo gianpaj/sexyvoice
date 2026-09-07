@@ -181,6 +181,63 @@ describe('call supplementation', () => {
     expect(result.shortCalls).toBe(1);
     expect(result.freeFeatures.live_call.credits).toBe(0);
   });
+  test('prices a zero-duration session from its sub-second timestamps', () => {
+    const result = summarizeContribution(
+      {
+        ...data(),
+        calls: [
+          {
+            ...call,
+            duration_seconds: 0,
+            ended_at: '2026-09-05T12:00:00.769Z',
+          },
+        ],
+      },
+      [],
+      start,
+      end,
+    );
+    expect(result.callCost).toBeCloseTo((0.769 / 60) * 0.05, 10);
+    expect(result.bases.estimated).toBe(1);
+    expect(result.bases.unknown).toBe(0);
+    expect(result.incomplete).toBe(false);
+    expect(result.freeFeatures.live_call.credits).toBe(0);
+  });
+  test.each([
+    undefined,
+    null,
+    'invalid',
+    '2026-09-05T11:59:59Z',
+    '2026-09-05T12:00:00Z',
+    '2026-09-05T12:00:01Z',
+    '2026-09-05T12:00:05Z',
+  ])(
+    'does not infer sub-second cost from invalid or inconsistent end time %s',
+    (ended_at) => {
+      const result = resolveUsageCost(
+        event({ dollar_amount: null, source_type: 'live_call' }),
+        { ...call, duration_seconds: 0, ended_at },
+      );
+      expect(result.basis).toBe('unknown');
+    },
+  );
+  test('does not replace positive or missing durations with timestamp estimates', () => {
+    const usage = event({ dollar_amount: null, source_type: 'live_call' });
+    const timestamps = { ...call, ended_at: '2026-09-05T12:00:00.500Z' };
+    expect(resolveUsageCost(usage, timestamps).amount).toBeCloseTo(
+      (5 / 60) * 0.05,
+      10,
+    );
+    expect(
+      resolveUsageCost(usage, { ...timestamps, duration_seconds: null }).basis,
+    ).toBe('unknown');
+    expect(
+      resolveUsageCost(
+        { ...usage, dollar_amount: 0.1 },
+        { ...timestamps, duration_seconds: 0 },
+      ),
+    ).toEqual({ amount: 0.1, basis: 'recorded' });
+  });
   test('ordinary free and paid calls come from events, counted once', () => {
     const result = summarizeContribution(
       {
