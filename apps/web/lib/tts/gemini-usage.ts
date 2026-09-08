@@ -49,14 +49,12 @@ function createAttempt(context: AttemptContext, streaming: boolean) {
   let finishReason: FinishReason | undefined;
   let blockReason: string | undefined;
   let responseId: string | undefined;
-  let httpStatus: number | null = null;
   let hasAudio = false;
   let receivedResponse = false;
 
   return {
     observe(response: GenerateContentResponse) {
       receivedResponse = true;
-      httpStatus = response.sdkHttpResponse?.responseInternal?.status ?? 200;
       usage = mergeGeminiUsage(usage, response.usageMetadata);
       finishReason = response.candidates?.[0]?.finishReason ?? finishReason;
       blockReason = response.promptFeedback?.blockReason ?? blockReason;
@@ -120,7 +118,7 @@ function createAttempt(context: AttemptContext, streaming: boolean) {
             completed,
             costStatus: dollarAmount === null ? 'unknown' : 'estimated',
             finishReason: finishReason ?? null,
-            httpStatus: errorStatus ?? httpStatus,
+            httpStatus: errorStatus,
             outcome,
             provider: 'google',
             receivedResponse,

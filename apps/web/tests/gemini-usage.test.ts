@@ -113,7 +113,7 @@ describe('Gemini provider attempts', () => {
         inputTokens: 100,
         metadata: expect.objectContaining({
           costStatus: 'estimated',
-          httpStatus: 200,
+          httpStatus: null,
           outcome: 'success',
         }),
         outputTokens: 1000,
@@ -159,7 +159,7 @@ describe('Gemini provider attempts', () => {
     },
   );
 
-  it('records blocked HTTP 200 and retains partial counts', async () => {
+  it('records blocked SDK responses and retains partial counts', async () => {
     await trackGeminiGeneration(context, async () =>
       response({ promptTokenCount: 5 }, FinishReason.SAFETY),
     );
@@ -168,7 +168,7 @@ describe('Gemini provider attempts', () => {
         dollarAmount: null,
         inputTokens: 5,
         metadata: expect.objectContaining({
-          httpStatus: 200,
+          httpStatus: null,
           outcome: 'content_blocked',
         }),
         outputTokens: null,
