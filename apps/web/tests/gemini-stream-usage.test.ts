@@ -59,6 +59,8 @@ it('stores streaming tokens and dollar amount once, separately from customer cre
   });
   expect(events[1].dollarAmount).toBeUndefined();
   expect(events[1].creditsUsed).toBeGreaterThan(0);
+  expect(events[0].requestId).toEqual(expect.any(String));
+  expect(events[0].requestId).not.toBe('');
   expect(events[0].requestId).toBe(events[1].requestId);
 });
 
@@ -99,6 +101,8 @@ it('retains primary usage when a stream without audio falls back', async () => {
     model: 'gemini-2.5-flash-preview-tts',
     outputTokens: 12,
   });
+  expect(events[0].requestId).toEqual(expect.any(String));
+  expect(events[0].requestId).not.toBe('');
   expect(new Set(events.map((event) => event.requestId)).size).toBe(1);
 });
 
