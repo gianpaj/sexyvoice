@@ -2,7 +2,10 @@ import type { FinishReason, GenerateContentResponse } from '@google/genai';
 import { captureException } from '@sentry/nextjs';
 import { after } from 'next/server';
 
-import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
+import {
+  calculateGenerateApiDollarAmount,
+  hasModelPricing,
+} from '@/lib/api/pricing';
 import { insertUsageEvent } from '@/lib/supabase/queries';
 import { parseGoogleApiError } from '@/utils/google-errors';
 import { classifyGeminiTtsResponse } from './gemini-response';
@@ -82,7 +85,13 @@ function createAttempt(context: AttemptContext, streaming: boolean) {
         const outputTokens = tokenCount(usage?.candidatesTokenCount);
         const totalTokens = tokenCount(usage?.totalTokenCount);
         const dollarAmount =
-          inputTokens !== null && outputTokens !== null
+          inputTokens !== null &&
+          outputTokens !== null &&
+          hasModelPricing({
+            model: context.model,
+            provider: 'google',
+            sourceType: context.sourceType,
+          })
             ? calculateGenerateApiDollarAmount({
                 candidatesTokenCount: outputTokens,
                 model: context.model,

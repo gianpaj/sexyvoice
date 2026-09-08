@@ -66,6 +66,21 @@ describe('Gemini token parsing', () => {
 });
 
 describe('Gemini provider attempts', () => {
+  it('keeps unpriced model cost unknown while retaining token counts', async () => {
+    await trackGeminiGeneration(
+      { ...context, model: 'unpriced-model' },
+      async () => response({ candidatesTokenCount: 20, promptTokenCount: 10 }),
+    );
+    expect(insertUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dollarAmount: null,
+        inputTokens: 10,
+        metadata: expect.objectContaining({ costStatus: 'unknown' }),
+        outputTokens: 20,
+      }),
+    );
+  });
+
   it('returns the response before the deferred insert starts', async () => {
     let deferred: (() => void | Promise<void>) | undefined;
     vi.mocked(after).mockImplementationOnce((callback) => {
