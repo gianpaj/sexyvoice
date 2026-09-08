@@ -1509,7 +1509,7 @@ function streamGeminiTtsResponse({
       const streamUsage = {
         ...extractMetadata(true, {
           usageMetadata: streamUsageMetadata,
-        } as GenerateContentResponse),
+        }),
         stream: true,
         userHasPaid,
       };

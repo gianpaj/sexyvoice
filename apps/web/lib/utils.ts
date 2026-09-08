@@ -281,7 +281,7 @@ interface ReplicateMetadata extends Record<string, string> {
 
 export function extractMetadata(
   isGeminiVoice: boolean,
-  genAIResponse: GenerateContentResponse | null,
+  genAIResponse: Pick<GenerateContentResponse, 'usageMetadata'> | null,
   replicateResponse?: Prediction,
 ): GeminiMetadata | ReplicateMetadata | undefined {
   if (isGeminiVoice) {
