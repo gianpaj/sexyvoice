@@ -857,9 +857,9 @@ export async function POST(request: Request) {
       geminiResponse,
       replicateResponse,
     );
-    if (isGeminiVoice && usageMetadata?.totalTokenCount !== undefined) {
+    if (isGeminiVoice && Number(usageMetadata?.totalTokenCount) > 0) {
       creditsUsed = calculateCreditsFromTokens(
-        Number.parseInt(usageMetadata.totalTokenCount, 10),
+        Number(usageMetadata?.totalTokenCount),
       );
     }
     const creditsDebited = await reconcileReservedCredits({

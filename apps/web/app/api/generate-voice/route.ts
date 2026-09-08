@@ -982,14 +982,14 @@ export async function POST(request: Request) {
       replicateResponse,
     );
 
-    if (isGeminiVoice && usage?.totalTokenCount !== undefined) {
+    if (isGeminiVoice && Number(usage?.totalTokenCount) > 0) {
       // Bill against the model that actually ran (`modelUsed`), not the stored
       // voice model: a 3.1 request that fell back to 2.5 Flash must not incur
       // the 3.1 free-user surcharge.
-      creditsUsed = calculateCreditsFromTokens(
-        Number.parseInt(usage.totalTokenCount, 10),
-        { model: modelUsed, userHasPaid },
-      );
+      creditsUsed = calculateCreditsFromTokens(Number(usage?.totalTokenCount), {
+        model: modelUsed,
+        userHasPaid,
+      });
     }
 
     const creditsDebited = await reconcileReservedCredits({
@@ -1483,7 +1483,10 @@ function streamGeminiTtsResponse({
 
       // Billing — calculate credits from stream tokens when available.
       let creditsUsed = estimate;
-      if (streamUsageMetadata?.totalTokenCount !== undefined) {
+      if (
+        streamUsageMetadata?.totalTokenCount &&
+        streamUsageMetadata.totalTokenCount > 0
+      ) {
         // Bill against the model that actually ran (`modelUsed`), which the
         // stream sets to 2.5 Flash on fallback — so a downgraded 3.1 request
         // is not charged the 3.1 free-user surcharge.

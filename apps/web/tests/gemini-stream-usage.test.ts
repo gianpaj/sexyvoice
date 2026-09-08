@@ -120,3 +120,28 @@ it('retains provider usage when audio upload fails', async () => {
     }),
   );
 });
+
+it('charges the estimate while preserving zero provider tokens', async () => {
+  setMockGoogleGenAIFactory(() => ({
+    models: {
+      async *generateContentStream() {
+        yield {
+          ...createDefaultStreamChunk(),
+          usageMetadata: {
+            candidatesTokenCount: 0,
+            promptTokenCount: 0,
+            totalTokenCount: 0,
+          },
+        } as GenerateContentResponse;
+      },
+    },
+  }));
+  expect(await generate()).toContain('event: done');
+  const events = vi.mocked(insertUsageEvent).mock.calls.map(([event]) => event);
+  expect(events[0]).toMatchObject({
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+  });
+  expect(events[1].creditsUsed).toBeGreaterThan(0);
+});
