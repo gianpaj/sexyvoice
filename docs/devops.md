@@ -528,6 +528,31 @@ Check:
 
 ### Gemini / voice generation issues
 
+Gemini dashboard, external speech API, and streaming calls record supplier usage
+through `apps/web/lib/tts/gemini-usage.ts`. In `usage_events`,
+`event_kind = 'provider_attempt'` stores numeric `input_tokens`, `output_tokens`,
+`total_tokens`, the actual model, and an estimated `dollar_amount`. Missing counts
+stay NULL. Cost stays NULL unless both input and output counts are available.
+Metadata includes HTTP status, finish/block reason, response ID, and raw usage
+metadata, without prompt text or audio.
+
+Each SDK generation attempt gets one event before audio persistence. Fallbacks
+share the application's `request_id` but retain separate model usage. Streaming
+counts are cumulative snapshots, merged by field rather than summed. Google HTTP
+400 and 500 failures are excluded; other errors and HTTP 200 responses without
+usable audio are recorded. These records do not prove an invoice charge.
+
+Provider attempts have zero credits. Customer events carry the credit deduction
+and audio-file reference; their Gemini cost and tokens are omitted to avoid
+counting the same generation twice. Customer history, summaries, and daily
+operation counts exclude provider attempts. API cost totals include provider
+attempts. Existing historical customer events retain their recorded costs.
+
+Apply `20260908120000_add_gemini_provider_usage.sql` before deploying the code,
+then run `pnpm test:db` against the migrated local database. Streaming remains
+disabled by the existing production flag.
+
+
 Check:
 
 - `GOOGLE_GENERATIVE_AI_API_KEY`

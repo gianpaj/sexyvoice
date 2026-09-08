@@ -54,6 +54,7 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
+import { trackGeminiGeneration } from '@/lib/tts/gemini-usage';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -612,24 +613,35 @@ export async function POST(request: Request) {
         },
       };
 
+      const generate = (model: string) =>
+        trackGeminiGeneration(
+          {
+            apiKeyId: authResult.apiKeyId,
+            inputChars: finalText.length,
+            model,
+            requestId,
+            signal: request.signal,
+            sourceType: 'api_tts',
+            userId,
+          },
+          () =>
+            ai.models.generateContent({
+              config,
+              contents: [{ parts: [{ text: finalText }], role: 'user' }],
+              model,
+            }),
+        );
+
       try {
         modelUsed =
           model === 'gpro31'
             ? 'gemini-3.1-flash-tts-preview'
             : 'gemini-2.5-pro-preview-tts';
-        geminiResponse = await ai.models.generateContent({
-          config,
-          contents: [{ parts: [{ text: finalText }], role: 'user' }],
-          model: modelUsed,
-        });
+        geminiResponse = await generate(modelUsed);
       } catch (proError) {
         modelUsed = 'gemini-2.5-flash-preview-tts';
         try {
-          geminiResponse = await ai.models.generateContent({
-            config,
-            contents: [{ parts: [{ text: finalText }], role: 'user' }],
-            model: modelUsed,
-          });
+          geminiResponse = await generate(modelUsed);
         } catch (flashError) {
           const providerFailure = getGeminiProviderFailure(
             proError,
@@ -845,7 +857,7 @@ export async function POST(request: Request) {
       geminiResponse,
       replicateResponse,
     );
-    if (isGeminiVoice && usageMetadata?.totalTokenCount) {
+    if (isGeminiVoice && usageMetadata?.totalTokenCount !== undefined) {
       creditsUsed = calculateCreditsFromTokens(
         Number.parseInt(usageMetadata.totalTokenCount, 10),
       );
@@ -899,7 +911,7 @@ export async function POST(request: Request) {
     await insertUsageEvent({
       apiKeyId: authResult.apiKeyId,
       creditsUsed: creditsDebited,
-      dollarAmount,
+      dollarAmount: isGeminiVoice ? null : dollarAmount,
       durationSeconds,
       inputChars: finalText.length,
       metadata: {

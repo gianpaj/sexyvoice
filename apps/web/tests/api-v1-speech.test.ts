@@ -535,10 +535,18 @@ describe('/api/v1/speech', () => {
       'gemini-3.1-flash-tts-preview',
     );
     expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
+    expect(insertUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        creditsUsed: 0,
+        dollarAmount: 0.000_726,
+        eventKind: 'provider_attempt',
+        model: 'gemini-3.1-flash-tts-preview',
+      }),
+    );
     expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
       expect.objectContaining({
         creditsUsed: actualCredits,
-        dollarAmount: 0.000_726,
+        dollarAmount: null,
         durationSeconds: 12,
         model: 'gemini-3.1-flash-tts-preview',
       }),
@@ -986,7 +994,7 @@ describe('/api/v1/speech', () => {
     expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
       expect.objectContaining({
         dollarAmount: 0.000_103,
-        durationSeconds: 12,
+        eventKind: 'provider_attempt',
         model: 'gemini-2.5-flash-preview-tts',
       }),
     );
