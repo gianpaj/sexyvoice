@@ -998,6 +998,16 @@ describe('/api/v1/speech', () => {
         model: 'gemini-2.5-flash-preview-tts',
       }),
     );
+    const customerEvent = vi
+      .mocked(insertUsageEvent)
+      .mock.calls.map(([event]) => event)
+      .find((event) => event.eventKind !== 'provider_attempt');
+    expect(customerEvent).toMatchObject({
+      dollarAmount: null,
+      durationSeconds: 12,
+      model: 'gemini-2.5-flash-preview-tts',
+    });
+    expect(customerEvent?.creditsUsed).toBeGreaterThan(0);
   });
 
   it('returns provider unavailable from transient Gemini errors without capture', async () => {
