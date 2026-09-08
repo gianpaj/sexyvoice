@@ -36,6 +36,16 @@ describe('/api/billing/usage', () => {
           data: [
             {
               api_key_id: 'key-1',
+              model: 'failed-primary-model',
+              requests: 0,
+              source_type: 'api_tts',
+              total_credits_used: 0,
+              total_dollar_amount: 0.12,
+              usage_date: '2026-02-26T00:00:00.000Z',
+              user_id: 'test-user-id',
+            },
+            {
+              api_key_id: 'key-1',
               model: 'gpro',
               requests: 2,
               source_type: 'api_tts',
