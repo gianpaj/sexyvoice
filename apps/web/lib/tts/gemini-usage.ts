@@ -105,7 +105,6 @@ function createAttempt(context: AttemptContext, streaming: boolean) {
         });
         if (!completed) outcome = 'incomplete';
         if (error) outcome = 'error';
-        if (context.signal?.aborted) outcome = 'aborted';
         await insertUsageEvent({
           apiKeyId: context.apiKeyId,
           creditsUsed: 0,
@@ -114,6 +113,7 @@ function createAttempt(context: AttemptContext, streaming: boolean) {
           inputChars: context.inputChars,
           inputTokens,
           metadata: {
+            aborted: context.signal?.aborted ?? false,
             blockReason: blockReason ?? null,
             completed,
             costStatus: dollarAmount === null ? 'unknown' : 'estimated',

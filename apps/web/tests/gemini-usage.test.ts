@@ -255,10 +255,50 @@ describe('Gemini provider attempts', () => {
       expect.objectContaining({
         inputTokens: 10,
         metadata: expect.objectContaining({
+          aborted: true,
           completed: false,
-          outcome: 'aborted',
+          outcome: 'incomplete',
         }),
         outputTokens: 30,
+      }),
+    );
+  });
+
+  it('preserves the provider outcome when the client has disconnected', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    await trackGeminiGeneration(
+      { ...context, signal: controller.signal },
+      async () => response({ candidatesTokenCount: 20, promptTokenCount: 10 }),
+    );
+    expect(insertUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          aborted: true,
+          completed: true,
+          outcome: 'success',
+        }),
+      }),
+    );
+  });
+
+  it('marks an early stream break as incomplete without an abort signal', async () => {
+    async function* chunks() {
+      yield response({ candidatesTokenCount: 20 });
+    }
+    for await (const _chunk of trackGeminiStream(context, async () =>
+      chunks(),
+    )) {
+      break;
+    }
+    expect(insertUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          aborted: false,
+          completed: false,
+          outcome: 'incomplete',
+        }),
+        outputTokens: 20,
       }),
     );
   });
