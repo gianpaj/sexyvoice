@@ -392,6 +392,16 @@ Use a temporary directory outside the repository for logs, downloaded audio,
 environment files, and generated reports. These artifacts may contain user text,
 email addresses, signed URLs, or other production data.
 
+### Provider attempt evidence
+
+Within the user's UTC window, read `usage_events` for both `customer_usage` and
+`provider_attempt` events. Correlate attempts and customer charges by `request_id`;
+fallback attempts retain their actual model. Provider rows hold numeric token
+counts, estimated `dollar_amount`, and outcome metadata even when no audio file
+exists. They consume zero customer credits. NULL tokens or cost mean unknown,
+and an estimate does not prove an invoice charge. See
+[`docs/devops.md`](../docs/devops.md#gemini--voice-generation-issues) for recording rules.
+
 ### 1. Establish the ledger baseline
 
 Run the read-only dispute evidence script to reconcile the complete account
