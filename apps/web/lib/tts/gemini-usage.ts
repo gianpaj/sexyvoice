@@ -1,5 +1,6 @@
 import type { FinishReason, GenerateContentResponse } from '@google/genai';
 import { captureException } from '@sentry/nextjs';
+import { after } from 'next/server';
 
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { insertUsageEvent } from '@/lib/supabase/queries';
@@ -149,7 +150,7 @@ export async function trackGeminiGeneration(
     failure = error;
     throw error;
   } finally {
-    await attempt.record(failure, failure === undefined);
+    after(() => attempt.record(failure, failure === undefined));
   }
 }
 

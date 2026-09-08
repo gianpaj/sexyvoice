@@ -1,4 +1,5 @@
 import { FinishReason, type GenerateContentResponse } from '@google/genai';
+import { after } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { insertUsageEvent } from '@/lib/supabase/queries';
@@ -32,6 +33,10 @@ const response = (
     usageMetadata,
   }) as GenerateContentResponse;
 
+vi.mock('next/server', () => ({
+  after: vi.fn((callback: () => Promise<void>) => callback()),
+}));
+
 beforeEach(() => vi.clearAllMocks());
 
 describe('Gemini token parsing', () => {
@@ -61,7 +66,22 @@ describe('Gemini token parsing', () => {
 });
 
 describe('Gemini provider attempts', () => {
-  it('records tokens and estimated cost before the app consumes the response', async () => {
+  it('returns the response before the deferred insert starts', async () => {
+    let deferred: (() => void | Promise<void>) | undefined;
+    vi.mocked(after).mockImplementationOnce((callback) => {
+      deferred = callback as () => void | Promise<void>;
+    });
+    const result = response({ candidatesTokenCount: 20, promptTokenCount: 10 });
+    await expect(
+      trackGeminiGeneration(context, async () => result),
+    ).resolves.toBe(result);
+    expect(insertUsageEvent).not.toHaveBeenCalled();
+    expect(deferred).toBeTypeOf('function');
+    await deferred?.();
+    expect(insertUsageEvent).toHaveBeenCalledOnce();
+  });
+
+  it('records tokens and estimated cost in the scheduled callback', async () => {
     const result = response({
       candidatesTokenCount: 1000,
       promptTokenCount: 100,

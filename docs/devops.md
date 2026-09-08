@@ -536,7 +536,8 @@ stay NULL. Cost stays NULL unless both input and output counts are available.
 Metadata includes HTTP status, finish/block reason, response ID, and raw usage
 metadata, without prompt text or audio.
 
-Each SDK generation attempt gets one event before audio persistence. Fallbacks
+Each SDK generation attempt schedules one event. Non-streaming inserts run in
+Next.js `after()`; streaming inserts are awaited inside the background task. Fallbacks
 share the application's `request_id` but retain separate model usage. Streaming
 counts are cumulative snapshots, merged by field rather than summed. Google HTTP
 400 and 500 failures are excluded; other errors and HTTP 200 responses without
