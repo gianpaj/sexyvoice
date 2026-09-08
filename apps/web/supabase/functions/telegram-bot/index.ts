@@ -384,6 +384,7 @@ async function generateTodayStats(): Promise<string> {
           .select(
             'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
           )
+          .eq('event_kind', 'customer_usage')
           .gte('occurred_at', sevenDaysAgo.toISOString())
           .lt('occurred_at', now.toISOString())
           .order('occurred_at', { ascending: true })
