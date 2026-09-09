@@ -345,6 +345,7 @@ describe('NewVoiceClient', () => {
           type: 'patch',
         });
       });
+      // The fixture supplies English copy; lang: 'fr' localizes the language name.
       expect(
         screen.getByText('Preparing audio processor for Français...'),
       ).toBeInTheDocument();
