@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, test } from 'vitest';
 
 import { getContributionData } from '../app/api/daily-stats/contribution-queries';
@@ -63,6 +63,53 @@ function database(
 const start = new Date('2026-08-07T00:00:00Z');
 const end = new Date('2026-09-06T00:00:00Z');
 describe('contribution reads', () => {
+  test('serializes contribution and cash filters through the real PostgREST builder', async () => {
+    const requests: URL[] = [];
+    const client = createClient('https://database.example.test', 'test-key', {
+      auth: { autoRefreshToken: false, persistSession: false },
+      global: {
+        fetch: (input) => {
+          requests.push(new URL(input instanceof Request ? input.url : input));
+          return Promise.resolve(
+            new Response('[]', {
+              headers: { 'Content-Type': 'application/json' },
+              status: 200,
+            }),
+          );
+        },
+      },
+    });
+    const internalId = '00000000-0000-0000-0000-000000000001';
+    await getContributionData(client, start, end, [internalId]);
+    await getCreditTransactionsInRange(client, start, end, [internalId]);
+    await getPurchaseTransactionsBefore(client, end, [internalId]);
+    expect(requests).toHaveLength(4);
+    const callQuery = requests.find((url) =>
+      url.pathname.endsWith('/call_sessions'),
+    )?.searchParams;
+    expect(callQuery?.get('or')).toBe(
+      '(and(ended_at.gte.2026-08-07T00:00:00.000Z,ended_at.lt.2026-09-06T00:00:00.000Z),and(ended_at.is.null,started_at.gte.2026-08-07T00:00:00.000Z,started_at.lt.2026-09-06T00:00:00.000Z))',
+    );
+    const cashQueries = requests.filter((url) =>
+      url.pathname.endsWith('/credit_transactions'),
+    );
+    expect(cashQueries).toHaveLength(2);
+    for (const url of cashQueries) {
+      expect(url.searchParams.get('description')).toBe('not.ilike.%manual%');
+      expect(url.searchParams.has('or')).toBe(false);
+      expect(url.searchParams.get('created_at')).toBe(
+        url === cashQueries[0]
+          ? 'gte.2026-08-07T00:00:00.000Z'
+          : 'lt.2026-09-06T00:00:00.000Z',
+      );
+    }
+    for (const url of requests) {
+      expect(url.searchParams.get('user_id')).toBe(`not.in.(${internalId})`);
+      expect(url.searchParams.get('offset')).toBe('0');
+      expect(url.searchParams.get('limit')).toBe('1000');
+    }
+  });
+
   test('paginates events and excludes internal users', async () => {
     const { client, requests } = database((table, ops) => {
       const offset = ops.find(([method]) => method === 'range')?.[1][0];
