@@ -78,7 +78,8 @@ export function CloneAudioInput({
   mic,
   ffmpeg,
   usesVoxtral,
-  selectedLocale,
+  selectedLocaleCode,
+  selectedLocaleName,
   onSelectSample,
   dispatch,
 }: {
@@ -87,7 +88,8 @@ export function CloneAudioInput({
   mic: CloneMic;
   ffmpeg: { error: string | null; loading: boolean };
   usesVoxtral: boolean;
-  selectedLocale: { code: string; value: string };
+  selectedLocaleCode: string;
+  selectedLocaleName: string;
   onSelectSample: (sample: SampleAudio) => void;
   dispatch: Dispatch<CloneStateAction>;
 }) {
@@ -195,12 +197,12 @@ export function CloneAudioInput({
       )}
 
       {/* FFmpeg loading message for non-English locales */}
-      {ffmpeg.loading && selectedLocale.code !== 'en' && (
+      {ffmpeg.loading && selectedLocaleCode !== 'en' && (
         <div className="text-center text-muted-foreground text-xs">
           <span className="flex items-center justify-center gap-2">
             <PulsatingDots />
             {formatCloneMessage(t('preparingAudioProcessor'), {
-              LANGUAGE: selectedLocale.value,
+              LANGUAGE: selectedLocaleName,
             })}
           </span>
         </div>

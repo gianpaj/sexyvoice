@@ -29,7 +29,7 @@ import {
   type RouteErrorDetails,
 } from '@/lib/clone/api-types';
 import {
-  CLONE_LOCALES,
+  CLONE_SUPPORTED_LOCALE_CODES,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import {
@@ -190,12 +190,12 @@ function NewVoiceClientInner({
     micBlob,
     micRecording,
     referenceAudioEnhancementEnabled,
-    selectedLocale,
+    selectedLocaleCode,
     status,
     text,
   } = cloneState;
 
-  const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocale.code);
+  const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocaleCode);
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
@@ -275,15 +275,21 @@ function NewVoiceClientInner({
   });
 
   const supportedLocales = (() => {
-    const codes = Object.keys(CLONE_LOCALES);
-    const translated = getTranslatedLanguages(lang, codes);
-    const merged = translated.map(({ value: code, label }) => ({
+    const translated = getTranslatedLanguages(lang, [
+      ...CLONE_SUPPORTED_LOCALE_CODES,
+    ]);
+    const locales = translated.map(({ value: code, label }) => ({
       code,
       name: label,
-      value: CLONE_LOCALES[code] || code,
     }));
-    return sortByPageLocale(merged, lang);
+    return sortByPageLocale(locales, lang);
   })();
+  const selectedLocaleName =
+    supportedLocales.find(
+      ({ code }) =>
+        code ===
+        (selectedLocaleCode === 'en-multi' ? 'en' : selectedLocaleCode),
+    )?.name ?? selectedLocaleCode;
 
   const onFilesAdded = useCallback(() => {
     dispatch({
@@ -295,7 +301,7 @@ function NewVoiceClientInner({
     });
   }, []);
 
-  const textMaxLength = getCloneTextMaxLength(selectedLocale.code, userHasPaid);
+  const textMaxLength = getCloneTextMaxLength(selectedLocaleCode, userHasPaid);
 
   const [fileState, fileActions] = useFileUpload({
     accept: ALLOWED_TYPES,
@@ -415,7 +421,7 @@ function NewVoiceClientInner({
       const formData = new FormData();
       formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
       formData.append(CLONE_FORM_FIELDS.text, text);
-      formData.append(CLONE_FORM_FIELDS.locale, selectedLocale.code);
+      formData.append(CLONE_FORM_FIELDS.locale, selectedLocaleCode);
       formData.append(
         CLONE_FORM_FIELDS.enhanceReferenceAudio,
         String(referenceAudioEnhancementEnabled),
@@ -543,7 +549,7 @@ function NewVoiceClientInner({
   const onSelectSample = (sample: SampleAudio) => {
     dispatch({
       patch: {
-        selectedLocale: { code: 'en', value: 'english' },
+        selectedLocaleCode: 'en',
         text: sample.prompt,
       },
       type: 'patch',
@@ -615,7 +621,8 @@ function NewVoiceClientInner({
                   status: micStatus,
                 }}
                 onSelectSample={onSelectSample}
-                selectedLocale={selectedLocale}
+                selectedLocaleCode={selectedLocaleCode}
+                selectedLocaleName={selectedLocaleName}
                 usesVoxtral={usesVoxtral}
               />
 
@@ -623,14 +630,14 @@ function NewVoiceClientInner({
                 <CloneLanguageSelect
                   disabled={status === 'generating'}
                   dispatch={dispatch}
-                  selectedLocale={selectedLocale}
+                  selectedLocaleCode={selectedLocaleCode}
                   supportedLocales={supportedLocales}
                 />
 
                 <CloneTextField
                   disabled={status === 'generating'}
                   dispatch={dispatch}
-                  locale={selectedLocale.code}
+                  locale={selectedLocaleCode}
                   text={text}
                   textMaxLength={textMaxLength}
                   userHasPaid={userHasPaid}

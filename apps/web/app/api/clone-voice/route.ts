@@ -21,8 +21,8 @@ import {
   type RouteErrorDetails,
 } from '@/lib/clone/api-types';
 import {
-  CHATTERBOX_CLONE_LOCALES,
-  CLONE_LOCALES,
+  CHATTERBOX_SUPPORTED_LOCALE_CODES,
+  CLONE_SUPPORTED_LOCALE_CODES,
   type CloneProvider,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
@@ -608,9 +608,9 @@ function validateReferenceAudioEnhancementInput(
 }
 
 function validateLocale(locale: string): void {
-  if (!Object.hasOwn(CLONE_LOCALES, locale)) {
+  if (!CLONE_SUPPORTED_LOCALE_CODES.has(locale)) {
     throw createRouteError(
-      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${Object.keys(CLONE_LOCALES).join(', ')}`,
+      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${[...CLONE_SUPPORTED_LOCALE_CODES].join(', ')}`,
       400,
       'errors.unsupportedLocale',
       { locale },
@@ -995,7 +995,7 @@ async function cloneVoiceWithReplicate(
   audioReferenceUrl: string,
 ): Promise<{ blob: Blob; modelUsed: string; requestId: string }> {
   const language = locale === 'en-multi' ? 'en' : locale;
-  if (!Object.hasOwn(CHATTERBOX_CLONE_LOCALES, language)) {
+  if (!CHATTERBOX_SUPPORTED_LOCALE_CODES.has(language)) {
     throw new Error(`Unsupported locale: ${locale}`);
   }
 

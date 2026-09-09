@@ -7,18 +7,20 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
-import { CLONE_LOCALES } from '@/lib/clone/constants';
+import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 const {
   fetchMock,
   mockEnsureLoaded,
+  mockFFmpegState,
   mockLanguageSelect,
   mockToastError,
   mockToastSuccess,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
+  mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
@@ -52,7 +54,7 @@ vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({
     convert: vi.fn(),
     ensureLoaded: mockEnsureLoaded,
-    isLoading: false,
+    isLoading: mockFFmpegState.isLoading,
   }),
 }));
 
@@ -113,14 +115,6 @@ vi.mock('@/hooks/use-media-recorder', () => ({
 
 vi.mock('@/lib/download', () => ({
   downloadUrl: vi.fn(),
-}));
-
-vi.mock('@/lib/i18n/get-translated-languages', () => ({
-  getTranslatedLanguages: (_lang: string, codes: string[]) =>
-    codes.map((code) => ({
-      label: code.toUpperCase(),
-      value: code,
-    })),
 }));
 
 const errorCodesDict = {
@@ -257,6 +251,7 @@ const renderedLocaleCodes = () => {
 describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFFmpegState.isLoading = false;
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
@@ -281,10 +276,10 @@ describe('NewVoiceClient', () => {
     const input = screen.getByTestId('clone-text-input');
     expect(input).toHaveAttribute('dir', 'ltr');
 
-    for (const [code, value] of Object.entries(CLONE_LOCALES)) {
+    for (const code of CLONE_SUPPORTED_LOCALE_CODES) {
       act(() => {
         mockLanguageSelect.mock.lastCall?.[0].dispatch({
-          patch: { selectedLocale: { code, value } },
+          patch: { selectedLocaleCode: code },
           type: 'patch',
         });
       });
@@ -296,13 +291,35 @@ describe('NewVoiceClient', () => {
 
     act(() => {
       mockLanguageSelect.mock.lastCall?.[0].dispatch({
-        patch: { selectedLocale: { code: 'en', value: 'english' } },
+        patch: { selectedLocaleCode: 'en' },
         type: 'patch',
       });
     });
     expect(input).toHaveAttribute('dir', 'ltr');
     expect(input).toHaveValue('');
   });
+
+  it.each([
+    ['fr', 'Français'],
+    ['en-multi', 'Anglais'],
+  ])(
+    'uses the translated name for %s in the audio loading message',
+    (code, name) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+
+      expect(
+        screen.getByText(`Preparing audio processor for ${name}...`),
+      ).toBeInTheDocument();
+    },
+  );
 
   it('lists the page locale first in the language select', () => {
     renderClone({ lang: 'it' });
@@ -315,7 +332,7 @@ describe('NewVoiceClient', () => {
 
     const codes = renderedLocaleCodes();
     expect(codes).toHaveLength(new Set(codes).size);
-    expect([...codes].sort()).toEqual(Object.keys(CLONE_LOCALES).sort());
+    expect([...codes].sort()).toEqual([...CLONE_SUPPORTED_LOCALE_CODES].sort());
     expect(codes).toContain('en');
     expect(codes).toContain('es');
   });
