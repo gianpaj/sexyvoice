@@ -20,14 +20,32 @@ describe('clone locales', () => {
     },
   );
   it('combines both models and the explicit English Chatterbox option', () => {
-    const expectedCodes = new Set([
-      ...VOXTRAL_SUPPORTED_LOCALE_CODES,
-      ...CHATTERBOX_SUPPORTED_LOCALE_CODES,
+    expect([...CLONE_SUPPORTED_LOCALE_CODES].sort()).toEqual([
+      'ar',
+      'da',
+      'de',
+      'el',
+      'en',
       'en-multi',
+      'es',
+      'fi',
+      'fr',
+      'he',
+      'hi',
+      'it',
+      'ja',
+      'ko',
+      'ms',
+      'nl',
+      'no',
+      'pl',
+      'pt',
+      'ru',
+      'sv',
+      'sw',
+      'tr',
+      'zh',
     ]);
-    expect(CLONE_SUPPORTED_LOCALE_CODES).toEqual(expectedCodes);
-    expect(expectedCodes.size).toBe(24);
-    expect(CLONE_SUPPORTED_LOCALE_CODES.has('en-multi')).toBe(true);
     expect(VOXTRAL_SUPPORTED_LOCALE_CODES.has('en')).toBe(true);
     expect(VOXTRAL_SUPPORTED_LOCALE_CODES.has('en-multi')).toBe(false);
   });
