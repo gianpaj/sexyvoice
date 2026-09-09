@@ -206,7 +206,7 @@ describe('call supplementation', () => {
     status: 'completed',
     user_id: 'free',
   };
-  test('estimates a short call without inventing consumed credits', () => {
+  test('estimates a short call from its stored duration', () => {
     const result = summarizeContribution(
       { ...data(), calls: [call] },
       [],
