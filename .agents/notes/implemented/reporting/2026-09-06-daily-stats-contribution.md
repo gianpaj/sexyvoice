@@ -1,6 +1,6 @@
 # Daily stats usage contribution
 
-Lifecycle: proposed; implementation in the working tree, not shipped.
+Lifecycle: implemented.
 
 The report compares collections after cash refunds against measured usage for
 paid and free customers. Definitions and limits live in

@@ -1,6 +1,6 @@
 # Daily usage costs and contribution
 
-Status: proposed implementation plan. No runtime changes are included.
+Status: implemented in SexyVoice. The admin handoff remains a follow-up.
 
 ## Outcome
 
