@@ -360,6 +360,16 @@ describe('call supplementation', () => {
       end,
     );
     expect(result.bases.recorded).toBe(0);
+    expect(result.callCost).toBeCloseTo((5 / 60) * 0.05, 10);
+  });
+  test('uses the end time rather than the start time for finalized calls', () => {
+    const result = summarizeContribution(
+      { ...data(), calls: [{ ...call, ended_at: end.toISOString() }] },
+      [],
+      start,
+      end,
+    );
+    expect(result.callCost).toBe(0);
   });
 });
 describe('cost provenance', () => {
