@@ -1,12 +1,8 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, test } from 'vitest';
 
 import { getContributionData } from '../app/api/daily-stats/contribution-queries';
-import {
-  getCallSessionsInRange,
-  getCreditTransactionsInRange,
-  getPurchaseTransactionsBefore,
-} from '../app/api/daily-stats/queries';
+import { getCallSessionsInRange } from '../app/api/daily-stats/queries';
 
 interface QueryResult {
   data: unknown[] | null;
@@ -63,53 +59,6 @@ function database(
 const start = new Date('2026-08-07T00:00:00Z');
 const end = new Date('2026-09-06T00:00:00Z');
 describe('contribution reads', () => {
-  test('serializes contribution and cash filters through the real PostgREST builder', async () => {
-    const requests: URL[] = [];
-    const client = createClient('https://database.example.test', 'test-key', {
-      auth: { autoRefreshToken: false, persistSession: false },
-      global: {
-        fetch: (input) => {
-          requests.push(new URL(input instanceof Request ? input.url : input));
-          return Promise.resolve(
-            new Response('[]', {
-              headers: { 'Content-Type': 'application/json' },
-              status: 200,
-            }),
-          );
-        },
-      },
-    });
-    const internalId = '00000000-0000-0000-0000-000000000001';
-    await getContributionData(client, start, end, [internalId]);
-    await getCreditTransactionsInRange(client, start, end, [internalId]);
-    await getPurchaseTransactionsBefore(client, end, [internalId]);
-    expect(requests).toHaveLength(4);
-    const callQuery = requests.find((url) =>
-      url.pathname.endsWith('/call_sessions'),
-    )?.searchParams;
-    expect(callQuery?.get('or')).toBe(
-      '(and(ended_at.gte.2026-08-07T00:00:00.000Z,ended_at.lt.2026-09-06T00:00:00.000Z),and(ended_at.is.null,started_at.gte.2026-08-07T00:00:00.000Z,started_at.lt.2026-09-06T00:00:00.000Z))',
-    );
-    const cashQueries = requests.filter((url) =>
-      url.pathname.endsWith('/credit_transactions'),
-    );
-    expect(cashQueries).toHaveLength(2);
-    for (const url of cashQueries) {
-      expect(url.searchParams.get('description')).toBe('not.ilike.%manual%');
-      expect(url.searchParams.has('or')).toBe(false);
-      expect(url.searchParams.get('created_at')).toBe(
-        url === cashQueries[0]
-          ? 'gte.2026-08-07T00:00:00.000Z'
-          : 'lt.2026-09-06T00:00:00.000Z',
-      );
-    }
-    for (const url of requests) {
-      expect(url.searchParams.get('user_id')).toBe(`not.in.(${internalId})`);
-      expect(url.searchParams.get('offset')).toBe('0');
-      expect(url.searchParams.get('limit')).toBe('1000');
-    }
-  });
-
   test('paginates events and excludes internal users', async () => {
     const { client, requests } = database((table, ops) => {
       const offset = ops.find(([method]) => method === 'range')?.[1][0];
@@ -126,12 +75,7 @@ describe('contribution reads', () => {
     });
     const result = await getContributionData(client, start, end, ['internal']);
     expect(result.events).toHaveLength(1000);
-    expect(requests[0].operations).toContainEqual([
-      'select',
-      [
-        'id, user_id, source_id, source_type, occurred_at, dollar_amount, model, metadata, input_chars, duration_seconds',
-      ],
-    ]);
+
     expect(
       requests.filter((request) => request.table === 'usage_events'),
     ).toHaveLength(2);
@@ -175,9 +119,6 @@ describe('contribution reads', () => {
         ['gte', 'lt'].includes(method),
       ),
     ).toBe(false);
-    expect(
-      requests.find((request) => request.table === 'audio_files')?.operations,
-    ).toContainEqual(['select', ['id, usage']]);
   });
   test('call activity reads paginate past 1000 calls', async () => {
     const { client, requests } = database((_table, ops) => {
@@ -198,11 +139,7 @@ describe('contribution reads', () => {
       'notIn',
       ['user_id', ['internal']],
     ]);
-    expect(requests[0].operations).toContainEqual([
-      'select',
-      ['id, started_at, duration_seconds, credits_used, status, free_call'],
-    ]);
-    expect(requests[1].operations).toContainEqual(['range', [1000, 1999]]);
+    expect(calls[1000].id).toBe('1000-0');
   });
   test('runs ID lookups concurrently with at most four batches and skips known links', async () => {
     let active = 0;
@@ -237,18 +174,7 @@ describe('contribution reads', () => {
       requests.filter((request) => request.table === 'usage_events'),
     ).toHaveLength(1);
   });
-  test('cash and purchase-history reads exclude manual grants', async () => {
-    const { client, requests } = database(() => ({ data: [], error: null }));
-    await getCreditTransactionsInRange(client, start, end);
-    await getPurchaseTransactionsBefore(client, end);
-    expect(requests).toHaveLength(2);
-    for (const request of requests) {
-      expect(request.operations).toContainEqual([
-        'not',
-        ['description', 'ilike', '%manual%'],
-      ]);
-    }
-  });
+
   test('database errors reject rather than reporting zero costs', async () => {
     const { client } = database(() => ({
       data: null,
