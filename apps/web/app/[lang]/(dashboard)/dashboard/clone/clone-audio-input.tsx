@@ -196,8 +196,7 @@ export function CloneAudioInput({
         </div>
       )}
 
-      {/* FFmpeg loading message for non-English locales */}
-      {ffmpeg.loading && selectedLocaleCode !== 'en' && (
+      {ffmpeg.loading && usesVoxtral && selectedLocaleCode !== 'en' && (
         <div className="text-center text-muted-foreground text-xs">
           <span className="flex items-center justify-center gap-2">
             <PulsatingDots />

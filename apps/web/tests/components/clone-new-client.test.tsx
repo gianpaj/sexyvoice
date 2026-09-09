@@ -299,10 +299,7 @@ describe('NewVoiceClient', () => {
     expect(input).toHaveValue('');
   });
 
-  it.each([
-    ['fr', 'Français'],
-    ['en-multi', 'Anglais'],
-  ])(
+  it.each([['fr', 'Français']])(
     'uses the translated name for %s in the audio loading message',
     (code, name) => {
       mockFFmpegState.isLoading = true;
@@ -318,6 +315,34 @@ describe('NewVoiceClient', () => {
       expect(
         screen.getByText(`Preparing audio processor for ${name}...`),
       ).toBeInTheDocument();
+    },
+  );
+
+  it.each(['zh', 'ja', 'en-multi', 'en'])(
+    'hides the preparation message when switching from French to %s',
+    (code) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: 'fr' },
+          type: 'patch',
+        });
+      });
+      expect(
+        screen.getByText('Preparing audio processor for Français...'),
+      ).toBeInTheDocument();
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(
+        screen.queryByText(/Preparing audio processor for/),
+      ).not.toBeInTheDocument();
     },
   );
 
