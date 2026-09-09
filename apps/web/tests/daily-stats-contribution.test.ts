@@ -62,6 +62,7 @@ describe('cash contribution', () => {
       end,
     );
     expect(result.contribution).toBe(60);
+    expect(result.contributionAlert).toBe(false);
     expect(result.coverage).toBe(5);
     expect(formatContribution('Yesterday', result).join('\n')).toContain(
       '5.00x',
@@ -93,6 +94,7 @@ describe('cash contribution', () => {
       const result = summarizeContribution(data(events), [], start, end);
       expect(result.incomplete).toBe(unknownCount > 0);
       expect(result.coverageAlert).toBe(unknownCount > 5);
+      expect(result.contributionAlert).toBe(unknownCount <= 5);
       if (unknownCount > 0) expect(result.coverage).toBeNull();
     },
   );
@@ -151,6 +153,7 @@ describe('cash contribution', () => {
       end,
     );
     expect(result.netCollections).toBe(100);
+    expect(result.contributionAlert).toBe(false);
     expect(result.coverage).toBeNull();
   });
   test('missing costs and identities make coverage incomplete', () => {

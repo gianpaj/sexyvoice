@@ -150,6 +150,7 @@ export function summarizeContribution(
     bases,
     callCost,
     contribution: netCollections - totalCost,
+    contributionAlert: !coverageAlert && netCollections < totalCost,
     coverage:
       incomplete || totals.free === 0
         ? null

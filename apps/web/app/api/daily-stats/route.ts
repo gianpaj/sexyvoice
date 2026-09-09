@@ -1309,7 +1309,7 @@ export async function GET(request: NextRequest) {
     contributionYesterday.coverageAlert
       ? 'Usage cost coverage is incomplete'
       : null,
-    !contributionYesterday.incomplete && contributionYesterday.contribution < 0
+    contributionYesterday.contributionAlert
       ? 'Measured usage costs exceeded net collections yesterday'
       : null,
     totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
