@@ -680,6 +680,7 @@
     "generating": "Genererer",
     "languageLabel": "Sprog",
     "languageSelectPlaceholder": "Vælg et sprog",
+    "englishChatterbox": "Engelsk (Chatterbox)",
     "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
     "playAudio": "Afspil lyd",
     "previewTitle": "Forhåndsvisning af genereret stemme",

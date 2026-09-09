@@ -281,7 +281,7 @@ function NewVoiceClientInner({
     ]);
     const locales = translated.map(({ value: code, label }) => ({
       code,
-      name: label,
+      name: code === 'en-multi' ? t('englishChatterbox') : label,
     }));
     return sortByPageLocale(locales, lang);
   })();

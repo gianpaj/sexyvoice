@@ -2,13 +2,19 @@
 import '@testing-library/jest-dom/vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NextIntlClientProvider } from 'next-intl';
+import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
 import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import daMessages from '@/messages/da.json';
+import deMessages from '@/messages/de.json';
+import enMessages from '@/messages/en.json';
+import esMessages from '@/messages/es.json';
+import frMessages from '@/messages/fr.json';
+import itMessages from '@/messages/it.json';
 
 const {
   fetchMock,
@@ -141,6 +147,7 @@ const dict = {
   ctaButton: 'Generate Audio',
   downloadAudio: 'Download Audio',
   dragDropText: 'Drag & drop or click to browse',
+  englishChatterbox: 'English (Chatterbox)',
   errorCloning: 'Failed to clone voice',
   errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errors: {
@@ -223,6 +230,7 @@ const dict = {
 
 const renderClone = (
   props: {
+    cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
     lang?: Locale;
     userHasPaid?: boolean;
@@ -231,7 +239,10 @@ const renderClone = (
   render(
     <NextIntlClientProvider
       locale="es"
-      messages={{ clone: dict, errorCodes: errorCodesDict }}
+      messages={{
+        clone: props.cloneMessages ?? dict,
+        errorCodes: errorCodesDict,
+      }}
     >
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
@@ -351,6 +362,30 @@ describe('NewVoiceClient', () => {
 
     expect(renderedLocaleCodes()[0]).toBe('it');
   });
+
+  it.each([
+    ['en', enMessages, 'English (Chatterbox)'],
+    ['es', esMessages, 'Inglés (Chatterbox)'],
+    ['de', deMessages, 'Englisch (Chatterbox)'],
+    ['da', daMessages, 'Engelsk (Chatterbox)'],
+    ['it', itMessages, 'Inglese (Chatterbox)'],
+    ['fr', frMessages, 'Anglais (Chatterbox)'],
+  ] as const)(
+    'labels Chatterbox English distinctly in %s',
+    (lang, messages, name) => {
+      renderClone({ cloneMessages: messages.clone, lang });
+
+      const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+        supportedLocales: { code: string; name: string }[];
+      };
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en-multi')?.name,
+      ).toBe(name);
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en')?.name,
+      ).not.toBe(name);
+    },
+  );
 
   it('keeps every supported locale when the page locale is hoisted', () => {
     renderClone({ lang: 'it' });
