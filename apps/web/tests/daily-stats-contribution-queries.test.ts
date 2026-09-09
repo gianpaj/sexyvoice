@@ -5,6 +5,7 @@ import { getContributionData } from '../app/api/daily-stats/contribution-queries
 import {
   getCallSessionsInRange,
   getCreditTransactionsInRange,
+  getPurchaseTransactionsBefore,
 } from '../app/api/daily-stats/queries';
 
 interface QueryResult {
@@ -32,6 +33,7 @@ function database(
         'gte',
         'lt',
         'notIn',
+        'not',
         'or',
         'order',
         'range',
@@ -188,13 +190,17 @@ describe('contribution reads', () => {
       requests.filter((request) => request.table === 'usage_events'),
     ).toHaveLength(1);
   });
-  test('cash reads retain null descriptions while excluding manual grants', async () => {
+  test('cash and purchase-history reads exclude manual grants', async () => {
     const { client, requests } = database(() => ({ data: [], error: null }));
     await getCreditTransactionsInRange(client, start, end);
-    expect(requests[0].operations).toContainEqual([
-      'or',
-      ['description.is.null,description.not.ilike.%manual%'],
-    ]);
+    await getPurchaseTransactionsBefore(client, end);
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect(request.operations).toContainEqual([
+        'not',
+        ['description', 'ilike', '%manual%'],
+      ]);
+    }
   });
   test('database errors reject rather than reporting zero costs', async () => {
     const { client } = database(() => ({

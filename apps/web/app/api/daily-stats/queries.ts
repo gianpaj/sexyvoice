@@ -186,7 +186,7 @@ export function getCreditTransactionsInRange(
         'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
       )
       .in('type', ['purchase', 'topup', 'refund'])
-      .or('description.is.null,description.not.ilike.%manual%')
+      .not('description', 'ilike', '%manual%')
       .gte('created_at', start.toISOString())
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
@@ -215,7 +215,7 @@ export function getPurchaseTransactionsBefore(
         'id, user_id, created_at, type, description, amount, metadata, profiles(username)',
       )
       .in('type', ['purchase', 'topup'])
-      .or('description.is.null,description.not.ilike.%manual%')
+      .not('description', 'ilike', '%manual%')
       .lt('created_at', end.toISOString());
     if (excludeUserIds.length > 0) {
       query = query.notIn('user_id', excludeUserIds);

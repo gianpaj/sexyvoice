@@ -86,7 +86,7 @@ function cash(transaction: CreditTransaction): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 function eligible(transaction: CreditTransaction) {
-  return !transaction.description?.toLowerCase().includes('manual');
+  return !transaction.description.toLowerCase().includes('manual');
 }
 export function summarizeContribution(
   data: ContributionData,
