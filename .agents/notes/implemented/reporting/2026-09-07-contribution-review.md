@@ -1,6 +1,6 @@
 # Contribution review
 
-Lifecycle: proposed; changes are in the working tree.
+Lifecycle: implemented.
 
 Coverage remains incomplete for any unpriced or unclassified record. The alert
 uses a separate threshold of more than 5% unpriced records, or any unclassified
