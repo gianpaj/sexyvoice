@@ -281,10 +281,13 @@ describe('NewVoiceClient', () => {
     vi.unstubAllGlobals();
   });
 
-  it('updates text direction for every supported language and back to English', () => {
+  it('updates text direction without clearing text when switching languages', async () => {
+    const user = userEvent.setup();
     renderClone();
 
     const input = screen.getByTestId('clone-text-input');
+    const text = 'Keep this text when switching languages.';
+    await user.type(input, text);
     expect(input).toHaveAttribute('dir', 'ltr');
 
     for (const code of CLONE_SUPPORTED_LOCALE_CODES) {
@@ -298,6 +301,7 @@ describe('NewVoiceClient', () => {
         'dir',
         code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
       );
+      expect(input).toHaveValue(text);
     }
 
     act(() => {
@@ -307,7 +311,7 @@ describe('NewVoiceClient', () => {
       });
     });
     expect(input).toHaveAttribute('dir', 'ltr');
-    expect(input).toHaveValue('');
+    expect(input).toHaveValue(text);
   });
 
   it.each([['fr', 'Français']])(
