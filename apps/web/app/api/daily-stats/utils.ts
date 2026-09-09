@@ -10,6 +10,13 @@ interface MetadataWithDollarAmount {
   dollarAmount?: number;
 }
 
+// Matches the admin dashboard's completed-call metric.
+export function isCompletedUserCall(
+  call: Pick<Tables<'call_sessions'>, 'status' | 'duration_seconds'>,
+): boolean {
+  return call.status === 'completed' && call.duration_seconds > 10;
+}
+
 // Helper to time individual queries
 export const _timed = async <T>(
   label: string,

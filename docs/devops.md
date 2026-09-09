@@ -562,3 +562,11 @@ When environment or deployment behavior changes:
 
 Keeping these docs synchronized prevents setup drift between development,
 deployment, and operational troubleshooting.
+
+## Daily stats troubleshooting
+
+The production `/api/daily-stats` handler delivers a Telegram message. Use the
+focused tests or read-only queries for verification. Contribution inputs bypass
+the local activity cache; database failures abort the report instead of showing
+zero usage. Reporting definitions and test commands are in the
+[daily-stats README](../apps/web/app/api/daily-stats/README.md).
