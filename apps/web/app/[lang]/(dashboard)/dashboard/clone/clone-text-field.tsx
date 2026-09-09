@@ -23,7 +23,7 @@ import { type CloneStateAction, formatCloneMessage } from './clone-state';
 
 export function CloneTextField({
   disabled,
-  locale,
+  selectedLocaleCode,
   text,
   textMaxLength,
   usesVoxtral,
@@ -31,7 +31,7 @@ export function CloneTextField({
   dispatch,
 }: {
   disabled: boolean;
-  locale: string;
+  selectedLocaleCode: string;
   text: string;
   textMaxLength: number;
   usesVoxtral: boolean;
@@ -53,7 +53,7 @@ export function CloneTextField({
           <Textarea
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             data-testid="clone-text-input"
-            dir={RTL_CLONE_LOCALE_CODES.has(locale) ? 'rtl' : 'ltr'}
+            dir={RTL_CLONE_LOCALE_CODES.has(selectedLocaleCode) ? 'rtl' : 'ltr'}
             disabled={disabled}
             id="text-to-convert"
             maxLength={textMaxLength + CHARACTERS_LIMIT_GRACE}

@@ -636,7 +636,7 @@ function NewVoiceClientInner({
                 <CloneTextField
                   disabled={status === 'generating'}
                   dispatch={dispatch}
-                  locale={selectedLocaleCode}
+                  selectedLocaleCode={selectedLocaleCode}
                   text={text}
                   textMaxLength={textMaxLength}
                   userHasPaid={userHasPaid}
