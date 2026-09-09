@@ -46,6 +46,9 @@ export const CLONE_SUPPORTED_LOCALE_CODES = new Set([
   'en-multi',
 ]);
 
+export const resolveBaseCloneLocale = (code: string) =>
+  code === 'en-multi' ? 'en' : code;
+
 export const RTL_CLONE_LOCALE_CODES = new Set(['ar', 'he']);
 
 export const CLONE_TEXT_MAX_LENGTH_NON_VOXTRAL = 300;

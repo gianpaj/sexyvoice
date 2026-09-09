@@ -24,6 +24,7 @@ import {
   CHATTERBOX_SUPPORTED_LOCALE_CODES,
   CLONE_SUPPORTED_LOCALE_CODES,
   type CloneProvider,
+  resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
@@ -994,7 +995,7 @@ async function cloneVoiceWithReplicate(
   locale: string,
   audioReferenceUrl: string,
 ): Promise<{ blob: Blob; modelUsed: string; requestId: string }> {
-  const language = locale === 'en-multi' ? 'en' : locale;
+  const language = resolveBaseCloneLocale(locale);
   if (!CHATTERBOX_SUPPORTED_LOCALE_CODES.has(language)) {
     throw new Error(`Unsupported locale: ${locale}`);
   }

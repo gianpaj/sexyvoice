@@ -4,10 +4,21 @@ import {
   CHATTERBOX_SUPPORTED_LOCALE_CODES,
   CLONE_SUPPORTED_LOCALE_CODES,
   RTL_CLONE_LOCALE_CODES,
+  resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 
 describe('clone locales', () => {
+  it('resolves the explicit English Chatterbox option to English', () => {
+    expect(resolveBaseCloneLocale('en-multi')).toBe('en');
+  });
+
+  it.each([...CHATTERBOX_SUPPORTED_LOCALE_CODES])(
+    'preserves the base locale %s',
+    (code) => {
+      expect(resolveBaseCloneLocale(code)).toBe(code);
+    },
+  );
   it('combines both models and the explicit English Chatterbox option', () => {
     const expectedCodes = new Set([
       ...VOXTRAL_SUPPORTED_LOCALE_CODES,

@@ -30,6 +30,7 @@ import {
 } from '@/lib/clone/api-types';
 import {
   CLONE_SUPPORTED_LOCALE_CODES,
+  resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import {
@@ -286,9 +287,7 @@ function NewVoiceClientInner({
   })();
   const selectedLocaleName =
     supportedLocales.find(
-      ({ code }) =>
-        code ===
-        (selectedLocaleCode === 'en-multi' ? 'en' : selectedLocaleCode),
+      ({ code }) => code === resolveBaseCloneLocale(selectedLocaleCode),
     )?.name ?? selectedLocaleCode;
 
   const onFilesAdded = useCallback(() => {
