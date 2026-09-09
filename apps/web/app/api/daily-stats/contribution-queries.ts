@@ -33,7 +33,7 @@ export async function getContributionData(
       let query = client
         .from('usage_events')
         .select(
-          'id, user_id, source_id, source_type, occurred_at, credits_used, dollar_amount, model, metadata, input_chars, duration_seconds',
+          'id, user_id, source_id, source_type, occurred_at, dollar_amount, model, metadata, input_chars, duration_seconds',
         )
         .gte('occurred_at', start.toISOString())
         .lt('occurred_at', end.toISOString());

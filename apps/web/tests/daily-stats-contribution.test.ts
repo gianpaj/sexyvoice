@@ -19,7 +19,6 @@ const start = new Date('2026-09-05T00:00:00Z');
 const end = new Date('2026-09-06T00:00:00Z');
 function event(overrides: Partial<UsageEvent> = {}): UsageEvent {
   return {
-    credits_used: 100,
     dollar_amount: 15,
     duration_seconds: null,
     id: 'event',

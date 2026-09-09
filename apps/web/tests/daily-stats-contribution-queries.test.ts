@@ -77,6 +77,12 @@ describe('contribution reads', () => {
     });
     const result = await getContributionData(client, start, end, ['internal']);
     expect(result.events).toHaveLength(1000);
+    expect(requests[0].operations).toContainEqual([
+      'select',
+      [
+        'id, user_id, source_id, source_type, occurred_at, dollar_amount, model, metadata, input_chars, duration_seconds',
+      ],
+    ]);
     expect(
       requests.filter((request) => request.table === 'usage_events'),
     ).toHaveLength(2);

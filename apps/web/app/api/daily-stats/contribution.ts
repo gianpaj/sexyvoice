@@ -7,10 +7,7 @@ import {
 import { classifyRefund } from './utils';
 
 export type UsageEvent = UsageEventCostInput &
-  Pick<
-    Tables<'usage_events'>,
-    'credits_used' | 'id' | 'occurred_at' | 'source_id' | 'user_id'
-  >;
+  Pick<Tables<'usage_events'>, 'id' | 'occurred_at' | 'source_id' | 'user_id'>;
 
 export type CallSession = Pick<
   Tables<'call_sessions'>,
