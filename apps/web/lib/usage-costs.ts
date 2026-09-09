@@ -36,7 +36,7 @@ const CALL_RATES: Record<string, number> = {
   'grok-voice-think-fast-1.0': 0.05,
   'grok-voice-think-fast-2.0': 0.08,
 };
-const GEMINI_MODELS = new Set([
+export const GEMINI_MODELS = new Set([
   'gemini-2.5-flash-preview-tts',
   'gemini-2.5-pro-preview-tts',
   'gemini-3.1-flash-tts-preview',
@@ -86,16 +86,16 @@ export function resolveUsageCost(
     output !== null &&
     output > 0
   ) {
-    return {
-      amount: calculateGenerateApiDollarAmount({
-        candidatesTokenCount: output,
-        model,
-        promptTokenCount: input,
-        provider: 'google',
-        sourceType: event.source_type === 'api_tts' ? 'api_tts' : 'tts',
-      }),
-      basis: 'estimated',
-    };
+    const amount = calculateGenerateApiDollarAmount({
+      candidatesTokenCount: output,
+      model,
+      promptTokenCount: input,
+      provider: 'google',
+      sourceType: event.source_type === 'api_tts' ? 'api_tts' : 'tts',
+    });
+    if (Number.isFinite(amount) && amount > 0) {
+      return { amount, basis: 'estimated' };
+    }
   }
   // Missing provider dimensions and sentinel costs must not look like free usage.
   return { amount: 0, basis: 'unknown' };

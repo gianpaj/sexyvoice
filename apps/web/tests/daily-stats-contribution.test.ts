@@ -11,6 +11,7 @@ import {
 import * as pricing from '../lib/api/pricing';
 import {
   type CallSessionCostInput,
+  GEMINI_MODELS,
   resolveUsageCost,
 } from '../lib/usage-costs';
 
@@ -362,6 +363,39 @@ describe('call supplementation', () => {
   });
 });
 describe('cost provenance', () => {
+  test.each([...GEMINI_MODELS])('%s has positive Gemini pricing', (model) => {
+    for (const source_type of ['tts', 'api_tts'] as const) {
+      const result = resolveUsageCost(
+        event({ dollar_amount: null, model, source_type }),
+        undefined,
+        { candidatesTokenCount: 1000, promptTokenCount: 100 },
+      );
+      expect(result.basis).toBe('estimated');
+      expect(result.amount).toBeGreaterThan(0);
+    }
+  });
+  test.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'invalid Gemini price %s stays unknown',
+    (amount) => {
+      const spy = vi
+        .spyOn(pricing, 'calculateGenerateApiDollarAmount')
+        .mockReturnValue(amount);
+      try {
+        expect(
+          resolveUsageCost(
+            event({
+              dollar_amount: null,
+              model: 'gemini-2.5-pro-preview-tts',
+            }),
+            undefined,
+            { candidatesTokenCount: 1000, promptTokenCount: 100 },
+          ),
+        ).toEqual({ amount: 0, basis: 'unknown' });
+      } finally {
+        spy.mockRestore();
+      }
+    },
+  );
   test.each([null, 0, -1, Number.NaN])(
     'unsupported cost %s stays unknown',
     (dollar_amount) => {
