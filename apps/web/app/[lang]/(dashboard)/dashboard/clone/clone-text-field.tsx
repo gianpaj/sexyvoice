@@ -13,13 +13,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID } from '@/lib/clone/constants';
+import {
+  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
+  RTL_CLONE_LOCALE_CODES,
+} from '@/lib/clone/constants';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { type CloneStateAction, formatCloneMessage } from './clone-state';
 
 export function CloneTextField({
   disabled,
+  locale,
   text,
   textMaxLength,
   usesVoxtral,
@@ -27,6 +31,7 @@ export function CloneTextField({
   dispatch,
 }: {
   disabled: boolean;
+  locale: string;
   text: string;
   textMaxLength: number;
   usesVoxtral: boolean;
@@ -48,6 +53,7 @@ export function CloneTextField({
           <Textarea
             className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             data-testid="clone-text-input"
+            dir={RTL_CLONE_LOCALE_CODES.has(locale) ? 'rtl' : 'ltr'}
             disabled={disabled}
             id="text-to-convert"
             maxLength={textMaxLength + CHARACTERS_LIMIT_GRACE}

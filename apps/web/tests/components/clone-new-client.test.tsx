@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
+import { CLONE_LOCALES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
 const {
@@ -274,6 +275,35 @@ describe('NewVoiceClient', () => {
     vi.unstubAllGlobals();
   });
 
+  it('updates text direction for every supported language and back to English', () => {
+    renderClone();
+
+    const input = screen.getByTestId('clone-text-input');
+    expect(input).toHaveAttribute('dir', 'ltr');
+
+    for (const [code, value] of Object.entries(CLONE_LOCALES)) {
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocale: { code, value } },
+          type: 'patch',
+        });
+      });
+      expect(input).toHaveAttribute(
+        'dir',
+        code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
+      );
+    }
+
+    act(() => {
+      mockLanguageSelect.mock.lastCall?.[0].dispatch({
+        patch: { selectedLocale: { code: 'en', value: 'english' } },
+        type: 'patch',
+      });
+    });
+    expect(input).toHaveAttribute('dir', 'ltr');
+    expect(input).toHaveValue('');
+  });
+
   it('lists the page locale first in the language select', () => {
     renderClone({ lang: 'it' });
 
@@ -285,6 +315,7 @@ describe('NewVoiceClient', () => {
 
     const codes = renderedLocaleCodes();
     expect(codes).toHaveLength(new Set(codes).size);
+    expect([...codes].sort()).toEqual(Object.keys(CLONE_LOCALES).sort());
     expect(codes).toContain('en');
     expect(codes).toContain('es');
   });

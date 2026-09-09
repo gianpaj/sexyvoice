@@ -28,7 +28,10 @@ import {
   type CloneSuccessResponse,
   type RouteErrorDetails,
 } from '@/lib/clone/api-types';
-import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import {
+  CLONE_LOCALES,
+  VOXTRAL_SUPPORTED_LOCALE_CODES,
+} from '@/lib/clone/constants';
 import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
@@ -55,33 +58,6 @@ export type { Status } from './clone-state';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
-
-const SUPPORTED_LOCALE_CODES: Record<string, string> = {
-  ar: 'arabic',
-  da: 'danish',
-  de: 'german',
-  el: 'greek',
-  en: 'english',
-  'en-multi': 'english',
-  es: 'spanish',
-  fi: 'finnish',
-  fr: 'french',
-  he: 'hebrew',
-  hi: 'hindi',
-  it: 'italian',
-  ja: 'japanese',
-  ko: 'korean',
-  ms: 'malay',
-  nl: 'dutch',
-  no: 'norwegian',
-  pl: 'polish',
-  pt: 'portuguese',
-  ru: 'russian',
-  sv: 'swedish',
-  sw: 'swahili',
-  tr: 'turkish',
-  zh: 'chinese',
-};
 
 // The server returns `CloneErrorResponseBody`, but proxies and older responses
 // may omit fields, so every field is treated as optional here. `message` is not
@@ -299,12 +275,12 @@ function NewVoiceClientInner({
   });
 
   const supportedLocales = (() => {
-    const codes = Object.keys(SUPPORTED_LOCALE_CODES);
+    const codes = Object.keys(CLONE_LOCALES);
     const translated = getTranslatedLanguages(lang, codes);
     const merged = translated.map(({ value: code, label }) => ({
       code,
       name: label,
-      value: SUPPORTED_LOCALE_CODES[code] || code,
+      value: CLONE_LOCALES[code] || code,
     }));
     return sortByPageLocale(merged, lang);
   })();
@@ -654,6 +630,7 @@ function NewVoiceClientInner({
                 <CloneTextField
                   disabled={status === 'generating'}
                   dispatch={dispatch}
+                  locale={selectedLocale.code}
                   text={text}
                   textMaxLength={textMaxLength}
                   userHasPaid={userHasPaid}
