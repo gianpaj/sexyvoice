@@ -17,7 +17,7 @@ credit-only refunds, and chargeback credit holds/releases do not affect cash.
 Usage is paid if it occurs at or after the customer's first positive cash
 purchase; promotional credits spent by paying customers remain paid usage.
 
-Estimated contribution equals net collections minus all measured usage costs.
+Estimated contribution equals net collections minus recorded and estimated usage costs.
 Free coverage equals net collections minus paid usage costs, divided by free
 usage costs. Zero free cost renders coverage N/A. Unpriced or unclassified
 records mark coverage incomplete; displayed dollars include only priced records.
@@ -43,8 +43,12 @@ and skip link checks for sessions already matched to an in-window event.
 model-specific estimates when data permits. Recorded costs are not necessarily
 invoice-verified. Unknown models, missing dimensions, and negative sentinels stay
 unpriced. Zero-duration calls can use a valid sub-second timestamp difference.
-Call duration estimates omit text/tool charges; stored call costs can reflect
-customer billing buckets rather than provider-billed time.
+Call duration estimates omit xAI's $0.004 per text input and tool charges. For
+example, 10 text inputs add $0.04, equal to 80% of a one-minute $0.05 audio
+estimate or 50% of a one-minute $0.08 estimate. This illustrates sensitivity,
+not observed input volume; the report cannot quantify the omitted total from
+duration alone. Stored call costs can reflect customer billing buckets rather
+than provider-billed time.
 
 Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).

@@ -1310,7 +1310,7 @@ export async function GET(request: NextRequest) {
       ? 'Usage cost coverage is incomplete'
       : null,
     contributionYesterday.contributionAlert
-      ? 'Measured usage costs exceeded net collections yesterday'
+      ? 'Recorded/estimated usage costs exceeded net collections yesterday'
       : null,
     totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
       ? `Paid usage is concentrated: top 3 users drove ${top3UsageSharePct}%`
@@ -1421,6 +1421,7 @@ export async function GET(request: NextRequest) {
     '💸 Usage economics (estimated, before fees/fixed costs)',
     ...formatContribution('Yesterday', contributionYesterday),
     ...formatContribution('30d', contribution30d),
+    'Call estimates omit $0.004 per text input and tool charges; totals are not invoice-reconciled.',
     '',
     '🔻 Funnel',
     `- New profiles: ${profilesTodayCount}`,
