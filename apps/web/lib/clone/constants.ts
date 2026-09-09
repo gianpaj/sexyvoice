@@ -49,6 +49,7 @@ export const CLONE_SUPPORTED_LOCALE_CODES = new Set([
 export const resolveBaseCloneLocale = (code: string) =>
   code === 'en-multi' ? 'en' : code;
 
+// Review this set when CLONE_SUPPORTED_LOCALE_CODES changes, especially for fa/ur.
 export const RTL_CLONE_LOCALE_CODES = new Set(['ar', 'he']);
 
 export const CLONE_TEXT_MAX_LENGTH_NON_VOXTRAL = 300;
