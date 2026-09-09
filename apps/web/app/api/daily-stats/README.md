@@ -23,7 +23,10 @@ usage costs. Zero free cost renders coverage N/A. Unpriced or unclassified
 records mark coverage incomplete; displayed dollars include only priced records.
 The separate coverage alert fires when more than 5% of records are unpriced, or
 any usage is unclassified. Record share controls alert noise, not cost accuracy;
-one expensive unknown record can matter even below that threshold.
+one expensive unknown record can matter even below that threshold. When the
+coverage alert is off, negative contribution triggers the usage-cost alert.
+Free coverage still stays incomplete for any gap; the alert tolerance does not
+establish dollar accuracy.
 
 This is a cash-period comparison before payment fees and fixed costs, not
 accounting profit. Taxes, final dispute losses, unlogged provider attempts,
