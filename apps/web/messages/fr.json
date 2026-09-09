@@ -684,6 +684,7 @@
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",
+    "englishChatterbox": "Anglais (Chatterbox)",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "previewTitle": "Aperçu de la voix générée",

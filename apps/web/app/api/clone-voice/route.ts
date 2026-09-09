@@ -21,7 +21,10 @@ import {
   type RouteErrorDetails,
 } from '@/lib/clone/api-types';
 import {
+  CHATTERBOX_SUPPORTED_LOCALE_CODES,
+  CLONE_SUPPORTED_LOCALE_CODES,
   type CloneProvider,
+  resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
@@ -77,35 +80,6 @@ const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
 const REFERENCE_AUDIO_ENHANCEMENT_DOLLARS_PER_SECOND = 0.001;
-
-// Replicate multilinguage supports the following languages
-// https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
-const SUPPORTED_LOCALE_CODES = [
-  { code: 'ar', value: 'arabic' },
-  { code: 'da', value: 'danish' },
-  { code: 'de', value: 'german' },
-  { code: 'el', value: 'greek' },
-  { code: 'en', value: 'english' },
-  { code: 'en-multi', value: 'english' },
-  { code: 'es', value: 'spanish' },
-  { code: 'fi', value: 'finnish' },
-  { code: 'fr', value: 'french' },
-  { code: 'he', value: 'hebrew' },
-  { code: 'hi', value: 'hindi' },
-  { code: 'it', value: 'italian' },
-  { code: 'ja', value: 'japanese' },
-  { code: 'ko', value: 'korean' },
-  { code: 'ms', value: 'malay' },
-  { code: 'nl', value: 'dutch' },
-  { code: 'no', value: 'norwegian' },
-  { code: 'pl', value: 'polish' },
-  { code: 'pt', value: 'portuguese' },
-  { code: 'ru', value: 'russian' },
-  { code: 'sv', value: 'swedish' },
-  { code: 'sw', value: 'swahili' },
-  { code: 'tr', value: 'turkish' },
-  { code: 'zh', value: 'chinese' },
-];
 
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -635,10 +609,9 @@ function validateReferenceAudioEnhancementInput(
 }
 
 function validateLocale(locale: string): void {
-  const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
-  if (!localeConfig) {
+  if (!CLONE_SUPPORTED_LOCALE_CODES.has(locale)) {
     throw createRouteError(
-      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${SUPPORTED_LOCALE_CODES.map((l) => l.code).join(', ')}`,
+      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${[...CLONE_SUPPORTED_LOCALE_CODES].join(', ')}`,
       400,
       'errors.unsupportedLocale',
       { locale },
@@ -1022,14 +995,9 @@ async function cloneVoiceWithReplicate(
   locale: string,
   audioReferenceUrl: string,
 ): Promise<{ blob: Blob; modelUsed: string; requestId: string }> {
-  const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
-  if (!localeConfig) {
+  const language = resolveBaseCloneLocale(locale);
+  if (!CHATTERBOX_SUPPORTED_LOCALE_CODES.has(language)) {
     throw new Error(`Unsupported locale: ${locale}`);
-  }
-
-  let language = locale;
-  if (locale === 'en-multi') {
-    language = 'en';
   }
 
   const replicate = new Replicate();

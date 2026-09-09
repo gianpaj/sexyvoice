@@ -42,6 +42,7 @@ jobs:
           claude_args: |
             --allowedTools "Bash(pnpm:*),Bash(git:*),mcp__github_inline_comment__create_inline_comment"
             --model "claude-opus-5"
+            --effort xhigh
 
   # General-purpose assistant triggered by "@claude" (without "review") in
   # issues, PR comments, and reviews. Can run CI commands and push commits.
@@ -97,3 +98,4 @@ jobs:
           claude_args: |
             --allowedTools "Bash(pnpm:*),Bash(git:*),mcp__github_inline_comment__create_inline_comment"
             --model "claude-opus-5"
+            --effort xhigh
