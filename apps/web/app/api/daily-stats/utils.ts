@@ -100,6 +100,25 @@ export const formatDuration = (seconds: number): string => {
   return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 };
 
+/**
+ * Formats one side of the free vs paid call split, e.g.
+ * `13 (30m 56s, avg 2m 23s)` or `183 free (564m 0s, avg 3m 5s)` when a `label`
+ * is given. Segments with no calls render as the bare count, so the report
+ * shows `Paid: 0` instead of a meaningless `Paid: 0 (0s, avg 0s)`.
+ */
+export function formatCallSegment(
+  count: number,
+  durationSeconds: number,
+  avgDurationSeconds: number,
+  label?: string,
+): string {
+  const head = label ? `${count} ${label}` : `${count}`;
+  if (count === 0) {
+    return head;
+  }
+  return `${head} (${formatDuration(durationSeconds)}, avg ${formatDuration(avgDurationSeconds)})`;
+}
+
 export function reduceAmountUsd(acc: number, row: { metadata: Json }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     console.log('Invalid metadata in row:', row);
@@ -172,6 +191,74 @@ export function maskUsername(username?: string): string | undefined {
     }
   }
   return maskedUsername;
+}
+
+export interface TopCustomerPurchase {
+  amount: number;
+  type: string;
+}
+
+export interface TopCustomer {
+  /** All-time number of purchases/top-ups by this customer. */
+  paymentCount: number;
+  purchases: TopCustomerPurchase[];
+  username: string;
+}
+
+/**
+ * Counts all-time payments (purchases/top-ups, refunds excluded upstream) per
+ * user, so the top-customer list can show whether a customer is a first-time or
+ * a repeat payer.
+ */
+export function countPaymentsByUser(
+  transactions: { user_id: string }[],
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const transaction of transactions) {
+    counts.set(transaction.user_id, (counts.get(transaction.user_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Renders the top paying customers of the day, e.g.
+ * `ikr...i98@gmail.com ($75 - existing topup, 12 payments)`. Multiple purchases
+ * by the same customer are collapsed into one entry: `$5+$5 topup` when they
+ * share a type, `$5 topup + $10 sub` when they don't.
+ */
+export function formatTopCustomers(customers: TopCustomer[]): string {
+  if (customers.length === 0) {
+    return 'N/A';
+  }
+
+  return customers
+    .map(({ paymentCount, purchases, username }) => {
+      const maskedUsername = maskUsername(username);
+
+      const allSameType =
+        purchases.length > 1 &&
+        purchases.every((purchase) => purchase.type === purchases[0].type);
+
+      let amountDisplay: string;
+      if (purchases.length === 1) {
+        // Single purchase: "$10 - existing topup"
+        amountDisplay = `$${purchases[0].amount} - ${purchases[0].type}`;
+      } else if (allSameType) {
+        // Multiple same-type: "$5+$5 topup"
+        const amounts = purchases
+          .map((purchase) => `$${purchase.amount}`)
+          .join('+');
+        amountDisplay = `${amounts} ${purchases[0].type}`;
+      } else {
+        // Mixed types: "$5 topup + $10 sub"
+        amountDisplay = purchases
+          .map((purchase) => `$${purchase.amount} ${purchase.type}`)
+          .join(' + ');
+      }
+
+      return `${maskedUsername} (${amountDisplay}, ${paymentCount} payment${paymentCount === 1 ? '' : 's'})`;
+    })
+    .join(', ');
 }
 
 export function filterByDateRange<T extends { created_at: string }>(

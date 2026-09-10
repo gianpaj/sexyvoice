@@ -39,11 +39,14 @@ import {
   calculateUsageBreakdown,
   classifyRefund,
   countByDateRange,
+  countPaymentsByUser,
   filterByDateRange,
+  formatCallSegment,
   formatChange,
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
+  formatTopCustomers,
   getFeatureHealthStatus,
   getProfileUsername,
   isCompletedUserCall,
@@ -866,39 +869,19 @@ export async function GET(request: NextRequest) {
 
   const topCustomerIds = topCustomers.map((c) => c.userId);
 
-  const topCustomersList =
-    topCustomers.length === 0
-      ? 'N/A'
-      : topCustomers
-          .map(({ username, transactions }) => {
-            // Use username from customer totals - no need for inefficient find()
-            const maskedUsername = maskUsername(username);
+  // How many times each customer has ever paid, so the report shows whether a
+  // top customer is a first-time or a repeat payer.
+  const paymentCountsByUser = countPaymentsByUser(allTimePurchaseTransactions);
 
-            // Format amounts: show individual amounts if multiple transactions
-            // e.g., "$5+$5 topup" or "$5 topup + $10 sub" for mixed types
-            const allSameType =
-              transactions.length > 1 &&
-              transactions.every((t) => t.type === transactions[0].type);
-
-            let amountDisplay: string;
-            if (transactions.length === 1) {
-              // Single transaction: "$10.00 - existing topup"
-              const t = transactions[0];
-              amountDisplay = `$${t.amount} - ${t.type}`;
-            } else if (allSameType) {
-              // Multiple same-type: "$5+$5 topup"
-              const amounts = transactions.map((t) => `$${t.amount}`).join('+');
-              amountDisplay = `${amounts} ${transactions[0].type}`;
-            } else {
-              // Mixed types: "$5 topup + $10 sub"
-              amountDisplay = transactions
-                .map((t) => `$${t.amount} ${t.type}`)
-                .join(' + ');
-            }
-
-            return `${maskedUsername} (${amountDisplay})`;
-          })
-          .join(', ');
+  const topCustomersList = formatTopCustomers(
+    topCustomers.map(({ transactions, userId, username }) => ({
+      // Fall back to yesterday's purchase count when the all-time transactions
+      // are missing (e.g. a stale debug cache).
+      paymentCount: paymentCountsByUser.get(userId) ?? transactions.length,
+      purchases: transactions,
+      username,
+    })),
+  );
 
   const topCustomerProfilesCount = topCustomerIds.length || '';
 
@@ -1448,8 +1431,8 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
-    `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
-    `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
+    `  - Free: ${formatCallSegment(freeCallsYesterdayCount, freeCallsDurationYesterday, freeCallsAvgDurationYesterday)} | Paid: ${formatCallSegment(paidCallsYesterdayCount, paidCallsDurationYesterday, paidCallsAvgDurationYesterday)}`,
+    `  - ${ROLLING_WINDOW_LABEL}: ${formatCallSegment(freeCalls14dCount, freeCallsDuration14d, freeCallsAvgDuration14d, 'free')}, ${formatCallSegment(paidCalls14dCount, paidCallsDuration14d, paidCallsAvgDuration14d, 'paid')}`,
     `  - Estimated usage cost: $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
