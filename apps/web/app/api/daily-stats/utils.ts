@@ -311,23 +311,28 @@ export type PageCursor =
   | { kind: 'after'; column: string; value: string };
 
 /**
- * When a page ends on a run longer than this, the cursor walks the run by `id`
- * rather than listing its ids. An estimate, not a measured threshold: the
- * filter is percent-encoded into the query string, so each uuid costs ~39 bytes
- * and 100 ids is ~3.9KB — against the 8000 characters postgrest-js itself warns
- * past (`urlLengthLimit`), with the select, range filters, order and limit
- * still to fit.
+ * A page can end part-way through a run of rows sharing one cursor value. Up to
+ * this many, the cursor carries their ids; past it, it walks the run by `id`
+ * instead. An estimate, not a measured threshold: the filter is percent-encoded
+ * into the query string, so each uuid costs ~39 bytes and 100 ids is ~3.9KB —
+ * against the 8000 characters postgrest-js itself warns past
+ * (`urlLengthLimit`), with the select, range filters, order and limit still to
+ * fit.
  *
  * The two directions are not symmetric, which is what sets the value. Erring
  * low costs one extra request. Erring high risks a 414, which is not a
- * transient error and so fails the whole run on its first response — the same
- * class of failure this pagination exists to avoid. So it sits well under what
- * should fit rather than close to it.
+ * transient error and so fails the whole report on its first response — the
+ * same class of failure this pagination exists to avoid. So it sits well under
+ * what should fit rather than close to it. Row correctness does not depend on
+ * the number either way; it only chooses between two correct strategies.
  *
- * Row correctness does not depend on this number either way; it only chooses
- * between two correct strategies. Postgres fixes `now()` at transaction start,
- * so any bulk insert produces a run long enough to reach it: a promo grant, a
- * backfill, a support batch.
+ * Where such a run comes from, since nothing in daily-stats writes: ordinary
+ * traffic inserts a row per user action, seconds apart, so their timestamps
+ * differ and runs stay one or two rows long. But `now()` is
+ * `transaction_timestamp()`, fixed when the transaction opens — so anything
+ * that writes many rows in one transaction elsewhere (a promo grant, a
+ * hand-run backfill, a support batch) leaves every row it wrote holding the
+ * same timestamp, and this read has to page through the block they form.
  */
 const MAX_CURSOR_EXCLUDE_IDS = 100;
 
@@ -525,7 +530,7 @@ const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 /**
  * Fetches one page, replaying it with exponential backoff when Supabase
  * answers with a transient gateway or connection failure. A whole daily-stats
- * run is wasted when a single page fails, so the cheap retry is worth it.
+ * report is wasted when a single page fails, so the cheap retry is worth it.
  */
 async function fetchPage<T>(
   queryBuilder: (

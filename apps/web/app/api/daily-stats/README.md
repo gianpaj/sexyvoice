@@ -66,12 +66,12 @@ history. This intentionally requires an all-time transaction read on that path.
 
 ## Query load
 
-A single page returning `504 Gateway Timeout` fails the whole run, so
+A single page returning `504 Gateway Timeout` fails the whole report, so
 `fetchAllPages` replays a page up to four times with exponential backoff on
 transient gateway or connection failures (502/503/504, `ETIMEDOUT`, dropped
 sockets) and on retryable SQLSTATEs such as `57014`. Every caller only reads, so
-replaying a page is safe. Non-transient errors still fail the run on the first
-response.
+replaying a page is safe. Non-transient errors still fail the report on the
+first response.
 
 `fetchAllPages` pages with a keyset cursor, not `LIMIT/OFFSET`: an offset page
 makes Postgres sort and then discard every row it skips, so the deepest pages
@@ -81,13 +81,20 @@ select both that column and `id`, and order by `(column asc, id asc)`. The seek
 is inclusive (`gte`) and excludes the ids already returned at that exact value,
 so rows sharing a timestamp are neither skipped nor duplicated.
 
-Postgres fixes `now()` at transaction start, so a bulk insert — a promo grant, a
-backfill, a support batch — gives every row it writes the same timestamp. Past
-100 such rows the id list starts crowding the URL, so the cursor switches to
-walking the run by `id` (`eq(value)` + `gt(id, …)`) and then steps past it
-(`gt(value)`). That threshold is deliberately conservative: overshooting it
-risks a 414, which is not transient and fails the run, while undershooting costs
-one extra request.
+Rows can arrive in runs that share one timestamp, and a page can end part-way
+through such a run. Nothing in daily-stats writes, so these are not of its
+making: ordinary traffic inserts a row per user action, seconds apart, and runs
+stay one or two rows long. But `now()` is `transaction_timestamp()`, fixed when
+the transaction opens — so anything writing many rows in one transaction
+elsewhere (a promo grant, a hand-run backfill, a support batch) leaves every row
+it wrote holding the same timestamp, and this read has to page through the block
+they form.
+
+Up to 100 such rows the cursor carries their ids. Past that the id list starts
+crowding the URL, so it walks the run by `id` (`eq(value)` + `gt(id, …)`)
+instead and then steps past it (`gt(value)`). That threshold is deliberately
+conservative: overshooting it risks a 414, which is not transient and fails the
+report, while undershooting costs one extra request.
 These shapes carry the same semantics as the row comparison
 `(created_at, id) > (value, lastId)` in
 `.agents/skills/supabase-postgres-best-practices/references/data-pagination.md`,
@@ -96,7 +103,8 @@ equivalent `(c > v) OR (c = v AND id > lastId)` needs a second top-level `or=`
 param on the three queries that already use `.or()` for their own filters, and
 whether PostgREST ANDs repeated `or=` params is not verifiable from here.
 Getting that wrong would silently change which rows a revenue report counts, so
-the AND form is used instead at the cost of one extra request per long run.
+the AND form is used instead at the cost of one extra request per long run of
+rows.
 
 One guard remains, turning a mis-specified query into an error instead of a
 loop: a cursor value that moves backwards, which means the query is not ordered
