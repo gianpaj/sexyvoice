@@ -67,7 +67,7 @@ const end = new Date('2026-09-06T00:00:00Z');
 // Rows carry the keyset cursor columns; paging reads them off the last row.
 const at = (i: number) => new Date(start.getTime() + i * 1000).toISOString();
 describe('all-time credit transaction reads', () => {
-  test('keeps the last duplicate, restores chronological order, and retains refunds', async () => {
+  test('paginates in query order with date and user filters, retaining refunds', async () => {
     const firstPage: DailyStatsCreditTransaction[] = Array.from(
       { length: PAGE_SIZE },
       (_, id) => ({
@@ -81,20 +81,17 @@ describe('all-time credit transaction reads', () => {
         user_id: 'user',
       }),
     );
-    const updatedTransaction = {
-      ...firstPage[0],
-      created_at: at(PAGE_SIZE),
-    };
+
     const refund: DailyStatsCreditTransaction = {
       ...firstPage[0],
       amount: -10,
-      created_at: at(PAGE_SIZE + 1),
+      created_at: at(PAGE_SIZE),
       id: 'refund',
       type: 'refund',
     };
     let page = 0;
     const { client, requests } = database(() => ({
-      data: page++ === 0 ? firstPage : [updatedTransaction, refund],
+      data: page++ === 0 ? firstPage : [refund],
       error: null,
     }));
 
@@ -102,17 +99,23 @@ describe('all-time credit transaction reads', () => {
       'internal',
     ]);
 
-    expect(transactions).toEqual([
-      ...firstPage.slice(1),
-      updatedTransaction,
-      refund,
-    ]);
+    expect(transactions).toEqual([...firstPage, refund]);
     expect(requests).toHaveLength(2);
     for (const request of requests) {
       expect(request.table).toBe('credit_transactions');
       expect(request.operations).toContainEqual([
         'in',
         ['type', ['purchase', 'topup', 'refund']],
+      ]);
+      expect(request.operations).toContainEqual([
+        'not',
+        ['description', 'ilike', '%manual%'],
+      ]);
+      expect(
+        request.operations.filter(([method]) => method === 'order'),
+      ).toEqual([
+        ['order', ['created_at', { ascending: true }]],
+        ['order', ['id', { ascending: true }]],
       ]);
       expect(request.operations).toContainEqual([
         'gte',

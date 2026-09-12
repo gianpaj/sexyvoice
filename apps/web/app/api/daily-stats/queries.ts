@@ -302,34 +302,23 @@ export function getCallSessionsInRange(
 const ALL_TIME_START = new Date(0);
 
 /**
- * Credit transactions before `end`, deduplicated by id and sorted
- * chronologically, using the same filters as {@link getCreditTransactionsInRange}.
+ * Credit transactions before `end`, ordered by `(created_at asc, id asc)`
+ * by {@link getCreditTransactionsInRange}, using its filters.
  *
  * Daily stats slices this once in memory for each reporting window instead of
  * re-querying per period: the per-period ranges are subsets of this one, so
  * issuing them concurrently only multiplies PostgREST load.
  */
-export async function getAllCreditTransactions(
+export function getAllCreditTransactions(
   supabase: DailyStatsSupabaseClient,
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsCreditTransaction[]> {
-  const transactions = await getCreditTransactionsInRange(
+  return getCreditTransactionsInRange(
     supabase,
     ALL_TIME_START,
     end,
     excludeUserIds,
-  );
-
-  // Keyset pagination has no shared snapshot across pages. Dedupe by id in
-  // case a transaction's timestamp changes mid-read, then sort chronologically.
-  return [
-    ...new Map(
-      transactions.map((transaction) => [transaction.id, transaction]),
-    ).values(),
-  ].sort(
-    (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
   );
 }
 
