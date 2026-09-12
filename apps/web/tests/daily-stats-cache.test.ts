@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => ({
     getClonedAudioFilesInRange: vi.fn().mockResolvedValue([]),
     getInternalUserIds: vi.fn().mockResolvedValue([]),
     getProfilesInRange: vi.fn().mockResolvedValue([]),
-    getProfileUsernamesByIds: vi.fn().mockResolvedValue([]),
+    getProfileUsernamesByIds: vi.fn().mockResolvedValue(new Map()),
     getUsageEventsInRange: vi.fn().mockResolvedValue([]),
   },
   readFileSync: vi.fn(),

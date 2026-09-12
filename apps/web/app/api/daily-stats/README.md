@@ -79,9 +79,21 @@ are both the slowest and the ones that time out. A query passes its ordering
 column as the cursor and applies it with `applyPageCursor`; it must therefore
 select both that column and `id`, and order by `(column asc, id asc)`. The seek
 is inclusive (`gte`) and excludes the ids already returned at that exact value,
-so rows sharing a timestamp are neither skipped nor duplicated. Two guards turn
-a mis-specified query into an error instead of a loop: a cursor value that moves
-backwards, and more than 200 rows sharing one value.
+so rows sharing a timestamp are neither skipped nor duplicated.
+
+Postgres fixes `now()` at transaction start, so a bulk insert — a promo grant, a
+backfill, a support batch — gives every row it writes the same timestamp. Past
+200 such rows the ids no longer fit in a URL, so the cursor switches to walking
+the run by `id` (`eq(value)` + `gt(id, …)`) and then steps past it (`gt(value)`).
+Every cursor shape is a plain AND of filters: the shorter
+`(c > v) OR (c = v AND id > lastId)` predicate would need a second top-level
+`or=` param on the two queries that already use `.or()`, and whether PostgREST
+ANDs repeated `or=` params is not verifiable from here — getting it wrong would
+silently change which rows a revenue report counts.
+
+One guard remains, turning a mis-specified query into an error instead of a
+loop: a cursor value that moves backwards, which means the query is not ordered
+by the column it pages on.
 
 Credit transactions are read once for all time and sliced in memory for every
 reporting window. The per-period reads this replaced were subsets of that same
@@ -127,6 +139,6 @@ send Telegram reports, but still requires `TELEGRAM_WEBHOOK_URL` to be set.
 
 ## Verification
 
-Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts tests/daily-stats-fetch-all-pages.test.ts`.
+Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts tests/daily-stats-fetch-all-pages.test.ts tests/daily-stats-cache.test.ts`.
 Use read-only queries to investigate actual records. Do not invoke the production
 GET handler for verification; it sends the Telegram report.

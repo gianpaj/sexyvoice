@@ -284,43 +284,78 @@ export const formatIdList = (ids: readonly string[]) => `(${ids.join(',')})`;
 /**
  * Position in a query ordered by `(column asc, id asc)`.
  *
- * `value` is re-read inclusively and `excludeIds` drops the rows already
- * emitted at exactly that value, so rows sharing a timestamp are neither
- * skipped nor returned twice. A strict `>` cursor would lose the ones after
- * the page boundary.
+ * Three shapes, because a run of rows sharing one `column` value cannot always
+ * be stepped over in a single filter:
+ *
+ * - `exclude` — the common case. Re-read `value` inclusively and drop the ids
+ *   already emitted at it. A strict `>` would lose the rest of the run.
+ * - `within` — the run is longer than one cursor can carry ids for, so walk it
+ *   by `id` instead.
+ * - `after`  — the run is exhausted; step past `value`.
+ *
+ * Every shape is a plain AND of filters. The textbook `(c > v) OR (c = v AND
+ * id > lastId)` predicate would be one request shorter in the `within` case,
+ * but it needs a second top-level `or=` param on the two queries that already
+ * use `.or()` for their own filters, and whether PostgREST ANDs repeated `or=`
+ * params is not something this code can verify at runtime. Getting that wrong
+ * silently changes which rows a revenue report counts, so it is not assumed.
  */
-export interface PageCursor {
-  column: string;
-  excludeIds: readonly string[];
-  value: string;
-}
+export type PageCursor =
+  | {
+      kind: 'exclude';
+      column: string;
+      value: string;
+      excludeIds: readonly string[];
+    }
+  | { kind: 'within'; column: string; value: string; afterId: string }
+  | { kind: 'after'; column: string; value: string };
 
 /**
- * Limit cursor ids to keep requests below the gateway's URL limit.
- * PostgreSQL fixes `now()` at transaction start, so bulk inserts can share a
- * timestamp. Pagination aborts if a full page ends with more than 200 rows at
- * the same cursor value, even for valid data, rather than risk an oversized
- * URL or silently drop rows.
+ * When a page ends on a run longer than this, the cursor walks the run by `id`
+ * rather than listing its ids. Sized for the gateway's URL limit (~37 bytes per
+ * uuid), and purely a choice between two correct strategies — exceeding it
+ * costs one extra request, never a dropped row or an aborted run.
+ *
+ * Postgres fixes `now()` at transaction start, so any bulk insert produces a
+ * run this long: a promo grant, a backfill, a support batch.
  */
 const MAX_CURSOR_EXCLUDE_IDS = 200;
 
 interface CursorFilterable {
+  eq: (column: string, value: string) => CursorFilterable;
+  gt: (column: string, value: string) => CursorFilterable;
   gte: (column: string, value: string) => CursorFilterable;
   not: (column: string, operator: string, value: string) => CursorFilterable;
 }
 
-/** Narrows a query to the rows after `cursor`. */
-export function applyPageCursor<Q extends CursorFilterable>(
-  query: Q,
-  cursor: PageCursor | null,
-): Q {
+/**
+ * Narrows a query to the rows after `cursor`, returning it unchanged in type.
+ *
+ * `Q` is deliberately unconstrained: constraining it to `CursorFilterable`
+ * makes TypeScript instantiate PostgREST's builder generics too deeply to
+ * resolve (TS2589). The cast is checked instead by the `applyPageCursor` tests,
+ * which assert the exact filters each cursor shape emits.
+ */
+export function applyPageCursor<Q>(query: Q, cursor: PageCursor | null): Q {
   if (!cursor) {
     return query;
   }
 
-  const seeked = query.gte(cursor.column, cursor.value) as Q;
+  const filterable = query as CursorFilterable;
+
+  if (cursor.kind === 'after') {
+    return filterable.gt(cursor.column, cursor.value) as Q;
+  }
+
+  if (cursor.kind === 'within') {
+    return filterable
+      .eq(cursor.column, cursor.value)
+      .gt('id', cursor.afterId) as Q;
+  }
+
+  const seeked = filterable.gte(cursor.column, cursor.value);
   if (cursor.excludeIds.length === 0) {
-    return seeked;
+    return seeked as Q;
   }
   return seeked.not('id', 'in', formatIdList(cursor.excludeIds)) as Q;
 }
@@ -353,14 +388,22 @@ export async function fetchAllPages<T>(
   while (true) {
     const data: T[] | null = await fetchPage(queryBuilder, cursor);
 
-    if (!data || data.length === 0) {
-      break;
+    if (data?.length) {
+      allData.push(...data);
     }
 
-    allData.push(...data);
-
-    if (data.length < PAGE_SIZE) {
-      break;
+    if (data === null || data.length < PAGE_SIZE) {
+      // A short page ends the read — unless it was walking a run of equal
+      // values, which only means that run is exhausted and rows past it remain.
+      if (cursor?.kind !== 'within') {
+        break;
+      }
+      cursor = {
+        column: cursor.column,
+        kind: 'after',
+        value: cursor.value,
+      };
+      continue;
     }
 
     cursor = nextCursor(data, cursorColumn, cursor);
@@ -395,20 +438,25 @@ function nextCursor<T>(
   }
 
   // Only rows at exactly `value` can come back again under `gte(value)`; rows
-  // at an earlier value are dropped by the seek itself. This page holds every
-  // such row, because a full page is sorted and ends at `value` — so there is
-  // no earlier page's boundary left to carry forward.
+  // at an earlier value are dropped by the seek itself.
   const excludeIds = page
     .filter((row) => readCursorField(row, cursorColumn) === value)
     .map((row) => readCursorField(row, 'id'));
 
+  // Too many to carry as ids. Rows are ordered by id within a value, so every
+  // one read so far is at or below the last — walk the rest by id. This also
+  // rules out a stale exclusion list: a full page that ends where it began is
+  // entirely one value, which always lands here rather than in `exclude`.
   if (excludeIds.length > MAX_CURSOR_EXCLUDE_IDS) {
-    throw new Error(
-      `fetchAllPages: ${excludeIds.length} rows share \`${cursorColumn}\` ${value}; cannot page past them`,
-    );
+    return {
+      afterId: readCursorField(page.at(-1), 'id'),
+      column: cursorColumn,
+      kind: 'within',
+      value,
+    };
   }
 
-  return { column: cursorColumn, excludeIds, value };
+  return { column: cursorColumn, excludeIds, kind: 'exclude', value };
 }
 
 /**
@@ -426,11 +474,12 @@ const TRANSIENT_POSTGRES_CODES = new Set([
 /**
  * Supabase's API gateway sheds load with plain 502/503/504 responses that
  * PostgREST surfaces as a bare `{ message }` with no SQLSTATE, so these have to
- * be matched on text. `timed? ?out` covers the observed `Gateway Timeout` as
- * well as `ETIMEDOUT` and `query timed out`.
+ * be matched on text. The timeout alternation covers the observed
+ * `Gateway Timeout`, nginx's hyphenated `504 Gateway Time-out`, Kong's
+ * `upstream server is timing out`, and `ETIMEDOUT`.
  */
 const TRANSIENT_ERROR_MESSAGE =
-  /bad gateway|service unavailable|temporarily unavailable|canceling statement|connection (?:reset|closed|terminated)|socket hang up|fetch failed|econnreset|timed? ?out/i;
+  /bad gateway|service unavailable|temporarily unavailable|canceling statement|connection (?:reset|closed|terminated)|socket hang up|fetch failed|econnreset|tim(?:ed?[ -]?out|ing out)/i;
 
 export function isTransientQueryError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {

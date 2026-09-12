@@ -69,11 +69,17 @@ function tableReader(rows: Row[]) {
   const sorted = sortRows(rows);
   return (cursor: PageCursor | null) => {
     let visible = sorted;
-    if (cursor) {
+    if (cursor?.kind === 'exclude') {
       const excluded = new Set(cursor.excludeIds);
       visible = sorted.filter(
         (row) => row.created_at >= cursor.value && !excluded.has(row.id),
       );
+    } else if (cursor?.kind === 'within') {
+      visible = sorted.filter(
+        (row) => row.created_at === cursor.value && row.id > cursor.afterId,
+      );
+    } else if (cursor?.kind === 'after') {
+      visible = sorted.filter((row) => row.created_at > cursor.value);
     }
     return Promise.resolve({ data: visible.slice(0, PAGE_SIZE), error: null });
   };
@@ -138,17 +144,72 @@ describe('fetchAllPages keyset paging', () => {
         'row-00998',
         'row-00999',
       ],
+      kind: 'exclude',
       value: collision,
     });
   });
 
-  test('refuses to page when too many rows share one cursor value', async () => {
+  // A bulk insert shares one `now()`, so these runs are ordinary data.
+  test('reads a run longer than the cursor can carry ids for', async () => {
+    const frozen = distinctAt(0);
+    // 400 rows at one value, ending the first page mid-run.
+    const rows = makeRows(PAGE_SIZE + 500, (i) =>
+      i >= 800 && i < 1200 ? frozen : distinctAt(i + 1),
+    );
+
+    const read = await fetchAllPages<Row>('created_at', tableReader(rows));
+
+    expect(read).toEqual(sortRows(rows));
+    expect(new Set(read.map((r) => r.id)).size).toBe(rows.length);
+  });
+
+  test('reads a run longer than a whole page', async () => {
+    const frozen = distinctAt(0);
+    const rows = makeRows(PAGE_SIZE * 3, (i) =>
+      i < PAGE_SIZE * 2 ? frozen : distinctAt(i + 1),
+    );
+
+    const read = await fetchAllPages<Row>('created_at', tableReader(rows));
+
+    expect(read).toEqual(sortRows(rows));
+    expect(new Set(read.map((r) => r.id)).size).toBe(rows.length);
+  });
+
+  test('reads a table that is entirely one cursor value', async () => {
     const frozen = distinctAt(0);
     const rows = makeRows(PAGE_SIZE * 2, () => frozen);
 
-    await expect(
-      fetchAllPages<Row>('created_at', tableReader(rows)),
-    ).rejects.toThrow(/rows share `created_at`/);
+    const read = await fetchAllPages<Row>('created_at', tableReader(rows));
+
+    expect(read).toEqual(sortRows(rows));
+  });
+
+  test('walks a long run by id, then steps past it', async () => {
+    const frozen = distinctAt(0);
+    const rows = makeRows(PAGE_SIZE + 10, (i) =>
+      i < PAGE_SIZE ? frozen : distinctAt(i + 1),
+    );
+    const kinds: (PageCursor | null)[] = [];
+    const reader = tableReader(rows);
+
+    await fetchAllPages<Row>('created_at', (cursor) => {
+      kinds.push(cursor);
+      return reader(cursor);
+    });
+
+    // Page 1 is all `frozen`, so the cursor walks by id rather than listing
+    // 1000 ids, then advances past the value once the run is exhausted.
+    expect(kinds[1]).toEqual({
+      afterId: 'row-00999',
+      column: 'created_at',
+      kind: 'within',
+      value: frozen,
+    });
+    expect(kinds[2]).toEqual({
+      column: 'created_at',
+      kind: 'after',
+      value: frozen,
+    });
   });
 
   test('refuses a cursor that moves backwards rather than looping forever', async () => {
@@ -187,6 +248,14 @@ describe('applyPageCursor', () => {
     const calls: [string, ...string[]][] = [];
     const builder = {
       calls,
+      eq(column: string, value: string) {
+        calls.push(['eq', column, value]);
+        return builder;
+      },
+      gt(column: string, value: string) {
+        calls.push(['gt', column, value]);
+        return builder;
+      },
       gte(column: string, value: string) {
         calls.push(['gte', column, value]);
         return builder;
@@ -211,6 +280,7 @@ describe('applyPageCursor', () => {
     applyPageCursor(query, {
       column: 'occurred_at',
       excludeIds: ['a', 'b'],
+      kind: 'exclude',
       value: '2026-09-01T00:00:00.000Z',
     });
 
@@ -220,12 +290,43 @@ describe('applyPageCursor', () => {
     ]);
   });
 
+  test('walks a long run by id with plain AND filters, no `or`', () => {
+    const query = fakeQuery();
+
+    applyPageCursor(query, {
+      afterId: 'row-42',
+      column: 'occurred_at',
+      kind: 'within',
+      value: '2026-09-01T00:00:00.000Z',
+    });
+
+    expect(query.calls).toEqual([
+      ['eq', 'occurred_at', '2026-09-01T00:00:00.000Z'],
+      ['gt', 'id', 'row-42'],
+    ]);
+  });
+
+  test('steps past an exhausted run', () => {
+    const query = fakeQuery();
+
+    applyPageCursor(query, {
+      column: 'occurred_at',
+      kind: 'after',
+      value: '2026-09-01T00:00:00.000Z',
+    });
+
+    expect(query.calls).toEqual([
+      ['gt', 'occurred_at', '2026-09-01T00:00:00.000Z'],
+    ]);
+  });
+
   test('skips the exclusion filter when nothing shares the boundary', () => {
     const query = fakeQuery();
 
     applyPageCursor(query, {
       column: 'created_at',
       excludeIds: [],
+      kind: 'exclude',
       value: '2026-09-01T00:00:00.000Z',
     });
 
@@ -274,6 +375,7 @@ describe('fetchAllPages', () => {
     expect(seen[2]).toEqual({
       column: 'created_at',
       excludeIds: [lastOfFirstPage.id],
+      kind: 'exclude',
       value: lastOfFirstPage.created_at,
     });
   });

@@ -319,12 +319,15 @@ export async function GET(request: NextRequest) {
       findNextSubscriptionDueForPayment(),
       getActiveSubscriptionsMrr(),
 
-      getCallSessionsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({ data, error: null })),
+      _timed(
+        `call_sessions:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCallSessionsInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({ data, error: null })),
+      ),
 
       // (callSessionsTotalCountResult) Total call sessions count
       (() => {
@@ -909,14 +912,15 @@ export async function GET(request: NextRequest) {
   // Contribution uses fresh usage and payment history together. Cached purchases
   // could misclassify fresh usage or understate collections; cached activity
   // metrics are only for local debugging and do not feed this calculation.
-  const contributionData = await getContributionData(
-    supabase,
-    thirtyDaysAgo,
-    today,
-    internalUserIds,
+  const contributionData = await _timed(
+    `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+    getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
   );
   const contributionTransactions = loadedFromValidCache
-    ? await getAllCreditTransactions(supabase, today, internalUserIds)
+    ? await _timed(
+        `credit_transactions:all_time paginated (cached path) < ${today.toISOString().slice(0, 10)}`,
+        getAllCreditTransactions(supabase, today, internalUserIds),
+      )
     : allCreditTransactions;
   const contributionYesterday = summarizeContribution(
     contributionData,
