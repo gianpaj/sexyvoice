@@ -301,19 +301,7 @@ export async function fetchAllPages<T>(
   let offset = 0;
 
   while (true) {
-    const { data, error } = await queryBuilder(offset);
-
-    if (error) {
-      if (error instanceof Error) {
-        throw error;
-      }
-
-      const msg =
-        typeof error === 'object' && error !== null && 'message' in error
-          ? (error as { message: string }).message
-          : String(error);
-      throw new Error(msg, { cause: error });
-    }
+    const data = await fetchPage(queryBuilder, offset);
 
     if (!data || data.length === 0) {
       break;
@@ -329,4 +317,95 @@ export async function fetchAllPages<T>(
   }
 
   return allData;
+}
+
+/**
+ * Postgres SQLSTATEs worth retrying. Daily stats only reads, so replaying a
+ * page is always safe.
+ */
+const TRANSIENT_POSTGRES_CODES = new Set([
+  '08000', // connection_exception
+  '08003', // connection_does_not_exist
+  '08006', // connection_failure
+  '53300', // too_many_connections
+  '57014', // query_canceled (statement timeout)
+]);
+
+/**
+ * Supabase's API gateway sheds load with plain 502/503/504 responses that
+ * PostgREST surfaces as a bare `{ message }` with no SQLSTATE, so these have to
+ * be matched on text. `timed? ?out` covers the observed `Gateway Timeout` as
+ * well as `ETIMEDOUT` and `query timed out`.
+ */
+const TRANSIENT_ERROR_MESSAGE =
+  /bad gateway|service unavailable|temporarily unavailable|canceling statement|connection (?:reset|closed|terminated)|socket hang up|fetch failed|econnreset|timed? ?out/i;
+
+export function isTransientQueryError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const { code, message } = error as { code?: unknown; message?: unknown };
+
+  if (typeof code === 'string' && TRANSIENT_POSTGRES_CODES.has(code)) {
+    return true;
+  }
+
+  return typeof message === 'string' && TRANSIENT_ERROR_MESSAGE.test(message);
+}
+
+function toQueryError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  }
+
+  const msg =
+    typeof error === 'object' && error !== null && 'message' in error
+      ? (error as { message: string }).message
+      : String(error);
+  return new Error(msg, { cause: error });
+}
+
+export const PAGE_MAX_ATTEMPTS = 4;
+const PAGE_RETRY_BASE_DELAY_MS = 500;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Fetches one page, replaying it with exponential backoff when Supabase
+ * answers with a transient gateway or connection failure. A whole daily-stats
+ * run is wasted when a single page fails, so the cheap retry is worth it.
+ */
+async function fetchPage<T>(
+  queryBuilder: (
+    offset: number,
+  ) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  offset: number,
+): Promise<T[] | null> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= PAGE_MAX_ATTEMPTS; attempt++) {
+    try {
+      const { data, error } = await queryBuilder(offset);
+      if (!error) {
+        return data;
+      }
+      lastError = error;
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (!isTransientQueryError(lastError) || attempt === PAGE_MAX_ATTEMPTS) {
+      throw toQueryError(lastError);
+    }
+
+    const delayMs = PAGE_RETRY_BASE_DELAY_MS * 2 ** (attempt - 1);
+    console.warn(
+      `♻️  [daily-stats] transient page error at offset ${offset}, retrying in ${delayMs}ms (attempt ${attempt}/${PAGE_MAX_ATTEMPTS})`,
+      lastError,
+    );
+    await wait(delayMs);
+  }
+
+  throw toQueryError(lastError);
 }

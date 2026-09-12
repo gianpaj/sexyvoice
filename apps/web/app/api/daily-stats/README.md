@@ -64,8 +64,30 @@ Contribution reads both usage and transactions fresh, even during local cached
 activity debugging, so customer classification and collections use fresh payment
 history. This intentionally requires an all-time transaction read on that path.
 
+## Query load
+
+A single page returning `504 Gateway Timeout` fails the whole run, so
+`fetchAllPages` replays a page up to four times with exponential backoff on
+transient gateway or connection failures (502/503/504, `ETIMEDOUT`, dropped
+sockets) and on retryable SQLSTATEs such as `57014`. Every caller only reads, so
+replaying a page is safe. Non-transient errors still fail the run on the first
+response.
+
+Credit transactions are read once for all time and sliced in memory for every
+reporting window. The per-period reads this replaced were subsets of that same
+range with identical filters and were merged straight back into it, so they
+added load without adding rows. Add new windows as in-memory filters over
+`allCreditTransactions`, not as extra queries.
+
+Every paginated read is wrapped in `_timed`. Leaving one untimed makes a failure
+inside it look like it came from whatever ran next.
+
+Known remaining cost, not yet addressed: `fetchAllPages` walks `LIMIT/OFFSET`, so
+deep pages get progressively more expensive, and `getUsageEventsInRange` embeds
+`profiles(username)` on every row to label three users in the report.
+
 ## Verification
 
-Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts`.
+Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts tests/daily-stats-fetch-all-pages.test.ts`.
 Use read-only queries to investigate actual records. Do not invoke the production
 GET handler for verification; it sends the Telegram report.

@@ -25,11 +25,11 @@ import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
   formatIdList,
+  getAllCreditTransactions,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
   getCallSessionsInRange,
   getClonedAudioFilesInRange,
-  getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
   getUsageEventsInRange,
@@ -142,10 +142,10 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
   let allCreditTransactions: Awaited<
-    ReturnType<typeof getCreditTransactionsInRange>
+    ReturnType<typeof getAllCreditTransactions>
   > = [];
   let allTimePurchaseTransactions: Awaited<
-    ReturnType<typeof getCreditTransactionsInRange>
+    ReturnType<typeof getAllCreditTransactions>
   > = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
@@ -339,15 +339,18 @@ export async function GET(request: NextRequest) {
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
     ] = await Promise.all([
-      getUsageEventsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({
-        data,
-        error: null,
-      })),
+      _timed(
+        `usage_events:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getUsageEventsInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({
+          data,
+          error: null,
+        })),
+      ),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         getAudioFilesInRange(
@@ -369,101 +372,48 @@ export async function GET(request: NextRequest) {
           }),
         ),
       ),
-      getProfilesInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({
-        data,
-        error: null,
-      })),
-    ]);
-
-    const [
-      yesterdayCreditTransactions,
-      fourteenDayCreditTransactions,
-      thirtyDayCreditTransactions,
-      monthToDateCreditTransactions,
-      previousMonthToDateCreditTransactions,
-      twoMonthsAgoToDateCreditTransactions,
-      threeMonthsAgoToDateCreditTransactions,
-      allTimeCreditTransactions,
-    ] = await Promise.all([
-      getCreditTransactionsInRange(
-        supabase,
-        previousDay,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        thirtyDaysAgo,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        monthStart,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        previousMonthStart,
-        previousMonthPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        twoMonthsAgoStart,
-        twoMonthsAgoPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        threeMonthsAgoStart,
-        threeMonthsAgoPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        new Date('1970-01-01T00:00:00.000Z'),
-        today,
-        internalUserIds,
+      _timed(
+        `profiles:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getProfilesInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({
+          data,
+          error: null,
+        })),
       ),
     ]);
 
+    // One all-time read feeds every reporting window below. The seven
+    // per-period queries this replaced were subsets of this same range with
+    // identical filters, and were merged straight back into it by the dedupe
+    // below — so they only multiplied PostgREST load without contributing a
+    // single row the all-time read did not already return.
+    const allTimeCreditTransactions = await _timed(
+      `credit_transactions:all_time paginated < ${today.toISOString().slice(0, 10)}`,
+      getAllCreditTransactions(supabase, today, internalUserIds),
+    );
+
+    // `fetchAllPages` walks offsets, so pages can overlap if rows shift
+    // mid-read; dedupe by id and sort to keep the chronological invariant the
+    // window filters below rely on.
     allCreditTransactions = [
       ...new Map(
-        [
-          ...allTimeCreditTransactions,
-          ...yesterdayCreditTransactions,
-          ...fourteenDayCreditTransactions,
-          ...thirtyDayCreditTransactions,
-          ...monthToDateCreditTransactions,
-          ...previousMonthToDateCreditTransactions,
-          ...twoMonthsAgoToDateCreditTransactions,
-          ...threeMonthsAgoToDateCreditTransactions,
-        ].map((transaction) => [transaction.id, transaction]),
+        allTimeCreditTransactions.map((transaction) => [
+          transaction.id,
+          transaction,
+        ]),
       ).values(),
     ].sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
 
-    allTimePurchaseTransactions = allTimeCreditTransactions
-      .filter((transaction) => transaction.type !== 'refund')
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      );
+    allTimePurchaseTransactions = allCreditTransactions.filter(
+      (transaction) => transaction.type !== 'refund',
+    );
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -979,12 +929,7 @@ export async function GET(request: NextRequest) {
     internalUserIds,
   );
   const contributionTransactions = loadedFromValidCache
-    ? await getCreditTransactionsInRange(
-        supabase,
-        new Date(0),
-        today,
-        internalUserIds,
-      )
+    ? await getAllCreditTransactions(supabase, today, internalUserIds)
     : allCreditTransactions;
   const contributionYesterday = summarizeContribution(
     contributionData,

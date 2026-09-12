@@ -287,3 +287,27 @@ export function getCallSessionsInRange(
       .range(offset, offset + PAGE_SIZE - 1);
   });
 }
+
+// Epoch sentinel for "all-time" reads so callers don't each spell out a date.
+const ALL_TIME_START = new Date(0);
+
+/**
+ * Every credit transaction before `end`, using the same filters as
+ * {@link getCreditTransactionsInRange}.
+ *
+ * Daily stats slices this once in memory for each reporting window instead of
+ * re-querying per period: the per-period ranges are subsets of this one, so
+ * issuing them concurrently only multiplies PostgREST load.
+ */
+export function getAllCreditTransactions(
+  supabase: DailyStatsSupabaseClient,
+  end: Date,
+  excludeUserIds: readonly string[] = [],
+): Promise<DailyStatsCreditTransaction[]> {
+  return getCreditTransactionsInRange(
+    supabase,
+    ALL_TIME_START,
+    end,
+    excludeUserIds,
+  );
+}
