@@ -93,7 +93,12 @@ export async function GET(request: NextRequest) {
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
   const cacheReportDate = today.toISOString().slice(0, 10);
-  const useCache = !isProd && fs.existsSync(CACHE_FILE);
+  const bypassCache =
+    !isProd && request.nextUrl.searchParams.get('cache') === 'off';
+  const useCache = !(isProd || bypassCache) && fs.existsSync(CACHE_FILE);
+  const debugHeaders = bypassCache
+    ? { 'Cache-Control': 'no-store', 'X-Daily-Stats-Cache': 'bypass' }
+    : undefined;
   const previousDay = subtractDays(today, 1);
   const twoDaysAgo = subtractDays(today, 2);
   const fourteenDaysAgo = subtractDays(today, ROLLING_WINDOW_DAYS);
@@ -439,7 +444,7 @@ export async function GET(request: NextRequest) {
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
-  if (!(isProd || loadedFromValidCache)) {
+  if (!(isProd || bypassCache || loadedFromValidCache)) {
     const cacheData = {
       activeSubscribersCount,
       allCreditTransactions,
@@ -617,7 +622,7 @@ export async function GET(request: NextRequest) {
     const message = `WARNING: No audio files generated yesterday! ${previousDay}-${today}`;
     console.warn({ message });
     if (!isProd) {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true }, { headers: debugHeaders });
     }
     await fetch(webhook, {
       body: JSON.stringify({ chat_id: '202637584', text: message }),
@@ -1430,7 +1435,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!isProd) {
-      return new NextResponse(message);
+      return new NextResponse(message, { headers: debugHeaders });
     }
     await fetch(webhook, {
       body: JSON.stringify({

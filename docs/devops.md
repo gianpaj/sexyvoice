@@ -569,4 +569,7 @@ The production `/api/daily-stats` handler delivers a Telegram message. Use the
 focused tests or read-only queries for verification. Contribution inputs bypass
 the local activity cache; database failures abort the report instead of showing
 zero usage. Reporting definitions and test commands are in the
-[daily-stats README](../apps/web/app/api/daily-stats/README.md).
+[daily-stats README](../apps/web/app/api/daily-stats/README.md). For local timing
+comparisons, use the development-only cache bypass and runner described in
+[Local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking).
+The runner rejects responses that do not confirm the cache bypass.

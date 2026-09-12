@@ -97,6 +97,34 @@ their embed: that read feeds the top-customer list, which needs many names.
 Every paginated read is wrapped in `_timed`. Leaving one untimed makes a failure
 inside it look like it came from whatever ran next.
 
+## Local benchmarking
+
+In development, `?cache=off` skips reading and writing
+`apps/web/.daily-stats-cache.json` without deleting the file. Successful bypass
+responses include `X-Daily-Stats-Cache: bypass` and `Cache-Control: no-store`.
+Production ignores this parameter and retains cron authentication.
+
+With `pnpm dev` running, open
+`https://sv.dev/api/daily-stats?date=2026-09-12&cache=off`, or run from the repo root:
+
+```sh
+node scripts/benchmark-daily-stats.mjs --label branch --date 2026-09-12
+```
+
+The runner excludes one warmup and measures five sequential requests. It checks
+HTTP status, the bypass header, and a nonempty text report. Results include total
+time, time to first byte, report hashes, and min/median/max timings. Reports and
+headers stay in private files under the ignored
+`scripts/.cache/daily-stats-benchmark/` directory. Treat these files as financial
+data; do not commit or share them. `--help` lists options.
+
+Compare versions with the same cache bypass patch, date, URL, environment, and
+run count. Switch versions only between runs and warm up each version before
+measuring. Do not benchmark versions concurrently against the same database.
+Database buffers and upstream caches are not cleared. After a client timeout,
+wait for the server request to finish before another run. Local mode does not
+send Telegram reports, but still requires `TELEGRAM_WEBHOOK_URL` to be set.
+
 ## Verification
 
 Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts tests/daily-stats-fetch-all-pages.test.ts`.
