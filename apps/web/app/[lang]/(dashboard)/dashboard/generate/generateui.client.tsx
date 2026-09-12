@@ -34,7 +34,7 @@ export function GenerateUI({
   );
   const isGeminiVoice = getTtsProvider(selectedVoiceSample?.model) === 'gemini';
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-16">
       <div className="flex justify-end">
         <GenerationSettingsPanel
           isPaidUser={isPaidUser}

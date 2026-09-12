@@ -1119,7 +1119,7 @@ export function AudioGenerator({
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 p-4 sm:p-6 sm:pt-4">
+      <CardContent className="space-y-4 px-4 sm:px-6 sm:pt-4">
         <div className="space-y-2">
           {isGrokVoice ? (
             <GrokTTSEditor
