@@ -312,10 +312,11 @@ export type PageCursor =
 
 /**
  * When a page ends on a run longer than this, the cursor walks the run by `id`
- * rather than listing its ids. An estimate, not a measured threshold: at ~37
- * bytes per uuid, 100 ids is ~3.7KB of the 8-16KB request line proxies commonly
- * accept. The rest is not free either — the same URL carries `excludeUserIds`
- * as a second uuid list, plus the select, range filters, order and limit.
+ * rather than listing its ids. An estimate, not a measured threshold: the
+ * filter is percent-encoded into the query string, so each uuid costs ~39 bytes
+ * and 100 ids is ~3.9KB — against the 8000 characters postgrest-js itself warns
+ * past (`urlLengthLimit`), with the select, range filters, order and limit
+ * still to fit.
  *
  * The two directions are not symmetric, which is what sets the value. Erring
  * low costs one extra request. Erring high risks a 414, which is not a
