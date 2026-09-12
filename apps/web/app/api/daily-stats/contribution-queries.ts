@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { CallSession, ContributionData, UsageEvent } from './contribution';
-import { fetchAllPages, PAGE_SIZE } from './utils';
+import { applyPageCursor, fetchAllPages, PAGE_SIZE } from './utils';
 
 const CALL_COLUMNS =
   'id, user_id, started_at, ended_at, duration_seconds, model, status';
@@ -29,7 +29,7 @@ export async function getContributionData(
   internalIds: string[],
 ): Promise<ContributionData> {
   const [events, windowCalls] = await Promise.all([
-    fetchAllPages<UsageEvent>((offset) => {
+    fetchAllPages<UsageEvent>('occurred_at', (cursor) => {
       let query = client
         .from('usage_events')
         .select(
@@ -38,12 +38,12 @@ export async function getContributionData(
         .gte('occurred_at', start.toISOString())
         .lt('occurred_at', end.toISOString());
       if (internalIds.length) query = query.notIn('user_id', internalIds);
-      return query
+      return applyPageCursor(query, cursor)
         .order('occurred_at')
         .order('id')
-        .range(offset, offset + PAGE_SIZE - 1);
+        .limit(PAGE_SIZE);
     }),
-    fetchAllPages<CallSession>((offset) => {
+    fetchAllPages<CallSession>('started_at', (cursor) => {
       let query = client
         .from('call_sessions')
         .select(CALL_COLUMNS)
@@ -51,10 +51,10 @@ export async function getContributionData(
           `and(ended_at.gte.${start.toISOString()},ended_at.lt.${end.toISOString()}),and(ended_at.is.null,started_at.gte.${start.toISOString()},started_at.lt.${end.toISOString()})`,
         );
       if (internalIds.length) query = query.notIn('user_id', internalIds);
-      return query
+      return applyPageCursor(query, cursor)
         .order('started_at')
         .order('id')
-        .range(offset, offset + PAGE_SIZE - 1);
+        .limit(PAGE_SIZE);
     }),
   ]);
   const calls = new Map(windowCalls.map((call) => [call.id, call]));
@@ -71,13 +71,13 @@ export async function getContributionData(
     ),
   ];
   const missingCalls = await fetchIdBatches(missingIds, (ids) =>
-    fetchAllPages<CallSession>((offset) =>
-      client
-        .from('call_sessions')
-        .select(CALL_COLUMNS)
-        .in('id', ids)
+    fetchAllPages<CallSession>('id', (cursor) =>
+      applyPageCursor(
+        client.from('call_sessions').select(CALL_COLUMNS).in('id', ids),
+        cursor,
+      )
         .order('id')
-        .range(offset, offset + PAGE_SIZE - 1),
+        .limit(PAGE_SIZE),
     ),
   );
   for (const row of missingCalls) {
@@ -92,14 +92,20 @@ export async function getContributionData(
     .filter((call) => !eventCallIds.has(call.id))
     .map((call) => call.id);
   const links = await fetchIdBatches(sessionIds, (ids) =>
-    fetchAllPages<Pick<Tables<'usage_events'>, 'source_id'>>((offset) =>
-      client
-        .from('usage_events')
-        .select('source_id')
-        .eq('source_type', 'live_call')
-        .in('source_id', ids)
-        .order('id')
-        .range(offset, offset + PAGE_SIZE - 1),
+    // `id` is selected only to carry the keyset cursor.
+    fetchAllPages<Pick<Tables<'usage_events'>, 'id' | 'source_id'>>(
+      'id',
+      (cursor) =>
+        applyPageCursor(
+          client
+            .from('usage_events')
+            .select('id, source_id')
+            .eq('source_type', 'live_call')
+            .in('source_id', ids),
+          cursor,
+        )
+          .order('id')
+          .limit(PAGE_SIZE),
     ),
   );
   const linkedCallIds = links.flatMap((row) =>
@@ -119,13 +125,13 @@ export async function getContributionData(
   ];
   const audioUsage: Record<string, unknown> = {};
   const audioFiles = await fetchIdBatches(audioIds, (ids) =>
-    fetchAllPages<Pick<Tables<'audio_files'>, 'id' | 'usage'>>((offset) =>
-      client
-        .from('audio_files')
-        .select('id, usage')
-        .in('id', ids)
+    fetchAllPages<Pick<Tables<'audio_files'>, 'id' | 'usage'>>('id', (cursor) =>
+      applyPageCursor(
+        client.from('audio_files').select('id, usage').in('id', ids),
+        cursor,
+      )
         .order('id')
-        .range(offset, offset + PAGE_SIZE - 1),
+        .limit(PAGE_SIZE),
     ),
   );
   for (const row of audioFiles) audioUsage[row.id] = row.usage;

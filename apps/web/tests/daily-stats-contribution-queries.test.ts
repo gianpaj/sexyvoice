@@ -2,7 +2,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, test } from 'vitest';
 
 import { getContributionData } from '../app/api/daily-stats/contribution-queries';
-import { getCallSessionsInRange } from '../app/api/daily-stats/queries';
+import {
+  type DailyStatsCreditTransaction,
+  getAllCreditTransactions,
+  getCallSessionsInRange,
+} from '../app/api/daily-stats/queries';
+import { PAGE_SIZE } from '../app/api/daily-stats/utils';
 
 interface QueryResult {
   data: unknown[] | null;
@@ -32,7 +37,7 @@ function database(
         'not',
         'or',
         'order',
-        'range',
+        'limit',
         'in',
         'eq',
       ]) {
@@ -58,15 +63,87 @@ function database(
 }
 const start = new Date('2026-08-07T00:00:00Z');
 const end = new Date('2026-09-06T00:00:00Z');
+
+// Rows carry the keyset cursor columns; paging reads them off the last row.
+const at = (i: number) => new Date(start.getTime() + i * 1000).toISOString();
+describe('all-time credit transaction reads', () => {
+  test('paginates in query order with date and user filters, retaining refunds', async () => {
+    const firstPage: DailyStatsCreditTransaction[] = Array.from(
+      { length: PAGE_SIZE },
+      (_, id) => ({
+        amount: 10,
+        created_at: at(id),
+        description: 'Credit purchase',
+        id: `${id}`,
+        metadata: {},
+        profiles: null,
+        type: 'purchase',
+        user_id: 'user',
+      }),
+    );
+
+    const refund: DailyStatsCreditTransaction = {
+      ...firstPage[0],
+      amount: -10,
+      created_at: at(PAGE_SIZE),
+      id: 'refund',
+      type: 'refund',
+    };
+    let page = 0;
+    const { client, requests } = database(() => ({
+      data: page++ === 0 ? firstPage : [refund],
+      error: null,
+    }));
+
+    const transactions = await getAllCreditTransactions(client, end, [
+      'internal',
+    ]);
+
+    expect(transactions).toEqual([...firstPage, refund]);
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect(request.table).toBe('credit_transactions');
+      expect(request.operations).toContainEqual([
+        'in',
+        ['type', ['purchase', 'topup', 'refund']],
+      ]);
+      expect(request.operations).toContainEqual([
+        'not',
+        ['description', 'ilike', '%manual%'],
+      ]);
+      expect(
+        request.operations.filter(([method]) => method === 'order'),
+      ).toEqual([
+        ['order', ['created_at', { ascending: true }]],
+        ['order', ['id', { ascending: true }]],
+      ]);
+      expect(request.operations).toContainEqual([
+        'gte',
+        ['created_at', new Date(0).toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'lt',
+        ['created_at', end.toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'notIn',
+        ['user_id', ['internal']],
+      ]);
+    }
+  });
+});
+
 describe('contribution reads', () => {
   test('paginates events and excludes internal users', async () => {
-    const { client, requests } = database((table, ops) => {
-      const offset = ops.find(([method]) => method === 'range')?.[1][0];
-      const count = table === 'usage_events' && offset === 0 ? 1000 : 0;
+    let eventPages = 0;
+    const { client, requests } = database((table) => {
+      if (table !== 'usage_events') return { data: [], error: null };
+      const count = eventPages++ === 0 ? PAGE_SIZE : 0;
       return {
         data: Array.from({ length: count }, (_, id) => ({
           dollar_amount: 1,
           id: `${id}`,
+          occurred_at: at(id),
           source_id: null,
           source_type: 'tts',
         })),
@@ -74,16 +151,31 @@ describe('contribution reads', () => {
       };
     });
     const result = await getContributionData(client, start, end, ['internal']);
-    expect(result.events).toHaveLength(1000);
+    expect(result.events).toHaveLength(PAGE_SIZE);
 
-    expect(
-      requests.filter((request) => request.table === 'usage_events'),
-    ).toHaveLength(2);
+    const eventReads = requests.filter(
+      (request) => request.table === 'usage_events',
+    );
+    expect(eventReads).toHaveLength(2);
     expect(
       requests.every((request) =>
         request.operations.some(([method]) => method === 'notIn'),
       ),
     ).toBe(true);
+
+    // First page seeks from the window start only.
+    expect(
+      eventReads[0].operations.filter(([method]) => method === 'gte'),
+    ).toEqual([['gte', ['occurred_at', start.toISOString()]]]);
+    // Second page re-seeks from the last row read and drops that row's id.
+    expect(eventReads[1].operations).toContainEqual([
+      'gte',
+      ['occurred_at', at(PAGE_SIZE - 1)],
+    ]);
+    expect(eventReads[1].operations).toContainEqual([
+      'not',
+      ['id', 'in', `(${PAGE_SIZE - 1})`],
+    ]);
   });
   test('cross-window link checks omit date filters and batch audio metadata', async () => {
     const { client, requests } = database((table, ops) => {
@@ -121,25 +213,34 @@ describe('contribution reads', () => {
     ).toBe(false);
   });
   test('call activity reads paginate past 1000 calls', async () => {
-    const { client, requests } = database((_table, ops) => {
-      const offset = ops.find(([method]) => method === 'range')?.[1][0];
+    let page = 0;
+    const { client, requests } = database(() => {
+      const current = page++;
       return {
-        data: Array.from({ length: offset === 0 ? 1000 : 1 }, (_, id) => ({
-          id: `${offset}-${id}`,
-        })),
+        data: Array.from(
+          { length: current === 0 ? PAGE_SIZE : 1 },
+          (_, id) => ({
+            id: `${current}-${id}`,
+            started_at: at(current * PAGE_SIZE + id),
+          }),
+        ),
         error: null,
       };
     });
     const calls = await getCallSessionsInRange(client, start, end, [
       'internal',
     ]);
-    expect(calls).toHaveLength(1001);
+    expect(calls).toHaveLength(PAGE_SIZE + 1);
     expect(requests).toHaveLength(2);
     expect(requests[0].operations).toContainEqual([
       'notIn',
       ['user_id', ['internal']],
     ]);
-    expect(calls[1000].id).toBe('1000-0');
+    expect(calls[PAGE_SIZE].id).toBe('1-0');
+    expect(requests[1].operations).toContainEqual([
+      'gte',
+      ['started_at', at(PAGE_SIZE - 1)],
+    ]);
   });
   test('runs ID lookups concurrently with at most four batches and skips known links', async () => {
     let active = 0;
