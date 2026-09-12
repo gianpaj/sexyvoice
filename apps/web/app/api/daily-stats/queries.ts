@@ -1,7 +1,12 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { DailyStatsProfileRelation } from './types';
-import { fetchAllPages, PAGE_SIZE } from './utils';
+import {
+  applyPageCursor,
+  fetchAllPages,
+  formatIdList,
+  PAGE_SIZE,
+} from './utils';
 
 const VOICE_CLONING_MODELS = [
   'resemble-ai/chatterbox-multilingual',
@@ -15,8 +20,6 @@ export const INTERNAL_USER_EMAILS = [
   'alex.kostinskyi@gmail.com',
 ] as const;
 
-export const formatIdList = (ids: readonly string[]) => `(${ids.join(',')})`;
-
 export type DailyStatsCreditTransaction = Pick<
   Tables<'credit_transactions'>,
   | 'amount'
@@ -28,10 +31,12 @@ export type DailyStatsCreditTransaction = Pick<
   | 'user_id'
 > & { profiles: DailyStatsProfileRelation };
 
+// No `profiles(username)` embed: PostgREST joins that per row, and the report
+// only labels three users. See getProfileUsernamesByIds.
 export type DailyStatsUsageEvent = Pick<
   Tables<'usage_events'>,
   'credits_used' | 'id' | 'occurred_at' | 'source_type' | 'user_id'
-> & { profiles: DailyStatsProfileRelation };
+>;
 
 export type DailyStatsAudioFile = Pick<
   Tables<'audio_files'>,
@@ -41,9 +46,10 @@ export type DailyStatsProfile = Pick<
   Tables<'profiles'>,
   'created_at' | 'id' | 'username'
 >;
+// `id` and `started_at` are not reported on; they carry the keyset cursor.
 export type DailyStatsCallSessionDuration = Pick<
   Tables<'call_sessions'>,
-  'duration_seconds'
+  'duration_seconds' | 'id' | 'started_at'
 >;
 
 type DailyStatsSupabaseClient = SupabaseClient;
@@ -65,21 +71,19 @@ export function getUsageEventsInRange(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsUsageEvent[]> {
-  return fetchAllPages<DailyStatsUsageEvent>((offset) => {
+  return fetchAllPages<DailyStatsUsageEvent>('occurred_at', (cursor) => {
     let query = supabase
       .from('usage_events')
-      .select(
-        'id, user_id, source_type, credits_used, occurred_at, profiles(username)',
-      )
+      .select('id, user_id, source_type, credits_used, occurred_at')
       .gte('occurred_at', start.toISOString())
       .lt('occurred_at', end.toISOString());
     if (excludeUserIds.length > 0) {
       query = query.notIn('user_id', excludeUserIds);
     }
-    return query
+    return applyPageCursor(query, cursor)
       .order('occurred_at', { ascending: true })
       .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
+      .limit(PAGE_SIZE)
       .then(({ data, error }) => ({
         data: (data as DailyStatsUsageEvent[] | null) ?? null,
         error,
@@ -93,7 +97,7 @@ export function getAudioFilesInRange(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsAudioFile[]> {
-  return fetchAllPages<DailyStatsAudioFile>((offset) => {
+  return fetchAllPages<DailyStatsAudioFile>('created_at', (cursor) => {
     let query = supabase
       .from('audio_files')
       .select('id, created_at, model')
@@ -105,10 +109,10 @@ export function getAudioFilesInRange(
         `user_id.is.null,user_id.not.in.${formatIdList(excludeUserIds)}`,
       );
     }
-    return query
+    return applyPageCursor(query, cursor)
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
+      .limit(PAGE_SIZE)
       .then(({ data, error }) => ({
         data: (data as DailyStatsAudioFile[] | null) ?? null,
         error,
@@ -122,29 +126,32 @@ export function getClonedAudioFilesInRange(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<Array<{ created_at: string | null; id: string }>> {
-  return fetchAllPages<{ created_at: string | null; id: string }>((offset) => {
-    let query = supabase
-      .from('audio_files')
-      .select('id, created_at')
-      .in('model', [...VOICE_CLONING_MODELS])
-      .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString());
-    if (excludeUserIds.length > 0) {
-      query = query.or(
-        `user_id.is.null,user_id.not.in.${formatIdList(excludeUserIds)}`,
-      );
-    }
-    return query
-      .order('created_at', { ascending: true })
-      .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
-      .then(({ data, error }) => ({
-        data:
-          (data as Array<{ created_at: string | null; id: string }> | null) ??
-          null,
-        error,
-      }));
-  });
+  return fetchAllPages<{ created_at: string | null; id: string }>(
+    'created_at',
+    (cursor) => {
+      let query = supabase
+        .from('audio_files')
+        .select('id, created_at')
+        .in('model', [...VOICE_CLONING_MODELS])
+        .gte('created_at', start.toISOString())
+        .lt('created_at', end.toISOString());
+      if (excludeUserIds.length > 0) {
+        query = query.or(
+          `user_id.is.null,user_id.not.in.${formatIdList(excludeUserIds)}`,
+        );
+      }
+      return applyPageCursor(query, cursor)
+        .order('created_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(PAGE_SIZE)
+        .then(({ data, error }) => ({
+          data:
+            (data as Array<{ created_at: string | null; id: string }> | null) ??
+            null,
+          error,
+        }));
+    },
+  );
 }
 
 export function getProfilesInRange(
@@ -153,7 +160,7 @@ export function getProfilesInRange(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsProfile[]> {
-  return fetchAllPages<DailyStatsProfile>((offset) => {
+  return fetchAllPages<DailyStatsProfile>('created_at', (cursor) => {
     let query = supabase
       .from('profiles')
       .select('id, created_at, username')
@@ -162,10 +169,10 @@ export function getProfilesInRange(
     if (excludeUserIds.length > 0) {
       query = query.notIn('id', excludeUserIds);
     }
-    return query
+    return applyPageCursor(query, cursor)
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
+      .limit(PAGE_SIZE)
       .then(({ data, error }) => ({
         data: (data as DailyStatsProfile[] | null) ?? null,
         error,
@@ -179,7 +186,7 @@ export function getCreditTransactionsInRange(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsCreditTransaction[]> {
-  return fetchAllPages<DailyStatsCreditTransaction>((offset) => {
+  return fetchAllPages<DailyStatsCreditTransaction>('created_at', (cursor) => {
     let query = supabase
       .from('credit_transactions')
       .select(
@@ -192,10 +199,10 @@ export function getCreditTransactionsInRange(
     if (excludeUserIds.length > 0) {
       query = query.notIn('user_id', excludeUserIds);
     }
-    return query
+    return applyPageCursor(query, cursor)
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
+      .limit(PAGE_SIZE)
       .then(({ data, error }) => ({
         data: (data as DailyStatsCreditTransaction[] | null) ?? null,
         error,
@@ -208,7 +215,7 @@ export function getPurchaseTransactionsBefore(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsCreditTransaction[]> {
-  return fetchAllPages<DailyStatsCreditTransaction>((offset) => {
+  return fetchAllPages<DailyStatsCreditTransaction>('created_at', (cursor) => {
     let query = supabase
       .from('credit_transactions')
       .select(
@@ -220,10 +227,10 @@ export function getPurchaseTransactionsBefore(
     if (excludeUserIds.length > 0) {
       query = query.notIn('user_id', excludeUserIds);
     }
-    return query
+    return applyPageCursor(query, cursor)
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
+      .limit(PAGE_SIZE)
       .then(({ data, error }) => ({
         data: (data as DailyStatsCreditTransaction[] | null) ?? null,
         error,
@@ -236,23 +243,26 @@ export function getCallSessionDurationsBefore(
   end: Date,
   excludeUserIds: readonly string[] = [],
 ): Promise<DailyStatsCallSessionDuration[]> {
-  return fetchAllPages<DailyStatsCallSessionDuration>((offset) => {
-    let query = supabase
-      .from('call_sessions')
-      .select('duration_seconds')
-      .lt('started_at', end.toISOString());
-    if (excludeUserIds.length > 0) {
-      query = query.notIn('user_id', excludeUserIds);
-    }
-    return query
-      .order('started_at', { ascending: true })
-      .order('id', { ascending: true })
-      .range(offset, offset + PAGE_SIZE - 1)
-      .then(({ data, error }) => ({
-        data: (data as DailyStatsCallSessionDuration[] | null) ?? null,
-        error,
-      }));
-  });
+  return fetchAllPages<DailyStatsCallSessionDuration>(
+    'started_at',
+    (cursor) => {
+      let query = supabase
+        .from('call_sessions')
+        .select('duration_seconds, id, started_at')
+        .lt('started_at', end.toISOString());
+      if (excludeUserIds.length > 0) {
+        query = query.notIn('user_id', excludeUserIds);
+      }
+      return applyPageCursor(query, cursor)
+        .order('started_at', { ascending: true })
+        .order('id', { ascending: true })
+        .limit(PAGE_SIZE)
+        .then(({ data, error }) => ({
+          data: (data as DailyStatsCallSessionDuration[] | null) ?? null,
+          error,
+        }));
+    },
+  );
 }
 
 export function getCallSessionsInRange(
@@ -271,7 +281,7 @@ export function getCallSessionsInRange(
       | 'status'
       | 'free_call'
     >
-  >((offset) => {
+  >('started_at', (cursor) => {
     let query = supabase
       .from('call_sessions')
       .select(
@@ -281,10 +291,10 @@ export function getCallSessionsInRange(
       .lt('started_at', end.toISOString());
     if (excludeUserIds.length > 0)
       query = query.notIn('user_id', excludeUserIds);
-    return query
+    return applyPageCursor(query, cursor)
       .order('started_at')
       .order('id')
-      .range(offset, offset + PAGE_SIZE - 1);
+      .limit(PAGE_SIZE);
   });
 }
 
@@ -309,5 +319,33 @@ export function getAllCreditTransactions(
     ALL_TIME_START,
     end,
     excludeUserIds,
+  );
+}
+
+/**
+ * Usernames for a handful of user ids.
+ *
+ * The report labels only its top few users, so it resolves them here instead of
+ * embedding `profiles(username)` on every usage-event row, which makes PostgREST
+ * join per row across the whole 14-day window.
+ */
+export async function getProfileUsernamesByIds(
+  supabase: DailyStatsSupabaseClient,
+  userIds: readonly string[],
+): Promise<Map<string, string>> {
+  if (userIds.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', [...new Set(userIds)]);
+  if (error) throw error;
+
+  return new Map(
+    ((data ?? []) as { id: string; username: string | null }[]).flatMap(
+      (row) => (row.username ? [[row.id, row.username] as const] : []),
+    ),
   );
 }

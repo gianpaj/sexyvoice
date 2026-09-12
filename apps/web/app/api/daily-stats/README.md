@@ -73,18 +73,29 @@ sockets) and on retryable SQLSTATEs such as `57014`. Every caller only reads, so
 replaying a page is safe. Non-transient errors still fail the run on the first
 response.
 
+`fetchAllPages` pages with a keyset cursor, not `LIMIT/OFFSET`: an offset page
+makes Postgres sort and then discard every row it skips, so the deepest pages
+are both the slowest and the ones that time out. A query passes its ordering
+column as the cursor and applies it with `applyPageCursor`; it must therefore
+select both that column and `id`, and order by `(column asc, id asc)`. The seek
+is inclusive (`gte`) and excludes the ids already returned at that exact value,
+so rows sharing a timestamp are neither skipped nor duplicated. Two guards turn
+a mis-specified query into an error instead of a loop: a cursor value that moves
+backwards, and more than 200 rows sharing one value.
+
 Credit transactions are read once for all time and sliced in memory for every
 reporting window. The per-period reads this replaced were subsets of that same
 range with identical filters and were merged straight back into it, so they
 added load without adding rows. Add new windows as in-memory filters over
 `allCreditTransactions`, not as extra queries.
 
+Usage events carry no `profiles(username)` embed — PostgREST joins an embed per
+row, and the report labels only its top three users. Resolve names for the few
+ids actually shown with `getProfileUsernamesByIds`. Credit transactions keep
+their embed: that read feeds the top-customer list, which needs many names.
+
 Every paginated read is wrapped in `_timed`. Leaving one untimed makes a failure
 inside it look like it came from whatever ran next.
-
-Known remaining cost, not yet addressed: `fetchAllPages` walks `LIMIT/OFFSET`, so
-deep pages get progressively more expensive, and `getUsageEventsInRange` embeds
-`profiles(username)` on every row to label three users in the report.
 
 ## Verification
 

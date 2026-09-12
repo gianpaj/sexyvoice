@@ -24,7 +24,6 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
-  formatIdList,
   getAllCreditTransactions,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
@@ -32,6 +31,7 @@ import {
   getClonedAudioFilesInRange,
   getInternalUserIds,
   getProfilesInRange,
+  getProfileUsernamesByIds,
   getUsageEventsInRange,
 } from './queries';
 import {
@@ -44,6 +44,7 @@ import {
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
+  formatIdList,
   getFeatureHealthStatus,
   getProfileUsername,
   isCompletedUserCall,
@@ -169,7 +170,7 @@ export async function GET(request: NextRequest) {
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (cached.version !== 3 || typeof cached.reportDate !== 'string') {
+    if (cached.version !== 4 || typeof cached.reportDate !== 'string') {
       console.log(
         '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
@@ -457,7 +458,7 @@ export async function GET(request: NextRequest) {
       reportDate: cacheReportDate,
       subscriptionsMrr,
       usageEvents14dResult,
-      version: 3,
+      version: 4,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -1164,14 +1165,13 @@ export async function GET(request: NextRequest) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3);
 
-  // Get usernames for top usage users from usage events
-  const userIdToUsername = new Map<string, string>();
-  for (const event of usageEvents14dData) {
-    const username = getProfileUsername(event.profiles);
-    if (username && !userIdToUsername.has(event.user_id)) {
-      userIdToUsername.set(event.user_id, username);
-    }
-  }
+  // Resolve just these three usernames. Embedding `profiles(username)` on the
+  // usage-events query instead made PostgREST join per row across the whole
+  // 14-day window to label the same three.
+  const userIdToUsername = await getProfileUsernamesByIds(
+    supabase,
+    topUsageUsers.map(([userId]) => userId),
+  );
 
   // DEBUG: Top users verification
   if (!isProd && process.env.DEBUG) {
