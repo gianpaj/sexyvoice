@@ -150,13 +150,16 @@ describe('fetchAllPages keyset paging', () => {
   });
 
   // A bulk insert shares one `now()`, so these runs are ordinary data.
-  test('reads a run longer than the cursor can carry ids for', async () => {
-    // The run must sort into the middle, not the front: a page that ends
-    // part-way through it is what forces `exclude` to hand over to `within`.
-    const frozen = distinctAt(700);
-    // 500 rows at one value, so page 1 ends 300 rows into the run.
-    const rows = makeRows(PAGE_SIZE + 500, (i) =>
-      i >= 700 && i < 1200 ? frozen : distinctAt(i),
+  test('hands `exclude` over to `within` inside a long run', async () => {
+    // Two conditions, and both matter. The page has to end *inside* the run,
+    // so the run cannot sort to the front. And it has to end no more than
+    // MAX_CURSOR_EXCLUDE_IDS rows in, or the very first cursor is already
+    // `within` and the handover never happens. 50 rows in leaves margin either
+    // side of the current cap.
+    const frozen = distinctAt(950);
+    // 1300 rows at one value: page 1 ends 50 rows in, page 2 is then all run.
+    const rows = makeRows(PAGE_SIZE + 1400, (i) =>
+      i >= 950 && i < 2250 ? frozen : distinctAt(i),
     );
     const kinds: string[] = [];
     const reader = tableReader(rows);
@@ -168,9 +171,12 @@ describe('fetchAllPages keyset paging', () => {
 
     expect(read).toEqual(sortRows(rows));
     expect(new Set(read.map((r) => r.id)).size).toBe(rows.length);
-    // Asserted, not assumed: an earlier version of this test read the run from
-    // the front and never left `exclude`, so it passed without the code it names.
-    expect(kinds).toEqual(['start', 'within', 'after']);
+    // Asserted, not assumed. Two earlier versions of this test named a path
+    // they never took — the first read the run from the front and stayed in
+    // `exclude`, the second jumped straight to `within`. The ids dropped on the
+    // way into `within` must all sort below its `afterId`, or they are skipped;
+    // this sequence is the only place that invariant is exercised.
+    expect(kinds).toEqual(['start', 'exclude', 'within', 'after']);
   });
 
   test('reads a run longer than a whole page', async () => {
