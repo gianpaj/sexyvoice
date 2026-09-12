@@ -243,7 +243,10 @@ export function VoiceSelect({
         <Button
           aria-expanded={open}
           aria-label={t('selectVoicePlaceholder')}
-          className={cn('h-12 w-full justify-between px-3', className)}
+          className={cn(
+            'h-auto min-h-12 w-full justify-between whitespace-normal px-3 py-2 text-left',
+            className,
+          )}
           role="combobox"
           variant="outline"
         >
@@ -253,12 +256,14 @@ export function VoiceSelect({
                 <AudioLines className="size-4 text-muted-foreground" />
               </span>
               <span className="flex min-w-0 flex-col items-start">
-                <span className="truncate font-medium text-sm leading-tight">
+                <span className="break-words font-medium text-sm leading-tight">
                   {capitalizeFirstLetter(selected.name)}
                 </span>
-                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                <span className="flex flex-wrap items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
-                  {selectedModel} &middot; {selected.description ?? ''}
+                  <span className="break-words">
+                    {selectedModel} &middot; {selected.description ?? ''}
+                  </span>
                 </span>
               </span>
             </span>
@@ -434,12 +439,15 @@ export function VoiceSelect({
                       type="button"
                     >
                       <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="flex items-center gap-2">
-                          <span className="truncate font-medium text-sm">
+                        {/* Wrap instead of truncating so long descriptions push
+                            to their own line and the voice name stays readable
+                            on narrow screens. */}
+                        <span className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="break-words font-medium text-sm">
                             {capitalizeFirstLetter(voice.name)}
                           </span>
                           {voice.description && (
-                            <span className="text-muted-foreground text-xs">
+                            <span className="min-w-0 break-words text-muted-foreground text-xs">
                               {voice.description}
                             </span>
                           )}
