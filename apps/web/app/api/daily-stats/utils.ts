@@ -312,17 +312,23 @@ export type PageCursor =
 
 /**
  * When a page ends on a run longer than this, the cursor walks the run by `id`
- * rather than listing its ids. 200 is an estimate, not a measured threshold: at
- * ~37 bytes per uuid it puts the id list near 7.4KB, comfortably inside the
- * 8-16KB request lines proxies commonly accept, with the rest of the query
- * string still to fit. Nothing breaks if it is wrong in either direction — it
- * only chooses between two correct strategies, one of which costs an extra
- * request.
+ * rather than listing its ids. An estimate, not a measured threshold: at ~37
+ * bytes per uuid, 100 ids is ~3.7KB of the 8-16KB request line proxies commonly
+ * accept. The rest is not free either — the same URL carries `excludeUserIds`
+ * as a second uuid list, plus the select, range filters, order and limit.
  *
- * Postgres fixes `now()` at transaction start, so any bulk insert produces a
- * run this long: a promo grant, a backfill, a support batch.
+ * The two directions are not symmetric, which is what sets the value. Erring
+ * low costs one extra request. Erring high risks a 414, which is not a
+ * transient error and so fails the whole run on its first response — the same
+ * class of failure this pagination exists to avoid. So it sits well under what
+ * should fit rather than close to it.
+ *
+ * Row correctness does not depend on this number either way; it only chooses
+ * between two correct strategies. Postgres fixes `now()` at transaction start,
+ * so any bulk insert produces a run long enough to reach it: a promo grant, a
+ * backfill, a support batch.
  */
-const MAX_CURSOR_EXCLUDE_IDS = 200;
+const MAX_CURSOR_EXCLUDE_IDS = 100;
 
 interface CursorFilterable {
   eq: (column: string, value: string) => CursorFilterable;

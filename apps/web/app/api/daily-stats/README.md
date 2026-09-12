@@ -83,8 +83,11 @@ so rows sharing a timestamp are neither skipped nor duplicated.
 
 Postgres fixes `now()` at transaction start, so a bulk insert — a promo grant, a
 backfill, a support batch — gives every row it writes the same timestamp. Past
-200 such rows the ids no longer fit in a URL, so the cursor switches to walking
-the run by `id` (`eq(value)` + `gt(id, …)`) and then steps past it (`gt(value)`).
+100 such rows the id list starts crowding the URL, so the cursor switches to
+walking the run by `id` (`eq(value)` + `gt(id, …)`) and then steps past it
+(`gt(value)`). That threshold is deliberately conservative: overshooting it
+risks a 414, which is not transient and fails the run, while undershooting costs
+one extra request.
 These shapes carry the same semantics as the row comparison
 `(created_at, id) > (value, lastId)` in
 `.agents/skills/supabase-postgres-best-practices/references/data-pagination.md`,
