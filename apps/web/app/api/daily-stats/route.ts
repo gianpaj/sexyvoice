@@ -24,14 +24,14 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
-  formatIdList,
+  getAllCreditTransactions,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
   getCallSessionsInRange,
   getClonedAudioFilesInRange,
-  getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
+  getProfileUsernamesByIds,
   getUsageEventsInRange,
 } from './queries';
 import {
@@ -44,6 +44,7 @@ import {
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
+  formatIdList,
   getFeatureHealthStatus,
   getProfileUsername,
   isCompletedUserCall,
@@ -92,7 +93,12 @@ export async function GET(request: NextRequest) {
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
   const cacheReportDate = today.toISOString().slice(0, 10);
-  const useCache = !isProd && fs.existsSync(CACHE_FILE);
+  const bypassCache =
+    !isProd && request.nextUrl.searchParams.get('cache') === 'off';
+  const useCache = !(isProd || bypassCache) && fs.existsSync(CACHE_FILE);
+  const debugHeaders = bypassCache
+    ? { 'Cache-Control': 'no-store', 'X-Daily-Stats-Cache': 'bypass' }
+    : undefined;
   const previousDay = subtractDays(today, 1);
   const twoDaysAgo = subtractDays(today, 2);
   const fourteenDaysAgo = subtractDays(today, ROLLING_WINDOW_DAYS);
@@ -142,10 +148,10 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
   let allCreditTransactions: Awaited<
-    ReturnType<typeof getCreditTransactionsInRange>
+    ReturnType<typeof getAllCreditTransactions>
   > = [];
   let allTimePurchaseTransactions: Awaited<
-    ReturnType<typeof getCreditTransactionsInRange>
+    ReturnType<typeof getAllCreditTransactions>
   > = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
@@ -169,7 +175,7 @@ export async function GET(request: NextRequest) {
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (cached.version !== 3 || typeof cached.reportDate !== 'string') {
+    if (cached.version !== 4 || typeof cached.reportDate !== 'string') {
       console.log(
         '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
@@ -313,12 +319,15 @@ export async function GET(request: NextRequest) {
       findNextSubscriptionDueForPayment(),
       getActiveSubscriptionsMrr(),
 
-      getCallSessionsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({ data, error: null })),
+      _timed(
+        `call_sessions:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCallSessionsInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({ data, error: null })),
+      ),
 
       // (callSessionsTotalCountResult) Total call sessions count
       (() => {
@@ -339,15 +348,18 @@ export async function GET(request: NextRequest) {
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
     ] = await Promise.all([
-      getUsageEventsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({
-        data,
-        error: null,
-      })),
+      _timed(
+        `usage_events:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getUsageEventsInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({
+          data,
+          error: null,
+        })),
+      ),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         getAudioFilesInRange(
@@ -369,101 +381,29 @@ export async function GET(request: NextRequest) {
           }),
         ),
       ),
-      getProfilesInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({
-        data,
-        error: null,
-      })),
-    ]);
-
-    const [
-      yesterdayCreditTransactions,
-      fourteenDayCreditTransactions,
-      thirtyDayCreditTransactions,
-      monthToDateCreditTransactions,
-      previousMonthToDateCreditTransactions,
-      twoMonthsAgoToDateCreditTransactions,
-      threeMonthsAgoToDateCreditTransactions,
-      allTimeCreditTransactions,
-    ] = await Promise.all([
-      getCreditTransactionsInRange(
-        supabase,
-        previousDay,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        thirtyDaysAgo,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        monthStart,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        previousMonthStart,
-        previousMonthPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        twoMonthsAgoStart,
-        twoMonthsAgoPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        threeMonthsAgoStart,
-        threeMonthsAgoPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        new Date('1970-01-01T00:00:00.000Z'),
-        today,
-        internalUserIds,
+      _timed(
+        `profiles:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getProfilesInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({
+          data,
+          error: null,
+        })),
       ),
     ]);
 
-    allCreditTransactions = [
-      ...new Map(
-        [
-          ...allTimeCreditTransactions,
-          ...yesterdayCreditTransactions,
-          ...fourteenDayCreditTransactions,
-          ...thirtyDayCreditTransactions,
-          ...monthToDateCreditTransactions,
-          ...previousMonthToDateCreditTransactions,
-          ...twoMonthsAgoToDateCreditTransactions,
-          ...threeMonthsAgoToDateCreditTransactions,
-        ].map((transaction) => [transaction.id, transaction]),
-      ).values(),
-    ].sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    // One all-time read feeds every reporting window below.
+    allCreditTransactions = await _timed(
+      `credit_transactions:all_time paginated < ${today.toISOString().slice(0, 10)}`,
+      getAllCreditTransactions(supabase, today, internalUserIds),
     );
 
-    allTimePurchaseTransactions = allTimeCreditTransactions
-      .filter((transaction) => transaction.type !== 'refund')
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      );
+    allTimePurchaseTransactions = allCreditTransactions.filter(
+      (transaction) => transaction.type !== 'refund',
+    );
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -488,7 +428,7 @@ export async function GET(request: NextRequest) {
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
-  if (!(isProd || loadedFromValidCache)) {
+  if (!(isProd || bypassCache || loadedFromValidCache)) {
     const cacheData = {
       activeSubscribersCount,
       allCreditTransactions,
@@ -507,7 +447,7 @@ export async function GET(request: NextRequest) {
       reportDate: cacheReportDate,
       subscriptionsMrr,
       usageEvents14dResult,
-      version: 3,
+      version: 4,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -666,7 +606,7 @@ export async function GET(request: NextRequest) {
     const message = `WARNING: No audio files generated yesterday! ${previousDay}-${today}`;
     console.warn({ message });
     if (!isProd) {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true }, { headers: debugHeaders });
     }
     await fetch(webhook, {
       body: JSON.stringify({ chat_id: '202637584', text: message }),
@@ -972,18 +912,14 @@ export async function GET(request: NextRequest) {
   // Contribution uses fresh usage and payment history together. Cached purchases
   // could misclassify fresh usage or understate collections; cached activity
   // metrics are only for local debugging and do not feed this calculation.
-  const contributionData = await getContributionData(
-    supabase,
-    thirtyDaysAgo,
-    today,
-    internalUserIds,
+  const contributionData = await _timed(
+    `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+    getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
   );
   const contributionTransactions = loadedFromValidCache
-    ? await getCreditTransactionsInRange(
-        supabase,
-        new Date(0),
-        today,
-        internalUserIds,
+    ? await _timed(
+        `credit_transactions:all_time paginated (cached path) < ${today.toISOString().slice(0, 10)}`,
+        getAllCreditTransactions(supabase, today, internalUserIds),
       )
     : allCreditTransactions;
   const contributionYesterday = summarizeContribution(
@@ -1219,14 +1155,13 @@ export async function GET(request: NextRequest) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3);
 
-  // Get usernames for top usage users from usage events
-  const userIdToUsername = new Map<string, string>();
-  for (const event of usageEvents14dData) {
-    const username = getProfileUsername(event.profiles);
-    if (username && !userIdToUsername.has(event.user_id)) {
-      userIdToUsername.set(event.user_id, username);
-    }
-  }
+  // Resolve just these three usernames. Embedding `profiles(username)` on the
+  // usage-events query instead made PostgREST join per row across the whole
+  // 14-day window to label the same three.
+  const userIdToUsername = await getProfileUsernamesByIds(
+    supabase,
+    topUsageUsers.map(([userId]) => userId),
+  );
 
   // DEBUG: Top users verification
   if (!isProd && process.env.DEBUG) {
@@ -1485,7 +1420,7 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!isProd) {
-      return new NextResponse(message);
+      return new NextResponse(message, { headers: debugHeaders });
     }
     await fetch(webhook, {
       body: JSON.stringify({
