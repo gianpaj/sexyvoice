@@ -151,16 +151,26 @@ describe('fetchAllPages keyset paging', () => {
 
   // A bulk insert shares one `now()`, so these runs are ordinary data.
   test('reads a run longer than the cursor can carry ids for', async () => {
-    const frozen = distinctAt(0);
-    // 400 rows at one value, ending the first page mid-run.
+    // The run must sort into the middle, not the front: a page that ends
+    // part-way through it is what forces `exclude` to hand over to `within`.
+    const frozen = distinctAt(700);
+    // 500 rows at one value, so page 1 ends 300 rows into the run.
     const rows = makeRows(PAGE_SIZE + 500, (i) =>
-      i >= 800 && i < 1200 ? frozen : distinctAt(i + 1),
+      i >= 700 && i < 1200 ? frozen : distinctAt(i),
     );
+    const kinds: string[] = [];
+    const reader = tableReader(rows);
 
-    const read = await fetchAllPages<Row>('created_at', tableReader(rows));
+    const read = await fetchAllPages<Row>('created_at', (cursor) => {
+      kinds.push(cursor ? cursor.kind : 'start');
+      return reader(cursor);
+    });
 
     expect(read).toEqual(sortRows(rows));
     expect(new Set(read.map((r) => r.id)).size).toBe(rows.length);
+    // Asserted, not assumed: an earlier version of this test read the run from
+    // the front and never left `exclude`, so it passed without the code it names.
+    expect(kinds).toEqual(['start', 'within', 'after']);
   });
 
   test('reads a run longer than a whole page', async () => {

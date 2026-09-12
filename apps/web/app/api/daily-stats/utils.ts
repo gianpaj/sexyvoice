@@ -295,7 +295,7 @@ export const formatIdList = (ids: readonly string[]) => `(${ids.join(',')})`;
  *
  * Every shape is a plain AND of filters. The textbook `(c > v) OR (c = v AND
  * id > lastId)` predicate would be one request shorter in the `within` case,
- * but it needs a second top-level `or=` param on the two queries that already
+ * but it needs a second top-level `or=` param on the three queries that already
  * use `.or()` for their own filters, and whether PostgREST ANDs repeated `or=`
  * params is not something this code can verify at runtime. Getting that wrong
  * silently changes which rows a revenue report counts, so it is not assumed.

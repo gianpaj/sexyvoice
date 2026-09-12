@@ -90,7 +90,7 @@ These shapes carry the same semantics as the row comparison
 `.agents/skills/supabase-postgres-best-practices/references/data-pagination.md`,
 but as plain ANDs. PostgREST cannot express a row comparison directly; the
 equivalent `(c > v) OR (c = v AND id > lastId)` needs a second top-level `or=`
-param on the two queries that already use `.or()` for their own filters, and
+param on the three queries that already use `.or()` for their own filters, and
 whether PostgREST ANDs repeated `or=` params is not verifiable from here.
 Getting that wrong would silently change which rows a revenue report counts, so
 the AND form is used instead at the cost of one extra request per long run.
