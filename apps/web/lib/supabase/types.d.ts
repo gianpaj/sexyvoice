@@ -325,10 +325,11 @@ declare type Database = {
       call_sessions: {
         Row: {
           billed_minutes: number;
+          character_id: string | null;
           created_at: string | null;
           credits_used: number;
           duration_seconds: number;
-          end_reason: string | null;
+          end_reason: string;
           ended_at: string | null;
           free_call: boolean | null;
           id: string;
@@ -336,6 +337,8 @@ declare type Database = {
           max_output_tokens: number | null;
           metadata: Json | null;
           model: string;
+          scene_id: string | null;
+          scene_modified: boolean | null;
           started_at: string;
           status: string;
           transcript: Json | null;
@@ -345,10 +348,11 @@ declare type Database = {
         };
         Insert: {
           billed_minutes?: number;
+          character_id?: string | null;
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
-          end_reason?: string | null;
+          end_reason?: string;
           ended_at?: string | null;
           free_call?: boolean | null;
           id?: string;
@@ -356,6 +360,8 @@ declare type Database = {
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model: string;
+          scene_id?: string | null;
+          scene_modified?: boolean | null;
           started_at?: string;
           status?: string;
           transcript?: Json | null;
@@ -365,10 +371,11 @@ declare type Database = {
         };
         Update: {
           billed_minutes?: number;
+          character_id?: string | null;
           created_at?: string | null;
           credits_used?: number;
           duration_seconds?: number;
-          end_reason?: string | null;
+          end_reason?: string;
           ended_at?: string | null;
           free_call?: boolean | null;
           id?: string;
@@ -376,6 +383,8 @@ declare type Database = {
           max_output_tokens?: number | null;
           metadata?: Json | null;
           model?: string;
+          scene_id?: string | null;
+          scene_modified?: boolean | null;
           started_at?: string;
           status?: string;
           transcript?: Json | null;
@@ -385,10 +394,61 @@ declare type Database = {
         };
         Relationships: [
           {
+            foreignKeyName: 'call_sessions_character_id_fkey';
+            columns: ['character_id'];
+            isOneToOne: false;
+            referencedRelation: 'characters';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'call_sessions_voice_id_fkey';
             columns: ['voice_id'];
             isOneToOne: false;
             referencedRelation: 'voices';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      call_turns: {
+        Row: {
+          cancelled: boolean;
+          created_at: string;
+          duration_ms: number | null;
+          id: number;
+          request_id: string | null;
+          response_created_at: string | null;
+          session_id: string;
+          ttft_ms: number | null;
+          turn_index: number;
+        };
+        Insert: {
+          cancelled?: boolean;
+          created_at?: string;
+          duration_ms?: number | null;
+          id?: never;
+          request_id?: string | null;
+          response_created_at?: string | null;
+          session_id: string;
+          ttft_ms?: number | null;
+          turn_index: number;
+        };
+        Update: {
+          cancelled?: boolean;
+          created_at?: string;
+          duration_ms?: number | null;
+          id?: never;
+          request_id?: string | null;
+          response_created_at?: string | null;
+          session_id?: string;
+          ttft_ms?: number | null;
+          turn_index?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'call_turns_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: false;
+            referencedRelation: 'call_sessions';
             referencedColumns: ['id'];
           },
         ];
