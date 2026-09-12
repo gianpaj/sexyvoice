@@ -85,11 +85,15 @@ Postgres fixes `now()` at transaction start, so a bulk insert — a promo grant,
 backfill, a support batch — gives every row it writes the same timestamp. Past
 200 such rows the ids no longer fit in a URL, so the cursor switches to walking
 the run by `id` (`eq(value)` + `gt(id, …)`) and then steps past it (`gt(value)`).
-Every cursor shape is a plain AND of filters: the shorter
-`(c > v) OR (c = v AND id > lastId)` predicate would need a second top-level
-`or=` param on the two queries that already use `.or()`, and whether PostgREST
-ANDs repeated `or=` params is not verifiable from here — getting it wrong would
-silently change which rows a revenue report counts.
+These shapes carry the same semantics as the row comparison
+`(created_at, id) > (value, lastId)` in
+`.agents/skills/supabase-postgres-best-practices/references/data-pagination.md`,
+but as plain ANDs. PostgREST cannot express a row comparison directly; the
+equivalent `(c > v) OR (c = v AND id > lastId)` needs a second top-level `or=`
+param on the two queries that already use `.or()` for their own filters, and
+whether PostgREST ANDs repeated `or=` params is not verifiable from here.
+Getting that wrong would silently change which rows a revenue report counts, so
+the AND form is used instead at the cost of one extra request per long run.
 
 One guard remains, turning a mis-specified query into an error instead of a
 loop: a cursor value that moves backwards, which means the query is not ordered

@@ -1,5 +1,20 @@
 # Daily-stats local benchmark
 
+## Motivation
+
+This change came from a production failure, not from the benchmark below. The
+07:00 UTC cron on 2026-09-12 died with `Error: Gateway Timeout` (Sentry issue
+`146561120`, deployment `dpl_C5CjXfESGWDhrpwKPvYyKBvVSS96`). Sentry's
+breadcrumbs name the request: `usage_events` at `offset=5000&limit=1000`
+returned 504 from Supabase's REST gateway after five shallower pages of the same
+query returned 200.
+
+So the benchmark below is not the evidence for the change; it only checks that
+paging differently did not make the ordinary case slower. Read its null result
+that way. The deepest-page cost that keyset paging removes is not reachable at
+the row counts a local dataset holds, and the incident it addresses was a
+gateway 504 on one page, which no timing run reproduces.
+
 ## Decision
 
 Use the same development-only `cache=off` patch on both revisions. It skips
