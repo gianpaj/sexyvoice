@@ -599,6 +599,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'tara',
         },
         quantity: 11, // "Hello world".length
+        requestId: expect.any(String),
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
         unit: 'chars',
@@ -783,6 +784,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'eve',
         },
         quantity: 13,
+        requestId: expect.any(String),
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
         unit: 'chars',
@@ -1100,10 +1102,19 @@ describe('Generate Voice API Route', () => {
         voiceId: 'voice-kore-id',
       });
 
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creditsUsed: 0,
+          dollarAmount: 0.000_251,
+          eventKind: 'provider_attempt',
+          inputTokens: 11,
+          outputTokens: 12,
+          totalTokens: 23,
+        }),
+      );
       // Verify usage event was logged for Gemini voice
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 26,
-        dollarAmount: 0.000_251,
         metadata: {
           duration: '12',
           model: 'gemini-2.5-pro-preview-tts',
@@ -1117,6 +1128,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'kore',
         },
         quantity: text.length,
+        requestId: expect.any(String),
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
         unit: 'chars',
@@ -1379,9 +1391,8 @@ describe('Generate Voice API Route', () => {
       expect(insertUsageEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           dollarAmount: 0.000_126,
-          metadata: expect.objectContaining({
-            model: 'gemini-2.5-flash-preview-tts',
-          }),
+          eventKind: 'provider_attempt',
+          model: 'gemini-2.5-flash-preview-tts',
         }),
       );
 

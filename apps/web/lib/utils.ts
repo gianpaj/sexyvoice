@@ -268,10 +268,10 @@ export function encodedRedirect(
   return redirect(`${path}?${type}=${encodeURIComponent(message)}`);
 }
 
-interface GeminiMetadata extends Record<string, string> {
-  readonly candidatesTokenCount: string;
-  readonly promptTokenCount: string;
-  readonly totalTokenCount: string;
+interface GeminiMetadata {
+  readonly candidatesTokenCount?: string;
+  readonly promptTokenCount?: string;
+  readonly totalTokenCount?: string;
 }
 
 interface ReplicateMetadata extends Record<string, string> {
@@ -281,25 +281,25 @@ interface ReplicateMetadata extends Record<string, string> {
 
 export function extractMetadata(
   isGeminiVoice: boolean,
-  genAIResponse: GenerateContentResponse | null,
+  genAIResponse: Pick<GenerateContentResponse, 'usageMetadata'> | null,
   replicateResponse?: Prediction,
 ): GeminiMetadata | ReplicateMetadata | undefined {
   if (isGeminiVoice) {
     const metadata = genAIResponse?.usageMetadata;
-    if (
-      !(
-        metadata?.promptTokenCount &&
-        metadata.candidatesTokenCount &&
-        metadata.totalTokenCount
-      )
-    ) {
-      return;
-    }
-    return {
-      candidatesTokenCount: metadata.candidatesTokenCount.toString(),
-      promptTokenCount: metadata.promptTokenCount.toString(),
-      totalTokenCount: metadata.totalTokenCount.toString(),
-    } as const;
+    if (!metadata) return;
+    const counts = {
+      candidatesTokenCount: metadata.candidatesTokenCount,
+      promptTokenCount: metadata.promptTokenCount,
+      totalTokenCount: metadata.totalTokenCount,
+    };
+    const entries = Object.entries(counts).filter(
+      ([, value]) =>
+        typeof value === 'number' && Number.isSafeInteger(value) && value >= 0,
+    );
+    if (entries.length === 0) return;
+    return Object.fromEntries(
+      entries.map(([key, value]) => [key, String(value)]),
+    );
   }
   const metrics = replicateResponse?.metrics;
   if (!(metrics?.predict_time && metrics?.total_time)) {

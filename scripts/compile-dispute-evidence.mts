@@ -158,6 +158,7 @@ async function getUsageSummary(
   const { data, error } = await supabase
     .from('usage_events')
     .select('source_type, quantity, credits_used, occurred_at')
+    .eq('event_kind', 'customer_usage')
     .eq('user_id', userId)
     .order('occurred_at', { ascending: true });
 

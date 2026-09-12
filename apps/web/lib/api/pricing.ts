@@ -75,6 +75,12 @@ function getPriceConfig({
   );
 }
 
+export function hasModelPricing(
+  input: Pick<PricingInput, 'sourceType' | 'provider' | 'model'>,
+): boolean {
+  return getPriceConfig(input) !== ZERO_PRICE;
+}
+
 function normalizeUnitCount(value: number | string | null | undefined): number {
   const parsedValue =
     typeof value === 'number' ? value : Number.parseFloat(value ?? '0');

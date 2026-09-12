@@ -122,14 +122,19 @@ export interface InsertUsageEventParams {
   creditsUsed: number;
   dollarAmount?: number | null;
   durationSeconds?: number | null;
+  eventKind?: 'customer_usage' | 'provider_attempt';
   inputChars?: number | null;
+  inputTokens?: number | null;
   metadata?: Json;
   model?: string | null;
+  occurredAt?: string;
   outputChars?: number | null;
+  outputTokens?: number | null;
   quantity: number;
   requestId?: string | null;
   sourceId?: string | null;
   sourceType: UsageSourceType;
+  totalTokens?: number | null;
   unit: UsageUnitType;
   userId: string;
 }
@@ -347,6 +352,11 @@ export const insertUsageEvent = async (
       .insert({
         api_key_id: params.apiKeyId ?? null,
         credits_used: params.creditsUsed,
+        event_kind: params.eventKind ?? 'customer_usage',
+        input_tokens: params.inputTokens ?? null,
+        output_tokens: params.outputTokens ?? null,
+        total_tokens: params.totalTokens ?? null,
+        ...(params.occurredAt ? { occurred_at: params.occurredAt } : {}),
         dollar_amount: params.dollarAmount ?? null,
         duration_seconds: params.durationSeconds ?? null,
         input_chars: params.inputChars ?? null,

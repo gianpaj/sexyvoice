@@ -141,7 +141,9 @@ export async function GET(request: NextRequest) {
     return APIErrorResponse('Failed to fetch billing usage', 500);
   }
 
-  const rows = (data ?? []) as ApiUsageDailyRow[];
+  const rows = ((data ?? []) as ApiUsageDailyRow[]).filter(
+    (row) => row.requests > 0,
+  );
   const widthDays = bucketWidth === '7d' ? 7 : 1;
   const bucketMap = new Map<
     string,
