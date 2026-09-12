@@ -296,11 +296,11 @@ export interface PageCursor {
 }
 
 /**
- * Cap on the ids carried in a cursor: ~37 bytes per uuid, so 200 already puts
- * the request near the gateway's URL limit. Every column paged on defaults to a
- * per-row `now()` at microsecond precision, so real boundaries hold one or two
- * rows. Hitting this means the data is not what these queries assume — fail
- * loudly rather than build a URL that gets rejected, or silently drop rows.
+ * Limit cursor ids to keep requests below the gateway's URL limit.
+ * PostgreSQL fixes `now()` at transaction start, so bulk inserts can share a
+ * timestamp. Pagination aborts if a full page ends with more than 200 rows at
+ * the same cursor value, even for valid data, rather than risk an oversized
+ * URL or silently drop rows.
  */
 const MAX_CURSOR_EXCLUDE_IDS = 200;
 

@@ -402,9 +402,8 @@ export async function GET(request: NextRequest) {
       getAllCreditTransactions(supabase, today, internalUserIds),
     );
 
-    // `fetchAllPages` walks offsets, so pages can overlap if rows shift
-    // mid-read; dedupe by id and sort to keep the chronological invariant the
-    // window filters below rely on.
+    // Keyset pagination has no shared snapshot across pages. Dedupe by id in
+    // case a transaction's timestamp changes mid-read, then sort chronologically.
     allCreditTransactions = [
       ...new Map(
         allTimeCreditTransactions.map((transaction) => [
