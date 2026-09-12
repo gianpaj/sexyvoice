@@ -2,7 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { describe, expect, test } from 'vitest';
 
 import { getContributionData } from '../app/api/daily-stats/contribution-queries';
-import { getCallSessionsInRange } from '../app/api/daily-stats/queries';
+import {
+  type DailyStatsCreditTransaction,
+  getAllCreditTransactions,
+  getCallSessionsInRange,
+} from '../app/api/daily-stats/queries';
 import { PAGE_SIZE } from '../app/api/daily-stats/utils';
 
 interface QueryResult {
@@ -62,6 +66,70 @@ const end = new Date('2026-09-06T00:00:00Z');
 
 // Rows carry the keyset cursor columns; paging reads them off the last row.
 const at = (i: number) => new Date(start.getTime() + i * 1000).toISOString();
+describe('all-time credit transaction reads', () => {
+  test('keeps the last duplicate, restores chronological order, and retains refunds', async () => {
+    const firstPage: DailyStatsCreditTransaction[] = Array.from(
+      { length: PAGE_SIZE },
+      (_, id) => ({
+        amount: 10,
+        created_at: at(id),
+        description: 'Credit purchase',
+        id: `${id}`,
+        metadata: {},
+        profiles: null,
+        type: 'purchase',
+        user_id: 'user',
+      }),
+    );
+    const updatedTransaction = {
+      ...firstPage[0],
+      created_at: at(PAGE_SIZE),
+    };
+    const refund: DailyStatsCreditTransaction = {
+      ...firstPage[0],
+      amount: -10,
+      created_at: at(PAGE_SIZE + 1),
+      id: 'refund',
+      type: 'refund',
+    };
+    let page = 0;
+    const { client, requests } = database(() => ({
+      data: page++ === 0 ? firstPage : [updatedTransaction, refund],
+      error: null,
+    }));
+
+    const transactions = await getAllCreditTransactions(client, end, [
+      'internal',
+    ]);
+
+    expect(transactions).toEqual([
+      ...firstPage.slice(1),
+      updatedTransaction,
+      refund,
+    ]);
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect(request.table).toBe('credit_transactions');
+      expect(request.operations).toContainEqual([
+        'in',
+        ['type', ['purchase', 'topup', 'refund']],
+      ]);
+      expect(request.operations).toContainEqual([
+        'gte',
+        ['created_at', new Date(0).toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'lt',
+        ['created_at', end.toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'notIn',
+        ['user_id', ['internal']],
+      ]);
+    }
+  });
+});
+
 describe('contribution reads', () => {
   test('paginates events and excludes internal users', async () => {
     let eventPages = 0;

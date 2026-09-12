@@ -392,28 +392,10 @@ export async function GET(request: NextRequest) {
       ),
     ]);
 
-    // One all-time read feeds every reporting window below. The seven
-    // per-period queries this replaced were subsets of this same range with
-    // identical filters, and were merged straight back into it by the dedupe
-    // below — so they only multiplied PostgREST load without contributing a
-    // single row the all-time read did not already return.
-    const allTimeCreditTransactions = await _timed(
+    // One all-time read feeds every reporting window below.
+    allCreditTransactions = await _timed(
       `credit_transactions:all_time paginated < ${today.toISOString().slice(0, 10)}`,
       getAllCreditTransactions(supabase, today, internalUserIds),
-    );
-
-    // Keyset pagination has no shared snapshot across pages. Dedupe by id in
-    // case a transaction's timestamp changes mid-read, then sort chronologically.
-    allCreditTransactions = [
-      ...new Map(
-        allTimeCreditTransactions.map((transaction) => [
-          transaction.id,
-          transaction,
-        ]),
-      ).values(),
-    ].sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
     );
 
     allTimePurchaseTransactions = allCreditTransactions.filter(
