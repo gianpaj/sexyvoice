@@ -166,7 +166,7 @@ const getOauthCallbackCookieContext = (request: Request) => {
       name.includes('auth-token'),
     ),
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
-      name.includes('code-verifier'),
+      /^sb-.+-auth-token-code-verifier(?:\.\d+)?$/.test(name),
     ),
     hasValidOauthCallbackMarkerCookie: verifyOauthCallbackMarkerValue(
       oauthCallbackMarkerCookie?.value,
@@ -266,13 +266,10 @@ export async function GET(request: Request) {
       );
     }
 
-    // Short-circuit a replayed/refreshed callback: the HMAC-signed marker cookie
-    // (60s TTL) proves we already exchanged the one-time `code` successfully, while
-    // the missing code-verifier cookie confirms the PKCE flow is no longer active.
-    // Invariant: the Supabase auth-token cookie written by that first exchange is
-    // still present, so downstream middleware reuses the existing session. If that
-    // cookie was somehow cleared while the marker survived, the dashboard simply
-    // redirects back to login — safe either way.
+    // A signed completion marker and no legacy verifier allow callback replays.
+    // exchangeCodeForSession(code) consumes only the legacy verifier; the SDK's
+    // per-flow slots and index can remain and must not block this shortcut.
+    // Dashboard middleware still validates the session before granting access.
     if (
       oauthCookieContext.hasValidOauthCallbackMarkerCookie &&
       !oauthCookieContext.hasSupabaseCodeVerifierCookie

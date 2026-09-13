@@ -193,33 +193,66 @@ describe('OAuth callback route', () => {
     );
   });
 
-  it('treats valid marked callbacks without a verifier as already completed', async () => {
-    vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
-    const marker = createOauthCallbackMarkerValue();
+  it.each([
+    '',
+    '; sb-test-auth-token-flow-flow1-code-verifier=leftover; sb-test-auth-token-flows-code-verifier=index',
+  ])(
+    'treats marked callbacks without a legacy verifier as completed: %s',
+    async (leftoverCookies) => {
+      vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
+      const marker = createOauthCallbackMarkerValue();
 
-    const response = await GET(
-      new Request(
-        'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
-        {
-          headers: {
-            cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token`,
+      const response = await GET(
+        new Request(
+          'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
+          {
+            headers: {
+              cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token${leftoverCookies}`,
+            },
           },
-        },
-      ),
-    );
+        ),
+      );
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe(
-      'https://sexyvoice.ai/en/dashboard',
-    );
-    expect(createClient).not.toHaveBeenCalled();
-    expect(responseCookieSetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-        name: OAUTH_CALLBACK_COOKIE_NAME,
-      }),
-    );
-  });
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toBe(
+        'https://sexyvoice.ai/en/dashboard',
+      );
+      expect(createClient).not.toHaveBeenCalled();
+      expect(responseCookieSetMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+          name: OAUTH_CALLBACK_COOKIE_NAME,
+        }),
+      );
+    },
+  );
+
+  it.each([
+    'sb-test-auth-token-code-verifier',
+    'sb-test-auth-token-code-verifier.0',
+  ])(
+    'exchanges a new flow with a completion marker and %s',
+    async (verifierName) => {
+      vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
+      const exchangeCodeForSession = vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: new Error('PKCE code verifier not found in storage.'),
+      });
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: { exchangeCodeForSession },
+      } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+      await GET(
+        new Request('https://sexyvoice.ai/auth/callback?code=new-code', {
+          headers: {
+            cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${createOauthCallbackMarkerValue()}; ${verifierName}=verifier`,
+          },
+        }),
+      );
+
+      expect(exchangeCodeForSession).toHaveBeenCalledWith('new-code');
+    },
+  );
 
   it('keeps unexpected exchange failures as exceptions with cookie context', async () => {
     const exchangeError = new Error('Unexpected auth exchange failure');

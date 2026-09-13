@@ -19,6 +19,12 @@ The Telegram bot's Deno import is outside the pnpm dependency graph and remains
 on its existing version. No migration or operational refund/reset script is part
 of this work.
 
+The OAuth callback uses the legacy PKCE verifier, matching the default SDK
+redirect configuration. Replay detection ignores per-flow slots and index cookies
+left after an exchange. Tests cover these leftovers and active legacy verifiers,
+including chunked cookies. Experimental flow-ID redirects are not enabled;
+overlapping OAuth flows do not gain slot isolation from this upgrade alone.
+
 ## Verification
 
 Node 24.10.0: `pnpm fixall` and `pnpm type-check` pass. The full test run,
