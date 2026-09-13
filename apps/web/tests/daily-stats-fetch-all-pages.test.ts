@@ -1,3 +1,4 @@
+import { PostgrestError } from '@supabase/supabase-js';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -8,7 +9,6 @@ import {
   PAGE_SIZE,
   type PageCursor,
 } from '../app/api/daily-stats/utils';
-import { PostgrestError } from '@supabase/supabase-js';
 
 const GATEWAY_TIMEOUT = { message: 'Gateway Timeout' };
 
@@ -426,7 +426,7 @@ describe('fetchAllPages', () => {
               details: '',
               hint: '',
               message: 'column does not exist',
-            })
+            }),
           });
         }),
       ),

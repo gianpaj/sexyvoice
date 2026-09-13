@@ -21,7 +21,10 @@ export function createMiddlewareClient(
           // locale rewrite or its request-header overrides.
           const forwarded = NextResponse.next({ request });
           const overrides = new Set(
-            (supabaseResponse.headers.get('x-middleware-override-headers') ?? '')
+            (
+              supabaseResponse.headers.get('x-middleware-override-headers') ??
+              ''
+            )
               .split(',')
               .map((name) => name.trim())
               .filter(Boolean),
@@ -32,7 +35,10 @@ export function createMiddlewareClient(
             if (!name) continue;
             const header = `x-middleware-request-${name}`;
             if (name === 'cookie' || !supabaseResponse.headers.has(header)) {
-              supabaseResponse.headers.set(header, forwarded.headers.get(header)!);
+              supabaseResponse.headers.set(
+                header,
+                forwarded.headers.get(header)!,
+              );
             }
             overrides.add(name);
           }
