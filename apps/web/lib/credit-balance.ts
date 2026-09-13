@@ -1,3 +1,3 @@
 export function isCreditBalance(amount: unknown): amount is number {
-  return typeof amount === 'number' && Number.isFinite(amount) && amount >= 0;
+  return typeof amount === 'number' && Number.isFinite(amount);
 }

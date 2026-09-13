@@ -89,12 +89,15 @@ describe.each([
   ['generation', GeneratePage],
   ['cloning', NewVoicePage],
 ] as const)('%s credit balance', (_name, Page) => {
-  it('keeps generation disabled for a confirmed zero without a lookup error', async () => {
-    await renderPage(Page, { amount: 0 });
-    expect(screen.getByRole('button', { name: 'Generate' })).toBeDisabled();
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(captureException).not.toHaveBeenCalled();
-  });
+  it.each([0, -10])(
+    'keeps generation disabled for a known balance of %s without a lookup error',
+    async (amount) => {
+      await renderPage(Page, { amount });
+      expect(screen.getByRole('button', { name: 'Generate' })).toBeDisabled();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(captureException).not.toHaveBeenCalled();
+    },
+  );
 
   it('enables generation when the balance is sufficient', async () => {
     await renderPage(Page, { amount: 10_000 });

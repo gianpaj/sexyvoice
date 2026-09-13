@@ -118,4 +118,15 @@ describe('credit balance display', () => {
     expect(await screen.findByRole('alert')).toBeVisible();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
+  it('displays a negative stored balance instead of a lookup error', async () => {
+    vi.mocked(getCredits).mockResolvedValue({ amount: -10 });
+    renderCredits();
+    expect(await screen.findByText('-10')).toBeVisible();
+    expect(screen.getByText('~0 min')).toBeVisible();
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuenow',
+      '0',
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });

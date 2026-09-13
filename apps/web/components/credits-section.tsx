@@ -132,7 +132,9 @@ function CreditsSection({
     return <CreditBalanceError />;
   }
 
-  const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
+  const minutesRemaining = Math.floor(
+    Math.max(0, creditsData.amount) / CREDITS_PER_MINUTE,
+  );
 
   return (
     <div
