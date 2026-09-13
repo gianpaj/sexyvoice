@@ -4,7 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ensureUserApplicationState } from '@/lib/supabase/ensure-user-application-state';
 import { updateSession } from '@/lib/supabase/middleware';
-import { createClient } from '@/lib/supabase/server';
+import { createMiddlewareClient } from '@/lib/supabase/middleware-client';
+
+vi.mock('@/lib/supabase/middleware-client', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@/lib/supabase/middleware-client')
+  >()),
+  createMiddlewareClient: vi.fn(),
+}));
 
 const nextResponseMocks = vi.hoisted(() => {
   const createResponse = (location?: string) => ({
@@ -55,7 +62,7 @@ describe('dashboard inactive-user reactivation boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    vi.mocked(createClient).mockResolvedValue({
+    vi.mocked(createMiddlewareClient).mockReturnValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: {

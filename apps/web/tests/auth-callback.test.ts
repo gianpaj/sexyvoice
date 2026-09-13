@@ -30,15 +30,15 @@ vi.mock('next/server', () => ({
       const responseInit = typeof init === 'object' ? init : undefined;
       const response = new Response(null, {
         ...responseInit,
-        headers: {
-          location: String(url),
-        },
+        headers: new Headers(responseInit?.headers),
         status: typeof init === 'number' ? init : (responseInit?.status ?? 307),
       }) as Response & {
         cookies: {
           set: typeof responseCookieSetMock;
         };
       };
+
+      response.headers.set('location', String(url));
 
       response.cookies = {
         set: responseCookieSetMock,
@@ -50,6 +50,38 @@ vi.mock('next/server', () => ({
 }));
 
 describe('OAuth callback route', () => {
+  it.each([null, { message: 'Exchange failed' }])(
+    'preserves auth cache headers on callback redirects',
+    async (error) => {
+      vi.mocked(createClient).mockImplementationOnce(async (headers) => {
+        headers?.set('cache-control', 'private, no-store');
+        return {
+          auth: {
+            exchangeCodeForSession: vi.fn().mockResolvedValue({
+              data: {
+                user: {
+                  app_metadata: {},
+                  email: 'test@example.com',
+                  id: 'test-user',
+                },
+              },
+              error,
+            }),
+          },
+        } as unknown as Awaited<ReturnType<typeof createClient>>;
+      });
+      const response = await GET(
+        new Request('https://sexyvoice.ai/auth/callback?code=test'),
+      );
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+      expect(response.headers.get('location')).toBe(
+        error
+          ? 'https://sexyvoice.ai/en/login'
+          : 'https://sexyvoice.ai/en/dashboard',
+      );
+    },
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
