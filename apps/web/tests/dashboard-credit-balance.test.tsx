@@ -88,7 +88,7 @@ beforeEach(() => vi.clearAllMocks());
 describe.each([
   ['generation', GeneratePage],
   ['cloning', NewVoicePage],
-] as const)('%s credit balance', (_name, Page) => {
+] as const)('%s credit balance', (name, Page) => {
   it.each([0, -10])(
     'keeps generation disabled for a known balance of %s without a lookup error',
     async (amount) => {
@@ -97,12 +97,14 @@ describe.each([
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
       expect(captureException).not.toHaveBeenCalled();
       if (amount < 0) {
-        expect(captureMessage).toHaveBeenCalledWith(
-          'Negative credit balance',
-          expect.objectContaining({
-            level: 'warning',
-          }),
-        );
+        expect(captureMessage).toHaveBeenCalledWith('Negative credit balance', {
+          level: 'warning',
+          tags: {
+            route:
+              name === 'generation' ? 'dashboard/generate' : 'dashboard/clone',
+          },
+          user: { id: 'user-1' },
+        });
       } else {
         expect(captureMessage).not.toHaveBeenCalled();
       }
@@ -155,7 +157,7 @@ describe.each([
         level: 'error',
         tags: {
           route:
-            _name === 'generation' ? 'dashboard/generate' : 'dashboard/clone',
+            name === 'generation' ? 'dashboard/generate' : 'dashboard/clone',
         },
         user: { id: 'user-1' },
       }),

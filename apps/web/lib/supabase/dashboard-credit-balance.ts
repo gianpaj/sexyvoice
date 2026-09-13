@@ -16,7 +16,11 @@ export async function getDashboardCreditBalance(
 
   if (!error && isCreditBalance(data?.amount)) {
     if (data.amount < 0) {
-      captureMessage('Negative credit balance', { level: 'warning' });
+      captureMessage('Negative credit balance', {
+        level: 'warning',
+        tags: { route },
+        user: { id: userId },
+      });
     }
     return data.amount;
   }
