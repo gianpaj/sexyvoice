@@ -421,6 +421,8 @@
     }
   },
   "creditsSection": {
+    "balanceError": "Dein Guthaben konnte nicht geladen werden. Bitte versuche es erneut.",
+    "retryBalance": "Erneut versuchen",
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",

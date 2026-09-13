@@ -6,12 +6,14 @@ import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 
+import { isCreditBalance } from '@/lib/credit-balance';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { initPostHog } from '@/lib/posthog-browser';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
+import { CreditBalanceError } from './credit-balance-error';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
@@ -39,14 +41,20 @@ function CreditsSection({
       0,
     ) || 0;
 
-  const { data: creditsData } = useQuery({
+  const {
+    data: creditsData,
+    isPending,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery({
     enabled: !!userId,
     queryFn: () => getCredits(supabase, userId),
     queryKey: ['credits', userId],
   });
 
   useEffect(() => {
-    if (!creditsData) {
+    if (isError || !isCreditBalance(creditsData?.amount)) {
       return;
     }
 
@@ -111,15 +119,19 @@ function CreditsSection({
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, [creditsData, lang, supabase]);
+  }, [creditsData, isError, lang, supabase]);
 
-  if (!creditsData) {
+  if (isPending) {
     return (
       <Skeleton
         className="h-[150px] w-full rounded-lg"
         data-visual-test-no-radius
       />
     );
+  }
+
+  if (isError || !isCreditBalance(creditsData?.amount)) {
+    return <CreditBalanceError isRetrying={isFetching} onRetry={refetch} />;
   }
 
   const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);

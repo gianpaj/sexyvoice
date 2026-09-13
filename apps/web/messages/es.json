@@ -421,6 +421,8 @@
     }
   },
   "creditsSection": {
+    "balanceError": "No pudimos cargar tu saldo de créditos. Inténtalo de nuevo.",
+    "retryBalance": "Reintentar",
     "title": "Créditos",
     "topupButton": "Recargar",
     "totalCredits": "Total",
