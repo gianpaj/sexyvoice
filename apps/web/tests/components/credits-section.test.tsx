@@ -40,9 +40,7 @@ vi.mock('@/lib/posthog-browser', () => ({ initPostHog: vi.fn() }));
 vi.mock('crisp-sdk-web', () => ({ Crisp: {} }));
 
 function renderCredits() {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+  const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
       <NextIntlClientProvider locale="en" messages={messages}>
@@ -128,5 +126,16 @@ describe('credit balance display', () => {
       '0',
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+  it('recovers from a successful response with an invalid balance', async () => {
+    vi.mocked(getCredits)
+      .mockResolvedValueOnce({ amount: Number.NaN })
+      .mockResolvedValueOnce({ amount: 0 });
+    renderCredits();
+    expect(await screen.findByRole('alert')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('0')).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(getCredits).toHaveBeenCalledTimes(2);
   });
 });

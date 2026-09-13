@@ -49,6 +49,7 @@ function CreditsSection({
     enabled: !!userId,
     queryFn: () => getCredits(supabase, userId),
     queryKey: ['credits', userId],
+    retry: false,
   });
 
   useEffect(() => {
