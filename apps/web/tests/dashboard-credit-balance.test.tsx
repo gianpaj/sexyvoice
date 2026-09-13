@@ -124,12 +124,31 @@ describe.each([
   });
 
   it('reports a failed query instead of treating it as zero credits', async () => {
-    const error = new Error('Database unavailable');
+    const error = Object.assign(new Error('Database unavailable'), {
+      code: '08006',
+      details: 'Connection lost',
+      hint: 'Retry the request',
+    });
     await renderPage(Page, null, error);
     expect(screen.getByRole('alert')).toBeVisible();
     expect(captureException).toHaveBeenCalledWith(
-      error,
-      expect.objectContaining({ user: { id: 'user-1' } }),
+      expect.objectContaining({ message: 'Credit balance lookup failed' }),
+      expect.objectContaining({
+        extra: {
+          balanceLookupError: {
+            code: '08006',
+            details: 'Connection lost',
+            hint: 'Retry the request',
+            message: 'Database unavailable',
+          },
+        },
+        level: 'error',
+        tags: {
+          route:
+            _name === 'generation' ? 'dashboard/generate' : 'dashboard/clone',
+        },
+        user: { id: 'user-1' },
+      }),
     );
   });
 });

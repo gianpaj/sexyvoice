@@ -18,9 +18,27 @@ export async function getDashboardCreditBalance(
     return data.amount;
   }
 
-  captureException(error ?? new Error('Credit balance is missing or invalid'), {
-    tags: { route },
-    user: { id: userId },
-  });
+  captureException(
+    new Error(
+      error
+        ? 'Credit balance lookup failed'
+        : 'Credit balance is missing or invalid',
+    ),
+    {
+      extra: error
+        ? {
+            balanceLookupError: {
+              code: error.code,
+              details: error.details,
+              hint: error.hint,
+              message: error.message,
+            },
+          }
+        : undefined,
+      level: 'error',
+      tags: { route },
+      user: { id: userId },
+    },
+  );
   return null;
 }
