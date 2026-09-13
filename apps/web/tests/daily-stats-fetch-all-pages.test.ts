@@ -8,6 +8,7 @@ import {
   PAGE_SIZE,
   type PageCursor,
 } from '../app/api/daily-stats/utils';
+import { PostgrestError } from '@supabase/supabase-js';
 
 const GATEWAY_TIMEOUT = { message: 'Gateway Timeout' };
 
@@ -420,7 +421,12 @@ describe('fetchAllPages', () => {
           attempts++;
           return Promise.resolve({
             data: null,
-            error: { code: '42703', message: 'column does not exist' },
+            error: new PostgrestError({
+              code: '42703',
+              details: '',
+              hint: '',
+              message: 'column does not exist',
+            })
           });
         }),
       ),

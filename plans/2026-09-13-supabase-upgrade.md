@@ -14,12 +14,12 @@ automatically retry that status.
 
 Versions verified against npm on September 13, 2026:
 
-| Package | Current | Target | Scope |
-| --- | --- | --- | --- |
-| `@supabase/supabase-js` | 2.99.2 | 2.116.0 | Shared catalog: web and operational scripts |
-| `@supabase/ssr` | 0.8.0 | 0.12.7 | Web browser and server clients |
-| `@supabase-cache-helpers/postgrest-react-query` | 1.13.8 | 1.13.9 | Dashboard server prefetch |
-| `@supabase-cache-helpers/postgrest-core` | 0.13.0 | 0.13.1 | Transitive dependency of cache helpers |
+| Package                                         | Current | Target  | Scope                                       |
+| ----------------------------------------------- | ------- | ------- | ------------------------------------------- |
+| `@supabase/supabase-js`                         | 2.99.2  | 2.116.0 | Shared catalog: web and operational scripts |
+| `@supabase/ssr`                                 | 0.8.0   | 0.12.7  | Web browser and server clients              |
+| `@supabase-cache-helpers/postgrest-react-query` | 1.13.8  | 1.13.9  | Dashboard server prefetch                   |
+| `@supabase-cache-helpers/postgrest-core`        | 0.13.0  | 0.13.1  | Transitive dependency of cache helpers      |
 
 These are minor/patch upgrades, not a new supabase-js major. SSR remains pre-1.0.
 SSR 0.12.7 requires supabase-js `^2.114.0`, so upgrade them together.
@@ -36,20 +36,20 @@ separate from this pnpm upgrade, and record the remaining pin in the PR.
 No wholesale v2 API migration is indicated by the reviewed releases. The following
 runtime and typing changes still require verification.
 
-| Change | Version | Impact on this implementation |
-| --- | --- | --- |
-| Node 20 support removed; Node >=22 required | JS 2.110.0 | Repo and checked CI workflows use Node 24; compatible |
-| `eq`/`neq` validate column names; mutations reject excess properties | JS 2.100.1 / 2.102.0 | Type-check generated `Database` queries and mutation payloads; fix actual mismatches without casts that suppress validation |
-| PostgREST responses gain a `success` discriminator; builder and relation inference tightened | JS 2.102.0 onward | Inspect typed response mocks, cache-helper generics, nullable rows, and embedded relations |
-| `maybeSingle` handling changes; `throwOnError` honored for multiple rows | JS 2.100.1 / 2.112.0 | Verify zero-row and multiple-row cases in billing, API authentication, CLI login, and application-state queries |
-| Browser auth lock implementation replaced; custom `lock` deprecated | JS 2.107.0 onward | No custom lock found; smoke-test refresh and sign-out across tabs |
-| `getClaims` returns an expired-JWT error; email-change single-confirmation `verifyOtp` can return null user/session | JS 2.107.0 / 2.106.0 | No matching application calls found; preserve current `getUser` authorization semantics |
-| Local session cleared on sign-out failure | JS 2.110.2 | `apps/web/app/actions.ts` calls sign-out; verify redirect and cookie clearing during an auth outage |
-| Realtime uses Phoenix; listeners cannot be added after joining; error values become Error objects | JS 2.100.0 / 2.101.0 / 2.103.3 | No application channel subscriptions found; low direct impact |
-| Functions calls stop putting API keys in Authorization | JS 2.110.4 | No `functions.invoke` calls found; do not assume SDK key handling changes external API-key authentication |
-| Storage signed-URL nullability and URL normalization changes | JS 2.103.x / 2.112.0 | No Supabase Storage SDK calls found; generated audio uses R2 |
-| `setAll(cookies, headers)` supplies auth response cache headers | SSR 0.10.0 | Current server adapter accepts cookies only; explicitly propagate headers where responses are writable |
-| Server auth initializes lazily with `skipAutoInitialize` | SSR 0.8.1 | Existing auth paths await `getUser`; validate refresh writes before responses finish |
+| Change                                                                                                              | Version                        | Impact on this implementation                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Node 20 support removed; Node >=22 required                                                                         | JS 2.110.0                     | Repo and checked CI workflows use Node 24; compatible                                                                       |
+| `eq`/`neq` validate column names; mutations reject excess properties                                                | JS 2.100.1 / 2.102.0           | Type-check generated `Database` queries and mutation payloads; fix actual mismatches without casts that suppress validation |
+| PostgREST responses gain a `success` discriminator; builder and relation inference tightened                        | JS 2.102.0 onward              | Inspect typed response mocks, cache-helper generics, nullable rows, and embedded relations                                  |
+| `maybeSingle` handling changes; `throwOnError` honored for multiple rows                                            | JS 2.100.1 / 2.112.0           | Verify zero-row and multiple-row cases in billing, API authentication, CLI login, and application-state queries             |
+| Browser auth lock implementation replaced; custom `lock` deprecated                                                 | JS 2.107.0 onward              | No custom lock found; smoke-test refresh and sign-out across tabs                                                           |
+| `getClaims` returns an expired-JWT error; email-change single-confirmation `verifyOtp` can return null user/session | JS 2.107.0 / 2.106.0           | No matching application calls found; preserve current `getUser` authorization semantics                                     |
+| Local session cleared on sign-out failure                                                                           | JS 2.110.2                     | `apps/web/app/actions.ts` calls sign-out; verify redirect and cookie clearing during an auth outage                         |
+| Realtime uses Phoenix; listeners cannot be added after joining; error values become Error objects                   | JS 2.100.0 / 2.101.0 / 2.103.3 | No application channel subscriptions found; low direct impact                                                               |
+| Functions calls stop putting API keys in Authorization                                                              | JS 2.110.4                     | No `functions.invoke` calls found; do not assume SDK key handling changes external API-key authentication                   |
+| Storage signed-URL nullability and URL normalization changes                                                        | JS 2.103.x / 2.112.0           | No Supabase Storage SDK calls found; generated audio uses R2                                                                |
+| `setAll(cookies, headers)` supplies auth response cache headers                                                     | SSR 0.10.0                     | Current server adapter accepts cookies only; explicitly propagate headers where responses are writable                      |
+| Server auth initializes lazily with `skipAutoInitialize`                                                            | SSR 0.8.1                      | Existing auth paths await `getUser`; validate refresh writes before responses finish                                        |
 
 SSR 0.12.0's changelog repeats older features, including the cookie-method rewrite
 and an encoding change that was reverted. Do not treat every repeated entry as a

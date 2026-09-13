@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 export function createMiddlewareClient(
   request: NextRequest,
-  response: NextResponse,
+  supabaseResponse: NextResponse,
 ) {
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,14 +14,14 @@ export function createMiddlewareClient(
         setAll(cookiesToSet, headers) {
           for (const { name, value, options } of cookiesToSet) {
             request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
+            supabaseResponse.cookies.set(name, value, options);
           }
 
           // Forward refreshed cookies to the render without replacing the
           // locale rewrite or its request-header overrides.
           const forwarded = NextResponse.next({ request });
           const overrides = new Set(
-            (response.headers.get('x-middleware-override-headers') ?? '')
+            (supabaseResponse.headers.get('x-middleware-override-headers') ?? '')
               .split(',')
               .map((name) => name.trim())
               .filter(Boolean),
@@ -31,18 +31,18 @@ export function createMiddlewareClient(
           ).split(',')) {
             if (!name) continue;
             const header = `x-middleware-request-${name}`;
-            if (name === 'cookie' || !response.headers.has(header)) {
-              response.headers.set(header, forwarded.headers.get(header)!);
+            if (name === 'cookie' || !supabaseResponse.headers.has(header)) {
+              supabaseResponse.headers.set(header, forwarded.headers.get(header)!);
             }
             overrides.add(name);
           }
-          response.headers.set(
+          supabaseResponse.headers.set(
             'x-middleware-override-headers',
             [...overrides].join(','),
           );
 
           for (const [name, value] of Object.entries(headers)) {
-            response.headers.set(name, value);
+            supabaseResponse.headers.set(name, value);
           }
         },
       },
