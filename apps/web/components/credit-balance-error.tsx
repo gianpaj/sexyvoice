@@ -24,7 +24,7 @@ export function CreditBalanceError() {
             disabled={isRetrying || isPending}
             onClick={() => {
               startTransition(() => {
-                void queryClient.invalidateQueries({ queryKey: ['credits'] });
+                queryClient.invalidateQueries({ queryKey: ['credits'] });
                 router.refresh();
               });
             }}
