@@ -340,6 +340,11 @@ retried. Backoff adds 1s/2s/4s unless the server supplies `Retry-After`; it does
 set an overall request deadline. Do not wrap all Supabase requests in another
 retry layer.
 
+The middleware profile check in `ensureUserApplicationState` disables retries
+because it is a best-effort repair check on every dashboard request. A failed
+read is reported and dashboard rendering continues without retry backoff. This
+does not impose a deadline on the initial request or the restoration RPC.
+
 The browser client disables SDK database retries. TanStack Query owns retries
 for dashboard queries; direct browser reads retain single-attempt behavior.
 

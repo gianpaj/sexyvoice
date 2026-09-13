@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { ensureUserApplicationState } from '@/lib/supabase/ensure-user-application-state';
 
 vi.unmock('@/lib/supabase/admin');
 
@@ -28,6 +29,28 @@ afterEach(() => {
 });
 
 describe('installed Supabase retry policy', () => {
+  it.each([503, 520])(
+    'does not retry the middleware profile check after HTTP %s',
+    async (status) => {
+      fetchMock.mockImplementation(
+        async () => new Response('Unavailable', { status }),
+      );
+      const pending = expect(
+        ensureUserApplicationState({
+          createdAt: '2025-08-29T11:38:46.727Z',
+          email: 'test@example.com',
+          id: 'test-user',
+        }),
+      ).rejects.toThrow('Failed to check user application state.');
+      await vi.runAllTimersAsync();
+      await pending;
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(String(fetchMock.mock.calls[0][0])).toContain(
+        '/rest/v1/profiles?',
+      );
+    },
+  );
+
   it.each([503, 520])(
     'recovers a server read after HTTP %s',
     async (status) => {

@@ -25,7 +25,8 @@ function createAdminMock({
     data: profile,
     error: profileError,
   });
-  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const retry = vi.fn().mockReturnValue({ maybeSingle });
+  const eq = vi.fn().mockReturnValue({ retry });
   const select = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ select });
   const rpc = vi.fn().mockResolvedValue({
@@ -33,7 +34,7 @@ function createAdminMock({
     error: restoreError,
   });
 
-  return { from, rpc };
+  return { from, retry, rpc };
 }
 
 describe('ensureUserApplicationState', () => {
@@ -50,6 +51,7 @@ describe('ensureUserApplicationState', () => {
     await expect(ensureUserApplicationState(user)).resolves.toBe('existing');
 
     expect(admin.from).toHaveBeenCalledWith('profiles');
+    expect(admin.retry).toHaveBeenCalledWith(false);
     expect(admin.rpc).not.toHaveBeenCalled();
     expect(captureMessage).not.toHaveBeenCalled();
   });
