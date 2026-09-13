@@ -45,8 +45,6 @@ function CreditsSection({
     data: creditsData,
     isPending,
     isError,
-    isFetching,
-    refetch,
   } = useQuery({
     enabled: !!userId,
     queryFn: () => getCredits(supabase, userId),
@@ -121,7 +119,7 @@ function CreditsSection({
       });
   }, [creditsData, isError, lang, supabase]);
 
-  if (isPending) {
+  if (isPending && userId) {
     return (
       <Skeleton
         className="h-[150px] w-full rounded-lg"
@@ -131,7 +129,7 @@ function CreditsSection({
   }
 
   if (isError || !isCreditBalance(creditsData?.amount)) {
-    return <CreditBalanceError isRetrying={isFetching} onRetry={refetch} />;
+    return <CreditBalanceError />;
   }
 
   const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import { captureException } from '@sentry/nextjs';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -61,9 +62,15 @@ async function renderPage(
     ),
   } as unknown as Awaited<ReturnType<typeof createClient>>);
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      {await Page({ params: Promise.resolve({ lang: 'en' }) })}
-    </NextIntlClientProvider>,
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
+      <NextIntlClientProvider locale="en" messages={messages}>
+        {await Page({ params: Promise.resolve({ lang: 'en' }) })}
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
 }
 

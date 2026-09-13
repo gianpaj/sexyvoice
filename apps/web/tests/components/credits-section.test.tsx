@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -25,11 +26,12 @@ vi.mock('@/lib/supabase/client', () => ({
 const supabase = {
   auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
 };
+const refresh = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/i18n/navigation', () => ({
   Link: ({ children }: { children: React.ReactNode }) => (
     <span>{children}</span>
   ),
-  useRouter: () => ({ refresh: vi.fn() }),
+  useRouter: () => ({ refresh }),
 }));
 vi.mock('@/components/ui/sidebar', () => ({
   useSidebar: () => ({ isMobile: false }),
@@ -104,5 +106,16 @@ describe('credit balance display', () => {
     );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(getCredits).toHaveBeenCalledTimes(2);
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+  it('does not present a cached balance as current after a failed refresh', async () => {
+    vi.mocked(getCredits)
+      .mockResolvedValueOnce({ amount: 10_000 })
+      .mockRejectedValueOnce(new Error('Network failure'));
+    const client = renderCredits();
+    await screen.findByRole('progressbar');
+    await act(() => client.invalidateQueries({ queryKey: ['credits'] }));
+    expect(await screen.findByRole('alert')).toBeVisible();
+    expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 });
