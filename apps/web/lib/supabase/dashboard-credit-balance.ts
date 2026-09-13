@@ -1,0 +1,26 @@
+import { captureException } from '@sentry/nextjs';
+
+import { isCreditBalance } from '@/lib/credit-balance';
+import type { TypedSupabaseClient } from './client';
+
+export async function getDashboardCreditBalance(
+  supabase: TypedSupabaseClient,
+  userId: string,
+  route: 'dashboard/generate' | 'dashboard/clone',
+): Promise<number | null> {
+  const { data, error } = await supabase
+    .from('credits')
+    .select('amount')
+    .eq('user_id', userId)
+    .single();
+
+  if (!error && isCreditBalance(data?.amount)) {
+    return data.amount;
+  }
+
+  captureException(error ?? new Error('Credit balance is missing or invalid'), {
+    tags: { route },
+    user: { id: userId },
+  });
+  return null;
+}

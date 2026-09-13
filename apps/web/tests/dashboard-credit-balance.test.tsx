@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import NewVoicePage from '@/app/[lang]/(dashboard)/dashboard/clone/page';
 import GeneratePage from '@/app/[lang]/(dashboard)/dashboard/generate/page';
 import { createClient } from '@/lib/supabase/server';
 import messages from '@/messages/en.json';
@@ -30,7 +31,11 @@ vi.mock(
   }),
 );
 
-async function renderPage(data: unknown, error: Error | null = null) {
+async function renderPage(
+  Page: typeof GeneratePage,
+  data: unknown,
+  error: Error | null = null,
+) {
   const query = {
     data: [],
     eq: vi.fn().mockReturnThis(),
@@ -44,28 +49,48 @@ async function renderPage(data: unknown, error: Error | null = null) {
         .fn()
         .mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
     },
-    from: vi.fn().mockReturnValue(query),
+    from: vi.fn((table: string) =>
+      table === 'credits'
+        ? query
+        : {
+            data: [],
+            eq: vi.fn().mockReturnThis(),
+            order: vi.fn().mockReturnThis(),
+            select: vi.fn().mockReturnThis(),
+          },
+    ),
   } as unknown as Awaited<ReturnType<typeof createClient>>);
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      {await GeneratePage({ params: Promise.resolve({ lang: 'en' }) })}
+      {await Page({ params: Promise.resolve({ lang: 'en' }) })}
     </NextIntlClientProvider>,
   );
 }
 
+vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/new.client', () => ({
+  default: ({ hasEnoughCredits }: { hasEnoughCredits: boolean }) => (
+    <button disabled={!hasEnoughCredits} type="button">
+      Generate
+    </button>
+  ),
+}));
+
 afterEach(cleanup);
 beforeEach(() => vi.clearAllMocks());
 
-describe('generation credit balance', () => {
+describe.each([
+  ['generation', GeneratePage],
+  ['cloning', NewVoicePage],
+] as const)('%s credit balance', (_name, Page) => {
   it('keeps generation disabled for a confirmed zero without a lookup error', async () => {
-    await renderPage({ amount: 0 });
+    await renderPage(Page, { amount: 0 });
     expect(screen.getByRole('button', { name: 'Generate' })).toBeDisabled();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(captureException).not.toHaveBeenCalled();
   });
 
   it('enables generation when the balance is sufficient', async () => {
-    await renderPage({ amount: 10_000 });
+    await renderPage(Page, { amount: 10_000 });
     expect(screen.getByRole('button', { name: 'Generate' })).toBeEnabled();
   });
 
@@ -76,7 +101,7 @@ describe('generation credit balance', () => {
     { amount: null },
     { amount: Number.NaN },
   ])('shows a retryable error for an unavailable balance %j', async (data) => {
-    await renderPage(data);
+    await renderPage(Page, data);
     expect(screen.getByRole('alert')).toHaveTextContent(
       messages.creditsSection.balanceError,
     );
@@ -90,7 +115,7 @@ describe('generation credit balance', () => {
 
   it('reports a failed query instead of treating it as zero credits', async () => {
     const error = new Error('Database unavailable');
-    await renderPage(null, error);
+    await renderPage(Page, null, error);
     expect(screen.getByRole('alert')).toBeVisible();
     expect(captureException).toHaveBeenCalledWith(
       error,
