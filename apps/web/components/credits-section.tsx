@@ -123,14 +123,18 @@ function CreditsSection({
   if (isPending && userId) {
     return (
       <Skeleton
-        className="h-[150px] w-full rounded-lg"
+        className="h-[150px] w-full rounded-lg group-data-[collapsible=icon]:hidden"
         data-visual-test-no-radius
       />
     );
   }
 
   if (isError || !isCreditBalance(creditsData?.amount)) {
-    return <CreditBalanceError />;
+    return (
+      <div className="group-data-[collapsible=icon]:hidden">
+        <CreditBalanceError />
+      </div>
+    );
   }
 
   const minutesRemaining = Math.floor(
