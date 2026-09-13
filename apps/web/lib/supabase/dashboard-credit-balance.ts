@@ -1,4 +1,4 @@
-import { captureException } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 
 import { isCreditBalance } from '@/lib/credit-balance';
 import type { TypedSupabaseClient } from './client';
@@ -15,6 +15,9 @@ export async function getDashboardCreditBalance(
     .single();
 
   if (!error && isCreditBalance(data?.amount)) {
+    if (data.amount < 0) {
+      captureMessage('Negative credit balance', { level: 'warning' });
+    }
     return data.amount;
   }
 

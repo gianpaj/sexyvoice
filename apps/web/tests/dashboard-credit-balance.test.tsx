@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { captureException } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
@@ -96,6 +96,16 @@ describe.each([
       expect(screen.getByRole('button', { name: 'Generate' })).toBeDisabled();
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
       expect(captureException).not.toHaveBeenCalled();
+      if (amount < 0) {
+        expect(captureMessage).toHaveBeenCalledWith(
+          'Negative credit balance',
+          expect.objectContaining({
+            level: 'warning',
+          }),
+        );
+      } else {
+        expect(captureMessage).not.toHaveBeenCalled();
+      }
     },
   );
 
