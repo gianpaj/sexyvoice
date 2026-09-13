@@ -44,7 +44,7 @@ build
 
 tsconfig.tsbuildinfo
 
-backups
+scripts/backups
 
 # Python virtual environment used by scripts/
 scripts/venv
