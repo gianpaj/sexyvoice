@@ -20,24 +20,27 @@ export function CreditBalanceError({
 
   return (
     <Alert variant="destructive">
-      <AlertDescription>{t('balanceError')}</AlertDescription>
-      <Button
-        className="mt-3"
-        disabled={isRetrying || isPending}
-        onClick={() => {
-          startTransition(async () => {
-            if (onRetry) {
-              await onRetry();
-            } else {
-              router.refresh();
-            }
-          });
-        }}
-        size="sm"
-        variant="outline"
-      >
-        {t('retryBalance')}
-      </Button>
+      <AlertDescription>
+        {t('balanceError')}
+        <div className="mt-2">
+          <Button
+            disabled={isRetrying || isPending}
+            onClick={() => {
+              startTransition(async () => {
+                if (onRetry) {
+                  await onRetry();
+                } else {
+                  router.refresh();
+                }
+              });
+            }}
+            size="sm"
+            variant="outline"
+          >
+            {t('retryBalance')}
+          </Button>
+        </div>
+      </AlertDescription>
     </Alert>
   );
 }
