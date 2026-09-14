@@ -330,6 +330,25 @@ Deliverable:
 
 ## Phase 4: Reduce application query volume
 
+### Scope Stripe profile-write suppression
+
+Keep the OAuth callback's customer lookup and profile write in this phase.
+`apps/web/app/auth/callback/route.ts` has no profile read to reuse and calls
+`createOrRetrieveCustomer` without a stored Stripe ID. Returning users therefore
+still incur a Stripe metadata search and a `profiles.stripe_id` update, even when
+the stored value matches. First sign-in requires that write.
+
+The credits page supplies the Stripe ID from its existing profile lookup, so
+`apps/web/lib/stripe/stripe-admin.ts` skips matching-ID writes there without adding
+a database read. This scope reflects data availability, not measured evidence that
+OAuth write volume is immaterial. Required writes retain Sentry capture and rethrow.
+
+Before extending suppression to OAuth, measure returning-user sign-in volume,
+callback latency, Stripe search latency, and profile-write failures. Compare the
+current path with a narrow `stripe_id` read followed by Stripe customer retrieval.
+Any follow-up must preserve first-sign-in persistence, metadata ownership checks,
+and recovery from deleted or missing Stripe customers.
+
 ### Verify history-query hydration
 
 `apps/web/components/react-query-client-provider.tsx` sets a global
