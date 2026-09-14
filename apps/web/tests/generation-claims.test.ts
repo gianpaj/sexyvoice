@@ -170,9 +170,7 @@ describe('Generation route claims authentication', () => {
 
         expect(response.status).toBe(200);
         expect(mocks.getClaims).toHaveBeenCalledOnce();
-        if (email === undefined) {
-          expect(mocks.getUser).not.toHaveBeenCalled();
-        }
+        expect(mocks.getUser).not.toHaveBeenCalled();
         if (name === 'generate-text') {
           expect(mocks.streamText).toHaveBeenCalledOnce();
         } else if (name === 'estimate-credits') {
