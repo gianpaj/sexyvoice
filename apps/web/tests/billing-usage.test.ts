@@ -3,14 +3,17 @@ import { describe, expect, it, vi } from 'vitest';
 import { GET } from '@/app/api/billing/usage/route';
 import { createClient } from '@/lib/supabase/server';
 
+const mockGetUser = vi.fn();
+
 describe('/api/billing/usage', () => {
   it('returns 401 for unauthenticated users', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: null },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: null },
           error: { message: 'Not authenticated' },
         }),
+        getUser: mockGetUser,
       },
     } as never);
 
@@ -23,10 +26,11 @@ describe('/api/billing/usage', () => {
   it('returns bucketed billing usage data', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'test-user-id' } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'test-user-id' } },
           error: null,
         }),
+        getUser: mockGetUser,
       },
       from: vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
@@ -64,6 +68,7 @@ describe('/api/billing/usage', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
+    expect(mockGetUser).not.toHaveBeenCalled();
     expect(json.object).toBe('list');
     expect(json.data).toHaveLength(1);
     expect(json.data[0].results[0].api_key_id).toBe('key-1');
@@ -74,10 +79,11 @@ describe('/api/billing/usage', () => {
   it('accepts api_voice_cloning as source_type filter', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'test-user-id' } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'test-user-id' } },
           error: null,
         }),
+        getUser: mockGetUser,
       },
       from: vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
@@ -100,5 +106,42 @@ describe('/api/billing/usage', () => {
     } as never);
 
     expect(response.status).toBe(200);
+  });
+});
+
+describe.each([
+  [
+    'GET',
+    () => GET(new Request('http://localhost/api/billing/usage') as never),
+  ],
+] as const)('%s claims authentication', (_method, invoke) => {
+  it.each([
+    ['missing data', { data: null, error: null }],
+    ['missing claims', { data: { claims: null }, error: null }],
+    ['missing subject', { data: { claims: {} }, error: null }],
+    ['empty subject', { data: { claims: { sub: '' } }, error: null }],
+    ['invalid token', { data: null, error: { message: 'Invalid JWT' } }],
+    [
+      'SDK error with claims',
+      {
+        data: { claims: { sub: 'test-user-id' } },
+        error: { message: 'Verification failed' },
+      },
+    ],
+  ])('rejects %s before data access', async (_name, result) => {
+    vi.clearAllMocks();
+
+    const from = vi.fn();
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser: vi.fn() },
+      from,
+    } as never);
+
+    const response = await invoke();
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
+
+    expect(from).not.toHaveBeenCalled();
   });
 });

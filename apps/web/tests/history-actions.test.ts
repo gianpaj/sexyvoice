@@ -57,7 +57,11 @@ function createSupabaseMock({
 
   const sessionSupabase = {
     auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user } }),
+      getClaims: vi.fn().mockResolvedValue({
+        data: { claims: user && { email: user.email, sub: user.id } },
+        error: null,
+      }),
+      getUser: vi.fn(),
     },
   };
   const adminSupabase = {
@@ -89,6 +93,7 @@ describe('history deletion actions', () => {
       success: true,
     });
 
+    expect(sessionSupabase.auth.getUser).not.toHaveBeenCalled();
     expect(adminSupabase.from).toHaveBeenCalledWith('audio_files');
     expect(query.update).toHaveBeenCalledWith({
       deleted_at: expect.any(String),
@@ -153,6 +158,25 @@ describe('history deletion actions', () => {
 
     expect(createAdminClient).not.toHaveBeenCalled();
     expect(mocks.redisDel).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { data: null, error: null },
+    { data: { claims: {} }, error: null },
+    { data: { claims: { sub: '' } }, error: null },
+    { data: { claims: { sub: 'user-1' } }, error: new Error('Invalid JWT') },
+  ])('denies both deletion scopes for invalid claims %j', async (response) => {
+    const { sessionSupabase } = createSupabaseMock({});
+    sessionSupabase.auth.getClaims.mockResolvedValue(response);
+    vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+
+    await expect(handleDeleteAction('audio-1')).rejects.toThrow(
+      'User not found',
+    );
+    await expect(handleDeleteAllAction()).rejects.toThrow('User not found');
+    expect(createAdminClient).not.toHaveBeenCalled();
+    expect(mocks.redisDel).not.toHaveBeenCalled();
+    expect(mocks.after).not.toHaveBeenCalled();
   });
 
   it('captures database failures with user and raw error context', async () => {

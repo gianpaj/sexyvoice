@@ -46,9 +46,13 @@ async function renderPage(
   };
   vi.mocked(createClient).mockResolvedValue({
     auth: {
-      getUser: vi
-        .fn()
-        .mockResolvedValue({ data: { user: { id: 'user-1' } }, error: null }),
+      getClaims: vi.fn().mockResolvedValue({
+        data: { claims: { sub: 'user-1' } },
+        error: null,
+      }),
+      getUser: vi.fn(() => {
+        throw new Error('getUser is forbidden');
+      }),
     },
     from: vi.fn((table: string) =>
       table === 'credits'

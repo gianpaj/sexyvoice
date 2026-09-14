@@ -8,6 +8,7 @@ import {
   isE2E,
 } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 import {
   getAllTimeUsageSummary,
@@ -25,10 +26,9 @@ export default async function UsagePage(props: {
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) return null;
 
   // Fetch summary data server-side for initial render. The summary cards are
   // server-rendered with no client refetch, so in E2E mode they bypass the
@@ -38,8 +38,8 @@ export default async function UsagePage(props: {
   const [monthlySummary, allTimeSummary] = e2e
     ? [E2E_MONTHLY_USAGE_SUMMARY, E2E_ALL_TIME_USAGE_SUMMARY]
     : await Promise.all([
-        getMonthlyUsageSummary(supabase, user.id),
-        getAllTimeUsageSummary(supabase, user.id),
+        getMonthlyUsageSummary(supabase, userId),
+        getAllTimeUsageSummary(supabase, userId),
       ]);
 
   // Get month name for display. In E2E mode use a pinned reference date so the

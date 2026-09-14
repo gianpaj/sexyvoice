@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { updateSession } from '@/lib/supabase/middleware';
+import { updateSession } from '@/lib/supabase/proxy';
 import { createClient } from '@/lib/supabase/server';
 
 vi.unmock('next/server');
@@ -21,7 +21,7 @@ const cookieName = 'sb-session-test-auth-token';
 const fetchMock = vi.fn<typeof fetch>();
 
 function token(expiresAt: number) {
-  return `${Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')}.${Buffer.from(JSON.stringify({ exp: expiresAt, sub: user.id })).toString('base64url')}.signature`;
+  return `${Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url')}.${Buffer.from(JSON.stringify({ exp: expiresAt, sub: user.id })).toString('base64url')}.${Buffer.from('signature').toString('base64url')}`;
 }
 
 function session(expiresAt: number) {

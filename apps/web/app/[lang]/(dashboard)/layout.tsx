@@ -11,6 +11,7 @@ import { ReactQueryClientProvider } from '@/components/react-query-client-provid
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import {
   getCreditsQuery,
@@ -29,10 +30,8 @@ export default async function DashboardLayout(props: {
   const supabase = await createClient();
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const claims = await getVerifiedClaims(supabase);
+  if (!claims?.sub) return null;
 
   const cookieStore = await cookies();
   const dismissedCookieKeys = cookieStore
@@ -51,11 +50,11 @@ export default async function DashboardLayout(props: {
   const [{ data: creditTransactions }, isPaidUser] = isE2E()
     ? [{ data: E2E_CREDIT_TRANSACTIONS }, false]
     : await Promise.all([
-        getCreditTransactions(supabase, user.id),
-        hasUserPaid(user.id),
+        getCreditTransactions(supabase, claims.sub),
+        hasUserPaid(claims.sub),
       ]);
   if (!isE2E()) {
-    await prefetchQuery(queryClient, getCreditsQuery(supabase, user.id));
+    await prefetchQuery(queryClient, getCreditsQuery(supabase, claims.sub));
   }
 
   return (
@@ -66,7 +65,7 @@ export default async function DashboardLayout(props: {
           creditTransactions={creditTransactions ?? []}
           isPaidUser={isPaidUser}
           lang={lang}
-          userId={user.id}
+          userId={claims.sub}
         >
           {props.children}
         </DashboardUI>

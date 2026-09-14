@@ -22,7 +22,7 @@ export const createClient = async (responseHeaders?: Headers) => {
             }
           } catch {
             // The `set` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
+            // This can be ignored if you have proxy refreshing
             // user sessions.
           }
         },

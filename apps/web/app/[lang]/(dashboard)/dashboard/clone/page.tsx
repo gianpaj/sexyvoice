@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -14,28 +15,26 @@ export default async function NewVoicePage(props: {
 }) {
   const { lang } = await props.params;
   const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
   const [t, tProfile] = await Promise.all([
     getTranslations('clone'),
     getTranslations('profile'),
   ]);
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
 
-  if (!user || error) {
+  if (!userId) {
     return <div>{tProfile('notLoggedIn')}</div>;
   }
 
   const [creditBalance, { data: creditTransactions }, userHasPaid] =
     await Promise.all([
-      getDashboardCreditBalance(supabase, user.id, 'dashboard/clone'),
+      getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
       supabase
         .from('credit_transactions')
         .select('amount')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false }),
-      hasUserPaid(user.id),
+      hasUserPaid(userId),
     ]);
 
   return (
@@ -51,7 +50,7 @@ export default async function NewVoicePage(props: {
           creditTransactions={creditTransactions}
           doNotToggleSidebar
           lang={lang}
-          userId={user.id}
+          userId={userId}
         />
       </div>
       {creditBalance === null ? (

@@ -19,6 +19,7 @@ export default async function ProfilePage(props: {
   const { lang } = await props.params;
   const t = await getTranslations({ locale: lang, namespace: 'profile' });
   const supabase = await createClient();
+  // biome-ignore lint/plugin/use-verified-claims: Password verification needs the current Auth email.
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 

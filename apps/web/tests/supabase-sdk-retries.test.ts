@@ -37,8 +37,8 @@ describe('installed Supabase retry policy', () => {
       );
       const pending = expect(
         ensureUserApplicationState({
-          createdAt: '2025-08-29T11:38:46.727Z',
           email: 'test@example.com',
+          getCreatedAt: vi.fn(),
           id: 'test-user',
         }),
       ).rejects.toThrow('Failed to check user application state.');

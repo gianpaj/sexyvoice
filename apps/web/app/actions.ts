@@ -97,6 +97,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
 
   const supabase = await createClient();
 
+  // biome-ignore lint/plugin/use-verified-claims: Confirm the Auth user before account-wide deletion.
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 

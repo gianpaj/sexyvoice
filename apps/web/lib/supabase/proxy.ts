@@ -1,8 +1,9 @@
-import { captureMessage } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
+import { getVerifiedClaims } from './auth';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { ensureUserApplicationState } from './ensure-user-application-state';
 import { copyAuthResponse, createMiddlewareClient } from './middleware-client';
@@ -58,9 +59,10 @@ export const updateSession = async (
   locale: string,
   response: NextResponse = NextResponse.next({ request }),
 ) => {
+  const supabaseResponse = response;
+
   try {
     const { pathname } = request.nextUrl;
-    const supabaseResponse = response;
     const rawOauthCallbackMarker = request.cookies.get(
       OAUTH_CALLBACK_COOKIE_NAME,
     )?.value;
@@ -70,13 +72,14 @@ export const updateSession = async (
 
     const supabase = createMiddlewareClient(request, supabaseResponse);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    // Keep this call immediately after creating the request-scoped client.
+    // It refreshes near-expiry tokens and verifies JWT signatures.
+    const claims = await getVerifiedClaims(supabase);
+    const isAuthenticated = Boolean(claims?.sub);
 
     const dashboardPath = isDashboardPath(pathname, locale);
 
-    if (!user && dashboardPath) {
+    if (!isAuthenticated && dashboardPath) {
       const redirectResponse = redirectWithSupabaseCookies(
         new URL(`/${locale}/login`, request.url),
         supabaseResponse,
@@ -116,22 +119,40 @@ export const updateSession = async (
       return redirectResponse;
     }
 
-    if (user && dashboardPath && !isE2E()) {
+    if (claims?.sub && dashboardPath && !isE2E()) {
       try {
         await ensureUserApplicationState({
-          createdAt: user.created_at,
-          email: user.email,
-          id: user.id,
+          email: claims.email,
+          // JWT claims omit the creation date; fetch it only for a missing profile.
+          getCreatedAt: async () => {
+            try {
+              // biome-ignore lint/plugin/use-verified-claims: Profile restoration needs Auth created_at, which JWT claims omit.
+              const { data, error } = await supabase.auth.getUser();
+              if (error || !data.user) {
+                throw new Error('Failed to fetch Auth user for restoration.', {
+                  cause: error,
+                });
+              }
+              return data.user.created_at;
+            } catch (error) {
+              captureException(error, {
+                tags: { area: 'auth', flow: 'inactive-user-reactivation' },
+                user: { id: claims?.sub },
+              });
+              throw error;
+            }
+          },
+          id: claims.sub,
         });
       } catch {
-        // Restoration failures are reported to Sentry inside the helper.
+        // Auth lookup failures are reported above; repair failures in the helper.
         // Never block dashboard access on this best-effort repair.
       }
     }
 
     const isPublicRoute = publicRoutes.includes(pathname);
 
-    if (!(user || isPublicRoute)) {
+    if (!(isAuthenticated || isPublicRoute)) {
       // If there's no session and trying to access a protected route (not the dashboard), redirect to the home page
       return redirectWithSupabaseCookies(
         new URL(`/${locale}`, request.url),
@@ -141,7 +162,7 @@ export const updateSession = async (
 
     const authRoutes = routesPerLocale(['/signup', '/login']);
 
-    if (user && authRoutes.includes(pathname)) {
+    if (isAuthenticated && authRoutes.includes(pathname)) {
       return redirectWithSupabaseCookies(
         new URL(`/${locale}/dashboard`, request.url),
         supabaseResponse,
@@ -155,10 +176,10 @@ export const updateSession = async (
     // Preserve the locale rewrite, refreshed request cookies, and auth cache headers.
     return supabaseResponse;
   } catch (e) {
-    console.error('Middleware error:', e);
+    console.error('Proxy error:', e);
     return redirectWithSupabaseCookies(
       new URL(`/${locale}`, request.url),
-      response,
+      supabaseResponse,
     );
   }
 };

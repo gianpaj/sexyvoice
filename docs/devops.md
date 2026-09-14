@@ -340,10 +340,49 @@ retried. Backoff adds 1s/2s/4s unless the server supplies `Retry-After`; it does
 set an overall request deadline. Do not wrap all Supabase requests in another
 retry layer.
 
+Pages, server actions, dashboard APIs, browser identity lookups, and the proxy
+use `getVerifiedClaims()` from `apps/web/lib/supabase/auth.ts` when they need
+verified identity. The helper delegates to `auth.getClaims()` and returns `null`
+on an SDK auth error or absent claims. Callers require `claims.sub` and retain
+independent ownership, credit, and entitlement checks in the database.
+
+With asymmetric signing keys, `getClaims()` normally verifies locally using
+cached JWKS; symmetric keys require an Auth-server request. Local verification
+does not check current session revocation or account status, so a token can pass
+until its expiry. JWT email and metadata are token snapshots. User-editable
+`user_metadata` is only suitable for display or analytics, not authorization.
+
+Biome enforces this policy with `biome-plugins/use-verified-claims.grit` in the
+web app's `app`, `components`, `hooks`, and `lib` directories. Direct
+`client.auth.getUser(...)` calls are errors regardless of the client variable
+name. Intentional lookups need `// biome-ignore lint/plugin/use-verified-claims:`
+with a reason immediately above the line containing the call. This is a syntax
+rule, not alias tracking; tests and SDK fixtures are outside its scope.
+
+Six calls deliberately use `getUser()`:
+
+- The credits page needs current email to find or create a Stripe customer.
+- The profile page supplies current email for password verification.
+- Proxy restoration fetches Auth `created_at` only when the profile is missing
+  and an email is present. Existing profiles need no extra Auth lookup there.
+- Account deletion performs a fresh Auth lookup before account-wide cleanup.
+- `POST /api/api-keys` and `POST /api/cli-login-sessions` perform fresh Auth
+  lookups before issuing durable credentials.
+
+The last three calls are sensitive-operation policy choices, not claims API
+limitations. `getUser()` is not recent reauthentication or a complete session
+revocation check. Immediate revocation enforcement or recent-login requirements
+need explicit checks. External API v1 continues to authenticate API keys rather
+than browser JWT claims.
+
 The middleware profile check in `ensureUserApplicationState` disables retries
 because it is a best-effort repair check on every dashboard request. A failed
 read is reported and dashboard rendering continues without retry backoff. This
 does not impose a deadline on the initial request or the restoration RPC.
+Auth user lookup failures during restoration, including a missing user after
+successful claim verification, are reported to Sentry with
+`flow: inactive-user-reactivation`. Restoration is best-effort and does not
+redirect a claims-authenticated dashboard request on lookup or repair failure.
 
 The browser client disables SDK database retries. TanStack Query owns retries
 for dashboard queries; direct browser reads retain single-attempt behavior.
