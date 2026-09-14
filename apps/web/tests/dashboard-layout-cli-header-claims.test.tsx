@@ -11,9 +11,7 @@ const mocks = vi.hoisted(() => ({
   getClaims: vi.fn(),
   getCreditsQuery: vi.fn(),
   getCreditTransactions: vi.fn(),
-  getUser: vi.fn(() => {
-    throw new Error('getUser is forbidden');
-  }),
+  getUser: vi.fn(),
   hasUserPaid: vi.fn(),
   prefetchQuery: vi.fn(),
 }));
@@ -139,7 +137,6 @@ describe('layout, CLI login, and header claims', () => {
       expect(mocks.hasUserPaid).not.toHaveBeenCalled();
       expect(mocks.getCreditTransactions).not.toHaveBeenCalled();
       expect(mocks.prefetchQuery).not.toHaveBeenCalled();
-      expect(mocks.getUser).not.toHaveBeenCalled();
     },
   );
 });

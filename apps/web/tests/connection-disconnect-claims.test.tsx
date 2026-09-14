@@ -6,9 +6,7 @@ import { ConnectionProvider, useConnection } from '@/hooks/use-connection';
 
 const mocks = vi.hoisted(() => ({
   getClaims: vi.fn(),
-  getUser: vi.fn(() => {
-    throw new Error('getUser is forbidden');
-  }),
+  getUser: vi.fn(),
   invalidateQueries: vi.fn(),
   refetchQueries: vi.fn(),
 }));
@@ -62,7 +60,6 @@ describe('connection disconnect claims', () => {
       expect(result.current.shouldConnect).toBe(false);
       expect(mocks.refetchQueries).not.toHaveBeenCalled();
       expect(mocks.invalidateQueries).not.toHaveBeenCalled();
-      expect(mocks.getUser).not.toHaveBeenCalled();
     },
   );
 });

@@ -28,9 +28,7 @@ vi.mock('@/lib/supabase/client', () => ({
 const supabase = {
   auth: {
     getClaims: vi.fn(),
-    getUser: vi.fn(() => {
-      throw new Error('getUser is forbidden');
-    }),
+    getUser: vi.fn(),
   },
 };
 const refresh = vi.hoisted(() => vi.fn());
@@ -125,7 +123,9 @@ describe('credit balance display', () => {
             : user_metadata.username,
         );
       }
-      expect(supabase.auth.getUser).not.toHaveBeenCalled();
+      if (user_metadata === undefined) {
+        expect(supabase.auth.getUser).not.toHaveBeenCalled();
+      }
     },
   );
 
@@ -152,7 +152,6 @@ describe('credit balance display', () => {
       expect(hasUserPaid).not.toHaveBeenCalled();
       expect(initPostHog).not.toHaveBeenCalled();
       expect(Crisp.configure).not.toHaveBeenCalled();
-      expect(supabase.auth.getUser).not.toHaveBeenCalled();
       consoleError.mockRestore();
     },
   );

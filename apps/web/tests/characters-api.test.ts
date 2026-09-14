@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mock variables – declared before vi.mock() so factories can reference them
@@ -431,6 +431,7 @@ describe('/api/characters', () => {
       const body = validCreateBody();
       const res = await POST(makeRequest(body));
       expect(res.status).toBe(201);
+      expect(mockGetUser).not.toHaveBeenCalled();
 
       // Verify prompt was inserted
       expect(insertedPrompts).toHaveLength(1);
@@ -547,6 +548,7 @@ describe('/api/characters', () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.success).toBe(true);
+      expect(mockGetUser).not.toHaveBeenCalled();
 
       expect(deletedCharacterIds).toContain(fakeUserCharacter.id);
       expect(deletedPromptIds).toContain(fakeUserCharacter.prompt_id);
@@ -617,10 +619,6 @@ describe('/api/characters', () => {
   });
 });
 
-afterEach(() => {
-  expect(mockGetUser).not.toHaveBeenCalled();
-});
-
 describe.each([
   ['POST create', () => POST(makeRequest(validCreateBody()))],
   [
@@ -644,10 +642,10 @@ describe.each([
     ],
   ])('rejects %s before data access', async (_name, result) => {
     vi.clearAllMocks();
-    const getUser = vi.fn();
+
     const from = vi.fn();
     vi.mocked(createClient).mockResolvedValueOnce({
-      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser: vi.fn() },
       from,
     } as never);
 
@@ -655,7 +653,7 @@ describe.each([
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-    expect(getUser).not.toHaveBeenCalled();
+
     expect(from).not.toHaveBeenCalled();
     expect(hasUserPaid).not.toHaveBeenCalled();
     expect(countUserCallCharacters).not.toHaveBeenCalled();

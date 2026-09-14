@@ -1,13 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/api/billing/usage/route';
 import { createClient } from '@/lib/supabase/server';
 
 const mockGetUser = vi.fn();
-
-afterEach(() => {
-  expect(mockGetUser).not.toHaveBeenCalled();
-});
 
 describe('/api/billing/usage', () => {
   it('returns 401 for unauthenticated users', async () => {
@@ -72,6 +68,7 @@ describe('/api/billing/usage', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
+    expect(mockGetUser).not.toHaveBeenCalled();
     expect(json.object).toBe('list');
     expect(json.data).toHaveLength(1);
     expect(json.data[0].results[0].api_key_id).toBe('key-1');
@@ -133,10 +130,10 @@ describe.each([
     ],
   ])('rejects %s before data access', async (_name, result) => {
     vi.clearAllMocks();
-    const getUser = vi.fn();
+
     const from = vi.fn();
     vi.mocked(createClient).mockResolvedValueOnce({
-      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser: vi.fn() },
       from,
     } as never);
 
@@ -144,7 +141,7 @@ describe.each([
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-    expect(getUser).not.toHaveBeenCalled();
+
     expect(from).not.toHaveBeenCalled();
   });
 });

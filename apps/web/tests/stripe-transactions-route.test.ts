@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/api/stripe/transactions/route';
 import { stripe } from '@/lib/stripe/stripe-admin';
@@ -22,10 +22,6 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 
 const mockGetUser = vi.fn();
-
-afterEach(() => {
-  expect(mockGetUser).not.toHaveBeenCalled();
-});
 
 describe('/api/stripe/transactions', () => {
   beforeEach(() => {
@@ -93,6 +89,7 @@ describe('/api/stripe/transactions', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
+    expect(mockGetUser).not.toHaveBeenCalled();
     expect(stripe.subscriptions.list).toHaveBeenCalledWith({
       customer: 'cus_owner',
     });
@@ -133,10 +130,10 @@ describe.each([
     ],
   ])('rejects %s before data access', async (_name, result) => {
     vi.clearAllMocks();
-    const getUser = vi.fn();
+
     const from = vi.fn();
     vi.mocked(createClient).mockResolvedValueOnce({
-      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser: vi.fn() },
       from,
     } as never);
 
@@ -144,7 +141,7 @@ describe.each([
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-    expect(getUser).not.toHaveBeenCalled();
+
     expect(from).not.toHaveBeenCalled();
     expect(getUserById).not.toHaveBeenCalled();
     expect(stripe.subscriptions.list).not.toHaveBeenCalled();

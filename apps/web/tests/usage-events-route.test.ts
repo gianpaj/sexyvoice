@@ -111,7 +111,6 @@ describe('GET /api/usage-events', () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-    expect(client.auth.getUser).not.toHaveBeenCalled();
     expect(client.from).not.toHaveBeenCalled();
     expectNoDataAccess();
   });

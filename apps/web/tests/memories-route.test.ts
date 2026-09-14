@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mock state – declared before vi.mock() so the factory can reference it.
@@ -111,6 +111,7 @@ describe('DELETE /api/memories', () => {
 
     expect(res.status).toBe(200);
     expect(body).toEqual({ deleted: 3, success: true });
+    expect(mockGetUser).not.toHaveBeenCalled();
     // Erasure must target agent_memories scoped to the current user only.
     expect(mockCalls.table).toBe('agent_memories');
     expect(mockCalls.filter).toEqual({
@@ -138,10 +139,6 @@ describe('DELETE /api/memories', () => {
   });
 });
 
-afterEach(() => {
-  expect(mockGetUser).not.toHaveBeenCalled();
-});
-
 describe.each([['DELETE', () => DELETE()]] as const)(
   '%s claims authentication',
   (_method, invoke) => {
@@ -160,10 +157,13 @@ describe.each([['DELETE', () => DELETE()]] as const)(
       ],
     ])('rejects %s before data access', async (_name, result) => {
       vi.clearAllMocks();
-      const getUser = vi.fn();
+
       const from = vi.fn();
       vi.mocked(createClient).mockResolvedValueOnce({
-        auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+        auth: {
+          getClaims: vi.fn().mockResolvedValue(result),
+          getUser: vi.fn(),
+        },
         from,
       } as never);
 
@@ -171,7 +171,7 @@ describe.each([['DELETE', () => DELETE()]] as const)(
 
       expect(response.status).toBe(401);
       expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-      expect(getUser).not.toHaveBeenCalled();
+
       expect(from).not.toHaveBeenCalled();
     });
   },

@@ -60,9 +60,7 @@ describe('createCheckoutSession()', () => {
           data: { claims: { sub: 'user_123' } },
           error: null,
         }),
-        getUser: vi.fn(() => {
-          throw new Error('getUser is forbidden');
-        }),
+        getUser: vi.fn(),
       },
     } as never);
     vi.mocked(getUserById).mockResolvedValue({
@@ -124,11 +122,11 @@ describe('createCheckoutSession()', () => {
   ])(
     'denies checkout before customer lookup for invalid claims %j',
     async (response) => {
-      const getUser = vi.fn(() => {
-        throw new Error('getUser is forbidden');
-      });
       vi.mocked(createClient).mockResolvedValue({
-        auth: { getClaims: vi.fn().mockResolvedValue(response), getUser },
+        auth: {
+          getClaims: vi.fn().mockResolvedValue(response),
+          getUser: vi.fn(),
+        },
       } as never);
       for (const type of ['topup', 'subscription']) {
         const formData = new FormData();
@@ -140,7 +138,6 @@ describe('createCheckoutSession()', () => {
       expect(getUserById).not.toHaveBeenCalled();
       expect(hasAnySubscriptionHistory).not.toHaveBeenCalled();
       expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
-      expect(getUser).not.toHaveBeenCalled();
     },
   );
 

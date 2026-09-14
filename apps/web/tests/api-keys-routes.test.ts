@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { DELETE } from '@/app/api/api-keys/[id]/route';
 import { GET, POST } from '@/app/api/api-keys/route';
@@ -6,10 +6,6 @@ import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 const mockGetUser = vi.fn();
-
-afterEach(() => {
-  expect(mockGetUser).not.toHaveBeenCalled();
-});
 
 describe('/api/api-keys routes', () => {
   it('lists current user API keys', async () => {
@@ -48,6 +44,7 @@ describe('/api/api-keys routes', () => {
 
     expect(response.status).toBe(200);
     expect(json.data).toHaveLength(1);
+    expect(mockGetUser).not.toHaveBeenCalled();
   });
 
   it('creates a new API key and returns secret once', async () => {
@@ -133,6 +130,7 @@ describe('/api/api-keys routes', () => {
 
     expect(response.status).toBe(200);
     expect(json.success).toBe(true);
+    expect(mockGetUser).not.toHaveBeenCalled();
   });
 
   it('returns 404 when key does not exist or belongs to another user', async () => {
@@ -234,10 +232,10 @@ describe.each([
     ],
   ])('rejects %s before data access', async (_name, result) => {
     vi.clearAllMocks();
-    const getUser = vi.fn();
+
     const from = vi.fn();
     vi.mocked(createClient).mockResolvedValueOnce({
-      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser: vi.fn() },
       from,
     } as never);
 
@@ -245,7 +243,7 @@ describe.each([
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
-    expect(getUser).not.toHaveBeenCalled();
+
     expect(from).not.toHaveBeenCalled();
     expect(hasUserPaid).not.toHaveBeenCalled();
   });

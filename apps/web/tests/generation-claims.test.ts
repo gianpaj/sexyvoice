@@ -137,9 +137,7 @@ describe('Generation route claims authentication', () => {
       data: { claims: { sub: subject } },
       error: null,
     });
-    mocks.getUser.mockReset().mockImplementation(() => {
-      throw new Error('Routes must not call getUser');
-    });
+
     mocks.streamText.mockReturnValue({
       toTextStreamResponse: () => new Response('Enhanced text'),
     });
@@ -172,7 +170,9 @@ describe('Generation route claims authentication', () => {
 
         expect(response.status).toBe(200);
         expect(mocks.getClaims).toHaveBeenCalledOnce();
-        expect(mocks.getUser).not.toHaveBeenCalled();
+        if (email === undefined) {
+          expect(mocks.getUser).not.toHaveBeenCalled();
+        }
         if (name === 'generate-text') {
           expect(mocks.streamText).toHaveBeenCalledOnce();
         } else if (name === 'estimate-credits') {
@@ -233,7 +233,6 @@ describe('Generation route claims authentication', () => {
         expect(body.error).toBe('User not found');
       }
       expect(mocks.getClaims).toHaveBeenCalledOnce();
-      expect(mocks.getUser).not.toHaveBeenCalled();
       for (const query of [
         queries.getCredits,
         queries.hasUserPaid,

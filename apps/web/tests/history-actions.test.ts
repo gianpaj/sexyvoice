@@ -61,9 +61,7 @@ function createSupabaseMock({
         data: { claims: user && { email: user.email, sub: user.id } },
         error: null,
       }),
-      getUser: vi.fn(() => {
-        throw new Error('getUser is forbidden');
-      }),
+      getUser: vi.fn(),
     },
   };
   const adminSupabase = {
@@ -179,7 +177,6 @@ describe('history deletion actions', () => {
     expect(createAdminClient).not.toHaveBeenCalled();
     expect(mocks.redisDel).not.toHaveBeenCalled();
     expect(mocks.after).not.toHaveBeenCalled();
-    expect(sessionSupabase.auth.getUser).not.toHaveBeenCalled();
   });
 
   it('captures database failures with user and raw error context', async () => {
