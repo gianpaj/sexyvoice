@@ -69,7 +69,7 @@ supabase --workdir apps/web inspect db vacuum-stats --linked
 supabase --workdir apps/web inspect db bloat --linked
 supabase --workdir apps/web inspect db long-running-queries --linked
 supabase --workdir apps/web inspect db blocking --linked
-supabase --workdir apps/web advisors --linked --type performance --level info
+supabase --workdir apps/web db advisors --linked --type performance --level info
 ```
 
 Save the outputs outside the repository. Record the observation time and the
@@ -480,7 +480,7 @@ supabase --workdir apps/web inspect db index-stats --linked
 supabase --workdir apps/web inspect db table-stats --linked
 supabase --workdir apps/web inspect db vacuum-stats --linked
 supabase --workdir apps/web inspect db blocking --linked
-supabase --workdir apps/web advisors --linked --type performance --level info
+supabase --workdir apps/web db advisors --linked --type performance --level info
 ```
 
 For each optimized statement, record:
