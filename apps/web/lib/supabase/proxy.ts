@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
+import { getVerifiedClaims } from './auth';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { ensureUserApplicationState } from './ensure-user-application-state';
 import { copyAuthResponse, createMiddlewareClient } from './middleware-client';
@@ -73,8 +74,7 @@ export const updateSession = async (
 
     // Keep this call immediately after creating the request-scoped client.
     // It refreshes near-expiry tokens and verifies JWT signatures.
-    const { data, error } = await supabase.auth.getClaims();
-    const claims = error ? null : data?.claims;
+    const claims = await getVerifiedClaims(supabase);
     const isAuthenticated = Boolean(claims?.sub);
 
     const dashboardPath = isDashboardPath(pathname, locale);
