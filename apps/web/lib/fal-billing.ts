@@ -41,7 +41,7 @@ export async function getFalBillingEventCost(
       },
     );
   } catch (err) {
-    logger.warn('Failed to fetch Fal billing event cost after retries', {
+    logger.warn('Failed to fetch Fal billing event cost', {
       extra: { errorMessage: getProviderErrorMessage(err), requestId },
     });
     return null;

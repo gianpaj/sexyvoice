@@ -525,11 +525,14 @@ output of `sentry-cli issues list` (first column).
 `apps/web/lib/fal-billing.ts` looks up reference audio enhancement costs through
 `fetchWithRetry` in `apps/web/lib/fetch-with-retry.ts`. It makes one immediate
 request and up to three retries, waiting 1s, 2s, and 4s between attempts. Each
-request has a fresh 5-second timeout. HTTP errors, fetch failures, and missing or
-invalid cost data all trigger retries.
+request has a fresh 5-second timeout. HTTP 408, 429, and 5xx responses, fetch
+failures, and missing or invalid cost data trigger retries. Other HTTP errors,
+including 400, 401, 403, and 404, fail immediately. A valid `Retry-After` header
+on a retryable HTTP response overrides the scheduled delay; it accepts seconds
+or an HTTP date. Missing or invalid headers use the 1s/2s/4s schedule.
 
-Only the final failure emits a Sentry warning, `Failed to fetch Fal billing event
-cost after retries`. The helper returns `null`, and the clone route records its
+Only the final failure emits a Sentry warning, `Failed to fetch Fal billing event cost`.
+The helper returns `null`, and the clone route records its
 estimated enhancement cost instead. Successful retries do not emit warnings.
 
 ## Troubleshooting Checklist

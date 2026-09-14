@@ -85,11 +85,33 @@ describe('getFalBillingEventCost', () => {
       await expect(result).resolves.toBeNull();
       expect(fetchMock).toHaveBeenCalledTimes(4);
       expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
-        'Failed to fetch Fal billing event cost after retries',
+        'Failed to fetch Fal billing event cost',
         {
           extra: {
             errorMessage:
               'Fal billing events API returned unexpected cost data',
+            requestId: 'request-id',
+          },
+        },
+      );
+    },
+  );
+
+  it.each([400, 401, 403, 404])(
+    'returns null and warns once without retrying HTTP %s',
+    async (status) => {
+      fetchMock.mockResolvedValue(
+        Response.json({ error: 'permanent' }, { status }),
+      );
+
+      await expect(getFalBillingEventCost('request-id')).resolves.toBeNull();
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+      expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+        'Failed to fetch Fal billing event cost',
+        {
+          extra: {
+            errorMessage: expect.stringContaining(`HTTP ${status}`),
             requestId: 'request-id',
           },
         },

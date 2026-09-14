@@ -70,6 +70,95 @@ describe('fetchWithRetry', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it.each([400, 401, 403, 404, 422])(
+    'fails immediately on HTTP %s without parsing the body',
+    async (status) => {
+      fetchMock.mockResolvedValue(
+        Response.json({ error: 'permanent' }, { status }),
+      );
+      const parse = vi.fn(parseResponse);
+
+      await expect(
+        fetchWithRetry(url, { parseResponse: parse }),
+      ).rejects.toThrow(`HTTP ${status}`);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(parse).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it.each([408, 429, 500, 502, 504])(
+    'retries HTTP %s with the default delay',
+    async (status) => {
+      fetchMock
+        .mockResolvedValueOnce(
+          Response.json({ error: 'temporary' }, { status }),
+        )
+        .mockResolvedValueOnce(Response.json({ cost: 12 }));
+      const result = fetchWithRetry(url, { parseResponse });
+
+      await vi.advanceTimersByTimeAsync(999);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      await expect(result).resolves.toEqual({ cost: 12 });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    },
+  );
+
+  it.each([
+    ['3', 3000],
+    ['Mon, 14 Sep 2026 12:00:05 GMT', 5000],
+    ['Mon, 14 Sep 2026 11:59:59 GMT', 0],
+    ['0', 0],
+    ['invalid', 1000],
+    ['-1', 1000],
+    ['', 1000],
+  ])('uses Retry-After %j with a delay of %s ms', async (retryAfter, delay) => {
+    vi.setSystemTime(new Date('2026-09-14T12:00:00Z'));
+    fetchMock
+      .mockResolvedValueOnce(
+        Response.json(
+          { error: 'rate limited' },
+          {
+            headers: { 'Retry-After': retryAfter },
+            status: 429,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(Response.json({ cost: 12 }));
+    const result = fetchWithRetry(url, { parseResponse });
+
+    if (delay > 0) {
+      await vi.advanceTimersByTimeAsync(delay - 1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+    } else {
+      await vi.advanceTimersByTimeAsync(0);
+    }
+    await expect(result).resolves.toEqual({ cost: 12 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('limits rate-limit retries to the configured attempt count', async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json(
+        { error: 'rate limited' },
+        {
+          headers: { 'Retry-After': '2' },
+          status: 429,
+        },
+      ),
+    );
+    const result = expect(
+      fetchWithRetry(url, { parseResponse }),
+    ).rejects.toThrow('HTTP 429');
+
+    await vi.advanceTimersByTimeAsync(6000);
+    await result;
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
   it('retries JSON parsing and response validation errors', async () => {
     fetchMock
       .mockResolvedValueOnce(new Response('invalid json'))

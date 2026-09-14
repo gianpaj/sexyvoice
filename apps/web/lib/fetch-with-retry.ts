@@ -5,7 +5,22 @@ interface FetchWithRetryOptions<T> {
   timeoutMs?: number;
 }
 
-/** Retries failed requests and parsing/validation errors. Only use for safe-to-repeat requests. */
+function getRetryAfterDelayMs(response: Response): number | undefined {
+  const value = response.headers.get('Retry-After')?.trim();
+  if (!value) {
+    return undefined;
+  }
+
+  const seconds = Number(value);
+  if (Number.isFinite(seconds)) {
+    return seconds >= 0 ? seconds * 1000 : undefined;
+  }
+
+  const date = Date.parse(value);
+  return Number.isFinite(date) ? Math.max(0, date - Date.now()) : undefined;
+}
+
+/** Retries transient HTTP, network, and parsing errors. Only use for safe-to-repeat requests. */
 export async function fetchWithRetry<T>(
   url: string,
   {
@@ -16,8 +31,9 @@ export async function fetchWithRetry<T>(
   }: FetchWithRetryOptions<T>,
 ): Promise<T> {
   for (let attempt = 0; ; attempt++) {
+    let response: Response | undefined;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         ...requestInit,
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -28,10 +44,22 @@ export async function fetchWithRetry<T>(
 
       return await parseResponse(response);
     } catch (error) {
-      const delay = retryDelaysMs[attempt];
-      if (delay === undefined) {
+      const fallbackDelay = retryDelaysMs[attempt];
+      if (
+        fallbackDelay === undefined ||
+        (response &&
+          !response.ok &&
+          response.status !== 408 &&
+          response.status !== 429 &&
+          !(response.status >= 500 && response.status < 600))
+      ) {
         throw error;
       }
+
+      const delay =
+        (response && !response.ok
+          ? getRetryAfterDelayMs(response)
+          : undefined) ?? fallbackDelay;
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
