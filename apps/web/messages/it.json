@@ -6,6 +6,7 @@
       "email": "Indirizzo email",
       "password": "Password",
       "submit": "Accedi",
+      "loading": "Caricamento...",
       "forgotPassword": "Hai dimenticato la password?",
       "signInWithGoogle": "Accedi con Google",
       "noAccount": "Non hai un account?",
@@ -20,6 +21,7 @@
       "username": "Nome utente",
       "fullName": "Nome completo",
       "submit": "Registrati",
+      "loading": "Caricamento...",
       "hasAccount": "Hai già un account?",
       "signIn": "Accedi",
       "error": "Errore nella creazione dell'account",
@@ -594,6 +596,7 @@
     "configurationUpdateError": "Errore durante l'aggiornamento della configurazione",
     "agentUnavailable": "Agente non disponibile",
     "activeCallError": "Hai già una chiamata attiva in corso",
+    "instructionsRejected": "Impossibile avviare la chiamata perché il personaggio o la scena non hanno superato i controlli di sicurezza del provider di IA. Modifica il personaggio o la scena e riprova.",
     "microphonePermissionDenied": "Accesso al microfono negato. Consenti l'accesso al microfono e riprova.",
     "disconnected": "Disconnesso",
     "chooseCharacter": "Con chi vuoi parlare?",
@@ -681,6 +684,7 @@
     "generating": "Generazione",
     "languageLabel": "Lingua",
     "languageSelectPlaceholder": "Seleziona una lingua",
+    "englishChatterbox": "Inglese (Chatterbox)",
     "notEnoughCredits": "Non hai crediti sufficienti per generare l'audio.",
     "playAudio": "Riproduci audio",
     "previewTitle": "Anteprima voce generata",
@@ -707,7 +711,6 @@
       "guardrailViolation": "Questa richiesta è stata bloccata da una policy di sicurezza di terze parti per la clonazione vocale. Prova con un testo diverso o con un altro audio di riferimento.",
       "insufficientCredits": "Servono __CREDITS__ crediti per clonare questo audio.",
       "internalError": "Impossibile clonare la voce. Riprova.",
-      "providerUnavailable": "Il provider di clonazione vocale è temporaneamente non disponibile. Riprova.",
       "invalidContentType": "La richiesta di caricamento non è valida. Riprova.",
       "invalidFileType": "Tipo di file non valido. Carica MP3, OGG, Opus, M4A, WAV o WebM.",
       "missingLocale": "Seleziona una lingua.",
@@ -856,8 +859,8 @@
     "description": "Monitora l'utilizzo dell'API e le richieste nel tempo."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Sintesi vocale IA gratuita & generatore di voci",
-    "description": "Genera parlato IA espressivo con emozioni in oltre 24 lingue. Prova gratis la sintesi vocale con clonazione vocale e sintesi del parlato naturale. Inizia con crediti gratuiti – nessuna carta richiesta.",
+    "defaultTitle": "SexyVoice.ai – Sintesi vocale IA gratuita & chiamate vocali in tempo reale",
+    "description": "Genera parlato IA espressivo con emozioni in oltre 24 lingue o parla in tempo reale con personaggi IA. Sintesi vocale gratuita, clonazione vocale e chiamate vocali dal vivo. Inizia con crediti gratuiti – nessuna carta richiesta.",
     "skipToMainContent": "Vai al contenuto principale",
     "descriptionLogin": "Accedi a SexyVoice.ai per accedere ai tuoi progetti vocali AI, gestire i crediti e generare parlato espressivo in più lingue con clonazione vocale avanzata.",
     "descriptionSignup": "Unisciti a SexyVoice.ai gratis - Ottieni 10.000 crediti per creare voci AI realistiche con emozioni. Sintesi vocale avanzata e clonazione vocale in 24 lingue.",
@@ -906,6 +909,26 @@
     "header": "Cronologia generazioni",
     "empty": "Nessuna cronologia ancora",
     "downloadError": "Impossibile scaricare l'audio",
+    "delete": {
+      "cancel": "Annulla",
+      "deleting": "Eliminazione...",
+      "single": {
+        "trigger": "Elimina",
+        "title": "Eliminare il file audio?",
+        "description": "Questo file audio verrà rimosso dalla cronologia. Questa azione non può essere annullata.",
+        "confirm": "Elimina",
+        "success": "File audio eliminato",
+        "error": "Impossibile eliminare il file audio. Riprova."
+      },
+      "all": {
+        "trigger": "Elimina tutto",
+        "title": "Eliminare tutti i file audio?",
+        "description": "{count, plural, one {Il file audio verrà rimosso dalla cronologia. Questa azione non può essere annullata.} other {Tutti i # file audio verranno rimossi dalla cronologia. Questa azione non può essere annullata.}}",
+        "confirm": "Elimina tutto",
+        "success": "Tutti i file audio sono stati eliminati",
+        "error": "Impossibile eliminare tutti i file audio. Riprova."
+      }
+    },
     "ui": {
       "filterText": "Filtra testo...",
       "customizeColumns": "Personalizza colonne",
@@ -1178,6 +1201,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
-    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi."
+    "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi.",
+    "PROVIDER_UNAVAILABLE": "{provider} non è disponibile al momento. Riprova."
   }
 }

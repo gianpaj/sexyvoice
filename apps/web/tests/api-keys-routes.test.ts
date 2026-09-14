@@ -4,6 +4,7 @@ import { DELETE } from '@/app/api/api-keys/[id]/route';
 import { GET, POST } from '@/app/api/api-keys/route';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { mockSupabaseUnauthenticatedUserOnce } from './setup';
 
 describe('/api/api-keys routes', () => {
   it('lists current user API keys', async () => {
@@ -15,24 +16,24 @@ describe('/api/api-keys routes', () => {
         }),
       },
       from: vi.fn(() => ({
-        select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockResolvedValue({
           data: [
             {
-              id: 'key-1',
-              name: 'Production',
-              key_prefix: 'sk_live_abc1',
               created_at: '2026-01-01T00:00:00.000Z',
-              last_used_at: null,
               expires_at: null,
+              id: 'key-1',
               is_active: true,
-              permissions: { scopes: ['voice:generate'] },
+              key_prefix: 'sk_live_abc1',
+              last_used_at: null,
               metadata: {},
+              name: 'Production',
+              permissions: { scopes: ['voice:generate'] },
             },
           ],
           error: null,
         }),
+        select: vi.fn().mockReturnThis(),
       })),
     } as never);
 
@@ -55,20 +56,20 @@ describe('/api/api-keys routes', () => {
       from: vi.fn((table: string) => {
         if (table === 'api_keys') {
           return {
-            select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
             insert: vi.fn().mockReturnThis(),
+            select: vi.fn().mockReturnThis(),
             single: vi.fn().mockResolvedValue({
               data: {
-                id: 'key-1',
-                name: 'Prod',
-                key_prefix: 'sk_live_abc1',
                 created_at: '2026-01-01T00:00:00.000Z',
-                last_used_at: null,
                 expires_at: null,
+                id: 'key-1',
                 is_active: true,
-                permissions: { scopes: ['voice:generate'] },
+                key_prefix: 'sk_live_abc1',
+                last_used_at: null,
                 metadata: {},
+                name: 'Prod',
+                permissions: { scopes: ['voice:generate'] },
               },
               error: null,
             }),
@@ -76,16 +77,16 @@ describe('/api/api-keys routes', () => {
         }
 
         return {
-          select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
+          select: vi.fn().mockReturnThis(),
         };
       }),
     } as never);
 
     const request = new Request('http://localhost/api/api-keys', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ name: 'Prod' }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -105,12 +106,12 @@ describe('/api/api-keys routes', () => {
         }),
       },
       from: vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockResolvedValue({
           data: [{ id: 'key-1' }],
           error: null,
         }),
+        update: vi.fn().mockReturnThis(),
       })),
     } as never);
 
@@ -132,13 +133,13 @@ describe('/api/api-keys routes', () => {
         }),
       },
       from: vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         // Zero rows matched — wrong id or different owner
         select: vi.fn().mockResolvedValue({
           data: [],
           error: null,
         }),
+        update: vi.fn().mockReturnThis(),
       })),
     } as never);
 
@@ -160,12 +161,12 @@ describe('/api/api-keys routes', () => {
         }),
       },
       from: vi.fn(() => ({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         select: vi.fn().mockResolvedValue({
           data: null,
-          error: { message: 'DB connection lost', code: '08006' },
+          error: { code: '08006', message: 'DB connection lost' },
         }),
+        update: vi.fn().mockReturnThis(),
       })),
     } as never);
 
@@ -179,15 +180,7 @@ describe('/api/api-keys routes', () => {
   });
 
   it('returns 401 when user is not authenticated', async () => {
-    vi.mocked(createClient).mockResolvedValueOnce({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: null },
-          error: { message: 'Not authenticated' },
-        }),
-      },
-      from: vi.fn(),
-    } as never);
+    mockSupabaseUnauthenticatedUserOnce();
 
     const response = await DELETE(new Request('http://localhost'), {
       params: Promise.resolve({ id: 'key-1' }),

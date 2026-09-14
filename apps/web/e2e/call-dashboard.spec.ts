@@ -1,6 +1,5 @@
 import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
-
 import { CallPage } from './pages/call.page';
 
 /**
@@ -24,12 +23,12 @@ test.describe('Call Dashboard - Authenticated User', () => {
     await page.route('**/api/call-token', async (route) => {
       console.log('[MOCK] call-token intercepted — not connecting to LiveKit');
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({
           accessToken: 'mock-token-for-e2e',
           url: 'wss://mock-livekit.example.com',
         }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
 
@@ -43,9 +42,9 @@ test.describe('Call Dashboard - Authenticated User', () => {
 
     await page.route('**/characters/*', async (route) => {
       await route.fulfill({
-        status: 200,
-        contentType: 'image/svg+xml',
         body: placeholderSvg,
+        contentType: 'image/svg+xml',
+        status: 200,
       });
     });
 
@@ -55,9 +54,9 @@ test.describe('Call Dashboard - Authenticated User', () => {
 
       if (imageUrl?.startsWith('/characters/')) {
         await route.fulfill({
-          status: 200,
-          contentType: 'image/svg+xml',
           body: placeholderSvg,
+          contentType: 'image/svg+xml',
+          status: 200,
         });
         return;
       }
@@ -117,19 +116,19 @@ test.describe('Call Dashboard - Authenticated User', () => {
 });
 
 test.describe('Call Dashboard - Mobile Viewport', () => {
-  test.use({ viewport: { width: 375, height: 812 } });
+  test.use({ viewport: { height: 812, width: 375 } });
 
   let callPage: CallPage;
 
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/call-token', async (route) => {
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({
           accessToken: 'mock-token-for-e2e',
           url: 'wss://mock-livekit.example.com',
         }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
 
@@ -143,9 +142,9 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
 
     await page.route('**/characters/*', async (route) => {
       await route.fulfill({
-        status: 200,
-        contentType: 'image/svg+xml',
         body: placeholderSvg,
+        contentType: 'image/svg+xml',
+        status: 200,
       });
     });
 
@@ -155,9 +154,9 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
 
       if (imageUrl?.startsWith('/characters/')) {
         await route.fulfill({
-          status: 200,
-          contentType: 'image/svg+xml',
           body: placeholderSvg,
+          contentType: 'image/svg+xml',
+          status: 200,
         });
         return;
       }

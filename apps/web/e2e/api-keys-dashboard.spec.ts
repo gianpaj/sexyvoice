@@ -2,13 +2,13 @@ import { expect, test } from '@playwright/test';
 
 const mockApiKeys = [
   {
-    id: 'key-1',
-    name: 'Production backend',
-    key_prefix: 'sk_live_abc123',
     created_at: '2026-03-01T12:00:00.000Z',
-    last_used_at: '2026-03-10T09:30:00.000Z',
     expires_at: null,
+    id: 'key-1',
     is_active: true,
+    key_prefix: 'sk_live_abc123',
+    last_used_at: '2026-03-10T09:30:00.000Z',
+    name: 'Production backend',
   },
 ];
 
@@ -16,9 +16,9 @@ test.describe('API Keys Dashboard - Authenticated User', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/api-keys', async (route) => {
       await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({ data: mockApiKeys }),
+        contentType: 'application/json',
+        status: 200,
       });
     });
   });

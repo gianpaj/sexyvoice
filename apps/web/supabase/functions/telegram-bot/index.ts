@@ -19,9 +19,10 @@ function getDefaultSupabaseSecretKey(): string {
   let secretKeys: unknown;
   try {
     secretKeys = JSON.parse(rawSecretKeys);
-  } catch {
+  } catch (error) {
     throw new Error(
       'Invalid env.SUPABASE_SECRET_KEYS: expected a JSON dictionary',
+      { cause: error },
     );
   }
 
@@ -130,7 +131,6 @@ function maskUsername(username?: string): string | undefined {
   return maskedUsername;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
 function reduceAmountUsd(acc: number, row: { metadata: any }): number {
   if (!row.metadata || typeof row.metadata !== 'object') {
     return acc;
@@ -333,7 +333,6 @@ async function generateTodayStats(): Promise<string> {
         created_at: string;
         type: string;
         description: string | null;
-        // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
         metadata: any;
         profiles: { username: string } | null;
       }[]
@@ -344,7 +343,6 @@ async function generateTodayStats(): Promise<string> {
         created_at: string;
         type: string;
         description: string | null;
-        // biome-ignore lint/suspicious/noExplicitAny: Metadata structure varies
         metadata: any;
         profiles: { username: string } | null;
       }[] = [];
@@ -375,9 +373,7 @@ async function generateTodayStats(): Promise<string> {
       return allTransactions;
     };
 
-    // biome-ignore lint/suspicious/noExplicitAny: it's ok
     const fetchUsageEvents = async (): Promise<any[]> => {
-      // biome-ignore lint/suspicious/noExplicitAny: it's ok
       const allEvents: any[] = [];
       const pageSize = 1000;
       let offset = 0;
@@ -625,10 +621,10 @@ async function generateTodayStats(): Promise<string> {
       | 'live_call'
       | 'audio_processing';
     const sourceTypeLabels: Record<UsageSourceType, string> = {
+      audio_processing: 'Processing',
+      live_call: 'Calls',
       tts: 'TTS',
       voice_cloning: 'Cloning',
-      live_call: 'Calls',
-      audio_processing: 'Processing',
     };
 
     const calculateUsageBreakdown = (events: any[]): Map<string, number> => {
@@ -670,16 +666,18 @@ async function generateTodayStats(): Promise<string> {
     const usageValueWeek = totalCreditsWeek * LRCV;
 
     // Burn rate: usage value vs revenue purchased today (both in dollars)
-    const burnRateRatio =
-      revenuePurchasedToday > 0
-        ? usageValueToday / revenuePurchasedToday
-        : usageValueToday > 0
-          ? Number.POSITIVE_INFINITY
-          : 0;
+    let burnRateRatio = 0;
+    if (revenuePurchasedToday > 0) {
+      burnRateRatio = usageValueToday / revenuePurchasedToday;
+    } else if (usageValueToday > 0) {
+      burnRateRatio = Number.POSITIVE_INFINITY;
+    }
 
+    const burnRateDisplay =
+      revenuePurchasedToday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞';
     const burnRateFlag =
       burnRateRatio > 1.2
-        ? ` ⚠️ Burn rate: ${revenuePurchasedToday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'} vs purchased`
+        ? ` ⚠️ Burn rate: ${burnRateDisplay} vs purchased`
         : '';
 
     // Top non-clone models
@@ -779,9 +777,9 @@ async function generateTodayStats(): Promise<string> {
 
     const customerTotals = [...customerTransactions.entries()].map(
       ([userId, transactions]) => ({
-        userId,
         total: transactions.reduce((sum, t) => sum + t.amount, 0),
         transactions,
+        userId,
         username: transactions[0].username,
       }),
     );
@@ -935,20 +933,20 @@ bot.command('menu', async (ctx) => {
       inline_keyboard: [
         [
           {
-            text: 'Help',
             callback_data: 'help',
+            text: 'Help',
           },
         ],
         [
           {
-            text: 'Stats 📊',
             callback_data: 'stats',
+            text: 'Stats 📊',
           },
         ],
         [
           {
-            text: 'About',
             callback_data: 'about',
+            text: 'About',
           },
         ],
       ],

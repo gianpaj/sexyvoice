@@ -155,6 +155,7 @@ Used for:
 - caching
 - rate limiting
 - fast lookups
+- evicting dashboard audio URL cache entries after R2 cleanup deletion
 
 ### Cloudflare R2
 
@@ -196,6 +197,7 @@ Notes:
 - `LIVEKIT_API_SECRET`
 
 Notes:
+
 - `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
   and used by the frontend to connect to LiveKit rooms.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
@@ -209,6 +211,7 @@ Notes:
 - `CALL_SUMMARY_SECRET`
 
 Notes:
+
 - `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
 - `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
   and verifying the short-lived OAuth callback marker cookie.
@@ -246,6 +249,7 @@ openssl rand -hex 32
 - `EDGE_CONFIG`
 
 Used for:
+
 - dynamic call instructions
 - runtime-configurable behavior without redeploys
 
@@ -327,6 +331,33 @@ follow-up cleanup.
   clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 - Be careful with migrations and generated types.
 
+#### Client retries and auth responses
+
+Server and script clients use the Supabase SDK's default PostgREST retries:
+GET, HEAD, and OPTIONS requests retry network failures and HTTP 503/520 up to
+three times. HTTP 504 and default POST RPCs, including credit mutations, are not
+retried. Backoff adds 1s/2s/4s unless the server supplies `Retry-After`; it does not
+set an overall request deadline. Do not wrap all Supabase requests in another
+retry layer.
+
+The middleware profile check in `ensureUserApplicationState` disables retries
+because it is a best-effort repair check on every dashboard request. A failed
+read is reported and dashboard rendering continues without retry backoff. This
+does not impose a deadline on the initial request or the restoration RPC.
+
+The browser client disables SDK database retries. TanStack Query owns retries
+for dashboard queries; direct browser reads retain single-attempt behavior.
+
+`apps/web/lib/supabase/middleware-client.ts` writes refreshed cookies to the
+request and response, preserving locale rewrites and request-header overrides.
+Auth redirects retain cookies and the SSR cache headers. The OAuth callback
+passes a response `Headers` collection to `createClient` and forwards it on both
+success and failure redirects. Server components use the cookie-store adapter;
+session refresh before rendering belongs in middleware.
+
+The web app and operational scripts share the catalog version. The Telegram
+bot's Deno URL import is versioned independently from the pnpm lockfile.
+
 ### Edge Config
 
 If used, create an Edge Config and provide the `call-instructions` payload.
@@ -378,6 +409,11 @@ pnpm run format
 ```
 
 ### Run tests
+
+`pnpm test` runs all package test suites. The unit-test workflow in
+`.github/workflows/tests.yml` uses `pnpm test:affected` to select changed
+packages and their dependents through Turbo. To inspect that selection without
+running tests, use `pnpm test:affected --dry=json`.
 
 ```bash
 pnpm test
@@ -489,6 +525,7 @@ output of `sentry-cli issues list` (first column).
 ### OAuth callback/session issues
 
 Check:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `SUPABASE_SECRET_KEY`
@@ -499,6 +536,7 @@ Check:
 ### LiveKit call issues
 
 Check:
+
 - `LIVEKIT_URL`
 - `LIVEKIT_API_KEY`
 - `LIVEKIT_API_SECRET`
@@ -508,6 +546,7 @@ Check:
 ### External API issues
 
 Check:
+
 - `API_KEY_HMAC_SECRET`
 - `R2_SPEECH_API_BUCKET_NAME`
 - `R2_SPEECH_API_PUBLIC_URL`
@@ -526,6 +565,7 @@ Check:
 ### Storage issues
 
 Check:
+
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
 - `R2_BUCKET_NAME`
@@ -549,3 +589,14 @@ When environment or deployment behavior changes:
 
 Keeping these docs synchronized prevents setup drift between development,
 deployment, and operational troubleshooting.
+
+## Daily stats troubleshooting
+
+The production `/api/daily-stats` handler delivers a Telegram message. Use the
+focused tests or read-only queries for verification. Contribution inputs bypass
+the local activity cache; database failures abort the report instead of showing
+zero usage. Reporting definitions and test commands are in the
+[daily-stats README](../apps/web/app/api/daily-stats/README.md). For local timing
+comparisons, use the development-only cache bypass and runner described in
+[Local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking).
+The runner rejects responses that do not confirm the cache bypass.

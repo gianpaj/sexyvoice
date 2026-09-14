@@ -198,7 +198,7 @@ export default async function BlogIndexPage(props: {
                     return (
                       <Card
                         className={cn(
-                          'group overflow-hidden border-white/10 bg-black/20 backdrop-blur-sm transition-colors duration-200 hover:border-white/20 hover:bg-white/10',
+                          'group overflow-hidden border-white/10 bg-black/20 py-0 backdrop-blur-sm transition-colors duration-200 hover:border-white/20 hover:bg-white/10',
                           isFeatured && 'sm:col-span-2 lg:col-span-3',
                         )}
                         key={post._id}
@@ -212,7 +212,7 @@ export default async function BlogIndexPage(props: {
                         >
                           <CardHeader
                             className={cn(
-                              'p-0',
+                              'relative block overflow-hidden p-0',
                               isFeatured && 'sm:w-2/5 sm:shrink-0',
                             )}
                           >

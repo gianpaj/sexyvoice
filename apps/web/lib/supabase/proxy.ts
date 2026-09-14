@@ -1,9 +1,11 @@
 import { captureMessage } from '@sentry/nextjs';
-import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { ensureUserApplicationState } from './ensure-user-application-state';
+import { copyAuthResponse, createMiddlewareClient } from './middleware-client';
 import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 
 const routesPerLocale = (routes: string[]): string[] =>
@@ -46,70 +48,17 @@ const isDashboardPath = (pathname: string, locale: string) =>
   pathname === `/${locale}/dashboard` ||
   pathname.startsWith(`/${locale}/dashboard/`);
 
-const copyResponseState = (source: NextResponse, target: NextResponse) => {
-  const sourceOverrideHeaders = source.headers
-    .get('x-middleware-override-headers')
-    ?.split(',')
-    .map((header) => header.trim())
-    .filter(Boolean);
-  const targetOverrideHeaders = target.headers
-    .get('x-middleware-override-headers')
-    ?.split(',')
-    .map((header) => header.trim())
-    .filter(Boolean);
-
-  for (const [key, value] of source.headers.entries()) {
-    const normalizedKey = key.toLowerCase();
-
-    if (
-      normalizedKey === 'set-cookie' ||
-      normalizedKey === 'x-middleware-override-headers' ||
-      normalizedKey === 'x-middleware-request-cookie'
-    ) {
-      continue;
-    }
-
-    target.headers.set(key, value);
-  }
-
-  const overrideHeaders = new Set([
-    ...(sourceOverrideHeaders ?? []),
-    ...(targetOverrideHeaders ?? []),
-  ]);
-
-  if (overrideHeaders.size > 0) {
-    target.headers.set(
-      'x-middleware-override-headers',
-      [...overrideHeaders].join(','),
-    );
-  }
-
-  for (const cookie of source.cookies.getAll()) {
-    target.cookies.set(cookie);
-  }
-
-  return target;
-};
-
 const redirectWithSupabaseCookies = (
   url: URL,
   supabaseResponse: NextResponse,
-) => {
-  const redirectResponse = NextResponse.redirect(url);
-
-  for (const cookie of supabaseResponse.cookies.getAll()) {
-    redirectResponse.cookies.set(cookie);
-  }
-
-  return redirectResponse;
-};
+) => copyAuthResponse(supabaseResponse, NextResponse.redirect(url));
 
 export const updateSession = async (
   request: NextRequest,
   locale: string,
   response: NextResponse = NextResponse.next({ request }),
 ) => {
-  let supabaseResponse = response;
+  const supabaseResponse = response;
 
   try {
     const { pathname } = request.nextUrl;
@@ -120,33 +69,7 @@ export const updateSession = async (
       rawOauthCallbackMarker,
     );
 
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            for (const { name, value } of cookiesToSet) {
-              request.cookies.set(name, value);
-            }
-
-            const refreshedResponse = copyResponseState(
-              supabaseResponse,
-              NextResponse.next({ request }),
-            );
-
-            for (const { name, value, options } of cookiesToSet) {
-              refreshedResponse.cookies.set(name, value, options);
-            }
-
-            supabaseResponse = refreshedResponse;
-          },
-        },
-      },
-    );
+    const supabase = createMiddlewareClient(request, supabaseResponse);
 
     // Keep this call immediately after creating the request-scoped client.
     // It refreshes near-expiry tokens and verifies JWT signatures.
@@ -196,6 +119,25 @@ export const updateSession = async (
       return redirectResponse;
     }
 
+    if (isAuthenticated && dashboardPath && !isE2E()) {
+      try {
+        // Restoration needs the auth creation date, which JWT claims omit.
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          await ensureUserApplicationState({
+            createdAt: user.created_at,
+            email: user.email,
+            id: user.id,
+          });
+        }
+      } catch {
+        // Restoration failures are reported to Sentry inside the helper.
+        // Never block dashboard access on this best-effort repair.
+      }
+    }
+
     const isPublicRoute = publicRoutes.includes(pathname);
 
     if (!(isAuthenticated || isPublicRoute)) {
@@ -219,19 +161,7 @@ export const updateSession = async (
       return clearOauthCallbackCookie(supabaseResponse);
     }
 
-    // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-    // creating a new response object with NextResponse.next() make sure to:
-    // 1. Pass the request in it, like so:
-    //    const myNewResponse = NextResponse.next({ request })
-    // 2. Copy over the cookies, like so:
-    //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-    // 3. Change the myNewResponse object to fit your needs, but avoid changing
-    //    the cookies!
-    // 4. Finally:
-    //    return myNewResponse
-    // If this is not done, you may be causing the browser and server to go out
-    // of sync and terminate the user's session prematurely!
-
+    // Preserve the locale rewrite, refreshed request cookies, and auth cache headers.
     return supabaseResponse;
   } catch (e) {
     console.error('Proxy error:', e);

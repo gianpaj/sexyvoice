@@ -16,15 +16,13 @@ vi.mock('mpg123-decoder', () => ({
     decode() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        errors: [],
         sampleRate: 44_100,
         samplesDecoded: 3,
-        errors: [],
       };
     }
 
-    free() {
-      return undefined;
-    }
+    free() {}
   },
 }));
 
@@ -35,24 +33,22 @@ vi.mock('ogg-opus-decoder', () => ({
     decode() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        errors: [],
         sampleRate: 48_000,
         samplesDecoded: 3,
-        errors: [],
       };
     }
 
     decodeFile() {
       return {
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        errors: [],
         sampleRate: 48_000,
         samplesDecoded: 3,
-        errors: [],
       };
     }
 
-    free() {
-      return undefined;
-    }
+    free() {}
   },
 }));
 
@@ -62,27 +58,25 @@ vi.mock('@wasm-audio-decoders/ogg-vorbis', () => ({
 
     decode() {
       return {
+        bitDepth: 16 as const,
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        errors: [],
         sampleRate: 44_100,
         samplesDecoded: 3,
-        bitDepth: 16 as const,
-        errors: [],
       };
     }
 
     decodeFile() {
       return {
+        bitDepth: 16 as const,
         channelData: [new Float32Array([0.1, 0.2, 0.3])],
+        errors: [],
         sampleRate: 44_100,
         samplesDecoded: 3,
-        bitDepth: 16 as const,
-        errors: [],
       };
     }
 
-    free() {
-      return undefined;
-    }
+    free() {}
   },
 }));
 
@@ -362,9 +356,9 @@ describe('audio-converter', () => {
       try {
         mockMPEGDecoder.prototype.decode = () => ({
           channelData: [],
+          errors: [],
           sampleRate: 44_100,
           samplesDecoded: 0,
-          errors: [],
         });
         const mp3Buffer = Buffer.from([0xff, 0xfb, 0x10, 0x00]);
         await expect(
@@ -407,9 +401,9 @@ describe('audio-converter', () => {
           new Float32Array([0.1, 0.2, 0.3]),
           new Float32Array([0.4, 0.5, 0.6]),
         ],
+        errors: [],
         sampleRate: 44_100,
         samplesDecoded: 3,
-        errors: [],
       });
 
       const mp3Buffer = Buffer.from([0xff, 0xfb, 0x10, 0x00]);

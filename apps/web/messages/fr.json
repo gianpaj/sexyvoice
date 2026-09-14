@@ -6,6 +6,7 @@
       "email": "Adresse e-mail",
       "password": "Mot de passe",
       "submit": "Se connecter",
+      "loading": "Chargement...",
       "forgotPassword": "Mot de passe oublié ?",
       "signInWithGoogle": "Se connecter avec Google",
       "noAccount": "Vous n'avez pas de compte ?",
@@ -20,6 +21,7 @@
       "username": "Nom d'utilisateur",
       "fullName": "Nom complet",
       "submit": "S'inscrire",
+      "loading": "Chargement...",
       "hasAccount": "Vous avez déjà un compte ?",
       "signIn": "Se connecter",
       "error": "Erreur lors de la création du compte",
@@ -594,6 +596,7 @@
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
     "activeCallError": "Vous avez déjà un appel actif en cours",
+    "instructionsRejected": "Cet appel n’a pas pu démarrer, car le personnage ou la scène n’ont pas passé les contrôles de sécurité du fournisseur d’IA. Modifiez le personnage ou la scène, puis réessayez.",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "disconnected": "Déconnecté",
     "chooseCharacter": "À qui voulez-vous parler ?",
@@ -681,6 +684,7 @@
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",
+    "englishChatterbox": "Anglais (Chatterbox)",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "previewTitle": "Aperçu de la voix générée",
@@ -707,7 +711,6 @@
       "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
       "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
       "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
-      "providerUnavailable": "Le fournisseur de clonage vocal est temporairement indisponible. Veuillez réessayer.",
       "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
       "missingLocale": "Veuillez sélectionner une langue.",
@@ -856,8 +859,8 @@
     "description": "Surveillez l'utilisation de l'API et les requêtes au fil du temps."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & générateur de voix",
-    "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues. Essayez gratuitement la synthèse vocale avec clonage vocal et synthèse naturelle de la parole. Commencez avec des crédits gratuits – aucune carte requise.",
+    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel",
+    "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise.",
     "skipToMainContent": "Aller au contenu principal",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
@@ -906,6 +909,26 @@
     "header": "Historique des générations",
     "empty": "Aucun historique pour le moment",
     "downloadError": "Échec du téléchargement de l'audio",
+    "delete": {
+      "cancel": "Annuler",
+      "deleting": "Suppression...",
+      "single": {
+        "trigger": "Supprimer",
+        "title": "Supprimer le fichier audio ?",
+        "description": "Ce fichier audio sera supprimé de votre historique. Cette action est irréversible.",
+        "confirm": "Supprimer",
+        "success": "Fichier audio supprimé",
+        "error": "Impossible de supprimer le fichier audio. Veuillez réessayer."
+      },
+      "all": {
+        "trigger": "Tout supprimer",
+        "title": "Supprimer tous les fichiers audio ?",
+        "description": "{count, plural, one {Le fichier audio sera supprimé de votre historique. Cette action est irréversible.} other {Les # fichiers audio seront supprimés de votre historique. Cette action est irréversible.}}",
+        "confirm": "Tout supprimer",
+        "success": "Tous les fichiers audio ont été supprimés",
+        "error": "Impossible de supprimer tous les fichiers audio. Veuillez réessayer."
+      }
+    },
     "ui": {
       "filterText": "Filtrer le texte...",
       "customizeColumns": "Personnaliser les colonnes",
@@ -1178,6 +1201,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
-    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes."
+    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes.",
+    "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez."
   }
 }

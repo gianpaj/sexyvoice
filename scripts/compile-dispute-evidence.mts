@@ -1,13 +1,10 @@
 import { writeFile } from 'node:fs/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
+import { loadScriptEnv } from './lib/env.mts';
+import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
 
-// Load environment variables
-config({
-  path: ['.env', '.env.local'],
-});
+loadScriptEnv();
 
 // ---------------------------------------------------------------------------
 // Types
@@ -95,29 +92,6 @@ interface DisputeReport {
 // ---------------------------------------------------------------------------
 // Supabase
 // ---------------------------------------------------------------------------
-
-/**
- * Create Supabase admin client
- */
-function createAdminClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-  }
-  if (!process.env.SUPABASE_SECRET_KEY) {
-    throw new Error('Missing env.SUPABASE_SECRET_KEY');
-  }
-
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Data gathering (read-only, no side effects)

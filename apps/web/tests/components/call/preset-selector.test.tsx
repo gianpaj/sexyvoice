@@ -73,7 +73,7 @@ beforeEach(() => {
           prompts: { localized_prompts: {}, prompt: '' },
           session_config: {
             maxOutputTokens: null,
-            model: 'grok-voice-think-fast-2.0',
+            model: 'grok-voice-think-fast-1.0',
             temperature: 0.8,
             voice: 'Ara',
           },
@@ -639,9 +639,11 @@ describe('PresetSelector', () => {
       ).toBeEnabled();
     });
 
-    it('does show a premium badge for paid users', () => {
+    it('does not show a premium badge for paid users', () => {
       render(<PresetSelector isPaidUser />);
-      expect(screen.queryByLabelText('Premium feature')).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText('Premium feature'),
+      ).not.toBeInTheDocument();
     });
 
     it('opens create character dialog when clicked by a paid user', async () => {

@@ -17,7 +17,7 @@ interface ResolveActiveBannerOptions {
   placement: BannerPlacement;
 }
 
-function getActivePromoBannerId() {
+export function getActivePromoBannerId() {
   if (process.env.NEXT_PUBLIC_PROMO_ENABLED !== 'true') {
     return null;
   }
@@ -101,10 +101,10 @@ function resolveBanner(
       options.audience === 'loggedIn'
         ? translation.ctaLoggedIn
         : translation.ctaLoggedOut,
-    dismissCookieKeys: [
-      definition.dismiss.cookieKey,
-      ...(definition.dismiss.legacyCookieKeys || []),
-    ],
+    dismiss: {
+      cookieKey: definition.dismiss.cookieKey,
+      days: definition.dismiss.days,
+    },
     dismissible: definition.dismissible ?? true,
     id: definition.id,
     kind: definition.kind,
@@ -128,18 +128,7 @@ export function resolveActiveBanner(
       (banner): banner is NonNullable<ReturnType<typeof getBannerDefinition>> =>
         Boolean(banner),
     )
-    .filter((banner) => {
-      const bannerCookieKeys = [
-        banner.dismiss.cookieKey,
-        ...('legacyCookieKeys' in banner.dismiss
-          ? banner.dismiss.legacyCookieKeys || []
-          : []),
-      ];
-
-      return bannerCookieKeys.every(
-        (cookieKey) => !dismissedCookieKeys.has(cookieKey),
-      );
-    })
+    .filter((banner) => !dismissedCookieKeys.has(banner.dismiss.cookieKey))
     .map((banner) => ({
       banner: resolveBanner(banner, options),
       priority: banner.priority,

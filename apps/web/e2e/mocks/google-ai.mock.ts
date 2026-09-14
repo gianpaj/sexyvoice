@@ -25,9 +25,9 @@ export const mockAudioData =
  * Matches the structure: { url, creditsUsed, creditsRemaining }
  */
 export const mockGenerateVoiceResponse = {
-  url: 'https://files.sexyvoice.ai/generated-audio-free/test-audio-e2e.wav',
-  creditsUsed: 12,
   creditsRemaining: 988,
+  creditsUsed: 12,
+  url: 'https://files.sexyvoice.ai/generated-audio-free/test-audio-e2e.wav',
 };
 
 /**
@@ -35,8 +35,8 @@ export const mockGenerateVoiceResponse = {
  * Grok estimates are calculated dynamically to mirror the real bucketed logic.
  */
 export const mockGeminiEstimateCreditsResponse = {
-  tokens: 150,
   estimatedCredits: 15,
+  tokens: 150,
 };
 
 const MOCK_GROK_VOICES = new Set(['eve', 'rex', 'sal']);
@@ -64,7 +64,7 @@ export async function handleGenerateVoice(route: Route) {
 
   // Log for debugging
   console.log('[MOCK] generate-voice called with:', {
-    text: `${postData?.text?.substring(0, 50)}...`,
+    text: `${postData?.text?.slice(0, 50)}...`,
     voice: postData?.voice,
   });
 
@@ -73,9 +73,9 @@ export async function handleGenerateVoice(route: Route) {
 
   // Fulfill with mock response
   await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
     body: JSON.stringify(mockGenerateVoiceResponse),
+    contentType: 'application/json',
+    status: 200,
   });
 }
 
@@ -89,7 +89,7 @@ export async function handleEstimateCredits(route: Route) {
   const postData = request.postDataJSON();
 
   console.log('[MOCK] estimate-credits called with:', {
-    text: `${postData?.text?.substring(0, 50)}...`,
+    text: `${postData?.text?.slice(0, 50)}...`,
     voice: postData?.voice,
   });
 
@@ -101,9 +101,9 @@ export async function handleEstimateCredits(route: Route) {
     : mockGeminiEstimateCreditsResponse;
 
   await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
     body: JSON.stringify(responseBody),
+    contentType: 'application/json',
+    status: 200,
   });
 }
 
@@ -118,13 +118,13 @@ export async function handleGenerateText(route: Route) {
   const postData = request.postDataJSON();
 
   console.log('[MOCK] generate-text called with:', {
-    prompt: `${postData?.prompt?.substring(0, 50)}...`,
+    prompt: `${postData?.prompt?.slice(0, 50)}...`,
   });
 
   await route.fulfill({
-    status: 200,
-    contentType: 'text/plain',
     body: mockEnhancedText,
+    contentType: 'text/plain',
+    status: 200,
   });
 }
 
@@ -144,9 +144,9 @@ export async function handleGenerateVoiceError(
     errorMessage,
   );
   await route.fulfill({
-    status: statusCode,
-    contentType: 'application/json',
     body: JSON.stringify({ error: errorMessage }),
+    contentType: 'application/json',
+    status: statusCode,
   });
 }
 
@@ -155,12 +155,12 @@ export async function handleGenerateVoiceError(
  */
 export async function handleInsufficientCreditsError(route: Route) {
   await route.fulfill({
-    status: 402,
-    contentType: 'application/json',
     body: JSON.stringify({
       error: 'Not enough credits',
       errorCode: 'INSUFFICIENT_CREDITS',
     }),
+    contentType: 'application/json',
+    status: 402,
   });
 }
 
@@ -169,12 +169,12 @@ export async function handleInsufficientCreditsError(route: Route) {
  */
 export async function handleQuotaExceededError(route: Route) {
   await route.fulfill({
-    status: 429,
-    contentType: 'application/json',
     body: JSON.stringify({
       error: 'You exceeded your current quota',
       errorCode: 'THIRD_P_QUOTA_EXCEEDED',
     }),
+    contentType: 'application/json',
+    status: 429,
   });
 }
 
@@ -183,12 +183,12 @@ export async function handleQuotaExceededError(route: Route) {
  */
 export async function handleProhibitedContentError(route: Route) {
   await route.fulfill({
-    status: 400,
-    contentType: 'application/json',
     body: JSON.stringify({
       error: 'Content was flagged as potentially harmful',
       errorCode: 'PROHIBITED_CONTENT',
     }),
+    contentType: 'application/json',
+    status: 400,
   });
 }
 

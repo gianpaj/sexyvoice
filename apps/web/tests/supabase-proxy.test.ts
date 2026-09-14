@@ -7,6 +7,7 @@ import { createOauthCallbackMarkerValue } from '@/lib/supabase/oauth-callback-ma
 import { updateSession } from '@/lib/supabase/proxy';
 
 vi.unmock('next/server');
+vi.mock('@/lib/e2e-mode', () => ({ isE2E: () => true }));
 
 const mocks = vi.hoisted(() => ({
   createServerClient: vi.fn(),
@@ -29,6 +30,7 @@ interface ProxyCookieAdapter {
       };
       value: string;
     }[],
+    headers: Record<string, string>,
   ) => void;
 }
 
@@ -144,17 +146,20 @@ describe('Supabase Proxy', () => {
     initialResponse.cookies.set('existing-cookie', 'existing-value');
 
     mocks.getClaims.mockImplementation(() => {
-      cookieAdapter?.setAll([
-        {
-          name: 'sb-access-token',
-          options: {
-            httpOnly: true,
-            path: '/',
-            sameSite: 'lax',
+      cookieAdapter?.setAll(
+        [
+          {
+            name: 'sb-access-token',
+            options: {
+              httpOnly: true,
+              path: '/',
+              sameSite: 'lax',
+            },
+            value: 'refreshed-token',
           },
-          value: 'refreshed-token',
-        },
-      ]);
+        ],
+        {},
+      );
 
       return authenticatedClaims;
     });
@@ -189,13 +194,16 @@ describe('Supabase Proxy', () => {
   it('copies refreshed Supabase cookies onto redirects', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
     mocks.getClaims.mockImplementation(() => {
-      cookieAdapter?.setAll([
-        {
-          name: 'sb-access-token',
-          options: { httpOnly: true, path: '/', sameSite: 'lax' },
-          value: 'refreshed-token',
-        },
-      ]);
+      cookieAdapter?.setAll(
+        [
+          {
+            name: 'sb-access-token',
+            options: { httpOnly: true, path: '/', sameSite: 'lax' },
+            value: 'refreshed-token',
+          },
+        ],
+        {},
+      );
 
       return unauthenticatedClaims;
     });

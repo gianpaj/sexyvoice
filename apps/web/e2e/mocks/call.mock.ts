@@ -37,9 +37,9 @@ export async function handleCallToken(route: Route) {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
   await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
     body: JSON.stringify(mockCallTokenResponse),
+    contentType: 'application/json',
+    status: 200,
   });
 }
 
@@ -50,12 +50,12 @@ export async function handleCallTokenInsufficientCredits(route: Route) {
   console.log('[MOCK] call-token INSUFFICIENT CREDITS handler called');
 
   await route.fulfill({
-    status: 402,
-    contentType: 'application/json',
     body: JSON.stringify({
       error: 'Not enough credits to start a call',
       errorCode: 'INSUFFICIENT_CREDITS',
     }),
+    contentType: 'application/json',
+    status: 402,
   });
 }
 
@@ -74,9 +74,9 @@ export async function handleCallTokenError(
   );
 
   await route.fulfill({
-    status: statusCode,
-    contentType: 'application/json',
     body: JSON.stringify({ error: errorMessage }),
+    contentType: 'application/json',
+    status: statusCode,
   });
 }
 

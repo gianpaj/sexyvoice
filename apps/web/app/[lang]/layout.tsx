@@ -36,7 +36,8 @@ export async function generateMetadata(
 
   if (!routing.locales.includes(lang)) {
     return {
-      title: 'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator',
+      title:
+        'SexyVoice.ai – Free AI Text-to-Speech, Voice Cloning & Real-Time Voice Calls',
     };
   }
 

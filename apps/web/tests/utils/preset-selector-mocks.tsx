@@ -40,9 +40,9 @@ vi.mock('@livekit/components-react', () => ({
 }));
 vi.mock('livekit-client', () => ({
   ConnectionState: {
-    Disconnected: 'disconnected',
     Connected: 'connected',
     Connecting: 'connecting',
+    Disconnected: 'disconnected',
     Reconnecting: 'reconnecting',
   },
 }));
@@ -70,14 +70,14 @@ vi.mock('next/navigation', () => ({
 
 /* ---- sonner ---- */
 vi.mock('sonner', () => ({
-  toast: { info: mockToastInfo, error: vi.fn(), success: vi.fn() },
+  toast: { error: vi.fn(), info: mockToastInfo, success: vi.fn() },
 }));
 
 /* ---- use-connection ---- */
 vi.mock('@/hooks/use-connection', () => ({
   useConnection: () => ({
-    disconnect: mockDisconnect,
     connect: mockConnect,
+    disconnect: mockDisconnect,
     shouldConnect: false,
   }),
 }));
@@ -85,70 +85,70 @@ vi.mock('@/hooks/use-connection', () => ({
 vi.mock('next-intl', () => ({
   useTranslations: (namespace?: string) => {
     const callLabels: Record<string, string> = {
-      chooseCharacter: 'Choose Character',
-      addCustomCharacter: 'Add custom character',
       addCharacterLabel: 'Add',
-      upgradePremiumTooltip: 'Upgrade to create custom characters',
+      addCustomCharacter: 'Add custom character',
       addDescriptionPlaceholder: 'Add a description...',
-      clickToAddDescription: 'Click to add a description...',
-      characterInstructions: '__NAME__ Instructions',
+      cancel: 'Cancel',
       characterFallbackName: 'Character',
+      characterInstructions: '__NAME__ Instructions',
+      chooseCharacter: 'Choose Character',
+      clickToAddDescription: 'Click to add a description...',
+      deleteCharacterAriaLabel: 'Delete __NAME__',
+      deletePreset: 'Delete',
+      deletePresetConfirm: 'This cannot be undone.',
       instructionsPlaceholder: 'Enter system instructions',
+      upgradePremiumTooltip: 'Upgrade to create custom characters',
       voiceLabel: 'Voice',
       voicePlaceholder: 'Choose a voice',
       voiceSelectorLabel: 'Voice',
       voiceSelectorPlaceholder: 'Choose voice',
-      deleteCharacterAriaLabel: 'Delete __NAME__',
-      deletePreset: 'Delete',
-      deletePresetConfirm: 'This cannot be undone.',
-      cancel: 'Cancel',
     };
     const presetSelectorLabels: Record<string, string> = {
       characterCreated: 'Character created',
-      characterUpdated: 'Character updated',
       characterRemoved: 'Character removed',
-      voiceUpdated: 'Voice updated',
+      characterUpdated: 'Character updated',
       failedToCreate: 'Failed to create character',
-      failedToUpdate: 'Failed to update character',
       failedToDelete: 'Failed to delete character',
       failedToSaveVoice: 'Failed to save voice',
+      failedToUpdate: 'Failed to update character',
+      voiceUpdated: 'Voice updated',
     };
     const savePresetLabels: Record<string, string> = {
-      save: 'Save',
-      saveAsNew: 'Save as new',
-      saveAsNewTitle: 'Save as new character',
-      saveAsNewDescription:
-        'This will create a new custom character with the current settings.',
-      nameLabel: 'Name',
-      descriptionLabel: 'Description',
       characterCreated: 'Character created',
       characterSaved: 'Character saved',
+      descriptionLabel: 'Description',
       failedToCreate: 'Failed to create character',
       failedToUpdate: 'Failed to update character',
+      nameLabel: 'Name',
+      save: 'Save',
+      saveAsNew: 'Save as new',
+      saveAsNewDescription:
+        'This will create a new custom character with the current settings.',
+      saveAsNewTitle: 'Save as new character',
     };
     const createCharacterLabels: Record<string, string> = {
-      dialogTitle: 'Create New Character',
-      dialogDescription:
-        'Create a custom AI character with your own personality and voice.',
-      nameLabel: 'Name',
-      nameRequired: '*',
-      namePlaceholder: 'e.g., Luna, Marcus, Zara...',
+      cancelButton: 'Cancel',
+      characterCount: '__COUNT__/5000 characters',
+      createButton: 'Create Character',
+      creatingButton: 'Creating...',
       descriptionLabel: 'Description',
       descriptionPlaceholder: 'A brief description of your character...',
-      voiceLabel: 'Voice',
-      voicePlaceholder: 'Choose a voice',
+      dialogDescription:
+        'Create a custom AI character with your own personality and voice.',
+      dialogTitle: 'Create New Character',
+      errorNameRequired: 'Name is required',
+      errorVoiceRequired: 'Please select a voice',
       instructionsLabel: 'Instructions',
       instructionsPlaceholder:
         "Describe your character's personality, speech patterns, backstory...",
-      characterCount: '__COUNT__/5000 characters',
-      cancelButton: 'Cancel',
-      createButton: 'Create Character',
-      creatingButton: 'Creating...',
-      errorNameRequired: 'Name is required',
-      errorVoiceRequired: 'Please select a voice',
+      nameLabel: 'Name',
+      namePlaceholder: 'e.g., Luna, Marcus, Zara...',
+      nameRequired: '*',
       playVoiceSample: 'Play voice sample',
-      stopVoiceSample: 'Stop voice sample',
       previewVoice: "Preview __VOICE__'s voice",
+      stopVoiceSample: 'Stop voice sample',
+      voiceLabel: 'Voice',
+      voicePlaceholder: 'Choose a voice',
     };
 
     return (key: string) => {
@@ -168,8 +168,8 @@ vi.mock('next-intl', () => ({
 
 /* ---- embla-carousel-react (used by Carousel UI component) ---- */
 vi.mock('embla-carousel-react', () => ({
-  default: () => [vi.fn(), undefined],
   __esModule: true,
+  default: () => [vi.fn(), undefined],
 }));
 
 // ---------------------------------------------------------------------------
@@ -186,8 +186,8 @@ import type { Preset } from '@/data/presets';
 export const makePreset = (
   overrides: Partial<Preset> & { id: string },
 ): Preset => ({
-  name: overrides.id.charAt(0).toUpperCase() + overrides.id.slice(1),
   instructions: `Instructions for ${overrides.id}`,
+  name: overrides.id.charAt(0).toUpperCase() + overrides.id.slice(1),
   sessionConfig: { ...defaultSessionConfig },
   ...overrides,
 });
@@ -196,23 +196,23 @@ export const makePreset = (
 export const defaultPresetsFixture: Preset[] = [
   makePreset({
     id: 'ramona',
-    name: 'Ramona',
-    localizedDescriptions: { en: 'Dominant businesswoman.' },
     image: 'ramona.webp',
+    localizedDescriptions: { en: 'Dominant businesswoman.' },
+    name: 'Ramona',
     sessionConfig: { ...defaultSessionConfig, voice: 'Eve' },
   }),
   makePreset({
     id: 'lily',
-    name: 'Lily',
-    localizedDescriptions: { en: 'Shy student girl.' },
     image: 'lily.webp',
+    localizedDescriptions: { en: 'Shy student girl.' },
+    name: 'Lily',
     sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
   }),
   makePreset({
     id: 'rafal',
-    name: 'Rafal',
-    localizedDescriptions: { en: 'Ex-military commander.' },
     image: 'rafal.webp',
+    localizedDescriptions: { en: 'Ex-military commander.' },
+    name: 'Rafal',
     sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
   }),
 ];
@@ -225,16 +225,16 @@ export function createDefaultPgState(
   overrides?: Partial<PlaygroundState>,
 ): PlaygroundState {
   return {
-    sessionConfig: { ...defaultSessionConfig },
     customCharacters: [],
-    selectedPresetId: 'ramona',
-    selectedSceneId: null,
-    sceneInstructions: '',
+    defaultPresets: defaultPresetsFixture,
+    initialInstruction: 'Say hi',
     instructions: 'test instructions',
     language: 'en' as const,
     memory: false,
-    initialInstruction: 'Say hi',
-    defaultPresets: defaultPresetsFixture,
+    sceneInstructions: '',
+    selectedPresetId: 'ramona',
+    selectedSceneId: null,
+    sessionConfig: { ...defaultSessionConfig },
     ...overrides,
   };
 }
@@ -242,19 +242,19 @@ export function createDefaultPgState(
 /* ---- use-playground-state ---- */
 vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
-    pgState: mockPgStateRef.current,
     dispatch: mockDispatch,
     helpers: {
+      encodeToUrlParams: mockEncodeToUrlParams,
+      getAllPresets: (state: PlaygroundState) => [
+        ...defaultPresetsFixture,
+        ...state.customCharacters,
+      ],
       getDefaultPresets: () => defaultPresetsFixture,
       getSelectedPreset: (state: PlaygroundState) =>
         [...defaultPresetsFixture, ...state.customCharacters].find(
           (p) => p.id === state.selectedPresetId,
         ),
-      getAllPresets: (state: PlaygroundState) => [
-        ...defaultPresetsFixture,
-        ...state.customCharacters,
-      ],
-      encodeToUrlParams: mockEncodeToUrlParams,
     },
+    pgState: mockPgStateRef.current,
   }),
 }));

@@ -4,10 +4,9 @@ import { XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useEffect, useState } from 'react';
 
-import { dismissBannerAction } from '@/app/[lang]/actions/banners';
 import { Button } from '@/components/ui/button';
 import type { ResolvedBanner } from '@/lib/banners/types';
-import { getCookie } from '@/lib/cookies';
+import { getCookie, setCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
 interface TimeRemaining {
@@ -61,15 +60,12 @@ export function Banner({
     setIsVisible(false);
 
     const resolveVisibility = async () => {
-      if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
+      if (!banner.dismissible) {
         return true;
       }
 
-      const cookieValues = await Promise.all(
-        banner.dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
-      );
-
-      return cookieValues.every((cookieValue) => !cookieValue);
+      const cookieValue = await getCookie(banner.dismiss.cookieKey);
+      return !cookieValue;
     };
 
     resolveVisibility()
@@ -83,7 +79,7 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [banner.dismissCookieKeys, banner.dismissible]);
+  }, [banner.dismiss.cookieKey, banner.dismissible]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
@@ -124,8 +120,16 @@ export function Banner({
   }, [banner.countdown?.enabled, banner.countdown?.endDate]);
 
   const handleDismissBanner = async () => {
-    await dismissBannerAction(banner.id);
+    const expiryDate = new Date();
+    expiryDate.setTime(
+      expiryDate.getTime() + banner.dismiss.days * 24 * 60 * 60 * 1000,
+    );
+
     setIsVisible(false);
+    await setCookie(banner.dismiss.cookieKey, 'true', {
+      expires: expiryDate,
+      path: '/',
+    });
   };
 
   if (!isVisible) {

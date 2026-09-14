@@ -132,11 +132,11 @@ export interface GoogleApiError {
   message: string;
 }
 
-type ErrorShape = {
-  message?: string;
-  details?: unknown[];
+interface ErrorShape {
   code?: number;
-};
+  details?: unknown[];
+  message?: string;
+}
 
 /**
  * Parses an error object to check if it's a structured Google API error
@@ -246,8 +246,8 @@ export function parseGoogleApiError(error: unknown): GoogleApiError | null {
 
     return {
       code,
-      message,
       details,
+      message,
     };
   }
 

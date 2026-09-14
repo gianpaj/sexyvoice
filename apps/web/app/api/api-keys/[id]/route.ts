@@ -13,10 +13,9 @@ export async function DELETE(
   ]);
   const {
     data: { user },
-    error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (!user) {
     return APIErrorResponse('Unauthorized', 401);
   }
 

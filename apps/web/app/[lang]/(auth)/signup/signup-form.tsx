@@ -149,7 +149,7 @@ export function SignUpForm({ lang }: { lang: Locale }) {
       {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <Button className="w-full" disabled={isLoading} type="submit">
-        {isLoading ? 'Loading...' : t('submit')}
+        {isLoading ? t('loading') : t('submit')}
       </Button>
 
       <Button

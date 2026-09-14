@@ -9,9 +9,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'NotFoundError',
-              value:
-                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
@@ -20,6 +17,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'NotFoundError',
+              value:
+                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
             },
           ],
         },
@@ -31,8 +31,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'NotFoundError',
-              value: 'The object can not be found here.',
               stacktrace: {
                 frames: [
                   {
@@ -45,6 +43,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'NotFoundError',
+              value: 'The object can not be found here.',
             },
           ],
         },
@@ -58,9 +58,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value:
-                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
@@ -69,6 +66,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value:
+                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
             },
           ],
         },
@@ -80,8 +80,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: "Cannot read properties of null (reading 'tagName')",
               stacktrace: {
                 frames: [
                   {
@@ -90,6 +88,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
             },
           ],
         },
@@ -103,9 +103,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'NotFoundError',
-              value:
-                "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
@@ -115,6 +112,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'NotFoundError',
+              value:
+                "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
             },
           ],
         },
@@ -151,8 +151,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value: 'Connection closed.',
               stacktrace: {
                 frames: [
                   {
@@ -162,6 +160,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value: 'Connection closed.',
             },
           ],
         },
@@ -173,8 +173,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value: 'An unexpected response was received from the server.',
               stacktrace: {
                 frames: [
                   {
@@ -184,6 +182,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value: 'An unexpected response was received from the server.',
             },
           ],
         },
@@ -197,8 +197,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value: 'An unexpected response was received from the server.',
               stacktrace: {
                 frames: [
                   {
@@ -207,6 +205,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value: 'An unexpected response was received from the server.',
             },
           ],
         },
@@ -220,8 +220,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'SecurityError',
-              value: "Permission to call 'get parentNode' denied.",
               stacktrace: {
                 frames: [
                   {
@@ -230,6 +228,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'SecurityError',
+              value: "Permission to call 'get parentNode' denied.",
             },
           ],
         },
@@ -243,8 +243,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: "Cannot read properties of null (reading 'tagName')",
               stacktrace: {
                 frames: [
                   {
@@ -253,6 +251,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
             },
           ],
         },
@@ -264,8 +264,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: "Cannot read properties of null (reading 'tagName')",
               stacktrace: {
                 frames: [
                   {
@@ -274,6 +272,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
             },
           ],
         },
@@ -287,13 +287,13 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'InvalidAccessError',
-              value: 'Track has ended',
               stacktrace: {
                 frames: [
                   { filename: '[native code]', function: 'applyConstraints' },
                 ],
               },
+              type: 'InvalidAccessError',
+              value: 'Track has ended',
             },
           ],
         },
@@ -318,12 +318,12 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'CompileError',
-              value:
-                'WebAssembly.Module(): Compiling function failed: Wasm SIMD unsupported',
               stacktrace: {
                 frames: [{ filename: 'blob:app:///krisp-worker' }],
               },
+              type: 'CompileError',
+              value:
+                'WebAssembly.Module(): Compiling function failed: Wasm SIMD unsupported',
             },
           ],
         },
@@ -337,9 +337,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value:
-                'Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate.',
               stacktrace: {
                 frames: [
                   {
@@ -348,6 +345,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value:
+                'Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate.',
             },
           ],
         },
@@ -359,8 +359,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value: 'Rendered more hooks than during the previous render.',
               stacktrace: {
                 frames: [
                   {
@@ -373,6 +371,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value: 'Rendered more hooks than during the previous render.',
             },
           ],
         },
@@ -386,8 +386,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value: 'Maximum update depth exceeded.',
               stacktrace: {
                 frames: [
                   {
@@ -396,6 +394,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value: 'Maximum update depth exceeded.',
             },
           ],
         },
@@ -407,8 +407,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value: 'Maximum update depth exceeded.',
               stacktrace: {
                 frames: [
                   {
@@ -418,6 +416,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value: 'Maximum update depth exceeded.',
             },
           ],
         },
@@ -431,8 +431,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'CompileError',
-              value: 'Wasm SIMD unsupported',
               stacktrace: {
                 frames: [
                   {
@@ -441,6 +439,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'CompileError',
+              value: 'Wasm SIMD unsupported',
             },
           ],
         },
@@ -454,11 +454,11 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'ReferenceError',
-              value: "Can't find variable: __firefox__",
               stacktrace: {
                 frames: [{ filename: 'app:///en', function: 'global code' }],
               },
+              type: 'ReferenceError',
+              value: "Can't find variable: __firefox__",
             },
           ],
         },
@@ -470,12 +470,12 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value:
-                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
               stacktrace: {
                 frames: [{ filename: 'app:///en', function: 'global code' }],
               },
+              type: 'TypeError',
+              value:
+                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
             },
           ],
         },
@@ -500,9 +500,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value:
-                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice.ai/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
               stacktrace: {
                 frames: [
                   {
@@ -512,6 +509,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value:
+                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice.ai/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
             },
           ],
         },
@@ -523,9 +523,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value:
-                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice-git-fix-sentry.vercel.app/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
               stacktrace: {
                 frames: [
                   {
@@ -535,6 +532,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value:
+                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice-git-fix-sentry.vercel.app/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
             },
           ],
         },
@@ -548,9 +548,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value:
-                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
               stacktrace: {
                 frames: [
                   {
@@ -559,6 +556,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value:
+                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
             },
           ],
         },
@@ -585,11 +585,11 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: 'network error',
               stacktrace: {
                 frames: [{ filename: '[native code]', function: 'fetch' }],
               },
+              type: 'TypeError',
+              value: 'network error',
             },
           ],
         },
@@ -603,9 +603,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'IndexSizeError',
-              value:
-                "Failed to execute 'collapse' on 'Selection': The offset 37 is larger than the node's length (36).",
               stacktrace: {
                 frames: [
                   {
@@ -615,6 +612,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'IndexSizeError',
+              value:
+                "Failed to execute 'collapse' on 'Selection': The offset 37 is larger than the node's length (36).",
             },
           ],
         },
@@ -628,9 +628,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'IndexSizeError',
-              value:
-                "Failed to execute 'collapse' on 'Selection': The offset 37 is larger than the node's length (36).",
               stacktrace: {
                 frames: [
                   {
@@ -639,6 +636,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'IndexSizeError',
+              value:
+                "Failed to execute 'collapse' on 'Selection': The offset 37 is larger than the node's length (36).",
             },
           ],
         },

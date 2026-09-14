@@ -40,14 +40,16 @@ import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-import { mapApiCharacterToPreset, saveCharacter } from '@/lib/characters';
+import {
+  MAX_CUSTOM_CHARACTERS,
+  mapApiCharacterToPreset,
+  saveCharacter,
+} from '@/lib/characters';
 import {
   CreateCharacterDialog,
   type NewCharacterPayload,
 } from './create-character-dialog';
 import { VoicePlayButton } from './voice-play-button';
-
-const MAX_CUSTOM_CHARACTERS = 10;
 
 function getInitials(name: string): string {
   return name

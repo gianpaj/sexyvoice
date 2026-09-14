@@ -33,10 +33,9 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const {
     data: { user },
-    error: authError,
   } = await supabase.auth.getUser();
 
-  if (authError || !user) {
+  if (!user) {
     return APIErrorResponse('Unauthorized', 401);
   }
 

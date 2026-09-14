@@ -56,20 +56,20 @@ export function createMockEvent<T extends Stripe.Event.Type>(
   data: any,
 ): Stripe.Event {
   return {
-    id: `evt_test_${Date.now()}`,
-    object: 'event',
     api_version: '2024-12-18.acacia',
     created: Math.floor(Date.now() / 1000),
-    type,
     data: {
       object: data,
     },
+    id: `evt_test_${Date.now()}`,
     livemode: false,
+    object: 'event',
     pending_webhooks: 0,
     request: {
       id: null,
       idempotency_key: null,
     },
+    type,
   } as Stripe.Event;
 }
 
@@ -82,15 +82,15 @@ export function createMockCheckoutSession(
 ): Stripe.Checkout.Session {
   // @ts-expect-error
   return {
-    id: 'cs_test_123',
-    object: 'checkout.session',
-    mode,
     customer: 'cus_test123',
-    payment_intent: mode === 'payment' ? 'pi_test123' : null,
-    subscription: mode === 'subscription' ? 'sub_test123' : null,
+    id: 'cs_test_123',
     metadata: (metadata as unknown as Stripe.Metadata) || {},
+    mode,
+    object: 'checkout.session',
+    payment_intent: mode === 'payment' ? 'pi_test123' : null,
     payment_status: 'paid',
     status: 'complete',
+    subscription: mode === 'subscription' ? 'sub_test123' : null,
   };
 }
 
@@ -102,42 +102,42 @@ export function createMockSubscription(
   status: Stripe.Subscription.Status = 'active',
 ): Stripe.Response<Stripe.Subscription> {
   return {
-    id: 'sub_test123',
-    object: 'subscription',
-    customer: 'cus_test123',
-    status,
-    current_period_start: Math.floor(Date.now() / 1000),
-    current_period_end: Math.floor(Date.now() / 1000) + 2_592_000, // +30 days
     cancel_at_period_end: false,
+    current_period_end: Math.floor(Date.now() / 1000) + 2_592_000, // +30 days
+    current_period_start: Math.floor(Date.now() / 1000),
+    customer: 'cus_test123',
+    default_payment_method: {
+      card: {
+        brand: 'visa',
+        last4: '4242',
+      },
+      id: 'pm_test',
+      object: 'payment_method',
+    },
+    id: 'sub_test123',
     items: {
-      object: 'list',
       data: [
         {
           id: 'si_test',
           object: 'subscription_item',
           price: {
-            id: priceId,
-            object: 'price',
             active: true,
             currency: 'usd',
-            unit_amount: 1500,
-            type: 'recurring',
+            id: priceId,
+            object: 'price',
             recurring: {
               interval: 'month',
               interval_count: 1,
             },
+            type: 'recurring',
+            unit_amount: 1500,
           },
         },
       ],
+      object: 'list',
     },
-    default_payment_method: {
-      id: 'pm_test',
-      object: 'payment_method',
-      card: {
-        brand: 'visa',
-        last4: '4242',
-      },
-    },
+    object: 'subscription',
+    status,
   } as Stripe.Response<Stripe.Subscription>;
 }
 
@@ -152,36 +152,36 @@ export function createMockInvoice(
   billingReason: Stripe.Invoice.BillingReason = 'subscription_cycle',
 ): Stripe.Invoice {
   return {
-    id: 'in_test123',
-    object: 'invoice',
-    customer: customerId,
-    subscription: subscriptionId,
-    payment_intent: paymentIntentId,
-    billing_reason: billingReason,
-    status: 'paid',
-    amount_paid: 1000,
     amount_due: 1000,
+    amount_paid: 1000,
+    billing_reason: billingReason,
+    customer: customerId,
+    id: 'in_test123',
     lines: {
-      object: 'list',
       data: [
         {
           id: 'il_test',
           object: 'line_item',
           price: {
-            id: priceId,
-            object: 'price',
             active: true,
             currency: 'usd',
-            unit_amount: 1000,
-            type: 'recurring',
+            id: priceId,
+            object: 'price',
             recurring: {
               interval: 'month',
               interval_count: 1,
             },
+            type: 'recurring',
+            unit_amount: 1000,
           },
         },
       ],
+      object: 'list',
     },
+    object: 'invoice',
+    payment_intent: paymentIntentId,
+    status: 'paid',
+    subscription: subscriptionId,
   } as Stripe.Invoice;
 }
 

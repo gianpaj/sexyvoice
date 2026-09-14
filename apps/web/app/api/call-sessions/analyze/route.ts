@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/performance/noNamespaceImport: matches Sentry usage across api routes */
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';

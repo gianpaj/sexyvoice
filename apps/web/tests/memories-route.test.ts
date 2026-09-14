@@ -6,8 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // factory closes over is `mock`-prefixed per Vitest's convention.
 // ---------------------------------------------------------------------------
 const mockUser = {
-  id: 'a1b2c3d4-5678-4abc-9def-012345678901',
   email: 'test@example.com',
+  id: 'a1b2c3d4-5678-4abc-9def-012345678901',
 };
 let mockIsAuthenticated = true;
 let mockAuthError: { message: string } | null = null;
@@ -17,8 +17,8 @@ let mockDeletedRows: Array<{ id: number }> = [];
 // Capture the table name and user_id filter the route applies, so we can
 // assert the erasure is correctly scoped to the authenticated user.
 const mockCalls = {
-  table: null as string | null,
   filter: null as { column: string; value: unknown } | null,
+  table: null as string | null,
 };
 
 // ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ describe('DELETE /api/memories', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({ success: true, deleted: 3 });
+    expect(body).toEqual({ deleted: 3, success: true });
     // Erasure must target agent_memories scoped to the current user only.
     expect(mockCalls.table).toBe('agent_memories');
     expect(mockCalls.filter).toEqual({
@@ -123,7 +123,7 @@ describe('DELETE /api/memories', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toEqual({ success: true, deleted: 0 });
+    expect(body).toEqual({ deleted: 0, success: true });
   });
 
   it('returns 500 when the delete query fails', async () => {
