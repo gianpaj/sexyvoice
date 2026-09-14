@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { normalizeModelId } from '@/data/models';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   countUserCallCharacters,
   getVoiceIdByName,
@@ -82,16 +83,14 @@ function formatZodError(error: z.ZodError): string {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
     // Check if user has paid
-    const isPaid = await hasUserPaid(user.id);
+    const isPaid = await hasUserPaid(claims.sub);
     if (!isPaid) {
       return APIErrorResponse('Custom characters require a paid account', 403);
     }
@@ -136,7 +135,7 @@ export async function POST(request: Request) {
       if (existingCharacter.is_public) {
         return APIErrorResponse('Cannot modify predefined characters', 403);
       }
-      if (existingCharacter.user_id !== user.id) {
+      if (existingCharacter.user_id !== claims.sub) {
         return APIErrorResponse('Character not found', 404);
       }
 
@@ -151,7 +150,7 @@ export async function POST(request: Request) {
 
       if (promptUpdateError) {
         captureException(promptUpdateError, {
-          extra: { characterId: body.id, userId: user.id },
+          extra: { characterId: body.id, userId: claims.sub },
         });
         return APIErrorResponse('Failed to update prompt', 500);
       }
@@ -182,7 +181,7 @@ export async function POST(request: Request) {
 
       if (charUpdateError) {
         captureException(charUpdateError, {
-          extra: { characterId: body.id, userId: user.id },
+          extra: { characterId: body.id, userId: claims.sub },
         });
         return APIErrorResponse('Failed to update character', 500);
       }
@@ -193,7 +192,7 @@ export async function POST(request: Request) {
     // ── CREATE new character ──
 
     // Check limit
-    const currentCount = await countUserCallCharacters(user.id);
+    const currentCount = await countUserCallCharacters(claims.sub);
     if (currentCount >= MAX_CUSTOM_CHARACTERS) {
       return APIErrorResponse(
         `Maximum of ${MAX_CUSTOM_CHARACTERS} custom characters reached`,
@@ -209,14 +208,14 @@ export async function POST(request: Request) {
         localized_prompts: body.localizedPrompts ?? {},
         prompt: body.prompt,
         type: 'call' as const,
-        user_id: user.id,
+        user_id: claims.sub,
       })
       .select('id')
       .single();
 
     if (promptInsertError || !newPrompt) {
       captureException(promptInsertError, {
-        extra: { userId: user.id },
+        extra: { userId: claims.sub },
       });
       return APIErrorResponse('Failed to create prompt', 500);
     }
@@ -234,7 +233,7 @@ export async function POST(request: Request) {
           voice: body.voiceName,
         },
         sort_order: currentCount,
-        user_id: user.id,
+        user_id: claims.sub,
         voice_id: voiceObj.id,
       })
       .select(
@@ -250,7 +249,7 @@ export async function POST(request: Request) {
 
     if (charInsertError || !newCharacter) {
       captureException(charInsertError, {
-        extra: { promptId: newPrompt.id, userId: user.id },
+        extra: { promptId: newPrompt.id, userId: claims.sub },
       });
       // Clean up orphaned prompt
       await supabase.from('prompts').delete().eq('id', newPrompt.id);
@@ -267,11 +266,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
@@ -302,7 +299,7 @@ export async function DELETE(request: Request) {
     if (character.is_public) {
       return APIErrorResponse('Cannot delete predefined characters', 403);
     }
-    if (character.user_id !== user.id) {
+    if (character.user_id !== claims.sub) {
       return APIErrorResponse('Character not found', 404);
     }
 
@@ -311,12 +308,12 @@ export async function DELETE(request: Request) {
       .from('characters')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', claims.sub)
       .eq('is_public', false);
 
     if (charDeleteError) {
       captureException(charDeleteError, {
-        extra: { characterId: id, userId: user.id },
+        extra: { characterId: id, userId: claims.sub },
       });
       return APIErrorResponse('Failed to delete character', 500);
     }
@@ -326,7 +323,7 @@ export async function DELETE(request: Request) {
       .from('prompts')
       .delete()
       .eq('id', character.prompt_id)
-      .eq('user_id', user.id);
+      .eq('user_id', claims.sub);
 
     if (promptDeleteError) {
       // Non-critical: log but don't fail the request
@@ -335,7 +332,7 @@ export async function DELETE(request: Request) {
           characterId: id,
           context: 'orphaned prompt cleanup',
           promptId: character.prompt_id,
-          userId: user.id,
+          userId: claims.sub,
         },
       });
     }

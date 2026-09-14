@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 
 export async function DELETE(
@@ -11,11 +12,9 @@ export async function DELETE(
     context.params,
     createClient(),
   ]);
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!user) {
+  if (!claims?.sub) {
     return APIErrorResponse('Unauthorized', 401);
   }
 
@@ -23,7 +22,7 @@ export async function DELETE(
     .from('api_keys')
     .update({ is_active: false })
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', claims.sub)
     .select('id');
 
   if (error) {

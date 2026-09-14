@@ -1,19 +1,25 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DELETE } from '@/app/api/api-keys/[id]/route';
 import { GET, POST } from '@/app/api/api-keys/route';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { mockSupabaseUnauthenticatedUserOnce } from './setup';
+
+const mockGetUser = vi.fn();
+
+afterEach(() => {
+  expect(mockGetUser).not.toHaveBeenCalled();
+});
 
 describe('/api/api-keys routes', () => {
   it('lists current user API keys', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'test-user-id' } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'test-user-id' } },
           error: null,
         }),
+        getUser: mockGetUser,
       },
       from: vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
@@ -48,6 +54,7 @@ describe('/api/api-keys routes', () => {
     vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
+        getClaims: vi.fn(),
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: 'test-user-id' } },
           error: null,
@@ -93,6 +100,9 @@ describe('/api/api-keys routes', () => {
     const json = await response.json();
 
     expect(response.status).toBe(201);
+    const client = await vi.mocked(createClient).mock.results.at(-1)!.value;
+    expect(client.auth.getUser).toHaveBeenCalledOnce();
+    expect(client.auth.getClaims).not.toHaveBeenCalled();
     expect(json.key).toMatch(/^sk_live_[A-Za-z0-9]{32}$/);
     expect(json.data.key_prefix).toHaveLength(12);
   });
@@ -100,10 +110,11 @@ describe('/api/api-keys routes', () => {
   it('deactivates API key', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'test-user-id' } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'test-user-id' } },
           error: null,
         }),
+        getUser: mockGetUser,
       },
       from: vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
@@ -127,10 +138,11 @@ describe('/api/api-keys routes', () => {
   it('returns 404 when key does not exist or belongs to another user', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'test-user-id' } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'test-user-id' } },
           error: null,
         }),
+        getUser: mockGetUser,
       },
       from: vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
@@ -155,10 +167,11 @@ describe('/api/api-keys routes', () => {
   it('returns 500 when the database update fails', async () => {
     vi.mocked(createClient).mockResolvedValueOnce({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: { user: { id: 'test-user-id' } },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'test-user-id' } },
           error: null,
         }),
+        getUser: mockGetUser,
       },
       from: vi.fn(() => ({
         eq: vi.fn().mockReturnThis(),
@@ -180,7 +193,11 @@ describe('/api/api-keys routes', () => {
   });
 
   it('returns 401 when user is not authenticated', async () => {
-    mockSupabaseUnauthenticatedUserOnce();
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getClaims: vi.fn().mockResolvedValue({ data: null, error: null }),
+      },
+    } as never);
 
     const response = await DELETE(new Request('http://localhost'), {
       params: Promise.resolve({ id: 'key-1' }),
@@ -189,5 +206,47 @@ describe('/api/api-keys routes', () => {
 
     expect(response.status).toBe(401);
     expect(json.error).toBe('Unauthorized');
+  });
+});
+
+describe.each([
+  ['GET', () => GET()],
+  [
+    'DELETE',
+    () =>
+      DELETE(new Request('http://localhost'), {
+        params: Promise.resolve({ id: 'key-1' }),
+      }),
+  ],
+] as const)('%s claims authentication', (_method, invoke) => {
+  it.each([
+    ['missing data', { data: null, error: null }],
+    ['missing claims', { data: { claims: null }, error: null }],
+    ['missing subject', { data: { claims: {} }, error: null }],
+    ['empty subject', { data: { claims: { sub: '' } }, error: null }],
+    ['invalid token', { data: null, error: { message: 'Invalid JWT' } }],
+    [
+      'SDK error with claims',
+      {
+        data: { claims: { sub: 'test-user-id' } },
+        error: { message: 'Verification failed' },
+      },
+    ],
+  ])('rejects %s before data access', async (_name, result) => {
+    vi.clearAllMocks();
+    const getUser = vi.fn();
+    const from = vi.fn();
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+      from,
+    } as never);
+
+    const response = await invoke();
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
+    expect(getUser).not.toHaveBeenCalled();
+    expect(from).not.toHaveBeenCalled();
+    expect(hasUserPaid).not.toHaveBeenCalled();
   });
 });

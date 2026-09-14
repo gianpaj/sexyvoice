@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mock variables – declared before vi.mock() so factories can reference them
@@ -7,6 +7,7 @@ const mockUser = {
   email: 'test@example.com',
   id: 'a1b2c3d4-5678-4abc-9def-012345678901',
 };
+const mockGetUser = vi.fn();
 let mockIsAuthenticated = true;
 let mockHasUserPaid = true;
 let mockCustomCharacterCount = 0;
@@ -230,15 +231,16 @@ vi.mock('@sentry/nextjs', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({
     auth: {
-      getUser: vi.fn(async () => {
+      getClaims: vi.fn(async () => {
         if (!mockIsAuthenticated) {
           return {
-            data: { user: null },
+            data: { claims: null },
             error: { message: 'Not authenticated' },
           };
         }
-        return { data: { user: mockUser }, error: null };
+        return { data: { claims: { sub: mockUser.id } }, error: null };
       }),
+      getUser: mockGetUser,
     },
     from: (table: string) => createQueryBuilder(table),
   })),
@@ -266,7 +268,17 @@ vi.mock('@/lib/supabase/queries', () => ({
 // Import the route handler AFTER mocks are set up
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Import the route handler AFTER mocks are set up
+// ---------------------------------------------------------------------------
+
 import { DELETE, POST } from '@/app/api/characters/route';
+import {
+  countUserCallCharacters,
+  getVoiceIdByName,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -602,5 +614,51 @@ describe('/api/characters', () => {
       expect(deletedCharacterIds).toHaveLength(0);
       expect(deletedPromptIds).toHaveLength(0);
     });
+  });
+});
+
+afterEach(() => {
+  expect(mockGetUser).not.toHaveBeenCalled();
+});
+
+describe.each([
+  ['POST create', () => POST(makeRequest(validCreateBody()))],
+  [
+    'POST update',
+    () => POST(makeRequest(validCreateBody({ id: fakeUserCharacter.id }))),
+  ],
+  ['DELETE', () => DELETE(makeRequest({ id: fakeUserCharacter.id }, 'DELETE'))],
+] as const)('%s claims authentication', (_method, invoke) => {
+  it.each([
+    ['missing data', { data: null, error: null }],
+    ['missing claims', { data: { claims: null }, error: null }],
+    ['missing subject', { data: { claims: {} }, error: null }],
+    ['empty subject', { data: { claims: { sub: '' } }, error: null }],
+    ['invalid token', { data: null, error: { message: 'Invalid JWT' } }],
+    [
+      'SDK error with claims',
+      {
+        data: { claims: { sub: 'test-user-id' } },
+        error: { message: 'Verification failed' },
+      },
+    ],
+  ])('rejects %s before data access', async (_name, result) => {
+    vi.clearAllMocks();
+    const getUser = vi.fn();
+    const from = vi.fn();
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser },
+      from,
+    } as never);
+
+    const response = await invoke();
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
+    expect(getUser).not.toHaveBeenCalled();
+    expect(from).not.toHaveBeenCalled();
+    expect(hasUserPaid).not.toHaveBeenCalled();
+    expect(countUserCallCharacters).not.toHaveBeenCalled();
+    expect(getVoiceIdByName).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { generateApiKey } from '@/lib/api/auth';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -15,11 +16,9 @@ const CreateApiKeySchema = z.object({
 
 export async function GET() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!user) {
+  if (!claims?.sub) {
     return APIErrorResponse('Unauthorized', 401);
   }
 
@@ -28,7 +27,7 @@ export async function GET() {
     .select(
       'id, name, key_prefix, created_at, last_used_at, expires_at, is_active, permissions, metadata',
     )
-    .eq('user_id', user.id)
+    .eq('user_id', claims.sub)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -40,6 +39,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase = await createClient();
+  // Durable API credentials require a fresh Auth server user check.
   const {
     data: { user },
   } = await supabase.auth.getUser();

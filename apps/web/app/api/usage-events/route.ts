@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 import {
   getAllTimeUsageSummary,
@@ -17,11 +18,9 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // Authenticate user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
@@ -62,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Fetch paginated usage events
     const { data, totalCount } = await getUsageEventsPaginated(
       supabase,
-      user.id,
+      claims.sub,
       {
         page,
         pageSize,
@@ -84,8 +83,8 @@ export async function GET(request: NextRequest) {
     // Include summary data if requested (typically for first page load)
     if (includeSummary) {
       const [monthlySummary, allTimeSummary] = await Promise.all([
-        getMonthlyUsageSummary(supabase, user.id),
-        getAllTimeUsageSummary(supabase, user.id),
+        getMonthlyUsageSummary(supabase, claims.sub),
+        getAllTimeUsageSummary(supabase, claims.sub),
       ]);
       response.monthlySummary = monthlySummary;
       response.allTimeSummary = allTimeSummary;
