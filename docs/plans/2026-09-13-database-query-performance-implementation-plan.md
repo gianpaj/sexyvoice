@@ -68,7 +68,7 @@ supabase inspect db vacuum-stats
 supabase inspect db bloat
 supabase inspect db long-running-queries
 supabase inspect db blocking
-supabase db advisors --linked --type performance --level info
+supabase --workdir apps/web advisors --linked --type performance --level info
 ```
 
 Save the outputs outside the repository. Record the observation time and the
@@ -460,7 +460,7 @@ supabase inspect db index-stats
 supabase inspect db table-stats
 supabase inspect db vacuum-stats
 supabase inspect db blocking
-supabase db advisors --linked --type performance --level info
+supabase --workdir apps/web advisors --linked --type performance --level info
 ```
 
 For each optimized statement, record:
