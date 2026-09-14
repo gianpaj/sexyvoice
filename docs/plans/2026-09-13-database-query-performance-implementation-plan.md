@@ -122,8 +122,11 @@ on public.audio_files (created_at, user_id)
 where status = 'active' and user_id is not null;
 ```
 
-This index matches the soft-delete status predicate and date range. Do not add the
-reversed `(user_id, created_at)` variant in this phase.
+This index matches the soft-delete status predicate and date range. The hard-delete
+job has no status predicate, so it cannot use this partial index; its date-range
+index candidate is the existing `audio_files_created_at_idx`. Verify both choices
+with target-row query plans. Do not add the reversed `(user_id, created_at)`
+variant in this phase.
 
 ### Rewrite both cron statements
 
@@ -487,8 +490,10 @@ For each optimized statement, record:
 
 - Both retention jobs preserve their 30-day and 45-day rules and complete without
   blocking application traffic.
-- Their target-row plans use the paid-user partial index and an appropriate
-  `audio_files` date path.
+- Their target-row plans use the paid-user partial index. Verify the soft-delete
+  date scan against `audio_files_active_created_user_idx` and the hard-delete
+  date scan against `audio_files_created_at_idx`; record any planner-selected
+  alternative and its measured cost.
 - Targeted RLS advisor warnings are cleared without changing allowed rows.
 - No standalone `audio_files(model)` index exists.
 - Stripe customer IDs are uniquely indexed when non-null.
