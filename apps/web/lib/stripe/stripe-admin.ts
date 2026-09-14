@@ -84,7 +84,9 @@ export async function createOrRetrieveCustomer(
       }
     }
 
-    await updateStripeId(userId, customer.id);
+    if (customer.id !== existingStripeId) {
+      await updateStripeId(userId, customer.id);
+    }
     return customer.id;
   };
 
@@ -192,10 +194,18 @@ export async function createOrRetrieveCustomer(
 // Helper function to update stripe_id in database
 const updateStripeId = async (userId: string, stripeId: string) => {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from('profiles')
     .update({ stripe_id: stripeId })
     .eq('id', userId);
+
+  if (error) {
+    captureException(error, {
+      extra: { customerId: stripeId },
+      user: { id: userId },
+    });
+    throw error;
+  }
 };
 
 async function hasMatchingSubscriptionHistory(

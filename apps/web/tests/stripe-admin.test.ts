@@ -51,8 +51,62 @@ describe('createOrRetrieveCustomer()', () => {
     vi.clearAllMocks();
   });
 
+  describe('Profile update failures', () => {
+    it.each(['existing', 'replacement', 'new'] as const)(
+      'should reject when persisting a %s customer fails',
+      async (source) => {
+        const databaseError = {
+          code: '23505',
+          details: '',
+          hint: '',
+          message: 'Duplicate Stripe customer ID',
+        };
+        const customer = {
+          id: stripeCustomerId,
+          metadata: { supabaseUUID: userId },
+          object: 'customer',
+        } as unknown as Awaited<ReturnType<typeof stripe.customers.create>>;
+        mockSupabase.from().eq.mockResolvedValue({
+          data: null,
+          error: databaseError,
+        });
+        vi.mocked(stripe.customers.retrieve).mockResolvedValue({
+          deleted: true,
+          id: 'cus_old',
+          object: 'customer',
+        } as Awaited<ReturnType<typeof stripe.customers.retrieve>>);
+        vi.mocked(stripe.customers.search).mockResolvedValue({
+          data: source === 'new' ? [] : [customer],
+        } as unknown as Awaited<ReturnType<typeof stripe.customers.search>>);
+        vi.mocked(stripe.customers.list).mockResolvedValue({
+          data: [],
+        } as unknown as Awaited<ReturnType<typeof stripe.customers.list>>);
+        vi.mocked(stripe.customers.create).mockResolvedValue(customer);
+
+        await expect(
+          createOrRetrieveCustomer(
+            userId,
+            email,
+            source === 'replacement' ? 'cus_old' : undefined,
+          ),
+        ).rejects.toBe(databaseError);
+
+        expect(Sentry.captureException).toHaveBeenCalledWith(databaseError, {
+          extra: { customerId: stripeCustomerId },
+          user: { id: userId },
+        });
+        expect(stripe.customers.create).toHaveBeenCalledTimes(
+          source === 'new' ? 1 : 0,
+        );
+      },
+    );
+  });
+
   describe('With existing Stripe ID', () => {
-    it('should return existing Stripe customer ID when metadata matches', async () => {
+    it('should return the stored customer without a redundant database write', async () => {
+      vi.mocked(createClient).mockRejectedValue(
+        new Error('Database connection failed'),
+      );
       const existingCustomer = {
         id: stripeCustomerId,
         metadata: {
@@ -72,6 +126,8 @@ describe('createOrRetrieveCustomer()', () => {
       expect(result).toBe(stripeCustomerId);
       expect(stripe.customers.retrieve).toHaveBeenCalledWith(stripeCustomerId);
       expect(stripe.customers.update).not.toHaveBeenCalled();
+      expect(createClient).not.toHaveBeenCalled();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('should update metadata and return ID when metadata is missing', async () => {
@@ -99,15 +155,7 @@ describe('createOrRetrieveCustomer()', () => {
       expect(stripe.customers.update).toHaveBeenCalledWith(stripeCustomerId, {
         metadata: { supabaseUUID: userId },
       });
-      expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      // Verify the chained methods are called correctly
-      // Verify the chain was called correctly
-      // The mock returns an object with update and eq methods
-      const mockFromReturn = mockSupabase.from.mock.results[0].value;
-      expect(mockFromReturn.update).toHaveBeenCalledWith({
-        stripe_id: stripeCustomerId,
-      });
-      expect(mockFromReturn.eq).toHaveBeenCalledWith('id', userId);
+      expect(createClient).not.toHaveBeenCalled();
     });
 
     it('should throw error when Stripe ID belongs to different user', async () => {
@@ -556,7 +604,7 @@ describe('createOrRetrieveCustomer()', () => {
       expect(result).toBe('cus_new_123');
     });
 
-    it('should handle Supabase update failure gracefully', async () => {
+    it('should propagate Supabase connection failures', async () => {
       const newCustomerId = 'cus_new_999';
       const supabaseError = new Error('Database connection failed');
 
@@ -586,9 +634,13 @@ describe('createOrRetrieveCustomer()', () => {
         update: vi.fn().mockReturnThis(),
       });
 
-      const result = await createOrRetrieveCustomer(userId, email);
-
-      expect(result).toBe('cus_new_999');
+      await expect(createOrRetrieveCustomer(userId, email)).rejects.toBe(
+        supabaseError,
+      );
+      expect(Sentry.captureException).toHaveBeenCalledWith(supabaseError, {
+        extra: { customerId: newCustomerId },
+        user: { id: userId },
+      });
     });
 
     it('should work with special characters in email', async () => {
