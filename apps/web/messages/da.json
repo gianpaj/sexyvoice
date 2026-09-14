@@ -571,6 +571,8 @@
     }
   },
   "call": {
+    "title": "Stemmeopkald",
+    "subtitle": "Vælg en AI-karakter, og tal sammen i realtid.",
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
     "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er {count}",

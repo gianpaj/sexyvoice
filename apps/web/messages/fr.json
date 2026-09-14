@@ -575,6 +575,8 @@
     }
   },
   "call": {
+    "title": "Appels vocaux",
+    "subtitle": "Choisissez un personnage IA et discutez avec lui en temps réel.",
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
