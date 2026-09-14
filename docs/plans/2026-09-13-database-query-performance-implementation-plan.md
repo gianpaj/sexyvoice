@@ -2,8 +2,9 @@
 
 ## Status
 
-Proposed for review. The investigation used read-only Supabase inspection commands
-against production. No migrations or database changes have been applied.
+Phase 3's Stripe customer uniqueness index is applied to production via
+`20260913171301_add_unique_profiles_stripe_id.sql`. The remaining work is proposed
+for review. The baseline investigation used read-only production inspection.
 
 ## Objective
 
@@ -272,6 +273,10 @@ only a handful of rows and no measured workload that justifies them.
 
 ### Enforce Stripe customer identity
 
+Applied to production in
+`apps/web/supabase/migrations/20260913171301_add_unique_profiles_stripe_id.sql`.
+The preflight and index definition below describe that step for unapplied databases.
+
 Run this read-only preflight before creating the index:
 
 ```sql
@@ -416,7 +421,8 @@ Deliverable:
 1. Capture the baseline and reconcile production definitions.
 2. Apply and observe the retention migration.
 3. Apply and verify the RLS migration with pgTAP.
-4. Apply the constraint and supporting-index migration.
+4. Apply the remaining supporting-index migration. Stripe uniqueness is applied
+   to production.
 5. Deploy application query-volume changes.
 6. Collect at least seven representative days of fresh statistics.
 7. Apply the index-removal migration only when the fresh data supports it.
