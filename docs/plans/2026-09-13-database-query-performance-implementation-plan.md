@@ -59,15 +59,15 @@ Run inspection commands sequentially. Concurrent commands can rotate the tempora
 `cli_login_postgres` password underneath another command.
 
 ```bash
-supabase inspect db db-stats
-supabase inspect db outliers
-supabase inspect db calls
-supabase inspect db table-stats
-supabase inspect db index-stats
-supabase inspect db vacuum-stats
-supabase inspect db bloat
-supabase inspect db long-running-queries
-supabase inspect db blocking
+supabase --workdir apps/web inspect db db-stats --linked
+supabase --workdir apps/web inspect db outliers --linked
+supabase --workdir apps/web inspect db calls --linked
+supabase --workdir apps/web inspect db table-stats --linked
+supabase --workdir apps/web inspect db index-stats --linked
+supabase --workdir apps/web inspect db vacuum-stats --linked
+supabase --workdir apps/web inspect db bloat --linked
+supabase --workdir apps/web inspect db long-running-queries --linked
+supabase --workdir apps/web inspect db blocking --linked
 supabase --workdir apps/web advisors --linked --type performance --level info
 ```
 
@@ -455,11 +455,11 @@ pnpm type-check
 After production rollout, rerun:
 
 ```bash
-supabase inspect db outliers
-supabase inspect db index-stats
-supabase inspect db table-stats
-supabase inspect db vacuum-stats
-supabase inspect db blocking
+supabase --workdir apps/web inspect db outliers --linked
+supabase --workdir apps/web inspect db index-stats --linked
+supabase --workdir apps/web inspect db table-stats --linked
+supabase --workdir apps/web inspect db vacuum-stats --linked
+supabase --workdir apps/web inspect db blocking --linked
 supabase --workdir apps/web advisors --linked --type performance --level info
 ```
 
