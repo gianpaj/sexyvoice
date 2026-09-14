@@ -7,6 +7,10 @@
   },
   "format_on_save": "on",
   "languages": {
+    "Markdown": {
+      "formatter": "prettier",
+      "format_on_save": "on"
+    },
     "JSON": {
       "formatter": {
         "language_server": {
