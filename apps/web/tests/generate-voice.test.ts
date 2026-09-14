@@ -17,7 +17,7 @@ import {
   mockRedisKeys,
   mockRedisSet,
   mockReplicateRun,
-  mockSupabaseUnauthenticatedUserOnce,
+  mockSupabaseUnauthenticatedClaimsOnce,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
   server,
@@ -250,7 +250,7 @@ describe('Generate Voice API Route', () => {
 
   describe('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
-      mockSupabaseUnauthenticatedUserOnce();
+      mockSupabaseUnauthenticatedClaimsOnce();
 
       const request = new Request('http://localhost/api/generate-voice', {
         body: JSON.stringify({ text: 'Hello world', voiceId: 'voice-tara-id' }),

@@ -312,9 +312,22 @@ const mockSupabaseGetUser = vi.hoisted(() =>
   }),
 );
 
-export function mockSupabaseUnauthenticatedUserOnce() {
-  mockSupabaseGetUser.mockResolvedValueOnce({
-    data: { user: null },
+const mockSupabaseGetClaims = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    data: {
+      claims: {
+        email: 'test@example.com',
+        sub: 'test-user-id',
+        user_metadata: {},
+      },
+    },
+    error: null,
+  }),
+);
+
+export function mockSupabaseUnauthenticatedClaimsOnce() {
+  mockSupabaseGetClaims.mockResolvedValueOnce({
+    data: null,
     error: { message: 'Not authenticated' },
   });
 }
@@ -322,17 +335,7 @@ export function mockSupabaseUnauthenticatedUserOnce() {
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
-      getClaims: vi.fn().mockImplementation(async () => {
-        const { data, error } = await mockSupabaseGetUser();
-        return {
-          data: {
-            claims: data.user
-              ? { email: data.user.email, sub: data.user.id }
-              : null,
-          },
-          error,
-        };
-      }),
+      getClaims: mockSupabaseGetClaims,
       getUser: mockSupabaseGetUser,
     },
     from: vi.fn(() => ({

@@ -6,7 +6,6 @@ import {
 } from '@google/genai';
 // biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
-import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
@@ -33,6 +32,7 @@ import {
   type ProviderId,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCredits,
   getVoiceById,
@@ -79,6 +79,11 @@ import {
 } from './gemini-tts';
 
 const { logger, captureException } = Sentry;
+
+interface GenerationIdentity {
+  email?: string;
+  id: string;
+}
 
 /**
  * The Google AI SDK wraps native AbortError into a generic Error whose name
@@ -274,7 +279,7 @@ export async function POST(request: Request) {
   let selectedLanguage = '';
   let isSplit = false;
   const outputCodec = 'mp3';
-  let user: User | null = null;
+  let user: GenerationIdentity | null = null;
   let userHasPaid = false;
   let modelUsed = '';
   let reservedCredits = 0;
@@ -323,15 +328,16 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       logger.error('User not found', {
         voiceId,
       });
       return APIErrorResponse('User not found', 401);
     }
+
+    user = { email: claims.email, id: claims.sub };
 
     Sentry.setUser({
       email: user.email,
@@ -1266,7 +1272,7 @@ function streamGeminiTtsResponse({
   text: string;
   config: GenerateContentConfig;
   voiceObj: { id: string; name: string; model: string; language: string };
-  user: { id: string; email?: string };
+  user: GenerationIdentity;
   userHasPaid: boolean;
   filename: string;
   estimate: number;

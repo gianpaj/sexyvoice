@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -58,17 +59,16 @@ async function validateRequestBody(
 
 async function validateUser(): Promise<ValidationResult<{ id: string }>> {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!user) {
+  if (!claims?.sub) {
     return {
       ok: false,
       response: APIErrorResponse('User not found', 401),
     };
   }
 
-  return { data: user, ok: true };
+  return { data: { id: claims.sub }, ok: true };
 }
 
 async function validateVoice(

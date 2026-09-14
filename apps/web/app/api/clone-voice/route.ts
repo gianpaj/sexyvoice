@@ -42,6 +42,7 @@ import {
   isTransientProviderFailure,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
@@ -1295,12 +1296,12 @@ export async function POST(request: Request) {
   try {
     // Authentication
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return routeErrorResponse('User not found', 401, 'errors.userNotFound');
     }
+    const user = { email: claims.email, id: claims.sub };
     userId = user.id;
 
     setUser({

@@ -1,11 +1,11 @@
 import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
 // biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
-import type { User } from '@supabase/supabase-js';
 import { streamText } from 'ai';
 
 import { GEMINI_AUDIO_TAGS, getEmotionTags } from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 
 // gemini-3.1-flash-lite
@@ -25,17 +25,18 @@ export async function POST(request: Request) {
     ttsProvider?: string;
     voiceModel?: string;
   } = await request.json();
-  let user: User | null = null;
+  let user: { id: string; email?: string } | null = null;
   try {
     const supabase = await createClient();
 
     // Check if user is authenticated
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return APIErrorResponse('User not found', 401);
     }
+
+    user = { email: claims.email, id: claims.sub };
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return APIErrorResponse('Text is required', 400);

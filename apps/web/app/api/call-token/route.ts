@@ -1,6 +1,5 @@
 import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 import { captureException, logger } from '@sentry/nextjs';
-import type { User } from '@supabase/supabase-js';
 import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -15,6 +14,7 @@ import {
   callTokenPlaygroundStateSchema,
 } from '@/lib/call-token-schema';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
   getCredits,
@@ -38,18 +38,19 @@ function appendSceneInstructions(
 }
 
 export async function POST(request: Request) {
-  let user: User | null = null;
+  let user: { id: string; email?: string } | null = null;
   try {
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       logger.error('User not found', {
         headers: Object.fromEntries(request.headers.entries()),
       });
       return APIErrorResponse('User not found', 401);
     }
+
+    user = { email: claims.email, id: claims.sub };
 
     const [currentAmount, isOverCallLimit] = await Promise.all([
       getCredits(user.id),
