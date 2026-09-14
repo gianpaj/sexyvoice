@@ -201,7 +201,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
 
    ```bash
    cd apps/web
-   supabase --workdir apps/web push
+   supabase db push
    cd ../..
    ```
 
@@ -293,7 +293,7 @@ Push schema changes to Supabase:
 
 ```bash
 cd apps/web
-supabase --workdir apps/web push
+supabase db push
 cd ../..
 ```
 
