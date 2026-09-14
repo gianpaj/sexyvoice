@@ -153,7 +153,7 @@ describe('dashboard inactive-user reactivation boundary', () => {
   });
 
   it.each(['missing user', 'auth error', 'rejected lookup'])(
-    'reports %s without blocking the dashboard',
+    'reports %s without redirecting the dashboard request',
     async (failure) => {
       vi.mocked(ensureUserApplicationState).mockImplementation(async (user) => {
         await user.getCreatedAt();
