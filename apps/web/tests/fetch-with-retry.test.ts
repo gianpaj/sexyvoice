@@ -58,7 +58,9 @@ describe('fetchWithRetry', () => {
 
   it('retries HTTP errors and stops after a successful retry', async () => {
     fetchMock
-      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(
+        Response.json({ error: 'unavailable' }, { status: 503 }),
+      )
       .mockResolvedValueOnce(Response.json({ cost: 12 }));
     const result = fetchWithRetry(url, { parseResponse });
 
