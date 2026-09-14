@@ -331,6 +331,33 @@ follow-up cleanup.
   clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
 - Be careful with migrations and generated types.
 
+#### Client retries and auth responses
+
+Server and script clients use the Supabase SDK's default PostgREST retries:
+GET, HEAD, and OPTIONS requests retry network failures and HTTP 503/520 up to
+three times. HTTP 504 and default POST RPCs, including credit mutations, are not
+retried. Backoff adds 1s/2s/4s unless the server supplies `Retry-After`; it does not
+set an overall request deadline. Do not wrap all Supabase requests in another
+retry layer.
+
+The middleware profile check in `ensureUserApplicationState` disables retries
+because it is a best-effort repair check on every dashboard request. A failed
+read is reported and dashboard rendering continues without retry backoff. This
+does not impose a deadline on the initial request or the restoration RPC.
+
+The browser client disables SDK database retries. TanStack Query owns retries
+for dashboard queries; direct browser reads retain single-attempt behavior.
+
+`apps/web/lib/supabase/middleware-client.ts` writes refreshed cookies to the
+request and response, preserving locale rewrites and request-header overrides.
+Auth redirects retain cookies and the SSR cache headers. The OAuth callback
+passes a response `Headers` collection to `createClient` and forwards it on both
+success and failure redirects. Server components use the cookie-store adapter;
+session refresh before rendering belongs in middleware.
+
+The web app and operational scripts share the catalog version. The Telegram
+bot's Deno URL import is versioned independently from the pnpm lockfile.
+
 ### Edge Config
 
 If used, create an Edge Config and provide the `call-instructions` payload.

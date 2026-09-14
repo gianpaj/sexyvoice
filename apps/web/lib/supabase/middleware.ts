@@ -5,8 +5,8 @@ import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
 import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { ensureUserApplicationState } from './ensure-user-application-state';
+import { copyAuthResponse, createMiddlewareClient } from './middleware-client';
 import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
-import { createClient } from './server';
 
 const routesPerLocale = (routes: string[]): string[] =>
   routing.locales.flatMap((locale) =>
@@ -51,15 +51,7 @@ const isDashboardPath = (pathname: string, locale: string) =>
 const redirectWithSupabaseCookies = (
   url: URL,
   supabaseResponse: NextResponse,
-) => {
-  const redirectResponse = NextResponse.redirect(url);
-
-  for (const cookie of supabaseResponse.cookies.getAll()) {
-    redirectResponse.cookies.set(cookie);
-  }
-
-  return redirectResponse;
-};
+) => copyAuthResponse(supabaseResponse, NextResponse.redirect(url));
 
 export const updateSession = async (
   request: NextRequest,
@@ -76,7 +68,7 @@ export const updateSession = async (
       rawOauthCallbackMarker,
     );
 
-    const supabase = await createClient();
+    const supabase = createMiddlewareClient(request, supabaseResponse);
 
     const {
       data: { user },
@@ -160,19 +152,7 @@ export const updateSession = async (
       return clearOauthCallbackCookie(supabaseResponse);
     }
 
-    // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
-    // creating a new response object with NextResponse.next() make sure to:
-    // 1. Pass the request in it, like so:
-    //    const myNewResponse = NextResponse.next({ request })
-    // 2. Copy over the cookies, like so:
-    //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
-    // 3. Change the myNewResponse object to fit your needs, but avoid changing
-    //    the cookies!
-    // 4. Finally:
-    //    return myNewResponse
-    // If this is not done, you may be causing the browser and server to go out
-    // of sync and terminate the user's session prematurely!
-
+    // Preserve the locale rewrite, refreshed request cookies, and auth cache headers.
     return supabaseResponse;
   } catch (e) {
     console.error('Middleware error:', e);

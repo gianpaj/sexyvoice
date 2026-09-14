@@ -31,6 +31,8 @@ export async function ensureUserApplicationState(
     .from('profiles')
     .select('id')
     .eq('id', user.id)
+    // This best-effort check blocks dashboard rendering; avoid retry backoff.
+    .retry(false)
     .maybeSingle();
 
   if (profileError) {

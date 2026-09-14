@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-export const createClient = async () => {
+export const createClient = async (responseHeaders?: Headers) => {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
@@ -12,7 +12,10 @@ export const createClient = async () => {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
+          for (const [name, value] of Object.entries(headers)) {
+            responseHeaders?.set(name, value);
+          }
           try {
             for (const { name, value, options } of cookiesToSet) {
               cookieStore.set(name, value, options);

@@ -1,3 +1,4 @@
+import { PostgrestError } from '@supabase/supabase-js';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
@@ -420,7 +421,12 @@ describe('fetchAllPages', () => {
           attempts++;
           return Promise.resolve({
             data: null,
-            error: { code: '42703', message: 'column does not exist' },
+            error: new PostgrestError({
+              code: '42703',
+              details: '',
+              hint: '',
+              message: 'column does not exist',
+            }),
           });
         }),
       ),
