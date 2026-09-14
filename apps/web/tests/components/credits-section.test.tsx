@@ -123,9 +123,7 @@ describe('credit balance display', () => {
             : user_metadata.username,
         );
       }
-      if (user_metadata === undefined) {
-        expect(supabase.auth.getUser).not.toHaveBeenCalled();
-      }
+      expect(supabase.auth.getUser).not.toHaveBeenCalled();
     },
   );
 
