@@ -84,7 +84,9 @@ export async function createOrRetrieveCustomer(
       }
     }
 
-    await updateStripeId(userId, customer.id);
+    if (customer.id !== existingStripeId) {
+      await updateStripeId(userId, customer.id);
+    }
     return customer.id;
   };
 

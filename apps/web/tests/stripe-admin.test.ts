@@ -52,7 +52,7 @@ describe('createOrRetrieveCustomer()', () => {
   });
 
   describe('Profile update failures', () => {
-    it.each(['existing', 'new'] as const)(
+    it.each(['existing', 'replacement', 'new'] as const)(
       'should reject when persisting a %s customer fails',
       async (source) => {
         const databaseError = {
@@ -70,9 +70,13 @@ describe('createOrRetrieveCustomer()', () => {
           data: null,
           error: databaseError,
         });
-        vi.mocked(stripe.customers.retrieve).mockResolvedValue(customer);
+        vi.mocked(stripe.customers.retrieve).mockResolvedValue({
+          deleted: true,
+          id: 'cus_old',
+          object: 'customer',
+        } as Awaited<ReturnType<typeof stripe.customers.retrieve>>);
         vi.mocked(stripe.customers.search).mockResolvedValue({
-          data: [],
+          data: source === 'new' ? [] : [customer],
         } as unknown as Awaited<ReturnType<typeof stripe.customers.search>>);
         vi.mocked(stripe.customers.list).mockResolvedValue({
           data: [],
@@ -83,7 +87,7 @@ describe('createOrRetrieveCustomer()', () => {
           createOrRetrieveCustomer(
             userId,
             email,
-            source === 'existing' ? stripeCustomerId : undefined,
+            source === 'replacement' ? 'cus_old' : undefined,
           ),
         ).rejects.toBe(databaseError);
 
@@ -99,7 +103,10 @@ describe('createOrRetrieveCustomer()', () => {
   });
 
   describe('With existing Stripe ID', () => {
-    it('should return existing Stripe customer ID when metadata matches', async () => {
+    it('should return the stored customer without a redundant database write', async () => {
+      vi.mocked(createClient).mockRejectedValue(
+        new Error('Database connection failed'),
+      );
       const existingCustomer = {
         id: stripeCustomerId,
         metadata: {
@@ -119,6 +126,8 @@ describe('createOrRetrieveCustomer()', () => {
       expect(result).toBe(stripeCustomerId);
       expect(stripe.customers.retrieve).toHaveBeenCalledWith(stripeCustomerId);
       expect(stripe.customers.update).not.toHaveBeenCalled();
+      expect(createClient).not.toHaveBeenCalled();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
     it('should update metadata and return ID when metadata is missing', async () => {
@@ -146,15 +155,7 @@ describe('createOrRetrieveCustomer()', () => {
       expect(stripe.customers.update).toHaveBeenCalledWith(stripeCustomerId, {
         metadata: { supabaseUUID: userId },
       });
-      expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      // Verify the chained methods are called correctly
-      // Verify the chain was called correctly
-      // The mock returns an object with update and eq methods
-      const mockFromReturn = mockSupabase.from.mock.results[0].value;
-      expect(mockFromReturn.update).toHaveBeenCalledWith({
-        stripe_id: stripeCustomerId,
-      });
-      expect(mockFromReturn.eq).toHaveBeenCalledWith('id', userId);
+      expect(createClient).not.toHaveBeenCalled();
     });
 
     it('should throw error when Stripe ID belongs to different user', async () => {
