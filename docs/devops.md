@@ -559,6 +559,33 @@ The Sentry UI uses short IDs like `SEXYVOICE-AI-6C`. The numeric ID is
 visible in the URL when viewing the issue in the Sentry dashboard, or in the
 output of `sentry-cli issues list` (first column).
 
+## Fal billing cost lookup
+
+`apps/web/lib/fal-billing.ts` looks up reference audio enhancement costs through
+`fetchWithRetry` in `apps/web/lib/fetch-with-retry.ts`. It makes one immediate
+request and up to three retries, waiting 1s, 2s, and 4s between attempts. Each
+request has a fresh 5-second timeout. HTTP 408, 429, and 5xx responses, fetch
+failures, and missing or invalid cost data trigger retries. Other HTTP errors,
+including 400, 401, 403, and 404, fail immediately. A valid `Retry-After` header
+on a retryable HTTP response overrides the scheduled delay; it accepts integer
+seconds or an HTTP date. Missing or invalid headers use the 1s/2s/4s schedule.
+
+The helper's `maxTotalDelayMs` defaults to 30,000 ms across all retry sleeps,
+including fallback delays. If the next delay exceeds the remaining budget, the
+helper throws the last error immediately rather than retrying before the server
+allows it. Large values and far-future dates cannot extend that budget.
+
+With the Fal defaults, request timeouts total at most 20 seconds and scheduled
+sleeps total at most 30 seconds: a worst-case budget of 50 seconds, excluding
+local response processing and event-loop scheduling. Without `Retry-After`, the
+1s/2s/4s ladder gives a 27-second budget. This is not a caller deadline; other
+callers must choose timeouts, retry counts, and sleep budgets that fit their
+remaining invocation time.
+
+Only the final failure emits a Sentry warning, `Failed to fetch Fal billing event cost`.
+The helper returns `null`, and the clone route records its
+estimated enhancement cost instead. Successful retries do not emit warnings.
+
 ## Troubleshooting Checklist
 
 ### OAuth callback/session issues
