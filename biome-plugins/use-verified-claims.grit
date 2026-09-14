@@ -1,0 +1,9 @@
+language js
+
+`$client.auth.getUser($args)` as $call where {
+  register_diagnostic(
+    span = $call,
+    message = "Use getVerifiedClaims() for identity checks. If this operation needs fresh Auth data or a fresh account lookup, suppress lint/plugin/use-verified-claims with the reason.",
+    severity = "error"
+  )
+}

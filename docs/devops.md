@@ -352,6 +352,13 @@ does not check current session revocation or account status, so a token can pass
 until its expiry. JWT email and metadata are token snapshots. User-editable
 `user_metadata` is only suitable for display or analytics, not authorization.
 
+Biome enforces this policy with `biome-plugins/use-verified-claims.grit` in the
+web app's `app`, `components`, `hooks`, and `lib` directories. Direct
+`client.auth.getUser(...)` calls are errors regardless of the client variable
+name. Intentional lookups need `// biome-ignore lint/plugin/use-verified-claims:`
+with a reason immediately above the line containing the call. This is a syntax
+rule, not alias tracking; tests and SDK fixtures are outside its scope.
+
 Six calls deliberately use `getUser()`:
 
 - The credits page needs current email to find or create a Stripe customer.

@@ -126,6 +126,7 @@ export const updateSession = async (
           // JWT claims omit the creation date; fetch it only for a missing profile.
           getCreatedAt: async () => {
             try {
+              // biome-ignore lint/plugin/use-verified-claims: Profile restoration needs Auth created_at, which JWT claims omit.
               const { data, error } = await supabase.auth.getUser();
               if (error || !data.user) {
                 throw new Error('Failed to fetch Auth user for restoration.', {

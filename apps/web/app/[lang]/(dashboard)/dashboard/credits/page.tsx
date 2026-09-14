@@ -71,6 +71,7 @@ export default async function CreditsPage(props: {
     namespace: 'sidebar',
   });
   const supabase = await createClient();
+  // biome-ignore lint/plugin/use-verified-claims: Stripe customer lookup and creation need the current Auth email.
   const { data, error: authError } = await supabase.auth.getUser();
   const user = data?.user;
 
