@@ -1,8 +1,10 @@
 import { Mic2 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
+import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
@@ -10,30 +12,24 @@ import NewVoiceClient from './new.client';
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const [{ lang }, supabase] = await Promise.all([
-    props.params,
-    createClient(),
+  const { lang } = await props.params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  const [t, tProfile] = await Promise.all([
+    getTranslations('clone'),
+    getTranslations('profile'),
   ]);
-  const [
-    {
-      data: { user },
-      error,
-    },
-    t,
-  ] = await Promise.all([supabase.auth.getUser(), getTranslations('clone')]);
 
   if (!user || error) {
-    return <div>Not logged in</div>;
+    return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const [{ data: creditsData }, { data: creditTransactions }, userHasPaid] =
+  const [creditBalance, { data: creditTransactions }, userHasPaid] =
     await Promise.all([
-      supabase
-        .from('credits')
-        .select('amount')
-        .eq('user_id', user.id)
-        .single()
-        .then((res) => res ?? { data: { amount: 0 } }),
+      getDashboardCreditBalance(supabase, user.id, 'dashboard/clone'),
       supabase
         .from('credit_transactions')
         .select('amount')
@@ -41,8 +37,6 @@ export default async function NewVoicePage(props: {
         .order('created_at', { ascending: false }),
       hasUserPaid(user.id),
     ]);
-
-  const credits = creditsData || { amount: 0 };
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -60,11 +54,15 @@ export default async function NewVoicePage(props: {
           userId={user.id}
         />
       </div>
-      <NewVoiceClient
-        hasEnoughCredits={credits.amount >= 10}
-        lang={lang}
-        userHasPaid={userHasPaid}
-      />
+      {creditBalance === null ? (
+        <CreditBalanceError />
+      ) : (
+        <NewVoiceClient
+          hasEnoughCredits={creditBalance >= 10}
+          lang={lang}
+          userHasPaid={userHasPaid}
+        />
+      )}
     </div>
   );
 }

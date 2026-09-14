@@ -421,6 +421,8 @@
     }
   },
   "creditsSection": {
+    "balanceError": "Dein Guthaben konnte nicht geladen werden. Bitte versuche es erneut.",
+    "retryBalance": "Erneut versuchen",
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
@@ -573,6 +575,8 @@
     }
   },
   "call": {
+    "title": "Sprachanrufe",
+    "subtitle": "Wähle einen KI-Charakter und sprich mit ihm in Echtzeit.",
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",

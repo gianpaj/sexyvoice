@@ -421,6 +421,8 @@
     }
   },
   "creditsSection": {
+    "balanceError": "Non è stato possibile caricare il saldo dei crediti. Riprova.",
+    "retryBalance": "Riprova",
     "title": "Crediti",
     "topupButton": "Ricarica",
     "totalCredits": "Totale",
@@ -573,6 +575,8 @@
     }
   },
   "call": {
+    "title": "Chiamate vocali",
+    "subtitle": "Scegli un personaggio IA e parla con lui in tempo reale.",
     "notice1": "Esplora i tuoi desideri più profondi in totale privacy.",
     "notice2": "Conversazioni crittografate end-to-end, senza giudizi.",
     "notEnoughCredits": "Non hai crediti sufficienti. Il minimo richiesto è {count}",
