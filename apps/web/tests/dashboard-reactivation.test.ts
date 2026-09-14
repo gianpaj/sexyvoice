@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,6 +13,8 @@ vi.mock('@/lib/supabase/middleware-client', async (importOriginal) => ({
   >()),
   createMiddlewareClient: vi.fn(),
 }));
+
+const getUser = vi.hoisted(() => vi.fn());
 
 const nextResponseMocks = vi.hoisted(() => {
   const createResponse = (location?: string) => ({
@@ -68,7 +71,7 @@ describe('dashboard inactive-user reactivation boundary', () => {
           data: { claims: { sub: 'returning-user-id' } },
           error: null,
         }),
-        getUser: vi.fn().mockResolvedValue({
+        getUser: getUser.mockResolvedValue({
           data: {
             user: {
               created_at: '2025-08-29T11:38:46.727Z',
@@ -121,6 +124,41 @@ describe('dashboard inactive-user reactivation boundary', () => {
 
     expect(ensureUserApplicationState).not.toHaveBeenCalled();
   });
+
+  it.each(['missing user', 'auth error', 'rejected lookup'])(
+    'reports %s without blocking the dashboard',
+    async (failure) => {
+      const lookupError = new Error('Auth unavailable');
+      if (failure === 'rejected lookup') {
+        getUser.mockRejectedValue(lookupError);
+      } else {
+        getUser.mockResolvedValue({
+          data: { user: null },
+          error: failure === 'auth error' ? lookupError : null,
+        });
+      }
+
+      const response = await updateSession(
+        createRequest('/en/dashboard/credits'),
+        'en',
+      );
+
+      expect(captureException).toHaveBeenCalledExactlyOnceWith(
+        failure === 'rejected lookup'
+          ? lookupError
+          : expect.objectContaining({
+              cause: failure === 'auth error' ? lookupError : null,
+              message: 'Failed to fetch Auth user for restoration.',
+            }),
+        {
+          tags: { area: 'auth', flow: 'inactive-user-reactivation' },
+          user: { id: 'returning-user-id' },
+        },
+      );
+      expect(ensureUserApplicationState).not.toHaveBeenCalled();
+      expect(response.headers.get('location')).toBeNull();
+    },
+  );
 
   it('continues to the dashboard when restoration fails', async () => {
     vi.mocked(ensureUserApplicationState).mockRejectedValue(

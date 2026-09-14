@@ -1,4 +1,4 @@
-import { captureMessage } from '@sentry/nextjs';
+import { captureException, captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { isE2E } from '@/lib/e2e-mode';
@@ -122,18 +122,30 @@ export const updateSession = async (
     if (isAuthenticated && dashboardPath && !isE2E()) {
       try {
         // Restoration needs the auth creation date, which JWT claims omit.
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          await ensureUserApplicationState({
-            createdAt: user.created_at,
-            email: user.email,
-            id: user.id,
-          });
-        }
+        const user = await (async () => {
+          try {
+            const { data, error } = await supabase.auth.getUser();
+            if (error || !data.user) {
+              throw new Error('Failed to fetch Auth user for restoration.', {
+                cause: error,
+              });
+            }
+            return data.user;
+          } catch (error) {
+            captureException(error, {
+              tags: { area: 'auth', flow: 'inactive-user-reactivation' },
+              user: { id: claims?.sub },
+            });
+            throw error;
+          }
+        })();
+        await ensureUserApplicationState({
+          createdAt: user.created_at,
+          email: user.email,
+          id: user.id,
+        });
       } catch {
-        // Restoration failures are reported to Sentry inside the helper.
+        // Auth lookup failures are reported above; repair failures in the helper.
         // Never block dashboard access on this best-effort repair.
       }
     }

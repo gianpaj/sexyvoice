@@ -344,6 +344,10 @@ The middleware profile check in `ensureUserApplicationState` disables retries
 because it is a best-effort repair check on every dashboard request. A failed
 read is reported and dashboard rendering continues without retry backoff. This
 does not impose a deadline on the initial request or the restoration RPC.
+Auth user lookup failures during restoration, including a missing user after
+successful claim verification, are reported to Sentry with
+`flow: inactive-user-reactivation`. Restoration is best-effort and does not
+redirect a claims-authenticated dashboard request on lookup or repair failure.
 
 The browser client disables SDK database retries. TanStack Query owns retries
 for dashboard queries; direct browser reads retain single-attempt behavior.
