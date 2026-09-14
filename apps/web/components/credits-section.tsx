@@ -6,12 +6,14 @@ import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 
+import { isCreditBalance } from '@/lib/credit-balance';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { initPostHog } from '@/lib/posthog-browser';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
+import { CreditBalanceError } from './credit-balance-error';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
@@ -39,14 +41,19 @@ function CreditsSection({
       0,
     ) || 0;
 
-  const { data: creditsData } = useQuery({
+  const {
+    data: creditsData,
+    isPending,
+    isError,
+  } = useQuery({
     enabled: !!userId,
     queryFn: () => getCredits(supabase, userId),
     queryKey: ['credits', userId],
+    retry: false,
   });
 
   useEffect(() => {
-    if (!creditsData) {
+    if (isError || !isCreditBalance(creditsData?.amount)) {
       return;
     }
 
@@ -111,18 +118,28 @@ function CreditsSection({
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, [creditsData, lang, supabase]);
+  }, [creditsData, isError, lang, supabase]);
 
-  if (!creditsData) {
+  if (isPending && userId) {
     return (
       <Skeleton
-        className="h-[150px] w-full rounded-lg"
+        className="h-[150px] w-full rounded-lg group-data-[collapsible=icon]:hidden"
         data-visual-test-no-radius
       />
     );
   }
 
-  const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
+  if (isError || !isCreditBalance(creditsData?.amount)) {
+    return (
+      <div className="group-data-[collapsible=icon]:hidden">
+        <CreditBalanceError />
+      </div>
+    );
+  }
+
+  const minutesRemaining = Math.floor(
+    Math.max(0, creditsData.amount) / CREDITS_PER_MINUTE,
+  );
 
   return (
     <div

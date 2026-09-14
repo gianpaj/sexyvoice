@@ -1,4 +1,5 @@
-import { getMessages } from 'next-intl/server';
+import { PhoneCall } from 'lucide-react';
+import { getTranslations } from 'next-intl/server';
 
 import { CallFaq } from '@/components/call/call-faq';
 import { Chat } from '@/components/call/chat';
@@ -14,18 +15,18 @@ export default async function Call(props: {
   params: Promise<{ lang: Locale }>;
 }) {
   const { lang } = await props.params;
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
-  const callFaq = dict.landing?.faq?.groups?.find(
-    (group) => group.id === 'liveCalling',
-  );
+  const [t, tProfile] = await Promise.all([
+    getTranslations({ locale: lang, namespace: 'call' }),
+    getTranslations({ locale: lang, namespace: 'profile' }),
+  ]);
 
   const supabase = await createClient();
 
   const claims = await getVerifiedClaims(supabase);
   const userId = claims?.sub;
   if (!userId) {
-    return <div>{dict.profile.notLoggedIn}</div>;
+    return <div>{tProfile('notLoggedIn')}</div>;
   }
 
   const [{ data: creditTransactions }, isPaidUser, callVoices] =
@@ -41,6 +42,12 @@ export default async function Call(props: {
 
   return (
     <div className="mx-auto flex w-full flex-col md:max-w-3xl">
+      <div>
+        <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
+          <PhoneCall size={26} /> {t('title')}
+        </h2>
+        <p className="text-muted-foreground">{t('subtitle')}</p>
+      </div>
       <div className="lg:hidden">
         <CreditsSection
           creditTransactions={creditTransactions}
@@ -64,13 +71,11 @@ export default async function Call(props: {
             className="text-center text-foreground text-xs leading-7"
             data-testid="call-notice-text"
           >
-            {dict.call.notice1}
+            {t('notice1')}
             <br />
-            {dict.call.notice2}
+            {t('notice2')}
           </p>
-          {callFaq && (
-            <CallFaq questions={callFaq.questions} title={callFaq.category} />
-          )}
+          <CallFaq />
         </div>
       </main>
     </div>

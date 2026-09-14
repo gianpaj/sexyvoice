@@ -2,8 +2,10 @@ import { Wand2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -22,18 +24,18 @@ export default async function GeneratePage(props: {
     redirect(`/${lang}/login`);
   }
 
-  const { data: creditsData } = (await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', userId)
-    .single()) || { amount: 0 };
-  const credits = creditsData || { amount: 0 };
+  const creditBalance = await getDashboardCreditBalance(
+    supabase,
+    userId,
+    'dashboard/generate',
+  );
   const isPlaywrightCreditsBypassEnabled =
     process.env.E2E_TEST_MODE === 'true' &&
     !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
     claims.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
   const hasEnoughCredits =
-    credits.amount >= 10 || isPlaywrightCreditsBypassEnabled;
+    (creditBalance !== null && creditBalance >= 10) ||
+    isPlaywrightCreditsBypassEnabled;
 
   const [{ data: creditTransactions }, isPaidUser, { data: publicVoices }] =
     await Promise.all([
@@ -76,11 +78,15 @@ export default async function GeneratePage(props: {
       </div>
 
       <div className="grid gap-6 pb-16">
-        <GenerateUI
-          hasEnoughCredits={hasEnoughCredits}
-          isPaidUser={isPaidUser}
-          publicVoices={publicVoices}
-        />
+        {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
+          <GenerateUI
+            hasEnoughCredits={hasEnoughCredits}
+            isPaidUser={isPaidUser}
+            publicVoices={publicVoices}
+          />
+        ) : (
+          <CreditBalanceError />
+        )}
       </div>
     </div>
   );

@@ -419,6 +419,8 @@
     }
   },
   "creditsSection": {
+    "balanceError": "We couldn't load your credit balance. Please try again.",
+    "retryBalance": "Retry",
     "title": "Credits",
     "topupButton": "Top-up",
     "totalCredits": "Total",
@@ -571,6 +573,8 @@
     }
   },
   "call": {
+    "title": "Voice calls",
+    "subtitle": "Choose an AI character and talk in real time.",
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
     "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
