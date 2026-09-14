@@ -231,6 +231,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 ## Documentation Rules
 
+- Read `.agents/product-marketing.md` before writing or revising headlines,
+  body copy, CTAs, or other marketing content; follow its positioning,
+  brand voice, and product claim guidance.
 - For commits that change only repository documentation, such as `AGENTS.md`,
   `README.md`, `ARCHITECTURE.md`, `docs/`, `plans/`, or `.agents/notes/`, append
   `[skip deploy]` to the commit subject so both Vercel projects skip deployment.
