@@ -165,8 +165,14 @@ Before applying the migration, compare old and new read-only target queries with
 - a deterministic sample of target IDs;
 - paid users with old audio;
 - free users with old audio;
-- rows with `user_id is null`; and
+- rows with `user_id is null`;
+- rows with a non-null `user_id` but no matching `profiles` row, expected to be
+  absent under the foreign key; and
 - rows exactly around the 30-day and 45-day cutoffs.
+
+Confirm that the `audio_files.user_id` foreign key to `profiles(id)` is enforced
+and validated before removing the join. If orphaned rows exist, stop: the direct
+predicate would include rows that the existing inner join excludes.
 
 Run `EXPLAIN (ANALYZE, BUFFERS)` only on the target-row `SELECT`. Do not use
 `EXPLAIN ANALYZE` on the production `UPDATE` or `DELETE`.
