@@ -12,20 +12,19 @@ import NewVoiceClient from './new.client';
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
-  const [{ lang }, supabase] = await Promise.all([
-    props.params,
-    createClient(),
+  const { lang } = await props.params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  const [t, tProfile] = await Promise.all([
+    getTranslations('clone'),
+    getTranslations('profile'),
   ]);
-  const [
-    {
-      data: { user },
-      error,
-    },
-    t,
-  ] = await Promise.all([supabase.auth.getUser(), getTranslations('clone')]);
 
   if (!user || error) {
-    return <div>Not logged in</div>;
+    return <div>{tProfile('notLoggedIn')}</div>;
   }
 
   const [creditBalance, { data: creditTransactions }, userHasPaid] =

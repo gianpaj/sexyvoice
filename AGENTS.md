@@ -137,7 +137,14 @@ Use package filters when you only want one app, e.g.
 
 - UI copy must use `next-intl`; do not hardcode user-facing English strings.
 - Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`.
-- Server components use `getMessages()` from `next-intl/server`.
+- Async Server Components use `getTranslations()` for UI text.
+  Non-async components can use `useTranslations()`, including on the server.
+- Prefer passing server-translated labels or content to Client Components
+  when practical. For translations within Client Components, use
+  `useTranslations()` from `next-intl`.
+- For raw message data, use `getMessages()` on the server,
+  `useMessages()` in Client Components, or `t.raw()` for a specific key.
+  Raw access does not process ICU interpolation or plurals.
 - Client components use `useTranslations()` from `next-intl`.
 - Use locale-aware navigation exports from `apps/web/lib/i18n/navigation.ts`, not raw
   Next.js navigation helpers.
