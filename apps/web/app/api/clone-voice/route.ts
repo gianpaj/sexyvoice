@@ -33,6 +33,7 @@ import {
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
+import { getFalBillingEventCost } from '@/lib/fal-billing';
 import PostHogClient from '@/lib/posthog';
 import {
   getProviderErrorMessage,
@@ -420,53 +421,6 @@ function getReferenceAudioEnhancementDollarCost(
     Math.max(0, durationSeconds) *
     REFERENCE_AUDIO_ENHANCEMENT_DOLLARS_PER_SECOND
   );
-}
-
-async function getFalBillingEventCost(
-  requestId: string,
-): Promise<number | null> {
-  const adminKey = process.env.FAL_ADMIN_KEY;
-  if (!adminKey) {
-    return null;
-  }
-
-  try {
-    const response = await fetch(
-      `https://api.fal.ai/v1/models/billing-events?request_id=${encodeURIComponent(requestId)}`,
-      {
-        cache: 'no-store',
-        headers: { Authorization: `Key ${adminKey}` },
-        signal: AbortSignal.timeout(5000),
-      },
-    );
-
-    if (!response.ok) {
-      logger.warn('Fal billing events API returned non-ok response', {
-        extra: { requestId, status: response.status },
-      });
-      return null;
-    }
-
-    const data = (await response.json()) as {
-      billing_events?: { cost_estimate_nano_usd?: number }[];
-    };
-    // Assumes one billing event per request_id; Fal may return multiple for retries.
-    const nanoUsd = data.billing_events?.[0]?.cost_estimate_nano_usd;
-
-    if (typeof nanoUsd !== 'number' || nanoUsd < 0) {
-      logger.warn('Fal billing events API returned unexpected cost data', {
-        extra: { nanoUsd, requestId },
-      });
-      return null;
-    }
-
-    return nanoUsd / 1_000_000_000;
-  } catch (err) {
-    logger.warn('Failed to fetch Fal billing event cost', {
-      extra: { errorMessage: getProviderErrorMessage(err), requestId },
-    });
-    return null;
-  }
 }
 
 function validateCreditAmount({
