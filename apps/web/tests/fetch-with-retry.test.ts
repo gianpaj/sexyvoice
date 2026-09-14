@@ -111,6 +111,8 @@ describe('fetchWithRetry', () => {
     ['Mon, 14 Sep 2026 11:59:59 GMT', 0],
     ['0', 0],
     ['invalid', 1000],
+    ['1e3', 1000],
+    ['1.5', 1000],
     ['-1', 1000],
     ['', 1000],
   ])('uses Retry-After %j with a delay of %s ms', async (retryAfter, delay) => {
@@ -158,6 +160,117 @@ describe('fetchWithRetry', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
     expect(vi.getTimerCount()).toBe(0);
   });
+
+  it.each([
+    '31',
+    '9999999999999999999999999999999999999999',
+    'Mon, 14 Sep 2099 12:00:00 GMT',
+  ])(
+    'rejects Retry-After %s without scheduling a sleep beyond the budget',
+    async (retryAfter) => {
+      vi.setSystemTime(new Date('2026-09-14T12:00:00Z'));
+      fetchMock.mockResolvedValue(
+        Response.json(
+          { error: 'rate limited' },
+          {
+            headers: { 'Retry-After': retryAfter },
+            status: 429,
+          },
+        ),
+      );
+
+      await expect(fetchWithRetry(url, { parseResponse })).rejects.toThrow(
+        'HTTP 429',
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it('caps cumulative sleep at 30 seconds rather than capping each delay', async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json(
+        { error: 'rate limited' },
+        {
+          headers: { 'Retry-After': '15' },
+          status: 429,
+        },
+      ),
+    );
+    const result = expect(
+      fetchWithRetry(url, { parseResponse }),
+    ).rejects.toThrow('HTTP 429');
+
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(1);
+    await result;
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('allows a retry exactly at the sleep budget boundary', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        Response.json(
+          { error: 'rate limited' },
+          {
+            headers: { 'Retry-After': '30' },
+            status: 429,
+          },
+        ),
+      )
+      .mockResolvedValueOnce(Response.json({ cost: 12 }));
+    const result = fetchWithRetry(url, { parseResponse });
+
+    await vi.advanceTimersByTimeAsync(30_000);
+    await expect(result).resolves.toEqual({ cost: 12 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('shares the sleep budget between fallback delays and Retry-After', async () => {
+    fetchMock
+      .mockRejectedValueOnce(new Error('network unavailable'))
+      .mockResolvedValueOnce(
+        Response.json(
+          { error: 'rate limited' },
+          {
+            headers: { 'Retry-After': '2' },
+            status: 429,
+          },
+        ),
+      );
+    const result = expect(
+      fetchWithRetry(url, { maxTotalDelayMs: 2500, parseResponse }),
+    ).rejects.toThrow('HTTP 429');
+
+    await vi.advanceTimersByTimeAsync(1000);
+    await result;
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([0, 500])(
+    'does not sleep when the next fallback exceeds a %s ms budget',
+    async (maxTotalDelayMs) => {
+      fetchMock.mockRejectedValue(new Error('network unavailable'));
+      await expect(
+        fetchWithRetry(url, { maxTotalDelayMs, parseResponse }),
+      ).rejects.toThrow('network unavailable');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'rejects an invalid sleep budget of %s',
+    async (maxTotalDelayMs) => {
+      await expect(
+        fetchWithRetry(url, { maxTotalDelayMs, parseResponse }),
+      ).rejects.toThrow('maxTotalDelayMs must be finite and non-negative');
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 
   it('retries JSON parsing and response validation errors', async () => {
     fetchMock

@@ -119,6 +119,31 @@ describe('getFalBillingEventCost', () => {
     },
   );
 
+  it('returns null and warns without waiting for an over-budget Retry-After', async () => {
+    fetchMock.mockResolvedValue(
+      Response.json(
+        { error: 'rate limited' },
+        {
+          headers: { 'Retry-After': '1000' },
+          status: 429,
+        },
+      ),
+    );
+
+    await expect(getFalBillingEventCost('request-id')).resolves.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+    expect(logger.warn).toHaveBeenCalledExactlyOnceWith(
+      'Failed to fetch Fal billing event cost',
+      {
+        extra: {
+          errorMessage: expect.stringContaining('HTTP 429'),
+          requestId: 'request-id',
+        },
+      },
+    );
+  });
+
   it('returns null and warns once after repeated network failures', async () => {
     fetchMock.mockRejectedValue(new Error('Network unavailable'));
     const result = getFalBillingEventCost('request-id');

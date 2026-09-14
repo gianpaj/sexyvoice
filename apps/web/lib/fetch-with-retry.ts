@@ -1,4 +1,5 @@
 interface FetchWithRetryOptions<T> {
+  maxTotalDelayMs?: number;
   parseResponse: (response: Response) => Promise<T>;
   requestInit?: Omit<RequestInit, 'signal'>;
   retryDelaysMs?: readonly number[];
@@ -11,9 +12,11 @@ function getRetryAfterDelayMs(response: Response): number | undefined {
     return undefined;
   }
 
-  const seconds = Number(value);
-  if (Number.isFinite(seconds)) {
-    return seconds >= 0 ? seconds * 1000 : undefined;
+  if (/^\d+$/.test(value)) {
+    return Number(value) * 1000;
+  }
+  if (Number.isFinite(Number(value))) {
+    return undefined;
   }
 
   const date = Date.parse(value);
@@ -24,12 +27,18 @@ function getRetryAfterDelayMs(response: Response): number | undefined {
 export async function fetchWithRetry<T>(
   url: string,
   {
+    maxTotalDelayMs = 30_000,
     parseResponse,
     requestInit,
     retryDelaysMs = [1000, 2000, 4000],
     timeoutMs = 5000,
   }: FetchWithRetryOptions<T>,
 ): Promise<T> {
+  if (!Number.isFinite(maxTotalDelayMs) || maxTotalDelayMs < 0) {
+    throw new RangeError('maxTotalDelayMs must be finite and non-negative');
+  }
+
+  let remainingDelayMs = maxTotalDelayMs;
   for (let attempt = 0; ; attempt++) {
     let response: Response | undefined;
     try {
@@ -60,6 +69,16 @@ export async function fetchWithRetry<T>(
         (response && !response.ok
           ? getRetryAfterDelayMs(response)
           : undefined) ?? fallbackDelay;
+      // Stop rather than retry before Retry-After or overflow Node's timer range.
+      if (
+        !Number.isFinite(delay) ||
+        delay < 0 ||
+        delay > remainingDelayMs ||
+        delay > 2_147_483_647
+      ) {
+        throw error;
+      }
+      remainingDelayMs -= delay;
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
