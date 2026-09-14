@@ -37,15 +37,12 @@
     "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
     "type-check": "turbo run type-check"
   },
-  "lint-staged": {
-    "*.{js,cjs,ts,tsx,json,jsonc,css,md,mdx}": [
-      "pnpm exec ultracite fix"
-    ]
-  },
+
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
     "lint-staged": "17.2.0",
+    "prettier": "3.9.6",
     "turbo": "2.10.12",
     "ultracite": "7.10.0"
   },

@@ -11,7 +11,11 @@ Nested guidance:
 
 ## Task Completion Requirements
 
-- All of `pnpm fixall` and `pnpm type-check` must pass before considering tasks completed.
+- For changes limited to repository Markdown documentation, format only the changed
+  files with `pnpm exec prettier --write <files>` and run `git diff --check`.
+  Skip `pnpm fixall`, `pnpm type-check`, and tests for those changes. Deployed
+  Markdown/MDX content is not covered by this exception.
+- For other changes, `pnpm fixall` and `pnpm type-check` must pass.
 - When you touch the web app's tests or shared code, also run `pnpm test`
   (or the focused file) and make sure the suite is green.
 - When you change Supabase migrations or pgTAP tests, run `pnpm test:db`
@@ -29,7 +33,7 @@ Nested guidance:
 - Never execute `supabase` CLI commands or SQL queries that can write data.
   Read-only commands such as `supabase status` are allowed.
 - Do not revert user changes unless the user explicitly asks.
-- Run `pnpm fixall` before committing when feasible.
+- Follow the validation scope in Task Completion Requirements before committing.
 
 ## Maintainability
 

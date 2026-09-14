@@ -374,6 +374,22 @@ pnpm preview
 
 ### Validate code quality
 
+`.lintstagedrc.js` is the pre-commit configuration. `pnpm lint-staged` formats
+staged Markdown with the pinned Prettier dependency and supported code files with
+Ultracite. TypeScript files are formatted before the project-wide type check runs.
+Files excluded by Biome remain excluded from formatting.
+
+For repository Markdown-only changes, format explicit paths instead of scanning
+the workspace:
+
+```bash
+pnpm exec prettier --write AGENTS.md docs/devops.md
+git diff --check
+```
+
+See [Task Completion Requirements](../AGENTS.md#task-completion-requirements) for
+validation scope. For full code-quality checks:
+
 ```bash
 pnpm run fixall
 pnpm run type-check
