@@ -2,8 +2,8 @@
 
 ## Status
 
-The broader optimization work remains proposed. The Stripe ID uniqueness step is
-implemented in migration source but is not applied.
+The Stripe ID uniqueness index is implemented and applied to production.
+The broader optimization work remains proposed.
 
 ## Decision
 
