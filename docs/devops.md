@@ -340,6 +340,15 @@ retried. Backoff adds 1s/2s/4s unless the server supplies `Retry-After`; it does
 set an overall request deadline. Do not wrap all Supabase requests in another
 retry layer.
 
+The proxy uses verified JWT claims for its authentication gate. With asymmetric
+signing keys, `getClaims()` normally verifies locally using cached JWKS; symmetric
+keys require an Auth-server request. Local verification does not check current
+session revocation or account status, so a token can pass until its expiry.
+
+The restoration path calls `getUser()` only when the profile is missing and an
+email is present, to fetch the original Auth creation date. Existing profiles
+need no additional Auth-server lookup in the proxy.
+
 The middleware profile check in `ensureUserApplicationState` disables retries
 because it is a best-effort repair check on every dashboard request. A failed
 read is reported and dashboard rendering continues without retry backoff. This

@@ -68,7 +68,12 @@ describe('dashboard inactive-user reactivation boundary', () => {
     vi.mocked(createMiddlewareClient).mockReturnValue({
       auth: {
         getClaims: vi.fn().mockResolvedValue({
-          data: { claims: { sub: 'returning-user-id' } },
+          data: {
+            claims: {
+              email: 'returning@example.com',
+              sub: 'returning-user-id',
+            },
+          },
           error: null,
         }),
         getUser: getUser.mockResolvedValue({
@@ -103,8 +108,8 @@ describe('dashboard inactive-user reactivation boundary', () => {
 
     await vi.waitFor(() => {
       expect(ensureUserApplicationState).toHaveBeenCalledWith({
-        createdAt: '2025-08-29T11:38:46.727Z',
         email: 'returning@example.com',
+        getCreatedAt: expect.any(Function),
         id: 'returning-user-id',
       });
     });
@@ -115,6 +120,28 @@ describe('dashboard inactive-user reactivation boundary', () => {
     await expect(requestPending).resolves.toBeDefined();
     expect(requestCompleted).toBe(true);
     expect(NextResponse.next).toHaveBeenCalled();
+  });
+
+  it('does not fetch the Auth user when the profile already exists', async () => {
+    vi.mocked(ensureUserApplicationState).mockResolvedValue('existing');
+
+    await updateSession(createRequest('/en/dashboard/credits'), 'en');
+
+    expect(ensureUserApplicationState).toHaveBeenCalledOnce();
+    expect(getUser).not.toHaveBeenCalled();
+  });
+
+  it('fetches the original Auth date when restoration requests it', async () => {
+    vi.mocked(ensureUserApplicationState).mockImplementation(async (user) => {
+      await expect(user.getCreatedAt()).resolves.toBe(
+        '2025-08-29T11:38:46.727Z',
+      );
+      return 'restored';
+    });
+
+    await updateSession(createRequest('/en/dashboard/credits'), 'en');
+
+    expect(getUser).toHaveBeenCalledOnce();
   });
 
   it('does not run restoration outside dashboard routes', async () => {
@@ -128,6 +155,10 @@ describe('dashboard inactive-user reactivation boundary', () => {
   it.each(['missing user', 'auth error', 'rejected lookup'])(
     'reports %s without blocking the dashboard',
     async (failure) => {
+      vi.mocked(ensureUserApplicationState).mockImplementation(async (user) => {
+        await user.getCreatedAt();
+        return 'restored';
+      });
       const lookupError = new Error('Auth unavailable');
       if (failure === 'rejected lookup') {
         getUser.mockRejectedValue(lookupError);
@@ -155,7 +186,7 @@ describe('dashboard inactive-user reactivation boundary', () => {
           user: { id: 'returning-user-id' },
         },
       );
-      expect(ensureUserApplicationState).not.toHaveBeenCalled();
+      expect(getUser).toHaveBeenCalledOnce();
       expect(response.headers.get('location')).toBeNull();
     },
   );

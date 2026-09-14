@@ -119,30 +119,29 @@ export const updateSession = async (
       return redirectResponse;
     }
 
-    if (isAuthenticated && dashboardPath && !isE2E()) {
+    if (claims?.sub && dashboardPath && !isE2E()) {
       try {
-        // Restoration needs the auth creation date, which JWT claims omit.
-        const user = await (async () => {
-          try {
-            const { data, error } = await supabase.auth.getUser();
-            if (error || !data.user) {
-              throw new Error('Failed to fetch Auth user for restoration.', {
-                cause: error,
-              });
-            }
-            return data.user;
-          } catch (error) {
-            captureException(error, {
-              tags: { area: 'auth', flow: 'inactive-user-reactivation' },
-              user: { id: claims?.sub },
-            });
-            throw error;
-          }
-        })();
         await ensureUserApplicationState({
-          createdAt: user.created_at,
-          email: user.email,
-          id: user.id,
+          email: claims.email,
+          // JWT claims omit the creation date; fetch it only for a missing profile.
+          getCreatedAt: async () => {
+            try {
+              const { data, error } = await supabase.auth.getUser();
+              if (error || !data.user) {
+                throw new Error('Failed to fetch Auth user for restoration.', {
+                  cause: error,
+                });
+              }
+              return data.user.created_at;
+            } catch (error) {
+              captureException(error, {
+                tags: { area: 'auth', flow: 'inactive-user-reactivation' },
+                user: { id: claims?.sub },
+              });
+              throw error;
+            }
+          },
+          id: claims.sub,
         });
       } catch {
         // Auth lookup failures are reported above; repair failures in the helper.
