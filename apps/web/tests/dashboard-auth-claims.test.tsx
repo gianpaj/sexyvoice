@@ -19,6 +19,10 @@ vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key: string) => key)),
 }));
 
+vi.mock('@/components/credit-balance-error', () => ({
+  CreditBalanceError: vi.fn(() => null),
+}));
+
 vi.mock('@/components/credits-section', () => ({
   default: vi.fn(() => null),
 }));

@@ -1,6 +1,6 @@
 'use client';
 
-import type { User } from '@supabase/supabase-js';
+import type { JwtPayload } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
@@ -10,6 +10,7 @@ import { isCreditBalance } from '@/lib/credit-balance';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { initPostHog } from '@/lib/posthog-browser';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
@@ -58,29 +59,33 @@ function CreditsSection({
     }
 
     const getData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) {
+      const claims = await getVerifiedClaims(supabase);
+      if (!claims?.sub) {
         throw new Error('User not found');
       }
 
-      const userHasPaid = await hasUserPaid(supabase, user.id);
-      return { user, userHasPaid };
+      const userHasPaid = await hasUserPaid(supabase, claims.sub);
+      return { claims, userHasPaid };
     };
 
     const sendUserAnalyticsData = (
-      user: User,
+      claims: JwtPayload,
       credits: Pick<Tables<'credits'>, 'amount'> | null | undefined,
       userHasPaid: boolean,
     ) => {
       const creditsLeft = credits?.amount ?? -1;
+      const metadata = claims.user_metadata;
+      const nickname =
+        (typeof metadata?.full_name === 'string' && metadata.full_name) ||
+        (typeof metadata?.username === 'string' && metadata.username) ||
+        undefined;
 
       initPostHog()
         .then((posthog) => {
-          posthog?.identify(user.id, {
+          posthog?.identify(claims.sub, {
             creditsLeft,
-            email: user.email,
-            name: user.user_metadata.full_name || user.user_metadata.username,
+            email: claims.email,
+            name: nickname,
             userHasPaid,
           });
         })
@@ -94,26 +99,24 @@ function CreditsSection({
         locale: lang,
       });
 
-      if (user.email) {
-        Crisp.user.setEmail(user.email);
+      if (claims.email) {
+        Crisp.user.setEmail(claims.email);
       }
 
-      const nickname =
-        user.user_metadata.full_name || user.user_metadata.username;
       if (nickname) {
         Crisp.user.setNickname(nickname);
       }
 
       Crisp.session.setData({
         creditsLeft,
-        user_id: user.id,
+        user_id: claims.sub,
         userHasPaid,
       });
     };
 
     getData()
-      .then(({ user, userHasPaid }) => {
-        sendUserAnalyticsData(user, creditsData, userHasPaid);
+      .then(({ claims, userHasPaid }) => {
+        sendUserAnalyticsData(claims, creditsData, userHasPaid);
       })
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);

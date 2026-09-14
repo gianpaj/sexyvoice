@@ -12,6 +12,7 @@ import {
   isInstructionsDirty,
   saveCharacter,
 } from '@/lib/characters';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { usePlaygroundState } from './use-playground-state';
@@ -128,10 +129,10 @@ export const ConnectionProvider = ({
 
   const disconnect = async () => {
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
-    const { data } = await supabase.auth.getUser();
-    if (data?.user?.id) {
-      queryClient.refetchQueries({ queryKey: ['credits', data.user.id] });
-      queryClient.invalidateQueries({ queryKey: ['credits', data.user.id] });
+    const claims = await getVerifiedClaims(supabase);
+    if (claims?.sub) {
+      queryClient.refetchQueries({ queryKey: ['credits', claims.sub] });
+      queryClient.invalidateQueries({ queryKey: ['credits', claims.sub] });
     }
   };
 

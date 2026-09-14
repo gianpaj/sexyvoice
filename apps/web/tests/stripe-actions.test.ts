@@ -56,13 +56,12 @@ describe('createCheckoutSession()', () => {
 
     vi.mocked(createClient).mockResolvedValue({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
-          data: {
-            user: {
-              email: 'user@example.com',
-              id: 'user_123',
-            },
-          },
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'user_123' } },
+          error: null,
+        }),
+        getUser: vi.fn(() => {
+          throw new Error('getUser is forbidden');
         }),
       },
     } as never);
@@ -115,6 +114,46 @@ describe('createCheckoutSession()', () => {
       process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
         originalSubscriptionCouponId;
     }
+  });
+
+  it.each([
+    { data: null, error: null },
+    { data: { claims: {} }, error: null },
+    { data: { claims: { sub: '' } }, error: null },
+    { data: { claims: { sub: 'user_123' } }, error: new Error('Invalid JWT') },
+  ])(
+    'denies checkout before customer lookup for invalid claims %j',
+    async (response) => {
+      const getUser = vi.fn(() => {
+        throw new Error('getUser is forbidden');
+      });
+      vi.mocked(createClient).mockResolvedValue({
+        auth: { getClaims: vi.fn().mockResolvedValue(response), getUser },
+      } as never);
+      for (const type of ['topup', 'subscription']) {
+        const formData = new FormData();
+        formData.set('type', type);
+        await expect(
+          createCheckoutSession(formData, 'starter'),
+        ).rejects.toThrow('Unauthorized checkout session request');
+      }
+      expect(getUserById).not.toHaveBeenCalled();
+      expect(hasAnySubscriptionHistory).not.toHaveBeenCalled();
+      expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+      expect(getUser).not.toHaveBeenCalled();
+    },
+  );
+
+  it('uses the claims subject for checkout without requiring email', async () => {
+    await createCheckoutSession(new FormData(), 'starter');
+    expect(getUserById).toHaveBeenCalledWith('user_123');
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: 'cus_123',
+        metadata: expect.objectContaining({ userId: 'user_123' }),
+      }),
+    );
+    expect((await createClient()).auth.getUser).not.toHaveBeenCalled();
   });
 
   it('rejects invalid package IDs without Sentry error noise', async () => {
