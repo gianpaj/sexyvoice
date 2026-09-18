@@ -1,6 +1,8 @@
 import { createBrowserClient } from '@supabase/ssr';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { instrumentSupabase } from './tracing';
+
 export type TypedSupabaseClient = SupabaseClient<Database>;
 
 let client: TypedSupabaseClient | undefined;
@@ -23,6 +25,7 @@ export function getSupabaseBrowserClient() {
       db: { retry: false },
     },
   );
+  instrumentSupabase(client);
   return client;
 }
 
