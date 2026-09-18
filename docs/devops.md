@@ -470,6 +470,22 @@ pnpm run format
 packages and their dependents through Turbo. To inspect that selection without
 running tests, use `pnpm test:affected --dry=json`.
 
+The `claude-review` job in `.github/workflows/claude.yml` resolves the current
+PR head at job start and checks out that SHA with full history. Its prompt
+requires Claude to verify and restore that checkout after action setup, then
+review the entire PR diff at the pinned commit. Pushes do not trigger another
+review; comment `@claude review` to request one.
+
+After reviewing, Claude finds the unit-test run for the pinned SHA with
+`gh run list` and waits with `gh run watch --interval 15 --exit-status`.
+Discovery and waiting share a five-minute budget. The review reports the CI
+conclusion and run URL, or explicitly reports unavailable or pending results.
+This is an agent instruction, not a workflow dependency or guaranteed CI gate.
+
+Both Claude jobs allow read-only `gh pr view`, `gh run list`, `gh run view`, and
+`gh run watch` commands to inspect CI. Their GitHub App tokens request
+`actions: read` and `checks: read` separately from the job-level permissions.
+
 ```bash
 pnpm test
 pnpm test:watch
