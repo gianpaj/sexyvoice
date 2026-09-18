@@ -2,10 +2,10 @@
 
 ## Findings
 
-- Installed Supabase JS is 2.116.0, SSR is 0.12.7, and Sentry Next.js is 10.45.0.
+- Supabase JS is 2.116.0, SSR is 0.12.7, and Sentry Next.js is 10.71.0.
 - Supabase meets the tracing requirement. Version 2.112.0 and later requires
   `@supabase/supabase-js/tracing` for SDK OpenTelemetry propagation.
-- OpenTelemetry API 1.9.0 is present transitively in the lockfile.
+- OpenTelemetry API 1.9.0 is an explicit web dependency for the tracing runtime.
 - Sentry 10.45.0 supports Supabase instrumentation but records query filters and
   plain-object mutation bodies without the guide's operation-data controls.
   Its `instrumentSupabaseClient` declaration accepts only one argument.
@@ -17,9 +17,10 @@
   `middleware-client.ts` under `apps/web/lib/supabase/`. Auth wrapping is per
   instance; database wrapping uses shared prototypes.
 
-## Decision awaiting approval
+## Approved approach
 
-Upgrade Sentry before enabling instrumentation. Use explicit
+Use Sentry 10.71.0. Version 10.75.0 is blocked by the repository's two-day
+release-age policy; do not bypass that policy. Use explicit
 `sendOperationData: false` consistently, preserve sampling, and restrict browser
 trace propagation to the configured Supabase origin plus existing same-origin
 behavior. Use Sentry's browser propagation and the Supabase tracing runtime with
@@ -29,6 +30,8 @@ Do not enable operation-data capture or build a custom replacement for SDK
 redaction on 10.45.0. Automatic Supabase error messages can still contain user
 content; agree on dropping or sanitizing those events before enabling capture.
 HTTP breadcrumbs and spans are separate collection paths and need review.
+The dependency upgrade passes `pnpm fixall`, `pnpm type-check`, and the focused
+Sentry filter, Supabase retry, and SSR response tests.
 
 ## Evidence and validation
 
