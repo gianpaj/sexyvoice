@@ -43,8 +43,9 @@ Type checks validate against generated schema types, not the live database.
 A separate integration test would be needed to cover those database contracts.
 
 Desktop and mobile screenshots cover free and paid users without custom
-characters. Tests assert that non-default scene options are disabled for free
-users and enabled for paid users, then close the selector before capture.
+characters. After capture, tests assert that non-default scene options are
+disabled for free users and enabled for paid users. Interacting only after
+capture keeps hover and keyboard-focus styling out of the at-rest snapshots.
 Custom-character editing and voice selection remain outside this suite.
 The voice catalog keeps server props deterministic.
 

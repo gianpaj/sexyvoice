@@ -188,10 +188,11 @@ including production, entitlement comes from the database.
 
 Both scenarios have desktop and mobile screenshots. Free snapshot names stay
 `call-dashboard-{viewport}-{project}`; paid snapshots use
-`call-dashboard-paid-{viewport}-{project}`. Before each screenshot, tests open
+`call-dashboard-paid-{viewport}-{project}`. After each screenshot, tests open
 the scene selector and check that all non-default scene options are disabled
 for free users and enabled for paid users. "No scene" stays enabled for both.
-Tests close the selector with Escape before capture.
+Capture precedes interaction so hover and keyboard-focus styles do not alter
+the at-rest screenshots.
 
 Character and voice fixtures are a one-time snapshot of the linked database's
 public query results, including localized descriptions and voice assignments.

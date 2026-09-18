@@ -99,11 +99,11 @@ test.describe('Call Dashboard - Authenticated User', () => {
     await callPage.expectPageVisible();
     await callPage.expectConfigurationFormVisible();
     await callPage.expectFixtureCharacters();
-    await callPage.expectSceneOptionsEnabled(false);
     await argosScreenshot(
       page,
       `call-dashboard-desktop-${testInfo.project.name}`,
     );
+    await callPage.expectSceneOptionsEnabled(false);
   });
 
   test('should display language selector', async () => {
@@ -157,11 +157,11 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
   }, testInfo) => {
     await callPage.expectCreditsSectionVisible();
     await callPage.expectFixtureCharacters();
-    await callPage.expectSceneOptionsEnabled(false);
     await argosScreenshot(
       page,
       `call-dashboard-mobile-${testInfo.project.name}`,
     );
+    await callPage.expectSceneOptionsEnabled(false);
   });
 });
 
@@ -186,11 +186,11 @@ for (const viewport of ['desktop', 'mobile'] as const) {
         await callPage.expectCreditsSectionVisible();
       }
       await callPage.expectFixtureCharacters();
-      await callPage.expectSceneOptionsEnabled(true);
       await argosScreenshot(
         page,
         `call-dashboard-paid-${viewport}-${testInfo.project.name}`,
       );
+      await callPage.expectSceneOptionsEnabled(true);
     });
   });
 }
