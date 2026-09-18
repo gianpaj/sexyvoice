@@ -477,6 +477,9 @@ pnpm test:coverage
 pnpm test:ui
 ```
 
+Call dashboard screenshot fixtures and local server requirements are documented
+under [call mocking behavior](../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior).
+
 ### Build content and validate translations
 
 ```bash

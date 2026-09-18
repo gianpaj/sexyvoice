@@ -84,6 +84,20 @@ export class CallPage {
     });
   }
 
+  async expectFixtureCharacters() {
+    const characters = this.configurationForm.locator('button[data-selected]');
+    await expect(characters).toHaveText(['Lily', 'Ramona', 'Rafal']);
+    await expect(
+      this.configurationForm.locator('button[data-selected="true"]'),
+    ).toHaveText('Lily');
+    await expect(
+      this.configurationForm.getByText(
+        'A friendly companion for a relaxed conversation.',
+        { exact: false },
+      ),
+    ).toBeVisible();
+  }
+
   // --- Actions ---
 
   /**

@@ -76,6 +76,7 @@ test.describe('Call Dashboard - Authenticated User', () => {
     // Verify configuration form is visible
     await callPage.expectPageVisible();
     await callPage.expectConfigurationFormVisible();
+    await callPage.expectFixtureCharacters();
     await argosScreenshot(
       page,
       `call-dashboard-desktop-${testInfo.project.name}`,
@@ -176,6 +177,7 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
     page,
   }, testInfo) => {
     await callPage.expectCreditsSectionVisible();
+    await callPage.expectFixtureCharacters();
     await argosScreenshot(
       page,
       `call-dashboard-mobile-${testInfo.project.name}`,
