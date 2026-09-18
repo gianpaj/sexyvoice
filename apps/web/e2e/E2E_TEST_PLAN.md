@@ -193,8 +193,10 @@ must receive it explicitly.
 Character queries run during server rendering, so browser `page.route()`
 handlers cannot intercept them. Keep fixture data in source control rather
 than copying live database rows during each test run. Desktop and mobile
-screenshots assert the fixed character order and selected description before
-capture. Fixture changes may require an intentional Argos baseline approval.
+screenshots require the server-rendered `data-e2e-call-fixtures` marker, then
+assert character order and selection using `lib/e2e-mocks-shared.ts`.
+Matching live content alone does not prove the server enabled fixtures.
+Fixture changes may require an intentional Argos baseline approval.
 
 The call spec also uses inline route handlers to mock:
 
@@ -206,6 +208,8 @@ The call spec also uses inline route handlers to mock:
 
 - tests do **not** establish a real LiveKit connection
 - tests validate UI structure and interaction affordances only
+- live database contracts and paid-user controls are outside this screenshot
+  suite; see the [coverage decision](../../../.agents/notes/implemented/operations/2026-09-18-call-screenshot-fixtures.md#coverage-limits)
 
 ---
 

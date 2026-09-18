@@ -5,6 +5,8 @@
 Use the existing server-only `lib/e2e-mocks.ts` fixtures and `isE2E()` gate
 for call dashboard rendering. Keep character rows shaped like query responses
 so tests exercise the production row-to-preset mapper. Preserve authentication.
+The public character snapshot lives in `lib/e2e-mocks-shared.ts`, re-exported
+by `lib/e2e-mocks.ts`, so Playwright can derive expectations from the same rows.
 
 The fixtures cover public characters, call voices, credit transactions,
 instruction config, and free-user status. Custom characters are empty.
@@ -27,6 +29,19 @@ synthetic. Tests do not refresh these snapshots from the database.
 
 Fixture edits can require a deliberate baseline approval. Runtime setup is
 [in the E2E guide](../../../../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior).
+
+## Coverage limits
+
+Accept fixture-backed call screenshots as UI regression coverage, not live
+Supabase integration coverage. The Vitest live-mode cases mock query functions;
+they verify branching and mapping, not SELECT joins or deployed RLS policies.
+Type checks validate against generated schema types, not the live database.
+A separate integration test would be needed to cover those database contracts.
+
+The screenshot fixture represents a free user without custom characters.
+Paid-user controls and custom-character voice selection are outside this suite.
+The voice catalog keeps server props deterministic but does not exercise those
+controls. Adding paid-user screenshots is a separate test-coverage task.
 
 ## Verification
 
