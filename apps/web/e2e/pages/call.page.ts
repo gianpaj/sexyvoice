@@ -85,6 +85,10 @@ export class CallPage {
   }
 
   async expectFixtureCharacters() {
+    await expect(
+      this.page.locator('[data-e2e-call-fixtures]'),
+      'Start the Next.js server with E2E_TEST_MODE=true before taking call screenshots',
+    ).toBeVisible();
     const characters = this.configurationForm.locator('button[data-selected]');
     await expect(characters).toHaveText(['Lily', 'Ramona', 'Rafal']);
     await expect(

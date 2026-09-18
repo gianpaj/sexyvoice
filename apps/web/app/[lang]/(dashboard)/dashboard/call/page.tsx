@@ -34,7 +34,8 @@ export default async function Call(props: {
     return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const [{ data: creditTransactions }, isPaidUser, callVoices] = isE2E()
+  const e2e = isE2E();
+  const [{ data: creditTransactions }, isPaidUser, callVoices] = e2e
     ? [{ data: E2E_CREDIT_TRANSACTIONS }, false, E2E_CALL_VOICES]
     : await Promise.all([
         supabase
@@ -47,7 +48,10 @@ export default async function Call(props: {
       ]);
 
   return (
-    <div className="mx-auto flex w-full flex-col md:max-w-3xl">
+    <div
+      className="mx-auto flex w-full flex-col md:max-w-3xl"
+      data-e2e-call-fixtures={e2e ? '' : undefined}
+    >
       <div>
         <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
           <PhoneCall size={26} /> {t('title')}

@@ -205,7 +205,8 @@ describe('call E2E data', () => {
   });
 
   it('passes fixture credits and voices with unpaid entitlement to the page', async () => {
-    renderToStaticMarkup(await CallPage({ params: params() }));
+    const html = renderToStaticMarkup(await CallPage({ params: params() }));
+    expect(html).toContain('data-e2e-call-fixtures=""');
 
     expectAuthenticated();
     expectNoDataCalls();
@@ -326,7 +327,8 @@ describe.each([
     ];
     vi.mocked(getCallVoices).mockResolvedValue(voices);
 
-    renderToStaticMarkup(await CallPage({ params: params() }));
+    const html = renderToStaticMarkup(await CallPage({ params: params() }));
+    expect(html).not.toContain('data-e2e-call-fixtures');
 
     expectAuthenticated();
     expect(from).toHaveBeenCalledExactlyOnceWith('credit_transactions');
