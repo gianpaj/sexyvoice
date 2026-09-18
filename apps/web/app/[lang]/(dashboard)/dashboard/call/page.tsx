@@ -5,11 +5,8 @@ import { CallFaq } from '@/components/call/call-faq';
 import { Chat } from '@/components/call/chat';
 import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
-import {
-  E2E_CALL_VOICES,
-  E2E_CREDIT_TRANSACTIONS,
-  isE2E,
-} from '@/lib/e2e-mocks';
+import { getE2ECallUser } from '@/lib/e2e-call-user';
+import { E2E_CALL_VOICES, E2E_CREDIT_TRANSACTIONS } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
@@ -34,9 +31,9 @@ export default async function Call(props: {
     return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const e2e = isE2E();
+  const e2e = await getE2ECallUser();
   const [{ data: creditTransactions }, isPaidUser, callVoices] = e2e
-    ? [{ data: E2E_CREDIT_TRANSACTIONS }, false, E2E_CALL_VOICES]
+    ? [{ data: E2E_CREDIT_TRANSACTIONS }, e2e.isPaidUser, E2E_CALL_VOICES]
     : await Promise.all([
         supabase
           .from('credit_transactions')

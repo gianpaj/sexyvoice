@@ -1,12 +1,17 @@
+import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query';
+import { cookies } from 'next/headers';
 import type { ComponentProps, ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CallLayout from '@/app/[lang]/(dashboard)/dashboard/call/layout';
 import CallPage from '@/app/[lang]/(dashboard)/dashboard/call/page';
+import DashboardUI from '@/app/[lang]/(dashboard)/dashboard.ui';
+import DashboardLayout from '@/app/[lang]/(dashboard)/layout';
 import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
+import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
   E2E_CALL_INSTRUCTION_CONFIG,
   E2E_CALL_VOICES,
@@ -22,11 +27,37 @@ import {
   getUserCallCharacters,
   hasUserPaid,
 } from '@/lib/supabase/queries';
+import {
+  getCreditsQuery,
+  getCreditTransactions,
+} from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('server-only', () => ({}));
 vi.mock('@livekit/components-styles', () => ({}));
+vi.mock('next/headers', () => ({ cookies: vi.fn() }));
+vi.mock('@supabase-cache-helpers/postgrest-react-query', () => ({
+  prefetchQuery: vi.fn(),
+}));
+vi.mock('@tanstack/react-query', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@tanstack/react-query')>()),
+  HydrationBoundary: ({ children }: { children: ReactNode }) => children,
+}));
+vi.mock('@/components/react-query-client-provider', () => ({
+  ReactQueryClientProvider: ({ children }: { children: ReactNode }) => children,
+}));
+vi.mock('@/app/[lang]/(dashboard)/dashboard.ui', () => ({
+  default: vi.fn(({ children }: { children: ReactNode }) => children),
+}));
+vi.mock('@/lib/banners/resolve-banner', () => ({
+  resolveActiveBanner: vi.fn(() => null),
+}));
+vi.mock('@/lib/supabase/queries.client', () => ({
+  getCreditsQuery: vi.fn(),
+  getCreditTransactions: vi.fn(),
+}));
 vi.mock('next-intl/server', () => ({
+  getMessages: async () => ({}),
   getTranslations: async () => (key: string) => key,
 }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
@@ -67,6 +98,18 @@ vi.mock('@/components/call/call-faq', () => ({ CallFaq: () => null }));
 const userId = 'verified-call-user';
 const params = () => Promise.resolve({ lang: 'de' as const });
 const liveCredits = [{ amount: 321 }];
+const cookieStore = {
+  get: vi.fn(),
+  getAll: vi.fn(() => []),
+};
+
+function setCallUserCookie(value: string | undefined) {
+  cookieStore.get.mockImplementation((name: string) =>
+    name === 'e2e-call-user' && value !== undefined
+      ? { name, value }
+      : undefined,
+  );
+}
 const query = {
   eq: vi.fn().mockReturnThis(),
   order: vi.fn().mockResolvedValue({ data: liveCredits }),
@@ -95,6 +138,9 @@ function expectNoDataCalls() {
     getUserCallCharacters,
     hasUserPaid,
     getCallInstructionConfig,
+    getCreditTransactions,
+    getCreditsQuery,
+    prefetchQuery,
   ]) {
     expect(mock).not.toHaveBeenCalled();
   }
@@ -127,6 +173,14 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv('E2E_TEST_MODE', 'true');
   vi.stubEnv('VERCEL_ENV', 'preview');
+  setCallUserCookie(undefined);
+  vi.mocked(cookies).mockResolvedValue(
+    cookieStore as unknown as Awaited<ReturnType<typeof cookies>>,
+  );
+  vi.mocked(getCreditTransactions).mockResolvedValue({
+    data: liveCredits,
+    error: null,
+  } as Awaited<ReturnType<typeof getCreditTransactions>>);
   vi.mocked(createClient).mockResolvedValue(supabase);
   vi.mocked(getVerifiedClaims).mockResolvedValue({ sub: userId } as NonNullable<
     Awaited<ReturnType<typeof getVerifiedClaims>>
@@ -145,6 +199,52 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe('call E2E data', () => {
+  it.each([
+    ['free', false],
+    ['paid', true],
+    [undefined, false],
+    ['invalid', false],
+  ] as const)('resolves cookie=%s to paid=%s', async (cookie, isPaidUser) => {
+    setCallUserCookie(cookie);
+
+    await expect(getE2ECallUser()).resolves.toEqual({ isPaidUser });
+    expect(cookies).toHaveBeenCalledOnce();
+    expect(cookieStore.get).toHaveBeenCalledExactlyOnceWith('e2e-call-user');
+    expectNoDataCalls();
+  });
+
+  it.each([
+    ['free', false],
+    ['paid', true],
+    [undefined, false],
+    ['invalid', false],
+  ] as const)(
+    'shares cookie=%s entitlement across the page and dashboard without layout data calls',
+    async (cookie, isPaidUser) => {
+      setCallUserCookie(cookie);
+      vi.mocked(hasUserPaid).mockResolvedValue(!isPaidUser);
+
+      const page = await CallPage({ params: params() });
+      const call = await CallLayout({ children: page, params: params() });
+      const html = renderToStaticMarkup(
+        await DashboardLayout({ children: call, params: params() }),
+      );
+
+      expect(html).toContain('data-e2e-call-fixtures=""');
+      expectPageProps(E2E_CREDIT_TRANSACTIONS, E2E_CALL_VOICES, isPaidUser);
+      expect(DashboardUI).toHaveBeenCalledOnce();
+      expect(vi.mocked(DashboardUI).mock.calls[0][0]).toMatchObject({
+        creditTransactions: E2E_CREDIT_TRANSACTIONS,
+        isPaidUser,
+        lang: 'de',
+        userId,
+      });
+      expect(providerProps().initialCustomCharacters).toEqual([]);
+      expect(createClient).toHaveBeenCalledTimes(3);
+      expect(getVerifiedClaims).toHaveBeenCalledTimes(3);
+      expectNoDataCalls();
+    },
+  );
   it.each([
     ['true', 'preview', true],
     ['true', undefined, true],
@@ -237,6 +337,51 @@ describe.each([
   beforeEach(() => {
     vi.stubEnv('E2E_TEST_MODE', flag);
     vi.stubEnv('VERCEL_ENV', env);
+  });
+
+  it('ignores a paid fixture cookie in the resolver', async () => {
+    setCallUserCookie('paid');
+
+    await expect(getE2ECallUser()).resolves.toBeNull();
+    expect(cookies).not.toHaveBeenCalled();
+    expect(cookieStore.get).not.toHaveBeenCalled();
+  });
+
+  it('uses unpaid database entitlement across the page and layouts despite a paid cookie', async () => {
+    setCallUserCookie('paid');
+    vi.mocked(hasUserPaid).mockResolvedValue(false);
+
+    const page = await CallPage({ params: params() });
+    const call = await CallLayout({ children: page, params: params() });
+    const html = renderToStaticMarkup(
+      await DashboardLayout({ children: call, params: params() }),
+    );
+
+    expect(html).not.toContain('data-e2e-call-fixtures');
+    expectPageProps(liveCredits, [], false);
+    expect(DashboardUI).toHaveBeenCalledOnce();
+    expect(vi.mocked(DashboardUI).mock.calls[0][0]).toMatchObject({
+      creditTransactions: liveCredits,
+      isPaidUser: false,
+      lang: 'de',
+      userId,
+    });
+    expect(hasUserPaid).toHaveBeenCalledTimes(3);
+    for (const args of vi.mocked(hasUserPaid).mock.calls) {
+      expect(args).toEqual([userId]);
+    }
+    expect(getCreditTransactions).toHaveBeenCalledExactlyOnceWith(
+      supabase,
+      userId,
+    );
+    expect(getCreditsQuery).toHaveBeenCalledExactlyOnceWith(supabase, userId);
+    expect(prefetchQuery).toHaveBeenCalledOnce();
+    expect(getPublicCallCharacters).toHaveBeenCalledOnce();
+    expect(getCallInstructionConfig).toHaveBeenCalledOnce();
+    expect(getCallVoices).toHaveBeenCalledOnce();
+    expect(getUserCallCharacters).not.toHaveBeenCalled();
+    expect(providerProps().initialCustomCharacters).toEqual([]);
+    expect(cookieStore.get).not.toHaveBeenCalled();
   });
 
   it('loads and maps public and paid custom characters with live instructions', async () => {

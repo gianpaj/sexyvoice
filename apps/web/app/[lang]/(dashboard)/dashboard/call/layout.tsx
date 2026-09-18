@@ -7,10 +7,10 @@ import type { CallLanguage } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
+import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
   E2E_CALL_INSTRUCTION_CONFIG,
   E2E_PUBLIC_CALL_CHARACTERS,
-  isE2E,
 } from '@/lib/e2e-mocks';
 import {
   applyPresetInstructionOverrides,
@@ -121,7 +121,7 @@ export default async function CallLayout({
   children: React.ReactNode;
   params: Promise<{ lang: Locale }>;
 }>) {
-  const e2e = isE2E();
+  const e2e = await getE2ECallUser();
   const { defaultInstructions, initialInstruction, presetInstructions } = e2e
     ? E2E_CALL_INSTRUCTION_CONFIG
     : await getCallInstructionConfig();
@@ -131,7 +131,7 @@ export default async function CallLayout({
   const userId = claims?.sub;
 
   const [publicCharacters, isPaidUser] = e2e
-    ? [E2E_PUBLIC_CALL_CHARACTERS, false]
+    ? [E2E_PUBLIC_CALL_CHARACTERS, e2e.isPaidUser]
     : await Promise.all([
         getPublicCallCharacters(),
         userId ? hasUserPaid(userId) : Promise.resolve(false),

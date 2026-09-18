@@ -2,6 +2,7 @@
 // Server-only state and fixtures live in `./e2e-mocks.ts`.
 import type { getPublicCallCharacters } from './supabase/queries';
 export const E2E_USER_ID = 'e2e-test-user-id';
+export const E2E_CALL_USER_COOKIE = 'e2e-call-user';
 
 // Single source of truth for the E2E usage-summary numbers. The server-side
 // summary cards (`./e2e-mocks.ts`) and the client-side data-table mock
