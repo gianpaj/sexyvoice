@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { E2E_PUBLIC_CALL_CHARACTERS } from '@/lib/e2e-mocks-shared';
+
 /**
  * Page Object Model for Call Dashboard
  *
@@ -90,13 +92,16 @@ export class CallPage {
       'Start the Next.js server with E2E_TEST_MODE=true before taking call screenshots',
     ).toBeVisible();
     const characters = this.configurationForm.locator('button[data-selected]');
-    await expect(characters).toHaveText(['Lily', 'Ramona', 'Rafal']);
+    const selectedCharacter = E2E_PUBLIC_CALL_CHARACTERS[0];
+    await expect(characters).toHaveText(
+      E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.name),
+    );
     await expect(
       this.configurationForm.locator('button[data-selected="true"]'),
-    ).toHaveText('Lily');
+    ).toHaveText(selectedCharacter.name);
     await expect(
       this.configurationForm.getByText(
-        '22yo shy, submissive student girl. Likes to please, hesitant, obedient.',
+        selectedCharacter.localized_descriptions.en,
         { exact: false },
       ),
     ).toBeVisible();
