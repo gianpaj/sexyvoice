@@ -10,6 +10,15 @@ The fixtures cover public characters, call voices, credit transactions,
 instruction config, and free-user status. Custom characters are empty.
 Production database queries and Argos comparison settings are unchanged.
 
+## Data provenance
+
+Public characters and call voices were captured from the linked database with
+read-only SELECT queries on 2026-09-18. The selected columns and joins match
+`getPublicCallCharacters()` and `getCallVoices()`. The snapshot contains three
+characters in `sort_order` and six voices ordered by `sort_order`, then name.
+User IDs and prompt text were excluded. Credits and instruction config remain
+synthetic. Tests do not refresh these snapshots from the database.
+
 ## Alternatives
 
 - Browser route mocks cannot intercept the server-rendered character queries.

@@ -179,6 +179,23 @@ describe('call E2E data', () => {
     expect(props.defaultPresets?.map((preset) => preset.id)).toEqual(
       E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.id),
     );
+    expect(props.defaultPresets?.map((preset) => preset.voiceName)).toEqual([
+      'Ara',
+      'Eve',
+      'Rex',
+    ]);
+    for (const character of E2E_PUBLIC_CALL_CHARACTERS) {
+      expect(character.prompts).toEqual({ type: 'call' });
+      expect(character).not.toHaveProperty('user_id');
+      expect(
+        E2E_CALL_VOICES.find((voice) => voice.id === character.voice_id),
+      ).toMatchObject(character.voices);
+    }
+    expect(props.defaultPresets?.map((preset) => preset.instructions)).toEqual([
+      '',
+      '',
+      '',
+    ]);
     expect(props.initialState).toEqual({
       initialInstruction: E2E_CALL_INSTRUCTION_CONFIG.initialInstruction,
       instructions: E2E_CALL_INSTRUCTION_CONFIG.defaultInstructions,

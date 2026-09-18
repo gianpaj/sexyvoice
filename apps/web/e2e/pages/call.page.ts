@@ -92,7 +92,7 @@ export class CallPage {
     ).toHaveText('Lily');
     await expect(
       this.configurationForm.getByText(
-        'A friendly companion for a relaxed conversation.',
+        '22yo shy, submissive student girl. Likes to please, hesitant, obedient.',
         { exact: false },
       ),
     ).toBeVisible();

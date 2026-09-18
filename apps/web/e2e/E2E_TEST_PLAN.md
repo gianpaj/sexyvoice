@@ -180,6 +180,11 @@ when `isE2E()` is true. These fix public character order and descriptions,
 call voices, credit transactions, instruction config, and free-user status.
 Custom characters are empty. Authentication still runs.
 
+Character and voice fixtures are a one-time snapshot of the linked database's
+public query results, including localized descriptions and voice assignments.
+They contain no user IDs or prompt text. Credits and instruction config are
+synthetic test data, not captured account data or production prompts.
+
 Enable `E2E_TEST_MODE=true` on the **Next.js server**, not just the Playwright
 process. `isE2E()` disables fixtures when `VERCEL_ENV=production`. CI's
 Playwright server inherits the flag; an independently started local server
