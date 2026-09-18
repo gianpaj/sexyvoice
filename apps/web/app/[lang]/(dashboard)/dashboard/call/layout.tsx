@@ -8,6 +8,11 @@ import type { Preset } from '@/data/presets';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import {
+  E2E_CALL_INSTRUCTION_CONFIG,
+  E2E_PUBLIC_CALL_CHARACTERS,
+  isE2E,
+} from '@/lib/e2e-mocks';
+import {
   applyPresetInstructionOverrides,
   getCallInstructionConfig,
 } from '@/lib/edge-config/call-instructions';
@@ -116,19 +121,23 @@ export default async function CallLayout({
   children: React.ReactNode;
   params: Promise<{ lang: Locale }>;
 }>) {
-  const { defaultInstructions, initialInstruction, presetInstructions } =
-    await getCallInstructionConfig();
+  const e2e = isE2E();
+  const { defaultInstructions, initialInstruction, presetInstructions } = e2e
+    ? E2E_CALL_INSTRUCTION_CONFIG
+    : await getCallInstructionConfig();
 
   const supabase = await createClient();
   const claims = await getVerifiedClaims(supabase);
   const userId = claims?.sub;
 
-  const [publicCharacters, isPaidUser] = await Promise.all([
-    getPublicCallCharacters(),
-    userId ? hasUserPaid(userId) : Promise.resolve(false),
-  ]);
+  const [publicCharacters, isPaidUser] = e2e
+    ? [E2E_PUBLIC_CALL_CHARACTERS, false]
+    : await Promise.all([
+        getPublicCallCharacters(),
+        userId ? hasUserPaid(userId) : Promise.resolve(false),
+      ]);
   const userCharacters =
-    userId && isPaidUser ? await getUserCallCharacters(userId) : [];
+    !e2e && userId && isPaidUser ? await getUserCallCharacters(userId) : [];
 
   const baseDefaultPresets: Preset[] = (publicCharacters ?? []).map(
     (character) => mapCharacterToPreset(character as CharacterRow),

@@ -13,10 +13,84 @@ import {
   E2E_USER_ID,
 } from './e2e-mocks-shared';
 import { isE2E as isE2EMode } from './e2e-mode';
+import type { getCallInstructionConfig } from './edge-config/call-instructions';
+import type {
+  getCallVoices,
+  getPublicCallCharacters,
+} from './supabase/queries';
 import type { AudioFileAndVoicesRes } from './supabase/queries.client';
 import type { MonthlyUsageSummary } from './supabase/usage-queries';
 
 export const isE2E = isE2EMode;
+
+// Keep the database response shapes so screenshots exercise the SSR mappers.
+export const E2E_CALL_VOICES = [
+  {
+    description: 'Warm and clear',
+    feature: 'call',
+    id: 'e2e-call-voice-ara',
+    language: 'en',
+    model: 'xai',
+    name: 'Ara',
+    sample_url: null,
+    sort_order: 0,
+    type: 'Female',
+  },
+] satisfies NonNullable<Awaited<ReturnType<typeof getCallVoices>>>;
+
+export const E2E_PUBLIC_CALL_CHARACTERS = [
+  {
+    id: 'e2e-character-lily',
+    image: 'lily.webp',
+    is_public: true,
+    localized_descriptions: {
+      en: 'A friendly companion for a relaxed conversation.',
+    },
+    name: 'Lily',
+    prompt_id: 'e2e-prompt-lily',
+    prompts: { type: 'call' },
+    session_config: { temperature: 0.8, voice: 'Ara' },
+    sort_order: 0,
+    voice_id: E2E_CALL_VOICES[0].id,
+    voices: { name: 'Ara', sample_url: null },
+  },
+  {
+    id: 'e2e-character-ramona',
+    image: 'ramona.webp',
+    is_public: true,
+    localized_descriptions: {
+      en: 'A thoughtful companion who enjoys a good story.',
+    },
+    name: 'Ramona',
+    prompt_id: 'e2e-prompt-ramona',
+    prompts: { type: 'call' },
+    session_config: { temperature: 0.8, voice: 'Ara' },
+    sort_order: 1,
+    voice_id: E2E_CALL_VOICES[0].id,
+    voices: { name: 'Ara', sample_url: null },
+  },
+  {
+    id: 'e2e-character-rafal',
+    image: 'rafal.webp',
+    is_public: true,
+    localized_descriptions: {
+      en: 'An easygoing companion with a sense of humor.',
+    },
+    name: 'Rafal',
+    prompt_id: 'e2e-prompt-rafal',
+    prompts: { type: 'call' },
+    session_config: { temperature: 0.8, voice: 'Ara' },
+    sort_order: 2,
+    voice_id: E2E_CALL_VOICES[0].id,
+    voices: { name: 'Ara', sample_url: null },
+  },
+] satisfies NonNullable<Awaited<ReturnType<typeof getPublicCallCharacters>>>;
+
+export const E2E_CALL_INSTRUCTION_CONFIG = {
+  defaultInstructions: 'Keep the conversation friendly and concise.',
+  initialInstruction: 'Say hello.',
+  presetInstructions: undefined,
+} satisfies Awaited<ReturnType<typeof getCallInstructionConfig>>;
 
 type CreditTransactionRow = Tables<'credit_transactions'>;
 
