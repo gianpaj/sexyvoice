@@ -1,3 +1,6 @@
+import type { Page } from '@playwright/test';
+
+import { E2E_CALL_USER_COOKIE } from '@/lib/e2e-mocks-shared';
 import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
 import { CallPage } from './pages/call.page';
@@ -15,24 +18,35 @@ import { CallPage } from './pages/call.page';
  * We do NOT actually connect to LiveKit — tests focus on UI presence only.
  */
 
-test.describe('Call Dashboard - Authenticated User', () => {
-  let callPage: CallPage;
-
-  test.beforeEach(async ({ page }) => {
-    // Mock the call-token endpoint to prevent real LiveKit connections
-    await page.route('**/api/call-token', async (route) => {
-      console.log('[MOCK] call-token intercepted — not connecting to LiveKit');
-      await route.fulfill({
-        body: JSON.stringify({
-          accessToken: 'mock-token-for-e2e',
-          url: 'wss://mock-livekit.example.com',
-        }),
-        contentType: 'application/json',
-        status: 200,
-      });
+async function setupCallPage(
+  page: Page,
+  baseURL: string | undefined,
+  user: 'free' | 'paid' = 'free',
+) {
+  if (!baseURL) {
+    throw new Error('Call dashboard tests require a Playwright baseURL');
+  }
+  await page.context().addCookies([
+    {
+      name: E2E_CALL_USER_COOKIE,
+      url: new URL('/', baseURL).href,
+      value: user,
+    },
+  ]);
+  // Mock the call-token endpoint to prevent real LiveKit connections
+  await page.route('**/api/call-token', async (route) => {
+    console.log('[MOCK] call-token intercepted — not connecting to LiveKit');
+    await route.fulfill({
+      body: JSON.stringify({
+        accessToken: 'mock-token-for-e2e',
+        url: 'wss://mock-livekit.example.com',
+      }),
+      contentType: 'application/json',
+      status: 200,
     });
+  });
 
-    const placeholderSvg = `
+  const placeholderSvg = `
       <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
         <rect width="128" height="128" fill="#27272a" />
         <circle cx="64" cy="48" r="24" fill="#71717a" />
@@ -40,32 +54,40 @@ test.describe('Call Dashboard - Authenticated User', () => {
       </svg>
     `;
 
-    await page.route('**/characters/*', async (route) => {
+  await page.route('**/characters/*', async (route) => {
+    await route.fulfill({
+      body: placeholderSvg,
+      contentType: 'image/svg+xml',
+      status: 200,
+    });
+  });
+
+  await page.route('**/_next/image*', async (route) => {
+    const url = new URL(route.request().url());
+    const imageUrl = url.searchParams.get('url');
+
+    if (imageUrl?.startsWith('/characters/')) {
       await route.fulfill({
         body: placeholderSvg,
         contentType: 'image/svg+xml',
         status: 200,
       });
-    });
+      return;
+    }
 
-    await page.route('**/_next/image*', async (route) => {
-      const url = new URL(route.request().url());
-      const imageUrl = url.searchParams.get('url');
+    await route.continue();
+  });
 
-      if (imageUrl?.startsWith('/characters/')) {
-        await route.fulfill({
-          body: placeholderSvg,
-          contentType: 'image/svg+xml',
-          status: 200,
-        });
-        return;
-      }
+  const callPage = new CallPage(page);
+  await callPage.goto();
+  return callPage;
+}
 
-      await route.continue();
-    });
+test.describe('Call Dashboard - Authenticated User', () => {
+  let callPage: CallPage;
 
-    callPage = new CallPage(page);
-    await callPage.goto();
+  test.beforeEach(async ({ page, baseURL }) => {
+    callPage = await setupCallPage(page, baseURL);
   });
 
   test.afterEach(async ({ page }) => {
@@ -77,6 +99,7 @@ test.describe('Call Dashboard - Authenticated User', () => {
     await callPage.expectPageVisible();
     await callPage.expectConfigurationFormVisible();
     await callPage.expectFixtureCharacters();
+    await callPage.expectSceneOptionsEnabled(false);
     await argosScreenshot(
       page,
       `call-dashboard-desktop-${testInfo.project.name}`,
@@ -121,52 +144,8 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
 
   let callPage: CallPage;
 
-  test.beforeEach(async ({ page }) => {
-    await page.route('**/api/call-token', async (route) => {
-      await route.fulfill({
-        body: JSON.stringify({
-          accessToken: 'mock-token-for-e2e',
-          url: 'wss://mock-livekit.example.com',
-        }),
-        contentType: 'application/json',
-        status: 200,
-      });
-    });
-
-    const placeholderSvg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-        <rect width="128" height="128" fill="#27272a" />
-        <circle cx="64" cy="48" r="24" fill="#71717a" />
-        <rect x="28" y="82" width="72" height="22" rx="11" fill="#71717a" />
-      </svg>
-    `;
-
-    await page.route('**/characters/*', async (route) => {
-      await route.fulfill({
-        body: placeholderSvg,
-        contentType: 'image/svg+xml',
-        status: 200,
-      });
-    });
-
-    await page.route('**/_next/image*', async (route) => {
-      const url = new URL(route.request().url());
-      const imageUrl = url.searchParams.get('url');
-
-      if (imageUrl?.startsWith('/characters/')) {
-        await route.fulfill({
-          body: placeholderSvg,
-          contentType: 'image/svg+xml',
-          status: 200,
-        });
-        return;
-      }
-
-      await route.continue();
-    });
-
-    callPage = new CallPage(page);
-    await callPage.goto();
+  test.beforeEach(async ({ page, baseURL }) => {
+    callPage = await setupCallPage(page, baseURL);
   });
 
   test.afterEach(async ({ page }) => {
@@ -178,12 +157,43 @@ test.describe('Call Dashboard - Mobile Viewport', () => {
   }, testInfo) => {
     await callPage.expectCreditsSectionVisible();
     await callPage.expectFixtureCharacters();
+    await callPage.expectSceneOptionsEnabled(false);
     await argosScreenshot(
       page,
       `call-dashboard-mobile-${testInfo.project.name}`,
     );
   });
 });
+
+for (const viewport of ['desktop', 'mobile'] as const) {
+  test.describe(`Call Dashboard - Paid User - ${viewport}`, () => {
+    if (viewport === 'mobile') {
+      test.use({ viewport: { height: 812, width: 375 } });
+    }
+
+    test.afterEach(async ({ page }) => {
+      await page.unroute('**/*');
+    });
+
+    test('should display the paid call page correctly', async ({
+      page,
+      baseURL,
+    }, testInfo) => {
+      const callPage = await setupCallPage(page, baseURL, 'paid');
+      await callPage.expectPageVisible();
+      await callPage.expectConfigurationFormVisible();
+      if (viewport === 'mobile') {
+        await callPage.expectCreditsSectionVisible();
+      }
+      await callPage.expectFixtureCharacters();
+      await callPage.expectSceneOptionsEnabled(true);
+      await argosScreenshot(
+        page,
+        `call-dashboard-paid-${viewport}-${testInfo.project.name}`,
+      );
+    });
+  });
+}
 
 test.describe('Call Dashboard - Unauthenticated', () => {
   test.use({ storageState: { cookies: [], origins: [] } });

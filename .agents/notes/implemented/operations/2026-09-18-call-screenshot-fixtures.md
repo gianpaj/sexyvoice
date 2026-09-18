@@ -9,7 +9,11 @@ The public character snapshot lives in `lib/e2e-mocks-shared.ts`, re-exported
 by `lib/e2e-mocks.ts`, so Playwright can derive expectations from the same rows.
 
 The fixtures cover public characters, call voices, credit transactions,
-instruction config, and free-user status. Custom characters are empty.
+instruction config, and free/paid entitlement. Custom characters are empty.
+The request-scoped `e2e-call-user` cookie selects entitlement through
+`lib/e2e-call-user.ts` only when `isE2E()` is true. Missing or invalid values
+select free. Each Playwright context sets its cookie before navigation;
+process-wide environment switching would prevent parallel scenario isolation.
 Production database queries and Argos comparison settings are unchanged.
 
 ## Data provenance
@@ -38,16 +42,21 @@ they verify branching and mapping, not SELECT joins or deployed RLS policies.
 Type checks validate against generated schema types, not the live database.
 A separate integration test would be needed to cover those database contracts.
 
-The screenshot fixture represents a free user without custom characters.
-Paid-user controls and custom-character voice selection are outside this suite.
-The voice catalog keeps server props deterministic but does not exercise those
-controls. Adding paid-user screenshots is a separate test-coverage task.
+Desktop and mobile screenshots cover free and paid users without custom
+characters. Tests assert that non-default scene options are disabled for free
+users and enabled for paid users, then close the selector before capture.
+Custom-character editing and voice selection remain outside this suite.
+The voice catalog keeps server props deterministic.
 
 ## Verification
 
 - `pnpm fixall` and `pnpm type-check` passed.
-- Vitest: 91 files passed, 1,311 tests passed, 19 skipped.
-- Call Playwright suite: 12 passed, including auth setup and both screenshots.
+- `pnpm --filter @sexyvoice/web exec vitest run`: 91 files passed,
+  1,323 tests passed, 19 skipped.
+- Call Playwright suite with two workers: 14 passed, including auth setup and
+  free/paid desktop/mobile screenshots.
+- `CI=true pnpm test` failed in Stripe webhook tests due to Redis connection
+  errors. The local non-watch suite passed those tests.
 - Local Playwright used installed Google Chrome because bundled Chromium was
   unavailable. The temporary Next.js dev server used `E2E_TEST_MODE=true`.
 - No Argos upload, baseline approval, or database mutation was performed by

@@ -35,7 +35,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 | Area     | Route                    | Spec                         | POM                      | Mocking                                              |            Tests |
 | -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
 | Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
-| Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               11 |
+| Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
 | Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               17 |
 | Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
 | History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
@@ -177,8 +177,21 @@ Reason:
 
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
-call voices, credit transactions, instruction config, and free-user status.
+call voices, credit transactions, and instruction config.
 Custom characters are empty. Authentication still runs.
+
+Playwright sets `e2e-call-user=free|paid` before navigation in each test's
+isolated browser context. `lib/e2e-call-user.ts` reads this cookie only in
+E2E mode and supplies entitlement to the dashboard layout, call layout, and
+call page. Missing or invalid values default to free. Outside E2E mode,
+including production, entitlement comes from the database.
+
+Both scenarios have desktop and mobile screenshots. Free snapshot names stay
+`call-dashboard-{viewport}-{project}`; paid snapshots use
+`call-dashboard-paid-{viewport}-{project}`. Before each screenshot, tests open
+the scene selector and check that all non-default scene options are disabled
+for free users and enabled for paid users. "No scene" stays enabled for both.
+Tests close the selector with Escape before capture.
 
 Character and voice fixtures are a one-time snapshot of the linked database's
 public query results, including localized descriptions and voice assignments.
@@ -208,7 +221,7 @@ The call spec also uses inline route handlers to mock:
 
 - tests do **not** establish a real LiveKit connection
 - tests validate UI structure and interaction affordances only
-- live database contracts and paid-user controls are outside this screenshot
+- live database contracts and custom-character editing are outside this screenshot
   suite; see the [coverage decision](../../../.agents/notes/implemented/operations/2026-09-18-call-screenshot-fixtures.md#coverage-limits)
 
 ---
