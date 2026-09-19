@@ -10,6 +10,84 @@ interface MetadataWithDollarAmount {
   dollarAmount?: number;
 }
 
+export interface PurchaseSummaryTransaction {
+  amount: number;
+  isNew: boolean;
+  type: 'subscription' | 'topup';
+}
+
+function formatDollarAmount(amount: number): string {
+  return `$${amount}`;
+}
+
+function formatTopupStatus(
+  newCount: number,
+  existingCount: number,
+): string | undefined {
+  if (newCount > 0 && existingCount > 0) {
+    return `${newCount} new + ${existingCount} existing topups`;
+  }
+
+  const count = newCount || existingCount;
+  if (count === 0) {
+    return;
+  }
+
+  const status = newCount > 0 ? 'new' : 'existing';
+  return `${count} ${status} topup${count === 1 ? '' : 's'}`;
+}
+
+export function formatPurchaseSummary(
+  transactions: PurchaseSummaryTransaction[],
+): string {
+  if (transactions.length === 1) {
+    const transaction = transactions[0];
+    const type = transaction.type === 'subscription' ? 'sub' : 'topup';
+    return `${formatDollarAmount(transaction.amount)} - ${transaction.isNew ? 'new' : 'existing'} ${type}`;
+  }
+
+  const subscriptions = transactions.filter(
+    (transaction) => transaction.type === 'subscription',
+  );
+  const topups = transactions.filter(
+    (transaction) => transaction.type === 'topup',
+  );
+  const hasMixedTypes = subscriptions.length > 0 && topups.length > 0;
+
+  const components = subscriptions.map(
+    (transaction) => `${formatDollarAmount(transaction.amount)} subscription`,
+  );
+  const topupsByAmount = new Map<number, number>();
+  for (const topup of topups) {
+    topupsByAmount.set(
+      topup.amount,
+      (topupsByAmount.get(topup.amount) ?? 0) + 1,
+    );
+  }
+  for (const [amount, count] of topupsByAmount) {
+    const quantity = count > 1 ? `${count}× ` : '';
+    const type = hasMixedTypes ? ` topup${count === 1 ? '' : 's'}` : '';
+    components.push(`${quantity}${formatDollarAmount(amount)}${type}`);
+  }
+
+  const total = transactions.reduce(
+    (sum, transaction) => sum + transaction.amount,
+    0,
+  );
+  const statuses = subscriptions.map(
+    (transaction) => `${transaction.isNew ? 'new' : 'existing'} subscription`,
+  );
+  const topupStatus = formatTopupStatus(
+    topups.filter((topup) => topup.isNew).length,
+    topups.filter((topup) => !topup.isNew).length,
+  );
+  if (topupStatus) {
+    statuses.push(topupStatus);
+  }
+
+  return `${formatDollarAmount(total)} = ${components.join(' + ')}; ${statuses.join(' + ')}`;
+}
+
 // Matches the admin dashboard's completed-call metric.
 export function isCompletedUserCall(
   call: Pick<Tables<'call_sessions'>, 'status' | 'duration_seconds'>,
