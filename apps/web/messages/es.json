@@ -395,7 +395,16 @@
         }
       },
       "mostPopular": "Más Popular",
-      "cheaperBadge": "{percent} más barato"
+      "cheaperBadge": "{percent} más barato",
+      "custom": {
+        "title": "Cantidad personalizada",
+        "description": "Compra exactamente los créditos que necesitas, desde {minCredits} créditos.",
+        "creditsLabel": "Créditos",
+        "creditsSummary": "{credits} créditos",
+        "decrease": "Reducir créditos",
+        "increase": "Aumentar créditos",
+        "hint": "En incrementos de {step}"
+      }
     },
     "status": {
       "success": {

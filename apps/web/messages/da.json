@@ -391,7 +391,16 @@
         }
       },
       "mostPopular": "Mest populære",
-      "cheaperBadge": "{percent} billigere"
+      "cheaperBadge": "{percent} billigere",
+      "custom": {
+        "title": "Valgfrit beløb",
+        "description": "Køb præcis de credits, du har brug for – fra {minCredits} credits.",
+        "creditsLabel": "Credits",
+        "creditsSummary": "{credits} credits",
+        "decrease": "Færre credits",
+        "increase": "Flere credits",
+        "hint": "I spring på {step}"
+      }
     },
     "status": {
       "success": {
