@@ -1,0 +1,198 @@
+'use client';
+
+import type { ColumnDef } from '@tanstack/react-table';
+import { ArrowUpDown, ChevronDown, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { useMemo, useState } from 'react';
+
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type {
+  UsageEvent,
+  UsageSourceType,
+  UsageUnitType,
+} from '@/lib/supabase/usage-queries';
+
+function formatDate(
+  input: string | number | Date,
+  { withTime = false }: { withTime?: boolean } = {},
+): string {
+  const date = new Date(input);
+  return date.toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'numeric',
+    year: 'numeric',
+    ...(withTime && {
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  });
+}
+
+function DateTimeCell({ value }: { value: string }) {
+  return (
+    <time dateTime={value} suppressHydrationWarning>
+      {formatDate(value, { withTime: true })}
+    </time>
+  );
+}
+
+const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
+  api_tts: 'bg-indigo-100 text-indigo-900 border-indigo-200',
+  api_voice_cloning: 'bg-rose-100 text-rose-900 border-rose-200',
+  audio_processing: 'bg-orange-100 text-orange-900 border-orange-200',
+  live_call: 'bg-green-100 text-green-900 border-green-200',
+  tts: 'bg-purple-100 text-purple-900 border-purple-200',
+  voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
+};
+
+/**
+ * Format quantity with appropriate unit
+ */
+function formatQuantity(
+  quantity: number,
+  unit: UsageUnitType,
+  tUnits: ReturnType<typeof useTranslations<'usage.units'>>,
+): string {
+  const formattedNumber = quantity.toLocaleString();
+
+  switch (unit) {
+    case 'chars':
+      return `${formattedNumber} ${tUnits('chars')}`;
+    case 'mins':
+      return `${formattedNumber} ${tUnits('mins')}`;
+    case 'secs':
+      return `${formattedNumber} ${tUnits('secs')}`;
+    case 'operation':
+      return `${formattedNumber} ${tUnits('operation')}`;
+    default:
+      return formattedNumber;
+  }
+}
+
+/**
+ * Details cell component with expandable metadata
+ */
+function DetailsCell({
+  metadata,
+}: {
+  metadata: Tables<'usage_events'>['metadata'];
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!metadata || typeof metadata !== 'object') {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
+  const metadataObj = metadata as Record<string, unknown>;
+  const voiceName = metadataObj.voiceName as string | undefined;
+  const textPreview = metadataObj.textPreview as string | undefined;
+
+  const hasDetails = voiceName || textPreview;
+
+  if (!hasDetails) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <Button
+        className="h-auto justify-start gap-1 p-0"
+        onClick={() => setIsExpanded(!isExpanded)}
+        variant="ghost"
+      >
+        {isExpanded ? (
+          <ChevronDown className="size-4" />
+        ) : (
+          <ChevronRight className="size-4" />
+        )}
+        <span className="text-sm">
+          {voiceName ||
+            (textPreview ? `${textPreview.slice(0, 30)}...` : 'View details')}
+        </span>
+      </Button>
+      {isExpanded && (
+        <div className="ml-5 space-y-1 text-muted-foreground text-xs">
+          {voiceName && <div>Voice: {voiceName}</div>}
+          {textPreview && (
+            <div className="max-w-[200px] truncate" title={textPreview}>
+              Text: {textPreview}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function useColumns(): ColumnDef<UsageEvent>[] {
+  const t = useTranslations('usage');
+  const tUnits = useTranslations('usage.units');
+
+  return useMemo(
+    () => [
+      {
+        accessorKey: 'source_type',
+        cell: ({ row }) => {
+          const sourceType = row.original.source_type as UsageSourceType;
+          let label: string;
+          if (sourceType === 'api_tts') {
+            label = 'API TTS';
+          } else if (sourceType === 'api_voice_cloning') {
+            label = 'API Voice Cloning';
+          } else {
+            label = t(`summary.byType.${sourceType}`);
+          }
+          return (
+            <Badge
+              className={`${SOURCE_TYPE_COLORS[sourceType]} border`}
+              variant="outline"
+            >
+              {label}
+            </Badge>
+          );
+        },
+        header: t('table.sourceType'),
+        id: 'source_type',
+      },
+      {
+        accessorKey: 'quantity',
+        cell: ({ row }) =>
+          formatQuantity(
+            row.original.quantity,
+            row.original.unit as UsageUnitType,
+            tUnits,
+          ),
+        header: t('table.quantity'),
+        id: 'quantity',
+      },
+      {
+        accessorKey: 'credits_used',
+        cell: ({ row }) => row.original.credits_used.toLocaleString(),
+        header: t('table.creditsUsed'),
+        id: 'credits_used',
+      },
+      {
+        accessorKey: 'occurred_at',
+        cell: ({ row }) => <DateTimeCell value={row.original.occurred_at} />,
+        header: ({ column }) => (
+          <Button
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            variant="ghost"
+          >
+            {t('table.date')}
+            <ArrowUpDown className="ml-2 size-4" />
+          </Button>
+        ),
+        id: 'occurred_at',
+      },
+      {
+        accessorKey: 'metadata',
+        cell: ({ row }) => <DetailsCell metadata={row.original.metadata} />,
+        header: t('table.details'),
+        id: 'details',
+      },
+    ],
+    [t, tUnits],
+  );
+}

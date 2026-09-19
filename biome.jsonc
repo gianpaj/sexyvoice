@@ -1,0 +1,258 @@
+{
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/next",
+    "ultracite/biome/react",
+    "ultracite/biome/tanstack",
+    "ultracite/biome/vitest"
+  ],
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "!**/venv",
+      "!**/.venv",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/dist",
+      "!**/build",
+      "!**/.claude",
+      "!apps/web/components/ui",
+      "!apps/web/app/globals.css",
+      "!apps/web/lib/disposable-email/deny-domains.json",
+      "!apps/web/next-env.d.ts"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "useLiteralEnumMembers": "error",
+        "useNodejsImportProtocol": "error",
+        "useAsConstAssertion": "error",
+        "useConsistentTypeDefinitions": {
+          "level": "warn",
+          "options": {
+            "style": "interface"
+          }
+        },
+        "useBlockStatements": "off",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useConst": "error",
+        "useSingleVarDeclarator": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "useExponentiationOperator": "error",
+        "useTemplate": "error",
+        "noParameterAssign": "error",
+        "noNonNullAssertion": "off",
+        "useDefaultParameterLast": "error",
+        "useImportType": "error",
+        "useExportType": "error",
+        "noUselessElse": "error",
+        "useShorthandFunctionType": "error",
+        // These syntax preferences create broad churn without improving safety.
+        "noIncrementDecrement": "off",
+        "useDestructuring": "off"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "off",
+        "noUnknownAtRules": "off",
+        "noShadow": "off",
+        "noLeakedRender": "off",
+        // Runtime data can violate TypeScript's static guarantees, so defensive
+        // null and exhaustiveness checks are intentional throughout the app.
+        "noUnnecessaryConditions": "off"
+      },
+      "complexity": {
+        // Existing generation and audio flows are intentionally orchestration-heavy.
+        // Refactor them independently rather than as part of a lint upgrade.
+        "noExcessiveCognitiveComplexity": "off"
+      },
+      "correctness": {
+        "useUniqueElementIds": "off",
+        "noNextAsyncClientComponent": "error"
+      },
+      "nursery": {
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error"
+      },
+      "performance": {
+        // React Compiler handles function identity optimization where useful.
+        "noJsxPropsBind": "off",
+        // Pagination and media-processing loops often require ordered awaits.
+        "noAwaitInLoops": "off",
+        // Tiptap primitives intentionally expose small public entry points.
+        "noBarrelFile": "off",
+        "noNamespaceImport": "warn",
+        "useTopLevelRegex": "off"
+      }
+    },
+    "domains": {
+      "next": "recommended",
+      "react": "recommended"
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "enabled": true,
+      "indentStyle": "space",
+      "indentWidth": 2,
+      "lineEnding": "lf",
+      "lineWidth": 80,
+      "attributePosition": "auto",
+      "quoteStyle": "single",
+      "trailingCommas": "all"
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "noDuplicateClasses": "on",
+        "organizeImports": {
+          "level": "on",
+          "options": {
+            "groups": [
+              // Modules imported with the `npm:` protocol
+              "npm:*",
+              "npm:*/**",
+              ":NODE:",
+              ":PACKAGE:",
+              ":BLANK_LINE:",
+              ":ALIAS:"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [
+    {
+      // Test helpers intentionally use async mocks, assertion helpers, and
+      // documented skips that do not represent production defects.
+      "includes": ["apps/web/tests/**", "apps/web/e2e/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noForEach": "off"
+          },
+          "suspicious": {
+            "noEmptyBlockStatements": "off",
+            "noMisplacedAssertion": "off",
+            "noSkippedTests": "info",
+            "noThenProperty": "off",
+            "useAwait": "off"
+          }
+        }
+      }
+    },
+    {
+      // Browser API shims need no-op methods, loose boundary types, and
+      // bitwise byte operations to match the APIs they replace.
+      "includes": ["apps/web/tests/setup.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noUselessConstructor": "off"
+          },
+          "suspicious": {
+            "noBitwiseOperators": "off",
+            "noEmptyBlockStatements": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      // Supabase Edge Functions run on Deno and receive untyped PostgREST
+      // result shapes at this integration boundary.
+      "includes": ["apps/web/supabase/functions/**"],
+      "javascript": {
+        "globals": ["Deno"]
+      },
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/web/app/**",
+        "!apps/web/app/api/**",
+        "apps/web/components/**",
+        "apps/web/hooks/**",
+        "apps/web/lib/**"
+      ],
+      "plugins": ["./biome-plugins/use-verified-claims.grit"]
+    },
+    {
+      // API handlers require claims-based identity checks and shared error responses.
+      // Other runtime code uses only the claims rule.
+      "includes": ["apps/web/app/api/**"],
+      "plugins": [
+        "./biome-plugins/use-api-error-response.grit",
+        "./biome-plugins/use-verified-claims.grit"
+      ]
+    },
+    {
+      // Package map insertion order controls checkout telemetry and remains part
+      // of the exported pricing API, so product tier order is intentional.
+      "includes": ["apps/web/lib/stripe/pricing.ts"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
+    },
+    {
+      // Keep the LLM schema aligned with the prompt and script. Evidence-first
+      // ordering is an intentional model hint, not a JSON output contract.
+      "includes": ["apps/web/lib/ai/analyze-call.ts"],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
+    },
+    {
+      // Object order carries prose meaning in these files: comments stay beside
+      // their settings, and scene labels precede the long prompt text.
+      "includes": [
+        "apps/web/data/call-scenes.ts",
+        "apps/web/playwright.config.ts"
+      ],
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "off"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -12,14 +12,14 @@
 
 ## Phase 2: Core Infrastructure
 - Set up API routes structure
-- Set up internationalization (i18n) system for English and Spanish
+- Set up internationalization (i18n) system for English, Spanish, German, Danish, Italian, and French
 - Set up voice selection system
-- Add authentication middleware (using Supabase)
+- Add authentication middleware (proxy) (using Supabase)
 
 ## Phase 3: User Interface
 - Design and implement landing page where you can create a new voice without logging in. Select a voice from a dropdown, select language and type the text you want to generate into speech (voice).
 - There's a list of audio files previously generated and ranked by usage and votes.
-- The main page should be under /en for English and /es for Spanish. Default to English.
+- The main page should be under /en, /es, /de, /da, /it, /fr for their respective locales. Default to English.
 - Create credit management interface and system
 - Implement responsive design
 
@@ -99,7 +99,7 @@ You can use it in single-player mode or join a chat room similar to Discord.
 - Add a table to keep track of usage and credits
 - Add the appropriate APIs
 - Add a Landing page with images
-- Make it Multilingual (Spanish and English for now)
+- Make it Multilingual (English, Spanish, German, Danish, Italian, and French)
 - Since bots can talk, users can choose the voice of the bot
 - The voice is chosen by the user who creates the bot.
 - Add a table to keep track of the bots and its voices

@@ -9,29 +9,157 @@ on:
     types: [opened, assigned]
   pull_request_review:
     types: [submitted]
+  pull_request:
+    types: [opened, ready_for_review]
 
 jobs:
-  claude:
+  # Reviews a PR automatically when it is opened or marked ready for review,
+  # and on demand when someone comments "@claude review".
+  claude-review:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.user.type == 'User') ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request != null && contains(github.event.comment.body, '@claude review')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude review')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude review'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
       id-token: write
+      actions: read # Grants the workflow permission to read CI results
+      checks: read # Allows watching check progress
+    steps:
+      - name: Resolve review commit
+        id: review-head
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: gh pr view "$PR_NUMBER" --json headRefOid --jq '"sha=" + .headRefOid' >> "$GITHUB_OUTPUT"
+
+      - name: Checkout review commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ steps.review-head.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm
+        # pnpm's version comes from `packageManager` in package.json.
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: PR Review with Progress Tracking
+        uses: anthropics/claude-code-action@8251c103ac8c1d761882c86aba1412c7f583c844 # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Allow Claude to read CI runs and logs using its separate GitHub App token.
+          # Job-level permissions only apply to the workflow's GITHUB_TOKEN.
+          additional_permissions: |
+            actions: read
+            checks: read
+          track_progress: true
+          prompt: |
+            /review-pr REPO: ${{ github.repository }} PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+
+            The review commit is ${{ steps.review-head.outputs.sha }}, captured
+            from the current PR head at job start. Do not replace it with a newer SHA.
+            Before reading code or running tests, verify git rev-parse HEAD equals
+            this SHA. The action may have switched branches during setup; if needed,
+            run git checkout --detach ${{ steps.review-head.outputs.sha }} and verify again.
+            If verification fails, report the mismatch and stop without reviewing.
+            Review the entire PR diff from its base branch to this pinned commit,
+            not just its latest commit. Do not use a live PR diff from a newer head.
+            Before posting the final review, check "Run Unit Tests" for this SHA:
+            gh run list --repo ${{ github.repository }} --workflow tests.yml --event pull_request --commit ${{ steps.review-head.outputs.sha }} --limit 1 --json databaseId,headSha,status,conclusion,url
+            Keep discovery and waiting within a 5-minute total budget.
+            If no run exists yet, retry discovery every 15 seconds using sleep 15.
+            Once a run exists, if it is not completed, use:
+            gh run watch <run-id> --repo ${{ github.repository }} --interval 15 --exit-status
+            Set the Bash tool timeout to the remaining wait budget; do not restart
+            the watch after the budget expires. A nonzero exit can mean CI failed,
+            not that the review should stop. Read the final status and conclusion
+            with gh run view <run-id> --repo ${{ github.repository }} --json headSha,status,conclusion,url.
+            For a failed run, inspect gh run view <run-id> --repo ${{ github.repository }} --log-failed.
+            Include the CI conclusion and run URL in the final review. If CI
+            remains pending, is missing, cancelled, skipped, or inaccessible,
+            report that explicitly rather than claiming validation passed.
+            Never wait for this Claude workflow or use another commit's results.
+            Recheck the PR head before posting; if it changed, identify the
+            reviewed SHA and state that the newer commit was not reviewed.
+          claude_args: |
+            --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr view:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
+            --model "claude-opus-5"
+            --effort xhigh
+
+  # General-purpose assistant triggered by "@claude" (without "review") in
+  # issues, PR comments, and reviews. Can run CI commands and push commits.
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude') && !contains(github.event.comment.body, '@claude review')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude') && !contains(github.event.comment.body, '@claude review')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude') && !contains(github.event.review.body, '@claude review')) ||
+      (github.event_name == 'issues' && github.event.action == 'assigned' && github.event.assignee.login == 'claude-bot') ||
+      (github.event_name == 'issues' && github.event.action == 'opened' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # Grants the workflow permission to read CI results
+      checks: read # Allows watching check progress
+    env:
+      # Unit tests use the Redis service below, so skip redis-memory-server's
+      # binary download when Claude runs `pnpm install`.
+      REDISMS_DISABLE_POSTINSTALL: 1
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm
+        # pnpm's version comes from `packageManager` in package.json.
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Unit tests connect to Redis on localhost when CI is set.
+      - name: Start Redis
+        uses: supercharge/redis-github-action@bc274cb7238cd63a45029db04ee48c07a72609fd # 1.8.1
+        with:
+          redis-version: 7
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@beta
+        uses: anthropics/claude-code-action@8251c103ac8c1d761882c86aba1412c7f583c844 # v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Allow Claude to read CI runs and logs using its separate GitHub App token.
+          # Job-level permissions only apply to the workflow's GITHUB_TOKEN.
+          additional_permissions: |
+            actions: read
+            checks: read
+          # Trigger when specific user is assigned to an issue
+          assignee_trigger: "claude-bot"
+          claude_args: |
+            --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr view:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
+            --model "claude-opus-5"
+            --effort xhigh

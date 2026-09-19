@@ -1,0 +1,207 @@
+import type { Page } from '@playwright/test';
+
+import { E2E_CALL_USER_COOKIE } from '@/lib/e2e-mocks-shared';
+import { argosScreenshot } from './argos-screenshot';
+import { expect, test } from './fixtures';
+import { CallPage } from './pages/call.page';
+
+/**
+ * Call Dashboard E2E Tests
+ *
+ * These tests verify the real-time AI voice call page functionality:
+ * 1. Configuration form display (language selector, character presets)
+ * 2. Connect button presence
+ * 3. Notice text at the bottom of the page
+ * 4. Auth redirect for unauthenticated users
+ *
+ * All tests use the authenticated state from auth.setup.ts.
+ * We do NOT actually connect to LiveKit — tests focus on UI presence only.
+ */
+
+async function setupCallPage(
+  page: Page,
+  baseURL: string | undefined,
+  user: 'free' | 'paid' = 'free',
+) {
+  if (!baseURL) {
+    throw new Error('Call dashboard tests require a Playwright baseURL');
+  }
+  await page.context().addCookies([
+    {
+      name: E2E_CALL_USER_COOKIE,
+      url: new URL('/', baseURL).href,
+      value: user,
+    },
+  ]);
+  // Mock the call-token endpoint to prevent real LiveKit connections
+  await page.route('**/api/call-token', async (route) => {
+    console.log('[MOCK] call-token intercepted — not connecting to LiveKit');
+    await route.fulfill({
+      body: JSON.stringify({
+        accessToken: 'mock-token-for-e2e',
+        url: 'wss://mock-livekit.example.com',
+      }),
+      contentType: 'application/json',
+      status: 200,
+    });
+  });
+
+  const placeholderSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+        <rect width="128" height="128" fill="#27272a" />
+        <circle cx="64" cy="48" r="24" fill="#71717a" />
+        <rect x="28" y="82" width="72" height="22" rx="11" fill="#71717a" />
+      </svg>
+    `;
+
+  await page.route('**/characters/*', async (route) => {
+    await route.fulfill({
+      body: placeholderSvg,
+      contentType: 'image/svg+xml',
+      status: 200,
+    });
+  });
+
+  await page.route('**/_next/image*', async (route) => {
+    const url = new URL(route.request().url());
+    const imageUrl = url.searchParams.get('url');
+
+    if (imageUrl?.startsWith('/characters/')) {
+      await route.fulfill({
+        body: placeholderSvg,
+        contentType: 'image/svg+xml',
+        status: 200,
+      });
+      return;
+    }
+
+    await route.continue();
+  });
+
+  const callPage = new CallPage(page);
+  await callPage.goto();
+  return callPage;
+}
+
+test.describe('Call Dashboard - Authenticated User', () => {
+  let callPage: CallPage;
+
+  test.beforeEach(async ({ page, baseURL }) => {
+    callPage = await setupCallPage(page, baseURL);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await page.unroute('**/*');
+  });
+
+  test('should display the call page correctly', async ({ page }, testInfo) => {
+    // Verify configuration form is visible
+    await callPage.expectPageVisible();
+    await callPage.expectConfigurationFormVisible();
+    await callPage.expectFixtureCharacters();
+    await argosScreenshot(
+      page,
+      `call-dashboard-desktop-${testInfo.project.name}`,
+    );
+    await callPage.expectSceneOptionsEnabled(false);
+  });
+
+  test('should display language selector', async () => {
+    await callPage.expectLanguageSelectorVisible();
+  });
+
+  test('should display language selector with multiple options', async () => {
+    await callPage.expectLanguageSelectorHasOptions();
+  });
+
+  test('should display connect/call button', async () => {
+    await callPage.expectConnectButtonVisible();
+  });
+
+  test('should display notice text', async () => {
+    await callPage.expectNoticeTextVisible();
+  });
+
+  test('should display the FAQ section when disconnected', async () => {
+    await callPage.expectCallFaqVisible();
+  });
+
+  test('should display configuration form with form element', async () => {
+    await callPage.expectFormPresent();
+  });
+
+  test('should display character/preset content area', async () => {
+    await callPage.expectCharacterContentPresent();
+  });
+
+  test('should have connect button enabled', async () => {
+    await callPage.expectConnectButtonEnabled();
+  });
+});
+
+test.describe('Call Dashboard - Mobile Viewport', () => {
+  test.use({ viewport: { height: 812, width: 375 } });
+
+  let callPage: CallPage;
+
+  test.beforeEach(async ({ page, baseURL }) => {
+    callPage = await setupCallPage(page, baseURL);
+  });
+
+  test.afterEach(async ({ page }) => {
+    await page.unroute('**/*');
+  });
+
+  test('should display credits section on mobile', async ({
+    page,
+  }, testInfo) => {
+    await callPage.expectCreditsSectionVisible();
+    await callPage.expectFixtureCharacters();
+    await argosScreenshot(
+      page,
+      `call-dashboard-mobile-${testInfo.project.name}`,
+    );
+    await callPage.expectSceneOptionsEnabled(false);
+  });
+});
+
+for (const viewport of ['desktop', 'mobile'] as const) {
+  test.describe(`Call Dashboard - Paid User - ${viewport}`, () => {
+    if (viewport === 'mobile') {
+      test.use({ viewport: { height: 812, width: 375 } });
+    }
+
+    test.afterEach(async ({ page }) => {
+      await page.unroute('**/*');
+    });
+
+    test('should display the paid call page correctly', async ({
+      page,
+      baseURL,
+    }, testInfo) => {
+      const callPage = await setupCallPage(page, baseURL, 'paid');
+      await callPage.expectPageVisible();
+      await callPage.expectConfigurationFormVisible();
+      if (viewport === 'mobile') {
+        await callPage.expectCreditsSectionVisible();
+      }
+      await callPage.expectFixtureCharacters();
+      await argosScreenshot(
+        page,
+        `call-dashboard-paid-${viewport}-${testInfo.project.name}`,
+      );
+      await callPage.expectSceneOptionsEnabled(true);
+    });
+  });
+}
+
+test.describe('Call Dashboard - Unauthenticated', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('should redirect to login when not authenticated', async ({ page }) => {
+    await page.goto('/en/dashboard/call');
+
+    // Should be redirected to login
+    await expect(page).toHaveURL(/login/, { timeout: 10_000 });
+  });
+});

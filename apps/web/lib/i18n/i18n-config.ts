@@ -1,0 +1,8 @@
+export const i18n = {
+  defaultLocale: 'en',
+  localePrefix: 'always',
+  locales: ['en', 'es', 'de', 'da', 'it', 'fr'],
+} as const;
+
+export type Locale = (typeof i18n)['locales'][number];
+export type LocalePrefix = (typeof i18n)['localePrefix'];

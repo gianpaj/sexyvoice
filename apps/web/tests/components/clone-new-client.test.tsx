@@ -1,0 +1,568 @@
+// @vitest-environment jsdom
+import '@testing-library/jest-dom/vitest';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
+import type { ReactNode } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
+import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import daMessages from '@/messages/da.json';
+import deMessages from '@/messages/de.json';
+import enMessages from '@/messages/en.json';
+import esMessages from '@/messages/es.json';
+import frMessages from '@/messages/fr.json';
+import itMessages from '@/messages/it.json';
+
+const {
+  fetchMock,
+  mockEnsureLoaded,
+  mockFFmpegState,
+  mockLanguageSelect,
+  mockToastError,
+  mockToastSuccess,
+} = vi.hoisted(() => ({
+  fetchMock: vi.fn(),
+  mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
+  mockFFmpegState: { isLoading: false },
+  mockLanguageSelect: vi.fn(),
+  mockToastError: vi.fn(),
+  mockToastSuccess: vi.fn(),
+}));
+
+const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
+  type: 'audio/wav',
+});
+
+vi.mock('@/components/audio-provider', () => ({
+  AudioProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/clone-sample-card', () => ({
+  default: () => <div data-testid="clone-sample-card" />,
+}));
+
+// Stubbed so the locale ordering computed by new.client.tsx can be asserted on
+// directly, without opening a Radix Select in jsdom.
+vi.mock(
+  '@/app/[lang]/(dashboard)/dashboard/clone/clone-language-select',
+  () => ({
+    CloneLanguageSelect: (props: { supportedLocales: { code: string }[] }) => {
+      mockLanguageSelect(props);
+      return <div data-testid="clone-language-select" />;
+    },
+  }),
+);
+
+vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
+  useFFmpeg: () => ({
+    convert: vi.fn(),
+    ensureLoaded: mockEnsureLoaded,
+    isLoading: mockFFmpegState.isLoading,
+  }),
+}));
+
+vi.mock('@/components/audio-player-with-context', () => ({
+  AudioPlayerWithContext: () => <div data-testid="audio-player" />,
+}));
+
+vi.mock('@/components/audio/microphone-main', () => ({
+  MicrophoneMain: () => <div data-testid="microphone-main" />,
+}));
+
+vi.mock('@/components/services/toast', () => ({
+  toast: {
+    error: mockToastError,
+    success: mockToastSuccess,
+  },
+}));
+
+vi.mock('@/hooks/use-file-upload', () => ({
+  formatBytes: () => '1 MB',
+  useFileUpload: () => [
+    {
+      errors: [],
+      files: [
+        {
+          file: selectedFile,
+          id: 'selected-file',
+        },
+      ],
+      isDragging: false,
+    },
+    {
+      addFiles: vi.fn(),
+      clearErrors: vi.fn(),
+      getInputProps: vi.fn(() => ({})),
+      handleDragEnter: vi.fn(),
+      handleDragLeave: vi.fn(),
+      handleDragOver: vi.fn(),
+      handleDrop: vi.fn(),
+      openFileDialog: vi.fn(),
+      removeFile: vi.fn(),
+    },
+  ],
+}));
+
+vi.mock('@/hooks/use-media-recorder', () => ({
+  default: () => ({
+    clearMediaBlob: vi.fn(),
+    clearMediaStream: vi.fn(),
+    getMediaStream: vi.fn(),
+    mediaBlob: null,
+    mediaStream: null,
+    startRecording: vi.fn(),
+    status: 'idle',
+    stopRecording: vi.fn(),
+  }),
+}));
+
+vi.mock('@/lib/download', () => ({
+  downloadUrl: vi.fn(),
+}));
+
+const errorCodesDict = {
+  PROVIDER_UNAVAILABLE:
+    '{provider} no está disponible temporalmente. Inténtalo de nuevo.',
+} as const;
+
+const dict = {
+  audioConversionFailed: 'Audio conversion failed. Please try recording again.',
+  audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
+  audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
+  audioDurationInvalidVoxtral:
+    'Reference audio must be at least __MIN__ seconds for voice cloning.',
+  audioDurationUnknown: 'Could not determine audio duration.',
+  audioFileLabel: 'Audio File',
+  audioProcessorError: 'Audio Processor Error',
+  cancelButton: 'Cancel',
+  convertingAudio: 'Converting audio',
+  crossLanguageInfo: {
+    description: '',
+    example: '',
+    title: '',
+  },
+  ctaButton: 'Generate Audio',
+  downloadAudio: 'Download Audio',
+  dragDropText: 'Drag & drop or click to browse',
+  englishChatterbox: 'English (Chatterbox)',
+  errorCloning: 'Failed to clone voice',
+  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
+  errors: {
+    audioConversionFailed:
+      'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
+    audioConversionRequiredWebm:
+      'WebM audio must be converted before uploading. Please try recording again.',
+    audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
+    audioDurationInvalidVoxtral:
+      'Reference audio must be at least __MIN__ seconds for voice cloning.',
+    audioDurationUnknown: 'Could not determine audio duration.',
+    ffmpegLoading:
+      'The audio converter is still loading. Please try again in a moment',
+    fileTooLarge: 'File size too large. Please use a smaller audio file.',
+    insufficientCredits: 'You need __CREDITS__ credits to clone this audio.',
+    internalError: 'Failed to clone voice. Please try again.',
+    invalidContentType: 'The upload request is invalid. Please try again.',
+    invalidFileType:
+      'Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.',
+    missingLocale: 'Please select a language.',
+    missingRequiredParameters: 'Please enter text and select an audio file.',
+    noAudioFile: 'Please select an audio file.',
+    noText: 'Please enter some text to convert to speech.',
+    referenceAudioEnhancementInputTooLarge:
+      'The reference audio is too large to enhance.',
+    referenceAudioEnhancementInputTooLong:
+      'Reference audio cleanup supports clips up to __MAX__ seconds.',
+    textTooLong: 'Text exceeds the maximum length of __MAX__ characters.',
+    unsupportedAudioFormat:
+      'Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.',
+    unsupportedLocale: 'This language is not supported for voice cloning.',
+    userNotFound: 'Please sign in to clone a voice.',
+  },
+  errorTitle: 'Error',
+  errorTooLarge: 'File size too large. Please use a smaller audio file.',
+  failedToLoadAudioProcessor: 'Failed to load audio processor',
+  failedToStartRecording: 'Failed to start recording: __ERROR__',
+  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
+  generating: 'Generating',
+  languageLabel: 'Language',
+  languageSelectPlaceholder: 'Select a language',
+  legalConsentCheckbox:
+    'By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.',
+  loadingAudioProcessor: 'Loading audio processor...',
+  microphoneError: 'Microphone error',
+  notEnoughCredits: "You don't have enough credits to generate audio.",
+  orUseMicrophone: 'or use your microphone',
+  paidTextLimitTooltip:
+    'Paid users can clone longer speech with up to __MAX__ characters.',
+  playAudio: 'Play Audio',
+  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
+  previewTitle: 'Generated Voice Preview',
+  referenceAudioEnhancementHelp:
+    'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
+  referenceAudioEnhancementLabel: 'Reference audio enhancement',
+  referenceAudioGuidanceLong:
+    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+  referenceAudioGuidanceShort:
+    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+  removeFile: 'Remove file',
+  sampleCard: {
+    exampleOutput: 'Example',
+    loadSource: 'Load source',
+    sourceAudio: 'Source audio',
+  },
+  subtitle:
+    'Upload an audio file and enter text to create a voice clone and generate speech in one step',
+  success: 'Audio generated successfully!',
+  tabPreview: 'Preview',
+  tabUpload: 'Upload',
+  textAreaPlaceholder: 'Enter the text you want to convert to speech...',
+  textToConvertLabel: 'Enter text to generate speech',
+  title: 'Clone a Voice',
+  tryDemo: 'Or try with a demo:',
+  unexpectedError: 'Unexpected error occurred',
+  upgradeTextLimitTooltip:
+    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
+  uploadAudioFile: 'Upload audio file',
+} as const;
+
+const renderClone = (
+  props: {
+    cloneMessages?: AbstractIntlMessages;
+    hasEnoughCredits?: boolean;
+    lang?: Locale;
+    userHasPaid?: boolean;
+  } = {},
+) =>
+  render(
+    <NextIntlClientProvider
+      locale="es"
+      messages={{
+        clone: props.cloneMessages ?? dict,
+        errorCodes: errorCodesDict,
+      }}
+    >
+      <NewVoiceClient
+        hasEnoughCredits={props.hasEnoughCredits ?? true}
+        lang={props.lang ?? 'en'}
+        userHasPaid={props.userHasPaid ?? false}
+      />
+    </NextIntlClientProvider>,
+  );
+
+const renderedLocaleCodes = () => {
+  const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+    supportedLocales: { code: string }[];
+  };
+  return lastCall.supportedLocales.map((locale) => locale.code);
+};
+
+describe('NewVoiceClient', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockFFmpegState.isLoading = false;
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
+        {
+          headers: {
+            'content-type': 'application/json',
+          },
+          status: 200,
+        },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('updates text direction without clearing text when switching languages', async () => {
+    const user = userEvent.setup();
+    renderClone();
+
+    const input = screen.getByTestId('clone-text-input');
+    const text = 'Keep this text when switching languages.';
+    await user.type(input, text);
+    expect(input).toHaveAttribute('dir', 'ltr');
+
+    for (const code of CLONE_SUPPORTED_LOCALE_CODES) {
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(input).toHaveAttribute(
+        'dir',
+        code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
+      );
+      expect(input).toHaveValue(text);
+    }
+
+    act(() => {
+      mockLanguageSelect.mock.lastCall?.[0].dispatch({
+        patch: { selectedLocaleCode: 'en' },
+        type: 'patch',
+      });
+    });
+    expect(input).toHaveAttribute('dir', 'ltr');
+    expect(input).toHaveValue(text);
+  });
+
+  it.each([['fr', 'Français']])(
+    'uses the translated name for %s in the audio loading message',
+    (code, name) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+
+      expect(
+        screen.getByText(`Preparing audio processor for ${name}...`),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it.each(['zh', 'ja', 'en-multi', 'en'])(
+    'hides the preparation message when switching from French to %s',
+    (code) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: 'fr' },
+          type: 'patch',
+        });
+      });
+      // The fixture supplies English copy; lang: 'fr' localizes the language name.
+      expect(
+        screen.getByText('Preparing audio processor for Français...'),
+      ).toBeInTheDocument();
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(
+        screen.queryByText(/Preparing audio processor for/),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it('lists the page locale first in the language select', () => {
+    renderClone({ lang: 'it' });
+
+    expect(renderedLocaleCodes()[0]).toBe('it');
+  });
+
+  it.each([
+    ['en', enMessages, 'English (Chatterbox)'],
+    ['es', esMessages, 'Inglés (Chatterbox)'],
+    ['de', deMessages, 'Englisch (Chatterbox)'],
+    ['da', daMessages, 'Engelsk (Chatterbox)'],
+    ['it', itMessages, 'Inglese (Chatterbox)'],
+    ['fr', frMessages, 'Anglais (Chatterbox)'],
+  ] as const)(
+    'labels Chatterbox English distinctly in %s',
+    (lang, messages, name) => {
+      renderClone({ cloneMessages: messages.clone, lang });
+
+      const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+        supportedLocales: { code: string; name: string }[];
+      };
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en-multi')?.name,
+      ).toBe(name);
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en')?.name,
+      ).not.toBe(name);
+    },
+  );
+
+  it('keeps every supported locale when the page locale is hoisted', () => {
+    renderClone({ lang: 'it' });
+
+    const codes = renderedLocaleCodes();
+    expect(codes).toHaveLength(new Set(codes).size);
+    expect([...codes].sort()).toEqual([...CLONE_SUPPORTED_LOCALE_CODES].sort());
+    expect(codes).toContain('en');
+    expect(codes).toContain('es');
+  });
+
+  it('hoists each website locale in turn', () => {
+    for (const lang of ['en', 'es', 'de', 'da', 'it', 'fr'] as const) {
+      mockLanguageSelect.mockClear();
+      const { unmount } = renderClone({ lang });
+
+      expect(renderedLocaleCodes()[0]).toBe(lang);
+      unmount();
+    }
+  });
+
+  it('renders reference audio enhancement unchecked by default', () => {
+    renderClone();
+
+    expect(
+      screen.getByRole('checkbox', {
+        name: dict.referenceAudioEnhancementLabel,
+      }),
+    ).not.toBeChecked();
+  });
+
+  it('shows the free Voxtral text limit by default', () => {
+    renderClone();
+
+    expect(screen.getByText('0 / 1000')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        'Upgrade to a paid plan to clone longer speech with up to 4000 characters.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the paid Voxtral text limit for paid users', () => {
+    renderClone({ userHasPaid: true });
+
+    expect(screen.getByText('0 / 4000')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(
+        'Paid users can clone longer speech with up to 4000 characters.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('submits enhanceReferenceAudio=true when the toggle is enabled', async () => {
+    const user = userEvent.setup();
+
+    renderClone();
+
+    await user.type(
+      screen.getByLabelText(dict.textToConvertLabel),
+      'Hello world',
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: dict.referenceAudioEnhancementLabel,
+      }),
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: dict.legalConsentCheckbox,
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: /generate audio/i,
+      }),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const formData = requestInit.body as FormData;
+
+    expect(formData.get('enhanceReferenceAudio')).toBe('true');
+    expect(mockToastSuccess).toHaveBeenCalledWith(dict.success);
+  });
+
+  it.each(['Mistral', 'Replicate'] as const)(
+    'renders localized %s provider errors',
+    async (provider) => {
+      const user = userEvent.setup();
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 'PROVIDER_UNAVAILABLE',
+            details: { provider },
+            error: `${provider} is temporarily unavailable. Please retry. (503)`,
+            serverMessage: `${provider} is temporarily unavailable. Please retry.`,
+            status: 503,
+          }),
+          {
+            headers: {
+              'content-type': 'application/json',
+            },
+            status: 503,
+          },
+        ),
+      );
+
+      renderClone();
+
+      await user.type(
+        screen.getByLabelText(dict.textToConvertLabel),
+        'Hello world',
+      );
+      await user.click(
+        screen.getByRole('checkbox', {
+          name: dict.legalConsentCheckbox,
+        }),
+      );
+      await user.click(
+        screen.getByRole('button', {
+          name: /generate audio/i,
+        }),
+      );
+
+      expect(
+        await screen.findByText(
+          `${provider} no está disponible temporalmente. Inténtalo de nuevo.`,
+        ),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('renders translated clone errors from API error codes', async () => {
+    const user = userEvent.setup();
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          code: 'errors.insufficientCredits',
+          details: { CREDITS: 252 },
+          error:
+            'Insufficient credits. You need 252 credits to clone this audio',
+        }),
+        {
+          headers: {
+            'content-type': 'application/json',
+          },
+          status: 402,
+        },
+      ),
+    );
+
+    renderClone();
+
+    await user.type(
+      screen.getByLabelText(dict.textToConvertLabel),
+      'Hello world',
+    );
+    await user.click(
+      screen.getByRole('checkbox', {
+        name: dict.legalConsentCheckbox,
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: /generate audio/i,
+      }),
+    );
+
+    expect(
+      await screen.findByText('You need 252 credits to clone this audio.'),
+    ).toBeInTheDocument();
+  });
+});

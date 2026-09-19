@@ -1,0 +1,324 @@
+import { captureException, captureMessage } from '@sentry/nextjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
+import {
+  hasAnySubscriptionHistory,
+  isStripeCouponUsable,
+  stripe,
+} from '@/lib/stripe/stripe-admin';
+import { getUserById } from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
+
+vi.mock('@sentry/nextjs', () => ({
+  captureException: vi.fn(),
+  captureMessage: vi.fn(),
+  default: {},
+}));
+
+vi.mock('@/lib/stripe/stripe-admin', () => ({
+  hasAnySubscriptionHistory: vi.fn(),
+  isStripeCouponUsable: vi.fn(),
+  stripe: {
+    checkout: {
+      sessions: {
+        create: vi.fn(),
+      },
+    },
+  },
+}));
+
+vi.mock('@/lib/supabase/queries', () => ({
+  getUserById: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}));
+
+describe('createCheckoutSession()', () => {
+  const originalE2ETestMode = process.env.E2E_TEST_MODE;
+  const originalVercelEnv = process.env.VERCEL_ENV;
+  const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const originalStarterPriceId = process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+  const originalSubscriptionStarterPriceId =
+    process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID;
+  const originalSubscriptionCouponId =
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
+    process.env.STRIPE_TOPUP_STARTER_PRICE_ID = 'price_topup_starter';
+    process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID =
+      'price_subscription_starter';
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        getClaims: vi.fn().mockResolvedValue({
+          data: { claims: { sub: 'user_123' } },
+          error: null,
+        }),
+        getUser: vi.fn(),
+      },
+    } as never);
+    vi.mocked(getUserById).mockResolvedValue({
+      stripe_id: 'cus_123',
+    } as never);
+    vi.mocked(hasAnySubscriptionHistory).mockResolvedValue(false);
+    vi.mocked(isStripeCouponUsable).mockResolvedValue(true);
+    vi.mocked(stripe.checkout.sessions.create).mockResolvedValue({
+      client_secret: 'client_secret_123',
+      url: 'https://checkout.stripe.com/session',
+    } as never);
+  });
+
+  afterEach(() => {
+    if (originalE2ETestMode === undefined) {
+      delete process.env.E2E_TEST_MODE;
+    } else {
+      process.env.E2E_TEST_MODE = originalE2ETestMode;
+    }
+
+    if (originalVercelEnv === undefined) {
+      delete process.env.VERCEL_ENV;
+    } else {
+      process.env.VERCEL_ENV = originalVercelEnv;
+    }
+
+    if (originalSiteUrl === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
+    }
+
+    if (originalStarterPriceId === undefined) {
+      delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    } else {
+      process.env.STRIPE_TOPUP_STARTER_PRICE_ID = originalStarterPriceId;
+    }
+
+    if (originalSubscriptionStarterPriceId === undefined) {
+      delete process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID;
+    } else {
+      process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID =
+        originalSubscriptionStarterPriceId;
+    }
+
+    if (originalSubscriptionCouponId === undefined) {
+      delete process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
+    } else {
+      process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+        originalSubscriptionCouponId;
+    }
+  });
+
+  it.each([
+    { data: null, error: null },
+    { data: { claims: {} }, error: null },
+    { data: { claims: { sub: '' } }, error: null },
+    { data: { claims: { sub: 'user_123' } }, error: new Error('Invalid JWT') },
+  ])(
+    'denies checkout before customer lookup for invalid claims %j',
+    async (response) => {
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          getClaims: vi.fn().mockResolvedValue(response),
+          getUser: vi.fn(),
+        },
+      } as never);
+      for (const type of ['topup', 'subscription']) {
+        const formData = new FormData();
+        formData.set('type', type);
+        await expect(
+          createCheckoutSession(formData, 'starter'),
+        ).rejects.toThrow('Unauthorized checkout session request');
+      }
+      expect(getUserById).not.toHaveBeenCalled();
+      expect(hasAnySubscriptionHistory).not.toHaveBeenCalled();
+      expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it('uses the claims subject for checkout without requiring email', async () => {
+    await createCheckoutSession(new FormData(), 'starter');
+    expect(getUserById).toHaveBeenCalledWith('user_123');
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customer: 'cus_123',
+        metadata: expect.objectContaining({ userId: 'user_123' }),
+      }),
+    );
+    expect((await createClient()).auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid package IDs without Sentry error noise', async () => {
+    process.env.VERCEL_ENV = 'preview';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(
+      createCheckoutSession(formData, 'free' as never),
+    ).rejects.toThrow('Invalid checkout package');
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+  });
+
+  it('reports invalid package IDs as info telemetry in Vercel production', async () => {
+    process.env.VERCEL_ENV = 'production';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(
+      createCheckoutSession(formData, 'free' as never),
+    ).rejects.toThrow('Invalid checkout package');
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).toHaveBeenCalledWith(
+      'Invalid checkout package id submitted.',
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          available_packages: ['starter', 'standard', 'pro'],
+          packageId: 'free',
+          vercelEnv: 'production',
+        }),
+        level: 'info',
+        tags: {
+          event_type: 'invalid_package_id',
+          section: 'stripe_actions',
+        },
+      }),
+    );
+  });
+
+  it('returns a safe null checkout result in E2E mode without price IDs', async () => {
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    delete process.env.VERCEL_ENV;
+    process.env.E2E_TEST_MODE = 'true';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).resolves.toEqual({
+      client_secret: null,
+      url: null,
+    });
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not report missing top-up price IDs outside Vercel production', async () => {
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    process.env.VERCEL_ENV = 'preview';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).rejects.toThrow(
+      'Checkout package missing price ID',
+    );
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('reports missing top-up price IDs in Vercel production', async () => {
+    delete process.env.STRIPE_TOPUP_STARTER_PRICE_ID;
+    process.env.VERCEL_ENV = 'production';
+    const formData = new FormData();
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).rejects.toThrow(
+      'Checkout package missing price ID',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'Checkout package missing price ID',
+      }),
+      expect.objectContaining({
+        extra: expect.objectContaining({
+          packageId: 'starter',
+          vercelEnv: 'production',
+        }),
+        tags: {
+          event_type: 'missing_price_id',
+          section: 'stripe_actions',
+        },
+      }),
+    );
+  });
+
+  it('applies the first-month coupon for eligible subscription customers', async () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+      'coupon_first_month';
+    const formData = new FormData();
+    formData.set('type', 'subscription');
+    formData.set('uiMode', 'hosted');
+
+    await expect(createCheckoutSession(formData, 'starter')).resolves.toEqual({
+      client_secret: 'client_secret_123',
+      url: 'https://checkout.stripe.com/session',
+    });
+
+    expect(hasAnySubscriptionHistory).toHaveBeenCalledWith('cus_123');
+    expect(isStripeCouponUsable).toHaveBeenCalledWith('coupon_first_month');
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        discounts: [{ coupon: 'coupon_first_month' }],
+        metadata: expect.objectContaining({
+          packageId: 'starter',
+          subscriptionDiscountCouponId: 'coupon_first_month',
+          type: 'subscription',
+          userId: 'user_123',
+        }),
+        mode: 'subscription',
+      }),
+    );
+  });
+
+  it('does not apply an unusable first-month coupon', async () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID = 'coupon_expired';
+    vi.mocked(isStripeCouponUsable).mockResolvedValue(false);
+    const formData = new FormData();
+    formData.set('type', 'subscription');
+    formData.set('uiMode', 'hosted');
+
+    await createCheckoutSession(formData, 'starter');
+
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        discounts: expect.anything(),
+      }),
+    );
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.not.objectContaining({
+          subscriptionDiscountCouponId: expect.anything(),
+        }),
+      }),
+    );
+  });
+
+  it('does not validate or apply a coupon after any subscription history', async () => {
+    process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID =
+      'coupon_first_month';
+    vi.mocked(hasAnySubscriptionHistory).mockResolvedValue(true);
+    const formData = new FormData();
+    formData.set('type', 'subscription');
+    formData.set('uiMode', 'hosted');
+
+    await createCheckoutSession(formData, 'starter');
+
+    expect(isStripeCouponUsable).not.toHaveBeenCalled();
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        discounts: expect.anything(),
+      }),
+    );
+  });
+});
