@@ -94,7 +94,7 @@ export default async function LandingPage(props: {
       {
         '@id': 'https://sexyvoice.ai/#organization',
         '@type': 'Organization',
-        logo: 'https://sexyvoice.ai/icon-192x192.png',
+        logo: 'https://sexyvoice.ai/web-app-manifest-192x192.png',
         name: 'SexyVoice.ai',
         sameAs: [
           'https://x.com/sexyvoiceai',

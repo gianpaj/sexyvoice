@@ -96,7 +96,7 @@ export async function generateMetadata({
       images: [
         {
           alt: post.title,
-          height: 630,
+          height: post.image ? 630 : 670,
           url: post.image || '/sexyvoice.ai-og-image.jpg',
           width: 1200,
         },
