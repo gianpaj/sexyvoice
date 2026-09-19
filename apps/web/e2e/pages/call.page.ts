@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { E2E_PUBLIC_CALL_CHARACTERS } from '@/lib/e2e-mocks-shared';
+
 /**
  * Page Object Model for Call Dashboard
  *
@@ -23,6 +25,7 @@ export class CallPage {
   readonly configurationForm: Locator;
   readonly languageSelectorTrigger: Locator;
   readonly languageSelector: Locator;
+  readonly sceneSelectorTrigger: Locator;
 
   // Character/Preset selection
   readonly presetCards: Locator;
@@ -48,6 +51,9 @@ export class CallPage {
     // Language selector — a Select component in the configuration form
     this.languageSelectorTrigger = page.locator('[role="combobox"]').first();
     this.languageSelector = page.locator('[role="listbox"]');
+    this.sceneSelectorTrigger = page
+      .getByTestId('call-scene-selector')
+      .getByRole('combobox');
 
     // Character/preset cards — rendered by PresetSelector component
     // These are buttons or interactive elements within the preset selector area
@@ -82,6 +88,43 @@ export class CallPage {
       state: 'visible',
       timeout: 15_000,
     });
+  }
+
+  async expectSceneOptionsEnabled(enabled: boolean) {
+    await this.sceneSelectorTrigger.click();
+    const listbox = this.page.getByRole('listbox');
+    await expect(listbox).toBeVisible();
+    const options = listbox.getByRole('option');
+    await expect(options.first()).toHaveText('No scene');
+    await expect(options.first()).toBeEnabled();
+    const count = await options.count();
+    expect(count).toBeGreaterThan(1);
+    for (let index = 1; index < count; index++) {
+      await expect(options.nth(index)).toBeEnabled({ enabled });
+    }
+    await this.page.keyboard.press('Escape');
+    await expect(listbox).toBeHidden();
+  }
+
+  async expectFixtureCharacters() {
+    await expect(
+      this.page.locator('[data-e2e-call-fixtures]'),
+      'Start the Next.js server with E2E_TEST_MODE=true before taking call screenshots',
+    ).toBeVisible();
+    const characters = this.configurationForm.locator('button[data-selected]');
+    const selectedCharacter = E2E_PUBLIC_CALL_CHARACTERS[0];
+    await expect(characters).toHaveText(
+      E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.name),
+    );
+    await expect(
+      this.configurationForm.locator('button[data-selected="true"]'),
+    ).toHaveText(selectedCharacter.name);
+    await expect(
+      this.configurationForm.getByText(
+        selectedCharacter.localized_descriptions.en,
+        { exact: false },
+      ),
+    ).toBeVisible();
   }
 
   // --- Actions ---
