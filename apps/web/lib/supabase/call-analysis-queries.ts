@@ -125,15 +125,17 @@ export async function getSubmittedCallAnalysesForBatch(
 }
 
 /**
- * Mark rows as submitted in `batchId` and bump `attempts`. PostgREST cannot
- * express `attempts = attempts + 1`, so rows are grouped by their current
- * attempt count (normally a single group) and updated per group.
+ * Claim pending rows for a batch that is about to be created. The rows move
+ * to `submitted` with no batch id yet and `attempts` bumped, guarded by
+ * `status = 'pending'` so two overlapping runs can never submit the same
+ * session twice: only the rows this call actually flipped are returned.
+ * PostgREST cannot express `attempts = attempts + 1`, so rows are grouped by
+ * their current attempt count (normally a single group) and updated per group.
  */
-export async function markCallAnalysesSubmitted(
+export async function claimPendingCallAnalyses(
   client: TypedSupabaseClient,
   rows: Pick<QueuedCallSession, 'attempts' | 'session_id'>[],
-  batchId: string,
-): Promise<void> {
+): Promise<string[]> {
   const byAttempts = new Map<number, string[]>();
   for (const row of rows) {
     const ids = byAttempts.get(row.attempts) ?? [];
@@ -142,8 +144,9 @@ export async function markCallAnalysesSubmitted(
   }
 
   const timestamp = nowIso();
+  const claimed: string[] = [];
   for (const [attempts, sessionIds] of byAttempts) {
-    const { error } = await client
+    const { data, error } = await client
       .from('call_analysis_queue')
       .update({
         attempts: attempts + 1,
@@ -151,13 +154,90 @@ export async function markCallAnalysesSubmitted(
         status: 'submitted',
         submitted_at: timestamp,
         updated_at: timestamp,
-        xai_batch_id: batchId,
+        xai_batch_id: null,
       })
-      .in('session_id', sessionIds);
+      .eq('status', 'pending')
+      .in('session_id', sessionIds)
+      .select('session_id');
     if (error) {
       throw error;
     }
+    claimed.push(...(data ?? []).map((row) => row.session_id));
   }
+  return claimed;
+}
+
+/** Attach the xAI batch id to rows claimed by `claimPendingCallAnalyses`. */
+export async function setCallAnalysisBatchId(
+  client: TypedSupabaseClient,
+  sessionIds: string[],
+  batchId: string,
+): Promise<void> {
+  if (sessionIds.length === 0) {
+    return;
+  }
+  const { error } = await client
+    .from('call_analysis_queue')
+    .update({ updated_at: nowIso(), xai_batch_id: batchId })
+    .in('session_id', sessionIds);
+  if (error) {
+    throw error;
+  }
+}
+
+/**
+ * Return claimed rows to `pending` when the batch could not be created. The
+ * attempt still counts, so a persistently failing upload eventually parks.
+ */
+export async function releaseCallAnalysisClaims(
+  client: TypedSupabaseClient,
+  sessionIds: string[],
+  lastError: string,
+): Promise<void> {
+  if (sessionIds.length === 0) {
+    return;
+  }
+  const { error } = await client
+    .from('call_analysis_queue')
+    .update({
+      last_error: lastError,
+      status: 'pending',
+      submitted_at: null,
+      updated_at: nowIso(),
+    })
+    .in('session_id', sessionIds)
+    .eq('status', 'submitted')
+    .is('xai_batch_id', null);
+  if (error) {
+    throw error;
+  }
+}
+
+/**
+ * Recycle claims that never received a batch id (the run died between the
+ * claim and `setCallAnalysisBatchId`). Only claims older than `olderThan` are
+ * touched so an in-progress run's rows are left alone.
+ */
+export async function releaseStaleCallAnalysisClaims(
+  client: TypedSupabaseClient,
+  olderThan: Date,
+): Promise<string[]> {
+  const { data, error } = await client
+    .from('call_analysis_queue')
+    .update({
+      last_error: 'Claim expired before a batch id was recorded',
+      status: 'pending',
+      submitted_at: null,
+      updated_at: nowIso(),
+    })
+    .eq('status', 'submitted')
+    .is('xai_batch_id', null)
+    .lt('submitted_at', olderThan.toISOString())
+    .select('session_id');
+  if (error) {
+    throw error;
+  }
+  return (data ?? []).map((row) => row.session_id);
 }
 
 export async function markCallAnalysesCompleted(

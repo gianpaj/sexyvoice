@@ -113,24 +113,18 @@ export function resolveCallAnalysisBatchOutcome(
   }
 }
 
-export interface SubmittedCallAnalysisBatch {
-  batchId: string;
+export interface PreparedCallAnalysisBatch {
   contexts: Map<string, CallAnalysisBatchContext>;
   /** Sessions rejected before upload (no usable transcript). */
   rejected: CallAnalysisBatchResult[];
+  requests: XaiChatCompletionBatchRequest[];
 }
 
-/**
- * Upload one JSONL file covering every analysable session and create the xAI
- * batch. Returns `batchId: null` when no session produced a request.
- */
-export async function submitCallAnalysisBatch(
+/** Pure phase: build every request and the context to interpret its result. */
+export function prepareCallAnalysisBatch(
   sessions: CallSessionForAnalysis[],
   model = getAnalysisModelId(),
-): Promise<
-  | SubmittedCallAnalysisBatch
-  | { batchId: null; rejected: CallAnalysisBatchResult[] }
-> {
+): PreparedCallAnalysisBatch {
   const contexts = new Map<string, CallAnalysisBatchContext>();
   const requests: XaiChatCompletionBatchRequest[] = [];
   const rejected: CallAnalysisBatchResult[] = [];
@@ -145,15 +139,46 @@ export async function submitCallAnalysisBatch(
     requests.push(prepared.request);
   }
 
-  if (requests.length === 0) {
-    return { batchId: null, rejected };
-  }
+  return { contexts, rejected, requests };
+}
 
+/** Side-effect phase: upload the JSONL file and create the xAI batch. */
+export async function createCallAnalysisBatch(
+  requests: XaiChatCompletionBatchRequest[],
+): Promise<string> {
   const fileId = await uploadBatchInputFile(
     toBatchJsonl(requests),
     'call-analysis-batch.jsonl',
   );
-  const batchId = await createBatch(`call-analysis-${requests.length}`, fileId);
+  return createBatch(`call-analysis-${requests.length}`, fileId);
+}
+
+export interface SubmittedCallAnalysisBatch {
+  batchId: string;
+  contexts: Map<string, CallAnalysisBatchContext>;
+  rejected: CallAnalysisBatchResult[];
+}
+
+/**
+ * Convenience for callers with no claim step (the scripts): prepare and
+ * create in one go. Returns `batchId: null` when no session produced a
+ * request.
+ */
+export async function submitCallAnalysisBatch(
+  sessions: CallSessionForAnalysis[],
+  model = getAnalysisModelId(),
+): Promise<
+  | SubmittedCallAnalysisBatch
+  | { batchId: null; rejected: CallAnalysisBatchResult[] }
+> {
+  const { contexts, requests, rejected } = prepareCallAnalysisBatch(
+    sessions,
+    model,
+  );
+  if (requests.length === 0) {
+    return { batchId: null, rejected };
+  }
+  const batchId = await createCallAnalysisBatch(requests);
   return { batchId, contexts, rejected };
 }
 

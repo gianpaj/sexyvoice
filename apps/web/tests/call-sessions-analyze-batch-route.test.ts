@@ -5,18 +5,21 @@ const mocks = vi.hoisted(() => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
   collectCallAnalysisBatchResults: vi.fn(),
+  createCallAnalysisBatch: vi.fn(),
   getBatchState: vi.fn(),
   queries: {
+    claimPendingCallAnalyses: vi.fn(),
     getAnalyzedSessionIds: vi.fn(),
     getInFlightCallAnalysisBatches: vi.fn(),
     getPendingCallAnalyses: vi.fn(),
     getSubmittedCallAnalysesForBatch: vi.fn(),
     markCallAnalysesCompleted: vi.fn(),
-    markCallAnalysesSubmitted: vi.fn(),
     markCallAnalysisFailed: vi.fn(),
+    releaseCallAnalysisClaims: vi.fn(),
+    releaseStaleCallAnalysisClaims: vi.fn(),
+    setCallAnalysisBatchId: vi.fn(),
     upsertCallSessionAnalysis: vi.fn(),
   },
-  submitCallAnalysisBatch: vi.fn(),
   waitForBatch: vi.fn(),
 }));
 
@@ -33,9 +36,12 @@ vi.mock('@/lib/supabase/call-analysis-queries', () => ({
   ...mocks.queries,
   MAX_CALL_ANALYSIS_ATTEMPTS: 3,
 }));
-vi.mock('@/lib/ai/call-analysis-batch', () => ({
+// Keep the pure prepare phase real so the route is exercised against actual
+// prompt building; only the paid xAI call is mocked.
+vi.mock('@/lib/ai/call-analysis-batch', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/ai/call-analysis-batch')>()),
   collectCallAnalysisBatchResults: mocks.collectCallAnalysisBatchResults,
-  submitCallAnalysisBatch: mocks.submitCallAnalysisBatch,
+  createCallAnalysisBatch: mocks.createCallAnalysisBatch,
 }));
 vi.mock('@/lib/ai/xai-batch', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/ai/xai-batch')>()),
@@ -94,6 +100,12 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     mocks.queries.getInFlightCallAnalysisBatches.mockResolvedValue([]);
     mocks.queries.getPendingCallAnalyses.mockResolvedValue([]);
     mocks.queries.getAnalyzedSessionIds.mockResolvedValue(new Set());
+    mocks.queries.releaseStaleCallAnalysisClaims.mockResolvedValue([]);
+    // Default claim: every offered row is claimed.
+    mocks.queries.claimPendingCallAnalyses.mockImplementation(
+      (_client, rows: Array<{ session_id: string }>) =>
+        Promise.resolve(rows.map((row) => row.session_id)),
+    );
     mocks.queries.markCallAnalysisFailed.mockImplementation(
       (_client, _id, _error, { retry }: { retry: boolean }) =>
         Promise.resolve(retry ? 'pending' : 'failed'),
@@ -112,15 +124,27 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(mocks.queries.getPendingCallAnalyses).not.toHaveBeenCalled();
   });
 
+  it('fails closed when CRON_SECRET is unset instead of accepting "Bearer undefined"', async () => {
+    vi.stubEnv('CRON_SECRET', '');
+
+    const res = await GET(request('Bearer undefined'));
+
+    expect(res.status).toBe(500);
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      'CRON_SECRET is not configured',
+    );
+    expect(mocks.queries.getPendingCallAnalyses).not.toHaveBeenCalled();
+  });
+
   it('is a no-op when nothing is queued or in flight', async () => {
     const res = await GET(request('Bearer cron-secret'));
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
-      reconciled: { pending: [], settled: [] },
+      reconciled: { pending: [], recycled: 0, settled: [] },
       submitted: { batchId: null, sessions: 0, settled: null, skipped: 0 },
     });
-    expect(mocks.submitCallAnalysisBatch).not.toHaveBeenCalled();
+    expect(mocks.createCallAnalysisBatch).not.toHaveBeenCalled();
   });
 
   it('settles a finished batch: writes analyses, retries and parks failures', async () => {
@@ -145,6 +169,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(res.status).toBe(200);
     expect(body.reconciled).toEqual({
       pending: [],
+      recycled: 0,
       settled: [{ batchId: 'batch_1', completed: 1, failed: 1, retried: 1 }],
     });
     expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledWith(
@@ -196,29 +221,17 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     vi.useRealTimers();
   });
 
-  it('coalesces pending rows into one batch and marks them submitted', async () => {
+  it('coalesces pending rows into one batch, claiming them before the xAI call', async () => {
     const rows = [
-      { ...queueRow('s1', 0, null as unknown as string), xai_batch_id: null },
-      { ...queueRow('s2', 0, null as unknown as string), xai_batch_id: null },
-      {
-        ...queueRow('s-done', 0, null as unknown as string),
-        xai_batch_id: null,
-      },
-      {
-        ...queueRow('s-empty', 0, null as unknown as string),
-        xai_batch_id: null,
-      },
+      { ...queueRow('s1', 0), xai_batch_id: null },
+      { ...queueRow('s2', 0), xai_batch_id: null },
+      { ...queueRow('s-done', 0), xai_batch_id: null },
+      { ...queueRow('s-empty', 0), xai_batch_id: null },
     ];
+    rows[3].call_sessions.transcript = [];
     mocks.queries.getPendingCallAnalyses.mockResolvedValue(rows);
     mocks.queries.getAnalyzedSessionIds.mockResolvedValue(new Set(['s-done']));
-    mocks.submitCallAnalysisBatch.mockResolvedValue({
-      batchId: 'batch_2',
-      contexts: new Map([
-        ['s1', {}],
-        ['s2', {}],
-      ]),
-      rejected: [{ error: 'No messages in transcript', sessionId: 's-empty' }],
-    });
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_2');
 
     const res = await GET(request('Bearer cron-secret'));
     const body = await res.json();
@@ -234,37 +247,102 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       expect.anything(),
       ['s-done'],
     );
-    const submittedSessions = mocks.submitCallAnalysisBatch.mock.calls[0][0];
-    expect(submittedSessions.map((s: { id: string }) => s.id)).toEqual([
-      's1',
-      's2',
-      's-empty',
-    ]);
+    // Sessions with no usable transcript are parked as failed.
     expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
       expect.anything(),
       's-empty',
       'No messages in transcript',
       { retry: false },
     );
-    expect(mocks.queries.markCallAnalysesSubmitted).toHaveBeenCalledWith(
+    // Claim happens first, on exactly the analysable rows...
+    expect(mocks.queries.claimPendingCallAnalyses).toHaveBeenCalledWith(
       expect.anything(),
       [rows[0], rows[1]],
+    );
+    expect(
+      mocks.queries.claimPendingCallAnalyses.mock.invocationCallOrder[0],
+    ).toBeLessThan(mocks.createCallAnalysisBatch.mock.invocationCallOrder[0]);
+    // ...then the batch is created from the claimed requests only...
+    const requests = mocks.createCallAnalysisBatch.mock.calls[0][0];
+    expect(requests.map((r: { custom_id: string }) => r.custom_id)).toEqual([
+      's1',
+      's2',
+    ]);
+    // ...and the batch id is attached afterwards.
+    expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledWith(
+      expect.anything(),
+      ['s1', 's2'],
       'batch_2',
     );
+    expect(mocks.queries.releaseCallAnalysisClaims).not.toHaveBeenCalled();
     expect(mocks.waitForBatch).toHaveBeenCalledWith(
       'batch_2',
       expect.objectContaining({ timeoutMs: expect.any(Number) }),
     );
   });
 
+  it('only submits rows the compare-and-set claim actually won', async () => {
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s1', 0), xai_batch_id: null },
+      { ...queueRow('s2', 0), xai_batch_id: null },
+    ]);
+    // An overlapping run already claimed s2.
+    mocks.queries.claimPendingCallAnalyses.mockResolvedValue(['s1']);
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_4');
+
+    const body = await (await GET(request('Bearer cron-secret'))).json();
+
+    expect(body.submitted.sessions).toBe(1);
+    const requests = mocks.createCallAnalysisBatch.mock.calls[0][0];
+    expect(requests.map((r: { custom_id: string }) => r.custom_id)).toEqual([
+      's1',
+    ]);
+    expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledWith(
+      expect.anything(),
+      ['s1'],
+      'batch_4',
+    );
+  });
+
+  it('skips the xAI call entirely when the claim wins nothing', async () => {
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s1', 0), xai_batch_id: null },
+    ]);
+    mocks.queries.claimPendingCallAnalyses.mockResolvedValue([]);
+
+    const body = await (await GET(request('Bearer cron-secret'))).json();
+
+    expect(body.submitted).toEqual({
+      batchId: null,
+      sessions: 0,
+      settled: null,
+      skipped: 0,
+    });
+    expect(mocks.createCallAnalysisBatch).not.toHaveBeenCalled();
+  });
+
+  it('releases the claims and reports 500 when the batch cannot be created', async () => {
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s1', 0), xai_batch_id: null },
+    ]);
+    mocks.createCallAnalysisBatch.mockRejectedValue(new Error('upload failed'));
+
+    const res = await GET(request('Bearer cron-secret'));
+
+    expect(res.status).toBe(500);
+    expect(mocks.queries.releaseCallAnalysisClaims).toHaveBeenCalledWith(
+      expect.anything(),
+      ['s1'],
+      'upload failed',
+    );
+    expect(mocks.queries.setCallAnalysisBatchId).not.toHaveBeenCalled();
+    expect(mocks.captureException).toHaveBeenCalledOnce();
+  });
+
   it('settles the new batch in the same run when it finishes quickly', async () => {
     const row = { ...queueRow('s1', 0), xai_batch_id: null };
     mocks.queries.getPendingCallAnalyses.mockResolvedValue([row]);
-    mocks.submitCallAnalysisBatch.mockResolvedValue({
-      batchId: 'batch_3',
-      contexts: new Map([['s1', {}]]),
-      rejected: [],
-    });
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_3');
     mocks.waitForBatch.mockResolvedValue({ settled: true, state: {} });
     mocks.queries.getSubmittedCallAnalysesForBatch.mockResolvedValue([
       queueRow('s1', 1, 'batch_3'),

@@ -15,6 +15,8 @@ vi.mock('@/lib/ai/xai-batch', async (importOriginal) => ({
 
 import {
   collectCallAnalysisBatchResults,
+  createCallAnalysisBatch,
+  prepareCallAnalysisBatch,
   prepareCallAnalysisBatchRequest,
   resolveCallAnalysisBatchOutcome,
   submitCallAnalysisBatch,
@@ -155,6 +157,23 @@ describe('submitCallAnalysisBatch() / collectCallAnalysisBatchResults()', () => 
     expect([...submission.contexts.keys()]).toEqual(['s1']);
     const jsonl = mocks.uploadBatchInputFile.mock.calls[0][0] as string;
     expect(jsonl.trim().split('\n')).toHaveLength(1);
+    expect(mocks.createBatch).toHaveBeenCalledWith('call-analysis-1', 'file_1');
+  });
+
+  it('exposes prepare and create as separate phases', async () => {
+    const prepared = prepareCallAnalysisBatch(
+      [session, { ...session, id: 's2', transcript: null }],
+      'm',
+    );
+    expect(prepared.requests.map((r) => r.custom_id)).toEqual(['s1']);
+    expect(prepared.rejected).toEqual([
+      { error: 'No messages in transcript', sessionId: 's2' },
+    ]);
+    expect(mocks.uploadBatchInputFile).not.toHaveBeenCalled();
+
+    await expect(createCallAnalysisBatch(prepared.requests)).resolves.toBe(
+      'batch_1',
+    );
     expect(mocks.createBatch).toHaveBeenCalledWith('call-analysis-1', 'file_1');
   });
 

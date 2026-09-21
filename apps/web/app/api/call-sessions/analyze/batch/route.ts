@@ -10,7 +10,8 @@ import {
 import {
   type CallAnalysisBatchContext,
   collectCallAnalysisBatchResults,
-  submitCallAnalysisBatch,
+  createCallAnalysisBatch,
+  prepareCallAnalysisBatch,
 } from '@/lib/ai/call-analysis-batch';
 import {
   getBatchState,
@@ -20,15 +21,18 @@ import {
 import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
+  claimPendingCallAnalyses,
   getAnalyzedSessionIds,
   getInFlightCallAnalysisBatches,
   getPendingCallAnalyses,
   getSubmittedCallAnalysesForBatch,
   MAX_CALL_ANALYSIS_ATTEMPTS,
   markCallAnalysesCompleted,
-  markCallAnalysesSubmitted,
   markCallAnalysisFailed,
   type QueuedCallSession,
+  releaseCallAnalysisClaims,
+  releaseStaleCallAnalysisClaims,
+  setCallAnalysisBatchId,
   upsertCallSessionAnalysis,
 } from '@/lib/supabase/call-analysis-queries';
 import type { TypedSupabaseClient } from '@/lib/supabase/client';
@@ -55,6 +59,12 @@ const MAX_SESSIONS_PER_BATCH = 200;
 const POLL_BUDGET_MS = 150_000;
 /** In-flight batches older than this are reported to Sentry as stuck. */
 const STALE_BATCH_MS = 24 * 60 * 60 * 1000;
+/**
+ * A claim without a batch id older than this belongs to a run that died
+ * between claiming rows and recording the batch; it is safely re-queued.
+ * Must exceed `maxDuration` so a live run's claims are never recycled.
+ */
+const STALE_CLAIM_MS = 15 * 60 * 1000;
 
 interface SettleSummary {
   batchId: string;
@@ -149,6 +159,17 @@ async function reconcileInFlightBatches(supabase: TypedSupabaseClient) {
   const settled: SettleSummary[] = [];
   const pending: string[] = [];
 
+  const recycled = await releaseStaleCallAnalysisClaims(
+    supabase,
+    new Date(Date.now() - STALE_CLAIM_MS),
+  );
+  if (recycled.length > 0) {
+    Sentry.captureMessage('Recycled call analysis claims without a batch id', {
+      extra: { sessionIds: recycled },
+      level: 'warning',
+    });
+  }
+
   for (const batch of await getInFlightCallAnalysisBatches(supabase)) {
     const state = await getBatchState(batch.batchId);
     if (isBatchSettled(state)) {
@@ -170,7 +191,7 @@ async function reconcileInFlightBatches(supabase: TypedSupabaseClient) {
     }
   }
 
-  return { pending, settled };
+  return { pending, recycled: recycled.length, settled };
 }
 
 async function submitPending(supabase: TypedSupabaseClient) {
@@ -192,8 +213,8 @@ async function submitPending(supabase: TypedSupabaseClient) {
     .map(toSession)
     .filter((session): session is CallSessionForAnalysis => session !== null);
 
-  const submission = await submitCallAnalysisBatch(sessions);
-  for (const rejected of submission.rejected) {
+  const prepared = prepareCallAnalysisBatch(sessions);
+  for (const rejected of prepared.rejected) {
     await markCallAnalysisFailed(
       supabase,
       rejected.sessionId,
@@ -201,41 +222,63 @@ async function submitPending(supabase: TypedSupabaseClient) {
       { retry: false },
     );
   }
+  const skipped = alreadyAnalyzed.size + prepared.rejected.length;
 
-  if (!submission.batchId) {
-    return {
-      batchId: null,
-      sessions: 0,
-      settled: null,
-      skipped: alreadyAnalyzed.size + submission.rejected.length,
-    };
+  // Claim before doing any paid external work: the compare-and-set on
+  // `status = 'pending'` means an overlapping run cannot submit the same
+  // rows, and a crash after this point leaves a claim that reconcile recycles
+  // instead of a pending row that would be resubmitted (and billed) again.
+  const claimed = await claimPendingCallAnalyses(
+    supabase,
+    candidates.filter((row) => prepared.contexts.has(row.session_id)),
+  );
+  const claimedSet = new Set(claimed);
+  const requests = prepared.requests.filter((request) =>
+    claimedSet.has(request.custom_id),
+  );
+  if (requests.length === 0) {
+    return { batchId: null, sessions: 0, settled: null, skipped };
   }
 
-  const submittedRows = candidates.filter((row) =>
-    submission.contexts.has(row.session_id),
-  );
-  await markCallAnalysesSubmitted(supabase, submittedRows, submission.batchId);
+  let batchId: string;
+  try {
+    batchId = await createCallAnalysisBatch(requests);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await releaseCallAnalysisClaims(supabase, claimed, message);
+    throw error;
+  }
+  await setCallAnalysisBatchId(supabase, claimed, batchId);
 
   // Small batches usually settle within a couple of minutes; wait while the
   // function budget allows so results land in this run. Otherwise the next
   // run's reconcile step picks the batch up.
-  const { settled } = await waitForBatch(submission.batchId, {
+  const { settled } = await waitForBatch(batchId, {
     timeoutMs: POLL_BUDGET_MS,
   });
 
   return {
-    batchId: submission.batchId,
-    sessions: submittedRows.length,
-    settled: settled ? await settleBatch(supabase, submission.batchId) : null,
-    skipped: alreadyAnalyzed.size + submission.rejected.length,
+    batchId,
+    sessions: requests.length,
+    settled: settled ? await settleBatch(supabase, batchId) : null,
+    skipped,
   };
 }
 
 export async function GET(request: NextRequest) {
-  const isProd = process.env.NODE_ENV === 'production';
-  const authHeader = request.headers.get('authorization');
-  if (isProd && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return APIErrorResponse('Unauthorized', 401);
+  // Vercel cron sends `Authorization: Bearer $CRON_SECRET`. Fail closed when
+  // the secret is unset: otherwise a literal `Bearer undefined` would match and
+  // anyone could start paid xAI batches. Local development skips auth like
+  // /api/daily-stats does.
+  if (process.env.NODE_ENV === 'production') {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) {
+      Sentry.captureMessage('CRON_SECRET is not configured');
+      return APIErrorResponse('Server misconfigured', 500);
+    }
+    if (request.headers.get('authorization') !== `Bearer ${secret}`) {
+      return APIErrorResponse('Unauthorized', 401);
+    }
   }
 
   const supabase = createAdminClient();
