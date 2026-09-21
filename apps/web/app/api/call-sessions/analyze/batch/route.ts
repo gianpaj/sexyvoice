@@ -60,6 +60,12 @@ const POLL_BUDGET_MS = 150_000;
 /** In-flight batches older than this are reported to Sentry as stuck. */
 const STALE_BATCH_MS = 24 * 60 * 60 * 1000;
 /**
+ * In-flight batches older than this are abandoned: their rows go back to
+ * `pending` (bounded by `attempts`) so a batch cancelled or purged at xAI
+ * cannot hold sessions in `submitted` forever.
+ */
+const ABANDON_BATCH_MS = 48 * 60 * 60 * 1000;
+/**
  * A claim without a batch id older than this belongs to a run that died
  * between claiming rows and recording the batch; it is safely re-queued.
  * Must exceed `maxDuration` so a live run's claims are never recycled.
@@ -76,6 +82,8 @@ interface SettleSummary {
 function toSession(row: QueuedCallSession): CallSessionForAnalysis | null {
   return row.call_sessions;
 }
+
+const SESSION_GONE_ERROR = 'Call session no longer available';
 
 function toContext(session: CallSessionForAnalysis): CallAnalysisBatchContext {
   return {
@@ -143,8 +151,10 @@ async function settleBatch(
       await markCallAnalysisFailed(
         supabase,
         row.session_id,
-        'Call session no longer available',
-        { retry: false },
+        SESSION_GONE_ERROR,
+        {
+          retry: false,
+        },
       );
       summary.failed += 1;
     }
@@ -155,9 +165,25 @@ async function settleBatch(
   return summary;
 }
 
+/** Give up on a batch that outlived ABANDON_BATCH_MS; rows retry via attempts. */
+async function abandonBatch(supabase: TypedSupabaseClient, batchId: string) {
+  const rows = await getSubmittedCallAnalysesForBatch(supabase, batchId);
+  for (const row of rows) {
+    await markCallAnalysisFailed(
+      supabase,
+      row.session_id,
+      `Batch ${batchId} did not settle within ${ABANDON_BATCH_MS / 3_600_000}h`,
+      { retry: row.attempts < MAX_CALL_ANALYSIS_ATTEMPTS },
+    );
+  }
+  return rows.length;
+}
+
 async function reconcileInFlightBatches(supabase: TypedSupabaseClient) {
-  const settled: SettleSummary[] = [];
+  const abandoned: string[] = [];
+  const failed: string[] = [];
   const pending: string[] = [];
+  const settled: SettleSummary[] = [];
 
   const recycled = await releaseStaleCallAnalysisClaims(
     supabase,
@@ -170,28 +196,55 @@ async function reconcileInFlightBatches(supabase: TypedSupabaseClient) {
     });
   }
 
+  // Each batch is isolated: one batch whose state lookup keeps failing (an
+  // expired id, a batch-specific 5xx) must not block reconciling the others
+  // or, via GET, submitting new work.
   for (const batch of await getInFlightCallAnalysisBatches(supabase)) {
-    const state = await getBatchState(batch.batchId);
-    if (isBatchSettled(state)) {
-      settled.push(await settleBatch(supabase, batch.batchId));
-      continue;
-    }
-
-    pending.push(batch.batchId);
     const submittedAt = batch.submittedAt ? Date.parse(batch.submittedAt) : 0;
-    if (submittedAt && Date.now() - submittedAt > STALE_BATCH_MS) {
-      Sentry.captureMessage('Call analysis batch appears stuck', {
-        extra: {
-          batchId: batch.batchId,
-          state,
-          submittedAt: batch.submittedAt,
-        },
-        level: 'warning',
-      });
+    const age = submittedAt ? Date.now() - submittedAt : 0;
+    try {
+      const state = await getBatchState(batch.batchId);
+      if (isBatchSettled(state)) {
+        settled.push(await settleBatch(supabase, batch.batchId));
+        continue;
+      }
+      if (age > ABANDON_BATCH_MS) {
+        await abandonBatch(supabase, batch.batchId);
+        abandoned.push(batch.batchId);
+        continue;
+      }
+      pending.push(batch.batchId);
+      if (age > STALE_BATCH_MS) {
+        Sentry.captureMessage('Call analysis batch appears stuck', {
+          extra: {
+            batchId: batch.batchId,
+            state,
+            submittedAt: batch.submittedAt,
+          },
+          level: 'warning',
+        });
+      }
+    } catch (error) {
+      console.error(
+        `Call analysis batch ${batch.batchId} reconcile error:`,
+        error,
+      );
+      Sentry.captureException(error, { extra: { batchId: batch.batchId } });
+      if (age > ABANDON_BATCH_MS) {
+        // Cannot even read its state any more; stop retrying it every run.
+        await abandonBatch(supabase, batch.batchId).catch((abandonError) =>
+          Sentry.captureException(abandonError, {
+            extra: { batchId: batch.batchId },
+          }),
+        );
+        abandoned.push(batch.batchId);
+      } else {
+        failed.push(batch.batchId);
+      }
     }
   }
 
-  return { pending, recycled: recycled.length, settled };
+  return { abandoned, failed, pending, recycled: recycled.length, settled };
 }
 
 async function submitPending(supabase: TypedSupabaseClient) {
@@ -209,9 +262,21 @@ async function submitPending(supabase: TypedSupabaseClient) {
   await markCallAnalysesCompleted(supabase, [...alreadyAnalyzed]);
 
   const candidates = rows.filter((row) => !alreadyAnalyzed.has(row.session_id));
-  const sessions = candidates
-    .map(toSession)
-    .filter((session): session is CallSessionForAnalysis => session !== null);
+  const sessions: CallSessionForAnalysis[] = [];
+  let gone = 0;
+  for (const row of candidates) {
+    const session = toSession(row);
+    if (session) {
+      sessions.push(session);
+      continue;
+    }
+    // The FK cascade should make this impossible, but a row with no session
+    // would otherwise stay pending and be re-selected (FIFO) on every run.
+    await markCallAnalysisFailed(supabase, row.session_id, SESSION_GONE_ERROR, {
+      retry: false,
+    });
+    gone += 1;
+  }
 
   const prepared = prepareCallAnalysisBatch(sessions);
   for (const rejected of prepared.rejected) {
@@ -222,7 +287,7 @@ async function submitPending(supabase: TypedSupabaseClient) {
       { retry: false },
     );
   }
-  const skipped = alreadyAnalyzed.size + prepared.rejected.length;
+  const skipped = alreadyAnalyzed.size + prepared.rejected.length + gone;
 
   // Claim before doing any paid external work: the compare-and-set on
   // `status = 'pending'` means an overlapping run cannot submit the same
@@ -283,15 +348,29 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  try {
-    const reconciled = await reconcileInFlightBatches(supabase);
-    const submitted = await submitPending(supabase);
-    const summary = { reconciled, submitted };
-    console.log('Call analysis batch drain:', JSON.stringify(summary));
-    return NextResponse.json(summary);
-  } catch (error) {
-    console.error('Call analysis batch drain error:', error);
-    Sentry.captureException(error);
-    return APIErrorResponse('Call analysis batch drain failed', 500);
+  // The two phases fail independently so a reconcile error never stops new
+  // sessions from being submitted (and vice versa).
+  const reconciled = await reconcileInFlightBatches(supabase).then(
+    (result) => ({ error: null, result }),
+    (error: unknown) => {
+      console.error('Call analysis batch reconcile error:', error);
+      Sentry.captureException(error, { extra: { phase: 'reconcile' } });
+      return { error: 'Reconcile failed', result: null };
+    },
+  );
+  const submitted = await submitPending(supabase).then(
+    (result) => ({ error: null, result }),
+    (error: unknown) => {
+      console.error('Call analysis batch submit error:', error);
+      Sentry.captureException(error, { extra: { phase: 'submit' } });
+      return { error: 'Submit failed', result: null };
+    },
+  );
+
+  const summary = { reconciled, submitted };
+  console.log('Call analysis batch drain:', JSON.stringify(summary));
+  if (reconciled.error || submitted.error) {
+    return NextResponse.json(summary, { status: 500 });
   }
+  return NextResponse.json(summary);
 }

@@ -141,8 +141,20 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
-      reconciled: { pending: [], recycled: 0, settled: [] },
-      submitted: { batchId: null, sessions: 0, settled: null, skipped: 0 },
+      reconciled: {
+        error: null,
+        result: {
+          abandoned: [],
+          failed: [],
+          pending: [],
+          recycled: 0,
+          settled: [],
+        },
+      },
+      submitted: {
+        error: null,
+        result: { batchId: null, sessions: 0, settled: null, skipped: 0 },
+      },
     });
     expect(mocks.createCallAnalysisBatch).not.toHaveBeenCalled();
   });
@@ -167,7 +179,9 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.reconciled).toEqual({
+    expect(body.reconciled.result).toEqual({
+      abandoned: [],
+      failed: [],
       pending: [],
       recycled: 0,
       settled: [{ batchId: 'batch_1', completed: 1, failed: 1, retried: 1 }],
@@ -210,7 +224,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     const res = await GET(request('Bearer cron-secret'));
     const body = await res.json();
 
-    expect(body.reconciled.pending).toEqual(['batch_old', 'batch_new']);
+    expect(body.reconciled.result.pending).toEqual(['batch_old', 'batch_new']);
     expect(
       mocks.queries.getSubmittedCallAnalysesForBatch,
     ).not.toHaveBeenCalled();
@@ -236,7 +250,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     const res = await GET(request('Bearer cron-secret'));
     const body = await res.json();
 
-    expect(body.submitted).toEqual({
+    expect(body.submitted.result).toEqual({
       batchId: 'batch_2',
       sessions: 2,
       settled: null,
@@ -292,7 +306,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     const body = await (await GET(request('Bearer cron-secret'))).json();
 
-    expect(body.submitted.sessions).toBe(1);
+    expect(body.submitted.result.sessions).toBe(1);
     const requests = mocks.createCallAnalysisBatch.mock.calls[0][0];
     expect(requests.map((r: { custom_id: string }) => r.custom_id)).toEqual([
       's1',
@@ -312,7 +326,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     const body = await (await GET(request('Bearer cron-secret'))).json();
 
-    expect(body.submitted).toEqual({
+    expect(body.submitted.result).toEqual({
       batchId: null,
       sessions: 0,
       settled: null,
@@ -353,7 +367,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     const body = await (await GET(request('Bearer cron-secret'))).json();
 
-    expect(body.submitted.settled).toEqual({
+    expect(body.submitted.result.settled).toEqual({
       batchId: 'batch_3',
       completed: 1,
       failed: 0,
@@ -362,14 +376,121 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledOnce();
   });
 
-  it('returns 500 and reports to Sentry when the drain fails', async () => {
+  it('isolates a batch whose state lookup fails and keeps draining the rest', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-01-01T02:00:00Z'));
+    mocks.queries.getInFlightCallAnalysisBatches.mockResolvedValue([
+      { batchId: 'batch_bad', submittedAt: '2026-01-01T01:00:00Z' },
+      { batchId: 'batch_ok', submittedAt: '2026-01-01T01:30:00Z' },
+    ]);
+    mocks.getBatchState.mockImplementation((batchId: string) =>
+      batchId === 'batch_bad'
+        ? Promise.reject(new Error('404 not found'))
+        : Promise.resolve({ num_pending: 0, num_requests: 1 }),
+    );
+    mocks.queries.getSubmittedCallAnalysesForBatch.mockResolvedValue([
+      queueRow('s1', 1, 'batch_ok'),
+    ]);
+    mocks.collectCallAnalysisBatchResults.mockResolvedValue([
+      { analysis, sessionId: 's1' },
+    ]);
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s-new', 0), xai_batch_id: null },
+    ]);
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_new');
+
+    const res = await GET(request('Bearer cron-secret'));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.reconciled.result.failed).toEqual(['batch_bad']);
+    expect(body.reconciled.result.settled).toEqual([
+      { batchId: 'batch_ok', completed: 1, failed: 0, retried: 0 },
+    ]);
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ extra: { batchId: 'batch_bad' } }),
+    );
+    // New work still goes out.
+    expect(body.submitted.result.batchId).toBe('batch_new');
+    vi.useRealTimers();
+  });
+
+  it('abandons a batch that has not settled after 48h, retrying rows via attempts', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-01-04T00:00:00Z'));
+    mocks.queries.getInFlightCallAnalysisBatches.mockResolvedValue([
+      { batchId: 'batch_dead', submittedAt: '2026-01-01T00:00:00Z' },
+    ]);
+    mocks.getBatchState.mockResolvedValue({ num_pending: 2, num_requests: 2 });
+    mocks.queries.getSubmittedCallAnalysesForBatch.mockResolvedValue([
+      queueRow('s-retry', 1, 'batch_dead'),
+      queueRow('s-final', 3, 'batch_dead'),
+    ]);
+
+    const body = await (await GET(request('Bearer cron-secret'))).json();
+
+    expect(body.reconciled.result.abandoned).toEqual(['batch_dead']);
+    expect(body.reconciled.result.pending).toEqual([]);
+    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+      expect.anything(),
+      's-retry',
+      expect.stringContaining('batch_dead'),
+      { retry: true },
+    );
+    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+      expect.anything(),
+      's-final',
+      expect.stringContaining('batch_dead'),
+      { retry: false },
+    );
+    expect(mocks.collectCallAnalysisBatchResults).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('parks pending rows whose call session is gone instead of re-selecting them', async () => {
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s-gone', 0), call_sessions: null, xai_batch_id: null },
+      { ...queueRow('s1', 0), xai_batch_id: null },
+    ]);
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_5');
+
+    const body = await (await GET(request('Bearer cron-secret'))).json();
+
+    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+      expect.anything(),
+      's-gone',
+      'Call session no longer available',
+      { retry: false },
+    );
+    expect(body.submitted.result).toMatchObject({
+      batchId: 'batch_5',
+      sessions: 1,
+      skipped: 1,
+    });
+  });
+
+  it('runs the submit phase even when reconcile fails, and reports 500', async () => {
     mocks.queries.getInFlightCallAnalysisBatches.mockRejectedValue(
       new Error('db down'),
     );
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s1', 0), xai_batch_id: null },
+    ]);
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_6');
 
     const res = await GET(request('Bearer cron-secret'));
+    const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(mocks.captureException).toHaveBeenCalledOnce();
+    expect(body.reconciled).toEqual({
+      error: 'Reconcile failed',
+      result: null,
+    });
+    expect(body.submitted.result.batchId).toBe('batch_6');
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ extra: { phase: 'reconcile' } }),
+    );
   });
 });

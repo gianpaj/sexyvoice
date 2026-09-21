@@ -35,6 +35,21 @@ export type QueuedCallSession = Pick<
 
 const QUEUE_WITH_SESSION = `session_id, attempts, submitted_at, xai_batch_id, call_sessions(${SESSION_COLUMNS})`;
 
+/**
+ * PostgREST `in.(...)` filters are sent in the query string; 200 UUIDs is
+ * about 7.5 KB, close to the usual 8 KB request-line limit. Keep every id
+ * list well under that regardless of MAX_SESSIONS_PER_BATCH.
+ */
+const IN_FILTER_CHUNK_SIZE = 50;
+
+function chunk<T>(items: T[], size = IN_FILTER_CHUNK_SIZE): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -146,23 +161,25 @@ export async function claimPendingCallAnalyses(
   const timestamp = nowIso();
   const claimed: string[] = [];
   for (const [attempts, sessionIds] of byAttempts) {
-    const { data, error } = await client
-      .from('call_analysis_queue')
-      .update({
-        attempts: attempts + 1,
-        last_error: null,
-        status: 'submitted',
-        submitted_at: timestamp,
-        updated_at: timestamp,
-        xai_batch_id: null,
-      })
-      .eq('status', 'pending')
-      .in('session_id', sessionIds)
-      .select('session_id');
-    if (error) {
-      throw error;
+    for (const ids of chunk(sessionIds)) {
+      const { data, error } = await client
+        .from('call_analysis_queue')
+        .update({
+          attempts: attempts + 1,
+          last_error: null,
+          status: 'submitted',
+          submitted_at: timestamp,
+          updated_at: timestamp,
+          xai_batch_id: null,
+        })
+        .eq('status', 'pending')
+        .in('session_id', ids)
+        .select('session_id');
+      if (error) {
+        throw error;
+      }
+      claimed.push(...(data ?? []).map((row) => row.session_id));
     }
-    claimed.push(...(data ?? []).map((row) => row.session_id));
   }
   return claimed;
 }
@@ -173,15 +190,15 @@ export async function setCallAnalysisBatchId(
   sessionIds: string[],
   batchId: string,
 ): Promise<void> {
-  if (sessionIds.length === 0) {
-    return;
-  }
-  const { error } = await client
-    .from('call_analysis_queue')
-    .update({ updated_at: nowIso(), xai_batch_id: batchId })
-    .in('session_id', sessionIds);
-  if (error) {
-    throw error;
+  const timestamp = nowIso();
+  for (const ids of chunk(sessionIds)) {
+    const { error } = await client
+      .from('call_analysis_queue')
+      .update({ updated_at: timestamp, xai_batch_id: batchId })
+      .in('session_id', ids);
+    if (error) {
+      throw error;
+    }
   }
 }
 
@@ -194,22 +211,22 @@ export async function releaseCallAnalysisClaims(
   sessionIds: string[],
   lastError: string,
 ): Promise<void> {
-  if (sessionIds.length === 0) {
-    return;
-  }
-  const { error } = await client
-    .from('call_analysis_queue')
-    .update({
-      last_error: lastError,
-      status: 'pending',
-      submitted_at: null,
-      updated_at: nowIso(),
-    })
-    .in('session_id', sessionIds)
-    .eq('status', 'submitted')
-    .is('xai_batch_id', null);
-  if (error) {
-    throw error;
+  const timestamp = nowIso();
+  for (const ids of chunk(sessionIds)) {
+    const { error } = await client
+      .from('call_analysis_queue')
+      .update({
+        last_error: lastError,
+        status: 'pending',
+        submitted_at: null,
+        updated_at: timestamp,
+      })
+      .in('session_id', ids)
+      .eq('status', 'submitted')
+      .is('xai_batch_id', null);
+    if (error) {
+      throw error;
+    }
   }
 }
 
@@ -244,21 +261,20 @@ export async function markCallAnalysesCompleted(
   client: TypedSupabaseClient,
   sessionIds: string[],
 ): Promise<void> {
-  if (sessionIds.length === 0) {
-    return;
-  }
   const timestamp = nowIso();
-  const { error } = await client
-    .from('call_analysis_queue')
-    .update({
-      completed_at: timestamp,
-      last_error: null,
-      status: 'completed',
-      updated_at: timestamp,
-    })
-    .in('session_id', sessionIds);
-  if (error) {
-    throw error;
+  for (const ids of chunk(sessionIds)) {
+    const { error } = await client
+      .from('call_analysis_queue')
+      .update({
+        completed_at: timestamp,
+        last_error: null,
+        status: 'completed',
+        updated_at: timestamp,
+      })
+      .in('session_id', ids);
+    if (error) {
+      throw error;
+    }
   }
 }
 
@@ -297,17 +313,20 @@ export async function getAnalyzedSessionIds(
   client: TypedSupabaseClient,
   sessionIds: string[],
 ): Promise<Set<string>> {
-  if (sessionIds.length === 0) {
-    return new Set();
+  const analyzed = new Set<string>();
+  for (const ids of chunk(sessionIds)) {
+    const { data, error } = await client
+      .from('call_session_analysis')
+      .select('session_id')
+      .in('session_id', ids);
+    if (error) {
+      throw error;
+    }
+    for (const row of data ?? []) {
+      analyzed.add(row.session_id);
+    }
   }
-  const { data, error } = await client
-    .from('call_session_analysis')
-    .select('session_id')
-    .in('session_id', sessionIds);
-  if (error) {
-    throw error;
-  }
-  return new Set((data ?? []).map((row) => row.session_id));
+  return analyzed;
 }
 
 export async function hasCallSessionAnalysis(
