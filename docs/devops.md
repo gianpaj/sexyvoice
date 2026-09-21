@@ -189,6 +189,12 @@ Notes:
   Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
 - `XAI_API_KEY` also powers call transcript analysis
   (`apps/web/lib/ai/analyze-call.ts`), not just Grok TTS.
+- `XAI_API_BASE_URL` optional override for the xAI REST host used by the Batch
+  API client (`apps/web/lib/ai/xai-batch.ts`; default `https://api.x.ai`).
+- `CALL_ANALYSIS_REALTIME` optional emergency bypass: when set to `true`,
+  `/api/call-sessions/analyze` analyses the transcript inline with a
+  synchronous Grok call instead of queueing it for the xAI Batch API drain job.
+  Leave unset in normal operation.
 
 ### LiveKit real-time calls
 
@@ -221,6 +227,9 @@ Notes:
   triggers `/api/call-sessions/analyze` on call completion. The same value must
   be stored in Supabase Vault as `call_summary_secret` (alongside
   `app_base_url`) so the `pg_net` trigger can call back into this app.
+- `CRON_SECRET` also protects `/api/call-sessions/analyze/batch`, the Vercel
+  cron that drains the call analysis queue (see
+  [Call transcript analysis](#call-transcript-analysis)).
 
 Generate secure secrets with:
 
@@ -690,6 +699,60 @@ When environment or deployment behavior changes:
 
 Keeping these docs synchronized prevents setup drift between development,
 deployment, and operational troubleshooting.
+
+## Call transcript analysis
+
+Completed calls of at least 120 seconds with a transcript are analysed by Grok
+and stored as one `call_session_analysis` row per session. Analysis is
+**asynchronous and best-effort**: nothing in the call UX waits on it, and
+results typically land minutes after the call, bounded by xAI batch processing
+time plus the cron interval.
+
+Flow:
+
+1. A Supabase Database Webhook (`pg_net`, see
+   `apps/web/supabase/migrations/20260703000000_add_call_session_analysis.sql`)
+   posts the session id to `POST /api/call-sessions/analyze` with
+   `CALL_SUMMARY_SECRET`.
+2. The webhook only checks eligibility (completed, long enough, non-empty
+   transcript, no existing analysis row) and inserts a `pending` row into
+   `call_analysis_queue`, returning `202 { queued: true }`. Duplicate
+   deliveries are no-ops thanks to the primary key on `session_id`.
+3. The Vercel cron `GET /api/call-sessions/analyze/batch` (every 15 minutes,
+   `CRON_SECRET`) first reconciles in-flight xAI batches, writing
+   `call_session_analysis` rows for settled ones, then coalesces pending rows
+   (up to 200) into a single new [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
+   request and waits up to a few minutes for it before handing off to the next
+   run.
+4. Failed requests never persist an analysis row. Retryable failures return to
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`;
+   the backfill script can still reprocess them because it anti-joins on
+   `call_session_analysis`.
+
+Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
+`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
+scripts import the same modules, so every path writes identical rows.
+
+Observability and troubleshooting:
+
+- The drain response and a `Call analysis batch drain:` log line summarise
+  reconciled batches and the new submission (`queued -> submitted ->
+completed` is visible in `call_analysis_queue.status` and its timestamps).
+- A batch still unsettled 24 hours after submission is reported to Sentry as
+  `Call analysis batch appears stuck`; inspect it in the xAI console.
+- Read-only check for stuck or failed work:
+
+  ```sql
+  select status, count(*), min(queued_at), max(submitted_at)
+  from public.call_analysis_queue
+  group by status;
+  ```
+
+- Emergency bypass: set `CALL_ANALYSIS_REALTIME=true` to analyse inline in the
+  webhook (synchronous Grok call, realtime pricing) while the batch path is
+  investigated. Local debugging can use the scripts' `--realtime` flag.
 
 ## Daily stats troubleshooting
 
