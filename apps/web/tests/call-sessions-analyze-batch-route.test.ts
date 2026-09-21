@@ -141,6 +141,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
+      parked: 0,
       reconciled: {
         error: null,
         result: {
@@ -210,6 +211,15 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     // Contexts are rebuilt from the queue rows' sessions.
     const contexts = mocks.collectCallAnalysisBatchResults.mock.calls[0][1];
     expect([...contexts.keys()]).toEqual(['s-ok', 's-retry', 's-final']);
+    // Terminal parks are raised once per run so someone knows to backfill.
+    expect(body.parked).toBe(1);
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      'Call analysis sessions parked as failed',
+      expect.objectContaining({
+        extra: { parked: [{ error: 'model error', sessionId: 's-final' }] },
+        level: 'warning',
+      }),
+    );
   });
 
   it('leaves unsettled batches alone and flags stale ones', async () => {
@@ -445,6 +455,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       { retry: false },
     );
     expect(mocks.collectCallAnalysisBatchResults).not.toHaveBeenCalled();
+    expect(body.parked).toBe(1);
     vi.useRealTimers();
   });
 

@@ -749,6 +749,11 @@ Observability and troubleshooting:
 completed` is visible in `call_analysis_queue.status` and its timestamps).
 - A batch still unsettled 24 hours after submission is reported to Sentry as
   `Call analysis batch appears stuck`; inspect it in the xAI console.
+- Sessions that reach the terminal `failed` state (attempts exhausted,
+  unusable transcript, session gone) are reported to Sentry as
+  `Call analysis sessions parked as failed` with their ids and errors. A
+  redelivered webhook does not revive them; run `pnpm backfill-call-analysis`
+  to reprocess.
 - Read-only check for stuck or failed work:
 
   ```sql
