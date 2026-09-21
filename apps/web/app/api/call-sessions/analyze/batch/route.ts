@@ -300,12 +300,13 @@ async function reconcileInFlightBatches(
  */
 async function recordBatchId(
   supabase: TypedSupabaseClient,
-  sessionIds: string[],
+  rows: Pick<QueuedCallSession, 'attempts' | 'session_id'>[],
   batchId: string,
 ) {
+  const sessionIds = rows.map((row) => row.session_id);
   for (let attempt = 0; ; attempt++) {
     try {
-      await setCallAnalysisBatchId(supabase, sessionIds, batchId);
+      await setCallAnalysisBatchId(supabase, rows, batchId);
       return;
     } catch (error) {
       const delay = BATCH_ID_WRITE_DELAYS_MS[attempt];
@@ -372,7 +373,9 @@ async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
   // instead of a pending row that would be resubmitted (and billed) again.
   const claimed = await claimPendingCallAnalyses(
     supabase,
-    candidates.filter((row) => prepared.contexts.has(row.session_id)),
+    candidates
+      .filter((row) => prepared.contexts.has(row.session_id))
+      .map((row) => row.session_id),
   );
   const claimedSet = new Set(claimed);
   const requests = prepared.requests.filter((request) =>
@@ -390,7 +393,11 @@ async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
     await releaseCallAnalysisClaims(supabase, claimed, message);
     throw error;
   }
-  await recordBatchId(supabase, claimed, batchId);
+  await recordBatchId(
+    supabase,
+    candidates.filter((row) => claimedSet.has(row.session_id)),
+    batchId,
+  );
 
   // Small batches usually settle within a couple of minutes; wait while the
   // function budget allows so results land in this run. Otherwise the next

@@ -747,8 +747,11 @@ scripts import the same modules, so every path writes identical rows.
 Observability and troubleshooting:
 
 - The drain response and a `Call analysis batch drain:` log line summarise
-  reconciled batches and the new submission (`queued -> submitted ->
-completed` is visible in `call_analysis_queue.status` and its timestamps).
+  reconciled batches and the new submission (the lifecycle is
+  `pending -> submitted -> completed | failed`, with `pending` again on a
+  retryable failure, visible in `call_analysis_queue.status` and its
+  timestamps; `attempts` counts batches xAI accepted, so an upload outage
+  never spends a session's retry budget).
 - A batch still unsettled 24 hours after submission is reported to Sentry as
   `Call analysis batch appears stuck`; inspect it in the xAI console.
 - Sessions that reach the terminal `failed` state (attempts exhausted,

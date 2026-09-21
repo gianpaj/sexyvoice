@@ -141,16 +141,52 @@ export async function getSubmittedCallAnalysesForBatch(
 
 /**
  * Claim pending rows for a batch that is about to be created. The rows move
- * to `submitted` with no batch id yet and `attempts` bumped, guarded by
- * `status = 'pending'` so two overlapping runs can never submit the same
- * session twice: only the rows this call actually flipped are returned.
- * PostgREST cannot express `attempts = attempts + 1`, so rows are grouped by
- * their current attempt count (normally a single group) and updated per group.
+ * to `submitted` with no batch id yet, guarded by `status = 'pending'` so two
+ * overlapping runs can never submit the same session twice: only the rows
+ * this call actually flipped are returned. `attempts` is deliberately not
+ * bumped here; it counts batches xAI accepted (see `setCallAnalysisBatchId`),
+ * so an upload outage cannot spend a session's analysis retry budget.
  */
 export async function claimPendingCallAnalyses(
   client: TypedSupabaseClient,
-  rows: Pick<QueuedCallSession, 'attempts' | 'session_id'>[],
+  sessionIds: string[],
 ): Promise<string[]> {
+  const timestamp = nowIso();
+  const claimed: string[] = [];
+  for (const ids of chunk(sessionIds)) {
+    const { data, error } = await client
+      .from('call_analysis_queue')
+      .update({
+        last_error: null,
+        status: 'submitted',
+        submitted_at: timestamp,
+        updated_at: timestamp,
+        xai_batch_id: null,
+      })
+      .eq('status', 'pending')
+      .in('session_id', ids)
+      .select('session_id');
+    if (error) {
+      throw error;
+    }
+    claimed.push(...(data ?? []).map((row) => row.session_id));
+  }
+  return claimed;
+}
+
+/**
+ * Attach the xAI batch id to rows claimed by `claimPendingCallAnalyses` and
+ * count the attempt: xAI has accepted the batch, so this submission is real.
+ * PostgREST cannot express `attempts = attempts + 1`, so rows are grouped by
+ * their current attempt count (normally a single group). The guard on
+ * `submitted` + null batch id makes a retried call idempotent (rows already
+ * stamped are skipped, never bumped twice) and enforces the claim invariant.
+ */
+export async function setCallAnalysisBatchId(
+  client: TypedSupabaseClient,
+  rows: Pick<QueuedCallSession, 'attempts' | 'session_id'>[],
+  batchId: string,
+): Promise<void> {
   const byAttempts = new Map<number, string[]>();
   for (const row of rows) {
     const ids = byAttempts.get(row.attempts) ?? [];
@@ -159,52 +195,29 @@ export async function claimPendingCallAnalyses(
   }
 
   const timestamp = nowIso();
-  const claimed: string[] = [];
   for (const [attempts, sessionIds] of byAttempts) {
     for (const ids of chunk(sessionIds)) {
-      const { data, error } = await client
+      const { error } = await client
         .from('call_analysis_queue')
         .update({
           attempts: attempts + 1,
-          last_error: null,
-          status: 'submitted',
-          submitted_at: timestamp,
           updated_at: timestamp,
-          xai_batch_id: null,
+          xai_batch_id: batchId,
         })
-        .eq('status', 'pending')
-        .in('session_id', ids)
-        .select('session_id');
+        .eq('status', 'submitted')
+        .is('xai_batch_id', null)
+        .in('session_id', ids);
       if (error) {
         throw error;
       }
-      claimed.push(...(data ?? []).map((row) => row.session_id));
-    }
-  }
-  return claimed;
-}
-
-/** Attach the xAI batch id to rows claimed by `claimPendingCallAnalyses`. */
-export async function setCallAnalysisBatchId(
-  client: TypedSupabaseClient,
-  sessionIds: string[],
-  batchId: string,
-): Promise<void> {
-  const timestamp = nowIso();
-  for (const ids of chunk(sessionIds)) {
-    const { error } = await client
-      .from('call_analysis_queue')
-      .update({ updated_at: timestamp, xai_batch_id: batchId })
-      .in('session_id', ids);
-    if (error) {
-      throw error;
     }
   }
 }
 
 /**
- * Return claimed rows to `pending` when the batch could not be created. The
- * attempt still counts, so a persistently failing upload eventually parks.
+ * Return claimed rows to `pending` when the batch could not be created. No
+ * attempt is charged: the failure is xAI's upload path, not the analysis, and
+ * the submit phase reports it to Sentry on every run until it recovers.
  */
 export async function releaseCallAnalysisClaims(
   client: TypedSupabaseClient,

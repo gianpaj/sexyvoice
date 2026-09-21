@@ -104,8 +104,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     mocks.queries.setCallAnalysisBatchId.mockResolvedValue(undefined);
     // Default claim: every offered row is claimed.
     mocks.queries.claimPendingCallAnalyses.mockImplementation(
-      (_client, rows: Array<{ session_id: string }>) =>
-        Promise.resolve(rows.map((row) => row.session_id)),
+      (_client, sessionIds: string[]) => Promise.resolve(sessionIds),
     );
     mocks.queries.markCallAnalysisFailed.mockImplementation(
       (_client, _id, _error, { retry }: { retry: boolean }) =>
@@ -310,7 +309,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     // Claim happens first, on exactly the analysable rows...
     expect(mocks.queries.claimPendingCallAnalyses).toHaveBeenCalledWith(
       expect.anything(),
-      [rows[0], rows[1]],
+      ['s1', 's2'],
     );
     expect(
       mocks.queries.claimPendingCallAnalyses.mock.invocationCallOrder[0],
@@ -321,10 +320,11 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       's1',
       's2',
     ]);
-    // ...and the batch id is attached afterwards.
+    // ...and the batch id (plus the attempt) is attached afterwards, on the
+    // claimed rows only.
     expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledWith(
       expect.anything(),
-      ['s1', 's2'],
+      [rows[0], rows[1]],
       'batch_2',
     );
     expect(mocks.queries.releaseCallAnalysisClaims).not.toHaveBeenCalled();
@@ -352,7 +352,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     ]);
     expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledWith(
       expect.anything(),
-      ['s1'],
+      [expect.objectContaining({ session_id: 's1' })],
       'batch_4',
     );
   });
