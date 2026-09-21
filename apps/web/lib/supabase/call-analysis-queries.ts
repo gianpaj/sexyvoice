@@ -231,20 +231,23 @@ export async function releaseCallAnalysisClaims(
 }
 
 /**
- * Recycle claims that never received a batch id (the run died between the
- * claim and `setCallAnalysisBatchId`). Only claims older than `olderThan` are
- * touched so an in-progress run's rows are left alone.
+ * Park claims that never received a batch id (the run died between the claim
+ * and `setCallAnalysisBatchId`, or that write kept failing). They are parked
+ * as `failed` rather than re-queued: the batch may already exist and be
+ * billed, so an automatic resubmission could pay twice. An operator can attach
+ * the id from the Sentry event or run the backfill script. Only claims older
+ * than `olderThan` are touched so an in-progress run's rows are left alone.
  */
-export async function releaseStaleCallAnalysisClaims(
+export async function expireStaleCallAnalysisClaims(
   client: TypedSupabaseClient,
   olderThan: Date,
 ): Promise<string[]> {
   const { data, error } = await client
     .from('call_analysis_queue')
     .update({
-      last_error: 'Claim expired before a batch id was recorded',
-      status: 'pending',
-      submitted_at: null,
+      last_error:
+        'Claim expired before a batch id was recorded; attach the id from Sentry or run the backfill script',
+      status: 'failed',
       updated_at: nowIso(),
     })
     .eq('status', 'submitted')

@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getBatchState: vi.fn(),
   queries: {
     claimPendingCallAnalyses: vi.fn(),
+    expireStaleCallAnalysisClaims: vi.fn(),
     getAnalyzedSessionIds: vi.fn(),
     getInFlightCallAnalysisBatches: vi.fn(),
     getPendingCallAnalyses: vi.fn(),
@@ -16,7 +17,6 @@ const mocks = vi.hoisted(() => ({
     markCallAnalysesCompleted: vi.fn(),
     markCallAnalysisFailed: vi.fn(),
     releaseCallAnalysisClaims: vi.fn(),
-    releaseStaleCallAnalysisClaims: vi.fn(),
     setCallAnalysisBatchId: vi.fn(),
     upsertCallSessionAnalysis: vi.fn(),
   },
@@ -100,7 +100,8 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     mocks.queries.getInFlightCallAnalysisBatches.mockResolvedValue([]);
     mocks.queries.getPendingCallAnalyses.mockResolvedValue([]);
     mocks.queries.getAnalyzedSessionIds.mockResolvedValue(new Set());
-    mocks.queries.releaseStaleCallAnalysisClaims.mockResolvedValue([]);
+    mocks.queries.expireStaleCallAnalysisClaims.mockResolvedValue([]);
+    mocks.queries.setCallAnalysisBatchId.mockResolvedValue(undefined);
     // Default claim: every offered row is claimed.
     mocks.queries.claimPendingCallAnalyses.mockImplementation(
       (_client, rows: Array<{ session_id: string }>) =>
@@ -146,9 +147,9 @@ describe('GET /api/call-sessions/analyze/batch', () => {
         error: null,
         result: {
           abandoned: [],
+          expiredClaims: 0,
           failed: [],
           pending: [],
-          recycled: 0,
           settled: [],
         },
       },
@@ -182,9 +183,9 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(res.status).toBe(200);
     expect(body.reconciled.result).toEqual({
       abandoned: [],
+      expiredClaims: 0,
       failed: [],
       pending: [],
-      recycled: 0,
       settled: [{ batchId: 'batch_1', completed: 1, failed: 1, retried: 1 }],
     });
     expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledWith(
@@ -242,6 +243,34 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(mocks.captureMessage.mock.calls[0][1]).toMatchObject({
       extra: { batchId: 'batch_old' },
     });
+    vi.useRealTimers();
+  });
+
+  it('parks claims that never received a batch id instead of resubmitting them', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-01-01T01:00:00Z'));
+    mocks.queries.expireStaleCallAnalysisClaims.mockResolvedValue(['s-lost']);
+
+    const body = await (await GET(request('Bearer cron-secret'))).json();
+
+    expect(body.reconciled.result.expiredClaims).toBe(1);
+    // Only claims older than the stale threshold (15 min) are touched.
+    expect(mocks.queries.expireStaleCallAnalysisClaims).toHaveBeenCalledWith(
+      expect.anything(),
+      new Date('2026-01-01T00:45:00Z'),
+    );
+    // Parked claims ride the same alert as every other terminal failure.
+    expect(body.parked).toBe(1);
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      'Call analysis sessions parked as failed',
+      expect.objectContaining({
+        extra: {
+          parked: [
+            { error: 'Claim expired without a batch id', sessionId: 's-lost' },
+          ],
+        },
+      }),
+    );
     vi.useRealTimers();
   });
 
@@ -343,6 +372,60 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       skipped: 0,
     });
     expect(mocks.createCallAnalysisBatch).not.toHaveBeenCalled();
+  });
+
+  it('retries the batch id write after a transient failure', async () => {
+    vi.useFakeTimers();
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s1', 0), xai_batch_id: null },
+    ]);
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_7');
+    mocks.queries.setCallAnalysisBatchId
+      .mockRejectedValueOnce(new Error('connection reset'))
+      .mockResolvedValueOnce(undefined);
+
+    const pending = GET(request('Bearer cron-secret'));
+    await vi.advanceTimersByTimeAsync(10_000);
+    const res = await pending;
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.submitted.result.batchId).toBe('batch_7');
+    expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledTimes(2);
+    expect(mocks.queries.releaseCallAnalysisClaims).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('keeps the claims and raises a Sentry error when the batch id cannot be recorded', async () => {
+    vi.useFakeTimers();
+    mocks.queries.getPendingCallAnalyses.mockResolvedValue([
+      { ...queueRow('s1', 0), xai_batch_id: null },
+    ]);
+    mocks.createCallAnalysisBatch.mockResolvedValue('batch_8');
+    mocks.queries.setCallAnalysisBatchId.mockRejectedValue(
+      new Error('db down'),
+    );
+
+    const pending = GET(request('Bearer cron-secret'));
+    await vi.advanceTimersByTimeAsync(60_000);
+    const res = await pending;
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.submitted.error).toBe('Submit failed');
+    // First attempt plus one retry per scheduled delay.
+    expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledTimes(4);
+    // Never released: the batch exists and is billed, so a resubmit could pay twice.
+    expect(mocks.queries.releaseCallAnalysisClaims).not.toHaveBeenCalled();
+    // The operator gets the batch id and the affected sessions.
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: { batchId: 'batch_8', sessionIds: ['s1'] },
+        level: 'error',
+      }),
+    );
+    vi.useRealTimers();
   });
 
   it('releases the claims and reports 500 when the batch cannot be created', async () => {

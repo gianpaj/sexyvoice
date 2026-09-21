@@ -725,9 +725,11 @@ Flow:
    request and waits up to a few minutes for it before handing off to the next
    run. Rows are claimed (`submitted`, no batch id yet) with a
    compare-and-set on `status = 'pending'` _before_ the paid xAI call, so
-   overlapping runs cannot submit the same session twice and a run that dies
-   mid-way leaves a claim rather than a resubmittable row; claims older than
-   15 minutes without a batch id are recycled to `pending` by the next run.
+   overlapping runs cannot submit the same session twice. The write that
+   attaches the batch id after the paid xAI call is retried; if a run still
+   dies or fails between the claim and that write, the claim is left alone and
+   parked as `failed` after 15 minutes (never resubmitted, since the batch may
+   already be billed), with the batch id in the Sentry error when it is known.
 4. Failed requests never persist an analysis row. Retryable failures return to
    `pending` for up to 3 submissions, then park as `failed` with `last_error`;
    the backfill script can still reprocess them because it anti-joins on

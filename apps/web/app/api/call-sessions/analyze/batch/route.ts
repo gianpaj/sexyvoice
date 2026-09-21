@@ -22,6 +22,7 @@ import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   claimPendingCallAnalyses,
+  expireStaleCallAnalysisClaims,
   getAnalyzedSessionIds,
   getInFlightCallAnalysisBatches,
   getPendingCallAnalyses,
@@ -31,7 +32,6 @@ import {
   markCallAnalysisFailed,
   type QueuedCallSession,
   releaseCallAnalysisClaims,
-  releaseStaleCallAnalysisClaims,
   setCallAnalysisBatchId,
   upsertCallSessionAnalysis,
 } from '@/lib/supabase/call-analysis-queries';
@@ -67,10 +67,16 @@ const STALE_BATCH_MS = 24 * 60 * 60 * 1000;
 const ABANDON_BATCH_MS = 48 * 60 * 60 * 1000;
 /**
  * A claim without a batch id older than this belongs to a run that died
- * between claiming rows and recording the batch; it is safely re-queued.
- * Must exceed `maxDuration` so a live run's claims are never recycled.
+ * between claiming rows and recording the batch. It is parked, not re-queued
+ * (the batch may exist and be billed). Must exceed `maxDuration` so a live
+ * run's claims are never touched.
  */
 const STALE_CLAIM_MS = 15 * 60 * 1000;
+/**
+ * Retry schedule for the write that attaches the batch id right after the
+ * paid xAI call: losing that id would orphan a billed batch.
+ */
+const BATCH_ID_WRITE_DELAYS_MS = [250, 1000, 4000];
 
 interface SettleSummary {
   batchId: string;
@@ -221,15 +227,12 @@ async function reconcileInFlightBatches(
   const pending: string[] = [];
   const settled: SettleSummary[] = [];
 
-  const recycled = await releaseStaleCallAnalysisClaims(
+  const expired = await expireStaleCallAnalysisClaims(
     supabase,
     new Date(Date.now() - STALE_CLAIM_MS),
   );
-  if (recycled.length > 0) {
-    Sentry.captureMessage('Recycled call analysis claims without a batch id', {
-      extra: { sessionIds: recycled },
-      level: 'warning',
-    });
+  for (const sessionId of expired) {
+    run.parked.push({ error: 'Claim expired without a batch id', sessionId });
   }
 
   // Each batch is isolated: one batch whose state lookup keeps failing (an
@@ -280,7 +283,46 @@ async function reconcileInFlightBatches(
     }
   }
 
-  return { abandoned, failed, pending, recycled: recycled.length, settled };
+  return {
+    abandoned,
+    expiredClaims: expired.length,
+    failed,
+    pending,
+    settled,
+  };
+}
+
+/**
+ * Attach the batch id to the claimed rows. The batch already exists and is
+ * billed at this point, so the write is retried; if it still fails the claims
+ * are deliberately left in place (an expired claim parks, it never resubmits)
+ * and a Sentry error carries everything needed to attach the id by hand.
+ */
+async function recordBatchId(
+  supabase: TypedSupabaseClient,
+  sessionIds: string[],
+  batchId: string,
+) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await setCallAnalysisBatchId(supabase, sessionIds, batchId);
+      return;
+    } catch (error) {
+      const delay = BATCH_ID_WRITE_DELAYS_MS[attempt];
+      if (delay === undefined) {
+        Sentry.captureException(error, {
+          extra: { batchId, sessionIds },
+          level: 'error',
+          tags: { call_analysis: 'batch_id_write_failed' },
+        });
+        throw new Error(
+          `xAI batch ${batchId} was created but its id could not be recorded for ${sessionIds.length} session(s); attach it manually before the claims expire`,
+          { cause: error },
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
 }
 
 async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
@@ -348,7 +390,7 @@ async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
     await releaseCallAnalysisClaims(supabase, claimed, message);
     throw error;
   }
-  await setCallAnalysisBatchId(supabase, claimed, batchId);
+  await recordBatchId(supabase, claimed, batchId);
 
   // Small batches usually settle within a couple of minutes; wait while the
   // function budget allows so results land in this run. Otherwise the next
