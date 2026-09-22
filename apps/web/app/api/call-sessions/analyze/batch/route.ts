@@ -82,6 +82,7 @@ interface SettleSummary {
   batchId: string;
   completed: number;
   failed: number;
+  refused: number;
   retried: number;
 }
 
@@ -94,6 +95,7 @@ const SESSION_GONE_ERROR = 'Call session no longer available';
 /** Per-run record of sessions that reached the terminal `failed` state. */
 interface RunLog {
   parked: Array<{ error: string; sessionId: string }>;
+  refused: Array<{ error: string; sessionId: string }>;
 }
 
 /**
@@ -137,6 +139,7 @@ async function settleBatch(
     batchId,
     completed: 0,
     failed: 0,
+    refused: 0,
     retried: 0,
   };
 
@@ -162,6 +165,19 @@ async function settleBatch(
         result.analysis,
       );
       completed.push(result.sessionId);
+      continue;
+    }
+
+    // A provider content refusal is deterministic: never return it to
+    // `pending` (that only pays for another guaranteed refusal) and record it
+    // separately so the run raises a countable, non-actionable warning instead
+    // of asking an operator to run the backfill script.
+    if ('refused' in result && result.refused) {
+      await markCallAnalysisFailed(supabase, result.sessionId, result.error, {
+        retry: false,
+      });
+      run.refused.push({ error: result.error, sessionId: result.sessionId });
+      summary.refused += 1;
       continue;
     }
 
@@ -431,7 +447,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient();
-  const run: RunLog = { parked: [] };
+  const run: RunLog = { parked: [], refused: [] };
 
   // The two phases fail independently so a reconcile error never stops new
   // sessions from being submitted (and vice versa).
@@ -461,7 +477,23 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const summary = { parked: run.parked.length, reconciled, submitted };
+  if (run.refused.length > 0) {
+    // Provider content refusals are terminal but not actionable: no backfill
+    // can succeed, so report them once per run under a stable fingerprint as a
+    // countable warning rather than an error.
+    Sentry.captureMessage('Call analysis sessions declined by the provider', {
+      extra: { refused: run.refused },
+      fingerprint: ['call-analysis-provider-refusal'],
+      level: 'warning',
+    });
+  }
+
+  const summary = {
+    parked: run.parked.length,
+    reconciled,
+    refused: run.refused.length,
+    submitted,
+  };
   console.log('Call analysis batch drain:', JSON.stringify(summary));
   if (reconciled.error || submitted.error) {
     return NextResponse.json(summary, { status: 500 });

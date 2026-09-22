@@ -152,6 +152,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
           settled: [],
         },
       },
+      refused: 0,
       submitted: {
         error: null,
         result: { batchId: null, sessions: 0, settled: null, skipped: 0 },
@@ -185,7 +186,9 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       expiredClaims: 0,
       failed: [],
       pending: [],
-      settled: [{ batchId: 'batch_1', completed: 1, failed: 1, retried: 1 }],
+      settled: [
+        { batchId: 'batch_1', completed: 1, failed: 1, refused: 0, retried: 1 },
+      ],
     });
     expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledWith(
       expect.anything(),
@@ -217,6 +220,62 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       'Call analysis sessions parked as failed',
       expect.objectContaining({
         extra: { parked: [{ error: 'model error', sessionId: 's-final' }] },
+        level: 'warning',
+      }),
+    );
+  });
+
+  it('parks a provider refusal terminally without retrying or asking for backfill', async () => {
+    mocks.queries.getInFlightCallAnalysisBatches.mockResolvedValue([
+      { batchId: 'batch_1', submittedAt: '2026-01-01T00:00:00Z' },
+    ]);
+    mocks.getBatchState.mockResolvedValue({ num_pending: 0, num_requests: 1 });
+    // attempts below the limit: a plain error here would retry, a refusal must not.
+    mocks.queries.getSubmittedCallAnalysesForBatch.mockResolvedValue([
+      queueRow('s-refused', 1),
+    ]);
+    mocks.collectCallAnalysisBatchResults.mockResolvedValue([
+      {
+        error: "permission-denied: I can't help with that request.",
+        refused: true,
+        sessionId: 's-refused',
+      },
+    ]);
+
+    const res = await GET(request('Bearer cron-secret'));
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.reconciled.result.settled).toEqual([
+      { batchId: 'batch_1', completed: 0, failed: 0, refused: 1, retried: 0 },
+    ]);
+    // Terminal, never back to pending: the same transcript is not paid for again.
+    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+      expect.anything(),
+      's-refused',
+      "permission-denied: I can't help with that request.",
+      { retry: false },
+    );
+    // Not a park: no backfill ask for a transcript the provider will always decline.
+    expect(body.parked).toBe(0);
+    expect(mocks.captureMessage).not.toHaveBeenCalledWith(
+      'Call analysis sessions parked as failed',
+      expect.anything(),
+    );
+    // Reported once per run under the stable refusal fingerprint.
+    expect(body.refused).toBe(1);
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      'Call analysis sessions declined by the provider',
+      expect.objectContaining({
+        extra: {
+          refused: [
+            {
+              error: "permission-denied: I can't help with that request.",
+              sessionId: 's-refused',
+            },
+          ],
+        },
+        fingerprint: ['call-analysis-provider-refusal'],
         level: 'warning',
       }),
     );
@@ -464,6 +523,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       batchId: 'batch_3',
       completed: 1,
       failed: 0,
+      refused: 0,
       retried: 0,
     });
     expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledOnce();
@@ -498,7 +558,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(res.status).toBe(200);
     expect(body.reconciled.result.failed).toEqual(['batch_bad']);
     expect(body.reconciled.result.settled).toEqual([
-      { batchId: 'batch_ok', completed: 1, failed: 0, retried: 0 },
+      { batchId: 'batch_ok', completed: 1, failed: 0, refused: 0, retried: 0 },
     ]);
     expect(mocks.captureException).toHaveBeenCalledWith(
       expect.any(Error),

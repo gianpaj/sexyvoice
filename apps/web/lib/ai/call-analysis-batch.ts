@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { isContentRefusalText } from '../provider-errors.ts';
 import {
   buildCallAnalysisPrompt,
   CALL_ANALYSIS_SYSTEM_PROMPT,
@@ -30,7 +31,12 @@ export interface CallAnalysisBatchContext {
 
 export type CallAnalysisBatchResult =
   | { analysis: CallAnalysis; error?: undefined; sessionId: string }
-  | { analysis?: undefined; error: string; sessionId: string };
+  | {
+      analysis?: undefined;
+      error: string;
+      refused?: true;
+      sessionId: string;
+    };
 
 // The realtime path hands the zod schema to `generateObject`; the Batch API is
 // a raw chat-completions request, so embed the equivalent JSON Schema in the
@@ -93,10 +99,14 @@ export function resolveCallAnalysisBatchOutcome(
     return { error: 'No batch result returned', sessionId };
   }
   if (outcome.errorMessage || !outcome.content) {
-    return {
-      error: outcome.errorMessage || 'Empty batch response',
-      sessionId,
-    };
+    const errorMessage = outcome.errorMessage || 'Empty batch response';
+    // A content-policy refusal is terminal: the same transcript can only be
+    // declined again, so classify it here (the one place xAI's raw per-request
+    // outcome is read) and let callers skip the retry/park path.
+    if (isContentRefusalText(outcome.errorMessage)) {
+      return { error: errorMessage, refused: true, sessionId };
+    }
+    return { error: errorMessage, sessionId };
   }
 
   try {
