@@ -9,6 +9,10 @@ import {
   MIN_ANALYSIS_CALL_DURATION_SECONDS,
 } from '@/lib/ai/analyze-call';
 import { APIErrorResponse } from '@/lib/error-ts';
+import {
+  CONTENT_REFUSAL_STATUS_CODE,
+  isProviderContentRefusal,
+} from '@/lib/provider-errors';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   enqueueCallAnalysis,
@@ -117,6 +121,22 @@ export async function POST(request: NextRequest) {
     await upsertCallSessionAnalysis(supabase, session, analysis);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    // A content-policy refusal is deterministic: the same transcript can only
+    // be declined again, so skip it terminally (200) and record it once as a
+    // countable, non-actionable warning instead of an error page.
+    if (isProviderContentRefusal(error)) {
+      console.warn('Call analysis declined by provider', {
+        callSessionId: id,
+        statusCode: CONTENT_REFUSAL_STATUS_CODE,
+      });
+      Sentry.captureMessage('Call analysis declined by provider', {
+        extra: { callSessionId: id },
+        fingerprint: ['call-analysis-provider-refusal'],
+        level: 'warning',
+      });
+      return NextResponse.json({ reason: 'provider_refused', skipped: true });
+    }
+
     console.error('Call analysis error:', error);
     Sentry.captureException(error, { extra: { callSessionId: id } });
 
