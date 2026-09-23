@@ -19,7 +19,10 @@ Customer credit calculations remain separate from provider dollar accounting.
 A read-only Supabase CLI query of project `bfaqdyadcpaetelvpbva` on 2026-09-23
 returned 36 TTS rows. The 22 Gemini rows cover 11 identities shared across `gpro`
 and `gpro31`. Each identity gets one new `gpro38` entry, preserving the 3.1
-owner, visibility, gender, NSFW flag, description, language, and sort order.
+owner, gender, NSFW flag, description, language, and sort order. All 28 new
+rows use `is_public = false` for the initial rollout. The user classifies
+`es-es-advisor-8` as female after listening; the catalog preserves Google's
+neutral provider label separately.
 
 The remaining 14 identities belong to Orpheus, xAI, or a cloning provider.
 `gemini-38-catalog.json` records each unsupported identity. Substituting a
@@ -58,5 +61,6 @@ Total duration is 248.92 seconds; recorded provider cost is $0.072223.
 A resumed generation verified all 28 files without regeneration. The uploader's
 28-file dry run performed no network requests.
 
-The user must listen before upload. R2 upload, public URL verification, and final
-SQL remain pending. No production catalog rows or storage objects were changed.
+The user has requested upload and private catalog insertion, with an SQL and R2
+path preview first. Friendly Spanish display names are under review. R2 upload,
+public URL verification, and final SQL remain pending. No production catalog rows or storage objects were changed.

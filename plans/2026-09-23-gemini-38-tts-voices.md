@@ -19,6 +19,7 @@ Its replacement SQL does not satisfy this additive catalog plan.
 ## Catalog rules
 
 - Create new UUIDs for the Gemini 3.8 entries with model alias `gpro38`.
+- Insert all new rows with `is_public = false` for the initial rollout.
 - Preserve all existing rows, model assignments, UUIDs, prompts, and sample URLs.
 - Include every existing voice identity in the inventory and coverage report.
 - Verify provider voice IDs against Gemini 3.8 before preparing each new entry.
