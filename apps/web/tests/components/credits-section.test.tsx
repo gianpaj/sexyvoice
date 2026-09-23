@@ -232,3 +232,27 @@ describe('credit balance display', () => {
     expect(getCredits).toHaveBeenCalledTimes(2);
   });
 });
+
+it('sends the refreshed balance to Crisp after credits are spent', async () => {
+  vi.stubEnv('NEXT_PUBLIC_CRISP_WEBSITE_ID', 'test-site');
+  supabase.auth.getClaims.mockResolvedValue({
+    data: { claims: { sub: 'user-1' } },
+    error: null,
+  });
+  vi.mocked(initPostHog).mockResolvedValue(undefined as never);
+  vi.mocked(getCredits)
+    .mockResolvedValueOnce({ amount: 10_000 })
+    .mockResolvedValueOnce({ amount: 725 });
+  const client = renderCredits();
+  await waitFor(() =>
+    expect(Crisp.session.setData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ creditsLeft: 10_000 }),
+    ),
+  );
+  await act(() => client.invalidateQueries({ queryKey: ['credits'] }));
+  await waitFor(() =>
+    expect(Crisp.session.setData).toHaveBeenLastCalledWith(
+      expect.objectContaining({ creditsLeft: 725, user_id: 'user-1' }),
+    ),
+  );
+});

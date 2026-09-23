@@ -1,6 +1,7 @@
 'use client';
 
 import { useCompletion } from '@ai-sdk/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
@@ -291,6 +292,7 @@ export function AudioGenerator({
   selectedVoice,
   settings = DEFAULT_GENERATION_SETTINGS,
 }: AudioGeneratorProps) {
+  const queryClient = useQueryClient();
   const t = useTranslations('generate');
   const translateErrorCode = useTranslations('errorCodes');
   const [text, setText] = useState('');
@@ -558,7 +560,7 @@ export function AudioGenerator({
   );
 
   const requestGenerateVoice = useCallback(
-    (
+    async (
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
@@ -578,14 +580,20 @@ export function AudioGenerator({
         !shouldUseSplitMode &&
         shouldStream;
 
-      if (useStream) {
-        return requestGenerateVoiceStream(segmentText, signal);
+      try {
+        if (useStream) {
+          return await requestGenerateVoiceStream(segmentText, signal);
+        }
+        return await requestGenerateVoiceJson(segmentText, signal, seed, split);
+      } finally {
+        // A failed or interrupted response can still follow a credit charge.
+        queryClient.invalidateQueries({ queryKey: ['credits'] });
       }
-      return requestGenerateVoiceJson(segmentText, signal, seed, split);
     },
     [
       isGeminiVoice,
       isStreamingModel,
+      queryClient,
       requestGenerateVoiceJson,
       requestGenerateVoiceStream,
       shouldUseSplitMode,

@@ -14,11 +14,21 @@ vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => mocks }));
 vi.mock('@/lib/supabase/client', () => ({ default: () => ({ auth: mocks }) }));
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
 vi.mock('@/hooks/use-playground-state', () => ({
-  usePlaygroundState: () => ({ dispatch: vi.fn(), helpers: {}, pgState: {} }),
+  usePlaygroundState: () => ({
+    dispatch: vi.fn(),
+    helpers: {
+      getSelectedPreset: () => null,
+      getStateWithFullInstructions: () => ({ sessionConfig: { voice: 'Ara' } }),
+    },
+    pgState: {},
+  }),
 }));
 vi.mock('@/lib/characters', () => ({}));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 beforeEach(() => vi.clearAllMocks());
 
 describe('connection disconnect claims', () => {
@@ -62,4 +72,21 @@ describe('connection disconnect claims', () => {
       expect(mocks.invalidateQueries).not.toHaveBeenCalled();
     },
   );
+});
+
+it('refreshes credits when a call is rejected for insufficient balance', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(new Response(null, { status: 402 })),
+  );
+  const { result } = renderHook(useConnection, { wrapper: ConnectionProvider });
+  await act(async () => {
+    await expect(result.current.connect()).rejects.toThrow(
+      'Failed to fetch token',
+    );
+  });
+  expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+    queryKey: ['credits'],
+  });
+  expect(result.current.shouldConnect).toBe(false);
 });

@@ -110,6 +110,7 @@ export const ConnectionProvider = ({
 
     if (!response.ok) {
       if (response.status === 402) {
+        queryClient.invalidateQueries({ queryKey: ['credits'] });
         toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
       } else if (response.status === 403) {
         toast.error(t('freeUserCallLimitExceeded'));

@@ -14,6 +14,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioGenerator } from '@/components/audio-generator';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 
+const invalidateQueries = vi.hoisted(() => vi.fn());
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries }),
+}));
+
 const mockToastFn = vi.hoisted(() =>
   Object.assign(vi.fn(), {
     dismiss: vi.fn(),
@@ -397,6 +402,7 @@ describe('AudioGenerator', () => {
       expect(fetchMock).toHaveBeenCalled();
     });
 
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['credits'] });
     const [url, request] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/generate-voice');
     expect(request).toEqual(
@@ -728,6 +734,7 @@ describe('AudioGenerator', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(invalidateQueries).toHaveBeenCalledTimes(2);
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
@@ -828,6 +835,7 @@ describe('AudioGenerator', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(invalidateQueries).toHaveBeenCalledTimes(2);
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
@@ -926,6 +934,7 @@ describe('AudioGenerator', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['credits'] });
     expect(mockToastFn.success).not.toHaveBeenCalled();
   });
 
@@ -1040,6 +1049,7 @@ describe('AudioGenerator', () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(invalidateQueries).toHaveBeenCalledTimes(3);
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
       split: true,
       styleVariant: 'dramatic',
@@ -1222,6 +1232,7 @@ describe('AudioGenerator', () => {
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(invalidateQueries).toHaveBeenCalledTimes(2);
     });
 
     expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
