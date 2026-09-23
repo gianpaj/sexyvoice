@@ -703,3 +703,11 @@ zero usage. Reporting definitions and test commands are in the
 comparisons, use the development-only cache bypass and runner described in
 [Local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking).
 The runner rejects responses that do not confirm the cache bypass.
+
+## Gemini 3.8 catalog rollout
+
+Generate previews locally, review them in `listen.html`, and use the separate R2
+uploader before preparing executable catalog SQL. See the
+[sample workflow](../scripts/README.md#gemini-38-voice-samples) for commands,
+manifest verification, and the bucket-root filename convention. Deploy `gpro38`
+route support before inserting its catalog entries.

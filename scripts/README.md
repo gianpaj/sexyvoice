@@ -115,71 +115,91 @@ New TypeScript maintenance scripts must call `loadScriptEnv()` from
 `createScriptAdminClient()` from `lib/supabase.mts`. Keep command-specific
 warnings and confirmation policy in the command.
 
-## Generate Gemini Speech Samples Script
+## Gemini 3.8 voice samples
 
-Generates speech samples through the public `/api/v1/speech` endpoint and saves
-them as MP3 files. The API returns WAV for `gpro`/`gpro31`, so the script
-downloads the WAV and converts it to MP3 with `ffmpeg` (required).
+`gemini-38-catalog.json` contains 28 additive entries: 11 existing Gemini identities,
+nine Spain Spanish voices, and eight Mexican Spanish voices. The 2026-09-23
+Supabase CLI inventory covers all 36 TTS rows. Its 14 non-Gemini identities are
+listed as unsupported in the catalog; they cannot be recreated by selecting their
+names in Gemini. Mexican provider IDs use `es-419` with the `Mexico Spanish`
+accent; catalog labels use `es-MX`. Catalan is excluded.
 
-### Quick Start
+Run these commands from `scripts/`. Use `pnpm run <command> --` when passing
+`--env-file`, so pnpm forwards the flag to the script. Environment loading uses
+`loadScriptEnv()`; `--env-file` accepts an explicit dotenv path and can be repeated.
+Existing process variables take precedence. Keep credentials out of arguments and
+Git.
 
 ```bash
-# Show help
-pnpm generate-gemini-speech-samples --help
+# Validate prompts and output paths without calling Google
+pnpm run generate-gemini-speech-samples -- \
+  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 --dry-run
 
-# Generate one sample by voice ID (model is inferred from the voice)
-SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --voiceId 85153e4b-f5b0-477a-856e-1bf05fd84165
-
-# Generate samples for specific voices with a model + style
-SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --model gpro --style "calm" \
-  --text "Hello there" --voices achernar,zephyr
-
-# Run against a local/dev server
-SEXYVOICE_API_BASE_URL=http://localhost:3000 SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --voiceId <id>
+# Generate local MP3s directly through Google; requires ffmpeg
+pnpm run generate-gemini-speech-samples -- \
+  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 \
+  --env-file /absolute/path/to/.env.local
 ```
 
-> Note: you don't need `--` before the flags (e.g. `pnpm generate-gemini-speech-samples --voiceId <id>`).
+The generator requires `GOOGLE_GENERATIVE_AI_API_KEY`. It sends the transcript as
+text and the delivery direction as speech metadata through the shared web-app
+helpers. The 3.8 model receives the exact regional provider ID. Each output uses
+`<provider-name>-gpro38-preview.mp3`, matching the live catalog's root-level,
+model-suffixed preview convention.
 
-### CLI Options
+`manifest.json` records catalog IDs, transcripts, directions, file hashes, token
+usage, and provider costs. `listen.html` provides local audio controls for the
+batch. Open it in a browser and listen before uploading. `--keep-wav` retains the
+intermediate audio. Rerunning the same command verifies and skips completed MP3s;
+it does not regenerate them. For changed prompts, use a new output directory.
+Move any untracked partial output aside before retrying a failed conversion.
 
-- `--voiceId <id>` - Voice ID from `GET /api/v1/voices`. Used **instead of** `--voice` + `--model` (the model is inferred from the voice).
-- `--model <gpro|gpro31>` - Gemini model alias (used with `--voices`)
-- `--voices <a,b,c>` - Comma-separated voice names (defaults to a built-in list when neither `--voices` nor `--voiceId` is given)
-- `--text <text>` - Text to synthesize
-- `--style <style>` - Emotion/style prompt applied by the API
-- `--seed <number>` - Optional deterministic seed
-- `--out <dir>` - Output directory (default: `scripts/generated-speech`)
-- `--base-url <url>` - Override `SEXYVOICE_API_BASE_URL`
-- `--api-key <key>` - Override `SEXYVOICE_API_KEY`
-- `--keep-wav` - Keep the downloaded WAV next to each MP3
-- `-h, --help` - Show help message
+### Upload reviewed samples
 
-### Environment
+The separate uploader requires a directory containing `manifest.json`. It accepts
+any destination bucket and folder, with `--folder .` selecting the bucket root.
+The live catalog uses `sv-audio-files` and `https://files.sexyvoice.ai`.
 
-- `SEXYVOICE_API_KEY` - Required Bearer API key
-- `SEXYVOICE_API_BASE_URL` - Optional API host (default: `https://sexyvoice.ai`)
-- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN` - Default `--style` if not passed
-- `DEBUG=1` - Print full stack traces on error
+```bash
+pnpm run upload-speech-samples -- \
+  --path generated-speech/gemini-38 --bucket sv-audio-files \
+  --folder . --public-url https://files.sexyvoice.ai --dry-run
 
-`.env.local`/`.env` files in the repo root, `apps/web/`, and `scripts/` are
-loaded automatically.
+# After listening, explicitly upload the reviewed batch
+pnpm run upload-speech-samples -- \
+  --path generated-speech/gemini-38 --bucket sv-audio-files \
+  --folder . --public-url https://files.sexyvoice.ai \
+  --env-file /absolute/path/to/.env.local --upload
+```
 
-### Requirements
+The default is a dry run with no network requests. `--voices <uuid,uuid>` selects
+reviewed catalog entries from the generation manifest. Uploads use the shared R2
+client and `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`.
+Conditional puts refuse overwrites. A retry can verify an identical existing
+object. A different object fails without changing it.
 
-- `ffmpeg` on your `PATH` (used to convert WAV → MP3)
+`uploads.json` records the current batch's verified URLs and failures. Verification
+checks R2 metadata and the SHA-256 of the public MP3. If a public URL is unavailable,
+rerun after it becomes accessible. Final SQL requires the full catalog, so rerun
+with all reviewed IDs after any partial batches; identical objects are only
+verified again.
 
-### Troubleshooting
+### Prepare additive SQL
 
-- **`Could not reach Speech API at ...: ENOTFOUND` / `ECONNREFUSED`** - the host
-  is wrong or the server isn't running. Check `SEXYVOICE_API_BASE_URL`.
-- **`... SELF_SIGNED_CERT_IN_CHAIN`** - the server uses a self-signed
-  certificate. For local/dev only, prepend `NODE_TLS_REJECT_UNAUTHORIZED=0`, or
-  point Node at the cert with `NODE_EXTRA_CA_CERTS=/path/to/cert.pem`.
+The checked-in `add-gemini-38-voices.sql` is a review draft with an execution guard.
+It preserves existing rows and skips existing `gpro38` identities on reruns.
+To refresh the draft, use `--draft`. After uploading and verifying all samples,
+prepare the executable version locally:
 
----
+```bash
+pnpm run prepare-gemini-voice-sql -- \
+  --catalog gemini-38-catalog.json --samples generated-speech/gemini-38 \
+  --out generated-speech/gemini-38/add-voices.sql
+```
+
+This command validates catalog, generation, local file hashes, and verified upload
+records. It writes SQL without executing it. Deploy `gpro38` support before a human
+runs the final SQL, as required by [the database rules](../AGENTS.md#mandatory-rules).
 
 ## Reset Freeloader Credits Script
 

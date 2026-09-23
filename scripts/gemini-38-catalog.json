@@ -1,0 +1,808 @@
+{
+  "version": 1,
+  "model": "gpro38",
+  "publicUrl": "https://files.sexyvoice.ai",
+  "folder": ".",
+  "inventory": {
+    "queriedAt": "2026-09-23T20:14:51.670Z",
+    "project": "bfaqdyadcpaetelvpbva",
+    "totalRows": 36,
+    "geminiRows": 22,
+    "unsupported": [
+      {
+        "name": "javi",
+        "model": "gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "pietro",
+        "model": "gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "dan",
+        "model": "lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "emma",
+        "model": "lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "josh",
+        "model": "lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "tara",
+        "model": "lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "Cloned voice",
+        "model": "resemble-ai/chatterbox-multilingual or fal-ai/chatterbox/text-to-speech",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "carina",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "ara",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "eve",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "leo",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "rex",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "sal",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      },
+      {
+        "name": "zagan",
+        "model": "xai",
+        "reason": "Provider-specific identity is not available in the Gemini voice library"
+      }
+    ]
+  },
+  "voices": [
+    {
+      "id": "1236ed64-eedc-4608-91b8-d545966b3777",
+      "name": "achernar",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "achernar-gpro38-preview.mp3",
+      "sourceIds": [
+        "390f5864-111b-4795-81ea-7026a1e64cfc",
+        "85153e4b-f5b0-477a-856e-1bf05fd84165"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "high"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Soft",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "78184293-4058-4a6a-8832-c41edb341fd7",
+      "name": "aoede",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "aoede-gpro38-preview.mp3",
+      "sourceIds": [
+        "5797178d-c047-44ea-aef4-94e97fb48663",
+        "dbee6556-5517-41b4-9919-05556eeea0fc"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Breezy",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "05eb6904-b8c8-46cd-b86e-96574ec04808",
+      "name": "autonoe",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "autonoe-gpro38-preview.mp3",
+      "sourceIds": [
+        "cd71a399-9c9a-4384-b76e-14e96a45fc8a",
+        "af68ca7e-5491-46ef-aaf3-0a9a185d8284"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Bright",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "28a915dd-afa1-4e1c-bd26-663594cbccf5",
+      "name": "callirrhoe",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "callirrhoe-gpro38-preview.mp3",
+      "sourceIds": [
+        "c38d0c52-e8c1-404b-9cb1-56d4cf252b9f",
+        "88710777-0252-4bfb-a37a-b60a8ac40db8"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Easy-going",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "ed34a03e-f216-4ee6-8a6f-f1e848f29d42",
+      "name": "despina",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "despina-gpro38-preview.mp3",
+      "sourceIds": [
+        "f586bd2c-909f-4bf3-a859-4e45e45a22d6",
+        "18b05489-3ae9-4c4a-b18d-7f846ec34838"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Smooth",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "4ae82b29-33e0-46dd-befa-51b2a98b9e48",
+      "name": "erinome",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "erinome-gpro38-preview.mp3",
+      "sourceIds": [
+        "530c8354-bb32-4231-a9c9-3c05fcdd220b",
+        "d7f3174c-e3ed-4f58-8889-838ae78f87e7"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Clear",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "d19ebe92-eb22-4e9c-ae91-64d66c413140",
+      "name": "gacrux",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "gacrux-gpro38-preview.mp3",
+      "sourceIds": [
+        "3da76670-6fca-435b-b097-eed8cc6f37a5",
+        "2676472e-1192-414d-8910-7b707190e294"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Mature",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "0ebbd66c-8103-442d-a65e-055fdf086be8",
+      "name": "kore",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "kore-gpro38-preview.mp3",
+      "sourceIds": [
+        "5a2bffef-5e60-4fe6-b989-9ed3e68b6c48",
+        "cafa09d1-4124-4b6b-a114-43c697ddd86d"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Firm",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "005b84ec-6fa6-43a0-a3b6-d5f750efeaaa",
+      "name": "puck",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "puck-gpro38-preview.mp3",
+      "sourceIds": [
+        "0111e4dd-a38a-48e0-a8bb-a0a057f4cceb",
+        "f61d5826-b5ab-40d8-b623-a29045c666df"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "male",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Upbeat",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Male",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "e9d93551-ed76-4cdc-9438-d7a614270b18",
+      "name": "sulafat",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "sulafat-gpro38-preview.mp3",
+      "sourceIds": [
+        "a68482ea-c14e-43cf-bf8c-16074bff9f8d",
+        "9a7ddf84-d3c2-466f-ad54-da143fb9e39c"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Warm",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "1269262d-e652-4a8d-b9c9-11dade5a30fb",
+      "name": "zephyr",
+      "language": "multiple",
+      "text": "Come a little closer. I saved you the quiet corner by the window. How was your day? We have nowhere else to be tonight.",
+      "style": "Warm and intimate, with a relaxed pace. Sound like a private conversation; leave a short pause before the question.",
+      "filename": "zephyr-gpro38-preview.mp3",
+      "sourceIds": [
+        "03925a20-4e15-4745-b86c-2c2e9d7de870",
+        "7959f661-b383-4e8b-9423-1b99f7d567d1"
+      ],
+      "provider": {
+        "language": "en-US",
+        "accent": "General American",
+        "gender": "female",
+        "pitch": "high"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Bright",
+        "feature": "tts",
+        "is_nsfw": true,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "261e8c9e-63c0-4f79-a183-a40f4c53f399",
+      "name": "es-es-advisor-8",
+      "language": "es-ES 🇪🇸",
+      "text": "Antes de decidir, revisemos las dos opciones. Esta cuesta menos, pero la otra te dará más margen si tus planes cambian.",
+      "style": "Seguro y reflexivo, con una pausa breve entre las opciones.",
+      "filename": "es-es-advisor-8-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "advisor",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "neutral",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Authoritative Advisor 8 · Castilian Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Neutral",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "a413088d-f5e2-474c-9e2f-353b9ffa01aa",
+      "name": "es-es-assistant-3",
+      "language": "es-ES 🇪🇸",
+      "text": "Ya está todo preparado. Tienes una reunión a las diez y media. ¿Quieres que te avise cinco minutos antes?",
+      "style": "Ágil y cercano. Haz una pausa breve antes de la pregunta.",
+      "filename": "es-es-assistant-3-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "assistant",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "male",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Digital Assistant 3 · Castilian Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Male",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "a762fc72-b7cb-4356-9376-5ba9ea491f37",
+      "name": "es-es-commercial-7",
+      "language": "es-ES 🇪🇸",
+      "text": "Ese primer café, la luz que entra por la ventana, un momento para ti. Hay mañanas que empiezan de otra manera.",
+      "style": "Cálido y sugerente, con una sonrisa ligera. Deja respirar cada frase.",
+      "filename": "es-es-commercial-7-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "commercial",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Commercial Voiceover 7 · Castilian Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "6dfd96aa-3574-4dd2-9cb4-bc7492166e10",
+      "name": "es-es-concierge-3",
+      "language": "es-ES 🇪🇸",
+      "text": "Bienvenida. Tu habitación está lista. Si te apetece cenar fuera, conozco un sitio tranquilo a cinco minutos de aquí.",
+      "style": "Atento y acogedor. La recomendación debe sonar personal.",
+      "filename": "es-es-concierge-3-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "concierge",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Concierge 3 · Castilian Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "44bd4de5-952c-4493-bf08-4f58d886c98a",
+      "name": "es-es-csagent-6",
+      "language": "es-ES 🇪🇸",
+      "text": "Entiendo lo que ha pasado. Vamos a comprobar el pedido juntas y te explicaré qué podemos hacer para resolverlo.",
+      "style": "Tranquilo y empático. Explica el siguiente paso con claridad.",
+      "filename": "es-es-csagent-6-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "csagent",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "female",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Call Center Agent 6 · Castilian Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "7b744f86-582f-4a68-ade0-8a0ccc7ebbbf",
+      "name": "es-es-podcaster-7",
+      "language": "es-ES 🇪🇸",
+      "text": "Hoy vamos a hablar de algo que nos pasa a todos: dejar para mañana esa pequeña tarea que lleva una semana esperando.",
+      "style": "Conversacional, con una leve ironía y entonación variada.",
+      "filename": "es-es-podcaster-7-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "podcaster",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "male",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Podcaster 7 · Castilian Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Male",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "c3906422-6f38-4059-87c5-28593a247b5f",
+      "name": "es-es-techagent-5",
+      "language": "es-ES 🇪🇸",
+      "text": "Primero, abre los ajustes y busca la conexión wifi. Cuando aparezca el nombre de tu red, selecciónalo. Vamos paso a paso.",
+      "style": "Paciente y preciso, con pausas cortas entre los pasos.",
+      "filename": "es-es-techagent-5-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "techagent",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Tech Advisor 5 · Castilian Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "3b9c813b-4c2b-412f-abd6-3d4fc1a18202",
+      "name": "es-es-training-12",
+      "language": "es-ES 🇪🇸",
+      "text": "En este ejercicio practicaremos cómo dar una respuesta clara. Escucha el ejemplo, identifica la idea principal y explícalo con tus propias palabras.",
+      "style": "Claro y animado, con una cadencia estable.",
+      "filename": "es-es-training-12-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "training",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "female",
+        "pitch": "high"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Training Voiceover 12 · Castilian Spanish · high pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "7e1c4c1f-2d26-4926-bdcf-bd8f8835ecba",
+      "name": "es-es-tutor-12",
+      "language": "es-ES 🇪🇸",
+      "text": "Casi lo tienes. Si dividimos esta cantidad entre tres, ¿qué ocurre con el resultado? Tómate un momento; podemos comprobarlo juntos.",
+      "style": "Cercano y paciente. Deja tiempo para pensar después de la pregunta.",
+      "filename": "es-es-tutor-12-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "tutor",
+      "provider": {
+        "language": "es-ES",
+        "accent": "Castilian Spanish",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Tutor 12 · Castilian Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "9d83bc40-8d27-464b-993c-e62850436a51",
+      "name": "es-419-advisor-4",
+      "language": "es-MX 🇲🇽",
+      "text": "Antes de decidir, veamos las dos opciones. Esta cuesta menos, pero la otra te da más margen si tus planes cambian.",
+      "style": "Seguro y reflexivo, con una pausa breve entre las opciones.",
+      "filename": "es-419-advisor-4-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "advisor",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "female",
+        "pitch": "high"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Authoritative Advisor 4 · Mexico Spanish · high pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "8246fbe2-00ea-4d10-b777-451184fbb475",
+      "name": "es-419-assistant-9",
+      "language": "es-MX 🇲🇽",
+      "text": "Ya quedó todo listo. Tienes una junta a las diez y media. ¿Quieres que te avise cinco minutos antes?",
+      "style": "Ágil y cercano. Haz una pausa breve antes de la pregunta.",
+      "filename": "es-419-assistant-9-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "assistant",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "male",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Digital Assistant 9 · Mexico Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Male",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "01db1e7d-2869-48d8-bfec-c01015675448",
+      "name": "es-419-commercial-1",
+      "language": "es-MX 🇲🇽",
+      "text": "El primer café del día, la luz que entra por la ventana, un ratito para ti. Hay mañanas que se disfrutan desde el principio.",
+      "style": "Cálido y sugerente, con una sonrisa ligera. Deja respirar cada frase.",
+      "filename": "es-419-commercial-1-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "commercial",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "male",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Commercial Voiceover 1 · Mexico Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Male",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "c3b17bbc-c5e6-46f7-8c47-75e0558ad91a",
+      "name": "es-419-concierge-5",
+      "language": "es-MX 🇲🇽",
+      "text": "Bienvenido. Tu habitación ya está lista. Si se te antoja salir a cenar, te puedo recomendar un lugar tranquilo aquí cerquita.",
+      "style": "Atento y acogedor. La recomendación debe sonar personal.",
+      "filename": "es-419-concierge-5-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "concierge",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "female",
+        "pitch": "high"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Concierge 5 · Mexico Spanish · high pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "6c9af296-2d9c-49fb-b196-c1b4a0cf74b8",
+      "name": "es-419-csagent-8",
+      "language": "es-MX 🇲🇽",
+      "text": "Entiendo lo que pasó. Vamos a revisar tu pedido y te explicaré qué podemos hacer para resolverlo.",
+      "style": "Tranquilo y empático. Explica el siguiente paso con claridad.",
+      "filename": "es-419-csagent-8-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "csagent",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "neutral",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Call Center Agent 8 · Mexico Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Neutral",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "b55f7a29-53db-46b1-811e-16490a8a1788",
+      "name": "es-419-podcaster-1",
+      "language": "es-MX 🇲🇽",
+      "text": "Hoy vamos a platicar de algo que nos pasa a todos: dejar para mañana ese pendiente chiquito que lleva una semana esperando.",
+      "style": "Conversacional, con una leve ironía y entonación variada.",
+      "filename": "es-419-podcaster-1-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "podcaster",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "male",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Podcaster 1 · Mexico Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Male",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "fd3e0ee9-2d91-4931-9b5f-3f9adbc2ccc6",
+      "name": "es-419-training-8",
+      "language": "es-MX 🇲🇽",
+      "text": "En este ejercicio vamos a practicar cómo dar una respuesta clara. Escucha el ejemplo, identifica la idea principal y explícalo con tus propias palabras.",
+      "style": "Claro y animado, con una cadencia estable.",
+      "filename": "es-419-training-8-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "training",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "female",
+        "pitch": "medium"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Training Voiceover 8 · Mexico Spanish · medium pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    },
+    {
+      "id": "036141f1-86e2-416b-9c4d-24062f547238",
+      "name": "es-419-tutor-3",
+      "language": "es-MX 🇲🇽",
+      "text": "Ya casi lo tienes. Si dividimos esta cantidad entre tres, ¿qué pasa con el resultado? Tómate un momento; lo podemos revisar juntos.",
+      "style": "Cercano y paciente. Deja tiempo para pensar después de la pregunta.",
+      "filename": "es-419-tutor-3-gpro38-preview.mp3",
+      "sourceIds": [],
+      "kind": "tutor",
+      "provider": {
+        "language": "es-419",
+        "accent": "Mexico Spanish",
+        "gender": "female",
+        "pitch": "low"
+      },
+      "row": {
+        "user_id": "362c0622-f066-4b5a-a7bd-94b819c5c7d5",
+        "description": "Tutor 3 · Mexico Spanish · low pitch",
+        "feature": "tts",
+        "is_nsfw": false,
+        "is_public": true,
+        "type": "Female",
+        "sort_order": 0
+      }
+    }
+  ]
+}
