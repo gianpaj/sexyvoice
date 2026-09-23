@@ -186,10 +186,10 @@ verified again.
 
 ### Prepare additive SQL
 
-The checked-in `add-gemini-38-voices.sql` is a review draft with an execution guard.
-It preserves existing rows and skips existing `gpro38` identities on reruns.
-To refresh the draft, use `--draft`. After uploading and verifying all samples,
-prepare the executable version locally:
+The checked-in `add-gemini-38-voices.sql` contains the verified 28-row catalog,
+with `is_public = false`. It preserves existing rows and skips existing `gpro38`
+identities on reruns. Use `--draft` to prepare guarded SQL before upload; after
+verification, prepare executable SQL locally:
 
 ```bash
 pnpm run prepare-gemini-voice-sql -- \
@@ -197,9 +197,15 @@ pnpm run prepare-gemini-voice-sql -- \
   --out generated-speech/gemini-38/add-voices.sql
 ```
 
+Friendly Spanish labels come from `apps/web/lib/voice-names.ts`. Selectors and the
+local listening page show these names; database names, API identifiers, provider
+requests, filenames, and cache identities retain the provider IDs.
+
 This command validates catalog, generation, local file hashes, and verified upload
-records. It writes SQL without executing it. Deploy `gpro38` support before a human
-runs the final SQL, as required by [the database rules](../AGENTS.md#mandatory-rules).
+records. It writes SQL without executing it. Deploy `gpro38` support before using
+these voices for generation. Database writes follow the
+[database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
+authorizes an exception.
 
 ## Reset Freeloader Credits Script
 

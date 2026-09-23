@@ -12,7 +12,9 @@ Generate a fresh sample for every new entry using `gemini-3.8-flash-tts`.
 Use `feat/gemini-38-voice-catalog`, created from `main` in a clean worktree.
 Model integration and provider-cost tracking are implemented and tested.
 The 28-entry catalog, local generator, and separate uploader are implemented.
-All 28 MP3s are ready for listening. Upload and final SQL await that review.
+All 28 MP3s are uploaded and verified. The 28 catalog entries are inserted
+with `is_public = false`, following user approval. Display names are implemented;
+production app deployment remains separate.
 The earlier implementation remains separate on `feat/gemini-38-tts`.
 Its replacement SQL does not satisfy this additive catalog plan.
 
@@ -75,7 +77,7 @@ Its replacement SQL does not satisfy this additive catalog plan.
 - [x] Save a manifest linking provider IDs, proposed catalog entries, prompts,
       generated files, token usage, and provider costs.
 - [x] Keep generation local; do not upload as part of generation.
-- [ ] Have the user listen to the MP3s before uploading. Regenerate rejected
+- [x] Have the user listen to the MP3s before uploading. Regenerate rejected
       samples and let the user review their replacements.
 
 ## 5. Upload reviewed samples to Cloudflare R2
@@ -91,11 +93,11 @@ bucket folder. Run it only for files the user has reviewed and selected.
 - [x] Add `--dry-run` to show local files, destination keys, and public URLs
       without uploading or changing the database.
 - [x] Refuse overwrites by default and detect duplicate destination keys.
-- [ ] Upload only the reviewed MP3s with the correct audio content type.
+- [x] Upload only the reviewed MP3s with the correct audio content type.
 - [x] Record successful uploads and public URLs in an upload manifest. Report
       failures separately so an incomplete batch cannot appear ready for SQL.
-- [ ] Verify the uploaded objects and public URLs before preparing the final SQL.
-- [ ] Populate new catalog entries' `sample_url` values from verified uploads.
+- [x] Verify the uploaded objects and public URLs before preparing the final SQL.
+- [x] Populate new catalog entries' `sample_url` values from verified uploads.
 
 ## 6. Validate and hand off
 
@@ -106,18 +108,19 @@ bucket folder. Run it only for files the user has reviewed and selected.
 - [x] Test upload dry runs, filename mapping, overwrite refusal, and partial failures.
 - [x] Run `pnpm fixall`, `pnpm type-check`, affected tests, and `git diff --check`.
 - [x] Update API documentation and regenerate OpenAPI pages.
-- [ ] Deliver reviewed SQL, generation and upload manifests, and deployment instructions.
+- [x] Deliver reviewed SQL, generation and upload manifests, and deployment instructions.
 
 ## Deployment
 
 Generate MP3s locally, let the user listen, then explicitly run the separate
-uploader for the selected files. Deploy `gpro38` support before inserting its
-catalog entries. Use verified R2 public URLs in the new rows. Neither script
+uploader for the selected files. The initial rows are private, as explicitly requested by the user. Deploy
+`gpro38` support and the approved display labels before enabling broader access. Use verified R2 public URLs in the new rows. Neither script
 executes catalog SQL. Existing voice selections keep
 using their existing models. Users can select the additional Gemini 3.8 entries.
 
-Prepare database writes for the user to execute under the repository's
-[database rules](../AGENTS.md#mandatory-rules).
+The user explicitly authorized applying the previewed insertion SQL. Future
+database writes follow the repository's [database rules](../AGENTS.md#mandatory-rules)
+unless the user explicitly authorizes an exception.
 
 ## Completion criteria
 

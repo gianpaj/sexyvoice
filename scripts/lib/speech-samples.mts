@@ -3,6 +3,8 @@ import { lstat, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { GenerateContentResponseUsageMetadata } from '@google/genai';
 
+import voiceNames from '../../apps/web/lib/voice-names.ts';
+
 export interface SampleVoice {
   filename: string;
   id: string;
@@ -136,7 +138,7 @@ export async function writeListeningPage(
     .map(
       (
         sample,
-      ) => `<article><h2>${escapeHtml(sample.name)} <small>${escapeHtml(sample.language)}</small></h2>
+      ) => `<article><h2>${escapeHtml(voiceNames.getVoiceDisplayName({ model: 'gpro38', name: sample.name }))} <small>${escapeHtml(sample.language)}</small></h2>
 <p>${escapeHtml(sample.text)}</p><p><small>${escapeHtml(sample.style)}</small></p>
 <audio controls preload="none" src="${encodeURIComponent(sample.filename)}"></audio>
 <p><small>Catalog ID: ${escapeHtml(sample.id)}</small></p></article>`,

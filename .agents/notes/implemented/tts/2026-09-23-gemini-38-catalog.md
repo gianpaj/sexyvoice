@@ -46,21 +46,36 @@ pitch; delivery prompts do not override them.
 Live previews use `https://files.sexyvoice.ai` at the `sv-audio-files` bucket root.
 New filenames follow `<provider-name>-gpro38-preview.mp3`. The separate uploader
 verifies local hashes and uses conditional puts. Only verified public URLs belong
-in executable SQL. The committed SQL draft raises an exception until the final
-SQL is regenerated from verified uploads.
+in executable SQL. The committed SQL contains the 28 private entries with verified URLs.
+`--draft` generates an execution guard for batches awaiting upload.
 
 See [the script workflow](../../../../scripts/README.md#gemini-38-voice-samples)
 for commands and manifest behavior.
 
-## Verification and pending review
+## Display names
 
-Model integration: 313 tests passed, 19 existing skips. Script tests: 62 passed.
+`apps/web/lib/voice-names.ts` maps the 17 regional provider IDs to the approved
+Spanish names. Selectors, preview labels, the generation progress toast, and the
+local listening page use these labels. The database name remains the provider ID.
+Changing the database name was rejected because generation and API lookups use it.
+
+## Verification and rollout
+
+Model integration: 313 tests passed, 19 existing skips. Display-name and generation
+regression checks: 54 tests passed, 3 existing skips. Script tests: 62 passed.
 `pnpm fixall`, `pnpm type-check`, script linting, and `git diff --check` passed.
 All 28 MP3s passed ffprobe checks, with durations from 5.28 to 12 seconds.
 Total duration is 248.92 seconds; recorded provider cost is $0.072223.
 A resumed generation verified all 28 files without regeneration. The uploader's
 28-file dry run performed no network requests.
 
-The user has requested upload and private catalog insertion, with an SQL and R2
-path preview first. Friendly Spanish display names are under review. R2 upload,
-public URL verification, and final SQL remain pending. No production catalog rows or storage objects were changed.
+The user explicitly approved the previewed SQL insert and R2 destinations with
+"looks good. go ahead" on 2026-09-23. All 28 MP3s were uploaded to
+`sv-audio-files`; R2 metadata and public SHA-256 hashes matched local files.
+The Supabase CLI applied the verified SQL in a transaction. Readback verified
+all 28 private rows and confirmed all 36 existing TTS rows were unchanged.
+This explicit request authorized the insert despite the repository's default
+read-only database rule.
+
+Gemini 3.8 route support and display labels are committed on the feature branch.
+Production app deployment remains a separate step; the new catalog is private.

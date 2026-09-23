@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
@@ -347,5 +347,54 @@ describe('VoiceSelector', () => {
     expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
       baseDict.voiceSelector.multilingualGroupLabel,
     );
+  });
+});
+
+describe('Gemini 3.8 display names', () => {
+  it('shows Clara and selects her catalog ID when searching by display name', async () => {
+    const user = userEvent.setup();
+    const setSelectedVoice = vi.fn();
+    const clara = createVoice({
+      id: 'clara-catalog-id',
+      model: 'gpro38',
+      name: 'es-es-advisor-8',
+      type: 'Female',
+    });
+    renderVoiceSelector({
+      publicVoices: [clara],
+      selectedVoice: undefined,
+      setSelectedVoice,
+    });
+    await user.click(screen.getByRole('combobox'));
+    await user.type(
+      screen.getByPlaceholderText(baseDict.voiceSelector.searchPlaceholder),
+      'Clara',
+    );
+    await user.click(
+      within(screen.getByRole('option', { name: /Clara/ })).getByRole(
+        'button',
+        { name: /Clara/ },
+      ),
+    );
+    expect(setSelectedVoice).toHaveBeenCalledWith('clara-catalog-id');
+    expect(clara.name).toBe('es-es-advisor-8');
+  });
+
+  it('keeps provider IDs searchable and labels the selected sample with the friendly name', async () => {
+    const user = userEvent.setup();
+    const clara = createVoice({
+      id: 'clara-catalog-id',
+      model: 'gpro38',
+      name: 'es-es-advisor-8',
+      sample_url: 'https://example.com/clara.mp3',
+    });
+    renderVoiceSelector({ publicVoices: [clara], selectedVoice: clara });
+    expect(screen.getAllByText('Clara').length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('combobox'));
+    await user.type(
+      screen.getByPlaceholderText(baseDict.voiceSelector.searchPlaceholder),
+      'es-es-advisor-8',
+    );
+    expect(screen.getByRole('option', { name: /Clara/ })).toBeInTheDocument();
   });
 });

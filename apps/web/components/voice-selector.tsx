@@ -21,7 +21,8 @@ import { VoiceSelect } from '@/components/voice-select';
 import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
+import { cn, getTtsProvider } from '@/lib/utils';
+import { getVoiceDisplayName } from '@/lib/voice-names';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
@@ -118,8 +119,7 @@ export function VoiceSelector({
               />
               <div>
                 <p className="text-muted-foreground text-sm">
-                  <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
-                  prompt:{' '}
+                  <b>{getVoiceDisplayName(selectedVoice)}</b> sample prompt:{' '}
                   {isGrokVoice ? (
                     <span className="whitespace-break-spaces">
                       <GrokTaggedText
