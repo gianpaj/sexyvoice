@@ -10,7 +10,8 @@ Generate a fresh sample for every new entry using `gemini-3.8-flash-tts`.
 ## Branch and status
 
 Use `feat/gemini-38-voice-catalog`, created from `main` in a clean worktree.
-This branch contains the plan only. Implementation and validation are pending.
+Model integration and provider-cost tracking are implemented and tested.
+Catalog generation and the separate upload workflow are in progress.
 The earlier implementation remains separate on `feat/gemini-38-tts`.
 Its replacement SQL does not satisfy this additive catalog plan.
 
@@ -25,7 +26,8 @@ Its replacement SQL does not satisfy this additive catalog plan.
 - Select Spanish additions from `es-MX` and `es-ES`; do not select `ca` voices.
 - Use one representative per kind, following the original selection request.
 - Confirm Mexican candidates from Google's voice list; the supplied table has
-  Spain Spanish entries only. Do not invent Mexican voice IDs.
+  Spain Spanish entries only. Mexican voices use provider locale `es-419` with
+  accent `Mexico Spanish`; preserve their IDs and label the product locale `es-MX`.
 
 ## 1. Inspect the catalogs
 
@@ -36,29 +38,29 @@ Its replacement SQL does not satisfy this additive catalog plan.
       filename format, and public URL convention.
 - [ ] Confirm public/private scope and account for every existing voice.
 - [ ] Check Gemini 3.8 support for each distinct provider voice identity.
-- [ ] Inspect the Mexican Spanish and Spain Spanish provider voice lists.
+- [x] Inspect the Mexican Spanish and Spain Spanish provider voice lists.
 - [ ] Record the final additions, their kinds, accents, genders, and pitches.
 
 ## 2. Support Gemini 3.8 generation
 
-- [ ] Add `gpro38` to model selection, API schemas, catalogs, and voice labels.
-- [ ] Verify the Google Gen AI SDK version required for the speech fields.
-- [ ] Share request construction across the dashboard, API, and sample script.
-- [ ] Keep spoken text separate from delivery instructions in speech metadata.
-- [ ] Preserve extended provider voice IDs exactly.
-- [ ] Handle complete WAV responses without adding another WAV header.
-- [ ] Include delivery instructions in dashboard cache keys.
-- [ ] Avoid fallback models that cannot serve the selected voice.
-- [ ] Keep existing model routes and voice selections working.
+- [x] Add `gpro38` to model selection, API schemas, catalogs, and voice labels.
+- [x] Verify the Google Gen AI SDK version required for the speech fields.
+- [x] Share request construction across the dashboard, API, and sample script.
+- [x] Keep spoken text separate from delivery instructions in speech metadata.
+- [x] Preserve extended provider voice IDs exactly.
+- [x] Handle complete WAV responses without adding another WAV header.
+- [x] Include delivery instructions in dashboard cache keys.
+- [x] Avoid fallback models that cannot serve the selected voice.
+- [x] Keep existing model routes and voice selections working.
 
 ## 3. Record usage and provider costs
 
-- [ ] Verify Google's published standard-tier Gemini 3.8 TTS rates.
-- [ ] Track the actual provider model and input/output token counts in both routes.
-- [ ] Apply effective dates to provider pricing and historical cost recovery.
-- [ ] Preserve historical pricing for other models.
-- [ ] Keep customer credit charging separate from provider dollar costs.
-- [ ] Test credit estimates, successful usage records, and refunds on failure.
+- [x] Verify Google's published standard-tier Gemini 3.8 TTS rates.
+- [x] Track the actual provider model and input/output token counts in both routes.
+- [x] Apply effective dates to provider pricing and historical cost recovery.
+- [x] Preserve historical pricing for other models.
+- [x] Keep customer credit charging separate from provider dollar costs.
+- [x] Test credit estimates, successful usage records, and refunds on failure.
 
 ## 4. Prepare SQL and samples
 

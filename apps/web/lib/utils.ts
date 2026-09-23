@@ -66,7 +66,7 @@ function getGemini31FreeMultiplier(
 }
 
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     return 'gemini';
   }
 
@@ -125,7 +125,7 @@ function getCreditMultiplier(
       break;
   }
 
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 

@@ -14,12 +14,18 @@ export function getFeaturedVoice(
 
 // ── Voice selector types & constants ─────────────────────────────────────────
 
-export type VoiceModel = 'Gemini 2.5' | 'Gemini 3.1' | 'Grok' | 'Replicate';
+export type VoiceModel =
+  | 'Gemini 2.5'
+  | 'Gemini 3.1'
+  | 'Gemini 3.8'
+  | 'Grok'
+  | 'Replicate';
 export type VoiceGender = 'Female' | 'Male' | 'Neutral';
 
 export const VOICE_MODELS: VoiceModel[] = [
   'Gemini 2.5',
   'Gemini 3.1',
+  'Gemini 3.8',
   'Grok',
   'Replicate',
 ];
@@ -29,6 +35,7 @@ export const VOICE_GENDERS: VoiceGender[] = ['Female', 'Male', 'Neutral'];
 export const MODEL_COLORS: Record<VoiceModel, string> = {
   'Gemini 2.5': '#4285f4',
   'Gemini 3.1': '#34a853',
+  'Gemini 3.8': '#0f9d58',
   Grok: '#9b59b6',
   Replicate: '#e67e22',
 };
@@ -49,6 +56,7 @@ export const VOICES: Voice[] = [];
 /** Maps the raw DB model string to a human-readable VoiceModel label. */
 export function getDisplayModel(dbModel: string): VoiceModel {
   if (dbModel === 'gpro') return 'Gemini 2.5';
+  if (dbModel === 'gpro38') return 'Gemini 3.8';
   if (dbModel === 'gpro31') return 'Gemini 3.1';
   if (dbModel === 'xai') return 'Grok';
   return 'Replicate';

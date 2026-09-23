@@ -248,6 +248,7 @@ export const normalizeModelName = (modelName: string | null | undefined) => {
     'gemini-2.5-flash': 'Gemini Flash',
     'gemini-2.5-pro': 'Gemini Pro',
     'gemini-3.1-flash': 'Gemini 3.1',
+    'gemini-3.8-flash-tts': 'Gemini 3.8',
     grok: 'Grok',
     'orpheus-3b-0.1-ft': 'Orpheus',
     'voxtral-mini-tts-2603': 'Voxtral Clone',

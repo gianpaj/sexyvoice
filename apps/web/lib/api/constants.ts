@@ -11,6 +11,12 @@ export const EXTERNAL_API_MODELS = {
     name: 'Gemini 3.1 Flash TTS',
     supportedFormats: ['wav'] as const,
   },
+  gpro38: {
+    id: 'gpro38',
+    maxInputLength: 1000,
+    name: 'Gemini 3.8 Flash TTS',
+    supportedFormats: ['wav'] as const,
+  },
   orpheus: {
     id: 'orpheus',
     maxInputLength: 500,
@@ -34,6 +40,7 @@ export const DB_MODEL_TO_EXTERNAL_ID: Record<string, string> = {
     'orpheus',
   gpro: 'gpro',
   gpro31: 'gpro31',
+  gpro38: 'gpro38',
   'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f':
     'orpheus',
   xai: 'xai',

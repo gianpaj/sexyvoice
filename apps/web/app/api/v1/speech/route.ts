@@ -49,7 +49,12 @@ import {
   restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { buildGeminiTtsPrompt } from '@/lib/tts/gemini-prompt';
+import {
+  buildGeminiTtsContents,
+  buildGeminiTtsPrompt,
+  buildGeminiVoiceConfig,
+  resolveGeminiTtsModel,
+} from '@/lib/tts/gemini-prompt';
 import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
@@ -452,7 +457,10 @@ export async function POST(request: Request) {
 
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
-    if (finalText.length > maxLength) {
+    if (
+      finalText.length + (model === 'gpro38' ? (style?.length ?? 0) : 0) >
+      maxLength
+    ) {
       const lengthErrorMessage =
         isGeminiVoice && style
           ? `The input text exceeds the maximum length of ${maxLength} characters after applying style`
@@ -604,30 +612,32 @@ export async function POST(request: Request) {
           },
         ],
         speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: voice.charAt(0).toUpperCase() + voice.slice(1),
-            },
-          },
+          voiceConfig: buildGeminiVoiceConfig(voice, model),
         },
       };
 
       try {
-        modelUsed =
-          model === 'gpro31'
-            ? 'gemini-3.1-flash-tts-preview'
-            : 'gemini-2.5-pro-preview-tts';
+        modelUsed = resolveGeminiTtsModel({ model, userHasPaid: true });
         geminiResponse = await ai.models.generateContent({
           config,
-          contents: [{ parts: [{ text: finalText }], role: 'user' }],
+          contents: buildGeminiTtsContents({
+            model,
+            styleVariant: style,
+            text: finalText,
+          }),
           model: modelUsed,
         });
       } catch (proError) {
+        if (model === 'gpro38') throw proError;
         modelUsed = 'gemini-2.5-flash-preview-tts';
         try {
           geminiResponse = await ai.models.generateContent({
             config,
-            contents: [{ parts: [{ text: finalText }], role: 'user' }],
+            contents: buildGeminiTtsContents({
+              model,
+              styleVariant: style,
+              text: finalText,
+            }),
             model: modelUsed,
           });
         } catch (flashError) {
@@ -903,6 +913,7 @@ export async function POST(request: Request) {
       durationSeconds,
       inputChars: finalText.length,
       metadata: {
+        ...usageMetadata,
         model: modelUsed,
         textLength: finalText.length,
         textPreview: finalText.slice(0, 100),

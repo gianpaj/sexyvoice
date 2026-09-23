@@ -24,7 +24,7 @@
   "dependencies": {
     "@ai-sdk/xai": "3.0.96",
     "@aws-sdk/client-s3": "3.1011.0",
-    "@google/genai": "1.19.0",
+    "@google/genai": "2.24.0",
     "@supabase/supabase-js": "catalog:",
     "@upstash/redis": "catalog:",
     "ai": "catalog:",

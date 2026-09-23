@@ -660,6 +660,11 @@ Check:
 - request logs
 - R2 upload configuration
 
+`gpro38` uses Gemini 3.8 Flash TTS on both dashboard and external API routes.
+Deploy application support before adding its catalog rows. Existing voice rows
+keep their model assignments. Provider costs use the dated standard rates in
+`apps/web/lib/api/pricing.ts`; historical recovery uses `usage_events.occurred_at`.
+
 ### Storage issues
 
 Check:
