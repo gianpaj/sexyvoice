@@ -631,6 +631,18 @@ Check:
 - redirect URL configuration in Supabase / OAuth provider
 - Sentry events tagged for OAuth callback flow
 
+### Crisp credit balance
+
+`CreditsSection` sends the browser's `['credits', userId]` query result to
+Crisp as `creditsLeft`. Speech generation invalidates credit queries after each
+request settles, including split segments and retries. A call-token 402 also
+invalidates them; call disconnect refreshes the authenticated user's balance.
+
+Crisp displays a session snapshot, not a live database balance. For support
+investigations, verify `public.credits.amount` for the user's ID. If Crisp stays
+stale, check the browser's credit query and the claims/paid-status lookups that
+precede `Crisp.session.setData`. The query's 60-second `staleTime` does not poll.
+
 ### LiveKit call issues
 
 Check:
