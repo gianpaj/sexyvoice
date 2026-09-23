@@ -101,3 +101,46 @@ export function isTransientProviderFailure(error: unknown): boolean {
     )
   );
 }
+
+// HTTP status a provider returns when it refuses to process the request's
+// content (e.g. xAI's `permission-denied` for explicit transcripts).
+export const CONTENT_REFUSAL_STATUS_CODE = 403;
+
+// Markers that identify a content-policy refusal rather than an auth/permission
+// problem that happens to share the 403 status. Matched against the AI SDK
+// `responseBody` when present, otherwise the error message.
+const CONTENT_REFUSAL_PATTERN =
+  /permission-denied|can't help with that request|cannot help with that request/;
+
+function getProviderResponseBody(error: unknown): string | null {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'responseBody' in error &&
+    typeof (error as Record<string, unknown>).responseBody === 'string'
+  ) {
+    return (error as Record<string, unknown>).responseBody as string;
+  }
+
+  return null;
+}
+
+/**
+ * A deterministic, non-retryable provider refusal: the model declines to
+ * process the request's content and answers HTTP 403 with a `permission-denied`
+ * body. Distinct from `isTransientProviderFailure`; a 403 must never be retried
+ * as a transient failure. Returns `false` for anything that is not a 403
+ * content refusal so genuine failures stay on the existing error path.
+ */
+export function isProviderContentRefusal(error: unknown): boolean {
+  if (getProviderStatusCode(error) !== CONTENT_REFUSAL_STATUS_CODE) {
+    return false;
+  }
+
+  const responseBody = getProviderResponseBody(error);
+  const haystack = (
+    responseBody ?? getProviderErrorMessage(error)
+  ).toLowerCase();
+
+  return CONTENT_REFUSAL_PATTERN.test(haystack);
+}

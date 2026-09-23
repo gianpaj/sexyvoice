@@ -10,6 +10,10 @@ import {
   toAnalysisRow,
 } from '@/lib/ai/analyze-call';
 import { APIErrorResponse } from '@/lib/error-ts';
+import {
+  CONTENT_REFUSAL_STATUS_CODE,
+  isProviderContentRefusal,
+} from '@/lib/provider-errors';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 // Grok structured generation can take several seconds; the default Node runtime
@@ -108,12 +112,35 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isProviderContentRefusal(error)) {
+      // The provider deterministically declines to analyze this transcript
+      // (HTTP 403 permission-denied) and the failure is non-retryable. Treat it
+      // as an expected skip, not a service failure: warn and record a single
+      // countable warning-level message with a stable fingerprint instead of an
+      // error-grade exception per call, and answer 200 so the webhook delivery
+      // isn't reported as a 500. No analysis row is written (see below), so the
+      // session stays reprocessable if the model or provider policy changes.
+      console.warn('Call analysis declined by provider', {
+        callSessionId: id,
+        statusCode: CONTENT_REFUSAL_STATUS_CODE,
+      });
+      Sentry.captureMessage('Call analysis declined by provider', {
+        extra: { callSessionId: id },
+        fingerprint: ['call-analysis-provider-refusal'],
+        level: 'warning',
+      });
+
+      return NextResponse.json({ reason: 'provider_refused', skipped: true });
+    }
+
     console.error('Call analysis error:', error);
     Sentry.captureException(error, { extra: { callSessionId: id } });
 
     // Don't persist an analysis row on failure: with the "row exists" idempotency
     // check above, that would block all retries. Leaving no row lets the next
-    // webhook fire or the backfill script reprocess this session.
+    // webhook fire or the backfill script reprocess this session. The provider
+    // refusal handled above is treated the same way — it also writes no row and
+    // leaves the session retryable.
     return APIErrorResponse('Failed to analyze call', 500);
   }
 }

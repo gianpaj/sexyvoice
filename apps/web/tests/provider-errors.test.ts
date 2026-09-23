@@ -8,8 +8,10 @@ import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import {
   formatProviderDisplayName,
   getProviderUnavailableDetails,
+  isProviderContentRefusal,
   isProviderDisplayName,
   isProviderId,
+  isTransientProviderFailure,
 } from '@/lib/provider-errors';
 import messages from '@/messages/en.json';
 
@@ -48,6 +50,74 @@ describe('provider metadata', () => {
       expect(isProviderDisplayName(provider)).toBe(false);
     },
   );
+});
+
+describe('isProviderContentRefusal', () => {
+  // Shape recorded from the Sentry event: an AI SDK `AI_APICallError` for the
+  // xAI 403 `permission-denied` refusal.
+  function createRefusal() {
+    return {
+      isRetryable: false,
+      message: "permission-denied: I can't help with that request.",
+      name: 'AI_APICallError',
+      responseBody:
+        '{"code":"permission-denied","error":"I can\'t help with that request."}',
+      statusCode: 403,
+    };
+  }
+
+  it('recognises the recorded xAI content refusal', () => {
+    expect(isProviderContentRefusal(createRefusal())).toBe(true);
+  });
+
+  it('matches the error message when no responseBody is present', () => {
+    const error = Object.assign(
+      new Error("permission-denied: I can't help with that request."),
+      { statusCode: 403 },
+    );
+    expect(isProviderContentRefusal(error)).toBe(true);
+  });
+
+  it('rejects a 403 without the refusal markers', () => {
+    expect(
+      isProviderContentRefusal({
+        message: 'forbidden: Invalid API key',
+        responseBody: '{"code":"forbidden","error":"Invalid API key"}',
+        statusCode: 403,
+      }),
+    ).toBe(false);
+  });
+
+  it.each([500, 429])(
+    'rejects status %s even with a similar message',
+    (statusCode) => {
+      expect(
+        isProviderContentRefusal({
+          message: "permission-denied: I can't help with that request.",
+          statusCode,
+        }),
+      ).toBe(false);
+    },
+  );
+
+  it('rejects a plain error with the message but no status code', () => {
+    expect(isProviderContentRefusal(new Error('permission-denied'))).toBe(
+      false,
+    );
+  });
+
+  it.each([null, undefined, 'permission-denied'])(
+    'rejects non-error input %s',
+    (input) => {
+      expect(isProviderContentRefusal(input)).toBe(false);
+    },
+  );
+
+  it('is disjoint from isTransientProviderFailure for the refusal', () => {
+    const refusal = createRefusal();
+    expect(isProviderContentRefusal(refusal)).toBe(true);
+    expect(isTransientProviderFailure(refusal)).toBe(false);
+  });
 });
 
 describe('getProviderUnavailableMessage', () => {
