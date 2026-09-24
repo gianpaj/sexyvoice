@@ -88,21 +88,24 @@ interface GeminiProviderFailure {
   type: 'rate_limit_error' | 'server_error';
 }
 
+/**
+ * Classify the errors from every Gemini attempt, in order. Quota is judged on
+ * the final attempt only, since an earlier model hitting its quota while the
+ * fallback still fails for another reason is not a quota outcome.
+ */
 function getGeminiProviderFailure(
-  proError: unknown,
-  flashError: unknown,
+  attemptErrors: unknown[],
 ): GeminiProviderFailure | null {
-  const proGoogleError = parseGoogleApiError(proError);
-  const flashGoogleError = parseGoogleApiError(flashError);
-  const parsedErrors = [proGoogleError, flashGoogleError].filter(
-    (error): error is NonNullable<typeof error> => error !== null,
-  );
+  const parsedErrors = attemptErrors
+    .map((error) => parseGoogleApiError(error))
+    .filter((error): error is NonNullable<typeof error> => error !== null);
+  const finalGoogleError = parseGoogleApiError(attemptErrors.at(-1));
 
-  if (flashGoogleError && isGoogleQuotaError(flashGoogleError)) {
+  if (finalGoogleError && isGoogleQuotaError(finalGoogleError)) {
     return {
       code: 'provider_quota_exceeded',
-      googleCode: flashGoogleError.code,
-      googleStatus: getGoogleApiErrorStatus(flashGoogleError),
+      googleCode: finalGoogleError.code,
+      googleStatus: getGoogleApiErrorStatus(finalGoogleError),
       message: getErrorMessage(
         ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
         'voice-generation',
@@ -621,6 +624,38 @@ export async function POST(request: Request) {
         },
       };
 
+      const respondToGeminiProviderFailure = async (
+        attemptErrors: unknown[],
+      ) => {
+        const providerFailure = getGeminiProviderFailure(attemptErrors);
+        if (!providerFailure) return null;
+
+        await refundReservedCredits('gemini_provider_failure');
+        await log({
+          apiKeyId: authResult.apiKeyId,
+          error: providerFailure.message,
+          errorCode: providerFailure.code,
+          isGeminiVoice,
+          model: modelUsed,
+          provider,
+          providerCode: providerFailure.googleCode,
+          providerStatus: providerFailure.googleStatus,
+          status: providerFailure.status,
+          textLength: finalText.length,
+          userId,
+          voice,
+        });
+
+        return respond(
+          createApiError({
+            code: providerFailure.code,
+            message: providerFailure.message,
+            type: providerFailure.type,
+          }),
+          { status: providerFailure.status },
+        );
+      };
+
       try {
         modelUsed = resolveGeminiTtsModel({ model, userHasPaid: true });
         geminiResponse = await ai.models.generateContent({
@@ -633,7 +668,14 @@ export async function POST(request: Request) {
           model: modelUsed,
         });
       } catch (proError) {
-        if (model === 'gpro38') throw proError;
+        if (model === 'gpro38') {
+          // No 2.5 fallback: it cannot serve the extended 3.8 voice ids.
+          const failureResponse = await respondToGeminiProviderFailure([
+            proError,
+          ]);
+          if (failureResponse) return failureResponse;
+          throw proError;
+        }
         modelUsed = 'gemini-2.5-flash-preview-tts';
         try {
           geminiResponse = await ai.models.generateContent({
@@ -646,37 +688,11 @@ export async function POST(request: Request) {
             model: modelUsed,
           });
         } catch (flashError) {
-          const providerFailure = getGeminiProviderFailure(
+          const failureResponse = await respondToGeminiProviderFailure([
             proError,
             flashError,
-          );
-
-          if (providerFailure) {
-            await refundReservedCredits('gemini_provider_failure');
-            await log({
-              apiKeyId: authResult.apiKeyId,
-              error: providerFailure.message,
-              errorCode: providerFailure.code,
-              isGeminiVoice,
-              model: modelUsed,
-              provider,
-              providerCode: providerFailure.googleCode,
-              providerStatus: providerFailure.googleStatus,
-              status: providerFailure.status,
-              textLength: finalText.length,
-              userId,
-              voice,
-            });
-
-            return respond(
-              createApiError({
-                code: providerFailure.code,
-                message: providerFailure.message,
-                type: providerFailure.type,
-              }),
-              { status: providerFailure.status },
-            );
-          }
+          ]);
+          if (failureResponse) return failureResponse;
 
           throw new Error(
             `Both Gemini models failed. Pro error: ${proError instanceof Error ? proError.message : String(proError)}. Flash error: ${flashError instanceof Error ? flashError.message : String(flashError)}`,

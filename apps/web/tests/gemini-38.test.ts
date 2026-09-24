@@ -1,3 +1,4 @@
+import { captureException } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as estimate } from '@/app/api/estimate-credits/route';
@@ -216,6 +217,48 @@ describe('Gemini 3.8 integration', () => {
     expect(restoreCredits).toHaveBeenCalled();
     expect(insertUsageEvent).not.toHaveBeenCalled();
   });
+
+  it.each([
+    {
+      code: 'provider_quota_exceeded',
+      googleCode: 429,
+      googleStatus: 'RESOURCE_EXHAUSTED',
+      status: 429,
+    },
+    {
+      code: 'provider_unavailable',
+      googleCode: 503,
+      googleStatus: 'UNAVAILABLE',
+      status: 503,
+    },
+  ])(
+    'classifies a $googleStatus provider error as $status without a fallback',
+    async ({ code, googleCode, googleStatus, status }) => {
+      vi.mocked(getVoiceByIdAdmin).mockResolvedValueOnce(voice);
+      const generateContent = vi.fn().mockRejectedValue(
+        new Error(
+          JSON.stringify({
+            error: {
+              code: googleCode,
+              message: 'Provider',
+              status: googleStatus,
+            },
+          }),
+        ),
+      );
+      setMockGoogleGenAIFactory(() => ({
+        models: { countTokens: vi.fn(), generateContent },
+      }));
+      const response = await speech(
+        request('/api/v1/speech', { input: 'Hola.', voiceId: voice.id }),
+      );
+      expect(response.status).toBe(status);
+      expect((await response.json()).error.code).toBe(code);
+      expect(generateContent).toHaveBeenCalledTimes(1);
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(captureException).not.toHaveBeenCalled();
+    },
+  );
 
   it('uses structured style and records costs in dashboard generation', async () => {
     vi.mocked(getVoiceById).mockResolvedValueOnce(voice);
