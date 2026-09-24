@@ -5,7 +5,6 @@ import {
   calculateGeminiTtsDollarAmount,
   calculateGrokTtsDollarAmount,
   calculateReadingTime,
-  capitalizeFirstLetter,
   cn,
   countWords,
   estimateCredits,
@@ -280,13 +279,6 @@ describe('formatDate', () => {
     const result = formatDate('2024-01-01T15:30:00Z', { withTime: true });
     // UTC timezone: 15:30 = 3:30 PM
     expect(result).toBe('January 1, 2024 at 03:30 PM');
-  });
-});
-
-// Tests for capitalizeFirstLetter function
-describe('capitalizeFirstLetter', () => {
-  test('capitalizes the first character', () => {
-    expect(capitalizeFirstLetter('hello')).toBe('Hello');
   });
 });
 

@@ -249,10 +249,6 @@ export function calculateCreditsFromTokens(
   return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN * multiplier);
 }
 
-export function capitalizeFirstLetter(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
  * @param {('error' | 'success')} type - The type of message, either 'error' or 'success'.
