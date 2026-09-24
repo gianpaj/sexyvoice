@@ -578,7 +578,7 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBeGreaterThan(0);
-      expect(json.creditsRemaining).toBeDefined();
+      expect(json).not.toHaveProperty('creditsRemaining');
 
       // Duration parsing adds an extra async hop before persistence; wait for
       // the after() callback to finish before asserting its side effects.
@@ -761,7 +761,7 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(json).toHaveProperty('url');
       expect(json).toHaveProperty('creditsUsed');
-      expect(json).toHaveProperty('creditsRemaining');
+      expect(json).not.toHaveProperty('creditsRemaining');
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.url).toContain('.mp3');
 
@@ -1079,7 +1079,7 @@ describe('Generate Voice API Route', () => {
       expect(response.status).toBe(200);
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBe(actualCredits);
-      expect(json.creditsRemaining).toBe(3000 - actualCredits);
+      expect(json).not.toHaveProperty('creditsRemaining');
 
       // Verify credits were consumed
       expect(reduceCredits).toHaveBeenNthCalledWith(1, {
@@ -1174,7 +1174,7 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.creditsUsed).toBe(actualCredits);
-      expect(json.creditsRemaining).toBe(1000 - actualCredits);
+      expect(json).not.toHaveProperty('creditsRemaining');
       expect(reduceCredits).toHaveBeenCalledOnce();
       expect(reduceCredits).toHaveBeenCalledWith({
         amount: reservedCredits,
@@ -1228,7 +1228,7 @@ describe('Generate Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json.creditsUsed).toBe(creditsDebited);
-      expect(json.creditsRemaining).toBe(0);
+      expect(json).not.toHaveProperty('creditsRemaining');
       expect(reduceCredits).toHaveBeenCalledWith({
         amount: reservedCredits,
         userId: 'test-user-id',
@@ -2673,7 +2673,7 @@ describe('Generate Voice API Route', () => {
         if (outcome === 'success') {
           expect(body).toContain('event: done');
           expect(body).toContain(`"creditsUsed":${actualCredits}`);
-          expect(body).toContain(`"creditsRemaining":${1000 - actualCredits}`);
+          expect(body).not.toContain('"creditsRemaining"');
           expect(body).not.toContain('event: error');
         } else {
           expect(body).toContain(
@@ -2862,7 +2862,7 @@ describe('Generate Voice API Route', () => {
         userId: 'test-user-id',
       });
       expect(body).toContain(`"creditsUsed":${actualCredits}`);
-      expect(body).toContain(`"creditsRemaining":${1000 - actualCredits}`);
+      expect(body).not.toContain('"creditsRemaining"');
     });
 
     it('returns SSE done-only on cache hit with stream: true', async () => {
@@ -3330,7 +3330,7 @@ describe('Integration Tests', () => {
     expect(response.status).toBe(200);
     expect(json.url).toBeTruthy();
     expect(json.creditsUsed).toBeGreaterThan(0);
-    expect(json.creditsRemaining).toBeDefined();
+    expect(json).not.toHaveProperty('creditsRemaining');
   });
 
   it('should complete full voice generation flow for Gemini', async () => {
@@ -3375,6 +3375,6 @@ describe('Integration Tests', () => {
     expect(response.status).toBe(200);
     expect(json.url).toBeTruthy();
     expect(json.creditsUsed).toBeGreaterThan(10);
-    expect(json.creditsRemaining).toBeDefined();
+    expect(json).not.toHaveProperty('creditsRemaining');
   });
 });

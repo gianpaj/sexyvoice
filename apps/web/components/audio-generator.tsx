@@ -154,7 +154,6 @@ interface SseAudioEvent {
 
 interface SseDoneEvent {
   cached?: boolean;
-  creditsRemaining: number;
   creditsUsed: number;
   url: string;
 }

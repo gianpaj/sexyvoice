@@ -573,7 +573,6 @@ export async function POST(request: Request) {
       if (shouldStream) {
         const body = createSseEvent('done', {
           cached: true,
-          creditsRemaining: currentAmount,
           creditsUsed: 0,
           url: result,
         });
@@ -612,7 +611,6 @@ export async function POST(request: Request) {
         return streamGeminiTtsResponse({
           ai,
           config: geminiTTSConfig,
-          currentAmount,
           estimate,
           filename,
           provider,
@@ -1092,7 +1090,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        creditsRemaining: (currentAmount || 0) - creditsDebited,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       },
@@ -1264,7 +1261,6 @@ function streamGeminiTtsResponse({
   userHasPaid,
   filename,
   estimate,
-  currentAmount,
   styleVariant,
   provider,
   requestSignal,
@@ -1278,7 +1274,6 @@ function streamGeminiTtsResponse({
   userHasPaid: boolean;
   filename: string;
   estimate: number;
-  currentAmount: number;
   styleVariant: string;
   provider: ProviderId;
   requestSignal: AbortSignal;
@@ -1565,7 +1560,6 @@ function streamGeminiTtsResponse({
 
       completed = true;
       await enqueue('done', {
-        creditsRemaining: (currentAmount || 0) - creditsDebited,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       });

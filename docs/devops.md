@@ -634,7 +634,10 @@ Check:
 ### Crisp credit balance
 
 `CreditsSection` sends the browser's `['credits', userId]` query result to
-Crisp as `creditsLeft`. Speech generation invalidates credit queries after each
+Crisp as `creditsLeft`. `/api/generate-voice` returns credits used, not a
+remaining-balance snapshot; the credit query reads the stored balance.
+
+Speech generation invalidates credit queries after each
 non-cancelled request settles, including split segments and retries. Confirmed
 cache hits skip the refresh because they do not charge credits. Charged split
 segments refresh individually so the balance stays current during long runs.

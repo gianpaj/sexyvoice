@@ -1632,7 +1632,7 @@ describe('AudioGenerator', () => {
   // 4 zero bytes → 2 Int16 PCM samples → valid for Int16Array
   const SSE_AUDIO_FRAME =
     'event: audio\ndata: {"data":"AAAAAA==","mimeType":"audio/L16;rate=24000"}\n\n';
-  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ creditsRemaining: 974, creditsUsed: 26, url: R2_AUDIO_URL })}\n\n`;
+  const SSE_DONE_FRAME = `event: done\ndata: ${JSON.stringify({ creditsUsed: 26, url: R2_AUDIO_URL })}\n\n`;
   const SSE_ERROR_FRAME = `event: error\ndata: ${JSON.stringify({
     details: { provider: 'Gemini' },
     error: 'Gemini is temporarily unavailable. Please retry.',
@@ -1654,7 +1654,6 @@ describe('AudioGenerator', () => {
         const user = userEvent.setup();
         const payload = {
           cached,
-          creditsRemaining: 1000,
           creditsUsed: 0,
           url: R2_AUDIO_URL,
         };
