@@ -42,10 +42,8 @@ describe('connection disconnect claims', () => {
     });
     await act(() => result.current.disconnect());
     expect(result.current.shouldConnect).toBe(false);
-    expect(mocks.refetchQueries).toHaveBeenCalledWith({
-      queryKey: ['credits', 'claims-user'],
-    });
-    expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+    expect(mocks.refetchQueries).not.toHaveBeenCalled();
+    expect(mocks.invalidateQueries).toHaveBeenCalledExactlyOnceWith({
       queryKey: ['credits', 'claims-user'],
     });
     expect(mocks.getUser).not.toHaveBeenCalled();
@@ -85,8 +83,9 @@ it('refreshes credits when a call is rejected for insufficient balance', async (
       'Failed to fetch token',
     );
   });
-  expect(mocks.invalidateQueries).toHaveBeenCalledWith({
+  expect(mocks.invalidateQueries).toHaveBeenCalledExactlyOnceWith({
     queryKey: ['credits'],
   });
+  expect(mocks.refetchQueries).not.toHaveBeenCalled();
   expect(result.current.shouldConnect).toBe(false);
 });

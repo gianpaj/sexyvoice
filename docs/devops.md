@@ -639,10 +639,15 @@ non-cancelled request settles, including split segments and retries. Confirmed
 cache hits skip the refresh because they do not charge credits. Charged split
 segments refresh individually so the balance stays current during long runs.
 Streaming errors wait for the reserved-credit refund attempt before reaching the
-client.
-Cancellation skips the refetch because it can race the server's refund. A
-call-token 402 also invalidates credit queries; call disconnect refreshes the
+client. Cancellation skips the refetch because it can race the server's refund.
+A call-token 402 also invalidates credit queries; call disconnect refreshes the
 authenticated user's balance.
+
+These flows and the balance-error Retry button use `invalidateCredits` in
+`apps/web/lib/credits-query.ts`. Invalidation refetches active queries; disconnect
+scopes it to the verified user without an additional explicit refetch. Voice
+cloning does not trigger a credit refresh and can leave the sidebar and Crisp
+stale until another refresh.
 
 Crisp displays a session snapshot, not a live database balance. For support
 investigations, verify `public.credits.amount` for the user's ID. If Crisp stays

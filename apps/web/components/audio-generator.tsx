@@ -37,6 +37,7 @@ import {
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
 } from '@/lib/ai';
+import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
@@ -595,7 +596,7 @@ export function AudioGenerator({
       } finally {
         // Cache hits do not charge; cancellation can race the server's refund.
         if (!(cached || signal.aborted)) {
-          queryClient.invalidateQueries({ queryKey: ['credits'] });
+          invalidateCredits(queryClient);
         }
       }
     },

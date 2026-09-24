@@ -14,6 +14,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CreditsSection from '@/components/credits-section';
+import { invalidateCredits } from '@/lib/credits-query';
 import { initPostHog } from '@/lib/posthog-browser';
 import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
 import messages from '@/messages/en.json';
@@ -205,7 +206,7 @@ describe('credit balance display', () => {
       .mockRejectedValueOnce(new Error('Network failure'));
     const client = renderCredits();
     await screen.findByRole('progressbar');
-    await act(() => client.invalidateQueries({ queryKey: ['credits'] }));
+    await act(() => invalidateCredits(client));
     expect(await screen.findByRole('alert')).toBeVisible();
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
@@ -249,7 +250,7 @@ it('sends the refreshed balance to Crisp after credits are spent', async () => {
       expect.objectContaining({ creditsLeft: 10_000 }),
     ),
   );
-  await act(() => client.invalidateQueries({ queryKey: ['credits'] }));
+  await act(() => invalidateCredits(client));
   await waitFor(() =>
     expect(Crisp.session.setData).toHaveBeenLastCalledWith(
       expect.objectContaining({ creditsLeft: 725, user_id: 'user-1' }),
