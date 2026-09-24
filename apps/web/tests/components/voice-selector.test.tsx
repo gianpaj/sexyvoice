@@ -239,33 +239,21 @@ describe('VoiceSelector', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('only looks up Orpheus emotion tags for Replicate voices', () => {
+  it('passes the selected voice to the emotion-tag lookup', () => {
     const spanishTags =
       '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
     vi.mocked(getEmotionTags).mockClear().mockReturnValue(spanishTags);
-
-    const { unmount } = renderVoiceSelector({
-      selectedVoice: createVoice({
-        id: 'voice-gemini-38',
-        language: 'es-ES 🇪🇸',
-        model: 'gpro38',
-        name: 'es-es-tutor-12',
-        sample_prompt: 'Hola',
-      }),
+    const gemini38 = createVoice({
+      id: 'voice-gemini-38',
+      language: 'es-ES 🇪🇸',
+      model: 'gpro38',
+      name: 'es-es-tutor-12',
+      sample_prompt: 'Hola',
     });
-    expect(getEmotionTags).not.toHaveBeenCalled();
-    expect(screen.queryByText(spanishTags)).not.toBeInTheDocument();
-    unmount();
 
-    renderVoiceSelector({
-      selectedVoice: createVoice({
-        id: 'voice-replicate-es',
-        language: 'es-ES 🇪🇸',
-        name: 'javi',
-        sample_prompt: 'Hola',
-      }),
-    });
-    expect(getEmotionTags).toHaveBeenCalledWith('es-ES 🇪🇸');
+    renderVoiceSelector({ selectedVoice: gemini38 });
+
+    expect(getEmotionTags).toHaveBeenCalledWith(gemini38);
   });
 
   it('shows the selected voice name in the trigger button', () => {

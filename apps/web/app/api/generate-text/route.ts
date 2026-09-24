@@ -64,7 +64,7 @@ Rules:
       : `Below is a text. The text is missing annotations for a voice actor.
 You are an expert at enhancing text for AI voice generation. Your task is to add emotion tags to make the voice output more expressive and engaging.
 
-Add emotion tags: '${getEmotionTags(selectedVoiceLanguage)}'. ONLY THESE exist
+Add emotion tags: '${getEmotionTags({ language: selectedVoiceLanguage, model: voiceModel ?? '' })}'. ONLY THESE exist
 
 Rules:
 1. Add emotion tags strategically to enhance the meaning and flow. Those are the only ones that exist
