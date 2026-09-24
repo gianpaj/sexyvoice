@@ -152,7 +152,14 @@ describe('VoicePicker preview', () => {
     await user.click(screen.getByRole('button', { name: 'Preview kore' }));
     expect(first.pause).toHaveBeenCalledOnce();
 
-    await act(async () => rejectPlayback(new Error('Playback interrupted')));
+    await act(async () =>
+      rejectPlayback(
+        new DOMException(
+          'The play() request was interrupted by a call to pause().',
+          'AbortError',
+        ),
+      ),
+    );
     act(() => first.dispatchEvent(new Event('ended')));
     expect(
       screen.getByRole('button', { name: 'Stop preview of kore' }),

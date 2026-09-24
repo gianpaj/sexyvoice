@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { attemptPlayback } from '@/lib/media-playback';
 import { capitalizeFirstLetter, cn } from '@/lib/utils';
 import {
   getDisplayModel,
@@ -141,7 +142,7 @@ export function VoicePicker({
 
     audio.addEventListener('ended', stopPreview);
     audio.addEventListener('error', stopPreview);
-    audio.play().catch(stopPreview);
+    attemptPlayback(() => audio.play(), stopPreview).catch(() => undefined);
     frameId = requestAnimationFrame(updateProgress);
 
     return () => {
