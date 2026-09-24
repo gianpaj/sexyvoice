@@ -42,6 +42,19 @@ All errors return this shape:
 | `provider_unavailable`        | `server_error`          | Upstream provider is temporarily unavailable; retry later.                                             |
 | `server_error`                | `server_error`          | Internal service or provider failure. Responses use HTTP 500 or 503; retry 503 responses with backoff. |
 
+## Voice lookup errors and client compatibility
+
+`POST /api/v1/speech` returns HTTP `404` with `error.code = "voice_not_found"`
+when a voice ID is unavailable or a voice name does not exist for the requested
+model. This applies to every supported model, including `gpro`, `gpro31`,
+`orpheus`, and `xai`, as well as `gpro38`.
+
+If your client handles HTTP `400` with `model_not_found`, also handle HTTP `404`
+with `voice_not_found` for voice/model mismatches. Select an available voice ID
+or a matching name and model from `GET /api/v1/voices` before retrying. Invalid
+request shapes and unsupported model values still return HTTP `400` validation
+errors.
+
 ## Debugging with request-id
 
 Every response includes `request-id` header. Save it with your logs and include it in bug reports.
