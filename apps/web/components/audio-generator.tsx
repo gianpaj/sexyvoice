@@ -344,7 +344,8 @@ export function AudioGenerator({
   const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
   const showEnhanceButton =
     provider === 'replicate' ||
-    (provider === 'gemini' && selectedVoice?.model === 'gpro31');
+    (provider === 'gemini' &&
+      (selectedVoice?.model === 'gpro31' || selectedVoice?.model === 'gpro38'));
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   // Gemini 3.1 (gpro31) shares one combined token budget between the transcript

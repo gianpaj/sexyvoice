@@ -29,9 +29,9 @@ export const GEMINI_AUDIO_TAGS =
   '[cheerfully], [whispering], [laughing], [pause], [excited], [sadly], [nervously], [slowly], [fast], [breathily], [sighing], [giggling]';
 
 // Gemini 3.8 inline vocal tags. English tags apply to every transcript language.
-// https://ai.google.dev/gemini-api/docs/speech-generation
+// https://ai.google.dev/gemini-api/docs/generate-content/speech-generation
 export const GEMINI_38_AUDIO_TAGS =
-  '<laugh>, <laughter>, <chuckle>, <giggle>, <snicker>, <cackle>, <sigh>, <sighs>, <gasp>, <breath>, <heavy breath>, <exhales>, <pant>, <phew>, <cough>, <throat-clearing>, <sneeze>, <snort>, <sniffle>, <groan>, <moan>, <grunt>, <growl>, <grr>, <hiss>, <tsk>, <pff>, <argh>, <cry>, <sob>, <whimper>, <scream>, <shriek>, <shout>, <cheer>, <whispers>, <whispering>, <yawn>, <short pause>, <long pause>';
+  '<argh>, <breath>, <heavy breath>, <exhales>, <cackle>, <cheer>, <chuckle>, <chuckles>, <cough>, <cry>, <gasp>, <giggle>, <groan>, <growl>, <grunt>, <grr>, <hiss>, <laugh>, <laughter>, <moan>, <pant>, <pff>, <phew>, <scream>, <shout>, <shriek>, <sigh>, <sighs>, <sneeze>, <snicker>, <snort>, <sob>, <throat-clearing>, <tsk>, <whimper>, <whispers>, <whispering>, <yawn>, <short pause>, <long pause>';
 
 /**
  * Inline emotion tags a voice understands, or undefined when the model has no
