@@ -386,8 +386,21 @@ balance; support investigations should verify `public.credits.amount`.
 after non-cancelled generation requests, including split segments and retries,
 and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
 scopes the refresh to the verified user. Cache hits skip it because they do not
-charge. Streaming errors wait for the refund attempt; cancellation skips the
-immediate refresh to avoid racing the server's refund.
+charge. Streaming errors wait for the refund attempt. Cancellation is best-effort:
+provider work that has finished can retain a charge during upload or reconciliation.
+The aborted fetch cannot confirm settlement, so it skips immediate invalidation
+to avoid caching a temporary reservation before a refund. A late charge can leave
+the sidebar and Crisp balance higher than the database until another refresh;
+`staleTime` does not bound that delay.
+
+At JSON and SSE finalization, the route reports a Sentry warning when it observes
+an aborted request with positive reconciled `creditsDebited`. The event uses
+`flow:generation-charge-retained-after-cancellation` and includes the transport,
+model, charged credits, and user ID. The server's `beforeSend` filter strips
+request data, breadcrumbs, and unrelated context from these events. Filter by
+the production environment to count confirmed cases. Cancellations observed only
+after finalization are not captured, so this is a lower bound on impact, not a
+complete count of disconnects. Failed refunds have separate Sentry reporting.
 
 Cloning does not invalidate credits, so the sidebar and Crisp can stay stale.
 Crisp holds a session snapshot, not a live balance. If a refreshed query does

@@ -2448,6 +2448,139 @@ describe('Generate Voice API Route', () => {
     });
   });
 
+  describe.each([false, true])(
+    'Late cancellation telemetry with stream=%s',
+    (stream) => {
+      beforeEach(async () => {
+        streamingOverride.enabled = stream;
+        const { hasUserPaid } = await import('@/lib/supabase/queries');
+        vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+      });
+
+      afterEach(() => {
+        streamingOverride.enabled = undefined;
+      });
+
+      it.each(['upload', 'reconciliation'])(
+        'reports the retained charge once when cancelled during %s',
+        async (stage) => {
+          const { restoreCredits } = await import('@/lib/supabase/queries');
+          const controller = new AbortController();
+          if (stage === 'upload') {
+            mockUploadFileToR2.mockImplementationOnce(
+              async (filename: string) => {
+                controller.abort();
+                return `https://files.sexyvoice.ai/${filename}`;
+              },
+            );
+          } else {
+            vi.mocked(restoreCredits).mockImplementationOnce(async () => {
+              controller.abort();
+            });
+          }
+          const text = 'Hello world '.repeat(10).trim();
+          const actualCredits = calculateCreditsFromTokens(23, {
+            model: 'gemini-3.1-flash-tts-preview',
+            userHasPaid: true,
+          });
+          const response = await POST(
+            new Request('http://localhost/api/generate-voice', {
+              body: JSON.stringify({
+                stream,
+                text,
+                voiceId: 'voice-achernar-31-id',
+              }),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+              signal: controller.signal,
+            }),
+          );
+          if (stream) {
+            await readSseBody(response);
+          } else {
+            expect((await response.json()).creditsUsed).toBe(actualCredits);
+          }
+
+          expect(controller.signal.aborted).toBe(true);
+          expect(restoreCredits).toHaveBeenCalledExactlyOnceWith({
+            amount:
+              estimateCredits(text, 'achernar', 'gpro31', true) - actualCredits,
+            userId: 'test-user-id',
+          });
+          await vi.waitFor(() => {
+            expect(Sentry.captureMessage).toHaveBeenCalledExactlyOnceWith(
+              'Voice generation charge retained after cancellation',
+              {
+                extra: {
+                  creditsDebited: actualCredits,
+                  model: 'gemini-3.1-flash-tts-preview',
+                },
+                fingerprint: ['generation-charge-retained-after-cancellation'],
+                level: 'warning',
+                tags: {
+                  flow: 'generation-charge-retained-after-cancellation',
+                  transport: stream ? 'sse' : 'json',
+                },
+                user: { id: 'test-user-id' },
+              },
+            );
+          });
+        },
+      );
+
+      it.each(['success', 'cancelled cache hit', 'refunded cancellation'])(
+        'does not report a retained cancellation charge for %s',
+        async (outcome) => {
+          const controller = new AbortController();
+          if (outcome === 'cancelled cache hit') {
+            mockRedisGet.mockImplementationOnce(async () => {
+              controller.abort();
+              return 'https://files.sexyvoice.ai/cached.wav';
+            });
+          } else if (outcome === 'refunded cancellation') {
+            const abort = () => {
+              controller.abort();
+              throw new DOMException('Aborted', 'AbortError');
+            };
+            setMockGoogleGenAIFactory(() => ({
+              models: {
+                generateContent: abort,
+                generateContentStream: abort,
+              },
+            }));
+          }
+          const response = await POST(
+            new Request('http://localhost/api/generate-voice', {
+              body: JSON.stringify({
+                stream,
+                text: 'Hello world',
+                voiceId: 'voice-achernar-31-id',
+              }),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+              signal: controller.signal,
+            }),
+          );
+          if (stream) await readSseBody(response);
+          await flushPromises();
+          expect(Sentry.captureMessage).not.toHaveBeenCalled();
+          if (outcome === 'refunded cancellation') {
+            const { restoreCredits } = await import('@/lib/supabase/queries');
+            expect(restoreCredits).toHaveBeenCalledExactlyOnceWith({
+              amount: estimateCredits(
+                'Hello world',
+                'achernar',
+                'gpro31',
+                true,
+              ),
+              userId: 'test-user-id',
+            });
+          }
+        },
+      );
+    },
+  );
+
   describe('Streaming credit refunds', () => {
     beforeEach(async () => {
       streamingOverride.enabled = true;
@@ -2457,6 +2590,67 @@ describe('Generate Voice API Route', () => {
 
     afterEach(() => {
       streamingOverride.enabled = undefined;
+    });
+
+    it('reports a retained charge once when the client disconnects before done delivery', async () => {
+      const { insertUsageEvent, restoreCredits } = await import(
+        '@/lib/supabase/queries'
+      );
+      const controller = new AbortController();
+      const usageStarted = Promise.withResolvers<void>();
+      const finishUsage = Promise.withResolvers<void>();
+      vi.mocked(insertUsageEvent).mockImplementationOnce(async () => {
+        usageStarted.resolve();
+        await finishUsage.promise;
+        return 'usage-id';
+      });
+      const text = 'Hello world '.repeat(10).trim();
+      const actualCredits = calculateCreditsFromTokens(23, {
+        model: 'gemini-3.1-flash-tts-preview',
+        userHasPaid: true,
+      });
+      const response = await POST(
+        new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            stream: true,
+            text,
+            voiceId: 'voice-achernar-31-id',
+          }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+          signal: controller.signal,
+        }),
+      );
+      const reader = response.body!.getReader();
+      try {
+        await reader.read();
+        await usageStarted.promise;
+        controller.abort();
+        await reader.cancel();
+      } finally {
+        finishUsage.resolve();
+        reader.releaseLock();
+      }
+      await vi.waitFor(() => {
+        expect(Sentry.captureMessage).toHaveBeenCalledExactlyOnceWith(
+          'Voice generation charge retained after cancellation',
+          expect.objectContaining({
+            extra: {
+              creditsDebited: actualCredits,
+              model: 'gemini-3.1-flash-tts-preview',
+            },
+            tags: {
+              flow: 'generation-charge-retained-after-cancellation',
+              transport: 'sse',
+            },
+          }),
+        );
+      });
+      expect(restoreCredits).toHaveBeenCalledExactlyOnceWith({
+        amount:
+          estimateCredits(text, 'achernar', 'gpro31', true) - actualCredits,
+        userId: 'test-user-id',
+      });
     });
 
     it.each(['caught failure', 'empty stream', 'mid-flight failure'])(

@@ -31,6 +31,7 @@ import {
   isTransientProviderFailure,
   type ProviderId,
 } from '@/lib/provider-errors';
+import { CANCELLED_CHARGE_FLOW } from '@/lib/sentry/server-filters';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
@@ -264,6 +265,30 @@ async function reconcileReservedCredits({
   }
 }
 
+function reportCancelledCharge({
+  creditsDebited,
+  model,
+  signal,
+  transport,
+  userId,
+}: {
+  creditsDebited: number;
+  model: string;
+  signal: AbortSignal;
+  transport: 'json' | 'sse';
+  userId: string;
+}) {
+  if (!signal.aborted || creditsDebited <= 0) return;
+
+  Sentry.captureMessage('Voice generation charge retained after cancellation', {
+    extra: { creditsDebited, model },
+    fingerprint: [CANCELLED_CHARGE_FLOW],
+    level: 'warning',
+    tags: { flow: CANCELLED_CHARGE_FLOW, transport },
+    user: { id: userId },
+  });
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -283,6 +308,7 @@ export async function POST(request: Request) {
   let userHasPaid = false;
   let modelUsed = '';
   let reservedCredits = 0;
+  let creditsDebited = 0;
   try {
     if (request.body === null) {
       logger.error('Request body is empty');
@@ -983,7 +1009,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const creditsDebited = await reconcileReservedCredits({
+    creditsDebited = await reconcileReservedCredits({
       actualCredits: creditsUsed,
       context: 'generate_voice_success',
       reservedCredits,
@@ -1247,6 +1273,16 @@ export async function POST(request: Request) {
     }
 
     return APIErrorResponse('Failed to generate voice', 500);
+  } finally {
+    if (user) {
+      reportCancelledCharge({
+        creditsDebited,
+        model: modelUsed,
+        signal: request.signal,
+        transport: 'json',
+        userId: user.id,
+      });
+    }
   }
 }
 
@@ -1305,6 +1341,7 @@ function streamGeminiTtsResponse({
     let streamBlockReason: string | undefined;
     let audioStarted = false;
     let completed = false;
+    let creditsDebited = 0;
     let fallbackAttempted = false;
     let errorPayload: Record<string, unknown> | undefined;
 
@@ -1473,7 +1510,7 @@ function streamGeminiTtsResponse({
           { model: modelUsed, userHasPaid },
         );
       }
-      const creditsDebited = await reconcileReservedCredits({
+      creditsDebited = await reconcileReservedCredits({
         actualCredits: creditsUsed,
         context: 'generate_voice_stream_success',
         reservedCredits,
@@ -1661,6 +1698,13 @@ function streamGeminiTtsResponse({
         } catch {
           // Writer already closed via an early-return path — safe to ignore.
         }
+        reportCancelledCharge({
+          creditsDebited,
+          model: modelUsed,
+          signal: requestSignal,
+          transport: 'sse',
+          userId: user.id,
+        });
       }
     }
   })().catch((error) => {
