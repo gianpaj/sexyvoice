@@ -58,6 +58,10 @@ export async function generateMetadata(
 
   return {
     description,
+    icons: {
+      apple: '/apple-touch-icon.png',
+      icon: '/favicon.ico',
+    },
     metadataBase: new URL(
       process.env.NODE_ENV === 'production'
         ? 'https://sexyvoice.ai'
@@ -85,11 +89,20 @@ export async function generateMetadata(
         template: '%s | SexyVoice.ai',
       },
       ...(openGraph?.url ? { url: openGraph.url } : {}),
-      ...(openGraph?.images ? { images: openGraph.images } : {}),
+      images: openGraph?.images ?? [
+        {
+          alt: 'SexyVoice.ai',
+          height: 670,
+          url: '/sexyvoice.ai-og-image.jpg',
+          width: 1200,
+        },
+      ],
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       description,
+      images: ['/sexyvoice.ai-og-image.jpg'],
       title: {
         default: pages.defaultTitle,
         template: '%s | SexyVoice.ai',

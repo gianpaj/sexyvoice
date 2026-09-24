@@ -32,15 +32,15 @@ The current suite covers the main dashboard surfaces with a mix of:
 
 ## Coverage Summary
 
-| Area | Route | Spec | POM | Mocking | Tests |
-|---|---|---|---|---|---:|
-| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts` | 14 *(1 skipped)* |
-| Call | `/en/dashboard/call` | `call-dashboard.spec.ts` | `pages/call.page.ts` | inline `page.route()` mocks | 11 |
-| Clone | `/en/dashboard/clone` | `clone-dashboard.spec.ts` | `pages/clone.page.ts` | none currently required | 17 |
-| Credits | `/en/dashboard/credits` | `credits-dashboard.spec.ts` | `pages/credits.page.ts` | no route mock; safe env-driven checkout failure path | 16 |
-| History | `/en/dashboard/history` | `history-dashboard.spec.ts` | `pages/history.page.ts` | none currently required | 12 |
-| Usage | `/en/dashboard/usage` | `usage-dashboard.spec.ts` | `pages/usage.page.ts` | `mocks/usage.mock.ts` | 14 |
-| Profile | `/en/dashboard/profile` | `profile-dashboard.spec.ts` | `pages/profile.page.ts` | one narrow auth-route passthrough in mismatch test | 13 |
+| Area     | Route                    | Spec                         | POM                      | Mocking                                              |            Tests |
+| -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
+| Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
+| Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
+| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               17 |
+| Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
+| History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
+| Usage    | `/en/dashboard/usage`    | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
+| Profile  | `/en/dashboard/profile`  | `profile-dashboard.spec.ts`  | `pages/profile.page.ts`  | one narrow auth-route passthrough in mismatch test   |               13 |
 
 ---
 
@@ -175,8 +175,44 @@ Reason:
 
 ### Current mocking behavior
 
-The call spec currently uses inline route handlers, not the helper mock file.
-It mocks:
+The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
+when `isE2E()` is true. These fix public character order and descriptions,
+call voices, credit transactions, and instruction config.
+Custom characters are empty. Authentication still runs.
+
+Playwright sets `e2e-call-user=free|paid` before navigation in each test's
+isolated browser context. `lib/e2e-call-user.ts` reads this cookie only in
+E2E mode and supplies entitlement to the dashboard layout, call layout, and
+call page. Missing or invalid values default to free. Outside E2E mode,
+including production, entitlement comes from the database.
+
+Both scenarios have desktop and mobile screenshots. Free snapshot names stay
+`call-dashboard-{viewport}-{project}`; paid snapshots use
+`call-dashboard-paid-{viewport}-{project}`. After each screenshot, tests open
+the scene selector and check that all non-default scene options are disabled
+for free users and enabled for paid users. "No scene" stays enabled for both.
+Capture precedes interaction so hover and keyboard-focus styles do not alter
+the at-rest screenshots.
+
+Character and voice fixtures are a one-time snapshot of the linked database's
+public query results, including localized descriptions and voice assignments.
+They contain no user IDs or prompt text. Credits and instruction config are
+synthetic test data, not captured account data or production prompts.
+
+Enable `E2E_TEST_MODE=true` on the **Next.js server**, not just the Playwright
+process. `isE2E()` disables fixtures when `VERCEL_ENV=production`. CI's
+Playwright server inherits the flag; an independently started local server
+must receive it explicitly.
+
+Character queries run during server rendering, so browser `page.route()`
+handlers cannot intercept them. Keep fixture data in source control rather
+than copying live database rows during each test run. Desktop and mobile
+screenshots require the server-rendered `data-e2e-call-fixtures` marker, then
+assert character order and selection using `lib/e2e-mocks-shared.ts`.
+Matching live content alone does not prove the server enabled fixtures.
+Fixture changes may require an intentional Argos baseline approval.
+
+The call spec also uses inline route handlers to mock:
 
 - `POST /api/call-token`
 - character image requests
@@ -186,6 +222,8 @@ It mocks:
 
 - tests do **not** establish a real LiveKit connection
 - tests validate UI structure and interaction affordances only
+- live database contracts and custom-character editing are outside this screenshot
+  suite; see the [coverage decision](../../../.agents/notes/implemented/operations/2026-09-18-call-screenshot-fixtures.md#coverage-limits)
 
 ---
 
