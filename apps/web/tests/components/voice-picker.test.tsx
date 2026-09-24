@@ -97,21 +97,22 @@ describe('VoicePicker preview', () => {
     expect(audio.pause).toHaveBeenCalledOnce();
   });
 
-  it('keeps the ring empty until the duration is available', async () => {
+  it('keeps the ring empty while the duration is unavailable', async () => {
     const { user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     const audio = PreviewAudio.instances[0];
-    audio.duration = Number.NaN;
-    audio.currentTime = 2;
     const ring = screen
       .getByRole('button', { name: 'Stop preview of tara' })
       .querySelector('circle[stroke-linecap="round"]');
-    await waitFor(() =>
-      expect(ring).toHaveAttribute('stroke-dasharray', '0 1'),
-    );
-    audio.duration = 10;
+
+    audio.currentTime = 2;
     await waitFor(() =>
       expect(ring).toHaveAttribute('stroke-dasharray', '0.2 1'),
+    );
+
+    audio.duration = Number.NaN;
+    await waitFor(() =>
+      expect(ring).toHaveAttribute('stroke-dasharray', '0 1'),
     );
   });
 
