@@ -67,16 +67,16 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature | Public or stored ID | Runtime provider/model | Notes |
-| --- | --- | --- | --- |
-| Dashboard TTS | `gpro` | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash |
-| External API TTS | `gpro` | `gemini-2.5-pro-preview-tts` | Always generates fresh audio; falls back to Gemini 2.5 Flash |
-| Dashboard and API TTS | `gpro31` | `gemini-3.1-flash-tts-preview` | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
-| Dashboard and API TTS | `xai` | xAI TTS API | Supports MP3/WAV and a `0.7`–`1.5` speed setting |
-| Dashboard and API TTS | `orpheus` | Replicate Orpheus | External API aliases supported Orpheus model paths to `orpheus` |
-| Voice cloning | Locale-dependent | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual | See the cloning locale table below |
-| Real-time calls | `grok-voice-think-fast-1.0` | xAI Grok Voice Agent | Current call model |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI structured generation | Runs only for eligible completed calls |
+| Feature                  | Public or stored ID               | Runtime provider/model                                                   | Notes                                                                     |
+| ------------------------ | --------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dashboard TTS            | `gpro`                            | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
+| External API TTS         | `gpro`                            | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
+| Dashboard and API TTS    | `gpro31`                          | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
+| Dashboard and API TTS    | `xai`                             | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
+| Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
+| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual     | See the cloning locale table below                                        |
+| Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI structured generation                                                | Runs only for eligible completed calls                                    |
 
 ## External REST API
 
@@ -95,13 +95,13 @@ creation requires a paid account and allows at most 10 active keys per user.
 
 ### Endpoints
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `POST` | `/api/v1/speech` | Generate fresh speech audio |
-| `GET` | `/api/v1/voices` | List public TTS voices and their model IDs |
-| `GET` | `/api/v1/models` | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
-| `GET` | `/api/v1/billing` | Return the credit balance and latest transaction |
-| `GET` | `/api/v1/openapi` | Return the public OpenAPI 3.1 document |
+| Method | Path              | Description                                             |
+| ------ | ----------------- | ------------------------------------------------------- |
+| `POST` | `/api/v1/speech`  | Generate fresh speech audio                             |
+| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs              |
+| `GET`  | `/api/v1/models`  | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
+| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction        |
+| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document                  |
 
 Clients may select speech voices by `voiceId`, or by the `voice` and `model`
 pair. Request and response schemas live in `apps/web/lib/api/schemas.ts` and
@@ -219,9 +219,9 @@ flowchart TD
 
 ### Locale Routing
 
-| Locale group | Locales | Model | Provider |
-| --- | --- | --- | --- |
-| Voxtral | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt` | `voxtral-mini-tts-2603` | Mistral |
+| Locale group            | Locales                                                                                        | Model                                 | Provider  |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
 | Chatterbox Multilingual | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
@@ -239,6 +239,11 @@ Optional fal.ai enhancement has separate duration and size safeguards and adds
 an `audio_processing` usage event. Clone credits are reserved before provider
 work and restored if generation fails. Background work saves metadata and
 analytics; it does not perform billing or schedule an Inngest cleanup job.
+
+`apps/web/lib/fal-billing.ts` looks up the enhancement's provider cost with
+bounded retries through `fetchWithRetry`. If the lookup fails, it emits one
+Sentry warning and the route records an estimated cost instead. Retry limits
+live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline.
 
 ## Real-time AI Voice Calls
 
@@ -275,15 +280,15 @@ is off by default, and its UI toggle is currently hidden.
 
 ### Call Configuration
 
-| Setting | Current behavior |
-| --- | --- |
-| Model | `grok-voice-think-fast-1.0` |
-| Voice | Stored per character, selected from public call voices, and resolved to a database ID |
-| Temperature | Defaults to `0.8`; accepted range is `0`–`1.2` |
-| Max output tokens | Nullable; defaults to the agent's model behavior |
-| Instructions | Edge Config defaults for non-character calls; database prompts for characters |
-| Language | 20 supported call languages; English fallback |
-| Memory | Paid, opt-in backend; off by default |
+| Setting           | Current behavior                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-1.0`                                                           |
+| Voice             | Stored per character, selected from public call voices, and resolved to a database ID |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                        |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                      |
+| Instructions      | Edge Config defaults for non-character calls; database prompts for characters         |
+| Language          | 20 supported call languages; English fallback                                         |
+| Memory            | Paid, opt-in backend; off by default                                                  |
 
 Completed calls of at least 120 seconds with a transcript are eligible for
 structured analysis. A Supabase Database Webhook authenticates to
@@ -323,6 +328,71 @@ See `apps/web/supabase/migrations/` and
   protected character prompt.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for the browser.
   `SUPABASE_SECRET_KEY` bypasses RLS and must remain server-only.
+
+#### Identity and session handling
+
+`getVerifiedClaims()` in `apps/web/lib/supabase/auth.ts` supplies verified
+identity for pages, actions, dashboard APIs, browser analytics, and the proxy.
+It returns `null` on SDK auth errors or absent claims. Callers require
+`claims.sub`; ownership, credit, and entitlement checks remain separate.
+
+Asymmetric JWTs normally verify locally with cached JWKS; symmetric keys require
+an Auth-server request. Claims do not enforce immediate session revocation or
+current account status. Email and metadata are token snapshots; user-editable
+`user_metadata` must not authorize access.
+
+Fresh `getUser()` lookups are reserved for:
+
+- Current email on the credits page for Stripe customer linking and on the
+  profile page for password verification.
+- Auth `created_at` during proxy restoration when the profile is missing and
+  an email is present.
+- Account deletion and durable credential issuance in `POST /api/api-keys`
+  and `POST /api/cli-login-sessions`.
+
+A fresh lookup is not recent reauthentication or a complete revocation check.
+`biome-plugins/use-verified-claims.grit` rejects direct `getUser()` calls in
+application code unless a suppression explains the exception. External API v1
+uses API-key authentication, not browser claims.
+
+`middleware-client.ts` forwards refreshed cookies to both the request and
+response, preserving locale rewrites and request-header overrides. Auth and
+OAuth callback redirects retain cookies and SSR cache headers on success and
+failure. Server components use the cookie-store adapter; middleware owns
+session refresh before rendering.
+
+#### Database retries
+
+Server and script clients use SDK retries for GET, HEAD, and OPTIONS requests
+on network failures and HTTP 503/520: up to three retries with 1s/2s/4s backoff
+unless `Retry-After` overrides it. HTTP 504 and default POST RPCs, including
+credit mutations, are not retried. This is not an overall request deadline;
+do not add a global retry wrapper around Supabase requests.
+
+The browser client disables SDK database retries; TanStack Query owns dashboard
+query retries. Direct browser reads remain single-attempt. The proxy's
+`ensureUserApplicationState` profile read also disables retries because repair
+is best-effort. Read, Auth lookup, and restoration failures are reported to
+Sentry without blocking a claims-authenticated dashboard request.
+
+### Credit balance sync
+
+`CreditsSection` uses the `['credits', userId]` query to display the stored
+balance and send `creditsLeft` to Crisp and PostHog. Its 60-second `staleTime`
+is not polling. `/api/generate-voice` returns credits used, not a remaining
+balance; support investigations should verify `public.credits.amount`.
+
+`invalidateCredits` in `apps/web/lib/credits-query.ts` refreshes active queries
+after non-cancelled generation requests, including split segments and retries,
+and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
+scopes the refresh to the verified user. Cache hits skip it because they do not
+charge. Streaming errors wait for the refund attempt; cancellation skips the
+immediate refresh to avoid racing the server's refund.
+
+Cloning does not invalidate credits, so the sidebar and Crisp can stay stale.
+Crisp holds a session snapshot, not a live balance. If a refreshed query does
+not reach Crisp, check the claims and paid-status lookups before
+`Crisp.session.setData`.
 
 ### R2 Buckets
 
