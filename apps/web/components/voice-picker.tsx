@@ -9,12 +9,7 @@ import {
   Square,
   X,
 } from 'lucide-react';
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-} from 'motion/react';
+import { motion, useMotionValue } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type KeyboardEvent,
@@ -25,6 +20,7 @@ import {
   useState,
 } from 'react';
 
+import { IconSwap } from '@/components/motion-primitives/icon-swap';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -110,7 +106,6 @@ export function VoicePicker({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const previewProgress = useMotionValue(0);
-  const shouldReduceMotion = useReducedMotion();
 
   const selectedId = value ?? internalValue;
   const selected = voices.find((v) => v.id === selectedId);
@@ -462,47 +457,13 @@ export function VoicePicker({
                             />
                           )}
                         </svg>
-                        <AnimatePresence initial={false} mode="popLayout">
-                          <motion.span
-                            animate={{
-                              filter: 'blur(0px)',
-                              opacity: 1,
-                              scale: 1,
-                            }}
-                            aria-hidden
-                            className="flex items-center justify-center"
-                            exit={
-                              shouldReduceMotion
-                                ? { opacity: 0 }
-                                : {
-                                    filter: 'blur(4px)',
-                                    opacity: 0,
-                                    scale: 0.25,
-                                  }
-                            }
-                            initial={
-                              shouldReduceMotion
-                                ? false
-                                : {
-                                    filter: 'blur(4px)',
-                                    opacity: 0,
-                                    scale: 0.25,
-                                  }
-                            }
-                            key={isPlaying ? 'stop' : 'play'}
-                            transition={
-                              shouldReduceMotion
-                                ? { duration: 0 }
-                                : { bounce: 0, duration: 0.3, type: 'spring' }
-                            }
-                          >
-                            {isPlaying ? (
-                              <Square className="size-3.5 fill-current" />
-                            ) : (
-                              <Play className="size-3.5 translate-x-px fill-current" />
-                            )}
-                          </motion.span>
-                        </AnimatePresence>
+                        <IconSwap swapKey={isPlaying ? 'stop' : 'play'}>
+                          {isPlaying ? (
+                            <Square className="size-3.5 fill-current" />
+                          ) : (
+                            <Play className="size-3.5 translate-x-px fill-current" />
+                          )}
+                        </IconSwap>
                       </button>
                     ) : (
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent" />
