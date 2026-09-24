@@ -95,7 +95,7 @@ describe('VoicePicker preview', () => {
     expect(
       screen.getByRole('button', { name: 'Preview tara' }),
     ).toBeInTheDocument();
-    expect(ring).not.toBeInTheDocument();
+    await waitFor(() => expect(ring).not.toBeInTheDocument());
     expect(audio.pause).toHaveBeenCalledOnce();
   });
 

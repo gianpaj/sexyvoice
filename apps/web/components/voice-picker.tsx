@@ -9,7 +9,12 @@ import {
   Square,
   X,
 } from 'lucide-react';
-import { motion, useMotionValue, useTransform } from 'motion/react';
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+} from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type KeyboardEvent,
@@ -116,8 +121,8 @@ export function VoicePicker({
 
   // Start / stop audio preview when playingId changes
   useEffect(() => {
-    previewProgress.set(0);
     if (!playingId) return;
+    previewProgress.set(0);
     const voice = voices.find((v) => v.id === playingId);
     if (!voice?.sample_url) {
       setPlayingId(null);
@@ -449,17 +454,23 @@ export function VoicePicker({
                             r="14.5"
                             stroke="currentColor"
                           />
-                          {isPlaying && (
-                            <motion.circle
-                              cx="16"
-                              cy="16"
-                              r="14.5"
-                              stroke="currentColor"
-                              strokeLinecap={previewLinecap}
-                              strokeWidth="2"
-                              style={{ pathLength: previewProgress }}
-                            />
-                          )}
+                          <AnimatePresence>
+                            {isPlaying && (
+                              <motion.circle
+                                animate={{ opacity: 1 }}
+                                cx="16"
+                                cy="16"
+                                exit={{ opacity: 0 }}
+                                key="progress"
+                                r="14.5"
+                                stroke="currentColor"
+                                strokeLinecap={previewLinecap}
+                                strokeWidth="2"
+                                style={{ pathLength: previewProgress }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            )}
+                          </AnimatePresence>
                         </svg>
                         <IconSwap swapKey={isPlaying ? 'stop' : 'play'}>
                           {isPlaying ? (
