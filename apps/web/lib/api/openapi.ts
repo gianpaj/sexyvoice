@@ -355,7 +355,8 @@ export function createExternalApiOpenApiDocument() {
                   schema: ErrorResponseSchema,
                 },
               },
-              description: 'Voice not found',
+              description:
+                'Voice ID not found, or voice name not found for the requested model',
             },
             422: {
               content: {
