@@ -43,7 +43,7 @@ import {
   type VoiceModel,
 } from '@/lib/voices';
 
-interface VoiceSelectProps {
+interface VoicePickerProps {
   className?: string;
   onValueChange?: (voiceId: string) => void;
   value?: string;
@@ -92,12 +92,12 @@ function FilterChip({
   );
 }
 
-export function VoiceSelect({
+export function VoicePicker({
   voices = [],
   value,
   onValueChange,
   className,
-}: VoiceSelectProps) {
+}: VoicePickerProps) {
   const t = useTranslations('generate.voiceSelector');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');

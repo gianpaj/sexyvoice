@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { VoiceSelect } from '@/components/voice-select';
+import { VoicePicker } from '@/components/voice-picker';
 import messages from '@/messages/en.json';
 
 const voices = ['tara', 'kore'].map(
@@ -43,12 +43,12 @@ class PreviewAudio extends EventTarget {
   }
 }
 
-async function openVoiceSelect() {
+async function openVoicePicker() {
   const user = userEvent.setup();
   const onValueChange = vi.fn();
   const result = render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <VoiceSelect onValueChange={onValueChange} voices={voices} />
+      <VoicePicker onValueChange={onValueChange} voices={voices} />
     </NextIntlClientProvider>,
   );
   await user.click(screen.getByRole('combobox'));
@@ -66,9 +66,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('VoiceSelect preview', () => {
+describe('VoicePicker preview', () => {
   it('tracks audio position and resets when playback ends', async () => {
-    const { onValueChange, user } = await openVoiceSelect();
+    const { onValueChange, user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
 
     const audio = PreviewAudio.instances[0];
@@ -98,7 +98,7 @@ describe('VoiceSelect preview', () => {
   });
 
   it('keeps the ring empty until the duration is available', async () => {
-    const { user } = await openVoiceSelect();
+    const { user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     const audio = PreviewAudio.instances[0];
     audio.duration = Number.NaN;
@@ -116,7 +116,7 @@ describe('VoiceSelect preview', () => {
   });
 
   it('stops on a second click and restarts the sample from the beginning', async () => {
-    const { user } = await openVoiceSelect();
+    const { user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     const first = PreviewAudio.instances[0];
     first.currentTime = 5;
@@ -146,7 +146,7 @@ describe('VoiceSelect preview', () => {
     );
     play.mockResolvedValue(undefined);
 
-    const { user } = await openVoiceSelect();
+    const { user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     const first = PreviewAudio.instances[0];
     await user.click(screen.getByRole('button', { name: 'Preview kore' }));
@@ -161,7 +161,7 @@ describe('VoiceSelect preview', () => {
   });
 
   it('resets on a media error', async () => {
-    const { user } = await openVoiceSelect();
+    const { user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     const audio = PreviewAudio.instances[0];
     act(() => audio.dispatchEvent(new Event('error')));
@@ -172,7 +172,7 @@ describe('VoiceSelect preview', () => {
   });
 
   it('stops playback when the popover closes or the component unmounts', async () => {
-    const { unmount, user } = await openVoiceSelect();
+    const { unmount, user } = await openVoicePicker();
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     await user.keyboard('{Escape}');
     expect(PreviewAudio.instances[0].pause).toHaveBeenCalledOnce();

@@ -5,17 +5,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GenerateUI } from '@/app/[lang]/(dashboard)/dashboard/generate/generateui.client';
 
-const mockVoiceSelector = vi.fn();
+const mockVoiceSettingsCard = vi.fn();
 const mockAudioGenerator = vi.fn();
 
-vi.mock('@/components/voice-selector', () => ({
-  VoiceSelector: (
+vi.mock('@/components/voice-settings-card', () => ({
+  VoiceSettingsCard: (
     props: React.ComponentProps<
-      typeof import('@/components/voice-selector').VoiceSelector
+      typeof import('@/components/voice-settings-card').VoiceSettingsCard
     >,
   ) => {
-    mockVoiceSelector(props);
-    return <div data-testid="voice-selector" />;
+    mockVoiceSettingsCard(props);
+    return <div data-testid="voice-settings-card" />;
   },
 }));
 
@@ -81,14 +81,14 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([geminiVoice]);
 
-    expect(screen.getByTestId('voice-selector')).toBeInTheDocument();
+    expect(screen.getByTestId('voice-settings-card')).toBeInTheDocument();
     expect(screen.getByTestId('audio-generator')).toBeInTheDocument();
 
     act(() => {
-      mockVoiceSelector.mock.calls[0][0].setSelectedStyle('Speak warmly');
+      mockVoiceSettingsCard.mock.calls[0][0].setSelectedStyle('Speak warmly');
     });
 
-    expect(mockVoiceSelector).toHaveBeenLastCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         selectedStyle: 'Speak warmly',
         selectedVoice: geminiVoice,
@@ -112,7 +112,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([grokVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedStyle: undefined,
         selectedVoice: grokVoice,
@@ -137,7 +137,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([replicateVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedStyle: undefined,
         selectedVoice: replicateVoice,
@@ -173,7 +173,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([firstVoice, featuredVoice, thirdVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedVoice: featuredVoice,
       }),
@@ -201,7 +201,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([firstVoice, secondVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedVoice: firstVoice,
       }),
@@ -217,7 +217,7 @@ describe('GenerateUI', () => {
   it('falls back to no selected voice when the list is empty', () => {
     renderGenerateUI([]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedStyle: undefined,
         selectedVoice: undefined,

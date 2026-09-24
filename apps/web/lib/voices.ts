@@ -33,7 +33,7 @@ export const MODEL_COLORS: Record<VoiceModel, string> = {
   Replicate: '#e67e22',
 };
 
-/** Minimal shape expected by VoiceSelect — a subset of Tables<'voices'>. */
+/** Minimal shape expected by VoicePicker — a subset of Tables<'voices'>. */
 export interface Voice {
   description: string;
   gender: VoiceGender;
@@ -54,7 +54,7 @@ export function getDisplayModel(dbModel: string): VoiceModel {
   return 'Replicate';
 }
 
-/** Converts a Supabase voices row to the VoiceSelect Voice shape. */
+/** Converts a Supabase voices row to the VoicePicker Voice shape. */
 export function toVoice(voice: Tables<'voices'>): Voice {
   return {
     description: voice.description ?? '',
