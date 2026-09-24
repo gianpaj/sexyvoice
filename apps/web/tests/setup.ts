@@ -380,7 +380,7 @@ vi.mock('@/lib/supabase/admin', () => ({
 }));
 
 // Mock Supabase queries specifically
-function lookupVoiceByNameAdmin(voiceName: string) {
+function findVoiceFixtureByName(voiceName: string) {
   if (voiceName === 'tara') {
     return Promise.resolve({
       id: 'voice-tara-id',
@@ -423,6 +423,15 @@ function lookupVoiceByNameAdmin(voiceName: string) {
     });
   }
   return Promise.resolve(null);
+}
+
+async function lookupVoiceFixtureByName(
+  voiceName: string,
+  _isPublic = true,
+  models?: readonly string[],
+) {
+  const row = await findVoiceFixtureByName(voiceName);
+  return row && models && !models.includes(row.model) ? null : row;
 }
 
 vi.mock('@/lib/supabase/queries', async () => {
@@ -523,48 +532,8 @@ vi.mock('@/lib/supabase/queries', async () => {
       }
       return Promise.resolve(null);
     }),
-    getVoiceIdByName: vi.fn((voiceName: string) => {
-      if (voiceName === 'tara') {
-        return Promise.resolve({
-          id: 'voice-tara-id',
-          language: 'en',
-          model:
-            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-          name: 'tara',
-        });
-      }
-      if (voiceName === 'kore') {
-        return Promise.resolve({
-          id: 'voice-kore-id',
-          language: 'en',
-          model: 'gpro',
-          name: 'kore',
-        });
-      }
-      if (voiceName === 'eve') {
-        return Promise.resolve({
-          id: 'voice-eve-id',
-          language: 'en',
-          model: 'xai',
-          name: 'eve',
-        });
-      }
-      if (voiceName === 'sal') {
-        return Promise.resolve({
-          id: 'voice-sal-id',
-          language: 'es-ES',
-          model: 'xai',
-          name: 'sal',
-        });
-      }
-      return Promise.resolve(null);
-    }),
-    getVoiceIdByNameAdmin: vi.fn(
-      async (voiceName: string, _isPublic?: boolean, models?: string[]) => {
-        const row = await lookupVoiceByNameAdmin(voiceName);
-        return row && models && !models.includes(row.model) ? null : row;
-      },
-    ),
+    getVoiceIdByName: vi.fn(lookupVoiceFixtureByName),
+    getVoiceIdByNameAdmin: vi.fn(lookupVoiceFixtureByName),
     hasUserPaid: vi.fn().mockResolvedValue(false),
     hasUserPaidAdmin: vi.fn().mockResolvedValue(false),
     insertUsageEvent: vi.fn().mockResolvedValue('test-usage-event-id'),
