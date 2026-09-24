@@ -233,5 +233,6 @@ Check Vercel runtime logs and Sentry for new errors after deployment. Validate
 auth, payments, storage, and API keys after rotating secrets used by those flows.
 
 Do not call production `/api/daily-stats` as a smoke test: it sends a Telegram
-message. Use the [daily-stats verification and local benchmark guidance](../apps/web/app/api/daily-stats/README.md#verification)
-for read-only checks and timing comparisons.
+message. See [daily-stats verification](../apps/web/app/api/daily-stats/README.md#verification)
+for read-only checks and [local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking)
+for timing comparisons.
