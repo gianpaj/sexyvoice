@@ -131,6 +131,30 @@ Notes:
   - this file (`docs/devops.md`) when the change affects deployment,
     operations, security, or runtime setup
 
+## Issue labeling
+
+`.github/workflows/label-issues.yml` runs when an issue is opened. The Jev
+labeler calls TypeSafe to evaluate the configured label criteria. It requires
+`TYPESAFE_API_KEY` as a GitHub Actions repository secret, not a Vercel or local
+application environment variable.
+
+Obtain a key from [TypeSafe](https://docs.typesafe.ai), then store it using the
+interactive prompt:
+
+```bash
+gh secret set TYPESAFE_API_KEY --repo gianpaj/sexyvoice
+```
+
+Use the same command to replace the key during rotation. Check that the secret
+name is present with `gh secret list --repo gianpaj/sexyvoice`; GitHub does not
+return the value. A missing or invalid key, or an unavailable provider, fails the
+labeling job. Inspect the **Label Issues** workflow in GitHub Actions and rerun
+the affected job after restoring access. Keep failures visible rather than
+using `continue-on-error`.
+
+The action is pinned to a full commit SHA. Its GitHub token has `issues: write`
+permission for applying labels; the TypeSafe key is supplied through `api-key`.
+
 ## Environment Variables
 
 Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical
