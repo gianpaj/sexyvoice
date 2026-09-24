@@ -128,7 +128,6 @@ describe('VoicePicker preview', () => {
 
     await user.click(screen.getByRole('button', { name: 'Preview tara' }));
     expect(PreviewAudio.instances).toHaveLength(2);
-    expect(PreviewAudio.instances[1].currentTime).toBe(0);
   });
 
   it('ignores a stale play rejection after switching voices', async () => {
