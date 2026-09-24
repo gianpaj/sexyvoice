@@ -364,6 +364,58 @@ Requires `.env` or `.env.local` with:
 
 ---
 
+## Sentry issue triage
+
+Use this read-only procedure for issue-level crashes and browser/device details.
+For handled generation failures and credit complaints, use the
+[Gemini application-log investigation](#2-correlate-sentry-application-logs).
+
+Verify the existing CLI authentication and list issues:
+
+```bash
+sentry-cli info
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai list
+```
+
+The numeric issue ID is in the issue's dashboard URL or the first column of the
+CLI issue list. A short ID such as `SEXYVOICE-AI-6C` is not an API issue ID.
+
+To fetch full events, use a token with `event:read` from `SENTRY_AUTH_TOKEN` or
+`~/.sentryclirc`. This keeps the token out of command arguments and output:
+
+```bash
+python3 - '<numeric-issue-id>' <<'PY'
+import configparser
+import json
+import os
+from pathlib import Path
+import sys
+from urllib.request import Request, urlopen
+
+issue_id = sys.argv[1]
+if not issue_id.isdecimal():
+    raise SystemExit("Replace <numeric-issue-id> with the issue's numeric ID")
+config = configparser.ConfigParser(interpolation=None)
+config.read(Path.home() / ".sentryclirc")
+token = os.environ.get("SENTRY_AUTH_TOKEN") or config.get("auth", "token", fallback=None)
+if not token:
+    raise SystemExit("Configure SENTRY_AUTH_TOKEN or ~/.sentryclirc first")
+url = f"https://sentry.io/api/0/organizations/sexyvoiceai/issues/{issue_id}/events/?full=true&per_page=10"
+request = Request(url, headers={"Authorization": f"Bearer {token}"})
+with urlopen(request, timeout=30) as response:
+    print(json.dumps(json.load(response), indent=2))
+    print("Pagination:", response.headers.get("Link", "none"), file=sys.stderr)
+PY
+```
+
+The [issue events API](https://docs.sentry.io/api/events/list-an-issues-events/)
+caps full-event pages at 10. Follow its `Link` header's next cursor when
+`results="true"`; one page is not the complete incident history. Inspect
+`dateCreated`, `tags`, `contexts.device`, `contexts.browser`, `contexts.os`, and
+`entries` for breadcrumbs, exceptions, and request details. Event contents may
+include customer data: keep exports out of the repository and shared reports.
+Resolving or muting an issue is a separate action, not part of diagnosis.
+
 ## Investigate Gemini TTS Errors and Credit Charges
 
 Use this runbook when a user reports that Gemini speech requests failed,

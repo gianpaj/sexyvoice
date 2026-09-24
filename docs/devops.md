@@ -208,9 +208,10 @@ and the `/monitoring` browser tunnel. Source maps upload only when
 `VERCEL_ENV=production`; do not expect uploads from preview deployments.
 Confirm the production build uploads maps and that the tunnel reaches Sentry.
 
-For incident investigation, use the existing
-[Sentry application-log procedure](../scripts/README.md#2-correlate-sentry-application-logs)
-rather than muting or resolving issues as a deployment check.
+For crashes and per-event browser/device details, use
+[Sentry issue triage](../scripts/README.md#sentry-issue-triage). For handled
+Gemini failures, use the [application-log investigation](../scripts/README.md#2-correlate-sentry-application-logs).
+Neither requires muting or resolving issues as a deployment check.
 
 ## Deployment verification
 
