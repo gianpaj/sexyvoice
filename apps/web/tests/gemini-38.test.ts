@@ -99,6 +99,9 @@ describe('Gemini 3.8 integration', () => {
       voice: voice.name,
     });
     expect(buildGeminiVoiceConfig('kore', 'gpro38')).toEqual({ voice: 'Kore' });
+    expect(buildGeminiVoiceConfig(voice.name, 'gpro31')).toEqual({
+      prebuiltVoiceConfig: { voiceName: 'Es-es-tutor-12' },
+    });
     expect(resolveGeminiTtsModel({ model: 'gpro38', userHasPaid: false })).toBe(
       'gemini-3.8-flash-tts',
     );

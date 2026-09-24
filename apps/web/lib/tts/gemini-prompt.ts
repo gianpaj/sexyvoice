@@ -84,11 +84,17 @@ export function buildGeminiTtsContents({
   ];
 }
 
+/**
+ * Shared identities (`kore`, `puck`, ...) are stored lowercase and Google
+ * expects them capitalized on every model. Gemini 3.8 also accepts extended
+ * catalog ids such as `es-es-advisor-8`, which are sent verbatim.
+ */
 export function buildGeminiVoiceConfig(
   voiceName: string,
   model?: string,
 ): VoiceConfig {
-  const name = voiceName.includes('-')
+  const isExtendedId = model === 'gpro38' && voiceName.includes('-');
+  const name = isExtendedId
     ? voiceName
     : voiceName.charAt(0).toUpperCase() + voiceName.slice(1);
   return model === 'gpro38'
