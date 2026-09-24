@@ -635,8 +635,11 @@ Check:
 
 `CreditsSection` sends the browser's `['credits', userId]` query result to
 Crisp as `creditsLeft`. Speech generation invalidates credit queries after each
-request settles, including split segments and retries. A call-token 402 also
-invalidates them; call disconnect refreshes the authenticated user's balance.
+non-cancelled request settles, including split segments and retries. Streaming
+errors wait for the reserved-credit refund attempt before reaching the client.
+Cancellation skips the refetch because it can race the server's refund. A
+call-token 402 also invalidates credit queries; call disconnect refreshes the
+authenticated user's balance.
 
 Crisp displays a session snapshot, not a live database balance. For support
 investigations, verify `public.credits.amount` for the user's ID. If Crisp stays

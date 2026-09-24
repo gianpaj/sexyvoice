@@ -1309,6 +1309,7 @@ function streamGeminiTtsResponse({
     let audioStarted = false;
     let completed = false;
     let fallbackAttempted = false;
+    let errorPayload: Record<string, unknown> | undefined;
 
     const getStreamBlockError = () => {
       if (!(streamFinishReason || streamBlockReason)) {
@@ -1446,9 +1447,9 @@ function streamGeminiTtsResponse({
           extra: { model: modelUsed, voice: voiceObj.name },
           user: { id: user.id },
         });
-        await enqueue('error', {
+        errorPayload = {
           error: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-        });
+        };
         return;
       }
 
@@ -1635,7 +1636,7 @@ function streamGeminiTtsResponse({
         });
       }
 
-      await enqueue('error', {
+      errorPayload = {
         error: clientMessage,
         ...(isTransientProviderError
           ? {
@@ -1643,7 +1644,7 @@ function streamGeminiTtsResponse({
               errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
             }
           : {}),
-      });
+      };
     } finally {
       if (!completed) {
         await refundReservedCredits({
@@ -1654,9 +1655,16 @@ function streamGeminiTtsResponse({
       }
 
       try {
-        await writer.close();
-      } catch {
-        // Writer already closed via an early-return path — safe to ignore.
+        // Clients may refresh their credit balance as soon as they receive an error.
+        if (errorPayload) {
+          await enqueue('error', errorPayload);
+        }
+      } finally {
+        try {
+          await writer.close();
+        } catch {
+          // Writer already closed via an early-return path — safe to ignore.
+        }
       }
     }
   })().catch((error) => {

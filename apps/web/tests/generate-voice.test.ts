@@ -13,6 +13,7 @@ import {
 import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
   createDefaultStreamChunk,
+  flushPromises,
   mockRedisGet,
   mockRedisKeys,
   mockRedisSet,
@@ -24,15 +25,34 @@ import {
   setMockGoogleGenAIFactory,
 } from './setup';
 
+const streamingOverride = vi.hoisted(() => ({
+  enabled: undefined as boolean | undefined,
+}));
+
+vi.mock('@/lib/ai', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/ai')>();
+  return {
+    ...actual,
+    get GEMINI_STREAMING_ENABLED() {
+      return streamingOverride.enabled ?? actual.GEMINI_STREAMING_ENABLED;
+    },
+  };
+});
+
 // ── SSE helpers ────────────────────────────────────────────────────────────
-async function readSseBody(response: Response): Promise<string> {
+async function readSseBody(
+  response: Response,
+  onChunk?: (chunk: string) => void,
+): Promise<string> {
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let body = '';
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    body += decoder.decode(value, { stream: true });
+    const chunk = decoder.decode(value, { stream: true });
+    body += chunk;
+    onChunk?.(chunk);
   }
   return body;
 }
@@ -2425,6 +2445,286 @@ describe('Generate Voice API Route', () => {
       expect(json.error).toBeTruthy();
       // Fail-fast happens before any credit reservation.
       expect(reduceCredits).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Streaming credit refunds', () => {
+    beforeEach(async () => {
+      streamingOverride.enabled = true;
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(true);
+    });
+
+    afterEach(() => {
+      streamingOverride.enabled = undefined;
+    });
+
+    it.each(['caught failure', 'empty stream', 'mid-flight failure'])(
+      'withholds the SSE error until the reserved-credit refund resolves for %s',
+      async (scenario) => {
+        const { reduceCredits, restoreCredits, saveAudioFile } = await import(
+          '@/lib/supabase/queries'
+        );
+        const refundStarted = Promise.withResolvers<void>();
+        const refund = Promise.withResolvers<void>();
+        vi.mocked(restoreCredits).mockImplementationOnce(() => {
+          refundStarted.resolve();
+          return refund.promise;
+        });
+
+        const providerError = new Error(
+          JSON.stringify({
+            error: {
+              code: 503,
+              message: 'Provider unavailable',
+              status: 'UNAVAILABLE',
+            },
+          }),
+        );
+        const generateContentStream = vi.fn().mockImplementation(function* () {
+          if (scenario === 'empty stream') return;
+          if (scenario === 'mid-flight failure') {
+            yield createDefaultStreamChunk();
+          }
+          throw providerError;
+        });
+        setMockGoogleGenAIFactory(() => ({
+          models: { generateContentStream },
+        }));
+
+        const text = 'Hello world';
+        const reservedCredits = estimateCredits(text, 'achernar', 'gpro31');
+        const response = await POST(
+          new Request('http://localhost/api/generate-voice', {
+            body: JSON.stringify({
+              stream: true,
+              text,
+              voiceId: 'voice-achernar-31-id',
+            }),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          }),
+        );
+        const chunks: string[] = [];
+        const bodyPromise = readSseBody(response, (chunk) => {
+          chunks.push(chunk);
+        });
+
+        try {
+          await refundStarted.promise;
+          await flushPromises();
+          expect(response.headers.get('content-type')).toContain(
+            'text/event-stream',
+          );
+          expect(reduceCredits).toHaveBeenCalledExactlyOnceWith({
+            amount: reservedCredits,
+            userId: 'test-user-id',
+          });
+          expect(restoreCredits).toHaveBeenCalledExactlyOnceWith({
+            amount: reservedCredits,
+            userId: 'test-user-id',
+          });
+          expect(chunks.join('')).not.toContain('event: error');
+          expect(chunks.join('')).not.toContain('event: done');
+          expect(chunks).toHaveLength(
+            scenario === 'mid-flight failure' ? 1 : 0,
+          );
+        } finally {
+          refund.resolve();
+          await bodyPromise;
+        }
+
+        const body = await bodyPromise;
+        const errorPayload =
+          scenario === 'empty stream'
+            ? {
+                error: getErrorMessage(
+                  'OTHER_GEMINI_BLOCK',
+                  'voice-generation',
+                ),
+              }
+            : {
+                details: { provider: 'Gemini' },
+                error: 'Gemini is temporarily unavailable. Please retry.',
+                errorCode: 'PROVIDER_UNAVAILABLE',
+              };
+        const errorEvents = chunks.filter((chunk) =>
+          chunk.startsWith('event: error\ndata: '),
+        );
+        expect(errorEvents).toHaveLength(1);
+        expect(
+          JSON.parse(errorEvents[0].slice('event: error\ndata: '.length)),
+        ).toEqual(errorPayload);
+        expect(body).not.toContain('event: done');
+        expect(generateContentStream).toHaveBeenCalledTimes(
+          scenario === 'mid-flight failure' ? 1 : 2,
+        );
+        expect(restoreCredits).toHaveBeenCalledOnce();
+        expect(saveAudioFile).not.toHaveBeenCalled();
+        if (scenario === 'empty stream') {
+          expect(Sentry.logger.error).toHaveBeenCalledWith(
+            'Gemini stream completed with no audio chunks',
+            expect.any(Object),
+          );
+          expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(
+            expect.objectContaining({
+              message: 'Gemini stream — no audio chunks',
+            }),
+            expect.any(Object),
+          );
+        } else {
+          expect(Sentry.logger.warn).toHaveBeenCalledWith(
+            'Gemini stream provider temporarily unavailable',
+            expect.any(Object),
+          );
+          expect(Sentry.captureException).not.toHaveBeenCalled();
+        }
+      },
+    );
+
+    it.each(['primary stream', 'fallback stream', 'client abort'])(
+      'refunds the reservation once without an SSE error on abort: %s',
+      async (scenario) => {
+        const { restoreCredits } = await import('@/lib/supabase/queries');
+        const controller = new AbortController();
+        const generateContentStream = vi.fn().mockImplementation(function* () {
+          if (scenario === 'client abort') {
+            yield createDefaultStreamChunk();
+            controller.abort();
+            yield createDefaultStreamChunk();
+            return;
+          }
+          throw new Error('AbortError: stream aborted');
+        });
+        if (scenario === 'fallback stream') {
+          generateContentStream.mockRejectedValueOnce(
+            new Error('Primary stream failed'),
+          );
+        }
+        setMockGoogleGenAIFactory(() => ({
+          models: { generateContentStream },
+        }));
+
+        const text = 'Hello world';
+        const response = await POST(
+          new Request('http://localhost/api/generate-voice', {
+            body: JSON.stringify({
+              stream: true,
+              text,
+              voiceId: 'voice-achernar-31-id',
+            }),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+            signal: controller.signal,
+          }),
+        );
+        const body = await readSseBody(response);
+
+        expect(body).not.toContain('event: error');
+        expect(body).not.toContain('event: done');
+        expect(generateContentStream).toHaveBeenCalledTimes(
+          scenario === 'fallback stream' ? 2 : 1,
+        );
+        expect(restoreCredits).toHaveBeenCalledExactlyOnceWith({
+          amount: estimateCredits(text, 'achernar', 'gpro31'),
+          userId: 'test-user-id',
+        });
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['success', 'post-reconciliation failure'])(
+      'only refunds unused reserved credits on %s',
+      async (outcome) => {
+        const { insertUsageEvent, restoreCredits, saveAudioFile } =
+          await import('@/lib/supabase/queries');
+        const text = 'Hello world '.repeat(10).trim();
+        const reservedCredits = estimateCredits(text, 'achernar', 'gpro31');
+        const actualCredits = calculateCreditsFromTokens(23, {
+          model: 'gemini-3.1-flash-tts-preview',
+          userHasPaid: true,
+        });
+        if (outcome === 'post-reconciliation failure') {
+          vi.mocked(insertUsageEvent).mockRejectedValueOnce(
+            new Error('Usage logging failed'),
+          );
+        }
+        const response = await POST(
+          new Request('http://localhost/api/generate-voice', {
+            body: JSON.stringify({
+              stream: true,
+              text,
+              voiceId: 'voice-achernar-31-id',
+            }),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          }),
+        );
+        const body = await readSseBody(response);
+
+        expect(body).toContain('event: audio');
+        expect(restoreCredits).toHaveBeenCalledExactlyOnceWith({
+          amount: reservedCredits - actualCredits,
+          userId: 'test-user-id',
+        });
+        expect(saveAudioFile).toHaveBeenCalledWith(
+          expect.objectContaining({ credits_used: actualCredits }),
+        );
+        if (outcome === 'success') {
+          expect(body).toContain('event: done');
+          expect(body).toContain(`"creditsUsed":${actualCredits}`);
+          expect(body).toContain(`"creditsRemaining":${1000 - actualCredits}`);
+          expect(body).not.toContain('event: error');
+        } else {
+          expect(body).toContain(
+            'event: error\ndata: {"error":"Usage logging failed"}\n\n',
+          );
+          expect(body).not.toContain('event: done');
+        }
+      },
+    );
+
+    it('reports a failed refund once and still sends the original SSE error', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      const refundError = new Error('Refund failed');
+      vi.mocked(restoreCredits).mockRejectedValueOnce(refundError);
+      const generateContentStream = vi
+        .fn()
+        .mockRejectedValue(new Error('Stream failed'));
+      setMockGoogleGenAIFactory(() => ({ models: { generateContentStream } }));
+
+      const response = await POST(
+        new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            stream: true,
+            text: 'Hello world',
+            voiceId: 'voice-achernar-31-id',
+          }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+      );
+      const body = await readSseBody(response);
+
+      expect(body).toBe('event: error\ndata: {"error":"Stream failed"}\n\n');
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(Sentry.logger.error).toHaveBeenCalledWith(
+        'Failed to restore reserved credits',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            context: 'generate_voice_stream_failure',
+            errorMessage: refundError.message,
+          }),
+        }),
+      );
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        refundError,
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            context: 'generate_voice_stream_failure',
+          }),
+        }),
+      );
     });
   });
 

@@ -586,8 +586,10 @@ export function AudioGenerator({
         }
         return await requestGenerateVoiceJson(segmentText, signal, seed, split);
       } finally {
-        // A failed or interrupted response can still follow a credit charge.
-        queryClient.invalidateQueries({ queryKey: ['credits'] });
+        // Cancellation refunds the reservation, but a refetch can beat the refund.
+        if (!signal.aborted) {
+          queryClient.invalidateQueries({ queryKey: ['credits'] });
+        }
       }
     },
     [

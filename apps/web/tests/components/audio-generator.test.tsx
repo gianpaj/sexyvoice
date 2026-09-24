@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -14,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioGenerator } from '@/components/audio-generator';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 
+const streamingOverride = vi.hoisted(() => ({ enabled: false }));
 const invalidateQueries = vi.hoisted(() => vi.fn());
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
@@ -127,7 +129,9 @@ vi.mock('@/components/grok-tts-editor', () => ({
 vi.mock('@/lib/ai', () => ({
   estimateTokenCount: vi.fn((text: string) => Math.ceil(text.length / 4)),
   GEMINI_CHARS_PER_TOKEN: 4,
-  GEMINI_STREAMING_ENABLED: false,
+  get GEMINI_STREAMING_ENABLED() {
+    return streamingOverride.enabled;
+  },
   getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
     if (model === 'gpro') {
       return isPaidUser ? 1000 : 500;
@@ -346,6 +350,7 @@ function getFetchRequestBody(
 describe('AudioGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    streamingOverride.enabled = false;
     mockToastFn.mockClear();
     mockToastFn.success.mockClear();
     mockToastFn.error.mockClear();
@@ -896,6 +901,9 @@ describe('AudioGenerator', () => {
         );
       });
       expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
+        queryKey: ['credits'],
+      });
     },
   );
 
@@ -950,7 +958,16 @@ describe('AudioGenerator', () => {
         ok: false,
         status: 500,
       })
-      .mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'));
+      .mockImplementationOnce(
+        (_url: string, { signal }: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            signal?.addEventListener(
+              'abort',
+              () => reject(new DOMException('Aborted', 'AbortError')),
+              { once: true },
+            );
+          }),
+      );
     vi.stubGlobal('fetch', fetchMock);
 
     renderAudioGenerator({
@@ -985,6 +1002,7 @@ describe('AudioGenerator', () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
+    await user.click(screen.getByRole('button', { name: baseDict.cancel }));
     await waitFor(() => {
       expect(
         screen.queryByRole('button', { name: baseDict.split.retry }),
@@ -992,6 +1010,9 @@ describe('AudioGenerator', () => {
     });
     expect(screen.getAllByText(baseDict.split.statusPending).length).toBe(2);
     expect(mockToastFn.error).not.toHaveBeenCalled();
+    expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
+      queryKey: ['credits'],
+    });
   });
 
   it('skips already-generated Gemini segments on re-run', async () => {
@@ -1649,6 +1670,66 @@ describe('AudioGenerator', () => {
     };
   }
 
+  it.each(['fetch', 'JSON body', 'SSE body'])(
+    'does not refresh credits when cancelled during %s',
+    async (stage) => {
+      streamingOverride.enabled = stage === 'SSE body';
+      const user = userEvent.setup();
+      const fetchMock = vi.fn(async (_url: string, { signal }: RequestInit) => {
+        if (stage === 'SSE body') {
+          return {
+            body: new ReadableStream<Uint8Array>({
+              start(controller) {
+                signal?.addEventListener(
+                  'abort',
+                  () =>
+                    controller.error(new DOMException('Aborted', 'AbortError')),
+                  { once: true },
+                );
+              },
+            }),
+            ok: true,
+          };
+        }
+
+        const pending = new Promise<never>((_resolve, reject) => {
+          signal?.addEventListener(
+            'abort',
+            () => reject(new DOMException('Aborted', 'AbortError')),
+            { once: true },
+          );
+        });
+        return stage === 'fetch' ? pending : { json: () => pending, ok: true };
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+      });
+      fireEvent.change(
+        await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+        { target: { value: LONG_TEXT } },
+      );
+      await user.click(screen.getByTestId('generate-button'));
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(getFetchRequestBody(fetchMock, 0).stream).toBe(
+        stage === 'SSE body' ? true : undefined,
+      );
+      expect(invalidateQueries).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await user.click(screen.getByRole('button', { name: baseDict.cancel }));
+      });
+
+      expect(fetchMock.mock.calls[0][1].signal?.aborted).toBe(true);
+      expect(screen.getByTestId('generate-button')).toBeEnabled();
+      expect(invalidateQueries).not.toHaveBeenCalled();
+      expect(mockToastFn.error).not.toHaveBeenCalled();
+      expect(mockToastFn.success).not.toHaveBeenCalled();
+    },
+  );
+
   // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false), so the
   // client no longer requests the SSE path. Re-enable with the flag.
   it.skip('sends stream: true when Gemini voice and text exceeds threshold', async () => {
@@ -1812,8 +1893,8 @@ describe('AudioGenerator', () => {
     expect(screen.queryByTestId('audio-player')).not.toBeInTheDocument();
   });
 
-  // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
-  it.skip('shows error toast on SSE error event', async () => {
+  it('shows an error toast and refreshes credits on an SSE error event', async () => {
+    streamingOverride.enabled = true;
     const user = userEvent.setup();
     const fetchMock = vi
       .fn()
@@ -1842,5 +1923,8 @@ describe('AudioGenerator', () => {
         'Gemini no está disponible temporalmente. Inténtalo de nuevo. (500)',
       ),
     );
+    expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
+      queryKey: ['credits'],
+    });
   });
 });
