@@ -75,15 +75,17 @@ describe('VoicePicker preview', () => {
     const button = screen.getByRole('button', {
       name: 'Stop preview of tara',
     });
-    const ring = button.querySelector('circle[stroke-linecap="round"]');
+    const ring = button.querySelector('circle[stroke-dasharray]');
     expect(audio.src).toBe(voices[0].sample_url);
     expect(audio.play).toHaveBeenCalledOnce();
     expect(onValueChange).not.toHaveBeenCalled();
+    expect(ring).toHaveAttribute('stroke-linecap', 'butt');
 
     audio.currentTime = 5;
     await waitFor(() =>
       expect(ring).toHaveAttribute('stroke-dasharray', '0.5 1'),
     );
+    expect(ring).toHaveAttribute('stroke-linecap', 'round');
     audio.currentTime = 8;
     await waitFor(() =>
       expect(ring).toHaveAttribute('stroke-dasharray', '0.8 1'),
@@ -103,7 +105,7 @@ describe('VoicePicker preview', () => {
     const audio = PreviewAudio.instances[0];
     const ring = screen
       .getByRole('button', { name: 'Stop preview of tara' })
-      .querySelector('circle[stroke-linecap="round"]');
+      .querySelector('circle[stroke-dasharray]');
 
     audio.currentTime = 2;
     await waitFor(() =>

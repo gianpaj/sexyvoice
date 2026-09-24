@@ -9,7 +9,7 @@ import {
   Square,
   X,
 } from 'lucide-react';
-import { motion, useMotionValue } from 'motion/react';
+import { motion, useMotionValue, useTransform } from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type KeyboardEvent,
@@ -106,6 +106,10 @@ export function VoicePicker({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const previewProgress = useMotionValue(0);
+  // A round cap on a zero-length stroke still paints a dot.
+  const previewLinecap = useTransform(previewProgress, (progress) =>
+    progress > 0 ? 'round' : 'butt',
+  );
 
   const selectedId = value ?? internalValue;
   const selected = voices.find((v) => v.id === selectedId);
@@ -451,7 +455,7 @@ export function VoicePicker({
                               cy="16"
                               r="14.5"
                               stroke="currentColor"
-                              strokeLinecap="round"
+                              strokeLinecap={previewLinecap}
                               strokeWidth="2"
                               style={{ pathLength: previewProgress }}
                             />
