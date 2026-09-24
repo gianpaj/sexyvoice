@@ -53,6 +53,12 @@ export function VoiceSelector({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
+  // Emotion tags are an Orpheus feature; Gemini and Grok voices with a
+  // regional language must not surface them.
+  const emotionTags =
+    provider === 'replicate' && selectedVoice
+      ? getEmotionTags(selectedVoice.language)
+      : undefined;
   // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
   // and the style, enforced in the generator; the standalone character counter
   // below only applies to the character-bounded Gemini 2.5 style prompt.
@@ -131,7 +137,7 @@ export function VoiceSelector({
                     <i>{selectedVoice.sample_prompt}</i>
                   )}
                 </p>
-                {getEmotionTags(selectedVoice.language) && (
+                {emotionTags && (
                   <TooltipProvider>
                     <Tooltip delayDuration={100}>
                       <TooltipTrigger asChild>
@@ -149,7 +155,7 @@ export function VoiceSelector({
                             {t('voiceSelector.toolTipEmotionTags')}
                           </strong>
                           <br />
-                          {getEmotionTags(selectedVoice.language)}
+                          {emotionTags}
                         </p>
                       </TooltipContent>
                     </Tooltip>

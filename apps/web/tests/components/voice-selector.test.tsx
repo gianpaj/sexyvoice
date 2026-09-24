@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { getVoiceGroups } from '@/components/voice-groups';
 import { VoiceSelector } from '@/components/voice-selector';
+import { getEmotionTags } from '@/lib/ai';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -236,6 +237,35 @@ describe('VoiceSelector', () => {
     expect(
       screen.queryByText(baseDict.voiceSelector.grokInfo),
     ).not.toBeInTheDocument();
+  });
+
+  it('only looks up Orpheus emotion tags for Replicate voices', () => {
+    const spanishTags =
+      '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
+    vi.mocked(getEmotionTags).mockClear().mockReturnValue(spanishTags);
+
+    const { unmount } = renderVoiceSelector({
+      selectedVoice: createVoice({
+        id: 'voice-gemini-38',
+        language: 'es-ES 🇪🇸',
+        model: 'gpro38',
+        name: 'es-es-tutor-12',
+        sample_prompt: 'Hola',
+      }),
+    });
+    expect(getEmotionTags).not.toHaveBeenCalled();
+    expect(screen.queryByText(spanishTags)).not.toBeInTheDocument();
+    unmount();
+
+    renderVoiceSelector({
+      selectedVoice: createVoice({
+        id: 'voice-replicate-es',
+        language: 'es-ES 🇪🇸',
+        name: 'javi',
+        sample_prompt: 'Hola',
+      }),
+    });
+    expect(getEmotionTags).toHaveBeenCalledWith('es-ES 🇪🇸');
   });
 
   it('shows the selected voice name in the trigger button', () => {
