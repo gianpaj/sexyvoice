@@ -327,6 +327,18 @@ test('a failed upload does not discard other successful samples', async () =>
     assert.equal(result.failures.length, 1);
   }));
 
+test('catalog SQL rejects ids that are not canonical UUIDs', () => {
+  const malformed = { ...catalog.voices[0], id: '-'.repeat(36) };
+  assert.throws(
+    () =>
+      prepareVoiceCatalogSql(
+        { ...catalog, voices: [malformed] },
+        { draft: true },
+      ),
+    /Invalid catalog UUID/,
+  );
+});
+
 test('draft SQL is guarded and final SQL requires verified matching samples', async () =>
   fixture(async (directory) => {
     const draft = prepareVoiceCatalogSql(catalog, { draft: true });

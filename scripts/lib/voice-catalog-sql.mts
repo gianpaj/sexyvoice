@@ -6,6 +6,7 @@ import type {
   SampleManifest,
   SampleVoice,
 } from './speech-samples.mts';
+import { UUID_PATTERN } from './uuid.mts';
 
 type VoiceMetadata = Pick<
   Tables<'voices'>,
@@ -61,12 +62,7 @@ export function prepareVoiceCatalogSql(
   const ids = new Set<string>();
   const identities = new Set<string>();
   const statements = catalog.voices.map((voice) => {
-    if (
-      !(
-        /^[0-9a-f-]{36}$/i.test(voice.id) &&
-        /^[0-9a-f-]{36}$/i.test(voice.row.user_id)
-      )
-    )
+    if (!(UUID_PATTERN.test(voice.id) && UUID_PATTERN.test(voice.row.user_id)))
       throw new Error('Invalid catalog UUID');
     if (voice.row.feature !== 'tts') throw new Error('Expected a TTS voice');
     const identity = JSON.stringify([
