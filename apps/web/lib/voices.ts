@@ -36,7 +36,7 @@ export const MODEL_COLORS: Record<VoiceModel, string> = {
   'Gemini 2.5': '#F163A8',
   'Gemini 3.1': '#B898EC',
   'Gemini 3.8': '#72B5E9',
-  Grok: '#F163A8',
+  Grok: '#65B88F',
   Replicate: '#EEBB2D',
 };
 
