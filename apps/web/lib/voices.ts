@@ -23,9 +23,9 @@ export type VoiceModel =
 export type VoiceGender = 'Female' | 'Male' | 'Neutral';
 
 export const VOICE_MODELS: VoiceModel[] = [
-  'Gemini 2.5',
-  'Gemini 3.1',
   'Gemini 3.8',
+  'Gemini 3.1',
+  'Gemini 2.5',
   'Grok',
   'Replicate',
 ];
@@ -33,11 +33,11 @@ export const VOICE_MODELS: VoiceModel[] = [
 export const VOICE_GENDERS: VoiceGender[] = ['Female', 'Male', 'Neutral'];
 
 export const MODEL_COLORS: Record<VoiceModel, string> = {
-  'Gemini 2.5': '#4285f4',
-  'Gemini 3.1': '#34a853',
-  'Gemini 3.8': '#0f9d58',
-  Grok: '#9b59b6',
-  Replicate: '#e67e22',
+  'Gemini 2.5': '#F163A8',
+  'Gemini 3.1': '#B898EC',
+  'Gemini 3.8': '#72B5E9',
+  Grok: '#F163A8',
+  Replicate: '#EEBB2D',
 };
 
 /** Minimal shape expected by VoiceSelect — a subset of Tables<'voices'>. */
