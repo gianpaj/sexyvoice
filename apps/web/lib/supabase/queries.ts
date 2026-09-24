@@ -197,7 +197,7 @@ function toCreditDebitError(error: unknown): unknown {
  * `gpro`, `gpro31`, and `gpro38` rows), so pass `models` whenever the caller
  * knows the model. Without it the oldest matching row wins, which keeps
  * existing name-only callers on the voice they resolved before newer rows
- * were added.
+ * were added. Equal timestamps are ordered by ID for a stable result.
  */
 export async function getVoiceIdByName(
   voiceName: string,
@@ -213,6 +213,7 @@ export async function getVoiceIdByName(
   if (models) query = query.in('model', [...models]);
   const { data, error } = await query
     .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
     .limit(1)
     .single();
 
@@ -721,6 +722,7 @@ export async function getVoiceIdByNameAdmin(
   if (models) query = query.in('model', [...models]);
   const { data, error } = await query
     .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
     .limit(1)
     .single();
 
