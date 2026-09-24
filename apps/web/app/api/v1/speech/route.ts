@@ -20,6 +20,7 @@ import {
   getDefaultFormat,
   isFormatSupported,
   isModelCompatibleWithVoice,
+  resolveDbModelIds,
   resolveExternalModelId,
 } from '@/lib/api/model';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
@@ -368,7 +369,11 @@ export async function POST(request: Request) {
       }
     } else if (requestedVoice) {
       try {
-        voiceObj = await getVoiceIdByNameAdmin(requestedVoice);
+        voiceObj = await getVoiceIdByNameAdmin(
+          requestedVoice,
+          true,
+          model ? resolveDbModelIds(model) : undefined,
+        );
       } catch {
         voiceObj = null;
       }

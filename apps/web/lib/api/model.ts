@@ -13,6 +13,13 @@ export function resolveExternalModelId(
   }
 }
 
+/** Database `voices.model` values that an external model id covers. */
+export function resolveDbModelIds(externalModel: ExternalApiModelId): string[] {
+  return Object.keys(DB_MODEL_TO_EXTERNAL_ID).filter(
+    (dbModel) => DB_MODEL_TO_EXTERNAL_ID[dbModel] === externalModel,
+  );
+}
+
 export function isModelCompatibleWithVoice(
   requestedModel: ExternalApiModelId,
   voiceDbModel: string,

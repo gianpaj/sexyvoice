@@ -142,6 +142,32 @@ describe('/api/v1/speech', () => {
     expect(json.error.param).toBe('temperature');
   });
 
+  it('scopes voice name lookups to the requested model', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'orpheus',
+        voice: 'tara',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    await POST(request);
+
+    expect(vi.mocked(getVoiceIdByNameAdmin)).toHaveBeenCalledWith(
+      'tara',
+      true,
+      [
+        'gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650',
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      ],
+    );
+  });
+
   it('returns 400 when voice model does not match requested model', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       body: JSON.stringify({
