@@ -432,7 +432,7 @@ export function VoicePicker({
                             ? t('stopPreview', { name: voice.name })
                             : t('previewVoice', { name: voice.name })
                         }
-                        className="hit-area-1.5 relative flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-[color,scale] hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.96] motion-reduce:transition-none"
+                        className="hit-area-1.5 relative flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-[color,scale] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.96] motion-reduce:transition-none"
                         onClick={() => togglePreview(voice.id)}
                         type="button"
                       >
