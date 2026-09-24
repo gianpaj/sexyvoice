@@ -307,7 +307,7 @@ export function VoicePicker({
                   : undefined
               }
               aria-autocomplete="list"
-              aria-controls="voice-select-listbox"
+              aria-controls="voice-picker-listbox"
               autoFocus
               className="h-9 pl-8 text-sm"
               onChange={(e) => setQuery(e.target.value)}
@@ -396,7 +396,7 @@ export function VoicePicker({
             <div
               aria-label={t('voiceListLabel')}
               className="p-1"
-              id="voice-select-listbox"
+              id="voice-picker-listbox"
               ref={listRef}
               role="listbox"
             >
