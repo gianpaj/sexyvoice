@@ -1696,7 +1696,7 @@ function streamGeminiTtsResponse({
         try {
           await writer.close();
         } catch {
-          // Writer already closed via an early-return path — safe to ignore.
+          // A client disconnect can make closing the writer reject.
         }
         reportCancelledCharge({
           creditsDebited,
