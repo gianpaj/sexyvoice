@@ -413,7 +413,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toBe(cachedUrl);
+      expect(json).toEqual({ cached: true, creditsUsed: 0, url: cachedUrl });
 
       // Verify no credits were consumed on cache hit
       expect(queries.reduceCredits).not.toHaveBeenCalled();
@@ -444,7 +444,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toBe(cachedUrl);
+      expect(json).toEqual({ cached: true, creditsUsed: 0, url: cachedUrl });
 
       // Verify no credits were consumed on cache hit
       expect(queries.reduceCredits).not.toHaveBeenCalled();
@@ -518,7 +518,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(200);
-      expect(json.url).toBe(cachedUrl);
+      expect(json).toEqual({ cached: true, creditsUsed: 0, url: cachedUrl });
       expect(queries.reduceCredits).not.toHaveBeenCalled();
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
       expect(mockRedisGet).toHaveBeenCalledWith(

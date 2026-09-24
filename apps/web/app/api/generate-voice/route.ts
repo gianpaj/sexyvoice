@@ -580,8 +580,10 @@ export async function POST(request: Request) {
         return new Response(body, { headers: SSE_HEADERS });
       }
 
-      // Return existing audio file URL
-      return NextResponse.json({ url: result }, { status: 200 });
+      return NextResponse.json(
+        { cached: true, creditsUsed: 0, url: result },
+        { status: 200 },
+      );
     }
 
     let replicateResponse: Prediction | undefined;

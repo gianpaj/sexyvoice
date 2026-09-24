@@ -158,6 +158,8 @@ interface SseDoneEvent {
   url: string;
 }
 
+type GenerateVoiceResult = Pick<SseDoneEvent, 'cached' | 'url'>;
+
 interface SseErrorEvent {
   details?: unknown;
   error: string;
@@ -432,7 +434,7 @@ export function AudioGenerator({
       signal: AbortSignal,
       seed?: number,
       split = false,
-    ): Promise<string> => {
+    ): Promise<GenerateVoiceResult> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
@@ -469,7 +471,7 @@ export function AudioGenerator({
         throwGenerateVoiceError(t, translateErrorCode, data, response);
       }
 
-      return data.url as string;
+      return { cached: data.cached === true, url: data.url as string };
     },
     [
       t,
@@ -486,7 +488,10 @@ export function AudioGenerator({
   );
 
   const requestGenerateVoiceStream = useCallback(
-    async (segmentText: string, signal: AbortSignal): Promise<string> => {
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+    ): Promise<GenerateVoiceResult> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
@@ -514,19 +519,19 @@ export function AudioGenerator({
 
       // The streaming player owns the Web Audio engine, peak accumulation, and
       // the live→file handoff. Here we just feed it PCM chunks as they arrive.
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<GenerateVoiceResult>((resolve, reject) => {
         parseSseStream(response, {
           onAudio: ({ data, mimeType }) => {
             if (signal.aborted) return;
             pushStreamChunk(data, mimeType);
           },
-          onDone: ({ url }) => {
+          onDone: ({ cached, url }) => {
             // Assemble the WAV and arrange the handoff; live playback continues
             // until the buffered tail finishes (see the hook). A cache hit sends
             // no audio chunks, so `finalize` is a no-op and the standard file
             // player handles the persisted URL instead.
             finalizeStream();
-            resolve(url);
+            resolve({ cached, url });
           },
           onError: ({ details, error, errorCode, serverMessage }) => {
             resetStream();
@@ -580,14 +585,16 @@ export function AudioGenerator({
         !shouldUseSplitMode &&
         shouldStream;
 
+      let cached = false;
       try {
-        if (useStream) {
-          return await requestGenerateVoiceStream(segmentText, signal);
-        }
-        return await requestGenerateVoiceJson(segmentText, signal, seed, split);
+        const result = useStream
+          ? await requestGenerateVoiceStream(segmentText, signal)
+          : await requestGenerateVoiceJson(segmentText, signal, seed, split);
+        cached = result.cached === true;
+        return result.url;
       } finally {
-        // Cancellation refunds the reservation, but a refetch can beat the refund.
-        if (!signal.aborted) {
+        // Cache hits do not charge; cancellation can race the server's refund.
+        if (!(cached || signal.aborted)) {
           queryClient.invalidateQueries({ queryKey: ['credits'] });
         }
       }

@@ -700,66 +700,72 @@ describe('AudioGenerator', () => {
     expect(input).not.toHaveAttribute('maxlength');
   });
 
-  it('generates each Replicate split segment separately', async () => {
-    const user = userEvent.setup();
-    const firstSegment = `${'A'.repeat(300)}.`;
-    const secondSegment = `${'B'.repeat(300)}.`;
-    const longText = `${firstSegment} ${secondSegment}`;
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        json: async () => ({ url: 'https://example.com/segment-1.mp3' }),
-        ok: true,
-      })
-      .mockResolvedValueOnce({
-        json: async () => ({ url: 'https://example.com/segment-2.mp3' }),
-        ok: true,
+  it.each([false, true])(
+    'generates each Replicate split segment separately with first segment cached=%s',
+    async (cached) => {
+      const user = userEvent.setup();
+      const firstSegment = `${'A'.repeat(300)}.`;
+      const secondSegment = `${'B'.repeat(300)}.`;
+      const longText = `${firstSegment} ${secondSegment}`;
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: async () => ({
+            cached,
+            url: 'https://example.com/segment-1.mp3',
+          }),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: async () => ({ url: 'https://example.com/segment-2.mp3' }),
+          ok: true,
+        });
+      vi.stubGlobal('fetch', fetchMock);
+
+      renderAudioGenerator();
+
+      fireEvent.change(
+        await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+        {
+          target: { value: longText },
+        },
+      );
+      await user.click(
+        screen.getByRole('checkbox', {
+          name: baseDict.split.splitToggleLabel,
+        }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
       });
-    vi.stubGlobal('fetch', fetchMock);
 
-    renderAudioGenerator();
+      await user.click(screen.getByTestId('generate-button'));
 
-    fireEvent.change(
-      await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
-      {
-        target: { value: longText },
-      },
-    );
-    await user.click(
-      screen.getByRole('checkbox', {
-        name: baseDict.split.splitToggleLabel,
-      }),
-    );
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(invalidateQueries).toHaveBeenCalledTimes(cached ? 1 : 2);
+      });
 
-    await waitFor(() => {
-      expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
-    });
-
-    await user.click(screen.getByTestId('generate-button'));
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(invalidateQueries).toHaveBeenCalledTimes(2);
-    });
-
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
-      split: true,
-      styleVariant: '',
-      text: firstSegment,
-      voiceId: 'voice-id',
-    });
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
-      split: true,
-      styleVariant: '',
-      text: secondSegment,
-      voiceId: 'voice-id',
-    });
-    expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
-    // Multiple segments show the progress modal, reaching completion on the
-    // final segment.
-    expect(mockToastFn.loading).toHaveBeenCalled();
-    expect(mockToastFn.dismiss).toHaveBeenCalled();
-  });
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+        split: true,
+        styleVariant: '',
+        text: firstSegment,
+        voiceId: 'voice-id',
+      });
+      expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+        split: true,
+        styleVariant: '',
+        text: secondSegment,
+        voiceId: 'voice-id',
+      });
+      expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+      // Multiple segments show the progress modal, reaching completion on the
+      // final segment.
+      expect(mockToastFn.loading).toHaveBeenCalled();
+      expect(mockToastFn.dismiss).toHaveBeenCalled();
+    },
+  );
 
   it('blocks split generation when the text creates more than 20 segments', async () => {
     const user = userEvent.setup();
@@ -1635,6 +1641,56 @@ describe('AudioGenerator', () => {
 
   const LONG_TEXT = 'a'.repeat(301);
   const SHORT_TEXT = 'a'.repeat(10);
+
+  describe.each(['JSON', 'SSE'])('%s credit refresh', (transport) => {
+    it.each([
+      { cached: true, refreshCount: 0 },
+      { cached: false, refreshCount: 1 },
+      { cached: undefined, refreshCount: 1 },
+    ])(
+      'refreshes $refreshCount times when cached=$cached',
+      async ({ cached, refreshCount }) => {
+        streamingOverride.enabled = transport === 'SSE';
+        const user = userEvent.setup();
+        const payload = {
+          cached,
+          creditsRemaining: 1000,
+          creditsUsed: 0,
+          url: R2_AUDIO_URL,
+        };
+        const fetchMock = vi
+          .fn()
+          .mockResolvedValue(
+            transport === 'SSE'
+              ? makeSseStreamResponse([
+                  `event: done\ndata: ${JSON.stringify(payload)}\n\n`,
+                ])
+              : { json: async () => payload, ok: true },
+          );
+        vi.stubGlobal('fetch', fetchMock);
+        renderAudioGenerator({
+          selectedVoice: createVoice({ model: 'gpro31', name: 'kore' }),
+        });
+        fireEvent.change(
+          await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+          { target: { value: LONG_TEXT } },
+        );
+        await user.click(screen.getByTestId('generate-button'));
+
+        await waitFor(() => {
+          expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
+        });
+        expect(getFetchRequestBody(fetchMock, 0).stream).toBe(
+          transport === 'SSE' ? true : undefined,
+        );
+        expect(invalidateQueries).toHaveBeenCalledTimes(refreshCount);
+        expect(screen.getByTestId('audio-player')).toHaveAttribute(
+          'data-url',
+          R2_AUDIO_URL,
+        );
+      },
+    );
+  });
 
   function setupAudioContextMock() {
     const mockStart = vi.fn();
