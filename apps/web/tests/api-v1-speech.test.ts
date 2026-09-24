@@ -168,7 +168,7 @@ describe('/api/v1/speech', () => {
     );
   });
 
-  it('returns 400 when voice model does not match requested model', async () => {
+  it('returns 404 when the voice does not exist for the requested model', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       body: JSON.stringify({
         input: 'Hello world',
@@ -185,8 +185,12 @@ describe('/api/v1/speech', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(json.error.code).toBe('model_not_found');
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('voice_not_found');
+    expect(json.error.param).toBe('voice');
+    expect(json.error.message).toBe(
+      'Voice "tara" was not found for model "gpro"',
+    );
   });
 
   it('returns 402 when credits are insufficient', async () => {
@@ -789,8 +793,8 @@ describe('/api/v1/speech', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(json.error.code).toBe('model_not_found');
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('voice_not_found');
   });
 
   it('returns provider quota errors from Gemini without capturing exceptions', async () => {

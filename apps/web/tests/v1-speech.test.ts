@@ -218,15 +218,15 @@ describe('V1 Speech API Route', () => {
       expect(json.error.param).toBe('model');
     });
 
-    it('should return 400 when voice model does not match requested model', async () => {
+    it('should return 404 when the voice does not exist for the requested model', async () => {
       // eve is a grok voice, but requesting orpheus model
       const response = await POST(
         speechRequest({ input: 'Hello', model: 'orpheus', voice: 'eve' }),
       );
       const json = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(json.error.code).toBe('model_not_found');
+      expect(response.status).toBe(404);
+      expect(json.error.code).toBe('voice_not_found');
     });
 
     it('should return 400 for unsupported response_format', async () => {

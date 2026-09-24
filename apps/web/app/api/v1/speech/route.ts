@@ -19,7 +19,6 @@ import { createLogger } from '@/lib/api/logger';
 import {
   getDefaultFormat,
   isFormatSupported,
-  isModelCompatibleWithVoice,
   resolveDbModelIds,
   resolveExternalModelId,
 } from '@/lib/api/model';
@@ -397,7 +396,7 @@ export async function POST(request: Request) {
           code: 'voice_not_found',
           message: requestedVoiceId
             ? `Voice ID "${requestedVoiceId}" was not found`
-            : `Voice "${requestedVoice}" was not found`,
+            : `Voice "${requestedVoice}" was not found for model "${model}"`,
           param: requestedVoiceId ? 'voiceId' : 'voice',
           type: 'not_found_error',
         }),
@@ -442,26 +441,6 @@ export async function POST(request: Request) {
             text: input,
           })
         : input;
-
-    if (!isModelCompatibleWithVoice(model, voiceObj.model)) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'model_not_found',
-        model,
-        status: 400,
-        userId,
-        voice,
-      });
-      return respond(
-        createApiError({
-          code: 'model_not_found',
-          message: `Voice "${voice}" is not available for model "${model}"`,
-          param: 'model',
-          type: 'invalid_request_error',
-        }),
-        { status: 400 },
-      );
-    }
 
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
