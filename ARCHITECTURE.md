@@ -308,7 +308,10 @@ session when the batch settles. Analysis is asynchronous and best-effort.
   cloning, audio processing, and live calls.
 - `api_keys` stores HMAC hashes, display prefixes, scopes, expiry, and last-use
   timestamps.
-- `call_sessions` stores call duration, billing, transcript, model, and status.
+- `call_sessions` stores call duration, billing, transcript, model, status,
+  end reason, and the character/scene the call ran.
+- `call_turns` stores per-response latency telemetry (time to first audio,
+  response duration, barge-ins), written in one batch when a call ends.
 - `call_session_analysis` stores one structured transcript analysis per call;
   `call_session_analytics` stores aggregate analysis runs;
   `call_analysis_queue` tracks pending and in-flight xAI batch analyses.
