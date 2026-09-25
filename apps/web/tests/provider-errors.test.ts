@@ -6,10 +6,14 @@ import {
 } from '@/lib/errors/provider-unavailable-message';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import {
+  CONTENT_REFUSAL_STATUS_CODE,
   formatProviderDisplayName,
   getProviderUnavailableDetails,
+  isContentRefusalText,
+  isProviderContentRefusal,
   isProviderDisplayName,
   isProviderId,
+  isTransientProviderFailure,
 } from '@/lib/provider-errors';
 import messages from '@/messages/en.json';
 
@@ -46,6 +50,90 @@ describe('provider metadata', () => {
       expect(isProviderId(provider)).toBe(false);
       expect(formatProviderDisplayName(provider)).toBeNull();
       expect(isProviderDisplayName(provider)).toBe(false);
+    },
+  );
+});
+
+describe('isProviderContentRefusal', () => {
+  const refusalBody = JSON.stringify({
+    code: 'permission-denied',
+    error: "I can't help with that request.",
+  });
+
+  function apiCallError(overrides: Record<string, unknown>) {
+    return Object.assign(
+      new Error("permission-denied: I can't help with that request."),
+      { name: 'AI_APICallError', ...overrides },
+    );
+  }
+
+  it('matches the recorded AI_APICallError shape with responseBody and 403', () => {
+    const error = apiCallError({
+      isRetryable: false,
+      responseBody: refusalBody,
+      statusCode: CONTENT_REFUSAL_STATUS_CODE,
+    });
+    expect(isProviderContentRefusal(error)).toBe(true);
+    // A refusal is disjoint from a transient failure.
+    expect(isTransientProviderFailure(error)).toBe(false);
+  });
+
+  it('matches a 403 whose message carries the markers but has no responseBody', () => {
+    expect(
+      isProviderContentRefusal(
+        apiCallError({ statusCode: CONTENT_REFUSAL_STATUS_CODE }),
+      ),
+    ).toBe(true);
+  });
+
+  it('rejects a 403 without the refusal markers (e.g. a bad API key)', () => {
+    expect(
+      isProviderContentRefusal(
+        Object.assign(new Error('Invalid API key'), {
+          responseBody: JSON.stringify({ code: 'invalid_request' }),
+          statusCode: CONTENT_REFUSAL_STATUS_CODE,
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it.each([500, 429])(
+    'rejects status %s even with the refusal markers',
+    (statusCode) => {
+      const error = apiCallError({ responseBody: refusalBody, statusCode });
+      expect(isProviderContentRefusal(error)).toBe(false);
+    },
+  );
+
+  it('rejects a plain Error carrying the markers but no status', () => {
+    expect(
+      isProviderContentRefusal(
+        new Error("permission-denied: I can't help with that request."),
+      ),
+    ).toBe(false);
+  });
+
+  it.each([null, undefined, "permission-denied: can't help with that request"])(
+    'rejects the non-error value %s',
+    (value) => {
+      expect(isProviderContentRefusal(value)).toBe(false);
+    },
+  );
+});
+
+describe('isContentRefusalText', () => {
+  it.each([
+    "permission-denied: I can't help with that request.",
+    'I cannot help with that request.',
+    '{"code":"permission-denied","error":"I can\'t help with that request."}',
+  ])('matches the refusal text %s', (text) => {
+    expect(isContentRefusalText(text)).toBe(true);
+  });
+
+  it.each(['rate limited', 'parse failed: bad json', null, undefined, 42])(
+    'does not match the normal value %s',
+    (value) => {
+      expect(isContentRefusalText(value)).toBe(false);
     },
   );
 });

@@ -68,6 +68,7 @@ describe('POST /api/call-sessions/analyze', () => {
     vi.stubEnv('CALL_SUMMARY_SECRET', SECRET);
     vi.stubEnv('CALL_ANALYSIS_REALTIME', '');
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     mocks.maybeSingle.mockResolvedValue({ data: eligibleSession, error: null });
     mocks.hasCallSessionAnalysis.mockResolvedValue(false);
     mocks.enqueueCallAnalysis.mockResolvedValue(undefined);
@@ -153,6 +154,41 @@ describe('POST /api/call-sessions/analyze', () => {
       expect.anything(),
       eligibleSession,
       analysis,
+    );
+  });
+
+  it('skips terminally when the provider declines the transcript inline', async () => {
+    vi.stubEnv('CALL_ANALYSIS_REALTIME', 'true');
+    const refusal = Object.assign(
+      new Error("permission-denied: I can't help with that request."),
+      {
+        isRetryable: false,
+        name: 'AI_APICallError',
+        responseBody: JSON.stringify({
+          code: 'permission-denied',
+          error: "I can't help with that request.",
+        }),
+        statusCode: 403,
+      },
+    );
+    mocks.analyzeTranscript.mockRejectedValueOnce(refusal);
+
+    const res = await POST(request({ id: 'session-1' }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      reason: 'provider_refused',
+      skipped: true,
+    });
+    expect(mocks.upsertCallSessionAnalysis).not.toHaveBeenCalled();
+    expect(mocks.captureException).not.toHaveBeenCalled();
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      'Call analysis declined by provider',
+      expect.objectContaining({
+        extra: { callSessionId: 'session-1' },
+        fingerprint: ['call-analysis-provider-refusal'],
+        level: 'warning',
+      }),
     );
   });
 

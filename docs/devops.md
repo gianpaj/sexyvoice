@@ -737,6 +737,18 @@ Flow:
    (one unreadable batch id is reported to Sentry and skipped, not fatal), and
    a batch that has not settled after 48 hours is abandoned: its rows return
    to `pending` under the same attempt limit.
+5. A request xAI declines on content grounds (HTTP 403
+   `permission-denied` / `I can't help with that request.`) is **terminal**,
+   not a retryable failure: it is recorded straight to `failed` with the
+   provider's message in `last_error`, it is never returned to `pending` (a
+   resubmission cannot succeed and would be billed again), and it is **not**
+   reported as a parked failure asking for the backfill script. Instead the run
+   reports it once as `Call analysis sessions declined by the provider`
+   (Sentry fingerprint `call-analysis-provider-refusal`, `level: warning`) and
+   the drain response carries `refused: <count>`. On the
+   `CALL_ANALYSIS_REALTIME` bypass the same refusal answers `200
+{ reason: 'provider_refused', skipped: true }` and logs the warning instead
+   of capturing an exception.
 
 Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
 the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis

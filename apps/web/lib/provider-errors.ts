@@ -101,3 +101,52 @@ export function isTransientProviderFailure(error: unknown): boolean {
     )
   );
 }
+
+/**
+ * HTTP status a provider uses when it declines the *content* of a request on
+ * policy grounds (as opposed to auth, quota or an outage). xAI returns 403 with
+ * `{"code":"permission-denied","error":"I can't help with that request."}`.
+ */
+export const CONTENT_REFUSAL_STATUS_CODE = 403;
+
+/**
+ * Markers that identify a deterministic content-policy refusal in a provider's
+ * error text or response body. A refusal is terminal: resubmitting the same
+ * transcript can only be declined again (and billed again).
+ */
+export const CONTENT_REFUSAL_PATTERN =
+  /permission-denied|can(?:'t|not) help with that request/i;
+
+function getProviderResponseBody(error: unknown): string | null {
+  if (error && typeof error === 'object') {
+    const responseBody = (error as Record<string, unknown>).responseBody;
+    if (typeof responseBody === 'string' && responseBody) {
+      return responseBody;
+    }
+  }
+  return null;
+}
+
+/**
+ * True when a raw provider error *text* (the batch path only has xAI's per-
+ * request message) carries a content-refusal marker. A normal error message
+ * never matches.
+ */
+export function isContentRefusalText(text: unknown): boolean {
+  return typeof text === 'string' && CONTENT_REFUSAL_PATTERN.test(text);
+}
+
+/**
+ * True only for a provider content refusal: the status is 403 *and* the error
+ * carries a refusal marker (preferring `responseBody` over `message`). A 403
+ * without the markers (e.g. a bad API key) or a 5xx/429 with them stays
+ * `false`, so a refusal never overlaps `isTransientProviderFailure`.
+ */
+export function isProviderContentRefusal(error: unknown): boolean {
+  if (getProviderStatusCode(error) !== CONTENT_REFUSAL_STATUS_CODE) {
+    return false;
+  }
+  const responseBody = getProviderResponseBody(error);
+  const text = responseBody ?? getProviderErrorMessage(error);
+  return CONTENT_REFUSAL_PATTERN.test(text);
+}
