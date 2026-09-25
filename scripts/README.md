@@ -286,17 +286,23 @@ pnpm backfill-free-call
 Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
 to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
 AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
-entry points that share a single engine (`analyze-call-sessions.mjs`); the
-backfill script imports its prompt, transcript extraction, analysis schema, and
-persistence, so all paths write identical rows.
+entry points that share a single engine (`analyze-call-sessions.mjs`). The
+prompt, analysis schema, transcript extraction and xAI Batch API client are
+imported from the web app (`apps/web/lib/ai/analyze-call.ts`,
+`apps/web/lib/ai/call-analysis-batch.ts`, `apps/web/lib/ai/xai-batch.ts`) via
+Node's native type stripping, so the scripts, the webhook and its batch drain
+cron all write identical rows.
 
 - **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
   last N hours.
 - **`backfill-call-analysis`** - one-off catch-up over **all** completed,
   unanalyzed calls (paginated), with model and duration filters.
 
-A third path (not a script) analyzes a single call in real time: the
-`POST /api/call-sessions/analyze` webhook fired when a call completes.
+The live path (not a script) is asynchronous: the `POST /api/call-sessions/analyze`
+webhook fired when a call completes only enqueues the session, and the
+`/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
+Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
+`backfill-call-analysis` to catch up sessions the queue parked as `failed`.
 
 Only successful analyses are persisted; failures leave no row so they stay
 retryable. Calls shorter than 120s and sessions that already have an analysis row
@@ -328,7 +334,8 @@ Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advance
 requests are uploaded as a JSONL batch, then the script block-polls until the
 batch completes before writing results. It is discounted and has no per-request
 rate limits, at the cost of async latency — best suited to the large backfill.
-Use `--realtime` to fall back to synchronous per-call generation instead.
+Use `--realtime` to fall back to synchronous per-call generation (the AI SDK
+`generateObject` path) instead.
 
 ### CLI Options
 
