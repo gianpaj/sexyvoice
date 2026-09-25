@@ -77,7 +77,7 @@ export function CustomTopup() {
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-6" data-testid="custom-topup">
       <CardHeader className="px-0">
         <CardTitle className="text-xl">{t('custom.title')}</CardTitle>
         <CardDescription>
