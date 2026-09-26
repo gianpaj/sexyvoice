@@ -55,6 +55,33 @@ describe('splitLongTextIntoSegments', () => {
     expectSegmentsWithinLimit(segments);
   });
 
+  it.each(['<short pause>', '[speaking slowly]'])(
+    'never cuts inside the inline tag %s',
+    (tag) => {
+      // Place the tag so its inner space is the last whitespace before the limit.
+      const prefix = 'word '.repeat(98);
+      const filler = 'x'.repeat(
+        SPLIT_SEGMENT_MAX_LENGTH - prefix.length - tag.indexOf(' '),
+      );
+      const text = `${prefix}${filler}${tag} tail.`;
+
+      const segments = splitLongTextIntoSegments(text);
+
+      expect(segments).toEqual([prefix.trim(), `${filler}${tag} tail.`]);
+      expectSegmentsWithinLimit(segments);
+    },
+  );
+
+  it('cuts before a tag that crosses the limit when no other whitespace exists', () => {
+    const head = 'a'.repeat(SPLIT_SEGMENT_MAX_LENGTH - 5);
+    const text = `${head}<long pause>${'b'.repeat(10)}.`;
+
+    expect(splitLongTextIntoSegments(text)).toEqual([
+      head,
+      `<long pause>${'b'.repeat(10)}.`,
+    ]);
+  });
+
   it('normalizes blank lines and surrounding whitespace while preserving sentence content', () => {
     const segments = splitLongTextIntoSegments(`
       First line with spaces.  
