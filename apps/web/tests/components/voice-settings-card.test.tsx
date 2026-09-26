@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { getVoiceGroups } from '@/components/voice-groups';
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { getEmotionTags } from '@/lib/ai';
+import { getFeaturedVoice } from '@/lib/voices';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -364,6 +365,38 @@ describe('VoiceSettingsCard', () => {
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
     expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
       baseDict.voiceSelector.multilingualGroupLabel,
+    );
+  });
+});
+
+describe('Featured voices shared across Gemini models', () => {
+  const featured = (model: string) =>
+    createVoice({
+      id: `achernar-${model}`,
+      language: 'multiple',
+      model,
+      name: 'achernar',
+      sort_order: 0,
+    });
+
+  it('lists the Gemini 3.8 voice before the same-named 3.1 voice', () => {
+    const [featuredGroup] = getVoiceGroups(
+      [featured('gpro31'), featured('gpro38')],
+      {
+        featuredGroupLabel: baseDict.voiceSelector.featuredGroupLabel,
+        geminiGroupLabel: baseDict.voiceSelector.multilingualGroupLabel,
+      },
+    );
+
+    expect(featuredGroup.voices.map((voice) => voice.id)).toEqual([
+      'achernar-gpro38',
+      'achernar-gpro31',
+    ]);
+  });
+
+  it('selects the Gemini 3.8 voice by default regardless of query order', () => {
+    expect(getFeaturedVoice([featured('gpro31'), featured('gpro38')])?.id).toBe(
+      'achernar-gpro38',
     );
   });
 });

@@ -1,4 +1,4 @@
-import { isFeaturedVoice } from '@/lib/voices';
+import { compareVoices, isFeaturedVoice } from '@/lib/voices';
 
 export interface VoiceGroup {
   label: string;
@@ -25,11 +25,7 @@ function isGrokVoice(voice: Tables<'voices'>) {
 }
 
 function sortVoices(voices: Tables<'voices'>[]) {
-  return [...voices].sort(
-    (voiceA, voiceB) =>
-      voiceA.sort_order - voiceB.sort_order ||
-      voiceA.name.localeCompare(voiceB.name),
-  );
+  return [...voices].sort(compareVoices);
 }
 
 function getGroupLabel(

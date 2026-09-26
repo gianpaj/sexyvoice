@@ -6,10 +6,27 @@ export function isFeaturedVoice(
   return voice.sort_order === FEATURED_VOICE_SORT_ORDER;
 }
 
+type SortableVoice = Pick<Tables<'voices'>, 'model' | 'name' | 'sort_order'>;
+
+/**
+ * Shared voice order: featured first, then by name. The same Gemini identity
+ * (`achernar`, `kore`, ...) exists under several models at the same
+ * `sort_order`, so ties follow `VOICE_MODELS`, which puts the newest Gemini
+ * first. Without the tie-break the database decides which model wins.
+ */
+export function compareVoices(a: SortableVoice, b: SortableVoice): number {
+  return (
+    a.sort_order - b.sort_order ||
+    a.name.localeCompare(b.name) ||
+    VOICE_MODELS.indexOf(getDisplayModel(a.model)) -
+      VOICE_MODELS.indexOf(getDisplayModel(b.model))
+  );
+}
+
 export function getFeaturedVoice(
   voices: Tables<'voices'>[],
 ): Tables<'voices'> | undefined {
-  return voices.find(isFeaturedVoice);
+  return voices.filter(isFeaturedVoice).sort(compareVoices)[0];
 }
 
 // ── Voice selector types & constants ─────────────────────────────────────────
