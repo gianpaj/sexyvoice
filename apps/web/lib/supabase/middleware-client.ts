@@ -1,11 +1,13 @@
 import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { instrumentSupabase } from './tracing';
+
 export function createMiddlewareClient(
   request: NextRequest,
   supabaseResponse: NextResponse,
 ) {
-  return createServerClient<Database>(
+  const client = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
@@ -54,6 +56,7 @@ export function createMiddlewareClient(
       },
     },
   );
+  return instrumentSupabase(client);
 }
 
 export function copyAuthResponse(source: NextResponse, target: NextResponse) {

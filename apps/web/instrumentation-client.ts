@@ -9,12 +9,21 @@ import {
 
 import { initPostHog } from '@/lib/posthog-browser';
 import { shouldDropClientSentryEvent } from '@/lib/sentry/client-filters';
+import {
+  sanitizeSupabaseBreadcrumb,
+  sanitizeSupabaseEvent,
+  sanitizeSupabaseSpan,
+  sanitizeSupabaseTransaction,
+} from '@/lib/sentry/supabase-privacy';
+import { getBrowserTracePropagationTargets } from '@/lib/sentry/trace-propagation';
 
 init({
   // Only capture errors from sexyvoice.ai domain
   allowUrls: [/https?:\/\/(www\.)?sexyvoice\.ai/],
 
-  beforeSend(event) {
+  beforeBreadcrumb: sanitizeSupabaseBreadcrumb,
+
+  beforeSend(event, hint) {
     const eventUrl = event.request?.url ?? '';
 
     // Additional filtering for app:// protocol (browser extensions)
@@ -26,8 +35,10 @@ init({
       return null;
     }
 
-    return event;
+    return sanitizeSupabaseEvent(event, hint);
   },
+  beforeSendSpan: sanitizeSupabaseSpan,
+  beforeSendTransaction: sanitizeSupabaseTransaction,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
@@ -48,12 +59,14 @@ init({
   // Replay is added lazily (see below) so its bundle stays off the first-paint
   // critical path. Keep this empty here.
   integrations: [],
+  propagateTraceparent: true,
 
   // If the entire session is not sampled, use the below sample rate to sample
   // sessions when an error occurs.
   replaysOnErrorSampleRate: 0.1,
 
   replaysSessionSampleRate: 0,
+  tracePropagationTargets: getBrowserTracePropagationTargets(),
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 0.1,

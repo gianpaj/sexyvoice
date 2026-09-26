@@ -528,6 +528,53 @@ pnpm run generate-supabase-types
 - Client errors are tunneled through `/monitoring` to bypass ad-blockers
 - Source maps are uploaded only in production (`VERCEL_ENV=production`)
 
+### Supabase tracing
+
+The web app uses Sentry's built-in Supabase instrumentation with
+`sendOperationData: false`. The browser, server, admin, and middleware factories
+call `instrumentSupabase` from `apps/web/lib/supabase/tracing.ts`. Each new client
+needs instrumentation because auth wrapping is per instance. Trace sampling is
+10% in all three Sentry configs; server and edge reporting require production
+`NODE_ENV`.
+
+Sentry owns outgoing trace propagation. Node and browser configs enable
+`propagateTraceparent: true`; the browser allowlist includes only same-origin
+requests and the configured `NEXT_PUBLIC_SUPABASE_URL` origin. Do not also enable
+Supabase's `tracePropagation` option or import its `/tracing` runtime: two
+propagation layers can attach different parent span IDs to the same request.
+Server-side Sentry propagation retains its default outbound targets.
+
+Keep the automatic HTTP spans alongside database spans. They provide coverage
+for Auth, Storage, HEAD requests, and RPCs. Sentry's Supabase instrumentation does
+not reliably provide RPC-specific database spans; RPC HTTP spans remain useful.
+The shared trace ID can correlate requests with Supabase API Gateway logs. An
+unsampled request can still carry a trace ID, without a stored Sentry trace.
+Sentry can send baggage on unsampled requests.
+
+`apps/web/lib/sentry/supabase-privacy.ts` sanitizes Supabase integration spans,
+breadcrumbs, automatic errors, and matching HTTP telemetry in every runtime:
+
+- Query filters and mutation bodies are excluded. HTTP URLs lose credentials,
+  query strings, and fragments.
+- Automatic Supabase errors retain trace correlation and approved error codes,
+  but discard free-form messages, stacks, and extra error contexts.
+- Table/schema names, URL paths, timings, and span status remain visible. Do not
+  put secrets in object paths or identifiers.
+- Manually captured exceptions, console logs, Replay, attachments, and arbitrary
+  scope data are outside this policy. It is not a general telemetry scrubber.
+
+The app has no Edge routes; Next.js 16 Proxy runs on Node. Before introducing an
+Edge route, revisit W3C propagation: Sentry's WinterCG fetch integration through
+10.75.0 does not honor `propagateTraceparent`. The edge config still includes
+privacy hooks and supports Supabase spans, but does not promise W3C headers.
+
+For deployment verification, inspect a normal dashboard Supabase request in the
+browser network panel for `traceparent`, `sentry-trace`, and `baggage`. Confirm
+that its trace ID matches a sampled Sentry trace and Supabase API Gateway logs.
+If browser calls to Supabase Edge Functions are added, their CORS allowlist must
+include `traceparent`, `tracestate`, `baggage`, and `sentry-trace`. No log drain is
+configured by this integration.
+
 ### CLI setup
 
 `sentry-cli` authenticates via `~/.sentryclirc` (contains an auth token).
