@@ -59,6 +59,20 @@ Spanish names. Selectors, preview labels, the generation progress toast, and the
 local listening page use these labels. The database name remains the provider ID.
 Changing the database name was rejected because generation and API lookups use it.
 
+## Featured voices and pricing
+
+All 28 rows use `sort_order = 0`, so they join the Featured group once public.
+The 11 public `gpro31` rows are featured too, and their names repeat in the 3.8
+batch. `compareVoices` in `apps/web/lib/voices.ts` breaks those ties by
+`VOICE_MODELS`, which lists Gemini 3.8 first. The 3.8 voice therefore sorts
+first and becomes the default selection. Without the tie-break, database row
+order decided both. A read-only query on 2026-09-26 showed the current featured
+set: the 11 `gpro31` voices and one Grok voice.
+
+Free users pay the base Gemini rate for 3.8 voices, with no surcharge, including
+after Google's promotional rate ends on 2027-01-01. The user chose this.
+`GEMINI_31_FREE_CREDIT_MULTIPLIER` applies to Gemini 3.1 only.
+
 ## Verification and rollout
 
 Model integration: 313 tests passed, 19 existing skips. Display-name and generation
