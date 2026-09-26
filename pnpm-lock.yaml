@@ -263,8 +263,8 @@ importers:
         specifier: ^3.8.1
         version: 3.8.1
       '@iconify-json/logos':
-        specifier: 1.2.11
-        version: 1.2.11
+        specifier: 1.2.14
+        version: 1.2.14
       '@iconify/tailwind':
         specifier: ^1.2.0
         version: 1.2.0
@@ -1669,8 +1669,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify-json/logos@1.2.11':
-    resolution: {integrity: sha512-fOo4pGEatuyuCFNL+cwquYMa2Im0oJHRHV7lt/Qqs5Ode/lPImHCQcfTtPzZj7qYMPb/h8YHN3TG54uEowrjNQ==}
+  '@iconify-json/logos@1.2.14':
+    resolution: {integrity: sha512-O36DicXkgAMT6NAsH7MTWlOql8NktHz9fBCItTjz6L/9gyRXw4vQj6qTeVgww5UZWiVugUV1MhVFA/g9HWIkBw==}
 
   '@iconify/tailwind4@1.2.3':
     resolution: {integrity: sha512-z8SKiMHRASJKF/IY//87MF88lcB7ulxh8vlhQXXLWsBkNtOh6ese9R41MyGpQeqXdRvQVt+/fX2glQtHFjQ+MA==}
@@ -11346,7 +11346,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify-json/logos@1.2.11':
+  '@iconify-json/logos@1.2.14':
     dependencies:
       '@iconify/types': 2.0.0
 
