@@ -126,6 +126,15 @@ describe('calculateCreditsFromTokens', () => {
     ).toBe(calculateCreditsFromTokens(100));
   });
 
+  test.each(['gpro38', 'gemini-3.8-flash-tts'])(
+    'should not surcharge free users for Gemini 3.8 (%s)',
+    (model) => {
+      expect(
+        calculateCreditsFromTokens(100, { model, userHasPaid: false }),
+      ).toBe(calculateCreditsFromTokens(100));
+    },
+  );
+
   test('should double credits when billed against the resolved 3.1 model id', () => {
     expect(
       calculateCreditsFromTokens(100, {
