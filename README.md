@@ -24,7 +24,7 @@
 ## 🌟 About
 
 - Generate AI voices in 24+ supported languages and locales
-- Major multilingual voice families from Google Gemini (`gpro`) and xAI Grok (`xai`)
+- 63 public voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`)
 - Voice cloning support across 20+ supported languages
 
 <!-- - Public library of generated voices ranked by usage and votes -->
@@ -41,7 +41,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
-- **Voice Selection System**: Choose from featured Gemini voices like `achernar`, `aoede`, `kore`, `puck`, `sulafat`, and `zephyr`, plus Grok voices like `ara`, `eve`, `leo`, `rex`, and `sal`
+- **Voice Selection System**: Choose from 63 public voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 
@@ -416,23 +416,40 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 
 ### Supported Voice Families and Languages
 
-#### Google Gemini (`gpro`) multilingual voices
+The public catalog has 63 voices: 57 text-to-speech voices and 6 voices for AI
+voice calls. Public voices live in the `voices` table, and `GET /api/v1/voices`
+returns the text-to-speech subset.
 
-Primary Gemini voices currently exposed in the app:
+| Family               | Model alias | Feature | Public voices | Languages                              |
+| -------------------- | ----------- | ------- | ------------- | -------------------------------------- |
+| Gemini 3.8 Flash TTS | `gpro38`    | `tts`   | 28            | Multilingual, plus `es-ES` and `es-MX` |
+| Gemini 3.1 Flash TTS | `gpro31`    | `tts`   | 11            | Multilingual (70+ languages)           |
+| Gemini 2.5 Pro TTS   | `gpro`      | `tts`   | 11            | Multilingual (24 languages)            |
+| xAI Grok             | `xai`       | `tts`   | 7             | Multilingual with automatic detection  |
+| xAI Grok             | `xai`       | `call`  | 6             | Multilingual                           |
 
-- `achernar`
-- `aoede`
-- `autonoe`
-- `callirrhoe`
-- `despina`
-- `erinome`
-- `gacrux`
-- `kore`
-- `puck`
-- `sulafat`
-- `zephyr`
+#### Google Gemini multilingual voices (`gpro`, `gpro31`, `gpro38`)
 
-These multilingual Gemini voices support style prompting and the following language/locale set:
+The same eleven Gemini voice identities exist under each Gemini model alias, so
+one name maps to three catalog rows. Select by `voiceId`, or pass the `model`
+alias together with the `voice` name.
+
+| Voice        | Character  |
+| ------------ | ---------- |
+| `achernar`   | Soft       |
+| `aoede`      | Breezy     |
+| `autonoe`    | Bright     |
+| `callirrhoe` | Easy-going |
+| `despina`    | Smooth     |
+| `erinome`    | Clear      |
+| `gacrux`     | Mature     |
+| `kore`       | Firm       |
+| `puck`       | Upbeat     |
+| `sulafat`    | Warm       |
+| `zephyr`     | Bright     |
+
+Gemini 2.5 Pro (`gpro`) voices support style prompting and the following
+language/locale set:
 
 | Language               | BCP-47 Code              | Language             | BCP-47 Code |
 | ---------------------- | ------------------------ | -------------------- | ----------- |
@@ -449,7 +466,7 @@ These multilingual Gemini voices support style prompting and the following langu
 | English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
 | Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
 
-#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (model: `gpro31`)
+#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (`gpro31`)
 
 Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`.
 Voices returned as `gpro` stay on Gemini 2.5 Pro.
@@ -472,15 +489,56 @@ Plus English, Spanish, French, Portuguese, and Arabic regional variants.
 
 Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
 
+#### Gemini 3.8 Flash TTS (`gpro38`)
+
+Use `gpro38` only with voices returned by `/api/v1/voices` as
+`model: "gpro38"`. Gemini 3.8 rows cover the eleven multilingual identities
+above plus 17 Spanish role voices. Each Spanish voice description records its
+role, accent, and pitch.
+
+Castilian Spanish (`es-ES`):
+
+| Voice                | Role                  | Type   | Pitch  |
+| -------------------- | --------------------- | ------ | ------ |
+| `es-es-advisor-8`    | Authoritative Advisor | Female | Low    |
+| `es-es-assistant-3`  | Digital Assistant     | Male   | Low    |
+| `es-es-commercial-7` | Commercial Voiceover  | Female | Medium |
+| `es-es-concierge-3`  | Concierge             | Female | Medium |
+| `es-es-csagent-6`    | Call Center Agent     | Female | Low    |
+| `es-es-podcaster-7`  | Podcaster             | Male   | Low    |
+| `es-es-techagent-5`  | Tech Advisor          | Female | Medium |
+| `es-es-training-12`  | Training Voiceover    | Female | High   |
+| `es-es-tutor-12`     | Tutor                 | Female | Medium |
+
+Mexican Spanish (`es-MX`, provider locale `es-419`):
+
+| Voice                 | Role                  | Type    | Pitch  |
+| --------------------- | --------------------- | ------- | ------ |
+| `es-419-advisor-4`    | Authoritative Advisor | Female  | High   |
+| `es-419-assistant-9`  | Digital Assistant     | Male    | Medium |
+| `es-419-commercial-1` | Commercial Voiceover  | Male    | Low    |
+| `es-419-concierge-5`  | Concierge             | Female  | High   |
+| `es-419-csagent-8`    | Call Center Agent     | Neutral | Medium |
+| `es-419-podcaster-1`  | Podcaster             | Male    | Low    |
+| `es-419-training-8`   | Training Voiceover    | Female  | Medium |
+| `es-419-tutor-3`      | Tutor                 | Female  | Low    |
+
 #### xAI Grok (`xai`) expressive voices
 
-Primary Grok voices currently exposed in the app:
+Grok text-to-speech voices:
 
-- `ara`
-- `eve`
-- `leo`
-- `rex`
-- `sal`
+| Voice    | Character                            |
+| -------- | ------------------------------------ |
+| `ara`    | Warm and friendly                    |
+| `carina` | Breathy and enthusiastic             |
+| `eve`    | Engaging and upbeat                  |
+| `leo`    | Authoritative and strong             |
+| `rex`    | Confident and clear                  |
+| `sal`    | Versatile voice                      |
+| `zagan`  | Powerful, dramatic, and unmistakable |
+
+AI voice calls use the Grok call voices `Ara`, `Carina`, `Eve`, `Leo`, `Rex`,
+and `Sal`.
 
 These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
 
@@ -496,15 +554,6 @@ These voices support expressive inline tags like `[laugh]` and wrapping tags lik
 | German                        | `de`    | Turkish               | `tr`    |
 | Hindi                         | `hi`    | Vietnamese            | `vi`    |
 | Indonesian                    | `id`    | Italian               | `it`    |
-
-#### Additional English voices
-
-We also expose English-focused Orpheus voices:
-
-- `dan` (`en-GB`)
-- `emma` (`en-US`)
-- `josh` (`en-US`)
-- `tara` (`en-US`)
 
 ---
 

@@ -27,37 +27,22 @@ Generate lets you turn any text into lifelike audio using AI voices. Choose from
 
 ## Voice Types
 
+The catalog has 57 public text-to-speech voices across four voice families.
+
 | Voice Type | Character Limit | Output Formats | Special Features |
 |------------|-----------------|----------------|------------------|
-| **Gpro voices** | 1,000 characters | WAV | Add style instructions for tone/emotion |
+| **Gemini 3.8 voices** | 1,000 characters | WAV | Style instructions plus inline vocal tags like `<sigh>` and `<short pause>`; includes Spanish voices for Spain and Mexico |
+| **Gemini 3.1 voices** | 1,000 characters | WAV | Style instructions plus inline expression tags like `[whispering]` and `[pause]` |
+| **Gemini 2.5 voices** | 1,000 characters | WAV | Style instructions for tone/emotion |
 | **Grok voices** | 1,000 characters | MP3, WAV | Multi-language support with expressive tags |
-| **Standard voices** | 500 characters | MP3 | Use emotion tags in your text |
 
 <Callout>
-Gpro voices show a text box where you can describe how you want the voice to sound (e.g., "warm and friendly" or "serious and professional").
+Gemini voices show a text box where you can describe how you want the voice to sound (e.g., "warm and friendly" or "serious and professional"). The same voice name, such as `kore` or `zephyr`, is available on Gemini 2.5, 3.1, and 3.8, so pick the model version you prefer.
 </Callout>
 
 <Callout>
 Grok voices support both MP3 and WAV output. They also support expressive tags like `[laugh]`, `[sigh]`, `[pause]`, and wrapper tags like `<whisper>...</whisper>`, `<soft>...</soft>` for fine-grained control over delivery.
 </Callout>
-
-## Emotion Tags (Standard voices)
-
-Standard voices support emotion tags you can insert directly into your text. Available tags vary by language.
-
-<AccordionGroup>
-  <Accordion title="English">
-    `<laugh>`, `<chuckle>`, `<sigh>`, `<cough>`, `<sniffle>`, `<groan>`, `<yawn>`, `<gasp>`
-  </Accordion>
-  <Accordion title="Spanish">
-    `<groan>`, `<chuckle>`, `<gasp>`, `<resoplido>`, `<laugh>`, `<yawn>`, `<cough>`
-  </Accordion>
-  <Accordion title="Italian">
-    `<sigh>`, `<laugh>`, `<cough>`, `<sniffle>`, `<groan>`, `<yawn>`, `<gemito>`, `<gasp>`
-  </Accordion>
-</AccordionGroup>
-
-**Example:** `Hello! <laugh> That was a good one.`
 
 ## Emotion Tags (Gemini 3.8 voices)
 
@@ -71,8 +56,7 @@ Gemini 3.8 voices accept inline vocal tags in any transcript language. Keep the 
 
 Credits are calculated based on text length and voice type:
 
-- **Gpro voices**: ~1 credit per token (based on text and audio length)
+- **Gemini voices**: ~1 credit per token (based on text and audio length)
 - **Grok voices**: 4 credits per 100 characters
-- **Standard voices**: Based on estimated audio duration
 
 You need at least **10 credits** to generate audio. Your remaining credits are shown at the top of the page.
