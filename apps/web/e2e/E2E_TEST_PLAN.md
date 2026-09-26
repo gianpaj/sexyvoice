@@ -25,7 +25,8 @@ The current suite covers the main dashboard surfaces with a mix of:
 - Playwright config lives in `apps/web/playwright.config.ts`
 - E2E tests run from `apps/web` via `pnpm run test:e2e`
 - CI builds the app first, then Playwright starts `next start`
-- local runs can reuse an already-running server on the configured Playwright port
+- local runs start `next dev` on the configured Playwright port, or reuse a
+  server already running there
 - authenticated tests reuse `.auth/user.json`, created by `e2e/auth/auth.setup.ts`
 
 ---
@@ -200,9 +201,9 @@ They contain no user IDs or prompt text. Credits and instruction config are
 synthetic test data, not captured account data or production prompts.
 
 Enable `E2E_TEST_MODE=true` on the **Next.js server**, not just the Playwright
-process. `isE2E()` disables fixtures when `VERCEL_ENV=production`. CI's
-Playwright server inherits the flag; an independently started local server
-must receive it explicitly.
+process. `isE2E()` disables fixtures when `VERCEL_ENV=production`. A server
+started by Playwright inherits the flag; an independently started server that
+Playwright reuses must receive it explicitly.
 
 Character queries run during server rendering, so browser `page.route()`
 handlers cannot intercept them. Keep fixture data in source control rather

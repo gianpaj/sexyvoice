@@ -46,7 +46,7 @@ minimumReleaseAgeExclude:
   - sharp@0.35.0
 
 catalog:
-  "@ai-sdk/react": "3.0.262"
+  "@ai-sdk/react": "3.0.292"
   "@biomejs/biome": "2.5.8"
   "@supabase/supabase-js": "2.116.0"
   "@tailwindcss/postcss": "4.2.2"
@@ -54,7 +54,7 @@ catalog:
   "@types/react": "19.2.16"
   "@types/react-dom": "19.2.3"
   "@upstash/redis": "1.37.0"
-  "ai": "6.0.259"
+  "ai": "6.0.289"
   "effective-progress": "0.12.0"
   "effect": "4.0.0-rc.111"
   "next": "16.3.4"
