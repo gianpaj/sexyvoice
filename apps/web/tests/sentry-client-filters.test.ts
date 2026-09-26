@@ -329,6 +329,22 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [],
+              },
+              type: 'NotReadableError',
+              value: 'The I/O read operation failed.',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
   });
 
   it('drops framework-only React render loop noise', () => {
@@ -441,6 +457,29 @@ describe('shouldDropClientSentryEvent', () => {
               },
               type: 'CompileError',
               value: 'Wasm SIMD unsupported',
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it('keeps NotReadableError with app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/hooks/use-media-recorder.ts',
+                    function: 'startRecording',
+                  },
+                ],
+              },
+              type: 'NotReadableError',
+              value: 'The I/O read operation failed.',
             },
           ],
         },
