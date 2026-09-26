@@ -21,7 +21,8 @@ import { VoicePicker } from '@/components/voice-picker';
 import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { capitalizeFirstLetter, cn, getTtsProvider } from '@/lib/utils';
+import { cn, getTtsProvider } from '@/lib/utils';
+import { getVoiceDisplayName } from '@/lib/voice-names';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
@@ -52,6 +53,7 @@ export function VoiceSettingsCard({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
+  const emotionTags = selectedVoice ? getEmotionTags(selectedVoice) : undefined;
   // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
   // and the style, enforced in the generator; the standalone character counter
   // below only applies to the character-bounded Gemini 2.5 style prompt.
@@ -118,8 +120,7 @@ export function VoiceSettingsCard({
               />
               <div>
                 <p className="text-muted-foreground text-sm">
-                  <b>{capitalizeFirstLetter(selectedVoice.name)}</b> sample
-                  prompt:{' '}
+                  <b>{getVoiceDisplayName(selectedVoice)}</b> sample prompt:{' '}
                   {isGrokVoice ? (
                     <span className="whitespace-break-spaces">
                       <GrokTaggedText
@@ -131,7 +132,7 @@ export function VoiceSettingsCard({
                     <i>{selectedVoice.sample_prompt}</i>
                   )}
                 </p>
-                {getEmotionTags(selectedVoice.language) && (
+                {emotionTags && (
                   <TooltipProvider>
                     <Tooltip delayDuration={100}>
                       <TooltipTrigger asChild>
@@ -149,7 +150,7 @@ export function VoiceSettingsCard({
                             {t('voiceSelector.toolTipEmotionTags')}
                           </strong>
                           <br />
-                          {getEmotionTags(selectedVoice.language)}
+                          {emotionTags}
                         </p>
                       </TooltipContent>
                     </Tooltip>

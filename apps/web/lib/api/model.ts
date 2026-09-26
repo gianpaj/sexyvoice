@@ -13,15 +13,17 @@ export function resolveExternalModelId(
   }
 }
 
-export function isModelCompatibleWithVoice(
-  requestedModel: ExternalApiModelId,
-  voiceDbModel: string,
-): boolean {
-  return resolveExternalModelId(voiceDbModel) === requestedModel;
+/** Database `voices.model` values that an external model id covers. */
+export function resolveDbModelIds(externalModel: ExternalApiModelId): string[] {
+  return Object.keys(DB_MODEL_TO_EXTERNAL_ID).filter(
+    (dbModel) => DB_MODEL_TO_EXTERNAL_ID[dbModel] === externalModel,
+  );
 }
 
 export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
-  return model === 'gpro' || model === 'gpro31' ? 'wav' : 'mp3';
+  return model === 'gpro' || model === 'gpro31' || model === 'gpro38'
+    ? 'wav'
+    : 'mp3';
 }
 
 export function isFormatSupported(

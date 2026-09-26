@@ -585,6 +585,7 @@ describe('Generate Voice API Route', () => {
       // Verify usage event was logged
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 48,
+        inputChars: 11,
         metadata: {
           duration: '12',
           model:
@@ -598,6 +599,8 @@ describe('Generate Voice API Route', () => {
           voiceId: 'voice-tara-id',
           voiceName: 'tara',
         },
+        model:
+          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
         quantity: 11, // "Hello world".length
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
@@ -769,6 +772,7 @@ describe('Generate Voice API Route', () => {
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 100,
         dollarAmount: 0.000_055,
+        inputChars: 13,
         metadata: {
           codec: 'mp3',
           duration: '12',
@@ -782,6 +786,7 @@ describe('Generate Voice API Route', () => {
           voiceId: 'voice-eve-id',
           voiceName: 'eve',
         },
+        model: 'xai',
         quantity: 13,
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
@@ -1104,18 +1109,23 @@ describe('Generate Voice API Route', () => {
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 26,
         dollarAmount: 0.000_251,
+        inputChars: 11,
         metadata: {
+          candidatesTokenCount: '12',
           duration: '12',
           model: 'gemini-2.5-pro-preview-tts',
           predictionId: null,
+          promptTokenCount: '11',
           provider: 'gemini',
           split: false,
           textLength: text.length,
           textPreview: text.slice(0, 100),
+          totalTokenCount: '23',
           userHasPaid: true,
           voiceId: 'voice-kore-id',
           voiceName: 'kore',
         },
+        model: 'gemini-2.5-pro-preview-tts',
         quantity: text.length,
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',

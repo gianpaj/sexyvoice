@@ -29,7 +29,7 @@ You can select a voice in either of two ways:
 
 ### Using `gpro` model
 
-Gemini voices (`gpro` and `gpro31`) accept an optional `temperature` (range `0`–`2`).
+Gemini voices (`gpro`, `gpro31`, and `gpro38`) accept an optional `temperature` (range `0`–`2`).
 Higher values make the delivery more varied and expressive; omit it to use the model
 default. `temperature` is ignored for non-Gemini voices.
 
@@ -46,6 +46,17 @@ curl -X POST 'https://sexyvoice.ai/api/v1/speech' \
     "temperature": 1.2
   }'
 ```
+
+### Using Gemini 3.8 Flash TTS
+
+Select a voice returned by `/api/v1/voices` with `model: "gpro38"`.
+Send spoken words in `input` and delivery instructions in `style`.
+The API sends style as speech metadata, separate from the transcript.
+Use inline tags such as `<sigh>` or `<short pause>` for brief vocal events.
+
+Gemini 3.8 returns WAV audio and reports `gemini-3.8-flash-tts` in `usage.model`.
+Requests do not fall back to Gemini 2.5 because extended voice IDs require 3.8.
+Existing voice IDs and the `gpro` and `gpro31` models keep their behavior.
 
 ### Using G31 (Gemini 3.1 Flash TTS)
 

@@ -42,6 +42,7 @@ import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getTtsProvider } from '@/lib/utils';
+import { getVoiceDisplayName } from '@/lib/voice-names';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
@@ -343,7 +344,8 @@ export function AudioGenerator({
   const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
   const showEnhanceButton =
     provider === 'replicate' ||
-    (provider === 'gemini' && selectedVoice?.model === 'gpro31');
+    (provider === 'gemini' &&
+      (selectedVoice?.model === 'gpro31' || selectedVoice?.model === 'gpro38'));
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
   // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
@@ -414,7 +416,9 @@ export function AudioGenerator({
     text,
   });
   const { showGenerationProgressToast, dismissGenerationProgressToast } =
-    useGenerationProgressToast(selectedVoice?.name);
+    useGenerationProgressToast(
+      selectedVoice ? getVoiceDisplayName(selectedVoice) : undefined,
+    );
 
   let textareaRightPadding = 'pr-16';
 

@@ -5,7 +5,6 @@ import {
   calculateGeminiTtsDollarAmount,
   calculateGrokTtsDollarAmount,
   calculateReadingTime,
-  capitalizeFirstLetter,
   cn,
   countWords,
   estimateCredits,
@@ -126,6 +125,15 @@ describe('calculateCreditsFromTokens', () => {
       calculateCreditsFromTokens(100, { model: 'gpro', userHasPaid: false }),
     ).toBe(calculateCreditsFromTokens(100));
   });
+
+  test.each(['gpro38', 'gemini-3.8-flash-tts'])(
+    'should not surcharge free users for Gemini 3.8 (%s)',
+    (model) => {
+      expect(
+        calculateCreditsFromTokens(100, { model, userHasPaid: false }),
+      ).toBe(calculateCreditsFromTokens(100));
+    },
+  );
 
   test('should double credits when billed against the resolved 3.1 model id', () => {
     expect(
@@ -280,13 +288,6 @@ describe('formatDate', () => {
     const result = formatDate('2024-01-01T15:30:00Z', { withTime: true });
     // UTC timezone: 15:30 = 3:30 PM
     expect(result).toBe('January 1, 2024 at 03:30 PM');
-  });
-});
-
-// Tests for capitalizeFirstLetter function
-describe('capitalizeFirstLetter', () => {
-  test('capitalizes the first character', () => {
-    expect(capitalizeFirstLetter('hello')).toBe('Hello');
   });
 });
 

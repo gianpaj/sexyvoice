@@ -35,7 +35,8 @@ import {
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { attemptPlayback } from '@/lib/media-playback';
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { getVoiceDisplayName } from '@/lib/voice-names';
 import {
   getDisplayModel,
   MODEL_COLORS,
@@ -225,6 +226,7 @@ export function VoicePicker({
       if (!q) return true;
       return (
         v.name.toLowerCase().includes(q) ||
+        getVoiceDisplayName(v).toLowerCase().includes(q) ||
         (v.description ?? '').toLowerCase().includes(q) ||
         displayModel.toLowerCase().includes(q) ||
         gender.toLowerCase().includes(q)
@@ -285,7 +287,7 @@ export function VoicePicker({
               </span>
               <span className="flex min-w-0 flex-col items-start">
                 <span className="truncate font-medium text-sm leading-tight">
-                  {capitalizeFirstLetter(selected.name)}
+                  {getVoiceDisplayName(selected)}
                 </span>
                 <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
@@ -434,8 +436,12 @@ export function VoicePicker({
                       <button
                         aria-label={
                           isPlaying
-                            ? t('stopPreview', { name: voice.name })
-                            : t('previewVoice', { name: voice.name })
+                            ? t('stopPreview', {
+                                name: getVoiceDisplayName(voice),
+                              })
+                            : t('previewVoice', {
+                                name: getVoiceDisplayName(voice),
+                              })
                         }
                         className="hit-area-1.5 relative flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-[scale] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.96] motion-reduce:transition-none"
                         onClick={() => togglePreview(voice.id)}
@@ -492,7 +498,7 @@ export function VoicePicker({
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex items-center gap-2">
                           <span className="truncate font-medium text-sm">
-                            {capitalizeFirstLetter(voice.name)}
+                            {getVoiceDisplayName(voice)}
                           </span>
                           {voice.description && (
                             <span className="text-muted-foreground text-xs">

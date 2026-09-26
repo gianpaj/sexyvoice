@@ -3,7 +3,11 @@ import { type GoogleLanguageModelOptions, google } from '@ai-sdk/google';
 import * as Sentry from '@sentry/nextjs';
 import { streamText } from 'ai';
 
-import { GEMINI_AUDIO_TAGS, getEmotionTags } from '@/lib/ai';
+import {
+  GEMINI_38_AUDIO_TAGS,
+  GEMINI_AUDIO_TAGS,
+  getEmotionTags,
+} from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
@@ -12,6 +16,61 @@ import { createClient } from '@/lib/supabase/server';
 // Latest update: May 7, 2026
 // Discontinuation date: May 7, 2027
 const model = google('gemini-3.1-flash-lite');
+
+// Gemini 3.8 reads the text as a verbatim transcript: only angle-bracket
+// vocal tags are performed, and delivery directions belong in the style field.
+const GEMINI_38_SYSTEM_PROMPT = `You are an expert at enhancing text for AI voice generation with Gemini 3.8 TTS.
+The model reads the text as a verbatim transcript, so anything you add is spoken aloud unless it is a supported vocal tag.
+
+Available tags: ${GEMINI_38_AUDIO_TAGS}
+
+Rules:
+1. Tags are momentary non-speech sounds. Place each one inline at the exact point the sound should happen, e.g. "<sigh> I told you. <short pause> Fine, come in."
+2. Use only tags from the list, written exactly as shown. Keep tags in English even when the text is in another language.
+3. Do not add delivery directions such as tone, emotion, or pace, and never use square brackets. Those belong in the separate style field.
+4. Use tags sparingly, at most 1-2 per sentence
+5. Keep the original text completely intact, only add tags
+6. Return only the enhanced text with tags, no explanations`;
+
+const GEMINI_31_SYSTEM_PROMPT = `You are an expert at enhancing text for AI voice generation using Gemini audio tags.
+Add inline audio tags to make the voice output more expressive and engaging.
+
+Available tags: ${GEMINI_AUDIO_TAGS}
+
+Rules:
+1. Embed tags directly before the word or phrase they affect, e.g. "[cheerfully] Have a great day!"
+2. Use tags sparingly — 1-3 per sentence maximum
+3. Keep the original text completely intact, only add tags
+4. Return only the enhanced text with audio tags, no explanations`;
+
+function buildSystemPrompt({
+  language,
+  ttsProvider,
+  voiceModel,
+}: {
+  language: string;
+  ttsProvider?: string;
+  voiceModel?: string;
+}): string {
+  if (ttsProvider === 'gemini' && voiceModel === 'gpro38') {
+    return GEMINI_38_SYSTEM_PROMPT;
+  }
+  if (ttsProvider === 'gemini' && voiceModel === 'gpro31') {
+    return GEMINI_31_SYSTEM_PROMPT;
+  }
+  return `Below is a text. The text is missing annotations for a voice actor.
+You are an expert at enhancing text for AI voice generation. Your task is to add emotion tags to make the voice output more expressive and engaging.
+
+Add emotion tags: '${getEmotionTags({ language, model: voiceModel ?? '' })}'. ONLY THESE exist
+
+Rules:
+1. Add emotion tags strategically to enhance the meaning and flow. Those are the only ones that exist
+2. Don't overuse tags - use them sparingly but effectively
+3. Consider the context and tone of the original text
+4. Keep the original text intact, only add emotion tags
+5. Use tags that would make sense for voice generation
+6. Return only the enhanced text with emotion tags, no explanations`;
+}
 
 export async function POST(request: Request) {
   const {
@@ -49,30 +108,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const isGeminiVoice = ttsProvider === 'gemini' && voiceModel === 'gpro31';
-    const system = isGeminiVoice
-      ? `You are an expert at enhancing text for AI voice generation using Gemini audio tags.
-Add inline audio tags to make the voice output more expressive and engaging.
-
-Available tags: ${GEMINI_AUDIO_TAGS}
-
-Rules:
-1. Embed tags directly before the word or phrase they affect, e.g. "[cheerfully] Have a great day!"
-2. Use tags sparingly — 1-3 per sentence maximum
-3. Keep the original text completely intact, only add tags
-4. Return only the enhanced text with audio tags, no explanations`
-      : `Below is a text. The text is missing annotations for a voice actor.
-You are an expert at enhancing text for AI voice generation. Your task is to add emotion tags to make the voice output more expressive and engaging.
-
-Add emotion tags: '${getEmotionTags(selectedVoiceLanguage)}'. ONLY THESE exist
-
-Rules:
-1. Add emotion tags strategically to enhance the meaning and flow. Those are the only ones that exist
-2. Don't overuse tags - use them sparingly but effectively
-3. Consider the context and tone of the original text
-4. Keep the original text intact, only add emotion tags
-5. Use tags that would make sense for voice generation
-6. Return only the enhanced text with emotion tags, no explanations`;
+    const system = buildSystemPrompt({
+      language: selectedVoiceLanguage,
+      ttsProvider,
+      voiceModel,
+    });
 
     const result = streamText({
       experimental_telemetry: {

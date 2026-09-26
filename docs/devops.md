@@ -131,6 +131,30 @@ Notes:
   - this file (`docs/devops.md`) when the change affects deployment,
     operations, security, or runtime setup
 
+## Issue labeling
+
+`.github/workflows/label-issues.yml` runs when an issue is opened. The Jev
+labeler calls TypeSafe to evaluate the configured label criteria. It requires
+`TYPESAFE_API_KEY` as a GitHub Actions repository secret, not a Vercel or local
+application environment variable.
+
+Obtain a key from [TypeSafe](https://docs.typesafe.ai), then store it using the
+interactive prompt:
+
+```bash
+gh secret set TYPESAFE_API_KEY --repo gianpaj/sexyvoice
+```
+
+Use the same command to replace the key during rotation. Check that the secret
+name is present with `gh secret list --repo gianpaj/sexyvoice`; GitHub does not
+return the value. A missing or invalid key, or an unavailable provider, fails the
+labeling job. Inspect the **Label Issues** workflow in GitHub Actions and rerun
+the affected job after restoring access. Keep failures visible rather than
+using `continue-on-error`.
+
+The action is pinned to a full commit SHA. Its GitHub token has `issues: write`
+permission for applying labels; the TypeSafe key is supplied through `api-key`.
+
 ## Environment Variables
 
 Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical
@@ -672,6 +696,11 @@ Check:
 - request logs
 - R2 upload configuration
 
+`gpro38` uses Gemini 3.8 Flash TTS on both dashboard and external API routes.
+Deploy application support before adding its catalog rows. Existing voice rows
+keep their model assignments. Provider costs use the dated standard rates in
+`apps/web/lib/api/pricing.ts`; historical recovery uses `usage_events.occurred_at`.
+
 ### Storage issues
 
 Check:
@@ -781,3 +810,12 @@ zero usage. Reporting definitions and test commands are in the
 comparisons, use the development-only cache bypass and runner described in
 [Local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking).
 The runner rejects responses that do not confirm the cache bypass.
+
+## Gemini 3.8 catalog rollout
+
+Generate previews locally, review them in `listen.html`, and use the separate R2
+uploader before preparing executable catalog SQL. See the
+[sample workflow](../scripts/README.md#gemini-38-voice-samples) for commands,
+manifest verification, and the bucket-root filename convention. The initial
+28 catalog entries have `is_public = false`. Deploy `gpro38` route support and
+the display-name mapping before using these voices or enabling public access.

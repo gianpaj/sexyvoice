@@ -26,6 +26,7 @@
     "lint": "turbo run lint",
     "lint-staged": "lint-staged",
     "prepare": "husky",
+    "prepare-gemini-voice-sql": "pnpm --filter @sexyvoice/scripts prepare-gemini-voice-sql",
     "refund-credits": "pnpm --filter @sexyvoice/scripts refund-credits",
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
@@ -35,9 +36,9 @@
     "test:db": "turbo run test:db --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
     "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "upload-speech-samples": "pnpm --filter @sexyvoice/scripts upload-speech-samples"
   },
-
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
