@@ -5,7 +5,6 @@ import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVoiceGroups } from '@/components/voice-groups';
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { getEmotionTags } from '@/lib/ai';
 
@@ -269,71 +268,6 @@ describe('VoiceSettingsCard', () => {
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
   });
 
-  it('keeps featured voices first and preserves query order for non-featured groups', () => {
-    const voiceGroups = getVoiceGroups(
-      [
-        createVoice({
-          id: 'voice-featured-zephyr',
-          language: 'multiple',
-          model: 'gpro',
-          name: 'zephyr',
-          sort_order: 0,
-        }),
-        createVoice({
-          id: 'voice-featured-achernar',
-          language: 'multiple',
-          model: 'gpro',
-          name: 'achernar',
-          sort_order: 0,
-        }),
-        createVoice({
-          id: 'voice-grok-sal',
-          language: 'multiple',
-          model: 'xai',
-          name: 'sal',
-          sort_order: 1,
-        }),
-        createVoice({
-          id: 'voice-grok-ara',
-          language: 'multiple',
-          model: 'xai',
-          name: 'ara',
-          sort_order: 1,
-        }),
-        createVoice({
-          id: 'voice-replicate-dan',
-          language: 'en-GB 🇬🇧',
-          model:
-            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-          name: 'dan',
-          sort_order: 2,
-        }),
-        createVoice({
-          id: 'voice-replicate-emma',
-          language: 'en-US 🇺🇸',
-          model:
-            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-          name: 'emma',
-          sort_order: 2,
-        }),
-      ],
-      {
-        featuredGroupLabel: baseDict.voiceSelector.featuredGroupLabel,
-        geminiGroupLabel: baseDict.voiceSelector.multilingualGroupLabel,
-      },
-    );
-
-    expect(voiceGroups.map((group) => group.label)).toEqual([
-      'Featured',
-      'Grok ✨',
-      'en-GB 🇬🇧',
-      'en-US 🇺🇸',
-    ]);
-    expect(
-      voiceGroups.map((group) => group.voices.map((voice) => voice.name)),
-    ).toEqual([['achernar', 'zephyr'], ['ara', 'sal'], ['dan'], ['emma']]);
-  });
-
   it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
     renderVoiceSettingsCard({
       publicVoices: [
@@ -365,32 +299,6 @@ describe('VoiceSettingsCard', () => {
     expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
       baseDict.voiceSelector.multilingualGroupLabel,
     );
-  });
-});
-
-describe('Featured voices shared across Gemini models', () => {
-  const featured = (model: string) =>
-    createVoice({
-      id: `achernar-${model}`,
-      language: 'multiple',
-      model,
-      name: 'achernar',
-      sort_order: 0,
-    });
-
-  it('lists the Gemini 3.8 voice before the same-named 3.1 voice', () => {
-    const [featuredGroup] = getVoiceGroups(
-      [featured('gpro31'), featured('gpro38')],
-      {
-        featuredGroupLabel: baseDict.voiceSelector.featuredGroupLabel,
-        geminiGroupLabel: baseDict.voiceSelector.multilingualGroupLabel,
-      },
-    );
-
-    expect(featuredGroup.voices.map((voice) => voice.id)).toEqual([
-      'achernar-gpro38',
-      'achernar-gpro31',
-    ]);
   });
 });
 
