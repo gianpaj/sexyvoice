@@ -160,7 +160,6 @@ test.describe('Generate Dashboard - Authenticated User', () => {
       await new Promise((resolve) => setTimeout(resolve, 5000));
       await route.fulfill({
         body: JSON.stringify({
-          creditsRemaining: 988,
           creditsUsed: 12,
           url: 'https://files.sexyvoice.ai/test.wav',
         }),
@@ -262,7 +261,6 @@ test.describe('Generate Dashboard - Split Mode', () => {
       generatedUrls.push(route.request().postDataJSON()?.text ?? '');
       await route.fulfill({
         body: JSON.stringify({
-          creditsRemaining: 995,
           creditsUsed: 5,
           url: `https://files.sexyvoice.ai/segment-${generatedUrls.length}.wav`,
         }),
@@ -298,7 +296,6 @@ test.describe('Generate Dashboard - Split Mode', () => {
       });
       await route.fulfill({
         body: JSON.stringify({
-          creditsRemaining: 995,
           creditsUsed: 5,
           url: `https://files.sexyvoice.ai/grok-segment-${generatedRequests.length}.mp3`,
         }),
@@ -332,7 +329,6 @@ test.describe('Generate Dashboard - Split Mode', () => {
       capturedLanguages.push(body?.language ?? '');
       await route.fulfill({
         body: JSON.stringify({
-          creditsRemaining: 995,
           creditsUsed: 5,
           url: `https://files.sexyvoice.ai/grok-fr-${capturedLanguages.length}.mp3`,
         }),

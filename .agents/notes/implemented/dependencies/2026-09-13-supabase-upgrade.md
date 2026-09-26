@@ -13,7 +13,7 @@ reach both the downstream render and the browser while preserving locale
 rewrites. OAuth callback redirects collect the cache headers supplied by SSR.
 Server components retain the cookie-store adapter because they cannot write
 response headers. The live retry and response rules are documented in
-[DevOps](../../../../docs/devops.md#client-retries-and-auth-responses).
+[Architecture](../../../../ARCHITECTURE.md#supabase-access-boundaries).
 
 The Telegram bot's Deno import is outside the pnpm dependency graph and remains
 on its existing version. No migration or operational refund/reset script is part

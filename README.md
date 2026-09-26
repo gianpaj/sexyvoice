@@ -16,7 +16,7 @@
   <a href="#-getting-started">🚀 Quick Start</a> •
   <a href="#-features">✨ Features</a> •
   <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a> •
-  <a href="./docs/devops.md">⚙️ DevOps Guide</a>
+  <a href="./docs/devops.md">⚙️ Deployment and release checks</a>
 </p>
 
 ---
@@ -195,7 +195,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
 
-   For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
+   For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
 
 4. **Set up Supabase**
    - Create a new project at Supabase
@@ -372,7 +372,7 @@ We welcome contributions!
 - Report bugs
 - Suggest features
 - Submit pull requests
-- Review the [DevOps Guide](./docs/devops.md) for environment variables, deployment, infrastructure, and operational setup changes
+- Review [Deployment and release checks](./docs/devops.md) when changing environment variables, infrastructure, or deployment configuration
 
 <!-- - Follow the code of conduct -->
 
