@@ -128,6 +128,10 @@ export default async function LangLayout({
 
   return (
     <html lang={lang}>
+      <head>
+        {/* The site is dark-only; tell the Dark Reader extension to stay off */}
+        <meta name="darkreader-lock" />
+      </head>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
           {messages.pages.skipToMainContent}
