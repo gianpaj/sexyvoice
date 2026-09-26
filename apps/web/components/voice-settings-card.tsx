@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { VoiceSelect } from '@/components/voice-select';
+import { VoicePicker } from '@/components/voice-picker';
 import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
@@ -33,7 +33,7 @@ import {
   TooltipTrigger,
 } from './ui/tooltip';
 
-export function VoiceSelector({
+export function VoiceSettingsCard({
   publicVoices,
   selectedVoice,
   setSelectedVoice,
@@ -102,7 +102,7 @@ export function VoiceSelector({
         <CardDescription>{t('voiceSelector.description')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 p-4 sm:p-6">
-        <VoiceSelect
+        <VoicePicker
           onValueChange={setSelectedVoice}
           value={selectedVoice?.id}
           voices={publicVoices}
