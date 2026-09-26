@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VoicePicker } from '@/components/voice-picker';
+import { compareVoices } from '@/lib/voices';
 import messages from '@/messages/en.json';
 
 const voices = ['tara', 'kore'].map(
@@ -64,6 +65,38 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+});
+
+describe('VoicePicker order', () => {
+  it('lists each Gemini 3.8 voice before its same-named 3.1 voice', async () => {
+    const [tara] = voices;
+    const featured = (model: string): Tables<'voices'> => ({
+      ...tara,
+      id: `achernar-${model}`,
+      language: 'multiple',
+      model,
+      name: 'achernar',
+      sort_order: 0,
+    });
+    // The generate page sorts the query result, whose ties have no defined order.
+    const sorted = [featured('gpro31'), tara, featured('gpro38')].sort(
+      compareVoices,
+    );
+    const user = userEvent.setup();
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <VoicePicker onValueChange={vi.fn()} voices={sorted} />
+      </NextIntlClientProvider>,
+    );
+
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.getAllByRole('option').map((option) => option.id)).toEqual([
+      'voice-item-achernar-gpro38',
+      'voice-item-achernar-gpro31',
+      'voice-item-tara',
+    ]);
+  });
 });
 
 describe('VoicePicker preview', () => {
