@@ -142,7 +142,33 @@ describe('/api/v1/speech', () => {
     expect(json.error.param).toBe('temperature');
   });
 
-  it('returns 400 when voice model does not match requested model', async () => {
+  it('scopes voice name lookups to the requested model', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'orpheus',
+        voice: 'tara',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    await POST(request);
+
+    expect(vi.mocked(getVoiceIdByNameAdmin)).toHaveBeenCalledWith(
+      'tara',
+      true,
+      [
+        'gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650',
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      ],
+    );
+  });
+
+  it('returns 404 when the voice does not exist for the requested model', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
       body: JSON.stringify({
         input: 'Hello world',
@@ -159,8 +185,12 @@ describe('/api/v1/speech', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(json.error.code).toBe('model_not_found');
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('voice_not_found');
+    expect(json.error.param).toBe('voice');
+    expect(json.error.message).toBe(
+      'Voice "tara" was not found for model "gpro"',
+    );
   });
 
   it('returns 402 when credits are insufficient', async () => {
@@ -763,8 +793,8 @@ describe('/api/v1/speech', () => {
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(json.error.code).toBe('model_not_found');
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('voice_not_found');
   });
 
   it('returns provider quota errors from Gemini without capturing exceptions', async () => {

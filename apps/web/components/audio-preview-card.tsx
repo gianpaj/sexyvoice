@@ -1,9 +1,9 @@
 'use client';
 
 import { Pause, Play } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
+import { IconSwap } from '@/components/motion-primitives/icon-swap';
 import { attemptPlayback } from '@/lib/media-playback';
 import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
@@ -67,21 +67,13 @@ export function AudioPreviewCard({
           size="icon"
           variant="outline"
         >
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.span
-              animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
-              exit={{ filter: 'blur(4px)', opacity: 0, scale: 0.25 }}
-              initial={{ filter: 'blur(4px)', opacity: 0, scale: 0.25 }}
-              key={isPlaying ? 'pause' : 'play'}
-              transition={{ bounce: 0, duration: 0.3, type: 'spring' }}
-            >
-              {isPlaying ? (
-                <Pause className="size-4" />
-              ) : (
-                <Play className="size-4" />
-              )}
-            </motion.span>
-          </AnimatePresence>
+          <IconSwap swapKey={isPlaying ? 'pause' : 'play'}>
+            {isPlaying ? (
+              <Pause className="size-4" />
+            ) : (
+              <Play className="size-4" />
+            )}
+          </IconSwap>
         </Button>
       </div>
       <div

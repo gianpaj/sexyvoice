@@ -69,6 +69,30 @@ vercel project inspect sexyvoice
 vercel env ls
 ```
 
+## Issue labeling
+
+`.github/workflows/label-issues.yml` runs when an issue is opened. The Jev
+labeler calls TypeSafe to evaluate the configured label criteria. It requires
+`TYPESAFE_API_KEY` as a GitHub Actions repository secret, not a Vercel or local
+application environment variable.
+
+Obtain a key from [TypeSafe](https://docs.typesafe.ai), then store it using the
+interactive prompt:
+
+```bash
+gh secret set TYPESAFE_API_KEY --repo gianpaj/sexyvoice
+```
+
+Use the same command to replace the key during rotation. Check that the secret
+name is present with `gh secret list --repo gianpaj/sexyvoice`; GitHub does not
+return the value. A missing or invalid key, or an unavailable provider, fails the
+labeling job. Inspect the **Label Issues** workflow in GitHub Actions and rerun
+the affected job after restoring access. Keep failures visible rather than
+using `continue-on-error`.
+
+The action is pinned to a full commit SHA. Its GitHub token has `issues: write`
+permission for applying labels; the TypeSafe key is supplied through `api-key`.
+
 ## Environment variables
 
 Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical template
@@ -107,6 +131,8 @@ playback and downloads.
 - `REPLICATE_API_TOKEN`
 - `XAI_API_KEY`: Grok TTS and call transcript analysis.
 - `XAI_SUMMARY_MODEL`: optional call-analysis model override; default `grok-4.3`.
+- `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
+  `https://api.x.ai`.
 
 ### LiveKit and call analysis
 
@@ -115,6 +141,8 @@ playback and downloads.
 - `CALL_SUMMARY_SECRET`: authenticates the call-analysis webhook. Store the same
   value in Supabase Vault as `call_summary_secret`, alongside `app_base_url`, so
   the `pg_net` trigger can call `/api/call-sessions/analyze`.
+- `CALL_ANALYSIS_REALTIME`: set to `true` for synchronous analysis in the webhook
+  during a batch-processing incident. Leave unset in normal operation.
 
 ### Authentication
 
@@ -160,12 +188,13 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 ### Notifications and background jobs
 
 - `TELEGRAM_WEBHOOK_URL`
-- `CRON_SECRET`
+- `CRON_SECRET`: authenticates the daily-stats and call-analysis batch crons.
 - `INNGEST_EVENT_KEY`
 - `INNGEST_SIGNING_KEY`
 - `INNGEST_BASE_URL`
 
-`apps/web/vercel.json` schedules `/api/daily-stats` at `0 7 * * *`.
+`apps/web/vercel.json` schedules `/api/daily-stats` at `0 7 * * *` and
+`/api/call-sessions/analyze/batch` every 15 minutes.
 
 ### Promotions and banners
 
@@ -236,3 +265,51 @@ Do not call production `/api/daily-stats` as a smoke test: it sends a Telegram
 message. See [daily-stats verification](../apps/web/app/api/daily-stats/README.md#verification)
 for read-only checks and [local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking)
 for timing comparisons.
+
+## Call transcript analysis
+
+Apply the call-analysis queue migration before deploying the batch drain.
+Verify `CALL_SUMMARY_SECRET`, `CRON_SECRET`, and `XAI_API_KEY` in the target
+environment. See [the analysis flow](../ARCHITECTURE.md#call-transcript-analysis)
+for queue ownership, retries, and failure handling.
+
+Release checks:
+
+- The drain response and a `Call analysis batch drain:` log line summarise
+  reconciled batches and the new submission (the lifecycle is
+  `pending -> submitted -> completed | failed`, with `pending` again on a
+  retryable failure, visible in `call_analysis_queue.status` and its
+  timestamps; `attempts` counts batches xAI accepted, so an upload outage
+  never spends a session's retry budget).
+- A batch still unsettled 24 hours after submission is reported to Sentry as
+  `Call analysis batch appears stuck`; inspect it in the xAI console.
+- Sessions that reach the terminal `failed` state (attempts exhausted,
+  unusable transcript, session gone) are reported to Sentry as
+  `Call analysis sessions parked as failed` with their ids and errors. A
+  redelivered webhook does not revive them; run `pnpm backfill-call-analysis`
+  to reprocess.
+- Read-only check for stuck or failed work:
+
+  ```sql
+  select status, count(*), min(queued_at), max(submitted_at)
+  from public.call_analysis_queue
+  group by status;
+  ```
+
+- Emergency bypass: set `CALL_ANALYSIS_REALTIME=true` to analyse inline in the
+  webhook (synchronous Grok call, realtime pricing) while the batch path is
+  investigated. Local debugging can use the scripts' `--realtime` flag.
+
+## Gemini 3.8 catalog rollout
+
+`gpro38` uses Gemini 3.8 Flash TTS on both dashboard and external API routes.
+Deploy application support before adding its catalog rows. Existing voice rows
+keep their model assignments. Provider costs use the dated standard rates in
+`apps/web/lib/api/pricing.ts`; historical recovery uses `usage_events.occurred_at`.
+
+Generate previews locally, review them in `listen.html`, and use the separate R2
+uploader before preparing executable catalog SQL. See the
+[sample workflow](../scripts/README.md#gemini-38-voice-samples) for commands,
+manifest verification, and the bucket-root filename convention. The initial
+28 catalog entries have `is_public = false`. Deploy `gpro38` route support and
+the display-name mapping before using these voices or enabling public access.

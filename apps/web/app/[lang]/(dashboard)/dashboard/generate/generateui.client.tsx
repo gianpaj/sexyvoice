@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { AudioGenerator } from '@/components/audio-generator';
 import { AudioProvider } from '@/components/audio-provider';
 import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
-import { VoiceSelector } from '@/components/voice-selector';
+import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { useGenerationSettings } from '@/hooks/use-generation-settings';
 import { getTtsProvider } from '@/lib/utils';
-import { getFeaturedVoice } from '@/lib/voices';
+import { compareVoices, getFeaturedVoice } from '@/lib/voices';
 
 interface GenerateUIProps {
   hasEnoughCredits: boolean;
@@ -24,14 +24,13 @@ export function GenerateUI({
   hasEnoughCredits,
   isPaidUser,
 }: GenerateUIProps) {
-  const initialVoiceId =
-    getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '';
+  // One order for the picker and the default voice; see compareVoices.
+  const voices = [...publicVoices].sort(compareVoices);
+  const initialVoiceId = getFeaturedVoice(voices)?.id || voices[0]?.id || '';
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
   const { settings, updateSettings, resetSettings } = useGenerationSettings();
-  const selectedVoiceSample = publicVoices.find(
-    (file) => file.id === selectedVoice,
-  );
+  const selectedVoiceSample = voices.find((file) => file.id === selectedVoice);
   const isGeminiVoice = getTtsProvider(selectedVoiceSample?.model) === 'gemini';
   return (
     <div className="flex flex-col gap-6">
@@ -44,9 +43,9 @@ export function GenerateUI({
           updateSettings={updateSettings}
         />
       </div>
-      <VoiceSelector
+      <VoiceSettingsCard
         isPaidUser={isPaidUser}
-        publicVoices={publicVoices}
+        publicVoices={voices}
         selectedStyle={isGeminiVoice ? selectedStyle : undefined}
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}

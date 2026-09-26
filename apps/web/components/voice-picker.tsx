@@ -4,11 +4,17 @@ import {
   AudioLines,
   Check,
   ChevronsUpDown,
-  Pause,
   Play,
   Search,
+  Square,
   X,
 } from 'lucide-react';
+import {
+  AnimatePresence,
+  motion,
+  useMotionValue,
+  useTransform,
+} from 'motion/react';
 import { useTranslations } from 'next-intl';
 import {
   type KeyboardEvent,
@@ -19,6 +25,7 @@ import {
   useState,
 } from 'react';
 
+import { IconSwap } from '@/components/motion-primitives/icon-swap';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -27,7 +34,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { capitalizeFirstLetter, cn } from '@/lib/utils';
+import { attemptPlayback } from '@/lib/media-playback';
+import { cn } from '@/lib/utils';
+import { getVoiceDisplayName } from '@/lib/voice-names';
 import {
   getDisplayModel,
   MODEL_COLORS,
@@ -37,7 +46,7 @@ import {
   type VoiceModel,
 } from '@/lib/voices';
 
-interface VoiceSelectProps {
+interface VoicePickerProps {
   className?: string;
   onValueChange?: (voiceId: string) => void;
   value?: string;
@@ -86,12 +95,12 @@ function FilterChip({
   );
 }
 
-export function VoiceSelect({
+export function VoicePicker({
   voices = [],
   value,
   onValueChange,
   className,
-}: VoiceSelectProps) {
+}: VoicePickerProps) {
   const t = useTranslations('generate.voiceSelector');
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -102,17 +111,19 @@ export function VoiceSelect({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const previewProgress = useMotionValue(0);
+  // A round cap on a zero-length stroke still paints a dot.
+  const previewLinecap = useTransform(previewProgress, (progress) =>
+    progress > 0 ? 'round' : 'butt',
+  );
 
   const selectedId = value ?? internalValue;
   const selected = voices.find((v) => v.id === selectedId);
 
   // Start / stop audio preview when playingId changes
   useEffect(() => {
-    if (!playingId) {
-      audioRef.current?.pause();
-      audioRef.current = null;
-      return;
-    }
+    if (!playingId) return;
+    previewProgress.set(0);
     const voice = voices.find((v) => v.id === playingId);
     if (!voice?.sample_url) {
       setPlayingId(null);
@@ -120,12 +131,33 @@ export function VoiceSelect({
     }
     const audio = new Audio(voice.sample_url);
     audioRef.current = audio;
-    audio.play().catch(() => setPlayingId(null));
-    audio.addEventListener('ended', () => setPlayingId(null));
+    let frameId: number;
+
+    const updateProgress = () => {
+      previewProgress.set(
+        Number.isFinite(audio.duration) && audio.duration > 0
+          ? Math.min(1, Math.max(0, audio.currentTime / audio.duration))
+          : 0,
+      );
+      frameId = requestAnimationFrame(updateProgress);
+    };
+    const stopPreview = () => {
+      if (audioRef.current === audio) setPlayingId(null);
+    };
+
+    audio.addEventListener('ended', stopPreview);
+    audio.addEventListener('error', stopPreview);
+    attemptPlayback(() => audio.play(), stopPreview).catch(() => undefined);
+    frameId = requestAnimationFrame(updateProgress);
+
     return () => {
+      cancelAnimationFrame(frameId);
+      audio.removeEventListener('ended', stopPreview);
+      audio.removeEventListener('error', stopPreview);
+      audioRef.current = null;
       audio.pause();
     };
-  }, [playingId, voices]);
+  }, [playingId, voices, previewProgress]);
 
   // Stop audio when popover closes; reset highlight
   useEffect(() => {
@@ -194,6 +226,7 @@ export function VoiceSelect({
       if (!q) return true;
       return (
         v.name.toLowerCase().includes(q) ||
+        getVoiceDisplayName(v).toLowerCase().includes(q) ||
         (v.description ?? '').toLowerCase().includes(q) ||
         displayModel.toLowerCase().includes(q) ||
         gender.toLowerCase().includes(q)
@@ -254,7 +287,7 @@ export function VoiceSelect({
               </span>
               <span className="flex min-w-0 flex-col items-start">
                 <span className="truncate font-medium text-sm leading-tight">
-                  {capitalizeFirstLetter(selected.name)}
+                  {getVoiceDisplayName(selected)}
                 </span>
                 <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
@@ -285,7 +318,7 @@ export function VoiceSelect({
                   : undefined
               }
               aria-autocomplete="list"
-              aria-controls="voice-select-listbox"
+              aria-controls="voice-picker-listbox"
               autoFocus
               className="h-9 pl-8 text-sm"
               onChange={(e) => setQuery(e.target.value)}
@@ -374,7 +407,7 @@ export function VoiceSelect({
             <div
               aria-label={t('voiceListLabel')}
               className="p-1"
-              id="voice-select-listbox"
+              id="voice-picker-listbox"
               ref={listRef}
               role="listbox"
             >
@@ -403,26 +436,55 @@ export function VoiceSelect({
                       <button
                         aria-label={
                           isPlaying
-                            ? t('stopPreview', { name: voice.name })
-                            : t('previewVoice', { name: voice.name })
+                            ? t('stopPreview', {
+                                name: getVoiceDisplayName(voice),
+                              })
+                            : t('previewVoice', {
+                                name: getVoiceDisplayName(voice),
+                              })
                         }
-                        className={cn(
-                          'flex size-8 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                          isPlaying
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'bg-background text-foreground hover:border-primary hover:text-primary',
-                        )}
+                        className="hit-area-1.5 relative flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-foreground transition-[scale] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:active:scale-[0.96] motion-reduce:transition-none"
                         onClick={() => togglePreview(voice.id)}
                         type="button"
                       >
-                        {isPlaying ? (
-                          <Pause aria-hidden className="size-3.5" />
-                        ) : (
-                          <Play
-                            aria-hidden
-                            className="size-3.5 translate-x-px"
+                        <svg
+                          aria-hidden="true"
+                          className="pointer-events-none absolute inset-0 size-full -rotate-90"
+                          fill="none"
+                          viewBox="0 0 32 32"
+                        >
+                          <circle
+                            className="text-border"
+                            cx="16"
+                            cy="16"
+                            r="14.5"
+                            stroke="currentColor"
                           />
-                        )}
+                          <AnimatePresence>
+                            {isPlaying && (
+                              <motion.circle
+                                animate={{ opacity: 1 }}
+                                cx="16"
+                                cy="16"
+                                exit={{ opacity: 0 }}
+                                key="progress"
+                                r="14.5"
+                                stroke="currentColor"
+                                strokeLinecap={previewLinecap}
+                                strokeWidth="2"
+                                style={{ pathLength: previewProgress }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            )}
+                          </AnimatePresence>
+                        </svg>
+                        <IconSwap swapKey={isPlaying ? 'stop' : 'play'}>
+                          {isPlaying ? (
+                            <Square className="size-3.5 fill-current" />
+                          ) : (
+                            <Play className="size-3.5 translate-x-px fill-current" />
+                          )}
+                        </IconSwap>
                       </button>
                     ) : (
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-transparent" />
@@ -436,7 +498,7 @@ export function VoiceSelect({
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex items-center gap-2">
                           <span className="truncate font-medium text-sm">
-                            {capitalizeFirstLetter(voice.name)}
+                            {getVoiceDisplayName(voice)}
                           </span>
                           {voice.description && (
                             <span className="text-muted-foreground text-xs">

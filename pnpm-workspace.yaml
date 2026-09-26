@@ -10,6 +10,8 @@ publicHoistPattern:
 minimumReleaseAge: 2880
 
 minimumReleaseAgeExclude:
+  # Gemini 3.8 TTS requires speechMetadata and VoiceConfig.voice.
+  - "@google/genai@2.24.0"
   - next
   - "@next/*"
   - react
@@ -87,6 +89,7 @@ overrides:
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
+  "@google/genai": false
   "@parcel/watcher": true
   "@sentry/cli": true
   "@swc/core": true

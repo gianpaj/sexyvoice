@@ -48,6 +48,8 @@ const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 // so free users get 3.1 audio for the price of 2.5. Charge them double for 3.1
 // voices to compensate. Paid users run 2.5 Pro for `gpro` (same cost as 3.1),
 // so they are not affected.
+// Gemini 3.8 (`gpro38`) has no free-tier surcharge, including after Google's
+// promotional rate ends on 2027-01-01. That is a product decision, not a gap.
 const GEMINI_31_FREE_CREDIT_MULTIPLIER = 2;
 
 // `model` may be the stored voice token (`gpro31`), used by the estimate and the
@@ -66,7 +68,7 @@ function getGemini31FreeMultiplier(
 }
 
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     return 'gemini';
   }
 
@@ -125,7 +127,7 @@ function getCreditMultiplier(
       break;
   }
 
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
@@ -247,10 +249,6 @@ export function calculateCreditsFromTokens(
   );
 
   return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN * multiplier);
-}
-
-export function capitalizeFirstLetter(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 /**

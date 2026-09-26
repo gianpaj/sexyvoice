@@ -76,7 +76,7 @@ The repository has three main workspaces:
 | Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
 | Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual     | See the cloning locale table below                                        |
 | Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI structured generation                                                | Runs only for eligible completed calls                                    |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
 
@@ -290,10 +290,49 @@ is off by default, and its UI toggle is currently hidden.
 | Language          | 20 supported call languages; English fallback                                         |
 | Memory            | Paid, opt-in backend; off by default                                                  |
 
-Completed calls of at least 120 seconds with a transcript are eligible for
-structured analysis. A Supabase Database Webhook authenticates to
-`/api/call-sessions/analyze` with `CALL_SUMMARY_SECRET`. The route is idempotent
-and writes one `call_session_analysis` row per session.
+### Call transcript analysis
+
+Completed calls of at least 120 seconds with a transcript are analysed by Grok
+and stored as one `call_session_analysis` row per session. Analysis is
+**asynchronous and best-effort**: nothing in the call UX waits on it, and
+results typically land minutes after the call, bounded by xAI batch processing
+time plus the cron interval.
+
+Flow:
+
+1. A Supabase Database Webhook (`pg_net`, see
+   `apps/web/supabase/migrations/20260703000000_add_call_session_analysis.sql`)
+   posts the session id to `POST /api/call-sessions/analyze` with
+   `CALL_SUMMARY_SECRET`.
+2. The webhook only checks eligibility (completed, long enough, non-empty
+   transcript, no existing analysis row) and inserts a `pending` row into
+   `call_analysis_queue`, returning `202 { queued: true }`. Duplicate
+   deliveries are no-ops thanks to the primary key on `session_id`.
+3. The Vercel cron `GET /api/call-sessions/analyze/batch` (every 15 minutes,
+   `CRON_SECRET`) first reconciles in-flight xAI batches, writing
+   `call_session_analysis` rows for settled ones, then coalesces pending rows
+   (up to 200) into a single new [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
+   request and waits up to a few minutes for it before handing off to the next
+   run. Rows are claimed (`submitted`, no batch id yet) with a
+   compare-and-set on `status = 'pending'` _before_ the paid xAI call, so
+   overlapping runs cannot submit the same session twice. The write that
+   attaches the batch id after the paid xAI call is retried; if a run still
+   dies or fails between the claim and that write, the claim is left alone and
+   parked as `failed` after 15 minutes (never resubmitted, since the batch may
+   already be billed), with the batch id in the Sentry error when it is known.
+4. Failed requests never persist an analysis row. Retryable failures return to
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`;
+   the backfill script can still reprocess them because it anti-joins on
+   `call_session_analysis`. Each in-flight batch is reconciled in isolation
+   (one unreadable batch id is reported to Sentry and skipped, not fatal), and
+   a batch that has not settled after 48 hours is abandoned: its rows return
+   to `pending` under the same attempt limit.
+
+Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
+`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
+scripts import the same modules, so every path writes identical rows.
 
 ## Data and Storage
 
@@ -312,7 +351,8 @@ and writes one `call_session_analysis` row per session.
   timestamps.
 - `call_sessions` stores call duration, billing, transcript, model, and status.
 - `call_session_analysis` stores one structured transcript analysis per call;
-  `call_session_analytics` stores aggregate analysis runs.
+  `call_session_analytics` stores aggregate analysis runs;
+  `call_analysis_queue` tracks pending and in-flight xAI batch analyses.
 - `agent_memories` stores pgvector-backed, per-user call memories with hybrid
   semantic and keyword retrieval.
 
@@ -445,7 +485,7 @@ apps/
 │   │   ├── generate-voice/            # Dashboard TTS
 │   │   ├── clone-voice/               # Dashboard voice cloning
 │   │   ├── call-token/                # LiveKit token and agent dispatch
-│   │   ├── call-sessions/analyze/     # Webhook-triggered transcript analysis
+│   │   ├── call-sessions/analyze/     # Webhook enqueue + batch drain cron
 │   │   ├── characters/                # Custom character CRUD
 │   │   ├── memories/                  # User memory erasure
 │   │   ├── api-keys/                  # External API key management

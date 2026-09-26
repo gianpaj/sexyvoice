@@ -48,6 +48,7 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildGeminiTtsContents,
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -550,6 +551,9 @@ export async function POST(request: Request) {
     if (speed !== undefined) {
       hashInput += `-speed:${speed}`;
     }
+    if (voiceObj.model === 'gpro38') {
+      hashInput += `-style:${JSON.stringify(styleVariant ?? '')}`;
+    }
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -628,6 +632,7 @@ export async function POST(request: Request) {
 
       const geminiTTSConfig = buildGeminiTtsConfig({
         abortSignal: abortController.signal,
+        model: voiceObj.model,
         seed,
         temperature,
         voiceName: voiceObj.name,
@@ -659,7 +664,11 @@ export async function POST(request: Request) {
 
           genAIResponse = await ai.models.generateContent({
             config: geminiTTSConfig,
-            contents: [{ parts: [{ text }], role: 'user' }],
+            contents: buildGeminiTtsContents({
+              model: voiceObj.model,
+              styleVariant,
+              text,
+            }),
             model: modelUsed,
           });
         } catch (error) {
@@ -674,6 +683,8 @@ export async function POST(request: Request) {
             reservedCredits = 0;
             return APIErrorResponse('Request aborted', 499);
           }
+
+          if (voiceObj.model === 'gpro38') throw error;
 
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
@@ -707,7 +718,11 @@ export async function POST(request: Request) {
           try {
             genAIResponse = await ai.models.generateContent({
               config: geminiTTSConfig,
-              contents: [{ parts: [{ text }], role: 'user' }],
+              contents: buildGeminiTtsContents({
+                model: voiceObj.model,
+                styleVariant,
+                text,
+              }),
               model: modelUsed,
             });
 
@@ -758,7 +773,11 @@ export async function POST(request: Request) {
         });
         genAIResponse = await ai.models.generateContent({
           config: geminiTTSConfig,
-          contents: [{ parts: [{ text }], role: 'user' }],
+          contents: buildGeminiTtsContents({
+            model: voiceObj.model,
+            styleVariant,
+            text,
+          }),
           model: modelUsed,
         });
       }
@@ -1082,6 +1101,8 @@ export async function POST(request: Request) {
       // Insert usage event for tracking (non-blocking)
       await insertUsageEvent({
         creditsUsed: creditsDebited,
+        inputChars: text.length,
+        model: modelUsed,
         quantity: text.length,
         sourceId: audioFileDBResult.data?.id,
         sourceType: 'tts',
@@ -1089,6 +1110,7 @@ export async function POST(request: Request) {
         userId: user.id,
         ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
+          ...usage,
           duration,
           model: modelUsed,
           predictionId: replicateResponse?.id ?? null,

@@ -441,6 +441,34 @@ describe('AudioGenerator', () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    { model: 'gpro31', visible: true },
+    { model: 'gpro38', visible: true },
+    { model: 'gpro', visible: false },
+  ])(
+    'shows the AI enhance button for $model voices: $visible',
+    async ({ model, visible }) => {
+      renderAudioGenerator({
+        selectedVoice: createVoice({
+          language: 'multiple',
+          model,
+          name: 'kore',
+        }),
+      });
+
+      // The prompt editor is loaded with next/dynamic.
+      await screen.findByTestId('generate-textarea');
+      const enhanceButton = screen.queryByTitle(
+        'Enhance text with AI emotion tags',
+      );
+      if (visible) {
+        expect(enhanceButton).toBeInTheDocument();
+      } else {
+        expect(enhanceButton).not.toBeInTheDocument();
+      }
+    },
+  );
+
   it('hides the AI enhance button for Grok voices', () => {
     renderAudioGenerator({
       selectedVoice: createVoice({

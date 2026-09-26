@@ -213,13 +213,19 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
 - Voice generation can involve Replicate, Google Gemini TTS (models `gpro` for
-  Gemini 2.5 and `gpro31` for Gemini 3.1 Flash), or xAI Grok TTS. External API
+  Gemini 2.5, `gpro31` for Gemini 3.1 Flash, and `gpro38` for Gemini 3.8 Flash), or xAI Grok TTS. External API
   `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
   `model = 'gpro31'` should use Gemini 3.1 Flash.
 - Voice cloning uses fal.ai and must respect permission and privacy
   requirements.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
+- Call transcript analysis is async: `/api/call-sessions/analyze` only enqueues
+  into `call_analysis_queue`; the `/api/call-sessions/analyze/batch` cron
+  drains it through the xAI Batch API. Shared prompt/schema/batch code lives in
+  `apps/web/lib/ai/` and is imported by `scripts/` through Node type stripping,
+  so those modules must use relative imports with `.ts` extensions and no `@/`
+  aliases. `CALL_ANALYSIS_REALTIME=true` is the inline emergency bypass.
 
 ## Banners
 

@@ -156,6 +156,8 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `FAL_KEY` - Your fal.ai API key for voice cloning
      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation and call transcript analysis
+     - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
+     - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
    - Real-time Calls (LiveKit)
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`
@@ -184,7 +186,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
    - Telegram cronjob
      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
-     - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+     - `CRON_SECRET` - For securing the cron API routes (`/api/daily-stats`, `/api/call-sessions/analyze/batch`) - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Axiom logging (optional)
      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
    - API key security
