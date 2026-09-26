@@ -1,6 +1,7 @@
 'use client';
 
 import { useCompletion } from '@ai-sdk/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
@@ -36,6 +37,7 @@ import {
   getGeminiCombinedTokenLimit,
   getGeminiStyleCharacterLimit,
 } from '@/lib/ai';
+import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
@@ -153,10 +155,11 @@ interface SseAudioEvent {
 
 interface SseDoneEvent {
   cached?: boolean;
-  creditsRemaining: number;
   creditsUsed: number;
   url: string;
 }
+
+type GenerateVoiceResult = Pick<SseDoneEvent, 'cached' | 'url'>;
 
 interface SseErrorEvent {
   details?: unknown;
@@ -292,6 +295,7 @@ export function AudioGenerator({
   selectedVoice,
   settings = DEFAULT_GENERATION_SETTINGS,
 }: AudioGeneratorProps) {
+  const queryClient = useQueryClient();
   const t = useTranslations('generate');
   const translateErrorCode = useTranslations('errorCodes');
   const [text, setText] = useState('');
@@ -434,7 +438,7 @@ export function AudioGenerator({
       signal: AbortSignal,
       seed?: number,
       split = false,
-    ): Promise<string> => {
+    ): Promise<GenerateVoiceResult> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
@@ -471,7 +475,7 @@ export function AudioGenerator({
         throwGenerateVoiceError(t, translateErrorCode, data, response);
       }
 
-      return data.url as string;
+      return { cached: data.cached === true, url: data.url as string };
     },
     [
       t,
@@ -488,7 +492,10 @@ export function AudioGenerator({
   );
 
   const requestGenerateVoiceStream = useCallback(
-    async (segmentText: string, signal: AbortSignal): Promise<string> => {
+    async (
+      segmentText: string,
+      signal: AbortSignal,
+    ): Promise<GenerateVoiceResult> => {
       if (!selectedVoice) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
@@ -516,19 +523,19 @@ export function AudioGenerator({
 
       // The streaming player owns the Web Audio engine, peak accumulation, and
       // the live→file handoff. Here we just feed it PCM chunks as they arrive.
-      return new Promise<string>((resolve, reject) => {
+      return new Promise<GenerateVoiceResult>((resolve, reject) => {
         parseSseStream(response, {
           onAudio: ({ data, mimeType }) => {
             if (signal.aborted) return;
             pushStreamChunk(data, mimeType);
           },
-          onDone: ({ url }) => {
+          onDone: ({ cached, url }) => {
             // Assemble the WAV and arrange the handoff; live playback continues
             // until the buffered tail finishes (see the hook). A cache hit sends
             // no audio chunks, so `finalize` is a no-op and the standard file
             // player handles the persisted URL instead.
             finalizeStream();
-            resolve(url);
+            resolve({ cached, url });
           },
           onError: ({ details, error, errorCode, serverMessage }) => {
             resetStream();
@@ -562,7 +569,7 @@ export function AudioGenerator({
   );
 
   const requestGenerateVoice = useCallback(
-    (
+    async (
       segmentText: string,
       signal: AbortSignal,
       seed?: number,
@@ -582,14 +589,25 @@ export function AudioGenerator({
         !shouldUseSplitMode &&
         shouldStream;
 
-      if (useStream) {
-        return requestGenerateVoiceStream(segmentText, signal);
+      let cached = false;
+      try {
+        const result = useStream
+          ? await requestGenerateVoiceStream(segmentText, signal)
+          : await requestGenerateVoiceJson(segmentText, signal, seed, split);
+        cached = result.cached === true;
+        return result.url;
+      } finally {
+        // An aborted fetch cannot confirm settlement. Refreshing can race a refund;
+        // skipping it can miss a late charge. See ARCHITECTURE.md#credit-balance-sync.
+        if (!(cached || signal.aborted)) {
+          invalidateCredits(queryClient);
+        }
       }
-      return requestGenerateVoiceJson(segmentText, signal, seed, split);
     },
     [
       isGeminiVoice,
       isStreamingModel,
+      queryClient,
       requestGenerateVoiceJson,
       requestGenerateVoiceStream,
       shouldUseSplitMode,

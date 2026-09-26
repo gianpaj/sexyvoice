@@ -240,6 +240,11 @@ an `audio_processing` usage event. Clone credits are reserved before provider
 work and restored if generation fails. Background work saves metadata and
 analytics; it does not perform billing or schedule an Inngest cleanup job.
 
+`apps/web/lib/fal-billing.ts` looks up the enhancement's provider cost with
+bounded retries through `fetchWithRetry`. If the lookup fails, it emits one
+Sentry warning and the route records an estimated cost instead. Retry limits
+live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline.
+
 ## Real-time AI Voice Calls
 
 Endpoint: `POST /api/call-token`
@@ -285,13 +290,49 @@ is off by default, and its UI toggle is currently hidden.
 | Language          | 20 supported call languages; English fallback                                         |
 | Memory            | Paid, opt-in backend; off by default                                                  |
 
-Completed calls of at least 120 seconds with a transcript are eligible for
-structured analysis. A Supabase Database Webhook authenticates to
-`/api/call-sessions/analyze` with `CALL_SUMMARY_SECRET`. The route is idempotent
-and only enqueues the session into `call_analysis_queue`; the
-`/api/call-sessions/analyze/batch` Vercel cron coalesces pending sessions into
-one xAI Batch API request and writes one `call_session_analysis` row per
-session when the batch settles. Analysis is asynchronous and best-effort.
+### Call transcript analysis
+
+Completed calls of at least 120 seconds with a transcript are analysed by Grok
+and stored as one `call_session_analysis` row per session. Analysis is
+**asynchronous and best-effort**: nothing in the call UX waits on it, and
+results typically land minutes after the call, bounded by xAI batch processing
+time plus the cron interval.
+
+Flow:
+
+1. A Supabase Database Webhook (`pg_net`, see
+   `apps/web/supabase/migrations/20260703000000_add_call_session_analysis.sql`)
+   posts the session id to `POST /api/call-sessions/analyze` with
+   `CALL_SUMMARY_SECRET`.
+2. The webhook only checks eligibility (completed, long enough, non-empty
+   transcript, no existing analysis row) and inserts a `pending` row into
+   `call_analysis_queue`, returning `202 { queued: true }`. Duplicate
+   deliveries are no-ops thanks to the primary key on `session_id`.
+3. The Vercel cron `GET /api/call-sessions/analyze/batch` (every 15 minutes,
+   `CRON_SECRET`) first reconciles in-flight xAI batches, writing
+   `call_session_analysis` rows for settled ones, then coalesces pending rows
+   (up to 200) into a single new [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
+   request and waits up to a few minutes for it before handing off to the next
+   run. Rows are claimed (`submitted`, no batch id yet) with a
+   compare-and-set on `status = 'pending'` _before_ the paid xAI call, so
+   overlapping runs cannot submit the same session twice. The write that
+   attaches the batch id after the paid xAI call is retried; if a run still
+   dies or fails between the claim and that write, the claim is left alone and
+   parked as `failed` after 15 minutes (never resubmitted, since the batch may
+   already be billed), with the batch id in the Sentry error when it is known.
+4. Failed requests never persist an analysis row. Retryable failures return to
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`;
+   the backfill script can still reprocess them because it anti-joins on
+   `call_session_analysis`. Each in-flight batch is reconciled in isolation
+   (one unreadable batch id is reported to Sentry and skipped, not fatal), and
+   a batch that has not settled after 48 hours is abandoned: its rows return
+   to `pending` under the same attempt limit.
+
+Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
+`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
+scripts import the same modules, so every path writes identical rows.
 
 ## Data and Storage
 
@@ -327,6 +368,84 @@ See `apps/web/supabase/migrations/` and
   protected character prompt.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for the browser.
   `SUPABASE_SECRET_KEY` bypasses RLS and must remain server-only.
+
+#### Identity and session handling
+
+`getVerifiedClaims()` in `apps/web/lib/supabase/auth.ts` supplies verified
+identity for pages, actions, dashboard APIs, browser analytics, and the proxy.
+It returns `null` on SDK auth errors or absent claims. Callers require
+`claims.sub`; ownership, credit, and entitlement checks remain separate.
+
+Asymmetric JWTs normally verify locally with cached JWKS; symmetric keys require
+an Auth-server request. Claims do not enforce immediate session revocation or
+current account status. Email and metadata are token snapshots; user-editable
+`user_metadata` must not authorize access.
+
+Fresh `getUser()` lookups are reserved for:
+
+- Current email on the credits page for Stripe customer linking and on the
+  profile page for password verification.
+- Auth `created_at` during proxy restoration when the profile is missing and
+  an email is present.
+- Account deletion and durable credential issuance in `POST /api/api-keys`
+  and `POST /api/cli-login-sessions`.
+
+A fresh lookup is not recent reauthentication or a complete revocation check.
+`biome-plugins/use-verified-claims.grit` rejects direct `getUser()` calls in
+application code unless a suppression explains the exception. External API v1
+uses API-key authentication, not browser claims.
+
+`middleware-client.ts` forwards refreshed cookies to both the request and
+response, preserving locale rewrites and request-header overrides. Auth and
+OAuth callback redirects retain cookies and SSR cache headers on success and
+failure. Server components use the cookie-store adapter; middleware owns
+session refresh before rendering.
+
+#### Database retries
+
+Server and script clients use SDK retries for GET, HEAD, and OPTIONS requests
+on network failures and HTTP 503/520: up to three retries with 1s/2s/4s backoff
+unless `Retry-After` overrides it. HTTP 504 and default POST RPCs, including
+credit mutations, are not retried. This is not an overall request deadline;
+do not add a global retry wrapper around Supabase requests.
+
+The browser client disables SDK database retries; TanStack Query owns dashboard
+query retries. Direct browser reads remain single-attempt. The proxy's
+`ensureUserApplicationState` profile read also disables retries because repair
+is best-effort. Read, Auth lookup, and restoration failures are reported to
+Sentry without blocking a claims-authenticated dashboard request.
+
+### Credit balance sync
+
+`CreditsSection` uses the `['credits', userId]` query to display the stored
+balance and send `creditsLeft` to Crisp and PostHog. Its 60-second `staleTime`
+is not polling. `/api/generate-voice` returns credits used, not a remaining
+balance; support investigations should verify `public.credits.amount`.
+
+`invalidateCredits` in `apps/web/lib/credits-query.ts` refreshes active queries
+after non-cancelled generation requests, including split segments and retries,
+and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
+scopes the refresh to the verified user. Cache hits skip it because they do not
+charge. Streaming errors wait for the refund attempt. Cancellation is best-effort:
+provider work that has finished can retain a charge during upload or reconciliation.
+The aborted fetch cannot confirm settlement, so it skips immediate invalidation
+to avoid caching a temporary reservation before a refund. A late charge can leave
+the sidebar and Crisp balance higher than the database until another refresh;
+`staleTime` does not bound that delay.
+
+At JSON and SSE finalization, the route reports a Sentry warning when it observes
+an aborted request with positive reconciled `creditsDebited`. The event uses
+`flow:generation-charge-retained-after-cancellation` and includes the transport,
+model, charged credits, and user ID. The server's `beforeSend` filter strips
+request data, breadcrumbs, and unrelated context from these events. Filter by
+the production environment to count confirmed cases. Cancellations observed only
+after finalization are not captured, so this is a lower bound on impact, not a
+complete count of disconnects. Failed refunds have separate Sentry reporting.
+
+Cloning does not invalidate credits, so the sidebar and Crisp can stay stale.
+Crisp holds a session snapshot, not a live balance. If a refreshed query does
+not reach Crisp, check the claims and paid-status lookups before
+`Crisp.session.setData`.
 
 ### R2 Buckets
 

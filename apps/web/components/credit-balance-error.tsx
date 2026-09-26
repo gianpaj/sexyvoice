@@ -4,6 +4,7 @@ import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useTransition } from 'react';
 
+import { invalidateCredits } from '@/lib/credits-query';
 import { useRouter } from '@/lib/i18n/navigation';
 import { Alert, AlertDescription } from './ui/alert';
 import { Button } from './ui/button';
@@ -24,7 +25,7 @@ export function CreditBalanceError() {
             disabled={isRetrying || isPending}
             onClick={() => {
               startTransition(() => {
-                queryClient.invalidateQueries({ queryKey: ['credits'] });
+                invalidateCredits(queryClient);
                 router.refresh();
               });
             }}
