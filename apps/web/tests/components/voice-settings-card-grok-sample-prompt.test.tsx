@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
-import { VoiceSelector } from '@/components/voice-selector';
+import { VoiceSettingsCard } from '@/components/voice-settings-card';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -74,10 +74,10 @@ function createVoice(
   } as Tables<'voices'>;
 }
 
-function renderVoiceSelector(selectedVoice: Tables<'voices'>) {
+function renderVoiceSettingsCard(selectedVoice: Tables<'voices'>) {
   return render(
     <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
-      <VoiceSelector
+      <VoiceSettingsCard
         publicVoices={[selectedVoice]}
         selectedStyle={undefined}
         selectedVoice={selectedVoice}
@@ -88,9 +88,9 @@ function renderVoiceSelector(selectedVoice: Tables<'voices'>) {
   );
 }
 
-describe('VoiceSelector Grok sample prompt rendering', () => {
+describe('VoiceSettingsCard Grok sample prompt rendering', () => {
   it('highlights Grok tags for xai voices', () => {
-    renderVoiceSelector(createVoice());
+    renderVoiceSettingsCard(createVoice());
 
     expect(screen.getByText('<emphasis>')).toHaveClass(
       'inline-flex',
@@ -113,7 +113,7 @@ describe('VoiceSelector Grok sample prompt rendering', () => {
   });
 
   it('keeps non-xai sample prompts as plain text', () => {
-    renderVoiceSelector(
+    renderVoiceSettingsCard(
       createVoice({
         model:
           'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',

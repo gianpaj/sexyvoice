@@ -6,7 +6,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getVoiceGroups } from '@/components/voice-groups';
-import { VoiceSelector } from '@/components/voice-selector';
+import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { getEmotionTags } from '@/lib/ai';
 
 vi.mock('@/components/audio-provider', () => ({
@@ -77,8 +77,8 @@ function createVoice(
   } as Tables<'voices'>;
 }
 
-function renderVoiceSelector(
-  overrides: Partial<React.ComponentProps<typeof VoiceSelector>> = {},
+function renderVoiceSettingsCard(
+  overrides: Partial<React.ComponentProps<typeof VoiceSettingsCard>> = {},
 ) {
   const publicVoices = [
     createVoice({
@@ -102,7 +102,7 @@ function renderVoiceSelector(
     }),
   ];
 
-  const defaultProps: React.ComponentProps<typeof VoiceSelector> = {
+  const defaultProps: React.ComponentProps<typeof VoiceSettingsCard> = {
     publicVoices,
     selectedStyle: 'soft and breathy',
     selectedVoice: publicVoices[0],
@@ -112,14 +112,14 @@ function renderVoiceSelector(
 
   return render(
     <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
-      <VoiceSelector {...defaultProps} {...overrides} />
+      <VoiceSettingsCard {...defaultProps} {...overrides} />
     </NextIntlClientProvider>,
   );
 }
 
-describe('VoiceSelector', () => {
+describe('VoiceSettingsCard', () => {
   it('renders the style textarea for Gemini voices', () => {
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedStyle: 'warm and intimate',
       selectedVoice: createVoice({
         id: 'voice-gemini',
@@ -136,7 +136,7 @@ describe('VoiceSelector', () => {
   });
 
   it('hides the style textarea for Grok voices', () => {
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedStyle: 'should not render',
       selectedVoice: createVoice({
         id: 'voice-grok',
@@ -153,7 +153,7 @@ describe('VoiceSelector', () => {
   });
 
   it('hides the style textarea for Replicate voices', () => {
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedStyle: 'should not render',
       selectedVoice: createVoice({
         id: 'voice-replicate',
@@ -173,7 +173,7 @@ describe('VoiceSelector', () => {
   it('shows the Grok tooltip copy for Grok voices', async () => {
     const user = userEvent.setup();
 
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedVoice: createVoice({
         id: 'voice-grok',
         model: 'xai',
@@ -194,7 +194,7 @@ describe('VoiceSelector', () => {
   it('shows the Gemini tooltip copy for Gemini voices', async () => {
     const user = userEvent.setup();
 
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedVoice: createVoice({
         id: 'voice-gemini',
         model: 'gpro',
@@ -215,7 +215,7 @@ describe('VoiceSelector', () => {
   it('shows the Replicate fallback tooltip copy for Replicate voices', async () => {
     const user = userEvent.setup();
 
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedVoice: createVoice({
         id: 'voice-replicate',
         model:
@@ -251,13 +251,13 @@ describe('VoiceSelector', () => {
       sample_prompt: 'Hola',
     });
 
-    renderVoiceSelector({ selectedVoice: gemini38 });
+    renderVoiceSettingsCard({ selectedVoice: gemini38 });
 
     expect(getEmotionTags).toHaveBeenCalledWith(gemini38);
   });
 
   it('shows the selected voice name in the trigger button', () => {
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       selectedVoice: createVoice({
         id: 'voice-grok',
         model: 'xai',
@@ -335,7 +335,7 @@ describe('VoiceSelector', () => {
   });
 
   it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       publicVoices: [
         createVoice({
           id: 'voice-replicate',
@@ -378,7 +378,7 @@ describe('Gemini 3.8 display names', () => {
       name: 'es-es-advisor-8',
       type: 'Female',
     });
-    renderVoiceSelector({
+    renderVoiceSettingsCard({
       publicVoices: [clara],
       selectedVoice: undefined,
       setSelectedVoice,
@@ -406,7 +406,7 @@ describe('Gemini 3.8 display names', () => {
       name: 'es-es-advisor-8',
       sample_url: 'https://example.com/clara.mp3',
     });
-    renderVoiceSelector({ publicVoices: [clara], selectedVoice: clara });
+    renderVoiceSettingsCard({ publicVoices: [clara], selectedVoice: clara });
     expect(screen.getAllByText('Clara').length).toBeGreaterThan(0);
     await user.click(screen.getByRole('combobox'));
     await user.type(

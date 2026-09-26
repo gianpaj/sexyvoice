@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { AudioGenerator } from '@/components/audio-generator';
 import { AudioProvider } from '@/components/audio-provider';
 import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
-import { VoiceSelector } from '@/components/voice-selector';
+import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { useGenerationSettings } from '@/hooks/use-generation-settings';
 import { getTtsProvider } from '@/lib/utils';
 import { getFeaturedVoice } from '@/lib/voices';
@@ -44,7 +44,7 @@ export function GenerateUI({
           updateSettings={updateSettings}
         />
       </div>
-      <VoiceSelector
+      <VoiceSettingsCard
         isPaidUser={isPaidUser}
         publicVoices={publicVoices}
         selectedStyle={isGeminiVoice ? selectedStyle : undefined}

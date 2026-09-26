@@ -67,16 +67,16 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature | Public or stored ID | Runtime provider/model | Notes |
-| --- | --- | --- | --- |
-| Dashboard TTS | `gpro` | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash |
-| External API TTS | `gpro` | `gemini-2.5-pro-preview-tts` | Always generates fresh audio; falls back to Gemini 2.5 Flash |
-| Dashboard and API TTS | `gpro31` | `gemini-3.1-flash-tts-preview` | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
-| Dashboard and API TTS | `xai` | xAI TTS API | Supports MP3/WAV and a `0.7`–`1.5` speed setting |
-| Dashboard and API TTS | `orpheus` | Replicate Orpheus | External API aliases supported Orpheus model paths to `orpheus` |
-| Voice cloning | Locale-dependent | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual | See the cloning locale table below |
-| Real-time calls | `grok-voice-think-fast-1.0` | xAI Grok Voice Agent | Current call model |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI structured generation | Runs only for eligible completed calls |
+| Feature                  | Public or stored ID               | Runtime provider/model                                                   | Notes                                                                     |
+| ------------------------ | --------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dashboard TTS            | `gpro`                            | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
+| External API TTS         | `gpro`                            | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
+| Dashboard and API TTS    | `gpro31`                          | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
+| Dashboard and API TTS    | `xai`                             | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
+| Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
+| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual     | See the cloning locale table below                                        |
+| Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
 
@@ -95,13 +95,13 @@ creation requires a paid account and allows at most 10 active keys per user.
 
 ### Endpoints
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `POST` | `/api/v1/speech` | Generate fresh speech audio |
-| `GET` | `/api/v1/voices` | List public TTS voices and their model IDs |
-| `GET` | `/api/v1/models` | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
-| `GET` | `/api/v1/billing` | Return the credit balance and latest transaction |
-| `GET` | `/api/v1/openapi` | Return the public OpenAPI 3.1 document |
+| Method | Path              | Description                                             |
+| ------ | ----------------- | ------------------------------------------------------- |
+| `POST` | `/api/v1/speech`  | Generate fresh speech audio                             |
+| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs              |
+| `GET`  | `/api/v1/models`  | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
+| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction        |
+| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document                  |
 
 Clients may select speech voices by `voiceId`, or by the `voice` and `model`
 pair. Request and response schemas live in `apps/web/lib/api/schemas.ts` and
@@ -219,9 +219,9 @@ flowchart TD
 
 ### Locale Routing
 
-| Locale group | Locales | Model | Provider |
-| --- | --- | --- | --- |
-| Voxtral | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt` | `voxtral-mini-tts-2603` | Mistral |
+| Locale group            | Locales                                                                                        | Model                                 | Provider  |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
 | Chatterbox Multilingual | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
@@ -275,20 +275,23 @@ is off by default, and its UI toggle is currently hidden.
 
 ### Call Configuration
 
-| Setting | Current behavior |
-| --- | --- |
-| Model | `grok-voice-think-fast-1.0` |
-| Voice | Stored per character, selected from public call voices, and resolved to a database ID |
-| Temperature | Defaults to `0.8`; accepted range is `0`–`1.2` |
-| Max output tokens | Nullable; defaults to the agent's model behavior |
-| Instructions | Edge Config defaults for non-character calls; database prompts for characters |
-| Language | 20 supported call languages; English fallback |
-| Memory | Paid, opt-in backend; off by default |
+| Setting           | Current behavior                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-1.0`                                                           |
+| Voice             | Stored per character, selected from public call voices, and resolved to a database ID |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                        |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                      |
+| Instructions      | Edge Config defaults for non-character calls; database prompts for characters         |
+| Language          | 20 supported call languages; English fallback                                         |
+| Memory            | Paid, opt-in backend; off by default                                                  |
 
 Completed calls of at least 120 seconds with a transcript are eligible for
 structured analysis. A Supabase Database Webhook authenticates to
 `/api/call-sessions/analyze` with `CALL_SUMMARY_SECRET`. The route is idempotent
-and writes one `call_session_analysis` row per session.
+and only enqueues the session into `call_analysis_queue`; the
+`/api/call-sessions/analyze/batch` Vercel cron coalesces pending sessions into
+one xAI Batch API request and writes one `call_session_analysis` row per
+session when the batch settles. Analysis is asynchronous and best-effort.
 
 ## Data and Storage
 
@@ -307,7 +310,8 @@ and writes one `call_session_analysis` row per session.
   timestamps.
 - `call_sessions` stores call duration, billing, transcript, model, and status.
 - `call_session_analysis` stores one structured transcript analysis per call;
-  `call_session_analytics` stores aggregate analysis runs.
+  `call_session_analytics` stores aggregate analysis runs;
+  `call_analysis_queue` tracks pending and in-flight xAI batch analyses.
 - `agent_memories` stores pgvector-backed, per-user call memories with hybrid
   semantic and keyword retrieval.
 
@@ -362,7 +366,7 @@ apps/
 │   │   ├── generate-voice/            # Dashboard TTS
 │   │   ├── clone-voice/               # Dashboard voice cloning
 │   │   ├── call-token/                # LiveKit token and agent dispatch
-│   │   ├── call-sessions/analyze/     # Webhook-triggered transcript analysis
+│   │   ├── call-sessions/analyze/     # Webhook enqueue + batch drain cron
 │   │   ├── characters/                # Custom character CRUD
 │   │   ├── memories/                  # User memory erasure
 │   │   ├── api-keys/                  # External API key management

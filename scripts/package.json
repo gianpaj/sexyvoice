@@ -2,9 +2,9 @@
   "name": "@sexyvoice/scripts",
   "private": true,
   "scripts": {
-    "analyze-call-sessions": "node analyze-call-sessions.mjs",
+    "analyze-call-sessions": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON analyze-call-sessions.mjs",
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
-    "backfill-call-analysis": "node backfill-call-analysis.mjs",
+    "backfill-call-analysis": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON backfill-call-analysis.mjs",
     "backfill-free-call": "tsx backfill-free-call.mts",
     "backup-r2-audio": "NODE_ENV=production tsx backup-r2-audio.mts",
     "batch-refund-credits": "tsx batch-refund-credits.mts",

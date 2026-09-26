@@ -221,6 +221,12 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   requirements.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
+- Call transcript analysis is async: `/api/call-sessions/analyze` only enqueues
+  into `call_analysis_queue`; the `/api/call-sessions/analyze/batch` cron
+  drains it through the xAI Batch API. Shared prompt/schema/batch code lives in
+  `apps/web/lib/ai/` and is imported by `scripts/` through Node type stripping,
+  so those modules must use relative imports with `.ts` extensions and no `@/`
+  aliases. `CALL_ANALYSIS_REALTIME=true` is the inline emergency bypass.
 
 ## Banners
 
