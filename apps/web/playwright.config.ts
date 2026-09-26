@@ -164,18 +164,18 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  webServer: process.env.CI
-    ? {
-        // In CI, the workflow builds the app before tests, so only start the
-        // server here. Locally, keep building first so `pnpm run test:e2e` works
-        // without requiring a manual build step.
-        command: `pnpm exec next start --port ${PLAYWRIGHT_PORT}`,
-        url: PLAYWRIGHT_BASE_URL,
-        timeout: 300 * 1000,
-        // Pin Node process TZ so RSC date formatting (date-fns runs in the
-        // server process) matches the browser timezoneId pinned above.
-        env: { TZ: 'UTC' },
-      }
-    : undefined,
+  /* Start the app server before running the tests */
+  webServer: {
+    // CI builds the app before tests, so serve that build. Locally, start the
+    // dev server, or reuse one already running on the Playwright port.
+    command: process.env.CI
+      ? `pnpm exec next start --port ${PLAYWRIGHT_PORT}`
+      : `pnpm exec next dev --port ${PLAYWRIGHT_PORT}`,
+    url: PLAYWRIGHT_BASE_URL,
+    reuseExistingServer: !process.env.CI,
+    timeout: 300 * 1000,
+    // Pin Node process TZ so RSC date formatting (date-fns runs in the
+    // server process) matches the browser timezoneId pinned above.
+    env: { TZ: 'UTC' },
+  },
 });
