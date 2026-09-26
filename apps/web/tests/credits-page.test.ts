@@ -26,6 +26,10 @@ vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn(async () => vi.fn((key: string) => key)),
 }));
 
+vi.mock('@/app/[lang]/(dashboard)/dashboard/credits/custom-topup', () => ({
+  CustomTopup: vi.fn(() => null),
+}));
+
 vi.mock('@/components/pricing-table', () => ({
   default: vi.fn(() => null),
 }));

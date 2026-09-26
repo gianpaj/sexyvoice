@@ -21,6 +21,7 @@ import {
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
+import { CustomTopup } from './custom-topup';
 import { PaymentStatus } from './payment-status';
 
 function getScheduledSubscriptionEndDate(
@@ -248,6 +249,8 @@ export default async function CreditsPage(props: {
         lang={lang}
         shouldShowSubscriptionPlans={shouldShowSubscriptionPlans}
       />
+
+      <CustomTopup />
 
       <div className="my-8">
         <h3 className="mb-4 font-semibold text-lg">{t('history.title')}</h3>

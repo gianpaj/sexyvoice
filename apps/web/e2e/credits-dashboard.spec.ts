@@ -7,9 +7,10 @@ import { CreditsPage } from './pages/credits.page';
  *
  * These tests verify the credits/billing page functionality:
  * 1. Credit top-up packages (Starter, Standard, Pro)
- * 2. Stripe Customer Portal link
- * 3. Credit transaction history
- * 4. TopupStatus alerts (success/canceled/error via URL params)
+ * 2. Custom credit top-up amount
+ * 3. Stripe Customer Portal link
+ * 4. Credit transaction history
+ * 5. TopupStatus alerts (success/canceled/error via URL params)
  *
  * All tests use the authenticated state from auth.setup.ts.
  * Stripe checkout sessions are NOT created — we only test the UI.
@@ -52,6 +53,33 @@ test.describe('Credits Dashboard - Authenticated User', () => {
 
   test('should show buy credits buttons', async () => {
     await creditsPage.expectBuyButtonsVisible();
+  });
+
+  test('should show the custom top-up card at the minimum amount', async () => {
+    await creditsPage.expectCustomTopupVisible();
+    await creditsPage.expectCustomTopupPrice('$2.50');
+
+    // 5,000 credits is the floor, so there is nothing to step down to
+    await expect(creditsPage.customDecreaseButton).toBeDisabled();
+  });
+
+  test('should step the custom credit amount and reprice', async () => {
+    await creditsPage.expectCustomTopupVisible();
+
+    await creditsPage.customIncreaseButton.click();
+    await expect(creditsPage.customCreditsInput).toHaveValue('5500');
+    await creditsPage.expectCustomTopupPrice('$2.75');
+
+    await creditsPage.customDecreaseButton.click();
+    await expect(creditsPage.customCreditsInput).toHaveValue('5000');
+    await creditsPage.expectCustomTopupPrice('$2.50');
+  });
+
+  test('should snap a typed custom amount to the nearest step', async () => {
+    await creditsPage.setCustomCredits(12_345);
+
+    await expect(creditsPage.customCreditsInput).toHaveValue('12500');
+    await creditsPage.expectCustomTopupPrice('$6.25');
   });
 
   test('should display credit history section', async () => {
