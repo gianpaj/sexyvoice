@@ -3,6 +3,7 @@ import { expect, test } from './fixtures';
 import {
   handleGenerateVoiceError,
   handleInsufficientCreditsError,
+  mockEnhancedText,
   setupDefaultMocks,
 } from './mocks/google-ai.mock';
 import { GeneratePage } from './pages/generate.page';
@@ -233,6 +234,19 @@ test.describe('Generate Dashboard - Authenticated User', () => {
     await generatePage.clickGenerate();
     await generatePage.waitForGenerationComplete();
     await generatePage.expectAudioPlayerVisible();
+  });
+
+  test('should restore the original text when undoing an enhancement', async ({
+    page,
+  }) => {
+    const originalText = 'Hello, this is my original prompt.';
+    await generatePage.enterText(originalText);
+
+    await generatePage.clickEnhanceText();
+    await expect(generatePage.textInput).toHaveValue(mockEnhancedText);
+
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(generatePage.textInput).toHaveValue(originalText);
   });
 });
 
