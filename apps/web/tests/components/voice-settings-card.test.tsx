@@ -8,7 +8,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { getVoiceGroups } from '@/components/voice-groups';
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { getEmotionTags } from '@/lib/ai';
-import { getFeaturedVoice } from '@/lib/voices';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -392,12 +391,6 @@ describe('Featured voices shared across Gemini models', () => {
       'achernar-gpro38',
       'achernar-gpro31',
     ]);
-  });
-
-  it('selects the Gemini 3.8 voice by default regardless of query order', () => {
-    expect(getFeaturedVoice([featured('gpro31'), featured('gpro38')])?.id).toBe(
-      'achernar-gpro38',
-    );
   });
 });
 

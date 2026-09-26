@@ -72,6 +72,29 @@ describe('GenerateUI', () => {
     vi.clearAllMocks();
   });
 
+  it('lists and selects Gemini 3.8 before the same-named 3.1 voice', () => {
+    const featured = (model: string) =>
+      createVoice({
+        id: `achernar-${model}`,
+        language: 'multiple',
+        model,
+        name: 'achernar',
+        sort_order: 0,
+      });
+    // The database returns tied rows in no defined order.
+    renderGenerateUI([
+      featured('gpro31'),
+      createVoice({ id: 'kore-gpro', model: 'gpro', name: 'kore' }),
+      featured('gpro38'),
+    ]);
+
+    const props = mockVoiceSettingsCard.mock.calls[0][0];
+    expect(
+      props.publicVoices.map((voice: Tables<'voices'>) => voice.id),
+    ).toEqual(['achernar-gpro38', 'achernar-gpro31', 'kore-gpro']);
+    expect(props.selectedVoice?.id).toBe('achernar-gpro38');
+  });
+
   it('passes Gemini style state to both child components for Gemini voices', () => {
     const geminiVoice = createVoice({
       id: 'voice-gemini',
@@ -196,7 +219,7 @@ describe('GenerateUI', () => {
     const secondVoice = createVoice({
       id: 'voice-second',
       model: 'gpro',
-      name: 'kore',
+      name: 'zephyr',
     });
 
     renderGenerateUI([firstVoice, secondVoice]);

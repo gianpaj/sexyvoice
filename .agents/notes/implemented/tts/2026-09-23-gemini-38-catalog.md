@@ -61,13 +61,15 @@ Changing the database name was rejected because generation and API lookups use i
 
 ## Featured voices and pricing
 
-All 28 rows use `sort_order = 0`, so they join the Featured group once public.
-The 11 public `gpro31` rows are featured too, and their names repeat in the 3.8
-batch. `compareVoices` in `apps/web/lib/voices.ts` breaks those ties by
-`VOICE_MODELS`, which lists Gemini 3.8 first. The 3.8 voice therefore sorts
-first and becomes the default selection. Without the tie-break, database row
-order decided both. A read-only query on 2026-09-26 showed the current featured
-set: the 11 `gpro31` voices and one Grok voice.
+All 28 rows use `sort_order = 0`, the featured value, so they sort to the top of
+the voice picker once public. The 11 public `gpro31` rows are featured too, and
+their names repeat in the 3.8 batch. The generate page sorts its voice list with
+`compareVoices` from `apps/web/lib/voices.ts`, which breaks those ties by
+`VOICE_MODELS` and lists Gemini 3.8 first. The picker shows each 3.8 voice
+before its 3.1 namesake, and the first featured voice becomes the default. The
+database query orders only by `sort_order` and name, so without the tie-break
+row order decided both. A read-only query on 2026-09-26 showed the current
+featured set: the 11 `gpro31` voices and one Grok voice.
 
 Free users pay the base Gemini rate for 3.8 voices, with no surcharge, including
 after Google's promotional rate ends on 2027-01-01. The user chose this.

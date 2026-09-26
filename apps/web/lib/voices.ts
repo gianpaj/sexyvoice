@@ -12,7 +12,8 @@ type SortableVoice = Pick<Tables<'voices'>, 'model' | 'name' | 'sort_order'>;
  * Shared voice order: featured first, then by name. The same Gemini identity
  * (`achernar`, `kore`, ...) exists under several models at the same
  * `sort_order`, so ties follow `VOICE_MODELS`, which puts the newest Gemini
- * first. Without the tie-break the database decides which model wins.
+ * first. The generate page sorts its voice list with this before rendering
+ * the picker or choosing the default voice.
  */
 export function compareVoices(a: SortableVoice, b: SortableVoice): number {
   return (
@@ -23,10 +24,11 @@ export function compareVoices(a: SortableVoice, b: SortableVoice): number {
   );
 }
 
+/** First featured voice, given a list already sorted with compareVoices. */
 export function getFeaturedVoice(
   voices: Tables<'voices'>[],
 ): Tables<'voices'> | undefined {
-  return voices.filter(isFeaturedVoice).sort(compareVoices)[0];
+  return voices.find(isFeaturedVoice);
 }
 
 // ── Voice selector types & constants ─────────────────────────────────────────
