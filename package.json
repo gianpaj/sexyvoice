@@ -1,6 +1,6 @@
 {
   "name": "sexyvoice",
-  "version": "2026.4.7",
+  "version": "2026.9.27",
   "private": true,
   "scripts": {
     "analyze-call-sessions": "pnpm --filter @sexyvoice/scripts analyze-call-sessions",

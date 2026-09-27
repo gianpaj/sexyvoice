@@ -194,7 +194,7 @@ export function createExternalApiOpenApiDocument() {
     info: {
       description: 'API for text-to-speech generation.',
       title: 'SexyVoice API',
-      version: '1.0.1',
+      version: '1.1.0',
     },
     openapi: '3.1.0',
     paths: {
