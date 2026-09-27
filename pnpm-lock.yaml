@@ -71,7 +71,7 @@ overrides:
   '@opentelemetry/exporter-trace-otlp-http': 0.218.0
   '@opentelemetry/sdk-node': 0.218.0
   fast-xml-parser@>=4.3.6 <=5.3.3: '>=5.3.7'
-  immutable@>=5.0.0-beta.1 <5.1.8: 5.1.8
+  immutable@>=5.0.0-beta.1 <5.1.8: 5.1.9
   protobufjs@<7.5.8: 7.6.6
   protobufjs@>=8.0.0 <8.2.0: 8.4.0
   remark-mdx-frontmatter>toml: 4.2.0
@@ -7556,8 +7556,8 @@ packages:
   immer@11.1.15:
     resolution: {integrity: sha512-VrNANlmnWQnh5COXIIOQXM9oOJw7naGKlBT74ZOOR6lpVXc3gFEu9FJLDFcpCJ2j+NWr8TIwtWD//T6ZX6TKiQ==}
 
-  immutable@5.1.8:
-    resolution: {integrity: sha512-TM5YqrGeTsVIPPpILzeqZ8D2Zc2TvNgSDi88zPF2a4cyqQdWV/wVWBDRDbNzzrLeRWScrFcOX9lW2iX6GOtUDw==}
+  immutable@5.1.9:
+    resolution: {integrity: sha512-m8nVez3rwrgmWxtLMt1ZYXB2Lv7OKYn/disyxAlSDYAlKSlFoPPfIAmAM/M5xqL4m4C/wAPw7S2/CNaUii1Hxg==}
 
   import-in-the-middle@1.14.2:
     resolution: {integrity: sha512-5tCuY9BV8ujfOpwtAGgsTx9CGUapcFMEEyByLv1B+v2+6DhAcw+Zr0nhQT7uwaZ7DiourxFEscghOR8e1aPLQw==}
@@ -17444,7 +17444,7 @@ snapshots:
 
   immer@11.1.15: {}
 
-  immutable@5.1.8: {}
+  immutable@5.1.9: {}
 
   import-in-the-middle@1.14.2:
     dependencies:
@@ -19526,7 +19526,7 @@ snapshots:
   sass@1.86.3:
     dependencies:
       chokidar: 4.0.3
-      immutable: 5.1.8
+      immutable: 5.1.9
       source-map-js: 1.2.1
     optionalDependencies:
       '@parcel/watcher': 2.5.6
