@@ -445,6 +445,10 @@ export function PresetSelector({
     </div>
   ) : null;
 
+  const showArrows = allCharacters.length + (addCharacterButton ? 1 : 0) > 6;
+  const slideClassName = 'flex basis-[22%] justify-center pl-2 sm:basis-1/6';
+  const lastSlideClassName = `${slideClassName} mr-4 sm:mr-0`;
+
   return (
     <>
       <div className="w-full">
@@ -454,16 +458,26 @@ export function PresetSelector({
         </div>
 
         {/* Avatar Row — Carousel: each avatar is its own slide. Mobile shows
-            4.5 so the next avatar peeks and swiping is discoverable; from sm up,
-            6 are visible and the arrows sit in the side gutters. */}
-        <div className="relative mb-4 sm:px-10">
+            4.5 so the next avatar peeks and swiping is discoverable. Below sm
+            the row bleeds into ConfigurationForm's px-4 so avatars scroll edge
+            to edge; Embla reads the track's padding-left and the last slide's
+            margin-right as edge gaps, so the row lines up with the heading at
+            rest. From sm up, 6 are visible and arrows get a gutter only when
+            there is more to scroll. */}
+        <div
+          className={`relative -mx-4 mb-4 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
+        >
           <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
-            <CarouselContent className="-ml-2">
+            <CarouselContent className="-ml-2 pl-4 sm:pl-0">
               {allCharacters.map((preset, index) => {
                 const isSelected = pgState.selectedPresetId === preset.id;
                 return (
                   <CarouselItem
-                    className="flex basis-[22%] justify-center pl-2 sm:basis-1/6"
+                    className={
+                      index === allCharacters.length - 1 && !addCharacterButton
+                        ? lastSlideClassName
+                        : slideClassName
+                    }
                     key={preset.id}
                   >
                     <AvatarButton
@@ -479,12 +493,12 @@ export function PresetSelector({
               })}
               {/* "+" add button as its own slide */}
               {addCharacterButton && (
-                <CarouselItem className="flex basis-[22%] justify-center pl-2 sm:basis-1/6">
+                <CarouselItem className={lastSlideClassName}>
                   {addCharacterButton}
                 </CarouselItem>
               )}
             </CarouselContent>
-            {allCharacters.length + (addCharacterButton ? 1 : 0) > 6 && (
+            {showArrows && (
               <>
                 <CarouselPrevious
                   className="-left-9 hidden h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80 sm:inline-flex"
