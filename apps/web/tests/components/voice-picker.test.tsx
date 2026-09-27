@@ -6,6 +6,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { VoicePicker } from '@/components/voice-picker';
+import { compareVoices } from '@/lib/voices';
 import messages from '@/messages/en.json';
 
 const voices = ['tara', 'kore'].map(
@@ -66,14 +67,46 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe('VoicePicker order', () => {
+  it('lists each Gemini 3.8 voice before its same-named 3.1 voice', async () => {
+    const [tara] = voices;
+    const featured = (model: string): Tables<'voices'> => ({
+      ...tara,
+      id: `achernar-${model}`,
+      language: 'multiple',
+      model,
+      name: 'achernar',
+      sort_order: 0,
+    });
+    // The generate page sorts the query result, whose ties have no defined order.
+    const sorted = [featured('gpro31'), tara, featured('gpro38')].sort(
+      compareVoices,
+    );
+    const user = userEvent.setup();
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <VoicePicker onValueChange={vi.fn()} voices={sorted} />
+      </NextIntlClientProvider>,
+    );
+
+    await user.click(screen.getByRole('combobox'));
+
+    expect(screen.getAllByRole('option').map((option) => option.id)).toEqual([
+      'voice-item-achernar-gpro38',
+      'voice-item-achernar-gpro31',
+      'voice-item-tara',
+    ]);
+  });
+});
+
 describe('VoicePicker preview', () => {
   it('tracks audio position and resets when playback ends', async () => {
     const { onValueChange, user } = await openVoicePicker();
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
 
     const audio = PreviewAudio.instances[0];
     const button = screen.getByRole('button', {
-      name: 'Stop preview of tara',
+      name: 'Stop preview of Tara',
     });
     const ring = button.querySelector('circle[stroke-dasharray]');
     expect(audio.src).toBe(voices[0].sample_url);
@@ -93,7 +126,7 @@ describe('VoicePicker preview', () => {
 
     act(() => audio.dispatchEvent(new Event('ended')));
     expect(
-      screen.getByRole('button', { name: 'Preview tara' }),
+      screen.getByRole('button', { name: 'Preview Tara' }),
     ).toBeInTheDocument();
     await waitFor(() => expect(ring).not.toBeInTheDocument());
     expect(audio.pause).toHaveBeenCalledOnce();
@@ -101,10 +134,10 @@ describe('VoicePicker preview', () => {
 
   it('keeps the ring empty while the duration is unavailable', async () => {
     const { user } = await openVoicePicker();
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
     const audio = PreviewAudio.instances[0];
     const ring = screen
-      .getByRole('button', { name: 'Stop preview of tara' })
+      .getByRole('button', { name: 'Stop preview of Tara' })
       .querySelector('circle[stroke-dasharray]');
 
     audio.currentTime = 2;
@@ -120,15 +153,15 @@ describe('VoicePicker preview', () => {
 
   it('stops on a second click and restarts the sample from the beginning', async () => {
     const { user } = await openVoicePicker();
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
     const first = PreviewAudio.instances[0];
     first.currentTime = 5;
     await user.click(
-      screen.getByRole('button', { name: 'Stop preview of tara' }),
+      screen.getByRole('button', { name: 'Stop preview of Tara' }),
     );
     expect(first.pause).toHaveBeenCalledOnce();
 
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
     expect(PreviewAudio.instances).toHaveLength(2);
   });
 
@@ -149,9 +182,9 @@ describe('VoicePicker preview', () => {
     play.mockResolvedValue(undefined);
 
     const { user } = await openVoicePicker();
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
     const first = PreviewAudio.instances[0];
-    await user.click(screen.getByRole('button', { name: 'Preview kore' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Kore' }));
     expect(first.pause).toHaveBeenCalledOnce();
 
     await act(async () =>
@@ -164,30 +197,30 @@ describe('VoicePicker preview', () => {
     );
     act(() => first.dispatchEvent(new Event('ended')));
     expect(
-      screen.getByRole('button', { name: 'Stop preview of kore' }),
+      screen.getByRole('button', { name: 'Stop preview of Kore' }),
     ).toBeInTheDocument();
     expect(PreviewAudio.instances[1].pause).not.toHaveBeenCalled();
   });
 
   it('resets on a media error', async () => {
     const { user } = await openVoicePicker();
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
     const audio = PreviewAudio.instances[0];
     act(() => audio.dispatchEvent(new Event('error')));
     expect(
-      screen.getByRole('button', { name: 'Preview tara' }),
+      screen.getByRole('button', { name: 'Preview Tara' }),
     ).toBeInTheDocument();
     expect(audio.pause).toHaveBeenCalledOnce();
   });
 
   it('stops playback when the popover closes or the component unmounts', async () => {
     const { unmount, user } = await openVoicePicker();
-    await user.click(screen.getByRole('button', { name: 'Preview tara' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Tara' }));
     await user.keyboard('{Escape}');
     expect(PreviewAudio.instances[0].pause).toHaveBeenCalledOnce();
 
     await user.click(screen.getByRole('combobox'));
-    await user.click(screen.getByRole('button', { name: 'Preview kore' }));
+    await user.click(screen.getByRole('button', { name: 'Preview Kore' }));
     unmount();
     expect(PreviewAudio.instances[1].pause).toHaveBeenCalledOnce();
   });

@@ -12,6 +12,7 @@ import {
   isInstructionsDirty,
   saveCharacter,
 } from '@/lib/characters';
+import { invalidateCredits } from '@/lib/credits-query';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
@@ -110,6 +111,7 @@ export const ConnectionProvider = ({
 
     if (!response.ok) {
       if (response.status === 402) {
+        invalidateCredits(queryClient);
         toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
       } else if (response.status === 403) {
         toast.error(t('freeUserCallLimitExceeded'));
@@ -131,8 +133,7 @@ export const ConnectionProvider = ({
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
     const claims = await getVerifiedClaims(supabase);
     if (claims?.sub) {
-      queryClient.refetchQueries({ queryKey: ['credits', claims.sub] });
-      queryClient.invalidateQueries({ queryKey: ['credits', claims.sub] });
+      invalidateCredits(queryClient, claims.sub);
     }
   };
 

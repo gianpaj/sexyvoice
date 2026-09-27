@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
-import { getVoiceGroups } from '@/components/voice-groups';
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
+import { getEmotionTags } from '@/lib/ai';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -238,6 +238,23 @@ describe('VoiceSettingsCard', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('passes the selected voice to the emotion-tag lookup', () => {
+    const spanishTags =
+      '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
+    vi.mocked(getEmotionTags).mockClear().mockReturnValue(spanishTags);
+    const gemini38 = createVoice({
+      id: 'voice-gemini-38',
+      language: 'es-ES 🇪🇸',
+      model: 'gpro38',
+      name: 'es-es-tutor-12',
+      sample_prompt: 'Hola',
+    });
+
+    renderVoiceSettingsCard({ selectedVoice: gemini38 });
+
+    expect(getEmotionTags).toHaveBeenCalledWith(gemini38);
+  });
+
   it('shows the selected voice name in the trigger button', () => {
     renderVoiceSettingsCard({
       selectedVoice: createVoice({
@@ -249,71 +266,6 @@ describe('VoiceSettingsCard', () => {
     });
 
     expect(screen.getByRole('combobox')).toHaveTextContent(/eve/i);
-  });
-
-  it('keeps featured voices first and preserves query order for non-featured groups', () => {
-    const voiceGroups = getVoiceGroups(
-      [
-        createVoice({
-          id: 'voice-featured-zephyr',
-          language: 'multiple',
-          model: 'gpro',
-          name: 'zephyr',
-          sort_order: 0,
-        }),
-        createVoice({
-          id: 'voice-featured-achernar',
-          language: 'multiple',
-          model: 'gpro',
-          name: 'achernar',
-          sort_order: 0,
-        }),
-        createVoice({
-          id: 'voice-grok-sal',
-          language: 'multiple',
-          model: 'xai',
-          name: 'sal',
-          sort_order: 1,
-        }),
-        createVoice({
-          id: 'voice-grok-ara',
-          language: 'multiple',
-          model: 'xai',
-          name: 'ara',
-          sort_order: 1,
-        }),
-        createVoice({
-          id: 'voice-replicate-dan',
-          language: 'en-GB 🇬🇧',
-          model:
-            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-          name: 'dan',
-          sort_order: 2,
-        }),
-        createVoice({
-          id: 'voice-replicate-emma',
-          language: 'en-US 🇺🇸',
-          model:
-            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-          name: 'emma',
-          sort_order: 2,
-        }),
-      ],
-      {
-        featuredGroupLabel: baseDict.voiceSelector.featuredGroupLabel,
-        geminiGroupLabel: baseDict.voiceSelector.multilingualGroupLabel,
-      },
-    );
-
-    expect(voiceGroups.map((group) => group.label)).toEqual([
-      'Featured',
-      'Grok ✨',
-      'en-GB 🇬🇧',
-      'en-US 🇺🇸',
-    ]);
-    expect(
-      voiceGroups.map((group) => group.voices.map((voice) => voice.name)),
-    ).toEqual([['achernar', 'zephyr'], ['ara', 'sal'], ['dan'], ['emma']]);
   });
 
   it('keeps the featured grok voice selected while using multilingual grouping copy', () => {
@@ -347,5 +299,54 @@ describe('VoiceSettingsCard', () => {
     expect(baseDict.voiceSelector.multilingualGroupLabel).toBe(
       baseDict.voiceSelector.multilingualGroupLabel,
     );
+  });
+});
+
+describe('Gemini 3.8 display names', () => {
+  it('shows Clara and selects her catalog ID when searching by display name', async () => {
+    const user = userEvent.setup();
+    const setSelectedVoice = vi.fn();
+    const clara = createVoice({
+      id: 'clara-catalog-id',
+      model: 'gpro38',
+      name: 'es-es-advisor-8',
+      type: 'Female',
+    });
+    renderVoiceSettingsCard({
+      publicVoices: [clara],
+      selectedVoice: undefined,
+      setSelectedVoice,
+    });
+    await user.click(screen.getByRole('combobox'));
+    await user.type(
+      screen.getByPlaceholderText(baseDict.voiceSelector.searchPlaceholder),
+      'Clara',
+    );
+    await user.click(
+      within(screen.getByRole('option', { name: /Clara/ })).getByRole(
+        'button',
+        { name: /Clara/ },
+      ),
+    );
+    expect(setSelectedVoice).toHaveBeenCalledWith('clara-catalog-id');
+    expect(clara.name).toBe('es-es-advisor-8');
+  });
+
+  it('keeps provider IDs searchable and labels the selected sample with the friendly name', async () => {
+    const user = userEvent.setup();
+    const clara = createVoice({
+      id: 'clara-catalog-id',
+      model: 'gpro38',
+      name: 'es-es-advisor-8',
+      sample_url: 'https://example.com/clara.mp3',
+    });
+    renderVoiceSettingsCard({ publicVoices: [clara], selectedVoice: clara });
+    expect(screen.getAllByText('Clara').length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('combobox'));
+    await user.type(
+      screen.getByPlaceholderText(baseDict.voiceSelector.searchPlaceholder),
+      'es-es-advisor-8',
+    );
+    expect(screen.getByRole('option', { name: /Clara/ })).toBeInTheDocument();
   });
 });

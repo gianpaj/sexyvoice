@@ -31,6 +31,7 @@ import {
   isTransientProviderFailure,
   type ProviderId,
 } from '@/lib/provider-errors';
+import { CANCELLED_CHARGE_FLOW } from '@/lib/sentry/server-filters';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
@@ -47,6 +48,7 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildGeminiTtsContents,
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -264,6 +266,30 @@ async function reconcileReservedCredits({
   }
 }
 
+function reportCancelledCharge({
+  creditsDebited,
+  model,
+  signal,
+  transport,
+  userId,
+}: {
+  creditsDebited: number;
+  model: string;
+  signal: AbortSignal;
+  transport: 'json' | 'sse';
+  userId: string;
+}) {
+  if (!signal.aborted || creditsDebited <= 0) return;
+
+  Sentry.captureMessage('Voice generation charge retained after cancellation', {
+    extra: { creditsDebited, model },
+    fingerprint: [CANCELLED_CHARGE_FLOW],
+    level: 'warning',
+    tags: { flow: CANCELLED_CHARGE_FLOW, transport },
+    user: { id: userId },
+  });
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -283,6 +309,7 @@ export async function POST(request: Request) {
   let userHasPaid = false;
   let modelUsed = '';
   let reservedCredits = 0;
+  let creditsDebited = 0;
   try {
     if (request.body === null) {
       logger.error('Request body is empty');
@@ -524,6 +551,9 @@ export async function POST(request: Request) {
     if (speed !== undefined) {
       hashInput += `-speed:${speed}`;
     }
+    if (voiceObj.model === 'gpro38') {
+      hashInput += `-style:${JSON.stringify(styleVariant ?? '')}`;
+    }
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -573,15 +603,16 @@ export async function POST(request: Request) {
       if (shouldStream) {
         const body = createSseEvent('done', {
           cached: true,
-          creditsRemaining: currentAmount,
           creditsUsed: 0,
           url: result,
         });
         return new Response(body, { headers: SSE_HEADERS });
       }
 
-      // Return existing audio file URL
-      return NextResponse.json({ url: result }, { status: 200 });
+      return NextResponse.json(
+        { cached: true, creditsUsed: 0, url: result },
+        { status: 200 },
+      );
     }
 
     let replicateResponse: Prediction | undefined;
@@ -601,6 +632,7 @@ export async function POST(request: Request) {
 
       const geminiTTSConfig = buildGeminiTtsConfig({
         abortSignal: abortController.signal,
+        model: voiceObj.model,
         seed,
         temperature,
         voiceName: voiceObj.name,
@@ -610,7 +642,6 @@ export async function POST(request: Request) {
         return streamGeminiTtsResponse({
           ai,
           config: geminiTTSConfig,
-          currentAmount,
           estimate,
           filename,
           provider,
@@ -633,7 +664,11 @@ export async function POST(request: Request) {
 
           genAIResponse = await ai.models.generateContent({
             config: geminiTTSConfig,
-            contents: [{ parts: [{ text }], role: 'user' }],
+            contents: buildGeminiTtsContents({
+              model: voiceObj.model,
+              styleVariant,
+              text,
+            }),
             model: modelUsed,
           });
         } catch (error) {
@@ -648,6 +683,8 @@ export async function POST(request: Request) {
             reservedCredits = 0;
             return APIErrorResponse('Request aborted', 499);
           }
+
+          if (voiceObj.model === 'gpro38') throw error;
 
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
@@ -681,7 +718,11 @@ export async function POST(request: Request) {
           try {
             genAIResponse = await ai.models.generateContent({
               config: geminiTTSConfig,
-              contents: [{ parts: [{ text }], role: 'user' }],
+              contents: buildGeminiTtsContents({
+                model: voiceObj.model,
+                styleVariant,
+                text,
+              }),
               model: modelUsed,
             });
 
@@ -732,7 +773,11 @@ export async function POST(request: Request) {
         });
         genAIResponse = await ai.models.generateContent({
           config: geminiTTSConfig,
-          contents: [{ parts: [{ text }], role: 'user' }],
+          contents: buildGeminiTtsContents({
+            model: voiceObj.model,
+            styleVariant,
+            text,
+          }),
           model: modelUsed,
         });
       }
@@ -983,7 +1028,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const creditsDebited = await reconcileReservedCredits({
+    creditsDebited = await reconcileReservedCredits({
       actualCredits: creditsUsed,
       context: 'generate_voice_success',
       reservedCredits,
@@ -1056,6 +1101,8 @@ export async function POST(request: Request) {
       // Insert usage event for tracking (non-blocking)
       await insertUsageEvent({
         creditsUsed: creditsDebited,
+        inputChars: text.length,
+        model: modelUsed,
         quantity: text.length,
         sourceId: audioFileDBResult.data?.id,
         sourceType: 'tts',
@@ -1063,6 +1110,7 @@ export async function POST(request: Request) {
         userId: user.id,
         ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
+          ...usage,
           duration,
           model: modelUsed,
           predictionId: replicateResponse?.id ?? null,
@@ -1090,7 +1138,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        creditsRemaining: (currentAmount || 0) - creditsDebited,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       },
@@ -1248,6 +1295,16 @@ export async function POST(request: Request) {
     }
 
     return APIErrorResponse('Failed to generate voice', 500);
+  } finally {
+    if (user) {
+      reportCancelledCharge({
+        creditsDebited,
+        model: modelUsed,
+        signal: request.signal,
+        transport: 'json',
+        userId: user.id,
+      });
+    }
   }
 }
 
@@ -1262,7 +1319,6 @@ function streamGeminiTtsResponse({
   userHasPaid,
   filename,
   estimate,
-  currentAmount,
   styleVariant,
   provider,
   requestSignal,
@@ -1276,7 +1332,6 @@ function streamGeminiTtsResponse({
   userHasPaid: boolean;
   filename: string;
   estimate: number;
-  currentAmount: number;
   styleVariant: string;
   provider: ProviderId;
   requestSignal: AbortSignal;
@@ -1308,7 +1363,9 @@ function streamGeminiTtsResponse({
     let streamBlockReason: string | undefined;
     let audioStarted = false;
     let completed = false;
+    let creditsDebited = 0;
     let fallbackAttempted = false;
+    let errorPayload: Record<string, unknown> | undefined;
 
     const getStreamBlockError = () => {
       if (!(streamFinishReason || streamBlockReason)) {
@@ -1446,9 +1503,9 @@ function streamGeminiTtsResponse({
           extra: { model: modelUsed, voice: voiceObj.name },
           user: { id: user.id },
         });
-        await enqueue('error', {
+        errorPayload = {
           error: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-        });
+        };
         return;
       }
 
@@ -1475,7 +1532,7 @@ function streamGeminiTtsResponse({
           { model: modelUsed, userHasPaid },
         );
       }
-      const creditsDebited = await reconcileReservedCredits({
+      creditsDebited = await reconcileReservedCredits({
         actualCredits: creditsUsed,
         context: 'generate_voice_stream_success',
         reservedCredits,
@@ -1562,7 +1619,6 @@ function streamGeminiTtsResponse({
 
       completed = true;
       await enqueue('done', {
-        creditsRemaining: (currentAmount || 0) - creditsDebited,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       });
@@ -1635,7 +1691,7 @@ function streamGeminiTtsResponse({
         });
       }
 
-      await enqueue('error', {
+      errorPayload = {
         error: clientMessage,
         ...(isTransientProviderError
           ? {
@@ -1643,7 +1699,7 @@ function streamGeminiTtsResponse({
               errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
             }
           : {}),
-      });
+      };
     } finally {
       if (!completed) {
         await refundReservedCredits({
@@ -1654,9 +1710,23 @@ function streamGeminiTtsResponse({
       }
 
       try {
-        await writer.close();
-      } catch {
-        // Writer already closed via an early-return path — safe to ignore.
+        // Clients may refresh their credit balance as soon as they receive an error.
+        if (errorPayload) {
+          await enqueue('error', errorPayload);
+        }
+      } finally {
+        try {
+          await writer.close();
+        } catch {
+          // A client disconnect can make closing the writer reject.
+        }
+        reportCancelledCharge({
+          creditsDebited,
+          model: modelUsed,
+          signal: requestSignal,
+          transport: 'sse',
+          userId: user.id,
+        });
       }
     }
   })().catch((error) => {

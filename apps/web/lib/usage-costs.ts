@@ -8,7 +8,8 @@ export type UsageEventCostInput = Pick<
   | 'metadata'
   | 'model'
   | 'source_type'
->;
+> &
+  Partial<Pick<Tables<'usage_events'>, 'occurred_at'>>;
 export type CallSessionCostInput = Pick<
   Tables<'call_sessions'>,
   'duration_seconds' | 'model'
@@ -40,6 +41,7 @@ export const GEMINI_MODELS = new Set([
   'gemini-2.5-flash-preview-tts',
   'gemini-2.5-pro-preview-tts',
   'gemini-3.1-flash-tts-preview',
+  'gemini-3.8-flash-tts',
 ]);
 
 export function resolveUsageCost(
@@ -89,6 +91,7 @@ export function resolveUsageCost(
     const amount = calculateGenerateApiDollarAmount({
       candidatesTokenCount: output,
       model,
+      occurredAt: event.occurred_at,
       promptTokenCount: input,
       provider: 'google',
       sourceType: event.source_type === 'api_tts' ? 'api_tts' : 'tts',
