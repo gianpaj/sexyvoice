@@ -1,6 +1,9 @@
 import type { Page } from '@playwright/test';
 
+import type { ApiCharacterResponse } from '@/lib/characters';
 import { E2E_CALL_USER_COOKIE } from '@/lib/e2e-mocks-shared';
+import de from '@/messages/de.json';
+import en from '@/messages/en.json';
 import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
 import { CallPage } from './pages/call.page';
@@ -15,13 +18,14 @@ import { CallPage } from './pages/call.page';
  * 4. Auth redirect for unauthenticated users
  *
  * All tests use the authenticated state from auth.setup.ts.
- * We do NOT actually connect to LiveKit — tests focus on UI presence only.
+ * Character writes and call tokens are mocked; tests never connect to LiveKit.
  */
 
 async function setupCallPage(
   page: Page,
   baseURL: string | undefined,
   user: 'free' | 'paid' = 'free',
+  locale: 'en' | 'de' = 'en',
 ) {
   if (!baseURL) {
     throw new Error('Call dashboard tests require a Playwright baseURL');
@@ -79,7 +83,7 @@ async function setupCallPage(
   });
 
   const callPage = new CallPage(page);
-  await callPage.goto();
+  await callPage.goto(locale);
   return callPage;
 }
 
@@ -192,6 +196,134 @@ for (const viewport of ['desktop', 'mobile'] as const) {
       );
       await callPage.expectSceneOptionsEnabled(true);
     });
+  });
+}
+
+for (const locale of ['en', 'de'] as const) {
+  test(`should save a new character copy and update it in ${locale}`, async ({
+    page,
+    baseURL,
+  }) => {
+    const labels = (locale === 'de' ? de : en).call;
+    const characters = new Map<string, ApiCharacterResponse>();
+
+    // Keep writes in this browser test. An ID denotes an update, so the mock
+    // must not treat an empty or unknown ID as a successful creation.
+    await page.route('**/api/characters', async (route) => {
+      const body = route.request().postDataJSON();
+      if (body.id !== undefined && !characters.has(body.id)) {
+        await route.fulfill({
+          json: { error: 'Invalid character ID' },
+          status: 400,
+        });
+        return;
+      }
+      const character: ApiCharacterResponse = {
+        id: body.id ?? crypto.randomUUID(),
+        is_public: false,
+        localized_descriptions: body.localizedDescriptions,
+        name: body.name,
+        prompts: {
+          localized_prompts: body.localizedPrompts,
+          prompt: body.prompt,
+        },
+        session_config: body.sessionConfig,
+        voices: { name: body.voiceName },
+      };
+      characters.set(character.id, character);
+      await route.fulfill({
+        json: character,
+        status: body.id === undefined ? 201 : 200,
+      });
+    });
+
+    const callPage = await setupCallPage(page, baseURL, 'paid', locale);
+    const originalName = 'Original story';
+    const copyName = 'Copied story';
+    const originalPrompt = 'You are a friendly guide to the night sky.';
+    const copiedPrompt = 'You are a friendly guide to the ocean.';
+    const updatedPrompt = 'You are a friendly guide to the mountains.';
+
+    await page.getByRole('button', { name: labels.addCustomCharacter }).click();
+    const createDialog = page.getByRole('dialog', {
+      name: labels.createCharacter.dialogTitle,
+    });
+    await createDialog
+      .getByLabel(labels.createCharacter.nameLabel)
+      .fill(originalName);
+    await createDialog
+      .getByLabel(labels.createCharacter.instructionsLabel)
+      .fill(originalPrompt);
+    await createDialog
+      .getByRole('button', {
+        exact: true,
+        name: labels.createCharacter.createButton,
+      })
+      .click();
+    await expect(createDialog).toBeHidden();
+
+    const editor = callPage.configurationForm.getByRole('textbox');
+    await expect(editor).toHaveValue(originalPrompt);
+    await editor.fill(copiedPrompt);
+    await page
+      .getByRole('button', {
+        exact: true,
+        name: labels.savePreset.saveAsNew,
+      })
+      .click();
+    const copyDialog = page.getByRole('dialog', {
+      name: labels.savePreset.saveAsNewTitle,
+    });
+    await copyDialog.getByLabel(labels.savePreset.nameLabel).fill(copyName);
+    const copyResponsePromise = page.waitForResponse('**/api/characters');
+    await copyDialog
+      .getByRole('button', {
+        exact: true,
+        name: labels.savePreset.save,
+      })
+      .click();
+    const copyResponse = await copyResponsePromise;
+    expect(copyResponse.request().postDataJSON()).not.toHaveProperty('id');
+    expect(copyResponse.status()).toBe(201);
+    const copy = (await copyResponse.json()) as ApiCharacterResponse;
+    expect(copy.prompts?.localized_prompts?.[locale]).toBe(copiedPrompt);
+    await expect(copyDialog).toBeHidden();
+    const selectedCharacter = callPage.configurationForm.locator(
+      'button[data-selected="true"]',
+    );
+    await expect(selectedCharacter).toContainText(copyName);
+    await expect(editor).toHaveValue(copiedPrompt);
+    await expect(
+      page.getByRole('button', { exact: true, name: labels.startCall }),
+    ).toBeEnabled();
+
+    const characterCards = callPage.configurationForm.locator(
+      'button[data-selected]',
+    );
+    const originalCard = characterCards.filter({ hasText: originalName });
+    const copyCard = characterCards.filter({ hasText: copyName });
+
+    // Selecting the original must restore its saved story, not the copy's text.
+    await originalCard.click();
+    await expect(editor).toHaveValue(originalPrompt);
+    await copyCard.click();
+    await expect(editor).toHaveValue(copiedPrompt);
+    await editor.fill(updatedPrompt);
+    const updateResponsePromise = page.waitForResponse('**/api/characters');
+    await page
+      .getByRole('button', { exact: true, name: labels.savePreset.save })
+      .click();
+    const updateResponse = await updateResponsePromise;
+    expect(updateResponse.request().postDataJSON().id).toBe(copy.id);
+    expect(updateResponse.status()).toBe(200);
+    await expect(
+      page.getByText(labels.savePreset.characterSaved, { exact: true }),
+    ).toBeVisible();
+    await originalCard.click();
+    await expect(editor).toHaveValue(originalPrompt);
+    await copyCard.click();
+    await expect(editor).toHaveValue(updatedPrompt);
+    expect(characters.size).toBe(2);
   });
 }
 

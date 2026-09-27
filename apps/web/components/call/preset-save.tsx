@@ -54,7 +54,6 @@ export function PresetSave() {
   // Save as new character (opens dialog)
   const handleSaveAsNew = async () => {
     const result = await saveCharacter({
-      id: '',
       localizedDescriptions: { [pgState.language]: description },
       localizedPrompts: { [pgState.language]: pgState.instructions },
       name,

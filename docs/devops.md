@@ -20,7 +20,7 @@ before merging to `main` and after deploying.
 - For deployable changes, verify the affected app's build and exercise the changed
   flow on its preview deployment. Check authentication, billing, generation, and
   storage when the change touches those integrations. For call dashboard
-  screenshots, follow the [fixture and local-server requirements](../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior).
+  screenshots, follow the [fixture and local-server requirements](../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior-1).
 - Review pending migrations, generated database types, environment changes, and
   secret-rotation dependencies. Migrations require a human operator; agents must
   not apply them. Run `pnpm test:db` against a local database with pending

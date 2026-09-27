@@ -359,6 +359,19 @@ describe('/api/characters', () => {
 
   // ─── POST: validation ─────────────────────────────────────────────
   describe('POST: input validation', () => {
+    it.each(['', 'not-a-uuid'])(
+      'rejects invalid character ID %j without writing',
+      async (id) => {
+        const res = await POST(makeRequest(validCreateBody({ id })));
+        expect(res.status).toBe(400);
+        expect(await res.json()).toMatchObject({ error: 'Invalid UUID' });
+        expect(insertedPrompts).toHaveLength(0);
+        expect(insertedCharacters).toHaveLength(0);
+        expect(updatedPrompts).toHaveLength(0);
+        expect(updatedCharacters).toHaveLength(0);
+      },
+    );
+
     it('returns 400 when name is missing', async () => {
       const res = await POST(makeRequest(validCreateBody({ name: '' })));
       expect(res.status).toBe(400);
