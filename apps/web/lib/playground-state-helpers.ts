@@ -2,6 +2,20 @@ import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
 
+const PRESET_PARAM = 'preset';
+
+/**
+ * Query params the call page owns. `preset` is the one it still writes; the
+ * rest are from links that used to carry the prompt and session settings.
+ * Everything else in the URL belongs to someone else and is left alone.
+ */
+const isOwnedUrlParam = (key: string) =>
+  key === PRESET_PARAM ||
+  key === 'instructions' ||
+  key === 'presetName' ||
+  key === 'presetDescription' ||
+  key.startsWith('sessionConfig.');
+
 export interface CallTokenPlaygroundState {
   instructions: string;
   language: PlaygroundState['language'];
@@ -35,7 +49,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       return `${state.instructions.trim()}\n\nScene instructions:\n${sceneInstructions}`.trim();
     },
     getPresetIdFromUrlParams: (urlParams: string): string | null =>
-      new URLSearchParams(urlParams).get('preset'),
+      new URLSearchParams(urlParams).get(PRESET_PARAM),
     getSelectedPreset: (state: PlaygroundState) =>
       [...defaultPresets, ...state.customCharacters].find(
         (preset) => preset.id === state.selectedPresetId,
@@ -81,15 +95,26 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
     },
 
     // The URL carries only the preset ID. Prompts and session settings load
-    // from the database and stay out of browser history and analytics.
+    // from the database and stay out of browser history and analytics, so old
+    // links that still carry them are stripped on every write.
     updateBrowserUrl: (presetId: string | null) => {
-      const search = presetId
-        ? `?${new URLSearchParams({ preset: presetId })}`
-        : '';
+      const params = new URLSearchParams(window.location.search);
+      for (const key of [...params.keys()]) {
+        if (isOwnedUrlParam(key)) {
+          params.delete(key);
+        }
+      }
+      if (presetId) {
+        params.set(PRESET_PARAM, presetId);
+      }
+      const search = params.toString();
+
+      // Carry the existing history state over: Next's router keeps its tree
+      // there, and replacing it with `{}` makes the back button reload the page.
       window.history.replaceState(
-        {},
+        window.history.state,
         '',
-        `${window.location.pathname}${search}`,
+        `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`,
       );
     },
   };

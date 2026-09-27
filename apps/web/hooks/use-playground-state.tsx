@@ -21,20 +21,6 @@ import {
 import type { Preset } from '@/data/presets';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
-const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
-
-const storageHelper = {
-  getStoredSelectedPresetId: (): string =>
-    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || '',
-  setStoredSelectedPresetId: (presetId: string | null): void => {
-    if (presetId === null) {
-      localStorage.removeItem(LS_SELECTED_PRESET_ID_KEY);
-    } else {
-      localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
-    }
-  },
-};
-
 /**
  * Resolves the best instructions for a given character and language.
  *
@@ -99,8 +85,6 @@ function playgroundStateReducer(
         sceneInstructions: action.payload,
       };
     case 'SET_SELECTED_PRESET_ID': {
-      storageHelper.setStoredSelectedPresetId(action.payload);
-
       const newState = {
         ...state,
         selectedPresetId: action.payload,
@@ -289,10 +273,18 @@ export const PlaygroundStateProvider = ({
   );
 
   const selectPreset = (presetId: string | null) => {
-    dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
+    // Re-selecting the current character would reload its instructions and
+    // session config from the stored preset, discarding unsaved edits.
+    if (presetId !== state.selectedPresetId) {
+      dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
+    }
     helpers.updateBrowserUrl(presetId);
   };
 
+  // Mount only. The URL is read once and rewritten to match; re-running this
+  // against a later render's props would drop a character created in this
+  // session and reset unsaved instructions.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reads the URL once on mount
   useEffect(() => {
     if (!window.location.search) return;
 
@@ -309,7 +301,7 @@ export const PlaygroundStateProvider = ({
     // load belongs to another user or a deleted character, and call-token
     // rejects both, so the link is dropped.
     helpers.updateBrowserUrl(loadedPreset?.id ?? null);
-  }, [helpers, initialCustomCharacters]);
+  }, []);
 
   return (
     <PlaygroundStateContext.Provider
