@@ -232,6 +232,8 @@ interface PlaygroundStateContextProps {
   dispatch: Dispatch<Action>;
   helpers: ReturnType<typeof createPlaygroundStateHelpers>;
   pgState: PlaygroundState;
+  /** Selects a character and keeps the URL in sync so a refresh restores it. */
+  selectPreset: (presetId: string | null) => void;
 }
 
 // Create the context
@@ -286,6 +288,11 @@ export const PlaygroundStateProvider = ({
     mergedInitialState,
   );
 
+  const selectPreset = (presetId: string | null) => {
+    dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
+    helpers.updateBrowserUrl(presetId);
+  };
+
   useEffect(() => {
     if (!window.location.search) return;
 
@@ -310,6 +317,7 @@ export const PlaygroundStateProvider = ({
         dispatch,
         helpers,
         pgState: state,
+        selectPreset,
       }}
     >
       {children}

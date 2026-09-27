@@ -14,8 +14,8 @@ import {
   mockDispatch,
   mockPgStateRef,
   mockSearchParams,
+  mockSelectPreset,
   mockToastInfo,
-  mockUpdateBrowserUrl,
 } from '@tests/utils/preset-selector-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -25,6 +25,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // ---------------------------------------------------------------------------
 import { PresetSelector } from '@/components/call/preset-selector';
 import type { Preset } from '@/data/presets';
+import type { DBVoice } from '@/data/voices';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -133,23 +134,12 @@ describe('PresetSelector', () => {
 
   // ---- Selection ----
   describe('character selection', () => {
-    it('dispatches SET_SELECTED_PRESET_ID when a character is clicked', async () => {
+    it('selects a character when it is clicked', async () => {
       const user = userEvent.setup();
       render(<PresetSelector />);
       await user.click(screen.getByRole('button', { name: /lily/i }));
 
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'lily',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
-    });
-
-    it('updates the browser URL after selecting a character', async () => {
-      const user = userEvent.setup();
-      render(<PresetSelector />);
-      await user.click(screen.getByRole('button', { name: /lily/i }));
-
-      expect(mockUpdateBrowserUrl).toHaveBeenCalledWith('lily');
+      expect(mockSelectPreset).toHaveBeenCalledWith('lily');
     });
 
     it('marks the selected character with aria-pressed=true', () => {
@@ -279,10 +269,7 @@ describe('PresetSelector', () => {
       expect(alphaCharacterButton).toBeTruthy();
       await user.click(alphaCharacterButton as HTMLElement);
 
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'custom-1',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
+      expect(mockSelectPreset).toHaveBeenCalledWith('custom-1');
     });
   });
 
@@ -366,11 +353,8 @@ describe('PresetSelector', () => {
         within(dialog).getByRole('button', { name: /^delete$/i }),
       );
 
-      // Should dispatch SET_SELECTED_PRESET_ID to fall back to first default
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'ramona',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
+      // Falls back to the first default character
+      expect(mockSelectPreset).toHaveBeenCalledWith('ramona');
     });
 
     it('does NOT change selected preset when deleting a non-selected custom character', async () => {
@@ -393,11 +377,7 @@ describe('PresetSelector', () => {
         within(dialog).getByRole('button', { name: /^delete$/i }),
       );
 
-      // Should NOT have dispatched SET_SELECTED_PRESET_ID
-      const setPresetCalls = mockDispatch.mock.calls.filter(
-        (call: any[]) => call[0]?.type === 'SET_SELECTED_PRESET_ID',
-      );
-      expect(setPresetCalls).toHaveLength(0);
+      expect(mockSelectPreset).not.toHaveBeenCalled();
     });
   });
 
@@ -444,10 +424,7 @@ describe('PresetSelector', () => {
 
       // Click Rafal
       await user.click(screen.getByRole('button', { name: /rafal/i }));
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'rafal',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
+      expect(mockSelectPreset).toHaveBeenCalledWith('rafal');
     });
   });
 
@@ -675,6 +652,37 @@ describe('PresetSelector', () => {
       await user.type(
         screen.getByLabelText(/instructions/i),
         'Test instructions',
+      );
+    });
+
+    it('selects the character after creating it', async () => {
+      const user = userEvent.setup();
+      const voice: DBVoice = {
+        description: null,
+        feature: 'call',
+        id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
+        language: 'multiple',
+        model: 'xai',
+        name: 'Ara',
+        sample_url: null,
+        sort_order: 0,
+        type: 'Female',
+      };
+      render(<PresetSelector callVoices={[voice]} isPaidUser />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+      await user.type(screen.getByLabelText(/name/i), 'Test Character');
+      await user.type(
+        screen.getByLabelText(/instructions/i),
+        'Test instructions',
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'Create Character' }),
+      );
+
+      expect(mockSelectPreset).toHaveBeenCalledWith(
+        '00000000-0000-4000-a000-000000000099',
       );
     });
 

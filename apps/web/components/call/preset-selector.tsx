@@ -136,7 +136,7 @@ export function PresetSelector({
   isPaidUser = false,
   callVoices = EMPTY_ITEMS,
 }: PresetSelectorProps) {
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
   const { disconnect, connect, shouldConnect } = useConnection();
   const t = useTranslations('call');
   const tPresetSelector = useTranslations('call.presetSelector');
@@ -193,13 +193,7 @@ export function PresetSelector({
 
   const handlePresetSelect = (presetId: string | null) => {
     if (isConnected) return;
-
-    dispatch({
-      payload: presetId,
-      type: 'SET_SELECTED_PRESET_ID',
-    });
-
-    helpers.updateBrowserUrl(presetId);
+    selectPreset(presetId);
   };
 
   const handleOpenCreateDialog = () => {
@@ -229,7 +223,7 @@ export function PresetSelector({
 
     const newPreset = mapApiCharacterToPreset(result);
     dispatch({ payload: newPreset, type: 'SAVE_CUSTOM_CHARACTER' });
-    dispatch({ payload: newPreset.id, type: 'SET_SELECTED_PRESET_ID' });
+    selectPreset(newPreset.id);
     toast.success(tPresetSelector('characterCreated'));
   };
 
