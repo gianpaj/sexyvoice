@@ -196,8 +196,9 @@ export function PresetSelector({
     if (pgState.selectedPresetId !== lastPresetId) {
       setLastPresetId(pgState.selectedPresetId);
       if (shouldConnect) {
+        // No pending voice here: it belonged to the character being left.
         disconnect().then(() => {
-          connect(pendingVoiceName);
+          connect();
         });
       }
     }
@@ -207,7 +208,6 @@ export function PresetSelector({
     disconnect,
     connect,
     lastPresetId,
-    pendingVoiceName,
   ]);
 
   const handlePresetSelect = (presetId: string | null) => {
@@ -265,10 +265,11 @@ export function PresetSelector({
   };
 
   // Handle voice dropdown change — updates in-memory state only.
-  // The pending voice name is passed to connect() so use-connection
-  // can persist it (along with any instruction changes) in one API call.
   const handleVoiceChange = (newVoiceName: string) => {
     if (!(selectedPreset && isSelectedCustom) || isConnected) return;
+
+    // sessionConfig is what a call is started with, so it has to move now.
+    dispatch({ payload: { voice: newVoiceName }, type: 'SET_SESSION_CONFIG' });
 
     const currentVoice =
       selectedPreset.voiceName || selectedPreset.sessionConfig.voice;
@@ -279,7 +280,7 @@ export function PresetSelector({
 
     setPendingVoiceName(newVoiceName);
 
-    // Update in-memory state so sessionConfig.voice is correct if a call starts
+    // Mirror the choice onto the preset so the voice sample and label match.
     const updatedVoice = callVoices.find((v) => v.name === newVoiceName);
     const updatedPreset: Preset = {
       ...selectedPreset,
@@ -423,7 +424,7 @@ export function PresetSelector({
 
   /** The "+" add-character button rendered as an avatar-shaped circle. */
   const addCharacterButton = canAddMore ? (
-    <div className="group/card relative flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-2">
       {/* Wrapper matching AvatarButton ring structure for vertical alignment */}
       <div className="rounded-full p-[3px]">
         <div className="rounded-full p-[2px]">
