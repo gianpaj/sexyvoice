@@ -287,9 +287,9 @@ export const PlaygroundStateProvider = ({
   );
 
   useEffect(() => {
-    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
-    if (!presetId) return;
+    if (!window.location.search) return;
 
+    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
     const loadedPreset = [
       ...helpers.getDefaultPresets(),
       ...initialCustomCharacters,
@@ -297,11 +297,11 @@ export const PlaygroundStateProvider = ({
 
     if (loadedPreset) {
       dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
-    } else {
-      // call-token rejects characters this user does not own, and deleted
-      // characters no longer resolve, so drop the stale link.
-      window.history.replaceState({}, document.title, window.location.pathname);
     }
+    // Old links carry prompts in the query string. An ID this page did not
+    // load belongs to another user or a deleted character, and call-token
+    // rejects both, so the link is dropped.
+    helpers.updateBrowserUrl(loadedPreset?.id ?? null);
   }, [helpers, initialCustomCharacters]);
 
   return (

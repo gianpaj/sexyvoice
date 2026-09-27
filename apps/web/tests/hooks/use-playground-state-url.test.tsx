@@ -35,8 +35,8 @@ describe('usePlaygroundState — preset URL', () => {
     localStorage.clear();
   });
 
-  it('selects a saved character from the URL without duplicating it', () => {
-    const search = `?preset=${savedCharacter.id}&presetName=${savedCharacter.name}&sessionConfig.voice=Rex`;
+  it('selects a saved character from an old link without duplicating it', () => {
+    const search = `?preset=${savedCharacter.id}&presetName=${savedCharacter.name}&instructions=Old+prompt&sessionConfig.voice=Rex`;
     window.history.replaceState({}, '', `/en/dashboard/call${search}`);
 
     const { result } = renderHook(() => usePlaygroundState(), {
@@ -48,16 +48,14 @@ describe('usePlaygroundState — preset URL', () => {
     expect(result.current.pgState.instructions).toBe(
       savedCharacter.instructions,
     );
-    expect(window.location.search).toBe(search);
+    expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 
-  it('ignores a preset URL for a character the page did not load', () => {
-    const unknownId = '1c9a4f3e-0000-4000-8000-000000000001';
-    window.history.replaceState(
-      {},
-      '',
-      `/en/dashboard/call?preset=${unknownId}&presetName=Shared&instructions=Hi`,
-    );
+  it.each([
+    '?preset=1c9a4f3e-0000-4000-8000-000000000001&presetName=Shared&instructions=Hi',
+    '?preset=',
+  ])('drops a preset link the page did not load: %s', (search) => {
+    window.history.replaceState({}, '', `/en/dashboard/call${search}`);
 
     const { result } = renderHook(() => usePlaygroundState(), {
       wrapper: makeWrapper([savedCharacter]),
