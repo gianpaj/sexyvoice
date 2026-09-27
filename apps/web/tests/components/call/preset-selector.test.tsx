@@ -13,7 +13,6 @@ import {
   mockConnectionState,
   mockDispatch,
   mockPgStateRef,
-  mockSearchParams,
   mockSelectPreset,
   mockToastInfo,
 } from '@tests/utils/preset-selector-mocks';
@@ -35,7 +34,6 @@ import type { DBVoice } from '@/data/voices';
 beforeEach(() => {
   mockPgStateRef.current = createDefaultPgState();
   mockConnectionState.value = 'disconnected';
-  mockSearchParams.value = new URLSearchParams();
 
   // jsdom doesn't provide crypto.randomUUID — stub it so handleAddCharacter works
   if (!globalThis.crypto.randomUUID) {
@@ -201,7 +199,6 @@ describe('PresetSelector', () => {
     });
 
     beforeEach(() => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -287,7 +284,6 @@ describe('PresetSelector', () => {
   // ---- Deletion flow ----
   describe('character deletion', () => {
     beforeEach(() => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -382,7 +378,6 @@ describe('PresetSelector', () => {
     });
 
     it('shows the selected custom character bio with editable name and description', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -420,7 +415,6 @@ describe('PresetSelector', () => {
   // ---- getInitials (tested indirectly) ----
   describe('initials rendering for imageless characters', () => {
     it('renders two-letter initials for a two-word name', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -435,7 +429,6 @@ describe('PresetSelector', () => {
     });
 
     it('renders a single initial for a single-word name', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -450,7 +443,6 @@ describe('PresetSelector', () => {
     });
 
     it('limits initials to two characters for long names', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -462,55 +454,6 @@ describe('PresetSelector', () => {
       });
       render(<PresetSelector />);
       expect(screen.getByText('AB')).toBeInTheDocument();
-    });
-  });
-
-  // ---- showInstruction query param variants ----
-  describe('showInstruction query parameter', () => {
-    it('treats showInstruction="" (empty string) as true', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'test' },
-            name: 'EmptyParam',
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-      // Custom char should be visible
-      expect(screen.getByText('EmptyParam')).toBeInTheDocument();
-    });
-
-    it('treats showInstruction=true as true', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'test' },
-            name: 'TrueParam',
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-      expect(screen.getByText('TrueParam')).toBeInTheDocument();
-    });
-
-    it('treats showInstruction=false as false', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=false');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'test' },
-            name: 'FalseParam',
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-      expect(screen.getByText('FalseParam')).toBeInTheDocument();
     });
   });
 
@@ -526,7 +469,6 @@ describe('PresetSelector', () => {
     });
 
     it('renders custom character with image', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -544,7 +486,6 @@ describe('PresetSelector', () => {
 
     it('does not dispatch delete when dialog is cancelled', async () => {
       const user = userEvent.setup();
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
