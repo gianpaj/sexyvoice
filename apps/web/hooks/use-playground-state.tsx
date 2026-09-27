@@ -268,19 +268,18 @@ const EMPTY_PRESETS: Preset[] = [];
 
 export const PlaygroundStateProvider = ({
   children,
-  defaultPresets: defaultPresetsProp,
+  defaultPresets = EMPTY_PRESETS,
   initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
-  const mergedDefaultPresets = defaultPresetsProp ?? [];
   const helpers = useMemo(
-    () => createPlaygroundStateHelpers(mergedDefaultPresets),
-    [mergedDefaultPresets],
+    () => createPlaygroundStateHelpers(defaultPresets),
+    [defaultPresets],
   );
   const mergedInitialState: PlaygroundState = {
     ...defaultPlaygroundState,
     customCharacters: initialCustomCharacters,
-    defaultPresets: mergedDefaultPresets,
+    defaultPresets,
     ...initialState,
     sessionConfig: {
       ...defaultPlaygroundState.sessionConfig,
@@ -298,13 +297,15 @@ export const PlaygroundStateProvider = ({
     const urlData = helpers.decodeFromURLParams(window.location.search);
 
     if (urlData.state.selectedPresetId) {
-      const defaultPreset = helpers
-        .getDefaultPresets()
-        .find((preset) => preset.id === urlData.state.selectedPresetId);
+      const loadedPreset = [
+        ...helpers.getDefaultPresets(),
+        ...initialCustomCharacters,
+      ].find((preset) => preset.id === urlData.state.selectedPresetId);
 
-      if (defaultPreset) {
-        dispatch({ payload: defaultPreset.id, type: 'SET_SELECTED_PRESET_ID' });
-        // Don't clear the URL for default presets
+      if (loadedPreset) {
+        dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
+        // Keep the URL for presets and saved characters so a refresh keeps
+        // the selection
         return;
       }
 
