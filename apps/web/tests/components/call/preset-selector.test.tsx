@@ -24,6 +24,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // the mocks file and are hoisted there).
 // ---------------------------------------------------------------------------
 import { PresetSelector } from '@/components/call/preset-selector';
+import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 
@@ -235,10 +236,16 @@ describe('PresetSelector', () => {
       expect(screen.getByText('B')).toBeInTheDocument();
     });
 
-    it('shows delete buttons for custom characters', () => {
+    it('shows a delete button only for the selected custom character', () => {
+      mockPgStateRef.current = {
+        ...(mockPgStateRef.current as PlaygroundState),
+        selectedPresetId: 'custom-1',
+      };
       render(<PresetSelector />);
       expect(screen.getByLabelText('Delete AlphaChar')).toBeInTheDocument();
-      expect(screen.getByLabelText('Delete BetaChar')).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText('Delete BetaChar'),
+      ).not.toBeInTheDocument();
     });
 
     it('does NOT show delete buttons for default characters', () => {
@@ -249,6 +256,10 @@ describe('PresetSelector', () => {
 
     it('does NOT show delete buttons when connected', () => {
       mockConnectionState.value = 'connected';
+      mockPgStateRef.current = {
+        ...(mockPgStateRef.current as PlaygroundState),
+        selectedPresetId: 'custom-1',
+      };
       render(<PresetSelector />);
       expect(
         screen.queryByLabelText('Delete AlphaChar'),
@@ -285,6 +296,7 @@ describe('PresetSelector', () => {
             name: 'ToDelete',
           }),
         ],
+        selectedPresetId: 'custom-del',
       });
     });
 
@@ -355,29 +367,6 @@ describe('PresetSelector', () => {
 
       // Falls back to the first default character
       expect(mockSelectPreset).toHaveBeenCalledWith('ramona');
-    });
-
-    it('does NOT change selected preset when deleting a non-selected custom character', async () => {
-      const user = userEvent.setup();
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'custom-del',
-            localizedDescriptions: { en: 'Not selected' },
-            name: 'ToDelete',
-          }),
-        ],
-        selectedPresetId: 'ramona',
-      });
-      render(<PresetSelector />);
-      await user.click(screen.getByLabelText('Delete ToDelete'));
-
-      const dialog = screen.getByRole('alertdialog');
-      await user.click(
-        within(dialog).getByRole('button', { name: /^delete$/i }),
-      );
-
-      expect(mockSelectPreset).not.toHaveBeenCalled();
     });
   });
 
@@ -564,6 +553,7 @@ describe('PresetSelector', () => {
             name: 'TestChar',
           }),
         ],
+        selectedPresetId: 'c1',
       });
       render(<PresetSelector />);
 
