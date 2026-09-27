@@ -67,7 +67,6 @@ type Action =
     }
   | { type: 'SET_INSTRUCTIONS'; payload: string }
   | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
-  | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
   | { type: 'SET_MEMORY'; payload: boolean }
@@ -98,11 +97,6 @@ function playgroundStateReducer(
       return {
         ...state,
         sceneInstructions: action.payload,
-      };
-    case 'SET_CUSTOM_CHARACTERS':
-      return {
-        ...state,
-        customCharacters: action.payload,
       };
     case 'SET_SELECTED_PRESET_ID': {
       storageHelper.setStoredSelectedPresetId(action.payload);
@@ -293,47 +287,19 @@ export const PlaygroundStateProvider = ({
   );
 
   useEffect(() => {
-    // Read the URL
-    const urlData = helpers.decodeFromURLParams(window.location.search);
+    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
+    if (!presetId) return;
 
-    if (urlData.state.selectedPresetId) {
-      const loadedPreset = [
-        ...helpers.getDefaultPresets(),
-        ...initialCustomCharacters,
-      ].find((preset) => preset.id === urlData.state.selectedPresetId);
+    const loadedPreset = [
+      ...helpers.getDefaultPresets(),
+      ...initialCustomCharacters,
+    ].find((preset) => preset.id === presetId);
 
-      if (loadedPreset) {
-        dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
-        // Keep the URL for presets and saved characters so a refresh keeps
-        // the selection
-        return;
-      }
-
-      // Handle non-default preset from URL
-      if (urlData.preset?.name) {
-        const newCharacter: Preset = {
-          id: urlData.state.selectedPresetId,
-          instructions: urlData.state.instructions || '',
-          localizedDescriptions: urlData.preset.localizedDescriptions,
-          name: urlData.preset.name || 'Shared Character',
-          sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
-        };
-
-        const updatedCustomCharacters = [
-          ...initialCustomCharacters,
-          newCharacter,
-        ];
-        dispatch({
-          payload: updatedCustomCharacters,
-          type: 'SET_CUSTOM_CHARACTERS',
-        });
-        dispatch({
-          payload: newCharacter.id,
-          type: 'SET_SELECTED_PRESET_ID',
-        });
-      }
-
-      // Clear the URL for non-default presets
+    if (loadedPreset) {
+      dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
+    } else {
+      // call-token rejects characters this user does not own, and deleted
+      // characters no longer resolve, so drop the stale link.
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [helpers, initialCustomCharacters]);

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -51,22 +51,49 @@ describe('usePlaygroundState — preset URL', () => {
     expect(window.location.search).toBe(search);
   });
 
-  it('adds a shared character from the URL and clears the URL', () => {
-    const sharedId = '1c9a4f3e-0000-4000-8000-000000000001';
+  it('ignores a preset URL for a character the page did not load', () => {
+    const unknownId = '1c9a4f3e-0000-4000-8000-000000000001';
     window.history.replaceState(
       {},
       '',
-      `/en/dashboard/call?preset=${sharedId}&presetName=Shared&instructions=Hi`,
+      `/en/dashboard/call?preset=${unknownId}&presetName=Shared&instructions=Hi`,
     );
 
     const { result } = renderHook(() => usePlaygroundState(), {
       wrapper: makeWrapper([savedCharacter]),
     });
 
-    expect(result.current.pgState.customCharacters.map(({ id }) => id)).toEqual(
-      [savedCharacter.id, sharedId],
-    );
-    expect(result.current.pgState.selectedPresetId).toBe(sharedId);
+    expect(result.current.pgState.customCharacters).toEqual([savedCharacter]);
+    expect(result.current.pgState.selectedPresetId).toBeNull();
     expect(window.location.search).toBe('');
+  });
+
+  it('encodes only the selected preset ID, not the current prompt', () => {
+    window.history.replaceState({}, '', '/en/dashboard/call');
+    const otherCharacter: Preset = {
+      ...savedCharacter,
+      id: '2d8b5e4f-0000-4000-8000-000000000002',
+      instructions: 'You are Nova.',
+      name: 'nova',
+    };
+
+    const { result } = renderHook(() => usePlaygroundState(), {
+      wrapper: makeWrapper([savedCharacter, otherCharacter]),
+    });
+    act(() => {
+      result.current.dispatch({
+        payload: savedCharacter.id,
+        type: 'SET_SELECTED_PRESET_ID',
+      });
+    });
+
+    const { helpers, pgState } = result.current;
+    expect(pgState.instructions).toBe(savedCharacter.instructions);
+    expect(
+      helpers.encodeToUrlParams({
+        ...pgState,
+        selectedPresetId: otherCharacter.id,
+      }),
+    ).toBe(`preset=${otherCharacter.id}`);
   });
 });

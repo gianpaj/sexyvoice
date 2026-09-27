@@ -1,5 +1,3 @@
-import { defaultSessionConfig } from '@/data/default-config';
-import { normalizeModelId } from '@/data/models';
 import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
@@ -19,111 +17,12 @@ export interface CallTokenPlaygroundState {
 
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
-    decodeFromURLParams: (
-      urlParams: string,
-    ): { state: Partial<PlaygroundState>; preset?: Partial<Preset> } => {
-      const params = new URLSearchParams(urlParams);
-      const returnValue: {
-        state: Partial<PlaygroundState>;
-        preset?: Partial<Preset>;
-      } = { state: {} };
-
-      const instructions = params.get('instructions');
-      if (instructions) {
-        returnValue.state.instructions = instructions;
-      }
-
-      const sessionConfig: Partial<PlaygroundState['sessionConfig']> = {};
-      params.forEach((value, key) => {
-        if (key.startsWith('sessionConfig.')) {
-          const configKey = key.split(
-            '.',
-          )[1] as keyof PlaygroundState['sessionConfig'];
-          switch (configKey) {
-            case 'maxOutputTokens':
-              sessionConfig.maxOutputTokens =
-                value === 'null' ? null : Number(value);
-              break;
-            case 'model':
-              // A shared/bookmarked URL can carry a retired id indefinitely;
-              // unnormalized it would also fail ConfigurationFormSchema's enum.
-              sessionConfig.model = normalizeModelId(value);
-              break;
-            case 'temperature':
-              sessionConfig.temperature = Number(value);
-              break;
-            case 'voice':
-              sessionConfig.voice = value;
-              break;
-            default:
-              break;
-          }
-        }
-      });
-
-      if (Object.keys(sessionConfig).length > 0) {
-        returnValue.state.sessionConfig = sessionConfig as SessionConfig;
-      }
-
-      const presetId = params.get('preset');
-      if (presetId) {
-        const presetDescription = params.get('presetDescription') || undefined;
-        returnValue.preset = {
-          id: presetId,
-          localizedDescriptions: presetDescription
-            ? { en: presetDescription }
-            : undefined,
-          name: params.get('presetName') || undefined,
-        };
-        returnValue.state.selectedPresetId = presetId;
-      }
-
-      return returnValue;
-    },
-
-    encodeToUrlParams: (state: PlaygroundState): string => {
-      // Preserve existing search params from the current URL
-      const existingParams =
-        typeof window === 'undefined'
-          ? new URLSearchParams()
-          : new URLSearchParams(window.location.search);
-      const params = new URLSearchParams(existingParams);
-
-      let isDefaultPreset = false;
-      const selectedPreset = helpers.getSelectedPreset(state);
-      if (selectedPreset) {
-        params.set('preset', selectedPreset.id);
-        isDefaultPreset = defaultPresets.some(
-          (p) => p.id === selectedPreset.id,
-        );
-      }
-
-      if (!isDefaultPreset) {
-        if (state.instructions) {
-          params.set('instructions', state.instructions);
-        }
-
-        if (selectedPreset) {
-          params.set('presetName', selectedPreset.name);
-          const presetDescription =
-            selectedPreset.localizedDescriptions?.[state.language] ??
-            selectedPreset.localizedDescriptions?.en;
-          if (presetDescription) {
-            params.set('presetDescription', presetDescription);
-          }
-        }
-
-        if (state.sessionConfig) {
-          for (const [key, value] of Object.entries(state.sessionConfig)) {
-            if (value !== defaultSessionConfig[key as keyof SessionConfig]) {
-              params.set(`sessionConfig.${key}`, String(value));
-            }
-          }
-        }
-      }
-
-      return params.toString();
-    },
+    // The URL carries only the preset ID. Prompts and session settings load
+    // from the database and stay out of browser history and analytics.
+    encodeToUrlParams: (state: PlaygroundState): string =>
+      state.selectedPresetId
+        ? new URLSearchParams({ preset: state.selectedPresetId }).toString()
+        : '',
     getAllPresets: (state: PlaygroundState) => [
       ...defaultPresets,
       ...state.customCharacters,
@@ -141,6 +40,8 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
 
       return `${state.instructions.trim()}\n\nScene instructions:\n${sceneInstructions}`.trim();
     },
+    getPresetIdFromUrlParams: (urlParams: string): string | null =>
+      new URLSearchParams(urlParams).get('preset'),
     getSelectedPreset: (state: PlaygroundState) =>
       [...defaultPresets, ...state.customCharacters].find(
         (preset) => preset.id === state.selectedPresetId,
