@@ -507,7 +507,7 @@ export function PresetSelector({
 
         {/* Bio Card - Editable for custom characters */}
         <div
-          className={`rounded-xl bg-muted p-4 transition-all duration-300 ${
+          className={`rounded-xl border border-separator1 bg-muted/30 p-4 transition-all duration-300 ${
             selectedPreset
               ? 'translate-y-0 opacity-100'
               : 'pointer-events-none h-0 translate-y-2 overflow-hidden p-0 opacity-0'
