@@ -299,7 +299,6 @@ export function AudioGenerator({
   const t = useTranslations('generate');
   const translateErrorCode = useTranslations('errorCodes');
   const [text, setText] = useState('');
-  const [previousText, setPreviousText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioURL, setAudioURL] = useState('');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
@@ -1024,11 +1023,11 @@ export function AudioGenerator({
   const handleEnhanceText = async () => {
     if (!(text.trim() && selectedVoice)) return;
 
+    const originalText = text;
     setIsEnhancingText(true);
-    setPreviousText(text);
 
     try {
-      const enhancedText = await complete(text, {
+      const enhancedText = await complete(originalText, {
         body: {
           selectedVoiceLanguage: selectedVoice.language,
           ttsProvider: provider,
@@ -1041,7 +1040,7 @@ export function AudioGenerator({
         toast('Text enhanced with emotion tags!', {
           action: {
             label: 'Undo',
-            onClick: () => setText(previousText),
+            onClick: () => setText(originalText),
           },
         });
       }

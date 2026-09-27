@@ -24,7 +24,7 @@
     "upload-speech-samples": "tsx upload-speech-samples.mts"
   },
   "dependencies": {
-    "@ai-sdk/xai": "3.0.96",
+    "@ai-sdk/xai": "3.0.135",
     "@aws-sdk/client-s3": "3.1011.0",
     "@google/genai": "2.24.0",
     "@supabase/supabase-js": "catalog:",
