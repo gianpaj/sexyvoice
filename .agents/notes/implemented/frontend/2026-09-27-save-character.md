@@ -19,7 +19,7 @@ The English and German browser scenarios failed on the empty-ID request
 before the fix and pass with the ID omitted. They cover distinct copies,
 localized instructions, selection, and updates that preserve the original.
 Mocking and authentication boundaries are documented in the
-[E2E guide](../../../../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior).
+[E2E guide](../../../../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior-1).
 API tests verify malformed IDs cannot write prompts or characters.
 No production character writes or LiveKit calls are part of these checks.
 

@@ -32,7 +32,7 @@ synthetic. Tests do not refresh these snapshots from the database.
 - Masking the character UI would hide layout regressions.
 
 Fixture edits can require a deliberate baseline approval. Runtime setup is
-[in the E2E guide](../../../../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior).
+[in the E2E guide](../../../../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior-1).
 
 ## Coverage limits
 
