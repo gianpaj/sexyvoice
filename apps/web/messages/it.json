@@ -891,6 +891,7 @@
     "/dashboard/api-keys": "Chiavi API",
     "/dashboard/api-billing": "Fatturazione API",
     "/dashboard/usage": "Utilizzo",
+    "/dashboard/profile": "Profilo",
     "/tools/audio-converter": "Convertitore Audio",
     "/tools/transcribe": "Trascrizione Audio",
     "titleAudioJoiner": "Unisci Audio Gratis – Combina e Taglia File Audio",
