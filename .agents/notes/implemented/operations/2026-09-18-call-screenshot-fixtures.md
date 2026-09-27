@@ -46,7 +46,8 @@ Desktop and mobile screenshots cover free and paid users without custom
 characters. After capture, tests assert that non-default scene options are
 disabled for free users and enabled for paid users. Interacting only after
 capture keeps hover and keyboard-focus styling out of the at-rest snapshots.
-Custom-character editing and voice selection remain outside this suite.
+Custom-character save coverage is documented in the linked E2E guide.
+Voice-selection behavior remains outside this suite.
 The voice catalog keeps server props deterministic.
 
 ## Verification

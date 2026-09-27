@@ -79,8 +79,8 @@ export class CallPage {
   /**
    * Navigate to the call page
    */
-  async goto() {
-    await this.page.goto('/en/dashboard/call', {
+  async goto(locale: 'en' | 'de' = 'en') {
+    await this.page.goto(`/${locale}/dashboard/call`, {
       waitUntil: 'domcontentloaded',
     });
     // Wait for the configuration form to appear

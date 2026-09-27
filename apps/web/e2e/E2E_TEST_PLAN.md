@@ -164,6 +164,8 @@ Reason:
 - configuration form is present
 - character/preset content area is present
 - connect button is enabled
+- paid users can create a character, save a separate copy, and update that copy
+  on the English and German sites without changing the original story
 
 #### Mobile
 
@@ -178,7 +180,13 @@ Reason:
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
 call voices, credit transactions, and instruction config.
-Custom characters are empty. Authentication still runs.
+Custom characters start empty. Authentication still runs.
+
+The English and German save-copy scenarios intercept `/api/characters` with
+a per-test in-memory store. Creates must omit the ID; updates must identify
+an existing mocked character. Tests assert selection, localized instructions,
+and independent original/copy edits. No character writes reach Supabase.
+The API tests separately exercise the real route and its UUID validation.
 
 Playwright sets `e2e-call-user=free|paid` before navigation in each test's
 isolated browser context. `lib/e2e-call-user.ts` reads this cookie only in
