@@ -12,10 +12,10 @@ import {
   makePreset,
   mockConnectionState,
   mockDispatch,
-  mockEncodeToUrlParams,
   mockPgStateRef,
   mockSearchParams,
   mockToastInfo,
+  mockUpdateBrowserUrl,
 } from '@tests/utils/preset-selector-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -30,15 +30,10 @@ import type { Preset } from '@/data/presets';
 // Helpers
 // ---------------------------------------------------------------------------
 
-let replaceStateSpy: ReturnType<typeof vi.spyOn>;
-
 beforeEach(() => {
   mockPgStateRef.current = createDefaultPgState();
   mockConnectionState.value = 'disconnected';
   mockSearchParams.value = new URLSearchParams();
-  replaceStateSpy = vi
-    .spyOn(window.history, 'replaceState')
-    .mockImplementation(() => undefined);
 
   // jsdom doesn't provide crypto.randomUUID — stub it so handleAddCharacter works
   if (!globalThis.crypto.randomUUID) {
@@ -90,7 +85,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  replaceStateSpy.mockRestore();
   vi.unstubAllGlobals();
 });
 
@@ -152,11 +146,10 @@ describe('PresetSelector', () => {
 
     it('updates the browser URL after selecting a character', async () => {
       const user = userEvent.setup();
-      mockEncodeToUrlParams.mockReturnValue('preset=lily');
       render(<PresetSelector />);
       await user.click(screen.getByRole('button', { name: /lily/i }));
 
-      expect(replaceStateSpy).toHaveBeenCalled();
+      expect(mockUpdateBrowserUrl).toHaveBeenCalledWith('lily');
     });
 
     it('marks the selected character with aria-pressed=true', () => {

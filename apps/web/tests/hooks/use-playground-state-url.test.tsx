@@ -68,7 +68,7 @@ describe('usePlaygroundState — preset URL', () => {
     expect(window.location.search).toBe('');
   });
 
-  it('encodes only the selected preset ID, not the current prompt', () => {
+  it('writes only the preset ID to the URL, not the current prompt', () => {
     window.history.replaceState({}, '', '/en/dashboard/call');
     const otherCharacter: Preset = {
       ...savedCharacter,
@@ -87,13 +87,10 @@ describe('usePlaygroundState — preset URL', () => {
       });
     });
 
-    const { helpers, pgState } = result.current;
-    expect(pgState.instructions).toBe(savedCharacter.instructions);
-    expect(
-      helpers.encodeToUrlParams({
-        ...pgState,
-        selectedPresetId: otherCharacter.id,
-      }),
-    ).toBe(`preset=${otherCharacter.id}`);
+    expect(result.current.pgState.instructions).toBe(
+      savedCharacter.instructions,
+    );
+    result.current.helpers.updateBrowserUrl(otherCharacter.id);
+    expect(window.location.search).toBe(`?preset=${otherCharacter.id}`);
   });
 });

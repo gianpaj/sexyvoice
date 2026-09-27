@@ -25,7 +25,7 @@ export const mockToastInfo = vi.fn();
 export const mockDisconnect = vi.fn().mockResolvedValue(undefined);
 export const mockConnect = vi.fn().mockResolvedValue(undefined);
 export const mockDispatch = vi.fn();
-export const mockEncodeToUrlParams = vi.fn().mockReturnValue('');
+export const mockUpdateBrowserUrl = vi.fn();
 export const mockPgStateRef: { current: PlaygroundState | null } = {
   current: null,
 };
@@ -244,7 +244,6 @@ vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
     dispatch: mockDispatch,
     helpers: {
-      encodeToUrlParams: mockEncodeToUrlParams,
       getAllPresets: (state: PlaygroundState) => [
         ...defaultPresetsFixture,
         ...state.customCharacters,
@@ -254,6 +253,7 @@ vi.mock('@/hooks/use-playground-state', () => ({
         [...defaultPresetsFixture, ...state.customCharacters].find(
           (p) => p.id === state.selectedPresetId,
         ),
+      updateBrowserUrl: mockUpdateBrowserUrl,
     },
     pgState: mockPgStateRef.current,
   }),

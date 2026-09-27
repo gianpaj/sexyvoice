@@ -17,12 +17,6 @@ export interface CallTokenPlaygroundState {
 
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
-    // The URL carries only the preset ID. Prompts and session settings load
-    // from the database and stay out of browser history and analytics.
-    encodeToUrlParams: (state: PlaygroundState): string =>
-      state.selectedPresetId
-        ? new URLSearchParams({ preset: state.selectedPresetId }).toString()
-        : '',
     getAllPresets: (state: PlaygroundState) => [
       ...defaultPresets,
       ...state.customCharacters,
@@ -86,12 +80,17 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       };
     },
 
-    updateBrowserUrl: (state: PlaygroundState) => {
-      if (typeof window !== 'undefined') {
-        const params = helpers.encodeToUrlParams(state);
-        const newUrl = `${window.location.origin}${window.location.pathname}${params ? `?${params}` : ''}`;
-        window.history.replaceState({}, '', newUrl);
-      }
+    // The URL carries only the preset ID. Prompts and session settings load
+    // from the database and stay out of browser history and analytics.
+    updateBrowserUrl: (presetId: string | null) => {
+      const search = presetId
+        ? `?${new URLSearchParams({ preset: presetId })}`
+        : '';
+      window.history.replaceState(
+        {},
+        '',
+        `${window.location.pathname}${search}`,
+      );
     },
   };
 

@@ -199,16 +199,7 @@ export function PresetSelector({
       type: 'SET_SELECTED_PRESET_ID',
     });
 
-    // Update URL with preset
-    const params = helpers.encodeToUrlParams({
-      ...pgState,
-      selectedPresetId: presetId,
-    });
-    window.history.replaceState(
-      {},
-      document.title,
-      `${window.location.pathname}${params ? `?${params}` : ''}`,
-    );
+    helpers.updateBrowserUrl(presetId);
   };
 
   const handleOpenCreateDialog = () => {
