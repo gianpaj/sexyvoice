@@ -121,7 +121,7 @@
     "tailwind-merge": "3.5.0",
     "tailwindcss": "catalog:",
     "tailwindcss-animate": "^1.0.7",
-    "wavesurfer.js": "7.12.4",
+    "wavesurfer.js": "7.12.12",
     "zod": "catalog:",
     "zod-openapi": "^5.4.6"
   },
