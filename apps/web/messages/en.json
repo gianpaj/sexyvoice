@@ -889,6 +889,7 @@
     "/dashboard/api-keys": "API Keys",
     "/dashboard/api-billing": "API Billing",
     "/dashboard/usage": "Usage",
+    "/dashboard/profile": "Profile",
     "/tools/audio-converter": "Audio Converter",
     "/tools/transcribe": "Audio Transcription",
     "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",

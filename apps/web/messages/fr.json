@@ -884,6 +884,7 @@
     "/dashboard/api-keys": "Clés API",
     "/dashboard/api-billing": "Facturation API",
     "/dashboard/usage": "Utilisation",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",
     "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",

@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import {
   E2E_ALL_TIME_USAGE_SUMMARY,
   E2E_MONTHLY_USAGE_SUMMARY,
@@ -17,6 +18,8 @@ import {
 } from '@/lib/supabase/usage-queries';
 import { DataTable } from './data-table';
 import { SummaryCard } from './summary-card';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/usage');
 
 export default async function UsagePage(props: {
   params: Promise<{ lang: Locale }>;

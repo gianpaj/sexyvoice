@@ -5,13 +5,17 @@ import { CallFaq } from '@/components/call/call-faq';
 import { Chat } from '@/components/call/chat';
 import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import { E2E_CALL_VOICES, E2E_CREDIT_TRANSACTIONS } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+
 // import { PresetShare } from "@/components/preset-share";
+
+export const generateMetadata = createDashboardMetadata('/dashboard/call');
 
 export default async function Call(props: {
   params: Promise<{ lang: Locale }>;

@@ -21,20 +21,6 @@ import {
 import type { Preset } from '@/data/presets';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
-const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
-
-const storageHelper = {
-  getStoredSelectedPresetId: (): string =>
-    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || '',
-  setStoredSelectedPresetId: (presetId: string | null): void => {
-    if (presetId === null) {
-      localStorage.removeItem(LS_SELECTED_PRESET_ID_KEY);
-    } else {
-      localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
-    }
-  },
-};
-
 /**
  * Resolves the best instructions for a given character and language.
  *
@@ -67,7 +53,6 @@ type Action =
     }
   | { type: 'SET_INSTRUCTIONS'; payload: string }
   | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
-  | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
   | { type: 'SET_MEMORY'; payload: boolean }
@@ -99,14 +84,7 @@ function playgroundStateReducer(
         ...state,
         sceneInstructions: action.payload,
       };
-    case 'SET_CUSTOM_CHARACTERS':
-      return {
-        ...state,
-        customCharacters: action.payload,
-      };
     case 'SET_SELECTED_PRESET_ID': {
-      storageHelper.setStoredSelectedPresetId(action.payload);
-
       const newState = {
         ...state,
         selectedPresetId: action.payload,
@@ -238,6 +216,8 @@ interface PlaygroundStateContextProps {
   dispatch: Dispatch<Action>;
   helpers: ReturnType<typeof createPlaygroundStateHelpers>;
   pgState: PlaygroundState;
+  /** Selects a character and keeps the URL in sync so a refresh restores it. */
+  selectPreset: (presetId: string | null) => void;
 }
 
 // Create the context
@@ -268,19 +248,18 @@ const EMPTY_PRESETS: Preset[] = [];
 
 export const PlaygroundStateProvider = ({
   children,
-  defaultPresets: defaultPresetsProp,
+  defaultPresets = EMPTY_PRESETS,
   initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
-  const mergedDefaultPresets = defaultPresetsProp ?? [];
   const helpers = useMemo(
-    () => createPlaygroundStateHelpers(mergedDefaultPresets),
-    [mergedDefaultPresets],
+    () => createPlaygroundStateHelpers(defaultPresets),
+    [defaultPresets],
   );
   const mergedInitialState: PlaygroundState = {
     ...defaultPlaygroundState,
     customCharacters: initialCustomCharacters,
-    defaultPresets: mergedDefaultPresets,
+    defaultPresets,
     ...initialState,
     sessionConfig: {
       ...defaultPlaygroundState.sessionConfig,
@@ -293,49 +272,37 @@ export const PlaygroundStateProvider = ({
     mergedInitialState,
   );
 
-  useEffect(() => {
-    // Read the URL
-    const urlData = helpers.decodeFromURLParams(window.location.search);
-
-    if (urlData.state.selectedPresetId) {
-      const defaultPreset = helpers
-        .getDefaultPresets()
-        .find((preset) => preset.id === urlData.state.selectedPresetId);
-
-      if (defaultPreset) {
-        dispatch({ payload: defaultPreset.id, type: 'SET_SELECTED_PRESET_ID' });
-        // Don't clear the URL for default presets
-        return;
-      }
-
-      // Handle non-default preset from URL
-      if (urlData.preset?.name) {
-        const newCharacter: Preset = {
-          id: urlData.state.selectedPresetId,
-          instructions: urlData.state.instructions || '',
-          localizedDescriptions: urlData.preset.localizedDescriptions,
-          name: urlData.preset.name || 'Shared Character',
-          sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
-        };
-
-        const updatedCustomCharacters = [
-          ...initialCustomCharacters,
-          newCharacter,
-        ];
-        dispatch({
-          payload: updatedCustomCharacters,
-          type: 'SET_CUSTOM_CHARACTERS',
-        });
-        dispatch({
-          payload: newCharacter.id,
-          type: 'SET_SELECTED_PRESET_ID',
-        });
-      }
-
-      // Clear the URL for non-default presets
-      window.history.replaceState({}, document.title, window.location.pathname);
+  const selectPreset = (presetId: string | null) => {
+    // Re-selecting the current character would reload its instructions and
+    // session config from the stored preset, discarding unsaved edits.
+    if (presetId !== state.selectedPresetId) {
+      dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
     }
-  }, [helpers, initialCustomCharacters]);
+    helpers.updateBrowserUrl(presetId);
+  };
+
+  // Mount only. The URL is read once and rewritten to match; re-running this
+  // against a later render's props would drop a character created in this
+  // session and reset unsaved instructions.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reads the URL once on mount
+  useEffect(() => {
+    if (!window.location.search) return;
+
+    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
+    const loadedPreset = [
+      ...helpers.getDefaultPresets(),
+      ...initialCustomCharacters,
+    ].find((preset) => preset.id === presetId);
+
+    if (loadedPreset) {
+      dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
+    }
+    // Old links carry prompts in the query string. An ID this page did not
+    // load belongs to another user or a deleted character, and call-token
+    // rejects both, so the link is dropped. On a full page load this runs
+    // before Next patches `replaceState`, so the current state is kept.
+    helpers.updateBrowserUrl(loadedPreset?.id ?? null, window.history.state);
+  }, []);
 
   return (
     <PlaygroundStateContext.Provider
@@ -343,6 +310,7 @@ export const PlaygroundStateProvider = ({
         dispatch,
         helpers,
         pgState: state,
+        selectPreset,
       }}
     >
       {children}

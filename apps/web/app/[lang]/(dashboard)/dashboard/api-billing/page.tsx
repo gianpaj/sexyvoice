@@ -1,8 +1,13 @@
 import { getMessages } from 'next-intl/server';
 import { Suspense } from 'react';
 
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { BillingUsageChart } from './billing-usage-chart';
+
+export const generateMetadata = createDashboardMetadata(
+  '/dashboard/api-billing',
+);
 
 export default async function ApiBillingPage(props: {
   params: Promise<{ lang: Locale }>;
