@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleDeleteAccountAction } from '@/app/actions';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
+  AccountBillingError,
   acquireAccountBillingOperation,
   commitAccountDeletion,
   releaseAccountBillingOperation,
@@ -26,11 +27,16 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
   hasOngoingSubscription: vi.fn(),
 }));
 
-vi.mock('@/lib/stripe/account-billing', () => ({
-  acquireAccountBillingOperation: vi.fn(),
-  commitAccountDeletion: vi.fn(),
-  releaseAccountBillingOperation: vi.fn(),
-}));
+vi.mock('@/lib/stripe/account-billing', async (importOriginal) => {
+  const { AccountBillingError } =
+    await importOriginal<typeof import('@/lib/stripe/account-billing')>();
+  return {
+    AccountBillingError,
+    acquireAccountBillingOperation: vi.fn(),
+    commitAccountDeletion: vi.fn(),
+    releaseAccountBillingOperation: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/supabase/queries', () => ({
   getUserByIdWithError: vi.fn(),
@@ -181,6 +187,30 @@ describe('account deletion', () => {
       expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
       expect(deleteFileFromR2).not.toHaveBeenCalled();
       expect(createAdminClient).not.toHaveBeenCalled();
+      expect(captureException).toHaveBeenCalledWith(error, expect.any(Object));
+    },
+  );
+
+  it.each(['accountBillingBlocked', 'accountBillingBusy'] as const)(
+    'returns %s without reporting an exception or changing account data',
+    async (code) => {
+      const { sessionSupabase } = setupAccountDeletion();
+      vi.mocked(acquireAccountBillingOperation).mockRejectedValueOnce(
+        new AccountBillingError(code),
+      );
+
+      await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+        error: code,
+      });
+
+      expect(captureException).not.toHaveBeenCalled();
+      expect(getUserByIdWithError).not.toHaveBeenCalled();
+      expect(hasOngoingSubscription).not.toHaveBeenCalled();
+      expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+      expect(deleteFileFromR2).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
+      expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
     },
   );
 

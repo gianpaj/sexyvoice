@@ -8,6 +8,7 @@ import { z } from 'zod';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
+  AccountBillingError,
   acquireAccountBillingOperation,
   commitAccountDeletion,
   releaseAccountBillingOperation,
@@ -144,6 +145,9 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       }
       await commitAccountDeletion(billingOperation);
     } catch (error) {
+      if (error instanceof AccountBillingError) {
+        return { error: error.code };
+      }
       captureException(error, {
         extra: { context: 'subscription check before account deletion' },
         user: { id: user.id },

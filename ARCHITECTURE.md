@@ -436,6 +436,11 @@ Checkout returns `accountBillingBlocked` with retry and support guidance, or
 failures. For interrupted requests, follow
 [Restore account billing](scripts/README.md#restore-account-billing).
 
+Account deletion returns the same billing error codes without reporting Sentry
+exceptions. A blocked deletion directs the user to support; a busy reservation
+asks them to wait for the other request to finish. Other verification failures
+return `subscriptionCheckFailed` and are reported as exceptions.
+
 `middleware-client.ts` forwards refreshed cookies to both the request and
 response, preserving locale rewrites and request-header overrides. Auth and
 OAuth callback redirects retain cookies and SSR cache headers on success and

@@ -4,13 +4,16 @@
 
 Account deletion blocks checkout during cleanup and releases its block when the
 request finishes, including handled failures. Retained Auth users can sign in
-and check out again. A terminated request or failed Redis release can leave
-checkout blocked; the user sees `accountBillingBlocked` with support guidance.
+and check out again. A terminated request or failed Redis release can block
+checkout and further deletion requests. Both return `accountBillingBlocked`
+with support guidance. A competing reservation returns `accountBillingBusy`
+and asks the user to wait. Deletion returns these errors without reporting
+Sentry exceptions.
 The coordination rules live in
 [Architecture](../ARCHITECTURE.md#identity-and-session-handling).
 
-Support can restore checkout when the user has confirmed they want to keep the
-account:
+Support can clear the block so the user can keep the account or finish deleting
+it:
 
 1. Identify the exact Supabase Auth user ID and verify that their profile exists.
    Review the failed deletion and any partial cleanup with the user; restoring
@@ -49,7 +52,7 @@ blocks whose value is `1`. Do not force-delete an operation key to bypass this
 check. If it reports `accountBillingBusy`, wait for the request to finish and
 its reservation to clear, then repeat the log checks before retrying.
 
-Have the user retry checkout and record the recovery in the support ticket.
+Have the user retry checkout or deletion and record the recovery in the support ticket.
 Blocked and busy checkout attempts use the Sentry event types
 `checkout_billing_blocked` and `checkout_billing_busy`; Stripe failures use
 `checkout_session_creation_error`.

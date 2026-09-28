@@ -804,7 +804,9 @@
         "errors": {
           "manageBilling": "Gestionar facturación",
           "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu cuenta.",
-          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo."
+          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo.",
+          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu cuenta. Contacta con soporte para completarla.",
+          "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
         }
       }
     },

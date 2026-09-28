@@ -27,7 +27,12 @@ describe('DeleteAccountForm', () => {
 
   afterEach(cleanup);
 
-  it.each(['subscriptionExists', 'subscriptionCheckFailed'] as const)(
+  it.each([
+    'subscriptionExists',
+    'subscriptionCheckFailed',
+    'accountBillingBlocked',
+    'accountBillingBusy',
+  ] as const)(
     'displays the %s error returned by the server action',
     async (error) => {
       vi.mocked(handleDeleteAccountAction).mockResolvedValue({ error });

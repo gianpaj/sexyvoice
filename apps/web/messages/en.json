@@ -802,7 +802,9 @@
         "errors": {
           "manageBilling": "Manage billing",
           "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your account.",
-          "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again."
+          "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again.",
+          "accountBillingBlocked": "Account deletion is blocked by an earlier deletion request. Contact support to complete the deletion.",
+          "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
         }
       }
     },
