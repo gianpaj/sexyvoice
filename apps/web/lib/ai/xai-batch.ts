@@ -154,7 +154,7 @@ interface RawChatCompletion {
 
 interface RawBatchResult {
   batch_request_id?: unknown;
-  batch_result?: { response?: RawBatchResponse };
+  batch_result?: { error?: unknown; response?: RawBatchResponse };
   custom_id?: unknown;
   error?: { message?: unknown } | string;
   error_message?: unknown;
@@ -184,6 +184,7 @@ export function extractBatchOutcome(result: unknown): XaiBatchOutcome {
     (typeof raw.error === 'string'
       ? asNullableString(raw.error)
       : asNullableString(raw.error?.message)) ??
+    asNullableString(raw.batch_result?.error) ??
     asNullableString(response?.body?.error?.message);
 
   const content =
