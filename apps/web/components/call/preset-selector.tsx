@@ -448,7 +448,7 @@ export function PresetSelector({
 
   const showArrows = allCharacters.length + (addCharacterButton ? 1 : 0) > 6;
   const slideClassName = 'flex basis-[22%] justify-center pl-2 sm:basis-1/6';
-  const lastSlideClassName = `${slideClassName} mr-4 sm:mr-0`;
+  const lastSlideClassName = `${slideClassName} mr-8 sm:mr-0`;
 
   return (
     <>
@@ -460,16 +460,16 @@ export function PresetSelector({
 
         {/* Avatar Row — Carousel: each avatar is its own slide. Mobile shows
             4.5 so the next avatar peeks and swiping is discoverable. Below sm
-            the row bleeds into ConfigurationForm's px-4 so avatars scroll edge
-            to edge; Embla reads the track's padding-left and the last slide's
-            margin-right as edge gaps, so the row lines up with the heading at
-            rest. From sm up, 6 are visible and arrows get a gutter only when
+            the row bleeds through ConfigurationForm's px-4 and the dashboard
+            main's px-4 so avatars scroll to the screen edges; Embla reads the
+            track's padding-left and the last slide's margin-right as edge
+            gaps, so the row lines up with the heading at rest. From sm up, 6 are visible and arrows get a gutter only when
             there is more to scroll. */}
         <div
-          className={`relative -mx-4 mb-4 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
+          className={`relative -mx-8 mb-4 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
         >
           <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
-            <CarouselContent className="-ml-2 pl-4 sm:pl-0">
+            <CarouselContent className="-ml-2 pl-8 sm:pl-0">
               {allCharacters.map((preset, index) => {
                 const isSelected = pgState.selectedPresetId === preset.id;
                 return (
