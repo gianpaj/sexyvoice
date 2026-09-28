@@ -26,25 +26,15 @@ it:
    Replace the placeholder with the verified UUID.
 
 ```bash
-ACCOUNT_BILLING_USER_ID='verified-auth-user-uuid' \
-  pnpm --filter @sexyvoice/scripts exec node --import tsx <<'JS'
-require('./lib/env.mts').loadScriptEnv(['../apps/web/.env.local']);
-const { restoreAccountBilling } = require('../apps/web/lib/stripe/account-billing.ts');
-
-async function main() {
-  const userId = process.env.ACCOUNT_BILLING_USER_ID;
-  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId ?? '')) {
-    throw new Error('Set ACCOUNT_BILLING_USER_ID to the verified Auth UUID');
-  }
-  const restored = await restoreAccountBilling(userId);
-  console.log(restored ? 'Billing restored' : 'No billing block found');
-}
-main().catch((error) => {
-  console.error(error.message);
-  process.exitCode = 1;
-});
-JS
+pnpm --filter @sexyvoice/scripts run restore-account-billing -- \
+  --env-file ../apps/web/.env.local \
+  --user-id 'verified-auth-user-uuid' \
+  --cleanup-stopped
 ```
+
+`restore-account-billing.mts` validates the UUID and requires `--cleanup-stopped`
+after the log checks above. It loads environment files with `loadScriptEnv()`
+and calls the shared `restoreAccountBilling` helper.
 
 The helper atomically refuses recovery while a billing or deletion reservation
 exists. It deletes only `stripe:account:{userId}:deleted`. It also handles legacy

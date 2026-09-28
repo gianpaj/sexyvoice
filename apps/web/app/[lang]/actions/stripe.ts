@@ -1,7 +1,7 @@
 'use server';
 
 import { captureException, captureMessage } from '@sentry/nextjs';
-import type { Stripe } from 'stripe';
+import Stripe from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
 import {
@@ -26,6 +26,43 @@ import { createClient } from '@/lib/supabase/server';
 
 const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
 const CHECKOUT_INVALID_PACKAGE_ID = 'CHECKOUT_INVALID_PACKAGE_ID';
+
+const checkoutRequestAttempts = new Map<string, number>();
+stripe.on('request', ({ idempotency_key }) => {
+  if (!idempotency_key) return;
+  const attempts = checkoutRequestAttempts.get(idempotency_key);
+  if (attempts !== undefined) {
+    checkoutRequestAttempts.set(idempotency_key, attempts + 1);
+  }
+});
+
+// Only explicit input-validation codes qualify; a generic 400 can follow execution.
+// https://docs.stripe.com/api/idempotent_requests
+// https://docs.stripe.com/error-codes
+const CHECKOUT_VALIDATION_ERRORS = new Set([
+  'parameter_invalid_empty',
+  'parameter_invalid_integer',
+  'parameter_invalid_string_blank',
+  'parameter_invalid_string_empty',
+  'parameter_missing',
+  'parameter_unknown',
+  'parameters_exclusive',
+]);
+
+function isDefinitiveCheckoutRejection(error: unknown): boolean {
+  if (!(error instanceof Stripe.errors.StripeError)) return false;
+  if (error.headers?.['stripe-should-retry'] === 'true') return false;
+
+  return (
+    (error instanceof Stripe.errors.StripeAuthenticationError &&
+      error.statusCode === 401) ||
+    (error instanceof Stripe.errors.StripePermissionError &&
+      error.statusCode === 403) ||
+    (error instanceof Stripe.errors.StripeInvalidRequestError &&
+      error.statusCode === 400 &&
+      CHECKOUT_VALIDATION_ERRORS.has(error.code ?? ''))
+  );
+}
 
 type CheckoutPackageId = Exclude<PackageType, 'free'>;
 
@@ -247,32 +284,36 @@ export async function createCheckoutSession(
             }),
           };
 
+    checkoutRequestAttempts.set(billingOperation.token, 0);
     checkoutRequestStarted = true;
     const checkoutSession: Stripe.Checkout.Session =
-      await stripe.checkout.sessions.create({
-        customer: stripeId,
-        expires_at: billingOperation.checkoutExpiresAt,
-        line_items: [
-          {
-            price: package_.priceId,
-            quantity: 1,
-          },
-        ],
-        mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
-        ...(shouldApplySubscriptionDiscount && {
-          discounts: [
+      await stripe.checkout.sessions.create(
+        {
+          customer: stripeId,
+          expires_at: billingOperation.checkoutExpiresAt,
+          line_items: [
             {
-              coupon: subscriptionDiscountCouponId,
+              price: package_.priceId,
+              quantity: 1,
             },
           ],
-        }),
-        ...(ui_mode === 'hosted' && {
-          cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
-          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
-        }),
-        metadata: metadata as unknown as Stripe.MetadataParam,
-        ui_mode,
-      });
+          mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
+          ...(shouldApplySubscriptionDiscount && {
+            discounts: [
+              {
+                coupon: subscriptionDiscountCouponId,
+              },
+            ],
+          }),
+          ...(ui_mode === 'hosted' && {
+            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
+            success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
+          }),
+          metadata: metadata as unknown as Stripe.MetadataParam,
+          ui_mode,
+        },
+        { idempotencyKey: billingOperation.token },
+      );
     checkoutRequestCompleted = true;
 
     return {
@@ -295,15 +336,10 @@ export async function createCheckoutSession(
       return { client_secret: null, error: error.code, url: null };
     }
 
-    const statusCode =
-      error && typeof error === 'object' && 'statusCode' in error
-        ? error.statusCode
-        : undefined;
     if (
-      typeof statusCode === 'number' &&
-      statusCode >= 400 &&
-      statusCode < 500 &&
-      statusCode !== 409
+      billingOperation &&
+      checkoutRequestAttempts.get(billingOperation.token) === 1 &&
+      isDefinitiveCheckoutRejection(error)
     ) {
       checkoutRequestCompleted = true;
     }
@@ -328,6 +364,9 @@ export async function createCheckoutSession(
     });
     throw error;
   } finally {
+    if (billingOperation) {
+      checkoutRequestAttempts.delete(billingOperation.token);
+    }
     // A failed request can still create a session at Stripe. Keep its reservation
     // until that session's fixed expiration has passed.
     if (

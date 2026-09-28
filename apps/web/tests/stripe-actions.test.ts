@@ -1,5 +1,5 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
@@ -22,17 +22,27 @@ vi.mock('@sentry/nextjs', () => ({
   default: {},
 }));
 
-vi.mock('@/lib/stripe/stripe-admin', () => ({
-  hasAnySubscriptionHistory: vi.fn(),
-  isStripeCouponUsable: vi.fn(),
-  stripe: {
-    checkout: {
-      sessions: {
-        create: vi.fn(),
-      },
-    },
-  },
+const stripeTransport = vi.hoisted(() => ({
+  create: vi.fn(),
+  fetch: vi.fn(),
 }));
+
+vi.mock('@/lib/stripe/stripe-admin', async () => {
+  const { default: Stripe } = await import('stripe');
+  const client = new Stripe('sk_test_checkout', {
+    httpClient: Stripe.createFetchHttpClient(stripeTransport.fetch),
+    maxNetworkRetries: 0,
+  });
+  stripeTransport.create.mockImplementation(
+    client.checkout.sessions.create.bind(client.checkout.sessions),
+  );
+  vi.spyOn(client.checkout.sessions, 'create');
+  return {
+    hasAnySubscriptionHistory: vi.fn(),
+    isStripeCouponUsable: vi.fn(),
+    stripe: client,
+  };
+});
 
 vi.mock('@/lib/stripe/account-billing', async (importOriginal) => {
   const { AccountBillingError } =
@@ -64,6 +74,7 @@ describe('createCheckoutSession()', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    stripeTransport.fetch.mockReset();
     vi.mocked(acquireAccountBillingOperation).mockResolvedValue({
       checkoutExpiresAt: 1_800_000_000,
       token: 'checkout-token',
@@ -170,6 +181,7 @@ describe('createCheckoutSession()', () => {
         customer: 'cus_123',
         metadata: expect.objectContaining({ userId: 'user_123' }),
       }),
+      { idempotencyKey: 'checkout-token' },
     );
     expect((await createClient()).auth.getUser).not.toHaveBeenCalled();
     expect(acquireAccountBillingOperation).toHaveBeenCalledWith(
@@ -178,6 +190,7 @@ describe('createCheckoutSession()', () => {
     );
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({ expires_at: 1_800_000_000 }),
+      { idempotencyKey: 'checkout-token' },
     );
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
@@ -239,20 +252,55 @@ describe('createCheckoutSession()', () => {
     expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
   });
 
-  it.each([400, 401, 402, 403, 404, 422, 429])(
-    'releases the reservation after a definitive Stripe %i rejection',
-    async (statusCode) => {
-      const error = new Stripe.errors.StripeError({
-        message: 'Checkout rejected',
-        statusCode,
-        type: 'invalid_request_error',
-      });
-      vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce(error);
+  const validationCodes = [
+    'parameter_invalid_empty',
+    'parameter_invalid_integer',
+    'parameter_invalid_string_blank',
+    'parameter_invalid_string_empty',
+    'parameter_missing',
+    'parameter_unknown',
+    'parameters_exclusive',
+  ];
+
+  function rejectThroughStripe(
+    status: number,
+    code?: string,
+    type = 'invalid_request_error',
+    headers?: Record<string, string>,
+  ) {
+    stripeTransport.fetch.mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { code, message: 'Checkout rejected', type },
+          }),
+          {
+            headers,
+            status,
+          },
+        ),
+    );
+    vi.mocked(stripe.checkout.sessions.create).mockImplementationOnce(
+      (...args) => stripeTransport.create(...args),
+    );
+  }
+
+  it.each([
+    ...validationCodes.map((code) => ({ code, status: 400 })),
+    { code: undefined, status: 401 },
+    { code: undefined, status: 403 },
+  ])(
+    'releases a single-attempt $status/$code rejection',
+    async ({ status, code }) => {
+      rejectThroughStripe(status, code);
 
       await expect(
         createCheckoutSession(new FormData(), 'starter'),
-      ).rejects.toBe(error);
+      ).rejects.toMatchObject({
+        statusCode: status,
+      });
 
+      expect(stripeTransport.fetch).toHaveBeenCalledTimes(1);
       expect(releaseAccountBillingOperation).toHaveBeenCalledWith({
         checkoutExpiresAt: 1_800_000_000,
         token: 'checkout-token',
@@ -261,23 +309,147 @@ describe('createCheckoutSession()', () => {
     },
   );
 
-  it.each([409, 500, 502, 503, 504])(
-    'keeps the reservation after an uncertain Stripe %i response',
-    async (statusCode) => {
-      const error = new Stripe.errors.StripeError({
-        message: 'Checkout outcome unknown',
-        statusCode,
-        type: 'api_error',
-      });
-      vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce(error);
+  it.each([
+    { status: 400, type: 'invalid_request_error' },
+    { status: 400, type: 'api_error' },
+    { status: 400, type: 'idempotency_error' },
+    { status: 402, type: 'card_error' },
+    { status: 404, type: 'invalid_request_error' },
+    { status: 409, type: 'invalid_request_error' },
+    { status: 422, type: 'invalid_request_error' },
+    { status: 424, type: 'api_error' },
+    { status: 429, type: 'rate_limit_error' },
+    ...[500, 502, 503, 504].map((status) => ({ status, type: 'api_error' })),
+  ])(
+    'retains an unclassified $status/$type rejection',
+    async ({ status, type }) => {
+      rejectThroughStripe(status, undefined, type);
 
       await expect(
         createCheckoutSession(new FormData(), 'starter'),
-      ).rejects.toBe(error);
+      ).rejects.toMatchObject({
+        statusCode: status,
+      });
 
       expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
     },
   );
+
+  it('retains a validation error when Stripe requests a retry', async () => {
+    rejectThroughStripe(400, 'parameter_missing', 'invalid_request_error', {
+      'stripe-should-retry': 'true',
+    });
+
+    await expect(
+      createCheckoutSession(new FormData(), 'starter'),
+    ).rejects.toThrow();
+
+    expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+  });
+
+  it('retains a status-shaped error that is not a Stripe error', async () => {
+    vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce({
+      code: 'parameter_missing',
+      statusCode: 400,
+      type: 'invalid_request_error',
+    });
+
+    await expect(
+      createCheckoutSession(new FormData(), 'starter'),
+    ).rejects.toBeDefined();
+
+    expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+  });
+
+  it.each([400, 401, 403, 429])(
+    'retains a final %i rejection after an SDK retry of an unknown outcome',
+    async (status) => {
+      rejectThroughStripe(
+        status,
+        status === 400 ? 'parameter_missing' : undefined,
+      );
+      stripeTransport.fetch.mockRejectedValueOnce(new Error('Connection lost'));
+      vi.mocked(stripe.checkout.sessions.create)
+        .mockReset()
+        .mockImplementationOnce(
+          (
+            params?:
+              | Stripe.Checkout.SessionCreateParams
+              | Stripe.RequestOptions,
+            options?: Stripe.RequestOptions,
+          ) =>
+            stripeTransport.create(params, {
+              ...options,
+              maxNetworkRetries: 1,
+            }),
+        );
+
+      await expect(
+        createCheckoutSession(new FormData(), 'starter'),
+      ).rejects.toMatchObject({
+        statusCode: status,
+      });
+
+      expect(stripeTransport.fetch).toHaveBeenCalledTimes(2);
+      for (const [, options] of stripeTransport.fetch.mock.calls) {
+        expect(new Headers(options.headers).get('Idempotency-Key')).toBe(
+          'checkout-token',
+        );
+      }
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps retry counts separate for concurrent checkouts', async () => {
+    vi.mocked(acquireAccountBillingOperation)
+      .mockResolvedValueOnce({
+        checkoutExpiresAt: 1_800_000_000,
+        token: 'retrying',
+        userId: 'user-a',
+      })
+      .mockResolvedValueOnce({
+        checkoutExpiresAt: 1_800_000_000,
+        token: 'rejected',
+        userId: 'user-b',
+      });
+    const counts = new Map<string, number>();
+    stripeTransport.fetch.mockImplementation(async (_url, options) => {
+      const token = new Headers(options.headers).get('Idempotency-Key') ?? '';
+      const count = (counts.get(token) ?? 0) + 1;
+      counts.set(token, count);
+      if (token === 'retrying' && count === 1)
+        throw new Error('Connection lost');
+      return new Response(
+        JSON.stringify({
+          error: {
+            code: 'parameter_missing',
+            message: 'Missing parameter',
+            type: 'invalid_request_error',
+          },
+        }),
+        { status: 400 },
+      );
+    });
+    vi.mocked(stripe.checkout.sessions.create).mockImplementation(
+      (
+        params?: Stripe.Checkout.SessionCreateParams | Stripe.RequestOptions,
+        options?: Stripe.RequestOptions,
+      ) => stripeTransport.create(params, { ...options, maxNetworkRetries: 1 }),
+    );
+
+    const results = await Promise.allSettled([
+      createCheckoutSession(new FormData(), 'starter'),
+      createCheckoutSession(new FormData(), 'starter'),
+    ]);
+
+    expect(results.every((result) => result.status === 'rejected')).toBe(true);
+    expect(counts.get('retrying')).toBe(2);
+    expect(counts.get('rejected')).toBe(1);
+    expect(releaseAccountBillingOperation).toHaveBeenCalledTimes(1);
+    expect(releaseAccountBillingOperation).toHaveBeenCalledWith(
+      expect.objectContaining({ token: 'rejected', userId: 'user-b' }),
+    );
+  });
 
   it('releases the reservation when checkout fails before contacting Stripe', async () => {
     vi.mocked(getUserById).mockResolvedValueOnce(null);
@@ -415,6 +587,7 @@ describe('createCheckoutSession()', () => {
         }),
         mode: 'subscription',
       }),
+      { idempotencyKey: 'checkout-token' },
     );
   });
 
@@ -431,6 +604,7 @@ describe('createCheckoutSession()', () => {
       expect.not.objectContaining({
         discounts: expect.anything(),
       }),
+      { idempotencyKey: 'checkout-token' },
     );
     expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -438,6 +612,7 @@ describe('createCheckoutSession()', () => {
           subscriptionDiscountCouponId: expect.anything(),
         }),
       }),
+      { idempotencyKey: 'checkout-token' },
     );
   });
 
@@ -456,6 +631,7 @@ describe('createCheckoutSession()', () => {
       expect.not.objectContaining({
         discounts: expect.anything(),
       }),
+      { idempotencyKey: 'checkout-token' },
     );
   });
 });

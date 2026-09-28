@@ -420,9 +420,27 @@ deleted files or characters.
 
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
-expiration. Successful requests and definitive Stripe 4xx rejections release
-their reservations. HTTP 409 conflicts, 5xx responses, and connection failures
-keep the reservation because session creation may still complete.
+expiration. Successful requests release their reservations. A rejection releases
+the reservation only after exactly one SDK request attempt, with no retry hint,
+and one of these Stripe error classifications:
+
+- HTTP 400 `StripeInvalidRequestError` with an explicit parameter-validation code
+  in `CHECKOUT_VALIDATION_ERRORS` in `app/[lang]/actions/stripe.ts`.
+- HTTP 401 `StripeAuthenticationError` or HTTP 403 `StripePermissionError`.
+
+The allowlist follows Stripe's [validation error codes](https://docs.stripe.com/error-codes),
+[idempotency rules](https://docs.stripe.com/api/idempotent_requests), and
+[authentication and permission errors](https://docs.stripe.com/api/errors).
+Other errors, including generic 400s, 402, 404, 409, 422, 424, 429, network
+failures, and 5xx responses, retain the reservation. This is a conservative
+policy, not a claim that every retained error created a session.
+
+Each creation uses its reservation token as the Stripe idempotency key. A single
+SDK request listener counts attempts by that key, and the action removes its
+counter in `finally`. A final rejection after a retry cannot settle an earlier
+unknown outcome, so the reservation remains held. See Stripe's
+[network-error guidance](https://docs.stripe.com/error-low-level#network-errors)
+and the installed [SDK request and retry implementation](https://github.com/stripe/stripe-node/blob/v17.7.0/src/RequestSender.ts).
 
 The `stripe:account:{userId}:deleted` block has no TTL: a terminated request or a
 failed Redis release requires support to confirm cleanup has stopped before
@@ -440,6 +458,9 @@ Account deletion returns the same billing error codes without reporting Sentry
 exceptions. A blocked deletion directs the user to support; a busy reservation
 asks them to wait for the other request to finish. Other verification failures
 return `subscriptionCheckFailed` and are reported as exceptions.
+The blocked-deletion toast wraps its text and stays open until dismissed.
+Checkout errors appear inline in the pricing card. Both blocked messages give
+the dashboard chat and `info@sexyvoice.ai` as support options.
 
 `middleware-client.ts` forwards refreshed cookies to both the request and
 response, preserving locale rewrites and request-header overrides. Auth and

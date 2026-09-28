@@ -17,6 +17,7 @@
     "prepare-gemini-voice-sql": "tsx prepare-gemini-voice-sql.mts",
     "refund-credits": "tsx refund-credits.mts",
     "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
+    "restore-account-billing": "node --import tsx restore-account-billing.mts",
     "sync-deny-domains": "node sync-deny-domains.mjs",
     "test": "tsx --test *r2*.test.mts",
     "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",

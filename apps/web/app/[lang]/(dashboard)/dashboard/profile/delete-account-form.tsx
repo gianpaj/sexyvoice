@@ -39,6 +39,11 @@ export function DeleteAccountForm() {
         closeButton: true,
         duration: Number.POSITIVE_INFINITY,
       });
+    } else if (result?.error === 'accountBillingBlocked') {
+      toast.error(t('errors.accountBillingBlocked'), {
+        closeButton: true,
+        duration: Number.POSITIVE_INFINITY,
+      });
     } else if (result?.error) {
       toast.error(t(`errors.${result.error}`));
     }

@@ -20,6 +20,11 @@ The mechanism and key lifetimes are documented in
   fixed session expiration passes. This temporarily blocks billing and deletion
   after a Stripe failure, but prevents a delayed session from charging after
   deletion. Redis failures also block deletion.
+- HTTP status alone does not prove that Checkout creation had no effect. Only
+  explicit validation, authentication, and permission rejections from a single
+  SDK attempt release the reservation. A final rejection after an SDK retry can
+  hide an earlier unknown outcome. Counts are scoped to the reservation's
+  idempotency key; the source documentation is linked in Architecture.
 - The deletion block holds the request token and has no TTL. The action's
   `finally` clears only its own block, after cleanup succeeds or fails. Retained
   Auth users can return and buy again, consistent with inactive-profile

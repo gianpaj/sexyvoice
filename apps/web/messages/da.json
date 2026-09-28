@@ -411,7 +411,7 @@
         "dismiss": "Luk"
       },
       "checkoutError": "Kunne ikke oprette betalingssession",
-      "accountBillingBlocked": "Fakturering er sat på pause under sletning af kontoen. Prøv igen om lidt. Hvis den stadig er blokeret, skal du kontakte support for at genåbne fakturering.",
+      "accountBillingBlocked": "Fakturering er sat på pause under sletning af kontoen. Kontakt support via chatten i dashboardet eller info@sexyvoice.ai.",
       "accountBillingBusy": "En anden fakturerings- eller sletteanmodning er i gang. Prøv igen senere."
     },
     "history": {
@@ -801,7 +801,7 @@
           "manageBilling": "Administrer fakturering",
           "subscriptionExists": "Din konto har stadig et Stripe-abonnement. Opsig det i faktureringsportalen, og vent, til det udløber, før du sletter din konto.",
           "subscriptionCheckFailed": "Vi kunne ikke kontrollere status for dit abonnement. Din konto er ikke blevet slettet. Prøv igen.",
-          "accountBillingBlocked": "Kontosletning er blokeret af en tidligere sletteanmodning. Kontakt support for at få sletningen gennemført.",
+          "accountBillingBlocked": "Kontosletning er blokeret af en tidligere sletteanmodning. Kontakt support via chatten i dashboardet eller info@sexyvoice.ai.",
           "accountBillingBusy": "En anden fakturerings- eller sletteanmodning er i gang. Prøv igen senere."
         }
       }

@@ -415,7 +415,7 @@
         "dismiss": "Fermer"
       },
       "checkoutError": "Impossible de créer la session de paiement",
-      "accountBillingBlocked": "La facturation est suspendue pendant la suppression du compte. Réessayez dans quelques instants. Si elle reste bloquée, contactez l’assistance pour la rétablir.",
+      "accountBillingBlocked": "La facturation est suspendue pendant la suppression du compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
       "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
     },
     "history": {
@@ -805,7 +805,7 @@
           "manageBilling": "Gérer la facturation",
           "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
           "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer.",
-          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre compte. Contactez l'assistance pour la finaliser.",
+          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
           "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
         }
       }

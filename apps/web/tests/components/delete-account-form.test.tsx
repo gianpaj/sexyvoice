@@ -53,11 +53,21 @@ describe('DeleteAccountForm', () => {
       expect(handleDeleteAccountAction).toHaveBeenCalledWith({ lang: 'en' });
 
       const options = vi.mocked(toast.error).mock.calls[0][1];
-      if (error === 'subscriptionExists') {
+      if (error === 'subscriptionExists' || error === 'accountBillingBlocked') {
         expect(options).toMatchObject({
           closeButton: true,
           duration: Number.POSITIVE_INFINITY,
         });
+      }
+      if (error === 'accountBillingBlocked') {
+        expect(vi.mocked(toast.error).mock.calls[0][0]).toContain(
+          'dashboard chat',
+        );
+        expect(vi.mocked(toast.error).mock.calls[0][0]).toContain(
+          'info@sexyvoice.ai',
+        );
+      }
+      if (error === 'subscriptionExists') {
         expect(isValidElement(options?.action)).toBe(true);
         if (isValidElement(options?.action)) render(options.action);
         expect(

@@ -415,7 +415,7 @@
         "dismiss": "Descartar"
       },
       "checkoutError": "Error al crear sesión de pago",
-      "accountBillingBlocked": "La facturación está en pausa por la eliminación de la cuenta. Inténtalo de nuevo en unos momentos. Si sigue bloqueada, contacta con soporte para restablecerla.",
+      "accountBillingBlocked": "La facturación está en pausa por la eliminación de la cuenta. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
       "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
     },
     "history": {
@@ -805,7 +805,7 @@
           "manageBilling": "Gestionar facturación",
           "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu cuenta.",
           "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo.",
-          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu cuenta. Contacta con soporte para completarla.",
+          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu cuenta. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
           "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
         }
       }
