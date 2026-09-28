@@ -414,7 +414,9 @@
         "description": "Si è verificato un problema nell'elaborazione del pagamento. Riprova o contatta il supporto se il problema persiste.",
         "dismiss": "Chiudi"
       },
-      "checkoutError": "Impossibile creare la sessione di checkout"
+      "checkoutError": "Impossibile creare la sessione di checkout",
+      "accountBillingBlocked": "La fatturazione è sospesa durante l'eliminazione dell'account. Contatta l'assistenza tramite la chat nella dashboard o info@sexyvoice.ai.",
+      "accountBillingBusy": "Un'altra richiesta di fatturazione o eliminazione è in corso. Riprova più tardi."
     },
     "history": {
       "title": "Cronologia crediti"
@@ -798,7 +800,14 @@
         "confirmDescription": "Questa azione non può essere annullata. Eliminerà permanentemente il tuo account, inclusi:\n• Tutti i file audio generati\n• Voci clonate\n• Utilizzo API\n• Personaggi personalizzati per le chiamate\n• Tutti i dati associati dai nostri server",
         "alertTitle": "Conferma di voler eliminare il tuo account",
         "cancel": "Annulla",
-        "continue": "Continua"
+        "continue": "Continua",
+        "errors": {
+          "manageBilling": "Gestisci fatturazione",
+          "subscriptionExists": "Il tuo account ha ancora un abbonamento Stripe. Annullalo nel portale di fatturazione e attendi che termini prima di eliminare il tuo account.",
+          "subscriptionCheckFailed": "Non è stato possibile verificare lo stato del tuo abbonamento. Il tuo account non è stato eliminato. Riprova.",
+          "accountBillingBlocked": "Una precedente richiesta di eliminazione sta bloccando l'eliminazione del tuo account. Contatta l'assistenza tramite la chat nella dashboard o info@sexyvoice.ai.",
+          "accountBillingBusy": "Un'altra richiesta di fatturazione o eliminazione è in corso. Riprova più tardi."
+        }
       }
     },
     "apiKeys": {
