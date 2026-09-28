@@ -880,6 +880,7 @@
     "/dashboard/api-keys": "API-nøgler",
     "/dashboard/api-billing": "API-fakturering",
     "/dashboard/usage": "Forbrug",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Lydkonverter",
     "/tools/transcribe": "Lydtransskription",
     "titleAudioConverter": "Gratis Online Lydkonverter – MP3, WAV, FLAC & Mere",
