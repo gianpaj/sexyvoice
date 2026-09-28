@@ -414,7 +414,9 @@
         "description": "Si è verificato un problema nell'elaborazione del pagamento. Riprova o contatta il supporto se il problema persiste.",
         "dismiss": "Chiudi"
       },
-      "checkoutError": "Impossibile creare la sessione di checkout"
+      "checkoutError": "Impossibile creare la sessione di checkout",
+      "accountBillingBlocked": "La fatturazione è sospesa durante l’eliminazione dell’account. Riprova tra poco. Se resta bloccata, contatta l’assistenza per ripristinarla.",
+      "accountBillingBusy": "Un'altra richiesta di fatturazione o eliminazione è in corso. Riprova più tardi."
     },
     "history": {
       "title": "Cronologia crediti"

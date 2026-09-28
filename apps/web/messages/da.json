@@ -410,7 +410,9 @@
         "description": "Der opstod et problem med at behandle din betaling. Prøv igen eller kontakt support, hvis problemet fortsætter.",
         "dismiss": "Luk"
       },
-      "checkoutError": "Kunne ikke oprette betalingssession"
+      "checkoutError": "Kunne ikke oprette betalingssession",
+      "accountBillingBlocked": "Fakturering er sat på pause under sletning af kontoen. Prøv igen om lidt. Hvis den stadig er blokeret, skal du kontakte support for at genåbne fakturering.",
+      "accountBillingBusy": "En anden fakturerings- eller sletteanmodning er i gang. Prøv igen senere."
     },
     "history": {
       "title": "Kredithistorik"

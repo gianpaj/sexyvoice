@@ -414,7 +414,9 @@
         "description": "Hubo un problema procesando tu pago. Por favor intenta de nuevo o contacta soporte si el problema persiste.",
         "dismiss": "Descartar"
       },
-      "checkoutError": "Error al crear sesión de pago"
+      "checkoutError": "Error al crear sesión de pago",
+      "accountBillingBlocked": "La facturación está en pausa por la eliminación de la cuenta. Inténtalo de nuevo en unos momentos. Si sigue bloqueada, contacta con soporte para restablecerla.",
+      "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
     },
     "history": {
       "title": "Historial de Créditos"

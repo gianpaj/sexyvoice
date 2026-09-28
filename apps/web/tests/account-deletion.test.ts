@@ -244,8 +244,29 @@ describe('account deletion', () => {
     expect(encodedRedirect).toHaveBeenCalledWith('success', '/en/', '');
   });
 
+  it('holds the reservation through cleanup and releases it after failure', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    sessionSupabase.auth.updateUser.mockImplementationOnce(async () => {
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+      throw new Error('Auth update failed');
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'Auth update failed',
+    );
+
+    expect(commitAccountDeletion).toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+  });
+
   it('uses the admin client for the user-scoped audio soft delete', async () => {
-    const { adminSupabase, audioUpdate } = setupAccountDeletion();
+    const { adminSupabase, audioUpdate, sessionSupabase } =
+      setupAccountDeletion();
+    sessionSupabase.auth.signOut.mockImplementationOnce(async () => {
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+      return { error: null };
+    });
 
     await handleDeleteAccountAction({ lang: 'en' });
 
@@ -273,6 +294,24 @@ describe('account deletion', () => {
       'User deleted',
       expect.objectContaining({ usageEventsRetained: 3 }),
     );
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('releases billing when database cleanup fails after the Auth update', async () => {
+    const { audioUpdate, sessionSupabase } = setupAccountDeletion();
+    audioUpdate.select.mockResolvedValueOnce({
+      data: null,
+      error: new Error('Database unavailable'),
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(sessionSupabase.auth.updateUser).toHaveBeenCalled();
+    expect(deleteFileFromR2).toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
   it('continues when the retained usage-event count is unavailable', async () => {

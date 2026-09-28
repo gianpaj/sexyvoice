@@ -4,7 +4,7 @@
 
 Use a shared Redis reservation for app checkout creation and account deletion.
 Before deleting account data, expire open Stripe Checkout Sessions, recheck
-subscriptions, and atomically commit a permanent billing block while the
+subscriptions, and atomically commit a billing block while the
 deletion request still owns the reservation.
 
 The mechanism and key lifetimes are documented in
@@ -20,13 +20,20 @@ The mechanism and key lifetimes are documented in
   fixed session expiration passes. This temporarily blocks billing and deletion
   after a Stripe failure, but prevents a delayed session from charging after
   deletion. Redis failures also block deletion.
-- Redis stores a permanent billing block per deleted account. These keys must
-  survive display-cache cleanup. A failed account cleanup can be retried.
+- The deletion block holds the request token and has no TTL. The action's
+  `finally` clears only its own block, after cleanup succeeds or fails. Retained
+  Auth users can return and buy again, consistent with inactive-profile
+  restoration. Sign-in itself must not clear a block while cleanup is running.
+- A terminated request or failed Redis release leaves a block that requires
+  support recovery after confirming cleanup has stopped. Automatic TTL recovery
+  would let a stalled deletion resume during a new checkout. See
+  [Scripts](../../../../scripts/README.md#restore-account-billing).
 - Stripe Dashboard operations and other clients that bypass the app's checkout
   action do not participate in this coordination.
 
 ## Verification
 
 Regression tests cover Redis reservation contention and expiry, stale commits,
-permanent billing blocks, existing Checkout Sessions, Stripe failures, and
-guard ordering before account and file mutations.
+cleanup blocks, automatic and support recovery, existing Checkout Sessions,
+Stripe rejection classification, localized billing errors, and guard ordering
+before account and file mutations.

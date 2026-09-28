@@ -412,7 +412,9 @@
         "description": "There was an issue processing your payment. Please try again or contact support if the problem persists.",
         "dismiss": "Dismiss"
       },
-      "checkoutError": "Failed to create checkout session"
+      "checkoutError": "Failed to create checkout session",
+      "accountBillingBlocked": "Billing is paused for account deletion. Try again shortly. If it stays blocked, contact support to restore billing.",
+      "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
     },
     "history": {
       "title": "Credit History"

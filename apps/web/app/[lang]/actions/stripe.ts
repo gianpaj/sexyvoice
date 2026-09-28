@@ -5,6 +5,8 @@ import type { Stripe } from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
 import {
+  AccountBillingError,
+  type AccountBillingErrorCode,
   acquireAccountBillingOperation,
   releaseAccountBillingOperation,
 } from '@/lib/stripe/account-billing';
@@ -144,12 +146,17 @@ async function getCheckoutStripeId(
 export async function createCheckoutSession(
   data: FormData,
   packageId: CheckoutPackageId,
-): Promise<{ client_secret: string | null; url: string | null }> {
+): Promise<{
+  client_secret: string | null;
+  error?: AccountBillingErrorCode;
+  url: string | null;
+}> {
   let billingOperation:
     | Awaited<ReturnType<typeof acquireAccountBillingOperation>>
     | undefined;
   let checkoutRequestStarted = false;
   let checkoutRequestCompleted = false;
+  let checkoutUserId: string | undefined;
   try {
     const ui_mode = data.get(
       'uiMode',
@@ -201,6 +208,7 @@ export async function createCheckoutSession(
       throw error;
     }
 
+    checkoutUserId = claims.sub;
     billingOperation = await acquireAccountBillingOperation(
       claims.sub,
       'checkout',
@@ -272,6 +280,21 @@ export async function createCheckoutSession(
       url: checkoutSession.url,
     };
   } catch (error) {
+    if (error instanceof AccountBillingError) {
+      captureMessage('Checkout blocked by account billing state.', {
+        level: 'info',
+        tags: {
+          event_type:
+            error.code === 'accountBillingBlocked'
+              ? 'checkout_billing_blocked'
+              : 'checkout_billing_busy',
+          section: 'stripe_actions',
+        },
+        user: { id: checkoutUserId },
+      });
+      return { client_secret: null, error: error.code, url: null };
+    }
+
     const statusCode =
       error && typeof error === 'object' && 'statusCode' in error
         ? error.statusCode

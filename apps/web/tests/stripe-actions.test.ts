@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import {
+  AccountBillingError,
   acquireAccountBillingOperation,
   releaseAccountBillingOperation,
 } from '@/lib/stripe/account-billing';
@@ -33,10 +34,15 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
   },
 }));
 
-vi.mock('@/lib/stripe/account-billing', () => ({
-  acquireAccountBillingOperation: vi.fn(),
-  releaseAccountBillingOperation: vi.fn(),
-}));
+vi.mock('@/lib/stripe/account-billing', async (importOriginal) => {
+  const { AccountBillingError } =
+    await importOriginal<typeof import('@/lib/stripe/account-billing')>();
+  return {
+    AccountBillingError,
+    acquireAccountBillingOperation: vi.fn(),
+    releaseAccountBillingOperation: vi.fn(),
+  };
+});
 
 vi.mock('@/lib/supabase/queries', () => ({
   getUserById: vi.fn(),
@@ -176,7 +182,7 @@ describe('createCheckoutSession()', () => {
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
-  it('does not create checkout during or after account deletion', async () => {
+  it('fails closed when billing coordination is unavailable', async () => {
     vi.mocked(acquireAccountBillingOperation).mockRejectedValueOnce(
       new Error('Account unavailable'),
     );
@@ -189,6 +195,37 @@ describe('createCheckoutSession()', () => {
     expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
     expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['accountBillingBlocked', 'checkout_billing_blocked'],
+    ['accountBillingBusy', 'checkout_billing_busy'],
+  ] as const)(
+    'returns %s and reports %s separately from Stripe failures',
+    async (code, eventType) => {
+      vi.mocked(acquireAccountBillingOperation).mockRejectedValueOnce(
+        new AccountBillingError(code),
+      );
+
+      await expect(
+        createCheckoutSession(new FormData(), 'starter'),
+      ).resolves.toEqual({
+        client_secret: null,
+        error: code,
+        url: null,
+      });
+
+      expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(captureMessage).toHaveBeenCalledWith(
+        'Checkout blocked by account billing state.',
+        {
+          level: 'info',
+          tags: { event_type: eventType, section: 'stripe_actions' },
+          user: { id: 'user_123' },
+        },
+      );
+    },
+  );
 
   it('retains the reservation when Stripe creation has an unknown outcome', async () => {
     vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce(

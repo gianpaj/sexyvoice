@@ -1,5 +1,59 @@
 # Scripts
 
+## Restore account billing
+
+Account deletion blocks checkout during cleanup and releases its block when the
+request finishes, including handled failures. Retained Auth users can sign in
+and check out again. A terminated request or failed Redis release can leave
+checkout blocked; the user sees `accountBillingBlocked` with support guidance.
+The coordination rules live in
+[Architecture](../ARCHITECTURE.md#identity-and-session-handling).
+
+Support can restore checkout when the user has confirmed they want to keep the
+account:
+
+1. Identify the exact Supabase Auth user ID and verify that their profile exists.
+   Review the failed deletion and any partial cleanup with the user; restoring
+   billing does not restore deleted files or characters.
+2. Confirm in request logs that every deletion request for this user has finished
+   or terminated. Ask the user to stop retrying deletion during recovery. An
+   expired Redis reservation alone does not prove the cleanup process stopped.
+3. Run the command below with the intended environment's `apps/web/.env.local`.
+   It uses the existing Upstash environment variables.
+   Replace the placeholder with the verified UUID.
+
+```bash
+ACCOUNT_BILLING_USER_ID='verified-auth-user-uuid' \
+  pnpm --filter @sexyvoice/scripts exec node --import tsx <<'JS'
+require('./lib/env.mts').loadScriptEnv(['../apps/web/.env.local']);
+const { restoreAccountBilling } = require('../apps/web/lib/stripe/account-billing.ts');
+
+async function main() {
+  const userId = process.env.ACCOUNT_BILLING_USER_ID;
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId ?? '')) {
+    throw new Error('Set ACCOUNT_BILLING_USER_ID to the verified Auth UUID');
+  }
+  const restored = await restoreAccountBilling(userId);
+  console.log(restored ? 'Billing restored' : 'No billing block found');
+}
+main().catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
+});
+JS
+```
+
+The helper atomically refuses recovery while a billing or deletion reservation
+exists. It deletes only `stripe:account:{userId}:deleted`. It also handles legacy
+blocks whose value is `1`. Do not force-delete an operation key to bypass this
+check. If it reports `accountBillingBusy`, wait for the request to finish and
+its reservation to clear, then repeat the log checks before retrying.
+
+Have the user retry checkout and record the recovery in the support ticket.
+Blocked and busy checkout attempts use the Sentry event types
+`checkout_billing_blocked` and `checkout_billing_busy`; Stripe failures use
+`checkout_session_creation_error`.
+
 ## R2 audio backup
 
 This command copies missing R2 objects to a local drive. It never deletes R2

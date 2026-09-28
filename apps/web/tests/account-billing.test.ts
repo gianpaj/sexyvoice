@@ -10,9 +10,11 @@ import {
 } from 'vitest';
 
 import {
+  AccountBillingError,
   acquireAccountBillingOperation,
   commitAccountDeletion,
   releaseAccountBillingOperation,
+  restoreAccountBilling,
 } from '@/lib/stripe/account-billing';
 import {
   clearRedis,
@@ -107,28 +109,107 @@ describe('account billing coordination', () => {
     );
   });
 
-  it('permanently blocks checkout after deletion commits but permits cleanup retries', async () => {
+  it('blocks checkout and other deletions until cleanup finishes, even after lease expiry', async () => {
     const deletion = await acquireAccountBillingOperation('user-1', 'deletion');
     await commitAccountDeletion(deletion);
-    await releaseAccountBillingOperation(deletion);
+    await redis.pexpire('stripe:account:{user-1}:operation', 0);
 
     expect(await redis.ttl('stripe:account:{user-1}:deleted')).toBe(-1);
     await expect(
       acquireAccountBillingOperation('user-1', 'checkout'),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: 'accountBillingBlocked' });
+    await expect(
+      acquireAccountBillingOperation('user-1', 'deletion'),
+    ).rejects.toMatchObject({ code: 'accountBillingBlocked' });
 
-    const retry = await acquireAccountBillingOperation('user-1', 'deletion');
-    await commitAccountDeletion(retry);
-    await releaseAccountBillingOperation(retry);
+    await releaseAccountBillingOperation(deletion);
+
     await expect(
       acquireAccountBillingOperation('user-1', 'checkout'),
-    ).rejects.toThrow();
+    ).resolves.toBeDefined();
+  });
+
+  it('lets a returning user check out after completed deletion cleanup', async () => {
+    const deletion = await acquireAccountBillingOperation('user-1', 'deletion');
+    await commitAccountDeletion(deletion);
+    await releaseAccountBillingOperation(deletion);
+
+    expect(await redis.exists('stripe:account:{user-1}:deleted')).toBe(0);
+    await expect(
+      acquireAccountBillingOperation('user-1', 'checkout'),
+    ).resolves.toBeDefined();
+  });
+
+  it('does not let a stale release remove another deletion block', async () => {
+    const first = await acquireAccountBillingOperation('user-1', 'deletion');
+    await releaseAccountBillingOperation(first);
+    const second = await acquireAccountBillingOperation('user-1', 'deletion');
+    await commitAccountDeletion(second);
+
+    await releaseAccountBillingOperation(first);
+
+    expect(await redis.get('stripe:account:{user-1}:deleted')).toBe(
+      second.token,
+    );
+    await expect(
+      acquireAccountBillingOperation('user-1', 'checkout'),
+    ).rejects.toMatchObject({ code: 'accountBillingBlocked' });
   });
 
   it('allows checkout after a blocked deletion releases its reservation', async () => {
     const deletion = await acquireAccountBillingOperation('user-1', 'deletion');
     await releaseAccountBillingOperation(deletion);
 
+    await expect(
+      acquireAccountBillingOperation('user-1', 'checkout'),
+    ).resolves.toBeDefined();
+  });
+
+  it('distinguishes a permanent block from a competing request', async () => {
+    const deletion = await acquireAccountBillingOperation('user-1', 'deletion');
+    await expect(
+      acquireAccountBillingOperation('user-1', 'checkout'),
+    ).rejects.toMatchObject({
+      code: 'accountBillingBusy',
+    });
+    await commitAccountDeletion(deletion);
+    await expect(
+      acquireAccountBillingOperation('user-1', 'checkout'),
+    ).rejects.toMatchObject({
+      code: 'accountBillingBlocked',
+    });
+  });
+
+  it('lets support restore checkout after an interrupted deletion has stopped', async () => {
+    const deletion = await acquireAccountBillingOperation('user-1', 'deletion');
+    await commitAccountDeletion(deletion);
+    await redis.pexpire('stripe:account:{user-1}:operation', 0);
+
+    expect(await restoreAccountBilling('user-1')).toBe(true);
+    expect(await restoreAccountBilling('user-1')).toBe(false);
+    await expect(
+      acquireAccountBillingOperation('user-1', 'checkout'),
+    ).resolves.toBeDefined();
+  });
+
+  it('refuses support recovery while a deletion reservation exists', async () => {
+    const deletion = await acquireAccountBillingOperation('user-1', 'deletion');
+    await commitAccountDeletion(deletion);
+
+    await expect(restoreAccountBilling('user-1')).rejects.toBeInstanceOf(
+      AccountBillingError,
+    );
+
+    expect(await redis.exists('stripe:account:{user-1}:deleted')).toBe(1);
+    expect(await redis.get('stripe:account:{user-1}:operation')).toBe(
+      deletion.token,
+    );
+  });
+
+  it('lets support recover legacy deletion blocks', async () => {
+    await redis.set('stripe:account:{user-1}:deleted', '1');
+
+    expect(await restoreAccountBilling('user-1')).toBe(true);
     await expect(
       acquireAccountBillingOperation('user-1', 'checkout'),
     ).resolves.toBeDefined();

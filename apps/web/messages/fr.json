@@ -414,7 +414,9 @@
         "description": "Un problème est survenu lors du traitement de votre paiement. Veuillez réessayer ou contacter le support si le problème persiste.",
         "dismiss": "Fermer"
       },
-      "checkoutError": "Impossible de créer la session de paiement"
+      "checkoutError": "Impossible de créer la session de paiement",
+      "accountBillingBlocked": "La facturation est suspendue pendant la suppression du compte. Réessayez dans quelques instants. Si elle reste bloquée, contactez l’assistance pour la rétablir.",
+      "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
     },
     "history": {
       "title": "Historique des crédits"

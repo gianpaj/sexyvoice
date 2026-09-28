@@ -405,20 +405,36 @@ URL is shared with the credits page through `lib/stripe/billing-portal.ts`.
 
 `lib/stripe/account-billing.ts` coordinates Checkout Session creation and account
 deletion through atomic Redis reservations per user. Deletion expires open
-Checkout Sessions, checks subscriptions again, and commits a permanent billing
-block before changing account data. The commit requires ownership of the
-reservation, so an expired deletion request cannot proceed. Failed cleanup can
-be retried while checkout remains blocked.
+Checkout Sessions, checks subscriptions again, and commits a billing block
+before changing account data. The commit requires ownership of the reservation,
+so an expired deletion request cannot proceed. The block prevents both checkout
+and another deletion, even if cleanup outlasts the five-minute reservation.
+The action's `finally` releases its reservation and block after cleanup succeeds
+or fails; token checks prevent stale requests from releasing another request's
+block.
+
+Auth users remain able to sign in and check out after deletion finishes.
+Inactive profiles removed by the retention script are restored on dashboard
+return through `ensureUserApplicationState`. Billing recovery does not restore
+deleted files or characters.
 
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
 expiration. Successful requests and definitive Stripe 4xx rejections release
 their reservations. HTTP 409 conflicts, 5xx responses, and connection failures
-keep the reservation because session creation may still complete. Deletion
-reservations expire after five minutes. The permanent
-`stripe:account:{userId}:deleted` keys are billing state, not cache entries;
-retain them when clearing the subscription display cache. Subscription state
-still comes directly from Stripe, and webhooks maintain the display cache.
+keep the reservation because session creation may still complete.
+
+The `stripe:account:{userId}:deleted` block has no TTL: a terminated request or a
+failed Redis release requires support to confirm cleanup has stopped before
+clearing it. These keys are coordination state; retain them when clearing the
+subscription display cache. Stripe remains the source of subscription state,
+and webhooks maintain the display cache.
+
+Checkout returns `accountBillingBlocked` with retry and support guidance, or
+`accountBillingBusy` for a competing reservation. Sentry records these as
+`checkout_billing_blocked` and `checkout_billing_busy`, separate from Stripe
+failures. For interrupted requests, follow
+[Restore account billing](scripts/README.md#restore-account-billing).
 
 `middleware-client.ts` forwards refreshed cookies to both the request and
 response, preserving locale rewrites and request-header overrides. Auth and

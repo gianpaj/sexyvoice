@@ -414,7 +414,9 @@
         "description": "Bei der Verarbeitung Ihrer Zahlung ist ein Problem aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht.",
         "dismiss": "Schließen"
       },
-      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden"
+      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden",
+      "accountBillingBlocked": "Die Abrechnung ist wegen der Kontolöschung pausiert. Versuchen Sie es gleich erneut. Bleibt sie gesperrt, wenden Sie sich an den Support, um sie wieder freizuschalten.",
+      "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
     },
     "history": {
       "title": "Credit-Verlauf"
