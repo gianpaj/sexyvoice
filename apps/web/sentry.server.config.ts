@@ -24,6 +24,9 @@ Sentry.init({
     Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
   ],
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+  // instrumentation.ts registers the OpenTelemetry provider through @vercel/otel.
+  skipOpenTelemetrySetup: true,
+
+  // Samples every exported trace, including the OTLP export to Dash0.
   tracesSampleRate: 0.1,
 });
