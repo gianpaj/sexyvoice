@@ -8,6 +8,8 @@ import type { Locale } from '../i18n/i18n-config';
  *   pro:      $75 / 300_000 credits = $0.25/1k
  *   discount: (0.40 - 0.25) / 0.40 = 0.375
  */
+const STARTER_TOPUP_DOLLAR_AMOUNT = 5;
+const STARTER_TOPUP_BASE_CREDITS = 10_000;
 const STANDARD_TOPUP_DOLLAR_AMOUNT = 10;
 const STANDARD_TOPUP_BASE_CREDITS = 25_000;
 const PRO_TOPUP_DOLLAR_AMOUNT = 75;
@@ -84,7 +86,7 @@ export const getTopupPackages = (lang: Locale) => {
     },
     // not shown on landing page, only in /credits page
     starter: {
-      baseCredits: 10_000,
+      baseCredits: STARTER_TOPUP_BASE_CREDITS,
       get baseCreditsLocale() {
         return Number(this.baseCredits).toLocaleString(lang);
       },
@@ -95,7 +97,7 @@ export const getTopupPackages = (lang: Locale) => {
           : this.baseCredits;
       },
       // pricePer1kCredits: isPromoEnabled ? 0.4166 : 0.5,
-      dollarAmount: 5, // $5.00
+      dollarAmount: STARTER_TOPUP_DOLLAR_AMOUNT, // $5.00
       priceId: process.env.STRIPE_TOPUP_STARTER_PRICE_ID,
       promoBonus: promoBonuses.starter.toLocaleString(lang),
     },
@@ -261,6 +263,59 @@ export function getSubscriptionMrrByPriceId(): Map<string, number> {
 const TOPUP_PACKAGES = getTopupPackages('en');
 
 export type PackageType = keyof typeof TOPUP_PACKAGES;
+
+/**
+ * Custom top-ups let a user buy an arbitrary credit amount instead of one of
+ * the fixed packages. They are billed at the starter rate ($0.50 per 1k
+ * credits), the least favourable per-credit price we offer, so the volume
+ * packages stay the better deal.
+ *
+ * `custom` is not a `PackageType`: it has no Stripe price ID and is charged
+ * with an inline `price_data` line item. It only ever appears as the
+ * `packageId` recorded on the resulting top-up transaction.
+ */
+export const CUSTOM_TOPUP_PACKAGE_ID = 'custom';
+export const CUSTOM_TOPUP_MIN_CREDITS = 5000;
+/** ~$500 — guards against fat-fingered amounts and Stripe's max charge. */
+export const CUSTOM_TOPUP_MAX_CREDITS = 1_000_000;
+export const CUSTOM_TOPUP_CREDIT_STEP = 500;
+
+/**
+ * Snaps an arbitrary (possibly hand-typed) credit amount to a purchasable one:
+ * a multiple of `CUSTOM_TOPUP_CREDIT_STEP` within the allowed range. Both the
+ * input field and the server action run it, so the price the user sees is the
+ * price we charge.
+ */
+export function validateCustomCreditAmount(credits: number): number {
+  if (!Number.isFinite(credits)) {
+    return CUSTOM_TOPUP_MIN_CREDITS;
+  }
+
+  const stepped =
+    Math.round(credits / CUSTOM_TOPUP_CREDIT_STEP) * CUSTOM_TOPUP_CREDIT_STEP;
+
+  return Math.min(
+    CUSTOM_TOPUP_MAX_CREDITS,
+    Math.max(CUSTOM_TOPUP_MIN_CREDITS, stepped),
+  );
+}
+
+/**
+ * Price of a custom top-up, in cents. Kept as integer arithmetic until the
+ * final division so no floating point rounding can creep into the amount we
+ * charge.
+ */
+export function calculateCustomTopupCents(credits: number): number {
+  return Math.round(
+    (validateCustomCreditAmount(credits) * STARTER_TOPUP_DOLLAR_AMOUNT * 100) /
+      STARTER_TOPUP_BASE_CREDITS,
+  );
+}
+
+/** Same price as `calculateCustomTopupCents`, in dollars. */
+export function calculateCustomTopupDollarAmount(credits: number): number {
+  return calculateCustomTopupCents(credits) / 100;
+}
 
 function trimTrailingZeros(num: number): string {
   return num.toFixed(3).replace(/\.?0+$/, '');

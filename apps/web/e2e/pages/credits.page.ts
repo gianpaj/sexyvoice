@@ -8,6 +8,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * - TopupStatus alerts (success/canceled/error driven by URL search params)
  * - Stripe Customer Portal link
  * - Three credit top-up packages (Starter, Standard, Pro)
+ * - A custom top-up card for an arbitrary credit amount
  * - Credit transaction history table
  * - Optional Stripe pricing table for subscriptions
  *
@@ -27,6 +28,7 @@ export class CreditsPage {
   readonly stripePortalLink: Locator;
 
   // Credit package cards
+  readonly pricingCards: Locator;
   readonly packageCards: Locator;
   readonly starterCard: Locator;
   readonly standardCard: Locator;
@@ -36,9 +38,17 @@ export class CreditsPage {
   readonly standardPrice: Locator;
   readonly proPrice: Locator;
 
+  // Custom top-up card
+  readonly customTopupCard: Locator;
+  readonly customCreditsInput: Locator;
+  readonly customIncreaseButton: Locator;
+  readonly customDecreaseButton: Locator;
+  readonly customBuyButton: Locator;
+
   // Credit history section
   readonly historyTitle: Locator;
   readonly historyTable: Locator;
+  readonly historyTableHeaders: Locator;
   readonly historyTableRows: Locator;
   readonly historyEmptyState: Locator;
 
@@ -64,9 +74,11 @@ export class CreditsPage {
       name: /stripe customer portal/i,
     });
 
-    // Package cards — scope to cards that contain a buy button to avoid
-    // matching sidebar cards or unrelated dashboard sections.
-    this.packageCards = page.locator('[class*="card"]').filter({
+    // Package cards — scope everything to the pricing grid so sidebar cards,
+    // unrelated dashboard sections and the custom top-up card (which has its
+    // own "Buy Credits" button) are never mistaken for a package.
+    this.pricingCards = page.getByTestId('pricing-cards');
+    this.packageCards = this.pricingCards.locator('[class*="card"]').filter({
       has: page.getByRole('button', { name: /buy credits/i }),
     });
     this.starterCard = this.packageCards
@@ -76,7 +88,9 @@ export class CreditsPage {
       .filter({ hasText: /standard/i })
       .first();
     this.proCard = this.packageCards.filter({ hasText: /pro/i }).first();
-    this.buyButtons = page.getByRole('button', { name: /buy credits/i });
+    this.buyButtons = this.pricingCards.getByRole('button', {
+      name: /buy credits/i,
+    });
     this.starterPrice = this.starterCard
       .locator('span')
       .filter({ hasText: /^\$\d+/ })
@@ -90,9 +104,23 @@ export class CreditsPage {
       .filter({ hasText: /^\$\d+/ })
       .first();
 
+    // Custom top-up card
+    this.customTopupCard = page.getByTestId('custom-topup');
+    this.customCreditsInput = this.customTopupCard.getByLabel(/^credits$/i);
+    this.customIncreaseButton = this.customTopupCard.getByRole('button', {
+      name: /increase credits/i,
+    });
+    this.customDecreaseButton = this.customTopupCard.getByRole('button', {
+      name: /decrease credits/i,
+    });
+    this.customBuyButton = this.customTopupCard.getByRole('button', {
+      name: /buy credits|processing/i,
+    });
+
     // Credit history section
     this.historyTitle = page.getByRole('heading', { name: /history/i });
     this.historyTable = page.locator('table');
+    this.historyTableHeaders = page.locator('table thead th');
     this.historyTableRows = page.locator('table tbody tr');
     this.historyEmptyState = page.getByText(/no transactions yet/i);
 
@@ -176,6 +204,15 @@ export class CreditsPage {
   }
 
   /**
+   * Type a credit amount into the custom top-up input and commit it (the field
+   * only snaps to a purchasable amount on blur, so half-typed values survive)
+   */
+  async setCustomCredits(credits: number) {
+    await this.customCreditsInput.fill(String(credits));
+    await this.customCreditsInput.blur();
+  }
+
+  /**
    * Dismiss the topup status alert
    */
   async dismissAlert() {
@@ -228,6 +265,25 @@ export class CreditsPage {
   }
 
   /**
+   * Verify the custom top-up card is visible with the minimum credit amount
+   * pre-filled
+   */
+  async expectCustomTopupVisible() {
+    await expect(this.customTopupCard).toBeVisible();
+    await expect(this.customCreditsInput).toHaveValue('5000');
+    await expect(this.customBuyButton).toBeVisible();
+  }
+
+  /**
+   * Verify the custom top-up card shows the given price for the current amount
+   */
+  async expectCustomTopupPrice(price: string) {
+    await expect(
+      this.customTopupCard.getByText(price, { exact: true }),
+    ).toBeVisible();
+  }
+
+  /**
    * Verify the credit history section is visible
    */
   async expectHistorySectionVisible() {
@@ -240,11 +296,15 @@ export class CreditsPage {
   async expectHistoryTableOrEmptyState() {
     const tableVisible = await this.historyTable.isVisible();
     if (tableVisible) {
-      // Table exists — verify it has the expected headers
-      await expect(this.page.getByText('Date')).toBeVisible();
-      await expect(this.page.getByText('Description')).toBeVisible();
-      await expect(this.page.getByText('Type')).toBeVisible();
-      await expect(this.page.getByText('Amount')).toBeVisible();
+      // Table exists — verify it has the expected headers. Scope the lookup to
+      // the table: page-wide text matching is a substring match, so "Amount"
+      // also hits copy such as the custom top-up card's "Custom amount" title.
+      await expect(this.historyTableHeaders).toHaveText([
+        'Date',
+        'Description',
+        'Type',
+        'Amount',
+      ]);
     } else {
       // Empty state is shown
       await expect(this.historyEmptyState).toBeVisible();

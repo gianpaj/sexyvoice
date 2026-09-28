@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { getSubscriptionPackages } from '@/lib/stripe/pricing';
+import {
+  CUSTOM_TOPUP_MAX_CREDITS,
+  CUSTOM_TOPUP_MIN_CREDITS,
+  calculateCustomTopupCents,
+  calculateCustomTopupDollarAmount,
+  getSubscriptionPackages,
+  validateCustomCreditAmount,
+} from '@/lib/stripe/pricing';
 
 describe('subscription pricing', () => {
   const originalCouponId =
@@ -70,5 +77,46 @@ describe('subscription pricing', () => {
     expect(packages.starter.dollarAmount).toBe(5);
     expect(packages.standard.dollarAmount).toBe(10);
     expect(packages.pro.dollarAmount).toBe(75);
+  });
+});
+
+describe('custom top-up pricing', () => {
+  it('snaps amounts to the credit step', () => {
+    expect(validateCustomCreditAmount(12_000)).toBe(12_000);
+    expect(validateCustomCreditAmount(12_100)).toBe(12_000);
+    expect(validateCustomCreditAmount(12_400)).toBe(12_500);
+  });
+
+  it('clamps amounts outside the allowed range', () => {
+    expect(validateCustomCreditAmount(0)).toBe(CUSTOM_TOPUP_MIN_CREDITS);
+    expect(validateCustomCreditAmount(-5000)).toBe(CUSTOM_TOPUP_MIN_CREDITS);
+    expect(validateCustomCreditAmount(4999)).toBe(CUSTOM_TOPUP_MIN_CREDITS);
+    expect(validateCustomCreditAmount(CUSTOM_TOPUP_MAX_CREDITS + 1000)).toBe(
+      CUSTOM_TOPUP_MAX_CREDITS,
+    );
+  });
+
+  it('falls back to the minimum for non-numeric amounts', () => {
+    expect(validateCustomCreditAmount(Number.NaN)).toBe(
+      CUSTOM_TOPUP_MIN_CREDITS,
+    );
+    expect(validateCustomCreditAmount(Number.POSITIVE_INFINITY)).toBe(
+      CUSTOM_TOPUP_MIN_CREDITS,
+    );
+  });
+
+  it('prices custom top-ups at the starter rate in whole cents', () => {
+    // $0.50 per 1k credits — the starter package rate.
+    expect(calculateCustomTopupCents(CUSTOM_TOPUP_MIN_CREDITS)).toBe(250);
+    expect(calculateCustomTopupCents(10_000)).toBe(500);
+    expect(calculateCustomTopupCents(12_500)).toBe(625);
+    expect(Number.isInteger(calculateCustomTopupCents(97_500))).toBe(true);
+  });
+
+  it('prices the validated amount, not the requested one', () => {
+    expect(calculateCustomTopupCents(1)).toBe(
+      calculateCustomTopupCents(CUSTOM_TOPUP_MIN_CREDITS),
+    );
+    expect(calculateCustomTopupDollarAmount(12_500)).toBe(6.25);
   });
 });

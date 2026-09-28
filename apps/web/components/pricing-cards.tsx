@@ -106,6 +106,7 @@ export function PricingCards({
     <div
       className={cn('flex flex-col gap-6 xl:px-28', className)}
       data-promo-theme={promoTheme}
+      data-testid="pricing-cards"
     >
       {/* Billing toggle — the "+15%" badge here is the single source of truth */}
       <div className="mx-auto flex items-center gap-1 rounded-full bg-muted p-1">

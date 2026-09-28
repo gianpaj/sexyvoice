@@ -5,9 +5,12 @@ import type { Stripe } from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
 import {
+  CUSTOM_TOPUP_PACKAGE_ID,
+  calculateCustomTopupCents,
   getSubscriptionPackages,
   getTopupPackages,
   type PackageType,
+  validateCustomCreditAmount,
 } from '@/lib/stripe/pricing';
 import {
   hasAnySubscriptionHistory,
@@ -22,6 +25,12 @@ const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
 const CHECKOUT_INVALID_PACKAGE_ID = 'CHECKOUT_INVALID_PACKAGE_ID';
 
 type CheckoutPackageId = Exclude<PackageType, 'free'>;
+
+/**
+ * What can end up as `packageId` on a top-up transaction: one of the fixed
+ * packages, or `custom` for a user-chosen credit amount.
+ */
+type TopupPackageId = CheckoutPackageId | typeof CUSTOM_TOPUP_PACKAGE_ID;
 
 const CHECKOUT_PACKAGE_IDS = Object.keys(getTopupPackages('en')).filter(
   (packageId): packageId is CheckoutPackageId => packageId !== 'free',
@@ -90,9 +99,11 @@ interface CheckoutMetadataBase {
   userId: string;
 }
 
-export interface TopupCheckoutMetadata extends CheckoutMetadataBase {
+export interface TopupCheckoutMetadata
+  extends Omit<CheckoutMetadataBase, 'packageId'> {
   credits: string;
   dollarAmount: string;
+  packageId: TopupPackageId;
   promo?: string;
   type: 'topup';
 }
@@ -113,7 +124,7 @@ interface CheckoutIdentity {
 
 async function getCheckoutStripeId(
   user: CheckoutIdentity,
-  packageId: CheckoutPackageId,
+  packageId: TopupPackageId,
 ): Promise<string> {
   const userData = await getUserById(user.id);
   // biome-ignore lint/complexity/useOptionalChain: needed
@@ -135,6 +146,103 @@ async function getCheckoutStripeId(
   }
 
   return userData.stripe_id;
+}
+
+/**
+ * Checkout for a user-chosen credit amount. Unlike the fixed packages there is
+ * no Stripe price ID, so the line item is priced inline from the starter rate.
+ * The amount is re-validated here because the number arriving from the client
+ * is untrusted input.
+ */
+export async function createCustomCheckoutSession(
+  credits: number,
+): Promise<{ client_secret: string | null; url: string | null }> {
+  const validatedCredits = validateCustomCreditAmount(credits);
+
+  try {
+    if (isE2E()) {
+      return {
+        client_secret: null,
+        url: null,
+      };
+    }
+
+    const lang = 'en';
+    const supabase = await createClient();
+    const claims = await getVerifiedClaims(supabase);
+
+    if (!claims?.sub) {
+      const error = new Error('Unauthorized checkout session request');
+      captureException(error, {
+        extra: {
+          checkoutType: 'topup',
+          credits: validatedCredits,
+          packageId: CUSTOM_TOPUP_PACKAGE_ID,
+        },
+        tags: {
+          event_type: 'auth_error',
+          section: 'stripe_actions',
+        },
+      });
+      throw error;
+    }
+
+    const stripeId = await getCheckoutStripeId(
+      { email: claims.email, id: claims.sub },
+      CUSTOM_TOPUP_PACKAGE_ID,
+    );
+
+    const amountInCents = calculateCustomTopupCents(validatedCredits);
+    const metadata: TopupCheckoutMetadata = {
+      credits: validatedCredits.toString(),
+      dollarAmount: (amountInCents / 100).toString(),
+      packageId: CUSTOM_TOPUP_PACKAGE_ID,
+      type: 'topup',
+      userId: claims.sub,
+    };
+
+    const checkoutSession: Stripe.Checkout.Session =
+      await stripe.checkout.sessions.create({
+        cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
+        customer: stripeId,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `${validatedCredits.toLocaleString('en')} Voice Credits`,
+              },
+              unit_amount: amountInCents,
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: metadata as unknown as Stripe.MetadataParam,
+        mode: 'payment',
+        success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${validatedCredits}`,
+        ui_mode: 'hosted',
+      });
+
+    return {
+      client_secret: checkoutSession.client_secret,
+      url: checkoutSession.url,
+    };
+  } catch (error) {
+    console.error('Error creating custom checkout session:', error);
+    captureException(error, {
+      extra: {
+        checkout_type: 'topup',
+        credits: validatedCredits,
+        error_message: error instanceof Error ? error.message : String(error),
+        packageId: CUSTOM_TOPUP_PACKAGE_ID,
+      },
+      tags: {
+        event_type: 'checkout_session_creation_error',
+        section: 'stripe_actions',
+      },
+    });
+    throw error;
+  }
 }
 
 export async function createCheckoutSession(
