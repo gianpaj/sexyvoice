@@ -299,8 +299,9 @@ export const PlaygroundStateProvider = ({
     }
     // Old links carry prompts in the query string. An ID this page did not
     // load belongs to another user or a deleted character, and call-token
-    // rejects both, so the link is dropped.
-    helpers.updateBrowserUrl(loadedPreset?.id ?? null);
+    // rejects both, so the link is dropped. On a full page load this runs
+    // before Next patches `replaceState`, so the current state is kept.
+    helpers.updateBrowserUrl(loadedPreset?.id ?? null, window.history.state);
   }, []);
 
   return (

@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { defaultSessionConfig } from '@/data/default-config';
 import type { Preset } from '@/data/presets';
@@ -98,19 +98,36 @@ describe('usePlaygroundState — preset URL', () => {
     );
   });
 
-  it("preserves the router's history state when rewriting the URL", () => {
+  it("keeps the router's history state when rewriting an old link on load", () => {
     window.history.replaceState(
       { __NA: true },
       '',
       `/en/dashboard/call?preset=${savedCharacter.id}&instructions=Old+prompt`,
     );
 
+    renderHook(() => usePlaygroundState(), {
+      wrapper: makeWrapper([savedCharacter]),
+    });
+
+    expect(window.history.state).toEqual({ __NA: true });
+    expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
+  });
+
+  it('passes a null state on selection so Next can sync its router', () => {
+    window.history.replaceState({ __NA: true }, '', '/en/dashboard/call');
     const { result } = renderHook(() => usePlaygroundState(), {
       wrapper: makeWrapper([savedCharacter]),
     });
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
     act(() => result.current.selectPreset(publicCharacter.id));
 
-    expect(window.history.state).toEqual({ __NA: true });
+    expect(replaceState).toHaveBeenLastCalledWith(
+      null,
+      '',
+      `/en/dashboard/call?preset=${publicCharacter.id}`,
+    );
+    replaceState.mockRestore();
   });
 
   it('selectPreset writes only the preset ID to the URL, not the prompt', () => {

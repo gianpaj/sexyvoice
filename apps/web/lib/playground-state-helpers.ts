@@ -97,7 +97,14 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
     // The URL carries only the preset ID. Prompts and session settings load
     // from the database and stay out of browser history and analytics, so old
     // links that still carry them are stripped on every write.
-    updateBrowserUrl: (presetId: string | null) => {
+    //
+    // `state` defaults to `null`, Next's documented shallow-update pattern: its
+    // patched `replaceState` copies the router tree into the new entry and
+    // syncs the router's URL. A state carrying Next's `__NA` flag skips that
+    // sync, so a later router refresh would restore the old URL. Callers that
+    // run before Next installs its patch pass `window.history.state` instead,
+    // so the tree survives and Back doesn't reload the page.
+    updateBrowserUrl: (presetId: string | null, state: unknown = null) => {
       const params = new URLSearchParams(window.location.search);
       for (const key of [...params.keys()]) {
         if (isOwnedUrlParam(key)) {
@@ -109,10 +116,8 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       }
       const search = params.toString();
 
-      // Carry the existing history state over: Next's router keeps its tree
-      // there, and replacing it with `{}` makes the back button reload the page.
       window.history.replaceState(
-        window.history.state,
+        state,
         '',
         `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`,
       );
