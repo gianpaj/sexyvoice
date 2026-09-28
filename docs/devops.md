@@ -180,6 +180,9 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: Dash0 OTLP ingress URL. `@vercel/otel`
+  exports server traces here; Sentry receives the same spans.
+- `OTEL_EXPORTER_OTLP_HEADERS`: `Authorization=Bearer <dash0-auth-token>`.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`
