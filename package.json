@@ -43,7 +43,7 @@
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
     "lint-staged": "17.2.0",
-    "prettier": "3.9.6",
+    "prettier": "3.9.9",
     "turbo": "2.10.12",
     "ultracite": "7.10.0"
   },
