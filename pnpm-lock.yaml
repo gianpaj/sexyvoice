@@ -348,7 +348,7 @@ importers:
         version: 0.1.20
       '@wavesurfer/react':
         specifier: ^1.0.12
-        version: 1.0.12(react@19.2.7)(wavesurfer.js@7.12.4)
+        version: 1.0.12(react@19.2.7)(wavesurfer.js@7.12.12)
       ai:
         specifier: 'catalog:'
         version: 6.0.289(zod@4.4.3)
@@ -479,8 +479,8 @@ importers:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.2.2)
       wavesurfer.js:
-        specifier: 7.12.4
-        version: 7.12.4
+        specifier: 7.12.12
+        version: 7.12.12
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -9824,8 +9824,8 @@ packages:
     resolution: {integrity: sha512-6i/00NBjP4yGPs+caKSyRfpTF/8Torsu0MOW3mMzIbhgISFder8i7xbqgHlLMwJrdiN8ndBV3UA1/AfzPSr+jg==}
     engines: {node: '>=10.13.0'}
 
-  wavesurfer.js@7.12.4:
-    resolution: {integrity: sha512-b/+XnWfJejNdvNUmtm4M5QzQepHhUbTo+62wYybwdV1B/Sn9vHhgb1xckRm0rGY2ZefJwLkE7lYcKnLfIia4cQ==}
+  wavesurfer.js@7.12.12:
+    resolution: {integrity: sha512-fyKNuREQTliCl4b9w7pUzpFXQIkX5tcdYu1o6vBdH+NlUXvTxshvfbG2hj8OxDevzQNZlDTHzZGyAT3FhuutWw==}
 
   web-namespaces@2.0.1:
     resolution: {integrity: sha512-bKr1DkiNa2krS7qxNtdrtHAmzuYGFQLiQ13TsorsdT6ULTkPLKuu5+GsFpDlg6JFjUTwX2DyhMPG2be8uPrqsQ==}
@@ -15833,10 +15833,10 @@ snapshots:
     dependencies:
       '@wasm-audio-decoders/common': 9.0.7
 
-  '@wavesurfer/react@1.0.12(react@19.2.7)(wavesurfer.js@7.12.4)':
+  '@wavesurfer/react@1.0.12(react@19.2.7)(wavesurfer.js@7.12.12)':
     dependencies:
       react: 19.2.7
-      wavesurfer.js: 7.12.4
+      wavesurfer.js: 7.12.12
 
   '@webassemblyjs/ast@1.14.1':
     dependencies:
@@ -20240,7 +20240,7 @@ snapshots:
     dependencies:
       graceful-fs: 4.2.11
 
-  wavesurfer.js@7.12.4: {}
+  wavesurfer.js@7.12.12: {}
 
   web-namespaces@2.0.1: {}
 
