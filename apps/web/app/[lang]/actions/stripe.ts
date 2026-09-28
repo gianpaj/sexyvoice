@@ -5,6 +5,10 @@ import type { Stripe } from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
 import {
+  acquireAccountBillingOperation,
+  releaseAccountBillingOperation,
+} from '@/lib/stripe/account-billing';
+import {
   getSubscriptionPackages,
   getTopupPackages,
   type PackageType,
@@ -141,6 +145,11 @@ export async function createCheckoutSession(
   data: FormData,
   packageId: CheckoutPackageId,
 ): Promise<{ client_secret: string | null; url: string | null }> {
+  let billingOperation:
+    | Awaited<ReturnType<typeof acquireAccountBillingOperation>>
+    | undefined;
+  let checkoutRequestStarted = false;
+  let checkoutRequestCompleted = false;
   try {
     const ui_mode = data.get(
       'uiMode',
@@ -192,6 +201,10 @@ export async function createCheckoutSession(
       throw error;
     }
 
+    billingOperation = await acquireAccountBillingOperation(
+      claims.sub,
+      'checkout',
+    );
     const stripeId = await getCheckoutStripeId(
       { email: claims.email, id: claims.sub },
       packageId,
@@ -226,9 +239,11 @@ export async function createCheckoutSession(
             }),
           };
 
+    checkoutRequestStarted = true;
     const checkoutSession: Stripe.Checkout.Session =
       await stripe.checkout.sessions.create({
         customer: stripeId,
+        expires_at: billingOperation.checkoutExpiresAt,
         line_items: [
           {
             price: package_.priceId,
@@ -250,6 +265,7 @@ export async function createCheckoutSession(
         metadata: metadata as unknown as Stripe.MetadataParam,
         ui_mode,
       });
+    checkoutRequestCompleted = true;
 
     return {
       client_secret: checkoutSession.client_secret,
@@ -275,5 +291,14 @@ export async function createCheckoutSession(
       },
     });
     throw error;
+  } finally {
+    // A failed request can still create a session at Stripe. Keep its reservation
+    // until that session's fixed expiration has passed.
+    if (
+      billingOperation &&
+      (!checkoutRequestStarted || checkoutRequestCompleted)
+    ) {
+      await releaseAccountBillingOperation(billingOperation);
+    }
   }
 }

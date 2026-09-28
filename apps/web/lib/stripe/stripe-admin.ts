@@ -266,6 +266,27 @@ export function hasOngoingSubscription(
   );
 }
 
+export async function expireOpenCheckoutSessions(customerId: string) {
+  let startingAfter: string | undefined;
+  while (true) {
+    const sessions = await stripe.checkout.sessions.list({
+      customer: customerId,
+      limit: 100,
+      status: 'open',
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+
+    for (const session of sessions.data) {
+      // If checkout completes concurrently, expiration fails and deletion stops.
+      await stripe.checkout.sessions.expire(session.id);
+    }
+
+    if (!sessions.has_more) return;
+    startingAfter = sessions.data.at(-1)?.id;
+    if (!startingAfter) throw new Error('Checkout session pagination failed');
+  }
+}
+
 export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
   try {
     const coupon = await stripe.coupons.retrieve(couponId);

@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createOrRetrieveCustomer,
+  expireOpenCheckoutSessions,
   hasOngoingSubscription,
   stripe,
 } from '@/lib/stripe/stripe-admin';
@@ -12,6 +13,7 @@ import { createClient } from '@/lib/supabase/server';
 // Mock Stripe customers API
 vi.mock('stripe', () => {
   const mockStripe = {
+    checkout: { sessions: { expire: vi.fn(), list: vi.fn() } },
     customers: {
       create: vi.fn(),
       list: vi.fn(),
@@ -31,6 +33,55 @@ vi.mock('stripe', () => {
       }
     },
   };
+});
+
+describe('expireOpenCheckoutSessions()', () => {
+  beforeEach(() => {
+    vi.mocked(stripe.checkout.sessions.list).mockReset();
+    vi.mocked(stripe.checkout.sessions.expire).mockReset();
+  });
+
+  it('expires every open session across pages', async () => {
+    vi.mocked(stripe.checkout.sessions.list)
+      .mockResolvedValueOnce({
+        data: [{ id: 'cs_1' }],
+        has_more: true,
+      } as never)
+      .mockResolvedValueOnce({
+        data: [{ id: 'cs_2' }],
+        has_more: false,
+      } as never);
+
+    await expireOpenCheckoutSessions('cus_123');
+
+    expect(stripe.checkout.sessions.list).toHaveBeenNthCalledWith(1, {
+      customer: 'cus_123',
+      limit: 100,
+      status: 'open',
+    });
+    expect(stripe.checkout.sessions.list).toHaveBeenNthCalledWith(2, {
+      customer: 'cus_123',
+      limit: 100,
+      starting_after: 'cs_1',
+      status: 'open',
+    });
+    expect(stripe.checkout.sessions.expire).toHaveBeenCalledWith('cs_1');
+    expect(stripe.checkout.sessions.expire).toHaveBeenCalledWith('cs_2');
+  });
+
+  it('stops deletion if an open session completes during expiration', async () => {
+    vi.mocked(stripe.checkout.sessions.list).mockResolvedValue({
+      data: [{ id: 'cs_1' }],
+      has_more: false,
+    } as never);
+    vi.mocked(stripe.checkout.sessions.expire).mockRejectedValue(
+      new Error('Session is complete'),
+    );
+
+    await expect(expireOpenCheckoutSessions('cus_123')).rejects.toThrow(
+      'Session is complete',
+    );
+  });
 });
 
 describe('hasOngoingSubscription()', () => {

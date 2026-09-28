@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import {
+  acquireAccountBillingOperation,
+  releaseAccountBillingOperation,
+} from '@/lib/stripe/account-billing';
+import {
   hasAnySubscriptionHistory,
   isStripeCouponUsable,
   stripe,
@@ -28,6 +32,11 @@ vi.mock('@/lib/stripe/stripe-admin', () => ({
   },
 }));
 
+vi.mock('@/lib/stripe/account-billing', () => ({
+  acquireAccountBillingOperation: vi.fn(),
+  releaseAccountBillingOperation: vi.fn(),
+}));
+
 vi.mock('@/lib/supabase/queries', () => ({
   getUserById: vi.fn(),
 }));
@@ -48,6 +57,11 @@ describe('createCheckoutSession()', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(acquireAccountBillingOperation).mockResolvedValue({
+      checkoutExpiresAt: 1_800_000_000,
+      token: 'checkout-token',
+      userId: 'user_123',
+    });
 
     process.env.NEXT_PUBLIC_SITE_URL = 'https://example.com';
     process.env.STRIPE_TOPUP_STARTER_PRICE_ID = 'price_topup_starter';
@@ -151,6 +165,51 @@ describe('createCheckoutSession()', () => {
       }),
     );
     expect((await createClient()).auth.getUser).not.toHaveBeenCalled();
+    expect(acquireAccountBillingOperation).toHaveBeenCalledWith(
+      'user_123',
+      'checkout',
+    );
+    expect(stripe.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({ expires_at: 1_800_000_000 }),
+    );
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('does not create checkout during or after account deletion', async () => {
+    vi.mocked(acquireAccountBillingOperation).mockRejectedValueOnce(
+      new Error('Account unavailable'),
+    );
+
+    await expect(
+      createCheckoutSession(new FormData(), 'starter'),
+    ).rejects.toThrow('Account unavailable');
+
+    expect(getUserById).not.toHaveBeenCalled();
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+  });
+
+  it('retains the reservation when Stripe creation has an unknown outcome', async () => {
+    vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce(
+      new Error('Connection lost'),
+    );
+
+    await expect(
+      createCheckoutSession(new FormData(), 'starter'),
+    ).rejects.toThrow('Connection lost');
+
+    expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+  });
+
+  it('releases the reservation when checkout fails before contacting Stripe', async () => {
+    vi.mocked(getUserById).mockResolvedValueOnce(null);
+
+    await expect(
+      createCheckoutSession(new FormData(), 'starter'),
+    ).rejects.toThrow('User not found');
+
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
   it('rejects invalid package IDs without Sentry error noise', async () => {

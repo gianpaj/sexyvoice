@@ -402,6 +402,21 @@ still blocks it until the subscription ends. A failed profile or Stripe lookup
 also blocks deletion. The profile form displays the returned error and directs
 subscribers to billing to cancel first.
 
+`lib/stripe/account-billing.ts` coordinates Checkout Session creation and account
+deletion through atomic Redis reservations per user. Deletion expires open
+Checkout Sessions, checks subscriptions again, and commits a permanent billing
+block before changing account data. The commit requires ownership of the
+reservation, so an expired deletion request cannot proceed. Failed cleanup can
+be retried while checkout remains blocked.
+
+Checkout Sessions have a fixed one-hour expiration. If session creation fails
+with an unknown outcome, its reservation lasts until one minute after that
+expiration. Successful requests release their reservations. Deletion
+reservations expire after five minutes. The permanent
+`stripe:account:{userId}:deleted` keys are billing state, not cache entries;
+retain them when clearing the subscription display cache. Subscription state
+still comes directly from Stripe, and webhooks maintain the display cache.
+
 `middleware-client.ts` forwards refreshed cookies to both the request and
 response, preserving locale rewrites and request-header overrides. Auth and
 OAuth callback redirects retain cookies and SSR cache headers on success and

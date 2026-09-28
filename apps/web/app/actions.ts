@@ -7,7 +7,15 @@ import { z } from 'zod';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
-import { hasOngoingSubscription } from '@/lib/stripe/stripe-admin';
+import {
+  acquireAccountBillingOperation,
+  commitAccountDeletion,
+  releaseAccountBillingOperation,
+} from '@/lib/stripe/account-billing';
+import {
+  expireOpenCheckoutSessions,
+  hasOngoingSubscription,
+} from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -107,7 +115,14 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     throw new Error('User not found');
   }
 
+  let billingOperation:
+    | Awaited<ReturnType<typeof acquireAccountBillingOperation>>
+    | undefined;
   try {
+    billingOperation = await acquireAccountBillingOperation(
+      user.id,
+      'deletion',
+    );
     const { data: profile, error: profileError } = await getUserByIdWithError(
       user.id,
     );
@@ -119,12 +134,24 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     if (await hasOngoingSubscription(profile.stripe_id)) {
       return { error: 'subscriptionExists' as const };
     }
+
+    if (profile.stripe_id) {
+      await expireOpenCheckoutSessions(profile.stripe_id);
+      if (await hasOngoingSubscription(profile.stripe_id)) {
+        return { error: 'subscriptionExists' as const };
+      }
+    }
+    await commitAccountDeletion(billingOperation);
   } catch (error) {
     captureException(error, {
       extra: { context: 'subscription check before account deletion' },
       user: { id: user.id },
     });
     return { error: 'subscriptionCheckFailed' as const };
+  } finally {
+    if (billingOperation) {
+      await releaseAccountBillingOperation(billingOperation);
+    }
   }
 
   const deletedAt = new Date();
