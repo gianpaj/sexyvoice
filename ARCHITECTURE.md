@@ -412,7 +412,9 @@ be retried while checkout remains blocked.
 
 Checkout Sessions have a fixed one-hour expiration. If session creation fails
 with an unknown outcome, its reservation lasts until one minute after that
-expiration. Successful requests release their reservations. Deletion
+expiration. Successful requests and definitive Stripe 4xx rejections release
+their reservations. HTTP 409 conflicts, 5xx responses, and connection failures
+keep the reservation because session creation may still complete. Deletion
 reservations expire after five minutes. The permanent
 `stripe:account:{userId}:deleted` keys are billing state, not cache entries;
 retain them when clearing the subscription display cache. Subscription state

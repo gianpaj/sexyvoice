@@ -1,4 +1,5 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
+import Stripe from 'stripe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
@@ -200,6 +201,46 @@ describe('createCheckoutSession()', () => {
 
     expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
   });
+
+  it.each([400, 401, 402, 403, 404, 422, 429])(
+    'releases the reservation after a definitive Stripe %i rejection',
+    async (statusCode) => {
+      const error = new Stripe.errors.StripeError({
+        message: 'Checkout rejected',
+        statusCode,
+        type: 'invalid_request_error',
+      });
+      vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce(error);
+
+      await expect(
+        createCheckoutSession(new FormData(), 'starter'),
+      ).rejects.toBe(error);
+
+      expect(releaseAccountBillingOperation).toHaveBeenCalledWith({
+        checkoutExpiresAt: 1_800_000_000,
+        token: 'checkout-token',
+        userId: 'user_123',
+      });
+    },
+  );
+
+  it.each([409, 500, 502, 503, 504])(
+    'keeps the reservation after an uncertain Stripe %i response',
+    async (statusCode) => {
+      const error = new Stripe.errors.StripeError({
+        message: 'Checkout outcome unknown',
+        statusCode,
+        type: 'api_error',
+      });
+      vi.mocked(stripe.checkout.sessions.create).mockRejectedValueOnce(error);
+
+      await expect(
+        createCheckoutSession(new FormData(), 'starter'),
+      ).rejects.toBe(error);
+
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+    },
+  );
 
   it('releases the reservation when checkout fails before contacting Stripe', async () => {
     vi.mocked(getUserById).mockResolvedValueOnce(null);

@@ -272,6 +272,19 @@ export async function createCheckoutSession(
       url: checkoutSession.url,
     };
   } catch (error) {
+    const statusCode =
+      error && typeof error === 'object' && 'statusCode' in error
+        ? error.statusCode
+        : undefined;
+    if (
+      typeof statusCode === 'number' &&
+      statusCode >= 400 &&
+      statusCode < 500 &&
+      statusCode !== 409
+    ) {
+      checkoutRequestCompleted = true;
+    }
+
     console.error('Error creating checkout session:', error);
     if (isCheckoutSetupError(error)) {
       reportCheckoutSetupError(error, packageId);
