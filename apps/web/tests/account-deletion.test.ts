@@ -3,11 +3,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleDeleteAccountAction } from '@/app/actions';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
+import { hasOngoingSubscription } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { encodedRedirect } from '@/lib/utils';
 
 vi.mock('@/lib/storage/upload', () => ({
   deleteFileFromR2: vi.fn(),
+}));
+
+vi.mock('@/lib/stripe/stripe-admin', () => ({
+  hasOngoingSubscription: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/queries', () => ({
+  getUserByIdWithError: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -85,6 +96,87 @@ describe('account deletion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(deleteFileFromR2).mockResolvedValue(undefined);
+    vi.mocked(getUserByIdWithError).mockResolvedValue({
+      data: { stripe_id: 'cus_123' },
+      error: null,
+    } as never);
+    vi.mocked(hasOngoingSubscription).mockResolvedValue(false);
+  });
+
+  it('blocks subscribers before any account or file changes', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    vi.mocked(hasOngoingSubscription).mockResolvedValue(true);
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+      error: 'subscriptionExists',
+    });
+
+    expect(getUserByIdWithError).toHaveBeenCalledWith('user-1');
+    expect(hasOngoingSubscription).toHaveBeenCalledWith('cus_123');
+    expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+    expect(sessionSupabase.from).not.toHaveBeenCalled();
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+    expect(createAdminClient).not.toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
+  });
+
+  it.each(['profile error', 'missing profile', 'Stripe error'])(
+    'blocks deletion when the subscription check fails with %s',
+    async (failure) => {
+      const { sessionSupabase } = setupAccountDeletion();
+      const error = new Error('Lookup failed');
+      if (failure === 'Stripe error') {
+        vi.mocked(hasOngoingSubscription).mockRejectedValueOnce(error);
+      } else {
+        vi.mocked(getUserByIdWithError).mockResolvedValueOnce({
+          data: null,
+          error: failure === 'profile error' ? error : null,
+        } as never);
+      }
+
+      await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+        error: 'subscriptionCheckFailed',
+      });
+
+      expect(captureException).toHaveBeenCalled();
+      expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+      expect(sessionSupabase.from).not.toHaveBeenCalled();
+      expect(deleteFileFromR2).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
+      expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+      expect(encodedRedirect).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects unauthenticated requests before checking subscriptions', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    sessionSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: null },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User not found',
+    );
+
+    expect(getUserByIdWithError).not.toHaveBeenCalled();
+    expect(hasOngoingSubscription).not.toHaveBeenCalled();
+    expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('allows deletion when the profile has no Stripe customer', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    vi.mocked(getUserByIdWithError).mockResolvedValueOnce({
+      data: { stripe_id: null },
+      error: null,
+    } as never);
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(hasOngoingSubscription).toHaveBeenCalledWith(null);
+    expect(sessionSupabase.auth.updateUser).toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+    expect(encodedRedirect).toHaveBeenCalledWith('success', '/en/', '');
   });
 
   it('uses the admin client for the user-scoped audio soft delete', async () => {

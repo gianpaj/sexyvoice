@@ -798,7 +798,11 @@
         "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Uso de API\n• Personajes de llamada personalizados\n• Todos los datos asociados de nuestros servidores",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
-        "continue": "Continuar"
+        "continue": "Continuar",
+        "errors": {
+          "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu cuenta.",
+          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo."
+        }
       }
     },
     "apiKeys": {

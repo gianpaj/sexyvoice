@@ -7,7 +7,9 @@ import { z } from 'zod';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
+import { hasOngoingSubscription } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
@@ -103,6 +105,26 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
 
   if (!user) {
     throw new Error('User not found');
+  }
+
+  try {
+    const { data: profile, error: profileError } = await getUserByIdWithError(
+      user.id,
+    );
+
+    if (profileError || !profile) {
+      throw profileError ?? new Error('User profile not found');
+    }
+
+    if (await hasOngoingSubscription(profile.stripe_id)) {
+      return { error: 'subscriptionExists' as const };
+    }
+  } catch (error) {
+    captureException(error, {
+      extra: { context: 'subscription check before account deletion' },
+      user: { id: user.id },
+    });
+    return { error: 'subscriptionCheckFailed' as const };
   }
 
   const deletedAt = new Date();

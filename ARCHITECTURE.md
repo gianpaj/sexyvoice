@@ -395,6 +395,13 @@ A fresh lookup is not recent reauthentication or a complete revocation check.
 application code unless a suppression explains the exception. External API v1
 uses API-key authentication, not browser claims.
 
+Account deletion checks the profile's Stripe customer subscriptions directly
+before changing account data or deleting files. Only `canceled` and
+`incomplete_expired` subscriptions allow deletion; a scheduled cancellation
+still blocks it until the subscription ends. A failed profile or Stripe lookup
+also blocks deletion. The profile form displays the returned error and directs
+subscribers to billing to cancel first.
+
 `middleware-client.ts` forwards refreshed cookies to both the request and
 response, preserving locale rewrites and request-header overrides. Auth and
 OAuth callback redirects retain cookies and SSR cache headers on success and

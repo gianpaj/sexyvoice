@@ -2,6 +2,7 @@
 
 import { AlertCircle, OctagonAlert } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 import { handleDeleteAccountAction } from '@/app/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -23,7 +24,10 @@ export function DeleteAccountForm() {
   const locale = useLocale();
 
   const handleDeleteAccount = async () => {
-    await handleDeleteAccountAction({ lang: locale });
+    const result = await handleDeleteAccountAction({ lang: locale });
+    if (result?.error) {
+      toast.error(t(`errors.${result.error}`));
+    }
   };
 
   return (

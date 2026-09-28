@@ -798,7 +798,11 @@
         "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• L'utilisation de l'API\n• Les personnages d'appel personnalisés\n• Toutes les données associées de nos serveurs",
         "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
         "cancel": "Annuler",
-        "continue": "Continuer"
+        "continue": "Continuer",
+        "errors": {
+          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
+          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer."
+        }
       }
     },
     "apiKeys": {

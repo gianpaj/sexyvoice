@@ -255,6 +255,17 @@ export function hasAnySubscriptionHistory(
   return hasMatchingSubscriptionHistory(customerId, () => true);
 }
 
+export function hasOngoingSubscription(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(
+    customerId,
+    (subscription) =>
+      subscription.status !== 'canceled' &&
+      subscription.status !== 'incomplete_expired',
+  );
+}
+
 export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
   try {
     const coupon = await stripe.coupons.retrieve(couponId);
