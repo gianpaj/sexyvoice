@@ -463,8 +463,9 @@ export function PresetSelector({
             the row bleeds through ConfigurationForm's px-4 and the dashboard
             main's px-4 so avatars scroll to the screen edges; Embla reads the
             track's padding-left and the last slide's margin-right as edge
-            gaps, so the row lines up with the heading at rest. From sm up, 6 are visible and arrows get a gutter only when
-            there is more to scroll. */}
+            gaps, so the row lines up with the heading at rest. From sm up, 6
+            are visible and arrows get a gutter only when there is more to
+            scroll. */}
         <div
           className={`relative -mx-8 mb-4 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
         >
