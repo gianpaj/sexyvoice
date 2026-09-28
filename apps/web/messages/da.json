@@ -410,7 +410,9 @@
         "description": "Der opstod et problem med at behandle din betaling. Prøv igen eller kontakt support, hvis problemet fortsætter.",
         "dismiss": "Luk"
       },
-      "checkoutError": "Kunne ikke oprette betalingssession"
+      "checkoutError": "Kunne ikke oprette betalingssession",
+      "accountBillingBlocked": "Fakturering er sat på pause under sletning af kontoen. Kontakt support via chatten i dashboardet eller info@sexyvoice.ai.",
+      "accountBillingBusy": "En anden fakturerings- eller sletteanmodning er i gang. Prøv igen senere."
     },
     "history": {
       "title": "Kredithistorik"
@@ -794,7 +796,14 @@
         "confirmDescription": "Denne handling kan ikke fortrydes. Dette vil permanent slette din konto, herunder:\n• Genererede lydfiler\n• Klonede stemmer\n• API-forbrug\n• Brugerdefinerede opkaldskarakterer\n• Alle tilknyttede data fra vores servere",
         "alertTitle": "Bekræft at du vil slette din konto",
         "cancel": "Annuller",
-        "continue": "Fortsæt"
+        "continue": "Fortsæt",
+        "errors": {
+          "manageBilling": "Administrer fakturering",
+          "subscriptionExists": "Din konto har stadig et Stripe-abonnement. Opsig det i faktureringsportalen, og vent, til det udløber, før du sletter din konto.",
+          "subscriptionCheckFailed": "Vi kunne ikke kontrollere status for dit abonnement. Din konto er ikke blevet slettet. Prøv igen.",
+          "accountBillingBlocked": "Kontosletning er blokeret af en tidligere sletteanmodning. Kontakt support via chatten i dashboardet eller info@sexyvoice.ai.",
+          "accountBillingBusy": "En anden fakturerings- eller sletteanmodning er i gang. Prøv igen senere."
+        }
       }
     },
     "apiKeys": {

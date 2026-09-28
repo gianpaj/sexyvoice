@@ -272,7 +272,11 @@ function CheckoutForm({
         throw new Error('Invalid checkout package');
       }
 
-      const { url } = await createCheckoutSession(formData, packageId);
+      const { url, error } = await createCheckoutSession(formData, packageId);
+
+      if (error) {
+        return { error: creditsT(`status.${error}`), success: false };
+      }
 
       if (url) {
         window.location.assign(url);

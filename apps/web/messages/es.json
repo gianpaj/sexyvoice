@@ -414,7 +414,9 @@
         "description": "Hubo un problema procesando tu pago. Por favor intenta de nuevo o contacta soporte si el problema persiste.",
         "dismiss": "Descartar"
       },
-      "checkoutError": "Error al crear sesión de pago"
+      "checkoutError": "Error al crear sesión de pago",
+      "accountBillingBlocked": "La facturación está en pausa por la eliminación de la cuenta. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
+      "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
     },
     "history": {
       "title": "Historial de Créditos"
@@ -798,7 +800,14 @@
         "confirmDescription": "Esta acción no se puede deshacer. Esto eliminará permanentemente tu cuenta, incluyendo:\n• Archivos de audio generados\n• Voces clonadas\n• Uso de API\n• Personajes de llamada personalizados\n• Todos los datos asociados de nuestros servidores",
         "alertTitle": "Confirma que quieres eliminar tu cuenta",
         "cancel": "Cancelar",
-        "continue": "Continuar"
+        "continue": "Continuar",
+        "errors": {
+          "manageBilling": "Gestionar facturación",
+          "subscriptionExists": "Tu cuenta todavía tiene una suscripción de Stripe. Cancélala en el portal de facturación y espera a que termine antes de eliminar tu cuenta.",
+          "subscriptionCheckFailed": "No hemos podido comprobar el estado de tu suscripción. Tu cuenta no se ha eliminado. Inténtalo de nuevo.",
+          "accountBillingBlocked": "Una solicitud de eliminación anterior está bloqueando la eliminación de tu cuenta. Contacta con soporte a través del chat del panel o info@sexyvoice.ai.",
+          "accountBillingBusy": "Hay otra solicitud de facturación o eliminación en curso. Inténtalo de nuevo más tarde."
+        }
       }
     },
     "apiKeys": {
