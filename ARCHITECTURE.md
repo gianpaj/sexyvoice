@@ -448,7 +448,7 @@ clearing it. These keys are coordination state; retain them when clearing the
 subscription display cache. Stripe remains the source of subscription state,
 and webhooks maintain the display cache.
 
-Checkout returns `accountBillingBlocked` with retry and support guidance, or
+Checkout returns `accountBillingBlocked` with support guidance, or
 `accountBillingBusy` for a competing reservation. Sentry records these as
 `checkout_billing_blocked` and `checkout_billing_busy`, separate from Stripe
 failures. For interrupted requests, follow
