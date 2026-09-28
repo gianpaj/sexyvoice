@@ -465,12 +465,13 @@ export function PresetSelector({
             track's padding-left and the last slide's margin-right as edge
             gaps, so the row lines up with the heading at rest. From sm up, 6
             are visible and arrows get a gutter only when there is more to
-            scroll. */}
+            scroll. The track's py-1 gives the hover scale room inside Embla's
+            overflow-hidden viewport; -mt-1 and mb-3 keep the layout in place. */}
         <div
-          className={`relative -mx-8 mb-4 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
+          className={`relative -mx-8 -mt-1 mb-3 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
         >
           <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
-            <CarouselContent className="-ml-2 pl-8 sm:pl-0">
+            <CarouselContent className="-ml-2 py-1 pl-8 sm:pl-0">
               {allCharacters.map((preset, index) => {
                 const isSelected = pgState.selectedPresetId === preset.id;
                 return (
