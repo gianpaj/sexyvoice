@@ -26,7 +26,7 @@ let mockAudioContext: {
   close: ReturnType<typeof vi.fn>;
   createAnalyser: ReturnType<typeof vi.fn>;
   createMediaElementSource: ReturnType<typeof vi.fn>;
-  destination: {};
+  destination: object;
 };
 
 let createMediaElementSourceCallCount: number;
@@ -35,8 +35,9 @@ function createMockAudioContext() {
   createMediaElementSourceCallCount = 0;
 
   mockAnalyserNode = {
+    connect: vi.fn(),
+    disconnect: vi.fn(),
     fftSize: 0,
-    smoothingTimeConstant: 0,
     frequencyBinCount: 1024,
     getFloatFrequencyData: vi.fn((dataArray: Float32Array) => {
       // Fill with some fake dB values (mid-range)
@@ -44,8 +45,7 @@ function createMockAudioContext() {
         dataArray[i] = -50; // mid-range dB value
       }
     }),
-    connect: vi.fn(),
-    disconnect: vi.fn(),
+    smoothingTimeConstant: 0,
   };
 
   mockSourceNode = {
@@ -54,11 +54,9 @@ function createMockAudioContext() {
   };
 
   mockAudioContext = {
-    state: 'running',
-    resume: vi.fn().mockResolvedValue(undefined),
     close: vi.fn().mockResolvedValue(undefined),
     createAnalyser: vi.fn(() => mockAnalyserNode),
-    createMediaElementSource: vi.fn((element: HTMLAudioElement) => {
+    createMediaElementSource: vi.fn((_element: HTMLAudioElement) => {
       createMediaElementSourceCallCount++;
       // Simulate one-shot: throw on second call with same element
       if (createMediaElementSourceCallCount > 1) {
@@ -70,14 +68,12 @@ function createMockAudioContext() {
       return mockSourceNode;
     }),
     destination: {},
+    resume: vi.fn().mockResolvedValue(undefined),
+    state: 'running',
   };
 
   return mockAudioContext;
 }
-
-// Store original rAF
-const originalRAF = globalThis.requestAnimationFrame;
-const originalCAF = globalThis.cancelAnimationFrame;
 
 beforeEach(() => {
   // Create fresh mock AudioContext for each test
@@ -103,7 +99,7 @@ beforeEach(() => {
 
     if (shouldAutoFlushFrame) {
       shouldAutoFlushFrame = false;
-      Promise.resolve().then(() => {
+      queueMicrotask(() => {
         if (rafCallbacks.has(id)) {
           rafCallbacks.delete(id);
           cb(performance.now());

@@ -3,13 +3,19 @@
 /**
  * Call Sessions Analysis Script (recent / daily cron)
  *
- * Analyzes recent call_sessions transcripts using xAI Grok via the AI SDK and
- * writes one rich row per call to `call_session_analysis`, plus an aggregate row
- * to `call_session_analytics`. Sessions that already have a call_session_analysis
+ * Analyzes recent call_sessions transcripts using xAI Grok and writes one rich
+ * row per call to `call_session_analysis`, plus an aggregate row to
+ * `call_session_analytics`. Sessions that already have a call_session_analysis
  * row are skipped.
  *
+ * The prompt, analysis schema, transcript extraction and xAI Batch API client
+ * are shared with the web app (apps/web/lib/ai/*) so this script, the backfill
+ * script, the /api/call-sessions/analyze webhook and its batch drain job all
+ * write identical rows. The TypeScript modules are loaded through Node's
+ * native type stripping (see the `analyze-call-sessions` package script).
+ *
  * Usage:
- *   node scripts/analyze-call-sessions.mjs [--dry-run] [--hours=24] [--limit=100] [--debug] [--debug-session=UUID] [--smoke-test]
+ *   pnpm analyze-call-sessions [--dry-run] [--hours=24] [--limit=100] [--debug] [--debug-session=UUID] [--smoke-test]
  *
  * Environment variables required:
  *   - NEXT_PUBLIC_SUPABASE_URL
@@ -26,7 +32,20 @@ import { createClient } from '@supabase/supabase-js';
 import { generateText } from 'ai';
 import { config } from 'dotenv';
 
+import {
+  analyzeTranscript,
+  getAnalysisModelId,
+  MIN_ANALYSIS_CALL_DURATION_SECONDS as SHARED_MIN_DURATION,
+  toAnalysisRow,
+} from '../apps/web/lib/ai/analyze-call.ts';
+import {
+  collectCallAnalysisBatchResults,
+  submitCallAnalysisBatch,
+} from '../apps/web/lib/ai/call-analysis-batch.ts';
+import { waitForBatch } from '../apps/web/lib/ai/xai-batch.ts';
+
 config({
+  override: false,
   path: [
     '.env',
     '.env.local',
@@ -35,7 +54,6 @@ config({
     '../apps/web/.env',
     '../apps/web/.env.local',
   ],
-  override: false,
 });
 
 // ============================================================================
@@ -43,21 +61,15 @@ config({
 // ============================================================================
 
 export const BATCH_SIZE = 5; // calls per chunk (sequential LLM calls)
-export const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120; // 2 minutes
+export const MIN_ANALYSIS_CALL_DURATION_SECONDS = SHARED_MIN_DURATION;
 export const LONG_CALL_THRESHOLD_SECONDS = 180; // 3 minutes
 const OUTPUT_FILE_PREFIX = 'call-analysis-results';
 const DB_FETCH_PAGE_SIZE = 1000;
-const DEFAULT_MODEL = 'grok-4.3';
 
 // xAI Batch API: async, discounted, no per-request rate limits. Default engine
 // for both the recent cron and the backfill; --realtime opts back into the
-// synchronous AI SDK path. See https://docs.x.ai/developers/advanced-api-usage/batch-api
-// Base host only; request paths below include the /v1 prefix (matches the
-// documented curl, e.g. https://api.x.ai/v1/files). Trailing slashes stripped
-// so an override with or without one both resolve correctly.
-const XAI_API_BASE = (
-  process.env.XAI_API_BASE_URL || 'https://api.x.ai'
-).replace(/\/+$/, '');
+// synchronous AI SDK path. The client lives in apps/web/lib/ai/xai-batch.ts and
+// honours XAI_API_BASE_URL. See https://docs.x.ai/developers/advanced-api-usage/batch-api
 const BATCH_POLL_INTERVAL_MS = 5000; // xAI recommends 2-5s between status polls
 export const DEFAULT_BATCH_TIMEOUT_MINUTES = 60;
 
@@ -88,7 +100,7 @@ export function createXaiClient() {
 }
 
 export function getModelId() {
-  return process.env.XAI_SUMMARY_MODEL || DEFAULT_MODEL;
+  return getAnalysisModelId();
 }
 
 // ============================================================================
@@ -97,14 +109,14 @@ export function getModelId() {
 
 function parseArgs() {
   const options = {
+    batchTimeoutMinutes: DEFAULT_BATCH_TIMEOUT_MINUTES,
+    debug: false,
+    debugSession: null,
     dryRun: false,
     hours: 24,
     limit: null,
-    debug: false,
-    debugSession: null,
-    smokeTest: false,
     realtime: false,
-    batchTimeoutMinutes: DEFAULT_BATCH_TIMEOUT_MINUTES,
+    smokeTest: false,
   };
 
   for (const arg of process.argv.slice(2)) {
@@ -249,27 +261,19 @@ export async function getAllCompletedCallSessions(supabase, options = {}) {
   return rows;
 }
 
+// Result rows carry the session fields needed by the shared row mapper.
 function buildAnalysisRecord(result) {
-  const analysis = result.analysis || {};
-  return {
-    session_id: result.sessionId,
-    user_id: result.userId || null,
-    started_at: result.startedAt || null,
-    duration_seconds: result.durationSeconds || null,
-    end_reason: result.endReason || null,
-    language: analysis.language || null,
-    topic_category: analysis.topic_category || null,
-    topic_subcategory: analysis.topic_subcategory || null,
-    engagement_level: analysis.user_engagement_level || null,
-    conversation_quality: analysis.conversation_quality || null,
-    where_died: analysis.where_conversation_died || null,
-    user_sentiment: analysis.user_sentiment || null,
-    key_requests: analysis.key_user_requests || [],
-    ai_issues: analysis.ai_compliance_issues || null,
-    notable_patterns: analysis.notable_patterns || null,
-    error: result.error || null,
-    analyzed_at: new Date().toISOString(),
-  };
+  return toAnalysisRow(
+    {
+      duration_seconds: result.durationSeconds ?? null,
+      end_reason: result.endReason ?? null,
+      id: result.sessionId,
+      started_at: result.startedAt ?? null,
+      transcript: null,
+      user_id: result.userId ?? null,
+    },
+    result.analysis,
+  );
 }
 
 export async function saveAllSessionAnalyses(supabase, results) {
@@ -291,8 +295,8 @@ export async function saveAllSessionAnalyses(supabase, results) {
     const { error } = await supabase
       .from('call_session_analysis')
       .upsert(buildAnalysisRecord(result), {
-        onConflict: 'session_id',
         ignoreDuplicates: true,
+        onConflict: 'session_id',
       });
     if (error) {
       console.error(
@@ -313,7 +317,7 @@ export async function saveAllSessionAnalyses(supabase, results) {
   if (errorCount > 0) {
     console.log(`   ❌ Failed to save ${errorCount} session analyses`);
   }
-  return { successCount, errorCount, skippedCount };
+  return { errorCount, skippedCount, successCount };
 }
 
 export async function saveAnalyticsRecord(supabase, analyticsData) {
@@ -330,91 +334,6 @@ export async function saveAnalyticsRecord(supabase, analyticsData) {
 }
 
 // ============================================================================
-// Transcript processing
-// ============================================================================
-
-function firstString(...values) {
-  for (const value of values) {
-    if (typeof value === 'string') return value;
-  }
-  return '';
-}
-
-export function extractMessages(transcript) {
-  if (!transcript) return [];
-
-  let assistantMessages = [];
-  if (Array.isArray(transcript)) {
-    assistantMessages = transcript;
-  } else if (Array.isArray(transcript.messages)) {
-    assistantMessages = transcript.messages;
-  }
-
-  const userTranscriptions = Array.isArray(transcript.user_transcriptions)
-    ? transcript.user_transcriptions
-    : [];
-
-  const normalizedAssistant = assistantMessages
-    .map((msg) => ({
-      role: msg.role || 'assistant',
-      content: firstString(msg.content, msg.text),
-      timestamp: msg.timestamp || msg.created_at || msg.time || null,
-    }))
-    .filter((msg) => msg.content);
-
-  const normalizedUser = userTranscriptions
-    .map((msg) => ({
-      role: 'user',
-      content: firstString(msg.content, msg.text, msg.transcript),
-      timestamp: msg.timestamp || msg.created_at || msg.time || null,
-    }))
-    .filter((msg) => msg.content);
-
-  return [...normalizedAssistant, ...normalizedUser].sort(
-    (a, b) => toEpoch(a.timestamp) - toEpoch(b.timestamp),
-  );
-}
-
-// Parse a timestamp to epoch ms; missing/invalid values sort first (0).
-function toEpoch(timestamp) {
-  if (!timestamp) {
-    return 0;
-  }
-  const parsed = Date.parse(timestamp);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-export function calculateConversationStats(messages) {
-  const userMessages = messages.filter((m) => m.role === 'user');
-  const assistantMessages = messages.filter((m) => m.role === 'assistant');
-  return {
-    totalMessages: messages.length,
-    userMessageCount: userMessages.length,
-    assistantMessageCount: assistantMessages.length,
-  };
-}
-
-export function buildConversationSummary(messages, maxLength = 4000) {
-  let summary = '';
-  for (const msg of messages) {
-    const prefix = msg.role === 'user' ? 'USER: ' : 'AI: ';
-    const line = `${prefix}${msg.content}\n`;
-    if (summary.length + line.length > maxLength) {
-      summary += '\n[... conversation truncated ...]';
-      break;
-    }
-    summary += line;
-  }
-  return summary;
-}
-
-function sanitizeMessageContent(content) {
-  return typeof content === 'string'
-    ? content.replaceAll('\u0000', '').trim()
-    : '';
-}
-
-// ============================================================================
 // LLM analysis
 // ============================================================================
 
@@ -426,48 +345,17 @@ export async function runSmokeTest(xai) {
   return text;
 }
 
-function buildPrompt(session, conversationSummary, stats, assistantOnlyNote) {
-  return `Analyze this AI voice call conversation and provide insights in JSON format.
-
-CONVERSATION:
-${conversationSummary}
-
-CONTEXT:
-- Call duration: ${session.duration_seconds} seconds
-- End reason: ${session.end_reason || 'unknown'}
-- Total messages: ${stats.totalMessages}
-${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}
-
-Respond with ONLY valid JSON (no markdown, no code blocks) in this exact format:
-{
-  "language": "ISO 639-1 two-letter code of the primary language used by the USER when user transcriptions are available; otherwise infer from the overall conversation context and set notable_patterns to mention the missing user transcription",
-  "topic_category": "One of: roleplay_intimate, roleplay_fantasy, casual_chat, emotional_support, asmr_relaxation, fetish_content, other",
-  "topic_subcategory": "More specific topic description (e.g., 'daddy_dom', 'girlfriend_experience', 'meditation', etc.)",
-  "user_engagement_level": "One of: high, medium, low, minimal",
-  "conversation_quality": "One of: flowing, choppy, one_sided, dying",
-  "where_conversation_died": "Brief description of what caused disengagement or null if conversation flowed well",
-  "user_sentiment": "One of: satisfied, frustrated, bored, engaged, confused",
-  "key_user_requests": ["List of main things the user asked for or wanted"],
-  "ai_compliance_issues": "Any issues with AI responses (too loud, wrong tone, etc.) or null",
-  "notable_patterns": "Any notable patterns or insights about this conversation, including whether user transcriptions were missing"
-}`;
+function sessionBase(session) {
+  return {
+    durationSeconds: session.duration_seconds,
+    endReason: session.end_reason,
+    sessionId: session.id,
+    startedAt: session.started_at,
+    userId: session.user_id,
+  };
 }
 
-function parseLlmJson(responseText) {
-  let cleaned = responseText.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.slice(7);
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.slice(3);
-  }
-  if (cleaned.endsWith('```')) {
-    cleaned = cleaned.slice(0, -3);
-  }
-  return JSON.parse(cleaned.trim());
-}
-
-export async function analyzeCallSessionsWithLLM(xai, sessions, options = {}) {
-  const model = xai(getModelId());
+export async function analyzeCallSessionsWithLLM(sessions, options = {}) {
   const results = [];
 
   for (const session of sessions) {
@@ -476,88 +364,20 @@ export async function analyzeCallSessionsWithLLM(xai, sessions, options = {}) {
     }
 
     try {
-      const messages = extractMessages(session.transcript).map((msg) => ({
-        ...msg,
-        content: sanitizeMessageContent(msg.content),
-      }));
-      const stats = calculateConversationStats(messages);
-
-      if (messages.length === 0) {
-        results.push({
-          sessionId: session.id,
-          userId: session.user_id,
-          startedAt: session.started_at,
-          durationSeconds: session.duration_seconds,
-          endReason: session.end_reason,
-          error: 'No messages in transcript',
-        });
-        continue;
-      }
-
-      const conversationSummary = buildConversationSummary(messages);
-      const assistantOnlyNote =
-        stats.userMessageCount === 0
-          ? 'No user transcription detected; analysis based on assistant transcript only.'
-          : null;
-
-      const { text: responseText } = await generateText({
-        model,
-        prompt: buildPrompt(
-          session,
-          conversationSummary,
-          stats,
-          assistantOnlyNote,
-        ),
-      });
-
-      let analysis;
-      try {
-        analysis = parseLlmJson(responseText);
-      } catch (parseError) {
-        // Treat an unparseable response as a failure (top-level error), not a
-        // valid analysis: otherwise it would inflate success metrics and persist
-        // an all-null row that blocks reprocessing.
-        console.error(
-          `❌ Failed to parse LLM response for session ${session.id}: ${parseError.message}`,
-        );
-        results.push({
-          sessionId: session.id,
-          userId: session.user_id,
-          startedAt: session.started_at,
-          durationSeconds: session.duration_seconds,
-          endReason: session.end_reason,
-          error: `parse failed: ${parseError.message}`,
-        });
-        continue;
-      }
-
-      results.push({
-        sessionId: session.id,
-        userId: session.user_id,
-        startedAt: session.started_at,
-        durationSeconds: session.duration_seconds,
-        endReason: session.end_reason,
-        stats,
-        analysis: assistantOnlyNote
-          ? {
-              ...analysis,
-              notable_patterns: analysis?.notable_patterns
-                ? `${analysis.notable_patterns} ${assistantOnlyNote}`
-                : assistantOnlyNote,
-            }
-          : analysis,
-      });
+      // Same synchronous generateObject path as the webhook's realtime bypass.
+      const analysis = await analyzeTranscript(session);
+      results.push({ ...sessionBase(session), analysis });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`❌ Error analyzing session ${session.id}: ${message}`);
-      results.push({ sessionId: session.id, error: message });
+      results.push({ ...sessionBase(session), error: message });
     }
   }
 
   return results;
 }
 
-async function processSessionsRealtime(xai, sessions, options) {
+async function processSessionsRealtime(sessions, options) {
   console.log(
     '\n🤖 Analyzing sessions with Grok via the AI SDK (real-time)...',
   );
@@ -571,7 +391,7 @@ async function processSessionsRealtime(xai, sessions, options) {
       `   Processing batch ${batchNum}/${totalBatches} (${batch.length} sessions)...`,
     );
 
-    const batchResults = await analyzeCallSessionsWithLLM(xai, batch, options);
+    const batchResults = await analyzeCallSessionsWithLLM(batch, options);
     allResults.push(...batchResults);
 
     if (i + BATCH_SIZE < sessions.length) {
@@ -586,290 +406,78 @@ async function processSessionsRealtime(xai, sessions, options) {
 // xAI Batch API (async: upload JSONL -> create batch -> poll -> retrieve)
 // ============================================================================
 
-const CHAT_COMPLETIONS_PATH = '/v1/chat/completions';
-
-async function xaiApiFetch(path, init = {}) {
-  if (!process.env.XAI_API_KEY) {
-    throw new Error('Missing env.XAI_API_KEY');
-  }
-  const response = await fetch(`${XAI_API_BASE}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${process.env.XAI_API_KEY}`,
-      ...(init.headers || {}),
-    },
-  });
-  if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    throw new Error(
-      `xAI ${init.method || 'GET'} ${path} failed: ${response.status} ${response.statusText}${
-        detail ? ` - ${detail}` : ''
-      }`,
-    );
-  }
-  return response.json();
-}
-
-// Upload the JSONL request file. Follows the documented curl (single `file`
-// multipart field); FormData sets the multipart Content-Type + boundary.
-async function uploadBatchInputFile(jsonl, filename) {
-  const form = new FormData();
-  form.append(
-    'file',
-    new Blob([jsonl], { type: 'application/jsonl' }),
-    filename,
-  );
-  const data = await xaiApiFetch('/v1/files', { method: 'POST', body: form });
-  const fileId = data.id || data.file_id || data.file?.id;
-  if (!fileId) {
-    throw new Error(`xAI file upload returned no id: ${JSON.stringify(data)}`);
-  }
-  return fileId;
-}
-
-async function createBatch(name, inputFileId) {
-  const data = await xaiApiFetch('/v1/batches', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, input_file_id: inputFileId }),
-  });
-  const batchId = data.batch_id || data.id;
-  if (!batchId) {
-    throw new Error(
-      `xAI batch creation returned no id: ${JSON.stringify(data)}`,
-    );
-  }
-  return batchId;
-}
-
-async function getBatchState(batchId) {
-  const batch = await xaiApiFetch(`/v1/batches/${batchId}`);
-  return batch.state || batch || {};
-}
-
-async function getBatchResults(batchId) {
-  const results = [];
-  let paginationToken = null;
-  do {
-    const query = new URLSearchParams({ limit: '100' });
-    if (paginationToken) {
-      query.set('pagination_token', paginationToken);
-    }
-    const page = await xaiApiFetch(`/v1/batches/${batchId}/results?${query}`);
-    if (Array.isArray(page.results)) {
-      results.push(...page.results);
-    }
-    paginationToken = page.pagination_token || null;
-  } while (paginationToken);
-  return results;
-}
-
-async function pollBatchUntilDone(batchId, options = {}) {
-  const timeoutMinutes =
-    options.batchTimeoutMinutes ?? DEFAULT_BATCH_TIMEOUT_MINUTES;
-  const timeoutMs = timeoutMinutes * 60_000;
-  const startedAt = Date.now();
-  let lastLine = '';
-
-  for (;;) {
-    const state = await getBatchState(batchId);
-    const pending = state.num_pending ?? 0;
-    const success = state.num_success ?? 0;
-    const errors = state.num_error ?? 0;
-    const cancelled = state.num_cancelled ?? 0;
-    const total = state.num_requests ?? 0;
-    const settled = success + errors + cancelled;
-
-    const line = `   ⏳ batch ${batchId}: ${success} done, ${pending} pending${
-      errors ? `, ${errors} errors` : ''
-    }${cancelled ? `, ${cancelled} cancelled` : ''}`;
-    if (line !== lastLine) {
-      console.log(line);
-      lastLine = line;
-    }
-
-    // Guard against the create->parse window where every counter is still 0:
-    // only treat pending==0 as "done" once the batch has registered requests.
-    const registered = total > 0 || settled > 0;
-    if (registered && pending === 0) {
-      return state;
-    }
-
-    if (Date.now() - startedAt > timeoutMs) {
-      throw new Error(
-        `Batch ${batchId} did not finish within ${timeoutMinutes} minutes. ` +
-          'Re-run later to retrieve results or inspect it in the xAI console.',
-      );
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, BATCH_POLL_INTERVAL_MS));
-  }
-}
-
-// The docs show the result shape for the inline batch_requests style; the
-// file-based /v1/chat/completions style may come back OpenAI-shaped. Probe both.
-function extractBatchResultContent(result) {
-  const customId = result.custom_id ?? result.batch_request_id ?? null;
-  const errorMessage =
-    result.error_message ||
-    result.error?.message ||
-    (typeof result.error === 'string' ? result.error : null) ||
-    result.response?.body?.error?.message ||
-    null;
-
-  const response = result.response ?? result.batch_result?.response ?? {};
-  const content =
-    response.body?.choices?.[0]?.message?.content ??
-    response.chat_get_completion?.choices?.[0]?.message?.content ??
-    response.choices?.[0]?.message?.content ??
-    null;
-
-  return { customId, content, errorMessage };
-}
-
-// Build one JSONL request line for a session, or an error-result row when the
-// transcript has no usable messages (mirrors the real-time path's early exit).
-function prepareBatchRequest(session, model) {
-  const base = {
-    sessionId: session.id,
-    userId: session.user_id,
-    startedAt: session.started_at,
-    durationSeconds: session.duration_seconds,
-    endReason: session.end_reason,
-  };
-
-  const messages = extractMessages(session.transcript).map((msg) => ({
-    ...msg,
-    content: sanitizeMessageContent(msg.content),
-  }));
-  const stats = calculateConversationStats(messages);
-
-  if (messages.length === 0) {
-    return { errorResult: { ...base, error: 'No messages in transcript' } };
-  }
-
-  const conversationSummary = buildConversationSummary(messages);
-  const assistantOnlyNote =
-    stats.userMessageCount === 0
-      ? 'No user transcription detected; analysis based on assistant transcript only.'
-      : null;
-
-  const line = JSON.stringify({
-    custom_id: session.id,
-    method: 'POST',
-    url: CHAT_COMPLETIONS_PATH,
-    body: {
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: buildPrompt(
-            session,
-            conversationSummary,
-            stats,
-            assistantOnlyNote,
-          ),
-        },
-      ],
-    },
-  });
-
-  return { line, ctx: { base, stats, assistantOnlyNote } };
-}
-
-// Turn a single batch outcome back into the shared result-row shape.
-function batchOutcomeToResult(sessionId, ctx, outcome) {
-  if (!outcome) {
-    return { ...ctx.base, error: 'No batch result returned' };
-  }
-  if (outcome.errorMessage || !outcome.content) {
-    return {
-      ...ctx.base,
-      error: outcome.errorMessage || 'Empty batch response',
-    };
-  }
-
-  let analysis;
-  try {
-    analysis = parseLlmJson(outcome.content);
-  } catch (parseError) {
-    // Treat an unparseable response as a failure (not a valid analysis) so it
-    // stays retryable and never persists an all-null row.
-    console.error(
-      `❌ Failed to parse batch response for session ${sessionId}: ${parseError.message}`,
-    );
-    return { ...ctx.base, error: `parse failed: ${parseError.message}` };
-  }
-
-  return {
-    ...ctx.base,
-    stats: ctx.stats,
-    analysis: ctx.assistantOnlyNote
-      ? {
-          ...analysis,
-          notable_patterns: analysis?.notable_patterns
-            ? `${analysis.notable_patterns} ${ctx.assistantOnlyNote}`
-            : ctx.assistantOnlyNote,
-        }
-      : analysis,
-  };
-}
-
 export async function analyzeCallSessionsWithBatchApi(sessions, options = {}) {
-  const model = getModelId();
   const targetSessions = options.debugSession
     ? sessions.filter((session) => session.id === options.debugSession)
     : sessions;
+  const bySessionId = new Map(targetSessions.map((s) => [s.id, s]));
 
-  const results = [];
-  // sessionId -> context needed to turn a batch result back into a result row.
-  const prepared = new Map();
-  const lines = [];
+  const submission = await submitCallAnalysisBatch(
+    targetSessions,
+    getModelId(),
+  );
+  const results = submission.rejected.map((rejected) => ({
+    ...sessionBase(bySessionId.get(rejected.sessionId)),
+    error: rejected.error,
+  }));
 
-  for (const session of targetSessions) {
-    const { line, ctx, errorResult } = prepareBatchRequest(session, model);
-    if (errorResult) {
-      results.push(errorResult);
-      continue;
-    }
-    prepared.set(session.id, ctx);
-    lines.push(line);
-  }
-
-  if (lines.length === 0) {
+  if (!submission.batchId) {
     return results;
   }
 
-  console.log(`   Uploading ${lines.length} requests to the xAI Batch API...`);
-  const fileId = await uploadBatchInputFile(
-    `${lines.join('\n')}\n`,
-    'call-analysis-batch.jsonl',
+  const { batchId, contexts } = submission;
+  console.log(
+    `   Uploaded ${contexts.size} requests; batch ${batchId} created, waiting for completion...`,
   );
-  const batchId = await createBatch(`call-analysis-${lines.length}`, fileId);
-  console.log(`   Batch ${batchId} created; waiting for completion...`);
 
-  await pollBatchUntilDone(batchId, options);
-  const batchResults = await getBatchResults(batchId);
-  console.log(`   Retrieved ${batchResults.length} batch results`);
-
-  const byId = new Map();
-  for (const raw of batchResults) {
-    const parsed = extractBatchResultContent(raw);
-    if (parsed.customId) {
-      byId.set(parsed.customId, parsed);
-    }
+  const timeoutMinutes =
+    options.batchTimeoutMinutes ?? DEFAULT_BATCH_TIMEOUT_MINUTES;
+  let lastLine = '';
+  const { settled } = await waitForBatch(batchId, {
+    onPoll: (state) => {
+      const errors = state.num_error ?? 0;
+      const cancelled = state.num_cancelled ?? 0;
+      const line = `   ⏳ batch ${batchId}: ${state.num_success ?? 0} done, ${
+        state.num_pending ?? 0
+      } pending${errors ? `, ${errors} errors` : ''}${
+        cancelled ? `, ${cancelled} cancelled` : ''
+      }`;
+      if (line !== lastLine) {
+        console.log(line);
+        lastLine = line;
+      }
+    },
+    pollIntervalMs: BATCH_POLL_INTERVAL_MS,
+    timeoutMs: timeoutMinutes * 60_000,
+  });
+  if (!settled) {
+    throw new Error(
+      `Batch ${batchId} did not finish within ${timeoutMinutes} minutes. ` +
+        'Re-run later to retrieve results or inspect it in the xAI console.',
+    );
   }
 
-  for (const [sessionId, ctx] of prepared) {
-    results.push(batchOutcomeToResult(sessionId, ctx, byId.get(sessionId)));
+  const batchResults = await collectCallAnalysisBatchResults(batchId, contexts);
+  console.log(`   Retrieved ${batchResults.length} batch results`);
+
+  for (const result of batchResults) {
+    const base = sessionBase(bySessionId.get(result.sessionId));
+    if (result.error) {
+      console.error(
+        `❌ Batch analysis failed for session ${result.sessionId}: ${result.error}`,
+      );
+      results.push({ ...base, error: result.error });
+    } else {
+      results.push({ ...base, analysis: result.analysis });
+    }
   }
 
   return results;
 }
 
-export function processSessionsInBatches(xai, sessions, options = {}) {
+export function processSessionsInBatches(sessions, options = {}) {
   if (options.realtime) {
-    return processSessionsRealtime(xai, sessions, options);
+    return processSessionsRealtime(sessions, options);
   }
   console.log('\n🤖 Analyzing sessions with Grok via the xAI Batch API...');
   return analyzeCallSessionsWithBatchApi(sessions, options);
@@ -908,19 +516,19 @@ export function aggregateInsights(analysisResults) {
   const topUserRequests = Object.entries(requestFrequency)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 10)
-    .map(([request, count]) => ({ request, count }));
+    .map(([request, count]) => ({ count, request }));
 
   return {
-    totalAnalyzed: analysisResults.length,
-    validAnalyses: validResults.length,
+    engagementLevels,
     errors: analysisResults.filter((r) => r.error).length,
     languageDistribution,
-    topicDistribution,
-    engagementLevels,
     popularTopics: Object.entries(topicDistribution)
       .sort(([, a], [, b]) => b - a)
-      .map(([topic, count]) => ({ topic, count })),
+      .map(([topic, count]) => ({ count, topic })),
+    topicDistribution,
     topUserRequests,
+    totalAnalyzed: analysisResults.length,
+    validAnalyses: validResults.length,
   };
 }
 
@@ -1015,9 +623,9 @@ export async function persistResults(supabase, allResults, insights, options) {
   await saveAllSessionAnalyses(supabase, allResults);
   await saveAnalyticsRecord(supabase, {
     analysis_date: new Date().toISOString(),
+    insights,
     time_range_hours: options.timeRangeHours ?? options.hours ?? 0,
     total_sessions_analyzed: allResults.length,
-    insights,
   });
 }
 
@@ -1035,10 +643,9 @@ async function main() {
   );
 
   const supabase = createAdminClient();
-  const xai = createXaiClient();
 
   if (options.smokeTest) {
-    console.log('\n🧪 xAI smoke test:', await runSmokeTest(xai));
+    console.log('\n🧪 xAI smoke test:', await runSmokeTest(createXaiClient()));
   }
 
   console.log('\n📥 Fetching recent unanalyzed call sessions...');
@@ -1053,7 +660,7 @@ async function main() {
     return;
   }
 
-  const allResults = await processSessionsInBatches(xai, sessions, options);
+  const allResults = await processSessionsInBatches(sessions, options);
   const insights = aggregateInsights(allResults);
   printSummaryReport(insights);
 

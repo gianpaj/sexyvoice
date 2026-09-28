@@ -1,70 +1,211 @@
 # Scripts
 
-## Generate Gemini Speech Samples Script
+## R2 audio backup
 
-Generates speech samples through the public `/api/v1/speech` endpoint and saves
-them as MP3 files. The API returns WAV for `gpro`/`gpro31`, so the script
-downloads the WAV and converts it to MP3 with `ffmpeg` (required).
+This command copies missing R2 objects to a local drive. It never deletes R2
+objects or local files, and it never overwrites an existing local path.
 
-### Quick Start
+A normal run requires the exact download directory to exist with write and
+traversal access. Mount the external volume and create the backup directory
+before running the command. The startup check happens before R2 listing, so a
+missing volume cannot become a directory on the internal disk. A dry run does
+not create or require the download directory.
+
+Back up both complete configured buckets:
 
 ```bash
-# Show help
-pnpm generate-gemini-speech-samples --help
-
-# Generate one sample by voice ID (model is inferred from the voice)
-SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --voiceId 85153e4b-f5b0-477a-856e-1bf05fd84165
-
-# Generate samples for specific voices with a model + style
-SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --model gpro --style "calm" \
-  --text "Hello there" --voices achernar,zephyr
-
-# Run against a local/dev server
-SEXYVOICE_API_BASE_URL=http://localhost:3000 SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --voiceId <id>
+pnpm backup-r2-audio -- \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket
 ```
 
-> Note: you don't need `--` before the flags (e.g. `pnpm generate-gemini-speech-samples --voiceId <id>`).
+Limit the scan to one or more exact bucket prefixes:
 
-### CLI Options
+```bash
+pnpm backup-r2-audio -- \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
+  --source sv-audio-files/generated-audio/,sv-api-speech-audio-files
+```
 
-- `--voiceId <id>` - Voice ID from `GET /api/v1/voices`. Used **instead of** `--voice` + `--model` (the model is inferred from the voice).
-- `--model <gpro|gpro31>` - Gemini model alias (used with `--voices`)
-- `--voices <a,b,c>` - Comma-separated voice names (defaults to a built-in list when neither `--voices` nor `--voiceId` is given)
-- `--text <text>` - Text to synthesize
-- `--style <style>` - Emotion/style prompt applied by the API
-- `--seed <number>` - Optional deterministic seed
-- `--out <dir>` - Output directory (default: `scripts/generated-speech`)
-- `--base-url <url>` - Override `SEXYVOICE_API_BASE_URL`
-- `--api-key <key>` - Override `SEXYVOICE_API_KEY`
-- `--keep-wav` - Keep the downloaded WAV next to each MP3
-- `-h, --help` - Show help message
+Use `--dry-run` to list, compare, and report without downloading. Use
+`--max-download-size 20GB` to cap new transfers. The command selects missing
+objects from oldest to newest and can fit a later small object when an older
+object exceeds the remaining cap.
 
-### Environment
+The package command sets `NODE_ENV=production` before loading Ink. React's
+development reconciler retains performance measurements on every Ink render and
+can exhaust the V8 heap during long transfers.
 
-- `SEXYVOICE_API_KEY` - Required Bearer API key
-- `SEXYVOICE_API_BASE_URL` - Optional API host (default: `https://sexyvoice.ai`)
-- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN` - Default `--style` if not passed
-- `DEBUG=1` - Print full stack traces on error
+Files keep their full bucket and key under the destination. Existing files with
+a simple ETag receive size and MD5 verification. Files with opaque or multipart
+ETags receive size-only verification. A mismatch is reported and left untouched.
 
-`.env.local`/`.env` files in the repo root, `apps/web/`, and `scripts/` are
-loaded automatically.
+The command writes `scripts/backups/r2-audio-backup-<timestamp>.json`. It
+requires `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`. Default
+sources also require `R2_BUCKET_NAME` and `R2_SPEECH_API_BUCKET_NAME`. The R2
+credentials need list and read access.
 
-### Requirements
+## R2 orphan audio cleanup
 
-- `ffmpeg` on your `PATH` (used to convert WAV → MP3)
+This command inventories free-user audio objects that are at least 45 days old
+and have no matching `audio_files.storage_key`. It scans only the configured
+`generated-audio-free/` and `cloned-audio-free/` locations.
 
-### Troubleshooting
+Create an inventory manifest first:
 
-- **`Could not reach Speech API at ...: ENOTFOUND` / `ECONNREFUSED`** - the host
-  is wrong or the server isn't running. Check `SEXYVOICE_API_BASE_URL`.
-- **`... SELF_SIGNED_CERT_IN_CHAIN`** - the server uses a self-signed
-  certificate. For local/dev only, prepend `NODE_TLS_REJECT_UNAUTHORIZED=0`, or
-  point Node at the cert with `NODE_EXTRA_CA_CERTS=/path/to/cert.pem`.
+```bash
+pnpm cleanup-orphaned-r2-audio
+```
 
----
+Review the JSON under `scripts/backups/` without editing it. The action command
+validates the candidate list and all derived totals, so use the manifest as
+generated or reject the run. The inventory reports total objects and bytes for
+each configured bucket. It also reports scanned objects, objects younger than 45
+days, old objects still referenced by the database, and orphan candidates for
+every allowed cleanup prefix.
+
+R2 has no aggregate bucket-size response. Inventory paginates all object metadata
+to calculate bucket totals. It does not download object contents, and objects
+outside the cleanup prefixes can never become candidates.
+
+A cleanup action with `--download` requires the exact download directory to
+exist with write and traversal access. Mount the external volume and prepare
+that directory before running the action. Cleanup checks it before reading the
+manifest or touching R2, so a missing volume cannot become a backup on the
+internal disk.
+
+Download one bounded batch to an external drive with:
+
+```bash
+pnpm cleanup-orphaned-r2-audio -- \
+  --manifest scripts/backups/r2-orphan-candidates-<timestamp>.json \
+  --download \
+  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
+  --max-download-size 20GB
+```
+
+Add `--delete --yes` to delete only objects with verified local copies. To
+delete without downloading, use `--delete --force --yes`. `--force` skips only
+the local backup check. The command still validates the manifest, checks the
+allowlist, refetches database keys, and compares live R2 metadata. Soft-deleted
+`audio_files` rows intentionally remain references and continue to protect their
+R2 objects.
+
+The command requires:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SECRET_KEY`
+- `R2_ENDPOINT`
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+- `R2_BUCKET_NAME`
+- `R2_SPEECH_API_BUCKET_NAME`
+- `KV_REST_API_URL` (deletion mode)
+- `KV_REST_API_TOKEN` (deletion mode)
+
+R2 credentials need list, read, and head access. Deletion mode also needs delete
+access. The destructive loop rechecks and deletes one object at a time to keep
+the gap between the final database check and deletion small. After deleting an
+object from the main dashboard bucket, the command evicts the matching Redis URL
+cache entry.
+
+## TypeScript maintenance scripts
+
+New TypeScript maintenance scripts must call `loadScriptEnv()` from
+`lib/env.mts` and create privileged Supabase clients with
+`createScriptAdminClient()` from `lib/supabase.mts`. Keep command-specific
+warnings and confirmation policy in the command.
+
+## Gemini 3.8 voice samples
+
+`gemini-38-catalog.json` contains 28 additive entries: 11 existing Gemini identities,
+nine Spain Spanish voices, and eight Mexican Spanish voices. The 2026-09-23
+Supabase CLI inventory covers all 36 TTS rows. Its 14 non-Gemini identities are
+listed as unsupported in the catalog; they cannot be recreated by selecting their
+names in Gemini. Mexican provider IDs use `es-419` with the `Mexico Spanish`
+accent; catalog labels use `es-MX`. Catalan is excluded.
+
+Run these commands from `scripts/`. Use `pnpm run <command> --` when passing
+`--env-file`, so pnpm forwards the flag to the script. Environment loading uses
+`loadScriptEnv()`; `--env-file` accepts an explicit dotenv path and can be repeated.
+Existing process variables take precedence. Keep credentials out of arguments and
+Git.
+
+```bash
+# Validate prompts and output paths without calling Google
+pnpm run generate-gemini-speech-samples -- \
+  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 --dry-run
+
+# Generate local MP3s directly through Google; requires ffmpeg
+pnpm run generate-gemini-speech-samples -- \
+  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 \
+  --env-file /absolute/path/to/.env.local
+```
+
+The generator requires `GOOGLE_GENERATIVE_AI_API_KEY`. It sends the transcript as
+text and the delivery direction as speech metadata through the shared web-app
+helpers. The 3.8 model receives the exact regional provider ID. Each output uses
+`<provider-name>-gpro38-preview.mp3`, matching the live catalog's root-level,
+model-suffixed preview convention.
+
+`manifest.json` records catalog IDs, transcripts, directions, file hashes, token
+usage, and provider costs. `listen.html` provides local audio controls for the
+batch. Open it in a browser and listen before uploading. `--keep-wav` retains the
+intermediate audio. Rerunning the same command verifies and skips completed MP3s;
+it does not regenerate them. For changed prompts, use a new output directory.
+Move any untracked partial output aside before retrying a failed conversion.
+
+### Upload reviewed samples
+
+The separate uploader requires a directory containing `manifest.json`. It accepts
+any destination bucket and folder, with `--folder .` selecting the bucket root.
+The live catalog uses `sv-audio-files` and `https://files.sexyvoice.ai`.
+
+```bash
+pnpm run upload-speech-samples -- \
+  --path generated-speech/gemini-38 --bucket sv-audio-files \
+  --folder . --public-url https://files.sexyvoice.ai --dry-run
+
+# After listening, explicitly upload the reviewed batch
+pnpm run upload-speech-samples -- \
+  --path generated-speech/gemini-38 --bucket sv-audio-files \
+  --folder . --public-url https://files.sexyvoice.ai \
+  --env-file /absolute/path/to/.env.local --upload
+```
+
+The default is a dry run with no network requests. `--voices <uuid,uuid>` selects
+reviewed catalog entries from the generation manifest. Uploads use the shared R2
+client and `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`.
+Conditional puts refuse overwrites. A retry can verify an identical existing
+object. A different object fails without changing it.
+
+`uploads.json` records the current batch's verified URLs and failures. Verification
+checks R2 metadata and the SHA-256 of the public MP3. If a public URL is unavailable,
+rerun after it becomes accessible. Final SQL requires the full catalog, so rerun
+with all reviewed IDs after any partial batches; identical objects are only
+verified again.
+
+### Prepare additive SQL
+
+The checked-in `add-gemini-38-voices.sql` contains the verified 28-row catalog,
+with `is_public = false`. It preserves existing rows and skips existing `gpro38`
+identities on reruns. Use `--draft` to prepare guarded SQL before upload; after
+verification, prepare executable SQL locally:
+
+```bash
+pnpm run prepare-gemini-voice-sql -- \
+  --catalog gemini-38-catalog.json --samples generated-speech/gemini-38 \
+  --out generated-speech/gemini-38/add-voices.sql
+```
+
+Friendly Spanish labels come from `apps/web/lib/voice-names.ts`. Selectors and the
+local listening page show these names; database names, API identifiers, provider
+requests, filenames, and cache identities retain the provider IDs.
+
+This command validates catalog, generation, local file hashes, and verified upload
+records. It writes SQL without executing it. Deploy `gpro38` support before using
+these voices for generation. Database writes follow the
+[database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
+authorizes an exception.
 
 ## Reset Freeloader Credits Script
 
@@ -275,17 +416,23 @@ pnpm backfill-free-call
 Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
 to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
 AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
-entry points that share a single engine (`analyze-call-sessions.mjs`); the
-backfill script imports its prompt, transcript extraction, analysis schema, and
-persistence, so all paths write identical rows.
+entry points that share a single engine (`analyze-call-sessions.mjs`). The
+prompt, analysis schema, transcript extraction and xAI Batch API client are
+imported from the web app (`apps/web/lib/ai/analyze-call.ts`,
+`apps/web/lib/ai/call-analysis-batch.ts`, `apps/web/lib/ai/xai-batch.ts`) via
+Node's native type stripping, so the scripts, the webhook and its batch drain
+cron all write identical rows.
 
 - **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
   last N hours.
 - **`backfill-call-analysis`** - one-off catch-up over **all** completed,
   unanalyzed calls (paginated), with model and duration filters.
 
-A third path (not a script) analyzes a single call in real time: the
-`POST /api/call-sessions/analyze` webhook fired when a call completes.
+The live path (not a script) is asynchronous: the `POST /api/call-sessions/analyze`
+webhook fired when a call completes only enqueues the session, and the
+`/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
+Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
+`backfill-call-analysis` to catch up sessions the queue parked as `failed`.
 
 Only successful analyses are persisted; failures leave no row so they stay
 retryable. Calls shorter than 120s and sessions that already have an analysis row
@@ -317,7 +464,8 @@ Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advance
 requests are uploaded as a JSONL batch, then the script block-polls until the
 batch completes before writing results. It is discounted and has no per-request
 rate limits, at the cost of async latency — best suited to the large backfill.
-Use `--realtime` to fall back to synchronous per-call generation instead.
+Use `--realtime` to fall back to synchronous per-call generation (the AI SDK
+`generateObject` path) instead.
 
 ### CLI Options
 
@@ -353,44 +501,324 @@ Requires `.env` or `.env.local` with:
 
 ---
 
+## Sentry issue triage
+
+Use this read-only procedure for issue-level crashes and browser/device details.
+For handled generation failures and credit complaints, use the
+[Gemini application-log investigation](#2-correlate-sentry-application-logs).
+
+Verify the existing CLI authentication and list issues:
+
+```bash
+sentry-cli info
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai list
+```
+
+The numeric issue ID is in the issue's dashboard URL or the first column of the
+CLI issue list. A short ID such as `SEXYVOICE-AI-6C` is not an API issue ID.
+
+To fetch full events, use a token with `event:read` from `SENTRY_AUTH_TOKEN` or
+`~/.sentryclirc`. This keeps the token out of command arguments and output:
+
+```bash
+python3 - '<numeric-issue-id>' <<'PY'
+import configparser
+import json
+import os
+from pathlib import Path
+import sys
+from urllib.request import Request, urlopen
+
+issue_id = sys.argv[1]
+if not issue_id.isdecimal():
+    raise SystemExit("Replace <numeric-issue-id> with the issue's numeric ID")
+config = configparser.ConfigParser(interpolation=None)
+config.read(Path.home() / ".sentryclirc")
+token = os.environ.get("SENTRY_AUTH_TOKEN") or config.get("auth", "token", fallback=None)
+if not token:
+    raise SystemExit("Configure SENTRY_AUTH_TOKEN or ~/.sentryclirc first")
+url = f"https://sentry.io/api/0/organizations/sexyvoiceai/issues/{issue_id}/events/?full=true&per_page=10"
+request = Request(url, headers={"Authorization": f"Bearer {token}"})
+with urlopen(request, timeout=30) as response:
+    print(json.dumps(json.load(response), indent=2))
+    print("Pagination:", response.headers.get("Link", "none"), file=sys.stderr)
+PY
+```
+
+The [issue events API](https://docs.sentry.io/api/events/list-an-issues-events/)
+caps full-event pages at 10. Follow its `Link` header's next cursor when
+`results="true"`; one page is not the complete incident history. Inspect
+`dateCreated`, `tags`, `contexts.device`, `contexts.browser`, `contexts.os`, and
+`entries` for breadcrumbs, exceptions, and request details. Event contents may
+include customer data: keep exports out of the repository and shared reports.
+Resolving or muting an issue is a separate action, not part of diagnosis.
+
+## Investigate Gemini TTS Errors and Credit Charges
+
+Use this runbook when a user reports that Gemini speech requests failed,
+returned defective audio, or consumed credits unexpectedly. It is the canonical
+workflow for humans and coding agents. The companion agent instructions are in
+`skills/investigate-gemini-tts-credit-report/SKILL.md`.
+
+The investigation is read-only. Do not run refund scripts, database mutations,
+Supabase RPCs, or any other production write while following it. A refund is a
+separate action that requires explicit human approval after the evidence and
+amount have been reviewed.
+
+### Inputs and scope
+
+Collect:
+
+- the user's UUID;
+- the start and end timestamps in UTC, including enough buffer to catch retries;
+- any generation IDs, request IDs, filenames, screenshots, or exact error text;
+- whether the complaint concerns an error response, the delivered audio, or
+  both.
+
+Do not infer a narrow time window from the report when one can be obtained from
+the user or production records. State any assumed window in the final report.
+Use a temporary directory outside the repository for logs, downloaded audio,
+environment files, and generated reports. These artifacts may contain user text,
+email addresses, signed URLs, or other production data.
+
+### 1. Establish the ledger baseline
+
+Run the read-only dispute evidence script to reconcile the complete account
+ledger:
+
+```bash
+pnpm --filter @sexyvoice/scripts compile-dispute-evidence -- <user-id>
+```
+
+The expected balance is:
+
+```text
+purchased + freemium + refund adjustments - usage = expected balance
+current balance - expected balance = unexplained delta
+```
+
+A zero delta means the stored credit balance agrees with the stored ledger. It
+does not prove that every delivered artifact was usable. A non-zero delta is a
+billing-integrity finding that must be explained before considering any refund.
+
+The script writes a Markdown report containing production account data. Move it
+to the temporary investigation directory and remove it after the investigation.
+Do not paste irrelevant PII into tickets or the final report.
+
+If the script does not expose a required detail, use the configured Supabase CLI
+or database client only for scoped `SELECT`/read-only queries. Inspect the query
+before execution. Never use `INSERT`, `UPDATE`, `DELETE`, DDL, RPC calls, or a
+script with a write mode during an investigation.
+
+### 2. Correlate Sentry application logs
+
+Use Sentry as the primary source for application errors and handled Gemini
+failures. Query the production project across the exact UTC window:
+
+```bash
+sentry-cli logs list \
+  --org sexyvoiceai \
+  --project 4509116876193872 \
+  --max-rows 1000 \
+  --query 'timestamp:>=<start-iso> timestamp:<=<end-iso> user.id:<user-id>'
+```
+
+Start without a level filter. The generation route records several handled
+Gemini failures as `warn`, including provider unavailability, rejected input,
+quota exhaustion, and responses with no audio. Add terms to `--query` to refine
+the results by `level`, message, model, provider response ID, or refund context.
+Useful messages include:
+
+- `Gemini voice generation succeeded`;
+- `Gemini voice generation returned no audio data`;
+- `Gemini voice generation failed`;
+- `Gemini provider temporarily unavailable`;
+- `Gemini rejected TTS request`;
+- `Failed to restore reserved credits`;
+- `Failed to refund unused reserved credits`.
+
+`--log-level` controls `sentry-cli`'s own output verbosity; it does not filter
+the returned application logs. Filter application levels inside `--query`, such
+as `level:error` or `level:warn`.
+
+The `sentry-cli logs` command is beta and may change. Confirm the installed
+syntax before adapting a command:
+
+```bash
+sentry-cli logs list --org sexyvoiceai --project 4509116876193872 --help
+```
+
+Use an existing authenticated CLI configuration with read access to the project;
+do not put an auth token in commands, reports, or shared notes. If the first
+query returns no rows, keep the same UTC window and broaden the Sentry search by
+removing `user.id` and using a supplied response ID, known message, or model.
+Narrow busy windows instead of assuming that the 1000-row result cap contains
+every matching attempt.
+
+Correlate attempts by `user.id`, timestamp, message, model, response ID,
+artifact ID, and credit reservation or refund context. Read the current
+generation route before relying on historical message names or refund behavior.
+
+### Vercel fallback
+
+Use Vercel only when Sentry has no matching evidence, the request may have
+failed before application logging, or platform HTTP/request metadata is needed:
+
+```bash
+vercel logs --environment production --since <start-iso> --until <end-iso> --limit 1000 --json
+vercel logs --environment production --since <start-iso> --until <end-iso> --query '<user-id>' --json
+vercel logs --environment production --request-id <request-id> --json
+```
+
+Label Vercel-only timestamp correlations as inferences unless a request ID,
+response ID, or artifact ID joins them to Sentry or database evidence.
+
+Classify each relevant attempt as one of:
+
+- failed before delivery and refunded;
+- failed before delivery with no matching refund evidence;
+- successful with a persisted delivered artifact;
+- successful but the delivered artifact is disputed;
+- inconclusive because the log or database evidence is incomplete.
+
+Do not equate an error log or HTTP status with a credit loss, or a success log
+with usable audio.
+
+### 3. Inspect delivered Gemini 3.1 artifacts
+
+Run the transcript-duration detector for the exact UTC window:
+
+```bash
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+  --user <user-id> \
+  --since <start-iso> \
+  --until <end-iso> \
+  --out <temporary-directory>/truncation-candidates.json
+```
+
+The detector produces short-output candidates and review-only long-output
+anomalies, not confirmed defects. Long-output anomalies must not enter refund
+calculations. For each disputed or flagged artifact, compare its database
+status, credits, model, transcript, duration, provider token metadata, storage
+object, and the matching request log. Download audio only when necessary and
+keep it in the temporary directory.
+
+Confirm a delivered-audio defect with independent evidence such as listening to
+the complete artifact, verifying that transcript content is missing, or finding
+that the file is empty, corrupt, or materially shorter than its transcript can
+support. One heuristic alone must not determine a refund.
+
+### Audio energy and “silence”
+
+`ffmpeg`'s `silencedetect` filter finds intervals below a selected amplitude
+threshold for a minimum duration. It does not prove that those intervals are
+inaudible. Quiet speech, room tone, compression artifacts, fades, and poor
+recording levels can all fall below the threshold while remaining audible.
+
+For example:
+
+```bash
+ffmpeg -i <audio-file> -af silencedetect=noise=-40dB:d=0.5 -f null -
+```
+
+Report this result as “approximately N seconds below -40 dBFS for at least 0.5
+seconds,” not “N seconds of silence.” Always state the threshold and minimum
+duration. Do not use low-energy duration by itself to classify audio as broken
+or to calculate a refund.
+
+### 4. Separate findings from hypotheses
+
+Use these evidence classes:
+
+- **Proven billing defect:** a debit or usage charge lacks the expected delivery
+  or refund and creates an explainable credit shortfall.
+- **Confirmed delivered-audio defect:** the artifact was billed and delivered,
+  but independent inspection confirms missing, corrupt, or unusable output.
+- **Suspected quality defect:** a heuristic or subjective review raises concern,
+  but the expected content may still be audible or present.
+- **No discrepancy found:** the ledger reconciles, failures were refunded, and
+  no delivered artifact was independently confirmed defective.
+- **Inconclusive:** required logs or artifacts are unavailable.
+
+Keep these claims separate. In particular, a reconciled ledger rules out an
+unexplained balance mismatch, but it does not rule out compensation for a
+confirmed defective artifact.
+
+### 5. Report and clean up
+
+Return:
+
+1. user ID and UTC investigation window;
+2. data sources and exact commands used;
+3. ledger equation, current balance, expected balance, and delta;
+4. request counts by outcome, with request IDs when available;
+5. delivered artifacts reviewed and their evidence;
+6. proven findings, suspected issues, and confidence labels;
+7. proposed credit adjustment, if supported, without executing it;
+8. missing evidence and recommended next action.
+
+Before finishing, remove or move to the system Trash all temporary environment
+files, logs, reports, signed URLs, and downloaded user audio. State what was
+cleaned up and whether anything remains recoverable in Trash.
+
+---
+
 ## Find Truncated Gemini 3.1 Flash TTS Script
 
-Read-only Node.js script that finds `gemini-3.1-flash-tts-preview` `audio_files`
-whose audio was truncated — the model rendered only a few seconds of a much
-longer transcript, yet the user was billed for the full input text. Use it to
-size and issue refunds when a user reports "the audio wasn't generated properly
-and I was charged too many credits."
+Read-only Node.js script that flags `gemini-3.1-flash-tts-preview`
+`audio_files` whose measured duration is unusually short or long for the stored
+transcript. Use it as one signal in the broader
+[Gemini TTS investigation](#investigate-gemini-tts-errors-and-credit-charges),
+not as proof of truncation or authorization for a refund.
 
-### Why these are over-charges
+### Why truncation can cause an overcharge
 
 Gemini TTS credits are `ceil(totalTokenCount * 1.1 * multiplier)` where
 `totalTokenCount = promptTokenCount + candidatesTokenCount` (see
-`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). When the model fails to
-voice the whole script, `promptTokenCount` (the input it read) is still large,
-so the user pays for text that was never turned into audio.
+`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). If the model reads a
+long prompt but produces only part of the requested speech, the prompt tokens
+can still contribute to the charge.
 
-### Detection signal
+### Detection signal and limits
 
 The transcript stored in `audio_files.text_content` (everything after the
 `## TRANSCRIPT` marker, see `apps/web/lib/tts/gemini-prompt.ts`) is the text that
-_should_ have been spoken. Dividing its character count by the audio `duration`
-gives chars-per-second. Natural speech tops out around ~25 cps, so any file well
-above the threshold was truncated:
+should have been spoken. Dividing its character count by `duration` gives
+characters per second. An extreme mismatch is a useful truncation signal:
 
-- bad : `~2400 spoken chars / 7.08s ≈ 340 cps` → truncated
-- good: `~1050 spoken chars / 70.24s ≈ 15 cps` → normal
+- strong candidate: `~2400 spoken chars / 7.08s ≈ 340 cps`;
+- typical example: `~1050 spoken chars / 70.24s ≈ 15 cps`.
 
-Rows with `duration = -1` (the "couldn't measure" sentinel) are listed
-separately as `unknown-duration` and are not flagged.
+Speech rate and stored prompt structure vary. The detector does not verify the
+spoken words, audio quality, low-energy passages, or whether the user considers
+the artifact usable. Rows with `duration = -1` (the “couldn't measure” sentinel)
+are listed as `unknown-duration` and are not judged.
+
+The detector also reports review-only long outputs when:
+
+```text
+actual duration > expected duration * long factor
+expected duration = spoken characters / normal cps
+```
+
+The default long factor is `2`. The check applies only when the transcript meets
+`--min-chars`. It records the actual-to-expected duration ratio for review.
+Long-output anomalies are quality signals; they do not contribute to candidate
+credit exposure or refund commands.
 
 ### Quick Start
 
 ```bash
-# Scan just the complaining user
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
+# Scan one user in an exact UTC window
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+  --user <user-id> --since <start-iso> --until <end-iso>
 
-# Scope to files created since a date
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id> --since 2026-06-01
+# Use a stricter long-output review threshold
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+  --user <user-id> --long-factor 2.5
+
+# Scan the user's complete history for this model
+pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
 
 # Scan all users
 pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
@@ -399,40 +827,38 @@ pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
 ### CLI Options
 
 - `--user <uuid>` — only scan this `user_id` (default: all users)
-- `--threshold <cps>` — flag when spoken chars-per-second exceeds this
-  (default: `30`, comfortably above natural speech)
-- `--min-chars <n>` — ignore clips whose transcript is shorter than this, to
-  avoid noise on tiny generations (default: `150`)
-- `--normal-cps <cps>` — assumed natural rate used to compute the expected
-  duration and the "delivered %" column (default: `15`)
+- `--threshold <cps>` — flag when spoken characters per second exceed this
+  heuristic threshold (default: `30`)
+- `--min-chars <n>` — ignore clips whose transcript is shorter than this
+  (default: `150`)
+- `--normal-cps <cps>` — comparison rate used to estimate duration and the
+  “delivered %” column (default: `15`); this is not measured transcript coverage
+- `--long-factor <n>` — report output longer than expected by this factor
+  (default: `2`; must be greater than `1`)
 - `--active-only` — skip soft-deleted rows (`deleted_at` not null)
-- `--since <date>` — only scan files created on/after this date/timestamp
-  (ISO-parseable, e.g. `2026-06-01` or `2026-06-01T00:00:00Z`); default scans
-  the user's entire history for the model
-- `--paid-only` — only scan users who have paid (have a `purchase`/`topup`
-  credit transaction, matching `hasUserPaid`). Freemium-only users can't be
-  refunded, so this keeps the refund commands runnable
+- `--since <date>` — only scan files created on or after this ISO date/timestamp
+- `--until <date>` — only scan files created on or before this ISO date/timestamp
+- `--paid-only` — only scan users with a `purchase` or `topup` transaction
 - `--out <path>` — JSON report path (default: `./truncated-gemini31-tts.json`)
-- `--reason <text>` — refund reason printed in the generated refund commands
+- `--reason <text>` — reason included in conditional refund instructions
 
 ### Output
 
-- A per-file table (worst first) with chars/sec, duration, spoken chars,
-  delivered %, credits billed, and the audio-out/text-in token ratio.
-- A **refund exposure by user** rollup (total credits billed for truncated
-  files).
-- A **refund commands** block: one ready-to-run
-  `pnpm --filter @sexyvoice/scripts refund-credits -- <user-id>` per affected
-  user, annotated with the exact prompt answers to issue a credits-only
-  ("platform bug") refund — press Enter to skip transaction selection (no USD
-  refund), enter the total credits, then the reason.
-- A JSON report (`report.byUser[]` carries the `command`, `credits`, `reason`,
-  and file `ids`) plus the full `truncated` and `unknownDuration` lists.
+- A candidate table with characters per second, duration, transcript length,
+  estimated delivered percentage, credits, and output/input token ratio.
+- A separate `REVIEW-ONLY LONG OUTPUTS` table with actual duration, expected
+  duration, and the actual-to-expected ratio. These rows never enter refund
+  exposure or refund commands.
+- Candidate credit exposure by user. This is not a confirmed refund amount.
+- Conditional refund commands retained for a human-approved follow-up. Never
+  run them based only on this detector.
+- A JSON report with `candidates`, `abnormallyLong`, `unknownDuration`, the
+  `summary.abnormallyLong` count, time bounds, thresholds, and explicit
+  heuristic/approval warnings.
 
-Review the flagged rows before refunding, then run the printed commands. Because
-`refund-credits.mts` takes only the user id on the CLI and asks for the credit
-amount and reason interactively, the amount/reason are printed as annotations
-rather than passed as flags. See [Refund Credits Script](#refund-credits-script).
+Independently inspect every candidate and reconcile the account ledger before
+proposing a refund. See [Refund Credits Script](#refund-credits-script) only
+after a human has approved a confirmed amount.
 
 ### Requirements
 

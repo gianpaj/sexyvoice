@@ -13,7 +13,7 @@ import type { PlaygroundState } from '@/data/playground-state';
 const mockConnectionState = { value: 'disconnected' };
 const mockDispatch = vi.fn();
 const mockPgStateRef: { current: Partial<PlaygroundState> } = {
-  current: { selectedSceneId: null, sceneInstructions: '' },
+  current: { sceneInstructions: '', selectedSceneId: null },
 };
 
 // ---------------------------------------------------------------------------
@@ -36,10 +36,10 @@ vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => {
     const labels: Record<string, string> = {
       sceneLabel: 'Scene',
-      scenePlaceholder: 'Choose scene',
       sceneNone: 'No scene',
-      sceneUpgradeRequired: 'Upgrade to use scenes',
+      scenePlaceholder: 'Choose scene',
       sceneTextLabel: 'Scene text',
+      sceneUpgradeRequired: 'Upgrade to use scenes',
     };
     return labels[key] ?? key;
   },
@@ -51,8 +51,8 @@ vi.mock('@/hooks/use-connection', () => ({
 
 vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
-    pgState: mockPgStateRef.current,
     dispatch: mockDispatch,
+    pgState: mockPgStateRef.current,
   }),
 }));
 
@@ -73,23 +73,19 @@ vi.mock('@/components/ui/select', () => {
         ctx.Provider,
         {
           value: {
-            onValueChange: disabled ? undefined : onValueChange,
             disabled,
+            onValueChange: disabled ? undefined : onValueChange,
           },
         },
         React.createElement(
           'div',
           {
-            'data-testid': 'scene-select',
             'aria-disabled': disabled || undefined,
+            'data-testid': 'scene-select',
           },
           children,
         ),
       ),
-    SelectTrigger: ({ children }: any) =>
-      React.createElement('div', { role: 'combobox' }, children),
-    SelectValue: ({ placeholder }: any) =>
-      React.createElement('span', null, placeholder),
     SelectContent: ({ children }: any) =>
       React.createElement('div', { role: 'listbox' }, children),
     SelectItem: ({ children, value, disabled: itemDisabled }: any) => {
@@ -97,14 +93,18 @@ vi.mock('@/components/ui/select', () => {
       return React.createElement(
         'button',
         {
-          role: 'option',
-          disabled: itemDisabled,
           'data-value': value,
+          disabled: itemDisabled,
           onClick: () => !itemDisabled && onValueChange?.(value),
+          role: 'option',
         },
         children,
       );
     },
+    SelectTrigger: ({ children }: any) =>
+      React.createElement('div', { role: 'combobox' }, children),
+    SelectValue: ({ placeholder }: any) =>
+      React.createElement('span', null, placeholder),
   };
 });
 
@@ -119,7 +119,7 @@ import { SceneSelector } from '@/components/call/scene-selector';
 
 beforeEach(() => {
   mockConnectionState.value = 'disconnected';
-  mockPgStateRef.current = { selectedSceneId: null, sceneInstructions: '' };
+  mockPgStateRef.current = { sceneInstructions: '', selectedSceneId: null };
   vi.clearAllMocks();
 });
 
@@ -186,8 +186,8 @@ describe('SceneSelector', () => {
 
     it('does NOT show the textarea for free users even with a scene selected', () => {
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: callScenes[0].text,
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser={false} />);
       expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
@@ -196,7 +196,7 @@ describe('SceneSelector', () => {
 
   describe('paid users', () => {
     beforeEach(() => {
-      mockPgStateRef.current = { selectedSceneId: null, sceneInstructions: '' };
+      mockPgStateRef.current = { sceneInstructions: '', selectedSceneId: null };
     });
 
     it('all scene options are enabled for paid users', () => {
@@ -222,22 +222,22 @@ describe('SceneSelector', () => {
         screen.getByRole('option', { name: /bartender after closing/i }),
       );
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'SET_SELECTED_SCENE_ID',
         payload: 'bartender-after-closing',
+        type: 'SET_SELECTED_SCENE_ID',
       });
     });
 
     it('dispatches SET_SELECTED_SCENE_ID with null when "No scene" is selected', async () => {
       const user = userEvent.setup();
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: callScenes[0].text,
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser />);
       await user.click(screen.getByRole('option', { name: /no scene/i }));
       expect(mockDispatch).toHaveBeenCalledWith({
-        type: 'SET_SELECTED_SCENE_ID',
         payload: null,
+        type: 'SET_SELECTED_SCENE_ID',
       });
     });
 
@@ -248,8 +248,8 @@ describe('SceneSelector', () => {
 
     it('shows the scene textarea when a scene is selected', () => {
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: callScenes[0].text,
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser />);
       expect(screen.getByRole('textbox')).toBeInTheDocument();
@@ -257,8 +257,8 @@ describe('SceneSelector', () => {
 
     it('shows the "Scene text" label above the textarea', () => {
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: callScenes[0].text,
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser />);
       expect(screen.getByText('Scene text')).toBeInTheDocument();
@@ -267,8 +267,8 @@ describe('SceneSelector', () => {
     it('textarea value reflects pgState.sceneInstructions', () => {
       const customText = 'My custom scene text';
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: customText,
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser />);
       expect(screen.getByRole('textbox')).toHaveValue(customText);
@@ -277,8 +277,8 @@ describe('SceneSelector', () => {
     it('dispatches SET_SCENE_INSTRUCTIONS when the textarea changes', async () => {
       const user = userEvent.setup();
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: 'original',
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser />);
       await user.type(screen.getByRole('textbox'), ' more');
@@ -310,8 +310,8 @@ describe('SceneSelector', () => {
 
     it('textarea is disabled when connected', () => {
       mockPgStateRef.current = {
-        selectedSceneId: 'bartender-after-closing',
         sceneInstructions: callScenes[0].text,
+        selectedSceneId: 'bartender-after-closing',
       };
       render(<SceneSelector isPaidUser />);
       expect(screen.getByRole('textbox')).toBeDisabled();

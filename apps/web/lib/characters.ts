@@ -1,6 +1,8 @@
 import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 
+export const MAX_CUSTOM_CHARACTERS = 10;
+
 // ─── API response shape (from POST /api/characters) ───────────────────────────
 
 export interface ApiCharacterResponse {
@@ -29,7 +31,7 @@ export interface ApiCharacterResponse {
 // ─── API request payload (sent to POST /api/characters) ───────────────────────
 
 export interface SaveCharacterPayload {
-  id: string;
+  id?: string;
   localizedDescriptions: Partial<Record<string, string>>;
   localizedPrompts: Partial<Record<string, string>>;
   name: string;

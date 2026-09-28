@@ -8,6 +8,11 @@
 
 type WindowWithCookieStore = Window & { cookieStore: CookieStore };
 
+interface SetCookieOptions {
+  expires?: Date;
+  path?: string;
+}
+
 /**
  * Check if the Cookie Store API is available
  */
@@ -67,4 +72,47 @@ export async function getCookie(name: string): Promise<string | null> {
 
   const cookies = parseDocumentCookies();
   return cookies.get(name) ?? null;
+}
+
+/**
+ * Sets a client-side cookie with fallback for browsers without Cookie Store.
+ */
+export async function setCookie(
+  name: string,
+  value: string,
+  { expires, path = '/' }: SetCookieOptions = {},
+): Promise<void> {
+  const cookieStore = getCookieStore();
+
+  if (cookieStore) {
+    try {
+      await cookieStore.set({
+        ...(expires ? { expires: expires.getTime() } : {}),
+        name,
+        path,
+        sameSite: 'lax',
+        value,
+      });
+      return;
+    } catch {
+      // Fall through to document.cookie fallback
+    }
+  }
+
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const cookieParts = [
+    `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
+    `path=${path}`,
+    'SameSite=Lax',
+  ];
+
+  if (expires) {
+    cookieParts.push(`expires=${expires.toUTCString()}`);
+  }
+
+  // biome-ignore lint/suspicious/noDocumentCookie: Required fallback for browsers without Cookie Store API.
+  document.cookie = cookieParts.join('; ');
 }

@@ -111,7 +111,7 @@ export function LoginForm({ lang }: { lang: Locale }) {
       <div className="relative">
         {lastUsedAuthFixed === 'email' && <LastUsedBanner />}
         <Button className="w-full" disabled={isLoading} type="submit">
-          {isLoading ? 'Loading...' : t('submit')}
+          {isLoading ? t('loading') : t('submit')}
         </Button>
       </div>
 

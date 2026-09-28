@@ -43,8 +43,8 @@ describe('buildMarkdownResponse', () => {
   it('preserves existing headers and appends Accept to Vary', () => {
     const response = buildMarkdownResponse('body', {
       headers: {
-        Vary: 'Origin',
         'Cache-Control': 'private, max-age=60',
+        Vary: 'Origin',
         'x-test-header': 'present',
       },
       status: 201,
@@ -61,8 +61,8 @@ describe('buildMarkdownResponse', () => {
 describe('renderBlogListMarkdown', () => {
   const messages = {
     landing: {
-      latestPosts: 'Latest Posts',
       blogDescription: 'Guides and news about voice AI.',
+      latestPosts: 'Latest Posts',
       noPostsAvailable: 'No posts available yet.',
     },
   } as IntlMessages;
@@ -70,10 +70,10 @@ describe('renderBlogListMarkdown', () => {
   it('renders blog posts with canonical URLs based on slugAsParams', () => {
     const posts = [
       {
-        title: 'Hello from SexyVoice.ai',
-        description: 'Intro post',
         date: '2025-04-28T00:00:00.000Z',
+        description: 'Intro post',
         slugAsParams: 'hello-from-sexyvoice',
+        title: 'Hello from SexyVoice.ai',
       },
     ] as const;
 
@@ -98,15 +98,15 @@ describe('renderBlogListMarkdown', () => {
 describe('renderBlogPostMarkdown', () => {
   it('renders metadata and canonical URL using slugAsParams', () => {
     const post = {
-      title: 'Hello from SexyVoice.ai',
-      description: 'Intro post',
-      date: '2025-04-28T00:00:00.000Z',
       author: 'SexyVoice.ai',
-      locale: 'en',
-      slugAsParams: 'hello-from-sexyvoice',
       body: {
         raw: 'Building the next generation of voice AI',
       },
+      date: '2025-04-28T00:00:00.000Z',
+      description: 'Intro post',
+      locale: 'en',
+      slugAsParams: 'hello-from-sexyvoice',
+      title: 'Hello from SexyVoice.ai',
     };
 
     const markdown = renderBlogPostMarkdown(post as never);
@@ -125,14 +125,14 @@ describe('renderBlogPostMarkdown', () => {
 describe('renderPolicyMarkdown', () => {
   it('renders updated date, body, and canonical URL', () => {
     const policy = {
-      title: 'Terms & Conditions | SexyVoice.ai',
-      updated: '2026-03-02',
-      description: 'Terms of service for SexyVoice.ai.',
-      locale: 'en',
-      slug: 'terms',
       body: {
         raw: '## General Terms\n\nBy using SexyVoice.ai, you agree to these terms.',
       },
+      description: 'Terms of service for SexyVoice.ai.',
+      locale: 'en',
+      slug: 'terms',
+      title: 'Terms & Conditions | SexyVoice.ai',
+      updated: '2026-03-02',
     };
 
     const markdown = renderPolicyMarkdown(policy as never);

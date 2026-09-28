@@ -21,21 +21,23 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
 }));
 
+const mockGetUser = vi.fn();
+
 describe('/api/stripe/transactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
     vi.mocked(createClient).mockResolvedValue({
       auth: {
-        getUser: vi.fn().mockResolvedValue({
+        getClaims: vi.fn().mockResolvedValue({
           data: {
-            user: {
-              id: 'user_123',
-              email: 'user@example.com',
+            claims: {
+              sub: 'user_123',
             },
           },
           error: null,
         }),
+        getUser: mockGetUser,
       },
     } as never);
     vi.mocked(getUserById).mockResolvedValue({
@@ -44,12 +46,10 @@ describe('/api/stripe/transactions', () => {
     vi.mocked(stripe.subscriptions.list).mockResolvedValue({
       data: [
         {
-          id: 'sub_123',
           created: 1_700_000_000,
           current_period_end: 1_700_086_400,
           current_period_start: 1_700_000_000,
-          latest_invoice: { id: 'in_123' },
-          status: 'active',
+          id: 'sub_123',
           items: {
             data: [
               {
@@ -60,6 +60,8 @@ describe('/api/stripe/transactions', () => {
               },
             ],
           },
+          latest_invoice: { id: 'in_123' },
+          status: 'active',
         },
       ],
     } as never);
@@ -87,16 +89,61 @@ describe('/api/stripe/transactions', () => {
     const json = await response.json();
 
     expect(response.status).toBe(200);
+    expect(mockGetUser).not.toHaveBeenCalled();
     expect(stripe.subscriptions.list).toHaveBeenCalledWith({
       customer: 'cus_owner',
     });
     expect(json).toEqual([
       expect.objectContaining({
-        id: 'sub_123',
         amount: 900,
         description: 'Subscription: Starter (active)',
+        id: 'sub_123',
         invoice_id: 'in_123',
       }),
     ]);
+  });
+});
+
+describe.each([
+  [
+    'GET',
+    () =>
+      GET(
+        new Request(
+          'http://localhost/api/stripe/transactions?stripeId=cus_owner',
+        ) as never,
+      ),
+  ],
+] as const)('%s claims authentication', (_method, invoke) => {
+  it.each([
+    ['missing data', { data: null, error: null }],
+    ['missing claims', { data: { claims: null }, error: null }],
+    ['missing subject', { data: { claims: {} }, error: null }],
+    ['empty subject', { data: { claims: { sub: '' } }, error: null }],
+    ['invalid token', { data: null, error: { message: 'Invalid JWT' } }],
+    [
+      'SDK error with claims',
+      {
+        data: { claims: { sub: 'test-user-id' } },
+        error: { message: 'Verification failed' },
+      },
+    ],
+  ])('rejects %s before data access', async (_name, result) => {
+    vi.clearAllMocks();
+
+    const from = vi.fn();
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: { getClaims: vi.fn().mockResolvedValue(result), getUser: vi.fn() },
+      from,
+    } as never);
+
+    const response = await invoke();
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
+
+    expect(from).not.toHaveBeenCalled();
+    expect(getUserById).not.toHaveBeenCalled();
+    expect(stripe.subscriptions.list).not.toHaveBeenCalled();
   });
 });

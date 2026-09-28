@@ -4,6 +4,10 @@ export type AudioFileAndVoicesRes = Tables<'audio_files'> & {
   voices: Tables<'voices'>;
 };
 
+export function getMyActiveAudioFilesFilter(userId: string) {
+  return { status: 'active' as const, user_id: userId };
+}
+
 export function getMyAudioFilesQuery(
   client: TypedSupabaseClient,
   userId: string,
@@ -16,10 +20,19 @@ export function getMyAudioFilesQuery(
         name
       )
     `)
-    .eq('user_id', userId)
-    .eq('status', 'active')
+    .match(getMyActiveAudioFilesFilter(userId))
     .order('created_at', { ascending: false })
     .throwOnError();
+}
+
+export function getMyAudioFilesCountQuery(
+  client: TypedSupabaseClient,
+  userId: string,
+) {
+  return client
+    .from('audio_files')
+    .select('id', { count: 'exact', head: true })
+    .match(getMyActiveAudioFilesFilter(userId));
 }
 
 // For client-side useQuery
@@ -30,6 +43,15 @@ export async function getMyAudioFiles(
   const { data, error } = await getMyAudioFilesQuery(client, userId);
   if (error) throw error;
   return data;
+}
+
+export async function getMyAudioFilesCount(
+  client: TypedSupabaseClient,
+  userId: string,
+) {
+  const { count, error } = await getMyAudioFilesCountQuery(client, userId);
+  if (error) throw error;
+  return count ?? 0;
 }
 
 // For server-side prefetching with supabase-cache-helpers

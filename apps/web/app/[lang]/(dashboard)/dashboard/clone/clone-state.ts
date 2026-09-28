@@ -26,10 +26,7 @@ export interface CloneState {
   micBlob: Blob | null;
   micRecording: boolean;
   referenceAudioEnhancementEnabled: boolean;
-  selectedLocale: {
-    code: string;
-    value: string;
-  };
+  selectedLocaleCode: string;
   status: Status;
   text: string;
 }
@@ -49,10 +46,7 @@ export const initialCloneState: CloneState = {
   micBlob: null,
   micRecording: false,
   referenceAudioEnhancementEnabled: false,
-  selectedLocale: {
-    code: 'en',
-    value: 'english',
-  },
+  selectedLocaleCode: 'en',
   status: 'idle',
   text: '',
 };

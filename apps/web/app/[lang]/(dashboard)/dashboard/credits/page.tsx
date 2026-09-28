@@ -8,6 +8,7 @@ import { Suspense } from 'react';
 import PricingTable from '@/components/pricing-table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { type CustomerData, getCustomerData } from '@/lib/redis/queries';
@@ -22,6 +23,8 @@ import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CreditHistory } from './credit-history';
 import { PaymentStatus } from './payment-status';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/credits');
 
 function getScheduledSubscriptionEndDate(
   customerData: CustomerData | null,
@@ -71,6 +74,7 @@ export default async function CreditsPage(props: {
     namespace: 'sidebar',
   });
   const supabase = await createClient();
+  // biome-ignore lint/plugin/use-verified-claims: Stripe customer lookup and creation need the current Auth email.
   const { data, error: authError } = await supabase.auth.getUser();
   const user = data?.user;
 

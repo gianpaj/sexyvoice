@@ -166,7 +166,7 @@ const getOauthCallbackCookieContext = (request: Request) => {
       name.includes('auth-token'),
     ),
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
-      name.includes('code-verifier'),
+      /^sb-.+-auth-token-code-verifier(?:\.\d+)?$/.test(name),
     ),
     hasValidOauthCallbackMarkerCookie: verifyOauthCallbackMarkerValue(
       oauthCallbackMarkerCookie?.value,
@@ -189,8 +189,8 @@ const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
   return response;
 };
 
-const createOauthRedirectResponse = (url: string) => {
-  const response = NextResponse.redirect(url);
+const createOauthRedirectResponse = (url: string, headers: Headers) => {
+  const response = NextResponse.redirect(url, { headers });
   const markerValue = createOauthCallbackMarkerValue();
 
   if (markerValue) {
@@ -208,10 +208,11 @@ const createOauthRedirectResponse = (url: string) => {
   return response;
 };
 
-const createOauthFailureRedirectResponse = (url: string) =>
-  clearOauthCallbackMarkerCookie(NextResponse.redirect(url));
+const createOauthFailureRedirectResponse = (url: string, headers: Headers) =>
+  clearOauthCallbackMarkerCookie(NextResponse.redirect(url, { headers }));
 
 export async function GET(request: Request) {
+  const responseHeaders = new Headers();
   // The `/auth/callback` route is required for the server-side auth flow implemented
   // by the SSR package. It exchanges an auth code for the user's session.
   // https://supabase.com/docs/guides/auth/server-side/nextjs
@@ -228,6 +229,7 @@ export async function GET(request: Request) {
       isSafeRedirectPath(redirectTo)
         ? `${origin}${redirectTo}`
         : `${origin}/${routing.defaultLocale}/dashboard`,
+      responseHeaders,
     );
   const reportKnownOauthCallbackFailure = (
     message: string,
@@ -251,20 +253,23 @@ export async function GET(request: Request) {
       });
     }
 
-    return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+    return createOauthFailureRedirectResponse(
+      `${origin}${loginPath}`,
+      responseHeaders,
+    );
   };
   try {
     if (!code) {
-      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+      return createOauthFailureRedirectResponse(
+        `${origin}${loginPath}`,
+        responseHeaders,
+      );
     }
 
-    // Short-circuit a replayed/refreshed callback: the HMAC-signed marker cookie
-    // (60s TTL) proves we already exchanged the one-time `code` successfully, while
-    // the missing code-verifier cookie confirms the PKCE flow is no longer active.
-    // Invariant: the Supabase auth-token cookie written by that first exchange is
-    // still present, so downstream middleware reuses the existing session. If that
-    // cookie was somehow cleared while the marker survived, the dashboard simply
-    // redirects back to login — safe either way.
+    // A signed completion marker and no legacy verifier allow callback replays.
+    // exchangeCodeForSession(code) consumes only the legacy verifier; the SDK's
+    // per-flow slots and index can remain and must not block this shortcut.
+    // Dashboard middleware still validates the session before granting access.
     if (
       oauthCookieContext.hasValidOauthCallbackMarkerCookie &&
       !oauthCookieContext.hasSupabaseCodeVerifierCookie
@@ -272,7 +277,7 @@ export async function GET(request: Request) {
       return createSafePostAuthRedirectResponse();
     }
 
-    const supabase = await createClient();
+    const supabase = await createClient(responseHeaders);
     const {
       data: { user },
       error: exchangeError,
@@ -302,7 +307,10 @@ export async function GET(request: Request) {
         },
       });
 
-      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+      return createOauthFailureRedirectResponse(
+        `${origin}${loginPath}`,
+        responseHeaders,
+      );
     }
 
     const email = user?.email;
@@ -320,7 +328,10 @@ export async function GET(request: Request) {
         },
       });
 
-      return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+      return createOauthFailureRedirectResponse(
+        `${origin}${loginPath}`,
+        responseHeaders,
+      );
     }
 
     // Add Stripe customer creation
@@ -351,12 +362,16 @@ export async function GET(request: Request) {
     }
 
     if (isSafeRedirectPath(redirectTo)) {
-      return createOauthRedirectResponse(`${origin}${redirectTo}`);
+      return createOauthRedirectResponse(
+        `${origin}${redirectTo}`,
+        responseHeaders,
+      );
     }
 
     // URL to redirect to after sign up process completes
     return createOauthRedirectResponse(
       `${origin}/${routing.defaultLocale}/dashboard`,
+      responseHeaders,
     );
   } catch (error) {
     const knownOauthCallbackFailure = getKnownOauthCallbackFailure(error);
@@ -381,6 +396,9 @@ export async function GET(request: Request) {
       },
     });
 
-    return createOauthFailureRedirectResponse(`${origin}${loginPath}`);
+    return createOauthFailureRedirectResponse(
+      `${origin}${loginPath}`,
+      responseHeaders,
+    );
   }
 }

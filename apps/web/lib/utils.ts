@@ -48,6 +48,8 @@ const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 // so free users get 3.1 audio for the price of 2.5. Charge them double for 3.1
 // voices to compensate. Paid users run 2.5 Pro for `gpro` (same cost as 3.1),
 // so they are not affected.
+// Gemini 3.8 (`gpro38`) has no free-tier surcharge, including after Google's
+// promotional rate ends on 2027-01-01. That is a product decision, not a gap.
 const GEMINI_31_FREE_CREDIT_MULTIPLIER = 2;
 
 // `model` may be the stored voice token (`gpro31`), used by the estimate and the
@@ -66,7 +68,7 @@ function getGemini31FreeMultiplier(
 }
 
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     return 'gemini';
   }
 
@@ -125,7 +127,7 @@ function getCreditMultiplier(
       break;
   }
 
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
@@ -249,10 +251,6 @@ export function calculateCreditsFromTokens(
   return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN * multiplier);
 }
 
-export function capitalizeFirstLetter(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
  * @param {('error' | 'success')} type - The type of message, either 'error' or 'success'.
@@ -314,7 +312,6 @@ export function extractMetadata(
 export const ERROR_CODES = {
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
   GEMINI_INPUT_TOO_LONG: 'GEMINI_INPUT_TOO_LONG',
-  GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
   NO_AUDIO_DATA: 'NO_AUDIO_DATA',
   OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
@@ -334,7 +331,6 @@ export const ERROR_CODES = {
 const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
   FREE_QUOTA_EXCEEDED: 503,
   GEMINI_INPUT_TOO_LONG: 400,
-  GEMINI_PROVIDER_UNAVAILABLE: 503,
   INTERNAL_SERVER_ERROR: 500,
   NO_AUDIO_DATA: 503,
   OTHER_GEMINI_BLOCK: 500,
@@ -358,9 +354,10 @@ export const getErrorMessage = (
   errorCode: keyof typeof ERROR_CODES | unknown,
   service: string,
 ) => {
-  const errorMessages: Record<
-    keyof typeof ERROR_CODES,
-    { [key: string]: string }
+  // PROVIDER_UNAVAILABLE is intentionally absent because its message requires
+  // provider interpolation. Server routes use getProviderUnavailableMessage().
+  const errorMessages: Partial<
+    Record<keyof typeof ERROR_CODES, { [key: string]: string }>
   > = {
     FREE_QUOTA_EXCEEDED: {
       default:
@@ -369,10 +366,6 @@ export const getErrorMessage = (
     GEMINI_INPUT_TOO_LONG: {
       default:
         'Your text is too long for this voice. Please shorten it or use Split mode.',
-    },
-    GEMINI_PROVIDER_UNAVAILABLE: {
-      default:
-        'Voice generation service temporarily unavailable. Please retry.',
     },
     INTERNAL_SERVER_ERROR: {
       default: 'An internal server error occurred. Please try again later.',
@@ -394,11 +387,6 @@ export const getErrorMessage = (
     PROHIBITED_CONTENT: {
       default:
         'Content generation prohibited. Please modify your text input and try again',
-    },
-    PROVIDER_UNAVAILABLE: {
-      default: 'Provider is temporarily unavailable. Please try again.',
-      'voice-cloning':
-        'Voice cloning provider is temporarily unavailable. Please try again.',
     },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',

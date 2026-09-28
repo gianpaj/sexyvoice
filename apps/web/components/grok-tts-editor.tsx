@@ -49,6 +49,7 @@ import {
   grokTextToTipTapDoc,
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
@@ -207,6 +208,34 @@ function moveEditorSelectionToEnd(
   return selection;
 }
 
+interface AppliedEditorContent {
+  selection: EditorSelectionSnapshot;
+  text: string;
+}
+
+/**
+ * Replaces the document without re-entering `onUpdate`, and reports what the
+ * editor actually ended up with.
+ *
+ * `plainTextToDoc(text)` is only a request: ProseMirror coerces it to the
+ * schema and `AutoConvertGrokTags` can rewrite it again in an appended
+ * transaction, so the round trip is not guaranteed to be the identity. Because
+ * `emitUpdate: false` suppresses the update that used to report the result,
+ * callers must reconcile against the returned `text` rather than assume the
+ * text they passed in was applied verbatim.
+ */
+function applyEditorContent(
+  editor: EditorInstance,
+  text: string,
+): AppliedEditorContent {
+  editor.commands.setContent(plainTextToDoc(text), { emitUpdate: false });
+
+  return {
+    selection: moveEditorSelectionToEnd(editor),
+    text: grokTipTapDocToText(editor.getJSON()),
+  };
+}
+
 interface GrokSlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
@@ -273,6 +302,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
             enabledItems: [],
             showGroups: false,
           }}
+          deleteQueryOnEscape={false}
           key={menu.pluginKey}
           pluginKey={menu.pluginKey}
         />
@@ -297,6 +327,7 @@ export function GrokTTSEditor({
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
+  const onChangeRef = useRef(onChange);
   const contentResetSelectionRef = useRef<EditorSelectionSnapshot | null>(null);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
@@ -307,7 +338,8 @@ export function GrokTTSEditor({
   useEffect(() => {
     charactersLimitRef.current = charactersLimit;
     enforceCharactersLimitRef.current = enforceCharactersLimit;
-  }, [charactersLimit, enforceCharactersLimit]);
+    onChangeRef.current = onChange;
+  }, [charactersLimit, enforceCharactersLimit, onChange]);
 
   const editor = useEditor({
     content: plainTextToDoc(value),
@@ -373,15 +405,19 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const text = enforceCharactersLimitRef.current
-        ? fullText.slice(0, charactersLimitRef.current + 10)
+      // Clamps user input only, mirroring `maxLength` on the other limited
+      // textareas. Text arriving from the parent is applied as given — see the
+      // content synchronization effect below.
+      const clampedText = enforceCharactersLimitRef.current
+        ? fullText.slice(0, charactersLimitRef.current + CHARACTERS_LIMIT_GRACE)
         : fullText;
+      let text = fullText;
 
-      if (text !== fullText) {
-        nextEditor.commands.setContent(plainTextToDoc(text));
-        const resetSelection = moveEditorSelectionToEnd(nextEditor);
-        lastSelectionRef.current = resetSelection;
-        contentResetSelectionRef.current = resetSelection;
+      if (clampedText !== fullText) {
+        const applied = applyEditorContent(nextEditor, clampedText);
+        lastSelectionRef.current = applied.selection;
+        contentResetSelectionRef.current = applied.selection;
+        text = applied.text;
       }
 
       setCurrentLength(text.length);
@@ -400,11 +436,30 @@ export function GrokTTSEditor({
       return;
     }
 
-    editor.commands.setContent(plainTextToDoc(value));
-    const resetSelection = moveEditorSelectionToEnd(editor);
-    lastSelectionRef.current = resetSelection;
-    contentResetSelectionRef.current = resetSelection;
-    setCurrentLength(value.length);
+    // Apply external values without character-limit clamping. audio-generator.tsx
+    // shares one text state between this editor and the non-Grok editor, and
+    // Split mode can temporarily disable enforcement. The red counter shows
+    // the overage, while textIsOverLimit in the parent blocks generation.
+    // The next user edit passes through onUpdate and clamps the document to the
+    // active limit plus grace.
+    const applied = applyEditorContent(editor, value);
+    lastSelectionRef.current = applied.selection;
+    contentResetSelectionRef.current = applied.selection;
+    setCurrentLength(applied.text.length);
+
+    // `applyEditorContent` suppresses the update that used to push the applied
+    // text back out, so reconcile here instead: when the editor clamps or
+    // normalizes what it was handed, the parent would otherwise keep a value
+    // that no longer matches the visible document. `applied.text` was read back
+    // from the editor, so the next pass hits the early return above and this
+    // settles after one extra render.
+    //
+    // Read through the ref rather than depending on `onChange`, so an inline
+    // parent callback cannot make this effect re-run — and reset the document
+    // and caret — on renders where `value` did not change.
+    if (applied.text !== value) {
+      onChangeRef.current(applied.text);
+    }
   }, [editor, value]);
 
   const insertInstantTag = (tag: InstantTagDef) => {

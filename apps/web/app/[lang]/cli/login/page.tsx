@@ -5,6 +5,7 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { isAllowedCliCallbackUrl } from '@/lib/api/cli-login';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { CliLoginClient } from './cli-login-client';
@@ -35,12 +36,10 @@ export default async function CliLoginPage(props: {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
   const redirectTo = `/${lang}/cli/login?callback_url=${encodeURIComponent(callback_url)}&state=${encodeURIComponent(state)}`;
-  if (!user) {
+  if (!claims?.sub) {
     redirect(`/${lang}/login?redirect_to=${encodeURIComponent(redirectTo)}`);
   }
 
@@ -50,10 +49,10 @@ export default async function CliLoginPage(props: {
       .select(
         'id, name, key_prefix, created_at, last_used_at, expires_at, is_active',
       )
-      .eq('user_id', user.id)
+      .eq('user_id', claims.sub)
       .eq('is_active', true)
       .order('created_at', { ascending: false }),
-    hasUserPaid(user.id),
+    hasUserPaid(claims.sub),
   ]);
 
   const visibleKeys =

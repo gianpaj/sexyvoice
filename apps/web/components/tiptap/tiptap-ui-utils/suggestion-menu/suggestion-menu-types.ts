@@ -64,6 +64,11 @@ export interface SuggestionMenuProps<T = DefaultContext>
    */
   children: (props: SuggestionMenuRenderProps<T>) => React.ReactNode;
   /**
+   * Whether pressing Escape deletes the trigger and query text.
+   * @default true
+   */
+  deleteQueryOnEscape?: boolean;
+  /**
    * The Tiptap editor instance.
    */
   editor?: Editor | null;

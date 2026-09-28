@@ -32,7 +32,6 @@ export interface BannerDefinition {
   dismiss: {
     cookieKey: string;
     days: number;
-    legacyCookieKeys?: string[];
   };
   dismissible?: boolean;
   id: string;
@@ -51,7 +50,10 @@ export interface ResolvedBanner {
   };
   ctaLink: string;
   ctaText: string;
-  dismissCookieKeys: string[];
+  dismiss: {
+    cookieKey: string;
+    days: number;
+  };
   dismissible: boolean;
   id: string;
   kind: BannerKind;

@@ -30,15 +30,15 @@ vi.mock('next/server', () => ({
       const responseInit = typeof init === 'object' ? init : undefined;
       const response = new Response(null, {
         ...responseInit,
+        headers: new Headers(responseInit?.headers),
         status: typeof init === 'number' ? init : (responseInit?.status ?? 307),
-        headers: {
-          location: String(url),
-        },
       }) as Response & {
         cookies: {
           set: typeof responseCookieSetMock;
         };
       };
+
+      response.headers.set('location', String(url));
 
       response.cookies = {
         set: responseCookieSetMock,
@@ -50,6 +50,38 @@ vi.mock('next/server', () => ({
 }));
 
 describe('OAuth callback route', () => {
+  it.each([null, { message: 'Exchange failed' }])(
+    'preserves auth cache headers on callback redirects',
+    async (error) => {
+      vi.mocked(createClient).mockImplementationOnce(async (headers) => {
+        headers?.set('cache-control', 'private, no-store');
+        return {
+          auth: {
+            exchangeCodeForSession: vi.fn().mockResolvedValue({
+              data: {
+                user: {
+                  app_metadata: {},
+                  email: 'test@example.com',
+                  id: 'test-user',
+                },
+              },
+              error,
+            }),
+          },
+        } as unknown as Awaited<ReturnType<typeof createClient>>;
+      });
+      const response = await GET(
+        new Request('https://sexyvoice.ai/auth/callback?code=test'),
+      );
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+      expect(response.headers.get('location')).toBe(
+        error
+          ? 'https://sexyvoice.ai/en/login'
+          : 'https://sexyvoice.ai/en/dashboard',
+      );
+    },
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -96,26 +128,26 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'pkce-code-verifier-missing',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
-          redirectTo: '/en/dashboard',
-          locale: 'en',
-          hasCode: true,
           codeLength: 6,
-          hasCookieHeader: true,
           cookieCount: 2,
-          supabaseCookieCount: 1,
+          errorMessage: 'PKCE code verifier not found in storage.',
+          hasCode: true,
+          hasCookieHeader: true,
+          hasOauthCallbackMarkerCookie: true,
           hasSupabaseAuthCookie: true,
           hasSupabaseCodeVerifierCookie: false,
-          hasOauthCallbackMarkerCookie: true,
-          errorMessage: 'PKCE code verifier not found in storage.',
+          locale: 'en',
+          redirectTo: '/en/dashboard',
+          supabaseCookieCount: 1,
         }),
+        flow: 'oauth-callback',
       },
     );
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
         maxAge: 0,
+        name: OAUTH_CALLBACK_COOKIE_NAME,
       }),
     );
   });
@@ -154,40 +186,73 @@ describe('OAuth callback route', () => {
     expect(captureMessage).not.toHaveBeenCalled();
     expect(responseCookieSetMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
         maxAge: 0,
+        name: OAUTH_CALLBACK_COOKIE_NAME,
         secure: true,
       }),
     );
   });
 
-  it('treats valid marked callbacks without a verifier as already completed', async () => {
-    vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
-    const marker = createOauthCallbackMarkerValue();
+  it.each([
+    '',
+    '; sb-test-auth-token-flow-flow1-code-verifier=leftover; sb-test-auth-token-flows-code-verifier=index',
+  ])(
+    'treats marked callbacks without a legacy verifier as completed: %s',
+    async (leftoverCookies) => {
+      vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
+      const marker = createOauthCallbackMarkerValue();
 
-    const response = await GET(
-      new Request(
-        'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
-        {
-          headers: {
-            cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token`,
+      const response = await GET(
+        new Request(
+          'https://sexyvoice.ai/auth/callback?code=abc123&redirect_to=%2Fen%2Fdashboard',
+          {
+            headers: {
+              cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${marker}; sb-test-auth-token=token${leftoverCookies}`,
+            },
           },
-        },
-      ),
-    );
+        ),
+      );
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe(
-      'https://sexyvoice.ai/en/dashboard',
-    );
-    expect(createClient).not.toHaveBeenCalled();
-    expect(responseCookieSetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: OAUTH_CALLBACK_COOKIE_NAME,
-        maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-      }),
-    );
-  });
+      expect(response.status).toBe(307);
+      expect(response.headers.get('location')).toBe(
+        'https://sexyvoice.ai/en/dashboard',
+      );
+      expect(createClient).not.toHaveBeenCalled();
+      expect(responseCookieSetMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
+          name: OAUTH_CALLBACK_COOKIE_NAME,
+        }),
+      );
+    },
+  );
+
+  it.each([
+    'sb-test-auth-token-code-verifier',
+    'sb-test-auth-token-code-verifier.0',
+  ])(
+    'exchanges a new flow with a completion marker and %s',
+    async (verifierName) => {
+      vi.stubEnv('API_KEY_HMAC_SECRET', 'test-secret');
+      const exchangeCodeForSession = vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: new Error('PKCE code verifier not found in storage.'),
+      });
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: { exchangeCodeForSession },
+      } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+      await GET(
+        new Request('https://sexyvoice.ai/auth/callback?code=new-code', {
+          headers: {
+            cookie: `${OAUTH_CALLBACK_COOKIE_NAME}=${createOauthCallbackMarkerValue()}; ${verifierName}=verifier`,
+          },
+        }),
+      );
+
+      expect(exchangeCodeForSession).toHaveBeenCalledWith('new-code');
+    },
+  );
 
   it('keeps unexpected exchange failures as exceptions with cookie context', async () => {
     const exchangeError = new Error('Unexpected auth exchange failure');
@@ -223,15 +288,15 @@ describe('OAuth callback route', () => {
     expect(captureException).toHaveBeenCalledWith(
       exchangeError,
       expect.objectContaining({
-        tags: {
-          area: 'auth',
-          flow: 'oauth-callback',
-        },
         extra: expect.objectContaining({
           hasSupabaseAuthCookie: true,
           hasSupabaseCodeVerifierCookie: true,
           supabaseCookieCount: 2,
         }),
+        tags: {
+          area: 'auth',
+          flow: 'oauth-callback',
+        },
       }),
     );
   });
@@ -273,13 +338,13 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'flow-state-expired',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorMessage: 'invalid flow state, flow state has expired',
           hasSupabaseCodeVerifierCookie: true,
           locale: 'es',
           redirectTo: '/es/dashboard',
         }),
+        flow: 'oauth-callback',
       },
     );
   });
@@ -318,10 +383,10 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'flow-state-expired',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorName: 'AuthApiError',
         }),
+        flow: 'oauth-callback',
       },
     );
   });
@@ -363,12 +428,12 @@ describe('OAuth callback route', () => {
       {
         area: 'auth',
         errorType: 'code-challenge-mismatch',
-        flow: 'oauth-callback',
         extra: expect.objectContaining({
           errorName: 'AuthApiError',
           hasSupabaseCodeVerifierCookie: true,
           locale: 'en',
         }),
+        flow: 'oauth-callback',
       },
     );
   });

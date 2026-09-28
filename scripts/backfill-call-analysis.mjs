@@ -47,15 +47,15 @@ import {
 function parseArgs() {
   const args = process.argv.slice(2);
   const options = {
+    batchTimeoutMinutes: DEFAULT_BATCH_TIMEOUT_MINUTES,
+    debug: false,
+    debugSession: null,
     dryRun: false,
     limit: null,
     minDuration: MIN_ANALYSIS_CALL_DURATION_SECONDS,
     models: [],
-    debug: false,
-    debugSession: null,
-    smokeTest: false,
     realtime: false,
-    batchTimeoutMinutes: DEFAULT_BATCH_TIMEOUT_MINUTES,
+    smokeTest: false,
   };
 
   for (const arg of args) {
@@ -137,10 +137,9 @@ async function main() {
   );
 
   const supabase = createAdminClient();
-  const xai = createXaiClient();
 
   if (options.smokeTest) {
-    console.log('\n🧪 xAI smoke test:', await runSmokeTest(xai));
+    console.log('\n🧪 xAI smoke test:', await runSmokeTest(createXaiClient()));
   }
 
   console.log('\n📥 Fetching completed sessions without an analysis row...');
@@ -160,7 +159,7 @@ async function main() {
     return;
   }
 
-  const allResults = await processSessionsInBatches(xai, sessions, options);
+  const allResults = await processSessionsInBatches(sessions, options);
   const insights = aggregateInsights(allResults);
   printSummaryReport(insights);
 

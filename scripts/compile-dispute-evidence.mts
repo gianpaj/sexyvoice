@@ -1,13 +1,11 @@
 import { writeFile } from 'node:fs/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
 
-// Load environment variables
-config({
-  path: ['.env', '.env.local'],
-});
+import { loadScriptEnv } from './lib/env.mts';
+import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+
+loadScriptEnv();
 
 // ---------------------------------------------------------------------------
 // Types
@@ -96,29 +94,6 @@ interface DisputeReport {
 // Supabase
 // ---------------------------------------------------------------------------
 
-/**
- * Create Supabase admin client
- */
-function createAdminClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-  }
-  if (!process.env.SUPABASE_SECRET_KEY) {
-    throw new Error('Missing env.SUPABASE_SECRET_KEY');
-  }
-
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Data gathering (read-only, no side effects)
 // ---------------------------------------------------------------------------
@@ -201,12 +176,12 @@ async function getUsageSummary(
   const bySource = new Map<string, UsageSummaryRow>();
   for (const row of rows) {
     const existing = bySource.get(row.source_type) ?? {
-      sourceType: row.source_type,
       eventCount: 0,
-      totalQuantity: 0,
-      totalCreditsUsed: 0,
       firstOccurredAt: null,
       lastOccurredAt: null,
+      sourceType: row.source_type,
+      totalCreditsUsed: 0,
+      totalQuantity: 0,
     };
     existing.eventCount += 1;
     existing.totalQuantity += Number(row.quantity ?? 0);
@@ -276,17 +251,17 @@ async function getAudioFilesSummary(
 
   return {
     count: rows.length,
-    totalDuration: rows.reduce((sum, r) => sum + Number(r.duration ?? 0), 0),
-    totalCreditsUsed: rows.reduce((sum, r) => sum + (r.credits_used ?? 0), 0),
     firstCreatedAt: rows.length > 0 ? rows[0].created_at : null,
-    lastCreatedAt: rows.at(-1)?.created_at ?? null,
-    paidCount: paidRows.length,
-    freeCount: freeRows.length,
-    unknownCount,
-    firstPaidCreatedAt: paidRows.length > 0 ? paidRows[0].created_at : null,
-    lastPaidCreatedAt: paidRows.at(-1)?.created_at ?? null,
     firstFreeCreatedAt: freeRows.length > 0 ? freeRows[0].created_at : null,
+    firstPaidCreatedAt: paidRows.length > 0 ? paidRows[0].created_at : null,
+    freeCount: freeRows.length,
+    lastCreatedAt: rows.at(-1)?.created_at ?? null,
+    lastPaidCreatedAt: paidRows.at(-1)?.created_at ?? null,
     models,
+    paidCount: paidRows.length,
+    totalCreditsUsed: rows.reduce((sum, r) => sum + (r.credits_used ?? 0), 0),
+    totalDuration: rows.reduce((sum, r) => sum + Number(r.duration ?? 0), 0),
+    unknownCount,
   };
 }
 
@@ -328,11 +303,11 @@ async function getCallSessionsSummary(
   return {
     count: rows.length,
     totalBilledMinutes: rows.reduce((s, r) => s + (r.billed_minutes ?? 0), 0),
+    totalCreditsUsed: rows.reduce((s, r) => s + (r.credits_used ?? 0), 0),
     totalDurationSeconds: rows.reduce(
       (s, r) => s + (r.duration_seconds ?? 0),
       0,
     ),
-    totalCreditsUsed: rows.reduce((s, r) => s + (r.credits_used ?? 0), 0),
   };
 }
 
@@ -373,14 +348,14 @@ async function gatherReport(userId: string): Promise<DisputeReport> {
   const totals = computeTotals(transactions, usageSummary, currentBalance);
 
   return {
-    generatedAt: new Date().toISOString(),
     account,
-    payments,
-    usageSummary,
     audioFiles,
-    voiceCloneCount,
     callSessions,
+    generatedAt: new Date().toISOString(),
+    payments,
     totals,
+    usageSummary,
+    voiceCloneCount,
   };
 }
 
@@ -433,16 +408,16 @@ function computeTotals(
     totalCreditsUsed;
 
   return {
-    totalChargedUSD,
-    totalRefundedUSD,
-    netPaidUSD,
-    totalPurchasedCredits,
-    totalFreemiumCredits,
-    totalCreditsUsed,
-    totalRefundedCredits,
+    balanceDelta: currentBalance - expectedBalance,
     currentBalance,
     expectedBalance,
-    balanceDelta: currentBalance - expectedBalance,
+    netPaidUSD,
+    totalChargedUSD,
+    totalCreditsUsed,
+    totalFreemiumCredits,
+    totalPurchasedCredits,
+    totalRefundedCredits,
+    totalRefundedUSD,
   };
 }
 
@@ -475,7 +450,8 @@ function renderConsole(report: DisputeReport): void {
   } else {
     for (const t of payments) {
       const usd =
-        t.metadata?.dollarAmount == null
+        t.metadata?.dollarAmount === undefined ||
+        t.metadata?.dollarAmount === null
           ? 'N/A'
           : fmtUSD(t.metadata.dollarAmount);
       console.log(
@@ -564,7 +540,8 @@ function renderMarkdown(report: DisputeReport): string {
     lines.push('| --- | --- | ---: | ---: | --- | --- |');
     for (const t of payments) {
       const usd =
-        t.metadata?.dollarAmount == null
+        t.metadata?.dollarAmount === undefined ||
+        t.metadata?.dollarAmount === null
           ? 'N/A'
           : fmtUSD(t.metadata.dollarAmount);
       lines.push(
@@ -691,5 +668,4 @@ async function main() {
 }
 
 // Run the script
-// biome-ignore lint/nursery/noFloatingPromises: fine for a script
-main();
+await main();

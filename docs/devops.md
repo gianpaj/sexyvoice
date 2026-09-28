@@ -1,229 +1,158 @@
-# DevOps Guide
+# Deployment and release checks
 
-This document is the operational reference for environment setup, deployment,
-runtime dependencies, infrastructure locations, and common maintenance tasks
-for SexyVoice.ai.
+This guide covers deployment configuration, infrastructure, and verification
+before merging to `main` and after deploying.
 
-For local development onboarding, see [`README.md`](../README.md).
-For architecture and product context, see [`ARCHITECTURE.md`](../ARCHITECTURE.md).
+- [README](../README.md): local setup and development commands.
+- [Architecture](../ARCHITECTURE.md): application behavior and service boundaries.
+- [Scripts](../scripts/README.md): maintenance and incident investigations.
 
-## Monorepo Layout
+## Before merging
 
-- `apps/web` contains the Next.js app package, `@sexyvoice/web`.
-- `apps/docs` contains the Fumadocs docs site for `docs.sexyvoice.ai`.
-- `scripts` contains operational one-off scripts as `@sexyvoice/scripts`.
-- Root package scripts run through Turborepo.
+- Run the checks required by
+  [Task Completion Requirements](../AGENTS.md#task-completion-requirements).
+  Repository Markdown-only changes need formatting and `git diff --check`, not
+  application builds or tests.
+- Check CI for the current PR head, not an earlier commit. The unit-test workflow
+  in `.github/workflows/tests.yml` runs `pnpm test:affected` for changed packages
+  and their dependents. Inspect its selection with
+  `pnpm test:affected --dry=json` when needed.
+- For deployable changes, verify the affected app's build and exercise the changed
+  flow on its preview deployment. Check authentication, billing, generation, and
+  storage when the change touches those integrations. For call dashboard
+  screenshots, follow the [fixture and local-server requirements](../apps/web/e2e/E2E_TEST_PLAN.md#current-mocking-behavior-1).
+- Review pending migrations, generated database types, environment changes, and
+  secret-rotation dependencies. Migrations require a human operator; agents must
+  not apply them. Run `pnpm test:db` against a local database with pending
+  migrations already applied when migrations or pgTAP tests change.
+- Confirm feature gates and commit-message deployment skips are intentional.
 
-## Infrastructure Overview
+Claude reviews pin a PR head and report CI results for that SHA. Pushes do not
+request another Claude review; comment `@claude review` when one is needed.
+The review's CI report is not a workflow dependency or a guaranteed merge gate.
 
-### Primary Services
+## Deployment targets
 
-- **Frontend / Hosting**: Vercel
-- **Database / Auth**: Supabase
-- **Audio Storage**: Cloudflare R2
-- **Cache / Rate Limiting**: Upstash Redis
-- **Monitoring**: Sentry
-- **Analytics**: PostHog
-- **Structured Logs**: Axiom
-- **Payments**: Stripe
-- **Voice Generation**:
-  - Replicate
-  - Google Generative AI
-  - fal.ai
-  - xAI
-- **Realtime Calls**: LiveKit
-- **Config Distribution**: Vercel Edge Config
+| Service       | Deployment configuration                                                        |
+| ------------- | ------------------------------------------------------------------------------- |
+| Web app       | Vercel project `sexyvoice`, Root Directory `apps/web`                           |
+| Docs site     | Separate Vercel project, Root Directory `apps/docs`, domain `docs.sexyvoice.ai` |
+| LiveKit agent | External Python service on Fly.io, Paris CDG                                    |
 
-## Runtime / Region Notes
+Use Node.js `24.x` and the pnpm version pinned in `package.json`. Root build
+commands use Turborepo. The docs app's build regenerates its OpenAPI reference;
+keep its custom domain and Vercel GitHub App connected to the deployment branch.
 
-### Production server locations
+The `ignoreCommand` in each app's `vercel.json` controls deployment skips:
 
-- **Supabase**: `eu-west-3`
-- **Redis Upstash**: `us-west-2` (Oregon)
-- **LiveKit Python server on Fly.io**: Paris CDG
+- Web: `skip deploy` or `skip ci` in the latest commit message.
+- Docs: `skip deploy`, `skip ci`, or `skip docs`.
 
-### Storage
+The [documentation commit rule](../AGENTS.md#documentation-rules) defines when to
+use `[skip deploy]`.
 
-#### R2 buckets
+### Regions and storage
 
-- `sv-audio-files`
-  - Eastern North America (ENAM)
-  - Used for cloned and generated dashboard audio files
+| Service                               | Configured location or purpose                        |
+| ------------------------------------- | ----------------------------------------------------- |
+| Supabase                              | `eu-west-3`                                           |
+| Upstash Redis                         | `us-west-2`, Oregon                                   |
+| `sv-audio-files` R2 bucket            | Eastern North America, dashboard TTS and cloned audio |
+| `sv-api-speech-audio-files` R2 bucket | Eastern North America, external API speech            |
 
-- `sv-api-speech-audio-files`
-  - Eastern North America (ENAM)
-  - Used for external API `/api/v1/speech` generated audio files
-
-### Vercel regions
-
-Current known regions for this project:
-
-- `eu-west-3` - `cdg1`
-- `us-east-1` - `iad1`
-- `us-west-1` - `sfo1`
-
-#### How to verify with Vercel CLI
-
-These commands were tested with Vercel CLI `50.37.1`.
-
-Confirmed working commands:
+Known Vercel region identifiers are `cdg1`, `iad1`, and `sfo1`. Verify active
+regions in the Vercel dashboard; project inspection may not list them.
+From the linked project directory, confirm project identity and environment:
 
 ```bash
-vercel --version
 vercel project inspect sexyvoice
 vercel env ls
 ```
 
-Recommended verification flow:
+## Issue labeling
 
-1. Confirm the CLI is available:
-   ```bash
-   vercel --version
-   ```
-2. Inspect the linked project and confirm the project identity:
-   ```bash
-   vercel project inspect sexyvoice
-   ```
-3. Inspect configured environment variables for the linked project:
-   ```bash
-   vercel env ls
-   ```
+`.github/workflows/label-issues.yml` runs when an issue is opened. The Jev
+labeler calls TypeSafe to evaluate the configured label criteria. It requires
+`TYPESAFE_API_KEY` as a GitHub Actions repository secret, not a Vercel or local
+application environment variable.
 
-Notes:
+Obtain a key from [TypeSafe](https://docs.typesafe.ai), then store it using the
+interactive prompt:
 
-- `vercel project inspect sexyvoice` currently returns general project metadata such as project ID, owner, root directory, framework preset, and Node.js version.
-- `vercel env ls` confirms you are operating on `gianpaj-projects/sexyvoice`.
-- The tested CLI output did not expose the runtime region list directly.
-- For the final source of truth on active regions, verify the project in the Vercel dashboard if the CLI output is insufficient.
+```bash
+gh secret set TYPESAFE_API_KEY --repo gianpaj/sexyvoice
+```
 
-## Environment Setup
+Use the same command to replace the key during rotation. Check that the secret
+name is present with `gh secret list --repo gianpaj/sexyvoice`; GitHub does not
+return the value. A missing or invalid key, or an unavailable provider, fails the
+labeling job. Inspect the **Label Issues** workflow in GitHub Actions and rerun
+the affected job after restoring access. Keep failures visible rather than
+using `continue-on-error`.
 
-### Local development
+The action is pinned to a full commit SHA. Its GitHub token has `issues: write`
+permission for applying labels; the TypeSafe key is supplied through `api-key`.
 
-1. Copy the example environment file:
+## Environment variables
 
-   ```bash
-   cp apps/web/.env.example apps/web/.env.local
-   ```
-
-2. Fill in all required values for the services you use.
-3. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-
-4. Start development:
-
-   ```bash
-   pnpm dev
-   ```
-
-### Preview / production deployments
-
-- Configure environment variables in Vercel project settings.
-- Keep production secrets out of local files and version control.
-- Rotate secrets carefully and validate affected flows after rotation.
-- If you add, rename, or remove an environment variable, update:
-  - `AGENTS.md`
-  - `README.md`
-  - `apps/web/.env.example`
-  - this file (`docs/devops.md`) when the change affects deployment,
-    operations, security, or runtime setup
-
-## Environment Variables
-
-Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical
-template.
+Use [`apps/web/.env.example`](../apps/web/.env.example) as the canonical template
+and configure preview and production values in the appropriate Vercel project.
+Keep production secrets out of local files and version control. Before rotating
+a secret, identify every producer and consumer that must change together.
 
 ### Core application
 
 - `NEXT_PUBLIC_SITE_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database
-  access remains controlled by RLS.
-- `SUPABASE_SECRET_KEY` - Server-only key that bypasses RLS; never expose it to
-  clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: safe for browser clients; RLS controls
+  database access.
+- `SUPABASE_SECRET_KEY`: server-only and bypasses RLS. Never expose it through a
+  `NEXT_PUBLIC_` variable.
 
-### Redis / caching
+### Redis and Cloudflare R2
 
 - `KV_REST_API_URL`
 - `KV_REST_API_TOKEN`
-
-Used for:
-
-- caching
-- rate limiting
-- fast lookups
-
-### Cloudflare R2
-
 - `R2_ACCESS_KEY_ID`
 - `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET_NAME`
-- `R2_SPEECH_API_BUCKET_NAME`
-- `R2_SPEECH_API_PUBLIC_URL`
 - `R2_ENDPOINT`
+- `R2_BUCKET_NAME`: dashboard audio.
+- `R2_SPEECH_API_BUCKET_NAME`: external API audio.
+- `R2_SPEECH_API_PUBLIC_URL`: public base URL for external API audio.
 
-Used for:
+Keep dashboard and external API buckets separate. Verify bucket CORS for browser
+playback and downloads.
 
-- dashboard audio storage
-- external API speech output storage
-
-### AI provider credentials
+### AI providers
 
 - `FAL_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
-- `MISTRAL_API_KEY`
+- `MISTRAL_API_KEY`: required for the Voxtral cloning path.
 - `REPLICATE_API_TOKEN`
-- `XAI_API_KEY` if xAI TTS is enabled in the environment
-- `XAI_SUMMARY_MODEL` optional override for the Grok model used to analyze call
-  transcripts (default `grok-4.3`)
+- `XAI_API_KEY`: Grok TTS and call transcript analysis.
+- `XAI_SUMMARY_MODEL`: optional call-analysis model override; default `grok-4.3`.
+- `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
+  `https://api.x.ai`.
 
-Notes:
+### LiveKit and call analysis
 
-- `GOOGLE_GENERATIVE_AI_API_KEY` is the Gemini key.
-  for free-user Gemini flows where configured in code.
-- `MISTRAL_API_KEY` is required for voice cloning requests that use the
-  Voxtral/Mistral path in `apps/web/app/api/clone-voice/route.ts`.
-- `XAI_API_KEY` also powers call transcript analysis
-  (`apps/web/lib/ai/analyze-call.ts`), not just Grok TTS.
+- `LIVEKIT_URL`: server URL returned by `/api/call-token`.
+- `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET`: server-only token-signing credentials.
+- `CALL_SUMMARY_SECRET`: authenticates the call-analysis webhook. Store the same
+  value in Supabase Vault as `call_summary_secret`, alongside `app_base_url`, so
+  the `pg_net` trigger can call `/api/call-sessions/analyze`.
+- `CALL_ANALYSIS_REALTIME`: set to `true` for synchronous analysis in the webhook
+  during a batch-processing incident. Leave unset in normal operation.
 
-### LiveKit real-time calls
+### Authentication
 
-- `LIVEKIT_URL`
-- `LIVEKIT_API_KEY`
-- `LIVEKIT_API_SECRET`
+- `API_KEY_HMAC_SECRET`: hashes external API keys.
+- `OAUTH_CALLBACK_MARKER_SECRET`: dedicated OAuth callback marker signing secret.
+  The code can fall back to `API_KEY_HMAC_SECRET`, but separate secrets avoid
+  coupling their rotation.
 
-Notes:
-- `LIVEKIT_URL` is the websocket/server URL returned by `/api/call-token`
-  and used by the frontend to connect to LiveKit rooms.
-- `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` are server-only credentials used
-  by `apps/web/app/api/call-token/route.ts` to mint LiveKit access tokens.
-- These secrets must never be exposed to the client.
-
-### Authentication / auth monitoring
-
-- `API_KEY_HMAC_SECRET`
-- `OAUTH_CALLBACK_MARKER_SECRET`
-- `CALL_SUMMARY_SECRET`
-
-Notes:
-- `API_KEY_HMAC_SECRET` is used for HMAC hashing of external API keys.
-- `OAUTH_CALLBACK_MARKER_SECRET` is the preferred dedicated secret for signing
-  and verifying the short-lived OAuth callback marker cookie.
-- If `OAUTH_CALLBACK_MARKER_SECRET` is unset, code may fall back to
-  `API_KEY_HMAC_SECRET`, but a dedicated secret is recommended.
-- `CALL_SUMMARY_SECRET` authenticates the Supabase Database Webhook that
-  triggers `/api/call-sessions/analyze` on call completion. The same value must
-  be stored in Supabase Vault as `call_summary_secret` (alongside
-  `app_base_url`) so the `pg_net` trigger can call back into this app.
-
-Generate secure secrets with:
-
-```bash
-openssl rand -hex 32
-```
+Generate secrets with `openssl rand -hex 32`. Verify Supabase and OAuth provider
+redirect URLs for each deployment environment.
 
 ### Stripe
 
@@ -235,40 +164,49 @@ openssl rand -hex 32
 - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
 - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
 - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
-- `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon
-  applied automatically for eligible first-time subscribers.
-- `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month
-  discount percentage used to display discounted subscription pricing when the
-  coupon is configured.
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID`: optional coupon for eligible
+  first-time subscribers.
+- `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT`: displayed first-month
+  discount when the coupon is configured.
 
 ### Edge Config
 
-- `EDGE_CONFIG`
+Set `EDGE_CONFIG` when using dynamic call instructions. The `call-instructions`
+payload contains `defaultInstructions`, `initialInstruction`, and
+`presetInstructions`. Keep private prompt contents server-side.
 
-Used for:
-- dynamic call instructions
-- runtime-configurable behavior without redeploys
-
-### Monitoring / analytics / support
+### Monitoring, analytics, and support
 
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: Dash0 OTLP ingress URL. `@vercel/otel`
+  exports server traces here; Sentry receives the same spans.
+- `OTEL_EXPORTER_OTLP_HEADERS`: `Authorization=Bearer <dash0-auth-token>`.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`
 - `NEXT_PUBLIC_CRISP_WEBSITE_ID`
 
-### Notifications / cron
+### Notifications and background jobs
 
 - `TELEGRAM_WEBHOOK_URL`
-- `CRON_SECRET`
+- `CRON_SECRET`: authenticates the daily-stats and call-analysis batch crons.
+- `INNGEST_EVENT_KEY`
+- `INNGEST_SIGNING_KEY`
+- `INNGEST_BASE_URL`
 
-### Promotion / banner configuration
+`apps/web/vercel.json` schedules `/api/daily-stats` at `0 7 * * *` and
+`/api/call-sessions/analyze/batch` every 15 minutes.
 
-- `NEXT_PUBLIC_PROMO_ENABLED` — enables promo campaign behavior: promo banners, bonus-credit pricing, and promo metadata; does not control announcement banners
-- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` — active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`; only used when `NEXT_PUBLIC_PROMO_ENABLED=true`
-- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` — active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`; works independently of `NEXT_PUBLIC_PROMO_ENABLED`
+### Promotions and banners
+
+- `NEXT_PUBLIC_PROMO_ENABLED`: enables promo banners, bonus-credit pricing, and
+  promo metadata, not announcement banners.
+- `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`: promo ID from the banner registry and
+  localized messages; requires `NEXT_PUBLIC_PROMO_ENABLED=true`.
+- `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER`: announcement ID, independent of the
+  promo flag.
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
 - `NEXT_PUBLIC_PROMO_TRANSLATIONS`
@@ -277,275 +215,104 @@ Used for:
 - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
 - `NEXT_PUBLIC_PROMO_BONUS_PRO`
 
-### Inngest
-
-- `INNGEST_EVENT_KEY`
-- `INNGEST_SIGNING_KEY`
-- `INNGEST_BASE_URL`
-
-## Deployment Notes
+## Deployment constraints
 
 ### Feature gates
 
-Pages that are merged but not ready to ship are gated by constants in
-`apps/web/lib/features.ts` rather than by an environment variable, so the state
-is visible in code review and cannot drift between Vercel projects.
-
-- `VOICE_CLONING_PAGE_ENABLED` — the public `/[lang]/voice-cloning` landing
-  page. Currently `process.env.VERCEL_ENV !== 'production'`: reviewable on
-  previews and locally, `404` in production, because the demo audio is still
-  TTS-generated placeholder material rather than real cloned output.
-
-Each gate must cover every entry point, otherwise a "hidden" page stays
-reachable. For `VOICE_CLONING_PAGE_ENABLED` that is: the page itself
-(`notFound()`), the landing page feature card and its grid column count, the
-footer Features link, and the `app/sitemap.ts` glob — the sitemap discovers
-pages from the filesystem, so a gated page is advertised to search engines
-unless it is excluded there too.
-
-To ship a gated page, set the constant to `true` and remove the gate in a
-follow-up cleanup.
-
-### Docs site (Fumadocs)
-
-- The docs site is a Fumadocs (Next.js) app in `apps/docs`, deployed to
-  `docs.sexyvoice.ai` as its own Vercel project (separate from the web app).
-- Set the Vercel project Root Directory to `apps/docs`; the build runs
-  `next build` (which regenerates the OpenAPI reference via
-  `generate-openapi-docs`).
-- `apps/docs/vercel.json` sets an `ignoreCommand` that skips the deploy when the
-  latest commit message contains `skip deploy`, `skip ci`, or `skip docs`.
-- Keep the `docs.sexyvoice.ai` custom domain and the Vercel GitHub App
-  connected to the repository/branch used for docs deployments.
+Review `apps/web/lib/features.ts` before shipping gated pages.
+`VOICE_CLONING_PAGE_ENABLED` allows the public `/[lang]/voice-cloning` page in
+previews and locally, but returns `404` in production while its demo audio is
+placeholder material. The gate must also cover the landing feature card, footer
+link, and sitemap. To ship the page, replace the placeholder audio and enable
+the gate; remove the gate in a follow-up cleanup.
 
 ### Supabase
 
-- Supabase powers auth and database access.
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for browser clients and remains
-  subject to RLS.
-- `SUPABASE_SECRET_KEY` is server-only and bypasses RLS. Never expose it to
-  clients or place it in an environment variable with a `NEXT_PUBLIC_` prefix.
-- Be careful with migrations and generated types.
+Verify migration compatibility and generated types before deploying code that
+uses a changed schema. Keep privileged keys server-only and preserve RLS.
+Application auth, retry, and cookie behavior is documented under
+[Supabase access boundaries](../ARCHITECTURE.md#supabase-access-boundaries).
 
-### Edge Config
+### Sentry
 
-If used, create an Edge Config and provide the `call-instructions` payload.
+`apps/web/next.config.js` configures org `sexyvoiceai`, project `sexyvoice-ai`,
+and the `/monitoring` browser tunnel. Source maps upload only when
+`VERCEL_ENV=production`; do not expect uploads from preview deployments.
+Confirm the production build uploads maps and that the tunnel reaches Sentry.
 
-Example structure:
+For crashes and per-event browser/device details, use
+[Sentry issue triage](../scripts/README.md#sentry-issue-triage). For handled
+Gemini failures, use the [application-log investigation](../scripts/README.md#2-correlate-sentry-application-logs).
+Neither requires muting or resolving issues as a deployment check.
 
-```json
-{
-  "call-instructions": {
-    "defaultInstructions": "You are a ...",
-    "initialInstruction": "SYSTEM: Say hi to the user in a seductive and flirtatious manner",
-    "presetInstructions": {
-      "soft-amanda": "You are a ...",
-      "hard-brandi": "You are a ..."
-    }
-  }
-}
-```
+## Deployment verification
 
-## Operational Security Guidelines
+Verify the deployed commit and target environment before testing. Use test
+accounts and avoid paid provider calls or production writes unless explicitly
+intended.
 
-- Never expose server-only secrets to the client.
-- Prefer dedicated secrets over shared secrets when the purpose differs.
-- Rotate secrets carefully and document the blast radius before doing so.
-- Validate auth, payments, storage uploads, and API key flows after secret
-  changes.
-- Keep OAuth callback marker signing isolated from API key hashing where
-  possible.
-- Use production-only secure cookies where supported.
+| Changed integration  | Verify                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------ |
+| Authentication       | Sign-in and OAuth redirects, refreshed session cookies, Supabase URL and key configuration             |
+| Credits and payments | Stripe webhook configuration, correct price IDs, and balance display for the affected flow             |
+| TTS or cloning       | Provider credentials and quotas, route errors in Sentry, R2 upload and playback on preview             |
+| LiveKit              | `/api/call-token` token issuance, room connection, and agent name/dispatch matching the deployed agent |
+| External API         | API-key authentication, Redis/rate limiting, dedicated R2 bucket/public URL, and Axiom request logs    |
+| Storage              | Correct bucket and endpoint, object access, browser CORS, and playback/downloads                       |
+| Docs                 | Custom domain, generated API reference, and links for changed endpoints                                |
 
-## Common Operational Tasks
+Check Vercel runtime logs and Sentry for new errors after deployment. Validate
+auth, payments, storage, and API keys after rotating secrets used by those flows.
 
-### Start the app locally
+Do not call production `/api/daily-stats` as a smoke test: it sends a Telegram
+message. See [daily-stats verification](../apps/web/app/api/daily-stats/README.md#verification)
+for read-only checks and [local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking)
+for timing comparisons.
 
-```bash
-pnpm install
-pnpm dev
-pnpm build
-pnpm preview
-```
+## Call transcript analysis
 
-### Validate code quality
+Apply the call-analysis queue migration before deploying the batch drain.
+Verify `CALL_SUMMARY_SECRET`, `CRON_SECRET`, and `XAI_API_KEY` in the target
+environment. See [the analysis flow](../ARCHITECTURE.md#call-transcript-analysis)
+for queue ownership, retries, and failure handling.
 
-```bash
-pnpm run fixall
-pnpm run type-check
-pnpm run lint
-pnpm run format
-```
+Release checks:
 
-### Run tests
+- The drain response and a `Call analysis batch drain:` log line summarise
+  reconciled batches and the new submission (the lifecycle is
+  `pending -> submitted -> completed | failed`, with `pending` again on a
+  retryable failure, visible in `call_analysis_queue.status` and its
+  timestamps; `attempts` counts batches xAI accepted, so an upload outage
+  never spends a session's retry budget).
+- A batch still unsettled 24 hours after submission is reported to Sentry as
+  `Call analysis batch appears stuck`; inspect it in the xAI console.
+- Sessions that reach the terminal `failed` state (attempts exhausted,
+  unusable transcript, session gone) are reported to Sentry as
+  `Call analysis sessions parked as failed` with their ids and errors. A
+  redelivered webhook does not revive them; run `pnpm backfill-call-analysis`
+  to reprocess.
+- Read-only check for stuck or failed work:
 
-```bash
-pnpm test
-pnpm test:watch
-pnpm test:coverage
-pnpm test:ui
-```
+  ```sql
+  select status, count(*), min(queued_at), max(submitted_at)
+  from public.call_analysis_queue
+  group by status;
+  ```
 
-### Build content and validate translations
+- Emergency bypass: set `CALL_ANALYSIS_REALTIME=true` to analyse inline in the
+  webhook (synchronous Grok call, realtime pricing) while the batch path is
+  investigated. Local debugging can use the scripts' `--realtime` flag.
 
-```bash
-pnpm build:content
-pnpm check-translations
-```
+## Gemini 3.8 catalog rollout
 
-### Generate Supabase types
+`gpro38` uses Gemini 3.8 Flash TTS on both dashboard and external API routes.
+Deploy application support before adding its catalog rows. Existing voice rows
+keep their model assignments. Provider costs use the dated standard rates in
+`apps/web/lib/api/pricing.ts`; historical recovery uses `usage_events.occurred_at`.
 
-```bash
-pnpm run generate-supabase-types
-```
-
-## Sentry
-
-### Configuration
-
-- **Org**: `sexyvoiceai`
-- **Project**: `sexyvoice-ai`
-- Sentry is configured in `next.config.js` via `@sentry/nextjs`
-- Client errors are tunneled through `/monitoring` to bypass ad-blockers
-- Source maps are uploaded only in production (`VERCEL_ENV=production`)
-
-### CLI setup
-
-`sentry-cli` authenticates via `~/.sentryclirc` (contains an auth token).
-Verify with:
-
-```bash
-sentry-cli info
-```
-
-### Common commands
-
-List issues:
-
-```bash
-sentry-cli issues --org sexyvoiceai --project sexyvoice-ai list
-```
-
-Filter by status:
-
-```bash
-sentry-cli issues --org sexyvoiceai --project sexyvoice-ai -s unresolved list
-```
-
-Bulk resolve/mute:
-
-```bash
-sentry-cli issues --org sexyvoiceai --project sexyvoice-ai -i <ISSUE_ID> resolve
-sentry-cli issues --org sexyvoiceai --project sexyvoice-ai -i <ISSUE_ID> mute
-```
-
-### Fetching event details via the API
-
-`sentry-cli` does not support listing individual events. Use the Sentry REST
-API directly with the auth token from `~/.sentryclirc`:
-
-```bash
-TOKEN=$(grep token ~/.sentryclirc | cut -d= -f2)
-
-# List events for an issue (use the numeric issue ID, not the short ID)
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://sentry.io/api/0/organizations/sexyvoiceai/issues/<ISSUE_ID>/events/?full=true&limit=100"
-```
-
-The response is a JSON array of event objects. Useful fields:
-
-- `dateCreated` — event timestamp
-- `tags` — array of `{key, value}` pairs (includes `url`, `browser`,
-  `browser.name`, `os`, `os.name`, `device.family`, `transaction`)
-- `contexts.device` — device family, model, brand
-- `contexts.browser` — browser name and version
-- `contexts.os` — OS name and version
-- `entries` — array containing `breadcrumbs` (with navigation history),
-  `exception` (stack traces), and `request` data
-- `user` — user ID and IP (may be `null` depending on privacy settings)
-
-To extract a summary table from all events, pipe the JSON through a script:
-
-```bash
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "https://sentry.io/api/0/organizations/sexyvoiceai/issues/<ISSUE_ID>/events/?full=true&limit=100" \
-  | python3 -c "
-import json, sys
-events = json.load(sys.stdin)
-for e in events:
-    tags = {t['key']: t['value'] for t in e.get('tags', [])}
-    print(f\"{e['dateCreated']}  {tags.get('browser', '?')}  {tags.get('os', '?')}  {tags.get('device.family', '?')}  {tags.get('url', '?')}\")
-"
-```
-
-### Finding the numeric issue ID
-
-The Sentry UI uses short IDs like `SEXYVOICE-AI-6C`. The numeric ID is
-visible in the URL when viewing the issue in the Sentry dashboard, or in the
-output of `sentry-cli issues list` (first column).
-
-## Troubleshooting Checklist
-
-### OAuth callback/session issues
-
-Check:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SECRET_KEY`
-- `OAUTH_CALLBACK_MARKER_SECRET`
-- redirect URL configuration in Supabase / OAuth provider
-- Sentry events tagged for OAuth callback flow
-
-### LiveKit call issues
-
-Check:
-- `LIVEKIT_URL`
-- `LIVEKIT_API_KEY`
-- `LIVEKIT_API_SECRET`
-- that `/api/call-token` can mint tokens successfully
-- that the LiveKit agent name and room dispatch configuration match the deployed agent setup
-
-### External API issues
-
-Check:
-- `API_KEY_HMAC_SECRET`
-- `R2_SPEECH_API_BUCKET_NAME`
-- `R2_SPEECH_API_PUBLIC_URL`
-- Axiom logs
-- rate limiting / Redis connectivity
-
-### Gemini / voice generation issues
-
-Check:
-
-- `GOOGLE_GENERATIVE_AI_API_KEY`
-- provider quotas
-- request logs
-- R2 upload configuration
-
-### Storage issues
-
-Check:
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET_NAME`
-- `R2_ENDPOINT`
-- bucket CORS configuration if browser fetches are involved
-
-## Documentation Maintenance Rules
-
-When environment or deployment behavior changes:
-
-1. Update [`apps/web/.env.example`](../apps/web/.env.example)
-2. Update [`README.md`](../README.md)
-3. Update [`AGENTS.md`](../AGENTS.md)
-4. Update this file if the change affects:
-   - deployment
-   - infra
-   - runtime behavior
-   - secret management
-   - region placement
-   - operational troubleshooting
-
-Keeping these docs synchronized prevents setup drift between development,
-deployment, and operational troubleshooting.
+Generate previews locally, review them in `listen.html`, and use the separate R2
+uploader before preparing executable catalog SQL. See the
+[sample workflow](../scripts/README.md#gemini-38-voice-samples) for commands,
+manifest verification, and the bucket-root filename convention. The initial
+28 catalog entries have `is_public = false`. Deploy `gpro38` route support and
+the display-name mapping before using these voices or enabling public access.

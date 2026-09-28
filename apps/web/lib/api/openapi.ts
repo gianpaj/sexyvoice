@@ -194,7 +194,7 @@ export function createExternalApiOpenApiDocument() {
     info: {
       description: 'API for text-to-speech generation.',
       title: 'SexyVoice API',
-      version: '1.0.1',
+      version: '1.1.0',
     },
     openapi: '3.1.0',
     paths: {
@@ -355,7 +355,8 @@ export function createExternalApiOpenApiDocument() {
                   schema: ErrorResponseSchema,
                 },
               },
-              description: 'Voice not found',
+              description:
+                'Voice ID not found, or voice name not found for the requested model',
             },
             422: {
               content: {
@@ -380,6 +381,14 @@ export function createExternalApiOpenApiDocument() {
                 },
               },
               description: 'Server error',
+            },
+            503: {
+              content: {
+                'application/json': {
+                  schema: ErrorResponseSchema,
+                },
+              },
+              description: 'Upstream service temporarily unavailable',
             },
           },
           security: [{ BearerAuth: [] }],

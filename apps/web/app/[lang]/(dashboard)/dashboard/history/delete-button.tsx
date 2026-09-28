@@ -2,7 +2,8 @@
 
 import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -27,25 +28,26 @@ export function DeleteButton({
   id: string;
   handleCloseDropdown: () => void;
 }) {
+  const t = useTranslations('history.delete');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = async () => {
     setIsDeleting(true);
     try {
       await handleDeleteAction(id);
       setIsOpen(false);
-      toast.success('Audio file deleted successfully');
+      toast.success(t('single.success'));
       handleCloseDropdown(); // Close the dropdown menu after deletion
       router.refresh();
     } catch (error) {
       console.error('Failed to delete audio file:', error);
-      toast.error('Failed to delete audio file. Please try again later.');
+      toast.error(t('single.error'));
     } finally {
       setIsDeleting(false);
     }
-  }, [id, handleCloseDropdown, router]);
+  };
 
   return (
     <AlertDialog onOpenChange={setIsOpen} open={isOpen}>
@@ -57,26 +59,27 @@ export function DeleteButton({
           }}
         >
           <Trash2 className="mr-2 h-4 w-4" />
-          Delete
+          {t('single.trigger')}
         </DropdownMenuItem>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Audio File</AlertDialogTitle>
+          <AlertDialogTitle>{t('single.title')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this audio file? This action cannot
-            be undone.
+            {t('single.description')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>
+            {t('cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction asChild>
             <Button
               disabled={isDeleting}
               onClick={handleDelete}
               variant="destructive"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? t('deleting') : t('single.confirm')}
             </Button>
           </AlertDialogAction>
         </AlertDialogFooter>

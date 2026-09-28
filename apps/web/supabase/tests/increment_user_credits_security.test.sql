@@ -2,11 +2,11 @@
 --
 -- Run against the local Supabase database with:
 --
---   supabase --workdir apps/web test db
+--   pnpm test:db
 
 begin;
 
-select plan(13);
+select plan(18);
 
 select is(
   (
@@ -79,6 +79,89 @@ select ok(
       'public.increment_user_credits(uuid, integer)'::pg_catalog.regprocedure
   ),
   'increment_user_credits has an empty search_path'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from pg_catalog.pg_policies
+    where schemaname = 'public'
+      and tablename = 'credits'
+      and policyname in (
+        'Only system can insert credits',
+        'Only system can update credits'
+      )
+  ),
+  0,
+  'legacy credit write policies are absent'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from (
+      values
+        ('SELECT'),
+        ('INSERT'),
+        ('UPDATE'),
+        ('DELETE'),
+        ('TRUNCATE'),
+        ('REFERENCES'),
+        ('TRIGGER')
+    ) as privileges(privilege_name)
+    where pg_catalog.has_table_privilege(
+      'anon',
+      'public.credits',
+      privilege_name
+    )
+  ),
+  0,
+  'anon has no credit table privileges'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from (
+      values
+        ('INSERT'),
+        ('UPDATE'),
+        ('DELETE'),
+        ('TRUNCATE'),
+        ('REFERENCES'),
+        ('TRIGGER')
+    ) as privileges(privilege_name)
+    where pg_catalog.has_table_privilege(
+      'authenticated',
+      'public.credits',
+      privilege_name
+    )
+  ),
+  0,
+  'authenticated has no direct credit mutation privileges'
+);
+
+select ok(
+  pg_catalog.has_table_privilege(
+    'authenticated',
+    'public.credits',
+    'SELECT'
+  ),
+  'authenticated retains credit read access'
+);
+
+select ok(
+  pg_catalog.has_table_privilege(
+    'service_role',
+    'public.credits',
+    'INSERT'
+  )
+    and pg_catalog.has_table_privilege(
+      'service_role',
+      'public.credits',
+      'UPDATE'
+    ),
+  'service_role retains credit mutation access'
 );
 
 set local request.jwt.claims = '{"role":"anon"}';

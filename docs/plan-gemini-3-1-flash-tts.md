@@ -110,7 +110,11 @@ visible only when `isGeminiVoice`:
 {
   isGeminiVoice && (
     <div className="flex items-center gap-2">
-      <Switch id="use-new-model" checked={useNewModel ?? false} onCheckedChange={setUseNewModel} />
+      <Switch
+        id="use-new-model"
+        checked={useNewModel ?? false}
+        onCheckedChange={setUseNewModel}
+      />
       <Label htmlFor="use-new-model" className="text-sm cursor-pointer">
         {dict.voiceSelector.useNewModelLabel}
       </Label>
@@ -177,7 +181,7 @@ The external API exposes Gemini 3.1 via a dedicated model ID `gpro31`.
 - `model: 'gpro31'` → `gemini-3.1-flash-tts-preview`
 
 Both `gpro` and `gpro31` share the same 30 Gemini voice names (same DB rows, model `'gpro'`).
-Voice-model compatibility is handled by `isModelCompatibleWithVoice()` in `lib/api/model.ts`.
+Name lookups are scoped to the requested model via `resolveDbModelIds()` in `lib/api/model.ts`.
 The `GET /api/v1/voices` endpoint emits each Gemini voice twice — once as `model: 'gpro'` and
 once as `model: 'gpro31'` — so API consumers can discover which voices work with the new model.
 

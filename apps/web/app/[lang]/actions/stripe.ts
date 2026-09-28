@@ -14,6 +14,7 @@ import {
   isStripeCouponUsable,
   stripe,
 } from '@/lib/stripe/stripe-admin';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -105,14 +106,13 @@ export type CheckoutMetadata =
   | SubscriptionCheckoutMetadata
   | TopupCheckoutMetadata;
 
-type CheckoutUser = NonNullable<
-  Awaited<
-    ReturnType<Awaited<ReturnType<typeof createClient>>['auth']['getUser']>
-  >['data']['user']
->;
+interface CheckoutIdentity {
+  email?: string;
+  id: string;
+}
 
 async function getCheckoutStripeId(
-  user: CheckoutUser,
+  user: CheckoutIdentity,
   packageId: CheckoutPackageId,
 ): Promise<string> {
   const userData = await getUserById(user.id);
@@ -175,16 +175,12 @@ export async function createCheckoutSession(
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const claims = await getVerifiedClaims(supabase);
 
-    if (authError || !user) {
+    if (!claims?.sub) {
       const error = new Error('Unauthorized checkout session request');
       captureException(error, {
         extra: {
-          authError: authError?.message ?? null,
           checkoutType,
           packageId,
         },
@@ -196,7 +192,10 @@ export async function createCheckoutSession(
       throw error;
     }
 
-    const stripeId = await getCheckoutStripeId(user, packageId);
+    const stripeId = await getCheckoutStripeId(
+      { email: claims.email, id: claims.sub },
+      packageId,
+    );
 
     const subscriptionDiscountCouponId =
       process.env.STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID;
@@ -211,7 +210,7 @@ export async function createCheckoutSession(
         ? {
             packageId,
             type: 'subscription',
-            userId: user.id,
+            userId: claims.sub,
             ...(shouldApplySubscriptionDiscount && {
               subscriptionDiscountCouponId,
             }),
@@ -221,7 +220,7 @@ export async function createCheckoutSession(
             dollarAmount: package_.dollarAmount.toString(),
             packageId,
             type: 'topup',
-            userId: user.id,
+            userId: claims.sub,
             ...(process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true' && {
               promo: process.env.NEXT_PUBLIC_PROMO_ID,
             }),

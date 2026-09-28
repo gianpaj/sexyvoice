@@ -94,7 +94,7 @@ export default async function LandingPage(props: {
       {
         '@id': 'https://sexyvoice.ai/#organization',
         '@type': 'Organization',
-        logo: 'https://sexyvoice.ai/icon-192x192.png',
+        logo: 'https://sexyvoice.ai/web-app-manifest-192x192.png',
         name: 'SexyVoice.ai',
         sameAs: [
           'https://x.com/sexyvoiceai',
@@ -349,31 +349,33 @@ export default async function LandingPage(props: {
               </h2>
               {get3PostsByLang(lang).map((post) => (
                 <Card
-                  className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
+                  className="relative max-w-sm pt-0 lg:min-w-[400px] lg:max-w-[400px]"
                   key={post.url}
                 >
-                  <Link href={post.url} prefetch>
-                    <CardHeader>
-                      {post.image && (
-                        <Image
-                          alt={post.title}
-                          className="mx-auto rounded-lg outline outline-white/10 -outline-offset-1"
-                          height={200}
-                          loading="lazy"
-                          priority={false}
-                          src={post.image}
-                          style={{ height: 'auto', width: '100%' }}
-                          width={300}
-                        />
-                      )}
-                      <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
-                        {post.title}
-                      </CardTitle>
-                    </CardHeader>
-                  </Link>
+                  {post.image && (
+                    <Link href={post.url} prefetch>
+                      <Image
+                        alt={post.title}
+                        className="relative w-full rounded-t-xl outline outline-white/10 -outline-offset-1"
+                        height={200}
+                        loading="lazy"
+                        priority={false}
+                        src={post.image}
+                        width={300}
+                      />
+                    </Link>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
+                      <Link href={post.url}>{post.title}</Link>
+                    </CardTitle>
+                  </CardHeader>
                 </Card>
               ))}
-              <Link className="text-center hover:underline" href="/blog">
+              <Link
+                className="text-center text-gray-400 text-sm transition-colors hover:text-foreground"
+                href="/blog"
+              >
                 {dictLanding.more}
               </Link>
             </div>

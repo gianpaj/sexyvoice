@@ -159,15 +159,44 @@ function splitIntoGrokProtectedChunks(text: string): SplitChunk[] {
   return chunks;
 }
 
+// Inline tags such as `<short pause>` or `[speaking slowly]` can contain
+// spaces. A cut inside one leaves each half as plain text, which the provider
+// reads aloud.
+const INLINE_TAG_PATTERN = /<[^<>\s][^<>\n]{0,40}>|\[[^[\]\s][^[\]\n]{0,40}\]/g;
+
+function getInlineTagSpans(text: string): [start: number, end: number][] {
+  return [...text.matchAll(INLINE_TAG_PATTERN)].map((match) => [
+    match.index,
+    match.index + match[0].length,
+  ]);
+}
+
 function getHardSplitIndex(text: string): number {
+  const tagSpans = getInlineTagSpans(text);
+  const isInsideTag = (index: number) =>
+    tagSpans.some(([start, end]) => index > start && index < end);
+
   const splitWindow = text.slice(0, SPLIT_SEGMENT_MAX_LENGTH + 1);
   const whitespaceMatches = [...splitWindow.matchAll(/\s+/g)];
   const lastWhitespaceIndex = whitespaceMatches
     .map((match) => match.index ?? -1)
-    .filter((index) => index > 0 && index <= SPLIT_SEGMENT_MAX_LENGTH)
+    .filter(
+      (index) =>
+        index > 0 && index <= SPLIT_SEGMENT_MAX_LENGTH && !isInsideTag(index),
+    )
     .at(-1);
+  if (lastWhitespaceIndex !== undefined) {
+    return lastWhitespaceIndex;
+  }
 
-  return lastWhitespaceIndex ?? SPLIT_SEGMENT_MAX_LENGTH;
+  // No usable whitespace: cut before a tag that crosses the limit.
+  const crossingTag = tagSpans.find(
+    ([start, end]) =>
+      start > 0 &&
+      start < SPLIT_SEGMENT_MAX_LENGTH &&
+      end > SPLIT_SEGMENT_MAX_LENGTH,
+  );
+  return crossingTag?.[0] ?? SPLIT_SEGMENT_MAX_LENGTH;
 }
 
 function splitPlainTextIntoUnits(text: string): string[] {

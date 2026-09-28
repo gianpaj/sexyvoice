@@ -6,14 +6,17 @@ import {
 } from '@google/genai';
 
 import { convertToWav } from '@/lib/audio';
+import { buildGeminiVoiceConfig } from '@/lib/tts/gemini-prompt';
 
 export function buildGeminiTtsConfig({
   voiceName,
+  model,
   seed,
   temperature,
   abortSignal,
 }: {
   voiceName: string;
+  model?: string;
   seed?: number;
   temperature?: number;
   abortSignal: AbortSignal;
@@ -30,11 +33,7 @@ export function buildGeminiTtsConfig({
       },
     ],
     speechConfig: {
-      voiceConfig: {
-        prebuiltVoiceConfig: {
-          voiceName: voiceName.charAt(0).toUpperCase() + voiceName.slice(1),
-        },
-      },
+      voiceConfig: buildGeminiVoiceConfig(voiceName, model),
     },
   };
 }

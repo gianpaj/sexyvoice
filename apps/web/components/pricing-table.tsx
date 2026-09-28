@@ -2,6 +2,7 @@ import { createTranslator } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
 import { type PlanData, PricingCards } from '@/components/pricing-cards';
+import { getActivePromoBannerId } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   getSubscriptionPackages,
@@ -31,10 +32,10 @@ async function PricingTable({
     namespace: 'credits.plans',
   });
 
-  const translations = process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS;
+  const activePromoBannerId = getActivePromoBannerId();
   const bannerTranslations =
-    translations && Object.hasOwn(promos, translations)
-      ? promos[translations as keyof typeof promos]
+    activePromoBannerId && Object.hasOwn(promos, activePromoBannerId)
+      ? promos[activePromoBannerId as keyof typeof promos]
       : undefined;
 
   const { plans: pPlans, billing } = credits;

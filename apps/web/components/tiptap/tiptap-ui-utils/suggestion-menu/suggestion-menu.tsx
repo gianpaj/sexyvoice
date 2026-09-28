@@ -101,6 +101,7 @@ export const SuggestionMenu = ({
   maxHeight = 384,
   pluginKey = SuggestionPluginKey,
   char,
+  deleteQueryOnEscape = true,
   ...internalSuggestionProps
 }: SuggestionMenuProps) => {
   const { editor } = useTiptapEditor(providedEditor);
@@ -184,7 +185,7 @@ export const SuggestionMenu = ({
       const previousNode = selection.$head?.nodeBefore;
       const cursorPosition = selection.$from.pos;
 
-      if (triggerChar) {
+      if (deleteQueryOnEscape && triggerChar) {
         const startPosition = previousNode
           ? calculateStartPosition(cursorPosition, previousNode, triggerChar)
           : selection.$from.start();
@@ -201,7 +202,7 @@ export const SuggestionMenu = ({
     }
 
     resetMenuState();
-  }, [char, editor, normalizedPluginKey, resetMenuState]);
+  }, [char, deleteQueryOnEscape, editor, normalizedPluginKey, resetMenuState]);
 
   useEffect(() => {
     if (!editor || editor.isDestroyed) {

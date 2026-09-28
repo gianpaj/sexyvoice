@@ -1,18 +1,16 @@
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "lib": ["ES2022", "DOM"],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["ESNext", "DOM"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "ES2022",
-    "types": ["node"],
-    "verbatimModuleSyntax": true
+    "target": "ES2024",
+    "types": ["node"]
   },
-  "include": [
-    "audit-unexplained-credits.mts",
-    "audit-unexplained-credits.test.mts"
-  ]
+  "include": ["*.mts", "lib/*.mts"]
 }
