@@ -800,6 +800,7 @@
         "cancel": "Abbrechen",
         "continue": "Weiter",
         "errors": {
+          "manageBilling": "Abrechnung verwalten",
           "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihr Konto löschen.",
           "subscriptionCheckFailed": "Wir konnten Ihren Abonnementstatus nicht prüfen. Ihr Konto wurde nicht gelöscht. Bitte versuchen Sie es erneut."
         }

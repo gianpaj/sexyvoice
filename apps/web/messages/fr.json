@@ -800,6 +800,7 @@
         "cancel": "Annuler",
         "continue": "Continuer",
         "errors": {
+          "manageBilling": "Gérer la facturation",
           "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
           "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer."
         }

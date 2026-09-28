@@ -3,11 +3,13 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
+import { isValidElement } from 'react';
 import { toast } from 'sonner';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DeleteAccountForm } from '@/app/[lang]/(dashboard)/dashboard/profile/delete-account-form';
 import { handleDeleteAccountAction } from '@/app/actions';
+import { STRIPE_BILLING_PORTAL_URL } from '@/lib/stripe/billing-portal';
 import messages from '@/messages/en.json';
 
 vi.mock('@/app/actions', () => ({
@@ -39,12 +41,26 @@ describe('DeleteAccountForm', () => {
       await user.click(screen.getByRole('button', { name: 'Delete account' }));
       await user.click(screen.getByRole('button', { name: 'Continue' }));
 
-      await waitFor(() =>
-        expect(toast.error).toHaveBeenCalledWith(
-          messages.profile.dangerZone.deleteAccount.errors[error],
-        ),
+      await waitFor(() => expect(toast.error).toHaveBeenCalled());
+      expect(vi.mocked(toast.error).mock.calls[0][0]).toBe(
+        messages.profile.dangerZone.deleteAccount.errors[error],
       );
       expect(handleDeleteAccountAction).toHaveBeenCalledWith({ lang: 'en' });
+
+      const options = vi.mocked(toast.error).mock.calls[0][1];
+      if (error === 'subscriptionExists') {
+        expect(options).toMatchObject({
+          closeButton: true,
+          duration: Number.POSITIVE_INFINITY,
+        });
+        expect(isValidElement(options?.action)).toBe(true);
+        if (isValidElement(options?.action)) render(options.action);
+        expect(
+          screen.getByRole('link', { name: 'Manage billing' }),
+        ).toHaveAttribute('href', STRIPE_BILLING_PORTAL_URL);
+      } else {
+        expect(options?.action).toBeUndefined();
+      }
     },
   );
 });

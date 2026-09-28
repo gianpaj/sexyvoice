@@ -798,6 +798,7 @@
         "cancel": "Cancel",
         "continue": "Continue",
         "errors": {
+          "manageBilling": "Manage billing",
           "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your account.",
           "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again."
         }

@@ -399,8 +399,9 @@ Account deletion checks the profile's Stripe customer subscriptions directly
 before changing account data or deleting files. Only `canceled` and
 `incomplete_expired` subscriptions allow deletion; a scheduled cancellation
 still blocks it until the subscription ends. A failed profile or Stripe lookup
-also blocks deletion. The profile form displays the returned error and directs
-subscribers to billing to cancel first.
+also blocks deletion. The subscription error stays visible until dismissed and
+includes a direct link to the Stripe billing portal to cancel first. The portal
+URL is shared with the credits page through `lib/stripe/billing-portal.ts`.
 
 `lib/stripe/account-billing.ts` coordinates Checkout Session creation and account
 deletion through atomic Redis reservations per user. Deletion expires open

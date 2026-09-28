@@ -800,6 +800,7 @@
         "cancel": "Annulla",
         "continue": "Continua",
         "errors": {
+          "manageBilling": "Gestisci fatturazione",
           "subscriptionExists": "Il tuo account ha ancora un abbonamento Stripe. Annullalo nel portale di fatturazione e attendi che termini prima di eliminare il tuo account.",
           "subscriptionCheckFailed": "Non è stato possibile verificare lo stato del tuo abbonamento. Il tuo account non è stato eliminato. Riprova."
         }
