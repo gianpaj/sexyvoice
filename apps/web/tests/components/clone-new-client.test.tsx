@@ -525,20 +525,7 @@ describe('NewVoiceClient', () => {
 
       renderClone();
 
-      await user.type(
-        screen.getByLabelText(dict.textToConvertLabel),
-        'Hello world',
-      );
-      await user.click(
-        screen.getByRole('checkbox', {
-          name: dict.legalConsentCheckbox,
-        }),
-      );
-      await user.click(
-        screen.getByRole('button', {
-          name: /generate audio/i,
-        }),
-      );
+      await submitClone(user);
 
       expect(
         await screen.findByText(
@@ -569,20 +556,7 @@ describe('NewVoiceClient', () => {
 
     renderClone();
 
-    await user.type(
-      screen.getByLabelText(dict.textToConvertLabel),
-      'Hello world',
-    );
-    await user.click(
-      screen.getByRole('checkbox', {
-        name: dict.legalConsentCheckbox,
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: /generate audio/i,
-      }),
-    );
+    await submitClone(user);
 
     expect(
       await screen.findByText('You need 252 credits to clone this audio.'),
