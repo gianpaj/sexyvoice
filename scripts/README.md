@@ -380,8 +380,8 @@ Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
 
 Only successful analyses are persisted. Each failure increments the session's
 `call_analysis_queue.attempts` (shared with the cron drain); after 3 failed
-attempts the session is parked and both scripts skip it unless
-`--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
+attempts the session is parked. A provider content refusal parks at once. Both
+scripts skip parked sessions unless `--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
 are skipped.
 
 ### Quick Start

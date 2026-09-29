@@ -398,7 +398,7 @@ export async function saveAllSessionAnalyses(supabase, results) {
   if (skippedCount > 0) {
     const parkedCount = await recordFailedAnalyses(supabase, results);
     console.log(
-      `   ⏭️ Skipped ${skippedCount} failed analyses (${parkedCount} parked after ${MAX_CALL_ANALYSIS_ATTEMPTS} attempts, the rest left for retry)`,
+      `   ⏭️ Skipped ${skippedCount} failed analyses (${parkedCount} parked after ${MAX_CALL_ANALYSIS_ATTEMPTS} attempts or a provider refusal, the rest left for retry)`,
     );
   }
   if (errorCount > 0) {
