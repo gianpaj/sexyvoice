@@ -321,9 +321,10 @@ Flow:
    parked as `failed` after 15 minutes (never resubmitted, since the batch may
    already be billed), with the batch id in the Sentry error when it is known.
 4. Failed requests never persist an analysis row. Retryable failures return to
-   `pending` for up to 3 submissions, then park as `failed` with `last_error`;
-   the backfill script can still reprocess them because it anti-joins on
-   `call_session_analysis`. Each in-flight batch is reconciled in isolation
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`.
+   The analysis scripts count their failures in the same `attempts` column and
+   skip parked sessions; `backfill-call-analysis --retry-failed` reprocesses
+   them. Each in-flight batch is reconciled in isolation
    (one unreadable batch id is reported to Sentry and skipped, not fatal), and
    a batch that has not settled after 48 hours is abandoned: its rows return
    to `pending` under the same attempt limit.

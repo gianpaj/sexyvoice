@@ -40,6 +40,7 @@ import {
 } from '../apps/web/lib/ai/analyze-call.ts';
 import {
   collectCallAnalysisBatchResults,
+  MAX_CALL_ANALYSIS_ATTEMPTS,
   submitCallAnalysisBatch,
 } from '../apps/web/lib/ai/call-analysis-batch.ts';
 import { waitForBatch } from '../apps/web/lib/ai/xai-batch.ts';
@@ -70,6 +71,8 @@ const DB_FETCH_PAGE_SIZE = 1000;
 // for both the recent cron and the backfill; --realtime opts back into the
 // synchronous AI SDK path. The client lives in apps/web/lib/ai/xai-batch.ts and
 // honours XAI_API_BASE_URL. See https://docs.x.ai/developers/advanced-api-usage/batch-api
+// Keeps PostgREST `in.(...)` filters well under the ~8 KB request-line limit.
+const IN_FILTER_CHUNK_SIZE = 50;
 const BATCH_POLL_INTERVAL_MS = 5000; // xAI recommends 2-5s between status polls
 export const DEFAULT_BATCH_TIMEOUT_MINUTES = 60;
 
@@ -215,7 +218,25 @@ async function getRecentCallSessions(supabase, hoursAgo, limit = null) {
     throw new Error(`Error fetching call sessions: ${error.message}`);
   }
 
-  return data || [];
+  const parked = await getParkedSessionIds(supabase);
+  return (data || []).filter((session) => !parked.has(session.id));
+}
+
+/**
+ * Sessions that used up MAX_CALL_ANALYSIS_ATTEMPTS, in the cron drain or in
+ * these scripts. Candidate queries skip them so a deterministic failure (such
+ * as a model refusal) is not re-sent on every run.
+ */
+async function getParkedSessionIds(supabase) {
+  const { data, error } = await supabase
+    .from('call_analysis_queue')
+    .select('session_id')
+    .eq('status', 'failed')
+    .gte('attempts', MAX_CALL_ANALYSIS_ATTEMPTS);
+  if (error) {
+    throw new Error(`Error fetching parked sessions: ${error.message}`);
+  }
+  return new Set((data || []).map((row) => row.session_id));
 }
 
 /**
@@ -223,8 +244,11 @@ async function getRecentCallSessions(supabase, hoursAgo, limit = null) {
  * Used by the backfill script.
  */
 export async function getAllCompletedCallSessions(supabase, options = {}) {
-  const { minDuration = MIN_ANALYSIS_CALL_DURATION_SECONDS, models = [] } =
-    options;
+  const {
+    includeParked = false,
+    minDuration = MIN_ANALYSIS_CALL_DURATION_SECONDS,
+    models = [],
+  } = options;
   const rows = [];
   let from = 0;
 
@@ -258,7 +282,11 @@ export async function getAllCompletedCallSessions(supabase, options = {}) {
     from += DB_FETCH_PAGE_SIZE;
   }
 
-  return rows;
+  if (includeParked) {
+    return rows;
+  }
+  const parked = await getParkedSessionIds(supabase);
+  return rows.filter((session) => !parked.has(session.id));
 }
 
 // Result rows carry the session fields needed by the shared row mapper.
@@ -276,6 +304,60 @@ function buildAnalysisRecord(result) {
   );
 }
 
+/**
+ * Count each failed analysis against the session's attempts in
+ * call_analysis_queue; at MAX_CALL_ANALYSIS_ATTEMPTS the session is parked and
+ * the candidate queries skip it. Rows the cron drain still owns (pending,
+ * submitted) are left alone. Returns how many sessions were parked.
+ */
+async function recordFailedAnalyses(supabase, results) {
+  const failed = results.filter((result) => result.error || !result.analysis);
+  const existing = new Map();
+  for (let i = 0; i < failed.length; i += IN_FILTER_CHUNK_SIZE) {
+    const ids = failed
+      .slice(i, i + IN_FILTER_CHUNK_SIZE)
+      .map((result) => result.sessionId);
+    const { data, error } = await supabase
+      .from('call_analysis_queue')
+      .select('session_id, status, attempts')
+      .in('session_id', ids);
+    if (error) {
+      console.error(`   ❌ Failed to read retry attempts: ${error.message}`);
+      return 0;
+    }
+    for (const row of data || []) {
+      existing.set(row.session_id, row);
+    }
+  }
+
+  const updatedAt = new Date().toISOString();
+  const rows = failed
+    .filter((result) => {
+      const status = existing.get(result.sessionId)?.status;
+      return status === undefined || status === 'failed';
+    })
+    .map((result) => ({
+      attempts: (existing.get(result.sessionId)?.attempts ?? 0) + 1,
+      last_error: result.error || 'Empty analysis',
+      session_id: result.sessionId,
+      status: 'failed',
+      updated_at: updatedAt,
+    }));
+  if (rows.length === 0) {
+    return 0;
+  }
+
+  const { error } = await supabase
+    .from('call_analysis_queue')
+    .upsert(rows, { onConflict: 'session_id' });
+  if (error) {
+    console.error(`   ❌ Failed to record retry attempts: ${error.message}`);
+    return 0;
+  }
+  return rows.filter((row) => row.attempts >= MAX_CALL_ANALYSIS_ATTEMPTS)
+    .length;
+}
+
 export async function saveAllSessionAnalyses(supabase, results) {
   let successCount = 0;
   let errorCount = 0;
@@ -284,7 +366,7 @@ export async function saveAllSessionAnalyses(supabase, results) {
   for (const result of results) {
     // Never persist a row for a failed analysis: a row would permanently
     // exclude the session from future runs (and the webhook deliberately does
-    // the same), so failures stay retryable.
+    // the same). Failures count against the session's attempts instead.
     if (result.error || !result.analysis) {
       skippedCount += 1;
       continue;
@@ -310,8 +392,9 @@ export async function saveAllSessionAnalyses(supabase, results) {
 
   console.log(`   ✅ Saved ${successCount} session analyses`);
   if (skippedCount > 0) {
+    const parkedCount = await recordFailedAnalyses(supabase, results);
     console.log(
-      `   ⏭️ Skipped ${skippedCount} failed analyses (left for retry)`,
+      `   ⏭️ Skipped ${skippedCount} failed analyses (${parkedCount} parked after ${MAX_CALL_ANALYSIS_ATTEMPTS} attempts, the rest left for retry)`,
     );
   }
   if (errorCount > 0) {
