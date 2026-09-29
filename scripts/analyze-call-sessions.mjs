@@ -44,6 +44,7 @@ import {
   submitCallAnalysisBatch,
 } from '../apps/web/lib/ai/call-analysis-batch.ts';
 import { waitForBatch } from '../apps/web/lib/ai/xai-batch.ts';
+import { isProviderContentRefusal } from '../apps/web/lib/provider-errors.ts';
 
 config({
   override: false,
@@ -307,8 +308,9 @@ function buildAnalysisRecord(result) {
 /**
  * Count each failed analysis against the session's attempts in
  * call_analysis_queue; at MAX_CALL_ANALYSIS_ATTEMPTS the session is parked and
- * the candidate queries skip it. Rows the cron drain still owns (pending,
- * submitted) are left alone. Returns how many sessions were parked.
+ * the candidate queries skip it. A provider content refusal parks at once,
+ * since a retry can only be declined again. Rows the cron drain still owns
+ * (pending, submitted) are left alone. Returns how many sessions were parked.
  */
 async function recordFailedAnalyses(supabase, results) {
   const failed = results.filter((result) => result.error || !result.analysis);
@@ -337,7 +339,9 @@ async function recordFailedAnalyses(supabase, results) {
       return status === undefined || status === 'failed';
     })
     .map((result) => ({
-      attempts: (existing.get(result.sessionId)?.attempts ?? 0) + 1,
+      attempts: result.refused
+        ? MAX_CALL_ANALYSIS_ATTEMPTS
+        : (existing.get(result.sessionId)?.attempts ?? 0) + 1,
       last_error: result.error || 'Empty analysis',
       session_id: result.sessionId,
       status: 'failed',
@@ -453,7 +457,11 @@ export async function analyzeCallSessionsWithLLM(sessions, options = {}) {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`❌ Error analyzing session ${session.id}: ${message}`);
-      results.push({ ...sessionBase(session), error: message });
+      results.push({
+        ...sessionBase(session),
+        error: message,
+        refused: isProviderContentRefusal(error),
+      });
     }
   }
 
@@ -549,7 +557,7 @@ export async function analyzeCallSessionsWithBatchApi(sessions, options = {}) {
       console.error(
         `❌ Batch analysis failed for session ${result.sessionId}: ${result.error}`,
       );
-      results.push({ ...base, error: result.error });
+      results.push({ ...base, error: result.error, refused: result.refused });
     } else {
       results.push({ ...base, analysis: result.analysis });
     }

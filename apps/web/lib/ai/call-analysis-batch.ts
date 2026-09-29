@@ -36,7 +36,12 @@ export interface CallAnalysisBatchContext {
 }
 
 export type CallAnalysisBatchResult =
-  | { analysis: CallAnalysis; error?: undefined; sessionId: string }
+  | {
+      analysis: CallAnalysis;
+      error?: undefined;
+      refused?: undefined;
+      sessionId: string;
+    }
   | {
       analysis?: undefined;
       error: string;

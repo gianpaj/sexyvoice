@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
     getSubmittedCallAnalysesForBatch: vi.fn(),
     markCallAnalysesCompleted: vi.fn(),
     markCallAnalysisFailed: vi.fn(),
+    parkRefusedCallAnalysis: vi.fn(),
     releaseCallAnalysisClaims: vi.fn(),
     setCallAnalysisBatchId: vi.fn(),
     upsertCallSessionAnalysis: vi.fn(),
@@ -249,13 +250,14 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     expect(body.reconciled.result.settled).toEqual([
       { batchId: 'batch_1', completed: 0, failed: 0, refused: 1, retried: 0 },
     ]);
-    // Terminal, never back to pending: the same transcript is not paid for again.
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    // Parked at once, never back to pending: the same transcript is not paid
+    // for again by the drain or the scripts.
+    expect(mocks.queries.parkRefusedCallAnalysis).toHaveBeenCalledWith(
       expect.anything(),
       's-refused',
       "permission-denied: I can't help with that request.",
-      { retry: false },
     );
+    expect(mocks.queries.markCallAnalysisFailed).not.toHaveBeenCalled();
     // Not a park: no backfill ask for a transcript the provider will always decline.
     expect(body.parked).toBe(0);
     expect(mocks.captureMessage).not.toHaveBeenCalledWith(

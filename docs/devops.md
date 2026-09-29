@@ -293,8 +293,9 @@ Release checks:
   to reprocess.
 - Sessions xAI declines on content grounds are reported once per run as
   `Call analysis sessions declined by the provider` (`level: warning`,
-  fingerprint `call-analysis-provider-refusal`). They are terminal; the
-  backfill script cannot fix them.
+  fingerprint `call-analysis-provider-refusal`). They are parked; resending
+  them with `backfill-call-analysis --retry-failed` is billed and only helps
+  after a model or provider policy change.
 - Read-only check for stuck or failed work:
 
   ```sql

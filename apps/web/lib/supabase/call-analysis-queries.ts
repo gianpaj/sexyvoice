@@ -3,6 +3,7 @@ import type {
   CallSessionForAnalysis,
 } from '@/lib/ai/analyze-call';
 import { toAnalysisRow } from '@/lib/ai/analyze-call';
+import { MAX_CALL_ANALYSIS_ATTEMPTS } from '@/lib/ai/call-analysis-batch';
 import type { TypedSupabaseClient } from './client';
 
 export type CallAnalysisQueueRow = Tables<'call_analysis_queue'>;
@@ -321,6 +322,50 @@ export async function markCallAnalysisFailed(
     throw error;
   }
   return status;
+}
+
+/**
+ * Park a session the provider declined on content grounds. Resubmitting can
+ * only be declined and billed again, so the row goes straight to `failed` with
+ * the attempt limit used up: the drain and the scripts treat it like any other
+ * parked session, and only `backfill-call-analysis --retry-failed` resends it.
+ * Upserts because the realtime bypass has no queue row yet.
+ */
+export async function parkRefusedCallAnalysis(
+  client: TypedSupabaseClient,
+  sessionId: string,
+  lastError: string,
+): Promise<void> {
+  const { error } = await client.from('call_analysis_queue').upsert(
+    {
+      attempts: MAX_CALL_ANALYSIS_ATTEMPTS,
+      last_error: lastError,
+      session_id: sessionId,
+      status: 'failed',
+      updated_at: nowIso(),
+    },
+    { onConflict: 'session_id' },
+  );
+  if (error) {
+    throw error;
+  }
+}
+
+/** True when the session is parked, so the realtime bypass must not resend it. */
+export async function isCallAnalysisParked(
+  client: TypedSupabaseClient,
+  sessionId: string,
+): Promise<boolean> {
+  const { count, error } = await client
+    .from('call_analysis_queue')
+    .select('session_id', { count: 'exact', head: true })
+    .eq('session_id', sessionId)
+    .eq('status', 'failed')
+    .gte('attempts', MAX_CALL_ANALYSIS_ATTEMPTS);
+  if (error) {
+    throw error;
+  }
+  return (count ?? 0) > 0;
 }
 
 /** Session ids (from `sessionIds`) that already have an analysis row. */

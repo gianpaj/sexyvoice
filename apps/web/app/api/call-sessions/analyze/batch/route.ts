@@ -30,6 +30,7 @@ import {
   MAX_CALL_ANALYSIS_ATTEMPTS,
   markCallAnalysesCompleted,
   markCallAnalysisFailed,
+  parkRefusedCallAnalysis,
   type QueuedCallSession,
   releaseCallAnalysisClaims,
   setCallAnalysisBatchId,
@@ -168,14 +169,12 @@ async function settleBatch(
       continue;
     }
 
-    // A provider content refusal is deterministic: never return it to
-    // `pending` (that only pays for another guaranteed refusal) and record it
-    // separately so the run raises a countable, non-actionable warning instead
-    // of asking an operator to run the backfill script.
-    if ('refused' in result && result.refused) {
-      await markCallAnalysisFailed(supabase, result.sessionId, result.error, {
-        retry: false,
-      });
+    // A provider content refusal is deterministic: park it at once (a retry
+    // only pays for another guaranteed refusal) and record it separately so
+    // the run raises a countable, non-actionable warning instead of asking an
+    // operator to run the backfill script.
+    if (result.refused) {
+      await parkRefusedCallAnalysis(supabase, result.sessionId, result.error);
       run.refused.push({ error: result.error, sessionId: result.sessionId });
       summary.refused += 1;
       continue;
