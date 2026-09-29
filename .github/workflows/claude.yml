@@ -56,7 +56,8 @@ jobs:
         continue-on-error: true
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: ${{ steps.review-head.outputs.sha }}
+          # Only push events reach this step; check out their immutable SHA.
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
