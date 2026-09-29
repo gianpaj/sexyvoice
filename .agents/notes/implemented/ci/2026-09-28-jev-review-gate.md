@@ -32,6 +32,10 @@ baseline. Custom Claude App identities require updating this check.
 - Missing baselines, changed bases, rewritten history, binary patches, and
   patches over 200,000 bytes request review without sending a diff to Jev.
 - Review setup runs only after the gate approves it.
+- A PR runs one Claude review at a time. Newer approved reviews queue rather
+  than cancel, so a push never aborts a manual review mid-comment; GitHub keeps
+  only the newest pending review. Runs that skip review use a per-run
+  concurrency group, so unrelated comments cannot displace a queued review.
 - Jev receives repository diff content through the TypeSafe API. Usage may cost
   credits; the workflow does not expose the API key in the state.
 - Fork PR secret restrictions remain; do not switch this code-executing

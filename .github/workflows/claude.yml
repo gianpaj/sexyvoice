@@ -157,6 +157,11 @@ jobs:
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.actor) &&
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.triggering_actor) &&
       needs.review-gate.outputs.should-review == 'true'
+    # One review per PR at a time. Newer reviews queue, and GitHub keeps only
+    # the newest pending one. Runs that will not review get a unique group, so
+    # skipped runs from unrelated comments never displace a queued review.
+    concurrency:
+      group: ${{ needs.review-gate.outputs.should-review == 'true' && format('claude-review-{0}', github.event.pull_request.number || github.event.issue.number) || format('claude-review-skip-{0}', github.run_id) }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
