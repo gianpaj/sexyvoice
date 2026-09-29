@@ -45,11 +45,13 @@ import {
   formatCurrencyChange,
   formatDuration,
   formatIdList,
+  formatPurchaseSummary,
   getFeatureHealthStatus,
   getProfileUsername,
   isCompletedUserCall,
   maskUsername,
   normalizeModelName,
+  type PurchaseSummaryTransaction,
   reduceAmountUsd,
   startOfDay,
   startOfMonth,
@@ -751,7 +753,7 @@ export async function GET(request: NextRequest) {
   // Track individual transactions per customer for detailed display
   const customerTransactions = new Map<
     string,
-    Array<{ amount: number; type: string; username: string }>
+    Array<PurchaseSummaryTransaction & { username: string }>
   >();
 
   for (const transaction of purchasePrevDayData) {
@@ -772,19 +774,15 @@ export async function GET(request: NextRequest) {
         isFirstSubscription?: boolean;
       };
 
-    // Determine purchase type label
-    let purchaseTypeLabel = '';
-    if (transaction.type === 'topup') {
-      purchaseTypeLabel = isFirstTopup ? 'new topup' : 'existing topup';
-    } else if (transaction.type === 'purchase') {
-      purchaseTypeLabel = isFirstSubscription ? 'new sub' : 'existing sub';
-    }
-
     // Store each transaction individually with username
     const existing = customerTransactions.get(transaction.user_id) ?? [];
     existing.push({
       amount: dollarAmount,
-      type: purchaseTypeLabel,
+      isNew:
+        transaction.type === 'topup'
+          ? isFirstTopup === true
+          : isFirstSubscription === true,
+      type: transaction.type === 'topup' ? 'topup' : 'subscription',
       username: getProfileUsername(transaction.profiles) || 'Unknown',
     });
     customerTransactions.set(transaction.user_id, existing);
@@ -811,32 +809,8 @@ export async function GET(request: NextRequest) {
       ? 'N/A'
       : topCustomers
           .map(({ username, transactions }) => {
-            // Use username from customer totals - no need for inefficient find()
             const maskedUsername = maskUsername(username);
-
-            // Format amounts: show individual amounts if multiple transactions
-            // e.g., "$5+$5 topup" or "$5 topup + $10 sub" for mixed types
-            const allSameType =
-              transactions.length > 1 &&
-              transactions.every((t) => t.type === transactions[0].type);
-
-            let amountDisplay: string;
-            if (transactions.length === 1) {
-              // Single transaction: "$10.00 - existing topup"
-              const t = transactions[0];
-              amountDisplay = `$${t.amount} - ${t.type}`;
-            } else if (allSameType) {
-              // Multiple same-type: "$5+$5 topup"
-              const amounts = transactions.map((t) => `$${t.amount}`).join('+');
-              amountDisplay = `${amounts} ${transactions[0].type}`;
-            } else {
-              // Mixed types: "$5 topup + $10 sub"
-              amountDisplay = transactions
-                .map((t) => `$${t.amount} ${t.type}`)
-                .join(' + ');
-            }
-
-            return `${maskedUsername} (${amountDisplay})`;
+            return `${maskedUsername} (${formatPurchaseSummary(transactions)})`;
           })
           .join(', ');
 

@@ -1,0 +1,60 @@
+name: Label Issues
+
+on:
+  issues:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Auto-label issue with Jev
+        uses: yamadashy/jev-labeler-action@0c90211a8873cb11913ef43ff13171c0afd74287 # v0.3.1
+        with:
+          api-key: ${{ secrets.TYPESAFE_API_KEY }}
+          # Exclude non-category operational labels or decision tags
+          exclude-labels: |
+            duplicate
+            wontfix
+            invalid
+            good first issue
+            help wanted
+            codex
+            dependencies
+            javascript
+            marketing
+
+          # Explicit criteria to ensure high precision across our domain and type labels
+          criteria: |
+            "type: bug": >-
+              The issue reports a bug, unexpected error, broken behavior, audio failure, or incorrect billing/credit calculation.
+            "type: feat": >-
+              The issue requests a new feature, new capability, or functional improvement to the product.
+            "type: refactor": >-
+              The issue proposes code cleanup, deduplication of abstractions, architecture restructuring, or code optimization.
+            "type: test": >-
+              The issue is about adding or fixing automated tests, Playwright E2E tests, Vitest unit tests, or test coverage.
+            "type: observability": >-
+              The issue involves logging, telemetry, tracing, Sentry error tracking, metrics, PostHog, or Axiom.
+            "type: infra": >-
+              The issue involves database migrations, Supabase schema or RLS policies, Cloudflare R2 storage, CI/CD, or background job infrastructure.
+            "type: docs": >-
+              The issue is about documentation, README updates, API references, or changelog UI.
+            "area: call": >-
+              The issue relates to real-time voice calls, LiveKit agent, WebRTC, call transcripts, call scenes, characters, or call memory.
+            "area: tts-generation": >-
+              The issue relates to text-to-speech audio generation, Gemini/Grok voices, voice presets, TTS models, or the dashboard audio generator.
+            "area: voice-cloning": >-
+              The issue relates to custom voice cloning, reference audio uploading/recording, Voxtral, Chatterbox, or audio enhancement with fal.ai.
+            "area: billing-credits": >-
+              The issue involves the credit ledger, credit deductions, pricing, top-ups, auto-recharge, Stripe checkout, or subscriptions.
+            "area: api": >-
+              The issue involves the external REST API (/api/v1/), developer API keys, OpenAPI spec, rate limiting, or programmatic access.
+            "area: ui-ux": >-
+              The issue is about frontend visual design, animations, theme, buttons, modals, responsiveness, or dashboard user experience.
+            "area: notifications": >-
+              The issue relates to transactional emails (Resend), Novu notifications, alerts, or user messaging.

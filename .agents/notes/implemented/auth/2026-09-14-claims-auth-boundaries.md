@@ -9,7 +9,7 @@ separate authorization checks. Do not fabricate a Supabase `User` from a JWT.
 
 Retain six `getUser()` calls for current email, Auth creation time, account
 cleanup, and durable credential issuance. The canonical method policy and exact
-exceptions live in [docs/devops.md](../../../../docs/devops.md#client-retries-and-auth-responses).
+exceptions live in [Architecture](../../../../ARCHITECTURE.md#identity-and-session-handling).
 
 ## Alternatives and consequences
 

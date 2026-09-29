@@ -1,5 +1,52 @@
 # Scripts
 
+## Restore account billing
+
+Account deletion blocks checkout during cleanup and releases its block when the
+request finishes, including handled failures. Retained Auth users can sign in
+and check out again. A terminated request or failed Redis release can block
+checkout and further deletion requests. Both return `accountBillingBlocked`
+with support guidance. A competing reservation returns `accountBillingBusy`
+and asks the user to wait. Deletion returns these errors without reporting
+Sentry exceptions.
+The coordination rules live in
+[Architecture](../ARCHITECTURE.md#identity-and-session-handling).
+
+Support can clear the block so the user can keep the account or finish deleting
+it:
+
+1. Identify the exact Supabase Auth user ID and verify that their profile exists.
+   Review the failed deletion and any partial cleanup with the user; restoring
+   billing does not restore deleted files or characters.
+2. Confirm in request logs that every deletion request for this user has finished
+   or terminated. Ask the user to stop retrying deletion during recovery. An
+   expired Redis reservation alone does not prove the cleanup process stopped.
+3. Run the command below with the intended environment's `apps/web/.env.local`.
+   It uses the existing Upstash environment variables.
+   Replace the placeholder with the verified UUID.
+
+```bash
+pnpm --filter @sexyvoice/scripts run restore-account-billing -- \
+  --env-file ../apps/web/.env.local \
+  --user-id 'verified-auth-user-uuid' \
+  --cleanup-stopped
+```
+
+`restore-account-billing.mts` validates the UUID and requires `--cleanup-stopped`
+after the log checks above. It loads environment files with `loadScriptEnv()`
+and calls the shared `restoreAccountBilling` helper.
+
+The helper atomically refuses recovery while a billing or deletion reservation
+exists. It deletes only `stripe:account:{userId}:deleted`. It also handles legacy
+blocks whose value is `1`. Do not force-delete an operation key to bypass this
+check. If it reports `accountBillingBusy`, wait for the request to finish and
+its reservation to clear, then repeat the log checks before retrying.
+
+Have the user retry checkout or deletion and record the recovery in the support ticket.
+Blocked and busy checkout attempts use the Sentry event types
+`checkout_billing_blocked` and `checkout_billing_busy`; Stripe failures use
+`checkout_session_creation_error`.
+
 ## R2 audio backup
 
 This command copies missing R2 objects to a local drive. It never deletes R2
@@ -115,71 +162,97 @@ New TypeScript maintenance scripts must call `loadScriptEnv()` from
 `createScriptAdminClient()` from `lib/supabase.mts`. Keep command-specific
 warnings and confirmation policy in the command.
 
-## Generate Gemini Speech Samples Script
+## Gemini 3.8 voice samples
 
-Generates speech samples through the public `/api/v1/speech` endpoint and saves
-them as MP3 files. The API returns WAV for `gpro`/`gpro31`, so the script
-downloads the WAV and converts it to MP3 with `ffmpeg` (required).
+`gemini-38-catalog.json` contains 28 additive entries: 11 existing Gemini identities,
+nine Spain Spanish voices, and eight Mexican Spanish voices. The 2026-09-23
+Supabase CLI inventory covers all 36 TTS rows. Its 14 non-Gemini identities are
+listed as unsupported in the catalog; they cannot be recreated by selecting their
+names in Gemini. Mexican provider IDs use `es-419` with the `Mexico Spanish`
+accent; catalog labels use `es-MX`. Catalan is excluded.
 
-### Quick Start
+Run these commands from `scripts/`. Use `pnpm run <command> --` when passing
+`--env-file`, so pnpm forwards the flag to the script. Environment loading uses
+`loadScriptEnv()`; `--env-file` accepts an explicit dotenv path and can be repeated.
+Existing process variables take precedence. Keep credentials out of arguments and
+Git.
 
 ```bash
-# Show help
-pnpm generate-gemini-speech-samples --help
+# Validate prompts and output paths without calling Google
+pnpm run generate-gemini-speech-samples -- \
+  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 --dry-run
 
-# Generate one sample by voice ID (model is inferred from the voice)
-SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --voiceId 85153e4b-f5b0-477a-856e-1bf05fd84165
-
-# Generate samples for specific voices with a model + style
-SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --model gpro --style "calm" \
-  --text "Hello there" --voices achernar,zephyr
-
-# Run against a local/dev server
-SEXYVOICE_API_BASE_URL=http://localhost:3000 SEXYVOICE_API_KEY=xxx \
-  pnpm generate-gemini-speech-samples --voiceId <id>
+# Generate local MP3s directly through Google; requires ffmpeg
+pnpm run generate-gemini-speech-samples -- \
+  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 \
+  --env-file /absolute/path/to/.env.local
 ```
 
-> Note: you don't need `--` before the flags (e.g. `pnpm generate-gemini-speech-samples --voiceId <id>`).
+The generator requires `GOOGLE_GENERATIVE_AI_API_KEY`. It sends the transcript as
+text and the delivery direction as speech metadata through the shared web-app
+helpers. The 3.8 model receives the exact regional provider ID. Each output uses
+`<provider-name>-gpro38-preview.mp3`, matching the live catalog's root-level,
+model-suffixed preview convention.
 
-### CLI Options
+`manifest.json` records catalog IDs, transcripts, directions, file hashes, token
+usage, and provider costs. `listen.html` provides local audio controls for the
+batch. Open it in a browser and listen before uploading. `--keep-wav` retains the
+intermediate audio. Rerunning the same command verifies and skips completed MP3s;
+it does not regenerate them. For changed prompts, use a new output directory.
+Move any untracked partial output aside before retrying a failed conversion.
 
-- `--voiceId <id>` - Voice ID from `GET /api/v1/voices`. Used **instead of** `--voice` + `--model` (the model is inferred from the voice).
-- `--model <gpro|gpro31>` - Gemini model alias (used with `--voices`)
-- `--voices <a,b,c>` - Comma-separated voice names (defaults to a built-in list when neither `--voices` nor `--voiceId` is given)
-- `--text <text>` - Text to synthesize
-- `--style <style>` - Emotion/style prompt applied by the API
-- `--seed <number>` - Optional deterministic seed
-- `--out <dir>` - Output directory (default: `scripts/generated-speech`)
-- `--base-url <url>` - Override `SEXYVOICE_API_BASE_URL`
-- `--api-key <key>` - Override `SEXYVOICE_API_KEY`
-- `--keep-wav` - Keep the downloaded WAV next to each MP3
-- `-h, --help` - Show help message
+### Upload reviewed samples
 
-### Environment
+The separate uploader requires a directory containing `manifest.json`. It accepts
+any destination bucket and folder, with `--folder .` selecting the bucket root.
+The live catalog uses `sv-audio-files` and `https://files.sexyvoice.ai`.
 
-- `SEXYVOICE_API_KEY` - Required Bearer API key
-- `SEXYVOICE_API_BASE_URL` - Optional API host (default: `https://sexyvoice.ai`)
-- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN` - Default `--style` if not passed
-- `DEBUG=1` - Print full stack traces on error
+```bash
+pnpm run upload-speech-samples -- \
+  --path generated-speech/gemini-38 --bucket sv-audio-files \
+  --folder . --public-url https://files.sexyvoice.ai --dry-run
 
-`.env.local`/`.env` files in the repo root, `apps/web/`, and `scripts/` are
-loaded automatically.
+# After listening, explicitly upload the reviewed batch
+pnpm run upload-speech-samples -- \
+  --path generated-speech/gemini-38 --bucket sv-audio-files \
+  --folder . --public-url https://files.sexyvoice.ai \
+  --env-file /absolute/path/to/.env.local --upload
+```
 
-### Requirements
+The default is a dry run with no network requests. `--voices <uuid,uuid>` selects
+reviewed catalog entries from the generation manifest. Uploads use the shared R2
+client and `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`.
+Conditional puts refuse overwrites. A retry can verify an identical existing
+object. A different object fails without changing it.
 
-- `ffmpeg` on your `PATH` (used to convert WAV → MP3)
+`uploads.json` records the current batch's verified URLs and failures. Verification
+checks R2 metadata and the SHA-256 of the public MP3. If a public URL is unavailable,
+rerun after it becomes accessible. Final SQL requires the full catalog, so rerun
+with all reviewed IDs after any partial batches; identical objects are only
+verified again.
 
-### Troubleshooting
+### Prepare additive SQL
 
-- **`Could not reach Speech API at ...: ENOTFOUND` / `ECONNREFUSED`** - the host
-  is wrong or the server isn't running. Check `SEXYVOICE_API_BASE_URL`.
-- **`... SELF_SIGNED_CERT_IN_CHAIN`** - the server uses a self-signed
-  certificate. For local/dev only, prepend `NODE_TLS_REJECT_UNAUTHORIZED=0`, or
-  point Node at the cert with `NODE_EXTRA_CA_CERTS=/path/to/cert.pem`.
+The checked-in `add-gemini-38-voices.sql` contains the verified 28-row catalog,
+with `is_public = false`. It preserves existing rows and skips existing `gpro38`
+identities on reruns. Use `--draft` to prepare guarded SQL before upload; after
+verification, prepare executable SQL locally:
 
----
+```bash
+pnpm run prepare-gemini-voice-sql -- \
+  --catalog gemini-38-catalog.json --samples generated-speech/gemini-38 \
+  --out generated-speech/gemini-38/add-voices.sql
+```
+
+Friendly Spanish labels come from `apps/web/lib/voice-names.ts`. Selectors and the
+local listening page show these names; database names, API identifiers, provider
+requests, filenames, and cache identities retain the provider IDs.
+
+This command validates catalog, generation, local file hashes, and verified upload
+records. It writes SQL without executing it. Deploy `gpro38` support before using
+these voices for generation. Database writes follow the
+[database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
+authorizes an exception.
 
 ## Reset Freeloader Credits Script
 
@@ -286,20 +359,29 @@ pnpm backfill-free-call
 Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
 to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
 AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
-entry points that share a single engine (`analyze-call-sessions.mjs`); the
-backfill script imports its prompt, transcript extraction, analysis schema, and
-persistence, so all paths write identical rows.
+entry points that share a single engine (`analyze-call-sessions.mjs`). The
+prompt, analysis schema, transcript extraction and xAI Batch API client are
+imported from the web app (`apps/web/lib/ai/analyze-call.ts`,
+`apps/web/lib/ai/call-analysis-batch.ts`, `apps/web/lib/ai/xai-batch.ts`) via
+Node's native type stripping, so the scripts, the webhook and its batch drain
+cron all write identical rows.
 
 - **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
   last N hours.
 - **`backfill-call-analysis`** - one-off catch-up over **all** completed,
   unanalyzed calls (paginated), with model and duration filters.
 
-A third path (not a script) analyzes a single call in real time: the
-`POST /api/call-sessions/analyze` webhook fired when a call completes.
+The live path (not a script) is asynchronous: the `POST /api/call-sessions/analyze`
+webhook fired when a call completes only enqueues the session, and the
+`/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
+Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
+`backfill-call-analysis --retry-failed` to catch up sessions the queue parked as
+`failed`.
 
-Only successful analyses are persisted; failures leave no row so they stay
-retryable. Calls shorter than 120s and sessions that already have an analysis row
+Only successful analyses are persisted. Each failure increments the session's
+`call_analysis_queue.attempts` (shared with the cron drain); after 3 failed
+attempts the session is parked and both scripts skip it unless
+`--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
 are skipped.
 
 ### Quick Start
@@ -328,7 +410,8 @@ Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advance
 requests are uploaded as a JSONL batch, then the script block-polls until the
 batch completes before writing results. It is discounted and has no per-request
 rate limits, at the cost of async latency — best suited to the large backfill.
-Use `--realtime` to fall back to synchronous per-call generation instead.
+Use `--realtime` to fall back to synchronous per-call generation (the AI SDK
+`generateObject` path) instead.
 
 ### CLI Options
 
@@ -363,6 +446,58 @@ Requires `.env` or `.env.local` with:
 - `XAI_API_BASE_URL` (optional; defaults to `https://api.x.ai`)
 
 ---
+
+## Sentry issue triage
+
+Use this read-only procedure for issue-level crashes and browser/device details.
+For handled generation failures and credit complaints, use the
+[Gemini application-log investigation](#2-correlate-sentry-application-logs).
+
+Verify the existing CLI authentication and list issues:
+
+```bash
+sentry-cli info
+sentry-cli issues --org sexyvoiceai --project sexyvoice-ai list
+```
+
+The numeric issue ID is in the issue's dashboard URL or the first column of the
+CLI issue list. A short ID such as `SEXYVOICE-AI-6C` is not an API issue ID.
+
+To fetch full events, use a token with `event:read` from `SENTRY_AUTH_TOKEN` or
+`~/.sentryclirc`. This keeps the token out of command arguments and output:
+
+```bash
+python3 - '<numeric-issue-id>' <<'PY'
+import configparser
+import json
+import os
+from pathlib import Path
+import sys
+from urllib.request import Request, urlopen
+
+issue_id = sys.argv[1]
+if not issue_id.isdecimal():
+    raise SystemExit("Replace <numeric-issue-id> with the issue's numeric ID")
+config = configparser.ConfigParser(interpolation=None)
+config.read(Path.home() / ".sentryclirc")
+token = os.environ.get("SENTRY_AUTH_TOKEN") or config.get("auth", "token", fallback=None)
+if not token:
+    raise SystemExit("Configure SENTRY_AUTH_TOKEN or ~/.sentryclirc first")
+url = f"https://sentry.io/api/0/organizations/sexyvoiceai/issues/{issue_id}/events/?full=true&per_page=10"
+request = Request(url, headers={"Authorization": f"Bearer {token}"})
+with urlopen(request, timeout=30) as response:
+    print(json.dumps(json.load(response), indent=2))
+    print("Pagination:", response.headers.get("Link", "none"), file=sys.stderr)
+PY
+```
+
+The [issue events API](https://docs.sentry.io/api/events/list-an-issues-events/)
+caps full-event pages at 10. Follow its `Link` header's next cursor when
+`results="true"`; one page is not the complete incident history. Inspect
+`dateCreated`, `tags`, `contexts.device`, `contexts.browser`, `contexts.os`, and
+`entries` for breadcrumbs, exceptions, and request details. Event contents may
+include customer data: keep exports out of the repository and shared reports.
+Resolving or muting an issue is a separate action, not part of diagnosis.
 
 ## Investigate Gemini TTS Errors and Credit Charges
 

@@ -67,16 +67,16 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature | Public or stored ID | Runtime provider/model | Notes |
-| --- | --- | --- | --- |
-| Dashboard TTS | `gpro` | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash |
-| External API TTS | `gpro` | `gemini-2.5-pro-preview-tts` | Always generates fresh audio; falls back to Gemini 2.5 Flash |
-| Dashboard and API TTS | `gpro31` | `gemini-3.1-flash-tts-preview` | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
-| Dashboard and API TTS | `xai` | xAI TTS API | Supports MP3/WAV and a `0.7`–`1.5` speed setting |
-| Dashboard and API TTS | `orpheus` | Replicate Orpheus | External API aliases supported Orpheus model paths to `orpheus` |
-| Voice cloning | Locale-dependent | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual | See the cloning locale table below |
-| Real-time calls | `grok-voice-think-fast-1.0` | xAI Grok Voice Agent | Current call model |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI structured generation | Runs only for eligible completed calls |
+| Feature                  | Public or stored ID               | Runtime provider/model                                                   | Notes                                                                     |
+| ------------------------ | --------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dashboard TTS            | `gpro`                            | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
+| External API TTS         | `gpro`                            | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
+| Dashboard and API TTS    | `gpro31`                          | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
+| Dashboard and API TTS    | `xai`                             | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
+| Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
+| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual     | See the cloning locale table below                                        |
+| Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
 
@@ -95,13 +95,13 @@ creation requires a paid account and allows at most 10 active keys per user.
 
 ### Endpoints
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `POST` | `/api/v1/speech` | Generate fresh speech audio |
-| `GET` | `/api/v1/voices` | List public TTS voices and their model IDs |
-| `GET` | `/api/v1/models` | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
-| `GET` | `/api/v1/billing` | Return the credit balance and latest transaction |
-| `GET` | `/api/v1/openapi` | Return the public OpenAPI 3.1 document |
+| Method | Path              | Description                                             |
+| ------ | ----------------- | ------------------------------------------------------- |
+| `POST` | `/api/v1/speech`  | Generate fresh speech audio                             |
+| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs              |
+| `GET`  | `/api/v1/models`  | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
+| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction        |
+| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document                  |
 
 Clients may select speech voices by `voiceId`, or by the `voice` and `model`
 pair. Request and response schemas live in `apps/web/lib/api/schemas.ts` and
@@ -219,9 +219,9 @@ flowchart TD
 
 ### Locale Routing
 
-| Locale group | Locales | Model | Provider |
-| --- | --- | --- | --- |
-| Voxtral | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt` | `voxtral-mini-tts-2603` | Mistral |
+| Locale group            | Locales                                                                                        | Model                                 | Provider  |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
 | Chatterbox Multilingual | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
@@ -239,6 +239,11 @@ Optional fal.ai enhancement has separate duration and size safeguards and adds
 an `audio_processing` usage event. Clone credits are reserved before provider
 work and restored if generation fails. Background work saves metadata and
 analytics; it does not perform billing or schedule an Inngest cleanup job.
+
+`apps/web/lib/fal-billing.ts` looks up the enhancement's provider cost with
+bounded retries through `fetchWithRetry`. If the lookup fails, it emits one
+Sentry warning and the route records an estimated cost instead. Retry limits
+live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline.
 
 ## Real-time AI Voice Calls
 
@@ -275,20 +280,60 @@ is off by default, and its UI toggle is currently hidden.
 
 ### Call Configuration
 
-| Setting | Current behavior |
-| --- | --- |
-| Model | `grok-voice-think-fast-1.0` |
-| Voice | Stored per character, selected from public call voices, and resolved to a database ID |
-| Temperature | Defaults to `0.8`; accepted range is `0`–`1.2` |
-| Max output tokens | Nullable; defaults to the agent's model behavior |
-| Instructions | Edge Config defaults for non-character calls; database prompts for characters |
-| Language | 20 supported call languages; English fallback |
-| Memory | Paid, opt-in backend; off by default |
+| Setting           | Current behavior                                                                      |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-1.0`                                                           |
+| Voice             | Stored per character, selected from public call voices, and resolved to a database ID |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                        |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                      |
+| Instructions      | Edge Config defaults for non-character calls; database prompts for characters         |
+| Language          | 20 supported call languages; English fallback                                         |
+| Memory            | Paid, opt-in backend; off by default                                                  |
 
-Completed calls of at least 120 seconds with a transcript are eligible for
-structured analysis. A Supabase Database Webhook authenticates to
-`/api/call-sessions/analyze` with `CALL_SUMMARY_SECRET`. The route is idempotent
-and writes one `call_session_analysis` row per session.
+### Call transcript analysis
+
+Completed calls of at least 120 seconds with a transcript are analysed by Grok
+and stored as one `call_session_analysis` row per session. Analysis is
+**asynchronous and best-effort**: nothing in the call UX waits on it, and
+results typically land minutes after the call, bounded by xAI batch processing
+time plus the cron interval.
+
+Flow:
+
+1. A Supabase Database Webhook (`pg_net`, see
+   `apps/web/supabase/migrations/20260703000000_add_call_session_analysis.sql`)
+   posts the session id to `POST /api/call-sessions/analyze` with
+   `CALL_SUMMARY_SECRET`.
+2. The webhook only checks eligibility (completed, long enough, non-empty
+   transcript, no existing analysis row) and inserts a `pending` row into
+   `call_analysis_queue`, returning `202 { queued: true }`. Duplicate
+   deliveries are no-ops thanks to the primary key on `session_id`.
+3. The Vercel cron `GET /api/call-sessions/analyze/batch` (every 15 minutes,
+   `CRON_SECRET`) first reconciles in-flight xAI batches, writing
+   `call_session_analysis` rows for settled ones, then coalesces pending rows
+   (up to 200) into a single new [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
+   request and waits up to a few minutes for it before handing off to the next
+   run. Rows are claimed (`submitted`, no batch id yet) with a
+   compare-and-set on `status = 'pending'` _before_ the paid xAI call, so
+   overlapping runs cannot submit the same session twice. The write that
+   attaches the batch id after the paid xAI call is retried; if a run still
+   dies or fails between the claim and that write, the claim is left alone and
+   parked as `failed` after 15 minutes (never resubmitted, since the batch may
+   already be billed), with the batch id in the Sentry error when it is known.
+4. Failed requests never persist an analysis row. Retryable failures return to
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`.
+   The analysis scripts count their failures in the same `attempts` column and
+   skip parked sessions; `backfill-call-analysis --retry-failed` reprocesses
+   them. Each in-flight batch is reconciled in isolation
+   (one unreadable batch id is reported to Sentry and skipped, not fatal), and
+   a batch that has not settled after 48 hours is abandoned: its rows return
+   to `pending` under the same attempt limit.
+
+Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
+`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
+scripts import the same modules, so every path writes identical rows.
 
 ## Data and Storage
 
@@ -307,7 +352,8 @@ and writes one `call_session_analysis` row per session.
   timestamps.
 - `call_sessions` stores call duration, billing, transcript, model, and status.
 - `call_session_analysis` stores one structured transcript analysis per call;
-  `call_session_analytics` stores aggregate analysis runs.
+  `call_session_analytics` stores aggregate analysis runs;
+  `call_analysis_queue` tracks pending and in-flight xAI batch analyses.
 - `agent_memories` stores pgvector-backed, per-user call memories with hybrid
   semantic and keyword retrieval.
 
@@ -323,6 +369,151 @@ See `apps/web/supabase/migrations/` and
   protected character prompt.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for the browser.
   `SUPABASE_SECRET_KEY` bypasses RLS and must remain server-only.
+
+#### Identity and session handling
+
+`getVerifiedClaims()` in `apps/web/lib/supabase/auth.ts` supplies verified
+identity for pages, actions, dashboard APIs, browser analytics, and the proxy.
+It returns `null` on SDK auth errors or absent claims. Callers require
+`claims.sub`; ownership, credit, and entitlement checks remain separate.
+
+Asymmetric JWTs normally verify locally with cached JWKS; symmetric keys require
+an Auth-server request. Claims do not enforce immediate session revocation or
+current account status. Email and metadata are token snapshots; user-editable
+`user_metadata` must not authorize access.
+
+Fresh `getUser()` lookups are reserved for:
+
+- Current email on the credits page for Stripe customer linking and on the
+  profile page for password verification.
+- Auth `created_at` during proxy restoration when the profile is missing and
+  an email is present.
+- Account deletion and durable credential issuance in `POST /api/api-keys`
+  and `POST /api/cli-login-sessions`.
+
+A fresh lookup is not recent reauthentication or a complete revocation check.
+`biome-plugins/use-verified-claims.grit` rejects direct `getUser()` calls in
+application code unless a suppression explains the exception. External API v1
+uses API-key authentication, not browser claims.
+
+Account deletion checks the profile's Stripe customer subscriptions directly
+before changing account data or deleting files. Only `canceled` and
+`incomplete_expired` subscriptions allow deletion; a scheduled cancellation
+still blocks it until the subscription ends. A failed profile or Stripe lookup
+also blocks deletion. The subscription error stays visible until dismissed and
+includes a direct link to the Stripe billing portal to cancel first. The portal
+URL is shared with the credits page through `lib/stripe/billing-portal.ts`.
+
+`lib/stripe/account-billing.ts` coordinates Checkout Session creation and account
+deletion through atomic Redis reservations per user. Deletion expires open
+Checkout Sessions, checks subscriptions again, and commits a billing block
+before changing account data. The commit requires ownership of the reservation,
+so an expired deletion request cannot proceed. The block prevents both checkout
+and another deletion, even if cleanup outlasts the five-minute reservation.
+The action's `finally` releases its reservation and block after cleanup succeeds
+or fails; token checks prevent stale requests from releasing another request's
+block.
+
+Auth users remain able to sign in and check out after deletion finishes.
+Inactive profiles removed by the retention script are restored on dashboard
+return through `ensureUserApplicationState`. Billing recovery does not restore
+deleted files or characters.
+
+Checkout Sessions have a fixed one-hour expiration. If session creation fails
+with an unknown outcome, its reservation lasts until one minute after that
+expiration. Successful requests release their reservations. A rejection releases
+the reservation only after exactly one SDK request attempt, with no retry hint,
+and one of these Stripe error classifications:
+
+- HTTP 400 `StripeInvalidRequestError` with an explicit parameter-validation code
+  in `CHECKOUT_VALIDATION_ERRORS` in `app/[lang]/actions/stripe.ts`.
+- HTTP 401 `StripeAuthenticationError` or HTTP 403 `StripePermissionError`.
+
+The allowlist follows Stripe's [validation error codes](https://docs.stripe.com/error-codes),
+[idempotency rules](https://docs.stripe.com/api/idempotent_requests), and
+[authentication and permission errors](https://docs.stripe.com/api/errors).
+Other errors, including generic 400s, 402, 404, 409, 422, 424, 429, network
+failures, and 5xx responses, retain the reservation. This is a conservative
+policy, not a claim that every retained error created a session.
+
+Each creation uses its reservation token as the Stripe idempotency key. A single
+SDK request listener counts attempts by that key, and the action removes its
+counter in `finally`. A final rejection after a retry cannot settle an earlier
+unknown outcome, so the reservation remains held. See Stripe's
+[network-error guidance](https://docs.stripe.com/error-low-level#network-errors)
+and the installed [SDK request and retry implementation](https://github.com/stripe/stripe-node/blob/v17.7.0/src/RequestSender.ts).
+
+The `stripe:account:{userId}:deleted` block has no TTL: a terminated request or a
+failed Redis release requires support to confirm cleanup has stopped before
+clearing it. These keys are coordination state; retain them when clearing the
+subscription display cache. Stripe remains the source of subscription state,
+and webhooks maintain the display cache.
+
+Checkout returns `accountBillingBlocked` with support guidance, or
+`accountBillingBusy` for a competing reservation. Sentry records these as
+`checkout_billing_blocked` and `checkout_billing_busy`, separate from Stripe
+failures. For interrupted requests, follow
+[Restore account billing](scripts/README.md#restore-account-billing).
+
+Account deletion returns the same billing error codes without reporting Sentry
+exceptions. A blocked deletion directs the user to support; a busy reservation
+asks them to wait for the other request to finish. Other verification failures
+return `subscriptionCheckFailed` and are reported as exceptions.
+The blocked-deletion toast wraps its text and stays open until dismissed.
+Checkout errors appear inline in the pricing card. Both blocked messages give
+the dashboard chat and `info@sexyvoice.ai` as support options.
+
+`middleware-client.ts` forwards refreshed cookies to both the request and
+response, preserving locale rewrites and request-header overrides. Auth and
+OAuth callback redirects retain cookies and SSR cache headers on success and
+failure. Server components use the cookie-store adapter; middleware owns
+session refresh before rendering.
+
+#### Database retries
+
+Server and script clients use SDK retries for GET, HEAD, and OPTIONS requests
+on network failures and HTTP 503/520: up to three retries with 1s/2s/4s backoff
+unless `Retry-After` overrides it. HTTP 504 and default POST RPCs, including
+credit mutations, are not retried. This is not an overall request deadline;
+do not add a global retry wrapper around Supabase requests.
+
+The browser client disables SDK database retries; TanStack Query owns dashboard
+query retries. Direct browser reads remain single-attempt. The proxy's
+`ensureUserApplicationState` profile read also disables retries because repair
+is best-effort. Read, Auth lookup, and restoration failures are reported to
+Sentry without blocking a claims-authenticated dashboard request.
+
+### Credit balance sync
+
+`CreditsSection` uses the `['credits', userId]` query to display the stored
+balance and send `creditsLeft` to Crisp and PostHog. Its 60-second `staleTime`
+is not polling. `/api/generate-voice` returns credits used, not a remaining
+balance; support investigations should verify `public.credits.amount`.
+
+`invalidateCredits` in `apps/web/lib/credits-query.ts` refreshes active queries
+after non-cancelled generation requests, including split segments and retries,
+and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
+scopes the refresh to the verified user. Cache hits skip it because they do not
+charge. Streaming errors wait for the refund attempt. Cancellation is best-effort:
+provider work that has finished can retain a charge during upload or reconciliation.
+The aborted fetch cannot confirm settlement, so it skips immediate invalidation
+to avoid caching a temporary reservation before a refund. A late charge can leave
+the sidebar and Crisp balance higher than the database until another refresh;
+`staleTime` does not bound that delay.
+
+At JSON and SSE finalization, the route reports a Sentry warning when it observes
+an aborted request with positive reconciled `creditsDebited`. The event uses
+`flow:generation-charge-retained-after-cancellation` and includes the transport,
+model, charged credits, and user ID. The server's `beforeSend` filter strips
+request data, breadcrumbs, and unrelated context from these events. Filter by
+the production environment to count confirmed cases. Cancellations observed only
+after finalization are not captured, so this is a lower bound on impact, not a
+complete count of disconnects. Failed refunds have separate Sentry reporting.
+
+Cloning does not invalidate credits, so the sidebar and Crisp can stay stale.
+Crisp holds a session snapshot, not a live balance. If a refreshed query does
+not reach Crisp, check the claims and paid-status lookups before
+`Crisp.session.setData`.
 
 ### R2 Buckets
 
@@ -362,7 +553,7 @@ apps/
 │   │   ├── generate-voice/            # Dashboard TTS
 │   │   ├── clone-voice/               # Dashboard voice cloning
 │   │   ├── call-token/                # LiveKit token and agent dispatch
-│   │   ├── call-sessions/analyze/     # Webhook-triggered transcript analysis
+│   │   ├── call-sessions/analyze/     # Webhook enqueue + batch drain cron
 │   │   ├── characters/                # Custom character CRUD
 │   │   ├── memories/                  # User memory erasure
 │   │   ├── api-keys/                  # External API key management

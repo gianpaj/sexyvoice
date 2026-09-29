@@ -1,10 +1,10 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
-import { get } from '@vercel/edge-config';
+import { get } from '@vercel/global-config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 
-vi.mock('@vercel/edge-config', () => ({
+vi.mock('@vercel/global-config', () => ({
   get: vi.fn(),
 }));
 

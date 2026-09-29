@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { waitForHydration } from '../wait-for-hydration';
+
 /**
  * Page Object Model for Generate Dashboard
  *
@@ -78,29 +80,7 @@ export class GeneratePage {
     });
     // Wait for key UI elements to be visible
     await this.textInput.waitFor({ state: 'visible', timeout: 15_000 });
-    // Wait for React 19 hydration to complete before interacting.
-    //
-    // Background: domcontentloaded fires as soon as SSR HTML is parsed — the
-    // textarea is already visible in the HTML, so waitFor({ state: 'visible' })
-    // returns immediately. But React hasn't attached its synthetic event
-    // listeners yet. If fill() fires at this point, the input event has nobody
-    // listening on the React side, so onChange is never called, text state stays
-    // '', and the character count/generate-button remain in their empty state.
-    //
-    // React writes __react* properties (fiber, props, events) onto DOM nodes
-    // only after the hydration pass completes. Waiting for that property gives
-    // us a reliable signal that React's event delegation is wired up.
-    await this.page.waitForFunction(
-      () => {
-        const el = document.querySelector('[data-testid="generate-textarea"]');
-        if (!el) return false;
-        return (
-          (el instanceof HTMLElement && el.isContentEditable) ||
-          Object.keys(el).some((key) => key.startsWith('__react'))
-        );
-      },
-      { timeout: 15_000 },
-    );
+    await waitForHydration(this.page, '[data-testid="generate-textarea"]');
   }
 
   /**
