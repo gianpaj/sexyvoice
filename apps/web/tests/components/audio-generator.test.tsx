@@ -1815,7 +1815,6 @@ describe('AudioGenerator', () => {
 
   // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false), so the
   // client no longer requests the SSE path. Re-enable with the flag.
-  // biome-ignore lint/suspicious/noSkippedTests: x
   it.skip('sends stream: true when Gemini voice and text exceeds threshold', async () => {
     const user = userEvent.setup();
     const fetchMock = vi
@@ -1932,7 +1931,6 @@ describe('AudioGenerator', () => {
   });
 
   // HOTFIX: streaming disabled — see GEMINI_STREAMING_ENABLED.
-  // biome-ignore lint/suspicious/noSkippedTests: x
   it.skip('schedules audio chunks via Web Audio and shows the streaming player', async () => {
     const user = userEvent.setup();
     const fetchMock = vi

@@ -1477,7 +1477,6 @@ describe('Generate Voice API Route', () => {
 
     // HOTFIX: streaming is disabled (GEMINI_STREAMING_ENABLED === false); gpro31
     // now uses the non-streaming JSON path. Re-enable with the flag.
-    // biome-ignore lint/suspicious/noSkippedTests: x
     it.skip('uses Gemini 3.1 for free users streaming gpro31 voices', async () => {
       const generateContentStream = vi
         .fn()
@@ -2937,7 +2936,6 @@ describe('Generate Voice API Route', () => {
   // because progressive streaming corrupted some generations. The SSE path is
   // retained in the route for a future re-enable, so this suite is parked rather
   // than removed — flip the flag back to `true` to restore it.
-  // biome-ignore lint/suspicious/noSkippedTests: x
   describe.skip('Streaming - Gemini SSE', () => {
     it('streams audio events and done event for Gemini voice', async () => {
       const {

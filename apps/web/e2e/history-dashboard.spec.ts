@@ -68,7 +68,6 @@ test.describe('History Dashboard - Authenticated User', () => {
     // Open the dropdown
     const opened = await historyPage.openColumnsDropdown();
     if (!opened) {
-      // biome-ignore lint/suspicious/noSkippedTests: x
       test.skip(true, 'Columns menu did not open');
     }
 
@@ -82,7 +81,6 @@ test.describe('History Dashboard - Authenticated User', () => {
 
     const opened = await historyPage.openColumnsDropdown();
     if (!opened) {
-      // biome-ignore lint/suspicious/noSkippedTests: x
       test.skip(true, 'Columns menu did not open');
     }
 
