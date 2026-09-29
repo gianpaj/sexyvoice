@@ -321,9 +321,10 @@ Flow:
    parked as `failed` after 15 minutes (never resubmitted, since the batch may
    already be billed), with the batch id in the Sentry error when it is known.
 4. Failed requests never persist an analysis row. Retryable failures return to
-   `pending` for up to 3 submissions, then park as `failed` with `last_error`;
-   the backfill script can still reprocess them because it anti-joins on
-   `call_session_analysis`. Each in-flight batch is reconciled in isolation
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`.
+   The analysis scripts count their failures in the same `attempts` column and
+   skip parked sessions; `backfill-call-analysis --retry-failed` reprocesses
+   them. Each in-flight batch is reconciled in isolation
    (one unreadable batch id is reported to Sentry and skipped, not fatal), and
    a batch that has not settled after 48 hours is abandoned: its rows return
    to `pending` under the same attempt limit.
@@ -394,6 +395,73 @@ A fresh lookup is not recent reauthentication or a complete revocation check.
 `biome-plugins/use-verified-claims.grit` rejects direct `getUser()` calls in
 application code unless a suppression explains the exception. External API v1
 uses API-key authentication, not browser claims.
+
+Account deletion checks the profile's Stripe customer subscriptions directly
+before changing account data or deleting files. Only `canceled` and
+`incomplete_expired` subscriptions allow deletion; a scheduled cancellation
+still blocks it until the subscription ends. A failed profile or Stripe lookup
+also blocks deletion. The subscription error stays visible until dismissed and
+includes a direct link to the Stripe billing portal to cancel first. The portal
+URL is shared with the credits page through `lib/stripe/billing-portal.ts`.
+
+`lib/stripe/account-billing.ts` coordinates Checkout Session creation and account
+deletion through atomic Redis reservations per user. Deletion expires open
+Checkout Sessions, checks subscriptions again, and commits a billing block
+before changing account data. The commit requires ownership of the reservation,
+so an expired deletion request cannot proceed. The block prevents both checkout
+and another deletion, even if cleanup outlasts the five-minute reservation.
+The action's `finally` releases its reservation and block after cleanup succeeds
+or fails; token checks prevent stale requests from releasing another request's
+block.
+
+Auth users remain able to sign in and check out after deletion finishes.
+Inactive profiles removed by the retention script are restored on dashboard
+return through `ensureUserApplicationState`. Billing recovery does not restore
+deleted files or characters.
+
+Checkout Sessions have a fixed one-hour expiration. If session creation fails
+with an unknown outcome, its reservation lasts until one minute after that
+expiration. Successful requests release their reservations. A rejection releases
+the reservation only after exactly one SDK request attempt, with no retry hint,
+and one of these Stripe error classifications:
+
+- HTTP 400 `StripeInvalidRequestError` with an explicit parameter-validation code
+  in `CHECKOUT_VALIDATION_ERRORS` in `app/[lang]/actions/stripe.ts`.
+- HTTP 401 `StripeAuthenticationError` or HTTP 403 `StripePermissionError`.
+
+The allowlist follows Stripe's [validation error codes](https://docs.stripe.com/error-codes),
+[idempotency rules](https://docs.stripe.com/api/idempotent_requests), and
+[authentication and permission errors](https://docs.stripe.com/api/errors).
+Other errors, including generic 400s, 402, 404, 409, 422, 424, 429, network
+failures, and 5xx responses, retain the reservation. This is a conservative
+policy, not a claim that every retained error created a session.
+
+Each creation uses its reservation token as the Stripe idempotency key. A single
+SDK request listener counts attempts by that key, and the action removes its
+counter in `finally`. A final rejection after a retry cannot settle an earlier
+unknown outcome, so the reservation remains held. See Stripe's
+[network-error guidance](https://docs.stripe.com/error-low-level#network-errors)
+and the installed [SDK request and retry implementation](https://github.com/stripe/stripe-node/blob/v17.7.0/src/RequestSender.ts).
+
+The `stripe:account:{userId}:deleted` block has no TTL: a terminated request or a
+failed Redis release requires support to confirm cleanup has stopped before
+clearing it. These keys are coordination state; retain them when clearing the
+subscription display cache. Stripe remains the source of subscription state,
+and webhooks maintain the display cache.
+
+Checkout returns `accountBillingBlocked` with support guidance, or
+`accountBillingBusy` for a competing reservation. Sentry records these as
+`checkout_billing_blocked` and `checkout_billing_busy`, separate from Stripe
+failures. For interrupted requests, follow
+[Restore account billing](scripts/README.md#restore-account-billing).
+
+Account deletion returns the same billing error codes without reporting Sentry
+exceptions. A blocked deletion directs the user to support; a busy reservation
+asks them to wait for the other request to finish. Other verification failures
+return `subscriptionCheckFailed` and are reported as exceptions.
+The blocked-deletion toast wraps its text and stays open until dismissed.
+Checkout errors appear inline in the pricing card. Both blocked messages give
+the dashboard chat and `info@sexyvoice.ai` as support options.
 
 `middleware-client.ts` forwards refreshed cookies to both the request and
 response, preserving locale rewrites and request-header overrides. Auth and

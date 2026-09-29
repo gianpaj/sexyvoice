@@ -1,5 +1,52 @@
 # Scripts
 
+## Restore account billing
+
+Account deletion blocks checkout during cleanup and releases its block when the
+request finishes, including handled failures. Retained Auth users can sign in
+and check out again. A terminated request or failed Redis release can block
+checkout and further deletion requests. Both return `accountBillingBlocked`
+with support guidance. A competing reservation returns `accountBillingBusy`
+and asks the user to wait. Deletion returns these errors without reporting
+Sentry exceptions.
+The coordination rules live in
+[Architecture](../ARCHITECTURE.md#identity-and-session-handling).
+
+Support can clear the block so the user can keep the account or finish deleting
+it:
+
+1. Identify the exact Supabase Auth user ID and verify that their profile exists.
+   Review the failed deletion and any partial cleanup with the user; restoring
+   billing does not restore deleted files or characters.
+2. Confirm in request logs that every deletion request for this user has finished
+   or terminated. Ask the user to stop retrying deletion during recovery. An
+   expired Redis reservation alone does not prove the cleanup process stopped.
+3. Run the command below with the intended environment's `apps/web/.env.local`.
+   It uses the existing Upstash environment variables.
+   Replace the placeholder with the verified UUID.
+
+```bash
+pnpm --filter @sexyvoice/scripts run restore-account-billing -- \
+  --env-file ../apps/web/.env.local \
+  --user-id 'verified-auth-user-uuid' \
+  --cleanup-stopped
+```
+
+`restore-account-billing.mts` validates the UUID and requires `--cleanup-stopped`
+after the log checks above. It loads environment files with `loadScriptEnv()`
+and calls the shared `restoreAccountBilling` helper.
+
+The helper atomically refuses recovery while a billing or deletion reservation
+exists. It deletes only `stripe:account:{userId}:deleted`. It also handles legacy
+blocks whose value is `1`. Do not force-delete an operation key to bypass this
+check. If it reports `accountBillingBusy`, wait for the request to finish and
+its reservation to clear, then repeat the log checks before retrying.
+
+Have the user retry checkout or deletion and record the recovery in the support ticket.
+Blocked and busy checkout attempts use the Sentry event types
+`checkout_billing_blocked` and `checkout_billing_busy`; Stripe failures use
+`checkout_session_creation_error`.
+
 ## R2 audio backup
 
 This command copies missing R2 objects to a local drive. It never deletes R2
@@ -432,10 +479,13 @@ The live path (not a script) is asynchronous: the `POST /api/call-sessions/analy
 webhook fired when a call completes only enqueues the session, and the
 `/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
 Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
-`backfill-call-analysis` to catch up sessions the queue parked as `failed`.
+`backfill-call-analysis --retry-failed` to catch up sessions the queue parked as
+`failed`.
 
-Only successful analyses are persisted; failures leave no row so they stay
-retryable. Calls shorter than 120s and sessions that already have an analysis row
+Only successful analyses are persisted. Each failure increments the session's
+`call_analysis_queue.attempts` (shared with the cron drain); after 3 failed
+attempts the session is parked and both scripts skip it unless
+`--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
 are skipped.
 
 ### Quick Start

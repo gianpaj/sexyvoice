@@ -111,7 +111,7 @@ export const ConnectionProvider = ({
 
     if (!response.ok) {
       if (response.status === 402) {
-        invalidateCredits(queryClient);
+        invalidateCredits(queryClient).catch(() => undefined);
         toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
       } else if (response.status === 403) {
         toast.error(t('freeUserCallLimitExceeded'));
@@ -133,7 +133,7 @@ export const ConnectionProvider = ({
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
     const claims = await getVerifiedClaims(supabase);
     if (claims?.sub) {
-      invalidateCredits(queryClient, claims.sub);
+      invalidateCredits(queryClient, claims.sub).catch(() => undefined);
     }
   };
 

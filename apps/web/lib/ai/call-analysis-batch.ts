@@ -22,6 +22,12 @@ import {
 // Shared with `scripts/` via Node's native type stripping: keep relative
 // imports extension-qualified and avoid `@/` aliases in this module.
 
+/**
+ * Failed analyses per session before it is parked as `failed`. The cron drain
+ * and the scripts share `call_analysis_queue.attempts` as the counter.
+ */
+export const MAX_CALL_ANALYSIS_ATTEMPTS = 3;
+
 /** Per-session context needed to turn a batch outcome back into an analysis. */
 export interface CallAnalysisBatchContext {
   assistantOnlyNote: string | null;

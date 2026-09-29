@@ -12,6 +12,7 @@ import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { E2E_CREDIT_TRANSACTIONS, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { type CustomerData, getCustomerData } from '@/lib/redis/queries';
+import { STRIPE_BILLING_PORTAL_URL } from '@/lib/stripe/billing-portal';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '@/lib/stripe/pricing';
 import {
   createOrRetrieveCustomer,
@@ -42,9 +43,6 @@ function getScheduledSubscriptionEndDate(
     dateStyle: 'medium',
   }).format(new Date(customerData.currentPeriodEnd * 1000));
 }
-
-const STRIPE_BILLING_PORTAL_URL =
-  'https://billing.stripe.com/p/login/28o01hfsn1gUccU8ww';
 
 async function canApplyFirstMonthSubscriptionDiscount(stripeId: string) {
   const subscriptionDiscountCouponId =
