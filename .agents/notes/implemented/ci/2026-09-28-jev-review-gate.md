@@ -34,8 +34,7 @@ baseline. Custom Claude App identities require updating this check.
 - Review setup runs only after the gate approves it.
 - A PR runs one Claude review at a time. Newer approved reviews queue rather
   than cancel, so a push never aborts a manual review mid-comment; GitHub keeps
-  only the newest pending review. Runs that skip review use a per-run
-  concurrency group, so unrelated comments cannot displace a queued review.
+  only the newest pending review.
 - Jev receives repository diff content through the TypeSafe API. Usage may cost
   credits; the workflow does not expose the API key in the state.
 - Fork PR secret restrictions remain; do not switch this code-executing
