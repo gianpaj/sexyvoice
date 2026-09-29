@@ -131,4 +131,9 @@ test('neutralizes spreadsheet formulas in CSV text', () => {
   );
   assert.equal(escapeCsv('user@example.com'), 'user@example.com');
   assert.equal(escapeCsv('last, first'), '"last, first"');
+  assert.equal(escapeCsv('-1+1'), "'-1+1");
+});
+
+test('keeps negative numbers numeric in CSV', () => {
+  assert.equal(escapeCsv(-50), '-50');
 });

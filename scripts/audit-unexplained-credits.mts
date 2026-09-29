@@ -524,8 +524,12 @@ async function fetchUsageAggregates(
 export function escapeCsv(value: number | string | null): string {
   if (value === null) return '';
 
+  // Only text can carry a formula; numbers such as -50 must stay numeric.
   const rawText = String(value);
-  const text = /^[=+\-@\t\r]/.test(rawText) ? `'${rawText}` : rawText;
+  const text =
+    typeof value === 'string' && /^[=+\-@\t\r]/.test(value)
+      ? `'${value}`
+      : rawText;
   if (!/[",\n\r]/.test(text)) return text;
   return `"${text.replaceAll('"', '""')}"`;
 }
