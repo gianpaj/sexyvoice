@@ -113,6 +113,20 @@ describe('isProviderContentRefusal', () => {
     ).toBe(false);
   });
 
+  it('rejects a permission-denied 403 without the refusal phrase', () => {
+    expect(
+      isProviderContentRefusal(
+        Object.assign(new Error('permission-denied: insufficient credits'), {
+          responseBody: JSON.stringify({
+            code: 'permission-denied',
+            error: 'Your team has run out of credits.',
+          }),
+          statusCode: CONTENT_REFUSAL_STATUS_CODE,
+        }),
+      ),
+    ).toBe(false);
+  });
+
   it.each([null, undefined, "permission-denied: can't help with that request"])(
     'rejects the non-error value %s',
     (value) => {
@@ -130,12 +144,17 @@ describe('isContentRefusalText', () => {
     expect(isContentRefusalText(text)).toBe(true);
   });
 
-  it.each(['rate limited', 'parse failed: bad json', null, undefined, 42])(
-    'does not match the normal value %s',
-    (value) => {
-      expect(isContentRefusalText(value)).toBe(false);
-    },
-  );
+  it.each([
+    'rate limited',
+    'parse failed: bad json',
+    'permission-denied: Your team has run out of credits.',
+    '{"code":"permission-denied","error":"API key lacks access to this model"}',
+    null,
+    undefined,
+    42,
+  ])('does not match the normal value %s', (value) => {
+    expect(isContentRefusalText(value)).toBe(false);
+  });
 });
 
 describe('getProviderUnavailableMessage', () => {

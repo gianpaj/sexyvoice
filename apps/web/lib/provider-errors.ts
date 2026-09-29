@@ -1,3 +1,6 @@
+// Shared with `scripts/` via Node's native type stripping: keep this module
+// free of `@/` aliases and extensionless relative imports.
+
 const PROVIDER_STATUS_PROPERTIES = [
   'status',
   'statusCode',
@@ -110,12 +113,13 @@ export function isTransientProviderFailure(error: unknown): boolean {
 export const CONTENT_REFUSAL_STATUS_CODE = 403;
 
 /**
- * Markers that identify a deterministic content-policy refusal in a provider's
- * error text or response body. A refusal is terminal: resubmitting the same
- * transcript can only be declined again (and billed again).
+ * The marker of a deterministic content-policy refusal in a provider's error
+ * text or response body. A refusal is terminal: resubmitting the same
+ * transcript can only be declined again (and billed again). xAI's
+ * `permission-denied` code alone is not a marker: it covers every 403,
+ * including exhausted credits and key permissions.
  */
-export const CONTENT_REFUSAL_PATTERN =
-  /permission-denied|can(?:'t|not) help with that request/i;
+export const CONTENT_REFUSAL_PATTERN = /can(?:'t|not) help with that request/i;
 
 function getProviderResponseBody(error: unknown): string | null {
   if (error && typeof error === 'object') {
