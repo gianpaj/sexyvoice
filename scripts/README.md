@@ -409,10 +409,11 @@ loaded in this order: `scripts/.env.local`, `apps/web/.env.local`,
 `scripts/.env`, then `apps/web/.env`.
 
 The report is an accounting anomaly report, **not proof of abuse and not safe to
-use for automatic enforcement**. Historical under-debits, missing opening
-balances, and missing usage events can also produce residuals. Rows for accounts
-created before the `usage_events` migration are marked as partial history. The
-audit also cannot detect forged matching ledger rows.
+use for automatic enforcement**. Historical under-debits and missing opening
+balances can also produce residuals. Missing usage events lower the residual
+instead, so rows for accounts created before the `usage_events` migration,
+marked as partial history, can understate unexplained credits. The audit also
+cannot detect forged matching ledger rows.
 
 ---
 
