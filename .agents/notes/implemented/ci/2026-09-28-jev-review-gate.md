@@ -23,8 +23,10 @@ baseline. Custom Claude App identities require updating this check.
   `gian0pa` or `gianpaj`. This includes rerunning the review job independently.
   Outsider events are skipped; a maintainer must post a fresh request rather
   than rerun an outsider-triggered event.
-- Maintainer requests on external PRs authorize execution of that PR's code
-  during `npm ci` and review. The actor allowlist is not a sandbox for PR code.
+- Comment-triggered runs refuse fork PRs. A comment event carries no PR SHA,
+  so a fork could push between the maintainer's request and the checkout that
+  runs `pnpm install`. Only collaborators can push same-repo branches. The
+  actor allowlist is not a sandbox for PR code.
 - Scores below 0.5 skip review; scores at or above 0.5 run Claude.
 - Missing/invalid judgments and gate preparation errors request review.
 - Missing baselines, changed bases, rewritten history, binary patches, and
