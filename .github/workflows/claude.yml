@@ -10,7 +10,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [opened, ready_for_review]
+    types: [opened, ready_for_review, synchronize]
 
 jobs:
   # Both the original actor and the rerun actor must be explicitly trusted.
@@ -46,8 +46,14 @@ jobs:
           if [[ -n "$EVENT_HEAD" ]]; then
             printf 'sha=%s\nbase=%s\n' "$EVENT_HEAD" "$EVENT_BASE" >> "$GITHUB_OUTPUT"
           else
-            gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid \
-              --jq '"sha=" + .headRefOid + "\nbase=" + .baseRefOid' >> "$GITHUB_OUTPUT"
+            # Comment events carry no PR SHA, so a fork could push after the
+            # maintainer's request. Only collaborators can push same-repo branches.
+            pr=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid,isCrossRepository)
+            if [[ $(jq -r .isCrossRepository <<< "$pr") == true ]]; then
+              echo '::error::@claude review does not run on fork PRs.'
+              exit 1
+            fi
+            jq -r '"sha=" + .headRefOid + "\nbase=" + .baseRefOid' <<< "$pr" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Checkout for diff inspection
@@ -56,7 +62,8 @@ jobs:
         continue-on-error: true
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          ref: ${{ steps.review-head.outputs.sha }}
+          # Only push events reach this step; check out their immutable SHA.
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -150,6 +157,10 @@ jobs:
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.actor) &&
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.triggering_actor) &&
       needs.review-gate.outputs.should-review == 'true'
+    # One review per PR at a time. Newer reviews queue, and GitHub keeps only
+    # the newest pending one.
+    concurrency:
+      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -287,7 +298,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-        run: gh pr view "$PR_NUMBER" --json headRefOid --jq '"sha=" + .headRefOid' >> "$GITHUB_OUTPUT"
+        run: |
+          # Comment events carry no PR SHA, so a fork could push after the
+          # maintainer's request. Only collaborators can push same-repo branches.
+          pr=$(gh pr view "$PR_NUMBER" --json headRefOid,isCrossRepository)
+          if [[ $(jq -r .isCrossRepository <<< "$pr") == true ]]; then
+            echo '::error::@claude does not run on fork PRs.'
+            exit 1
+          fi
+          jq -r '"sha=" + .headRefOid' <<< "$pr" >> "$GITHUB_OUTPUT"
 
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

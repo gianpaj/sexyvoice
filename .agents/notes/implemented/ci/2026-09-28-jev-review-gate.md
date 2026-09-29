@@ -23,13 +23,18 @@ baseline. Custom Claude App identities require updating this check.
   `gian0pa` or `gianpaj`. This includes rerunning the review job independently.
   Outsider events are skipped; a maintainer must post a fresh request rather
   than rerun an outsider-triggered event.
-- Maintainer requests on external PRs authorize execution of that PR's code
-  during `npm ci` and review. The actor allowlist is not a sandbox for PR code.
+- Comment-triggered runs refuse fork PRs. A comment event carries no PR SHA,
+  so a fork could push between the maintainer's request and the checkout that
+  runs `pnpm install`. Only collaborators can push same-repo branches. The
+  actor allowlist is not a sandbox for PR code.
 - Scores below 0.5 skip review; scores at or above 0.5 run Claude.
 - Missing/invalid judgments and gate preparation errors request review.
 - Missing baselines, changed bases, rewritten history, binary patches, and
   patches over 200,000 bytes request review without sending a diff to Jev.
 - Review setup runs only after the gate approves it.
+- A PR runs one Claude review at a time. Newer approved reviews queue rather
+  than cancel, so a push never aborts a manual review mid-comment; GitHub keeps
+  only the newest pending review.
 - Jev receives repository diff content through the TypeSafe API. Usage may cost
   credits; the workflow does not expose the API key in the state.
 - Fork PR secret restrictions remain; do not switch this code-executing

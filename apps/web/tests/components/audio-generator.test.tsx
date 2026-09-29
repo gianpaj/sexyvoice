@@ -16,7 +16,7 @@ import { AudioGenerator } from '@/components/audio-generator';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 
 const streamingOverride = vi.hoisted(() => ({ enabled: false }));
-const invalidateQueries = vi.hoisted(() => vi.fn());
+const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
 }));
