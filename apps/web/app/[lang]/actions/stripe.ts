@@ -1,9 +1,15 @@
 'use server';
 
 import { captureException, captureMessage } from '@sentry/nextjs';
-import type { Stripe } from 'stripe';
+import Stripe from 'stripe';
 
 import { isE2E } from '@/lib/e2e-mode';
+import {
+  AccountBillingError,
+  type AccountBillingErrorCode,
+  acquireAccountBillingOperation,
+  releaseAccountBillingOperation,
+} from '@/lib/stripe/account-billing';
 import {
   getSubscriptionPackages,
   getTopupPackages,
@@ -20,6 +26,43 @@ import { createClient } from '@/lib/supabase/server';
 
 const CHECKOUT_CONFIGURATION_ERROR = 'CHECKOUT_CONFIGURATION_ERROR';
 const CHECKOUT_INVALID_PACKAGE_ID = 'CHECKOUT_INVALID_PACKAGE_ID';
+
+const checkoutRequestAttempts = new Map<string, number>();
+stripe.on('request', ({ idempotency_key }) => {
+  if (!idempotency_key) return;
+  const attempts = checkoutRequestAttempts.get(idempotency_key);
+  if (attempts !== undefined) {
+    checkoutRequestAttempts.set(idempotency_key, attempts + 1);
+  }
+});
+
+// Only explicit input-validation codes qualify; a generic 400 can follow execution.
+// https://docs.stripe.com/api/idempotent_requests
+// https://docs.stripe.com/error-codes
+const CHECKOUT_VALIDATION_ERRORS = new Set([
+  'parameter_invalid_empty',
+  'parameter_invalid_integer',
+  'parameter_invalid_string_blank',
+  'parameter_invalid_string_empty',
+  'parameter_missing',
+  'parameter_unknown',
+  'parameters_exclusive',
+]);
+
+function isDefinitiveCheckoutRejection(error: unknown): boolean {
+  if (!(error instanceof Stripe.errors.StripeError)) return false;
+  if (error.headers?.['stripe-should-retry'] === 'true') return false;
+
+  return (
+    (error instanceof Stripe.errors.StripeAuthenticationError &&
+      error.statusCode === 401) ||
+    (error instanceof Stripe.errors.StripePermissionError &&
+      error.statusCode === 403) ||
+    (error instanceof Stripe.errors.StripeInvalidRequestError &&
+      error.statusCode === 400 &&
+      CHECKOUT_VALIDATION_ERRORS.has(error.code ?? ''))
+  );
+}
 
 type CheckoutPackageId = Exclude<PackageType, 'free'>;
 
@@ -140,7 +183,17 @@ async function getCheckoutStripeId(
 export async function createCheckoutSession(
   data: FormData,
   packageId: CheckoutPackageId,
-): Promise<{ client_secret: string | null; url: string | null }> {
+): Promise<{
+  client_secret: string | null;
+  error?: AccountBillingErrorCode;
+  url: string | null;
+}> {
+  let billingOperation:
+    | Awaited<ReturnType<typeof acquireAccountBillingOperation>>
+    | undefined;
+  let checkoutRequestStarted = false;
+  let checkoutRequestCompleted = false;
+  let checkoutUserId: string | undefined;
   try {
     const ui_mode = data.get(
       'uiMode',
@@ -192,6 +245,11 @@ export async function createCheckoutSession(
       throw error;
     }
 
+    checkoutUserId = claims.sub;
+    billingOperation = await acquireAccountBillingOperation(
+      claims.sub,
+      'checkout',
+    );
     const stripeId = await getCheckoutStripeId(
       { email: claims.email, id: claims.sub },
       packageId,
@@ -226,36 +284,66 @@ export async function createCheckoutSession(
             }),
           };
 
+    checkoutRequestAttempts.set(billingOperation.token, 0);
+    checkoutRequestStarted = true;
     const checkoutSession: Stripe.Checkout.Session =
-      await stripe.checkout.sessions.create({
-        customer: stripeId,
-        line_items: [
-          {
-            price: package_.priceId,
-            quantity: 1,
-          },
-        ],
-        mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
-        ...(shouldApplySubscriptionDiscount && {
-          discounts: [
+      await stripe.checkout.sessions.create(
+        {
+          customer: stripeId,
+          expires_at: billingOperation.checkoutExpiresAt,
+          line_items: [
             {
-              coupon: subscriptionDiscountCouponId,
+              price: package_.priceId,
+              quantity: 1,
             },
           ],
-        }),
-        ...(ui_mode === 'hosted' && {
-          cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
-          success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
-        }),
-        metadata: metadata as unknown as Stripe.MetadataParam,
-        ui_mode,
-      });
+          mode: checkoutType === 'subscription' ? 'subscription' : 'payment',
+          ...(shouldApplySubscriptionDiscount && {
+            discounts: [
+              {
+                coupon: subscriptionDiscountCouponId,
+              },
+            ],
+          }),
+          ...(ui_mode === 'hosted' && {
+            cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?canceled=true`,
+            success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/${lang}/dashboard/credits?success=true&creditsAmount=${package_.credits}`,
+          }),
+          metadata: metadata as unknown as Stripe.MetadataParam,
+          ui_mode,
+        },
+        { idempotencyKey: billingOperation.token },
+      );
+    checkoutRequestCompleted = true;
 
     return {
       client_secret: checkoutSession.client_secret,
       url: checkoutSession.url,
     };
   } catch (error) {
+    if (error instanceof AccountBillingError) {
+      captureMessage('Checkout blocked by account billing state.', {
+        level: 'info',
+        tags: {
+          event_type:
+            error.code === 'accountBillingBlocked'
+              ? 'checkout_billing_blocked'
+              : 'checkout_billing_busy',
+          section: 'stripe_actions',
+        },
+        user: { id: checkoutUserId },
+      });
+      return { client_secret: null, error: error.code, url: null };
+    }
+
+    if (
+      billingOperation &&
+      checkoutRequestAttempts.get(billingOperation.token) === 1 &&
+      isDefinitiveCheckoutRejection(error)
+    ) {
+      checkoutRequestCompleted = true;
+    }
+
     console.error('Error creating checkout session:', error);
     if (isCheckoutSetupError(error)) {
       reportCheckoutSetupError(error, packageId);
@@ -275,5 +363,17 @@ export async function createCheckoutSession(
       },
     });
     throw error;
+  } finally {
+    if (billingOperation) {
+      checkoutRequestAttempts.delete(billingOperation.token);
+    }
+    // A failed request can still create a session at Stripe. Keep its reservation
+    // until that session's fixed expiration has passed.
+    if (
+      billingOperation &&
+      (!checkoutRequestStarted || checkoutRequestCompleted)
+    ) {
+      await releaseAccountBillingOperation(billingOperation);
+    }
   }
 }

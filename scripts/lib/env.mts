@@ -1,8 +1,9 @@
 import { config } from 'dotenv';
 
-export function loadScriptEnv(): void {
+export function loadScriptEnv(paths?: string[]): void {
   config({
     override: false,
-    path: ['.env', '.env.local'],
+    path: paths ?? ['.env', '.env.local'],
+    quiet: true,
   });
 }

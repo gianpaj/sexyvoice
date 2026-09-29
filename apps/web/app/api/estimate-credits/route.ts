@@ -7,6 +7,7 @@ import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildGeminiTtsContents,
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -182,7 +183,11 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
 
     const tokenResponse = await ai.models.countTokens({
-      contents: [{ parts: [{ text: finalText }], role: 'user' }],
+      contents: buildGeminiTtsContents({
+        model,
+        styleVariant,
+        text: finalText,
+      }),
       model: estimateModel,
     });
 
@@ -192,7 +197,7 @@ export async function POST(request: Request) {
     // Characters per second ~ 15 (faster speech)
     // Tokens per second of audio ~ 32 (based on documentation)
     const CHARACTERS_PER_SECOND = 15;
-    const TOKENS_PER_SECOND = 32;
+    const TOKENS_PER_SECOND = model === 'gpro38' ? 25 : 32;
 
     // Base the audio-duration estimate on the full spoken payload. For gpro31
     // the style is delivered as direction (it shapes pacing/delivery), so the

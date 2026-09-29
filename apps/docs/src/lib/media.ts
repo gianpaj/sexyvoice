@@ -7,7 +7,7 @@ export const mediaAdapters: Record<string, MediaAdapter> = {
       return JSON.stringify(data.body);
     },
     // returns code that inits a `body` variable, used for request body
-    generateExample(data, ctx) {
+    generateExample(_data, ctx) {
       if (ctx.lang === 'js') {
         return `const body = "hello world"`;
       }

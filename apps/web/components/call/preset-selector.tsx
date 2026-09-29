@@ -59,13 +59,26 @@ function getInitials(name: string): string {
     .join('');
 }
 
+// Initials avatars cycle through these by row position, so neighbours never
+// share a color. Violet and fuchsia would blend into the selection ring, and
+// red reads as an error, so both are left out.
+const AVATAR_GRADIENTS = [
+  'from-sky-500 to-indigo-600',
+  'from-emerald-500 to-teal-700',
+  'from-amber-500 to-orange-600',
+  'from-orange-400 to-pink-600',
+  'from-cyan-500 to-blue-700',
+];
+
 function AvatarButton({
+  colorIndex,
   name,
   image,
   isSelected,
   isConnected,
   onClick,
 }: {
+  colorIndex: number;
   name: string;
   image?: string;
   isSelected: boolean;
@@ -89,7 +102,13 @@ function AvatarButton({
         } ${isConnected ? '' : 'group-hover:scale-105'}`}
       >
         <div className="rounded-full bg-background p-[2px]">
-          <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-neutral-800 sm:h-16 sm:w-16">
+          <div
+            className={`relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full sm:h-16 sm:w-16 ${
+              image
+                ? 'bg-neutral-800'
+                : `bg-linear-to-br ${AVATAR_GRADIENTS[colorIndex % AVATAR_GRADIENTS.length]}`
+            }`}
+          >
             {image ? (
               <Image
                 alt={name}
@@ -102,7 +121,7 @@ function AvatarButton({
               />
             ) : (
               <span
-                className={`select-none font-semibold text-neutral-300 text-sm transition-all duration-300 ${
+                className={`select-none font-semibold text-lg text-white transition-all duration-300 ${
                   isConnected && !isSelected ? 'opacity-40' : ''
                 }`}
               >
@@ -136,7 +155,7 @@ export function PresetSelector({
   isPaidUser = false,
   callVoices = EMPTY_ITEMS,
 }: PresetSelectorProps) {
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
   const { disconnect, connect, shouldConnect } = useConnection();
   const t = useTranslations('call');
   const tPresetSelector = useTranslations('call.presetSelector');
@@ -177,8 +196,9 @@ export function PresetSelector({
     if (pgState.selectedPresetId !== lastPresetId) {
       setLastPresetId(pgState.selectedPresetId);
       if (shouldConnect) {
+        // No pending voice here: it belonged to the character being left.
         disconnect().then(() => {
-          connect(pendingVoiceName);
+          connect();
         });
       }
     }
@@ -188,27 +208,11 @@ export function PresetSelector({
     disconnect,
     connect,
     lastPresetId,
-    pendingVoiceName,
   ]);
 
   const handlePresetSelect = (presetId: string | null) => {
     if (isConnected) return;
-
-    dispatch({
-      payload: presetId,
-      type: 'SET_SELECTED_PRESET_ID',
-    });
-
-    // Update URL with preset
-    const params = helpers.encodeToUrlParams({
-      ...pgState,
-      selectedPresetId: presetId,
-    });
-    window.history.replaceState(
-      {},
-      document.title,
-      `${window.location.pathname}${params ? `?${params}` : ''}`,
-    );
+    selectPreset(presetId);
   };
 
   const handleOpenCreateDialog = () => {
@@ -238,7 +242,7 @@ export function PresetSelector({
 
     const newPreset = mapApiCharacterToPreset(result);
     dispatch({ payload: newPreset, type: 'SAVE_CUSTOM_CHARACTER' });
-    dispatch({ payload: newPreset.id, type: 'SET_SELECTED_PRESET_ID' });
+    selectPreset(newPreset.id);
     toast.success(tPresetSelector('characterCreated'));
   };
 
@@ -261,10 +265,11 @@ export function PresetSelector({
   };
 
   // Handle voice dropdown change — updates in-memory state only.
-  // The pending voice name is passed to connect() so use-connection
-  // can persist it (along with any instruction changes) in one API call.
   const handleVoiceChange = (newVoiceName: string) => {
     if (!(selectedPreset && isSelectedCustom) || isConnected) return;
+
+    // sessionConfig is what a call is started with, so it has to move now.
+    dispatch({ payload: { voice: newVoiceName }, type: 'SET_SESSION_CONFIG' });
 
     const currentVoice =
       selectedPreset.voiceName || selectedPreset.sessionConfig.voice;
@@ -275,7 +280,7 @@ export function PresetSelector({
 
     setPendingVoiceName(newVoiceName);
 
-    // Update in-memory state so sessionConfig.voice is correct if a call starts
+    // Mirror the choice onto the preset so the voice sample and label match.
     const updatedVoice = callVoices.find((v) => v.name === newVoiceName);
     const updatedPreset: Preset = {
       ...selectedPreset,
@@ -419,7 +424,7 @@ export function PresetSelector({
 
   /** The "+" add-character button rendered as an avatar-shaped circle. */
   const addCharacterButton = canAddMore ? (
-    <div className="group/card relative flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-2">
       {/* Wrapper matching AvatarButton ring structure for vertical alignment */}
       <div className="rounded-full p-[3px]">
         <div className="rounded-full p-[2px]">
@@ -441,6 +446,10 @@ export function PresetSelector({
     </div>
   ) : null;
 
+  const showArrows = allCharacters.length + (addCharacterButton ? 1 : 0) > 6;
+  const slideClassName = 'flex basis-[22%] justify-center pl-2 sm:basis-1/6';
+  const lastSlideClassName = `${slideClassName} mr-8 sm:mr-0`;
+
   return (
     <>
       <div className="w-full">
@@ -449,70 +458,57 @@ export function PresetSelector({
           {t('chooseCharacter')}
         </div>
 
-        {/* Avatar Row — Carousel: each avatar is its own slide, 5 visible on mobile / 6 on desktop */}
-        <div className="relative mb-4 md:px-10">
+        {/* Avatar Row — Carousel: each avatar is its own slide. Mobile shows
+            4.5 so the next avatar peeks and swiping is discoverable. Below sm
+            the row bleeds through ConfigurationForm's px-4 and the dashboard
+            main's px-4 so avatars scroll to the screen edges; Embla reads the
+            track's padding-left and the last slide's margin-right as edge
+            gaps, so the row lines up with the heading at rest. From sm up, 6
+            are visible and arrows get a gutter only when there is more to
+            scroll. The track's py-1 gives the hover scale room inside Embla's
+            overflow-hidden viewport; -mt-1 and mb-3 keep the layout in place. */}
+        <div
+          className={`relative -mx-8 -mt-1 mb-3 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
+        >
           <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
-            <CarouselContent className="-ml-2">
-              {allCharacters.map((preset) => {
+            <CarouselContent className="-ml-2 py-1 pl-8 sm:pl-0">
+              {allCharacters.map((preset, index) => {
                 const isSelected = pgState.selectedPresetId === preset.id;
-                const isCustom = isCustomCharacter(preset.id);
                 return (
                   <CarouselItem
-                    className="basis-1/5 pl-2 sm:basis-1/6"
+                    className={
+                      index === allCharacters.length - 1 && !addCharacterButton
+                        ? lastSlideClassName
+                        : slideClassName
+                    }
                     key={preset.id}
                   >
-                    <div className="group/card relative flex flex-col items-center">
-                      <AvatarButton
-                        image={preset.image}
-                        isConnected={isConnected}
-                        isSelected={isSelected}
-                        name={preset.name}
-                        onClick={() => handlePresetSelect(preset.id)}
-                      />
-                      {/* Delete button for custom characters */}
-                      {isCustom && !isConnected && (
-                        <button
-                          aria-label={t('deleteCharacterAriaLabel').replace(
-                            '__NAME__',
-                            preset.name,
-                          )}
-                          className="absolute top-0 -right-1 z-10 rounded-full bg-red-800 p-1 text-destructive-foreground transition-opacity hover:bg-destructive/80 focus:opacity-100 group-hover/card:opacity-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCharacterToDelete({
-                              id: preset.id,
-                              name: preset.name,
-                            });
-                            setShowDeleteDialog(true);
-                          }}
-                          title={t('deleteCharacterAriaLabel').replace(
-                            '__NAME__',
-                            preset.name,
-                          )}
-                          type="button"
-                        >
-                          <Trash2 className="h-2.5 w-2.5 text-white" />
-                        </button>
-                      )}
-                    </div>
+                    <AvatarButton
+                      colorIndex={index}
+                      image={preset.image}
+                      isConnected={isConnected}
+                      isSelected={isSelected}
+                      name={preset.name}
+                      onClick={() => handlePresetSelect(preset.id)}
+                    />
                   </CarouselItem>
                 );
               })}
               {/* "+" add button as its own slide */}
               {addCharacterButton && (
-                <CarouselItem className="basis-1/5 pl-2 sm:basis-1/6">
+                <CarouselItem className={lastSlideClassName}>
                   {addCharacterButton}
                 </CarouselItem>
               )}
             </CarouselContent>
-            {allCharacters.length + (addCharacterButton ? 1 : 0) > 5 && (
+            {showArrows && (
               <>
                 <CarouselPrevious
-                  className="-left-2 h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80"
+                  className="-left-9 hidden h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80 sm:inline-flex"
                   variant="outline"
                 />
                 <CarouselNext
-                  className="-right-2 h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80"
+                  className="-right-9 hidden h-7 w-7 border-separator1 bg-muted text-foreground hover:bg-muted/80 sm:inline-flex"
                   variant="outline"
                 />
               </>
@@ -522,7 +518,7 @@ export function PresetSelector({
 
         {/* Bio Card - Editable for custom characters */}
         <div
-          className={`rounded-xl bg-muted p-4 transition-all duration-300 ${
+          className={`rounded-xl border border-separator1 bg-muted/30 p-4 transition-all duration-300 ${
             selectedPreset
               ? 'translate-y-0 opacity-100'
               : 'pointer-events-none h-0 translate-y-2 overflow-hidden p-0 opacity-0'
@@ -560,6 +556,29 @@ export function PresetSelector({
                       <Pencil className="h-3 w-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                     </button>
                   )}
+                  <Button
+                    aria-label={t('deleteCharacterAriaLabel').replace(
+                      '__NAME__',
+                      selectedPreset.name,
+                    )}
+                    className="-my-1 -mr-2 ml-auto shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      setCharacterToDelete({
+                        id: selectedPreset.id,
+                        name: selectedPreset.name,
+                      });
+                      setShowDeleteDialog(true);
+                    }}
+                    size="icon"
+                    title={t('deleteCharacterAriaLabel').replace(
+                      '__NAME__',
+                      selectedPreset.name,
+                    )}
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 {/* Editable Description */}

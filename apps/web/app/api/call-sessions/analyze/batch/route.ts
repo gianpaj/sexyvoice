@@ -469,8 +469,8 @@ export async function GET(request: NextRequest) {
   );
 
   if (run.parked.length > 0) {
-    // Terminal failures need a human: the backfill script is the only way
-    // these sessions get analysed now.
+    // Terminal failures need a human: `backfill-call-analysis --retry-failed`
+    // is the only way these sessions get analysed now.
     Sentry.captureMessage('Call analysis sessions parked as failed', {
       extra: { parked: run.parked },
       level: 'warning',

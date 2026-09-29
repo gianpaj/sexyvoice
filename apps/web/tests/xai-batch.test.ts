@@ -127,6 +127,17 @@ describe('xai-batch client', () => {
       }),
     ).toMatchObject({ content: null, customId: 'c', errorMessage: 'boom' });
 
+    expect(
+      extractBatchOutcome({
+        batch_request_id: 'd',
+        batch_result: { error: "I can't help with that request." },
+      }),
+    ).toEqual({
+      content: null,
+      customId: 'd',
+      errorMessage: "I can't help with that request.",
+    });
+
     expect(extractBatchOutcome(null)).toEqual({
       content: null,
       customId: null,

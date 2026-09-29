@@ -1,6 +1,6 @@
 {
   "name": "sexyvoice",
-  "version": "2026.4.7",
+  "version": "2026.9.27",
   "private": true,
   "scripts": {
     "analyze-call-sessions": "pnpm --filter @sexyvoice/scripts analyze-call-sessions",
@@ -26,6 +26,7 @@
     "lint": "turbo run lint",
     "lint-staged": "lint-staged",
     "prepare": "husky",
+    "prepare-gemini-voice-sql": "pnpm --filter @sexyvoice/scripts prepare-gemini-voice-sql",
     "refund-credits": "pnpm --filter @sexyvoice/scripts refund-credits",
     "reset-freeloader-credits": "pnpm --filter @sexyvoice/scripts reset-freeloader-credits",
     "sync-deny-domains": "pnpm --filter @sexyvoice/scripts sync-deny-domains",
@@ -35,16 +36,16 @@
     "test:db": "turbo run test:db --filter=@sexyvoice/web",
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
     "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
-    "type-check": "turbo run type-check"
+    "type-check": "turbo run type-check",
+    "upload-speech-samples": "pnpm --filter @sexyvoice/scripts upload-speech-samples"
   },
-
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "husky": "9.1.7",
     "lint-staged": "17.2.0",
-    "prettier": "3.9.6",
+    "prettier": "3.9.9",
     "turbo": "2.10.12",
-    "ultracite": "7.10.0"
+    "ultracite": "7.12.0"
   },
   "packageManager": "pnpm@11.16.0",
   "engines": {

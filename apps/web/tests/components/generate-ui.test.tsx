@@ -5,17 +5,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GenerateUI } from '@/app/[lang]/(dashboard)/dashboard/generate/generateui.client';
 
-const mockVoiceSelector = vi.fn();
+const mockVoiceSettingsCard = vi.fn();
 const mockAudioGenerator = vi.fn();
 
-vi.mock('@/components/voice-selector', () => ({
-  VoiceSelector: (
+vi.mock('@/components/voice-settings-card', () => ({
+  VoiceSettingsCard: (
     props: React.ComponentProps<
-      typeof import('@/components/voice-selector').VoiceSelector
+      typeof import('@/components/voice-settings-card').VoiceSettingsCard
     >,
   ) => {
-    mockVoiceSelector(props);
-    return <div data-testid="voice-selector" />;
+    mockVoiceSettingsCard(props);
+    return <div data-testid="voice-settings-card" />;
   },
 }));
 
@@ -72,6 +72,29 @@ describe('GenerateUI', () => {
     vi.clearAllMocks();
   });
 
+  it('lists and selects Gemini 3.8 before the same-named 3.1 voice', () => {
+    const featured = (model: string) =>
+      createVoice({
+        id: `achernar-${model}`,
+        language: 'multiple',
+        model,
+        name: 'achernar',
+        sort_order: 0,
+      });
+    // The database returns tied rows in no defined order.
+    renderGenerateUI([
+      featured('gpro31'),
+      createVoice({ id: 'kore-gpro', model: 'gpro', name: 'kore' }),
+      featured('gpro38'),
+    ]);
+
+    const props = mockVoiceSettingsCard.mock.calls[0][0];
+    expect(
+      props.publicVoices.map((voice: Tables<'voices'>) => voice.id),
+    ).toEqual(['achernar-gpro38', 'achernar-gpro31', 'kore-gpro']);
+    expect(props.selectedVoice?.id).toBe('achernar-gpro38');
+  });
+
   it('passes Gemini style state to both child components for Gemini voices', () => {
     const geminiVoice = createVoice({
       id: 'voice-gemini',
@@ -81,14 +104,14 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([geminiVoice]);
 
-    expect(screen.getByTestId('voice-selector')).toBeInTheDocument();
+    expect(screen.getByTestId('voice-settings-card')).toBeInTheDocument();
     expect(screen.getByTestId('audio-generator')).toBeInTheDocument();
 
     act(() => {
-      mockVoiceSelector.mock.calls[0][0].setSelectedStyle('Speak warmly');
+      mockVoiceSettingsCard.mock.calls[0][0].setSelectedStyle('Speak warmly');
     });
 
-    expect(mockVoiceSelector).toHaveBeenLastCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenLastCalledWith(
       expect.objectContaining({
         selectedStyle: 'Speak warmly',
         selectedVoice: geminiVoice,
@@ -112,7 +135,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([grokVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedStyle: undefined,
         selectedVoice: grokVoice,
@@ -137,7 +160,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([replicateVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedStyle: undefined,
         selectedVoice: replicateVoice,
@@ -173,7 +196,7 @@ describe('GenerateUI', () => {
 
     renderGenerateUI([firstVoice, featuredVoice, thirdVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedVoice: featuredVoice,
       }),
@@ -196,12 +219,12 @@ describe('GenerateUI', () => {
     const secondVoice = createVoice({
       id: 'voice-second',
       model: 'gpro',
-      name: 'kore',
+      name: 'zephyr',
     });
 
     renderGenerateUI([firstVoice, secondVoice]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedVoice: firstVoice,
       }),
@@ -217,7 +240,7 @@ describe('GenerateUI', () => {
   it('falls back to no selected voice when the list is empty', () => {
     renderGenerateUI([]);
 
-    expect(mockVoiceSelector).toHaveBeenCalledWith(
+    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedStyle: undefined,
         selectedVoice: undefined,

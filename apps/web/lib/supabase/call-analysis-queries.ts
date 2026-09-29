@@ -12,8 +12,7 @@ export type CallAnalysisQueueStatus =
   | 'pending'
   | 'submitted';
 
-/** A batch submission that errors this many times is parked as `failed`. */
-export const MAX_CALL_ANALYSIS_ATTEMPTS = 3;
+export { MAX_CALL_ANALYSIS_ATTEMPTS } from '@/lib/ai/call-analysis-batch';
 
 const SESSION_COLUMNS =
   'id, user_id, started_at, duration_seconds, end_reason, transcript';

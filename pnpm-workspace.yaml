@@ -10,6 +10,8 @@ publicHoistPattern:
 minimumReleaseAge: 2880
 
 minimumReleaseAgeExclude:
+  # Gemini 3.8 TTS requires speechMetadata and VoiceConfig.voice.
+  - "@google/genai@2.24.0"
   - next
   - "@next/*"
   - react
@@ -46,17 +48,17 @@ minimumReleaseAgeExclude:
   - sharp@0.35.0
 
 catalog:
-  "@ai-sdk/react": "3.0.262"
-  "@biomejs/biome": "2.5.8"
+  "@ai-sdk/react": "3.0.292"
+  "@biomejs/biome": "2.5.14"
   "@supabase/supabase-js": "2.116.0"
   "@tailwindcss/postcss": "4.2.2"
   "@types/node": "24.10.4"
   "@types/react": "19.2.16"
   "@types/react-dom": "19.2.3"
   "@upstash/redis": "1.37.0"
-  "ai": "6.0.259"
+  "ai": "6.0.289"
   "effective-progress": "0.12.0"
-  "effect": "4.0.0-rc.111"
+  "effect": "4.0.0-rc.117"
   "next": "16.3.4"
   "postcss": "8.5.23"
   "react": "19.2.7"
@@ -73,8 +75,8 @@ overrides:
   "@opentelemetry/exporter-trace-otlp-http": "0.218.0"
   "@opentelemetry/sdk-node": "0.218.0"
   "fast-xml-parser@>=4.3.6 <=5.3.3": ">=5.3.7"
-  "immutable@>=5.0.0-beta.1 <5.1.8": "5.1.8"
-  "protobufjs@<7.5.8": "7.6.5"
+  "immutable@>=5.0.0-beta.1 <5.1.8": "5.1.9"
+  "protobufjs@<7.5.8": "7.6.6"
   "protobufjs@>=8.0.0 <8.2.0": "8.4.0"
   # Scope the TOML security fix to this consumer to avoid forcing a major bump on others.
   "remark-mdx-frontmatter>toml": "4.2.0"
@@ -87,6 +89,7 @@ overrides:
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
+  "@google/genai": false
   "@parcel/watcher": true
   "@sentry/cli": true
   "@swc/core": true

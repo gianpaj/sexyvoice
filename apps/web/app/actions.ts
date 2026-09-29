@@ -7,7 +7,18 @@ import { z } from 'zod';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
+import {
+  AccountBillingError,
+  acquireAccountBillingOperation,
+  commitAccountDeletion,
+  releaseAccountBillingOperation,
+} from '@/lib/stripe/account-billing';
+import {
+  expireOpenCheckoutSessions,
+  hasOngoingSubscription,
+} from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
 
@@ -105,131 +116,183 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
     throw new Error('User not found');
   }
 
-  const deletedAt = new Date();
-  const deletedAtIso = deletedAt.toISOString();
+  let billingOperation:
+    | Awaited<ReturnType<typeof acquireAccountBillingOperation>>
+    | undefined;
+  try {
+    try {
+      billingOperation = await acquireAccountBillingOperation(
+        user.id,
+        'deletion',
+      );
+      const { data: profile, error: profileError } = await getUserByIdWithError(
+        user.id,
+      );
 
-  const { error } = await supabase.auth.updateUser({
-    data: { deleted: deletedAt },
-  });
-
-  const [
-    { data: audio_files, error: audioFilesError },
-    { data: customCharacters, error: customCharactersError },
-    { data: apiKeys, error: apiKeysError },
-    { count: retainedUsageEventsCount, error: usageEventsError },
-  ] = await Promise.all([
-    supabase.from('audio_files').select().eq('user_id', user.id),
-    supabase.from('characters').select('id, prompt_id').eq('user_id', user.id),
-    supabase.from('api_keys').select().eq('user_id', user.id),
-    supabase
-      .from('usage_events')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id),
-  ]);
-
-  if (audioFilesError || customCharactersError || apiKeysError) {
-    throw new Error('User deletion failed');
-  }
-
-  if (usageEventsError) {
-    captureException(usageEventsError, {
-      extra: { context: 'retained usage event count during account deletion' },
-      level: 'warning',
-      user: { email: user.email, id: user.id },
-    });
-  }
-
-  if (audio_files) {
-    const deletionResults = await Promise.allSettled(
-      audio_files.map((file) => deleteFileFromR2(file.storage_key)),
-    );
-
-    deletionResults.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        const file = audio_files[index];
-        captureException(
-          new Error(result.reason || 'Failed to delete file from R2 storage.'),
-          {
-            extra: {
-              file,
-            },
-            user: { email: user.email, id: user.id },
-          },
-        );
-        console.error(
-          `Failed to delete file ${file.storage_key} from R2`,
-          result.reason,
-        );
+      if (profileError || !profile) {
+        throw profileError ?? new Error('User profile not found');
       }
+
+      if (await hasOngoingSubscription(profile.stripe_id)) {
+        return { error: 'subscriptionExists' as const };
+      }
+
+      if (profile.stripe_id) {
+        await expireOpenCheckoutSessions(profile.stripe_id);
+        if (await hasOngoingSubscription(profile.stripe_id)) {
+          return { error: 'subscriptionExists' as const };
+        }
+      }
+      await commitAccountDeletion(billingOperation);
+    } catch (error) {
+      if (error instanceof AccountBillingError) {
+        return { error: error.code };
+      }
+      captureException(error, {
+        extra: { context: 'subscription check before account deletion' },
+        user: { id: user.id },
+      });
+      return { error: 'subscriptionCheckFailed' as const };
+    }
+
+    const deletedAt = new Date();
+    const deletedAtIso = deletedAt.toISOString();
+
+    const { error } = await supabase.auth.updateUser({
+      data: { deleted: deletedAt },
     });
-  }
 
-  const admin = createAdminClient();
-  const { error: deleteError, data: deleteData } = await admin
-    .from('audio_files')
-    .update({
-      deleted_at: deletedAtIso,
-      status: 'deleted',
-    })
-    .eq('user_id', user.id)
-    .select('id');
+    const [
+      { data: audio_files, error: audioFilesError },
+      { data: customCharacters, error: customCharactersError },
+      { data: apiKeys, error: apiKeysError },
+      { count: retainedUsageEventsCount, error: usageEventsError },
+    ] = await Promise.all([
+      supabase.from('audio_files').select().eq('user_id', user.id),
+      supabase
+        .from('characters')
+        .select('id, prompt_id')
+        .eq('user_id', user.id),
+      supabase.from('api_keys').select().eq('user_id', user.id),
+      supabase
+        .from('usage_events')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id),
+    ]);
 
-  if (customCharacters && customCharacters.length > 0) {
-    const characterIds = customCharacters.map((character) => character.id);
-    const promptIds = customCharacters
-      .map((character) => character.prompt_id)
-      .filter((promptId): promptId is string => Boolean(promptId));
-
-    const { error: deleteCharactersError } = await supabase
-      .from('characters')
-      .delete()
-      .in('id', characterIds)
-      .eq('user_id', user.id);
-
-    if (deleteCharactersError) {
+    if (audioFilesError || customCharactersError || apiKeysError) {
       throw new Error('User deletion failed');
     }
 
-    if (promptIds.length > 0) {
-      const { error: deletePromptsError } = await supabase
-        .from('prompts')
+    if (usageEventsError) {
+      captureException(usageEventsError, {
+        extra: {
+          context: 'retained usage event count during account deletion',
+        },
+        level: 'warning',
+        user: { email: user.email, id: user.id },
+      });
+    }
+
+    if (audio_files) {
+      const deletionResults = await Promise.allSettled(
+        audio_files.map((file) => deleteFileFromR2(file.storage_key)),
+      );
+
+      deletionResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const file = audio_files[index];
+          captureException(
+            new Error(
+              result.reason || 'Failed to delete file from R2 storage.',
+            ),
+            {
+              extra: {
+                file,
+              },
+              user: { email: user.email, id: user.id },
+            },
+          );
+          console.error(
+            `Failed to delete file ${file.storage_key} from R2`,
+            result.reason,
+          );
+        }
+      });
+    }
+
+    const admin = createAdminClient();
+    const { error: deleteError, data: deleteData } = await admin
+      .from('audio_files')
+      .update({
+        deleted_at: deletedAtIso,
+        status: 'deleted',
+      })
+      .eq('user_id', user.id)
+      .select('id');
+
+    if (customCharacters && customCharacters.length > 0) {
+      const characterIds = customCharacters.map((character) => character.id);
+      const promptIds = customCharacters
+        .map((character) => character.prompt_id)
+        .filter((promptId): promptId is string => Boolean(promptId));
+
+      const { error: deleteCharactersError } = await supabase
+        .from('characters')
         .delete()
-        .in('id', promptIds)
+        .in('id', characterIds)
         .eq('user_id', user.id);
 
-      if (deletePromptsError) {
-        captureException(deletePromptsError, {
-          extra: {
-            context: 'custom character prompt cleanup during account deletion',
-            promptIds,
-          },
-          user: { email: user.email, id: user.id },
-        });
+      if (deleteCharactersError) {
+        throw new Error('User deletion failed');
+      }
+
+      if (promptIds.length > 0) {
+        const { error: deletePromptsError } = await supabase
+          .from('prompts')
+          .delete()
+          .in('id', promptIds)
+          .eq('user_id', user.id);
+
+        if (deletePromptsError) {
+          captureException(deletePromptsError, {
+            extra: {
+              context:
+                'custom character prompt cleanup during account deletion',
+              promptIds,
+            },
+            user: { email: user.email, id: user.id },
+          });
+        }
       }
     }
+
+    if (error || deleteError) {
+      throw new Error('User deletion failed');
+    }
+    logger.info('User deleted', {
+      apiKeysDeleted: apiKeys ? apiKeys.length : 0,
+      deleted: deleteData?.length,
+      deletedCustomCharacters: customCharacters?.length ?? 0,
+      // usage_events is an immutable audit log protected from deletion by the
+      // database. Report retained rows instead of claiming they were removed.
+      usageEventsRetained: retainedUsageEventsCount,
+      userId: user.id,
+    });
+
+    console.log('User deleted', {
+      apiKeysDeleted: apiKeys?.length ?? 0,
+      deleted: deleteData?.length,
+      deletedCustomCharacters: customCharacters?.length ?? 0,
+      usageEventsRetained: retainedUsageEventsCount,
+      userId: user.id,
+    });
+    await supabase.auth.signOut();
+
+    return encodedRedirect('success', `/${lang}/`, '');
+  } finally {
+    if (billingOperation) {
+      await releaseAccountBillingOperation(billingOperation);
+    }
   }
-
-  if (error || deleteError) {
-    throw new Error('User deletion failed');
-  }
-  logger.info('User deleted', {
-    apiKeysDeleted: apiKeys ? apiKeys.length : 0,
-    deleted: deleteData?.length,
-    deletedCustomCharacters: customCharacters?.length ?? 0,
-    // usage_events is an immutable audit log protected from deletion by the
-    // database. Report retained rows instead of claiming they were removed.
-    usageEventsRetained: retainedUsageEventsCount,
-    userId: user.id,
-  });
-
-  console.log('User deleted', {
-    apiKeysDeleted: apiKeys?.length ?? 0,
-    deleted: deleteData?.length,
-    deletedCustomCharacters: customCharacters?.length ?? 0,
-    usageEventsRetained: retainedUsageEventsCount,
-    userId: user.id,
-  });
-  await supabase.auth.signOut();
-
-  return encodedRedirect('success', `/${lang}/`, '');
 };
