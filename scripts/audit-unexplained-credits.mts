@@ -2,19 +2,12 @@ import { rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+import { loadScriptEnv } from './lib/env.mts';
+import { createScriptAdminClient } from './lib/supabase.mts';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-
-config({
-  path: [
-    resolve(scriptDirectory, '.env.local'),
-    resolve(scriptDirectory, '../apps/web/.env.local'),
-    resolve(scriptDirectory, '.env'),
-    resolve(scriptDirectory, '../apps/web/.env'),
-  ],
-});
 
 const PAGE_SIZE = 1000;
 const USER_BATCH_SIZE = 50;
@@ -174,29 +167,6 @@ export function createReadOnlyFetch(delegate: FetchLike = fetch): FetchLike {
 
     return delegate(input, init);
   };
-}
-
-function createAdminClient(): SupabaseClient {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-  }
-  if (!process.env.SUPABASE_SECRET_KEY) {
-    throw new Error('Missing env.SUPABASE_SECRET_KEY');
-  }
-
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-      global: {
-        fetch: createReadOnlyFetch(),
-      },
-    },
-  );
 }
 
 function parsePositiveNumber(
@@ -705,7 +675,13 @@ async function main(): Promise<void> {
     throw new Error('--days is required');
   }
 
-  const supabase = createAdminClient();
+  loadScriptEnv([
+    resolve(scriptDirectory, '.env.local'),
+    resolve(scriptDirectory, '../apps/web/.env.local'),
+    resolve(scriptDirectory, '.env'),
+    resolve(scriptDirectory, '../apps/web/.env'),
+  ]);
+  const supabase = createScriptAdminClient({ fetch: createReadOnlyFetch() });
   const auditAsOf = new Date(Date.now() - AUDIT_SAFETY_LAG_MS).toISOString();
   const windowStart = new Date(
     new Date(auditAsOf).getTime() - days * MILLISECONDS_PER_DAY,
