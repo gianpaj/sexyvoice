@@ -1,4 +1,4 @@
-import { chmod, writeFile } from 'node:fs/promises';
+import { rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -772,11 +772,14 @@ async function main(): Promise<void> {
   const outputPath = options.output
     ? resolve(options.output)
     : createDefaultOutputPath(days);
+  // Create the report owner-only from the first byte: `mode` only applies to a
+  // new file, so replace any existing one instead of writing through it.
+  await rm(outputPath, { force: true });
   await writeFile(outputPath, createCsv(rows), {
     encoding: 'utf8',
+    flag: 'wx',
     mode: 0o600,
   });
-  await chmod(outputPath, 0o600);
 
   console.log(`\nCSV report: ${outputPath}`);
   console.log(
