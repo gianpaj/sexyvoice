@@ -599,7 +599,7 @@ export function AudioGenerator({
         // An aborted fetch cannot confirm settlement. Refreshing can race a refund;
         // skipping it can miss a late charge. See ARCHITECTURE.md#credit-balance-sync.
         if (!(cached || signal.aborted)) {
-          invalidateCredits(queryClient);
+          invalidateCredits(queryClient).catch(() => undefined);
         }
       }
     },

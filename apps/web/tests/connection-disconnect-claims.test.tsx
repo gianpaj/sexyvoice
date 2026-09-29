@@ -7,7 +7,7 @@ import { ConnectionProvider, useConnection } from '@/hooks/use-connection';
 const mocks = vi.hoisted(() => ({
   getClaims: vi.fn(),
   getUser: vi.fn(),
-  invalidateQueries: vi.fn(),
+  invalidateQueries: vi.fn(() => Promise.resolve()),
   refetchQueries: vi.fn(),
 }));
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => mocks }));
