@@ -10,7 +10,7 @@ on:
   pull_request_review:
     types: [submitted]
   pull_request:
-    types: [opened, ready_for_review]
+    types: [opened, ready_for_review, synchronize]
 
 jobs:
   # Both the original actor and the rerun actor must be explicitly trusted.
