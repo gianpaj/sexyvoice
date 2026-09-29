@@ -64,7 +64,8 @@ export async function GET(request: Request) {
           language: voice.language,
           model,
           name: voice.name,
-          supports_style: model === 'gpro' || model === 'gpro31',
+          supports_style:
+            model === 'gpro' || model === 'gpro31' || model === 'gpro38',
         },
       ];
     });

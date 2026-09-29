@@ -221,6 +221,50 @@ declare type Database = {
         };
         Relationships: [];
       };
+      call_analysis_queue: {
+        Row: {
+          attempts: number;
+          completed_at: string | null;
+          last_error: string | null;
+          queued_at: string;
+          session_id: string;
+          status: string;
+          submitted_at: string | null;
+          updated_at: string;
+          xai_batch_id: string | null;
+        };
+        Insert: {
+          attempts?: number;
+          completed_at?: string | null;
+          last_error?: string | null;
+          queued_at?: string;
+          session_id: string;
+          status?: string;
+          submitted_at?: string | null;
+          updated_at?: string;
+          xai_batch_id?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          completed_at?: string | null;
+          last_error?: string | null;
+          queued_at?: string;
+          session_id?: string;
+          status?: string;
+          submitted_at?: string | null;
+          updated_at?: string;
+          xai_batch_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'call_analysis_queue_session_id_fkey';
+            columns: ['session_id'];
+            isOneToOne: true;
+            referencedRelation: 'call_sessions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       call_session_analysis: {
         Row: {
           ai_issues: string | null;

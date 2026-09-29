@@ -3,12 +3,15 @@ import { getTranslations } from 'next-intl/server';
 
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/clone');
 
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;

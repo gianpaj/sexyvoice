@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query';
 import { getTranslations } from 'next-intl/server';
 
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { E2E_AUDIO_FILES, isE2E } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -14,6 +15,8 @@ import {
 } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 import { DataTable } from './data-table';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/history');
 
 export default async function HistoryPage(props: {
   params: Promise<{ lang: Locale }>;

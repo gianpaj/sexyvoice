@@ -12,9 +12,8 @@ import {
   makePreset,
   mockConnectionState,
   mockDispatch,
-  mockEncodeToUrlParams,
   mockPgStateRef,
-  mockSearchParams,
+  mockSelectPreset,
   mockToastInfo,
 } from '@tests/utils/preset-selector-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,21 +23,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // the mocks file and are hoisted there).
 // ---------------------------------------------------------------------------
 import { PresetSelector } from '@/components/call/preset-selector';
+import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
+import type { DBVoice } from '@/data/voices';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-let replaceStateSpy: ReturnType<typeof vi.spyOn>;
-
 beforeEach(() => {
   mockPgStateRef.current = createDefaultPgState();
   mockConnectionState.value = 'disconnected';
-  mockSearchParams.value = new URLSearchParams();
-  replaceStateSpy = vi
-    .spyOn(window.history, 'replaceState')
-    .mockImplementation(() => undefined);
 
   // jsdom doesn't provide crypto.randomUUID — stub it so handleAddCharacter works
   if (!globalThis.crypto.randomUUID) {
@@ -90,7 +85,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  replaceStateSpy.mockRestore();
   vi.unstubAllGlobals();
 });
 
@@ -139,24 +133,12 @@ describe('PresetSelector', () => {
 
   // ---- Selection ----
   describe('character selection', () => {
-    it('dispatches SET_SELECTED_PRESET_ID when a character is clicked', async () => {
+    it('selects a character when it is clicked', async () => {
       const user = userEvent.setup();
       render(<PresetSelector />);
       await user.click(screen.getByRole('button', { name: /lily/i }));
 
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'lily',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
-    });
-
-    it('updates the browser URL after selecting a character', async () => {
-      const user = userEvent.setup();
-      mockEncodeToUrlParams.mockReturnValue('preset=lily');
-      render(<PresetSelector />);
-      await user.click(screen.getByRole('button', { name: /lily/i }));
-
-      expect(replaceStateSpy).toHaveBeenCalled();
+      expect(mockSelectPreset).toHaveBeenCalledWith('lily');
     });
 
     it('marks the selected character with aria-pressed=true', () => {
@@ -217,7 +199,6 @@ describe('PresetSelector', () => {
     });
 
     beforeEach(() => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -252,10 +233,16 @@ describe('PresetSelector', () => {
       expect(screen.getByText('B')).toBeInTheDocument();
     });
 
-    it('shows delete buttons for custom characters', () => {
+    it('shows a delete button only for the selected custom character', () => {
+      mockPgStateRef.current = {
+        ...(mockPgStateRef.current as PlaygroundState),
+        selectedPresetId: 'custom-1',
+      };
       render(<PresetSelector />);
       expect(screen.getByLabelText('Delete AlphaChar')).toBeInTheDocument();
-      expect(screen.getByLabelText('Delete BetaChar')).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText('Delete BetaChar'),
+      ).not.toBeInTheDocument();
     });
 
     it('does NOT show delete buttons for default characters', () => {
@@ -266,6 +253,10 @@ describe('PresetSelector', () => {
 
     it('does NOT show delete buttons when connected', () => {
       mockConnectionState.value = 'connected';
+      mockPgStateRef.current = {
+        ...(mockPgStateRef.current as PlaygroundState),
+        selectedPresetId: 'custom-1',
+      };
       render(<PresetSelector />);
       expect(
         screen.queryByLabelText('Delete AlphaChar'),
@@ -286,17 +277,13 @@ describe('PresetSelector', () => {
       expect(alphaCharacterButton).toBeTruthy();
       await user.click(alphaCharacterButton as HTMLElement);
 
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'custom-1',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
+      expect(mockSelectPreset).toHaveBeenCalledWith('custom-1');
     });
   });
 
   // ---- Deletion flow ----
   describe('character deletion', () => {
     beforeEach(() => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -305,6 +292,7 @@ describe('PresetSelector', () => {
             name: 'ToDelete',
           }),
         ],
+        selectedPresetId: 'custom-del',
       });
     });
 
@@ -373,38 +361,8 @@ describe('PresetSelector', () => {
         within(dialog).getByRole('button', { name: /^delete$/i }),
       );
 
-      // Should dispatch SET_SELECTED_PRESET_ID to fall back to first default
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'ramona',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
-    });
-
-    it('does NOT change selected preset when deleting a non-selected custom character', async () => {
-      const user = userEvent.setup();
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'custom-del',
-            localizedDescriptions: { en: 'Not selected' },
-            name: 'ToDelete',
-          }),
-        ],
-        selectedPresetId: 'ramona',
-      });
-      render(<PresetSelector />);
-      await user.click(screen.getByLabelText('Delete ToDelete'));
-
-      const dialog = screen.getByRole('alertdialog');
-      await user.click(
-        within(dialog).getByRole('button', { name: /^delete$/i }),
-      );
-
-      // Should NOT have dispatched SET_SELECTED_PRESET_ID
-      const setPresetCalls = mockDispatch.mock.calls.filter(
-        (call: any[]) => call[0]?.type === 'SET_SELECTED_PRESET_ID',
-      );
-      expect(setPresetCalls).toHaveLength(0);
+      // Falls back to the first default character
+      expect(mockSelectPreset).toHaveBeenCalledWith('ramona');
     });
   });
 
@@ -420,7 +378,6 @@ describe('PresetSelector', () => {
     });
 
     it('shows the selected custom character bio with editable name and description', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -451,17 +408,13 @@ describe('PresetSelector', () => {
 
       // Click Rafal
       await user.click(screen.getByRole('button', { name: /rafal/i }));
-      expect(mockDispatch).toHaveBeenCalledWith({
-        payload: 'rafal',
-        type: 'SET_SELECTED_PRESET_ID',
-      });
+      expect(mockSelectPreset).toHaveBeenCalledWith('rafal');
     });
   });
 
   // ---- getInitials (tested indirectly) ----
   describe('initials rendering for imageless characters', () => {
     it('renders two-letter initials for a two-word name', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -476,7 +429,6 @@ describe('PresetSelector', () => {
     });
 
     it('renders a single initial for a single-word name', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -491,7 +443,6 @@ describe('PresetSelector', () => {
     });
 
     it('limits initials to two characters for long names', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -503,55 +454,6 @@ describe('PresetSelector', () => {
       });
       render(<PresetSelector />);
       expect(screen.getByText('AB')).toBeInTheDocument();
-    });
-  });
-
-  // ---- showInstruction query param variants ----
-  describe('showInstruction query parameter', () => {
-    it('treats showInstruction="" (empty string) as true', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'test' },
-            name: 'EmptyParam',
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-      // Custom char should be visible
-      expect(screen.getByText('EmptyParam')).toBeInTheDocument();
-    });
-
-    it('treats showInstruction=true as true', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'test' },
-            name: 'TrueParam',
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-      expect(screen.getByText('TrueParam')).toBeInTheDocument();
-    });
-
-    it('treats showInstruction=false as false', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=false');
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'test' },
-            name: 'FalseParam',
-          }),
-        ],
-      });
-      render(<PresetSelector />);
-      expect(screen.getByText('FalseParam')).toBeInTheDocument();
     });
   });
 
@@ -567,7 +469,6 @@ describe('PresetSelector', () => {
     });
 
     it('renders custom character with image', () => {
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -585,7 +486,6 @@ describe('PresetSelector', () => {
 
     it('does not dispatch delete when dialog is cancelled', async () => {
       const user = userEvent.setup();
-      mockSearchParams.value = new URLSearchParams('showInstruction=true');
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: [
           makePreset({
@@ -594,6 +494,7 @@ describe('PresetSelector', () => {
             name: 'TestChar',
           }),
         ],
+        selectedPresetId: 'c1',
       });
       render(<PresetSelector />);
 
@@ -682,6 +583,37 @@ describe('PresetSelector', () => {
       await user.type(
         screen.getByLabelText(/instructions/i),
         'Test instructions',
+      );
+    });
+
+    it('selects the character after creating it', async () => {
+      const user = userEvent.setup();
+      const voice: DBVoice = {
+        description: null,
+        feature: 'call',
+        id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
+        language: 'multiple',
+        model: 'xai',
+        name: 'Ara',
+        sample_url: null,
+        sort_order: 0,
+        type: 'Female',
+      };
+      render(<PresetSelector callVoices={[voice]} isPaidUser />);
+      await user.click(
+        screen.getByRole('button', { name: /add custom character/i }),
+      );
+      await user.type(screen.getByLabelText(/name/i), 'Test Character');
+      await user.type(
+        screen.getByLabelText(/instructions/i),
+        'Test instructions',
+      );
+      await user.click(
+        screen.getByRole('button', { name: 'Create Character' }),
+      );
+
+      expect(mockSelectPreset).toHaveBeenCalledWith(
+        '00000000-0000-4000-a000-000000000099',
       );
     });
 

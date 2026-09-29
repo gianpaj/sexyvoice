@@ -31,7 +31,7 @@ export interface ApiCharacterResponse {
 // ─── API request payload (sent to POST /api/characters) ───────────────────────
 
 export interface SaveCharacterPayload {
-  id: string;
+  id?: string;
   localizedDescriptions: Partial<Record<string, string>>;
   localizedPrompts: Partial<Record<string, string>>;
   name: string;
