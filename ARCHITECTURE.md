@@ -510,7 +510,12 @@ the production environment to count confirmed cases. Cancellations observed only
 after finalization are not captured, so this is a lower bound on impact, not a
 complete count of disconnects. Failed refunds have separate Sentry reporting.
 
-Cloning does not invalidate credits, so the sidebar and Crisp can stay stale.
+Cloning invalidates credits once `/api/clone-voice` responds, whether it
+succeeded or failed. The route awaits its reservation refund before responding,
+so the refreshed balance is settled, including a charge kept after a failed
+refund. A cancelled or failed fetch skips the refresh for the same reason as
+generation.
+
 Crisp holds a session snapshot, not a live balance. If a refreshed query does
 not reach Crisp, check the claims and paid-status lookups before
 `Crisp.session.setData`.
