@@ -513,8 +513,11 @@ complete count of disconnects. Failed refunds have separate Sentry reporting.
 Cloning invalidates credits once `/api/clone-voice` responds, whether it
 succeeded or failed. The route awaits its reservation refund before responding,
 so the refreshed balance is settled, including a charge kept after a failed
-refund. A cancelled or failed fetch skips the refresh for the same reason as
-generation.
+refund. A cancelled or failed fetch cannot confirm settlement, so it skips the
+refresh. Unlike generation, a cancelled clone is usually still charged: the
+route passes the abort signal only to reference-audio enhancement, so provider
+generation and upload finish and keep the reservation. The sidebar and Crisp
+then show the pre-clone balance until the next refetch.
 
 Crisp holds a session snapshot, not a live balance. If a refreshed query does
 not reach Crisp, check the claims and paid-status lookups before
