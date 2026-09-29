@@ -1,3 +1,5 @@
+/// <reference path="../apps/web/lib/supabase/types.d.ts" />
+
 import { rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,32 +35,22 @@ interface CliOptions {
   output?: string;
 }
 
-interface CreditBalanceRow {
-  amount: number;
-  updated_at: string;
-  user_id: string;
-}
+type CreditBalanceRow = Pick<
+  Tables<'credits'>,
+  'amount' | 'updated_at' | 'user_id'
+>;
 
-interface CreditTransactionRow {
-  amount: number;
-  created_at: string;
-  id: string;
-  user_id: string;
-}
+type CreditTransactionRow = Pick<
+  Tables<'credit_transactions'>,
+  'amount' | 'created_at' | 'id' | 'user_id'
+>;
 
-interface ProfileRow {
-  created_at: string;
-  id: string;
-  username: string;
-}
+type ProfileRow = Pick<Tables<'profiles'>, 'created_at' | 'id' | 'username'>;
 
-interface UsageEventRow {
-  created_at: string;
-  credits_used: number;
-  id: string;
-  occurred_at: string;
-  user_id: string;
-}
+type UsageEventRow = Pick<
+  Tables<'usage_events'>,
+  'created_at' | 'credits_used' | 'id' | 'occurred_at' | 'user_id'
+>;
 
 interface LedgerAggregate {
   lastTransactionAt: string | null;
@@ -88,7 +80,7 @@ export interface CreditReconciliation {
 
 interface AuditRow extends CreditReconciliation {
   auditAsOf: string;
-  balanceUpdatedAt: string;
+  balanceUpdatedAt: string | null;
   currentBalance: number;
   historyCoverage: HistoryCoverage;
   lastTransactionAt: string | null;
