@@ -18,6 +18,7 @@
  *   --limit=N            Only analyze the N most recent candidates
  *   --min-duration=N     Minimum call duration in seconds (default: 120)
  *   --models=a,b,c       Only analyze these call models
+ *   --retry-failed       Include sessions parked after too many failed attempts
  *   --debug              Verbose logging
  *   --debug-session=UUID Only analyze a specific session id
  *   --smoke-test         Run a tiny xAI request first to validate the model id
@@ -30,6 +31,7 @@
  *   - XAI_SUMMARY_MODEL (optional; defaults to grok-4.3)
  */
 
+import { MAX_CALL_ANALYSIS_ATTEMPTS } from '../apps/web/lib/ai/call-analysis-batch.ts';
 import {
   aggregateInsights,
   createAdminClient,
@@ -55,6 +57,7 @@ function parseArgs() {
     minDuration: MIN_ANALYSIS_CALL_DURATION_SECONDS,
     models: [],
     realtime: false,
+    retryFailed: false,
     smokeTest: false,
   };
 
@@ -76,6 +79,9 @@ function parseArgs() {
           .split(',')
           .map((m) => m.trim())
           .filter(Boolean);
+        break;
+      case '--retry-failed':
+        options.retryFailed = true;
         break;
       case '--debug':
         options.debug = true;
@@ -108,6 +114,7 @@ Options:
   --limit=N            Only analyze the N most recent candidates
   --min-duration=N     Minimum call duration in seconds (default: ${MIN_ANALYSIS_CALL_DURATION_SECONDS})
   --models=a,b,c       Only analyze these call models
+  --retry-failed       Include sessions parked after ${MAX_CALL_ANALYSIS_ATTEMPTS} failed attempts
   --debug              Verbose logging
   --debug-session=UUID Only analyze a specific session id
   --smoke-test         Run a tiny xAI request first to validate the model id
@@ -144,6 +151,7 @@ async function main() {
 
   console.log('\n📥 Fetching completed sessions without an analysis row...');
   let sessions = await getAllCompletedCallSessions(supabase, {
+    includeParked: options.retryFailed,
     minDuration: options.minDuration,
     models: options.models,
   });

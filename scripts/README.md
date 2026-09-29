@@ -375,10 +375,13 @@ The live path (not a script) is asynchronous: the `POST /api/call-sessions/analy
 webhook fired when a call completes only enqueues the session, and the
 `/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
 Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
-`backfill-call-analysis` to catch up sessions the queue parked as `failed`.
+`backfill-call-analysis --retry-failed` to catch up sessions the queue parked as
+`failed`.
 
-Only successful analyses are persisted; failures leave no row so they stay
-retryable. Calls shorter than 120s and sessions that already have an analysis row
+Only successful analyses are persisted. Each failure increments the session's
+`call_analysis_queue.attempts` (shared with the cron drain); after 3 failed
+attempts the session is parked and both scripts skip it unless
+`--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
 are skipped.
 
 ### Quick Start
