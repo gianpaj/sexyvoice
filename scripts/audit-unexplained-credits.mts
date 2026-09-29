@@ -149,10 +149,7 @@ export function reconcileCreditAccount(
   };
 }
 
-type FetchLike = (
-  input: RequestInfo | URL,
-  init?: RequestInit,
-) => Promise<Response>;
+type FetchLike = typeof fetch;
 
 export function createReadOnlyFetch(delegate: FetchLike = fetch): FetchLike {
   return (input, init) => {
