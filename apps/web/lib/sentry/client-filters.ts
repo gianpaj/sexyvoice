@@ -5,6 +5,9 @@ interface SentryStackFrame {
 }
 
 interface SentryException {
+  mechanism?: {
+    handled?: boolean;
+  };
   stacktrace?: {
     frames?: SentryStackFrame[];
   };
@@ -46,7 +49,11 @@ const thirdPartyScriptFramePattern = /posthog-recorder\.js|addEL_hook/i;
 const localAppFramePattern = /apps\/web|\/_next\/static\/chunks\/app\//i;
 const nextSharedChunkFramePattern = /\/_next\/static\/chunks\/(?!app\/)/i;
 const browserMediaNoisePattern =
-  /Track has ended|WASM_OR_WORKER_NOT_READY|Wasm SIMD unsupported|Lock was stolen by another request|The I\/O read operation failed\./i;
+  /Track has ended|WASM_OR_WORKER_NOT_READY|Wasm SIMD unsupported|Lock was stolen by another request/i;
+// WebKit's default NotReadableError message. App code that catches the error and
+// reports it sends a handled event, so only unhandled rejections are noise.
+const unhandledBrowserReadErrorPattern =
+  /^NotReadableError The I\/O read operation failed\.$/;
 const opaqueBrowserEventRejectionPattern =
   /Event `Event` \(type=error\) captured as promise rejection/i;
 const injectedBrowserGlobalPattern =
@@ -180,6 +187,16 @@ function isBrowserRuntimeNoiseException(exception: SentryException): boolean {
   return framesHaveNoLocalAppFrame(frames);
 }
 
+function isUnhandledBrowserReadNoiseException(
+  exception: SentryException,
+): boolean {
+  return (
+    exception.mechanism?.handled === false &&
+    unhandledBrowserReadErrorPattern.test(getExceptionText(exception)) &&
+    framesHaveNoLocalAppFrame(exception.stacktrace?.frames ?? [])
+  );
+}
+
 function isNextClientTransientException(exception: SentryException): boolean {
   const exceptionText = getExceptionText(exception);
   if (!nextClientTransientPattern.test(exceptionText)) {
@@ -227,6 +244,10 @@ export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
   }
 
   if (exceptions.some(isBrowserRuntimeNoiseException)) {
+    return true;
+  }
+
+  if (exceptions.some(isUnhandledBrowserReadNoiseException)) {
     return true;
   }
 

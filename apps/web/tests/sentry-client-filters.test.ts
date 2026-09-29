@@ -329,22 +329,6 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(true);
-
-    expect(
-      shouldDropClientSentryEvent({
-        exception: {
-          values: [
-            {
-              stacktrace: {
-                frames: [],
-              },
-              type: 'NotReadableError',
-              value: 'The I/O read operation failed.',
-            },
-          ],
-        },
-      }),
-    ).toBe(true);
   });
 
   it('drops framework-only React render loop noise', () => {
@@ -464,27 +448,48 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(false);
   });
 
-  it('keeps NotReadableError with app frames', () => {
-    expect(
-      shouldDropClientSentryEvent({
-        exception: {
-          values: [
+  describe('NotReadableError', () => {
+    const notReadable = (
+      mechanism: { handled?: boolean } | undefined,
+      frames: { filename: string; function?: string }[] = [],
+    ) => ({
+      exception: {
+        values: [
+          {
+            mechanism,
+            stacktrace: { frames },
+            type: 'NotReadableError',
+            value: 'The I/O read operation failed.',
+          },
+        ],
+      },
+    });
+
+    it('drops unhandled frame-less rejections', () => {
+      expect(shouldDropClientSentryEvent(notReadable({ handled: false }))).toBe(
+        true,
+      );
+    });
+
+    it('keeps errors the app caught and reported', () => {
+      expect(shouldDropClientSentryEvent(notReadable({ handled: true }))).toBe(
+        false,
+      );
+      expect(shouldDropClientSentryEvent(notReadable(undefined))).toBe(false);
+    });
+
+    it('keeps unhandled rejections with app frames', () => {
+      expect(
+        shouldDropClientSentryEvent(
+          notReadable({ handled: false }, [
             {
-              stacktrace: {
-                frames: [
-                  {
-                    filename: 'apps/web/hooks/use-media-recorder.ts',
-                    function: 'startRecording',
-                  },
-                ],
-              },
-              type: 'NotReadableError',
-              value: 'The I/O read operation failed.',
+              filename: 'apps/web/hooks/use-media-recorder.ts',
+              function: 'startRecording',
             },
-          ],
-        },
-      }),
-    ).toBe(false);
+          ]),
+        ),
+      ).toBe(false);
+    });
   });
 
   it('drops injected browser globals and external worker imports without app frames', () => {
