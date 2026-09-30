@@ -10,6 +10,7 @@
     "batch-refund-credits": "tsx batch-refund-credits.mts",
     "check-disposable-emails": "node check-disposable-emails.mjs",
     "cleanup-orphaned-r2-audio": "tsx cleanup-orphaned-r2-audio.mts",
+    "compare-audio-cleanup": "tsx compare-audio-cleanup.mts",
     "compile-dispute-evidence": "tsx compile-dispute-evidence.mts",
     "find-truncated-gemini31-tts": "node find-truncated-gemini31-tts.mjs",
     "generate-gemini-speech-samples": "tsx generate-gemini-speech-samples.mts",
@@ -27,6 +28,7 @@
   "dependencies": {
     "@ai-sdk/xai": "3.0.135",
     "@aws-sdk/client-s3": "3.1011.0",
+    "@fal-ai/client": "^1.10.1",
     "@google/genai": "2.24.0",
     "@supabase/supabase-js": "catalog:",
     "@upstash/redis": "catalog:",

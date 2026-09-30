@@ -254,6 +254,30 @@ these voices for generation. Database writes follow the
 [database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
 authorizes an exception.
 
+## Audio cleanup comparison
+
+`compare-audio-cleanup.mts` runs local audio through fal cleanup models and
+writes a side-by-side listening page. It compares `fal-ai/deepfilternet3`, the
+model behind clone reference audio enhancement, with
+[`veed/clean-audio`](https://fal.ai/models/veed/clean-audio). Inputs
+are trimmed to 60 seconds to match the clone route. Existing outputs are reused.
+
+```bash
+# List inputs and estimated cost without calling fal
+pnpm compare-audio-cleanup --dry-run ~/samples/cloning
+
+# Clean every file and open generated-speech/audio-cleanup/listen.html
+pnpm run compare-audio-cleanup -- --env-file ../apps/web/.env.local ~/samples/cloning
+```
+
+Requires `FAL_KEY`, `ffmpeg`, and `ffprobe`.
+
+VEED Clean Audio is not better than DeepFilterNet3. On 2026-09-30, 44 cloning
+samples showed no consistent quality gain; VEED sounded worse on some clips.
+VEED costs less on clips longer than 12.5 seconds ($0.0125 per started minute
+versus $0.001 per second), but it averaged 12.5 seconds per clip against 6.7
+seconds for DeepFilterNet3. Clone enhancement stays on DeepFilterNet3.
+
 ## Reset Freeloader Credits Script
 
 Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.

@@ -563,6 +563,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1011.0
         version: 3.1011.0
+      '@fal-ai/client':
+        specifier: ^1.10.1
+        version: 1.10.1
       '@google/genai':
         specifier: 2.24.0
         version: 2.24.0(supports-color@8.1.1)
