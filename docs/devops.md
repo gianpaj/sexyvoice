@@ -233,6 +233,57 @@ uses a changed schema. Keep privileged keys server-only and preserve RLS.
 Application auth, retry, and cookie behavior is documented under
 [Supabase access boundaries](../ARCHITECTURE.md#supabase-access-boundaries).
 
+#### Local Supabase versions and data
+
+`apps/web/supabase/config.toml` selects Postgres 17 and the local project ID
+`sexyvoice.ai-pg17`. Run local CLI commands with `--workdir apps/web` from the
+repository root. The project ID selects Docker resources; it does not change
+which hosted project is linked.
+
+The retained `supabase_db_sexyvoice.ai` volume contains Postgres 15 data. Do not
+start it with Postgres 17 or delete it with `stop --no-backup` or Docker volume
+pruning. Local cleanup cron jobs are disabled in the restored PG17 database.
+See the [local upgrade record](../.agents/notes/implemented/operations/2026-09-30-local-postgres-17-upgrade.md)
+for backup locations, verification, and restore caveats.
+
+#### Supabase upgrade maintenance windows
+
+Prefer Saturday 10:00–12:00 UTC; use Wednesday 09:00–11:00 UTC as the
+alternative. These are recommended windows, not a scheduled upgrade. Keep UTC
+as the scheduling reference: CEST is UTC+2 and CET is UTC+1.
+
+| Priority    | Window (UTC)          | CEST / CET                | Average usage events, 8 weeks / latest 4 |
+| ----------- | --------------------- | ------------------------- | ---------------------------------------- |
+| Preferred   | Saturday 10:00–12:00  | 12:00–14:00 / 11:00–13:00 | 12.4 / 9.3                               |
+| Alternative | Wednesday 09:00–11:00 | 11:00–13:00 / 10:00–12:00 | 14.0 / 14.5                              |
+
+The 2026-09-30 assessment used read-only Supabase CLI queries for eight complete
+weeks, August 5–September 29, with a separate September 2–29 comparison. Counts
+cover each full two-hour window. Saturday had 4–25 usage events and 0–1
+overlapping calls per window; Wednesday had 7–27 events and 0–3 overlapping
+calls. Average distinct usage users were 5.1 and 5.3, respectively.
+
+These figures measure recorded product usage, including external API TTS, not
+all HTTP requests or database load. Failed attempts may be absent. Recheck
+recent activity before scheduling; neither window guarantees zero traffic.
+
+Before upgrading:
+
+- Review the [Supabase upgrade guidance](https://supabase.com/docs/guides/platform/upgrading),
+  Dashboard eligibility warnings, and project-specific downtime estimate.
+  Reserve two hours for the operation and verification, not as an estimate of
+  database downtime. Extend the window if the Dashboard estimate requires it.
+- Confirm a recent usable backup and notify users of the scheduled outage.
+- Check scheduled jobs. Database audio cleanup runs at 03:17 and 03:47 UTC,
+  outside both windows. The Vercel schedules documented under
+  [Notifications and background jobs](#notifications-and-background-jobs)
+  include call-analysis batching every 15 minutes, which overlaps either window.
+  Plan for interrupted runs and verify queue recovery afterward.
+- After upgrading, verify sign-in, generation, credit balances, external API
+  requests, and calls; check logs for errors and slow queries. Follow the
+  [deployment verification](#deployment-verification) precautions for production
+  tests.
+
 ### Sentry
 
 `apps/web/next.config.js` configures org `sexyvoiceai`, project `sexyvoice-ai`,
