@@ -152,12 +152,25 @@ export default async function LandingPage(props: {
       {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
+        <div className="min-h-screen bg-linear-to-br from-[#090711] to-zinc-800 selection:bg-[#d8b4ff]/30">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[4rem] left-[-12rem] h-[36rem] w-[36rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(167,139,250,0.34),rgba(91,33,182,0.12)_42%,transparent_70%)] blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[21rem] right-[-14rem] h-[42rem] w-[42rem] rounded-full bg-[radial-gradient(circle_at_center,rgba(244,114,182,0.28),rgba(59,130,246,0.08)_48%,transparent_72%)] blur-3xl"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-[-30rem] left-1/2 h-[34rem] w-[56rem] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.16),transparent_68%)] blur-3xl"
+          />
+
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
+            <div className="z-10 flex min-h-[calc(100svh-4rem)] flex-col justify-evenly py-8 text-center">
               <HeroWaveform />
-              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+              <h1 className="text-balance font-bold text-5xl leading-16 md:text-6xl">
                 <span className="text-white/90">{firstPart}</span>
                 <br />
                 {titleRestParts && (
@@ -172,7 +185,7 @@ export default async function LandingPage(props: {
                   </span>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty text-gray-300 text-xl leading-8 sm:leading-10">
                 {dictLanding.hero.subtitle}
               </p>
 
@@ -228,56 +241,58 @@ export default async function LandingPage(props: {
             {/* Features Grid */}
             <div
               className={`mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 ${
-                VOICE_CLONING_PAGE_ENABLED ? 'lg:grid-cols-3' : 'lg:grid-cols-2'
+                VOICE_CLONING_PAGE_ENABLED
+                  ? 'lg:grid-cols-6 lg:*:col-span-2 lg:*:first:col-start-2'
+                  : 'lg:grid-cols-2'
               }`}
             >
-              <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
+              <Card className="group max-w-sm border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors hover:border-fuchsia-400/60 hover:bg-fuchsia-400/8">
                 <Link href="/voice-call" prefetch>
                   <CardHeader className="pb-3">
                     <CardDecorator>
                       <PhoneCall
                         aria-hidden
-                        className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
+                        className="size-6 text-gray-200 transition-colors group-hover:text-white"
                       />
                     </CardDecorator>
 
-                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
+                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
                       {dictLanding.features.voiceCalling.title}
                     </h3>
                   </CardHeader>
 
                   <CardContent>
-                    <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
+                    <p className="text-pretty text-center text-sm text-zinc-300">
                       {dictLanding.features.voiceCalling.description}
                     </p>
                   </CardContent>
                 </Link>
               </Card>
               {VOICE_CLONING_PAGE_ENABLED && (
-                <Card className="group max-w-sm border-fuchsia-800 shadow-zinc-950/5 transition-colors hover:border-fuchsia-950">
+                <Card className="group max-w-sm border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors hover:border-fuchsia-400/60 hover:bg-fuchsia-400/8">
                   <Link href="/voice-cloning" prefetch>
                     <CardHeader className="pb-3">
                       <CardDecorator>
                         <AudioLines
                           aria-hidden
-                          className="size-6 text-gray-200 transition-colors group-hover:text-promo-accent"
+                          className="size-6 text-gray-200 transition-colors group-hover:text-white"
                         />
                       </CardDecorator>
 
-                      <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-promo-accent/70">
+                      <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
                         {dictLanding.features.voiceCloneDemo.title}
                       </h3>
                     </CardHeader>
 
                     <CardContent>
-                      <p className="text-justify text-sm transition-colors group-hover:text-promo-accent">
+                      <p className="text-pretty text-center text-sm text-zinc-300">
                         {dictLanding.features.voiceCloneDemo.description}
                       </p>
                     </CardContent>
                   </Link>
                 </Card>
               )}
-              <Card className="group max-w-sm shadow-zinc-950/5">
+              <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Shield aria-hidden className="size-6 text-gray-200" />
@@ -288,12 +303,12 @@ export default async function LandingPage(props: {
                   </h3>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-justify text-sm">
+                  <p className="text-pretty text-center text-sm text-zinc-300">
                     {dictLanding.features.security.description}
                   </p>
                 </CardContent>
               </Card>
-              <Card className="group max-w-sm shadow-zinc-950/5">
+              <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Mic2 aria-hidden className="size-6 text-gray-200" />
@@ -305,13 +320,13 @@ export default async function LandingPage(props: {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-justify text-sm">
+                  <p className="text-pretty text-center text-sm text-zinc-300">
                     {dictLanding.features.voiceCloning.description}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="group max-w-sm shadow-zinc-950/5">
+              <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
                 <CardHeader className="pb-3">
                   <CardDecorator>
                     <Globe2 aria-hidden className="size-6 text-gray-200" />
@@ -323,7 +338,7 @@ export default async function LandingPage(props: {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-justify text-sm">
+                  <p className="text-pretty text-center text-sm text-zinc-300">
                     {dictLanding.features.multiLanguage.description}
                   </p>
                 </CardContent>

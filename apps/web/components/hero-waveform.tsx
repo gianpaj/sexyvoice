@@ -2,7 +2,7 @@ import './hero-waveform.scss';
 
 function HeroWaveform() {
   return (
-    <div className="flex justify-center pb-6 sm:pb-8">
+    <div className="flex justify-center pb-6 sm:pb-0">
       <svg
         data-name="Layer 1"
         id="wave"

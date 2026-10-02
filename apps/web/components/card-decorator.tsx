@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  */
 export const CardDecorator = ({ children }: { children: ReactNode }) => (
   <div className="mx-auto grid size-36 place-items-center">
-    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
+    <div className="flex size-12 items-center justify-center rounded-md border-fuchsia-300/30 border-t border-l bg-fuchsia-500/20">
       {children}
     </div>
   </div>
