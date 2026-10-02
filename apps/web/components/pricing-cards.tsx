@@ -104,7 +104,7 @@ export function PricingCards({
 
   return (
     <div
-      className={cn('flex flex-col gap-6 xl:px-28', className)}
+      className={cn('flex flex-col gap-6 xl:px-16', className)}
       data-promo-theme={promoTheme}
     >
       {/* Billing toggle — the "+15%" badge here is the single source of truth */}
