@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@ai-sdk/xai": "3.0.135",
-    "@aws-sdk/client-s3": "3.1011.0",
+    "@aws-sdk/client-s3": "3.1144.0",
     "@fal-ai/client": "^1.10.1",
     "@google/genai": "2.24.0",
     "@supabase/supabase-js": "catalog:",
