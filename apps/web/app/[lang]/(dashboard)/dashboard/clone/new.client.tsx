@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, CircleStop, Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
@@ -38,6 +39,7 @@ import {
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
 import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
+import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
@@ -321,6 +323,7 @@ function NewVoiceClientInner({
   }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
 
   const handleGenerate = async () => {
     if (!(file || micBlob)) {
@@ -431,6 +434,11 @@ function NewVoiceClientInner({
         method: 'POST',
         signal: abortController.current.signal,
       });
+
+      // The route settles its reservation and any refund before it responds, so
+      // every response carries a settled balance. An aborted or failed fetch
+      // cannot confirm settlement. See ARCHITECTURE.md#credit-balance-sync.
+      invalidateCredits(queryClient).catch(() => undefined);
 
       if (!voiceRes.ok) {
         let errorMessage = t('errorCloning');
