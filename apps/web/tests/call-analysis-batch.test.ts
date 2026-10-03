@@ -106,6 +106,29 @@ describe('resolveCallAnalysisBatchOutcome()', () => {
     );
   });
 
+  it('flags a content-policy refusal as terminal without touching plain errors', () => {
+    expect(
+      resolveCallAnalysisBatchOutcome(context, {
+        content: null,
+        customId: 's1',
+        errorMessage: "permission-denied: I can't help with that request.",
+      }),
+    ).toEqual({
+      error: "permission-denied: I can't help with that request.",
+      refused: true,
+      sessionId: 's1',
+    });
+
+    // A plain model/parse error is not a refusal, so it stays retryable.
+    const plain = resolveCallAnalysisBatchOutcome(context, {
+      content: null,
+      customId: 's1',
+      errorMessage: 'model error',
+    });
+    expect(plain).toEqual({ error: 'model error', sessionId: 's1' });
+    expect('refused' in plain).toBe(false);
+  });
+
   it('turns missing, errored and off-schema outcomes into retryable errors', () => {
     expect(resolveCallAnalysisBatchOutcome(context, undefined)).toEqual({
       error: 'No batch result returned',

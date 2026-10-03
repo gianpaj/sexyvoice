@@ -9,10 +9,13 @@ import {
   MIN_ANALYSIS_CALL_DURATION_SECONDS,
 } from '@/lib/ai/analyze-call';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { isProviderContentRefusal } from '@/lib/provider-errors';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   enqueueCallAnalysis,
   hasCallSessionAnalysis,
+  isCallAnalysisParked,
+  parkRefusedCallAnalysis,
   upsertCallSessionAnalysis,
 } from '@/lib/supabase/call-analysis-queries';
 
@@ -113,10 +116,43 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (await isCallAnalysisParked(supabase, id)) {
+      return NextResponse.json({ skipped: true });
+    }
+  } catch (error) {
+    console.error('Error checking parked analysis:', error);
+    return APIErrorResponse('Failed to check existing analysis', 500);
+  }
+
+  try {
     const analysis = await analyzeTranscript(session);
     await upsertCallSessionAnalysis(supabase, session, analysis);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    // A content-policy refusal is deterministic: the same transcript can only
+    // be declined again, so park it and skip (200) with one countable,
+    // non-actionable warning instead of an error page.
+    if (isProviderContentRefusal(error)) {
+      console.warn('Call analysis declined by provider', { callSessionId: id });
+      Sentry.captureMessage('Call analysis declined by provider', {
+        extra: { callSessionId: id },
+        fingerprint: ['call-analysis-provider-refusal'],
+        level: 'warning',
+      });
+      try {
+        await parkRefusedCallAnalysis(
+          supabase,
+          id,
+          error instanceof Error ? error.message : String(error),
+        );
+      } catch (parkError) {
+        // Still answer 200: a 500 makes the webhook redeliver, which pays for
+        // another guaranteed refusal.
+        Sentry.captureException(parkError, { extra: { callSessionId: id } });
+      }
+      return NextResponse.json({ reason: 'provider_refused', skipped: true });
+    }
+
     console.error('Call analysis error:', error);
     Sentry.captureException(error, { extra: { callSessionId: id } });
 
