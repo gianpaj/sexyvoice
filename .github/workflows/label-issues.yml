@@ -16,24 +16,29 @@ jobs:
         uses: yamadashy/jev-labeler-action@0c90211a8873cb11913ef43ff13171c0afd74287 # v0.3.1
         with:
           api-key: ${{ secrets.TYPESAFE_API_KEY }}
-          # Exclude non-category operational labels or decision tags
-          exclude-labels: |
-            duplicate
-            wontfix
-            invalid
-            good first issue
-            help wanted
-            codex
-            dependencies
-            javascript
-            marketing
+          # Only classify canonical types and areas, not legacy or operational labels.
+          labels: |
+            type: bug
+            type: feat
+            type: refactor
+            type: test
+            type: observability
+            type: infra
+            type: docs
+            area: call
+            area: tts-generation
+            area: voice-cloning
+            area: billing-credits
+            area: api
+            area: ui-ux
+            area: notifications
 
           # Explicit criteria to ensure high precision across our domain and type labels
           criteria: |
             "type: bug": >-
               The issue reports a bug, unexpected error, broken behavior, audio failure, or incorrect billing/credit calculation.
             "type: feat": >-
-              The issue requests a new feature, new capability, or functional improvement to the product.
+              The primary purpose is a new user-facing product capability. Internal logging, telemetry, tracing, monitoring, tests, documentation, infrastructure, and refactoring alone do not qualify.
             "type: refactor": >-
               The issue proposes code cleanup, deduplication of abstractions, architecture restructuring, or code optimization.
             "type: test": >-
@@ -53,7 +58,7 @@ jobs:
             "area: billing-credits": >-
               The issue involves the credit ledger, credit deductions, pricing, top-ups, auto-recharge, Stripe checkout, or subscriptions.
             "area: api": >-
-              The issue involves the external REST API (/api/v1/), developer API keys, OpenAPI spec, rate limiting, or programmatic access.
+              The issue primarily changes external /api/v1/ routes or their supporting code, including authentication, developer API keys, OpenAPI specs, rate limiting, schemas, and request logging. Merely mentioning an API or SDK does not qualify.
             "area: ui-ux": >-
               The issue is about frontend visual design, animations, theme, buttons, modals, responsiveness, or dashboard user experience.
             "area: notifications": >-
