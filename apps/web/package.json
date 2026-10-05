@@ -55,7 +55,7 @@
     "@livekit/components-react": "2.9.24",
     "@livekit/components-styles": "^1.2.0",
     "@livekit/krisp-noise-filter": "^0.3.4",
-    "@livekit/protocol": "1.48.2",
+    "@livekit/protocol": "1.52.1",
     "@mistralai/mistralai": "^2.1.2",
     "@next/bundle-analyzer": "16.3.8",
     "@sentry/nextjs": "10.45.0",
