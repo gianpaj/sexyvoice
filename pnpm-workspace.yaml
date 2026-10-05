@@ -54,6 +54,7 @@ overrides:
   "undici@>=4.5.0 <5.28.5": ">=5.28.5"
   "ultracite>zod": "4.3.6"
   "unbash>zod": "4.3.6"
+  "vite@>=7.0.0 <7.3.2": "7.3.6"
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
