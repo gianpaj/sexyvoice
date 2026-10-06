@@ -102,7 +102,6 @@ export async function GET(request: NextRequest) {
     ? { 'Cache-Control': 'no-store', 'X-Daily-Stats-Cache': 'bypass' }
     : undefined;
   const previousDay = subtractDays(today, 1);
-  const twoDaysAgo = subtractDays(today, 2);
   const fourteenDaysAgo = subtractDays(today, ROLLING_WINDOW_DAYS);
   const thirtyDaysAgo = subtractDays(today, 30);
   // Use previousDay for MTD calculations since we're reporting on that day's month
@@ -719,12 +718,6 @@ export async function GET(request: NextRequest) {
       transaction.created_at >= previousDay.toISOString() &&
       transaction.created_at < today.toISOString(),
   );
-  const refundsPrevCount = refundTransactions.filter(
-    (transaction) =>
-      transaction.created_at >= twoDaysAgo.toISOString() &&
-      transaction.created_at < previousDay.toISOString(),
-  ).length;
-  const refundsTotalCount = refundTransactions.length;
 
   // Chargeback dispute activity (holds vs releases). Hold rows carry a negative
   // `amount` (credits frozen), release rows a positive `amount` (credits
@@ -881,7 +874,6 @@ export async function GET(request: NextRequest) {
     (prevMtdRevenue + twoMonthsAgoMtdRevenue + threeMonthsAgoMtdRevenue) / 3;
 
   const creditsTodayCount = purchasePrevDayData.length;
-  const refundsTodayCount = refundsPrevDayData.length;
 
   // Contribution uses fresh usage and payment history together. Cached purchases
   // could misclassify fresh usage or understate collections; cached activity
@@ -1373,14 +1365,7 @@ export async function GET(request: NextRequest) {
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount}: ${topCustomersList}`,
     '',
-    ...(refundsTodayCount > 0
-      ? [
-          `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
-          `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Yesterday: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
-        ]
-      : [
-          `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
-        ]),
+    `🔄 Refunds: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)} yesterday | All-time: $${Math.abs(totalRefundAmountUsd).toFixed(2)}`,
     ...(chargebackTransactions.length > 0
       ? [
           `⚖️ Chargebacks: ${chargebackHoldsTodayCount} held / ${chargebackReleasesTodayCount} released today`,
