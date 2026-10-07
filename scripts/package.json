@@ -4,6 +4,7 @@
   "scripts": {
     "analyze-call-sessions": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON analyze-call-sessions.mjs",
     "analyze-free-users": "node --env-file=.env analyze-free-users.mjs",
+    "audit-unexplained-credits": "tsx audit-unexplained-credits.mts",
     "backfill-call-analysis": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON backfill-call-analysis.mjs",
     "backfill-free-call": "tsx backfill-free-call.mts",
     "backup-r2-audio": "NODE_ENV=production tsx backup-r2-audio.mts",
@@ -20,7 +21,7 @@
     "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",
     "restore-account-billing": "node --import tsx restore-account-billing.mts",
     "sync-deny-domains": "node sync-deny-domains.mjs",
-    "test": "tsx --test *r2*.test.mts",
+    "test": "tsx --test *.test.mts",
     "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",
     "type-check": "tsc --noEmit",
     "upload-speech-samples": "tsx upload-speech-samples.mts"

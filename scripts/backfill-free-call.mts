@@ -1,6 +1,7 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
+
 import { loadScriptEnv } from './lib/env.mts';
 import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
 
@@ -158,11 +159,11 @@ function computeUpdates(
 
     results.push({
       callId: session.id,
-      userId: session.user_id,
-      startedAt: session.started_at,
-      previousValue: session.free_call,
-      newValue: correctValue,
       changed,
+      newValue: correctValue,
+      previousValue: session.free_call,
+      startedAt: session.started_at,
+      userId: session.user_id,
     });
   }
 
@@ -349,32 +350,32 @@ Examples:
 function parseCliArgs(): CliOptions {
   try {
     const { values } = parseArgs({
+      allowPositionals: false,
       args: process.argv.slice(2),
       options: {
         dryrun: {
-          type: 'boolean',
-          short: 'd',
           default: false,
-        },
-        limit: {
-          type: 'string',
-          short: 'l',
+          short: 'd',
+          type: 'boolean',
         },
         help: {
-          type: 'boolean',
-          short: 'h',
           default: false,
+          short: 'h',
+          type: 'boolean',
+        },
+        limit: {
+          short: 'l',
+          type: 'string',
         },
       },
-      allowPositionals: false,
     });
 
     return {
       dryrun: values.dryrun as boolean,
+      help: values.help as boolean,
       limit: values.limit
         ? Number.parseInt(values.limit as string, 10)
         : undefined,
-      help: values.help as boolean,
     };
   } catch (error: unknown) {
     console.error(
@@ -496,4 +497,4 @@ async function main() {
   }
 }
 
-main();
+await main();

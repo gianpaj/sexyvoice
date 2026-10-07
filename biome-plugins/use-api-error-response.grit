@@ -11,8 +11,5 @@ language js
 // machine-readable `{ errorCode }` i18n responses) are intentionally not flagged.
 `NextResponse.json($args)` as $call where {
   $args <: contains `error: $_`,
-  register_diagnostic(
-    span = $call,
-    message = "Return error responses with APIErrorResponse(message, status) from '@/lib/error-ts' instead of NextResponse.json({ error }, ...). This keeps error bodies consistent across the API."
-  )
+  register_diagnostic(span=$call, message="Return error responses with APIErrorResponse(message, status) from '@/lib/error-ts' instead of NextResponse.json({ error }, ...). This keeps error bodies consistent across the API.")
 }

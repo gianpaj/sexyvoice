@@ -336,6 +336,111 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 
 ---
 
+## Audit Unexplained Credits Script
+
+Read-only Node.js/TypeScript audit that finds recently changed balances that
+cannot be explained by recorded credit transactions and usage events.
+
+### Quick Start
+
+```bash
+# Scan users whose balance changed in the last 3 days
+pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 3
+
+# Raise the reporting threshold (default: 50 credits)
+pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 7 --min-credits 100
+
+# Limit candidates while testing
+pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 1 --limit 25
+```
+
+### CLI Options
+
+- `--days <number>` - Required lookback window for `credits.updated_at`
+- `--min-credits <number>` - Minimum unexplained grant to report; defaults to `50`
+- `-l, --limit <number>` - Limit recently changed balances scanned
+- `-o, --output <path>` - Set the CSV report path
+- `-h, --help` - Show help
+
+### How it works
+
+1. Sets a fixed audit cutoff with a five-minute safety lag.
+2. Finds balances updated during the requested window using stable keyset
+   pagination.
+3. Fetches those users' recorded transaction and usage history up to the cutoff.
+4. Rechecks balances and skips any account that changed during the audit.
+5. Compares stable balances with the balance explained by the recorded ledger.
+6. Prints a summary and, when it flags users, writes a permission-restricted CSV
+   report.
+
+### Output columns
+
+The console uses short `snake_case` labels. The CSV uses the corresponding
+`camelCase` names and includes additional timestamps and record counts. The
+console's `(index)` column is only a display row number.
+
+| Console column     | CSV column               | Meaning                                                                                                                     |
+| ------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `classification`   | `classification`         | How the unexplained credits appear to have been used.                                                                       |
+| `net_ledger`       | `netLedgerCredits`       | Sum of `credit_transactions.amount` through the audit cutoff, including negative adjustments.                               |
+| `recorded_usage`   | `recordedUsage`          | Sum of `usage_events.credits_used` through the cutoff. This may exclude older usage recorded before `usage_events` existed. |
+| `expected`         | `expectedBalance`        | Balance supported by the ledger after subtracting recorded usage.                                                           |
+| `current`          | `currentBalance`         | User's complete balance in `credits.amount`; this is not the suspicious amount.                                             |
+| `unexplained`      | `unexplainedGrants`      | Credits in the accounting difference between the current and expected balances.                                             |
+| `minimum_used`     | `minimumUnexplainedUsed` | Conservative lower bound for unexplained credits already consumed.                                                          |
+| `remaining`        | `unexplainedRemaining`   | Unexplained credits that may remain in the current balance.                                                                 |
+| `history_coverage` | `historyCoverage`        | Whether `usage_events` likely covers the account's full history.                                                            |
+| `user_id`          | `userId`                 | Supabase user UUID.                                                                                                         |
+| `username`         | `username`               | Profile username or email.                                                                                                  |
+
+The reconciliation uses these formulas:
+
+```text
+expected = max(0, net_ledger - recorded_usage)
+unexplained = max(0, current + recorded_usage - net_ledger)
+remaining = min(current, unexplained)
+minimum_used = max(0, unexplained - remaining)
+```
+
+For example, a user with `600,000` net ledger credits, `17,500` recorded usage,
+and a `582,704` current balance has an expected balance of `582,500`. Only the
+`204`-credit difference is unexplained; the full `582,704` balance is not
+suspicious.
+
+Classifications have these meanings:
+
+- `unspent` - All unexplained credits may remain in the current balance.
+- `used` - All unexplained credits must have been consumed.
+- `used_and_remaining` - Some unexplained credits must have been consumed, and
+  some may remain.
+- `invalid_balance` - The current balance is negative and violates the expected
+  balance invariant.
+
+`history_coverage` has two values:
+
+- `recorded_events_only` - The account was created after usage event tracking
+  began, so recorded usage should cover its full history.
+- `partial_pre_usage_events` - The account predates usage event tracking, so the
+  audit may omit older usage.
+
+These classifications provide conservative accounting estimates. Credits are
+fungible, so the audit cannot identify which specific credits a user consumed.
+
+The script enforces read-only access by rejecting every HTTP method except `GET`
+and `HEAD` before it reaches Supabase. It requires
+`NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`. Environment files are
+loaded in this order: `scripts/.env.local`, `apps/web/.env.local`,
+`scripts/.env`, then `apps/web/.env`.
+
+The report is an accounting anomaly report, **not proof of abuse and not safe to
+use for automatic enforcement**. Historical under-debits and missing opening
+balances can also produce residuals. Missing usage events lower the residual
+instead, so rows for accounts created before the `usage_events` migration,
+marked as partial history, can understate unexplained credits. The audit also
+cannot detect forged matching ledger rows.
+
+---
+
 ## Backfill Free Call Script
 
 Retroactively sets the `free_call` column on `call_sessions` by checking whether the

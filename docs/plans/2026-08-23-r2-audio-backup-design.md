@@ -185,8 +185,8 @@ the effects through `Progress.all()`:
 ```ts
 Progress.all(objects.map(downloadObject), {
   concurrency: 4,
-  description: 'Downloading R2 objects',
-  mode: 'result',
+  description: "Downloading R2 objects",
+  mode: "result",
 });
 ```
 

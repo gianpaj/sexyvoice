@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
+
 import { loadScriptEnv } from './lib/env.mts';
 import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
 
@@ -74,12 +75,12 @@ function parseCsv(filePath: string): DupeRow[] {
     }
 
     rows.push({
-      sourceId: fields[iSourceId],
-      userId: fields[iUserId],
+      duplicateCredits,
       eventCount: Number.parseInt(fields[iEventCount], 10),
       firstEventAt: fields[iFirstEvent],
       lastEventAt: fields[iLastEvent],
-      duplicateCredits,
+      sourceId: fields[iSourceId],
+      userId: fields[iUserId],
     });
   }
 
@@ -93,15 +94,15 @@ async function applyPlatformBugRefund(
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  const description = `Refund - Double billing (voice call ${sourceId.substring(0, 8)})`;
+  const description = `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`;
 
   const { error: txError } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
     amount: refundCredits,
-    type: 'refund',
     description,
-    reference_id: null,
     metadata: { reason: 'Double billing - voice call', sourceId },
+    reference_id: null,
+    type: 'refund',
+    user_id: userId,
   });
 
   if (txError) {
@@ -109,8 +110,8 @@ async function applyPlatformBugRefund(
   }
 
   const { error: creditsError } = await supabase.rpc('increment_user_credits', {
-    user_id_var: userId,
     credit_amount_var: refundCredits,
+    user_id_var: userId,
   });
 
   if (creditsError) {
@@ -164,17 +165,17 @@ async function main() {
     const row = rows[i];
     const prefix = `[${i + 1}/${rows.length}]`;
     process.stdout.write(
-      `${prefix} user=${row.userId.substring(0, 8)} credits=${row.duplicateCredits} ... `,
+      `${prefix} user=${row.userId.slice(0, 8)} credits=${row.duplicateCredits} ... `,
     );
 
     if (isDryRun) {
       console.log('(dry run)');
       results.push({
-        sourceId: row.sourceId,
-        userId: row.userId,
         credits: row.duplicateCredits,
-        status: 'skipped',
         reason: 'dry run',
+        sourceId: row.sourceId,
+        status: 'skipped',
+        userId: row.userId,
       });
       continue;
     }
@@ -188,21 +189,21 @@ async function main() {
       console.log('OK');
       okCount++;
       results.push({
-        sourceId: row.sourceId,
-        userId: row.userId,
         credits: row.duplicateCredits,
+        sourceId: row.sourceId,
         status: 'ok',
+        userId: row.userId,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       console.log(`ERROR: ${msg}`);
       errCount++;
       results.push({
-        sourceId: row.sourceId,
-        userId: row.userId,
         credits: row.duplicateCredits,
-        status: 'error',
         reason: msg,
+        sourceId: row.sourceId,
+        status: 'error',
+        userId: row.userId,
       });
     }
   }
