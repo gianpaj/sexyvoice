@@ -3,6 +3,10 @@
 `route.ts` sends the daily Telegram report. `contribution.ts` calculates usage
 contribution for yesterday and the last 30 complete UTC days.
 
+The refund line shows yesterday's and all-time dollar amounts from
+`metadata.dollarAmount`. Credit-only refunds and credit resets contribute $0;
+the report omits refund transaction counts.
+
 ## Completed calls
 
 The completed-call line matches the admin dashboard: `status = 'completed'`
