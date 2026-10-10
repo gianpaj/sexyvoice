@@ -40,7 +40,7 @@
     "@ai-sdk/react": "catalog:",
     "@ai-sdk/xai": "3.0.135",
     "@argos-ci/playwright": "^6.6.4",
-    "@aws-sdk/client-s3": "3.1145.0",
+    "@aws-sdk/client-s3": "3.1147.0",
     "@axiomhq/js": "^1.4.0",
     "@fal-ai/client": "^1.10.1",
     "@ffmpeg/ffmpeg": "^0.12.15",
