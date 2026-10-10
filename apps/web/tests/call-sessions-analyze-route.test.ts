@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
   captureMessage: vi.fn(),
   enqueueCallAnalysis: vi.fn(),
   hasCallSessionAnalysis: vi.fn(),
+  isCallAnalysisParked: vi.fn(),
   maybeSingle: vi.fn(),
+  parkRefusedCallAnalysis: vi.fn(),
   upsertCallSessionAnalysis: vi.fn(),
 }));
 
@@ -30,6 +32,8 @@ vi.mock('@/lib/supabase/admin', () => ({
 vi.mock('@/lib/supabase/call-analysis-queries', () => ({
   enqueueCallAnalysis: mocks.enqueueCallAnalysis,
   hasCallSessionAnalysis: mocks.hasCallSessionAnalysis,
+  isCallAnalysisParked: mocks.isCallAnalysisParked,
+  parkRefusedCallAnalysis: mocks.parkRefusedCallAnalysis,
   upsertCallSessionAnalysis: mocks.upsertCallSessionAnalysis,
 }));
 vi.mock('@/lib/ai/analyze-call', async (importOriginal) => ({
@@ -68,8 +72,11 @@ describe('POST /api/call-sessions/analyze', () => {
     vi.stubEnv('CALL_SUMMARY_SECRET', SECRET);
     vi.stubEnv('CALL_ANALYSIS_REALTIME', '');
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
     mocks.maybeSingle.mockResolvedValue({ data: eligibleSession, error: null });
     mocks.hasCallSessionAnalysis.mockResolvedValue(false);
+    mocks.isCallAnalysisParked.mockResolvedValue(false);
+    mocks.parkRefusedCallAnalysis.mockResolvedValue(undefined);
     mocks.enqueueCallAnalysis.mockResolvedValue(undefined);
   });
 
@@ -154,6 +161,98 @@ describe('POST /api/call-sessions/analyze', () => {
       eligibleSession,
       analysis,
     );
+  });
+
+  it('skips terminally when the provider declines the transcript inline', async () => {
+    vi.stubEnv('CALL_ANALYSIS_REALTIME', 'true');
+    const refusal = Object.assign(
+      new Error("permission-denied: I can't help with that request."),
+      {
+        isRetryable: false,
+        name: 'AI_APICallError',
+        responseBody: JSON.stringify({
+          code: 'permission-denied',
+          error: "I can't help with that request.",
+        }),
+        statusCode: 403,
+      },
+    );
+    mocks.analyzeTranscript.mockRejectedValueOnce(refusal);
+
+    const res = await POST(request({ id: 'session-1' }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      reason: 'provider_refused',
+      skipped: true,
+    });
+    expect(mocks.upsertCallSessionAnalysis).not.toHaveBeenCalled();
+    expect(mocks.parkRefusedCallAnalysis).toHaveBeenCalledWith(
+      expect.anything(),
+      'session-1',
+      "permission-denied: I can't help with that request.",
+    );
+    expect(mocks.captureException).not.toHaveBeenCalled();
+    expect(mocks.captureMessage).toHaveBeenCalledWith(
+      'Call analysis declined by provider',
+      expect.objectContaining({
+        extra: { callSessionId: 'session-1' },
+        fingerprint: ['call-analysis-provider-refusal'],
+        level: 'warning',
+      }),
+    );
+  });
+
+  it('still skips a refusal when parking it fails', async () => {
+    vi.stubEnv('CALL_ANALYSIS_REALTIME', 'true');
+    mocks.analyzeTranscript.mockRejectedValueOnce(
+      Object.assign(new Error("I can't help with that request."), {
+        statusCode: 403,
+      }),
+    );
+    const parkError = new Error('db down');
+    mocks.parkRefusedCallAnalysis.mockRejectedValueOnce(parkError);
+
+    const res = await POST(request({ id: 'session-1' }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      reason: 'provider_refused',
+      skipped: true,
+    });
+    expect(mocks.captureException).toHaveBeenCalledWith(parkError, {
+      extra: { callSessionId: 'session-1' },
+    });
+  });
+
+  it('does not resend a parked session inline', async () => {
+    vi.stubEnv('CALL_ANALYSIS_REALTIME', 'true');
+    mocks.isCallAnalysisParked.mockResolvedValueOnce(true);
+
+    const res = await POST(request({ id: 'session-1' }));
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ skipped: true });
+    expect(mocks.analyzeTranscript).not.toHaveBeenCalled();
+  });
+
+  it('does not treat a generic permission-denied 403 as a refusal', async () => {
+    vi.stubEnv('CALL_ANALYSIS_REALTIME', 'true');
+    mocks.analyzeTranscript.mockRejectedValueOnce(
+      Object.assign(new Error('permission-denied: insufficient credits'), {
+        responseBody: JSON.stringify({
+          code: 'permission-denied',
+          error: 'Your team has run out of credits.',
+        }),
+        statusCode: 403,
+      }),
+    );
+
+    const res = await POST(request({ id: 'session-1' }));
+
+    expect(res.status).toBe(500);
+    expect(mocks.parkRefusedCallAnalysis).not.toHaveBeenCalled();
+    expect(mocks.captureException).toHaveBeenCalled();
   });
 
   it('leaves no analysis row when the inline analysis fails', async () => {

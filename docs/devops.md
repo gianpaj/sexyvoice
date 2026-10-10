@@ -342,6 +342,11 @@ Release checks:
   `Call analysis sessions parked as failed` with their ids and errors. A
   redelivered webhook does not revive them; run `pnpm backfill-call-analysis`
   to reprocess.
+- Sessions xAI declines on content grounds are reported once per run as
+  `Call analysis sessions declined by the provider` (`level: warning`,
+  fingerprint `call-analysis-provider-refusal`). They are parked; resending
+  them with `backfill-call-analysis --retry-failed` is billed and only helps
+  after a model or provider policy change.
 - Read-only check for stuck or failed work:
 
   ```sql
