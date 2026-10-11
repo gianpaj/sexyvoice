@@ -255,8 +255,8 @@ importers:
         specifier: ^0.27.19
         version: 0.27.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@google/genai':
-        specifier: 2.24.0
-        version: 2.24.0(supports-color@8.1.1)
+        specifier: 2.28.0
+        version: 2.28.0(supports-color@8.1.1)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.71.2(react@19.2.7))
@@ -568,8 +568,8 @@ importers:
         specifier: ^1.10.1
         version: 1.10.1
       '@google/genai':
-        specifier: 2.24.0
-        version: 2.24.0(supports-color@8.1.1)
+        specifier: 2.28.0
+        version: 2.28.0(supports-color@8.1.1)
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.116.0(@opentelemetry/api@1.9.0)
@@ -1522,8 +1522,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@google/genai@2.24.0':
-    resolution: {integrity: sha512-bIu5eoxF1AaPWs9ivmUJGp1RpDHyapoODvWvnkzRDx2CTIW6UJXFhDdjj0BlRve3ZHMMuEkQBVrA/ALqpW4apA==}
+  '@google/genai@2.28.0':
+    resolution: {integrity: sha512-hyNAJj+ywu3L46qlZod6KO/JvcT3QONz6VCiPevC/FWOjAD+LQb7DMLUoV8vzoLpt61Q0ruQX99iqbxEjPJWmw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -10737,7 +10737,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.16
 
-  '@google/genai@2.24.0(supports-color@8.1.1)':
+  '@google/genai@2.28.0(supports-color@8.1.1)':
     dependencies:
       google-auth-library: 10.9.1(supports-color@8.1.1)
       p-retry: 4.6.2
