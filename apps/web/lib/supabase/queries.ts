@@ -435,6 +435,44 @@ export const getUserByStripeCustomerId = async (customerId: string) => {
   return data;
 };
 
+/**
+ * Non-blocking duplicate-credit guard. Lookup failures are logged and treated
+ * as "no prior credit" because `unique_reference_id_idx` still rejects
+ * duplicate inserts (see `isCreditTransactionReferenceConflict`).
+ */
+const findCreditTransactionByReference = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  referenceId: string,
+) => {
+  try {
+    const { data, error } = await supabase
+      .from('credit_transactions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('reference_id', referenceId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error checking existing credit transaction:', {
+        error: error.message,
+        referenceId,
+        userId,
+      });
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error checking existing credit transaction:', {
+      error: error instanceof Error ? error.message : String(error),
+      referenceId,
+      userId,
+    });
+    return null;
+  }
+};
+
 export const insertSubscriptionCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
@@ -444,27 +482,22 @@ export const insertSubscriptionCreditTransaction = async (
 ) => {
   const supabase = createAdminClient();
 
-  try {
-    // Check if transaction already exists using reference_id (payment_intent)
-    // This prevents duplicate credits when multiple webhook events fire
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check if transaction already exists using reference_id (payment_intent)
+  // This prevents duplicate credits when multiple webhook events fire
+  const existing = await findCreditTransactionByReference(
+    supabase,
+    userId,
+    paymentIntentId,
+  );
 
-    if (data) {
-      console.log('Subscription transaction already exists', {
-        data,
-        paymentIntentId,
-        subscriptionId,
-        userId,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existing) {
+    console.log('Subscription transaction already exists', {
+      data: existing,
+      paymentIntentId,
+      subscriptionId,
+      userId,
+    });
+    return;
   }
 
   // Check if this is the user's first subscription transaction
@@ -525,25 +558,20 @@ export const insertTopupCreditTransaction = async (
 ) => {
   const supabase = createAdminClient();
 
-  try {
-    // Check if transaction already exists to prevent duplicates
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check if transaction already exists to prevent duplicates
+  const existing = await findCreditTransactionByReference(
+    supabase,
+    userId,
+    paymentIntentId,
+  );
 
-    if (data) {
-      console.log('Topup transaction already exists', {
-        data,
-        paymentIntentId,
-        userId,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existing) {
+    console.log('Topup transaction already exists', {
+      data: existing,
+      paymentIntentId,
+      userId,
+    });
+    return;
   }
 
   // Check if this is the user's first transaction (topup)
