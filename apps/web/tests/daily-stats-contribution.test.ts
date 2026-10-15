@@ -61,11 +61,11 @@ describe('cash contribution', () => {
       start,
       end,
     );
-    expect(result.contribution).toBe(60);
+    expect(result.contribution).toBeCloseTo(57.595_506_85);
     expect(result.contributionAlert).toBe(false);
-    expect(result.coverage).toBe(5);
+    expect(result.coverage).toBeCloseTo(4.839_700_46);
     expect(formatContribution('Yesterday', result).join('\n')).toContain(
-      '5.00x',
+      '4.84x',
     );
   });
   test('keeps each period to two lines and hides diagnostic detail', () => {
@@ -78,7 +78,7 @@ describe('cash contribution', () => {
     const lines = formatContribution('Yesterday', result);
     expect(lines).toHaveLength(2);
     expect(lines[0]).toBe(
-      '- Yesterday: $100.00 net − $15.00 usage = $85.00 left',
+      '- Yesterday: $100.00 net − $15.00 usage − $2.40 overhead = $82.60 left',
     );
     expect(lines.join('\n')).not.toMatch(/Cost records|Session-only|Free tts/);
   });
@@ -189,10 +189,37 @@ describe('cash contribution', () => {
       start,
       end,
     );
-    expect(result.contribution).toBe(-30);
-    expect(result.coverage).toBe(0);
+    expect(result.contribution).toBeCloseTo(-32.404_493_15);
+    expect(result.coverage).toBeCloseTo(-0.080_149_77);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      '= -$30.00 left',
+      '= -$32.40 left',
+    );
+  });
+  test('subtracts overhead on idle days and alerts when it exceeds collections', () => {
+    const result = summarizeContribution(
+      data(),
+      [purchase({ metadata: { dollarAmount: 2 } })],
+      start,
+      end,
+    );
+    expect(result.totalCost).toBe(0);
+    expect(result.overhead.total).toBeCloseTo(2.404_493_15);
+    expect(result.overhead.callServer).toBeCloseTo(0.903_123_29);
+    expect(result.contribution).toBeCloseTo(-0.404_493_15);
+    expect(result.contributionAlert).toBe(true);
+    expect(result.coverage).toBeNull();
+  });
+  test('uses unrounded daily averages across a 30-day month boundary', () => {
+    const result = summarizeContribution(
+      data(),
+      [],
+      new Date('2026-09-15T00:00:00Z'),
+      new Date('2026-10-15T00:00:00Z'),
+    );
+    expect(result.overhead.total).toBeCloseTo(72.134_794_52);
+    expect(result.overhead.callServer).toBeCloseTo(27.093_698_63);
+    expect(formatContribution('30d', result)[0]).toBe(
+      '- 30d: $0.00 net − $0.00 usage − $72.13 overhead = -$72.13 left',
     );
   });
 });

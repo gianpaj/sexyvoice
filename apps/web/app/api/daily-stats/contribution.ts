@@ -4,6 +4,7 @@ import {
   type UsageCost,
   type UsageEventCostInput,
 } from '@/lib/usage-costs';
+import { summarizeOverhead } from './overhead';
 import { classifyRefund } from './utils';
 
 export type UsageEvent = UsageEventCostInput &
@@ -138,6 +139,7 @@ export function summarizeContribution(
     if (record.feature === 'live_call') callCost += record.cost.amount;
   }
   const totalCost = totals.paid + totals.free + totals.unclassified;
+  const overhead = summarizeOverhead(start, end);
   const incomplete = bases.unknown > 0 || unclassified > 0;
   const recordCount = bases.recorded + bases.estimated + bases.unknown;
   // Alert volume is distinct from coverage: small gaps still remain visible.
@@ -146,15 +148,17 @@ export function summarizeContribution(
   return {
     bases,
     callCost,
-    contribution: netCollections - totalCost,
-    contributionAlert: !coverageAlert && netCollections < totalCost,
+    contribution: netCollections - totalCost - overhead.total,
+    contributionAlert:
+      !coverageAlert && netCollections < totalCost + overhead.total,
     coverage:
       incomplete || totals.free === 0
         ? null
-        : (netCollections - totals.paid) / totals.free,
+        : (netCollections - totals.paid - overhead.total) / totals.free,
     coverageAlert,
     incomplete,
     netCollections,
+    overhead,
     totalCost,
     totals,
     unclassified,
@@ -177,7 +181,7 @@ export function formatContribution(
   ].filter(Boolean);
   const gapLabel = gaps.length > 0 ? ` (${gaps.join(', ')})` : '';
   return [
-    `- ${label}: ${usd(summary.netCollections)} net − ${usd(summary.totalCost)} usage = ${usd(summary.contribution)} left${gapLabel}`,
+    `- ${label}: ${usd(summary.netCollections)} net − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead = ${usd(summary.contribution)} left${gapLabel}`,
     `  Paid ${usd(summary.totals.paid)} | Free ${usd(summary.totals.free)} | Free coverage ${coverage}`,
   ];
 }
