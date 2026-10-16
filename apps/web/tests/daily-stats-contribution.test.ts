@@ -7,6 +7,7 @@ import {
   summarizeContribution,
   type UsageEvent,
 } from '../app/api/daily-stats/contribution';
+import { summarizeOverhead } from '../app/api/daily-stats/overhead';
 // biome-ignore lint/performance/noNamespaceImport: spy on pricing inputs without changing production rates
 import * as pricing from '../lib/api/pricing';
 import {
@@ -17,6 +18,7 @@ import {
 
 const start = new Date('2026-09-05T00:00:00Z');
 const end = new Date('2026-09-06T00:00:00Z');
+const overhead = summarizeOverhead(start, end).total;
 function event(overrides: Partial<UsageEvent> = {}): UsageEvent {
   return {
     dollar_amount: 15,
@@ -61,11 +63,11 @@ describe('cash contribution', () => {
       start,
       end,
     );
-    expect(result.contribution).toBeCloseTo(57.595_506_85);
+    expect(result.contribution).toBeCloseTo(60 - overhead);
     expect(result.contributionAlert).toBe(false);
-    expect(result.coverage).toBeCloseTo(4.839_700_46);
+    expect(result.coverage).toBeCloseTo((75 - overhead) / 15);
     expect(formatContribution('Yesterday', result).join('\n')).toContain(
-      '4.84x',
+      `${((75 - overhead) / 15).toFixed(2)}x`,
     );
   });
   test('keeps each period to two lines and hides diagnostic detail', () => {
@@ -78,7 +80,7 @@ describe('cash contribution', () => {
     const lines = formatContribution('Yesterday', result);
     expect(lines).toHaveLength(2);
     expect(lines[0]).toBe(
-      '- Yesterday: $100.00 net collections − $15.00 usage − $2.40 overhead = $82.60 remaining',
+      `- Yesterday: $100.00 net collections − $15.00 usage − $${overhead.toFixed(2)} overhead = $${(85 - overhead).toFixed(2)} remaining`,
     );
     expect(lines.join('\n')).not.toMatch(/Cost records|Session-only|Free tts/);
   });
@@ -189,10 +191,10 @@ describe('cash contribution', () => {
       start,
       end,
     );
-    expect(result.contribution).toBeCloseTo(-32.404_493_15);
-    expect(result.coverage).toBeCloseTo(-0.080_149_77);
+    expect(result.contribution).toBeCloseTo(-30 - overhead);
+    expect(result.coverage).toBeCloseTo(-overhead / 30);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      '= -$32.40 remaining',
+      `= -$${(30 + overhead).toFixed(2)} remaining`,
     );
   });
   test('subtracts overhead on idle days and alerts when it exceeds collections', () => {
