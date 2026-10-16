@@ -11,6 +11,27 @@ afterEach(() => {
   vi.resetModules();
 });
 
+describe('overhead basis label', () => {
+  test.each([
+    {
+      months: ['2026-08', '2026-09', '2026-10'],
+      label: 'Aug 2026, Sep 2026, Oct 2026',
+    },
+    { months: ['2026-12', '2027-01'], label: 'Dec 2026, Jan 2027' },
+    { months: ['2026-07', '2026-09'], label: 'Jul 2026, Sep 2026' },
+  ])('uses saved invoice months $months', async ({ months, label }) => {
+    vi.doMock(baselinePath, () => ({
+      default: { ...costs, invoiceMonths: months },
+    }));
+    const { formatOverheadBasis } = await import(
+      '../app/api/daily-stats/overhead'
+    );
+    expect(formatOverheadBasis()).toBe(
+      `Overhead uses ${label} invoice averages plus an annual reservation.`,
+    );
+  });
+});
+
 describe('overhead baseline validation', () => {
   test.each([
     { amounts: [] },

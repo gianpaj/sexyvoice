@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatContribution, summarizeContribution } from './contribution';
 import { getContributionData } from './contribution-queries';
+import { formatOverheadBasis } from './overhead';
 
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
@@ -1322,7 +1323,7 @@ export async function GET(request: NextRequest) {
     '💸 Usage economics (estimated, before payment fees)',
     ...formatContribution('Yesterday', contributionYesterday),
     ...formatContribution('30d', contribution30d),
-    'Overhead uses Jul–Sep 2026 invoice averages plus annual reservations.',
+    formatOverheadBasis(),
     'Call estimates omit $0.004 per text input and tool charges; totals are not invoice-reconciled.',
     '',
     '🔻 Funnel',
