@@ -1,5 +1,19 @@
 import costs from './overhead-costs.json';
 
+function validateAmounts(provider: string, amounts: number[]) {
+  if (
+    amounts.length === 0 ||
+    amounts.some((amount) => !Number.isFinite(amount) || amount < 0)
+  ) {
+    throw new Error(`Invalid overhead baseline for ${provider}`);
+  }
+}
+
+for (const [provider, amounts] of Object.entries(costs.monthlyInvoicesUsd)) {
+  validateAmounts(provider, amounts);
+}
+validateAmounts('Fly.io annual reservation', [costs.flyAnnualReservationUsd]);
+
 const average = (amounts: number[]) =>
   amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length;
 
