@@ -181,7 +181,7 @@ export function formatContribution(
   ].filter(Boolean);
   const gapLabel = gaps.length > 0 ? ` (${gaps.join(', ')})` : '';
   return [
-    `- ${label}: ${usd(summary.netCollections)} net − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead = ${usd(summary.contribution)} left${gapLabel}`,
+    `- ${label}: ${usd(summary.netCollections)} net collections − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead = ${usd(summary.contribution)} remaining${gapLabel}`,
     `  Paid ${usd(summary.totals.paid)} | Free ${usd(summary.totals.free)} | Free coverage ${coverage}`,
   ];
 }

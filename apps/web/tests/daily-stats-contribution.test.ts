@@ -78,7 +78,7 @@ describe('cash contribution', () => {
     const lines = formatContribution('Yesterday', result);
     expect(lines).toHaveLength(2);
     expect(lines[0]).toBe(
-      '- Yesterday: $100.00 net − $15.00 usage − $2.40 overhead = $82.60 left',
+      '- Yesterday: $100.00 net collections − $15.00 usage − $2.40 overhead = $82.60 remaining',
     );
     expect(lines.join('\n')).not.toMatch(/Cost records|Session-only|Free tts/);
   });
@@ -192,7 +192,7 @@ describe('cash contribution', () => {
     expect(result.contribution).toBeCloseTo(-32.404_493_15);
     expect(result.coverage).toBeCloseTo(-0.080_149_77);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      '= -$32.40 left',
+      '= -$32.40 remaining',
     );
   });
   test('subtracts overhead on idle days and alerts when it exceeds collections', () => {
@@ -219,7 +219,7 @@ describe('cash contribution', () => {
     expect(result.overhead.total).toBeCloseTo(72.134_794_52);
     expect(result.overhead.callServer).toBeCloseTo(27.093_698_63);
     expect(formatContribution('30d', result)[0]).toBe(
-      '- 30d: $0.00 net − $0.00 usage − $72.13 overhead = -$72.13 left',
+      '- 30d: $0.00 net collections − $0.00 usage − $72.13 overhead = -$72.13 remaining',
     );
   });
 });
