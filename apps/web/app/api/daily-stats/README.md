@@ -21,20 +21,53 @@ credit-only refunds, and chargeback credit holds/releases do not affect cash.
 Usage is paid if it occurs at or after the customer's first positive cash
 purchase; promotional credits spent by paying customers remain paid usage.
 
-Estimated contribution equals net collections minus recorded and estimated usage costs.
-Free coverage equals net collections minus paid usage costs, divided by free
-usage costs. Zero free cost renders coverage N/A. Unpriced or unclassified
+Estimated contribution equals net collections minus recorded and estimated usage
+costs and allocated overhead. Free coverage equals net collections minus paid
+usage costs and overhead, divided by free usage costs. Zero free cost renders
+coverage N/A. Unpriced or unclassified
 records mark coverage incomplete; displayed dollars include only priced records.
 The separate coverage alert fires when more than 5% of records are unpriced, or
 any usage is unclassified. Record share controls alert noise, not cost accuracy;
 one expensive unknown record can matter even below that threshold. When the
-coverage alert is off, negative contribution triggers the usage-cost alert.
+coverage alert is off, negative contribution triggers the usage-and-overhead alert.
 Free coverage still stays incomplete for any gap; the alert tolerance does not
 establish dollar accuracy.
 
-This is a cash-period comparison before payment fees and fixed costs, not
+This is a cash-period comparison before payment fees, not
 accounting profit. Taxes, final dispute losses, unlogged provider attempts,
 retries, and ancillary infrastructure can be absent from the inputs.
+
+## Overhead estimates
+
+`overhead-costs.json` stores the manually maintained USD invoice baseline;
+`overhead.ts` allocates it over reporting windows. Update the baseline when newer
+invoices are available. Missing invoices are unknown, not zero. This estimate
+uses the same baseline for every report date, including historical reports;
+it does not reconstruct historical infrastructure bills.
+
+The source is the `Purchases 2026` CSV export from the contracting purchases
+spreadsheet, reviewed on 2026-10-15. Amounts use its USD column, including VAT
+where recorded, without additional currency conversion. July–September invoice
+averages cover Vercel, Fly.io, and Cloudflare. Invoice dates can follow usage:
+the September Fly.io and Cloudflare invoices cover August usage.
+
+Fly.io's $72 annual machine reservation is allocated at $6/month in addition
+to its monthly invoices. Monthly averages are multiplied by 12/365 and the
+window's UTC day count; round only for display. The baseline is about
+$73.14/month or $2.40/day. Fly.io is attributed entirely to the voice-call
+server and shown separately in the Calls section, already included in overhead.
+Vercel and Cloudflare are entirely attributable to SexyVoice.
+
+September's positive $29.59 Vercel entry is treated as the final charge. Its
+description says "partial refund"; confirm that interpretation against the
+invoice before treating the baseline as reconciled.
+
+Supabase, LiveKit, Upstash, Sentry, Dash0, Axiom, PostHog, Inngest, and email
+are confirmed free by the owner. Inworld, Hetzner, and domain purchases are
+excluded because their attribution to SexyVoice is unconfirmed. AI-provider
+invoices and prepaid credit purchases are excluded from overhead to avoid
+duplicating usage costs. Free coverage reserves overhead before measuring
+how much remains to fund free usage; hosting is not split across user cohorts.
 
 ## Cost sources
 

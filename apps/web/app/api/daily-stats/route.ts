@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatContribution, summarizeContribution } from './contribution';
 import { getContributionData } from './contribution-queries';
+import { formatOverheadBasis } from './overhead';
 
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
@@ -1211,7 +1212,7 @@ export async function GET(request: NextRequest) {
       ? 'Usage cost coverage is incomplete'
       : null,
     contributionYesterday.contributionAlert
-      ? 'Recorded/estimated usage costs exceeded net collections yesterday'
+      ? 'Estimated usage and overhead costs exceeded net collections yesterday'
       : null,
     totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
       ? `Paid usage is concentrated: top 3 users drove ${top3UsageSharePct}%`
@@ -1319,9 +1320,10 @@ export async function GET(request: NextRequest) {
       ? ['', '🚨 Alerts', ...alerts.map((alert) => `- ${alert}`)]
       : []),
     '',
-    '💸 Usage economics (estimated, before fees/fixed costs)',
+    '💸 Usage economics (estimated, before payment fees)',
     ...formatContribution('Yesterday', contributionYesterday),
     ...formatContribution('30d', contribution30d),
+    formatOverheadBasis(),
     'Call estimates omit $0.004 per text input and tool charges; totals are not invoice-reconciled.',
     '',
     '🔻 Funnel',
@@ -1352,6 +1354,7 @@ export async function GET(request: NextRequest) {
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
     `  - Estimated usage cost: $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
+    `  - Fly.io call-server hosting (included in overhead): $${contributionYesterday.overhead.callServer.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.overhead.callServer.toFixed(2)}`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,
