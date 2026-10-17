@@ -173,7 +173,7 @@ describe('Banner', () => {
     expect(dismiss).not.toHaveClass('sm:-translate-y-1/2');
   });
 
-  it('preserves the public banner grid and inline dismiss button', async () => {
+  it('centers public desktop copy between balanced side columns and keeps mobile layout unchanged', async () => {
     const { container } = render(<Banner banner={banner} />);
     const dismiss = await screen.findByRole('button', {
       name: banner.ariaLabelDismiss,
@@ -181,7 +181,18 @@ describe('Banner', () => {
     const layout =
       container.querySelector('[data-promo-theme]')?.firstElementChild;
 
-    expect(layout).toHaveClass('sm:grid', 'sm:grid-cols-[1fr_auto]');
+    expect(layout).toHaveClass(
+      'sm:grid',
+      'sm:grid-cols-[1fr_auto]',
+      'lg:grid-cols-[1fr_2fr_1fr]',
+    );
+    expect(screen.getByText(banner.text).parentElement).toHaveClass(
+      'lg:col-start-2',
+    );
+    expect(dismiss.parentElement).toHaveClass(
+      'lg:col-start-3',
+      'lg:justify-self-end',
+    );
     expect(dismiss).not.toHaveClass('absolute');
     expect(container.querySelector('[data-dashboard-banner]')).toBeNull();
   });

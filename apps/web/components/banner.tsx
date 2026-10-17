@@ -163,7 +163,7 @@ export function Banner({
           'relative mx-auto flex flex-col items-center gap-3 text-white',
           inDashboard
             ? 'justify-center gap-2 px-4 pt-3 pb-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-3 sm:px-14 sm:py-[clamp(0.375rem,1.5vw,1rem)]'
-            : 'px-4 lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4',
+            : 'px-4 lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4 lg:grid-cols-[1fr_2fr_1fr]',
         )}
         style={{
           paddingBlock: inDashboard ? undefined : 'clamp(0.5rem, 1.5vw, 1rem)',
@@ -172,7 +172,7 @@ export function Banner({
         <div
           className={cn(
             'flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6',
-            inDashboard && 'px-8 sm:px-0',
+            inDashboard ? 'px-8 sm:px-0' : 'lg:col-start-2',
           )}
         >
           <p className="whitespace-pre-line text-wrap font-medium text-sm md:text-base">
@@ -213,7 +213,7 @@ export function Banner({
           className={
             inDashboard
               ? 'contents'
-              : 'flex shrink-0 items-center justify-center gap-2'
+              : 'flex shrink-0 items-center justify-center gap-2 lg:col-start-3 lg:justify-self-end'
           }
         >
           <Button
