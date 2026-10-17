@@ -138,112 +138,127 @@ export function PricingCards({
           'md:grid-cols-2 lg:grid-cols-4': plans.length === 4,
         })}
       >
-        {plans.map((plan) => (
-          <Card
-            className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2`}
-            key={`${plan.name}-${billingMode}`}
-          >
-            {/* Promo corner badge — only during active promotions */}
-            {isPromoEnabled && plan.price > 0 && promoBannerText && (
-              <div className="absolute top-0 right-0 rounded-bl-lg bg-linear-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
-                {promoBannerText}
-              </div>
-            )}
+        {plans.map((plan) => {
+          const promoBonusCredits = isPromoEnabled
+            ? plan.promoBonus
+            : undefined;
+          const bonusCredits =
+            billingMode === 'monthly'
+              ? plan.subscriptionBonusCredits
+              : promoBonusCredits;
 
-            <div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-xl">{plan.name}</h3>
-                {!isPromoEnabled && plan.isPopular && (
-                  <Badge className="rounded-full bg-promo-text">
-                    {t('popular')}
-                  </Badge>
-                )}
-                {!(isPromoEnabled || plan.isPopular) && plan.price > 10 && (
-                  <Badge
-                    className="bg-green-900 text-green-100"
-                    variant="secondary"
-                  >
-                    {creditsT('topup.cheaperBadge', {
-                      percent: format.number(PRO_TOPUP_DISCOUNT_VS_STANDARD, {
-                        maximumFractionDigits: 1,
-                        style: 'percent',
-                      }),
-                    })}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-baseline gap-0.5">
-                <span className="font-bold text-3xl tabular-nums">
-                  ${plan.price}
-                </span>
-                <span className="text-muted-foreground text-sm">
-                  {plan.billing ??
-                    (billingMode === 'monthly'
-                      ? billingT('monthly')
-                      : billingT('oneTime'))}
-                </span>
-              </div>
-              {!isPromoEnabled && plan.pricePer1kCredits ? (
-                <div className="mt-1 text-muted-foreground text-xs tabular-nums">
-                  ${plan.pricePer1kCredits} per 1k credits
-                  {plan.saveFromPrevPlanPer1kCredits && (
-                    <>
-                      {' '}
-                      <span className="font-medium text-green-400">
-                        (save ${plan.saveFromPrevPlanPer1kCredits}/1k)
-                      </span>
-                    </>
+          return (
+            <Card
+              className={`relative overflow-hidden p-6 ${plan.isPopular ? 'border-none ring-2 ring-promo-accent' : ''} grid grid-rows-[auto_minmax(60px,auto)_auto_1fr] gap-2`}
+              key={`${plan.name}-${billingMode}`}
+            >
+              {/* Promo corner badge — only during active promotions */}
+              {isPromoEnabled && plan.price > 0 && promoBannerText && (
+                <div className="absolute top-0 right-0 rounded-bl-lg bg-linear-to-br from-promo-primary to-promo-primary-dark px-3 py-1 font-bold text-white text-xs">
+                  {promoBannerText}
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-xl">{plan.name}</h3>
+                  {!isPromoEnabled && plan.isPopular && (
+                    <Badge className="rounded-full bg-promo-text">
+                      {t('popular')}
+                    </Badge>
+                  )}
+                  {!(isPromoEnabled || plan.isPopular) && plan.price > 10 && (
+                    <Badge
+                      className="bg-green-900 text-green-100"
+                      variant="secondary"
+                    >
+                      {creditsT('topup.cheaperBadge', {
+                        percent: format.number(PRO_TOPUP_DISCOUNT_VS_STANDARD, {
+                          maximumFractionDigits: 1,
+                          style: 'percent',
+                        }),
+                      })}
+                    </Badge>
                   )}
                 </div>
-              ) : (
-                /* Keep vertical rhythm consistent across cards */
-                <div className="mt-1 h-4" />
-              )}
-            </div>
-            <p className="text-muted-foreground text-sm">{plan.description}</p>
-            {checkoutEnabled && plan.id ? (
-              <CheckoutForm
-                billingMode={billingMode}
-                buttonText={plan.buttonText}
-                buttonVariant={plan.buttonVariant}
-                planId={plan.id}
-              />
-            ) : (
-              <Button
-                asChild
-                className="hit-area-6 my-4 w-full"
-                variant={plan.buttonVariant as 'outline' | 'default'}
-              >
-                <Link href="/signup">{plan.buttonText}</Link>
-              </Button>
-            )}
-            <div className="space-y-2">
-              <div>
-                <div className="font-semibold text-base tabular-nums">
-                  {plan.creditsText}
+                <div className="flex items-baseline gap-0.5">
+                  <span className="font-bold text-3xl tabular-nums">
+                    ${plan.price}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {plan.billing ??
+                      (billingMode === 'monthly'
+                        ? billingT('monthly')
+                        : billingT('oneTime'))}
+                  </span>
                 </div>
-                {isPromoEnabled && plan.promoBonus && (
-                  <div className="font-medium text-promo-text-dark text-xs">
-                    +{plan.promoBonus} bonus
+                {!isPromoEnabled && plan.pricePer1kCredits ? (
+                  <div className="mt-1 text-muted-foreground text-xs tabular-nums">
+                    ${plan.pricePer1kCredits} per 1k credits
+                    {plan.saveFromPrevPlanPer1kCredits && (
+                      <>
+                        {' '}
+                        <span className="font-medium text-green-400">
+                          (save ${plan.saveFromPrevPlanPer1kCredits}/1k)
+                        </span>
+                      </>
+                    )}
                   </div>
-                )}
-                {billingMode === 'monthly' && plan.subscriptionBonusCredits && (
-                  <div className="font-medium text-green-400 text-xs">
-                    {t('subscriptionBonusCredits', {
-                      bonusCredits: plan.subscriptionBonusCredits,
-                    })}
-                  </div>
+                ) : (
+                  /* Keep vertical rhythm consistent across cards */
+                  <div className="mt-1 h-4" />
                 )}
               </div>
-              {plan.features.map((feature, index) => (
-                <div className="flex items-center text-sm" key={index}>
-                  <Check aria-hidden="true" className="mr-2 size-4 min-w-fit" />
-                  {feature}
+              <p className="text-muted-foreground text-sm">
+                {plan.description}
+              </p>
+              {checkoutEnabled && plan.id ? (
+                <CheckoutForm
+                  billingMode={billingMode}
+                  buttonText={plan.buttonText}
+                  buttonVariant={plan.buttonVariant}
+                  planId={plan.id}
+                />
+              ) : (
+                <Button
+                  asChild
+                  className="hit-area-6 my-4 w-full"
+                  variant={plan.buttonVariant as 'outline' | 'default'}
+                >
+                  <Link href="/signup">{plan.buttonText}</Link>
+                </Button>
+              )}
+              <div className="space-y-2">
+                <div>
+                  <div className="font-semibold text-base tabular-nums">
+                    {plan.creditsText}
+                  </div>
+                  {bonusCredits && (
+                    <div
+                      className={cn(
+                        'font-medium text-xs',
+                        isPromoEnabled
+                          ? 'text-promo-text-dark'
+                          : 'text-green-400',
+                      )}
+                    >
+                      {t('subscriptionBonusCredits', { bonusCredits })}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </Card>
-        ))}
+                {plan.features.map((feature, index) => (
+                  <div className="flex items-center text-sm" key={index}>
+                    <Check
+                      aria-hidden="true"
+                      className="mr-2 size-4 min-w-fit"
+                    />
+                    {feature}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

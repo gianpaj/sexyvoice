@@ -208,11 +208,12 @@ export default function DashboardUI({
           </SidebarFooter>
         </Sidebar>
 
-        {activeBanner && <Banner banner={activeBanner} inDashboard />}
-        <div className="flex w-full flex-1 flex-col">
-          <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
-            <SidebarTrigger className="lg:hidden" />
+        <div className="group/dashboard relative flex min-w-0 flex-1 flex-col">
+          <div className="sticky top-0 z-30 flex h-12 items-center border-b bg-background px-4 shadow-sm group-has-data-dashboard-banner/dashboard:absolute group-has-[[data-dashboard-banner]]/dashboard:left-0 group-has-[[data-dashboard-banner]]/dashboard:size-11 group-has-[[data-dashboard-banner]]/dashboard:border-0 group-has-[[data-dashboard-banner]]/dashboard:bg-transparent group-has-[[data-dashboard-banner]]/dashboard:px-0 group-has-[[data-dashboard-banner]]/dashboard:shadow-none sm:px-6 lg:hidden">
+            <SidebarTrigger className="size-11 lg:hidden" />
           </div>
+
+          {activeBanner && <Banner banner={activeBanner} inDashboard />}
 
           <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8" id="main-content">
             {children}

@@ -204,12 +204,13 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `NEXT_PUBLIC_PROMO_ENABLED`: enables promo banners, bonus-credit pricing, and
   promo metadata, not announcement banners.
 - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`: promo ID from the banner registry and
-  localized messages; requires `NEXT_PUBLIC_PROMO_ENABLED=true`.
+  localized messages; requires `NEXT_PUBLIC_PROMO_ENABLED=true`. When unset or
+  empty, no promo banner is selected; bonus-credit pricing remains controlled by
+  the promo flag.
 - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER`: announcement ID, independent of the
   promo flag.
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
-- `NEXT_PUBLIC_PROMO_TRANSLATIONS`
 - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`
 - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
 - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`

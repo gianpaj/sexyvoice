@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { isBannerCountdownExpired } from './countdown';
 import { getBannerDefinition } from './registry';
 import type {
   BannerAudience,
@@ -22,11 +23,7 @@ export function getActivePromoBannerId() {
     return null;
   }
 
-  return (
-    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER ||
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS ||
-    'blackFridayBanner'
-  );
+  return process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER || null;
 }
 
 function getActiveAnnouncementBannerId() {
@@ -83,6 +80,10 @@ function resolveBanner(
     translation.countdown
       ? process.env[definition.countdown.endDateEnvVar]
       : undefined;
+
+  if (isBannerCountdownExpired(countdownEndDate)) {
+    return null;
+  }
 
   return {
     ariaLabelDismiss: translation.ariaLabelDismiss,
