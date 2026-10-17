@@ -7,12 +7,11 @@ form rely on these defaults to avoid doubled vertical padding and
 misaligned mobile edges.
 
 `PricingCards` leaves horizontal gutters to callers. The homepage uses
-`xl:px-10`; the credits dashboard uses `xl:px-0`. A shared desktop gutter
-would be overridden by both callers.
+`xl:px-10`; the credits dashboard has no horizontal gutter.
 
 The generation page preserves its credit-balance error branch. Its
-successful branch renders `GenerateUI` directly, with bottom spacing on
-the component. The error branch retains the same bottom spacing.
+successful branch renders `GenerateUI` directly. The outer page container
+owns bottom spacing for both the successful and error branches.
 
 The homepage retains the current hero typography, including German mobile
 sizing. Generated Next.js type declarations match `main`.

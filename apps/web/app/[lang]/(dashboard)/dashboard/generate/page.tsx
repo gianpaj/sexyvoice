@@ -62,7 +62,7 @@ export default async function GeneratePage(props: {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8 pb-16">
       <div>
         <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
           <Wand2 size={26} />
@@ -87,9 +87,7 @@ export default async function GeneratePage(props: {
           publicVoices={publicVoices}
         />
       ) : (
-        <div className="pb-16">
-          <CreditBalanceError />
-        </div>
+        <CreditBalanceError />
       )}
     </div>
   );

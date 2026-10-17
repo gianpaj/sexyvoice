@@ -244,7 +244,7 @@ export default async function CreditsPage(props: {
       <PricingTable
         applyFirstMonthSubscriptionDiscount={isEligibleForSubscriptionDiscount}
         checkoutEnabled
-        className="py-0 pb-16 xl:px-0"
+        className="py-0 pb-16"
         hideFreePlan
         lang={lang}
         shouldShowSubscriptionPlans={shouldShowSubscriptionPlans}
