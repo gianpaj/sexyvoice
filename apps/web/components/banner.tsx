@@ -139,12 +139,18 @@ export function Banner({
   return (
     <div
       className={cn('w-full', {
-        'fixed z-50 bg-promo-primary-dark/50 backdrop-blur-sm': inDashboard,
+        'shrink-0 border-promo-accent/20 border-b bg-promo-primary-dark/50':
+          inDashboard,
       })}
       data-promo-theme={banner.theme}
     >
       <div
-        className="relative mx-auto flex flex-col items-center gap-3 px-4 text-white lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4"
+        className={cn(
+          'relative mx-auto flex flex-col items-center gap-3 text-white',
+          inDashboard
+            ? 'justify-center px-14 sm:flex-row sm:flex-wrap sm:gap-x-6'
+            : 'px-4 lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4',
+        )}
         style={{ paddingBlock: 'clamp(0.5rem, 1.5vw, 1rem)' }}
       >
         <div className="flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6">
@@ -182,10 +188,19 @@ export function Banner({
             )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-center gap-2">
+        <div
+          className={
+            inDashboard
+              ? 'contents'
+              : 'flex shrink-0 items-center justify-center gap-2'
+          }
+        >
           <Button
             asChild
-            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
+            className={cn(
+              'whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark',
+              inDashboard && 'min-h-10 shrink-0',
+            )}
             effect="ringHover"
             size="sm"
             variant="outline"
@@ -196,7 +211,11 @@ export function Banner({
           {banner.dismissible && (
             <Button
               aria-label={banner.ariaLabelDismiss}
-              className="shrink-0"
+              className={cn(
+                'shrink-0 text-white hover:bg-promo-accent/20 hover:text-white focus-visible:ring-promo-accent',
+                inDashboard &&
+                  'absolute top-2 right-2 size-11 p-0 sm:top-1/2 sm:-translate-y-1/2',
+              )}
               onClick={handleDismissBanner}
               size="sm"
               variant="ghost"
