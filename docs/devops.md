@@ -209,7 +209,6 @@ payload contains `defaultInstructions`, `initialInstruction`, and
   promo flag.
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
-
 - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`
 - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
 - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
