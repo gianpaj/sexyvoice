@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -68,15 +69,41 @@ describe('Banner', () => {
     });
   });
 
-  it('omits expired dashboard banners from the initial markup', () => {
-    expect(
-      renderToString(
-        <Banner
-          banner={{ ...banner, countdown: expiredCountdown }}
-          inDashboard
-        />,
-      ),
-    ).toBe('');
+  it('hydrates without a mismatch when the deadline passes after server rendering', async () => {
+    const clock = vi
+      .spyOn(Date, 'now')
+      .mockReturnValue(Date.parse('2030-11-30T11:59:58Z'));
+    const timedBanner = {
+      ...banner,
+      countdown: { ...expiredCountdown, endDate: '2030-11-30T12:00:00Z' },
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    let root: ReturnType<typeof hydrateRoot> | undefined;
+    const onRecoverableError = vi.fn();
+
+    try {
+      container.innerHTML = renderToString(
+        <Banner banner={timedBanner} inDashboard />,
+      );
+      expect(container.querySelector('[data-dashboard-banner]')).not.toBeNull();
+      clock.mockReturnValue(Date.parse('2030-11-30T12:00:01Z'));
+
+      await act(async () => {
+        root = hydrateRoot(
+          container,
+          <Banner banner={timedBanner} inDashboard />,
+          { onRecoverableError },
+        );
+      });
+
+      expect(onRecoverableError).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-dashboard-banner]')).toBeNull();
+    } finally {
+      await act(async () => root?.unmount());
+      container.remove();
+      clock.mockRestore();
+    }
   });
 
   it.each([false, true])(

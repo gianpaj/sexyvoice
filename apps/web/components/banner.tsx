@@ -51,9 +51,7 @@ export function Banner({
   const countdownEndDate = banner.countdown?.enabled
     ? banner.countdown.endDate
     : undefined;
-  const [isVisible, setIsVisible] = useState(
-    inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
-  );
+  const [isVisible, setIsVisible] = useState(inDashboard === true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
