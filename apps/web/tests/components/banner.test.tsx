@@ -60,7 +60,8 @@ describe('Banner', () => {
 
     expect(surface).toHaveAttribute('data-promo-theme', 'blue');
     expect(surface).toHaveAttribute('data-dashboard-banner');
-    expect(surface).not.toHaveClass('fixed', 'backdrop-blur-sm');
+    expect(surface).not.toHaveClass('fixed');
+    expect(surface).not.toHaveClass('backdrop-blur-sm');
     expect(layout).toHaveClass(
       'justify-center',
       'sm:flex-wrap',
@@ -124,10 +125,8 @@ describe('Banner', () => {
         'hover:text-white',
         'focus-visible:ring-promo-accent',
       );
-      expect(dismiss).not.toHaveClass(
-        'hover:bg-accent',
-        'hover:text-accent-foreground',
-      );
+      expect(dismiss).not.toHaveClass('hover:bg-accent');
+      expect(dismiss).not.toHaveClass('hover:text-accent-foreground');
     },
   );
 
