@@ -182,6 +182,15 @@ billing modes use one translated bonus label and the promo color while a promo
 is enabled. Without a promo, monthly subscription bonuses stay green and
 one-time bonuses are hidden. Keep this presentation consistent across locales.
 
+## Public banner layout
+
+At desktop widths, public banners center the copy between equal side columns
+and keep the CTA and dismiss control on the right. The copy uses half the
+available grid width, so long translations and countdown banners can wrap onto
+extra lines. This is the trade-off for keeping wrapped text centered regardless
+of control width. Verify long copy and countdowns before changing the layout;
+an auto-sized middle column can shift long copy off-center.
+
 ## Dashboard layout
 
 Keep dashboard banners in normal flow inside the content column in
