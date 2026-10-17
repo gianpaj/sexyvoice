@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Banner } from '@/components/banner';
@@ -38,6 +39,17 @@ describe('Banner', () => {
     cleanup();
     await clearDismissCookie();
     vi.unstubAllGlobals();
+  });
+
+  it('includes the server-resolved dashboard banner in the initial markup', () => {
+    const html = renderToString(<Banner banner={banner} inDashboard />);
+
+    expect(html).toContain('data-dashboard-banner');
+    expect(html).toContain(banner.text);
+  });
+
+  it('keeps public banners hidden until the client checks dismissal cookies', () => {
+    expect(renderToString(<Banner banner={banner} />)).toBe('');
   });
 
   it('centers the dashboard message and CTA without a fixed overlay', async () => {

@@ -47,12 +47,18 @@ export function Banner({
   banner: ResolvedBanner;
   inDashboard?: boolean;
 }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(inDashboard === true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
 
   useEffect(() => {
+    // Dashboard resolution already filters dismissal cookies on the server.
+    if (inDashboard) {
+      setIsVisible(true);
+      return;
+    }
+
     let isCancelled = false;
 
     // Hide immediately so a previously-visible banner doesn't flash while the
@@ -79,7 +85,7 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [banner.dismiss.cookieKey, banner.dismissible]);
+  }, [banner.dismiss.cookieKey, banner.dismissible, inDashboard]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
