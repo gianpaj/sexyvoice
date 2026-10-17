@@ -48,6 +48,15 @@ describe('Banner', () => {
     expect(html).toContain(banner.text);
   });
 
+  it('hides a cached dashboard banner when its dismissal cookie is already set', async () => {
+    await setCookie(DISMISS_COOKIE, 'true', { path: '/' });
+    const { container } = render(<Banner banner={banner} inDashboard />);
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-dashboard-banner]')).toBeNull();
+    });
+  });
+
   it('keeps public banners hidden until the client checks dismissal cookies', () => {
     expect(renderToString(<Banner banner={banner} />)).toBe('');
   });

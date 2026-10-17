@@ -53,17 +53,11 @@ export function Banner({
   );
 
   useEffect(() => {
-    // Dashboard resolution already filters dismissal cookies on the server.
-    if (inDashboard) {
-      setIsVisible(true);
-      return;
-    }
-
     let isCancelled = false;
 
-    // Hide immediately so a previously-visible banner doesn't flash while the
-    // async cookie check for the new banner resolves.
-    setIsVisible(false);
+    // Fresh dashboard renders are server-filtered, but cached navigation can
+    // restore stale banner props. Recheck cookies without hiding valid banners.
+    setIsVisible(inDashboard === true);
 
     const resolveVisibility = async () => {
       if (!banner.dismissible) {
@@ -76,7 +70,7 @@ export function Banner({
 
     resolveVisibility()
       .then((visible) => {
-        if (!isCancelled) {
+        if (!(isCancelled || (inDashboard && visible))) {
           setIsVisible(visible);
         }
       })
