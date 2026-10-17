@@ -47,12 +47,15 @@ describe('Banner', () => {
     const layout = surface?.firstElementChild;
 
     expect(surface).toHaveAttribute('data-promo-theme', 'blue');
+    expect(surface).toHaveAttribute('data-dashboard-banner');
     expect(surface).not.toHaveClass('fixed', 'backdrop-blur-sm');
     expect(layout).toHaveClass(
       'justify-center',
       'sm:flex-wrap',
       'px-4',
       'gap-2',
+      'pt-3',
+      'pb-2',
       'sm:px-14',
     );
     expect(screen.getByText(banner.text)).toHaveClass(
@@ -82,6 +85,7 @@ describe('Banner', () => {
 
     expect(layout).toHaveClass('sm:grid', 'sm:grid-cols-[1fr_auto]');
     expect(dismiss).not.toHaveClass('absolute');
+    expect(container.querySelector('[data-dashboard-banner]')).toBeNull();
   });
 
   it.each([true, false])(
@@ -134,6 +138,7 @@ describe('Banner', () => {
         screen.queryByRole('button', { name: banner.ariaLabelDismiss }),
       ).not.toBeInTheDocument();
     });
+    expect(document.querySelector('[data-dashboard-banner]')).toBeNull();
     expect(document.cookie).toContain(`${DISMISS_COOKIE}=true`);
     expect(fetchSpy).not.toHaveBeenCalled();
   });

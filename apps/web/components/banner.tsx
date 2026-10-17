@@ -142,25 +142,24 @@ export function Banner({
         'shrink-0 border-promo-accent/20 border-b bg-promo-primary-dark/50':
           inDashboard,
       })}
+      data-dashboard-banner={inDashboard ? '' : undefined}
       data-promo-theme={banner.theme}
     >
       <div
         className={cn(
           'relative mx-auto flex flex-col items-center gap-3 text-white',
           inDashboard
-            ? 'justify-center gap-2 px-4 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-3 sm:px-14'
+            ? 'justify-center gap-2 px-4 pt-3 pb-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-3 sm:px-14 sm:py-[clamp(0.375rem,1.5vw,1rem)]'
             : 'px-4 lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4',
         )}
         style={{
-          paddingBlock: inDashboard
-            ? 'clamp(0.375rem, 1.5vw, 1rem)'
-            : 'clamp(0.5rem, 1.5vw, 1rem)',
+          paddingBlock: inDashboard ? undefined : 'clamp(0.5rem, 1.5vw, 1rem)',
         }}
       >
         <div
           className={cn(
             'flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6',
-            inDashboard && banner.dismissible && 'px-8 sm:px-0',
+            inDashboard && 'px-8 sm:px-0',
           )}
         >
           <p className="whitespace-pre-line text-wrap font-medium text-sm md:text-base">
