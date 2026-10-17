@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   claimPendingCallAnalyses,
   getAnalyzedSessionIds,
+  MAX_CALL_ANALYSIS_ATTEMPTS,
   markCallAnalysesCompleted,
+  parkRefusedCallAnalysis,
   setCallAnalysisBatchId,
 } from '@/lib/supabase/call-analysis-queries';
 import type { TypedSupabaseClient } from '@/lib/supabase/client';
@@ -47,6 +49,7 @@ const client = {
   from: (table: string) => ({
     select: () => builder(table),
     update: (payload: unknown) => builder(table, payload),
+    upsert: (payload: unknown) => builder(table, payload),
   }),
 } as unknown as TypedSupabaseClient;
 
@@ -117,5 +120,29 @@ describe('call-analysis-queries id chunking', () => {
       expect(call.filters).toContainEqual(['eq', 'status', 'submitted']);
       expect(call.filters).toContainEqual(['is', 'xai_batch_id', null]);
     }
+  });
+});
+
+describe('parkRefusedCallAnalysis', () => {
+  beforeEach(() => {
+    calls.length = 0;
+  });
+
+  it('writes a row the parked filters skip, even with no queue row yet', async () => {
+    await parkRefusedCallAnalysis(
+      client,
+      's1',
+      "I can't help with that request.",
+    );
+
+    expect(calls).toHaveLength(1);
+    // The drain, the realtime bypass and scripts/analyze-call-sessions.mjs
+    // treat status = failed with attempts >= the limit as parked.
+    expect(calls[0].payload).toMatchObject({
+      attempts: MAX_CALL_ANALYSIS_ATTEMPTS,
+      last_error: "I can't help with that request.",
+      session_id: 's1',
+      status: 'failed',
+    });
   });
 });
