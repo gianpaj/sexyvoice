@@ -188,6 +188,11 @@ rendering. When the banner is absent, the standalone navigation header remains.
 Do not use the promo flag or `activeBanner` prop alone to position navigation:
 a dismissal cookie can hide a configured banner.
 
+The banner and overlaid trigger intentionally scroll away together rather than
+covering page content with a floating control. Users return to the top to open
+the sidebar while a banner is visible. Without a banner, the standalone header
+stays sticky.
+
 Keep text centered with clearance around both controls, and align the first
 mobile text line with the icons. Preserve navigation when the banner is
 dismissed, disabled, or non-dismissible. Leave exact spacing in the components.
