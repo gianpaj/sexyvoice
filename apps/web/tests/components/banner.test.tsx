@@ -82,9 +82,19 @@ describe('Banner', () => {
     expect(cta).toHaveAttribute('href', banner.ctaLink);
     expect(cta).toHaveClass('sm:min-h-10');
     expect(cta).not.toHaveClass('min-h-10');
-    expect(
-      screen.getByRole('button', { name: banner.ariaLabelDismiss }),
-    ).toHaveClass('absolute', 'top-0', 'right-0', 'size-11');
+    const dismiss = screen.getByRole('button', {
+      name: banner.ariaLabelDismiss,
+    });
+    expect(dismiss).toHaveClass(
+      'absolute',
+      'top-0',
+      'right-0',
+      'size-11',
+      'lg:top-1/2',
+      'lg:-translate-y-1/2',
+    );
+    expect(dismiss).not.toHaveClass('sm:top-1/2');
+    expect(dismiss).not.toHaveClass('sm:-translate-y-1/2');
   });
 
   it('preserves the public banner grid and inline dismiss button', async () => {

@@ -228,7 +228,7 @@ export function Banner({
               className={cn(
                 'shrink-0 text-white hover:bg-promo-accent/20 hover:text-white focus-visible:ring-promo-accent',
                 inDashboard &&
-                  'absolute top-0 right-0 size-11 p-0 sm:top-1/2 sm:right-2 sm:-translate-y-1/2',
+                  'absolute top-0 right-0 size-11 p-0 lg:top-1/2 lg:right-2 lg:-translate-y-1/2',
               )}
               onClick={handleDismissBanner}
               size="sm"
