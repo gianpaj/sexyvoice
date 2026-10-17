@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCheckoutSession } from '@/app/[lang]/actions/stripe';
 import { type PlanData, PricingCards } from '@/components/pricing-cards';
 import messages from '@/messages/en.json';
+import spanishMessages from '@/messages/es.json';
 
 vi.mock('@/app/[lang]/actions/stripe', () => ({
   createCheckoutSession: vi.fn(),
@@ -27,6 +28,88 @@ const plan: PlanData = {
   name: 'Starter',
   price: 10,
 };
+
+describe('pricing bonus presentation', () => {
+  afterEach(cleanup);
+
+  it.each([
+    { locale: 'en' as const, translations: messages },
+    { locale: 'es' as const, translations: spanishMessages },
+  ])(
+    'uses the same translated promo label and theme in both modes ($locale)',
+    async ({ locale, translations }) => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <NextIntlClientProvider locale={locale} messages={translations}>
+          <PricingCards
+            isPromoEnabled
+            promoTheme="orange"
+            subscriptionPlans={[
+              { ...plan, subscriptionBonusCredits: '12,375' },
+            ]}
+            topupPlans={[{ ...plan, promoBonus: '7,500' }]}
+          />
+        </NextIntlClientProvider>,
+      );
+      const bonusLabel = translations.credits.plans.subscriptionBonusCredits;
+      const monthlyBonus = screen.getByText(
+        bonusLabel.replace('{bonusCredits}', '12,375'),
+      );
+      expect(monthlyBonus).toHaveClass('text-promo-text-dark');
+      expect(monthlyBonus).not.toHaveClass('text-green-400');
+      expect(container.firstChild).toHaveAttribute(
+        'data-promo-theme',
+        'orange',
+      );
+
+      await user.click(
+        screen.getByRole('button', {
+          name: translations.credits.plans.toggleOneTime,
+        }),
+      );
+
+      expect(
+        screen.getByText(bonusLabel.replace('{bonusCredits}', '7,500')),
+      ).toHaveClass('text-promo-text-dark');
+      expect(
+        screen.queryByText(bonusLabel.replace('{bonusCredits}', '12,375')),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it('keeps the monthly bonus green and hides one-time bonuses when the promo is disabled', async () => {
+    const user = userEvent.setup();
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PricingCards
+          isPromoEnabled={false}
+          promoTheme="orange"
+          subscriptionPlans={[{ ...plan, subscriptionBonusCredits: '3,750' }]}
+          topupPlans={[{ ...plan, promoBonus: '7,500' }]}
+        />
+      </NextIntlClientProvider>,
+    );
+    const bonusLabel = messages.credits.plans.subscriptionBonusCredits;
+    const monthlyBonus = screen.getByText(
+      bonusLabel.replace('{bonusCredits}', '3,750'),
+    );
+    expect(monthlyBonus).toHaveClass('text-green-400');
+    expect(monthlyBonus).not.toHaveClass('text-promo-text-dark');
+
+    await user.click(
+      screen.getByRole('button', {
+        name: messages.credits.plans.toggleOneTime,
+      }),
+    );
+
+    expect(
+      screen.queryByText(bonusLabel.replace('{bonusCredits}', '7,500')),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(bonusLabel.replace('{bonusCredits}', '3,750')),
+    ).not.toBeInTheDocument();
+  });
+});
 
 describe('checkout billing errors', () => {
   beforeEach(() => vi.clearAllMocks());

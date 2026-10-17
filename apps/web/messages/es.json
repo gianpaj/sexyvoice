@@ -324,7 +324,7 @@
       "subscribe": "Suscribirse",
       "x_credits": "{numCredits} créditos",
       "subscriptionBonus": "+15% más créditos",
-      "subscriptionBonusCredits": "+{bonusCredits} créditos de bonificación",
+      "subscriptionBonusCredits": "+{bonusCredits} bonus",
       "toggleMonthly": "Mensual",
       "toggleOneTime": "Pago único",
       "free": {
