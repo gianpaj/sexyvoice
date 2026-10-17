@@ -75,8 +75,8 @@ are not a percentage reduction in price.
 A countdown controls banner presentation, not offer eligibility. It requires a
 registry `countdown` definition, localized countdown labels, and an end-date
 environment value. Setting the environment value alone does not add a timer.
-The server resolver excludes expired countdown banners; the client also checks
-expiry when resolving visibility and while a displayed timer runs. Shared expiry
+The server resolver excludes expired countdown banners when it runs; the client
+also checks expiry when resolving visibility and while a displayed timer runs. Shared expiry
 logic lives in `apps/web/lib/banners/countdown.ts`. This only ends banner display,
 not the financial offer.
 
@@ -160,6 +160,9 @@ their static caching. On those pages, the client can hide a dismissed banner,
 but it cannot replace it with the next eligible banner because the server sent
 only the highest-priority banner. If a promo and announcement are active
 together, dismissing the promo leaves the banner slot empty on those pages.
+Expiry has the same limitation: the client hides a promo that expires after the
+static page is built, but an announcement cannot replace it until the page is
+regenerated, such as by a new deployment.
 Blog and dashboard pages pass dismissal cookies to the resolver, so a subsequent
 server render can select the next eligible announcement. Client-side dismissal
 alone hides the current banner; it does not immediately resolve a replacement.
