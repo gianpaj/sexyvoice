@@ -50,7 +50,7 @@ export function Chat() {
         console.error('Agent Unavailable');
 
         toast.error(t('agentUnavailable'));
-      }, 5000);
+      }, 10_000);
     }
 
     if (agent) {
@@ -62,14 +62,14 @@ export function Chat() {
       !agent &&
       hasSeenAgent
     ) {
-      // Agent disappeared while connected, wait 5s before disconnecting
+      // Agent disappeared while connected, wait 10s before disconnecting
       disconnectTimer = setTimeout(() => {
         if (!agent) {
           disconnect();
           setHasSeenAgent(false);
           toast.info(t('disconnected'));
         }
-      }, 5000);
+      }, 10_000);
     }
 
     setIsChatRunning(

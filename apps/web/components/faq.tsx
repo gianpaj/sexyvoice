@@ -93,7 +93,7 @@ export const FAQComponent = async ({
   const groups = sortFaqGroups(dict.groups, priorityGroupIds);
   return (
     <>
-      <div className="mb-12 text-left md:text-center">
+      <div className="mb-12 text-left">
         <h2 className="mb-2 font-bold text-3xl text-white">{dict.title}</h2>
         <p className="text-gray-200">{dict.subtitle}</p>
       </div>

@@ -20,9 +20,9 @@ describe('APIErrorResponse', () => {
       error: 'Insufficient credits',
       // `message` includes the status suffix.
       message: 'Insufficient credits (402)',
-      status: 402,
-      serverMessage: 'Insufficient credits',
       retryAfter: null,
+      serverMessage: 'Insufficient credits',
+      status: 402,
     });
   });
 

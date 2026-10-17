@@ -1,17 +1,20 @@
 'use client';
 
-import type { User } from '@supabase/supabase-js';
+import type { JwtPayload } from '@supabase/supabase-js';
 import { useQuery } from '@tanstack/react-query';
 import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 
+import { isCreditBalance } from '@/lib/credit-balance';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { initPostHog } from '@/lib/posthog-browser';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
+import { CreditBalanceError } from './credit-balance-error';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
@@ -39,41 +42,50 @@ function CreditsSection({
       0,
     ) || 0;
 
-  const { data: creditsData } = useQuery({
+  const {
+    data: creditsData,
+    isPending,
+    isError,
+  } = useQuery({
     enabled: !!userId,
     queryFn: () => getCredits(supabase, userId),
     queryKey: ['credits', userId],
+    retry: false,
   });
 
   useEffect(() => {
-    if (!creditsData) {
+    if (isError || !isCreditBalance(creditsData?.amount)) {
       return;
     }
 
     const getData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) {
+      const claims = await getVerifiedClaims(supabase);
+      if (!claims?.sub) {
         throw new Error('User not found');
       }
 
-      const userHasPaid = await hasUserPaid(supabase, user.id);
-      return { user, userHasPaid };
+      const userHasPaid = await hasUserPaid(supabase, claims.sub);
+      return { claims, userHasPaid };
     };
 
     const sendUserAnalyticsData = (
-      user: User,
+      claims: JwtPayload,
       credits: Pick<Tables<'credits'>, 'amount'> | null | undefined,
       userHasPaid: boolean,
     ) => {
       const creditsLeft = credits?.amount ?? -1;
+      const metadata = claims.user_metadata;
+      const nickname =
+        (typeof metadata?.full_name === 'string' && metadata.full_name) ||
+        (typeof metadata?.username === 'string' && metadata.username) ||
+        undefined;
 
       initPostHog()
         .then((posthog) => {
-          posthog?.identify(user.id, {
+          posthog?.identify(claims.sub, {
             creditsLeft,
-            email: user.email,
-            name: user.user_metadata.full_name || user.user_metadata.username,
+            email: claims.email,
+            name: nickname,
             userHasPaid,
           });
         })
@@ -87,42 +99,50 @@ function CreditsSection({
         locale: lang,
       });
 
-      if (user.email) {
-        Crisp.user.setEmail(user.email);
+      if (claims.email) {
+        Crisp.user.setEmail(claims.email);
       }
 
-      const nickname =
-        user.user_metadata.full_name || user.user_metadata.username;
       if (nickname) {
         Crisp.user.setNickname(nickname);
       }
 
       Crisp.session.setData({
         creditsLeft,
-        user_id: user.id,
+        user_id: claims.sub,
         userHasPaid,
       });
     };
 
     getData()
-      .then(({ user, userHasPaid }) => {
-        sendUserAnalyticsData(user, creditsData, userHasPaid);
+      .then(({ claims, userHasPaid }) => {
+        sendUserAnalyticsData(claims, creditsData, userHasPaid);
       })
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, [creditsData, lang, supabase]);
+  }, [creditsData, isError, lang, supabase]);
 
-  if (!creditsData) {
+  if (isPending && userId) {
     return (
       <Skeleton
-        className="h-[150px] w-full rounded-lg"
+        className="h-[150px] w-full rounded-lg group-data-[collapsible=icon]:hidden"
         data-visual-test-no-radius
       />
     );
   }
 
-  const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
+  if (isError || !isCreditBalance(creditsData?.amount)) {
+    return (
+      <div className="group-data-[collapsible=icon]:hidden">
+        <CreditBalanceError />
+      </div>
+    );
+  }
+
+  const minutesRemaining = Math.floor(
+    Math.max(0, creditsData.amount) / CREDITS_PER_MINUTE,
+  );
 
   return (
     <div

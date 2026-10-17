@@ -104,7 +104,7 @@ export function PricingCards({
 
   return (
     <div
-      className={cn('flex flex-col gap-6 xl:px-28', className)}
+      className={cn('flex flex-col gap-6', className)}
       data-promo-theme={promoTheme}
     >
       {/* Billing toggle — the "+15%" badge here is the single source of truth */}
@@ -272,7 +272,11 @@ function CheckoutForm({
         throw new Error('Invalid checkout package');
       }
 
-      const { url } = await createCheckoutSession(formData, packageId);
+      const { url, error } = await createCheckoutSession(formData, packageId);
+
+      if (error) {
+        return { error: creditsT(`status.${error}`), success: false };
+      }
 
       if (url) {
         window.location.assign(url);

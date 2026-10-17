@@ -15,7 +15,7 @@ export function HeaderStatic() {
   const { isMobile375 } = useIsMobileSizes();
 
   return (
-    <header className="border-gray-700 border-b bg-gray-900">
+    <header className="border-gray-800/20 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
           className="hit-area-2 flex items-end gap-0"

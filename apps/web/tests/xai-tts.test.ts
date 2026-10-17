@@ -6,7 +6,6 @@ describe('normalizeXaiTtsSpeed', () => {
   it('returns undefined for missing or invalid values', () => {
     expect(normalizeXaiTtsSpeed(undefined)).toBeUndefined();
     expect(normalizeXaiTtsSpeed(Number.NaN)).toBeUndefined();
-    // biome-ignore lint/suspicious/noExplicitAny: exercising a non-number input
     expect(normalizeXaiTtsSpeed('1.2' as any)).toBeUndefined();
   });
 

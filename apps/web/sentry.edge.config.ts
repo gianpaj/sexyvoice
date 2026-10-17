@@ -3,20 +3,20 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
+  // Setting this option to true will print useful information to the console while you're setting up Sentry.
+  debug: false,
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
-
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 0.1,
+  enabled: process.env.NODE_ENV === 'production',
+  enableLogs: true,
   integrations: [
     // send console.log, console.warn, and console.error calls as logs to Sentry
     Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
   ],
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
-  enabled: process.env.NODE_ENV === 'production',
-  enableLogs: true,
+  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+  tracesSampleRate: 0.1,
 });

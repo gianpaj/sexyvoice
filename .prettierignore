@@ -1,0 +1,3 @@
+# Preserve upstream skill formatting and the aliases into that tree.
+/.agents/skills/
+/.claude/skills/

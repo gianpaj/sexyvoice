@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   analyzeTranscript,
+  buildCallAnalysisPrompt,
   buildConversationSummary,
   callAnalysisSchema,
   extractMessages,
+  parseCallAnalysisResponse,
   toAnalysisRow,
 } from '@/lib/ai/analyze-call';
 
@@ -79,6 +81,65 @@ describe('extractMessages()', () => {
     ]);
     expect(messages).toHaveLength(1);
     expect(messages[0].content).toBe('ok');
+  });
+
+  it('strips NUL bytes that Postgres would reject', () => {
+    const messages = extractMessages([
+      { content: 'he\u0000llo ', role: 'assistant' },
+    ]);
+    expect(messages[0].content).toBe('hello');
+  });
+});
+
+describe('buildCallAnalysisPrompt()', () => {
+  it('returns null for an empty transcript', () => {
+    expect(buildCallAnalysisPrompt({ id: 's1', transcript: null })).toBeNull();
+  });
+
+  it('embeds the conversation, context and assistant-only note', () => {
+    const input = buildCallAnalysisPrompt({
+      duration_seconds: 150,
+      end_reason: 'timeout',
+      id: 's1',
+      transcript: [{ content: 'hello', role: 'assistant' }],
+    });
+    expect(input).toMatchObject({ messageCount: 1, userMessageCount: 0 });
+    expect(input?.assistantOnlyNote).toMatch(/No user transcription/);
+    expect(input?.prompt).toContain('AI: hello');
+    expect(input?.prompt).toContain('Call duration: 150 seconds');
+    expect(input?.prompt).toContain('End reason: timeout');
+    expect(input?.prompt).toContain('- Note: No user transcription');
+  });
+});
+
+describe('parseCallAnalysisResponse()', () => {
+  const valid = {
+    ai_compliance_issues: null,
+    conversation_quality: 'flowing',
+    key_user_requests: [],
+    language: 'en',
+    notable_patterns: null,
+    topic_category: 'casual_chat',
+    topic_subcategory: 'smalltalk',
+    user_engagement_level: 'medium',
+    user_sentiment: 'engaged',
+    where_conversation_died: null,
+  };
+
+  it('accepts plain and fenced JSON', () => {
+    expect(parseCallAnalysisResponse(JSON.stringify(valid))).toEqual(valid);
+    expect(
+      parseCallAnalysisResponse(`\`\`\`json\n${JSON.stringify(valid)}\n\`\`\``),
+    ).toEqual(valid);
+  });
+
+  it('rejects invalid JSON and schema mismatches', () => {
+    expect(() => parseCallAnalysisResponse('nope')).toThrow();
+    expect(() =>
+      parseCallAnalysisResponse(
+        JSON.stringify({ ...valid, topic_category: 'unknown' }),
+      ),
+    ).toThrow(/schema validation/);
   });
 });
 

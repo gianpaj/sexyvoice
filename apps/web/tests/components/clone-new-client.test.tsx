@@ -1,23 +1,32 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NextIntlClientProvider } from 'next-intl';
+import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
+import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import daMessages from '@/messages/da.json';
+import deMessages from '@/messages/de.json';
+import enMessages from '@/messages/en.json';
+import esMessages from '@/messages/es.json';
+import frMessages from '@/messages/fr.json';
+import itMessages from '@/messages/it.json';
 
 const {
   fetchMock,
   mockEnsureLoaded,
+  mockFFmpegState,
   mockLanguageSelect,
   mockToastError,
   mockToastSuccess,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
+  mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
@@ -51,7 +60,7 @@ vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({
     convert: vi.fn(),
     ensureLoaded: mockEnsureLoaded,
-    isLoading: false,
+    isLoading: mockFFmpegState.isLoading,
   }),
 }));
 
@@ -74,6 +83,7 @@ vi.mock('@/hooks/use-file-upload', () => ({
   formatBytes: () => '1 MB',
   useFileUpload: () => [
     {
+      errors: [],
       files: [
         {
           file: selectedFile,
@@ -81,32 +91,31 @@ vi.mock('@/hooks/use-file-upload', () => ({
         },
       ],
       isDragging: false,
-      errors: [],
     },
     {
+      addFiles: vi.fn(),
+      clearErrors: vi.fn(),
+      getInputProps: vi.fn(() => ({})),
       handleDragEnter: vi.fn(),
       handleDragLeave: vi.fn(),
       handleDragOver: vi.fn(),
       handleDrop: vi.fn(),
       openFileDialog: vi.fn(),
       removeFile: vi.fn(),
-      getInputProps: vi.fn(() => ({})),
-      clearErrors: vi.fn(),
-      addFiles: vi.fn(),
     },
   ],
 }));
 
 vi.mock('@/hooks/use-media-recorder', () => ({
   default: () => ({
-    status: 'idle',
-    startRecording: vi.fn(),
-    stopRecording: vi.fn(),
-    clearMediaStream: vi.fn(),
     clearMediaBlob: vi.fn(),
-    mediaStream: null,
-    mediaBlob: null,
+    clearMediaStream: vi.fn(),
     getMediaStream: vi.fn(),
+    mediaBlob: null,
+    mediaStream: null,
+    startRecording: vi.fn(),
+    status: 'idle',
+    stopRecording: vi.fn(),
   }),
 }));
 
@@ -114,75 +123,33 @@ vi.mock('@/lib/download', () => ({
   downloadUrl: vi.fn(),
 }));
 
-vi.mock('@/lib/i18n/get-translated-languages', () => ({
-  getTranslatedLanguages: (_lang: string, codes: string[]) =>
-    codes.map((code) => ({
-      label: code.toUpperCase(),
-      value: code,
-    })),
-}));
+const errorCodesDict = {
+  PROVIDER_UNAVAILABLE:
+    '{provider} no está disponible temporalmente. Inténtalo de nuevo.',
+} as const;
 
 const dict = {
-  audioFileLabel: 'Audio File',
-  cancelButton: 'Cancel',
-  ctaButton: 'Generate Audio',
-  downloadAudio: 'Download Audio',
-  dragDropText: 'Drag & drop or click to browse',
-  errorCloning: 'Failed to clone voice',
-  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
-  errorTooLarge: 'File size too large. Please use a smaller audio file.',
-  errorTitle: 'Error',
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
   audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
   audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
   audioDurationInvalidVoxtral:
     'Reference audio must be at least __MIN__ seconds for voice cloning.',
   audioDurationUnknown: 'Could not determine audio duration.',
+  audioFileLabel: 'Audio File',
   audioProcessorError: 'Audio Processor Error',
+  cancelButton: 'Cancel',
   convertingAudio: 'Converting audio',
-  failedToLoadAudioProcessor: 'Failed to load audio processor',
-  failedToStartRecording: 'Failed to start recording: __ERROR__',
-  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
-  generating: 'Generating',
-  languageLabel: 'Language',
-  languageSelectPlaceholder: 'Select a language',
-  legalConsentCheckbox:
-    'By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.',
-  notEnoughCredits: "You don't have enough credits to generate audio.",
-  orUseMicrophone: 'or use your microphone',
-  playAudio: 'Play Audio',
-  loadingAudioProcessor: 'Loading audio processor...',
-  microphoneError: 'Microphone error',
-  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
-  previewTitle: 'Generated Voice Preview',
-  referenceAudioGuidanceLong:
-    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
-  referenceAudioGuidanceShort:
-    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
-  paidTextLimitTooltip:
-    'Paid users can clone longer speech with up to __MAX__ characters.',
-  upgradeTextLimitTooltip:
-    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
-  referenceAudioEnhancementHelp:
-    'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
-  referenceAudioEnhancementLabel: 'Reference audio enhancement',
-  removeFile: 'Remove file',
-  sampleCard: {
-    exampleOutput: 'Example',
-    loadSource: 'Load source',
-    sourceAudio: 'Source audio',
+  crossLanguageInfo: {
+    description: '',
+    example: '',
+    title: '',
   },
-  subtitle:
-    'Upload an audio file and enter text to create a voice clone and generate speech in one step',
-  success: 'Audio generated successfully!',
-  tabPreview: 'Preview',
-  tabUpload: 'Upload',
-  textAreaPlaceholder: 'Enter the text you want to convert to speech...',
-  textToConvertLabel: 'Enter text to generate speech',
-  title: 'Clone a Voice',
-  tryDemo: 'Or try with a demo:',
-  unexpectedError: 'Unexpected error occurred',
-  uploadAudioFile: 'Upload audio file',
+  ctaButton: 'Generate Audio',
+  downloadAudio: 'Download Audio',
+  dragDropText: 'Drag & drop or click to browse',
+  englishChatterbox: 'English (Chatterbox)',
+  errorCloning: 'Failed to clone voice',
+  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errors: {
     audioConversionFailed:
       'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
@@ -214,22 +181,69 @@ const dict = {
     unsupportedLocale: 'This language is not supported for voice cloning.',
     userNotFound: 'Please sign in to clone a voice.',
   },
-  crossLanguageInfo: {
-    description: '',
-    example: '',
-    title: '',
+  errorTitle: 'Error',
+  errorTooLarge: 'File size too large. Please use a smaller audio file.',
+  failedToLoadAudioProcessor: 'Failed to load audio processor',
+  failedToStartRecording: 'Failed to start recording: __ERROR__',
+  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
+  generating: 'Generating',
+  languageLabel: 'Language',
+  languageSelectPlaceholder: 'Select a language',
+  legalConsentCheckbox:
+    'By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.',
+  loadingAudioProcessor: 'Loading audio processor...',
+  microphoneError: 'Microphone error',
+  notEnoughCredits: "You don't have enough credits to generate audio.",
+  orUseMicrophone: 'or use your microphone',
+  paidTextLimitTooltip:
+    'Paid users can clone longer speech with up to __MAX__ characters.',
+  playAudio: 'Play Audio',
+  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
+  previewTitle: 'Generated Voice Preview',
+  referenceAudioEnhancementHelp:
+    'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
+  referenceAudioEnhancementLabel: 'Reference audio enhancement',
+  referenceAudioGuidanceLong:
+    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+  referenceAudioGuidanceShort:
+    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+  removeFile: 'Remove file',
+  sampleCard: {
+    exampleOutput: 'Example',
+    loadSource: 'Load source',
+    sourceAudio: 'Source audio',
   },
+  subtitle:
+    'Upload an audio file and enter text to create a voice clone and generate speech in one step',
+  success: 'Audio generated successfully!',
+  tabPreview: 'Preview',
+  tabUpload: 'Upload',
+  textAreaPlaceholder: 'Enter the text you want to convert to speech...',
+  textToConvertLabel: 'Enter text to generate speech',
+  title: 'Clone a Voice',
+  tryDemo: 'Or try with a demo:',
+  unexpectedError: 'Unexpected error occurred',
+  upgradeTextLimitTooltip:
+    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
+  uploadAudioFile: 'Upload audio file',
 } as const;
 
 const renderClone = (
   props: {
+    cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
     lang?: Locale;
     userHasPaid?: boolean;
   } = {},
 ) =>
   render(
-    <NextIntlClientProvider locale="en" messages={{ clone: dict }}>
+    <NextIntlClientProvider
+      locale="es"
+      messages={{
+        clone: props.cloneMessages ?? dict,
+        errorCodes: errorCodesDict,
+      }}
+    >
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
         lang={props.lang ?? 'en'}
@@ -248,14 +262,15 @@ const renderedLocaleCodes = () => {
 describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFFmpegState.isLoading = false;
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
         {
-          status: 200,
           headers: {
             'content-type': 'application/json',
           },
+          status: 200,
         },
       ),
     );
@@ -266,17 +281,123 @@ describe('NewVoiceClient', () => {
     vi.unstubAllGlobals();
   });
 
+  it('updates text direction without clearing text when switching languages', async () => {
+    const user = userEvent.setup();
+    renderClone();
+
+    const input = screen.getByTestId('clone-text-input');
+    const text = 'Keep this text when switching languages.';
+    await user.type(input, text);
+    expect(input).toHaveAttribute('dir', 'ltr');
+
+    for (const code of CLONE_SUPPORTED_LOCALE_CODES) {
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(input).toHaveAttribute(
+        'dir',
+        code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
+      );
+      expect(input).toHaveValue(text);
+    }
+
+    act(() => {
+      mockLanguageSelect.mock.lastCall?.[0].dispatch({
+        patch: { selectedLocaleCode: 'en' },
+        type: 'patch',
+      });
+    });
+    expect(input).toHaveAttribute('dir', 'ltr');
+    expect(input).toHaveValue(text);
+  });
+
+  it.each([['fr', 'Français']])(
+    'uses the translated name for %s in the audio loading message',
+    (code, name) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+
+      expect(
+        screen.getByText(`Preparing audio processor for ${name}...`),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it.each(['zh', 'ja', 'en-multi', 'en'])(
+    'hides the preparation message when switching from French to %s',
+    (code) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: 'fr' },
+          type: 'patch',
+        });
+      });
+      // The fixture supplies English copy; lang: 'fr' localizes the language name.
+      expect(
+        screen.getByText('Preparing audio processor for Français...'),
+      ).toBeInTheDocument();
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(
+        screen.queryByText(/Preparing audio processor for/),
+      ).not.toBeInTheDocument();
+    },
+  );
+
   it('lists the page locale first in the language select', () => {
     renderClone({ lang: 'it' });
 
     expect(renderedLocaleCodes()[0]).toBe('it');
   });
 
+  it.each([
+    ['en', enMessages, 'English (Chatterbox)'],
+    ['es', esMessages, 'Inglés (Chatterbox)'],
+    ['de', deMessages, 'Englisch (Chatterbox)'],
+    ['da', daMessages, 'Engelsk (Chatterbox)'],
+    ['it', itMessages, 'Inglese (Chatterbox)'],
+    ['fr', frMessages, 'Anglais (Chatterbox)'],
+  ] as const)(
+    'labels Chatterbox English distinctly in %s',
+    (lang, messages, name) => {
+      renderClone({ cloneMessages: messages.clone, lang });
+
+      const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+        supportedLocales: { code: string; name: string }[];
+      };
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en-multi')?.name,
+      ).toBe(name);
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en')?.name,
+      ).not.toBe(name);
+    },
+  );
+
   it('keeps every supported locale when the page locale is hoisted', () => {
     renderClone({ lang: 'it' });
 
     const codes = renderedLocaleCodes();
     expect(codes).toHaveLength(new Set(codes).size);
+    expect([...codes].sort()).toEqual([...CLONE_SUPPORTED_LOCALE_CODES].sort());
     expect(codes).toContain('en');
     expect(codes).toContain('es');
   });
@@ -357,6 +478,53 @@ describe('NewVoiceClient', () => {
     expect(mockToastSuccess).toHaveBeenCalledWith(dict.success);
   });
 
+  it.each(['Mistral', 'Replicate'] as const)(
+    'renders localized %s provider errors',
+    async (provider) => {
+      const user = userEvent.setup();
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 'PROVIDER_UNAVAILABLE',
+            details: { provider },
+            error: `${provider} is temporarily unavailable. Please retry. (503)`,
+            serverMessage: `${provider} is temporarily unavailable. Please retry.`,
+            status: 503,
+          }),
+          {
+            headers: {
+              'content-type': 'application/json',
+            },
+            status: 503,
+          },
+        ),
+      );
+
+      renderClone();
+
+      await user.type(
+        screen.getByLabelText(dict.textToConvertLabel),
+        'Hello world',
+      );
+      await user.click(
+        screen.getByRole('checkbox', {
+          name: dict.legalConsentCheckbox,
+        }),
+      );
+      await user.click(
+        screen.getByRole('button', {
+          name: /generate audio/i,
+        }),
+      );
+
+      expect(
+        await screen.findByText(
+          `${provider} no está disponible temporalmente. Inténtalo de nuevo.`,
+        ),
+      ).toBeInTheDocument();
+    },
+  );
+
   it('renders translated clone errors from API error codes', async () => {
     const user = userEvent.setup();
     fetchMock.mockResolvedValueOnce(
@@ -368,10 +536,10 @@ describe('NewVoiceClient', () => {
             'Insufficient credits. You need 252 credits to clone this audio',
         }),
         {
-          status: 402,
           headers: {
             'content-type': 'application/json',
           },
+          status: 402,
         },
       ),
     );
