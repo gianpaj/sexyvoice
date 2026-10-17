@@ -231,6 +231,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 
 - Banner definitions live in `apps/web/lib/banners/registry.ts`.
 - Banner resolution lives in `apps/web/lib/banners/resolve-banner.ts`.
+- Promo banners require `NEXT_PUBLIC_PROMO_ENABLED=true` and an explicit
+  `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`. An unset or empty selection shows no promo
+  banner; do not add an implicit campaign fallback.
 - Banner dismissal writes a client-side cookie through
   `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`.
 - Localized copy lives under `promos` or `announcements` in every
