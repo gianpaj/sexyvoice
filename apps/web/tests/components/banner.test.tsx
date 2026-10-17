@@ -48,13 +48,28 @@ describe('Banner', () => {
 
     expect(surface).toHaveAttribute('data-promo-theme', 'blue');
     expect(surface).not.toHaveClass('fixed', 'backdrop-blur-sm');
-    expect(layout).toHaveClass('justify-center', 'sm:flex-wrap', 'px-14');
+    expect(layout).toHaveClass(
+      'justify-center',
+      'sm:flex-wrap',
+      'px-4',
+      'gap-2',
+      'sm:px-14',
+    );
+    expect(screen.getByText(banner.text)).toHaveClass(
+      'text-sm',
+      'md:text-base',
+    );
+    expect(screen.getByText(banner.text).parentElement).toHaveClass(
+      'px-8',
+      'sm:px-0',
+    );
     expect(layout).not.toHaveClass('sm:grid');
     expect(cta).toHaveAttribute('href', banner.ctaLink);
-    expect(cta).toHaveClass('min-h-10');
+    expect(cta).toHaveClass('sm:min-h-10');
+    expect(cta).not.toHaveClass('min-h-10');
     expect(
       screen.getByRole('button', { name: banner.ariaLabelDismiss }),
-    ).toHaveClass('absolute', 'right-2', 'size-11');
+    ).toHaveClass('absolute', 'top-0', 'right-0', 'size-11');
   });
 
   it('preserves the public banner grid and inline dismiss button', async () => {

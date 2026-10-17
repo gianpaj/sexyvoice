@@ -148,12 +148,21 @@ export function Banner({
         className={cn(
           'relative mx-auto flex flex-col items-center gap-3 text-white',
           inDashboard
-            ? 'justify-center px-14 sm:flex-row sm:flex-wrap sm:gap-x-6'
+            ? 'justify-center gap-2 px-4 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-3 sm:px-14'
             : 'px-4 lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4',
         )}
-        style={{ paddingBlock: 'clamp(0.5rem, 1.5vw, 1rem)' }}
+        style={{
+          paddingBlock: inDashboard
+            ? 'clamp(0.375rem, 1.5vw, 1rem)'
+            : 'clamp(0.5rem, 1.5vw, 1rem)',
+        }}
       >
-        <div className="flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6">
+        <div
+          className={cn(
+            'flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6',
+            inDashboard && banner.dismissible && 'px-8 sm:px-0',
+          )}
+        >
           <p className="whitespace-pre-line text-wrap font-medium text-sm md:text-base">
             {banner.text}
           </p>
@@ -199,7 +208,7 @@ export function Banner({
             asChild
             className={cn(
               'whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark',
-              inDashboard && 'min-h-10 shrink-0',
+              inDashboard && 'shrink-0 sm:min-h-10',
             )}
             effect="ringHover"
             size="sm"
@@ -214,7 +223,7 @@ export function Banner({
               className={cn(
                 'shrink-0 text-white hover:bg-promo-accent/20 hover:text-white focus-visible:ring-promo-accent',
                 inDashboard &&
-                  'absolute top-2 right-2 size-11 p-0 sm:top-1/2 sm:-translate-y-1/2',
+                  'absolute top-0 right-0 size-11 p-0 sm:top-1/2 sm:right-2 sm:-translate-y-1/2',
               )}
               onClick={handleDismissBanner}
               size="sm"
