@@ -256,7 +256,7 @@ export default async function LandingPage(props: {
                 prefetch
               >
                 <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
-                  <CardHeader className="pb-3">
+                  <CardHeader>
                     <CardDecorator>
                       <PhoneCall
                         aria-hidden
@@ -283,7 +283,7 @@ export default async function LandingPage(props: {
                   prefetch
                 >
                   <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
-                    <CardHeader className="pb-3">
+                    <CardHeader>
                       <CardDecorator>
                         <AudioLines
                           aria-hidden
@@ -305,7 +305,7 @@ export default async function LandingPage(props: {
                 </Link>
               )}
               <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardDecorator>
                     <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
@@ -321,7 +321,7 @@ export default async function LandingPage(props: {
                 </CardContent>
               </Card>
               <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardDecorator>
                     <Mic2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
@@ -339,7 +339,7 @@ export default async function LandingPage(props: {
               </Card>
 
               <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
-                <CardHeader className="pb-3">
+                <CardHeader>
                   <CardDecorator>
                     <Globe2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>

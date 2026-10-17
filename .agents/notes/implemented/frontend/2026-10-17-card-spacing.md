@@ -4,7 +4,8 @@ The shared shadcn `Card` owns vertical padding (`py-6`) and spacing
 between slots (`gap-6`). `CardHeader` and `CardContent` own horizontal
 padding (`px-6`). The generation settings, audio generator, and cloning
 form rely on these defaults to avoid doubled vertical padding and
-misaligned mobile edges.
+misaligned mobile edges. Homepage feature cards and voice-call privacy
+cards use the shared 24px gap without extra header bottom padding.
 
 `PricingCards` leaves horizontal gutters to callers. The homepage uses
 `xl:px-10`; the credits dashboard has no horizontal gutter.
