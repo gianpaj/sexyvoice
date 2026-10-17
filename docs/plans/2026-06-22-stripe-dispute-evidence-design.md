@@ -59,29 +59,24 @@ error before running the remaining queries.
 ## Data Gathered (all scoped `WHERE user_id = X`)
 
 ### Account — `profiles`
-
 - `username` (the user's email), `stripe_id`, `created_at`.
 - Proves identity and signup date.
 
 ### Payments — `credit_transactions` (type in `purchase`, `topup`, `refund`)
-
 - Per row: `created_at`, `type`, `amount` (credits), `metadata.dollarAmount`,
   `reference_id` (Stripe Payment Intent ID), `subscription_id`.
 - Proves what they paid and links each payment to a Stripe Payment Intent.
 
 ### Balance — `credits`
-
 - Current `amount`. Source of truth for available credits.
 
 ### Usage summary — `usage_events`, aggregated by `source_type`
-
 - Per `source_type` (`tts`, `voice_cloning`, `live_call`, `audio_processing`,
   `api_tts`, `api_voice_cloning`): event count, total `quantity`,
   total `credits_used`, first and last `occurred_at`.
 - This append-only audit log is the strongest proof the service was used.
 
 ### Delivered artifacts (metadata only — no `text_content`, no URLs)
-
 - `audio_files`: count, total `duration`, total `credits_used`, first/last
   `created_at`, distinct `model`s, and a paid-vs-free split (first/last paid,
   first free). Paid/free is "was the user a paying customer at generation time",
@@ -113,12 +108,10 @@ error before running the remaining queries.
 ## Output
 
 ### Console (stdout)
-
 Sectioned, labelled text in the visual style of
 `refund-credits.mts`'s `displayRefundInfo()` (header banners, aligned labels).
 
 ### Markdown file
-
 Written to `dispute-<user_id>-<YYYY-MM-DD>.md` in the current working
 directory. Same sections as the console view, formatted as Markdown headings
 and tables so it can be attached directly to the Stripe dispute response.
