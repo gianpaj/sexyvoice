@@ -1,12 +1,27 @@
 ---
 name: promo-banner
-description: Set up promotional banners with optional countdown timers. Use when creating seasonal sales, limited-time offers, or marketing campaigns that need dismissible banners with localized copy and theme customization.
+description: Configure and verify promotional campaigns using the shared banner system. Use when enabling or reusing seasonal offers, setting bonus credits, selecting banner themes and placements, or testing promo pricing, countdowns, and dismissal across the homepage, dashboard, and blog.
 ---
 
 # Promo banner setup
 
 Configure a promotional banner through the shared banner registry. Existing
 placements already resolve and render the highest-priority active banner.
+
+## Inspect the campaign
+
+Inspect `apps/web/lib/banners/registry.ts`, existing copy under `promos` in
+`apps/web/messages/*.json`, relevant environment values, and
+`apps/web/lib/stripe/pricing.ts` before editing. Reuse a registered banner when
+its offer, placements, and dismissal behavior fit; add an entry only when needed.
+
+Confirm the target environment (local, preview, or production), offer type,
+package bonuses, and campaign end time. Inspect only relevant configuration;
+do not print secrets. Do not deploy, modify Stripe resources, or make a payment
+unless the user requests it.
+
+For campaign copy, follow the positioning and claims guidance in
+`.agents/product-marketing.md` as required by `AGENTS.md`.
 
 ## Configure the campaign
 
@@ -20,10 +35,11 @@ NEXT_PUBLIC_ACTIVE_PROMO_BANNER=winterSaleBanner
 
 # Optional presentation
 NEXT_PUBLIC_PROMO_THEME=pink
-NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE=2026-01-31T23:59:59Z
+# Only if the selected registry entry supports a countdown
+# NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE=2027-01-31T23:59:59Z
 
 # Only for Stripe metadata and bonus-credit campaigns
-NEXT_PUBLIC_PROMO_ID=winter_sale_2026
+NEXT_PUBLIC_PROMO_ID=winter_sale_2027
 NEXT_PUBLIC_PROMO_BONUS_STARTER=2000
 NEXT_PUBLIC_PROMO_BONUS_STANDARD=7500
 NEXT_PUBLIC_PROMO_BONUS_PRO=105000
@@ -34,11 +50,43 @@ When it is unset or empty, no promo banner is selected.
 `NEXT_PUBLIC_PROMO_ID` does not select the banner or name its dismissal
 cookie.
 
+## Offer behavior and expiry
+
+| Control                           | Effect                                                                                                               |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_PROMO_ENABLED`       | Enables promo banner selection, bonus-credit pricing, and promo metadata; does not control announcements.            |
+| `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` | Selects the banner, not the financial offer.                                                                         |
+| `NEXT_PUBLIC_PROMO_BONUS_*`       | Adds credits without reducing the payment amount.                                                                    |
+| Stripe first-month coupon         | Separately discounts eligible subscribers' checkout prices; see [Stripe configuration](../../docs/devops.md#stripe). |
+
+Banner absence or dismissal does not disable bonus-credit pricing. The Stripe
+coupon is independent of the promo flag; verify its validity and eligibility
+when a campaign advertises a price discount. Do not treat the displayed discount
+percentage as proof of the coupon's actual terms.
+
+Check advertised percentages against package totals from
+`apps/web/lib/stripe/pricing.ts`. Subscription credits are
+`Math.round((baseCredits + promoBonus) * SUBSCRIPTION_BONUS_MULTIPLIER)`;
+the multiplier is `1.15`. The displayed monthly bonus includes both the promo
+and subscription bonuses. For example, a 25,000-credit package with 7,500 promo
+credits yields 32,500 one-time credits or 37,375 monthly credits. Extra credits
+are not a percentage reduction in price.
+
+A countdown controls banner presentation, not offer eligibility. It requires a
+registry `countdown` definition, localized countdown labels, and an end-date
+environment value. Setting the environment value alone does not add a timer.
+
+Confirm the shutdown procedure: disable the promo flag in the target environment
+to stop promo bonuses and banner selection, and end any Stripe coupon offer
+independently. Follow the deployment workflow for environment changes
+in [deployment guidance](../../docs/devops.md). Do not promise automatic expiry
+unless the billing path enforces it.
+
 ## Register the banner
 
-Add the banner to `apps/web/lib/banners/registry.ts`. The `id` must match the
-active environment value and the translation key. Give each banner a stable,
-unique dismissal cookie.
+For a new banner, add an entry to `apps/web/lib/banners/registry.ts`. The `id`
+must match the active environment value and the translation key. Give each
+banner a stable, unique dismissal cookie.
 
 ```ts
 yourPromoBanner: {
@@ -108,8 +156,9 @@ their static caching. On those pages, the client can hide a dismissed banner,
 but it cannot replace it with the next eligible banner because the server sent
 only the highest-priority banner. If a promo and announcement are active
 together, dismissing the promo leaves the banner slot empty on those pages.
-Blog and dashboard pages pass dismissal cookies to the resolver, so they can
-fall back to the announcement.
+Blog and dashboard pages pass dismissal cookies to the resolver, so a subsequent
+server render can select the next eligible announcement. Client-side dismissal
+alone hides the current banner; it does not immediately resolve a replacement.
 
 ## Theme colors
 
@@ -119,6 +168,29 @@ live in `apps/web/app/globals.css` under `[data-promo-theme]` selectors.
 When adding a theme, extend `BannerTheme` in
 `apps/web/lib/banners/types.ts`, add its CSS variables, and update the example
 environment values.
+
+Use promo color tokens for banner hover and keyboard-focus treatments, not
+generic gray button states. In `apps/web/components/pricing-cards.tsx`, both
+billing modes use one translated bonus label and the promo color while a promo
+is enabled. Without a promo, monthly subscription bonuses stay green and
+one-time bonuses are hidden. Keep this presentation consistent across locales.
+
+## Dashboard layout
+
+Keep dashboard banners in normal flow inside the content column in
+`apps/web/app/[lang]/(dashboard)/dashboard.ui.tsx`; do not cover the page heading
+or desktop sidebar with a fixed banner.
+
+On mobile, the dashboard-owned sidebar trigger overlays the visible banner at
+the top-left; dismissal sits at the top-right. The content column uses CSS
+`:has()` with the banner's `data-dashboard-banner` marker to detect actual
+rendering. When the banner is absent, the standalone navigation header remains.
+Do not use the promo flag or `activeBanner` prop alone to position navigation:
+a dismissal cookie can hide a configured banner.
+
+Keep text centered with clearance around both controls, and align the first
+mobile text line with the icons. Preserve navigation when the banner is
+dismissed, disabled, or non-dismissible. Leave exact spacing in the components.
 
 ## Dismissal behavior
 
@@ -130,17 +202,48 @@ resolver reads the same cookie on later requests.
 Dismissal is entirely client-side. Do not add a Server Action or derive the
 cookie name from `NEXT_PUBLIC_PROMO_ID`.
 
+## Verification
+
+Follow `AGENTS.md` for mandatory validation and its documentation-only exception.
+For campaign or runtime changes, run translation parity checks and the focused
+banner and pricing tests:
+
+```sh
+pnpm check-translations
+pnpm --filter @sexyvoice/web test --run tests/banner-resolver.test.ts tests/components/banner.test.tsx tests/stripe-pricing.test.ts tests/components/pricing-cards.test.tsx
+```
+
+When checkout or fulfillment behavior changes, also run the relevant
+`tests/stripe-actions.test.ts` and `tests/stripe-webhook.test.ts` suites.
+
+Verify the following states before deployment:
+
+- Mobile and desktop: each supported placement, wrapping in supported locales,
+  text/icon alignment, control clearance, and themed hover and keyboard focus.
+- Banner visible, dismissed, and disabled: sidebar navigation works in each
+  dashboard state. Use a fresh browser context or clear the specific dismissal
+  cookie to distinguish misconfiguration from a dismissed banner.
+- Logged-in and logged-out CTAs: check the actual placement's audience and target;
+  the cacheable homepage resolves the logged-out CTA.
+- Monthly and one-time pricing, with promos enabled and disabled: compare credit
+  totals, prices, translated bonus labels, and theme colors against the offer.
+- Countdown-supported campaigns: check expiry without assuming bonus credits or
+  a Stripe coupon have ended.
+- Overlapping promo and announcement: check immediate dismissal and a subsequent
+  server render on both cacheable and cookie-aware pages.
+
+Capture screenshots from an authenticated dashboard and public pages at mobile
+and desktop widths. If authentication blocks inspection, report it; do not claim
+visual verification from component tests alone.
+
 ## Checklist
 
-1. Add a registry entry with a unique `id`, `dismiss.cookieKey`, and
-   `dismiss.days`.
-2. Choose the CTA targets, placements, countdown behavior, and priority.
-3. Add matching copy to all six `apps/web/messages/*.json` files.
-4. Set `NEXT_PUBLIC_PROMO_ENABLED=true` and
-   `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` to the registry id.
-5. Set theme, countdown, Stripe metadata, and bonus-credit variables only when
-   the campaign needs them.
-6. Run `pnpm check-translations`, `pnpm fixall`, and the focused banner tests.
-7. Verify dismissal, logged-in and logged-out CTAs, supported placements, and
-   countdown expiry before deployment. When a promo and announcement overlap,
-   verify the dismissal result on both cacheable and cookie-aware pages.
+1. Inspect and reuse existing campaign definitions before adding entries.
+2. Confirm the environment, offer, totals, deadline, and shutdown procedure.
+3. Check CTA targets, placements, priority, and stable dismissal cookies.
+4. Add or update campaign copy in all six locales when needed.
+5. Set the promo flag and explicit banner id; configure theme, metadata, bonuses,
+   and supported countdown settings for the intended offer.
+6. Complete the applicable checks in Verification and `AGENTS.md`.
+7. Report what was configured, tested, and visually verified, and what remains
+   before production activation.
