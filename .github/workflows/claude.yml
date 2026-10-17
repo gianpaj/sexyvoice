@@ -212,7 +212,7 @@ jobs:
             not just its latest commit. These base and head SHAs are pinned;
             do not use a live PR diff from a newer head or base.
             Before posting the final review, check "Run Unit Tests" for this SHA:
-            gh run list --repo ${{ github.repository }} --workflow test.yml --event pull_request --commit ${{ needs.review-gate.outputs.sha }} --limit 1 --json databaseId,headSha,status,conclusion,url
+            gh run list --repo ${{ github.repository }} --workflow tests.yml --event pull_request --commit ${{ needs.review-gate.outputs.sha }} --limit 1 --json databaseId,headSha,status,conclusion,url
             Keep discovery and waiting within a 5-minute total budget.
             If no run exists yet, retry discovery every 15 seconds using sleep 15.
             Once a run exists, if it is not completed, use:
@@ -228,8 +228,8 @@ jobs:
             Never wait for this Claude workflow or use another commit's results.
             Recheck the PR head before posting; if it changed, identify the
             reviewed SHA and state that the newer commit was not reviewed.
-            Include this exact completion marker in the assessment body:
-            <!-- claude-review-run: ${{ github.run_id }}-${{ github.run_attempt }} head: ${{ needs.review-gate.outputs.sha }} base: ${{ needs.review-gate.outputs.base }} -->
+            End the final assessment with this line exactly:
+            Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-gate.outputs.sha }}/${{ needs.review-gate.outputs.base }}
             Include the completion marker only after completing the code review.
             If commit verification fails or you cannot complete the review,
             report the problem in a comment without the completion marker.
@@ -244,7 +244,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
           REVIEW_HEAD: ${{ needs.review-gate.outputs.sha }}
           REVIEW_BASE: ${{ needs.review-gate.outputs.base }}
-          REVIEW_RUN_MARKER: "<!-- claude-review-run: ${{ github.run_id }}-${{ github.run_attempt }} head: ${{ needs.review-gate.outputs.sha }} base: ${{ needs.review-gate.outputs.base }} -->"
+          # The action strips HTML comments from bodies Claude publishes.
+          REVIEW_RUN_MARKER: "Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-gate.outputs.sha }}/${{ needs.review-gate.outputs.base }}"
         run: |
           # A successful action alone does not prove Claude completed the review.
           gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
