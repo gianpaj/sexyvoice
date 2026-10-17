@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,6 +10,17 @@ import type { ResolvedBanner } from '@/lib/banners/types';
 import { setCookie } from '@/lib/cookies';
 
 const DISMISS_COOKIE = 'banner-expressive-voices-launch-dismissed';
+const expiredCountdown = {
+  enabled: true,
+  endDate: '2000-01-01T00:00:00Z',
+  labels: {
+    days: 'Days',
+    hours: 'Hours',
+    minutes: 'Min',
+    prefix: 'Ends in:',
+    seconds: 'Sec',
+  },
+};
 const banner = {
   ariaLabelDismiss: 'Dismiss expressive voices announcement',
   ctaLink: '/en/dashboard/generate',
@@ -56,6 +67,34 @@ describe('Banner', () => {
       expect(container.querySelector('[data-dashboard-banner]')).toBeNull();
     });
   });
+
+  it('omits expired dashboard banners from the initial markup', () => {
+    expect(
+      renderToString(
+        <Banner
+          banner={{ ...banner, countdown: expiredCountdown }}
+          inDashboard
+        />,
+      ),
+    ).toBe('');
+  });
+
+  it.each([false, true])(
+    'does not reveal an expired banner after checking cookies (dashboard: %s)',
+    async (inDashboard) => {
+      let container: HTMLElement | undefined;
+      await act(async () => {
+        container = render(
+          <Banner
+            banner={{ ...banner, countdown: expiredCountdown }}
+            inDashboard={inDashboard}
+          />,
+        ).container;
+      });
+
+      expect(container?.querySelector('[data-promo-theme]')).toBeNull();
+    },
+  );
 
   it('keeps public banners hidden until the client checks dismissal cookies', () => {
     expect(renderToString(<Banner banner={banner} />)).toBe('');

@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { isBannerCountdownExpired } from '@/lib/banners/countdown';
 // biome-ignore lint/performance/noNamespaceImport: Vitest needs the module namespace to spy on the registry export
 import * as bannerRegistry from '@/lib/banners/registry';
 import {
@@ -87,7 +88,62 @@ describe('getActivePromoBannerId', () => {
   });
 });
 
+describe('isBannerCountdownExpired', () => {
+  const now = Date.parse('2026-11-30T12:00:00Z');
+
+  it.each([
+    [undefined, false],
+    ['', false],
+    ['invalid', false],
+    ['2026-11-30T11:59:59Z', true],
+    ['2026-11-30T12:00:00Z', true],
+    ['2026-11-30T12:00:01Z', false],
+  ] as const)('checks the configured deadline %s', (endDate, expired) => {
+    expect(isBannerCountdownExpired(endDate, now)).toBe(expired);
+  });
+});
+
 describe('resolveActiveBanner', () => {
+  beforeEach(() => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-30T12:00:00Z'));
+  });
+
+  it.each(['landing', 'dashboard', 'blog'] as const)(
+    'omits an expired promo on %s',
+    (placement) => {
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+      process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
+      process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE = '2026-11-30T12:00:00Z';
+      unsetEnv('NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER');
+
+      expect(
+        resolveActiveBanner({
+          audience: 'loggedOut',
+          lang: 'en',
+          messages,
+          placement,
+        }),
+      ).toBeNull();
+    },
+  );
+
+  it('selects the announcement when the promo countdown has ended', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
+    process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE = '2026-11-30T11:59:59Z';
+    process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER =
+      'expressiveVoicesLaunch';
+
+    expect(
+      resolveActiveBanner({
+        audience: 'loggedIn',
+        lang: 'en',
+        messages,
+        placement: 'dashboard',
+      })?.id,
+    ).toBe('expressiveVoicesLaunch');
+  });
+
   it('returns the active promo banner for the landing page', () => {
     process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
     process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';

@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { isBannerCountdownExpired } from './countdown';
 import { getBannerDefinition } from './registry';
 import type {
   BannerAudience,
@@ -79,6 +80,10 @@ function resolveBanner(
     translation.countdown
       ? process.env[definition.countdown.endDateEnvVar]
       : undefined;
+
+  if (isBannerCountdownExpired(countdownEndDate)) {
+    return null;
+  }
 
   return {
     ariaLabelDismiss: translation.ariaLabelDismiss,

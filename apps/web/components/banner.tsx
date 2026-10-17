@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Fragment, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { isBannerCountdownExpired } from '@/lib/banners/countdown';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import { getCookie, setCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
@@ -27,7 +28,7 @@ function calculateTimeRemaining(endDate: string): TimeRemaining | null {
   const end = parsedEnd.getTime();
   const distance = end - now;
 
-  if (distance < 0) {
+  if (isBannerCountdownExpired(endDate, now)) {
     return { days: 0, expired: true, hours: 0, minutes: 0, seconds: 0 };
   }
 
@@ -47,7 +48,12 @@ export function Banner({
   banner: ResolvedBanner;
   inDashboard?: boolean;
 }) {
-  const [isVisible, setIsVisible] = useState(inDashboard === true);
+  const countdownEndDate = banner.countdown?.enabled
+    ? banner.countdown.endDate
+    : undefined;
+  const [isVisible, setIsVisible] = useState(
+    inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
+  );
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
@@ -57,7 +63,9 @@ export function Banner({
 
     // Fresh dashboard renders are server-filtered, but cached navigation can
     // restore stale banner props. Recheck cookies without hiding valid banners.
-    setIsVisible(inDashboard === true);
+    setIsVisible(
+      inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
+    );
 
     const resolveVisibility = async () => {
       if (!banner.dismissible) {
@@ -70,8 +78,10 @@ export function Banner({
 
     resolveVisibility()
       .then((visible) => {
-        if (!(isCancelled || (inDashboard && visible))) {
-          setIsVisible(visible);
+        const shouldShow =
+          visible && !isBannerCountdownExpired(countdownEndDate);
+        if (!(isCancelled || (inDashboard && shouldShow))) {
+          setIsVisible(shouldShow);
         }
       })
       .catch(() => undefined);
@@ -79,7 +89,12 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [banner.dismiss.cookieKey, banner.dismissible, inDashboard]);
+  }, [
+    banner.dismiss.cookieKey,
+    banner.dismissible,
+    countdownEndDate,
+    inDashboard,
+  ]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {

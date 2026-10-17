@@ -75,6 +75,10 @@ are not a percentage reduction in price.
 A countdown controls banner presentation, not offer eligibility. It requires a
 registry `countdown` definition, localized countdown labels, and an end-date
 environment value. Setting the environment value alone does not add a timer.
+The server resolver excludes expired countdown banners; the client also checks
+expiry when resolving visibility and while a displayed timer runs. Shared expiry
+logic lives in `apps/web/lib/banners/countdown.ts`. This only ends banner display,
+not the financial offer.
 
 Confirm the shutdown procedure: disable the promo flag in the target environment
 to stop promo bonuses and banner selection, and end any Stripe coupon offer
