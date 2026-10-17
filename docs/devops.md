@@ -27,9 +27,12 @@ before merging to `main` and after deploying.
   migrations already applied when migrations or pgTAP tests change.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
-Claude reviews pin a PR head and report CI results for that SHA. Pushes do not
+Claude reviews run automatically when a non-draft PR opens or is marked ready
+for review. They pin a PR head and report CI results for that SHA. Pushes do not
 request another Claude review; comment `@claude review` when one is needed.
-The review's CI report is not a workflow dependency or a guaranteed merge gate.
+The workflow verifies publication using a plain-text completion marker from
+`claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
+merge gate.
 
 ## Deployment targets
 
