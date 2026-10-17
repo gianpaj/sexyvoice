@@ -84,7 +84,10 @@ describe('Banner', () => {
 
     try {
       container.innerHTML = renderToString(
-        <Banner banner={timedBanner} inDashboard />,
+        <div>
+          <Banner banner={timedBanner} inDashboard />
+          <main />
+        </div>,
       );
       expect(container.querySelector('[data-dashboard-banner]')).not.toBeNull();
       clock.mockReturnValue(Date.parse('2030-11-30T12:00:01Z'));
@@ -92,7 +95,10 @@ describe('Banner', () => {
       await act(async () => {
         root = hydrateRoot(
           container,
-          <Banner banner={timedBanner} inDashboard />,
+          <div>
+            <Banner banner={timedBanner} inDashboard />
+            <main />
+          </div>,
           { onRecoverableError },
         );
       });
