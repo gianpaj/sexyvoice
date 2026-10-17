@@ -22,11 +22,7 @@ export function getActivePromoBannerId() {
     return null;
   }
 
-  return (
-    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER ||
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS ||
-    'blackFridayBanner'
-  );
+  return process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER || null;
 }
 
 function getActiveAnnouncementBannerId() {

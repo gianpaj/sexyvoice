@@ -16,7 +16,6 @@ const originalEnv = {
   NEXT_PUBLIC_PROMO_ENABLED: process.env.NEXT_PUBLIC_PROMO_ENABLED,
   NEXT_PUBLIC_PROMO_ID: process.env.NEXT_PUBLIC_PROMO_ID,
   NEXT_PUBLIC_PROMO_THEME: process.env.NEXT_PUBLIC_PROMO_THEME,
-  NEXT_PUBLIC_PROMO_TRANSLATIONS: process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS,
 };
 
 type EnvKey = keyof typeof originalEnv;
@@ -72,16 +71,19 @@ afterEach(() => {
 });
 
 describe('getActivePromoBannerId', () => {
-  it('uses the active banner id before the legacy translation id', () => {
+  it('requires an explicit active banner id', () => {
     process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
     process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'currentPromo';
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS = 'legacyPromo';
 
     expect(getActivePromoBannerId()).toBe('currentPromo');
 
     process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = '';
 
-    expect(getActivePromoBannerId()).toBe('legacyPromo');
+    expect(getActivePromoBannerId()).toBeNull();
+
+    unsetEnv('NEXT_PUBLIC_ACTIVE_PROMO_BANNER');
+
+    expect(getActivePromoBannerId()).toBeNull();
   });
 });
 
@@ -113,10 +115,24 @@ describe('resolveActiveBanner', () => {
     });
   });
 
-  it('uses the default promo id and theme when no overrides are configured', () => {
+  it('returns null when promos are enabled without a selected banner', () => {
     process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
     unsetEnv('NEXT_PUBLIC_ACTIVE_PROMO_BANNER');
-    unsetEnv('NEXT_PUBLIC_PROMO_TRANSLATIONS');
+    unsetEnv('NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER');
+
+    expect(
+      resolveActiveBanner({
+        audience: 'loggedOut',
+        lang: 'en',
+        messages,
+        placement: 'landing',
+      }),
+    ).toBeNull();
+  });
+
+  it('uses the default theme for an explicitly selected promo', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
     unsetEnv('NEXT_PUBLIC_PROMO_THEME');
     unsetEnv('NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER');
 

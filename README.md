@@ -177,7 +177,6 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
-     - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows

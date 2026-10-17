@@ -29,8 +29,8 @@ NEXT_PUBLIC_PROMO_BONUS_STANDARD=7500
 NEXT_PUBLIC_PROMO_BONUS_PRO=105000
 ```
 
-Use `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` for new banners.
-`NEXT_PUBLIC_PROMO_TRANSLATIONS` remains a legacy selection fallback.
+Set `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` explicitly to select a promo banner.
+When it is unset or empty, no promo banner is selected.
 `NEXT_PUBLIC_PROMO_ID` does not select the banner or name its dismissal
 cookie.
 
