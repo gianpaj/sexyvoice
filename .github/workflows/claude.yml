@@ -92,6 +92,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # /review-pr and its reviewer agents live in the action's own repository.
+      # The runner downloads every action in this job before the first step,
+      # so copy them from that download: the `uses:` pin below is the only
+      # version to update. The action replaces .claude/ in the checkout with
+      # the base branch's copy before Claude starts, so install them as
+      # user-level config instead.
+      - name: Install /review-pr command and reviewer agents
+        run: |
+          # The runner's action cache layout is undocumented; fail if it changes.
+          shopt -s nullglob
+          dirs=("$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-action/*/.claude)
+          if (( ${#dirs[@]} != 1 )); then
+            echo "::error::Expected one downloaded claude-code-action, found ${#dirs[@]}."
+            exit 1
+          fi
+          src=${dirs[0]}
+          mkdir -p ~/.claude/commands ~/.claude/agents
+          cp "$src/commands/review-pr.md" ~/.claude/commands/
+          cp "$src"/agents/*.md ~/.claude/agents/
+
       - name: PR Review with Progress Tracking
         uses: anthropics/claude-code-action@34968b5981d5d170904281aa3df6f3c0d4a28855 # v1
         with:
@@ -137,7 +157,7 @@ jobs:
             If commit verification fails or you cannot complete the review,
             report the problem in a comment without the completion marker.
           claude_args: |
-            --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr view:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
+            --allowedTools "Task,Bash(pnpm:*),Bash(git:*),Bash(gh pr view:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
             --model "claude-opus-5-5"
             --effort xhigh
 
