@@ -110,7 +110,30 @@ jobs:
           src=${dirs[0]}
           mkdir -p ~/.claude/commands ~/.claude/agents
           cp "$src/commands/review-pr.md" ~/.claude/commands/
-          cp "$src"/agents/*.md ~/.claude/agents/
+          # The pinned agents have unquoted descriptions containing YAML delimiters.
+          python3 - "$src/agents" <<'PY'
+          import json
+          import re
+          import sys
+          from pathlib import Path
+
+          for source in Path(sys.argv[1]).glob('*.md'):
+              text = source.read_text()
+              opening, frontmatter, body = text.split('---\n', 2)
+              if opening:
+                  raise ValueError(f'{source}: missing frontmatter opening')
+              frontmatter, count = re.subn(
+                  r'^description: (.+)$',
+                  lambda match: 'description: ' + json.dumps(match[1]),
+                  frontmatter,
+                  count=1,
+                  flags=re.MULTILINE,
+              )
+              if count != 1:
+                  raise ValueError(f'{source}: expected one description')
+              destination = Path.home() / '.claude' / 'agents' / source.name
+              destination.write_text('---\n' + frontmatter + '---\n' + body)
+          PY
 
       - name: PR Review with Progress Tracking
         uses: anthropics/claude-code-action@34968b5981d5d170904281aa3df6f3c0d4a28855 # v1
