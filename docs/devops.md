@@ -30,9 +30,16 @@ before merging to `main` and after deploying.
 Claude reviews run automatically when a non-draft PR opens or is marked ready
 for review. They pin a PR head and report CI results for that SHA. Pushes do not
 request another Claude review; comment `@claude review` when one is needed.
+Reviews use `/review-pr` in agent mode and publish a final top-level PR comment.
 The workflow verifies publication using a plain-text completion marker from
 `claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
 merge gate.
+
+Claude GitHub App authentication requires the workflow content to match the
+default branch. A PR that edits `.github/workflows/claude.yml` can verify setup
+steps, but the action skips Claude execution and the publication check fails.
+Verify command expansion, all five reviewer agents, and the final review comment
+on a subsequent review after the workflow reaches the default branch.
 
 ## Deployment targets
 
