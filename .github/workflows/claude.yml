@@ -175,7 +175,8 @@ jobs:
             Recheck the PR head before posting; if it changed, identify the
             reviewed SHA and state that the newer commit was not reviewed.
             Publish the final assessment as a top-level PR comment using
-            gh pr comment ${{ github.event.pull_request.number || github.event.issue.number }} --repo ${{ github.repository }} --body-file <file>.
+            gh pr comment ${{ github.event.pull_request.number || github.event.issue.number }} --repo ${{ github.repository }} --body '<final assessment>'.
+            Pass the body directly as a literal shell argument; do not write a file.
             Do this even if there are no noteworthy findings; returning text alone
             does not publish the review. End that comment with this line exactly:
             Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-context.outputs.sha }}/${{ needs.review-context.outputs.base }}
