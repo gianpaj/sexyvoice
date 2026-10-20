@@ -437,8 +437,9 @@ export const getUserByStripeCustomerId = async (customerId: string) => {
 
 /**
  * Non-blocking duplicate-credit guard. Lookup failures are logged and treated
- * as "no prior credit" because `unique_reference_id_idx` still rejects
- * duplicate inserts (see `isCreditTransactionReferenceConflict`).
+ * as "no prior credit" because `unique_reference_topup_idx` and
+ * `unique_reference_purchase_idx` reject duplicate inserts (see
+ * `isCreditTransactionReferenceConflict`).
  */
 const findCreditTransactionByReference = async (
   supabase: ReturnType<typeof createAdminClient>,
