@@ -55,7 +55,7 @@ function createCreditTransactionsStub(preCheck: PreCheckResult) {
 
   vi.mocked(createAdminClient).mockReturnValue({ from, rpc } as never);
 
-  return { insert, maybeSingle, rpc, single };
+  return { eq: query.eq, insert, maybeSingle, rpc, single };
 }
 
 const grants = [
@@ -106,6 +106,11 @@ describe.each(grants)('$name duplicate pre-check', ({ grant }) => {
 
     await grant();
 
+    expect(stub.eq.mock.calls).toEqual([
+      ['user_id', 'user-1'],
+      ['reference_id', 'pi_123'],
+    ]);
+    expect(stub.maybeSingle).toHaveBeenCalledTimes(1);
     expect(stub.insert).not.toHaveBeenCalled();
     expect(stub.rpc).not.toHaveBeenCalled();
   });
