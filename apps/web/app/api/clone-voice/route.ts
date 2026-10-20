@@ -32,6 +32,7 @@ import {
   getCloneTextMaxLength,
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
+import type { VoxtralModel } from '@/lib/clone/voxtral';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { getFalBillingEventCost } from '@/lib/fal-billing';
 import PostHogClient from '@/lib/posthog';
@@ -78,6 +79,8 @@ const FALLBACK_MIN_DURATION = 10;
 const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
 const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
+// Select 'voxtral-mini-tts-2603' to compare with the earlier model.
+const VOXTRAL_MODEL: VoxtralModel = 'voxtral-mini-tts-3-0';
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
@@ -868,7 +871,7 @@ async function generateVoiceWithMistral(
   text: string,
   referenceAudioBuffer: Buffer,
 ): Promise<{ buffer: Buffer; modelUsed: string; requestId: string }> {
-  const model = 'voxtral-mini-tts-2603';
+  const model = VOXTRAL_MODEL;
   const client = getMistralClient();
 
   let response: Awaited<ReturnType<typeof client.audio.speech.complete>>;
@@ -1054,12 +1057,14 @@ async function createCloneOutputFilename({
   provider: CloneProvider;
   text: string;
 }): Promise<string> {
+  const providerCacheKey =
+    provider === 'mistral' ? `${provider}-${VOXTRAL_MODEL}` : provider;
   const cacheKeyInput = enhancementEnabled
-    ? `${locale}-${provider}-${text}-${audioHash}-enhanced`
-    : `${locale}-${provider}-${text}-${audioHash}`;
+    ? `${locale}-${providerCacheKey}-${text}-${audioHash}-enhanced`
+    : `${locale}-${providerCacheKey}-${text}-${audioHash}`;
   const hash = await generateHash(cacheKeyInput);
 
-  return `${basePath}/${locale}-${provider}-${hash}.wav`;
+  return `${basePath}/${locale}-${providerCacheKey}-${hash}.wav`;
 }
 
 // ============================================================================
@@ -1133,6 +1138,7 @@ async function runBackgroundTasks(
       provider,
       audioFileData.baseCloneCredits,
       audioFileData.text,
+      VOXTRAL_MODEL,
     ),
     metadata: {
       audioDuration: audioFileData.duration,

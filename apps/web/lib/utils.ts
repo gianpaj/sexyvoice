@@ -6,6 +6,7 @@ import type { Prediction } from 'replicate';
 import { twMerge } from 'tailwind-merge';
 
 import type { CloneProvider } from '@/lib/clone/constants';
+import { getVoxtralDollarCost, type VoxtralModel } from '@/lib/clone/voxtral';
 import { GEMINI_TTS_31 } from '@/lib/tts/gemini-prompt';
 
 export function cn(...inputs: ClassValue[]) {
@@ -425,10 +426,10 @@ export const getDollarCost = (
   provider: CloneProvider,
   credits?: number,
   text?: string,
+  model: VoxtralModel = 'voxtral-mini-tts-2603',
 ) => {
   if (provider === 'mistral') {
-    // $0.016 per 1k characters
-    return text ? (text.length / 1000) * 0.016 : -1;
+    return text ? getVoxtralDollarCost(model, text) : -1;
   }
   if (provider === 'replicate') {
     // resemble-ai/chatterbox-multilingual - model costs approximately $0.0046 to run on Replicate

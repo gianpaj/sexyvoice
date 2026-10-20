@@ -10,9 +10,24 @@ import {
   estimateCredits,
   estimateGrokCredits,
   formatDate,
+  getDollarCost,
   getTtsProvider,
   nanoid,
 } from '../lib/utils';
+
+describe('getDollarCost', () => {
+  test('estimates Voxtral costs using the selected model', () => {
+    const text = 'a'.repeat(1000);
+    expect(getDollarCost('mistral', undefined, text)).toBe(0.016);
+    expect(
+      getDollarCost('mistral', undefined, text, 'voxtral-mini-tts-3-0'),
+    ).toBe(0.013);
+  });
+
+  test('preserves the unknown cost for missing text', () => {
+    expect(getDollarCost('mistral')).toBe(-1);
+  });
+});
 
 // This model costs approximately $0.015 to run on Replicate, or 66 runs per $1
 //

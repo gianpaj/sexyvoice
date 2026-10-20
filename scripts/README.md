@@ -1,5 +1,33 @@
 # Scripts
 
+## Compare Voxtral voice cloning
+
+Run both Voxtral TTS models with identical reference bytes and text:
+
+```bash
+pnpm --filter @sexyvoice/scripts exec node \
+  --disable-warning=MODULE_TYPELESS_PACKAGE_JSON compare-voxtral.mts \
+  --reference /absolute/path/voice.wav \
+  --text-file /absolute/path/text.txt
+```
+
+The script loads `MISTRAL_API_KEY` from the web app or repository environment
+files. It sends one request per model, saves WAV outputs and `comparison.json`
+in a temporary directory, and prints its location. Use `--output-dir` to select
+a new directory. The report includes the reference hash, exact text, full
+response latency, and estimated provider cost at $16 and $13 per million
+characters. These are single-request timings, not latency benchmarks.
+
+Use a clean WAV or MP3 reference between 3 and 25 seconds to match the dashboard's
+Voxtral input window. The script sends the file unchanged, without enhancement
+or trimming. It calls Mistral directly, bypassing dashboard credits, Redis, R2,
+and database persistence. Failed requests are recorded, and the other model
+still runs. Cost estimates do not account for any charges on failed requests.
+
+The dashboard model is selected by `VOXTRAL_MODEL` in
+`apps/web/app/api/clone-voice/route.ts`. Its cache key and provider cost use the
+selected model. Customer credit rates stay unchanged.
+
 ## Restore account billing
 
 Account deletion blocks checkout during cleanup and releases its block when the

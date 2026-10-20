@@ -841,7 +841,9 @@ describe('Clone Voice API Route', () => {
 
       // Generated output should still be cached
       expect(mockRedisSet).toHaveBeenCalledWith(
-        expect.stringMatching(/^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/),
+        expect.stringMatching(
+          /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
+        ),
         expect.stringContaining('files.sexyvoice.ai'),
       );
     });
@@ -860,7 +862,9 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringMatching(/^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/),
+        expect.stringMatching(
+          /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
+        ),
       );
       expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
     });
@@ -1221,7 +1225,7 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({
             errorName: 'SDKError',
-            model: 'voxtral-mini-tts-2603',
+            model: 'voxtral-mini-tts-3-0',
             statusCode: 503,
           }),
         }),
@@ -1272,7 +1276,7 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           credits_used: 252,
           duration: '12.000',
-          model: 'voxtral-mini-tts-2603',
+          model: 'voxtral-mini-tts-3-0',
           usage: { creditsUsed: 252 },
         }),
       );
@@ -1281,12 +1285,12 @@ describe('Clone Voice API Route', () => {
         1,
         expect.objectContaining({
           creditsUsed: 132,
-          dollarAmount: 0.000_176,
+          dollarAmount: 0.000_143,
           metadata: expect.objectContaining({
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
-          model: 'voxtral-mini-tts-2603',
+          model: 'voxtral-mini-tts-3-0',
           quantity: 1,
           requestId: expect.any(String),
           sourceId: 'test-audio-file-id',
@@ -1434,7 +1438,7 @@ describe('Clone Voice API Route', () => {
         duration: '12.000',
         filename: expect.stringContaining('cloned-audio-free/'),
         isPublic: false,
-        model: 'voxtral-mini-tts-2603',
+        model: 'voxtral-mini-tts-3-0',
         predictionId: expect.any(String),
         text: 'Hello world',
         url: expect.stringContaining('files.sexyvoice.ai'),
@@ -1447,11 +1451,11 @@ describe('Clone Voice API Route', () => {
       expect(queries.insertUsageEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           creditsUsed: 132,
-          dollarAmount: 0.000_176,
+          dollarAmount: 0.000_143,
           metadata: expect.objectContaining({
             audioDuration: 12,
             locale: 'en',
-            model: 'voxtral-mini-tts-2603',
+            model: 'voxtral-mini-tts-3-0',
             provider: 'mistral',
             referenceAudioEnhancementRequestId: null,
             referenceAudioFileMimeType: 'audio/wav',
@@ -1687,10 +1691,10 @@ describe('Clone Voice API Route', () => {
 
       expect(calls).toHaveLength(2);
       expect(calls[0]).toMatch(
-        /^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/,
+        /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
       );
       expect(calls[1]).toMatch(
-        /^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/,
+        /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
       );
       expect(calls[0]).not.toBe(calls[1]);
     });
