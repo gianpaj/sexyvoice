@@ -596,7 +596,7 @@ function NewVoiceClientInner({
           }}
           value={activeTab}
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 gap-1 rounded-xl bg-muted/40">
             <TabsTrigger value="upload">{t('tabUpload')}</TabsTrigger>
             <TabsTrigger disabled={status !== 'complete'} value="preview">
               {t('tabPreview')}
