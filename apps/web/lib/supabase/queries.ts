@@ -446,32 +446,23 @@ const findCreditTransactionByReference = async (
   userId: string,
   referenceId: string,
 ) => {
-  try {
-    const { data, error } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', referenceId)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('reference_id', referenceId)
+    .maybeSingle();
 
-    if (error) {
-      console.error('Error checking existing credit transaction:', {
-        error: error.message,
-        referenceId,
-        userId,
-      });
-      return null;
-    }
-
-    return data;
-  } catch (error) {
+  if (error) {
     console.error('Error checking existing credit transaction:', {
-      error: error instanceof Error ? error.message : String(error),
+      error: error.message,
       referenceId,
       userId,
     });
     return null;
   }
+
+  return data;
 };
 
 export const insertSubscriptionCreditTransaction = async (
