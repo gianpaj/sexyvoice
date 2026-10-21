@@ -84,6 +84,25 @@ describe('demo clone speakers', () => {
     }
   });
 
+  it('stores valid waveform peaks bound to each final MP3', () => {
+    for (const asset of Object.values(manifest.assets)) {
+      expect(asset.waveform.sourceSha256).toBe(asset.sha256);
+      expect(asset.waveform.peaks.length).toBeGreaterThanOrEqual(1);
+      expect(asset.waveform.peaks.length).toBeLessThanOrEqual(8);
+      const points = asset.waveform.peaks[0].length;
+      expect(points).toBeGreaterThanOrEqual(1);
+      expect(points).toBeLessThanOrEqual(4096);
+      for (const channel of asset.waveform.peaks) {
+        expect(channel).toHaveLength(points);
+        for (const value of channel) {
+          expect(Number.isFinite(value)).toBe(true);
+          expect(value).toBeGreaterThanOrEqual(-1);
+          expect(value).toBeLessThanOrEqual(1);
+        }
+      }
+    }
+  });
+
   it('uses unique speaker ids', () => {
     const ids = demoCloneSpeakers.map((speaker) => speaker.id);
 

@@ -14,6 +14,7 @@
     "compare-audio-cleanup": "tsx compare-audio-cleanup.mts",
     "compile-dispute-evidence": "tsx compile-dispute-evidence.mts",
     "find-truncated-gemini31-tts": "node find-truncated-gemini31-tts.mjs",
+    "generate-audio-waveforms": "node generate-audio-waveforms.mts",
     "generate-gemini-speech-samples": "tsx generate-gemini-speech-samples.mts",
     "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
     "prepare-gemini-voice-sql": "tsx prepare-gemini-voice-sql.mts",

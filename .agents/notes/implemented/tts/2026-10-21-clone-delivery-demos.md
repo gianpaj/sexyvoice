@@ -81,6 +81,31 @@ recorded only when captured; the same-text request has an unrecorded latency
 and uses `null`. The script saves the raw WAV and request metadata before
 encoding so normalization failures do not require another paid request.
 
+## Precomputed waveform data
+
+`scripts/generate-audio-waveforms.mts` adds per-channel peak arrays under each
+manifest asset's `waveform` field. `sourceSha256` records the exact final audio
+used for extraction, separately from the asset hash, so an asset metadata update
+cannot make stale peaks appear current. Matching files and resolution are skipped.
+Explicit input files support adding future speaker takes without processing the
+other clips. A failed batch or detected concurrent manifest edit publishes no changes.
+
+The extractor uses local FFmpeg analysis at 8 kHz, retains each channel, and
+stores 256 signed maxima per channel rounded to four decimals. Peak arrays use
+normalized amplitudes rather than a WaveSurfer-specific representation. The
+small curated catalog stays in repository JSON; R2 sidecar requests were rejected
+for this catalog because they add a request before drawing. Audio normalization
+and waveform extraction remain separate operations; extraction does not modify
+recordings or call a provider.
+
+The nine current MP3s have verified source hashes and peaks. Existing request,
+duration, and hash fields are unchanged. The active renderer still fetches and
+decodes audio. Consuming these peaks and keeping its canvas mounted is a
+separate integration.
+
+See [waveform generation](../../../../scripts/README.md#generate-waveform-peaks)
+for the command and options.
+
 ## Applying a demo
 
 Applying a take loads its reference, tagged text, and language. It does not
@@ -100,11 +125,13 @@ nine shipped MP3s match the manifest's SHA-256 hashes. The unprocessed Kat
 replacement is retained locally under
 `scripts/.cache/kat-same-original-20261021/references/kat-reference.mp3`.
 
-Frontend validation passed: 1,765 web tests, nine public voice-cloning browser
-tests, translation parity, formatting, type checks, and desktop/mobile inspection,
-including Arabic RTL. Eighteen unrelated web tests are skipped. The frontend
-language catalog does not change audio, reference inputs, generation code, or
-published prompt metadata.
+Validation passed: 1,766 web tests, 131 script tests, formatting, and type
+checks. The waveform CLI and extractor have 40 focused tests; the 35 demo-data
+tests include hash and peak validation. Eighteen unrelated web tests
+are skipped. Frontend verification includes nine public voice-cloning browser
+tests, translation parity, and desktop/mobile inspection with Arabic RTL.
+The language catalog does not change audio, reference inputs, generation code,
+or published prompt metadata.
 
 See [prepared cloning demos](../../../../ARCHITECTURE.md#prepared-cloning-demos)
 for runtime paths and [generation instructions](../../../../scripts/README.md#generate-prepared-cloning-demos)

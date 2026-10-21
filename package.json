@@ -19,6 +19,7 @@
     "fix": "ultracite fix",
     "fixall": "turbo run fixall",
     "format": "turbo run format",
+    "generate-audio-waveforms": "node scripts/generate-audio-waveforms.mts",
     "generate-gemini-speech-samples": "pnpm --filter @sexyvoice/scripts generate-gemini-speech-samples",
     "generate-supabase-types": "pnpm --filter @sexyvoice/web generate-supabase-types",
     "generate-supabase-types:local": "pnpm --filter @sexyvoice/web generate-supabase-types:local",

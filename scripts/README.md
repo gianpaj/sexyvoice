@@ -55,6 +55,52 @@ per-request source hashes when changing a voice's reference. The web tests
 check asset hashes and prompt consistency. The script does not upload files or
 change database rows.
 
+## Generate waveform peaks
+
+Analyze the final, normalized MP3s before uploading those exact files to R2:
+
+```bash
+pnpm generate-audio-waveforms
+```
+
+The command processes every asset listed in
+`apps/web/data/clone-demo-assets.json`, using local files from
+`apps/web/public/demo-clones/voxtral-3/`. It preserves the other manifest fields
+and adds `waveform: { sourceSha256, peaks }` to each asset. `peaks` contains one
+array per audio channel, with 256 signed, normalized amplitudes per channel,
+rounded to four decimal places. This is ordinary JSON data, not a WaveSurfer
+binary or version-specific format.
+
+For future speaker takes, pass the final local files explicitly:
+
+```bash
+pnpm generate-audio-waveforms path/to/italian-anxious.mp3 path/to/spanish-anxious.mp3
+```
+
+Explicit files add or update manifest entries keyed by filename. Duplicate
+filenames from different directories are rejected. Existing request metadata
+and unrelated assets remain unchanged. Adding waveform metadata does not
+publish a voice or connect a pending language to an existing reference.
+
+Options:
+
+- `--audio-dir <dir>` changes where manifest-listed files are read. Use a local
+  directory of final MP3s or downloads of the exact R2 objects; the script does
+  not fetch remote audio.
+- `--manifest <file>` selects another existing JSON manifest with an `assets`
+  object.
+- `--points <number>` selects 1–4096 peaks per channel; the default is 256.
+- `--force` recomputes matching entries.
+
+FFmpeg and FFprobe are required only for files needing extraction. The script
+skips entries whose audio hash, waveform source hash, and peak count match.
+Changing a recording or the requested resolution triggers regeneration. It
+updates the manifest atomically after all selected files succeed and checks
+for concurrent manifest edits before writing. Audio files are read-only; the command
+makes no provider calls or uploads. The player consumes precomputed data only
+when its renderer is wired to pass these peaks; creating the metadata alone
+does not change rendering or take-switch behavior.
+
 ## Upload files to R2
 
 `upload-r2-files.mts` uploads any file type, including multiple files selected

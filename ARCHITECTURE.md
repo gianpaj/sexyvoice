@@ -281,7 +281,14 @@ for existing recordings.
 All prepared takes use `voxtral-mini-tts-3-0`. References and results are bundled
 under `apps/web/public/demo-clones/voxtral-3/`; playback makes no generation
 request. `clone-demo-assets.json` records durations, source and asset hashes,
-latency when captured, and estimated cost. Kat's full reference and same-text
+latency when captured, estimated cost, and precomputed waveform peaks. Each
+asset's `waveform.sourceSha256` binds its per-channel peaks to the final MP3.
+The local extraction workflow lives in
+[waveform generation](scripts/README.md#generate-waveform-peaks). The renderer
+still loads waveform data from audio; supplying the precomputed peaks is a
+separate playback integration.
+
+Kat's full reference and same-text
 result target -14 LUFS; the remaining prepared recordings are unchanged.
 See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
 asset workflow.
