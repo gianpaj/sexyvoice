@@ -185,6 +185,13 @@ seed, and temperature; seed and temperature require a paid account. Grok
 accepts a speech-speed multiplier. Provider-affecting advanced settings create
 distinct cache keys.
 
+The dashboard sends `textImproved` with generation requests after applying AI
+emotion tags. Edits preserve the flag, clearing the text resets it, and Undo
+restores its prior value. The route stores the boolean in
+`audio_files.usage.textImproved` for JSON and streaming generations. Omitted or
+non-boolean values resolve to `false`. Cache hits reuse the existing audio row
+and its original metadata; the flag does not affect cache keys.
+
 The route reserves credits atomically before generation. On success it
 reconciles the estimate with Gemini's token usage when available; on failure
 it restores the reservation. Database and analytics writes run after the

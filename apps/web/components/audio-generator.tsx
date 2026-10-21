@@ -299,6 +299,7 @@ export function AudioGenerator({
   const t = useTranslations('generate');
   const translateErrorCode = useTranslations('errorCodes');
   const [text, setText] = useState('');
+  const [textImproved, setTextImproved] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [audioURL, setAudioURL] = useState('');
   const [isEnhancingText, setIsEnhancingText] = useState(false);
@@ -311,6 +312,11 @@ export function AudioGenerator({
     useState<AudioPlayerControls | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
+
+  const handleTextChange = (value: string) => {
+    setText(value);
+    if (!value.trim()) setTextImproved(false);
+  };
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
@@ -454,6 +460,7 @@ export function AudioGenerator({
           language: isGrokVoice ? selectedGrokLanguage : undefined,
           styleVariant: isGeminiVoice ? selectedStyle : '',
           text: segmentText,
+          textImproved,
           voiceId: selectedVoice.id,
           ...(effectiveSeed === undefined ? {} : { seed: effectiveSeed }),
           ...(isGeminiVoice && settings.temperature !== null
@@ -479,6 +486,7 @@ export function AudioGenerator({
     [
       t,
       translateErrorCode,
+      textImproved,
       isGeminiVoice,
       isGrokVoice,
       selectedGrokLanguage,
@@ -504,6 +512,7 @@ export function AudioGenerator({
           stream: true,
           styleVariant: selectedStyle ?? '',
           text: segmentText,
+          textImproved,
           voiceId: selectedVoice.id,
           ...(settings.seed === null ? {} : { seed: settings.seed }),
           ...(settings.temperature === null
@@ -557,6 +566,7 @@ export function AudioGenerator({
     [
       t,
       translateErrorCode,
+      textImproved,
       finalizeStream,
       pushStreamChunk,
       resetStream,
@@ -1024,6 +1034,7 @@ export function AudioGenerator({
     if (!(text.trim() && selectedVoice)) return;
 
     const originalText = text;
+    const originalTextImproved = textImproved;
     setIsEnhancingText(true);
 
     try {
@@ -1037,10 +1048,14 @@ export function AudioGenerator({
 
       if (enhancedText) {
         setText(enhancedText);
+        setTextImproved(true);
         toast('Text enhanced with emotion tags!', {
           action: {
             label: 'Undo',
-            onClick: () => setText(originalText),
+            onClick: () => {
+              setText(originalText);
+              setTextImproved(originalTextImproved);
+            },
           },
         });
       }
@@ -1147,7 +1162,7 @@ export function AudioGenerator({
               charactersLimit={charactersLimit}
               enforceCharactersLimit={!shouldDisableCharactersLimit}
               isPaidUser={isPaidUser}
-              onChange={setText}
+              onChange={handleTextChange}
               placeholder={t('textAreaPlaceholder')}
               selectedGrokLanguage={selectedGrokLanguage}
               setSelectedGrokLanguage={setSelectedGrokLanguage}
@@ -1166,7 +1181,7 @@ export function AudioGenerator({
               isGenerating={isGenerating}
               isPaidUser={isPaidUser}
               onEnhanceText={handleEnhanceText}
-              onTextChange={setText}
+              onTextChange={handleTextChange}
               onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
               showEnhanceButton={showEnhanceButton}
               text={text}

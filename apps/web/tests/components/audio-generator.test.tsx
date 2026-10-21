@@ -33,9 +33,11 @@ const mockJoinSegments = vi.hoisted(() =>
   vi.fn(async () => new Blob(['joined'], { type: 'audio/mpeg' })),
 );
 
+const mockComplete = vi.hoisted(() => vi.fn());
+
 vi.mock('@ai-sdk/react', () => ({
   useCompletion: () => ({
-    complete: vi.fn(),
+    complete: mockComplete,
   }),
 }));
 
@@ -350,6 +352,7 @@ function getFetchRequestBody(
 describe('AudioGenerator', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockComplete.mockReset();
     streamingOverride.enabled = false;
     mockToastFn.mockClear();
     mockToastFn.success.mockClear();
@@ -364,6 +367,54 @@ describe('AudioGenerator', () => {
       randomUUID: vi.fn(() => `segment-${++uuidCounter}`),
     });
   });
+
+  it.each(['edit', 'undo', 'clear', 'failed', 'repeat undo'])(
+    'tracks text improvement after %s',
+    async (action) => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ url: 'https://example.com/audio.mp3' }),
+        ok: true,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      mockComplete.mockResolvedValue(
+        action === 'failed' ? undefined : 'Hello [happy]',
+      );
+      renderAudioGenerator();
+      const textarea = await screen.findByTestId('generate-textarea');
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(getFetchRequestBody(fetchMock, 0).textImproved).toBe(false);
+
+      await user.click(screen.getByTitle(baseDict.enhanceTextTitle));
+      await waitFor(() => expect(mockComplete).toHaveBeenCalledOnce());
+      if (action !== 'failed') {
+        await waitFor(() => expect(textarea).toHaveValue('Hello [happy]'));
+      }
+      if (action === 'edit') {
+        fireEvent.change(textarea, {
+          target: { value: 'Hello [happy] again' },
+        });
+      } else if (action === 'undo') {
+        act(() => mockToastFn.mock.calls.at(-1)?.[1].action.onClick());
+      } else if (action === 'clear') {
+        fireEvent.change(textarea, { target: { value: '' } });
+        fireEvent.change(textarea, { target: { value: 'New text' } });
+      } else if (action === 'repeat undo') {
+        mockComplete.mockResolvedValueOnce('Hello [excited]');
+        await user.click(screen.getByTitle(baseDict.enhanceTextTitle));
+        await waitFor(() => expect(textarea).toHaveValue('Hello [excited]'));
+        act(() => mockToastFn.mock.calls.at(-1)?.[1].action.onClick());
+      }
+
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      expect(getFetchRequestBody(fetchMock, 1).textImproved).toBe(
+        action === 'edit' || action === 'repeat undo',
+      );
+    },
+  );
 
   it('submits the selected Grok language in the generation request', async () => {
     const user = userEvent.setup();
@@ -424,6 +475,7 @@ describe('AudioGenerator', () => {
       split: false,
       styleVariant: '',
       text: 'مرحبا',
+      textImproved: false,
       voiceId: 'voice-id',
     });
   });
@@ -589,6 +641,7 @@ describe('AudioGenerator', () => {
       split: false,
       styleVariant: '',
       text: shortText,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     // A single segment doesn't warrant a progress modal.
@@ -779,12 +832,14 @@ describe('AudioGenerator', () => {
         split: true,
         styleVariant: '',
         text: firstSegment,
+        textImproved: false,
         voiceId: 'voice-id',
       });
       expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
         split: true,
         styleVariant: '',
         text: secondSegment,
+        textImproved: false,
         voiceId: 'voice-id',
       });
       expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -881,12 +936,14 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: 'Read this in a dramatic whisper',
       text: firstSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       split: true,
       styleVariant: 'Read this in a dramatic whisper',
       text: secondSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -1109,6 +1166,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: 'dramatic',
       text: secondSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
   });
@@ -1236,12 +1294,14 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: 'calm',
       text: firstSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
       split: true,
       styleVariant: 'calm',
       text: secondSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
   });
@@ -1295,6 +1355,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: firstSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
@@ -1302,6 +1363,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: secondSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
@@ -1404,6 +1466,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: secondSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
   });
@@ -1465,6 +1528,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: firstSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(getFetchRequestBody(fetchMock, 3)).toEqual({
@@ -1472,6 +1536,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: secondSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
   });
@@ -1617,6 +1682,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: firstSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
@@ -1624,6 +1690,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: wrappedSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(JSON.parse(fetchMock.mock.calls[2][1].body)).toEqual({
@@ -1631,6 +1698,7 @@ describe('AudioGenerator', () => {
       split: true,
       styleVariant: '',
       text: lastSegment,
+      textImproved: false,
       voiceId: 'voice-id',
     });
     expect(mockToastFn.success).toHaveBeenCalledWith(baseDict.success);
