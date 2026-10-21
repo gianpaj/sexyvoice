@@ -269,6 +269,15 @@ her reference recording's full passage. Natural remains the default.
 `apps/web/data/clone-demo-config.ts` defines prompts and supported voice/take
 pairs through `getCloneDemoTakes()`.
 
+`apps/web/data/clone-demo-languages.ts` defines nine language slots and staged
+anxious prompts. `getDemoCloneLanguages()` joins these slots to actual published
+speakers. The website locale is selected and listed first; unsupported locales
+fall back to English. Browser language does not override that choice. Kat and
+Heike are playable; other languages show planned text and a coming-soon notice
+without audio, delivery controls, or a demo CTA. Each added voice requires its
+own reference and matching generated assets; staged prompts are not transcripts
+for existing recordings.
+
 All prepared takes use `voxtral-mini-tts-3-0`. References and results are bundled
 under `apps/web/public/demo-clones/voxtral-3/`; playback makes no generation
 request. `clone-demo-assets.json` records durations, source and asset hashes,
@@ -278,8 +287,10 @@ See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
 asset workflow.
 
 The player uses one native audio element for the selected take or original
-recording, with the shared waveform renderer attached to that element.
-Changing voice or delivery stops playback. Unsupported voice/take combinations
+recording. `NativeAudioWaveform` attaches to that element after its metadata
+matches the selected clip. Each waveform instance owns an abort signal so a
+queued load cannot rewrite the audio source after cleanup. Visual defaults are
+shared with the other audio players. Changing language or delivery stops playback. Unsupported voice/take combinations
 fall back to Natural. The prompt appears above the player with highlighted
 tags; selecting the prompt excludes its decorative quotation marks.
 Applying a demo loads its reference, prompt, and

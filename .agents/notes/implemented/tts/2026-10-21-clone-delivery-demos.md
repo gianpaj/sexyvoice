@@ -22,6 +22,32 @@ This prevents overlap without another playback coordinator. A source change
 must commit before calling play within the click handler; a second source write
 can interrupt playback and lose the browser's user gesture.
 
+## Language selection and pending samples
+
+The frontend catalog covers English, German, Spanish, French, Italian, Dutch,
+Portuguese, Arabic, and Hindi. Each slot has a translated anxious prompt in
+`apps/web/data/clone-demo-languages.ts`. A slot joins to a published speaker by
+language; no speaker, reference URL, or playback is fabricated for pending slots.
+Kat and Heike retain their independent references and matching published prompts.
+The new anxious text is staged for replacement recordings, not applied to old audio.
+
+The website locale selects and orders the language list on the server and client.
+Browser-language detection was rejected because it can override an explicit site
+language choice. Unsupported site locales fall back to English. Pending languages
+show a localized notice and planned text, with no audio, delivery selector, or CTA.
+They remain selectable so the frontend can be reviewed before recording approval.
+Arabic planned text uses RTL direction.
+
+The native language selector remains disabled until hydration to prevent an early
+choice from being lost. Switching to a pending slot stops playback and removes
+the waveform; returning to a published voice restores only a valid take.
+
+`NativeAudioWaveform` creates one WaveSurfer instance per source with its own abort
+signal. Cleanup aborts before destruction because WaveSurfer can queue a load
+that starts after destruction. The demo waits for matching native metadata before
+binding the waveform. Relying only on WaveSurfer destruction was rejected because
+an obsolete fetch could rewrite the external audio element's source.
+
 ## Assets
 
 The nine bundled MP3s use the site's own origin and cache behavior. Bundling
@@ -70,13 +96,15 @@ the demo priority over the decorative waveform.
 
 The published Kat reference measures -14.30 LUFS / -2.29 dBTP over 13.406 seconds;
 the same-text clone measures -14.41 LUFS / -2.24 dBTP over 13.28 seconds. All
-seven unrelated MP3s match their shipped SHA-256 hashes. The unprocessed Kat
+nine shipped MP3s match the manifest's SHA-256 hashes. The unprocessed Kat
 replacement is retained locally under
 `scripts/.cache/kat-same-original-20261021/references/kat-reference.mp3`.
 
-Validation passed: 1,714 web tests, 91 script tests, eight public voice-cloning
-browser tests, translation parity, formatting, type checks, and desktop/mobile
-inspection. Eighteen unrelated web tests are skipped.
+Frontend validation passed: 1,765 web tests, nine public voice-cloning browser
+tests, translation parity, formatting, type checks, and desktop/mobile inspection,
+including Arabic RTL. Eighteen unrelated web tests are skipped. The frontend
+language catalog does not change audio, reference inputs, generation code, or
+published prompt metadata.
 
 See [prepared cloning demos](../../../../ARCHITECTURE.md#prepared-cloning-demos)
 for runtime paths and [generation instructions](../../../../scripts/README.md#generate-prepared-cloning-demos)

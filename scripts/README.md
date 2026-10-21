@@ -8,6 +8,13 @@ recordings as `kat-reference.mp3` and `heike-reference.mp3` in a local directory
 Use the intended source version; the bundled reference can differ from the R2
 objects `clone-demos/kat-reference.mp3` and `clone-demos/heike-reference.mp3`.
 
+Frontend-only language slots and translated draft prompts live separately in
+`apps/web/data/clone-demo-languages.ts`. They do not enable generation or imply
+that recordings exist. To publish a language, configure its actual voice with
+its own authorized reference and matching prompt in `clone-demo-config.ts`,
+then publish the corresponding MP3s and manifest entries together. Do not attach
+a draft prompt to an existing recording with different text.
+
 Generate all supported pairs with:
 
 ```bash
