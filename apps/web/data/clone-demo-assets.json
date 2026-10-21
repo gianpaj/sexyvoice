@@ -1,14 +1,24 @@
 {
   "model": "voxtral-mini-tts-3-0",
   "sourceHashes": {
-    "kat": "f117b5ef8b83a0b2b56bfebefd965188c4ba33050d0cd736ba9259e46954b23b",
+    "kat": "2033b46b2119975b87bbb9e193601eb1141dc4caa8dd20570691ad74d193f67a",
     "heike": "36699b3899261ccc27885a664469b318cb67e0608dc1b1d1b75cba1241306ed9"
   },
   "requests": [
     {
       "voice": "kat",
+      "take": "sameOriginal",
+      "input": "Downtown Drugstore had a bell on the door that made a single tink sound when you opened it.\nOxford Pharmacy had two bells on its doors, so it was more of a ta-tank, though nothing to startle over.",
+      "sourceHash": "2033b46b2119975b87bbb9e193601eb1141dc4caa8dd20570691ad74d193f67a",
+      "latencyMs": null,
+      "estimatedCostUsd": 0.002548,
+      "requestId": null
+    },
+    {
+      "voice": "kat",
       "take": "natural",
       "input": "Oh, you're here just when I was thinking about you.",
+      "sourceHash": "f117b5ef8b83a0b2b56bfebefd965188c4ba33050d0cd736ba9259e46954b23b",
       "latencyMs": 1792,
       "estimatedCostUsd": 0.000663,
       "requestId": null
@@ -17,6 +27,7 @@
       "voice": "kat",
       "take": "sarcastic",
       "input": "[emotion=sarcastic] Oh, you're here just when I was thinking about you.",
+      "sourceHash": "f117b5ef8b83a0b2b56bfebefd965188c4ba33050d0cd736ba9259e46954b23b",
       "latencyMs": 1230,
       "estimatedCostUsd": 0.000923,
       "requestId": null
@@ -25,6 +36,7 @@
       "voice": "kat",
       "take": "calmSlow",
       "input": "Oh, [emotion=calm][pace=slow]you're here just when I was thinking about you.",
+      "sourceHash": "f117b5ef8b83a0b2b56bfebefd965188c4ba33050d0cd736ba9259e46954b23b",
       "latencyMs": 1835,
       "estimatedCostUsd": 0.000988,
       "requestId": null
@@ -56,8 +68,12 @@
   ],
   "assets": {
     "kat-reference.mp3": {
-      "durationSeconds": 12,
-      "sha256": "3978c28da41c66e4abd49ee8804e7e99adc7c728f21ad84c69a5e5d6d6ea0637"
+      "durationSeconds": 13.406021,
+      "sha256": "f248d30de9a3995f5cc0e103777a2058d554ec1a84abcb9bfbe8b53e20c09cad"
+    },
+    "kat-sameOriginal.mp3": {
+      "durationSeconds": 13.28,
+      "sha256": "67ca1634924abec73076468ff8efd70b76ebe021d056c30a450fb936eaf07638"
     },
     "kat-natural.mp3": {
       "durationSeconds": 2.88,

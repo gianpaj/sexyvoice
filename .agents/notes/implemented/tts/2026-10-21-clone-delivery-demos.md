@@ -2,44 +2,58 @@
 
 ## Decision
 
-The public cloning page and dashboard share the same native player. Kat speaks
-one English sentence; Heike speaks one German sentence. Each offers Natural,
-Sarcastic, and Calm & slow takes. Three takes cover a baseline, an emotion, and
-an emotion combined with pacing without adding another selector.
+The public cloning page and dashboard share the same native player. Kat and
+Heike each offer Natural, Sarcastic, and Calm & slow takes. These cover a
+baseline, an emotion, and an emotion combined with pacing without adding
+another selector. Kat also offers “Same as original” first in the list, using
+the full reference passage. Natural remains the default; unsupported voice/take
+pairs fall back to it. Heike has no same-text comparison.
 
 The sentences work as both a greeting and a sarcastic remark. Reusing each
-sentence and reference across takes keeps attention on delivery. Prompts are
-available under a disclosure so visitors can inspect and reuse the tags.
+sentence and reference across the short takes keeps attention on delivery.
+The same-text example isolates similarity from changes in wording. Prompts
+appear above the player with inline highlighted tags. The tags inherit the
+sentence's font and baseline. A selectable span groups the complete prompt;
+decorative quotation marks remain outside the selection.
 
-One audio element handles original and generated audio. This prevents overlap
-without a waveform library or another playback coordinator. A source change
+One audio element handles original and generated audio. The shared waveform
+renderer attaches to that element rather than creating another playback owner.
+This prevents overlap without another playback coordinator. A source change
 must commit before calling play within the click handler; a second source write
 can interrupt playback and lose the browser's user gesture.
 
 ## Assets
 
-The eight bundled MP3s total 706,144 bytes. Bundling avoids the public R2 URLs
-that returned 403 and gives playback the site's own origin and cache behavior.
+The nine bundled MP3s use the site's own origin and cache behavior. Bundling
+avoids reliance on public R2 object access.
 Generating on click would add provider latency and spend credits before a
 visitor has tried the product. Relabeling old clips would misrepresent which
 model and tags produced them.
 
-Reference inputs come from the existing product demo objects
-`clone-demos/kat-reference.mp3` and `clone-demos/heike-reference.mp3`. The
-repository does not establish their upstream recording provenance; this change
-makes no new public-domain or licensing claim. Original input hashes are in
-`apps/web/data/clone-demo-assets.json`.
+Reference inputs are authorized product demo recordings. Kat's complete
+recording is supplied by the user; Heike uses the product demo reference. The
+repository does not establish their upstream recording provenance or make a
+public-domain or licensing claim. Input and asset hashes are in
+`apps/web/data/clone-demo-assets.json`. Per-request `sourceHash` values preserve
+which reference version produced each Kat take.
 
-Each reference is trimmed to 12 seconds and converted to mono 24 kHz WAV.
-`voxtral-mini-tts-3-0` generates all six takes. MP3 previews share a -16 LUFS
-normalization target. The generation script retains raw WAVs and records full
-response times, estimated costs, durations, and asset hashes.
+Generation preserves the full reference and converts a separate copy to mono
+24 kHz WAV for `voxtral-mini-tts-3-0`. The playback reference is normalized from
+the source recording, not the downsampled API input. Kat's complete reference
+and same-text result target -14 LUFS; the existing short takes and all Heike
+recordings retain their shipped audio. This bounds the comparison change rather
+than regenerating unrelated clips.
 
-The six speech requests took 853–1,792 ms each and cost an estimated $0.00494 in
-total at $13 per million input characters. These are individual requests, not a
-latency benchmark or a billing receipt. Separate Voxtral 3 transcription checks
-returned the exact configured sentence for all six MP3s. Transcription checks
-content completeness; they do not establish perceptual quality or identity.
+The shared normalizer measures the decoded 128 kbps MP3, accepts -14 ±0.5 LUFS
+and peaks at or below -1.5 dBTP, and permits at most four encodes from the original
+input. Measured PCM gain with a high-rate limiter corrects loudnorm's dynamic
+fallback when its offset adjustment cannot reach the target. Verifying only the
+PCM filter output was rejected because MP3 encoding can alter peaks and level.
+
+The manifest's provider costs are estimates, not billing receipts. Latency is
+recorded only when captured; the same-text request has an unrecorded latency
+and uses `null`. The script saves the raw WAV and request metadata before
+encoding so normalization failures do not require another paid request.
 
 ## Applying a demo
 
@@ -47,10 +61,22 @@ Applying a take loads its reference, tagged text, and language. It does not
 submit the form or grant consent. A pending reference download cannot replace
 an uploaded file or microphone recording. The landing CTA preserves its two
 selection IDs through login, signup, OAuth, and email confirmation. Signup
-continuation accepts only the six fixed demo paths in supported site locales.
+continuation accepts only supported voice/take pairs in supported site locales.
 
 The public page retains its preview gate pending review. Its mobile hero gives
 the demo priority over the decorative waveform.
+
+## Verification
+
+The published Kat reference measures -14.30 LUFS / -2.29 dBTP over 13.406 seconds;
+the same-text clone measures -14.41 LUFS / -2.24 dBTP over 13.28 seconds. All
+seven unrelated MP3s match their shipped SHA-256 hashes. The unprocessed Kat
+replacement is retained locally under
+`scripts/.cache/kat-same-original-20261021/references/kat-reference.mp3`.
+
+Validation passed: 1,714 web tests, 91 script tests, eight public voice-cloning
+browser tests, translation parity, formatting, type checks, and desktop/mobile
+inspection. Eighteen unrelated web tests are skipped.
 
 See [prepared cloning demos](../../../../ARCHITECTURE.md#prepared-cloning-demos)
 for runtime paths and [generation instructions](../../../../scripts/README.md#generate-prepared-cloning-demos)

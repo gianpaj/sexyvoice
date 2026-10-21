@@ -30,7 +30,7 @@ export async function DemoCloneSection({ lang }: DemoCloneSectionProps) {
   ) as Record<DemoLanguageCode, string>;
 
   return (
-    <section className="mx-auto w-full max-w-lg py-4">
+    <section className="mx-auto w-full max-w-xl py-4">
       <DemoClonePlayer
         initialSpeakerId={resolveInitialDemoSpeakerId(lang)}
         labels={demoClone}

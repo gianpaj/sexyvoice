@@ -264,23 +264,31 @@ listed languages are untested.
 
 The public cloning page and dashboard use the same `DemoClonePlayer`: Kat in
 English and Heike in German, each with Natural, Sarcastic, and Calm & slow takes
-of one sentence. `apps/web/data/clone-demo-config.ts` defines the sentences and
-tags. All six takes were generated with `voxtral-mini-tts-3-0` using the same
-12-second reference per voice. References and results are bundled under
-`apps/web/public/demo-clones/voxtral-3/`; playback makes no generation request.
-`clone-demo-assets.json` records durations, hashes, latency, and estimated cost.
+of one sentence. Kat also has a first-listed “Same as original” example using
+her reference recording's full passage. Natural remains the default.
+`apps/web/data/clone-demo-config.ts` defines prompts and supported voice/take
+pairs through `getCloneDemoTakes()`.
+
+All prepared takes use `voxtral-mini-tts-3-0`. References and results are bundled
+under `apps/web/public/demo-clones/voxtral-3/`; playback makes no generation
+request. `clone-demo-assets.json` records durations, source and asset hashes,
+latency when captured, and estimated cost. Kat's full reference and same-text
+result target -14 LUFS; the remaining prepared recordings are unchanged.
 See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
 asset workflow.
 
 The player uses one native audio element for the selected take or original
-recording. Changing voice or delivery stops playback. The prompt is available
-in a disclosure. Applying a demo loads its reference, tagged sentence, and
+recording, with the shared waveform renderer attached to that element.
+Changing voice or delivery stops playback. Unsupported voice/take combinations
+fall back to Natural. The prompt appears above the player with highlighted
+tags; selecting the prompt excludes its decorative quotation marks.
+Applying a demo loads its reference, prompt, and
 language into the cloning form. Consent and generation require explicit user
 actions. Reference downloads do not replace a file or recording the user has
 selected while the download was pending.
 
 The landing CTA carries `demo` and `take` into `/[lang]/dashboard/clone`.
-`apps/web/lib/clone/demo-redirect.ts` allows only the six known selections through
+`apps/web/lib/clone/demo-redirect.ts` allows only supported voice/take pairs through
 login, signup, OAuth, and email confirmation. Other signup redirects use the
 default callback. The public cloning page follows the preview gate in
 `apps/web/lib/features.ts`.

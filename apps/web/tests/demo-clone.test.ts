@@ -19,19 +19,32 @@ import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 const WEBSITE_LOCALES = ['en', 'es', 'de', 'da', 'it', 'fr'] as const;
 
 describe('demo clone speakers', () => {
-  it('bundles two voices with three takes of one sentence each', () => {
+  it('keeps three short deliveries and puts Kat’s same-text example first', () => {
     expect(demoCloneSpeakers).toHaveLength(2);
     for (const speaker of demoCloneSpeakers) {
-      expect(speaker.takes.map(({ id }) => id)).toEqual([
+      const deliveries = speaker.takes.filter(
+        ({ id }) => id !== 'sameOriginal',
+      );
+      expect(deliveries.map(({ id }) => id)).toEqual([
         'natural',
         'sarcastic',
         'calmSlow',
       ]);
-      for (const take of speaker.takes) {
+      for (const take of deliveries) {
         expect(getDemoCloneTranscript(take.prompt)).toBe(speaker.script);
       }
-      expect(speaker.takes[2].prompt).toContain('[emotion=calm][pace=slow]');
+      expect(deliveries[2].prompt).toContain('[emotion=calm][pace=slow]');
     }
+    expect(getDemoCloneSpeaker('kat').takes[0].id).toBe('sameOriginal');
+    expect(getDemoCloneSpeaker('kat').takes).toHaveLength(4);
+    expect(getDemoCloneSpeaker('heike').takes).toHaveLength(3);
+    expect(getDemoCloneSelection('heike', 'sameOriginal')).toBeNull();
+  });
+
+  it('uses Kat’s full reference passage without delivery tags', () => {
+    expect(getDemoCloneSelection('kat', 'sameOriginal')?.take.prompt).toBe(
+      'Downtown Drugstore had a bell on the door that made a single tink sound when you opened it.\nOxford Pharmacy had two bells on its doors, so it was more of a ta-tank, though nothing to startle over.',
+    );
   });
 
   it('places Kat’s calm and slow tags after the opening interjection', () => {
@@ -143,6 +156,9 @@ describe('demo handoff', () => {
   });
 
   it('keeps only allowlisted demo paths through signup', () => {
+    expect(
+      getCloneDemoRedirect('/en/dashboard/clone?demo=kat&take=sameOriginal'),
+    ).toBe('/en/dashboard/clone?demo=kat&take=sameOriginal');
     for (const locale of WEBSITE_LOCALES) {
       expect(
         getCloneDemoRedirect(
@@ -156,6 +172,7 @@ describe('demo handoff', () => {
       '/en/\\evil.com?demo=kat&take=natural',
       '/en/dashboard/generate?demo=kat&take=natural',
       '/en/dashboard/clone?demo=bad&take=natural',
+      '/en/dashboard/clone?demo=heike&take=sameOriginal',
       '/en/dashboard/clone?demo=kat',
       '/xx/dashboard/clone?demo=kat&take=natural',
       '/en/dashboard/clone?demo=kat&take=natural#fragment',

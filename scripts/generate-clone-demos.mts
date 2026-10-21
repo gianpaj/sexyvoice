@@ -10,8 +10,10 @@ import {
   CLONE_DEMO_TAKES,
   CLONE_DEMO_VOICES,
   getCloneDemoPrompt,
+  getCloneDemoTakes,
 } from '../apps/web/data/clone-demo-config.ts';
 import { getVoxtralDollarCost } from '../apps/web/lib/clone/voxtral.ts';
+import { normalizeCloneDemoAudio } from './lib/clone-demo-audio.mts';
 import { loadScriptEnv } from './lib/env.mts';
 
 const { values } = parseArgs({
@@ -27,7 +29,7 @@ const { values } = parseArgs({
 
 if (values.help) {
   console.log(
-    'Generate Voxtral clone demos from existing reference MP3s.\n--reference-dir <dir> --output-dir <new-dir> [--voice kat|heike] [--take natural|sarcastic|calmSlow] [--env-file <file>]\nDefaults to all voices and takes. Requires ffmpeg, ffprobe, MISTRAL_API_KEY. Does not upload files or write database rows.',
+    'Generate Voxtral clone demos from existing reference MP3s.\n--reference-dir <dir> --output-dir <new-dir> [--voice kat|heike] [--take sameOriginal|natural|sarcastic|calmSlow] [--env-file <file>]\nDefaults to all voices and takes. Requires ffmpeg, ffprobe, MISTRAL_API_KEY. Does not upload files or write database rows.',
   );
   process.exit(0);
 }
@@ -39,6 +41,16 @@ const takes = CLONE_DEMO_TAKES.filter(
 );
 if (!voices.length) throw new Error(`Unknown voice: ${values.voice}`);
 if (!takes.length) throw new Error(`Unknown take: ${values.take}`);
+const selections = voices
+  .map((voice) => ({
+    voice,
+    takes: getCloneDemoTakes(voice).filter(
+      (take) => !values.take || take.id === values.take,
+    ),
+  }))
+  .filter(({ takes }) => takes.length);
+if (!selections.length)
+  throw new Error(`Unsupported demo selection: ${values.voice}/${values.take}`);
 
 if (!(values['reference-dir'] && values['output-dir']))
   throw new Error('--reference-dir and --output-dir are required');
@@ -74,6 +86,7 @@ const requests = [] as {
   voice: string;
   take: string;
   input: string;
+  sourceHash: string;
   latencyMs: number;
   estimatedCostUsd: number;
   requestId: string | null;
@@ -87,7 +100,14 @@ async function recordAsset(filename: string) {
   };
 }
 
-for (const voice of voices) {
+async function writeReport() {
+  await writeFile(
+    join(directory, 'generation.json'),
+    `${JSON.stringify({ model: CLONE_DEMO_MODEL, sourceHashes, requests, assets }, null, 2)}\n`,
+  );
+}
+
+for (const { voice, takes } of selections) {
   const source = join(
     resolve(values['reference-dir']),
     `${voice.id}-reference.mp3`,
@@ -102,27 +122,13 @@ for (const voice of voices) {
     'error',
     '-i',
     source,
-    '-t',
-    '12',
     '-ac',
     '1',
     '-ar',
     '24000',
     referenceWav,
   ]);
-  execFileSync('ffmpeg', [
-    '-v',
-    'error',
-    '-i',
-    referenceWav,
-    '-af',
-    'loudnorm=I=-16:TP=-1.5:LRA=11',
-    '-codec:a',
-    'libmp3lame',
-    '-b:a',
-    '128k',
-    join(directory, referenceName),
-  ]);
+  normalizeCloneDemoAudio(source, join(directory, referenceName));
   await recordAsset(referenceName);
   const reference = (await readFile(referenceWav)).toString('base64');
 
@@ -159,32 +165,19 @@ for (const voice of voices) {
     const rawWav = join(directory, `${voice.id}-${take.id}.wav`);
     await writeFile(rawWav, bytes, { flag: 'wx' });
     const filename = `${voice.id}-${take.id}.mp3`;
-    execFileSync('ffmpeg', [
-      '-v',
-      'error',
-      '-i',
-      rawWav,
-      '-af',
-      'loudnorm=I=-16:TP=-1.5:LRA=11',
-      '-codec:a',
-      'libmp3lame',
-      '-b:a',
-      '128k',
-      join(directory, filename),
-    ]);
-    await recordAsset(filename);
     requests.push({
       voice: voice.id,
       take: take.id,
       input,
+      sourceHash: sourceHashes[voice.id],
       latencyMs,
       estimatedCostUsd: getVoxtralDollarCost(CLONE_DEMO_MODEL, input),
       requestId: response.headers.get('x-request-id'),
     });
-    await writeFile(
-      join(directory, 'generation.json'),
-      `${JSON.stringify({ model: CLONE_DEMO_MODEL, sourceHashes, requests, assets }, null, 2)}\n`,
-    );
+    await writeReport();
+    normalizeCloneDemoAudio(rawWav, join(directory, filename));
+    await recordAsset(filename);
+    await writeReport();
     console.log(
       `${voice.id}/${take.id}: ${assets[filename].durationSeconds.toFixed(2)}s, ${latencyMs}ms, estimated $${getVoxtralDollarCost(CLONE_DEMO_MODEL, input).toFixed(6)}`,
     );

@@ -1,9 +1,9 @@
 import assetManifest from './clone-demo-assets.json';
 import {
-  CLONE_DEMO_TAKES,
   CLONE_DEMO_VOICES,
   type CloneDemoTakeId,
   getCloneDemoPrompt,
+  getCloneDemoTakes,
 } from './clone-demo-config';
 
 export type { CloneDemoTakeId } from './clone-demo-config';
@@ -45,7 +45,7 @@ function getClip(filename: string): DemoCloneClip {
   };
 }
 
-/** Two reference voices, each speaking the same sentence in three prepared takes. */
+/** Prepared deliveries and same-text comparisons for the reference voices. */
 export const demoCloneSpeakers: readonly DemoCloneSpeaker[] =
   CLONE_DEMO_VOICES.map((voice) => ({
     id: voice.id,
@@ -54,7 +54,7 @@ export const demoCloneSpeakers: readonly DemoCloneSpeaker[] =
     name: voice.name,
     script: voice.sentence,
     reference: getClip(`${voice.id}-reference.mp3`),
-    takes: CLONE_DEMO_TAKES.map((take) => ({
+    takes: getCloneDemoTakes(voice).map((take) => ({
       id: take.id,
       prompt: getCloneDemoPrompt(voice, take.id),
       ...getClip(`${voice.id}-${take.id}.mp3`),

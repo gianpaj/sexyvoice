@@ -36,6 +36,8 @@ vi.mock('@/lib/i18n/navigation', () => ({
 }));
 
 const labels = messages.landing.demoClone;
+const sameOriginalPrompt =
+  'Downtown Drugstore had a bell on the door that made a single tink sound when you opened it.\nOxford Pharmacy had two bells on its doors, so it was more of a ta-tank, though nothing to startle over.';
 const props = {
   initialSpeakerId: 'kat',
   labels,
@@ -64,6 +66,128 @@ const selectTake = (id: string) =>
   );
 
 describe('Hear the difference', () => {
+  it('lists Same as original first for Kat while keeping Natural selected by default', () => {
+    render(<DemoClonePlayer {...props} />);
+    const takes = document.querySelectorAll<HTMLInputElement>(
+      'input[name="demo-clone-take"]',
+    );
+    expect(Array.from(takes, (take) => take.value)).toEqual([
+      'sameOriginal',
+      'natural',
+      'sarcastic',
+      'calmSlow',
+    ]);
+    expect(
+      screen.getByRole('radio', { name: labels.sameOriginal }),
+    ).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
+  });
+
+  it('offers only the three existing deliveries for Heike', () => {
+    render(<DemoClonePlayer {...props} initialSpeakerId="heike" />);
+    const takes = document.querySelectorAll<HTMLInputElement>(
+      'input[name="demo-clone-take"]',
+    );
+    expect(Array.from(takes, (take) => take.value)).toEqual([
+      'natural',
+      'sarcastic',
+      'calmSlow',
+    ]);
+    expect(
+      screen.queryByRole('radio', { name: labels.sameOriginal }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the full reference passage and links to the exact Same as original take', () => {
+    render(<DemoClonePlayer {...props} />);
+    selectTake('sameOriginal');
+    expect(
+      screen.getByRole('radio', { name: labels.sameOriginal }),
+    ).toBeChecked();
+    expect(screen.getByTestId('demo-clone-prompt-text').textContent).toBe(
+      sameOriginalPrompt,
+    );
+    expect(screen.getByTestId('demo-clone-result')).toHaveAttribute(
+      'data-take-id',
+      'sameOriginal',
+    );
+    expect(audio().getAttribute('src')).toBe(
+      '/demo-clones/voxtral-3/kat-sameOriginal.mp3',
+    );
+    expect(screen.getByTestId('demo-clone-try')).toHaveAttribute(
+      'href',
+      '/dashboard/clone?demo=kat&take=sameOriginal',
+    );
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  it('falls back to Natural for an unsupported initial speaker and take pairing', () => {
+    render(
+      <DemoClonePlayer
+        {...props}
+        initialSpeakerId="heike"
+        initialTakeId="sameOriginal"
+      />,
+    );
+    expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
+    expect(audio().getAttribute('src')).toBe(
+      '/demo-clones/voxtral-3/heike-natural.mp3',
+    );
+    expect(screen.getByTestId('demo-clone-try')).toHaveAttribute(
+      'href',
+      '/dashboard/clone?demo=heike&take=natural',
+    );
+    fireEvent.click(screen.getByTestId('demo-clone-speaker-kat'));
+    expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
+  });
+
+  it('resets an unsupported take to Natural when switching speakers', async () => {
+    render(<DemoClonePlayer {...props} initialTakeId="sameOriginal" />);
+    expect(
+      screen.getByRole('radio', { name: labels.sameOriginal }),
+    ).toBeChecked();
+    fireEvent.click(screen.getByLabelText(labels.playAudio));
+    await screen.findByLabelText(labels.pauseAudio);
+    audio().currentTime = 2;
+    fireEvent.click(screen.getByTestId('demo-clone-speaker-heike'));
+    expect(
+      screen.queryByRole('radio', { name: labels.sameOriginal }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
+    expect(screen.getByTestId('demo-clone-result')).toHaveAttribute(
+      'data-take-id',
+      'natural',
+    );
+    expect(audio().getAttribute('src')).toBe(
+      '/demo-clones/voxtral-3/heike-natural.mp3',
+    );
+    expect(audio().currentTime).toBe(0);
+    expect(screen.getByLabelText(labels.playAudio)).toBeInTheDocument();
+    expect(screen.getByTestId('demo-clone-try')).toHaveAttribute(
+      'href',
+      '/dashboard/clone?demo=heike&take=natural',
+    );
+    fireEvent.click(screen.getByTestId('demo-clone-speaker-kat'));
+    expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
+  });
+
+  it.each(['natural', 'sarcastic', 'calmSlow'] as const)(
+    'preserves the supported %s take when switching speakers',
+    (initialTakeId) => {
+      render(<DemoClonePlayer {...props} initialTakeId={initialTakeId} />);
+      for (const speaker of ['heike', 'kat']) {
+        fireEvent.click(screen.getByTestId(`demo-clone-speaker-${speaker}`));
+        expect(screen.getByTestId('demo-clone-result')).toHaveAttribute(
+          'data-take-id',
+          initialTakeId,
+        );
+        expect(audio().getAttribute('src')).toBe(
+          `/demo-clones/voxtral-3/${speaker}-${initialTakeId}.mp3`,
+        );
+      }
+    },
+  );
+
   it.each(['kat', 'heike'])(
     'shows tags inline without autoplay and preserves %s’s sentence across takes',
     (speakerId) => {
@@ -95,6 +219,43 @@ describe('Hear the difference', () => {
         ).not.toBeInTheDocument();
       }
       expect(play).not.toHaveBeenCalled();
+    },
+  );
+
+  it('highlights emotion and pace tags without changing the prompt text', () => {
+    render(<DemoClonePlayer {...props} initialTakeId="calmSlow" />);
+    for (const tag of ['[emotion=calm]', '[pace=slow]']) {
+      expect(screen.getByText(tag, { exact: true })).toHaveClass(
+        'bg-primary/20',
+        'text-blue-300',
+        'align-baseline',
+      );
+      expect(screen.getByText(tag, { exact: true })).not.toHaveClass(
+        'text-sm',
+        'font-mono',
+        'align-middle',
+      );
+    }
+    expect(screen.getByTestId('demo-clone-script').textContent).toBe(
+      "“Oh, [emotion=calm][pace=slow]you're here just when I was thinking about you.”",
+    );
+    selectTake('natural');
+    expect(screen.queryByText('[emotion=calm]')).not.toBeInTheDocument();
+    expect(screen.queryByText('[pace=slow]')).not.toBeInTheDocument();
+  });
+
+  it.each(['sameOriginal', 'natural', 'sarcastic', 'calmSlow'] as const)(
+    'groups the entire %s prompt for selection without quotation marks',
+    (initialTakeId) => {
+      render(<DemoClonePlayer {...props} initialTakeId={initialTakeId} />);
+      const prompt = screen.getByTestId('demo-clone-prompt-text');
+      expect(prompt).toHaveClass('select-all');
+      expect(prompt.textContent).not.toMatch(/[“”]/);
+      const quotes = screen
+        .getByTestId('demo-clone-script')
+        .querySelectorAll('[aria-hidden="true"]');
+      expect(quotes).toHaveLength(2);
+      for (const quote of quotes) expect(quote).toHaveClass('select-none');
     },
   );
 
@@ -234,15 +395,32 @@ describe('Hear the difference', () => {
     expect(audio().getAttribute('src')).toContain('kat-natural.mp3');
   });
 
-  it('passes the exact selected delivery to the dashboard action', () => {
-    const onTryVoice = vi.fn();
-    const { rerender } = render(
-      <DemoClonePlayer {...props} onTryVoice={onTryVoice} />,
-    );
-    selectTake('calmSlow');
-    fireEvent.click(screen.getByTestId('demo-clone-try'));
-    expect(onTryVoice).toHaveBeenCalledWith('kat', 'calmSlow');
-    rerender(<DemoClonePlayer {...props} applying onTryVoice={onTryVoice} />);
-    expect(screen.getByTestId('demo-clone-try')).toBeDisabled();
+  it('uses a signup CTA publicly and an apply action in the dashboard', () => {
+    const { rerender } = render(<DemoClonePlayer {...props} />);
+    expect(
+      screen.getByRole('link', { name: labels.signUpAndClone }),
+    ).toHaveAttribute('href', '/dashboard/clone?demo=kat&take=natural');
+    rerender(<DemoClonePlayer {...props} onTryVoice={vi.fn()} />);
+    expect(
+      screen.getByRole('button', { name: labels.tryVoice }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: labels.signUpAndClone }),
+    ).not.toBeInTheDocument();
   });
+
+  it.each(['sameOriginal', 'natural', 'sarcastic', 'calmSlow'] as const)(
+    'passes the exact %s delivery to the dashboard action',
+    (takeId) => {
+      const onTryVoice = vi.fn();
+      const { rerender } = render(
+        <DemoClonePlayer {...props} onTryVoice={onTryVoice} />,
+      );
+      selectTake(takeId);
+      fireEvent.click(screen.getByTestId('demo-clone-try'));
+      expect(onTryVoice).toHaveBeenCalledExactlyOnceWith('kat', takeId);
+      rerender(<DemoClonePlayer {...props} applying onTryVoice={onTryVoice} />);
+      expect(screen.getByTestId('demo-clone-try')).toBeDisabled();
+    },
+  );
 });

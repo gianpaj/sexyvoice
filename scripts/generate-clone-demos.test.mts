@@ -19,13 +19,25 @@ test('documents single-voice and single-take generation', () => {
   const result = cli(['--help']);
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /--voice kat\|heike/);
-  assert.match(result.stdout, /--take natural\|sarcastic\|calmSlow/);
+  assert.match(
+    result.stdout,
+    /--take sameOriginal\|natural\|sarcastic\|calmSlow/,
+  );
 });
 
 test('rejects unknown voices before loading credentials or creating output', () => {
   const result = cli(['--voice', 'unknown']);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Unknown voice: unknown/);
+});
+
+test('rejects unsupported voice and take pairs before generation', () => {
+  const result = cli(['--voice', 'heike', '--take', 'sameOriginal']);
+  assert.equal(result.status, 1);
+  assert.match(
+    result.stderr,
+    /Unsupported demo selection: heike\/sameOriginal/,
+  );
 });
 
 test('rejects unknown takes before loading credentials or creating output', () => {

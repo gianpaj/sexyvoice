@@ -42,6 +42,29 @@ afterEach(() => {
 });
 
 describe('dashboard demo selection', () => {
+  it('hands off Kat’s reference and full passage for Same as original', async () => {
+    fetchMock.mockResolvedValue(
+      new Response('sample', { headers: { 'content-type': 'audio/mpeg' } }),
+    );
+    renderSample();
+    fireEvent.click(screen.getByRole('radio', { name: 'Same as original' }));
+    fireEvent.click(screen.getByTestId('demo-clone-try'));
+    expect(screen.getByTestId('demo-clone-try')).toBeDisabled();
+    await waitFor(() => expect(props.addFiles).toHaveBeenCalledOnce());
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      '/demo-clones/voxtral-3/kat-reference.mp3',
+    );
+    expect(props.onSelectSample).toHaveBeenCalledExactlyOnceWith({
+      locale: 'en',
+      prompt:
+        'Downtown Drugstore had a bell on the door that made a single tink sound when you opened it.\nOxford Pharmacy had two bells on its doors, so it was more of a ta-tank, though nothing to startle over.',
+    });
+    const [file] = props.addFiles.mock.calls[0][0] as File[];
+    expect(file.name).toBe('kat-reference.mp3');
+    expect(file.type).toBe('audio/mpeg');
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('loads the matching German reference, language, and tagged text', async () => {
     fetchMock.mockResolvedValue(
       new Response('sample', { headers: { 'content-type': 'audio/mpeg' } }),

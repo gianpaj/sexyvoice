@@ -2,11 +2,13 @@
 
 ## Generate prepared cloning demos
 
-The sentences, voices, and three deliveries live in
-`apps/web/data/clone-demo-config.ts`. The reference inputs are the existing R2
+The voices, delivery prompts, and supported voice/take pairs live in
+`apps/web/data/clone-demo-config.ts`. Supply authorized, complete reference
+recordings as `kat-reference.mp3` and `heike-reference.mp3` in a local directory.
+Use the intended source version; the bundled reference can differ from the R2
 objects `clone-demos/kat-reference.mp3` and `clone-demos/heike-reference.mp3`.
-Download authorized copies as `kat-reference.mp3` and `heike-reference.mp3` into
-a local directory before running:
+
+Generate all supported pairs with:
 
 ```bash
 pnpm --filter @sexyvoice/scripts exec node \
@@ -15,29 +17,41 @@ pnpm --filter @sexyvoice/scripts exec node \
   --output-dir /absolute/path/new-demo-run
 ```
 
-To regenerate one take, add `--voice kat --take calmSlow`. Copy only the selected
-result MP3 and replace its matching request and asset metadata in
-`apps/web/data/clone-demo-assets.json`. Keep reference assets and other recordings
-unchanged.
+To generate one take, add `--voice kat --take sameOriginal` or
+`--voice kat --take calmSlow`. `sameOriginal` is available only for Kat. Copy only
+the intended result MP3 and its matching request and asset metadata into
+`apps/web/data/clone-demo-assets.json`. Replace a reference preview and its
+metadata only when intentionally publishing a reference change. Keep unrelated
+recordings unchanged.
 
 Requires `MISTRAL_API_KEY`, `ffmpeg`, and `ffprobe`. Optional `--env-file` flags
-load explicit environment files. Each voice uses a single reference trimmed to
-12 seconds, mono, 24 kHz WAV. By default, the script requests three WAV takes per
-voice from Mistral and retains the WAVs. References and results are also encoded as 128 kbps MP3
-with the same loudness normalization target of -16 LUFS.
+load explicit environment files. The script preserves the complete reference;
+it converts a separate copy to mono, 24 kHz WAV for Mistral. Kat has four
+supported takes; Heike has three. Raw generated WAVs remain in the run directory.
 
-`generation.json` records input hashes, prompts, full-response latency,
-estimated provider cost, output durations, and MP3 hashes. Review the clips and
-confirm that each take speaks the complete sentence before publishing assets.
-The script does not upload files or change database rows. Copy the eight MP3s
-to `apps/web/public/demo-clones/voxtral-3/` and the report to
-`apps/web/data/clone-demo-assets.json` together. The web tests check asset hashes
-and prompt consistency. Keep raw WAVs in the run directory.
+Reference playback previews and generated results use 128 kbps MP3. Shared
+normalization in `lib/clone-demo-audio.mts` targets -14 LUFS and limits true peaks
+to -1.5 dBTP. It measures the decoded MP3 and permits up to four encodes from the
+original input to achieve the target within 0.5 LUFS. It never overwrites a source
+or existing output. Failure publishes no output MP3.
+
+`generation.json` records input hashes per request, prompts, full-response
+latency, estimated provider cost, output durations, and MP3 hashes. Request
+metadata is saved before MP3 encoding, so an encoding failure does not require
+another provider request. Recover from the retained WAV rather than generating
+paid audio again. An unrecorded latency is `null`, not an estimate.
+
+Review the clips and confirm that each take speaks the complete prompt before
+publishing assets under `apps/web/public/demo-clones/voxtral-3/`. Merge the
+matching report entries into `apps/web/data/clone-demo-assets.json`; preserve
+per-request source hashes when changing a voice's reference. The web tests
+check asset hashes and prompt consistency. The script does not upload files or
+change database rows.
 
 ## Upload files to R2
 
 `upload-r2-files.mts` uploads any file type, including multiple files selected
-with a shell glob. From the repository root, upload all eight prepared clone
+with a shell glob. From the repository root, upload all prepared clone
 demo MP3s with one command:
 
 ```bash

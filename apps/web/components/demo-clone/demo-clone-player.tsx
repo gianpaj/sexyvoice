@@ -13,11 +13,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { AudioWaveform } from '@/components/audio-waveform';
+import { GrokTaggedText } from '@/components/grok-tagged-text';
 import { Button } from '@/components/ui/button';
 import {
   type CloneDemoTakeId,
   type DemoLanguageCode,
   demoCloneSpeakers,
+  getDemoCloneSelection,
   getDemoCloneSpeaker,
 } from '@/data/demo-clone';
 import { Link } from '@/lib/i18n/navigation';
@@ -38,8 +40,10 @@ export interface DemoCloneLabels {
   playAudio: string;
   preparedExamplesCaption: string;
   retry: string;
+  sameOriginal: string;
   sarcastic: string;
   seek: string;
+  signUpAndClone: string;
   subtitle: string;
   title: string;
   tryVoice: string;
@@ -67,8 +71,12 @@ export function DemoClonePlayer({
   onTryVoice,
   applying = false,
 }: DemoClonePlayerProps) {
-  const [speakerId, setSpeakerId] = useState(initialSpeakerId);
-  const [takeId, setTakeId] = useState<CloneDemoTakeId>(initialTakeId);
+  const [speakerId, setSpeakerId] = useState(
+    () => getDemoCloneSpeaker(initialSpeakerId).id,
+  );
+  const [takeId, setTakeId] = useState<CloneDemoTakeId>(
+    () => getDemoCloneSelection(speakerId, initialTakeId)?.take.id ?? 'natural',
+  );
   const [source, setSource] = useState<'take' | 'reference'>('take');
   const [playback, setPlayback] = useState<Playback>('idle');
   const [currentTime, setCurrentTime] = useState(0);
@@ -121,6 +129,7 @@ export function DemoClonePlayer({
   const switchSpeaker = (id: string) => {
     stop();
     setSpeakerId(id);
+    setTakeId(getDemoCloneSelection(id, takeId)?.take.id ?? 'natural');
     setSource('take');
   };
 
@@ -229,7 +238,19 @@ export function DemoClonePlayer({
         data-testid="demo-clone-script"
         lang={speaker.languageCode}
       >
-        &ldquo;{take.prompt}&rdquo;
+        <span aria-hidden="true" className="select-none">
+          &ldquo;
+        </span>
+        <span className="select-all" data-testid="demo-clone-prompt-text">
+          <GrokTaggedText
+            className="mx-0.5 inline-flex rounded bg-primary/20 px-1 py-0.5 align-baseline text-blue-300"
+            provider="voxtral"
+            text={take.prompt}
+          />
+        </span>
+        <span aria-hidden="true" className="select-none">
+          &rdquo;
+        </span>
       </blockquote>
 
       <div
@@ -382,7 +403,7 @@ export function DemoClonePlayer({
                 query: { demo: speaker.id, take: take.id },
               }}
             >
-              {labels.tryVoice}
+              {labels.signUpAndClone}
             </Link>
           </Button>
         )}
