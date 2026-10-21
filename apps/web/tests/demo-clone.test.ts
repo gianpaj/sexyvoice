@@ -34,6 +34,20 @@ describe('demo clone speakers', () => {
     }
   });
 
+  it('places Kat’s calm and slow tags after the opening interjection', () => {
+    expect(getDemoCloneSelection('kat', 'calmSlow')?.take.prompt).toBe(
+      "Oh, [emotion=calm][pace=slow]you're here just when I was thinking about you.",
+    );
+  });
+
+  it('matches every prepared prompt to its generation request', () => {
+    for (const request of manifest.requests) {
+      expect(
+        getDemoCloneSelection(request.voice, request.take)?.take.prompt,
+      ).toBe(request.input);
+    }
+  });
+
   it('ships every audio clip with verified duration and content hashes', () => {
     for (const speaker of demoCloneSpeakers) {
       for (const clip of [speaker.reference, ...speaker.takes]) {

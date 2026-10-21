@@ -35,10 +35,16 @@ test.describe('Hear the difference', () => {
     await page.goto('/en/voice-cloning');
     for (const speaker of ['kat', 'heike']) {
       await page.getByTestId(`demo-clone-speaker-${speaker}`).click();
-      const sentence = await page
-        .getByTestId('demo-clone-script')
-        .textContent();
-      for (const take of ['natural', 'sarcastic', 'calmSlow']) {
+      await page
+        .locator('input[name="demo-clone-take"][value="natural"]')
+        .check({ force: true });
+      const quote = page.getByTestId('demo-clone-script');
+      const sentence = await quote.textContent();
+      for (const [take, tags] of [
+        ['natural', ''],
+        ['sarcastic', '[emotion=sarcastic]'],
+        ['calmSlow', '[emotion=calm][pace=slow]'],
+      ]) {
         await page
           .locator(`input[name="demo-clone-take"][value="${take}"]`)
           .check({ force: true });
@@ -47,8 +53,11 @@ test.describe('Hear the difference', () => {
           'src',
           `/demo-clones/voxtral-3/${speaker}-${take}.mp3`,
         );
-        await expect(page.getByTestId('demo-clone-script')).toHaveText(
-          sentence!,
+        await expect(quote).toBeVisible();
+        if (tags) await expect(quote).toContainText(tags);
+        else await expect(quote).not.toContainText('[');
+        expect((await quote.textContent())?.replace(/\[[^\]]*\]\s*/g, '')).toBe(
+          sentence,
         );
         await page.getByTestId('demo-clone-play').click();
         await expect(page.locator('audio')).toHaveJSProperty('paused', false);
@@ -83,18 +92,19 @@ test.describe('Hear the difference', () => {
     );
   });
 
-  test('keeps tags in a disclosure and carries the selected take through login and signup', async ({
+  test('shows tags inline without a disclosure and carries the selected take through login and signup', async ({
     page,
   }) => {
     await page.goto('/en/voice-cloning');
     await page.getByTestId('demo-clone-speaker-heike').click();
     await page.getByText('Calm & slow', { exact: true }).click();
-    await expect(page.getByTestId('demo-clone-script')).not.toContainText('[');
-    await expect(page.getByTestId('demo-clone-prompt')).not.toBeVisible();
-    await page.getByText('See the prompt', { exact: true }).click();
-    await expect(page.getByTestId('demo-clone-prompt')).toContainText(
+    await expect(page.getByTestId('demo-clone-script')).toBeVisible();
+    await expect(page.getByTestId('demo-clone-script')).toContainText(
       '[emotion=calm][pace=slow]',
     );
+    const player = page.getByTestId('demo-clone-result').locator('..');
+    await expect(player.locator('details, summary')).toHaveCount(0);
+    await expect(page.getByTestId('demo-clone-prompt')).toHaveCount(0);
     await page.getByTestId('demo-clone-try').click();
     await expect(page).toHaveURL(/\/en\/login\?redirect_to=/);
     expect(new URL(page.url()).searchParams.get('redirect_to')).toBe(

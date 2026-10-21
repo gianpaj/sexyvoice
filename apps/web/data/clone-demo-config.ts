@@ -15,6 +15,10 @@ export const CLONE_DEMO_VOICES = [
     image: '/demo-clones/kat.webp',
     languageCode: 'en',
     sentence: "Oh, you're here just when I was thinking about you.",
+    prompts: {
+      calmSlow:
+        "Oh, [emotion=calm][pace=slow]you're here just when I was thinking about you.",
+    },
     sourceKey: 'clone-demos/kat-reference.mp3',
   },
   {
@@ -28,9 +32,14 @@ export const CLONE_DEMO_VOICES = [
 ] as const;
 
 export function getCloneDemoPrompt(
-  sentence: string,
+  voice: (typeof CLONE_DEMO_VOICES)[number],
   takeId: CloneDemoTakeId,
 ): string {
   const take = CLONE_DEMO_TAKES.find((take) => take.id === takeId)!;
-  return `${take.tags.join('')}${take.tags.length ? ' ' : ''}${sentence}`;
+  const prompts: Partial<Record<CloneDemoTakeId, string>> =
+    'prompts' in voice ? voice.prompts : {};
+  return (
+    prompts[takeId] ??
+    `${take.tags.join('')}${take.tags.length ? ' ' : ''}${voice.sentence}`
+  );
 }

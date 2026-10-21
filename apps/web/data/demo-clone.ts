@@ -56,7 +56,7 @@ export const demoCloneSpeakers: readonly DemoCloneSpeaker[] =
     reference: getClip(`${voice.id}-reference.mp3`),
     takes: CLONE_DEMO_TAKES.map((take) => ({
       id: take.id,
-      prompt: getCloneDemoPrompt(voice.sentence, take.id),
+      prompt: getCloneDemoPrompt(voice, take.id),
       ...getClip(`${voice.id}-${take.id}.mp3`),
     })),
   }));
@@ -78,7 +78,7 @@ export function getDemoCloneSelection(
 }
 
 export function getDemoCloneTranscript(script: string): string {
-  return script.replace(/\s*\[[^\]]*\]\s*/g, ' ').trim();
+  return script.replace(/\[[^\]]*\]/g, '').trim();
 }
 
 export function isDemoLanguageCode(code: string): code is DemoLanguageCode {

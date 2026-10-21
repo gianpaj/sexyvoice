@@ -64,24 +64,39 @@ const selectTake = (id: string) =>
   );
 
 describe('Hear the difference', () => {
-  it('starts ready without autoplay and preserves words across the three takes', () => {
-    render(<DemoClonePlayer {...props} />);
-    expect(screen.getByTestId('demo-clone-result')).toHaveAttribute(
-      'data-take-id',
-      'natural',
-    );
-    const sentence = screen.getByTestId('demo-clone-script').textContent;
-    for (const take of ['sarcastic', 'calmSlow', 'natural']) {
-      selectTake(take);
-      expect(audio().getAttribute('src')).toBe(
-        `/demo-clones/voxtral-3/kat-${take}.mp3`,
+  it.each(['kat', 'heike'])(
+    'shows tags inline without autoplay and preserves %s’s sentence across takes',
+    (speakerId) => {
+      render(<DemoClonePlayer {...props} initialSpeakerId={speakerId} />);
+      expect(screen.getByTestId('demo-clone-result')).toHaveAttribute(
+        'data-take-id',
+        'natural',
       );
-      expect(screen.getByTestId('demo-clone-script').textContent).toBe(
-        sentence,
-      );
-    }
-    expect(play).not.toHaveBeenCalled();
-  });
+      const quote = screen.getByTestId('demo-clone-script');
+      const sentence = quote.textContent;
+      for (const [take, tags] of [
+        ['sarcastic', '[emotion=sarcastic]'],
+        ['calmSlow', '[emotion=calm][pace=slow]'],
+        ['natural', ''],
+      ]) {
+        selectTake(take);
+        expect(audio().getAttribute('src')).toBe(
+          `/demo-clones/voxtral-3/${speakerId}-${take}.mp3`,
+        );
+        expect(quote).toBeVisible();
+        if (tags) expect(quote).toHaveTextContent(tags);
+        else expect(quote.textContent).not.toContain('[');
+        expect(quote.textContent?.replace(/\[[^\]]*\]\s*/g, '')).toBe(sentence);
+        expect(
+          document.querySelector('details, summary'),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByTestId('demo-clone-prompt'),
+        ).not.toBeInTheDocument();
+      }
+      expect(play).not.toHaveBeenCalled();
+    },
+  );
 
   it('renders the shared waveform against the native audio element', () => {
     render(<DemoClonePlayer {...props} />);

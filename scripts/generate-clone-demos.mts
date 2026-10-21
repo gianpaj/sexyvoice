@@ -19,16 +19,27 @@ const { values } = parseArgs({
     'env-file': { type: 'string', multiple: true },
     'reference-dir': { type: 'string' },
     'output-dir': { type: 'string' },
+    voice: { type: 'string' },
+    take: { type: 'string' },
     help: { type: 'boolean' },
   },
 });
 
 if (values.help) {
   console.log(
-    'Generate six Voxtral clone demos from existing reference MP3s.\n--reference-dir <dir> --output-dir <new-dir> [--env-file <file>]\nRequires ffmpeg, ffprobe, MISTRAL_API_KEY. Does not upload files or write database rows.',
+    'Generate Voxtral clone demos from existing reference MP3s.\n--reference-dir <dir> --output-dir <new-dir> [--voice kat|heike] [--take natural|sarcastic|calmSlow] [--env-file <file>]\nDefaults to all voices and takes. Requires ffmpeg, ffprobe, MISTRAL_API_KEY. Does not upload files or write database rows.',
   );
   process.exit(0);
 }
+const voices = CLONE_DEMO_VOICES.filter(
+  (voice) => !values.voice || voice.id === values.voice,
+);
+const takes = CLONE_DEMO_TAKES.filter(
+  (take) => !values.take || take.id === values.take,
+);
+if (!voices.length) throw new Error(`Unknown voice: ${values.voice}`);
+if (!takes.length) throw new Error(`Unknown take: ${values.take}`);
+
 if (!(values['reference-dir'] && values['output-dir']))
   throw new Error('--reference-dir and --output-dir are required');
 loadScriptEnv(values['env-file']);
@@ -76,7 +87,7 @@ async function recordAsset(filename: string) {
   };
 }
 
-for (const voice of CLONE_DEMO_VOICES) {
+for (const voice of voices) {
   const source = join(
     resolve(values['reference-dir']),
     `${voice.id}-reference.mp3`,
@@ -115,8 +126,8 @@ for (const voice of CLONE_DEMO_VOICES) {
   await recordAsset(referenceName);
   const reference = (await readFile(referenceWav)).toString('base64');
 
-  for (const take of CLONE_DEMO_TAKES) {
-    const input = getCloneDemoPrompt(voice.sentence, take.id);
+  for (const take of takes) {
+    const input = getCloneDemoPrompt(voice, take.id);
     const startedAt = performance.now();
     const response = await fetch('https://api.mistral.ai/v1/audio/speech', {
       method: 'POST',

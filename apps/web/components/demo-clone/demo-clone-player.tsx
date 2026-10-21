@@ -40,7 +40,6 @@ export interface DemoCloneLabels {
   retry: string;
   sarcastic: string;
   seek: string;
-  showPrompt: string;
   subtitle: string;
   title: string;
   tryVoice: string;
@@ -230,7 +229,7 @@ export function DemoClonePlayer({
         data-testid="demo-clone-script"
         lang={speaker.languageCode}
       >
-        &ldquo;{speaker.script}&rdquo;
+        &ldquo;{take.prompt}&rdquo;
       </blockquote>
 
       <div
@@ -388,18 +387,6 @@ export function DemoClonePlayer({
           </Button>
         )}
       </div>
-      <details className="mt-4 text-sm">
-        <summary className="cursor-pointer py-2 text-muted-foreground">
-          {labels.showPrompt}
-        </summary>
-        <pre
-          className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-muted p-3 font-mono text-xs leading-6"
-          data-testid="demo-clone-prompt"
-          lang={speaker.languageCode}
-        >
-          {take.prompt}
-        </pre>
-      </details>
       <p className="mt-4 text-pretty text-muted-foreground text-xs">
         {labels.preparedExamplesCaption}
       </p>

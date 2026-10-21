@@ -15,10 +15,15 @@ pnpm --filter @sexyvoice/scripts exec node \
   --output-dir /absolute/path/new-demo-run
 ```
 
+To regenerate one take, add `--voice kat --take calmSlow`. Copy only the selected
+result MP3 and replace its matching request and asset metadata in
+`apps/web/data/clone-demo-assets.json`. Keep reference assets and other recordings
+unchanged.
+
 Requires `MISTRAL_API_KEY`, `ffmpeg`, and `ffprobe`. Optional `--env-file` flags
 load explicit environment files. Each voice uses a single reference trimmed to
-12 seconds, mono, 24 kHz WAV. The script requests three WAV takes from Mistral
-and retains the WAVs. References and results are also encoded as 128 kbps MP3
+12 seconds, mono, 24 kHz WAV. By default, the script requests three WAV takes per
+voice from Mistral and retains the WAVs. References and results are also encoded as 128 kbps MP3
 with the same loudness normalization target of -16 LUFS.
 
 `generation.json` records input hashes, prompts, full-response latency,

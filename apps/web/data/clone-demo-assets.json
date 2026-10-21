@@ -24,9 +24,9 @@
     {
       "voice": "kat",
       "take": "calmSlow",
-      "input": "[emotion=calm][pace=slow] Oh, you're here just when I was thinking about you.",
-      "latencyMs": 1273,
-      "estimatedCostUsd": 0.001001,
+      "input": "Oh, [emotion=calm][pace=slow]you're here just when I was thinking about you.",
+      "latencyMs": 1835,
+      "estimatedCostUsd": 0.000988,
       "requestId": null
     },
     {
@@ -68,8 +68,8 @@
       "sha256": "d3bd450c3e21bbbbe49e98dddafea323dedd78fc5c7a5d386d289348a1ec863a"
     },
     "kat-calmSlow.mp3": {
-      "durationSeconds": 4.64,
-      "sha256": "1c652fa19ba52374502df581884da33e8dcd4b17c215b414d5268e3978427fb6"
+      "durationSeconds": 5.6,
+      "sha256": "d142504732d6ce6639475640c60adc90ea63416148d71b12dda112dc80d31b8c"
     },
     "heike-reference.mp3": {
       "durationSeconds": 12,
