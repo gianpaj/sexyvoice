@@ -40,6 +40,21 @@ const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
   type: 'audio/wav',
 });
 
+vi.mock('@/lib/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
@@ -128,6 +143,7 @@ const errorCodesDict = {
 } as const;
 
 const dict = {
+  savedVoice: enMessages.clone.savedVoice,
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
   audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
   audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
@@ -231,6 +247,7 @@ const renderClone = (
   props: {
     cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
+    initialSaveForCalls?: boolean;
     initialDemo?: {
       speakerId: string;
       takeId: 'natural' | 'sarcastic' | 'calmSlow';
@@ -253,6 +270,7 @@ const renderClone = (
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
         initialDemo={props.initialDemo}
+        initialSaveForCalls={props.initialSaveForCalls}
         lang={props.lang ?? 'en'}
         userHasPaid={props.userHasPaid ?? false}
       />
@@ -267,6 +285,37 @@ const renderedLocaleCodes = () => {
 };
 
 describe('NewVoiceClient', () => {
+  it('saves a reusable voice without requiring generated speech text', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ audioReferenceId: 'reference' }), {
+        status: 200,
+      }),
+    );
+    const user = userEvent.setup();
+    renderClone({
+      initialSaveForCalls: true,
+      userHasPaid: true,
+      hasEnoughCredits: false,
+      cloneMessages: enMessages.clone,
+    });
+    expect(
+      screen.queryByLabelText(enMessages.clone.textToConvertLabel),
+    ).not.toBeInTheDocument();
+    await user.type(
+      screen.getByLabelText(enMessages.clone.savedVoice.name),
+      'My voice',
+    );
+    await user.click(screen.getByTestId('clone-legal-consent'));
+    await user.click(screen.getByTestId('clone-generate-button'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body.get('saveVoiceName')).toBe('My voice');
+    expect(body.get('voiceConsent')).toBe('true');
+    expect(
+      screen.getByRole('link', { name: enMessages.clone.savedVoice.useInCall }),
+    ).toHaveAttribute('href', '/dashboard/call?custom=1&voice=reference');
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;

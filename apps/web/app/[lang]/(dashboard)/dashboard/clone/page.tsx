@@ -17,13 +17,15 @@ export const generateMetadata = createDashboardMetadata('/dashboard/clone');
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
   searchParams?: Promise<{
+    for?: string | string[];
     demo?: string | string[];
     take?: string | string[];
   }>;
 }) {
   const [{ lang }, searchParams] = await Promise.all([
     props.params,
-    props.searchParams ?? Promise.resolve({ demo: undefined, take: undefined }),
+    props.searchParams ??
+      Promise.resolve({ for: undefined, demo: undefined, take: undefined }),
   ]);
   const selection = getDemoCloneSelection(
     typeof searchParams.demo === 'string' ? searchParams.demo : null,
@@ -78,6 +80,7 @@ export default async function NewVoicePage(props: {
               ? { speakerId: selection.speaker.id, takeId: selection.take.id }
               : undefined
           }
+          initialSaveForCalls={searchParams.for === 'call'}
           lang={lang}
           userHasPaid={userHasPaid}
         />

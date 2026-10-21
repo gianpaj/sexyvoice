@@ -687,6 +687,31 @@
       "playVoiceSample": "Riproduci file audio",
       "stopVoiceSample": "Ferma file audio",
       "previewVoice": "Anteprima della voce di __VOICE__"
+    },
+    "custom": {
+      "modeLabel": "Configura chiamata",
+      "characters": "Personaggi",
+      "custom": "Personalizzato",
+      "voiceSources": "Origine della voce",
+      "builtIn": "Voci incluse",
+      "myVoices": "Le mie voci",
+      "voiceHeading": "Come dovrebbe suonare il tuo personaggio?",
+      "cloneVoice": "Clona una voce",
+      "noVoices": "Nessuna voce salvata",
+      "noVoicesHelp": "Clona una voce per usarla nelle tue chiamate.",
+      "noBuiltInVoices": "Nessuna voce inclusa disponibile",
+      "personality": "Aggiungi una personalità",
+      "promptAdded": "Istruzioni aggiunte",
+      "promptRequired": "Istruzioni obbligatorie",
+      "nameHelp": "per salvare",
+      "optional": "facoltativa",
+      "promptLabel": "Istruzioni sulla personalità",
+      "promptHelp": "Descrivi come deve agire e parlare il tuo personaggio. Le istruzioni sono obbligatorie per avviare una chiamata personalizzata.",
+      "saveCharacter": "Salva personaggio",
+      "saveOptional": "Puoi avviare una chiamata senza salvare.",
+      "characterLimit": "Puoi salvare fino a 10 personaggi.",
+      "paidHelp": "Le chiamate personalizzate richiedono un account a pagamento.",
+      "upgrade": "Passa a un piano a pagamento"
     }
   },
   "clone": {
@@ -738,7 +763,10 @@
       "textTooLong": "Il testo supera la lunghezza massima di __MAX__ caratteri.",
       "unsupportedAudioFormat": "Formato audio non supportato per la clonazione vocale. Usa MP3, OGG/Opus, WebM o WAV.",
       "unsupportedLocale": "Questa lingua non è supportata per la clonazione vocale.",
-      "userNotFound": "Accedi per clonare una voce."
+      "userNotFound": "Accedi per clonare una voce.",
+      "voiceNameAndConsentRequired": "Inserisci un nome (fino a 50 caratteri) e conferma di avere il permesso di salvare la voce.",
+      "savedVoiceRequiresPaid": "Per salvare le voci è necessario un account a pagamento.",
+      "savedVoiceLocaleUnsupported": "Scegli arabo, francese, hindi, inglese, italiano, olandese, portoghese, spagnolo o tedesco per salvare una voce per le chiamate."
     },
     "sampleCard": {
       "sourceAudio": "Audio sorgente",
@@ -771,7 +799,16 @@
     "audioProcessorError": "Errore del processore audio",
     "preparingAudioProcessor": "Preparazione del processore audio per __LANGUAGE__...",
     "removeFile": "Rimuovi file",
-    "convertingAudio": "Conversione audio"
+    "convertingAudio": "Conversione audio",
+    "savedVoice": {
+      "modeLabel": "Salva una voce per le chiamate",
+      "name": "Nome della voce",
+      "help": "Salva questa voce su Mistral per selezionarla in Le mie voci. Il fornitore conserva il campione di riferimento.",
+      "save": "Salva voce",
+      "success": "Voce salvata",
+      "useInCall": "Usa la voce in una chiamata →",
+      "backToCall": "Torna alla chiamata"
+    }
   },
   "profile": {
     "title": "Impostazioni profilo",

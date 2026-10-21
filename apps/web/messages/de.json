@@ -687,6 +687,31 @@
       "playVoiceSample": "Stimmprobe abspielen",
       "stopVoiceSample": "Stimmprobe stoppen",
       "previewVoice": "Vorschau der Stimme von __VOICE__"
+    },
+    "custom": {
+      "modeLabel": "Anruf einrichten",
+      "characters": "Charaktere",
+      "custom": "Eigener Charakter",
+      "voiceSources": "Stimmenquelle",
+      "builtIn": "Enthaltene Stimmen",
+      "myVoices": "Meine Stimmen",
+      "voiceHeading": "Wie soll dein Charakter klingen?",
+      "cloneVoice": "Stimme klonen",
+      "noVoices": "Noch keine gespeicherten Stimmen",
+      "noVoicesHelp": "Klone eine Stimme, um sie in deinen Anrufen zu verwenden.",
+      "noBuiltInVoices": "Keine enthaltenen Stimmen verfügbar",
+      "personality": "Persönlichkeit hinzufügen",
+      "promptAdded": "Anweisungen hinzugefügt",
+      "promptRequired": "Anweisungen erforderlich",
+      "nameHelp": "zum Speichern",
+      "optional": "optional",
+      "promptLabel": "Persönlichkeitsanweisungen",
+      "promptHelp": "Beschreibe, wie dein Charakter handeln und sprechen soll. Für einen eigenen Anruf sind Anweisungen erforderlich.",
+      "saveCharacter": "Charakter speichern",
+      "saveOptional": "Du kannst einen Anruf starten, ohne zu speichern.",
+      "characterLimit": "Du kannst bis zu 10 Charaktere speichern.",
+      "paidHelp": "Eigene Anrufe erfordern ein kostenpflichtiges Konto.",
+      "upgrade": "Upgrade"
     }
   },
   "clone": {
@@ -738,7 +763,10 @@
       "textTooLong": "Der Text überschreitet die maximale Länge von __MAX__ Zeichen.",
       "unsupportedAudioFormat": "Nicht unterstütztes Audioformat für das Klonen von Stimmen. Bitte verwenden Sie MP3, OGG/Opus, WebM oder WAV.",
       "unsupportedLocale": "Diese Sprache wird für das Klonen von Stimmen nicht unterstützt.",
-      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen."
+      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen.",
+      "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
+      "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
+      "savedVoiceLocaleUnsupported": "Wähle Arabisch, Deutsch, Englisch, Französisch, Hindi, Italienisch, Niederländisch, Portugiesisch oder Spanisch, um eine Stimme für Anrufe zu speichern."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -771,7 +799,16 @@
     "audioProcessorError": "Audioprozessor-Fehler",
     "preparingAudioProcessor": "Audioprozessor für __LANGUAGE__ wird vorbereitet...",
     "removeFile": "Datei entfernen",
-    "convertingAudio": "Audio wird konvertiert"
+    "convertingAudio": "Audio wird konvertiert",
+    "savedVoice": {
+      "modeLabel": "Stimme für Anrufe speichern",
+      "name": "Name der Stimme",
+      "help": "Speichere diese Stimme bei Mistral, um sie unter Meine Stimmen auszuwählen. Der Anbieter bewahrt die Referenzaufnahme auf.",
+      "save": "Stimme speichern",
+      "success": "Stimme gespeichert",
+      "useInCall": "Stimme für einen Anruf verwenden →",
+      "backToCall": "Zurück zum Anruf"
+    }
   },
   "profile": {
     "title": "Profileinstellungen",

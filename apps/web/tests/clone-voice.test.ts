@@ -17,6 +17,14 @@ import {
   server,
 } from './setup';
 
+const { mockSaveMistralVoice } = vi.hoisted(() => ({
+  mockSaveMistralVoice: vi.fn(),
+}));
+vi.mock('@/lib/clone/mistral', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/clone/mistral')>()),
+  saveMistralVoice: mockSaveMistralVoice,
+}));
+
 // Helper function to create a minimal valid WAV header
 const createWavHeader = (dataSize: number): Uint8Array => {
   const buffer = new ArrayBuffer(44);
@@ -85,8 +93,55 @@ const createFormDataWithAudio = (
 };
 
 describe('Clone Voice API Route', () => {
+  it('saves an owned profile without generating speech or charging speech credits', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveMistralVoice.mockResolvedValueOnce({ id: 'reference' });
+    const form = createFormDataWithAudio('');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ audioReferenceId: 'reference' });
+    expect(mockSaveMistralVoice).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      'My voice',
+      'en',
+      expect.any(String),
+    );
+    expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { paid: false, locale: 'en', consent: 'true', status: 403 },
+    { paid: true, locale: 'da', consent: 'true', status: 400 },
+    { paid: true, locale: 'en', consent: 'false', status: 400 },
+  ])(
+    'rejects invalid saved voice requests: $paid $locale $consent',
+    async ({ paid, locale, consent, status }) => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(paid);
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', consent);
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(status);
+      expect(mockSaveMistralVoice).not.toHaveBeenCalled();
+    },
+  );
+
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(queries.hasUserPaid).mockReset().mockResolvedValue(false);
 
     const musicMetadata = await import('music-metadata');
     vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({

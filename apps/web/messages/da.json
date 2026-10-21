@@ -683,6 +683,31 @@
       "playVoiceSample": "Afspil stemmeprøve",
       "stopVoiceSample": "Stop stemmeprøve",
       "previewVoice": "Forhåndsvisning af __VOICE__s stemme"
+    },
+    "custom": {
+      "modeLabel": "Opsæt opkald",
+      "characters": "Karakterer",
+      "custom": "Tilpasset",
+      "voiceSources": "Stemmekilde",
+      "builtIn": "Indbyggede stemmer",
+      "myVoices": "Mine stemmer",
+      "voiceHeading": "Hvordan skal din karakter lyde?",
+      "cloneVoice": "Klon en stemme",
+      "noVoices": "Ingen gemte stemmer endnu",
+      "noVoicesHelp": "Klon en stemme for at bruge den i dine opkald.",
+      "noBuiltInVoices": "Ingen indbyggede stemmer tilgængelige",
+      "personality": "Tilføj en personlighed",
+      "promptAdded": "Instruktioner tilføjet",
+      "promptRequired": "Instruktioner påkrævet",
+      "nameHelp": "for at gemme",
+      "optional": "valgfrit",
+      "promptLabel": "Personlighedsinstruktioner",
+      "promptHelp": "Beskriv, hvordan din karakter skal opføre sig og tale. Instruktioner er påkrævet for at starte et tilpasset opkald.",
+      "saveCharacter": "Gem karakter",
+      "saveOptional": "Du kan starte et opkald uden at gemme.",
+      "characterLimit": "Du kan gemme op til 10 karakterer.",
+      "paidHelp": "Tilpassede opkald kræver en betalt konto.",
+      "upgrade": "Opgrader"
     }
   },
   "clone": {
@@ -734,7 +759,10 @@
       "textTooLong": "Teksten overskrider den maksimale længde på __MAX__ tegn.",
       "unsupportedAudioFormat": "Ikke-understøttet lydformat til stemmekloning. Brug MP3, OGG/Opus, WebM eller WAV.",
       "unsupportedLocale": "Dette sprog understøttes ikke til stemmekloning.",
-      "userNotFound": "Log ind for at klone en stemme."
+      "userNotFound": "Log ind for at klone en stemme.",
+      "voiceNameAndConsentRequired": "Indtast et navn (op til 50 tegn), og bekræft, at du har tilladelse til at gemme stemmen.",
+      "savedVoiceRequiresPaid": "Du skal have en betalt konto for at gemme stemmer.",
+      "savedVoiceLocaleUnsupported": "Vælg arabisk, engelsk, fransk, hindi, italiensk, nederlandsk, portugisisk, spansk eller tysk for at gemme en stemme til opkald."
     },
     "sampleCard": {
       "sourceAudio": "Kildelyd",
@@ -767,7 +795,16 @@
     "audioProcessorError": "Lydprocessorfejl",
     "preparingAudioProcessor": "Forbereder lydprocessor til __LANGUAGE__...",
     "removeFile": "Fjern fil",
-    "convertingAudio": "Konverterer lyd"
+    "convertingAudio": "Konverterer lyd",
+    "savedVoice": {
+      "modeLabel": "Gem en stemme til opkald",
+      "name": "Stemmens navn",
+      "help": "Gem denne stemme hos Mistral, så du kan vælge den under Mine stemmer. Udbyderen opbevarer referenceoptagelsen.",
+      "save": "Gem stemme",
+      "success": "Stemme gemt",
+      "useInCall": "Brug stemmen i et opkald →",
+      "backToCall": "Tilbage til opkald"
+    }
   },
   "profile": {
     "title": "Profilindstillinger",

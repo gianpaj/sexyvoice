@@ -1,3 +1,4 @@
+import { getVoiceIdByName } from './queries';
 import { createClient } from './server';
 
 export async function getSavedCallVoices(userId: string) {
@@ -35,7 +36,6 @@ export async function resolveCallVoice(
     return reference ? { id: reference.id, name: reference.name } : null;
   }
   if (config.audioReferenceId) return null;
-  const { getVoiceIdByName } = await import('./queries');
   try {
     return await getVoiceIdByName(config.voice);
   } catch {

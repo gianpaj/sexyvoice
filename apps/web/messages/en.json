@@ -685,6 +685,31 @@
       "playVoiceSample": "Play voice sample",
       "stopVoiceSample": "Stop voice sample",
       "previewVoice": "Preview __VOICE__'s voice"
+    },
+    "custom": {
+      "modeLabel": "Call setup",
+      "characters": "Characters",
+      "custom": "Custom",
+      "voiceSources": "Voice source",
+      "builtIn": "Built-in voices",
+      "myVoices": "My voices",
+      "voiceHeading": "How should your character sound?",
+      "cloneVoice": "Clone a voice",
+      "noVoices": "No saved voices yet",
+      "noVoicesHelp": "Clone a voice to use it in your calls.",
+      "noBuiltInVoices": "No built-in voices available",
+      "personality": "Add a personality",
+      "promptAdded": "Prompt added",
+      "promptRequired": "Prompt required",
+      "nameHelp": "to save",
+      "optional": "optional",
+      "promptLabel": "Personality prompt",
+      "promptHelp": "Describe how your character should act and speak. A prompt is required to start a custom call.",
+      "saveCharacter": "Save character",
+      "saveOptional": "You can start a call without saving.",
+      "characterLimit": "You can save up to 10 characters.",
+      "paidHelp": "Custom calls require a paid account.",
+      "upgrade": "Upgrade"
     }
   },
   "clone": {
@@ -736,7 +761,10 @@
       "textTooLong": "Text exceeds the maximum length of __MAX__ characters.",
       "unsupportedAudioFormat": "Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.",
       "unsupportedLocale": "This language is not supported for voice cloning.",
-      "userNotFound": "Please sign in to clone a voice."
+      "userNotFound": "Please sign in to clone a voice.",
+      "voiceNameAndConsentRequired": "Enter a voice name (up to 50 characters) and confirm you have permission to save it.",
+      "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
+      "savedVoiceLocaleUnsupported": "Choose Arabic, Dutch, English, French, German, Hindi, Italian, Portuguese or Spanish to save a voice for calls."
     },
     "sampleCard": {
       "sourceAudio": "Source audio",
@@ -769,7 +797,16 @@
     "audioProcessorError": "Audio Processor Error",
     "preparingAudioProcessor": "Preparing audio processor for __LANGUAGE__...",
     "removeFile": "Remove file",
-    "convertingAudio": "Converting audio"
+    "convertingAudio": "Converting audio",
+    "savedVoice": {
+      "modeLabel": "Save a voice for calls",
+      "name": "Voice name",
+      "help": "Save this voice with Mistral so you can select it in My voices. The reference sample is retained by the voice provider.",
+      "save": "Save voice",
+      "success": "Voice saved",
+      "useInCall": "Use voice in a call →",
+      "backToCall": "Back to call"
+    }
   },
   "profile": {
     "title": "Profile Settings",
