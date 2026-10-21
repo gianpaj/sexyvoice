@@ -327,6 +327,7 @@ export async function POST(request: Request) {
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
     isSplit = body.split === true;
+    const textImproved = body.textImproved === true;
     const stream = body.stream === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
@@ -647,6 +648,7 @@ export async function POST(request: Request) {
           provider,
           requestSignal: request.signal,
           reservedCredits: estimate,
+          textImproved,
           styleVariant,
           text,
           user,
@@ -1078,6 +1080,7 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           split: isSplit,
+          textImproved,
           userHasPaid,
         },
         userId: user.id,
@@ -1323,6 +1326,7 @@ function streamGeminiTtsResponse({
   provider,
   requestSignal,
   reservedCredits,
+  textImproved,
 }: {
   ai: GoogleGenAI;
   text: string;
@@ -1336,6 +1340,7 @@ function streamGeminiTtsResponse({
   provider: ProviderId;
   requestSignal: AbortSignal;
   reservedCredits: number;
+  textImproved: boolean;
 }): Response {
   const encoder = new TextEncoder();
   const selectedModel = resolveGeminiTtsModel({
@@ -1569,7 +1574,7 @@ function streamGeminiTtsResponse({
         predictionId: undefined,
         text,
         url: uploadUrl,
-        usage: streamUsage,
+        usage: { ...streamUsage, textImproved },
         userId: user.id,
         voiceId: voiceObj.id,
       });
