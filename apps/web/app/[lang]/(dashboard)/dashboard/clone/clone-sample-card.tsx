@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { DemoClonePlayer } from '@/components/demo-clone/demo-clone-player';
 import {
   type CloneDemoTakeId,
+  DEMO_LANGUAGE_CODES,
   type DemoLanguageCode,
   getDemoCloneSelection,
   resolveInitialDemoSpeakerId,
@@ -38,10 +39,9 @@ export default function CloneSampleCard({
   const pending = useRef<AbortController | null>(null);
   useEffect(() => () => pending.current?.abort(), []);
   const languageLabels = Object.fromEntries(
-    getTranslatedLanguages(locale, ['en', 'de']).map(({ value, label }) => [
-      value,
-      label,
-    ]),
+    getTranslatedLanguages(locale, DEMO_LANGUAGE_CODES).map(
+      ({ value, label }) => [value, label],
+    ),
   ) as Record<DemoLanguageCode, string>;
 
   const apply = async (speakerId: string, takeId: CloneDemoTakeId) => {
@@ -75,8 +75,10 @@ export default function CloneSampleCard({
     <DemoClonePlayer
       applying={applying}
       initialSpeakerId={resolveInitialDemoSpeakerId(locale)}
+      key={locale}
       labels={labels}
       languageLabels={languageLabels}
+      locale={locale}
       onTryVoice={apply}
     />
   );

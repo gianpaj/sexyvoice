@@ -33,8 +33,10 @@ export async function DemoCloneSection({ lang }: DemoCloneSectionProps) {
     <section className="mx-auto w-full max-w-xl py-4">
       <DemoClonePlayer
         initialSpeakerId={resolveInitialDemoSpeakerId(lang)}
+        key={lang}
         labels={demoClone}
         languageLabels={languageLabels}
+        locale={lang}
       />
     </section>
   );

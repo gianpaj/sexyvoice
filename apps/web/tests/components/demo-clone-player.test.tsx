@@ -8,14 +8,20 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import WavesurferPlayer from '@wavesurfer/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DemoClonePlayer } from '@/components/demo-clone/demo-clone-player';
+import { NativeAudioWaveform } from '@/components/native-audio-waveform';
+import {
+  DEMO_LANGUAGE_CODES,
+  type DemoLanguageCode,
+  getDemoCloneLanguages,
+} from '@/data/demo-clone';
+import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import messages from '@/messages/en.json';
 
-vi.mock('@wavesurfer/react', () => ({
-  default: vi.fn(({ url }: { url?: string }) => (
+vi.mock('@/components/native-audio-waveform', () => ({
+  NativeAudioWaveform: vi.fn(({ url }: { url: string }) => (
     <div data-testid="audio-waveform" data-url={url} />
   )),
 }));
@@ -41,13 +47,17 @@ const sameOriginalPrompt =
 const props = {
   initialSpeakerId: 'kat',
   labels,
-  languageLabels: { en: 'English', de: 'German' },
+  languageLabels: Object.fromEntries(
+    getTranslatedLanguages('en', DEMO_LANGUAGE_CODES).map(
+      ({ value, label }) => [value, label],
+    ),
+  ) as Record<DemoLanguageCode, string>,
 };
 let play: ReturnType<typeof vi.spyOn>;
 let pause: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
-  vi.mocked(WavesurferPlayer).mockClear();
+  vi.mocked(NativeAudioWaveform).mockClear();
   play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
   pause = vi
     .spyOn(HTMLMediaElement.prototype, 'pause')
@@ -60,12 +70,213 @@ afterEach(() => {
 });
 
 const audio = () => document.querySelector('audio')!;
-const selectTake = (id: string) =>
+const selectLanguage = (value: string) => {
+  const previousAudio = audio();
+  fireEvent.change(screen.getByTestId('demo-clone-language'), {
+    target: { value },
+  });
+  if (previousAudio && audio() === previousAudio)
+    fireEvent.loadedMetadata(previousAudio);
+};
+const selectTake = (id: string) => {
+  const previousAudio = audio();
   fireEvent.click(
     document.querySelector(`input[name="demo-clone-take"][value="${id}"]`)!,
   );
+  if (previousAudio && audio() === previousAudio)
+    fireEvent.loadedMetadata(previousAudio);
+};
 
 describe('Hear the difference', () => {
+  it.each([
+    ['en', 'en'],
+    ['de-DE', 'de'],
+    ['es', 'es'],
+    ['fr', 'fr'],
+    ['it-IT', 'it'],
+    ['nl', 'nl'],
+    ['pt', 'pt'],
+    ['ar', 'ar'],
+    ['hi', 'hi'],
+    ['da', 'en'],
+  ])('orders and selects the route language %s as %s', (locale, expected) => {
+    render(<DemoClonePlayer {...props} locale={locale} />);
+    const select = screen.getByRole('combobox', { name: labels.pickLanguage });
+    expect(select).toBe(screen.getByTestId('demo-clone-language'));
+    expect(select.tagName).toBe('SELECT');
+    expect(select).toHaveValue(expected);
+    const options = screen.getAllByRole('option');
+    expect(options).toHaveLength(9);
+    expect(
+      options.map((option) => (option as HTMLOptionElement).value),
+    ).toEqual([
+      expected,
+      ...DEMO_LANGUAGE_CODES.filter((code) => code !== expected),
+    ]);
+    for (const option of options) expect(option).toBeEnabled();
+    expect(
+      document.querySelector('input[name="demo-clone-speaker"]'),
+    ).toBeNull();
+  });
+
+  it('uses the route locale rather than the browser language', () => {
+    vi.spyOn(window.navigator, 'language', 'get').mockReturnValue('de-DE');
+    vi.spyOn(window.navigator, 'languages', 'get').mockReturnValue(['de-DE']);
+    render(<DemoClonePlayer {...props} locale="fr" />);
+    expect(screen.getByTestId('demo-clone-language')).toHaveValue('fr');
+    expect(screen.getByTestId('demo-clone-pending')).toBeVisible();
+    expect(document.querySelector('audio')).toBeNull();
+  });
+
+  it.each(['it', 'es', 'fr', 'nl', 'pt', 'ar', 'hi'])(
+    'shows only the planned %s prompt without fabricated audio or actions',
+    (locale) => {
+      render(<DemoClonePlayer {...props} locale={locale} />);
+      const planned = getDemoCloneLanguages(locale)[0];
+      expect(planned.speaker).toBeNull();
+      expect(screen.getByTestId('demo-clone-prompt-text').textContent).toBe(
+        planned.prompt,
+      );
+      expect(screen.getByTestId('demo-clone-prompt-text')).toHaveClass(
+        'select-all',
+      );
+      expect(
+        screen.getByText('[emotion=anxious]', { exact: true }),
+      ).toHaveClass('bg-primary/20');
+      expect(screen.getByTestId('demo-clone-script')).toHaveAttribute(
+        'lang',
+        locale,
+      );
+      expect(screen.getByTestId('demo-clone-pending')).toHaveAttribute(
+        'role',
+        'status',
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(
+        labels.samplePending,
+      );
+      expect(screen.getByRole('option', { selected: true })).toHaveTextContent(
+        labels.comingSoon,
+      );
+      expect(document.querySelector('audio, img')).toBeNull();
+      expect(screen.queryByTestId('audio-waveform')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('demo-clone-play')).not.toBeInTheDocument();
+      expect(screen.queryByRole('slider')).not.toBeInTheDocument();
+      expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
+      expect(screen.queryByText(labels.hearOriginal)).not.toBeInTheDocument();
+      expect(play).not.toHaveBeenCalled();
+    },
+  );
+
+  it('renders the planned Arabic prompt right to left', () => {
+    render(<DemoClonePlayer {...props} locale="ar" />);
+    expect(screen.getByTestId('demo-clone-script')).toHaveAttribute(
+      'dir',
+      'rtl',
+    );
+  });
+
+  it('shows an image only for the selected ready voice', () => {
+    render(<DemoClonePlayer {...props} locale="en" />);
+    expect(document.querySelectorAll('img')).toHaveLength(1);
+    expect(document.querySelector('img')).toHaveAttribute(
+      'src',
+      '/demo-clones/kat.webp',
+    );
+    selectLanguage('de');
+    expect(document.querySelectorAll('img')).toHaveLength(1);
+    expect(document.querySelector('img')).toHaveAttribute(
+      'src',
+      '/demo-clones/heike.webp',
+    );
+    selectLanguage('it');
+    expect(document.querySelector('img')).toBeNull();
+  });
+
+  it('stops playback on a pending selection and restores only real ready audio', async () => {
+    render(<DemoClonePlayer {...props} />);
+    fireEvent.click(screen.getByTestId('demo-clone-play'));
+    await screen.findByLabelText(labels.pauseAudio);
+    const previousAudio = audio();
+    previousAudio.currentTime = 2;
+    pause.mockClear();
+    selectLanguage('it');
+    expect(pause.mock.contexts).toContain(previousAudio);
+    expect(document.querySelector('audio')).toBeNull();
+    expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
+    selectLanguage('de');
+    expect(audio()).toHaveAttribute(
+      'src',
+      '/demo-clones/voxtral-3/heike-natural.mp3',
+    );
+    expect(audio().currentTime).toBe(0);
+    expect(screen.getByLabelText(labels.playAudio)).toBeInTheDocument();
+    expect(screen.getByTestId('demo-clone-try')).toHaveAttribute(
+      'href',
+      '/dashboard/clone?demo=heike&take=natural',
+    );
+    expect(screen.getByTestId('demo-clone-prompt-text').textContent).toBe(
+      'Ach, da bist du ja genau im richtigen Moment.',
+    );
+    expect(play).toHaveBeenCalledOnce();
+  });
+
+  it.each(['resolve', 'reject'] as const)(
+    'ignores a late play %s after selecting a pending language',
+    async (outcome) => {
+      let resolvePlay: () => void = () => {};
+      let rejectPlay: (error: Error) => void = () => {};
+      play.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            resolvePlay = resolve;
+            rejectPlay = reject;
+          }),
+      );
+      render(<DemoClonePlayer {...props} />);
+      fireEvent.click(screen.getByTestId('demo-clone-play'));
+      selectLanguage('fr');
+      await act(async () => {
+        if (outcome === 'resolve') resolvePlay();
+        else rejectPlay(new DOMException('No audio', 'NotSupportedError'));
+      });
+      expect(screen.getByTestId('demo-clone-pending')).toBeVisible();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(document.querySelector('audio')).toBeNull();
+      selectLanguage('de');
+      expect(screen.getByLabelText(labels.playAudio)).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(audio()).toHaveAttribute(
+        'src',
+        '/demo-clones/voxtral-3/heike-natural.mp3',
+      );
+    },
+  );
+
+  it('pauses native audio on unmount after starting from a pending locale', async () => {
+    const { unmount } = render(<DemoClonePlayer {...props} locale="it" />);
+    selectLanguage('de');
+    const element = audio();
+    fireEvent.click(screen.getByTestId('demo-clone-play'));
+    await screen.findByLabelText(labels.pauseAudio);
+    pause.mockClear();
+    unmount();
+    expect(pause.mock.contexts).toContain(element);
+  });
+
+  it('offers the dashboard callback only for a real ready selection', () => {
+    const onTryVoice = vi.fn();
+    render(<DemoClonePlayer {...props} locale="it" onTryVoice={onTryVoice} />);
+    expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
+    expect(onTryVoice).not.toHaveBeenCalled();
+    selectLanguage('de');
+    selectTake('calmSlow');
+    fireEvent.click(screen.getByTestId('demo-clone-try'));
+    expect(onTryVoice).toHaveBeenCalledExactlyOnceWith('heike', 'calmSlow');
+    selectLanguage('fr');
+    expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
+    expect(onTryVoice).toHaveBeenCalledOnce();
+  });
   it('lists Same as original first for Kat while keeping Natural selected by default', () => {
     render(<DemoClonePlayer {...props} />);
     const takes = document.querySelectorAll<HTMLInputElement>(
@@ -137,7 +348,7 @@ describe('Hear the difference', () => {
       'href',
       '/dashboard/clone?demo=heike&take=natural',
     );
-    fireEvent.click(screen.getByTestId('demo-clone-speaker-kat'));
+    selectLanguage('en');
     expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
   });
 
@@ -149,7 +360,7 @@ describe('Hear the difference', () => {
     fireEvent.click(screen.getByLabelText(labels.playAudio));
     await screen.findByLabelText(labels.pauseAudio);
     audio().currentTime = 2;
-    fireEvent.click(screen.getByTestId('demo-clone-speaker-heike'));
+    selectLanguage('de');
     expect(
       screen.queryByRole('radio', { name: labels.sameOriginal }),
     ).not.toBeInTheDocument();
@@ -167,7 +378,7 @@ describe('Hear the difference', () => {
       'href',
       '/dashboard/clone?demo=heike&take=natural',
     );
-    fireEvent.click(screen.getByTestId('demo-clone-speaker-kat'));
+    selectLanguage('en');
     expect(screen.getByRole('radio', { name: labels.natural })).toBeChecked();
   });
 
@@ -176,7 +387,7 @@ describe('Hear the difference', () => {
     (initialTakeId) => {
       render(<DemoClonePlayer {...props} initialTakeId={initialTakeId} />);
       for (const speaker of ['heike', 'kat']) {
-        fireEvent.click(screen.getByTestId(`demo-clone-speaker-${speaker}`));
+        selectLanguage(speaker === 'heike' ? 'de' : 'en');
         expect(screen.getByTestId('demo-clone-result')).toHaveAttribute(
           'data-take-id',
           initialTakeId,
@@ -261,17 +472,12 @@ describe('Hear the difference', () => {
 
   it('renders the shared waveform against the native audio element', () => {
     render(<DemoClonePlayer {...props} />);
-    expect(vi.mocked(WavesurferPlayer).mock.lastCall?.[0]).toEqual(
+    expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]).toEqual(
       expect.objectContaining({
-        barGap: 2,
-        barRadius: 2,
-        barWidth: 2,
-        cursorColor: 'transparent',
-        height: 48,
+        duration: expect.any(Number),
         interact: false,
         media: audio(),
-        progressColor: '#7c3aed',
-        waveColor: '#a1a1aa',
+        url: audio().src,
       }),
     );
     expect(document.querySelectorAll('audio')).toHaveLength(1);
@@ -279,6 +485,49 @@ describe('Hear the difference', () => {
       'data-variant',
       'secondary',
     );
+  });
+
+  it('waits for matching native metadata before rebinding the waveform to the same audio', () => {
+    render(<DemoClonePlayer {...props} />);
+    const element = audio();
+    const originalUrl = element.src;
+    const currentSrc = vi
+      .spyOn(element, 'currentSrc', 'get')
+      .mockReturnValue(originalUrl);
+    const previousWaveform = screen.getByTestId('audio-waveform');
+    vi.mocked(NativeAudioWaveform).mockClear();
+
+    fireEvent.click(screen.getByRole('radio', { name: labels.sarcastic }));
+
+    expect(audio()).toBe(element);
+    expect(element).toHaveAttribute(
+      'src',
+      '/demo-clones/voxtral-3/kat-sarcastic.mp3',
+    );
+    expect(element.currentSrc).toBe(originalUrl);
+    expect(screen.queryByTestId('audio-waveform')).not.toBeInTheDocument();
+    expect(NativeAudioWaveform).not.toHaveBeenCalled();
+    fireEvent.loadedMetadata(element);
+    expect(screen.queryByTestId('audio-waveform')).not.toBeInTheDocument();
+    expect(NativeAudioWaveform).not.toHaveBeenCalled();
+
+    currentSrc.mockReturnValue(element.src);
+    fireEvent.loadedMetadata(element);
+
+    expect(screen.getByTestId('audio-waveform')).not.toBe(previousWaveform);
+    expect(screen.getByTestId('audio-waveform')).toHaveAttribute(
+      'data-url',
+      element.src,
+    );
+    expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ media: element, url: element.src }),
+    );
+    expect(audio()).toBe(element);
+    expect(element).toHaveAttribute(
+      'src',
+      '/demo-clones/voxtral-3/kat-sarcastic.mp3',
+    );
+    expect(play).not.toHaveBeenCalled();
   });
 
   it('seeks through the waveform and updates the time display', () => {
@@ -317,7 +566,7 @@ describe('Hear the difference', () => {
     audio().currentTime = 1;
     selectTake('calmSlow');
     expect(audio().currentTime).toBe(0);
-    fireEvent.click(screen.getByTestId('demo-clone-speaker-heike'));
+    selectLanguage('de');
     expect(audio().getAttribute('src')).toContain('heike-calmSlow.mp3');
     expect(screen.getByTestId('demo-clone-try')).toHaveAttribute(
       'href',
@@ -355,6 +604,7 @@ describe('Hear the difference', () => {
     await screen.findByLabelText(labels.pauseAudio);
     expect(audio()).toBe(element);
     expect(audio().getAttribute('src')).toContain('kat-reference.mp3');
+    fireEvent.loadedMetadata(element);
     expect(screen.getByTestId('audio-waveform')).toHaveAttribute(
       'data-url',
       expect.stringContaining('kat-reference.mp3'),
@@ -362,6 +612,11 @@ describe('Hear the difference', () => {
     fireEvent.click(screen.getByText(labels.backToClone));
     await screen.findByLabelText(labels.pauseAudio);
     expect(audio().getAttribute('src')).toContain('kat-sarcastic.mp3');
+    fireEvent.loadedMetadata(element);
+    expect(screen.getByTestId('audio-waveform')).toHaveAttribute(
+      'data-url',
+      expect.stringContaining('kat-sarcastic.mp3'),
+    );
   });
 
   it('offers retry on a real playback failure', async () => {
@@ -381,12 +636,9 @@ describe('Hear the difference', () => {
   it('reloads the waveform when retrying a decode failure', async () => {
     render(<DemoClonePlayer {...props} />);
     const waveform = screen.getByTestId('audio-waveform');
-    const waveformProps = vi.mocked(WavesurferPlayer).mock.lastCall?.[0];
+    const waveformProps = vi.mocked(NativeAudioWaveform).mock.lastCall?.[0];
     act(() => {
-      waveformProps?.onError?.(
-        {} as Parameters<NonNullable<typeof waveformProps.onError>>[0],
-        new Error('Decode failed'),
-      );
+      waveformProps?.onError?.(new Error('Decode failed'));
     });
     expect(screen.getByRole('alert')).toHaveTextContent(labels.audioError);
     fireEvent.click(screen.getByText(labels.retry));

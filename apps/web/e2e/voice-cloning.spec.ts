@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { DEMO_LANGUAGE_CODES, getDemoCloneLanguages } from '../data/demo-clone';
+
 const RESULT = '[data-testid="demo-clone-result"]';
 const sameOriginalPrompt =
   'Downtown Drugstore had a bell on the door that made a single tink sound when you opened it.\nOxford Pharmacy had two bells on its doors, so it was more of a ta-tank, though nothing to startle over.';
@@ -14,8 +16,12 @@ test.describe('Hear the difference', () => {
     await expect(
       page.getByRole('heading', { name: 'Hear the difference' }),
     ).toBeVisible();
-    await expect(page.locator('input[name="demo-clone-speaker"]')).toHaveCount(
-      2,
+    const languages = page.getByTestId('demo-clone-language');
+    await expect(languages).toHaveValue('en');
+    await expect(languages.locator('option')).toHaveCount(9);
+    await expect(languages.locator('option').first()).toHaveAttribute(
+      'value',
+      'en',
     );
     const takes = page.locator('input[name="demo-clone-take"]');
     await expect(takes).toHaveCount(4);
@@ -34,7 +40,7 @@ test.describe('Hear the difference', () => {
     await expect(
       page.getByRole('link', { name: 'Sign up and Clone', exact: true }),
     ).toBeVisible();
-    await page.getByTestId('demo-clone-speaker-heike').click();
+    await page.getByTestId('demo-clone-language').selectOption('de');
     await expect(takes).toHaveCount(3);
     await expect(
       page.getByRole('radio', { name: 'Same as original' }),
@@ -85,7 +91,7 @@ test.describe('Hear the difference', () => {
       'src',
       '/demo-clones/voxtral-3/kat-sameOriginal.mp3',
     );
-    await page.getByTestId('demo-clone-speaker-heike').click();
+    await page.getByTestId('demo-clone-language').selectOption('de');
     await expect(page.locator(RESULT)).toHaveAttribute(
       'data-take-id',
       'natural',
@@ -101,7 +107,7 @@ test.describe('Hear the difference', () => {
       '/demo-clones/voxtral-3/heike-natural.mp3',
     );
     await expect(page.locator('audio')).toHaveJSProperty('paused', true);
-    await page.getByTestId('demo-clone-speaker-kat').click();
+    await page.getByTestId('demo-clone-language').selectOption('en');
     await expect(
       page.getByRole('radio', { name: 'Natural', exact: true }),
     ).toBeChecked();
@@ -142,7 +148,9 @@ test.describe('Hear the difference', () => {
     });
     await page.goto('/en/voice-cloning');
     for (const speaker of ['kat', 'heike']) {
-      await page.getByTestId(`demo-clone-speaker-${speaker}`).click();
+      await page
+        .getByTestId('demo-clone-language')
+        .selectOption(speaker === 'heike' ? 'de' : 'en');
       await page
         .locator('input[name="demo-clone-take"][value="natural"]')
         .check({ force: true });
@@ -204,7 +212,7 @@ test.describe('Hear the difference', () => {
     page,
   }) => {
     await page.goto('/en/voice-cloning');
-    await page.getByTestId('demo-clone-speaker-heike').click();
+    await page.getByTestId('demo-clone-language').selectOption('de');
     await page.getByText('Calm & slow', { exact: true }).click();
     await expect(page.getByTestId('demo-clone-script')).toBeVisible();
     await expect(page.getByTestId('demo-clone-script')).toContainText(
@@ -228,18 +236,83 @@ test.describe('Hear the difference', () => {
     );
   });
 
-  test('preselects German for German visitors and English for uncovered locales', async ({
+  test('selects the route language and shows pending French without generating audio', async ({
     page,
   }) => {
-    for (const [locale, speaker] of [
-      ['de', 'heike'],
-      ['fr', 'kat'],
+    const generationRequests: string[] = [];
+    await page.route('**/api/**', async (route) => {
+      const request = route.request();
+      if (
+        request.method() === 'POST' &&
+        /clone-voice|audio\/speech|text-to-speech|generate/.test(request.url())
+      ) {
+        generationRequests.push(request.url());
+        await route.abort();
+      } else await route.continue();
+    });
+    for (const [locale, selected] of [
+      ['de', 'de'],
+      ['fr', 'fr'],
+      ['da', 'en'],
     ]) {
       await page.goto(`/${locale}/voice-cloning`);
-      await expect(
-        page.locator(`input[name="demo-clone-speaker"][value="${speaker}"]`),
-      ).toBeChecked();
+      const languages = page.getByTestId('demo-clone-language');
+      await expect(languages).toHaveValue(selected);
+      await expect(languages.locator('option')).toHaveCount(9);
+      expect(
+        await languages
+          .locator('option')
+          .evaluateAll((options) =>
+            options.map((option) => (option as HTMLOptionElement).value),
+          ),
+      ).toEqual([
+        selected,
+        ...DEMO_LANGUAGE_CODES.filter((code) => code !== selected),
+      ]);
+      if (selected === 'fr') {
+        await expect(page.getByTestId('demo-clone-pending')).toHaveAttribute(
+          'role',
+          'status',
+        );
+        await expect(page.getByTestId('demo-clone-pending')).toBeVisible();
+        await expect(page.getByTestId('demo-clone-prompt-text')).toHaveText(
+          getDemoCloneLanguages('fr')[0].prompt,
+        );
+        await expect(page.locator('audio')).toHaveCount(0);
+        await expect(page.getByTestId('demo-clone-play')).toHaveCount(0);
+        await expect(page.getByRole('slider')).toHaveCount(0);
+        await expect(page.locator('input[name="demo-clone-take"]')).toHaveCount(
+          0,
+        );
+        await expect(page.getByTestId('demo-clone-try')).toHaveCount(0);
+        for (const code of ['it', 'es', 'nl', 'pt', 'ar', 'hi']) {
+          await languages.selectOption(code);
+          await expect(page.getByTestId('demo-clone-pending')).toBeVisible();
+          await expect(page.getByTestId('demo-clone-prompt-text')).toHaveText(
+            getDemoCloneLanguages(code)[0].prompt,
+          );
+          await expect(page.locator('audio')).toHaveCount(0);
+          await expect(page.getByTestId('demo-clone-try')).toHaveCount(0);
+        }
+        await languages.selectOption('de');
+      }
+      await expect(page.locator('audio')).toHaveAttribute(
+        'src',
+        `/demo-clones/voxtral-3/${selected === 'en' ? 'kat' : 'heike'}-natural.mp3`,
+      );
+      await expect(page.locator('audio')).toHaveJSProperty('paused', true);
     }
+    expect(generationRequests).toEqual([]);
+  });
+
+  test.describe('browser language differs from route', () => {
+    test.use({ locale: 'de-DE' });
+    test('keeps French selected and pending', async ({ page }) => {
+      await page.goto('/fr/voice-cloning');
+      await expect(page.getByTestId('demo-clone-language')).toHaveValue('fr');
+      await expect(page.getByTestId('demo-clone-pending')).toBeVisible();
+      await expect(page.locator('audio')).toHaveCount(0);
+    });
   });
 
   test('fits a mobile screen and supports keyboard selection', async ({

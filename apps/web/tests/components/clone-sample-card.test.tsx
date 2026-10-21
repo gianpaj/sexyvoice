@@ -12,9 +12,14 @@ import { NextIntlClientProvider } from 'next-intl';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CloneSampleCard from '@/app/[lang]/(dashboard)/dashboard/clone/clone-sample-card';
+import { getDemoCloneLanguages } from '@/data/demo-clone';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import messages from '@/messages/en.json';
+import italianMessages from '@/messages/it.json';
 
-vi.mock('@wavesurfer/react', () => ({ default: () => null }));
+vi.mock('@/components/native-audio-waveform', () => ({
+  NativeAudioWaveform: () => null,
+}));
 vi.mock('@/lib/i18n/navigation', () => ({ Link: () => null }));
 const fetchMock = vi.fn();
 const props = {
@@ -23,9 +28,9 @@ const props = {
   setErrorMessage: vi.fn(),
   setStatus: vi.fn(),
 };
-const renderSample = () =>
+const renderSample = (locale: Locale = 'en', translatedMessages = messages) =>
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={translatedMessages}>
       <CloneSampleCard {...props} />
     </NextIntlClientProvider>,
   );
@@ -42,6 +47,49 @@ afterEach(() => {
 });
 
 describe('dashboard demo selection', () => {
+  it('defaults the dashboard chooser to its route locale without fetching pending audio', async () => {
+    fetchMock.mockResolvedValue(
+      new Response('sample', { headers: { 'content-type': 'audio/mpeg' } }),
+    );
+    renderSample('it', italianMessages);
+    const select = screen.getByTestId('demo-clone-language');
+    expect(select).toHaveValue('it');
+    expect(screen.getAllByRole('option')).toHaveLength(9);
+    expect(screen.getAllByRole('option')[0]).toHaveValue('it');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      italianMessages.landing.demoClone.samplePending,
+    );
+    expect(screen.getByTestId('demo-clone-prompt-text').textContent).toBe(
+      getDemoCloneLanguages('it')[0].prompt,
+    );
+    expect(document.querySelector('audio')).toBeNull();
+    expect(screen.queryByTestId('demo-clone-try')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(props.addFiles).not.toHaveBeenCalled();
+    expect(props.onSelectSample).not.toHaveBeenCalled();
+    fireEvent.change(select, { target: { value: 'de' } });
+    fireEvent.click(screen.getByTestId('demo-clone-try'));
+    await waitFor(() => expect(props.addFiles).toHaveBeenCalledOnce());
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      '/demo-clones/voxtral-3/heike-reference.mp3',
+    );
+    expect(props.onSelectSample).toHaveBeenCalledExactlyOnceWith({
+      locale: 'de',
+      prompt: 'Ach, da bist du ja genau im richtigen Moment.',
+    });
+  });
+
+  it('defaults an uncovered dashboard route locale to English', () => {
+    renderSample('da');
+    expect(screen.getByTestId('demo-clone-language')).toHaveValue('en');
+    expect(screen.getAllByRole('option')[0]).toHaveValue('en');
+    expect(screen.getByTestId('demo-clone-try')).toBeEnabled();
+    expect(document.querySelector('audio')).toHaveAttribute(
+      'src',
+      '/demo-clones/voxtral-3/kat-natural.mp3',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
   it('hands off Kat’s reference and full passage for Same as original', async () => {
     fetchMock.mockResolvedValue(
       new Response('sample', { headers: { 'content-type': 'audio/mpeg' } }),
@@ -70,7 +118,9 @@ describe('dashboard demo selection', () => {
       new Response('sample', { headers: { 'content-type': 'audio/mpeg' } }),
     );
     renderSample();
-    fireEvent.click(screen.getByTestId('demo-clone-speaker-heike'));
+    fireEvent.change(screen.getByTestId('demo-clone-language'), {
+      target: { value: 'de' },
+    });
     fireEvent.click(screen.getByText('Calm & slow', { exact: true }));
     fireEvent.click(screen.getByTestId('demo-clone-try'));
     expect(screen.getByTestId('demo-clone-try')).toBeDisabled();

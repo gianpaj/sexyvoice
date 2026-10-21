@@ -5,13 +5,21 @@ import {
   getCloneDemoPrompt,
   getCloneDemoTakes,
 } from './clone-demo-config';
+import {
+  CLONE_DEMO_LANGUAGES,
+  type DemoLanguageCode,
+  resolveInitialDemoLanguageCode,
+} from './clone-demo-languages';
 
 export type { CloneDemoTakeId } from './clone-demo-config';
 export { CLONE_DEMO_TAKES } from './clone-demo-config';
-
-export const DEMO_LANGUAGE_CODES = ['en', 'de'] as const;
-export type DemoLanguageCode = (typeof DEMO_LANGUAGE_CODES)[number];
-export const DEMO_FALLBACK_LANGUAGE: DemoLanguageCode = 'en';
+export type { DemoLanguageCode } from './clone-demo-languages';
+export {
+  DEMO_FALLBACK_LANGUAGE,
+  DEMO_LANGUAGE_CODES,
+  isDemoLanguageCode,
+  resolveInitialDemoLanguageCode,
+} from './clone-demo-languages';
 
 export interface DemoCloneClip {
   durationSeconds: number;
@@ -31,6 +39,13 @@ export interface DemoCloneSpeaker {
   reference: DemoCloneClip;
   script: string;
   takes: readonly DemoCloneTake[];
+}
+
+export interface DemoCloneLanguage {
+  languageCode: DemoLanguageCode;
+  /** Staged text, not the transcript of any ready audio. */
+  prompt: string;
+  speaker: DemoCloneSpeaker | null;
 }
 
 const assets: Record<string, { durationSeconds: number }> =
@@ -81,8 +96,19 @@ export function getDemoCloneTranscript(script: string): string {
   return script.replace(/\[[^\]]*\]/g, '').trim();
 }
 
-export function isDemoLanguageCode(code: string): code is DemoLanguageCode {
-  return (DEMO_LANGUAGE_CODES as readonly string[]).includes(code);
+export function getDemoCloneLanguages(locale: string): DemoCloneLanguage[] {
+  const initialLanguage = resolveInitialDemoLanguageCode(locale);
+  const languages = CLONE_DEMO_LANGUAGES.map((language) => ({
+    ...language,
+    speaker:
+      demoCloneSpeakers.find(
+        (speaker) => speaker.languageCode === language.languageCode,
+      ) ?? null,
+  }));
+  return [
+    ...languages.filter(({ languageCode }) => languageCode === initialLanguage),
+    ...languages.filter(({ languageCode }) => languageCode !== initialLanguage),
+  ];
 }
 
 export function resolveInitialDemoSpeakerId(pageLocale: string): string {

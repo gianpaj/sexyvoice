@@ -4,16 +4,21 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import manifest from '@/data/clone-demo-assets.json';
+import { CLONE_DEMO_VOICES } from '@/data/clone-demo-config';
+import { CLONE_DEMO_LANGUAGES } from '@/data/clone-demo-languages';
 import {
   DEMO_FALLBACK_LANGUAGE,
   DEMO_LANGUAGE_CODES,
   demoCloneSpeakers,
+  getDemoCloneLanguages,
   getDemoCloneSelection,
   getDemoCloneSpeaker,
   getDemoCloneTranscript,
   isDemoLanguageCode,
+  resolveInitialDemoLanguageCode,
   resolveInitialDemoSpeakerId,
 } from '@/data/demo-clone';
+import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 
 const WEBSITE_LOCALES = ['en', 'es', 'de', 'da', 'it', 'fr'] as const;
@@ -85,10 +90,38 @@ describe('demo clone speakers', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('covers each demo language with exactly one speaker', () => {
+  it('has exactly one ready speaker for English and German', () => {
     const codes = demoCloneSpeakers.map((speaker) => speaker.languageCode);
 
-    expect([...codes].sort()).toEqual([...DEMO_LANGUAGE_CODES].sort());
+    expect(codes).toEqual(['en', 'de']);
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const code of codes) {
+      expect(isDemoLanguageCode(code)).toBe(true);
+    }
+  });
+
+  it('uses independent source references and audio for each ready voice', () => {
+    const sourceKeys = CLONE_DEMO_VOICES.map((voice) => voice.sourceKey);
+    const sourceHashes = Object.values(manifest.sourceHashes);
+    const referencePaths = demoCloneSpeakers.map(
+      ({ reference }) => reference.src,
+    );
+    const referenceHashes = demoCloneSpeakers.map(({ reference }) => {
+      const filename = reference.src
+        .split('/')
+        .pop() as keyof typeof manifest.assets;
+      return manifest.assets[filename].sha256;
+    });
+
+    for (const values of [
+      sourceKeys,
+      sourceHashes,
+      referencePaths,
+      referenceHashes,
+    ]) {
+      expect(values).toHaveLength(demoCloneSpeakers.length);
+      expect(new Set(values).size).toBe(demoCloneSpeakers.length);
+    }
   });
 
   it('has an English speaker to fall back to', () => {
@@ -97,6 +130,133 @@ describe('demo clone speakers', () => {
     );
 
     expect(fallback).toBeDefined();
+  });
+});
+
+describe('demo clone languages', () => {
+  it('derives nine ordered language codes from one catalog and matches Voxtral', () => {
+    expect(DEMO_LANGUAGE_CODES).toEqual([
+      'en',
+      'de',
+      'es',
+      'fr',
+      'it',
+      'nl',
+      'pt',
+      'ar',
+      'hi',
+    ]);
+    expect(DEMO_LANGUAGE_CODES).toEqual(
+      CLONE_DEMO_LANGUAGES.map(({ languageCode }) => languageCode),
+    );
+    expect(new Set(DEMO_LANGUAGE_CODES)).toEqual(
+      VOXTRAL_SUPPORTED_LOCALE_CODES,
+    );
+  });
+
+  it('stages distinct translated anxious prompts without assigning audio', () => {
+    const languages = getDemoCloneLanguages('en');
+    expect(languages[0].prompt).toBe(
+      '[emotion=anxious] Hi… um, sorry to bother you. I just… I didn’t know who else to call. Are you… busy?',
+    );
+    expect(new Set(languages.map(({ prompt }) => prompt)).size).toBe(9);
+    for (const language of languages) {
+      expect(language.prompt.match(/\[[^\]]*\]/g)).toEqual([
+        '[emotion=anxious]',
+      ]);
+      expect(getDemoCloneTranscript(language.prompt).length).toBeGreaterThan(
+        40,
+      );
+      expect(Object.keys(language).sort()).toEqual([
+        'languageCode',
+        'prompt',
+        'speaker',
+      ]);
+      if (language.speaker) {
+        expect(language.speaker).toBe(
+          demoCloneSpeakers.find(
+            ({ languageCode }) => languageCode === language.languageCode,
+          ),
+        );
+        for (const take of language.speaker.takes) {
+          expect(take.prompt).not.toBe(language.prompt);
+        }
+      } else {
+        expect(language.speaker).toBeNull();
+      }
+    }
+    expect(languages.filter(({ speaker }) => speaker !== null)).toHaveLength(2);
+    expect(languages.filter(({ speaker }) => speaker === null)).toHaveLength(7);
+  });
+
+  it.each([
+    ['en-US', 'en'],
+    ['DE-de', 'de'],
+    [' es_MX ', 'es'],
+    ['fr-CA', 'fr'],
+    ['it-IT', 'it'],
+    ['nl-NL', 'nl'],
+    ['pt-BR', 'pt'],
+    ['ar-EG', 'ar'],
+    ['hi-IN', 'hi'],
+    ['da-DK', 'en'],
+    ['zz', 'en'],
+    ['', 'en'],
+  ])('normalizes %j to %s', (locale, expected) => {
+    expect(resolveInitialDemoLanguageCode(locale)).toBe(expected);
+    expect(getDemoCloneLanguages(locale)[0].languageCode).toBe(expected);
+  });
+
+  it('puts the locale first and preserves the remaining catalog order without mutation', () => {
+    const catalogBefore = structuredClone(CLONE_DEMO_LANGUAGES);
+    const speakersBefore = structuredClone(demoCloneSpeakers);
+    const englishBefore = getDemoCloneLanguages('en');
+    for (const locale of [...WEBSITE_LOCALES, ...DEMO_LANGUAGE_CODES]) {
+      const initial = resolveInitialDemoLanguageCode(locale);
+      const languages = getDemoCloneLanguages(locale);
+      expect(languages.map(({ languageCode }) => languageCode)).toEqual([
+        initial,
+        ...DEMO_LANGUAGE_CODES.filter((code) => code !== initial),
+      ]);
+      expect(languages).toHaveLength(9);
+    }
+    expect(CLONE_DEMO_LANGUAGES).toEqual(catalogBefore);
+    expect(demoCloneSpeakers).toEqual(speakersBefore);
+    expect(getDemoCloneLanguages('en')).toEqual(englishBefore);
+    const changed = getDemoCloneLanguages('de');
+    changed[0].prompt = 'changed';
+    changed.reverse();
+    expect(getDemoCloneLanguages('en')).toEqual(englishBefore);
+  });
+
+  it('keeps pending languages out of ready selections and signup redirects', () => {
+    for (const { languageCode, speaker } of getDemoCloneLanguages('en')) {
+      if (speaker) continue;
+      expect(resolveInitialDemoSpeakerId(languageCode)).toBe('kat');
+      expect(getDemoCloneSpeaker(languageCode)).toBe(demoCloneSpeakers[0]);
+      for (const take of [
+        'sameOriginal',
+        'natural',
+        'sarcastic',
+        'calmSlow',
+        'anxious',
+      ]) {
+        expect(getDemoCloneSelection(languageCode, take)).toBeNull();
+        expect(
+          getCloneDemoRedirect(
+            `/en/dashboard/clone?demo=${languageCode}&take=${take}`,
+          ),
+        ).toBeNull();
+      }
+    }
+    for (const speaker of demoCloneSpeakers) {
+      expect(getDemoCloneSelection(speaker.id, 'anxious')).toBeNull();
+      expect(
+        getCloneDemoRedirect(
+          `/en/dashboard/clone?demo=${speaker.id}&take=anxious`,
+        ),
+      ).toBeNull();
+    }
   });
 });
 
