@@ -73,6 +73,15 @@ function commentRequest(id = 'publish') {
   };
 }
 
+test('checks publication even when diagnostics or review execution fails', () => {
+  assert.ok(
+    / {6}- name: Verify review publication\n {8}if: \$\{\{ always\(\) \}\}/.test(
+      workflow,
+    ),
+    'Publication verification must run regardless of earlier step outcomes',
+  );
+});
+
 test('counts a direct publication request and its successful tool result', () => {
   const { diagnostics, output } = runDiagnostics([
     commentRequest(),
