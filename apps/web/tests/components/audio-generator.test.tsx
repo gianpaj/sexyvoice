@@ -368,6 +368,45 @@ describe('AudioGenerator', () => {
     });
   });
 
+  it.each([
+    { action: 'edit', currentText: 'New text' },
+    { action: 'clear', currentText: '' },
+    { action: 'edit back', currentText: 'Hello' },
+  ])(
+    'discards a pending improvement after $action',
+    async ({ currentText }) => {
+      const user = userEvent.setup();
+      const enhancement = Promise.withResolvers<string>();
+      mockComplete.mockReturnValueOnce(enhancement.promise);
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ url: 'https://example.com/audio.mp3' }),
+        ok: true,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator();
+      const textarea = await screen.findByTestId('generate-textarea');
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      await user.click(screen.getByTitle(baseDict.enhanceTextTitle));
+      await waitFor(() => expect(mockComplete).toHaveBeenCalledOnce());
+
+      fireEvent.change(textarea, { target: { value: 'New text' } });
+      fireEvent.change(textarea, { target: { value: currentText } });
+      await act(async () => enhancement.resolve('Hello [happy]'));
+      expect(textarea).toHaveValue(currentText);
+      expect(mockToastFn).not.toHaveBeenCalled();
+
+      if (!currentText) {
+        fireEvent.change(textarea, { target: { value: 'After clearing' } });
+      }
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(getFetchRequestBody(fetchMock, 0)).toMatchObject({
+        text: currentText || 'After clearing',
+        textImproved: false,
+      });
+    },
+  );
+
   it.each(['edit', 'undo', 'clear', 'failed', 'repeat undo'])(
     'tracks text improvement after %s',
     async (action) => {

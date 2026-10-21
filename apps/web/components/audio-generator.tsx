@@ -313,7 +313,10 @@ export function AudioGenerator({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
 
+  const textRevisionRef = useRef(0);
+
   const handleTextChange = (value: string) => {
+    textRevisionRef.current += 1;
     setText(value);
     if (!value.trim()) setTextImproved(false);
   };
@@ -1035,6 +1038,7 @@ export function AudioGenerator({
 
     const originalText = text;
     const originalTextImproved = textImproved;
+    const originalTextRevision = textRevisionRef.current;
     setIsEnhancingText(true);
 
     try {
@@ -1046,14 +1050,14 @@ export function AudioGenerator({
         },
       });
 
-      if (enhancedText) {
-        setText(enhancedText);
+      if (enhancedText && textRevisionRef.current === originalTextRevision) {
+        handleTextChange(enhancedText);
         setTextImproved(true);
         toast('Text enhanced with emotion tags!', {
           action: {
             label: 'Undo',
             onClick: () => {
-              setText(originalText);
+              handleTextChange(originalText);
               setTextImproved(originalTextImproved);
             },
           },
