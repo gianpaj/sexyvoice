@@ -39,8 +39,10 @@ Within the review job, the workflow attempts diagnostics even when setup fails
 or Claude is skipped or cancelled. It writes sanitized diagnostics to the job
 log and step summary: SDK result status, denied tool names from a fixed allowlist,
 denied Bash operation categories, and direct `gh pr comment` request/result
-counts. Request counts do not prove publication; the completion-marker check
-remains authoritative. Missing or invalid traces are reported explicitly.
+counts. Command classification supports leading environment assignments and
+`env` prefixes without emitting their values. It does not interpret compound
+shell programs. Request counts do not prove publication; the completion-marker
+check remains authoritative. Missing or invalid traces are reported explicitly.
 Prompts, command arguments, tool results, final responses, and raw execution
 files are not published. Keep `show_full_output` disabled on this public repo.
 

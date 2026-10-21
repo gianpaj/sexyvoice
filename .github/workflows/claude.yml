@@ -198,6 +198,7 @@ jobs:
           import json
           import os
           import re
+          import shlex
           from collections import Counter
           from pathlib import Path
 
@@ -208,20 +209,36 @@ jobs:
               'mcp__github_inline_comment__create_inline_comment',
           }
 
+          def skip_assignments(words, word):
+              while re.match(r'^[A-Za-z_][A-Za-z0-9_]*=', word):
+                  word = next(words, '')
+              return word
+
           def bash_operation(tool_input):
               command = tool_input.get('command') if isinstance(tool_input, dict) else None
               if not isinstance(command, str):
                   return 'other'
-              for label, pattern in (
-                  ('pr_comment', r'gh\s+pr\s+comment'),
-                  ('pr_view', r'gh\s+pr\s+view'),
-                  ('ci_read', r'gh\s+run\s+(?:list|view|watch)'),
-                  ('git', r'git'),
-                  ('pnpm', r'pnpm'),
-                  ('sleep', r'sleep'),
-              ):
-                  if re.match(r'^\s*' + pattern + r'(?:\s|$)', command):
-                      return label
+              # Read only the command prefix, not its body or heredoc contents.
+              words = shlex.shlex(command, posix=True)
+              words.whitespace_split = True
+              words.commenters = ''
+              try:
+                  program = skip_assignments(words, next(words, ''))
+                  if program == 'env':
+                      program = next(words, '')
+                      if program == '--':
+                          program = next(words, '')
+                      program = skip_assignments(words, program)
+                  if program == 'gh':
+                      group, operation = next(words, ''), next(words, '')
+                      if group == 'pr' and operation in ('comment', 'view'):
+                          return 'pr_' + operation
+                      if group == 'run' and operation in ('list', 'view', 'watch'):
+                          return 'ci_read'
+                  if program in ('git', 'pnpm', 'sleep'):
+                      return program
+              except ValueError:
+                  pass
               return 'other'
 
           summary = {'execution_log': 'available', 'sdk_result': 'missing'}

@@ -181,6 +181,52 @@ test('does not mistake a mention of the publishing command for a direct request'
   assert.doesNotMatch(output, /SECRET/);
 });
 
+test('counts assignment-prefixed publication requests and denials without leaking values', () => {
+  for (const command of [
+    "GH_TOKEN=SECRET_TOKEN gh pr comment 635 --body 'SECRET_BODY'",
+    "env GH_TOKEN='SECRET TOKEN' gh pr comment 635 --body 'SECRET_BODY'",
+    "A=SECRET_ONE B='SECRET TWO' env -- GH_TOKEN=SECRET_TOKEN gh pr comment 635 --body 'SECRET_BODY'",
+  ]) {
+    const request = commentRequest();
+    request.message.content[0].input.command = command;
+    const { diagnostics, output } = runDiagnostics([
+      request,
+      {
+        type: 'result',
+        subtype: 'success',
+        permission_denials: [{ tool_name: 'Bash', tool_input: { command } }],
+      },
+    ]);
+    assert.equal(diagnostics.direct_pr_comment_requests.requested, 1);
+    assert.deepEqual(diagnostics.denied_bash_operations, { pr_comment: 1 });
+    assert.doesNotMatch(output, /SECRET/);
+  }
+});
+
+test('classifies the command prefix without parsing its heredoc body', () => {
+  const request = commentRequest();
+  request.message.content[0].input.command =
+    "GH_TOKEN=SECRET_TOKEN gh pr comment 635 --body-file - <<'EOF'\nauthor's SECRET note\nEOF";
+  const { diagnostics, output } = runDiagnostics([request]);
+  assert.equal(diagnostics.direct_pr_comment_requests.requested, 1);
+  assert.doesNotMatch(output, /SECRET/);
+});
+
+test('does not classify prefixed mentions, quoted executable names, or malformed commands as publication', () => {
+  for (const command of [
+    'GH_TOKEN=SECRET_TOKEN echo "gh pr comment"',
+    'env GH_TOKEN=SECRET_TOKEN echo gh pr comment',
+    'GH_TOKEN=SECRET_TOKEN "gh pr comment"',
+    "GH_TOKEN='SECRET_UNTERMINATED gh pr comment",
+  ]) {
+    const request = commentRequest();
+    request.message.content[0].input.command = command;
+    const { diagnostics, output } = runDiagnostics([request]);
+    assert.equal(diagnostics.direct_pr_comment_requests.requested, 0);
+    assert.doesNotMatch(output, /SECRET/);
+  }
+});
+
 test('reports a missing trace without printing its path', () => {
   const { diagnostics, output } = runDiagnostics(undefined);
   assert.equal(diagnostics.execution_log, 'missing');
