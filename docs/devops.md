@@ -35,8 +35,9 @@ The workflow verifies publication using a plain-text completion marker from
 `claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
 merge gate.
 
-After Claude execution, the workflow writes sanitized diagnostics to the job log
-and step summary: SDK result status, denied tool names from a fixed allowlist,
+Within the review job, the workflow attempts diagnostics even when setup fails
+or Claude is skipped or cancelled. It writes sanitized diagnostics to the job
+log and step summary: SDK result status, denied tool names from a fixed allowlist,
 denied Bash operation categories, and direct `gh pr comment` request/result
 counts. Request counts do not prove publication; the completion-marker check
 remains authoritative. Missing or invalid traces are reported explicitly.

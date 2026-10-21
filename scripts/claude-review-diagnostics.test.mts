@@ -82,6 +82,13 @@ test('checks publication even when diagnostics or review execution fails', () =>
   );
 });
 
+test('attempts diagnostics even when the review is skipped or cancelled', () => {
+  assert.ok(
+    /^ {8}if: \$\{\{ always\(\) \}\}/.test(step),
+    'Diagnostics must not depend on a success or failure review outcome',
+  );
+});
+
 test('counts a direct publication request and its successful tool result', () => {
   const { diagnostics, output } = runDiagnostics([
     commentRequest(),

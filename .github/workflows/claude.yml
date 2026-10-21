@@ -190,7 +190,7 @@ jobs:
             --effort xhigh
 
       - name: Summarize review execution
-        if: ${{ always() && (steps.review.outcome == 'success' || steps.review.outcome == 'failure') }}
+        if: ${{ always() }}
         env:
           CLAUDE_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
         run: |
