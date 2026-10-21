@@ -101,7 +101,7 @@ export function DemoClonePlayer({
     null,
   );
   const [waveformRetry, setWaveformRetry] = useState(0);
-  // Wait for the native source to switch before a waveform can load against it.
+  // Keep the waveform visible, but wait for matching metadata before updating it.
   const [mediaSource, setMediaSource] = useState('');
   const setAudioRef = useCallback((element: HTMLAudioElement | null) => {
     audioRef.current = element;
@@ -361,13 +361,15 @@ export function DemoClonePlayer({
                 />
               </Button>
               <div className="relative h-12 min-w-0 flex-1 rounded-md has-focus-visible:ring-2 has-focus-visible:ring-ring">
-                {audioElement && waveformUrl && mediaSource === waveformUrl && (
+                {audioElement && waveformUrl && (
                   <NativeAudioWaveform
                     duration={clip.durationSeconds}
                     interact={false}
-                    key={`${clip.src}:${waveformRetry}`}
                     media={audioElement}
                     onError={() => setPlayback('error')}
+                    peaks={clip.peaks}
+                    ready={mediaSource === waveformUrl}
+                    reloadKey={waveformRetry}
                     url={waveformUrl}
                   />
                 )}

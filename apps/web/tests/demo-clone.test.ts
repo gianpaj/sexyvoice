@@ -76,6 +76,7 @@ describe('demo clone speakers', () => {
         const asset = manifest.assets[filename];
         expect(clip.durationSeconds).toBe(asset.durationSeconds);
         expect(clip.durationSeconds).toBeGreaterThan(0);
+        expect(clip.peaks).toBe(asset.waveform.peaks);
         const bytes = readFileSync(resolve('public', clip.src.slice(1)));
         expect(createHash('sha256').update(bytes).digest('hex')).toBe(
           asset.sha256,

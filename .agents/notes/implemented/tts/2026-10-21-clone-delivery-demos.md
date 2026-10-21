@@ -42,11 +42,18 @@ The native language selector remains disabled until hydration to prevent an earl
 choice from being lost. Switching to a pending slot stops playback and removes
 the waveform; returning to a published voice restores only a valid take.
 
-`NativeAudioWaveform` creates one WaveSurfer instance per source with its own abort
-signal. Cleanup aborts before destruction because WaveSurfer can queue a load
-that starts after destruction. The demo waits for matching native metadata before
-binding the waveform. Relying only on WaveSurfer destruction was rejected because
-an obsolete fetch could rewrite the external audio element's source.
+`NativeAudioWaveform` retains one WaveSurfer instance per native media element
+and interaction mode, with its own abort signal. The waveform host stays mounted
+across take, reference, and retry changes. A pending metadata change leaves the
+current waveform visible; matching metadata permits loading the new cached peaks.
+The source URL is not a component key or instance-owner dependency. Remounting
+per URL was rejected because it clears the canvas and repeats decoding.
+
+Cleanup aborts before destruction because WaveSurfer can queue a load that starts
+after destruction. Relying only on destruction was rejected because an obsolete
+fetch could rewrite the external audio element's source. Instance creation and
+updates always receive precomputed peaks, so they make no waveform fetch or
+`decodeAudioData` call. Only the native element loads MP3s for playback.
 
 ## Assets
 
@@ -99,9 +106,10 @@ and waveform extraction remain separate operations; extraction does not modify
 recordings or call a provider.
 
 The nine current MP3s have verified source hashes and peaks. Existing request,
-duration, and hash fields are unchanged. The active renderer still fetches and
-decodes audio. Consuming these peaks and keeping its canvas mounted is a
-separate integration.
+duration, and hash fields are unchanged. Clip objects expose the manifest arrays
+by reference, and asset resolution rejects a waveform source hash that differs
+from its audio hash. The renderer uses `load(url, peaks, duration)` for ready
+source changes; retries increment a reload token without replacing the renderer.
 
 See [waveform generation](../../../../scripts/README.md#generate-waveform-peaks)
 for the command and options.
@@ -125,11 +133,13 @@ nine shipped MP3s match the manifest's SHA-256 hashes. The unprocessed Kat
 replacement is retained locally under
 `scripts/.cache/kat-same-original-20261021/references/kat-reference.mp3`.
 
-Validation passed: 1,766 web tests, 131 script tests, formatting, and type
+Validation passed: 1,773 web tests, 131 script tests, formatting, and type
 checks. The waveform CLI and extractor have 40 focused tests; the 35 demo-data
 tests include hash and peak validation. Eighteen unrelated web tests
-are skipped. Frontend verification includes nine public voice-cloning browser
-tests, translation parity, and desktop/mobile inspection with Arabic RTL.
+are skipped. Frontend verification includes ten public voice-cloning browser tests,
+translation parity, and desktop/mobile inspection with Arabic RTL. The cached
+waveform regression verifies a persistent host, no blank canvas frames, no MP3
+fetch/XHR for waveform drawing, and no `decodeAudioData` calls.
 The language catalog does not change audio, reference inputs, generation code,
 or published prompt metadata.
 

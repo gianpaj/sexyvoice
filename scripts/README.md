@@ -97,9 +97,12 @@ skips entries whose audio hash, waveform source hash, and peak count match.
 Changing a recording or the requested resolution triggers regeneration. It
 updates the manifest atomically after all selected files succeed and checks
 for concurrent manifest edits before writing. Audio files are read-only; the command
-makes no provider calls or uploads. The player consumes precomputed data only
-when its renderer is wired to pass these peaks; creating the metadata alone
-does not change rendering or take-switch behavior.
+makes no provider calls or uploads.
+
+The demo reads these peaks from the bundled manifest. Take and reference changes
+reuse the waveform renderer instead of fetching and decoding MP3s to draw them.
+The native audio element still loads each recording for playback. Missing or
+stale waveform hashes fail with a command to regenerate the data.
 
 ## Upload files to R2
 

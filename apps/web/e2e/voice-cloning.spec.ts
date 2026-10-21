@@ -189,6 +189,146 @@ test.describe('Hear the difference', () => {
     expect(generationRequests).toEqual([]);
   });
 
+  test('keeps the cached waveform painted across takes and references without fetching or decoding audio in JavaScript', async ({
+    page,
+  }) => {
+    const waveformRequests: string[] = [];
+    page.on('request', (request) => {
+      if (
+        ['fetch', 'xhr'].includes(request.resourceType()) &&
+        /\.mp3(?:\?|$)/.test(request.url())
+      )
+        waveformRequests.push(request.url());
+    });
+    await page.addInitScript(() => {
+      const counters = { decodeCalls: 0 };
+      Object.defineProperty(window, '__waveformCounters', { value: counters });
+      const original = BaseAudioContext.prototype.decodeAudioData;
+      BaseAudioContext.prototype.decodeAudioData = function (...args) {
+        counters.decodeCalls += 1;
+        return original.apply(this, args);
+      };
+    });
+    await page.goto('/en/voice-cloning');
+    await expect(page.getByTestId('demo-clone-language')).toBeEnabled();
+    const wrapper = page.locator(RESULT).locator('[part="wrapper"]');
+    await expect(
+      wrapper.locator('[part="canvases"] canvas').first(),
+    ).toBeVisible();
+    const monitor = await wrapper.evaluateHandle((element) => {
+      const root = element.getRootNode() as ShadowRoot;
+      const state = {
+        frames: 0,
+        blankFrames: 0,
+        detachedFrames: 0,
+        stopped: false,
+      };
+      const sample = () => {
+        if (state.stopped) return;
+        state.frames += 1;
+        if (
+          !root.host.isConnected ||
+          root.querySelector('[part="wrapper"]') !== element
+        )
+          state.detachedFrames += 1;
+        const painted = Array.from(
+          element.querySelectorAll<HTMLCanvasElement>(
+            '[part="canvases"] canvas',
+          ),
+        ).some((canvas) => {
+          if (!(canvas.width && canvas.height)) return false;
+          const context = canvas.getContext('2d');
+          if (!context) return false;
+          const pixels = context.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          ).data;
+          for (let i = 3; i < pixels.length; i += 4)
+            if (pixels[i] !== 0) return true;
+          return false;
+        });
+        if (!painted) state.blankFrames += 1;
+        requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+      return state;
+    });
+    try {
+      await expect
+        .poll(() => monitor.evaluate((state) => state.frames))
+        .toBeGreaterThan(0);
+      for (const clip of ['sarcastic', 'natural', 'reference', 'natural']) {
+        if (clip === 'reference')
+          await page.getByRole('button', { name: 'Hear the original' }).click();
+        else if (
+          await page.getByRole('button', { name: 'Back to the clone' }).count()
+        )
+          await page.getByRole('button', { name: 'Back to the clone' }).click();
+        else
+          await page
+            .locator(`input[name="demo-clone-take"][value="${clip}"]`)
+            .check({ force: true });
+        await expect(page.locator('audio')).toHaveAttribute(
+          'src',
+          `/demo-clones/voxtral-3/kat-${clip}.mp3`,
+        );
+        await expect
+          .poll(() =>
+            page
+              .locator('audio')
+              .evaluate((audio: HTMLAudioElement) => audio.readyState),
+          )
+          .toBeGreaterThanOrEqual(1);
+        await page.evaluate(async () => {
+          for (let frame = 0; frame < 4; frame += 1)
+            await new Promise<void>((resolve) =>
+              requestAnimationFrame(() => resolve()),
+            );
+        });
+      }
+      await page.getByTestId('demo-clone-language').selectOption('de');
+      await expect(page.locator('audio')).toHaveAttribute(
+        'src',
+        '/demo-clones/voxtral-3/heike-natural.mp3',
+      );
+      await expect
+        .poll(() =>
+          page
+            .locator('audio')
+            .evaluate((audio: HTMLAudioElement) => audio.readyState),
+        )
+        .toBeGreaterThanOrEqual(1);
+      await page.evaluate(async () => {
+        for (let frame = 0; frame < 4; frame += 1)
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => resolve()),
+          );
+      });
+      const result = await monitor.evaluate((state) => {
+        state.stopped = true;
+        return state;
+      });
+      expect(result.frames).toBeGreaterThanOrEqual(20);
+      expect(result.detachedFrames).toBe(0);
+      expect(result.blankFrames).toBe(0);
+      expect(waveformRequests).toEqual([]);
+      expect(
+        await page.evaluate(
+          () =>
+            (window as Window & { __waveformCounters: { decodeCalls: number } })
+              .__waveformCounters.decodeCalls,
+        ),
+      ).toBe(0);
+    } finally {
+      await monitor.evaluate((state) => {
+        state.stopped = true;
+      });
+      await monitor.dispose();
+    }
+  });
+
   test('uses one player for the original recording and selected clone', async ({
     page,
   }) => {

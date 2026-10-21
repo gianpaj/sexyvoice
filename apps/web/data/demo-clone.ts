@@ -23,6 +23,7 @@ export {
 
 export interface DemoCloneClip {
   durationSeconds: number;
+  peaks: number[][];
   src: string;
 }
 
@@ -48,14 +49,22 @@ export interface DemoCloneLanguage {
   speaker: DemoCloneSpeaker | null;
 }
 
-const assets: Record<string, { durationSeconds: number }> =
-  assetManifest.assets;
+type DemoCloneAsset =
+  (typeof assetManifest.assets)[keyof typeof assetManifest.assets];
+
+const assets: Record<string, DemoCloneAsset> = assetManifest.assets;
 
 function getClip(filename: string): DemoCloneClip {
   const asset = assets[filename];
   if (!asset) throw new Error(`Missing clone demo asset: ${filename}`);
+  if (asset.waveform?.sourceSha256 !== asset.sha256) {
+    throw new Error(
+      `Missing or stale clone demo waveform: ${filename}. Run pnpm generate-audio-waveforms.`,
+    );
+  }
   return {
     durationSeconds: asset.durationSeconds,
+    peaks: asset.waveform.peaks,
     src: `/demo-clones/voxtral-3/${filename}`,
   };
 }

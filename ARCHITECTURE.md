@@ -284,9 +284,10 @@ request. `clone-demo-assets.json` records durations, source and asset hashes,
 latency when captured, estimated cost, and precomputed waveform peaks. Each
 asset's `waveform.sourceSha256` binds its per-channel peaks to the final MP3.
 The local extraction workflow lives in
-[waveform generation](scripts/README.md#generate-waveform-peaks). The renderer
-still loads waveform data from audio; supplying the precomputed peaks is a
-separate playback integration.
+[waveform generation](scripts/README.md#generate-waveform-peaks). Each
+`DemoCloneClip` exposes its cached peak arrays directly from the manifest;
+missing or stale waveform hashes reject the asset with regeneration guidance.
+The renderer uses these peaks without a waveform MP3 fetch or audio decode.
 
 Kat's full reference and same-text
 result target -14 LUFS; the remaining prepared recordings are unchanged.
@@ -294,10 +295,12 @@ See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
 asset workflow.
 
 The player uses one native audio element for the selected take or original
-recording. `NativeAudioWaveform` attaches to that element after its metadata
-matches the selected clip. Each waveform instance owns an abort signal so a
-queued load cannot rewrite the audio source after cleanup. Visual defaults are
-shared with the other audio players. Changing language or delivery stops playback. Unsupported voice/take combinations
+recording. `NativeAudioWaveform` retains one WaveSurfer instance per native media
+element and interaction mode. It keeps the current waveform visible during a
+source switch, then calls `load(url, peaks, duration)` after matching metadata.
+Take, reference, and retry changes update the existing renderer rather than
+remounting it. Cleanup aborts the instance's signal before destruction. Visual
+defaults are shared with the other audio players. Changing language or delivery stops playback. Unsupported voice/take combinations
 fall back to Natural. The prompt appears above the player with highlighted
 tags; selecting the prompt excludes its decorative quotation marks.
 Applying a demo loads its reference, prompt, and

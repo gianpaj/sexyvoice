@@ -16,6 +16,7 @@ import {
   DEMO_LANGUAGE_CODES,
   type DemoLanguageCode,
   getDemoCloneLanguages,
+  getDemoCloneSpeaker,
 } from '@/data/demo-clone';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import messages from '@/messages/en.json';
@@ -478,6 +479,11 @@ describe('Hear the difference', () => {
         interact: false,
         media: audio(),
         url: audio().src,
+        peaks: getDemoCloneSpeaker('kat').takes.find(
+          (take) => take.id === 'natural',
+        )!.peaks,
+        ready: true,
+        reloadKey: 0,
       }),
     );
     expect(document.querySelectorAll('audio')).toHaveLength(1);
@@ -487,7 +493,7 @@ describe('Hear the difference', () => {
     );
   });
 
-  it('waits for matching native metadata before rebinding the waveform to the same audio', () => {
+  it('keeps the waveform mounted while waiting for matching native metadata', () => {
     render(<DemoClonePlayer {...props} />);
     const element = audio();
     const originalUrl = element.src;
@@ -505,22 +511,37 @@ describe('Hear the difference', () => {
       '/demo-clones/voxtral-3/kat-sarcastic.mp3',
     );
     expect(element.currentSrc).toBe(originalUrl);
-    expect(screen.queryByTestId('audio-waveform')).not.toBeInTheDocument();
-    expect(NativeAudioWaveform).not.toHaveBeenCalled();
+    expect(screen.getByTestId('audio-waveform')).toBe(previousWaveform);
+    expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        media: element,
+        url: element.src,
+        ready: false,
+      }),
+    );
     fireEvent.loadedMetadata(element);
-    expect(screen.queryByTestId('audio-waveform')).not.toBeInTheDocument();
-    expect(NativeAudioWaveform).not.toHaveBeenCalled();
+    expect(screen.getByTestId('audio-waveform')).toBe(previousWaveform);
+    expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]?.ready).toBe(
+      false,
+    );
 
     currentSrc.mockReturnValue(element.src);
     fireEvent.loadedMetadata(element);
 
-    expect(screen.getByTestId('audio-waveform')).not.toBe(previousWaveform);
+    expect(screen.getByTestId('audio-waveform')).toBe(previousWaveform);
     expect(screen.getByTestId('audio-waveform')).toHaveAttribute(
       'data-url',
       element.src,
     );
     expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]).toEqual(
-      expect.objectContaining({ media: element, url: element.src }),
+      expect.objectContaining({
+        media: element,
+        url: element.src,
+        ready: true,
+        peaks: getDemoCloneSpeaker('kat').takes.find(
+          (take) => take.id === 'sarcastic',
+        )!.peaks,
+      }),
     );
     expect(audio()).toBe(element);
     expect(element).toHaveAttribute(
@@ -528,6 +549,57 @@ describe('Hear the difference', () => {
       '/demo-clones/voxtral-3/kat-sarcastic.mp3',
     );
     expect(play).not.toHaveBeenCalled();
+  });
+
+  it('passes each real clip’s cached peaks without remounting across takes, references, and ready voices', async () => {
+    render(<DemoClonePlayer {...props} />);
+    const waveform = screen.getByTestId('audio-waveform');
+    const element = audio();
+    for (const speakerId of ['kat', 'heike']) {
+      const speaker = getDemoCloneSpeaker(speakerId);
+      selectLanguage(speaker.languageCode);
+      for (const take of speaker.takes) {
+        selectTake(take.id);
+        const waveformProps = vi.mocked(NativeAudioWaveform).mock.lastCall?.[0];
+        expect(screen.getByTestId('audio-waveform')).toBe(waveform);
+        expect(audio()).toBe(element);
+        expect(take.peaks.length).toBeGreaterThan(0);
+        expect(waveformProps?.peaks).toBe(take.peaks);
+        expect(waveformProps).toEqual(
+          expect.objectContaining({
+            duration: take.durationSeconds,
+            url: element.src,
+            media: element,
+            ready: true,
+          }),
+        );
+        expect(element).toHaveAttribute('src', take.src);
+      }
+      fireEvent.click(screen.getByText(labels.hearOriginal));
+      await screen.findByLabelText(labels.pauseAudio);
+      fireEvent.loadedMetadata(element);
+      expect(screen.getByTestId('audio-waveform')).toBe(waveform);
+      expect(speaker.reference.peaks.length).toBeGreaterThan(0);
+      expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]?.peaks).toBe(
+        speaker.reference.peaks,
+      );
+      expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]).toEqual(
+        expect.objectContaining({
+          duration: speaker.reference.durationSeconds,
+          url: element.src,
+          media: element,
+          ready: true,
+        }),
+      );
+      expect(element).toHaveAttribute('src', speaker.reference.src);
+      fireEvent.click(screen.getByText(labels.backToClone));
+      await screen.findByLabelText(labels.pauseAudio);
+      fireEvent.loadedMetadata(element);
+      expect(screen.getByTestId('audio-waveform')).toBe(waveform);
+      expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]?.peaks).toBe(
+        speaker.takes.at(-1)!.peaks,
+      );
+    }
   });
 
   it('seeks through the waveform and updates the time display', () => {
@@ -633,7 +705,7 @@ describe('Hear the difference', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('reloads the waveform when retrying a decode failure', async () => {
+  it('increments the reload key without remounting the waveform on retry', async () => {
     render(<DemoClonePlayer {...props} />);
     const waveform = screen.getByTestId('audio-waveform');
     const waveformProps = vi.mocked(NativeAudioWaveform).mock.lastCall?.[0];
@@ -643,7 +715,10 @@ describe('Hear the difference', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(labels.audioError);
     fireEvent.click(screen.getByText(labels.retry));
     await screen.findByLabelText(labels.pauseAudio);
-    expect(screen.getByTestId('audio-waveform')).not.toBe(waveform);
+    expect(screen.getByTestId('audio-waveform')).toBe(waveform);
+    expect(vi.mocked(NativeAudioWaveform).mock.lastCall?.[0]?.reloadKey).toBe(
+      (waveformProps?.reloadKey ?? 0) + 1,
+    );
     expect(audio().getAttribute('src')).toContain('kat-natural.mp3');
   });
 
