@@ -407,7 +407,7 @@ describe('AudioGenerator', () => {
     },
   );
 
-  it.each(['edit', 'undo', 'clear', 'failed', 'repeat undo'])(
+  it.each(['edit', 'replace', 'undo', 'clear', 'failed', 'repeat undo'])(
     'tracks text improvement after %s',
     async (action) => {
       const user = userEvent.setup();
@@ -434,6 +434,10 @@ describe('AudioGenerator', () => {
       if (action === 'edit') {
         fireEvent.change(textarea, {
           target: { value: 'Hello [happy] again' },
+        });
+      } else if (action === 'replace') {
+        fireEvent.change(textarea, {
+          target: { value: 'Completely unrelated replacement text' },
         });
       } else if (action === 'undo') {
         act(() => mockToastFn.mock.calls.at(-1)?.[1].action.onClick());
@@ -466,7 +470,7 @@ describe('AudioGenerator', () => {
         });
       }
       expect(getFetchRequestBody(fetchMock, 1).textImproved).toBe(
-        action === 'edit' || action === 'repeat undo',
+        ['edit', 'replace', 'repeat undo'].includes(action),
       );
     },
   );

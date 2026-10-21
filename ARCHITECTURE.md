@@ -185,9 +185,12 @@ seed, and temperature; seed and temperature require a paid account. Grok
 accepts a speech-speed multiplier. Provider-affecting advanced settings create
 distinct cache keys.
 
-The dashboard sends `textImproved` with generation requests after applying AI
-emotion tags. Edits preserve the flag, clearing the text resets it, and Undo
-restores its prior value. The route stores the boolean in
+The dashboard sends `textImproved` to record whether Improve text succeeded in
+the current edit chain, not whether the current text still contains AI-added
+tags. Non-empty edits, including select-all replacement with unrelated text,
+preserve the flag. Clearing the text resets it, and Undo restores its prior
+value. Pending improvements are discarded if the text changes before they
+complete. The route stores the boolean in
 `audio_files.usage.textImproved` for JSON and streaming generations. Omitted or
 non-boolean values resolve to `false`. Cache hits reuse the existing audio row
 and its original metadata; the flag does not affect cache keys.
