@@ -24,6 +24,7 @@
     "test": "tsx --test *.test.mts",
     "test-gemini-tts-stream": "node test-gemini-tts-stream.mjs",
     "type-check": "tsc --noEmit",
+    "upload-r2-files": "node upload-r2-files.mts",
     "upload-speech-samples": "tsx upload-speech-samples.mts"
   },
   "dependencies": {

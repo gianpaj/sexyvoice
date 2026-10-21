@@ -29,6 +29,40 @@ to `apps/web/public/demo-clones/voxtral-3/` and the report to
 `apps/web/data/clone-demo-assets.json` together. The web tests check asset hashes
 and prompt consistency. Keep raw WAVs in the run directory.
 
+## Upload files to R2
+
+`upload-r2-files.mts` uploads any file type, including multiple files selected
+with a shell glob. From the repository root, upload all eight prepared clone
+demo MP3s with one command:
+
+```bash
+pnpm upload-r2-files --bucket sv-audio-files \
+  --prefix demo-clones/voxtral-3 --content-type audio/mpeg \
+  --public-url https://files.sexyvoice.ai \
+  --env-file apps/web/.env.local \
+  apps/web/public/demo-clones/voxtral-3/*.mp3
+```
+
+Files keep their basenames under the destination prefix. `--bucket` is required;
+`--prefix` defaults to the bucket root. `--content-type` applies to the whole
+batch and defaults to `application/octet-stream`. Paths are relative to the
+working directory. No generation manifest is required.
+
+The command uploads by default. Add `--dry-run` to validate files and print
+all destinations without credentials or network requests. Uploads require
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_ENDPOINT`; repeat
+`--env-file` to load multiple environment files.
+
+The generic command and speech-sample uploader share conditional-write and
+verification logic. They refuse to overwrite different objects and verify R2
+size, content type, and SHA-256 metadata. `--public-url` additionally checks
+public download hashes and content types; omit it for private buckets.
+Failures are printed and produce a nonzero exit status while other files
+continue uploading. Public verification does not test browser CORS; verify
+reference fetching from production and preview origins before switching runtime
+URLs. Uploading does not change runtime URLs, delete local files, or write
+database rows.
+
 ## Restore account billing
 
 Account deletion blocks checkout during cleanup and releases its block when the
