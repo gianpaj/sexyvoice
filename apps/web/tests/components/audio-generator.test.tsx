@@ -402,14 +402,30 @@ describe('AudioGenerator', () => {
         fireEvent.change(textarea, { target: { value: '' } });
         fireEvent.change(textarea, { target: { value: 'New text' } });
       } else if (action === 'repeat undo') {
-        mockComplete.mockResolvedValueOnce('Hello [excited]');
+        fireEvent.change(textarea, {
+          target: { value: 'Hello [happy] again' },
+        });
+        mockComplete.mockResolvedValueOnce('Hello [excited] again');
         await user.click(screen.getByTitle(baseDict.enhanceTextTitle));
-        await waitFor(() => expect(textarea).toHaveValue('Hello [excited]'));
+        expect(mockComplete).toHaveBeenLastCalledWith(
+          'Hello [happy] again',
+          expect.anything(),
+        );
+        await waitFor(() =>
+          expect(textarea).toHaveValue('Hello [excited] again'),
+        );
         act(() => mockToastFn.mock.calls.at(-1)?.[1].action.onClick());
+        expect(textarea).toHaveValue('Hello [happy] again');
       }
 
       await user.click(screen.getByTestId('generate-button'));
       await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      if (action === 'repeat undo') {
+        expect(getFetchRequestBody(fetchMock, 1)).toMatchObject({
+          text: 'Hello [happy] again',
+          textImproved: true,
+        });
+      }
       expect(getFetchRequestBody(fetchMock, 1).textImproved).toBe(
         action === 'edit' || action === 'repeat undo',
       );
