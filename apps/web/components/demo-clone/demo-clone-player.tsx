@@ -1,239 +1,382 @@
 'use client';
 
-import { AlertCircle } from 'lucide-react';
-import Image from 'next/image';
-import { useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
-
 import {
-  type AudioPlayerControls,
-  AudioPlayerWithContext,
-} from '@/components/audio-player-with-context';
-import { AudioProvider } from '@/components/audio-provider';
+  AlertCircle,
+  Headphones,
+  LoaderCircle,
+  Pause,
+  Play,
+  RotateCcw,
+} from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+
 import { Button } from '@/components/ui/button';
 import {
+  type CloneDemoTakeId,
   type DemoLanguageCode,
   demoCloneSpeakers,
   getDemoCloneSpeaker,
-  getDemoCloneTranscript,
 } from '@/data/demo-clone';
+import { Link } from '@/lib/i18n/navigation';
+import { attemptPlayback } from '@/lib/media-playback';
 
 export interface DemoCloneLabels {
   audioError: string;
-  hearResult: string;
+  backToClone: string;
+  calmSlow: string;
+  clonedVoice: string;
+  deliveryLabel: string;
+  hearOriginal: string;
+  loading: string;
+  natural: string;
+  originalVoice: string;
+  pauseAudio: string;
   pickSpeaker: string;
   playAudio: string;
   preparedExamplesCaption: string;
-  referenceLabel: string;
-  resultLabel: string;
   retry: string;
+  sarcastic: string;
+  seek: string;
+  showPrompt: string;
+  subtitle: string;
+  title: string;
+  tryVoice: string;
 }
 
 interface DemoClonePlayerProps {
+  applying?: boolean;
   initialSpeakerId: string;
+  initialTakeId?: CloneDemoTakeId;
   labels: DemoCloneLabels;
-  /** Localized language names, keyed by the code each speaker is tagged with. */
   languageLabels: Record<DemoLanguageCode, string>;
+  onTryVoice?: (speakerId: string, takeId: CloneDemoTakeId) => void;
 }
+
+type Playback = 'idle' | 'loading' | 'playing' | 'error';
+
+const formatTime = (seconds: number) =>
+  `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
 export function DemoClonePlayer({
   initialSpeakerId,
+  initialTakeId = 'natural',
   labels,
   languageLabels,
+  onTryVoice,
+  applying = false,
 }: DemoClonePlayerProps) {
   const [speakerId, setSpeakerId] = useState(initialSpeakerId);
-  const [resultRevealed, setResultRevealed] = useState(false);
-  const [hasAudioError, setHasAudioError] = useState(false);
-  // Bumped to remount the players, forcing wavesurfer to refetch after a retry.
-  const [retryNonce, setRetryNonce] = useState(0);
-
-  const referenceControls = useRef<AudioPlayerControls | null>(null);
-  const resultControls = useRef<AudioPlayerControls | null>(null);
-
-  // Warm the HTTP cache for the clip the visitor can play first: the reference
-  // of the speaker they land on (the result sits behind the reveal button).
-  // Keyed off `initialSpeakerId` rather than the live selection so it stays a
-  // one-shot hint and never re-fires as the visitor clicks around. `crossOrigin`
-  // matches the CORS fetch wavesurfer makes, so the bytes are actually reused.
-  ReactDOM.preload(getDemoCloneSpeaker(initialSpeakerId).reference.src, {
-    as: 'audio',
-    crossOrigin: 'anonymous',
-  });
-
+  const [takeId, setTakeId] = useState<CloneDemoTakeId>(initialTakeId);
+  const [source, setSource] = useState<'take' | 'reference'>('take');
+  const [playback, setPlayback] = useState<Playback>('idle');
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const playRequest = useRef(0);
   const speaker = getDemoCloneSpeaker(speakerId);
+  const take = speaker.takes.find((take) => take.id === takeId)!;
+  const clip = source === 'take' ? take : speaker.reference;
 
-  const stopResult = () => resultControls.current?.stop();
-  const stopReference = () => referenceControls.current?.stop();
+  useEffect(() => {
+    const audio = audioRef.current;
+    return () => {
+      playRequest.current += 1;
+      audio?.pause();
+    };
+  }, []);
 
-  // Switching speakers stops playback. Handled here rather than in an effect
-  // because both players remount on the speaker change anyway; the stop calls
-  // silence the outgoing audio before React tears the players down.
-  const handleSpeakerChange = (nextSpeakerId: string) => {
-    stopReference();
-    stopResult();
-    setHasAudioError(false);
-    setSpeakerId(nextSpeakerId);
+  const stop = () => {
+    playRequest.current += 1;
+    audioRef.current?.pause();
+    if (audioRef.current) audioRef.current.currentTime = 0;
+    setPlayback('idle');
+    setCurrentTime(0);
   };
 
-  const handleRetry = () => {
-    setHasAudioError(false);
-    setRetryNonce((nonce) => nonce + 1);
+  const pause = () => {
+    playRequest.current += 1;
+    audioRef.current?.pause();
+    setPlayback('idle');
   };
+
+  const play = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const request = ++playRequest.current;
+    setPlayback('loading');
+    const played = await attemptPlayback(() => audio.play());
+    if (request === playRequest.current)
+      setPlayback(played ? 'playing' : 'error');
+  };
+
+  const switchSpeaker = (id: string) => {
+    stop();
+    setSpeakerId(id);
+    setSource('take');
+  };
+
+  const switchTake = (id: CloneDemoTakeId) => {
+    stop();
+    setTakeId(id);
+    setSource('take');
+  };
+
+  const switchReference = async () => {
+    stop();
+    const nextSource = source === 'take' ? 'reference' : 'take';
+    // Commit the source before play() so React cannot reload it mid-playback.
+    // Keeping playback in this click handler preserves the browser's user gesture.
+    flushSync(() => setSource(nextSource));
+    await play();
+  };
+
+  const PlayIcon = {
+    idle: Play,
+    error: Play,
+    playing: Pause,
+    loading: LoaderCircle,
+  }[playback];
+  const playButtonLabel = {
+    idle: labels.playAudio,
+    error: labels.playAudio,
+    playing: labels.pauseAudio,
+    loading: labels.loading,
+  }[playback];
 
   return (
-    <AudioProvider>
-      <div className="mx-auto flex w-full max-w-md flex-col items-center gap-8">
-        {/* Speaker picker */}
-        <fieldset className="flex flex-col items-center gap-3 border-none p-0">
-          <legend className="mb-2 w-full text-center text-muted-foreground text-sm">
-            {labels.pickSpeaker}
-          </legend>
-          <div className="flex items-center justify-center gap-6">
-            {demoCloneSpeakers.map((option) => {
-              const isSelected = option.id === speakerId;
-              return (
-                <label
-                  className="group flex cursor-pointer flex-col items-center gap-1.5"
-                  data-testid={`demo-clone-speaker-${option.id}`}
-                  key={option.id}
-                >
-                  <input
-                    checked={isSelected}
-                    className="peer sr-only"
-                    name="demo-clone-speaker"
-                    onChange={() => handleSpeakerChange(option.id)}
-                    type="radio"
-                    value={option.id}
-                  />
-                  <div
-                    className={`relative rounded-full p-[2px] transition-all duration-300 ${
-                      isSelected
-                        ? `bg-linear-to-tr ${option.accent}`
-                        : 'bg-transparent'
-                    } group-hover:scale-105 peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-background`}
-                    style={
-                      isSelected
-                        ? {
-                            boxShadow: `0 0 12px 6px rgba(${option.glowColor}, 0.25)`,
-                          }
-                        : undefined
-                    }
-                  >
-                    <div className="rounded-full bg-background p-[2px]">
-                      <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-neutral-800 sm:h-16 sm:w-16">
-                        <Image
-                          alt={option.name}
-                          className={`object-cover transition-opacity duration-300 ${
-                            isSelected ? '' : 'opacity-60 grayscale'
-                          }`}
-                          fill
-                          sizes="64px"
-                          src={option.image}
-                          unoptimized
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <span
-                    className={`font-medium text-xs transition-colors ${
-                      isSelected
-                        ? 'text-foreground'
-                        : 'text-muted-foreground group-hover:text-foreground'
-                    }`}
-                  >
-                    {option.name}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {languageLabels[option.languageCode]}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
+    <div className="rounded-2xl border border-input bg-background/95 p-5 text-left shadow-lg sm:p-7">
+      <div className="space-y-2">
+        <h2 className="font-semibold text-2xl tracking-tight">
+          {labels.title}
+        </h2>
+        <p className="text-muted-foreground text-sm">{labels.subtitle}</p>
+      </div>
 
-        {/* Reference clip */}
-        <div className="flex w-fit flex-col items-center gap-2 rounded-lg border bg-muted/30 p-4">
-          <p className="text-muted-foreground text-sm">
-            {labels.referenceLabel}
-          </p>
-          <AudioPlayerWithContext
-            key={`reference-${speaker.id}-${retryNonce}`}
-            onControlsReady={(controls) => {
-              referenceControls.current = controls;
-            }}
-            onError={() => setHasAudioError(true)}
-            onPlaybackStart={stopResult}
-            playAudioTitle={labels.playAudio}
-            progressColor="#8b5cf6"
-            showWaveform
-            url={speaker.reference.src}
-            waveColor="#888888"
-          />
-        </div>
-
-        {/* Script the cloned voice speaks */}
-        <blockquote
-          className="w-full rounded-lg border border-input p-3 text-left text-muted-foreground text-sm"
-          data-testid="demo-clone-script"
-          lang={speaker.languageCode}
-        >
-          &ldquo;{getDemoCloneTranscript(speaker.script)}&rdquo;
-        </blockquote>
-
-        {/* Result */}
-        {resultRevealed ? (
-          <div
-            className="flex w-fit flex-col items-center gap-2 rounded-lg border bg-muted/30 p-4"
-            data-speaker-id={speaker.id}
-            data-testid="demo-clone-result"
+      <fieldset
+        className="mt-6 flex flex-wrap gap-3 border-0 p-0"
+        disabled={applying}
+      >
+        <legend className="mb-3 text-muted-foreground text-xs">
+          {labels.pickSpeaker}
+        </legend>
+        {demoCloneSpeakers.map((option) => (
+          <label
+            className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-input p-2.5 has-checked:border-primary has-checked:bg-accent/50 has-focus-visible:ring-2 has-focus-visible:ring-ring"
+            data-testid={`demo-clone-speaker-${option.id}`}
+            key={option.id}
           >
-            <p className="text-muted-foreground text-sm">
-              {labels.resultLabel}
-            </p>
-            <AudioPlayerWithContext
-              key={`result-${speaker.id}-${retryNonce}`}
-              onControlsReady={(controls) => {
-                resultControls.current = controls;
-              }}
-              onError={() => setHasAudioError(true)}
-              onPlaybackStart={stopReference}
-              playAudioTitle={labels.playAudio}
-              progressColor="#8b5cf6"
-              showWaveform
-              url={speaker.result.src}
-              waveColor="#888888"
+            <input
+              checked={option.id === speakerId}
+              className="sr-only"
+              name="demo-clone-speaker"
+              onChange={() => switchSpeaker(option.id)}
+              type="radio"
+              value={option.id}
             />
-          </div>
-        ) : (
+            <Image
+              alt=""
+              className="size-10 rounded-full object-cover outline outline-black/10 dark:outline-white/10"
+              height={40}
+              src={option.image}
+              unoptimized
+              width={40}
+            />
+            <span className="grid gap-0.5">
+              <span className="font-medium text-sm">{option.name}</span>
+              <span className="text-muted-foreground text-xs">
+                {languageLabels[option.languageCode]}
+              </span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+
+      <fieldset className="mt-5 border-0 p-0" disabled={applying}>
+        <legend className="mb-3 text-muted-foreground text-xs">
+          {labels.deliveryLabel}
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {speaker.takes.map((option) => (
+            <label
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-input px-4 py-2.5 text-sm has-checked:border-primary has-checked:bg-accent has-checked:text-foreground has-focus-visible:ring-2 has-focus-visible:ring-ring"
+              key={option.id}
+            >
+              <input
+                checked={option.id === takeId}
+                className="sr-only"
+                name="demo-clone-take"
+                onChange={() => switchTake(option.id)}
+                type="radio"
+                value={option.id}
+              />
+              {labels[option.id]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <blockquote
+        className="my-6 text-pretty text-xl leading-8 tracking-tight"
+        data-testid="demo-clone-script"
+        lang={speaker.languageCode}
+      >
+        &ldquo;{speaker.script}&rdquo;
+      </blockquote>
+
+      <div
+        className="space-y-4 border-input border-y py-5"
+        data-speaker-id={speaker.id}
+        data-take-id={take.id}
+        data-testid="demo-clone-result"
+      >
+        {/* A single native player prevents overlapping reference and result audio. */}
+        {/* biome-ignore lint/a11y/useMediaCaption: The take transcript is displayed above the player; this element also plays a separate reference recording. */}
+        <audio
+          onEnded={() => setPlayback('idle')}
+          onError={() => setPlayback('error')}
+          onPause={() =>
+            setPlayback((state) => (state === 'error' ? state : 'idle'))
+          }
+          onPlaying={() => setPlayback('playing')}
+          onTimeUpdate={() =>
+            setCurrentTime(audioRef.current?.currentTime ?? 0)
+          }
+          onWaiting={() => {
+            if (!audioRef.current?.paused) setPlayback('loading');
+          }}
+          preload="metadata"
+          ref={audioRef}
+          src={clip.src}
+        />
+        <div className="flex items-center gap-4">
           <Button
-            className="hit-area-4 w-full bg-blue-600 hover:bg-blue-700"
-            data-testid="demo-clone-reveal"
-            effect="ringHover"
-            onClick={() => setResultRevealed(true)}
-            size="lg"
+            aria-label={playButtonLabel}
+            className="size-12 shrink-0 rounded-full"
+            data-testid="demo-clone-play"
+            onClick={() =>
+              playback === 'playing' || playback === 'loading'
+                ? pause()
+                : play()
+            }
+            type="button"
           >
-            {labels.hearResult}
+            <PlayIcon
+              className={
+                playback === 'loading'
+                  ? 'size-5 animate-spin motion-reduce:animate-none'
+                  : 'size-5'
+              }
+            />
+          </Button>
+          <div aria-live="polite" className="min-w-0 flex-1">
+            <p className="font-medium text-sm">
+              {source === 'reference' ? labels.originalVoice : labels[take.id]}
+            </p>
+            <p className="mt-0.5 text-muted-foreground text-xs">
+              {speaker.name} · {languageLabels[speaker.languageCode]} ·{' '}
+              {source === 'reference'
+                ? labels.originalVoice
+                : labels.clonedVoice}
+            </p>
+          </div>
+          <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
+            {formatTime(currentTime)} / {formatTime(clip.durationSeconds)}
+          </span>
+        </div>
+        <input
+          aria-label={labels.seek}
+          className="h-5 w-full accent-primary"
+          max={clip.durationSeconds}
+          min={0}
+          onChange={(event) => {
+            if (audioRef.current)
+              audioRef.current.currentTime = Number(event.target.value);
+            setCurrentTime(Number(event.target.value));
+          }}
+          step={0.01}
+          type="range"
+          value={Math.min(currentTime, clip.durationSeconds)}
+        />
+      </div>
+
+      {playback === 'error' && (
+        <div
+          className="mt-4 flex flex-wrap items-center gap-2 text-destructive text-sm"
+          role="alert"
+        >
+          <AlertCircle className="size-4 shrink-0" />
+          <span>{labels.audioError}</span>
+          <Button
+            onClick={async () => {
+              audioRef.current?.load();
+              await play();
+            }}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <RotateCcw className="size-3.5" />
+            {labels.retry}
+          </Button>
+        </div>
+      )}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <Button
+          className="min-h-11 px-0 text-muted-foreground"
+          onClick={switchReference}
+          type="button"
+          variant="link"
+        >
+          <Headphones className="size-4" />
+          {source === 'reference' ? labels.backToClone : labels.hearOriginal}
+        </Button>
+        {onTryVoice ? (
+          <Button
+            className="min-h-11"
+            data-testid="demo-clone-try"
+            disabled={applying}
+            onClick={() => {
+              stop();
+              onTryVoice(speaker.id, take.id);
+            }}
+            type="button"
+          >
+            {applying && (
+              <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" />
+            )}
+            {labels.tryVoice}
+          </Button>
+        ) : (
+          <Button asChild className="min-h-11">
+            <Link
+              data-testid="demo-clone-try"
+              href={{
+                pathname: '/dashboard/clone',
+                query: { demo: speaker.id, take: take.id },
+              }}
+            >
+              {labels.tryVoice}
+            </Link>
           </Button>
         )}
-
-        {hasAudioError && (
-          <div
-            className="flex items-center gap-3 text-destructive text-sm"
-            role="alert"
-          >
-            <AlertCircle className="size-4 shrink-0" />
-            <span>{labels.audioError}</span>
-            <Button onClick={handleRetry} size="sm" variant="outline">
-              {labels.retry}
-            </Button>
-          </div>
-        )}
-
-        <p className="text-balance text-center text-muted-foreground text-xs">
-          {labels.preparedExamplesCaption}
-        </p>
       </div>
-    </AudioProvider>
+      <details className="mt-4 text-sm">
+        <summary className="cursor-pointer py-2 text-muted-foreground">
+          {labels.showPrompt}
+        </summary>
+        <pre
+          className="mt-2 whitespace-pre-wrap break-words rounded-lg bg-muted p-3 font-mono text-xs leading-6"
+          data-testid="demo-clone-prompt"
+          lang={speaker.languageCode}
+        >
+          {take.prompt}
+        </pre>
+      </details>
+      <p className="mt-4 text-pretty text-muted-foreground text-xs">
+        {labels.preparedExamplesCaption}
+      </p>
+    </div>
   );
 }

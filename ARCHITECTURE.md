@@ -74,7 +74,7 @@ The repository has three main workspaces:
 | Dashboard and API TTS    | `gpro31`                          | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
 | Dashboard and API TTS    | `xai`                             | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
 | Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
-| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual     | See the cloning locale table below                                        |
+| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
 | Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
 | Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
@@ -221,7 +221,7 @@ flowchart TD
 
 | Locale group            | Locales                                                                                        | Model                                 | Provider  |
 | ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
-| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
+| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-3-0`                | Mistral   |
 | Chatterbox Multilingual | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
@@ -244,6 +244,46 @@ analytics; it does not perform billing or schedule an Inngest cleanup job.
 bounded retries through `fetchWithRetry`. If the lookup fails, it emits one
 Sentry warning and the route records an estimated cost instead. Retry limits
 live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline.
+
+### Tagged speech editing
+
+`apps/web/components/tts-editor.tsx` shares the Tiptap editor between Grok speech
+and Voxtral cloning. The provider selects its tag catalog, autocomplete, and
+unsupported-tag highlighting. Grok supports instant tags and paired wrappers;
+Voxtral supports 34 emotion tags, pace tags, and the documented vocal sounds in
+`apps/web/lib/voxtral-tags.ts`. Voxtral tags apply to the following text without
+a closing tag. The clone form uses a textarea for Chatterbox locales.
+
+`apps/web/lib/tts-editor.ts` parses and serializes provider tags as plain text.
+Copying preserves tag syntax and line breaks; unknown tags remain literal text.
+The API receives the text unchanged. Tag characters count toward the existing
+text limits. Mistral documents tag behavior as tested in English; its other
+listed languages are untested.
+
+### Prepared cloning demos
+
+The public cloning page and dashboard use the same `DemoClonePlayer`: Kat in
+English and Heike in German, each with Natural, Sarcastic, and Calm & slow takes
+of one sentence. `apps/web/data/clone-demo-config.ts` defines the sentences and
+tags. All six takes were generated with `voxtral-mini-tts-3-0` using the same
+12-second reference per voice. References and results are bundled under
+`apps/web/public/demo-clones/voxtral-3/`; playback makes no generation request.
+`clone-demo-assets.json` records durations, hashes, latency, and estimated cost.
+See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
+asset workflow.
+
+The player uses one native audio element for the selected take or original
+recording. Changing voice or delivery stops playback. The prompt is available
+in a disclosure. Applying a demo loads its reference, tagged sentence, and
+language into the cloning form. Consent and generation require explicit user
+actions. Reference downloads do not replace a file or recording the user has
+selected while the download was pending.
+
+The landing CTA carries `demo` and `take` into `/[lang]/dashboard/clone`.
+`apps/web/lib/clone/demo-redirect.ts` allows only the six known selections through
+login, signup, OAuth, and email confirmation. Other signup redirects use the
+default callback. The public cloning page follows the preview gate in
+`apps/web/lib/features.ts`.
 
 ## Real-time AI Voice Calls
 

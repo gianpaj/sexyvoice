@@ -20,11 +20,15 @@ const {
   fetchMock,
   mockEnsureLoaded,
   mockFFmpegState,
+  mockAddFiles,
+  mockUpload,
   mockLanguageSelect,
   mockToastError,
   mockToastSuccess,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
+  mockAddFiles: vi.fn(),
+  mockUpload: { files: [] as { file: File; id: string }[] },
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
   mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
@@ -84,16 +88,11 @@ vi.mock('@/hooks/use-file-upload', () => ({
   useFileUpload: () => [
     {
       errors: [],
-      files: [
-        {
-          file: selectedFile,
-          id: 'selected-file',
-        },
-      ],
+      files: mockUpload.files,
       isDragging: false,
     },
     {
-      addFiles: vi.fn(),
+      addFiles: mockAddFiles,
       clearErrors: vi.fn(),
       getInputProps: vi.fn(() => ({})),
       handleDragEnter: vi.fn(),
@@ -232,6 +231,10 @@ const renderClone = (
   props: {
     cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
+    initialDemo?: {
+      speakerId: string;
+      takeId: 'natural' | 'sarcastic' | 'calmSlow';
+    };
     lang?: Locale;
     userHasPaid?: boolean;
   } = {},
@@ -242,10 +245,14 @@ const renderClone = (
       messages={{
         clone: props.cloneMessages ?? dict,
         errorCodes: errorCodesDict,
+        generate: enMessages.generate,
+        landing: enMessages.landing,
+        ttsEditor: enMessages.ttsEditor,
       }}
     >
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
+        initialDemo={props.initialDemo}
         lang={props.lang ?? 'en'}
         userHasPaid={props.userHasPaid ?? false}
       />
@@ -263,6 +270,7 @@ describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;
+    mockUpload.files = [{ file: selectedFile, id: 'selected-file' }];
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
@@ -281,11 +289,46 @@ describe('NewVoiceClient', () => {
     vi.unstubAllGlobals();
   });
 
+  it('loads a selected demo reference and tagged sentence without generating', async () => {
+    mockUpload.files = [];
+    fetchMock.mockResolvedValue(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { 'content-type': 'audio/mpeg' },
+      }),
+    );
+    renderClone({ initialDemo: { speakerId: 'heike', takeId: 'calmSlow' } });
+    const input = await screen.findByTestId('clone-text-input');
+    expect(input).toHaveTextContent(
+      'Ach, da bist du ja genau im richtigen Moment.',
+    );
+    await waitFor(() => expect(mockAddFiles).toHaveBeenCalledOnce());
+    const [file] = mockAddFiles.mock.calls[0][0] as File[];
+    expect(file.name).toBe('heike-reference.mp3');
+    expect(file.type).toBe('audio/mpeg');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      '/demo-clones/voxtral-3/heike-reference.mp3',
+    );
+    expect(screen.getByTestId('clone-legal-consent')).not.toBeChecked();
+  });
+
+  it('keeps a user reference when a demo download completes', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { 'content-type': 'audio/mpeg' },
+      }),
+    );
+    renderClone({ initialDemo: { speakerId: 'kat', takeId: 'sarcastic' } });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await act(async () => {});
+    expect(mockAddFiles).not.toHaveBeenCalled();
+  });
+
   it('updates text direction without clearing text when switching languages', async () => {
     const user = userEvent.setup();
     renderClone();
 
-    const input = screen.getByTestId('clone-text-input');
+    const input = await screen.findByTestId('clone-text-input');
     const text = 'Keep this text when switching languages.';
     await user.type(input, text);
     expect(input).toHaveAttribute('dir', 'ltr');
@@ -297,11 +340,16 @@ describe('NewVoiceClient', () => {
           type: 'patch',
         });
       });
-      expect(input).toHaveAttribute(
+      const currentInput = await screen.findByTestId('clone-text-input');
+      expect(currentInput).toHaveAttribute(
         'dir',
         code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
       );
-      expect(input).toHaveValue(text);
+      if (currentInput instanceof HTMLTextAreaElement) {
+        expect(currentInput).toHaveValue(text);
+      } else {
+        expect(currentInput).toHaveTextContent(text);
+      }
     }
 
     act(() => {
@@ -310,8 +358,9 @@ describe('NewVoiceClient', () => {
         type: 'patch',
       });
     });
-    expect(input).toHaveAttribute('dir', 'ltr');
-    expect(input).toHaveValue(text);
+    const currentInput = await screen.findByTestId('clone-text-input');
+    expect(currentInput).toHaveAttribute('dir', 'ltr');
+    expect(currentInput).toHaveTextContent(text);
   });
 
   it.each([['fr', 'Français']])(
@@ -450,7 +499,7 @@ describe('NewVoiceClient', () => {
     renderClone();
 
     await user.type(
-      screen.getByLabelText(dict.textToConvertLabel),
+      await screen.findByLabelText(dict.textToConvertLabel),
       'Hello world',
     );
     await user.click(
@@ -503,7 +552,7 @@ describe('NewVoiceClient', () => {
       renderClone();
 
       await user.type(
-        screen.getByLabelText(dict.textToConvertLabel),
+        await screen.findByLabelText(dict.textToConvertLabel),
         'Hello world',
       );
       await user.click(
@@ -547,7 +596,7 @@ describe('NewVoiceClient', () => {
     renderClone();
 
     await user.type(
-      screen.getByLabelText(dict.textToConvertLabel),
+      await screen.findByLabelText(dict.textToConvertLabel),
       'Hello world',
     );
     await user.click(

@@ -19,6 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import {
@@ -33,6 +34,7 @@ import {
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
 import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
@@ -141,19 +143,27 @@ function PreviewTabContent({
 
 // ─── Public wrapper ───────────────────────────────────────────────────────────
 
+interface InitialDemo {
+  speakerId: string;
+  takeId: CloneDemoTakeId;
+}
+
 export default function NewVoiceClient({
   lang,
   hasEnoughCredits,
   userHasPaid,
+  initialDemo,
 }: {
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
+  initialDemo?: InitialDemo;
 }) {
   return (
     <AudioProvider>
       <NewVoiceClientInner
         hasEnoughCredits={hasEnoughCredits}
+        initialDemo={initialDemo}
         lang={lang}
         userHasPaid={userHasPaid}
       />
@@ -165,13 +175,16 @@ function NewVoiceClientInner({
   lang,
   hasEnoughCredits,
   userHasPaid,
+  initialDemo,
 }: {
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
+  initialDemo?: InitialDemo;
 }) {
   const t = useTranslations('clone');
   const translateErrorCode = useTranslations('errorCodes');
+  const demoLabels = useTranslations('landing.demoClone');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -179,7 +192,20 @@ function NewVoiceClientInner({
   } = useFFmpeg({ lazyLoad: true });
   const [cloneState, dispatch] = useReducer(
     cloneStateReducer,
-    initialCloneState,
+    initialDemo,
+    (demo) => {
+      const selection = getDemoCloneSelection(
+        demo?.speakerId ?? null,
+        demo?.takeId ?? null,
+      );
+      return selection
+        ? {
+            ...initialCloneState,
+            selectedLocaleCode: selection.speaker.languageCode,
+            text: selection.take.prompt,
+          }
+        : initialCloneState;
+    },
   );
   const {
     activeTab,
@@ -312,6 +338,32 @@ function NewVoiceClientInner({
   const { clearErrors } = fileActions;
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
+
+  const applyInitialReference = useEffectEvent((reference: File) => {
+    if (!(file || micBlob || micRecording)) fileActions.addFiles([reference]);
+  });
+  const reportInitialReferenceError = useEffectEvent(() => {
+    dispatch({
+      patch: { errorMessage: demoLabels('audioError') },
+      type: 'patch',
+    });
+  });
+  useEffect(() => {
+    const selection = getDemoCloneSelection(
+      initialDemo?.speakerId ?? null,
+      initialDemo?.takeId ?? null,
+    );
+    if (!selection) return;
+    const controller = new AbortController();
+    loadDemoCloneReference(selection.speaker, controller.signal)
+      .then((reference) => {
+        if (!controller.signal.aborted) applyInitialReference(reference);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) reportInitialReferenceError();
+      });
+    return () => controller.abort();
+  }, [initialDemo?.speakerId, initialDemo?.takeId]);
 
   // Clear custom error message when file upload errors change
   useEffect(() => {
@@ -548,7 +600,7 @@ function NewVoiceClientInner({
   const onSelectSample = (sample: SampleAudio) => {
     dispatch({
       patch: {
-        selectedLocaleCode: 'en',
+        selectedLocaleCode: sample.locale,
         text: sample.prompt,
       },
       type: 'patch',

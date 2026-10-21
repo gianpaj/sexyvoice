@@ -1,109 +1,146 @@
 import { expect, test } from '@playwright/test';
 
-/**
- * Each speaker owns its prepared clip; nothing is generated. These tests assert
- * on `data-speaker-id` rather than on playback, so they stay valid whether or
- * not the R2 audio objects exist yet.
- */
-
 const RESULT = '[data-testid="demo-clone-result"]';
 
-test.describe('Voice cloning demo landing page', () => {
-  test('is reachable logged out and reveals the prepared clip', async ({
+test.describe('Hear the difference', () => {
+  test('offers two voices and three prepared takes immediately', async ({
     page,
   }) => {
     await page.goto('/en/voice-cloning');
-
-    // The result only exists once revealed.
-    await expect(page.locator(RESULT)).toHaveCount(0);
-
-    await page.getByTestId('demo-clone-reveal').click();
-
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-speaker-id',
-      'kat',
-    );
-  });
-
-  test('swaps the clip and the script when the speaker changes', async ({
-    page,
-  }) => {
-    await page.goto('/en/voice-cloning');
-    await page.getByTestId('demo-clone-reveal').click();
-
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-speaker-id',
-      'kat',
-    );
-    await expect(page.getByTestId('demo-clone-script')).toContainText(
-      'Downtown Drugstore',
-    );
-
-    await page.getByTestId('demo-clone-speaker-heike').click();
-
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-speaker-id',
-      'heike',
-    );
-    await expect(page.getByTestId('demo-clone-script')).toContainText(
-      'Der Kasse gleich rechts',
-    );
-  });
-
-  test('keeps the reveal button until it is pressed', async ({ page }) => {
-    await page.goto('/en/voice-cloning');
-
-    const reveal = page.getByTestId('demo-clone-reveal');
-    await expect(reveal).toBeVisible();
-
-    await page.getByTestId('demo-clone-speaker-heike').click();
-    await expect(reveal).toBeVisible();
-
-    await reveal.click();
-    await expect(reveal).toHaveCount(0);
-    await expect(page.locator(RESULT)).toHaveAttribute(
-      'data-speaker-id',
-      'heike',
-    );
-  });
-
-  test('pre-selects the speaker whose language the page locale matches', async ({
-    page,
-  }) => {
-    await page.goto('/de/voice-cloning');
-
     await expect(
-      page.locator('input[name="demo-clone-speaker"][value="heike"]'),
-    ).toBeChecked();
-  });
-
-  test('falls back to the English speaker for an uncovered locale', async ({
-    page,
-  }) => {
-    await page.goto('/fr/voice-cloning');
-
-    await expect(
-      page.locator('input[name="demo-clone-speaker"][value="kat"]'),
-    ).toBeChecked();
-  });
-
-  test('never shows the raw TTS directives', async ({ page }) => {
-    await page.goto('/en/voice-cloning');
-
-    await expect(page.getByTestId('demo-clone-script')).not.toContainText('[');
-  });
-
-  test('never offers to generate or upload', async ({ page }) => {
-    await page.goto('/en/voice-cloning');
-
-    // Honesty constraints from the design doc: no upload control, and the CTA
-    // must not imply the visitor's selections produced the audio.
-    await expect(page.locator('input[type="file"]')).toHaveCount(0);
-    await expect(page.getByTestId('demo-clone-reveal')).toHaveText(
-      'Hear the result',
-    );
-    await expect(
-      page.getByText('Prepared examples. Sign up to clone your own voice.'),
+      page.getByRole('heading', { name: 'Hear the difference' }),
     ).toBeVisible();
+    await expect(page.locator('input[name="demo-clone-speaker"]')).toHaveCount(
+      2,
+    );
+    await expect(page.locator('input[name="demo-clone-take"]')).toHaveCount(3);
+    await expect(page.locator(RESULT)).toHaveAttribute(
+      'data-take-id',
+      'natural',
+    );
+    await expect(page.locator('audio')).toHaveJSProperty('paused', true);
+  });
+
+  test('plays all six local clips and stops when changing selection', async ({
+    page,
+  }) => {
+    const generationRequests: string[] = [];
+    page.on('request', (request) => {
+      if (
+        request.method() === 'POST' &&
+        /clone-voice|audio\/speech/.test(request.url())
+      )
+        generationRequests.push(request.url());
+    });
+    await page.goto('/en/voice-cloning');
+    for (const speaker of ['kat', 'heike']) {
+      await page.getByTestId(`demo-clone-speaker-${speaker}`).click();
+      const sentence = await page
+        .getByTestId('demo-clone-script')
+        .textContent();
+      for (const take of ['natural', 'sarcastic', 'calmSlow']) {
+        await page
+          .locator(`input[name="demo-clone-take"][value="${take}"]`)
+          .check({ force: true });
+        await expect(page.locator('audio')).toHaveJSProperty('paused', true);
+        await expect(page.locator('audio')).toHaveAttribute(
+          'src',
+          `/demo-clones/voxtral-3/${speaker}-${take}.mp3`,
+        );
+        await expect(page.getByTestId('demo-clone-script')).toHaveText(
+          sentence!,
+        );
+        await page.getByTestId('demo-clone-play').click();
+        await expect(page.locator('audio')).toHaveJSProperty('paused', false);
+        await expect
+          .poll(() =>
+            page
+              .locator('audio')
+              .evaluate((audio: HTMLAudioElement) => audio.currentTime),
+          )
+          .toBeGreaterThan(0);
+      }
+    }
+    expect(generationRequests).toEqual([]);
+  });
+
+  test('uses one player for the original recording and selected clone', async ({
+    page,
+  }) => {
+    await page.goto('/en/voice-cloning');
+    await page.getByText('Calm & slow', { exact: true }).click();
+    await page.getByRole('button', { name: 'Hear the original' }).click();
+    await expect(page.locator('audio')).toHaveCount(1);
+    await expect(page.locator('audio')).toHaveAttribute(
+      'src',
+      '/demo-clones/voxtral-3/kat-reference.mp3',
+    );
+    await expect(page.locator('audio')).toHaveJSProperty('paused', false);
+    await page.getByRole('button', { name: 'Back to the clone' }).click();
+    await expect(page.locator('audio')).toHaveAttribute(
+      'src',
+      '/demo-clones/voxtral-3/kat-calmSlow.mp3',
+    );
+  });
+
+  test('keeps tags in a disclosure and carries the selected take through login and signup', async ({
+    page,
+  }) => {
+    await page.goto('/en/voice-cloning');
+    await page.getByTestId('demo-clone-speaker-heike').click();
+    await page.getByText('Calm & slow', { exact: true }).click();
+    await expect(page.getByTestId('demo-clone-script')).not.toContainText('[');
+    await expect(page.getByTestId('demo-clone-prompt')).not.toBeVisible();
+    await page.getByText('See the prompt', { exact: true }).click();
+    await expect(page.getByTestId('demo-clone-prompt')).toContainText(
+      '[emotion=calm][pace=slow]',
+    );
+    await page.getByTestId('demo-clone-try').click();
+    await expect(page).toHaveURL(/\/en\/login\?redirect_to=/);
+    expect(new URL(page.url()).searchParams.get('redirect_to')).toBe(
+      '/en/dashboard/clone?demo=heike&take=calmSlow',
+    );
+    await page
+      .getByRole('navigation')
+      .getByRole('link', { name: 'Sign up', exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/en\/signup\?redirect_to=/);
+    expect(new URL(page.url()).searchParams.get('redirect_to')).toBe(
+      '/en/dashboard/clone?demo=heike&take=calmSlow',
+    );
+  });
+
+  test('preselects German for German visitors and English for uncovered locales', async ({
+    page,
+  }) => {
+    for (const [locale, speaker] of [
+      ['de', 'heike'],
+      ['fr', 'kat'],
+    ]) {
+      await page.goto(`/${locale}/voice-cloning`);
+      await expect(
+        page.locator(`input[name="demo-clone-speaker"][value="${speaker}"]`),
+      ).toBeChecked();
+    }
+  });
+
+  test('fits a mobile screen and supports keyboard selection', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/en/voice-cloning');
+    const natural = page.locator(
+      'input[name="demo-clone-take"][value="natural"]',
+    );
+    await natural.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(
+      page.locator('input[name="demo-clone-take"][value="sarcastic"]'),
+    ).toBeChecked();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
   });
 });

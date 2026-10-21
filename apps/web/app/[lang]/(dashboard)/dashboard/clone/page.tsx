@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
+import { getDemoCloneSelection } from '@/data/demo-clone';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -15,8 +16,19 @@ export const generateMetadata = createDashboardMetadata('/dashboard/clone');
 
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
+  searchParams?: Promise<{
+    demo?: string | string[];
+    take?: string | string[];
+  }>;
 }) {
-  const { lang } = await props.params;
+  const [{ lang }, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams ?? Promise.resolve({ demo: undefined, take: undefined }),
+  ]);
+  const selection = getDemoCloneSelection(
+    typeof searchParams.demo === 'string' ? searchParams.demo : null,
+    typeof searchParams.take === 'string' ? searchParams.take : null,
+  );
   const supabase = await createClient();
   const [t, tProfile] = await Promise.all([
     getTranslations('clone'),
@@ -61,6 +73,11 @@ export default async function NewVoicePage(props: {
       ) : (
         <NewVoiceClient
           hasEnoughCredits={creditBalance >= 10}
+          initialDemo={
+            selection
+              ? { speakerId: selection.speaker.id, takeId: selection.take.id }
+              : undefined
+          }
           lang={lang}
           userHasPaid={userHasPaid}
         />

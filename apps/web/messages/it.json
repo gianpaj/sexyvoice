@@ -105,12 +105,24 @@
       "pickCharacter": "Scegli un personaggio"
     },
     "demoClone": {
+      "title": "Senti la differenza",
+      "subtitle": "Due voci. Una frase ciascuna. Tre modi di dirla.",
       "pickSpeaker": "Scegli una voce",
-      "referenceLabel": "Audio di riferimento",
-      "resultLabel": "Voce clonata",
-      "hearResult": "Ascolta il risultato",
+      "deliveryLabel": "Scegli lo stile",
+      "natural": "Naturale",
+      "sarcastic": "Sarcastico",
+      "calmSlow": "Calmo e lento",
       "playAudio": "Riproduci audio",
-      "preparedExamplesCaption": "Esempi preparati. Registrati per clonare la tua voce.",
+      "pauseAudio": "Metti in pausa",
+      "loading": "Caricamento audio",
+      "clonedVoice": "Voce clonata",
+      "originalVoice": "Registrazione originale",
+      "hearOriginal": "Ascolta l’originale",
+      "backToClone": "Torna al clone",
+      "tryVoice": "Usa questo stile",
+      "showPrompt": "Vedi il testo con i tag",
+      "seek": "Posizione audio",
+      "preparedExamplesCaption": "Esempi preparati. Ascoltare è gratis; la generazione usa crediti.",
       "audioError": "Impossibile caricare questo audio.",
       "retry": "Riprova"
     },
@@ -1217,5 +1229,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Gli indirizzi email temporanei non sono consentiti",
     "AUTH_PROVIDER_RATELIMIT": "Per motivi di sicurezza, puoi richiedere questo solo dopo {time} secondi.",
     "PROVIDER_UNAVAILABLE": "{provider} non è disponibile al momento. Riprova."
+  },
+  "ttsEditor": {
+    "label": "Testo da leggere",
+    "effects": "Effetti vocali",
+    "emotions": "Emozioni",
+    "pace": "Ritmo",
+    "vocalSounds": "Suoni vocali"
   }
 }

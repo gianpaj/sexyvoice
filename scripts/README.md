@@ -28,6 +28,35 @@ The dashboard model is selected by `VOXTRAL_MODEL` in
 `apps/web/app/api/clone-voice/route.ts`. Its cache key and provider cost use the
 selected model. Customer credit rates stay unchanged.
 
+## Generate prepared cloning demos
+
+The sentences, voices, and three deliveries live in
+`apps/web/data/clone-demo-config.ts`. The reference inputs are the existing R2
+objects `clone-demos/kat-reference.mp3` and `clone-demos/heike-reference.mp3`.
+Download authorized copies as `kat-reference.mp3` and `heike-reference.mp3` into
+a local directory before running:
+
+```bash
+pnpm --filter @sexyvoice/scripts exec node \
+  --disable-warning=MODULE_TYPELESS_PACKAGE_JSON generate-clone-demos.mts \
+  --reference-dir /absolute/path/references \
+  --output-dir /absolute/path/new-demo-run
+```
+
+Requires `MISTRAL_API_KEY`, `ffmpeg`, and `ffprobe`. Optional `--env-file` flags
+load explicit environment files. Each voice uses a single reference trimmed to
+12 seconds, mono, 24 kHz WAV. The script requests three WAV takes from Mistral
+and retains the WAVs. References and results are also encoded as 128 kbps MP3
+with the same loudness normalization target of -16 LUFS.
+
+`generation.json` records input hashes, prompts, full-response latency,
+estimated provider cost, output durations, and MP3 hashes. Review the clips and
+confirm that each take speaks the complete sentence before publishing assets.
+The script does not upload files or change database rows. Copy the eight MP3s
+to `apps/web/public/demo-clones/voxtral-3/` and the report to
+`apps/web/data/clone-demo-assets.json` together. The web tests check asset hashes
+and prompt consistency. Keep raw WAVs in the run directory.
+
 ## Restore account billing
 
 Account deletion blocks checkout during cleanup and releases its block when the

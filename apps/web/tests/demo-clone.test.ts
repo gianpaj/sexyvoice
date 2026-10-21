@@ -1,29 +1,54 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
+import manifest from '@/data/clone-demo-assets.json';
 import {
   DEMO_FALLBACK_LANGUAGE,
   DEMO_LANGUAGE_CODES,
   demoCloneSpeakers,
+  getDemoCloneSelection,
   getDemoCloneSpeaker,
+  getDemoCloneTranscript,
   isDemoLanguageCode,
   resolveInitialDemoSpeakerId,
 } from '@/data/demo-clone';
+import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 
 const WEBSITE_LOCALES = ['en', 'es', 'de', 'da', 'it', 'fr'] as const;
 
 describe('demo clone speakers', () => {
-  it('gives every speaker a reference clip, a result clip, and a script', () => {
+  it('bundles two voices with three takes of one sentence each', () => {
+    expect(demoCloneSpeakers).toHaveLength(2);
     for (const speaker of demoCloneSpeakers) {
-      expect(speaker.reference.src).toMatch(/^https:\/\//);
-      expect(speaker.result.src).toMatch(/^https:\/\//);
-      expect(speaker.script.trim()).toBeTruthy();
+      expect(speaker.takes.map(({ id }) => id)).toEqual([
+        'natural',
+        'sarcastic',
+        'calmSlow',
+      ]);
+      for (const take of speaker.takes) {
+        expect(getDemoCloneTranscript(take.prompt)).toBe(speaker.script);
+      }
+      expect(speaker.takes[2].prompt).toContain('[emotion=calm][pace=slow]');
     }
   });
 
-  it('gives every clip a positive duration', () => {
+  it('ships every audio clip with verified duration and content hashes', () => {
     for (const speaker of demoCloneSpeakers) {
-      expect(speaker.reference.durationSeconds).toBeGreaterThan(0);
-      expect(speaker.result.durationSeconds).toBeGreaterThan(0);
+      for (const clip of [speaker.reference, ...speaker.takes]) {
+        expect(clip.src).toMatch(/^\/demo-clones\/voxtral-3\//);
+        const filename = clip.src
+          .split('/')
+          .pop() as keyof typeof manifest.assets;
+        const asset = manifest.assets[filename];
+        expect(clip.durationSeconds).toBe(asset.durationSeconds);
+        expect(clip.durationSeconds).toBeGreaterThan(0);
+        const bytes = readFileSync(resolve('public', clip.src.slice(1)));
+        expect(createHash('sha256').update(bytes).digest('hex')).toBe(
+          asset.sha256,
+        );
+      }
     }
   });
 
@@ -90,5 +115,39 @@ describe('isDemoLanguageCode', () => {
     }
 
     expect(isDemoLanguageCode('zz')).toBe(false);
+  });
+});
+
+describe('demo handoff', () => {
+  it('resolves only complete known selections', () => {
+    expect(getDemoCloneSelection('heike', 'calmSlow')?.take.prompt).toContain(
+      '[pace=slow]',
+    );
+    expect(getDemoCloneSelection('unknown', 'natural')).toBeNull();
+    expect(getDemoCloneSelection('kat', 'angry')).toBeNull();
+    expect(getDemoCloneSelection('kat', null)).toBeNull();
+  });
+
+  it('keeps only allowlisted demo paths through signup', () => {
+    for (const locale of WEBSITE_LOCALES) {
+      expect(
+        getCloneDemoRedirect(
+          `/${locale}/dashboard/clone?take=calmSlow&demo=heike&other=ignored`,
+        ),
+      ).toBe(`/${locale}/dashboard/clone?demo=heike&take=calmSlow`);
+    }
+    for (const path of [
+      'https://evil.com/en/dashboard/clone?demo=kat&take=natural',
+      '//evil.com/en/dashboard/clone?demo=kat&take=natural',
+      '/en/\\evil.com?demo=kat&take=natural',
+      '/en/dashboard/generate?demo=kat&take=natural',
+      '/en/dashboard/clone?demo=bad&take=natural',
+      '/en/dashboard/clone?demo=kat',
+      '/xx/dashboard/clone?demo=kat&take=natural',
+      '/en/dashboard/clone?demo=kat&take=natural#fragment',
+      null,
+    ]) {
+      expect(getCloneDemoRedirect(path)).toBeNull();
+    }
   });
 });

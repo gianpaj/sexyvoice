@@ -105,12 +105,24 @@
       "pickCharacter": "Pick a character"
     },
     "demoClone": {
+      "title": "Hear the difference",
+      "subtitle": "Two voices. One sentence each. Three ways to say it.",
       "pickSpeaker": "Pick a voice",
-      "referenceLabel": "Reference audio",
-      "resultLabel": "Cloned voice",
-      "hearResult": "Hear the result",
+      "deliveryLabel": "Choose a delivery",
+      "natural": "Natural",
+      "sarcastic": "Sarcastic",
+      "calmSlow": "Calm & slow",
       "playAudio": "Play audio",
-      "preparedExamplesCaption": "Prepared examples. Sign up to clone your own voice.",
+      "pauseAudio": "Pause audio",
+      "loading": "Loading audio",
+      "clonedVoice": "Cloned voice",
+      "originalVoice": "Original recording",
+      "hearOriginal": "Hear the original",
+      "backToClone": "Back to the clone",
+      "tryVoice": "Use this delivery",
+      "showPrompt": "See the prompt",
+      "seek": "Audio position",
+      "preparedExamplesCaption": "Prepared examples. Listening is free; generation uses credits.",
       "audioError": "This audio could not be loaded.",
       "retry": "Try again"
     },
@@ -1215,5 +1227,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
     "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds.",
     "PROVIDER_UNAVAILABLE": "{provider} is temporarily unavailable. Please retry."
+  },
+  "ttsEditor": {
+    "label": "Speech text",
+    "effects": "Voice effects",
+    "emotions": "Emotions",
+    "pace": "Pace",
+    "vocalSounds": "Vocal sounds"
   }
 }

@@ -105,12 +105,24 @@
       "pickCharacter": "Choisissez un personnage"
     },
     "demoClone": {
+      "title": "Écoutez la différence",
+      "subtitle": "Deux voix. Une phrase chacune. Trois façons de la dire.",
       "pickSpeaker": "Choisissez une voix",
-      "referenceLabel": "Audio de référence",
-      "resultLabel": "Voix clonée",
-      "hearResult": "Écouter le résultat",
-      "playAudio": "Lire l'audio",
-      "preparedExamplesCaption": "Exemples préparés. Inscrivez-vous pour cloner votre propre voix.",
+      "deliveryLabel": "Choisissez une interprétation",
+      "natural": "Naturelle",
+      "sarcastic": "Sarcastique",
+      "calmSlow": "Calme et lente",
+      "playAudio": "Lire l’audio",
+      "pauseAudio": "Mettre en pause",
+      "loading": "Chargement de l’audio",
+      "clonedVoice": "Voix clonée",
+      "originalVoice": "Enregistrement original",
+      "hearOriginal": "Écouter l’original",
+      "backToClone": "Revenir au clone",
+      "tryVoice": "Utiliser cette interprétation",
+      "showPrompt": "Voir le texte avec les balises",
+      "seek": "Position de l’audio",
+      "preparedExamplesCaption": "Exemples préparés. L’écoute est gratuite ; la génération utilise des crédits.",
       "audioError": "Impossible de charger cet audio.",
       "retry": "Réessayer"
     },
@@ -1217,5 +1229,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
     "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes.",
     "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez."
+  },
+  "ttsEditor": {
+    "label": "Texte à lire",
+    "effects": "Effets vocaux",
+    "emotions": "Émotions",
+    "pace": "Rythme",
+    "vocalSounds": "Sons vocaux"
   }
 }

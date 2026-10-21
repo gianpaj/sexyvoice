@@ -105,13 +105,25 @@
       "pickCharacter": "Vælg en karakter"
     },
     "demoClone": {
+      "title": "Hør forskellen",
+      "subtitle": "To stemmer. Én sætning hver. Tre måder at sige den på.",
       "pickSpeaker": "Vælg en stemme",
-      "referenceLabel": "Referencelyd",
-      "resultLabel": "Klonet stemme",
-      "hearResult": "Hør resultatet",
+      "deliveryLabel": "Vælg en udtryksform",
+      "natural": "Naturlig",
+      "sarcastic": "Sarkastisk",
+      "calmSlow": "Rolig og langsom",
       "playAudio": "Afspil lyd",
-      "preparedExamplesCaption": "Forberedte eksempler. Tilmeld dig for at klone din egen stemme.",
-      "audioError": "Denne lyd kunne ikke indlæses.",
+      "pauseAudio": "Sæt lyd på pause",
+      "loading": "Indlæser lyd",
+      "clonedVoice": "Klonet stemme",
+      "originalVoice": "Original optagelse",
+      "hearOriginal": "Hør originalen",
+      "backToClone": "Tilbage til klonen",
+      "tryVoice": "Brug denne udtryksform",
+      "showPrompt": "Se teksten med tags",
+      "seek": "Lydposition",
+      "preparedExamplesCaption": "Forberedte eksempler. Det er gratis at lytte; generering bruger credits.",
+      "audioError": "Lyden kunne ikke indlæses.",
       "retry": "Prøv igen"
     },
     "features": {
@@ -1213,5 +1225,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Engangsmailadresser er ikke tilladt",
     "AUTH_PROVIDER_RATELIMIT": "Af sikkerhedsmæssige årsager kan du kun anmode om dette efter {time} sekunder.",
     "PROVIDER_UNAVAILABLE": "{provider} er midlertidigt utilgængelig. Prøv igen."
+  },
+  "ttsEditor": {
+    "label": "Taletekst",
+    "effects": "Stemmeeffekter",
+    "emotions": "Følelser",
+    "pace": "Tempo",
+    "vocalSounds": "Stemmelyde"
   }
 }

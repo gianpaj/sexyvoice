@@ -91,7 +91,7 @@ export class ClonePage {
     // Language selector — the combobox for language selection
     this.languageSelector = page.getByTestId('clone-language-select');
 
-    // Text input (textarea with placeholder)
+    // Voxtral uses a contenteditable editor; other providers use a textarea.
     this.textInput = page.getByTestId('clone-text-input');
     // Character count (e.g., "0 / 500")
     this.characterCount = page.getByTestId('clone-character-count');
@@ -154,11 +154,15 @@ export class ClonePage {
 
   /**
    * Enter text into the text input
-   * @param text - Text to type into the textarea
+   * @param text - Text to enter in the active provider's editor
    */
   async enterText(text: string) {
     await this.textInput.fill(text);
-    await expect(this.textInput).toHaveValue(text);
+    if (await this.textInput.getAttribute('contenteditable')) {
+      await expect(this.textInput).toHaveText(text);
+    } else {
+      await expect(this.textInput).toHaveValue(text);
+    }
     await this.textInput.blur();
   }
 

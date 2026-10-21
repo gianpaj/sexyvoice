@@ -105,12 +105,24 @@
       "pickCharacter": "Wähle einen Charakter"
     },
     "demoClone": {
-      "pickSpeaker": "Wähle eine Stimme",
-      "referenceLabel": "Referenz-Audio",
-      "resultLabel": "Geklonte Stimme",
-      "hearResult": "Ergebnis anhören",
+      "title": "Hör den Unterschied",
+      "subtitle": "Zwei Stimmen. Je ein Satz. Drei Arten, ihn zu sagen.",
+      "pickSpeaker": "Stimme auswählen",
+      "deliveryLabel": "Sprechweise auswählen",
+      "natural": "Natürlich",
+      "sarcastic": "Sarkastisch",
+      "calmSlow": "Ruhig & langsam",
       "playAudio": "Audio abspielen",
-      "preparedExamplesCaption": "Vorbereitete Beispiele. Registriere dich, um deine eigene Stimme zu klonen.",
+      "pauseAudio": "Audio pausieren",
+      "loading": "Audio wird geladen",
+      "clonedVoice": "Geklonte Stimme",
+      "originalVoice": "Originalaufnahme",
+      "hearOriginal": "Original anhören",
+      "backToClone": "Zurück zum Klon",
+      "tryVoice": "Diese Sprechweise verwenden",
+      "showPrompt": "Text mit Tags ansehen",
+      "seek": "Audioposition",
+      "preparedExamplesCaption": "Vorbereitete Beispiele. Anhören ist kostenlos; die Generierung verbraucht Credits.",
       "audioError": "Dieses Audio konnte nicht geladen werden.",
       "retry": "Erneut versuchen"
     },
@@ -1217,5 +1229,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
     "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
     "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
+  },
+  "ttsEditor": {
+    "label": "Sprechtext",
+    "effects": "Stimmeffekte",
+    "emotions": "Emotionen",
+    "pace": "Tempo",
+    "vocalSounds": "Stimmliche Laute"
   }
 }
