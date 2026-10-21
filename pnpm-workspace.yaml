@@ -16,6 +16,8 @@ minimumReleaseAgeExclude:
   - react-dom
   # Renovate security update: music-metadata@11.16.0
   - music-metadata@11.16.0
+  # Renovate security update: vite@7.3.7
+  - vite@7.3.7
 
 catalog:
   "@ai-sdk/react": "3.0.292"
@@ -56,7 +58,7 @@ overrides:
   "undici@>=4.5.0 <5.28.5": ">=5.28.5"
   "ultracite>zod": "4.3.6"
   "unbash>zod": "4.3.6"
-  "vite@>=7.0.0 <7.3.2": "7.3.6"
+  "vite@>=7.0.0 <7.3.2": "7.3.7"
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
