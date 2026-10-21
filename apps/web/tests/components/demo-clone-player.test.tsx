@@ -8,10 +8,17 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import WavesurferPlayer from '@wavesurfer/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DemoClonePlayer } from '@/components/demo-clone/demo-clone-player';
 import messages from '@/messages/en.json';
+
+vi.mock('@wavesurfer/react', () => ({
+  default: vi.fn(({ url }: { url?: string }) => (
+    <div data-testid="audio-waveform" data-url={url} />
+  )),
+}));
 
 vi.mock('@/lib/i18n/navigation', () => ({
   Link: ({
@@ -38,6 +45,7 @@ let play: ReturnType<typeof vi.spyOn>;
 let pause: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
+  vi.mocked(WavesurferPlayer).mockClear();
   play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
   pause = vi
     .spyOn(HTMLMediaElement.prototype, 'pause')
@@ -73,6 +81,44 @@ describe('Hear the difference', () => {
       );
     }
     expect(play).not.toHaveBeenCalled();
+  });
+
+  it('renders the shared waveform against the native audio element', () => {
+    render(<DemoClonePlayer {...props} />);
+    expect(vi.mocked(WavesurferPlayer).mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        barGap: 2,
+        barRadius: 2,
+        barWidth: 2,
+        cursorColor: 'transparent',
+        height: 48,
+        interact: false,
+        media: audio(),
+        progressColor: '#7c3aed',
+        waveColor: '#a1a1aa',
+      }),
+    );
+    expect(document.querySelectorAll('audio')).toHaveLength(1);
+    expect(screen.getByTestId('demo-clone-play')).toHaveAttribute(
+      'data-variant',
+      'secondary',
+    );
+  });
+
+  it('seeks through the waveform and updates the time display', () => {
+    render(<DemoClonePlayer {...props} />);
+    fireEvent.change(screen.getByRole('slider', { name: labels.seek }), {
+      target: { value: '2' },
+    });
+    expect(audio().currentTime).toBe(2);
+    expect(screen.getByText(/^0:02 \/ /)).toBeInTheDocument();
+    selectTake('sarcastic');
+    expect(audio().currentTime).toBe(0);
+    expect(screen.getByRole('slider')).toHaveValue('0');
+    expect(screen.getByTestId('audio-waveform')).toHaveAttribute(
+      'data-url',
+      expect.stringContaining('kat-sarcastic.mp3'),
+    );
   });
 
   it('pauses at the current position and resumes the same clip', async () => {
@@ -133,6 +179,10 @@ describe('Hear the difference', () => {
     await screen.findByLabelText(labels.pauseAudio);
     expect(audio()).toBe(element);
     expect(audio().getAttribute('src')).toContain('kat-reference.mp3');
+    expect(screen.getByTestId('audio-waveform')).toHaveAttribute(
+      'data-url',
+      expect.stringContaining('kat-reference.mp3'),
+    );
     fireEvent.click(screen.getByText(labels.backToClone));
     await screen.findByLabelText(labels.pauseAudio);
     expect(audio().getAttribute('src')).toContain('kat-sarcastic.mp3');
@@ -150,6 +200,23 @@ describe('Hear the difference', () => {
     fireEvent.click(screen.getByText(labels.retry));
     await screen.findByLabelText(labels.pauseAudio);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('reloads the waveform when retrying a decode failure', async () => {
+    render(<DemoClonePlayer {...props} />);
+    const waveform = screen.getByTestId('audio-waveform');
+    const waveformProps = vi.mocked(WavesurferPlayer).mock.lastCall?.[0];
+    act(() => {
+      waveformProps?.onError?.(
+        {} as Parameters<NonNullable<typeof waveformProps.onError>>[0],
+        new Error('Decode failed'),
+      );
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent(labels.audioError);
+    fireEvent.click(screen.getByText(labels.retry));
+    await screen.findByLabelText(labels.pauseAudio);
+    expect(screen.getByTestId('audio-waveform')).not.toBe(waveform);
+    expect(audio().getAttribute('src')).toContain('kat-natural.mp3');
   });
 
   it('passes the exact selected delivery to the dashboard action', () => {

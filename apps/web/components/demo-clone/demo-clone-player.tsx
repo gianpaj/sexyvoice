@@ -9,9 +9,10 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
+import { AudioWaveform } from '@/components/audio-waveform';
 import { Button } from '@/components/ui/button';
 import {
   type CloneDemoTakeId,
@@ -73,6 +74,14 @@ export function DemoClonePlayer({
   const [playback, setPlayback] = useState<Playback>('idle');
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
+    null,
+  );
+  const [waveformRetry, setWaveformRetry] = useState(0);
+  const setAudioRef = useCallback((element: HTMLAudioElement | null) => {
+    audioRef.current = element;
+    setAudioElement(element);
+  }, []);
   const playRequest = useRef(0);
   const speaker = getDemoCloneSpeaker(speakerId);
   const take = speaker.takes.find((take) => take.id === takeId)!;
@@ -246,29 +255,10 @@ export function DemoClonePlayer({
             if (!audioRef.current?.paused) setPlayback('loading');
           }}
           preload="metadata"
-          ref={audioRef}
+          ref={setAudioRef}
           src={clip.src}
         />
         <div className="flex items-center gap-4">
-          <Button
-            aria-label={playButtonLabel}
-            className="size-12 shrink-0 rounded-full"
-            data-testid="demo-clone-play"
-            onClick={() =>
-              playback === 'playing' || playback === 'loading'
-                ? pause()
-                : play()
-            }
-            type="button"
-          >
-            <PlayIcon
-              className={
-                playback === 'loading'
-                  ? 'size-5 animate-spin motion-reduce:animate-none'
-                  : 'size-5'
-              }
-            />
-          </Button>
           <div aria-live="polite" className="min-w-0 flex-1">
             <p className="font-medium text-sm">
               {source === 'reference' ? labels.originalVoice : labels[take.id]}
@@ -284,20 +274,55 @@ export function DemoClonePlayer({
             {formatTime(currentTime)} / {formatTime(clip.durationSeconds)}
           </span>
         </div>
-        <input
-          aria-label={labels.seek}
-          className="h-5 w-full accent-primary"
-          max={clip.durationSeconds}
-          min={0}
-          onChange={(event) => {
-            if (audioRef.current)
-              audioRef.current.currentTime = Number(event.target.value);
-            setCurrentTime(Number(event.target.value));
-          }}
-          step={0.01}
-          type="range"
-          value={Math.min(currentTime, clip.durationSeconds)}
-        />
+        <div className="flex items-center gap-3">
+          <Button
+            aria-label={playButtonLabel}
+            className="min-h-10 min-w-10 shrink-0 rounded-full"
+            data-testid="demo-clone-play"
+            onClick={() =>
+              playback === 'playing' || playback === 'loading'
+                ? pause()
+                : play()
+            }
+            size="icon"
+            type="button"
+            variant="secondary"
+          >
+            <PlayIcon
+              className={
+                playback === 'loading'
+                  ? 'size-4 animate-spin motion-reduce:animate-none'
+                  : 'size-4'
+              }
+            />
+          </Button>
+          <div className="relative h-12 min-w-0 flex-1 rounded-md has-focus-visible:ring-2 has-focus-visible:ring-ring">
+            {audioElement && (
+              <AudioWaveform
+                duration={clip.durationSeconds}
+                interact={false}
+                key={`${clip.src}:${waveformRetry}`}
+                media={audioElement}
+                onError={() => setPlayback('error')}
+                url={new URL(clip.src, audioElement.ownerDocument.baseURI).href}
+              />
+            )}
+            <input
+              aria-label={labels.seek}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              max={clip.durationSeconds}
+              min={0}
+              onChange={(event) => {
+                if (audioRef.current)
+                  audioRef.current.currentTime = Number(event.target.value);
+                setCurrentTime(Number(event.target.value));
+              }}
+              step={0.01}
+              type="range"
+              value={Math.min(currentTime, clip.durationSeconds)}
+            />
+          </div>
+        </div>
       </div>
 
       {playback === 'error' && (
@@ -309,6 +334,7 @@ export function DemoClonePlayer({
           <span>{labels.audioError}</span>
           <Button
             onClick={async () => {
+              setWaveformRetry((retry) => retry + 1);
               audioRef.current?.load();
               await play();
             }}

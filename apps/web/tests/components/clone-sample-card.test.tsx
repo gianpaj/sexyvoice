@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import CloneSampleCard from '@/app/[lang]/(dashboard)/dashboard/clone/clone-sample-card';
 import messages from '@/messages/en.json';
 
+vi.mock('@wavesurfer/react', () => ({ default: () => null }));
 vi.mock('@/lib/i18n/navigation', () => ({ Link: () => null }));
 const fetchMock = vi.fn();
 const props = {
