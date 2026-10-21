@@ -58,6 +58,7 @@ function toStringRecord(value: unknown): Record<string, string> {
 }
 
 function toSessionConfig(value: unknown): {
+  audioReferenceId?: string;
   model?: string;
   voice?: string;
   temperature?: number;
@@ -69,6 +70,7 @@ function toSessionConfig(value: unknown): {
   }
 
   return value as {
+    audioReferenceId?: string;
     model?: string;
     voice?: string;
     temperature?: number;
@@ -100,6 +102,7 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
     promptId: character.prompt_id ?? undefined,
     promptType: prompts?.type ?? undefined,
     sessionConfig: {
+      audioReferenceId: sessionConfig.audioReferenceId,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
@@ -109,7 +112,9 @@ function mapCharacterToPreset(character: CharacterRow): Preset {
       voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
     },
     voiceId: character.voice_id ?? undefined,
-    voiceName: voice?.name ?? undefined,
+    voiceName: sessionConfig.audioReferenceId
+      ? sessionConfig.voice
+      : (voice?.name ?? undefined),
     voiceSampleUrl: voice?.sample_url ?? undefined,
   };
 }

@@ -164,6 +164,9 @@ describe('Generation route claims authentication', () => {
           error: null,
         });
 
+        if (name === 'call-token') {
+          vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+        }
         const response = await post(request());
         await response.text();
         await flushPromises();
