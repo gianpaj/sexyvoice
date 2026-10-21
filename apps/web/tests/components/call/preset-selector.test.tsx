@@ -25,13 +25,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PresetSelector } from '@/components/call/preset-selector';
 import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
-import type { DBVoice } from '@/data/voices';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+const mockOpenCustom = vi.fn();
+
 beforeEach(() => {
+  mockOpenCustom.mockClear();
   mockPgStateRef.current = createDefaultPgState();
   mockConnectionState.value = 'disconnected';
 
@@ -96,19 +98,19 @@ describe('PresetSelector', () => {
   // ---- Rendering ----
   describe('rendering', () => {
     it('renders the "Choose Character" heading', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByText('Choose Character')).toBeInTheDocument();
     });
 
     it('renders all three default character names when there are no custom characters', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       for (const preset of defaultPresetsFixture) {
         expect(screen.getByText(preset.name)).toBeInTheDocument();
       }
     });
 
     it('renders avatar images for default characters', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       for (const preset of defaultPresetsFixture) {
         const img = screen.getByAltText(preset.name);
         expect(img).toBeInTheDocument();
@@ -117,7 +119,7 @@ describe('PresetSelector', () => {
     });
 
     it('renders the bio card with the selected character description', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByText(/Ramona:/)).toBeInTheDocument();
       expect(screen.getByText(/Dominant businesswoman\./)).toBeInTheDocument();
     });
@@ -126,7 +128,7 @@ describe('PresetSelector', () => {
       mockPgStateRef.current = createDefaultPgState({
         selectedPresetId: null,
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.queryByText(/Ramona:/)).not.toBeInTheDocument();
     });
   });
@@ -135,14 +137,14 @@ describe('PresetSelector', () => {
   describe('character selection', () => {
     it('selects a character when it is clicked', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(screen.getByRole('button', { name: /lily/i }));
 
       expect(mockSelectPreset).toHaveBeenCalledWith('lily');
     });
 
     it('marks the selected character with aria-pressed=true', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByRole('button', { name: /ramona/i })).toHaveAttribute(
         'data-selected',
         'true',
@@ -161,7 +163,7 @@ describe('PresetSelector', () => {
     });
 
     it('disables all character buttons', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       const buttons = screen
         .getAllByRole('button')
         .filter((b) =>
@@ -174,7 +176,7 @@ describe('PresetSelector', () => {
 
     it('does not dispatch when a character is clicked', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(screen.getByRole('button', { name: /lily/i }));
       expect(mockDispatch).not.toHaveBeenCalled();
     });
@@ -192,7 +194,7 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       // Default characters should be visible
       expect(screen.getByText('Ramona')).toBeInTheDocument();
       expect(screen.getByText('MyChar')).toBeInTheDocument();
@@ -216,7 +218,7 @@ describe('PresetSelector', () => {
     });
 
     it('renders both default and custom characters', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       // All defaults
       for (const preset of defaultPresetsFixture) {
         expect(screen.getByText(preset.name)).toBeInTheDocument();
@@ -227,7 +229,7 @@ describe('PresetSelector', () => {
     });
 
     it('renders initials for custom characters without images', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       // AlphaChar → "A", BetaChar → "B"
       expect(screen.getByText('A')).toBeInTheDocument();
       expect(screen.getByText('B')).toBeInTheDocument();
@@ -238,7 +240,7 @@ describe('PresetSelector', () => {
         ...(mockPgStateRef.current as PlaygroundState),
         selectedPresetId: 'custom-1',
       };
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByLabelText('Delete AlphaChar')).toBeInTheDocument();
       expect(
         screen.queryByLabelText('Delete BetaChar'),
@@ -246,7 +248,7 @@ describe('PresetSelector', () => {
     });
 
     it('does NOT show delete buttons for default characters', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.queryByLabelText('Delete Ramona')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Delete Lily')).not.toBeInTheDocument();
     });
@@ -257,7 +259,7 @@ describe('PresetSelector', () => {
         ...(mockPgStateRef.current as PlaygroundState),
         selectedPresetId: 'custom-1',
       };
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(
         screen.queryByLabelText('Delete AlphaChar'),
       ).not.toBeInTheDocument();
@@ -268,7 +270,7 @@ describe('PresetSelector', () => {
 
     it('can select a custom character', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       const alphaCharacterButton = screen
         .getAllByRole('button', { name: /alphachar/i })
         .find(
@@ -298,7 +300,7 @@ describe('PresetSelector', () => {
 
     it('opens the delete confirmation dialog when delete button is clicked', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(screen.getByLabelText('Delete ToDelete'));
 
       const dialog = screen.getByRole('alertdialog');
@@ -314,7 +316,7 @@ describe('PresetSelector', () => {
 
     it('dismisses the dialog when Cancel is clicked', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(screen.getByLabelText('Delete ToDelete'));
 
       const dialog = screen.getByRole('alertdialog');
@@ -326,7 +328,7 @@ describe('PresetSelector', () => {
 
     it('dispatches DELETE_CUSTOM_CHARACTER and shows toast when confirmed', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(screen.getByLabelText('Delete ToDelete'));
 
       const dialog = screen.getByRole('alertdialog');
@@ -353,7 +355,7 @@ describe('PresetSelector', () => {
         ],
         selectedPresetId: 'custom-del',
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(screen.getByLabelText('Delete ToDelete'));
 
       const dialog = screen.getByRole('alertdialog');
@@ -372,7 +374,7 @@ describe('PresetSelector', () => {
       mockPgStateRef.current = createDefaultPgState({
         selectedPresetId: 'lily',
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByText(/Lily:/)).toBeInTheDocument();
       expect(screen.getByText(/Shy student girl\./)).toBeInTheDocument();
     });
@@ -390,7 +392,7 @@ describe('PresetSelector', () => {
         ],
         selectedPresetId: 'custom-bio',
       });
-      render(<PresetSelector isPaidUser />);
+      render(<PresetSelector isPaidUser onCreateCharacter={mockOpenCustom} />);
       // For custom characters, name and description are separate editable elements
       // Zara appears twice: once in avatar label, once in bio card name button
       const zaraElements = screen.getAllByText('Zara');
@@ -402,7 +404,7 @@ describe('PresetSelector', () => {
 
     it('dispatches selection when a different character is clicked', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       // Initially Ramona is selected
       expect(screen.getByText(/Ramona:/)).toBeInTheDocument();
 
@@ -424,7 +426,7 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByText('JD')).toBeInTheDocument();
     });
 
@@ -438,7 +440,7 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByText('A')).toBeInTheDocument();
     });
 
@@ -452,7 +454,7 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByText('AB')).toBeInTheDocument();
     });
   });
@@ -463,7 +465,7 @@ describe('PresetSelector', () => {
       mockPgStateRef.current = createDefaultPgState({
         selectedPresetId: null,
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       // Should not crash, heading still renders
       expect(screen.getByText('Choose Character')).toBeInTheDocument();
     });
@@ -479,7 +481,7 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       const img = screen.getByAltText('WithImage');
       expect(img).toHaveAttribute('src', '/characters/custom-avatar.webp');
     });
@@ -496,7 +498,7 @@ describe('PresetSelector', () => {
         ],
         selectedPresetId: 'c1',
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
 
       // Open and cancel the dialog – then confirm that DELETE was not dispatched
       await user.click(screen.getByLabelText('Delete TestChar'));
@@ -522,104 +524,43 @@ describe('PresetSelector', () => {
           }),
         ],
       });
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(
         screen.getByRole('button', { name: /add custom character/i }),
       ).toBeInTheDocument();
     });
 
     it('shows a premium badge (Sparkles icon) for free users', () => {
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       expect(screen.getByLabelText('Premium feature')).toBeInTheDocument();
     });
 
     it('is enabled for paid users', () => {
-      render(<PresetSelector isPaidUser />);
+      render(<PresetSelector isPaidUser onCreateCharacter={mockOpenCustom} />);
       expect(
         screen.getByRole('button', { name: /add custom character/i }),
       ).toBeEnabled();
     });
 
     it('does not show a premium badge for paid users', () => {
-      render(<PresetSelector isPaidUser />);
+      render(<PresetSelector isPaidUser onCreateCharacter={mockOpenCustom} />);
       expect(
         screen.queryByLabelText('Premium feature'),
       ).not.toBeInTheDocument();
     });
 
-    it('opens create character dialog when clicked by a paid user', async () => {
+    it('opens the inline Custom setup when a paid user adds a character', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector isPaidUser />);
+      render(<PresetSelector isPaidUser onCreateCharacter={mockOpenCustom} />);
       await user.click(
         screen.getByRole('button', { name: /add custom character/i }),
       );
-
-      // Dialog should open with create character form
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-      expect(screen.getByText('Create New Character')).toBeInTheDocument();
-      expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/instructions/i)).toBeInTheDocument();
-    });
-
-    it('opens create dialog and can be filled with character details', async () => {
-      const user = userEvent.setup();
-      render(<PresetSelector callVoices={[]} isPaidUser />);
-
-      // Open dialog
-      await user.click(
-        screen.getByRole('button', { name: /add custom character/i }),
-      );
-
-      // Verify dialog opened
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
-
-      // Fill in the form
-      await user.type(screen.getByLabelText(/name/i), 'Test Character');
-      await user.type(
-        screen.getByLabelText(/description/i),
-        'A test description',
-      );
-      await user.type(
-        screen.getByLabelText(/instructions/i),
-        'Test instructions',
-      );
-    });
-
-    it('selects the character after creating it', async () => {
-      const user = userEvent.setup();
-      const voice: DBVoice = {
-        description: null,
-        feature: 'call',
-        id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
-        language: 'multiple',
-        model: 'xai',
-        name: 'Ara',
-        sample_url: null,
-        sort_order: 0,
-        type: 'Female',
-      };
-      render(<PresetSelector callVoices={[voice]} isPaidUser />);
-      await user.click(
-        screen.getByRole('button', { name: /add custom character/i }),
-      );
-      await user.type(screen.getByLabelText(/name/i), 'Test Character');
-      await user.type(
-        screen.getByLabelText(/instructions/i),
-        'Test instructions',
-      );
-      await user.click(
-        screen.getByRole('button', { name: 'Create Character' }),
-      );
-
-      expect(mockSelectPreset).toHaveBeenCalledWith(
-        '00000000-0000-4000-a000-000000000099',
-      );
+      expect(mockOpenCustom).toHaveBeenCalledOnce();
     });
 
     it('does NOT dispatch when clicked by a free user', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       await user.click(
         screen.getByRole('button', { name: /add custom character/i }),
       );
@@ -632,7 +573,7 @@ describe('PresetSelector', () => {
 
     it('is disabled when connected (even for paid users)', () => {
       mockConnectionState.value = 'connected';
-      render(<PresetSelector isPaidUser />);
+      render(<PresetSelector isPaidUser onCreateCharacter={mockOpenCustom} />);
       expect(
         screen.getByRole('button', { name: /add custom character/i }),
       ).toBeDisabled();
@@ -649,41 +590,15 @@ describe('PresetSelector', () => {
       mockPgStateRef.current = createDefaultPgState({
         customCharacters: maxCustom,
       });
-      render(<PresetSelector isPaidUser />);
+      render(<PresetSelector isPaidUser onCreateCharacter={mockOpenCustom} />);
       expect(
         screen.queryByRole('button', { name: /add custom character/i }),
       ).not.toBeInTheDocument();
     });
 
-    it('opens dialog with empty name field regardless of existing custom characters', async () => {
-      const user = userEvent.setup();
-      mockPgStateRef.current = createDefaultPgState({
-        customCharacters: [
-          makePreset({
-            id: 'c1',
-            localizedDescriptions: { en: 'first' },
-            name: 'Character 1',
-          }),
-          makePreset({
-            id: 'c2',
-            localizedDescriptions: { en: 'second' },
-            name: 'Character 2',
-          }),
-        ],
-      });
-      render(<PresetSelector isPaidUser />);
-      await user.click(
-        screen.getByRole('button', { name: /add custom character/i }),
-      );
-
-      // Dialog should open with empty name field - user enters their own name
-      const nameInput = screen.getByLabelText(/name/i) as HTMLInputElement;
-      expect(nameInput.value).toBe('');
-    });
-
     it('shows the premium tooltip text for free users on hover', async () => {
       const user = userEvent.setup();
-      render(<PresetSelector />);
+      render(<PresetSelector onCreateCharacter={mockOpenCustom} />);
       // The tooltip trigger wraps the button in a <span> — hover it to open
       const trigger = screen
         .getByRole('button', { name: /add custom character/i })

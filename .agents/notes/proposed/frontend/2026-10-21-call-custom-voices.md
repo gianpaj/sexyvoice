@@ -20,10 +20,46 @@ The agent resolves that row with the user ID before synthesizing speech.
 key requires a `voices` row. The same constraint exists on `call_sessions`.
 
 No new database schema is needed. Public character prompts remain server-side.
-The implementation builds on `feat/voxtral-3-comparison` to retain Clone UI
+The working branch builds on `feat/voxtral-3-comparison` to retain Clone UI
 work and Voxtral 3 support. Speech generation and existing clone credit charges
 remain separate from saved-profile selection in calls.
 
+## Implementation
+
+The inline form replaces the creation modal. The Add circle opens Custom.
+Character creation uses the shared `saveCharacter` helper; the built-in and
+saved voice cards share `VoicePicker`. Character prompt resolution remains
+server-side. A separate voice override for predefined characters is omitted: Custom
+combines a voice with its own prompt, while predefined characters remain bundles.
+
+The Clone page saves profiles through the existing audio normalization path,
+without generating speech or charging speech credits. Provider creation and the
+owned database insert share a helper with cleanup on insert failure. Sample
+playback uses an owner-checked private proxy.
+
+The Clone link saves a user-scoped draft in session storage. Restoration is
+validated and runs once per mount, including React Strict Mode's effect replay.
+The personality accordion starts closed after returning. Selecting a built-in
+voice clears both the Mistral model selector and the reference ID.
+
 ## Verification
 
-Implementation and validation are in progress.
+- `pnpm fixall`, `pnpm type-check`, and `pnpm check-translations` pass.
+  The worktree reuses installed dependencies with
+  `--config.verify-deps-before-run=false`.
+- Web Vitest: 119 files, 1,707 passed, 18 existing skips. Coverage includes
+  clone consent, account gates, provider/owner filters, provider cleanup,
+  private samples, token metadata, character saving, draft isolation, and
+  restoration under Strict Mode.
+- Call-dashboard Playwright: 17 passed on desktop/mobile, with English and
+  German character creation/copy/update scenarios. The four changed creation
+  and Custom scenarios also pass after modal removal.
+- A browser round trip through Clone restores the prompt and selects the saved
+  voice with no page errors. That check mocks clone creation. Browser checks
+  use local Auth fixtures and mocked character writes/call tokens; they do not
+  create live voices, write production data, or connect to LiveKit.
+- The SexyCall session-record fix passes 288 Python tests with 3 existing skips.
+
+Implementation is complete locally. Release requires the web branch and the
+Mistral-enabled SexyCall branch. Real provider voice creation and a live call
+remain release checks for voice quality, latency, and interruptions.

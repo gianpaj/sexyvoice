@@ -7,9 +7,14 @@ import { ConfigurationForm } from '@/components/call/configuration-form';
 import CreditsSection from '@/components/credits-section';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
-import { E2E_CALL_VOICES, E2E_CREDIT_TRANSACTIONS } from '@/lib/e2e-mocks';
+import {
+  E2E_CALL_VOICES,
+  E2E_CREDIT_TRANSACTIONS,
+  E2E_SAVED_CALL_VOICES,
+} from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getSavedCallVoices } from '@/lib/supabase/call-voices';
 import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -36,17 +41,24 @@ export default async function Call(props: {
   }
 
   const e2e = await getE2ECallUser();
-  const [{ data: creditTransactions }, isPaidUser, callVoices] = e2e
-    ? [{ data: E2E_CREDIT_TRANSACTIONS }, e2e.isPaidUser, E2E_CALL_VOICES]
-    : await Promise.all([
-        supabase
-          .from('credit_transactions')
-          .select('amount')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false }),
-        hasUserPaid(userId),
-        getCallVoices(),
-      ]);
+  const [{ data: creditTransactions }, isPaidUser, callVoices, savedVoices] =
+    e2e
+      ? [
+          { data: E2E_CREDIT_TRANSACTIONS },
+          e2e.isPaidUser,
+          E2E_CALL_VOICES,
+          e2e.isPaidUser ? E2E_SAVED_CALL_VOICES : [],
+        ]
+      : await Promise.all([
+          supabase
+            .from('credit_transactions')
+            .select('amount')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false }),
+          hasUserPaid(userId),
+          getCallVoices(),
+          getSavedCallVoices(userId),
+        ]);
 
   return (
     <div
@@ -59,7 +71,7 @@ export default async function Call(props: {
         </h2>
         <p className="text-muted-foreground">{t('subtitle')}</p>
       </div>
-      <div className="lg:hidden">
+      <div className="lg:hidden" data-testid="call-mobile-credits">
         <CreditsSection
           creditTransactions={creditTransactions}
           doNotToggleSidebar
@@ -73,6 +85,8 @@ export default async function Call(props: {
           callVoices={callVoices}
           isPaidUser={isPaidUser}
           lang={lang}
+          savedVoices={savedVoices}
+          userId={userId}
         />
       </div>
       <main className="flex w-full flex-1 flex-col md:p-4 lg:mt-16">

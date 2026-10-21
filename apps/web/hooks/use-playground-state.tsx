@@ -14,7 +14,9 @@ import { callScenes } from '@/data/call-scenes';
 import { defaultSessionConfig } from '@/data/default-config';
 import {
   type CallLanguage,
+  type CustomCallDraft,
   defaultPlaygroundState,
+  emptyCustomCallDraft,
   languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
@@ -47,6 +49,8 @@ function resolveInstructions(
 
 // Define action types and payloads
 type Action =
+  | { type: 'SET_CALL_MODE'; payload: 'characters' | 'custom' }
+  | { type: 'SET_CUSTOM_DRAFT'; payload: Partial<CustomCallDraft> }
   | {
       type: 'SET_SESSION_CONFIG';
       payload: Partial<PlaygroundState['sessionConfig']>;
@@ -66,9 +70,68 @@ function playgroundStateReducer(
   action: Action,
 ): PlaygroundState {
   switch (action.type) {
+    case 'SET_CUSTOM_DRAFT': {
+      const draft = {
+        ...(state.customDraft ?? emptyCustomCallDraft),
+        ...action.payload,
+      };
+      return {
+        ...state,
+        customDraft: draft,
+        ...(state.mode === 'custom'
+          ? {
+              instructions: draft.instructions,
+              sessionConfig: draft.sessionConfig,
+            }
+          : {}),
+      };
+    }
+    case 'SET_CALL_MODE': {
+      if (action.payload === (state.mode ?? 'characters')) return state;
+      if (action.payload === 'custom') {
+        const draft = state.customDraft ?? emptyCustomCallDraft;
+        return {
+          ...state,
+          mode: 'custom',
+          characterPresetId: state.selectedPresetId,
+          selectedPresetId: null,
+          instructions: draft.instructions,
+          sessionConfig: draft.sessionConfig,
+        };
+      }
+      const id = state.characterPresetId ?? state.defaultPresets[0]?.id ?? null;
+      const preset = [...state.defaultPresets, ...state.customCharacters].find(
+        (p) => p.id === id,
+      );
+      return {
+        ...state,
+        mode: 'characters',
+        selectedPresetId: id,
+        instructions: id
+          ? resolveInstructions(id, state.language, [
+              ...state.defaultPresets,
+              ...state.customCharacters,
+            ])
+          : '',
+        sessionConfig: preset?.sessionConfig ?? defaultSessionConfig,
+        customDraft: {
+          ...(state.customDraft ?? emptyCustomCallDraft),
+          instructions: state.instructions,
+          sessionConfig: state.sessionConfig,
+        },
+      };
+    }
     case 'SET_SESSION_CONFIG':
       return {
         ...state,
+        ...(state.mode === 'custom'
+          ? {
+              customDraft: {
+                ...(state.customDraft ?? emptyCustomCallDraft),
+                sessionConfig: { ...state.sessionConfig, ...action.payload },
+              },
+            }
+          : {}),
         sessionConfig: {
           ...state.sessionConfig,
           ...action.payload,
@@ -77,6 +140,14 @@ function playgroundStateReducer(
     case 'SET_INSTRUCTIONS':
       return {
         ...state,
+        ...(state.mode === 'custom'
+          ? {
+              customDraft: {
+                ...(state.customDraft ?? emptyCustomCallDraft),
+                instructions: action.payload,
+              },
+            }
+          : {}),
         instructions: action.payload,
       };
     case 'SET_SCENE_INSTRUCTIONS':
@@ -88,6 +159,7 @@ function playgroundStateReducer(
       const newState = {
         ...state,
         selectedPresetId: action.payload,
+        mode: 'characters' as const,
       };
 
       const helpers = createPlaygroundStateHelpers(state.defaultPresets);

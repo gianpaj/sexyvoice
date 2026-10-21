@@ -23,7 +23,7 @@ flowchart LR
     SessionRoutes --> Supabase["Supabase Auth + PostgreSQL"]
     V1 --> Supabase
     Token --> LiveKit["LiveKit room"]
-    LiveKit --> Agent["sexycall agent<br/>grok-voice-think-fast-1.0"]
+    LiveKit --> Agent["sexycall agent<br/>Grok realtime or Mistral TTS"]
     Agent --> Supabase
     Supabase --> Analysis["Call-analysis webhook"]
     Analysis --> XAI["xAI structured analysis"]
@@ -199,7 +199,10 @@ flowchart TD
     A["Multipart text, locale, and reference audio"] --> B["Authenticate Supabase session"]
     B --> C["Validate locale, tier text limit, file type, and 4.5 MB size limit"]
     C --> D["Normalize to WAV when supported and trim to provider limit"]
-    D --> E["Hash processed audio and check Redis output cache"]
+    D --> S{"Save voice for calls?"}
+    S -->|"Yes: paid, consented, Mistral locale"| T["Create Mistral voice and owned audio_references row"]
+    T --> U["Return audioReferenceId without generating speech"]
+    S -->|"No"| E["Hash processed audio and check Redis output cache"]
     E -->|"Hit"| F["Return cached URL at zero credits"]
     E -->|"Miss"| G{"Enhancement requested?"}
     G -->|"Yes"| H["Reserve clone + enhancement credits"]
@@ -216,6 +219,27 @@ flowchart TD
     O --> P["Return URL and credit totals"]
     P --> Q["Next.js after(): save metadata, usage events, and analytics"]
 ```
+
+### Saved Voices for Calls
+
+The Clone page offers **Save a voice for calls** to paid users. Entering from
+`/dashboard/call` selects this mode. It requires a name, permission to save the
+reference, and a Mistral-supported locale. The same upload validation, WAV
+normalization, trimming, and minimum duration checks apply. Audio cleanup is
+available only for speech generation.
+
+`POST /api/clone-voice` accepts `saveVoiceName` and `voiceConsent=true` for this
+mode; text is optional. `saveMistralVoice` calls Mistral's voice creation API and
+inserts its provider ID, owner, name, and locale into `audio_references`. If the
+insert fails, it attempts to delete the provider voice. The response contains
+`audioReferenceId`. This action generates no speech and charges no speech
+credits. The reference is retained by Mistral; generated WAVs in `audio_files`
+remain separate from reusable profiles.
+
+Saved voice samples are served through
+`GET /api/audio-references/[id]/sample`. The route authenticates the user,
+checks ownership and `provider=mistral`, and returns audio with private,
+non-cacheable headers. Provider IDs stay on the server.
 
 ### Locale Routing
 
@@ -291,7 +315,7 @@ Endpoint: `POST /api/call-token`
 
 ```mermaid
 flowchart TD
-    A["Choose language, character, scene, and voice"] --> B["POST /api/call-token"]
+    A["Choose a character or a custom voice and personality"] --> B["POST /api/call-token"]
     B --> C["Authenticate Supabase session"]
     C --> D["Check minimum credits and free-user lifetime call limit"]
     D --> E["Validate configuration and normalize the call model"]
@@ -301,7 +325,7 @@ flowchart TD
     H --> I["Mint LiveKit token with server-resolved metadata"]
     I --> J["Dispatch the sexycall agent"]
     J --> K["Browser and agent join the WebRTC room"]
-    K --> L["Agent runs grok-voice-think-fast-1.0"]
+    K --> L["Agent runs Grok realtime or STT + LLM + Mistral TTS"]
     L --> M["Agent meters credits and writes call session, transcript, and usage"]
     M --> N["Client disconnects and refreshes credit balance"]
     M --> O["Supabase webhook requests analysis for eligible completed calls"]
@@ -318,17 +342,39 @@ fallback, and places the result in LiveKit token metadata. Custom characters,
 custom scenes, and the long-term memory backend require a paid account. Memory
 is off by default, and its UI toggle is currently hidden.
 
+### Call Setup
+
+Characters are voice-and-prompt bundles displayed in a circular carousel.
+Custom exposes Built-in voices and My voices, plus a link to the Clone page.
+Its Add a personality accordion starts closed. A voice and nonempty prompt are
+required to call; a name is required to save a reusable character. Custom calls
+require a paid account, including calls with unsaved prompts.
+
+The playground reducer preserves custom drafts independently of selected
+characters. The Clone link stores the draft in session storage scoped to the
+user; the return restores it and selects the newly saved voice. Prompt text
+never enters the URL. Saving is optional before starting a custom call.
+
+Built-in voices use the Grok model. Saved Mistral voices set
+`sessionConfig.model=mistral-tts` and `sessionConfig.audioReferenceId` to an
+owned `audio_references` row. The token route rechecks ownership and provider,
+then sends the reference row ID as the LiveKit `voice` metadata value. The
+agent resolves the provider voice and runs STT, an LLM, and Voxtral TTS 3.
+The shared cloned-audio `voices` row satisfies the legacy foreign keys on
+characters and call sessions; the saved reference stays in session config and
+call-session metadata. Selecting a built-in voice clears the saved reference.
+
 ### Call Configuration
 
-| Setting           | Current behavior                                                                      |
-| ----------------- | ------------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-1.0`                                                           |
-| Voice             | Stored per character, selected from public call voices, and resolved to a database ID |
-| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                        |
-| Max output tokens | Nullable; defaults to the agent's model behavior                                      |
-| Instructions      | Edge Config defaults for non-character calls; database prompts for characters         |
-| Language          | 20 supported call languages; English fallback                                         |
-| Memory            | Paid, opt-in backend; off by default                                                  |
+| Setting           | Current behavior                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| Model             | `grok-voice-think-fast-1.0` or `mistral-tts`                                         |
+| Voice             | Public call voice or an owned Mistral profile; retained in saved characters          |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                       |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                     |
+| Instructions      | User prompt for unsaved Custom calls; server-resolved database prompt for characters |
+| Language          | 20 supported call languages; English fallback                                        |
+| Memory            | Paid, opt-in backend; off by default                                                 |
 
 ### Call transcript analysis
 
