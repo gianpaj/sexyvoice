@@ -35,6 +35,14 @@ The workflow verifies publication using a plain-text completion marker from
 `claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
 merge gate.
 
+After Claude execution, the workflow writes sanitized diagnostics to the job log
+and step summary: SDK result status, denied tool names from a fixed allowlist,
+denied Bash operation categories, and direct `gh pr comment` request/result
+counts. Request counts do not prove publication; the completion-marker check
+remains authoritative. Missing or invalid traces are reported explicitly.
+Prompts, command arguments, tool results, final responses, and raw execution
+files are not published. Keep `show_full_output` disabled on this public repo.
+
 Claude GitHub App authentication requires the workflow content to match the
 default branch. A PR that edits `.github/workflows/claude.yml` can verify setup
 steps, but the action skips Claude execution and the publication check fails.
