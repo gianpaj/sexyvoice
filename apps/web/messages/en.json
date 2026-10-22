@@ -191,7 +191,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Your voice, in every language",
-        "subtitle": "Clone a voice from a few seconds of audio.\nHear it speak naturally in 23 languages."
+        "subtitle": "Clone a voice from a few seconds of audio.\nHear it speak naturally in 28 languages."
       },
       "cta": {
         "freeCredits": "Start with 10,000 free credits",
@@ -256,7 +256,7 @@
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
-              "answer": "Voice cloning supports the following 23 languages:\n\n🇸🇦 Arabic,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\nand 🇹🇷 Turkish."
+              "answer": "Voice cloning supports the following 28 languages:\n\n🇪🇸 Catalan,\n🇭🇺 Hungarian,\n🇷🇴 Romanian,\n🇺🇦 Ukrainian,\n🇻🇳 Vietnamese,\n🇸🇦 Arabic,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\nand 🇹🇷 Turkish."
             }
           ]
         },
@@ -764,7 +764,7 @@
       "userNotFound": "Please sign in to clone a voice.",
       "voiceNameAndConsentRequired": "Enter a voice name (up to 50 characters) and confirm you have permission to save it.",
       "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
-      "savedVoiceLocaleUnsupported": "Choose Arabic, Dutch, English, French, German, Hindi, Italian, Portuguese or Spanish to save a voice for calls."
+      "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language."
     },
     "sampleCard": {
       "sourceAudio": "Source audio",
@@ -773,7 +773,7 @@
     },
     "crossLanguageInfo": {
       "title": "Cross-Language Voice Transfer",
-      "description": "Clone a voice in one language and have it speak fluently in any of the other 23 supported languages while preserving the speaker's unique characteristics.",
+      "description": "Clone a voice in one language and have it speak in any of the 28 supported languages while preserving the speaker's unique characteristics.",
       "example": "Example: Upload an English speaker's voice sample → Generate French speech in their voice"
     },
     "legalConsentCheckbox": "By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.",
@@ -927,7 +927,7 @@
     "titleVoiceCall": "AI Voice Calling – Talk to Live AI Characters",
     "descriptionVoiceCall": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
     "titleVoiceCloning": "AI Voice Cloning",
-    "descriptionVoiceCloning": "Clone a voice from a few seconds of audio and hear it speak naturally in 23 languages.",
+    "descriptionVoiceCloning": "Clone a voice from a few seconds of audio and hear it speak naturally in 28 languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
     "titleTranscribe": "Free Audio Transcription – 99+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",

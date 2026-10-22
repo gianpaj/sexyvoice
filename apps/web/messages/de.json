@@ -191,7 +191,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Deine Stimme, in jeder Sprache",
-        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 23 Sprachen sprechen."
+        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 28 Sprachen sprechen."
       },
       "cta": {
         "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
@@ -256,7 +256,7 @@
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
-              "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
+              "answer": "Das Stimmklonen unterstützt die folgenden 28 Sprachen:\n\n🇪🇸 Katalanisch,\n🇭🇺 Ungarisch,\n🇷🇴 Rumänisch,\n🇺🇦 Ukrainisch,\n🇻🇳 Vietnamesisch,\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
             }
           ]
         },
@@ -766,7 +766,7 @@
       "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen.",
       "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
       "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
-      "savedVoiceLocaleUnsupported": "Wähle Arabisch, Deutsch, Englisch, Französisch, Hindi, Italienisch, Niederländisch, Portugiesisch oder Spanisch, um eine Stimme für Anrufe zu speichern."
+      "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -775,7 +775,7 @@
     },
     "crossLanguageInfo": {
       "title": "Stimmübertragung zwischen Sprachen",
-      "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
+      "description": "Klone eine Stimme in einer Sprache und lass sie in jeder der 28 unterstützten Sprachen sprechen. Die einzigartigen Eigenschaften der Stimme bleiben erhalten.",
       "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
     },
     "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden.",
@@ -929,7 +929,7 @@
     "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
     "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
     "titleVoiceCloning": "KI-Stimmklonen",
-    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 23 Sprachen sprechen.",
+    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 28 Sprachen sprechen.",
     "/": "",
     "/voice-call": "Sprachanruf",
     "/login": "Anmelden",

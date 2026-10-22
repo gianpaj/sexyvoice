@@ -1,15 +1,31 @@
 export type CloneProvider = 'mistral' | 'replicate';
 
+// Confirmed TTS languages; Mistral does not enumerate its full 35-language set.
+// https://docs.mistral.ai/studio/audio/specs-and-limits/languages
+// Greek is also confirmed at https://mistral.ai/news/voxtral-3/
 export const VOXTRAL_SUPPORTED_LOCALE_CODES = new Set([
   'ar',
+  'ca',
   'de',
+  'el',
   'en',
   'es',
   'fr',
   'hi',
+  'hu',
   'it',
+  'ja',
+  'ko',
   'nl',
+  'no',
+  'pl',
   'pt',
+  'ro',
+  'ru',
+  'tr',
+  'uk',
+  'vi',
+  'zh',
 ]);
 
 // https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema

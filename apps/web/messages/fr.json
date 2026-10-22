@@ -191,7 +191,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Votre voix, dans toutes les langues",
-        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 23 langues."
+        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 28 langues."
       },
       "cta": {
         "freeCredits": "Commencez avec 10 000 crédits gratuits",
@@ -256,7 +256,7 @@
             },
             {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",
-              "answer": "Le clonage vocal supporte les 23 langues suivantes :\n\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
+              "answer": "Le clonage vocal supporte les 28 langues suivantes :\n\n🇪🇸 Catalan,\n🇭🇺 Hongrois,\n🇷🇴 Roumain,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien,\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
             }
           ]
         },
@@ -766,7 +766,7 @@
       "userNotFound": "Veuillez vous connecter pour cloner une voix.",
       "voiceNameAndConsentRequired": "Saisissez un nom (50 caractères maximum) et confirmez que vous avez l’autorisation d’enregistrer cette voix.",
       "savedVoiceRequiresPaid": "Un compte payant est nécessaire pour enregistrer des voix.",
-      "savedVoiceLocaleUnsupported": "Choisissez l’allemand, l’anglais, l’arabe, l’espagnol, le français, le hindi, l’italien, le néerlandais ou le portugais pour enregistrer une voix pour les appels."
+      "savedVoiceLocaleUnsupported": "Cette option de langue ne permet pas d’enregistrer une voix pour les appels. Choisissez une autre langue."
     },
     "sampleCard": {
       "sourceAudio": "Audio source",
@@ -775,7 +775,7 @@
     },
     "crossLanguageInfo": {
       "title": "Transfert vocal inter-langues",
-      "description": "Clonez une voix dans une langue et faites-la parler couramment dans l'une des 23 autres langues supportées tout en préservant les caractéristiques uniques du locuteur.",
+      "description": "Clonez une voix dans une langue et faites-la parler dans l’une des 28 langues prises en charge tout en préservant ses caractéristiques uniques.",
       "example": "Exemple : Téléchargez un échantillon vocal d'un locuteur anglais → Générez de la parole française avec sa voix"
     },
     "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles.",
@@ -929,7 +929,7 @@
     "titleVoiceCall": "Appels Vocaux IA – Parlez en Direct avec des Personnages IA",
     "descriptionVoiceCall": "Passez des appels téléphoniques IA en direct avec vos voix préférées. Parlez en temps réel avec des personnages IA – des conversations naturelles grâce à la technologie vocale de SexyVoice.ai.",
     "titleVoiceCloning": "Clonage vocal par IA",
-    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 23 langues.",
+    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 28 langues.",
     "/": "",
     "/voice-call": "Appel Vocal",
     "/login": "Connexion",

@@ -412,7 +412,11 @@ describe('NewVoiceClient', () => {
     expect(currentInput).toHaveTextContent(text);
   });
 
-  it.each([['fr', 'Français']])(
+  it.each([
+    ['fr', 'Français'],
+    ['pl', 'Polonais'],
+    ['ca', 'Catalan'],
+  ])(
     'uses the translated name for %s in the audio loading message',
     (code, name) => {
       mockFFmpegState.isLoading = true;
@@ -431,7 +435,7 @@ describe('NewVoiceClient', () => {
     },
   );
 
-  it.each(['zh', 'ja', 'en-multi', 'en'])(
+  it.each(['da', 'fi', 'en-multi', 'en'])(
     'hides the preparation message when switching from French to %s',
     (code) => {
       mockFFmpegState.isLoading = true;
@@ -459,6 +463,23 @@ describe('NewVoiceClient', () => {
       ).not.toBeInTheDocument();
     },
   );
+
+  it('offers the confirmed additional languages with localized names', () => {
+    renderClone();
+    const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+      supportedLocales: { code: string; name: string }[];
+    };
+    expect(lastCall.supportedLocales).toEqual(
+      expect.arrayContaining([
+        { code: 'ca', name: 'Catalan' },
+        { code: 'hu', name: 'Hungarian' },
+        { code: 'pl', name: 'Polish' },
+        { code: 'ro', name: 'Romanian' },
+        { code: 'uk', name: 'Ukrainian' },
+        { code: 'vi', name: 'Vietnamese' },
+      ]),
+    );
+  });
 
   it('lists the page locale first in the language select', () => {
     renderClone({ lang: 'it' });

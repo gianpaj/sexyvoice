@@ -243,10 +243,20 @@ non-cacheable headers. Provider IDs stay on the server.
 
 ### Locale Routing
 
-| Locale group            | Locales                                                                                        | Model                                 | Provider  |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
-| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-3-0`                | Mistral   |
-| Chatterbox Multilingual | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
+| Locale group            | Locales                                                                                                                            | Model                                 | Provider  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral                 | `ar`, `ca`, `de`, `el`, `en`, `es`, `fr`, `hi`, `hu`, `it`, `ja`, `ko`, `nl`, `no`, `pl`, `pt`, `ro`, `ru`, `tr`, `uk`, `vi`, `zh` | `voxtral-mini-tts-3-0`                | Mistral   |
+| Chatterbox Multilingual | `da`, `en-multi`, `fi`, `he`, `ms`, `sv`, `sw`                                                                                     | `resemble-ai/chatterbox-multilingual` | Replicate |
+
+The dashboard language dropdown and `POST /api/clone-voice` use
+`apps/web/lib/clone/constants.ts` for the same locale list and provider routing.
+The list contains 28 languages plus the explicit English Chatterbox option.
+Mistral confirms 21 languages in its
+[TTS preset table](https://docs.mistral.ai/studio/audio/specs-and-limits/languages)
+and Greek in its [launch article](https://mistral.ai/news/voxtral-3/).
+Its claimed 35-language coverage is not fully enumerated. Danish, Finnish,
+Hebrew, Malay, Swedish, and Swahili stay on Chatterbox pending confirmation;
+this routing does not establish that Mistral cannot speak them.
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
 Chatterbox accepts 300. Reference audio must be at least 3 seconds for Voxtral
