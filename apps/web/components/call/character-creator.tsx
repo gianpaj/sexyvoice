@@ -23,7 +23,11 @@ import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/call-voices';
+import {
+  type SavedCallVoice,
+  savedVoiceSampleUrl,
+  withCallVoice,
+} from '@/lib/call-voices';
 import {
   buildSaveCharacterPayload,
   getPresetDescription,
@@ -32,6 +36,7 @@ import {
 } from '@/lib/characters';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from './character-avatar';
+import { CloneVoiceDialog } from './clone-voice-dialog';
 import { ListenButton } from './listen-button';
 import { VoicePicker } from './voice-picker';
 
@@ -47,12 +52,11 @@ export type CreatorIntent =
 interface CharacterCreatorProps {
   callVoices: DBVoice[];
   intent: CreatorIntent;
-  newVoiceId?: string | null;
   onCancel: () => void;
-  /** Opens cloning with the current form, so it can come back to it. */
-  onCloneVoice?: (draft: CustomCallDraft) => void;
   onDelete: (preset: Preset) => void;
   onSaved: (preset: Preset, updated: boolean) => void;
+  /** Adds a voice cloned from the creator to the saved list. */
+  onVoiceCreated: (voice: SavedCallVoice) => void;
   savedVoices: SavedCallVoice[];
 }
 
@@ -90,11 +94,10 @@ function StepBadge({ step }: { step: number }) {
 export function CharacterCreator({
   callVoices,
   intent,
-  newVoiceId,
   onCancel,
-  onCloneVoice,
   onDelete,
   onSaved,
+  onVoiceCreated,
   savedVoices,
 }: CharacterCreatorProps) {
   const t = useTranslations('call.creator');
@@ -152,6 +155,8 @@ export function CharacterCreator({
   const [triedSave, setTriedSave] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [cloneOpen, setCloneOpen] = useState(false);
+  const [newVoiceId, setNewVoiceId] = useState<string | null>(null);
 
   const update = (patch: Partial<CustomCallDraft>) => {
     setForm((current) => ({ ...current, ...patch }));
@@ -501,9 +506,10 @@ export function CharacterCreator({
                 config={sessionConfig}
                 newVoiceId={newVoiceId}
                 onChange={(config) => update({ sessionConfig: config })}
-                onCloneVoice={
-                  onCloneVoice ? () => onCloneVoice(form) : undefined
-                }
+                onCloneVoice={() => {
+                  player.stop();
+                  setCloneOpen(true);
+                }}
                 savedVoices={savedVoices}
               />
               {triedSave && !voiceValid && (
@@ -576,6 +582,23 @@ export function CharacterCreator({
           </div>
         </div>
       </div>
+
+      <CloneVoiceDialog
+        language={language}
+        onCreated={onVoiceCreated}
+        onOpenChange={setCloneOpen}
+        onUseVoice={(voice) => {
+          update({
+            sessionConfig: withCallVoice(sessionConfig, {
+              name: voice.name,
+              savedId: voice.id,
+            }),
+          });
+          setNewVoiceId(voice.id);
+        }}
+        open={cloneOpen}
+        savedCount={savedVoices.length}
+      />
 
       <AlertDialog onOpenChange={setConfirmLeave} open={confirmLeave}>
         <AlertDialogContent>

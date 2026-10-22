@@ -12,7 +12,6 @@ import { ModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
-import { callDraftStorageKey } from '@/lib/call-draft';
 import type { SavedCallVoice } from '@/lib/call-voices';
 import messages from '@/messages/en.json';
 
@@ -67,6 +66,9 @@ vi.mock('next/image', () => ({
   ),
 }));
 vi.mock('sonner', () => ({ toast: toastMock }));
+vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
+  useFFmpeg: () => ({ convert: vi.fn(), ensureLoaded: vi.fn() }),
+}));
 vi.mock('@/lib/i18n/navigation', () => ({
   Link: ({ children, href }: { children: ReactNode; href: string }) => (
     <a href={href}>{children}</a>
@@ -117,7 +119,7 @@ const savedVoice: SavedCallVoice = {
   name: 'My voice',
 };
 
-const userId = 'user-1';
+const clonedVoiceId = '6f1d9c2a-0000-4000-8000-0000000000bb';
 let fetchMock: ReturnType<typeof vi.fn>;
 
 function renderExperience({
@@ -138,7 +140,6 @@ function renderExperience({
           callVoices={callVoices}
           isPaidUser={isPaidUser}
           savedVoices={[savedVoice]}
-          userId={userId}
         >
           <p>Footer</p>
         </CallExperience>
@@ -159,7 +160,6 @@ const savedResponse = (body: Record<string, unknown>, id: string) => ({
 
 beforeEach(() => {
   window.history.replaceState({}, '', '/en/dashboard/call');
-  sessionStorage.clear();
   connection.connect.mockReset().mockResolvedValue(undefined);
   connection.shouldConnect = false;
   connection.state = 'disconnected';
@@ -170,7 +170,10 @@ beforeEach(() => {
   toastMock.error.mockClear();
   routerPush.mockClear();
   window.scrollTo = vi.fn();
-  fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
+  fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+    if (url === '/api/clone-voice') {
+      return Response.json({ audioReferenceId: clonedVoiceId });
+    }
     const body = JSON.parse(String(init.body));
     if (init.method === 'DELETE') return new Response(null, { status: 200 });
     return Response.json(savedResponse(body, body.id ?? 'new-character-id'), {
@@ -178,6 +181,10 @@ beforeEach(() => {
     });
   });
   vi.stubGlobal('fetch', fetchMock);
+  vi.stubGlobal(
+    'MediaRecorder',
+    Object.assign(vi.fn(), { isTypeSupported: () => true }),
+  );
 });
 
 afterEach(() => vi.unstubAllGlobals());
@@ -249,7 +256,6 @@ describe('CallExperience panel', () => {
             callVoices={callVoices}
             isPaidUser
             savedVoices={[savedVoice]}
-            userId={userId}
           />
         </PlaygroundStateProvider>
       </NextIntlClientProvider>,
@@ -386,16 +392,7 @@ describe('CallExperience creator', () => {
     expect(screen.getByTestId('character-picker')).toBeInTheDocument();
   });
 
-  it('reopens the draft with the cloned voice on return from Clone', async () => {
-    sessionStorage.setItem(
-      callDraftStorageKey(userId),
-      JSON.stringify({
-        description: 'Kept description',
-        instructions: 'Kept personality',
-        name: 'Kept name',
-        sessionConfig: { ...defaultSessionConfig },
-      }),
-    );
+  it('starts a character with the voice saved on the Clone page', async () => {
     window.history.replaceState(
       {},
       '',
@@ -404,15 +401,102 @@ describe('CallExperience creator', () => {
     renderExperience();
 
     const creator = await screen.findByTestId('character-creator');
-    expect(within(creator).getByLabelText('Name')).toHaveValue('Kept name');
-    expect(
-      within(creator).getByRole('textbox', { name: 'Personality' }),
-    ).toHaveValue('Kept personality');
+    expect(within(creator).getByLabelText('Name')).toHaveValue('');
     expect(
       within(creator).getByRole('radio', { name: /My voice/ }),
     ).toBeChecked();
-    expect(sessionStorage.getItem(callDraftStorageKey(userId))).toBeNull();
     expect(window.location.search).toBe('');
+  });
+
+  it('clones a voice from an upload and selects it', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+
+    await user.click(
+      screen.getByRole('button', { name: /Create a character/ }),
+    );
+    const creator = await screen.findByTestId('character-creator');
+    await user.click(
+      within(creator).getByRole('button', { name: /Clone a voice/ }),
+    );
+    const dialog = await screen.findByTestId('clone-voice-dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(
+      within(dialog).getByText('Record at least 10 seconds first.'),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Upload a file' }),
+    );
+    const sample = new File(['audio'], 'sample.wav', { type: 'audio/wav' });
+    await user.upload(
+      dialog.querySelector('input[type="file"]') as HTMLInputElement,
+      sample,
+    );
+    expect(within(dialog).getByText('sample.wav')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+
+    const name = within(dialog).getByLabelText('Name this voice');
+    expect(name).toHaveValue('My voice 2');
+    await user.clear(name);
+    await user.type(name, 'Radio voice');
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create voice' }),
+    );
+    expect(
+      within(dialog).getByText(
+        'Please confirm you have permission to clone this voice.',
+      ),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('checkbox'));
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Create voice' }),
+    );
+    expect(
+      await within(dialog).findByText('“Radio voice” is ready'),
+    ).toBeInTheDocument();
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/clone-voice');
+    const form = init.body as FormData;
+    expect(form.get('saveVoiceName')).toBe('Radio voice');
+    expect(form.get('voiceConsent')).toBe('true');
+    expect(form.get('locale')).toBe('en');
+    expect(form.get('file')).toBe(sample);
+
+    await user.click(
+      within(dialog).getByRole('button', { name: 'Use this voice' }),
+    );
+    expect(screen.queryByTestId('clone-voice-dialog')).not.toBeInTheDocument();
+    expect(
+      within(creator).getByRole('radio', { name: /Radio voice/ }),
+    ).toBeChecked();
+    expect(within(creator).getByText('New')).toBeInTheDocument();
+  });
+});
+
+describe('CallExperience clone without MediaRecorder', () => {
+  it('offers only an upload', async () => {
+    vi.stubGlobal('MediaRecorder', undefined);
+    Reflect.deleteProperty(window, 'MediaRecorder');
+    const user = userEvent.setup();
+    renderExperience();
+
+    await user.click(
+      screen.getByRole('button', { name: /Create a character/ }),
+    );
+    await user.click(
+      within(await screen.findByTestId('character-creator')).getByRole(
+        'button',
+        { name: /Clone a voice/ },
+      ),
+    );
+    const dialog = await screen.findByTestId('clone-voice-dialog');
+    expect(
+      within(dialog).queryByRole('button', { name: 'Record now' }),
+    ).not.toBeInTheDocument();
+    expect(within(dialog).getByText(/Drop an audio file here/)).toBeVisible();
   });
 });
 

@@ -269,6 +269,26 @@ for (const viewport of ['desktop', 'mobile'] as const) {
         page,
         `call-creator-${viewport}-${testInfo.project.name}`,
       );
+
+      await creator
+        .getByRole('button', { name: new RegExp(en.call.voices.cloneTitle) })
+        .click();
+      const cloneDialog = page.getByTestId('clone-voice-dialog');
+      await expect(
+        cloneDialog.getByRole('button', { name: en.call.clone.recordNow }),
+      ).toBeVisible();
+      await cloneDialog
+        .getByRole('button', { exact: true, name: en.call.clone.next })
+        .click();
+      await expect(
+        cloneDialog.getByText(
+          en.call.clone.needRecording.replace('{seconds}', '10'),
+        ),
+      ).toBeVisible();
+      await argosScreenshot(
+        page,
+        `call-clone-${viewport}-${testInfo.project.name}`,
+      );
     });
   });
 }
@@ -362,7 +382,10 @@ for (const locale of ['en', 'de'] as const) {
     const stored = [...characters.values()].map(
       (c) => c.prompts?.localized_prompts?.[locale],
     );
-    expect(stored.sort()).toEqual([originalPrompt, updatedPrompt].sort());
+    expect(stored).toHaveLength(2);
+    expect(stored).toEqual(
+      expect.arrayContaining([originalPrompt, updatedPrompt]),
+    );
   });
 }
 

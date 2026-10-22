@@ -20,10 +20,8 @@ import {
   SamplePlayerProvider,
   useSamplePlayer,
 } from '@/hooks/use-sample-player';
-import { callDraftStorageKey, customCallDraftSchema } from '@/lib/call-draft';
 import { type SavedCallVoice, withCallVoice } from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
-import { useRouter } from '@/lib/i18n/navigation';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
@@ -43,7 +41,6 @@ interface CallExperienceProps {
   /** Credits summary shown above the picker on small screens. */
   mobileCredits?: ReactNode;
   savedVoices: SavedCallVoice[];
-  userId: string;
 }
 
 export function CallExperience(props: CallExperienceProps) {
@@ -56,40 +53,25 @@ export function CallExperience(props: CallExperienceProps) {
 
 type View = { name: 'picker' } | { name: 'creator'; intent: CreatorIntent };
 
-/** Reads a draft saved before leaving for the Clone page, once. */
-function takeClonedDraft(
-  userId: string,
+/**
+ * The Clone page links back with `?custom=1&voice=<id>` to start a character
+ * with the voice it just saved.
+ */
+function returnedCloneDraft(
   savedVoices: SavedCallVoice[],
 ): CustomCallDraft | null {
   const params = new URLSearchParams(window.location.search);
   if (params.get('custom') !== '1') return null;
-  let draft: CustomCallDraft | null = null;
-  try {
-    const stored = sessionStorage.getItem(callDraftStorageKey(userId));
-    const parsed = customCallDraftSchema.safeParse(
-      stored ? JSON.parse(stored) : null,
-    );
-    if (parsed.success) draft = parsed.data;
-    sessionStorage.removeItem(callDraftStorageKey(userId));
-  } catch {
-    /* Browser storage may be unavailable. */
-  }
-  const base = draft ?? {
+  const voice = savedVoices.find((v) => v.id === params.get('voice'));
+  const sessionConfig = { ...defaultSessionConfig };
+  return {
     description: '',
     instructions: '',
     name: '',
-    sessionConfig: { ...defaultSessionConfig },
+    sessionConfig: voice
+      ? withCallVoice(sessionConfig, { name: voice.name, savedId: voice.id })
+      : sessionConfig,
   };
-  const voice = savedVoices.find((v) => v.id === params.get('voice'));
-  return voice
-    ? {
-        ...base,
-        sessionConfig: withCallVoice(base.sessionConfig, {
-          name: voice.name,
-          savedId: voice.id,
-        }),
-      }
-    : base;
 }
 
 function CallExperienceScreens({
@@ -97,8 +79,7 @@ function CallExperienceScreens({
   children,
   isPaidUser,
   mobileCredits,
-  savedVoices,
-  userId,
+  savedVoices: initialSavedVoices,
 }: CallExperienceProps) {
   const t = useTranslations('call');
   const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
@@ -108,7 +89,6 @@ function CallExperienceScreens({
   const microphone = useMicrophonePermission();
   const player = useSamplePlayer();
   const { remove } = useDeferredCharacterDelete();
-  const router = useRouter();
 
   const [view, setView] = useState<View>({ name: 'picker' });
   const [panelOpen, setPanelOpen] = useState(false);
@@ -119,6 +99,7 @@ function CallExperienceScreens({
     presetId: string;
   } | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
 
   const allPresets = helpers.getAllPresets(pgState);
   const findPreset = (id: string | null) =>
@@ -169,7 +150,7 @@ function CallExperienceScreens({
   // creator with the draft and the new voice.
   // biome-ignore lint/correctness/useExhaustiveDependencies: initial URL only
   useEffect(() => {
-    const draft = takeClonedDraft(userId, savedVoices);
+    const draft = returnedCloneDraft(savedVoices);
     if (draft && canCreate) {
       setView({ intent: { draft, kind: 'create' }, name: 'creator' });
       return;
@@ -217,18 +198,6 @@ function CallExperienceScreens({
     setPanelOpen(false);
   };
 
-  const cloneFromPage = (draft: CustomCallDraft) => {
-    try {
-      sessionStorage.setItem(
-        callDraftStorageKey(userId),
-        JSON.stringify(draft),
-      );
-    } catch {
-      /* Browser storage may be unavailable. */
-    }
-    router.push('/dashboard/clone?for=call');
-  };
-
   const callPreset = findPreset(callPresetId);
   const endedPreset = ended ? findPreset(ended.presetId) : undefined;
 
@@ -257,11 +226,11 @@ function CallExperienceScreens({
         callVoices={callVoices}
         intent={view.intent}
         onCancel={() => showView({ name: 'picker' })}
-        // Clone hands the draft back without a character ID, so editing an
-        // existing character keeps to its saved voices.
-        onCloneVoice={view.intent.kind === 'edit' ? undefined : cloneFromPage}
         onDelete={handleDelete}
         onSaved={handleSaved}
+        onVoiceCreated={(voice) =>
+          setSavedVoices((voices) => [voice, ...voices])
+        }
         savedVoices={savedVoices}
       />
     );

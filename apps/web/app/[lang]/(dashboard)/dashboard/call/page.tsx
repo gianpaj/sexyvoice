@@ -73,7 +73,6 @@ export default async function Call(props: {
           </div>
         }
         savedVoices={savedVoices}
-        userId={userId}
       >
         <div className="flex flex-col gap-5">
           <p

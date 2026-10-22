@@ -180,7 +180,7 @@ function expectPageProps(
   });
   expect(CallExperience).toHaveBeenCalledOnce();
   expect(vi.mocked(CallExperience).mock.calls[0][0]).toEqual(
-    expect.objectContaining({ callVoices, isPaidUser, savedVoices, userId }),
+    expect.objectContaining({ callVoices, isPaidUser, savedVoices }),
   );
 }
 
