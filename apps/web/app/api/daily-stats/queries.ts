@@ -12,6 +12,7 @@ const VOICE_CLONING_MODELS = [
   'resemble-ai/chatterbox-multilingual',
   'resemble-ai/chatterbox',
   'voxtral-mini-tts-2603',
+  'voxtral-mini-tts-3-0',
 ] as const;
 
 // Internal users excluded from daily stats aggregations.
