@@ -221,31 +221,19 @@ export function CharacterCreator({
       return;
     }
     setSaving(true);
-    const voiceName = sessionConfig.voice;
+    // Public characters are never a base: their prompts stay on the server.
+    const base =
+      intent.kind !== 'remix' && !source?.isPublic ? source : undefined;
     const result = await saveCharacter(
-      editing
-        ? buildSaveCharacterPayload(
-            {
-              ...editing,
-              localizedDescriptions: {
-                ...editing.localizedDescriptions,
-                [language]: form.description.trim(),
-              },
-              name,
-              sessionConfig,
-              voiceName,
-            },
-            language,
-            form.instructions,
-          )
-        : {
-            localizedDescriptions: { [language]: form.description.trim() },
-            localizedPrompts: { [language]: form.instructions },
-            name,
-            prompt: form.instructions,
-            sessionConfig,
-            voiceName,
-          },
+      buildSaveCharacterPayload({
+        base,
+        description: form.description.trim(),
+        instructions: form.instructions,
+        language,
+        name,
+        sessionConfig,
+        update: Boolean(editing),
+      }),
     );
     setSaving(false);
     if (!result.ok) {
@@ -504,6 +492,7 @@ export function CharacterCreator({
               <VoicePicker
                 callVoices={callVoices}
                 config={sessionConfig}
+                labelledBy="creator-voice"
                 newVoiceId={newVoiceId}
                 onChange={(config) => update({ sessionConfig: config })}
                 onCloneVoice={() => {

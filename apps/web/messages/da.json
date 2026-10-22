@@ -800,6 +800,7 @@
       "consentError": "Bekræft, at du har tilladelse til at klone denne stemme.",
       "creating": "Opretter “{name}”…",
       "creatingHelp": "Det tager som regel under et minut.",
+      "creatingClose": "Du kan lukke dette. Stemmen bliver stadig gemt under Dine stemmer.",
       "ready": "“{name}” er klar",
       "readyHelp": "Lyt for at tjekke, at den lyder rigtigt.",
       "hearIt": "Hør den",

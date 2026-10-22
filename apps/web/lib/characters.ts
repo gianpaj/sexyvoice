@@ -78,33 +78,53 @@ export function mapApiCharacterToPreset(
 
 // ─── Payload builder ─────────────────────────────────────────────────────────
 
-/**
- * Builds the payload for saving/updating a custom character via POST /api/characters.
- */
-export function buildSaveCharacterPayload(
-  preset: Preset,
-  language: string,
-  instructions: string,
-): SaveCharacterPayload {
-  // Filter out undefined values from Partial<Record<string, string>> fields
-  const filterDefined = (
-    obj: Partial<Record<string, string>> | undefined,
-  ): Partial<Record<string, string>> =>
-    Object.fromEntries(
-      Object.entries(obj ?? {}).filter(([, v]) => v !== undefined),
-    );
+const definedEntries = (
+  record: Partial<Record<string, string>> | undefined,
+): Partial<Record<string, string>> =>
+  Object.fromEntries(
+    Object.entries(record ?? {}).filter(([, value]) => value !== undefined),
+  );
 
+/**
+ * Builds the POST /api/characters payload from the creator's fields. `base`
+ * is the user's own character being edited or duplicated: its other
+ * languages are kept, and only an English edit replaces its default prompt.
+ * `id` is sent only when `update` is set; without it the API creates a copy.
+ */
+export function buildSaveCharacterPayload({
+  base,
+  description,
+  instructions,
+  language,
+  name,
+  sessionConfig,
+  update = false,
+}: {
+  base?: Preset;
+  description: string;
+  instructions: string;
+  language: string;
+  name: string;
+  sessionConfig: Preset['sessionConfig'];
+  update?: boolean;
+}): SaveCharacterPayload {
   return {
-    id: preset.id,
-    localizedDescriptions: filterDefined(preset.localizedDescriptions),
+    ...(update && base ? { id: base.id } : {}),
+    localizedDescriptions: {
+      ...definedEntries(base?.localizedDescriptions),
+      [language]: description,
+    },
     localizedPrompts: {
-      ...filterDefined(preset.localizedInstructions),
+      ...definedEntries(base?.localizedInstructions),
       [language]: instructions,
     },
-    name: preset.name,
-    prompt: instructions,
-    sessionConfig: preset.sessionConfig,
-    voiceName: preset.voiceName ?? preset.sessionConfig.voice,
+    name,
+    prompt:
+      language === 'en' || !base?.instructions
+        ? instructions
+        : base.instructions,
+    sessionConfig,
+    voiceName: sessionConfig.voice,
   };
 }
 

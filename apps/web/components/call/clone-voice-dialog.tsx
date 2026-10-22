@@ -87,8 +87,13 @@ export function CloneVoiceDialog({
   const [consent, setConsent] = useState(false);
   const [triedCreate, setTriedCreate] = useState(false);
   const [created, setCreated] = useState<SavedCallVoice | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
   const recordingUrl = useRef<string | null>(null);
+  // Set when a recording is stopped to be thrown away: `onStop` fires after
+  // the state reset and would otherwise bring the take back.
+  const discardStop = useRef(false);
+  // Bumped by reset. A save that finishes after it still lists the voice,
+  // since the server keeps it, but leaves the dialog alone.
+  const requestRef = useRef(0);
 
   const recorder = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
@@ -96,13 +101,34 @@ export function CloneVoiceDialog({
       if (canRecord) setProblem(t('micError'));
     },
     onStart: () => {
+      discardStop.current = false;
       setRecording(null);
       setSeconds(0);
       setProblem(null);
     },
-    onStop: (blob) => setRecording(blob),
+    onStop: (blob) => {
+      if (discardStop.current) {
+        discardStop.current = false;
+        return;
+      }
+      setRecording(blob);
+    },
   });
   const isRecording = recorder.status === 'recording';
+
+  // A blocked microphone fails inside the recorder without calling onError.
+  useEffect(() => {
+    if (canRecord && recorder.status === 'failed') setProblem(t('micError'));
+  }, [canRecord, recorder.status, t]);
+
+  const discardRecording = () => {
+    if (isRecording) {
+      discardStop.current = true;
+      recorder.stopRecording();
+    }
+    setRecording(null);
+    setSeconds(0);
+  };
 
   useEffect(() => {
     if (!isRecording) return;
@@ -128,14 +154,12 @@ export function CloneVoiceDialog({
   );
 
   const reset = () => {
-    abortRef.current?.abort();
-    if (isRecording) recorder.stopRecording();
+    requestRef.current += 1;
+    discardRecording();
     recorder.clearMediaStream();
     player.stop();
     setStep('record');
     setSource(initialSource);
-    setRecording(null);
-    setSeconds(0);
     setFile(null);
     setProblem(null);
     setName(defaultName());
@@ -150,11 +174,7 @@ export function CloneVoiceDialog({
   };
 
   const chooseSource = (next: Source) => {
-    if (isRecording) {
-      recorder.stopRecording();
-      setRecording(null);
-      setSeconds(0);
-    }
+    if (isRecording) discardRecording();
     setProblem(null);
     setSource(next);
   };
@@ -201,8 +221,9 @@ export function CloneVoiceDialog({
     if (!(name.trim() && consent)) return;
     setProblem(null);
     setStep('processing');
-    const controller = new AbortController();
-    abortRef.current = controller;
+    requestRef.current += 1;
+    const request = requestRef.current;
+    const current = () => requestRef.current === request;
     const locale = VOXTRAL_SUPPORTED_LOCALE_CODES.has(language)
       ? language
       : 'en';
@@ -221,21 +242,28 @@ export function CloneVoiceDialog({
       const response = await fetch('/api/clone-voice', {
         body: form,
         method: 'POST',
-        signal: controller.signal,
       });
       if (!response.ok) {
-        setProblem(await readCloneError(response, tClone, translateErrorCode));
-        setStep('confirm');
+        const message = await readCloneError(
+          response,
+          tClone,
+          translateErrorCode,
+        );
+        if (current()) {
+          setProblem(message);
+          setStep('confirm');
+        }
         return;
       }
       const { audioReferenceId } =
         (await response.json()) as SaveVoiceSuccessResponse;
       const voice = { id: audioReferenceId, locale, name: name.trim() };
-      setCreated(voice);
       onCreated(voice);
+      if (!current()) return;
+      setCreated(voice);
       setStep('ready');
     } catch (error) {
-      if (controller.signal.aborted) return;
+      if (!current()) return;
       setProblem(
         error instanceof Error && error.message
           ? error.message
@@ -596,6 +624,9 @@ export function CloneVoiceDialog({
               <span className="text-[13px] text-slate-400">
                 {t('creatingHelp')}
               </span>
+              <span className="text-[13px] text-slate-400">
+                {t('creatingClose')}
+              </span>
             </div>
           )}
 
@@ -671,15 +702,8 @@ export function CloneVoiceDialog({
             </>
           )}
           {step === 'processing' && (
-            <button
-              className={secondaryButton}
-              onClick={() => {
-                abortRef.current?.abort();
-                setStep('confirm');
-              }}
-              type="button"
-            >
-              {t('cancel')}
+            <button className={secondaryButton} onClick={close} type="button">
+              {t('close')}
             </button>
           )}
           {step === 'ready' && created && (

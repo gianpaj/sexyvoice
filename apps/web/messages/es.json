@@ -804,6 +804,7 @@
       "consentError": "Confirma que tienes permiso para clonar esta voz.",
       "creating": "Creando «{name}»…",
       "creatingHelp": "Suele tardar menos de un minuto.",
+      "creatingClose": "Puedes cerrar esta ventana. La voz se guardará igualmente en Tus voces.",
       "ready": "«{name}» está lista",
       "readyHelp": "Escúchala para comprobar que suena bien.",
       "hearIt": "Escuchar",

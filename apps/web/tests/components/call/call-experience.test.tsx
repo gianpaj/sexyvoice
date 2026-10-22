@@ -17,6 +17,7 @@ import messages from '@/messages/en.json';
 
 const connection = vi.hoisted(() => ({
   connect: vi.fn(),
+  disconnect: vi.fn(),
   shouldConnect: false,
   state: 'disconnected',
 }));
@@ -25,7 +26,11 @@ const microphone = vi.hoisted(() => ({
   status: 'unknown',
 }));
 const toastMock = vi.hoisted(() =>
-  Object.assign(vi.fn(), { error: vi.fn(), success: vi.fn() }),
+  Object.assign(vi.fn(), {
+    dismiss: vi.fn(),
+    error: vi.fn(),
+    success: vi.fn(),
+  }),
 );
 const routerPush = vi.hoisted(() => vi.fn());
 
@@ -42,7 +47,7 @@ vi.mock('livekit-client', () => ({
 vi.mock('@/hooks/use-connection', () => ({
   useConnection: () => ({
     connect: connection.connect,
-    disconnect: vi.fn(),
+    disconnect: connection.disconnect,
     shouldConnect: connection.shouldConnect,
   }),
 }));
@@ -161,11 +166,13 @@ const savedResponse = (body: Record<string, unknown>, id: string) => ({
 beforeEach(() => {
   window.history.replaceState({}, '', '/en/dashboard/call');
   connection.connect.mockReset().mockResolvedValue(undefined);
+  connection.disconnect.mockReset().mockResolvedValue(undefined);
   connection.shouldConnect = false;
   connection.state = 'disconnected';
   microphone.request.mockReset().mockResolvedValue(true);
   microphone.status = 'unknown';
-  toastMock.mockClear();
+  toastMock.mockClear().mockReturnValue('toast-id');
+  toastMock.dismiss.mockClear();
   toastMock.success.mockClear();
   toastMock.error.mockClear();
   routerPush.mockClear();
@@ -245,7 +252,7 @@ describe('CallExperience panel', () => {
 
     expect(microphone.request).toHaveBeenCalledOnce();
     expect(connection.connect).toHaveBeenCalledOnce();
-    rerender(
+    const tree = () => (
       <NextIntlClientProvider locale="en" messages={messages}>
         <PlaygroundStateProvider
           defaultPresets={[featured]}
@@ -258,8 +265,9 @@ describe('CallExperience panel', () => {
             savedVoices={[savedVoice]}
           />
         </PlaygroundStateProvider>
-      </NextIntlClientProvider>,
+      </NextIntlClientProvider>
     );
+    rerender(tree());
     expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');
   });
 
@@ -526,6 +534,21 @@ describe('CallExperience delete', () => {
       await screen.findByRole('button', { name: 'Open Marco' }),
     ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('sends pending deletes before the creator opens', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+
+    await user.click(
+      screen.getByRole('button', { name: 'More options for Marco' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+    await user.click(
+      screen.getByRole('button', { name: /Create a character/ }),
+    );
+
+    expect(toastMock.dismiss).toHaveBeenCalledWith('toast-id');
   });
 
   it('sends the delete when the Undo toast closes', async () => {

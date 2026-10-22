@@ -802,6 +802,7 @@
       "consentError": "Please confirm you have permission to clone this voice.",
       "creating": "Creating “{name}”…",
       "creatingHelp": "This usually takes less than a minute.",
+      "creatingClose": "You can close this. The voice will still be saved to Your voices.",
       "ready": "“{name}” is ready",
       "readyHelp": "Listen to check it sounds right.",
       "hearIt": "Hear it",

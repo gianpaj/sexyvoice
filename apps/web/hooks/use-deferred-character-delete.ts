@@ -12,6 +12,7 @@ export const DELETE_UNDO_MS = 6000;
 interface PendingDelete {
   index: number;
   preset: Preset;
+  toastId: number | string;
 }
 
 const sendDelete = (id: string) =>
@@ -73,13 +74,23 @@ export function useDeferredCharacterDelete() {
     if (pgState.selectedPresetId === preset.id) {
       selectPreset(helpers.getDefaultPresets()[0]?.id ?? null);
     }
-    pending.current.set(preset.id, { index, preset });
-    toast(t('deleted', { name: preset.name }), {
+    const toastId = toast(t('deleted', { name: preset.name }), {
       action: { label: t('undo'), onClick: () => undo(preset.id) },
       duration: DELETE_UNDO_MS,
       onAutoClose: () => commit(preset.id),
       onDismiss: () => commit(preset.id),
     });
+    pending.current.set(preset.id, { index, preset, toastId });
+  };
+
+  /**
+   * Sends every pending delete now. Creating a character first frees its
+   * slot, since the server counts characters still waiting to be deleted.
+   */
+  const flush = () => {
+    for (const entry of pending.current.values()) {
+      toast.dismiss(entry.toastId);
+    }
   };
 
   useEffect(() => {
@@ -96,5 +107,5 @@ export function useDeferredCharacterDelete() {
     };
   }, []);
 
-  return { remove };
+  return { flush, remove };
 }

@@ -26,6 +26,8 @@ interface VoicePickerProps {
   callVoices: DBVoice[];
   config: SessionConfig;
   disabled?: boolean;
+  /** ID of the heading that names the voice choice. */
+  labelledBy?: string;
   /** Saved voice to badge as new, such as one cloned in this session. */
   newVoiceId?: string | null;
   onChange: (config: SessionConfig) => void;
@@ -38,6 +40,7 @@ export function VoicePicker({
   callVoices,
   config,
   disabled,
+  labelledBy,
   newVoiceId,
   onChange,
   onCloneVoice,
@@ -124,7 +127,11 @@ export function VoicePicker({
     'font-semibold text-slate-400 text-xs uppercase tracking-[0.1em]';
 
   return (
-    <div className="flex flex-col gap-5">
+    <div
+      aria-labelledby={labelledBy}
+      className="flex flex-col gap-5"
+      role="radiogroup"
+    >
       {(saved.length > 0 || onCloneVoice) && (
         <div className="flex flex-col gap-2.5">
           <h3 className={headingClass}>{t('yourVoices')}</h3>
