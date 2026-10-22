@@ -344,7 +344,7 @@ function NewVoiceClientInner({
   });
   const reportInitialReferenceError = useEffectEvent(() => {
     dispatch({
-      patch: { errorMessage: demoLabels('audioError') },
+      patch: { errorMessage: demoLabels('audioError'), status: 'error' },
       type: 'patch',
     });
   });

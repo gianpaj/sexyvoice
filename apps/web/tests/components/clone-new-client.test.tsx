@@ -312,6 +312,26 @@ describe('NewVoiceClient', () => {
     expect(screen.getByTestId('clone-legal-consent')).not.toBeChecked();
   });
 
+  it.each(['http', 'network'])(
+    'shows a demo reference %s failure',
+    async (failure) => {
+      mockUpload.files = [];
+      if (failure === 'http') {
+        fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
+      } else {
+        fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+      }
+
+      renderClone({ initialDemo: { speakerId: 'heike', takeId: 'calmSlow' } });
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        enMessages.landing.demoClone.audioError,
+      );
+      expect(mockAddFiles).not.toHaveBeenCalled();
+      expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
+    },
+  );
+
   it('keeps a user reference when a demo download completes', async () => {
     fetchMock.mockResolvedValue(
       new Response(new Uint8Array([1, 2, 3]), {
