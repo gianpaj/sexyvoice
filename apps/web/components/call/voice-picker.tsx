@@ -119,7 +119,7 @@ export function VoicePicker({
   };
 
   const gridClass =
-    'grid grid-cols-[repeat(auto-fill,minmax(min(180px,100%),1fr))] gap-2.5';
+    'grid grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-2.5';
   const headingClass =
     'font-semibold text-slate-400 text-xs uppercase tracking-[0.1em]';
 
