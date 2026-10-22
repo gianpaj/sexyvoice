@@ -476,28 +476,31 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves multiline pasted text while converting supported Grok tags', async () => {
-    const onChange = vi.fn();
-    const pastedText = 'First line\n[pause]\n<soft>Third line</soft>';
+  it.each(['\n', '\r\n', '\r'])(
+    'normalizes %j line endings while pasting Grok tags',
+    async (lineEnding) => {
+      const onChange = vi.fn();
+      const pastedText = 'First line\n[pause]\n<soft>Third line</soft>';
 
-    renderEditor({ onChange });
+      renderEditor({ onChange });
 
-    const editor = await findEditor();
+      const editor = await findEditor();
 
-    pasteIntoEditor(editor, pastedText);
+      pasteIntoEditor(editor, pastedText.replaceAll('\n', lineEnding));
 
-    await waitFor(() => {
-      expect(onChange).toHaveBeenLastCalledWith(pastedText);
-    });
-    expect(
-      Array.from(editor.querySelectorAll('p')).map(
-        (paragraph) => paragraph.textContent,
-      ),
-    ).toEqual(['First line', '[pause]', '<soft>Third line</soft>']);
-    expect(
-      editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
-    ).toHaveLength(3);
-  });
+      await waitFor(() => {
+        expect(onChange).toHaveBeenLastCalledWith(pastedText);
+      });
+      expect(
+        Array.from(editor.querySelectorAll('p')).map(
+          (paragraph) => paragraph.textContent,
+        ),
+      ).toEqual(['First line', '[pause]', '<soft>Third line</soft>']);
+      expect(
+        editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
+      ).toHaveLength(3);
+    },
+  );
 
   it('opens the effects popover and shows available effect actions', async () => {
     const user = userEvent.setup();
@@ -1228,16 +1231,21 @@ describe('Voxtral TTSEditor', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('preserves multiline pasted emotion, pace and vocal tags verbatim', async () => {
-    const onChange = vi.fn();
-    const text =
-      "[emotion=sarcastic] I don't need diamonds, darling.\n[pace=slow][sigh] I need stable Wi-Fi and a nap";
-    renderEditor({ provider: 'voxtral', onChange });
-    const editor = await findEditor();
-    pasteIntoEditor(editor, text);
-    await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(text));
-    expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(3);
-  });
+  it.each(['\n', '\r\n', '\r'])(
+    'normalizes %j line endings while pasting Voxtral tags',
+    async (lineEnding) => {
+      const onChange = vi.fn();
+      const text =
+        "[emotion=sarcastic] I don't need diamonds, darling.\n[pace=slow][sigh] I need stable Wi-Fi and a nap";
+      renderEditor({ provider: 'voxtral', onChange });
+      const editor = await findEditor();
+      pasteIntoEditor(editor, text.replaceAll('\n', lineEnding));
+      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(text));
+      expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(
+        3,
+      );
+    },
+  );
 
   it('inserts an emotion at the caret without a closing tag', async () => {
     const user = userEvent.setup();

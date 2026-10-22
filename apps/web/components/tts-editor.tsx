@@ -410,7 +410,9 @@ function ProviderTTSEditor({
         keydown: () => false,
       },
       handlePaste: (view, event) => {
-        const text = event.clipboardData?.getData('text/plain');
+        const text = event.clipboardData
+          ?.getData('text/plain')
+          .replace(/\r\n?/g, '\n');
         if (!text) return false;
 
         // Parse clipboard text for the active provider. HTML chips from another
