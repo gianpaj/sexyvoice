@@ -17,6 +17,14 @@ import {
   server,
 } from './setup';
 
+const { mockSaveMistralVoice } = vi.hoisted(() => ({
+  mockSaveMistralVoice: vi.fn(),
+}));
+vi.mock('@/lib/clone/mistral', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/clone/mistral')>()),
+  saveMistralVoice: mockSaveMistralVoice,
+}));
+
 // Helper function to create a minimal valid WAV header
 const createWavHeader = (dataSize: number): Uint8Array => {
   const buffer = new ArrayBuffer(44);
@@ -85,8 +93,58 @@ const createFormDataWithAudio = (
 };
 
 describe('Clone Voice API Route', () => {
+  it.each(['en', 'pl', 'ca'])(
+    'saves an owned %s profile without generating speech or charging speech credits',
+    async (locale) => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+      mockSaveMistralVoice.mockResolvedValueOnce({ id: 'reference' });
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', 'true');
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ audioReferenceId: 'reference' });
+      expect(mockSaveMistralVoice).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        'My voice',
+        locale,
+        expect.any(String),
+      );
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { paid: false, locale: 'en', consent: 'true', status: 403 },
+    { paid: true, locale: 'da', consent: 'true', status: 400 },
+    { paid: true, locale: 'en', consent: 'false', status: 400 },
+  ])(
+    'rejects invalid saved voice requests: $paid $locale $consent',
+    async ({ paid, locale, consent, status }) => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(paid);
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', consent);
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(status);
+      expect(mockSaveMistralVoice).not.toHaveBeenCalled();
+    },
+  );
+
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.mocked(queries.hasUserPaid).mockReset().mockResolvedValue(false);
 
     const musicMetadata = await import('music-metadata');
     vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
@@ -209,7 +267,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -235,7 +293,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -259,7 +317,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         validText,
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -635,11 +693,11 @@ describe('Clone Voice API Route', () => {
       }
     });
 
-    it('should not reject valid supported locales (Japanese)', async () => {
+    it('should not reject valid supported locales (Danish)', async () => {
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -974,7 +1032,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('long-reference.wav'),
-        'ja',
+        'da',
         true,
       );
 
@@ -1025,7 +1083,7 @@ describe('Clone Voice API Route', () => {
           'audio/wav',
           44 + 30 * 44_100 * 2,
         ),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -1356,35 +1414,82 @@ describe('Clone Voice API Route', () => {
       );
     });
 
-    it('should successfully clone voice using Mistral Voxtral for supported multilingual locales', async () => {
-      const formData = createFormDataWithAudio(
-        'Bonjour',
-        createMockAudioFile('audio1'),
-        'fr',
-      );
+    it.each([
+      'ca',
+      'el',
+      'hu',
+      'ja',
+      'ko',
+      'no',
+      'pl',
+      'ro',
+      'ru',
+      'tr',
+      'uk',
+      'vi',
+      'zh',
+    ])(
+      'routes %s speech to Voxtral 3 with the Voxtral text limit',
+      async (locale) => {
+        const formData = createFormDataWithAudio(
+          'a'.repeat(301),
+          createMockAudioFile('audio1'),
+          locale,
+        );
 
-      const request = new Request('http://localhost/api/clone-voice', {
-        body: formData,
-        method: 'POST',
-      });
+        const request = new Request('http://localhost/api/clone-voice', {
+          body: formData,
+          method: 'POST',
+        });
 
-      const response = await POST(request);
-      const json = await response.json();
+        const response = await POST(request);
+        const json = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(json.url).toContain('files.sexyvoice.ai');
-      expect(json.creditsUsed).toBeGreaterThan(0);
-      expect(json.creditsRemaining).toBeDefined();
+        expect(response.status).toBe(200);
+        expect(json.url).toContain('files.sexyvoice.ai');
+        expect(json.creditsUsed).toBeGreaterThan(0);
+        expect(json.creditsRemaining).toBeDefined();
 
-      // Supported Voxtral locales should not use the Replicate fallback path
-      expect(mockReplicateRun).not.toHaveBeenCalled();
-    });
+        expect(mockMistralSpeechComplete).toHaveBeenCalledWith(
+          expect.objectContaining({ model: 'voxtral-mini-tts-3-0' }),
+        );
+        expect(mockReplicateRun).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['da', 'fi', 'he', 'ms', 'sv', 'sw', 'en-multi'])(
+      'keeps %s on Chatterbox',
+      async (locale) => {
+        const form = createFormDataWithAudio(
+          'Test speech',
+          createMockAudioFile(),
+          locale,
+        );
+        const response = await POST(
+          new Request('http://localhost/api/clone-voice', {
+            body: form,
+            method: 'POST',
+          }),
+        );
+        expect(response.status).toBe(200);
+        expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+        expect(mockReplicateRun).toHaveBeenCalledWith(
+          expect.stringContaining('chatterbox-multilingual'),
+          {
+            input: expect.objectContaining({
+              language: locale === 'en-multi' ? 'en' : locale,
+            }),
+          },
+          expect.any(Function),
+        );
+      },
+    );
 
     it('should optionally enhance reference audio before cloning with Replicate fallback locales', async () => {
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile('audio1.wav'),
-        'ja',
+        'da',
         true,
       );
 
@@ -1482,9 +1587,9 @@ describe('Clone Voice API Route', () => {
       });
 
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -1511,8 +1616,8 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({
             errorMessage: 'API quota exceeded',
-            language: 'ja',
-            locale: 'ja',
+            language: 'da',
+            locale: 'da',
           }),
         }),
       );
@@ -1527,9 +1632,9 @@ describe('Clone Voice API Route', () => {
       );
 
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -1553,8 +1658,8 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({
             errorName: 'Error',
-            language: 'ja',
-            locale: 'ja',
+            language: 'da',
+            locale: 'da',
           }),
         }),
       );

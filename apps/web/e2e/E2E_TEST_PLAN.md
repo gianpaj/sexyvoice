@@ -164,6 +164,10 @@ Reason:
 - notice text is visible
 - configuration form is present
 - character/preset content area is present
+- Custom exposes built-in and saved voices with a visible Clone page link
+- the personality accordion starts closed; a prompt enables a custom call
+- character/custom mode switches preserve the selected voice and prompt
+- the Custom layout fits desktop and mobile widths
 - connect button is enabled
 - paid users can create a character, save a separate copy, and update that copy
   on the English and German sites without changing the original story
@@ -180,7 +184,8 @@ Reason:
 
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
-call voices, credit transactions, and instruction config.
+call voices, saved Mistral profiles for paid users, credit transactions, and
+instruction config.
 Custom characters start empty. Authentication still runs.
 
 The English and German save-copy scenarios intercept `/api/characters` with

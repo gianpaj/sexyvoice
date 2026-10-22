@@ -195,7 +195,7 @@
     "voiceCloning": {
       "hero": {
         "title": "La tua voce, in ogni lingua",
-        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 23 lingue."
+        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 28 lingue."
       },
       "cta": {
         "freeCredits": "Inizia con 10.000 crediti gratuiti",
@@ -260,7 +260,7 @@
             },
             {
               "question": "Quali lingue supporta la clonazione vocale?",
-              "answer": "La clonazione vocale supporta le seguenti 23 lingue:\n\n🇸🇦 Arabo,\n🇨🇳 Cinese mandarino,\n🇰🇷 Coreano,\n🇩🇰 Danese,\n🇮🇱 Ebraico,\n🇫🇮 Finlandese,\n🇫🇷 Francese,\n🇯🇵 Giapponese,\n🇬🇷 Greco,\n🇮🇳 Hindi,\n🇬🇧 Inglese,\n🇮🇹 Italiano,\n🇲🇾 Malese,\n🇳🇴 Norvegese,\n🇳🇱 Olandese,\n🇵🇱 Polacco,\n🇵🇹 Portoghese,\n🇷🇺 Russo,\n🇪🇸 Spagnolo,\n🇸🇪 Svedese,\n🇰🇪 Swahili,\n🇩🇪 Tedesco,\ne 🇹🇷 Turco."
+              "answer": "La clonazione vocale supporta le seguenti 28 lingue:\n\n🇪🇸 Catalano,\n🇭🇺 Ungherese,\n🇷🇴 Rumeno,\n🇺🇦 Ucraino,\n🇻🇳 Vietnamita,\n🇸🇦 Arabo,\n🇨🇳 Cinese mandarino,\n🇰🇷 Coreano,\n🇩🇰 Danese,\n🇮🇱 Ebraico,\n🇫🇮 Finlandese,\n🇫🇷 Francese,\n🇯🇵 Giapponese,\n🇬🇷 Greco,\n🇮🇳 Hindi,\n🇬🇧 Inglese,\n🇮🇹 Italiano,\n🇲🇾 Malese,\n🇳🇴 Norvegese,\n🇳🇱 Olandese,\n🇵🇱 Polacco,\n🇵🇹 Portoghese,\n🇷🇺 Russo,\n🇪🇸 Spagnolo,\n🇸🇪 Svedese,\n🇰🇪 Swahili,\n🇩🇪 Tedesco,\ne 🇹🇷 Turco."
             }
           ]
         },
@@ -691,6 +691,31 @@
       "playVoiceSample": "Riproduci file audio",
       "stopVoiceSample": "Ferma file audio",
       "previewVoice": "Anteprima della voce di __VOICE__"
+    },
+    "custom": {
+      "modeLabel": "Configura chiamata",
+      "characters": "Personaggi",
+      "custom": "Personalizzato",
+      "voiceSources": "Origine della voce",
+      "builtIn": "Voci incluse",
+      "myVoices": "Le mie voci",
+      "voiceHeading": "Come dovrebbe suonare il tuo personaggio?",
+      "cloneVoice": "Clona una voce",
+      "noVoices": "Nessuna voce salvata",
+      "noVoicesHelp": "Clona una voce per usarla nelle tue chiamate.",
+      "noBuiltInVoices": "Nessuna voce inclusa disponibile",
+      "personality": "Aggiungi una personalità",
+      "promptAdded": "Istruzioni aggiunte",
+      "promptRequired": "Istruzioni obbligatorie",
+      "nameHelp": "per salvare",
+      "optional": "facoltativa",
+      "promptLabel": "Istruzioni sulla personalità",
+      "promptHelp": "Descrivi come deve agire e parlare il tuo personaggio. Le istruzioni sono obbligatorie per avviare una chiamata personalizzata.",
+      "saveCharacter": "Salva personaggio",
+      "saveOptional": "Puoi avviare una chiamata senza salvare.",
+      "characterLimit": "Puoi salvare fino a 10 personaggi.",
+      "paidHelp": "Le chiamate personalizzate richiedono un account a pagamento.",
+      "upgrade": "Passa a un piano a pagamento"
     }
   },
   "clone": {
@@ -742,7 +767,10 @@
       "textTooLong": "Il testo supera la lunghezza massima di __MAX__ caratteri.",
       "unsupportedAudioFormat": "Formato audio non supportato per la clonazione vocale. Usa MP3, OGG/Opus, WebM o WAV.",
       "unsupportedLocale": "Questa lingua non è supportata per la clonazione vocale.",
-      "userNotFound": "Accedi per clonare una voce."
+      "userNotFound": "Accedi per clonare una voce.",
+      "voiceNameAndConsentRequired": "Inserisci un nome (fino a 50 caratteri) e conferma di avere il permesso di salvare la voce.",
+      "savedVoiceRequiresPaid": "Per salvare le voci è necessario un account a pagamento.",
+      "savedVoiceLocaleUnsupported": "Questa opzione di lingua non permette di salvare voci per le chiamate. Scegli un’altra lingua."
     },
     "sampleCard": {
       "sourceAudio": "Audio sorgente",
@@ -751,7 +779,7 @@
     },
     "crossLanguageInfo": {
       "title": "Trasferimento vocale cross-lingua",
-      "description": "Clona una voce in una lingua e falla parlare fluentemente in una qualsiasi delle altre 23 lingue supportate preservando le caratteristiche uniche del parlante.",
+      "description": "Clona una voce in una lingua e falla parlare in una delle 28 lingue supportate preservando le caratteristiche uniche del parlante.",
       "example": "Esempio: Carica un file audio di un parlante inglese → Genera parlato francese con la sua voce"
     },
     "legalConsentCheckbox": "Utilizzando la clonazione vocale, certifico di avere tutti i consensi/diritti legali per clonare questi campioni vocali e che non utilizzerò nulla di generato per scopi illegali o dannosi.",
@@ -775,7 +803,16 @@
     "audioProcessorError": "Errore del processore audio",
     "preparingAudioProcessor": "Preparazione del processore audio per __LANGUAGE__...",
     "removeFile": "Rimuovi file",
-    "convertingAudio": "Conversione audio"
+    "convertingAudio": "Conversione audio",
+    "savedVoice": {
+      "modeLabel": "Salva una voce per le chiamate",
+      "name": "Nome della voce",
+      "help": "Salva questa voce su Mistral per selezionarla in Le mie voci. Il fornitore conserva il campione di riferimento.",
+      "save": "Salva voce",
+      "success": "Voce salvata",
+      "useInCall": "Usa la voce in una chiamata →",
+      "backToCall": "Torna alla chiamata"
+    }
   },
   "profile": {
     "title": "Impostazioni profilo",
@@ -896,7 +933,7 @@
     "titleVoiceCall": "Chiamate Vocali IA – Parla dal Vivo con Personaggi IA",
     "descriptionVoiceCall": "Fai chiamate telefoniche IA dal vivo con le tue voci preferite. Parla in tempo reale con personaggi IA – conversazioni naturali grazie alla tecnologia vocale di SexyVoice.ai.",
     "titleVoiceCloning": "Clonazione vocale con IA",
-    "descriptionVoiceCloning": "Clona una voce da pochi secondi di audio e ascoltala parlare in modo naturale in 23 lingue.",
+    "descriptionVoiceCloning": "Clona una voce da pochi secondi di audio e ascoltala parlare in modo naturale in 28 lingue.",
     "titleAudioConverter": "Convertitore Audio Online Gratuito – Converti MP3, WAV, FLAC e Altri Formati",
     "titleTranscribe": "Trascrizione Audio Online Gratuita – Da Voce a Testo in 99+ Lingue",
     "descriptionAudioConverter": "Convertitore audio online gratuito – Converti MP3, WAV, FLAC, OGG, AAC, M4A e altri formati direttamente nel tuo browser. Nessun upload richiesto, 100% privato e offline. Basato su FFmpeg.",

@@ -195,7 +195,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Din stemme, på alle sprog",
-        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på 23 sprog."
+        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på 28 sprog."
       },
       "cta": {
         "freeCredits": "Start med 10.000 gratis kreditter",
@@ -260,7 +260,7 @@
             },
             {
               "question": "Hvilke sprog understøttes for stemmekloning?",
-              "answer": "Stemmekloning understøtter følgende 23 sprog:\n\n🇸🇦 Arabisk,\n🇩🇰 Dansk,\n🇬🇧 Engelsk,\n🇫🇮 Finsk,\n🇫🇷 Fransk,\n🇬🇷 Græsk,\n🇮🇱 Hebraisk,\n🇮🇳 Hindi,\n🇳🇱 Hollandsk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇲🇾 Malajisk,\n🇨🇳 Mandarin-kinesisk,\n🇳🇴 Norsk,\n🇵🇱 Polsk,\n🇵🇹 Portugisisk,\n🇷🇺 Russisk,\n🇪🇸 Spansk,\n🇸🇪 Svensk,\n🇰🇪 Swahili,\n🇹🇷 Tyrkisk,\nog 🇩🇪 Tysk."
+              "answer": "Stemmekloning understøtter følgende 28 sprog:\n\n🇪🇸 Catalansk,\n🇭🇺 Ungarsk,\n🇷🇴 Rumænsk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk,\n🇸🇦 Arabisk,\n🇩🇰 Dansk,\n🇬🇧 Engelsk,\n🇫🇮 Finsk,\n🇫🇷 Fransk,\n🇬🇷 Græsk,\n🇮🇱 Hebraisk,\n🇮🇳 Hindi,\n🇳🇱 Hollandsk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇲🇾 Malajisk,\n🇨🇳 Mandarin-kinesisk,\n🇳🇴 Norsk,\n🇵🇱 Polsk,\n🇵🇹 Portugisisk,\n🇷🇺 Russisk,\n🇪🇸 Spansk,\n🇸🇪 Svensk,\n🇰🇪 Swahili,\n🇹🇷 Tyrkisk,\nog 🇩🇪 Tysk."
             }
           ]
         },
@@ -687,6 +687,31 @@
       "playVoiceSample": "Afspil stemmeprøve",
       "stopVoiceSample": "Stop stemmeprøve",
       "previewVoice": "Forhåndsvisning af __VOICE__s stemme"
+    },
+    "custom": {
+      "modeLabel": "Opsæt opkald",
+      "characters": "Karakterer",
+      "custom": "Tilpasset",
+      "voiceSources": "Stemmekilde",
+      "builtIn": "Indbyggede stemmer",
+      "myVoices": "Mine stemmer",
+      "voiceHeading": "Hvordan skal din karakter lyde?",
+      "cloneVoice": "Klon en stemme",
+      "noVoices": "Ingen gemte stemmer endnu",
+      "noVoicesHelp": "Klon en stemme for at bruge den i dine opkald.",
+      "noBuiltInVoices": "Ingen indbyggede stemmer tilgængelige",
+      "personality": "Tilføj en personlighed",
+      "promptAdded": "Instruktioner tilføjet",
+      "promptRequired": "Instruktioner påkrævet",
+      "nameHelp": "for at gemme",
+      "optional": "valgfrit",
+      "promptLabel": "Personlighedsinstruktioner",
+      "promptHelp": "Beskriv, hvordan din karakter skal opføre sig og tale. Instruktioner er påkrævet for at starte et tilpasset opkald.",
+      "saveCharacter": "Gem karakter",
+      "saveOptional": "Du kan starte et opkald uden at gemme.",
+      "characterLimit": "Du kan gemme op til 10 karakterer.",
+      "paidHelp": "Tilpassede opkald kræver en betalt konto.",
+      "upgrade": "Opgrader"
     }
   },
   "clone": {
@@ -738,7 +763,10 @@
       "textTooLong": "Teksten overskrider den maksimale længde på __MAX__ tegn.",
       "unsupportedAudioFormat": "Ikke-understøttet lydformat til stemmekloning. Brug MP3, OGG/Opus, WebM eller WAV.",
       "unsupportedLocale": "Dette sprog understøttes ikke til stemmekloning.",
-      "userNotFound": "Log ind for at klone en stemme."
+      "userNotFound": "Log ind for at klone en stemme.",
+      "voiceNameAndConsentRequired": "Indtast et navn (op til 50 tegn), og bekræft, at du har tilladelse til at gemme stemmen.",
+      "savedVoiceRequiresPaid": "Du skal have en betalt konto for at gemme stemmer.",
+      "savedVoiceLocaleUnsupported": "Denne sprogmulighed understøtter ikke gemte stemmer til opkald. Vælg et andet sprog."
     },
     "sampleCard": {
       "sourceAudio": "Kildelyd",
@@ -747,7 +775,7 @@
     },
     "crossLanguageInfo": {
       "title": "Stemmekloning på tværs af sprog",
-      "description": "Klon en stemme på ét sprog og få den til at tale flydende på et af de andre 23 understøttede sprog, mens talerens unikke karakteristika bevares.",
+      "description": "Klon en stemme på ét sprog og få den til at tale på et af de 28 understøttede sprog, mens stemmens unikke karakteristika bevares.",
       "example": "Eksempel: Upload en engelsktalende persons stemmeprøve → Generer fransk tale med deres stemme"
     },
     "legalConsentCheckbox": "Ved at bruge stemmekloning bekræfter du, at du har alle juridiske samtykker/rettigheder til at klone disse stemmeprøver, og at du ikke vil bruge noget genereret til ulovlige eller skadelige formål.",
@@ -771,7 +799,16 @@
     "audioProcessorError": "Lydprocessorfejl",
     "preparingAudioProcessor": "Forbereder lydprocessor til __LANGUAGE__...",
     "removeFile": "Fjern fil",
-    "convertingAudio": "Konverterer lyd"
+    "convertingAudio": "Konverterer lyd",
+    "savedVoice": {
+      "modeLabel": "Gem en stemme til opkald",
+      "name": "Stemmens navn",
+      "help": "Gem denne stemme hos Mistral, så du kan vælge den under Mine stemmer. Udbyderen opbevarer referenceoptagelsen.",
+      "save": "Gem stemme",
+      "success": "Stemme gemt",
+      "useInCall": "Brug stemmen i et opkald →",
+      "backToCall": "Tilbage til opkald"
+    }
   },
   "profile": {
     "title": "Profilindstillinger",
@@ -892,7 +929,7 @@
     "titleVoiceCall": "AI-stemmeopkald – Tal live med AI-karakterer",
     "descriptionVoiceCall": "Før live AI-telefonopkald med dine yndlingsstemmer. Tal i realtid med AI-karakterer – naturlige samtaler drevet af SexyVoice.ai's stemmeteknologi.",
     "titleVoiceCloning": "AI-stemmekloning",
-    "descriptionVoiceCloning": "Klon en stemme ud fra få sekunders lyd, og hør den tale naturligt på 23 sprog.",
+    "descriptionVoiceCloning": "Klon en stemme ud fra få sekunders lyd, og hør den tale naturligt på 28 sprog.",
     "/": "",
     "/voice-call": "Stemmeopkald",
     "/login": "Log ind",

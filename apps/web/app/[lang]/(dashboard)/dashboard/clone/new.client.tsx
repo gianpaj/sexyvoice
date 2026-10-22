@@ -8,6 +8,7 @@ import {
   useEffectEvent,
   useReducer,
   useRef,
+  useState,
 } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
@@ -18,6 +19,9 @@ import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
 import { useFileUpload } from '@/hooks/use-file-upload';
@@ -28,6 +32,7 @@ import {
   type CloneRouteErrorCode,
   type CloneSuccessResponse,
   type RouteErrorDetails,
+  type SaveVoiceSuccessResponse,
 } from '@/lib/clone/api-types';
 import {
   CLONE_SUPPORTED_LOCALE_CODES,
@@ -44,6 +49,7 @@ import { downloadUrl } from '@/lib/download';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { CloneAudioInput } from './clone-audio-input';
@@ -153,17 +159,20 @@ export default function NewVoiceClient({
   hasEnoughCredits,
   userHasPaid,
   initialDemo,
+  initialSaveForCalls = false,
 }: {
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
   initialDemo?: InitialDemo;
+  initialSaveForCalls?: boolean;
 }) {
   return (
     <AudioProvider>
       <NewVoiceClientInner
         hasEnoughCredits={hasEnoughCredits}
         initialDemo={initialDemo}
+        initialSaveForCalls={initialSaveForCalls}
         lang={lang}
         userHasPaid={userHasPaid}
       />
@@ -176,13 +185,20 @@ function NewVoiceClientInner({
   hasEnoughCredits,
   userHasPaid,
   initialDemo,
+  initialSaveForCalls = false,
 }: {
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
   initialDemo?: InitialDemo;
+  initialSaveForCalls?: boolean;
 }) {
   const t = useTranslations('clone');
+  const [saveVoiceOnly, setSaveVoiceOnly] = useState(
+    initialSaveForCalls && userHasPaid,
+  );
+  const [voiceName, setVoiceName] = useState('');
+  const [savedVoiceId, setSavedVoiceId] = useState<string | null>(null);
   const translateErrorCode = useTranslations('errorCodes');
   const demoLabels = useTranslations('landing.demoClone');
   const {
@@ -386,7 +402,13 @@ function NewVoiceClientInner({
       return;
     }
 
-    if (!text.trim()) {
+    if (
+      !legalConsentChecked ||
+      (saveVoiceOnly && !(voiceName.trim() && usesVoxtral && userHasPaid))
+    )
+      return;
+
+    if (!(saveVoiceOnly || text.trim())) {
       dispatch({
         patch: {
           errorMessage: t('errors.noText'),
@@ -478,6 +500,13 @@ function NewVoiceClientInner({
         String(referenceAudioEnhancementEnabled),
       );
 
+      if (saveVoiceOnly) {
+        formData.append(CLONE_FORM_FIELDS.saveVoiceName, voiceName.trim());
+        formData.append(
+          CLONE_FORM_FIELDS.voiceConsent,
+          String(legalConsentChecked),
+        );
+      }
       voiceRes = await fetch('/api/clone-voice', {
         body: formData,
         method: 'POST',
@@ -520,7 +549,15 @@ function NewVoiceClientInner({
         return;
       }
 
-      const voiceResult = (await voiceRes.json()) as CloneSuccessResponse;
+      const voiceResult = (await voiceRes.json()) as
+        | CloneSuccessResponse
+        | SaveVoiceSuccessResponse;
+      if ('audioReferenceId' in voiceResult) {
+        setSavedVoiceId(voiceResult.audioReferenceId);
+        dispatch({ patch: { status: 'idle' }, type: 'patch' });
+        toast.success(t('savedVoice.success'));
+        return;
+      }
 
       toast.success(t('success'));
 
@@ -566,8 +603,8 @@ function NewVoiceClientInner({
 
       if (
         status !== 'generating' &&
-        text.trim() &&
-        hasEnoughCredits &&
+        (saveVoiceOnly ? voiceName.trim() : text.trim()) &&
+        (saveVoiceOnly || hasEnoughCredits) &&
         legalConsentChecked
       ) {
         handleGenerate().catch((error) => {
@@ -685,15 +722,57 @@ function NewVoiceClientInner({
                   supportedLocales={supportedLocales}
                 />
 
-                <CloneTextField
-                  disabled={status === 'generating'}
-                  dispatch={dispatch}
-                  selectedLocaleCode={selectedLocaleCode}
-                  text={text}
-                  textMaxLength={textMaxLength}
-                  userHasPaid={userHasPaid}
-                  usesVoxtral={usesVoxtral}
-                />
+                {userHasPaid && (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={saveVoiceOnly}
+                      disabled={status === 'generating'}
+                      id="save-voice-only"
+                      onCheckedChange={(checked) => {
+                        setSaveVoiceOnly(checked === true);
+                        setSavedVoiceId(null);
+                      }}
+                    />
+                    <Label htmlFor="save-voice-only">
+                      {t('savedVoice.modeLabel')}
+                    </Label>
+                  </div>
+                )}
+                {saveVoiceOnly ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="saved-voice-name">
+                      {t('savedVoice.name')}
+                    </Label>
+                    <Input
+                      disabled={status === 'generating'}
+                      id="saved-voice-name"
+                      maxLength={50}
+                      onChange={(e) => {
+                        setVoiceName(e.target.value);
+                        setSavedVoiceId(null);
+                      }}
+                      value={voiceName}
+                    />
+                    <p className="text-muted-foreground text-sm">
+                      {t('savedVoice.help')}
+                    </p>
+                    {!usesVoxtral && (
+                      <p className="text-destructive text-sm">
+                        {t('errors.savedVoiceLocaleUnsupported')}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <CloneTextField
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    selectedLocaleCode={selectedLocaleCode}
+                    text={text}
+                    textMaxLength={textMaxLength}
+                    userHasPaid={userHasPaid}
+                    usesVoxtral={usesVoxtral}
+                  />
+                )}
               </div>
             </div>
 
@@ -705,7 +784,7 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
-            {!hasEnoughCredits && (
+            {!(saveVoiceOnly || hasEnoughCredits) && (
               <Alert className="mx-auto w-fit" variant="destructive">
                 <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
               </Alert>
@@ -714,22 +793,46 @@ function NewVoiceClientInner({
             <CloneConsentFields
               disabled={status === 'generating'}
               dispatch={dispatch}
+              hideEnhancement={saveVoiceOnly}
               legalConsentChecked={legalConsentChecked}
               referenceAudioEnhancementEnabled={
                 referenceAudioEnhancementEnabled
               }
             />
 
+            {savedVoiceId && (
+              <div className="rounded-lg border border-violet-500/40 bg-violet-500/10 p-4">
+                <p className="mb-2 text-sm">{t('savedVoice.success')}</p>
+                <Button asChild>
+                  <Link href={`/dashboard/call?custom=1&voice=${savedVoiceId}`}>
+                    {t('savedVoice.useInCall')}
+                  </Link>
+                </Button>
+              </div>
+            )}
+            {initialSaveForCalls && (
+              <Link
+                className="inline-block text-muted-foreground text-sm underline underline-offset-4"
+                href="/dashboard/call?custom=1"
+              >
+                {t('savedVoice.backToCall')}
+              </Link>
+            )}
             <GenerateButton
               className="w-full"
-              ctaText={t('ctaButton')}
+              ctaText={t(saveVoiceOnly ? 'savedVoice.save' : 'ctaButton')}
               data-testid="clone-generate-button"
               disabled={
-                !((file || micBlob) && text.trim()) ||
+                !(
+                  (file || micBlob) &&
+                  (saveVoiceOnly ? voiceName.trim() : text.trim())
+                ) ||
+                (saveVoiceOnly &&
+                  (!(usesVoxtral && userHasPaid) || Boolean(savedVoiceId))) ||
                 status === 'generating' ||
-                !hasEnoughCredits ||
+                !(saveVoiceOnly || hasEnoughCredits) ||
                 convertingMicAudio ||
-                textIsOverLimit ||
+                (!saveVoiceOnly && textIsOverLimit) ||
                 !legalConsentChecked
               }
               generatingText={

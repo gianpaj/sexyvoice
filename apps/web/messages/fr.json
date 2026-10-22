@@ -195,7 +195,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Votre voix, dans toutes les langues",
-        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 23 langues."
+        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 28 langues."
       },
       "cta": {
         "freeCredits": "Commencez avec 10 000 crédits gratuits",
@@ -260,7 +260,7 @@
             },
             {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",
-              "answer": "Le clonage vocal supporte les 23 langues suivantes :\n\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
+              "answer": "Le clonage vocal supporte les 28 langues suivantes :\n\n🇪🇸 Catalan,\n🇭🇺 Hongrois,\n🇷🇴 Roumain,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien,\n🇩🇪 Allemand,\n🇬🇧 Anglais,\n🇸🇦 Arabe,\n🇨🇳 Chinois mandarin,\n🇰🇷 Coréen,\n🇩🇰 Danois,\n🇪🇸 Espagnol,\n🇫🇮 Finnois,\n🇫🇷 Français,\n🇬🇷 Grec,\n🇮🇱 Hébreu,\n🇮🇳 Hindi,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇲🇾 Malais,\n🇳🇱 Néerlandais,\n🇳🇴 Norvégien,\n🇵🇱 Polonais,\n🇵🇹 Portugais,\n🇷🇺 Russe,\n🇸🇪 Suédois,\n🇰🇪 Swahili,\net 🇹🇷 Turc."
             }
           ]
         },
@@ -691,6 +691,31 @@
       "playVoiceSample": "Lire l'échantillon vocal",
       "stopVoiceSample": "Arrêter l'échantillon vocal",
       "previewVoice": "Aperçu de la voix de __VOICE__"
+    },
+    "custom": {
+      "modeLabel": "Configurer l’appel",
+      "characters": "Personnages",
+      "custom": "Personnalisé",
+      "voiceSources": "Source de la voix",
+      "builtIn": "Voix incluses",
+      "myVoices": "Mes voix",
+      "voiceHeading": "Comment votre personnage doit-il sonner ?",
+      "cloneVoice": "Cloner une voix",
+      "noVoices": "Aucune voix enregistrée",
+      "noVoicesHelp": "Clonez une voix pour l’utiliser dans vos appels.",
+      "noBuiltInVoices": "Aucune voix incluse disponible",
+      "personality": "Ajouter une personnalité",
+      "promptAdded": "Instructions ajoutées",
+      "promptRequired": "Instructions requises",
+      "nameHelp": "pour enregistrer",
+      "optional": "facultative",
+      "promptLabel": "Instructions de personnalité",
+      "promptHelp": "Décrivez comment votre personnage doit agir et parler. Des instructions sont requises pour lancer un appel personnalisé.",
+      "saveCharacter": "Enregistrer le personnage",
+      "saveOptional": "Vous pouvez lancer un appel sans enregistrer.",
+      "characterLimit": "Vous pouvez enregistrer jusqu’à 10 personnages.",
+      "paidHelp": "Les appels personnalisés nécessitent un compte payant.",
+      "upgrade": "Passer à un forfait payant"
     }
   },
   "clone": {
@@ -742,7 +767,10 @@
       "textTooLong": "Le texte dépasse la longueur maximale de __MAX__ caractères.",
       "unsupportedAudioFormat": "Format audio non pris en charge pour le clonage vocal. Utilisez MP3, OGG/Opus, WebM ou WAV.",
       "unsupportedLocale": "Cette langue n'est pas prise en charge pour le clonage vocal.",
-      "userNotFound": "Veuillez vous connecter pour cloner une voix."
+      "userNotFound": "Veuillez vous connecter pour cloner une voix.",
+      "voiceNameAndConsentRequired": "Saisissez un nom (50 caractères maximum) et confirmez que vous avez l’autorisation d’enregistrer cette voix.",
+      "savedVoiceRequiresPaid": "Un compte payant est nécessaire pour enregistrer des voix.",
+      "savedVoiceLocaleUnsupported": "Cette option de langue ne permet pas d’enregistrer une voix pour les appels. Choisissez une autre langue."
     },
     "sampleCard": {
       "sourceAudio": "Audio source",
@@ -751,7 +779,7 @@
     },
     "crossLanguageInfo": {
       "title": "Transfert vocal inter-langues",
-      "description": "Clonez une voix dans une langue et faites-la parler couramment dans l'une des 23 autres langues supportées tout en préservant les caractéristiques uniques du locuteur.",
+      "description": "Clonez une voix dans une langue et faites-la parler dans l’une des 28 langues prises en charge tout en préservant ses caractéristiques uniques.",
       "example": "Exemple : Téléchargez un échantillon vocal d'un locuteur anglais → Générez de la parole française avec sa voix"
     },
     "legalConsentCheckbox": "En utilisant le clonage vocal, vous certifiez que vous disposez de tous les consentements/droits légaux pour cloner ces échantillons vocaux et que vous n'utiliserez rien de ce qui est généré à des fins illégales ou nuisibles.",
@@ -775,7 +803,16 @@
     "audioProcessorError": "Erreur du processeur audio",
     "preparingAudioProcessor": "Préparation du processeur audio pour __LANGUAGE__...",
     "removeFile": "Supprimer le fichier",
-    "convertingAudio": "Conversion de l'audio"
+    "convertingAudio": "Conversion de l'audio",
+    "savedVoice": {
+      "modeLabel": "Enregistrer une voix pour les appels",
+      "name": "Nom de la voix",
+      "help": "Enregistrez cette voix chez Mistral pour la sélectionner dans Mes voix. Le fournisseur conserve l’échantillon de référence.",
+      "save": "Enregistrer la voix",
+      "success": "Voix enregistrée",
+      "useInCall": "Utiliser la voix dans un appel →",
+      "backToCall": "Retour à l’appel"
+    }
   },
   "profile": {
     "title": "Paramètres du profil",
@@ -896,7 +933,7 @@
     "titleVoiceCall": "Appels Vocaux IA – Parlez en Direct avec des Personnages IA",
     "descriptionVoiceCall": "Passez des appels téléphoniques IA en direct avec vos voix préférées. Parlez en temps réel avec des personnages IA – des conversations naturelles grâce à la technologie vocale de SexyVoice.ai.",
     "titleVoiceCloning": "Clonage vocal par IA",
-    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 23 langues.",
+    "descriptionVoiceCloning": "Clonez une voix à partir de quelques secondes d'audio et écoutez-la parler naturellement dans 28 langues.",
     "/": "",
     "/voice-call": "Appel Vocal",
     "/login": "Connexion",

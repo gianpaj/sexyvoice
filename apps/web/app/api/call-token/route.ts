@@ -15,10 +15,10 @@ import {
 } from '@/lib/call-token-schema';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { resolveCallVoice } from '@/lib/supabase/call-voices';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
   getCredits,
-  getVoiceIdByName,
   hasUserPaid,
   isFreeUserOverCallLimit,
   resolveCharacterPrompt,
@@ -125,7 +125,10 @@ export async function POST(request: Request) {
       : defaultLanguage;
 
     // Validate voice exists in DB
-    const voiceObj = await getVoiceIdByName(voice);
+    const voiceObj = await resolveCallVoice(
+      playgroundState.sessionConfig,
+      user.id,
+    );
 
     if (!voiceObj) {
       captureException('Voice not found', { extra: { voice } });
@@ -199,6 +202,19 @@ export async function POST(request: Request) {
           },
         });
         return APIErrorResponse('Failed to resolve character prompt', 500);
+      }
+    }
+
+    if (!selectedPresetId || model === 'mistral-tts') {
+      isPaidUser ??= await hasUserPaid(user.id);
+      if (!isPaidUser) {
+        return APIErrorResponse(
+          'Custom characters require a paid account',
+          403,
+        );
+      }
+      if (!resolvedInstructions.trim()) {
+        return APIErrorResponse('A personality prompt is required', 400);
       }
     }
 

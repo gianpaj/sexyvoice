@@ -155,7 +155,7 @@ describe('demo clone speakers', () => {
 });
 
 describe('demo clone languages', () => {
-  it('derives nine ordered language codes from one catalog and matches Voxtral', () => {
+  it('derives nine ordered demo languages supported by Voxtral', () => {
     expect(DEMO_LANGUAGE_CODES).toEqual([
       'en',
       'de',
@@ -170,9 +170,9 @@ describe('demo clone languages', () => {
     expect(DEMO_LANGUAGE_CODES).toEqual(
       CLONE_DEMO_LANGUAGES.map(({ languageCode }) => languageCode),
     );
-    expect(new Set(DEMO_LANGUAGE_CODES)).toEqual(
-      VOXTRAL_SUPPORTED_LOCALE_CODES,
-    );
+    for (const code of DEMO_LANGUAGE_CODES) {
+      expect(VOXTRAL_SUPPORTED_LOCALE_CODES.has(code)).toBe(true);
+    }
   });
 
   it('stages distinct translated anxious prompts without assigning audio', () => {

@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { Mistral } from '@mistralai/mistralai';
 import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
@@ -27,6 +26,7 @@ import {
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { getMistralClient, saveMistralVoice } from '@/lib/clone/mistral';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import {
   getCloneTextMaxLength,
@@ -121,6 +121,7 @@ interface FormInput {
   enhanceReferenceAudio: boolean;
   file: File;
   locale: string;
+  saveVoiceName?: string;
   text: string;
 }
 
@@ -149,22 +150,6 @@ class RouteError extends Error {
     this.code = code;
     this.details = details;
   }
-}
-
-let mistralClient: Mistral | null = null;
-
-function getMistralClient(): Mistral {
-  const apiKey = process.env.MISTRAL_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('MISTRAL_API_KEY is not configured');
-  }
-
-  if (!mistralClient) {
-    mistralClient = new Mistral({ apiKey });
-  }
-
-  return mistralClient;
 }
 
 function createRouteError(
@@ -274,6 +259,21 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const enhanceReferenceAudioValue = formData.get(
     CLONE_FORM_FIELDS.enhanceReferenceAudio,
   );
+  const nameValue = formData.get(CLONE_FORM_FIELDS.saveVoiceName);
+  const saveVoiceName =
+    typeof nameValue === 'string' ? nameValue.trim() : undefined;
+  if (
+    nameValue !== null &&
+    (!saveVoiceName ||
+      saveVoiceName.length > 50 ||
+      formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
+  ) {
+    throw createRouteError(
+      'A voice name and permission to save are required',
+      400,
+      'errors.voiceNameAndConsentRequired',
+    );
+  }
   const textValue = formData.get(CLONE_FORM_FIELDS.text);
   const file = formData.get(CLONE_FORM_FIELDS.file);
   const locale = formData.get(CLONE_FORM_FIELDS.locale);
@@ -285,7 +285,7 @@ async function parseFormData(request: Request): Promise<FormInput> {
     enhanceReferenceAudioValue === 'true';
   const localeStr = typeof locale === 'string' ? locale : '';
 
-  if (!(text && audioFile)) {
+  if (!((text || saveVoiceName) && audioFile)) {
     throw createRouteError(
       'Missing required parameters: text and audio file',
       400,
@@ -302,6 +302,7 @@ async function parseFormData(request: Request): Promise<FormInput> {
   }
 
   return {
+    saveVoiceName,
     enhanceReferenceAudio: shouldEnhanceReferenceAudio,
     file: audioFile,
     locale: localeStr,
@@ -1284,6 +1285,34 @@ export async function POST(request: Request) {
     validateLocale(locale);
 
     const userHasPaid = await hasUserPaid(user.id);
+    if (formInput.saveVoiceName) {
+      if (!userHasPaid)
+        return routeErrorResponse(
+          'Saved voices require a paid account',
+          403,
+          'errors.savedVoiceRequiresPaid',
+        );
+      if (resolveCloneProvider(locale) !== 'mistral')
+        return routeErrorResponse(
+          'This language is not supported for saved voices',
+          400,
+          'errors.savedVoiceLocaleUnsupported',
+        );
+      const processedAudio = await processAudioFile(
+        referenceAudioFile,
+        false,
+        locale,
+        user.id,
+      );
+      validateAudioDuration(processedAudio.duration, 'mistral');
+      const reference = await saveMistralVoice(
+        processedAudio.buffer,
+        formInput.saveVoiceName,
+        locale,
+        user.id,
+      );
+      return NextResponse.json({ audioReferenceId: reference.id });
+    }
     validateTextLength(text, locale, userHasPaid);
 
     // Check credits

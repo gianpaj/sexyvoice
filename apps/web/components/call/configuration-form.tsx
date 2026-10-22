@@ -15,12 +15,19 @@ import type { z } from 'zod';
 
 import { SessionConfig } from '@/components/call/session-config';
 import { Form } from '@/components/ui/form';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { defaultSessionConfig } from '@/data/default-config';
+import { ModelId } from '@/data/models';
 import type { CallLanguage } from '@/data/playground-state';
-import { callLanguages as callLanguageCodes } from '@/data/playground-state';
+import {
+  callLanguages as callLanguageCodes,
+  emptyCustomCallDraft,
+} from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { callDraftStorageKey, customCallDraftSchema } from '@/lib/call-draft';
+import type { SavedCallVoice } from '@/lib/call-voices';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
@@ -31,6 +38,7 @@ import {
   SelectValue,
 } from '../ui/select';
 import { ConfigurationFormSchema } from './configuration-form.schema';
+import { CustomCharacterForm } from './custom-character-form';
 import { InstructionsEditor } from './instructions-editor';
 import { PresetSave } from './preset-save';
 import { PresetSelector } from './preset-selector';
@@ -39,18 +47,22 @@ import { SceneSelector } from './scene-selector';
 // import { useToast } from "@/hooks/use-toast";
 
 // Configuration changes that require full reconnection instead of hot-reload
-const RECONNECT_REQUIRED_FIELDS = ['voice'];
+const RECONNECT_REQUIRED_FIELDS = ['voice', 'model'];
 
 interface ConfigurationFormProps {
   callVoices?: DBVoice[];
   isPaidUser?: boolean;
   lang: Locale;
+  savedVoices?: SavedCallVoice[];
+  userId?: string;
 }
 
 const EMPTY_ITEMS: DBVoice[] = [];
 
 export function ConfigurationForm({
   lang,
+  savedVoices = [],
+  userId = '',
   isPaidUser = false,
   callVoices = EMPTY_ITEMS,
 }: ConfigurationFormProps) {
@@ -67,6 +79,7 @@ export function ConfigurationForm({
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const formValues = form.watch();
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref to track timeout
+  const restoredDraftRef = useRef(false);
   const hasConnectedOnceRef = useRef(false); // Track if we've connected once
   const isReconnectingRef = useRef(false); // Track if we're currently reconnecting to prevent loops
   // const { toast } = useToast();
@@ -242,6 +255,56 @@ export function ConfigurationForm({
     dispatch({ payload: value as CallLanguage, type: 'SET_LANGUAGE' });
   };
   const displayLanguage = true;
+  const mode = pgState.mode ?? 'characters';
+  const busy = connectionState !== ConnectionState.Disconnected;
+  const changeMode = (value: string) => {
+    if (busy || (value !== 'characters' && value !== 'custom')) return;
+    dispatch({ type: 'SET_CALL_MODE', payload: value });
+    helpers.updateBrowserUrl(
+      value === 'custom'
+        ? null
+        : (pgState.characterPresetId ??
+            helpers.getDefaultPresets()[0]?.id ??
+            null),
+    );
+  };
+
+  // Restore only on a return from Clone, scoped to the signed-in user.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: initial navigation only
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('custom') !== '1' || restoredDraftRef.current) return;
+    restoredDraftRef.current = true;
+    let draft = emptyCustomCallDraft;
+    try {
+      const stored = sessionStorage.getItem(callDraftStorageKey(userId));
+      const parsed = customCallDraftSchema.safeParse(
+        stored ? JSON.parse(stored) : null,
+      );
+      if (parsed.success) draft = parsed.data;
+      sessionStorage.removeItem(callDraftStorageKey(userId));
+    } catch {
+      /* Browser storage may be unavailable. */
+    }
+    const voice = savedVoices.find((v) => v.id === params.get('voice'));
+    dispatch({
+      type: 'SET_CUSTOM_DRAFT',
+      payload: {
+        ...draft,
+        ...(voice
+          ? {
+              sessionConfig: {
+                ...draft.sessionConfig,
+                model: ModelId.MISTRAL_TTS,
+                audioReferenceId: voice.id,
+                voice: voice.name,
+              },
+            }
+          : {}),
+      },
+    });
+    dispatch({ type: 'SET_CALL_MODE', payload: 'custom' });
+  }, []);
 
   return (
     <header
@@ -313,27 +376,63 @@ export function ConfigurationForm({
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">
-          <PresetSelector callVoices={callVoices} isPaidUser={isPaidUser} />
-          {isPaidUser &&
-            pgState.selectedPresetId &&
-            !helpers
-              .getDefaultPresets()
-              .some((p) => p.id === pgState.selectedPresetId) && (
-              <div className="mt-4 space-y-4">
-                {/* Instructions Editor for custom per-character instructions */}
-                <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
-                  <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-                    {t('characterInstructions').replace(
-                      '__NAME__',
-                      helpers.getSelectedPreset(pgState)?.name ||
-                        t('characterFallbackName'),
-                    )}
+          <Tabs onValueChange={changeMode} value={mode}>
+            <TabsList
+              aria-label={t('custom.modeLabel')}
+              className="mb-5 grid h-11 w-full grid-cols-2"
+            >
+              <TabsTrigger
+                className="data-[state=active]:bg-violet-500/15 data-[state=active]:text-violet-700 dark:data-[state=active]:bg-violet-500/15 dark:data-[state=active]:text-violet-200"
+                disabled={busy}
+                value="characters"
+              >
+                {t('custom.characters')}
+              </TabsTrigger>
+              <TabsTrigger
+                className="data-[state=active]:bg-violet-500/15 data-[state=active]:text-violet-700 dark:data-[state=active]:bg-violet-500/15 dark:data-[state=active]:text-violet-200"
+                disabled={busy}
+                value="custom"
+              >
+                {t('custom.custom')}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="characters">
+              <PresetSelector
+                callVoices={callVoices}
+                isPaidUser={isPaidUser}
+                onCreateCharacter={() => changeMode('custom')}
+              />
+              {isPaidUser &&
+                pgState.selectedPresetId &&
+                !helpers
+                  .getDefaultPresets()
+                  .some((p) => p.id === pgState.selectedPresetId) && (
+                  <div className="mt-4 space-y-4">
+                    {/* Instructions Editor for custom per-character instructions */}
+                    <div className="rounded-lg border border-separator1 bg-muted/30 p-3">
+                      <div className="mb-2 font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                        {t('characterInstructions').replace(
+                          '__NAME__',
+                          helpers.getSelectedPreset(pgState)?.name ||
+                            t('characterFallbackName'),
+                        )}
+                      </div>
+                      <InstructionsEditor instructions={pgState.instructions} />
+                    </div>
+                    <PresetSave />
                   </div>
-                  <InstructionsEditor instructions={pgState.instructions} />
-                </div>
-                <PresetSave />
-              </div>
-            )}
+                )}
+            </TabsContent>
+            <TabsContent value="custom">
+              <CustomCharacterForm
+                callVoices={callVoices}
+                disabled={busy}
+                isPaidUser={isPaidUser}
+                savedVoices={savedVoices}
+                userId={userId}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
 
         <SceneSelector isPaidUser={isPaidUser} />

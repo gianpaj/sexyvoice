@@ -25,7 +25,7 @@ export interface CallTokenPlaygroundState {
   selectedSceneId: PlaygroundState['selectedSceneId'];
   sessionConfig: Pick<
     SessionConfig,
-    'maxOutputTokens' | 'model' | 'temperature' | 'voice'
+    'audioReferenceId' | 'maxOutputTokens' | 'model' | 'temperature' | 'voice'
   >;
 }
 
@@ -86,6 +86,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
         selectedPresetId: state.selectedPresetId,
         selectedSceneId: state.selectedSceneId,
         sessionConfig: {
+          audioReferenceId: state.sessionConfig.audioReferenceId,
           maxOutputTokens: state.sessionConfig.maxOutputTokens,
           model: state.sessionConfig.model,
           temperature: state.sessionConfig.temperature,

@@ -17,6 +17,7 @@ export interface ApiCharacterResponse {
     localized_prompts?: Record<string, string> | null;
   } | null;
   session_config?: {
+    audioReferenceId?: string;
     model?: string;
     voice?: string;
     temperature?: number;
@@ -57,6 +58,7 @@ export function mapApiCharacterToPreset(
     name: character.name,
     promptId: character.prompt_id,
     sessionConfig: {
+      audioReferenceId: sessionConfig.audioReferenceId,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
@@ -66,7 +68,9 @@ export function mapApiCharacterToPreset(
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
     },
     voiceId: character.voice_id,
-    voiceName: character.voices?.name ?? undefined,
+    voiceName: sessionConfig.audioReferenceId
+      ? sessionConfig.voice
+      : (character.voices?.name ?? undefined),
     voiceSampleUrl: character.voices?.sample_url ?? undefined,
   };
 }

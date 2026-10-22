@@ -22,6 +22,7 @@ describe('clone locales', () => {
   it('combines both models and the explicit English Chatterbox option', () => {
     expect([...CLONE_SUPPORTED_LOCALE_CODES].sort()).toEqual([
       'ar',
+      'ca',
       'da',
       'de',
       'el',
@@ -32,6 +33,7 @@ describe('clone locales', () => {
       'fr',
       'he',
       'hi',
+      'hu',
       'it',
       'ja',
       'ko',
@@ -40,10 +42,13 @@ describe('clone locales', () => {
       'no',
       'pl',
       'pt',
+      'ro',
       'ru',
       'sv',
       'sw',
       'tr',
+      'uk',
+      'vi',
       'zh',
     ]);
     expect(VOXTRAL_SUPPORTED_LOCALE_CODES.has('en')).toBe(true);

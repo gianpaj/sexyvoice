@@ -19,8 +19,9 @@ export function ConnectButton() {
   // Check if selected character is custom and has empty instructions
   const selectedPreset = helpers.getSelectedPreset(pgState);
   const isCustomCharacter = selectedPreset && !selectedPreset.isPublic;
-  const fullInstructions = helpers.getFullInstructions(pgState);
-  const hasEmptyInstructions = isCustomCharacter && !fullInstructions.trim();
+  const isCustomDraft = pgState.mode === 'custom';
+  const hasEmptyInstructions =
+    (isCustomCharacter || isCustomDraft) && !pgState.instructions.trim();
 
   const handleConnectionToggle = async () => {
     if (shouldConnect) {
@@ -77,7 +78,8 @@ export function ConnectButton() {
         disabled={
           connecting ||
           shouldConnect ||
-          !pgState.selectedPresetId ||
+          !(pgState.selectedPresetId || isCustomDraft) ||
+          !pgState.sessionConfig.voice ||
           hasEmptyInstructions
         }
         icon={() =>

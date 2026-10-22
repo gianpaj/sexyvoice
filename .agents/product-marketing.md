@@ -54,7 +54,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 | ----------------------------------- | --------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Content Creator                     | Consistent, professional-grade audio at scale | Recording and re-recording eats the production schedule | Emotion-rich generation in minutes, reusable cloned voices             |
 | Storyteller / Character Creator     | Voices that act, not just read                | Standard TTS is flat and kills immersion                | Emotion tags, style prompting, per-character voices, live calling      |
-| Localization / Multilingual Creator | Reaching audiences in their own language      | Voice talent per language is expensive and slow         | One cloned voice across 23 cloning languages; 70+ generation languages |
+| Localization / Multilingual Creator | Reaching audiences in their own language      | Voice talent per language is expensive and slow         | One cloned voice across 28 cloning languages; 70+ generation languages |
 | Developer / Indie Studio            | API quality, docs, predictable cost           | Building or stitching speech infra is a distraction     | Live REST API, CLI, OpenAPI docs, per-request credit billing           |
 | Hobbyist                            | Trying AI voice cheaply                       | Upfront cost and complexity of other tools              | 10,000 free credits, no credit card, free browser-based audio tools    |
 
@@ -88,7 +88,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 
 - Expressive by default — models interpret emotional and logical context; emotion tags for laughter, sighs, coughs; style prompting ("British accent," "seductive tone")
 - Three modes in one platform and one credit balance: generation, cloning, and live real-time calling
-- Language breadth — coverage depends on the feature, and speech generation goes widest: 70+ languages on Gemini 3.1, 24 on Gemini 2.5, fewer on other voice models. Cloning covers 23 languages. See the coverage table under Proof Points before quoting a number.
+- Language breadth — coverage depends on the feature, and speech generation goes widest: 70+ languages on Gemini 3.1, 24 on Gemini 2.5, fewer on other voice models. Cloning covers 28 languages. See the coverage table under Proof Points before quoting a number.
 - Model choice under one API — Google Gemini (2.5 and 3.1 Flash), xAI Grok, and Replicate/Orpheus
 - Real developer surface — REST API v1, API keys, CLI login, usage/billing dashboards, OpenAPI-generated docs at docs.sexyvoice.ai
 - Transparent credit pricing published on the site; free tier with no card
@@ -216,7 +216,7 @@ varies. Speech generation is the widest, and Gemini goes furthest.
 | Theme              | Proof                                                                                                                |
 | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
 | Expressive quality | Context-aware models; emotion tags; style prompting; Gemini + Grok voice families                                    |
-| Breadth            | Up to 70+ speech generation languages (Gemini 3.1); 23 cloning languages                                             |
+| Breadth            | Up to 70+ speech generation languages (Gemini 3.1); 28 cloning languages                                             |
 | All-in-one         | Generation, cloning, and live calling in one web app on one credit balance                                           |
 | Developer-ready    | Live speech-generation API v1, API keys, CLI, OpenAPI docs, usage and billing dashboards                             |
 | Privacy            | Encrypted storage, cloning samples deleted after use, user-controlled deletion, offline browser tools with no upload |

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { ModelId } from '@/data/models';
 
 export const ConfigurationFormSchema = z.object({
+  audioReferenceId: z.uuid().optional(),
   maxOutputTokens: z.number().nullable(),
   model: z.enum(Object.values(ModelId)),
   temperature: z.number().min(0).max(1.2),
