@@ -28,10 +28,7 @@ import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import {
   CLONE_FORM_FIELDS,
-  type CloneErrorResponseBody,
-  type CloneRouteErrorCode,
   type CloneSuccessResponse,
-  type RouteErrorDetails,
   type SaveVoiceSuccessResponse,
 } from '@/lib/clone/api-types';
 import {
@@ -40,13 +37,13 @@ import {
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
+import { formatCloneMessage, readCloneError } from '@/lib/clone/error-message';
 import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
 import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
-import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
@@ -56,57 +53,13 @@ import { CloneAudioInput } from './clone-audio-input';
 import { CloneConsentFields } from './clone-consent-fields';
 import { CloneLanguageSelect } from './clone-language-select';
 import type { SampleAudio } from './clone-sample-card';
-import {
-  cloneStateReducer,
-  formatCloneMessage,
-  initialCloneState,
-} from './clone-state';
+import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
 
 export type { Status } from './clone-state';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
-
-// The server returns `CloneErrorResponseBody`, but proxies and older responses
-// may omit fields, so every field is treated as optional here. `message` is not
-// part of the route contract but can arrive from upstream/proxy error bodies.
-type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
-  message?: string;
-};
-
-type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
-type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
-
-const getCloneErrorMessage = (
-  t: CloneTranslator,
-  translateErrorCode: ErrorCodesTranslator,
-  code?: CloneRouteErrorCode,
-  fallbackMessage?: string,
-  details?: RouteErrorDetails,
-): string => {
-  const serverFallback = fallbackMessage || t('errorCloning');
-  if (code === 'PROVIDER_UNAVAILABLE') {
-    return resolveErrorMessage(
-      translateErrorCode,
-      code,
-      details,
-      serverFallback,
-    );
-  }
-
-  if (!code) {
-    return serverFallback;
-  }
-
-  const messageKey = code as Parameters<CloneTranslator>[0];
-  if (!t.has(messageKey)) {
-    return serverFallback;
-  }
-
-  const message = t(messageKey);
-  return formatCloneMessage(message, details ?? {});
-};
 
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
@@ -514,30 +467,11 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = t('errorCloning');
-        let voiceResult: CloneErrorResponse | null = null;
-
-        try {
-          voiceResult = (await voiceRes.json()) as CloneErrorResponse;
-        } catch {
-          voiceResult = null;
-        }
-
-        // Older/proxy 413 responses may still arrive without the JSON error contract.
-        if (voiceRes.status === 413 && !voiceResult?.code) {
-          errorMessage = t('errorTooLarge');
-        } else {
-          errorMessage = getCloneErrorMessage(
-            t,
-            translateErrorCode,
-            voiceResult?.code,
-            voiceResult?.message ||
-              voiceResult?.serverMessage ||
-              voiceResult?.error ||
-              errorMessage,
-            voiceResult?.details,
-          );
-        }
+        const errorMessage = await readCloneError(
+          voiceRes,
+          t,
+          translateErrorCode,
+        );
 
         dispatch({
           patch: {

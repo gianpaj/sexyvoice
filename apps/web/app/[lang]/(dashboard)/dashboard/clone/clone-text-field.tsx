@@ -18,9 +18,10 @@ import {
   CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
   RTL_CLONE_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { formatCloneMessage } from '@/lib/clone/error-message';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
-import { type CloneStateAction, formatCloneMessage } from './clone-state';
+import type { CloneStateAction } from './clone-state';
 
 const TTSEditor = dynamic(
   () => import('@/components/tts-editor').then((module) => module.TTSEditor),
