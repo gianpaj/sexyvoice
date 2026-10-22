@@ -20,8 +20,9 @@ import {
 } from '@/data/demo-clone';
 import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
+import { i18n } from '@/lib/i18n/i18n-config';
 
-const WEBSITE_LOCALES = ['en', 'es', 'de', 'da', 'it', 'fr'] as const;
+const WEBSITE_LOCALES = i18n.locales;
 
 describe('demo clone speakers', () => {
   it('keeps three short deliveries and puts Kat’s same-text example first', () => {
