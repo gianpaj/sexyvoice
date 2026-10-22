@@ -292,7 +292,8 @@ export async function POST(request: Request) {
     at.roomConfig = new RoomConfiguration({
       agents: [
         new RoomAgentDispatch({
-          agentName: 'sexycall',
+          // Must match the agent's LIVEKIT_AGENT_NAME; use a dev name locally.
+          agentName: process.env.LIVEKIT_AGENT_NAME || 'sexycall',
         }),
       ],
       name: roomName,
