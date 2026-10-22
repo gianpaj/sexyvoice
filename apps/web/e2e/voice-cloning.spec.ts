@@ -64,9 +64,9 @@ test.describe('Hear the difference', () => {
     const prompt = page.getByTestId('demo-clone-prompt-text');
     await expect(prompt).toHaveClass(/\bselect-all\b/);
     expect(await prompt.textContent()).toBe(sameOriginalPrompt);
-    await expect(page.locator('audio')).toHaveAttribute(
+    await expect(page.locator('audio')).toHaveJSProperty(
       'src',
-      '/demo-clones/voxtral-3/kat-sameOriginal.mp3',
+      new URL('/demo-clones/voxtral-3/kat-sameOriginal.mp3', page.url()).href,
     );
     await expect(page.getByTestId('demo-clone-try')).toHaveAttribute(
       'href',
@@ -82,14 +82,14 @@ test.describe('Hear the difference', () => {
       )
       .toBeGreaterThan(0);
     await page.getByRole('button', { name: 'Hear the original' }).click();
-    await expect(page.locator('audio')).toHaveAttribute(
+    await expect(page.locator('audio')).toHaveJSProperty(
       'src',
-      '/demo-clones/voxtral-3/kat-reference.mp3',
+      new URL('/demo-clones/voxtral-3/kat-reference.mp3', page.url()).href,
     );
     await page.getByRole('button', { name: 'Back to the clone' }).click();
-    await expect(page.locator('audio')).toHaveAttribute(
+    await expect(page.locator('audio')).toHaveJSProperty(
       'src',
-      '/demo-clones/voxtral-3/kat-sameOriginal.mp3',
+      new URL('/demo-clones/voxtral-3/kat-sameOriginal.mp3', page.url()).href,
     );
     await page.getByTestId('demo-clone-language').selectOption('de');
     await expect(page.locator(RESULT)).toHaveAttribute(
@@ -102,9 +102,9 @@ test.describe('Hear the difference', () => {
     await expect(
       page.getByRole('radio', { name: 'Natural', exact: true }),
     ).toBeChecked();
-    await expect(page.locator('audio')).toHaveAttribute(
+    await expect(page.locator('audio')).toHaveJSProperty(
       'src',
-      '/demo-clones/voxtral-3/heike-natural.mp3',
+      new URL('/demo-clones/voxtral-3/heike-natural.mp3', page.url()).href,
     );
     await expect(page.locator('audio')).toHaveJSProperty('paused', true);
     await page.getByTestId('demo-clone-language').selectOption('en');
@@ -165,9 +165,10 @@ test.describe('Hear the difference', () => {
           .locator(`input[name="demo-clone-take"][value="${take}"]`)
           .check({ force: true });
         await expect(page.locator('audio')).toHaveJSProperty('paused', true);
-        await expect(page.locator('audio')).toHaveAttribute(
+        await expect(page.locator('audio')).toHaveJSProperty(
           'src',
-          `/demo-clones/voxtral-3/${speaker}-${take}.mp3`,
+          new URL(`/demo-clones/voxtral-3/${speaker}-${take}.mp3`, page.url())
+            .href,
         );
         await expect(quote).toBeVisible();
         if (tags) await expect(quote).toContainText(tags);
@@ -270,9 +271,9 @@ test.describe('Hear the difference', () => {
           await page
             .locator(`input[name="demo-clone-take"][value="${clip}"]`)
             .check({ force: true });
-        await expect(page.locator('audio')).toHaveAttribute(
+        await expect(page.locator('audio')).toHaveJSProperty(
           'src',
-          `/demo-clones/voxtral-3/kat-${clip}.mp3`,
+          new URL(`/demo-clones/voxtral-3/kat-${clip}.mp3`, page.url()).href,
         );
         await expect
           .poll(() =>
@@ -289,9 +290,9 @@ test.describe('Hear the difference', () => {
         });
       }
       await page.getByTestId('demo-clone-language').selectOption('de');
-      await expect(page.locator('audio')).toHaveAttribute(
+      await expect(page.locator('audio')).toHaveJSProperty(
         'src',
-        '/demo-clones/voxtral-3/heike-natural.mp3',
+        new URL('/demo-clones/voxtral-3/heike-natural.mp3', page.url()).href,
       );
       await expect
         .poll(() =>
@@ -336,15 +337,15 @@ test.describe('Hear the difference', () => {
     await page.getByText('Calm & slow', { exact: true }).click();
     await page.getByRole('button', { name: 'Hear the original' }).click();
     await expect(page.locator('audio')).toHaveCount(1);
-    await expect(page.locator('audio')).toHaveAttribute(
+    await expect(page.locator('audio')).toHaveJSProperty(
       'src',
-      '/demo-clones/voxtral-3/kat-reference.mp3',
+      new URL('/demo-clones/voxtral-3/kat-reference.mp3', page.url()).href,
     );
     await expect(page.locator('audio')).toHaveJSProperty('paused', false);
     await page.getByRole('button', { name: 'Back to the clone' }).click();
-    await expect(page.locator('audio')).toHaveAttribute(
+    await expect(page.locator('audio')).toHaveJSProperty(
       'src',
-      '/demo-clones/voxtral-3/kat-calmSlow.mp3',
+      new URL('/demo-clones/voxtral-3/kat-calmSlow.mp3', page.url()).href,
     );
   });
 
@@ -436,9 +437,12 @@ test.describe('Hear the difference', () => {
         }
         await languages.selectOption('de');
       }
-      await expect(page.locator('audio')).toHaveAttribute(
+      await expect(page.locator('audio')).toHaveJSProperty(
         'src',
-        `/demo-clones/voxtral-3/${selected === 'en' ? 'kat' : 'heike'}-natural.mp3`,
+        new URL(
+          `/demo-clones/voxtral-3/${selected === 'en' ? 'kat' : 'heike'}-natural.mp3`,
+          page.url(),
+        ).href,
       );
       await expect(page.locator('audio')).toHaveJSProperty('paused', true);
     }
