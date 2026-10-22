@@ -14,54 +14,37 @@ import { callScenes } from '@/data/call-scenes';
 import { defaultSessionConfig } from '@/data/default-config';
 import {
   type CallLanguage,
-  type CustomCallDraft,
   defaultPlaygroundState,
-  emptyCustomCallDraft,
   languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
+import { getPresetInstructions } from '@/lib/characters';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
-/**
- * Resolves the best instructions for a given character and language.
- *
- * Priority:
- * 1. Character localizedInstructions for the specific language
- * 2. Preset's default instructions field (fallback)
- */
 function resolveInstructions(
   characterId: string,
   language: CallLanguage,
   allPresets: Preset[],
 ): string {
-  // Find the preset
-  const preset = allPresets.find((p) => p.id === characterId);
-
-  // 1. Custom character localizedInstructions
-  if (preset?.localizedInstructions?.[language] !== undefined) {
-    return preset.localizedInstructions[language] as string;
-  }
-
-  // 3. Fallback to preset's default instructions
-  return preset?.instructions || '';
+  return getPresetInstructions(
+    allPresets.find((p) => p.id === characterId),
+    language,
+  );
 }
 
 // Define action types and payloads
 type Action =
-  | { type: 'SET_CALL_MODE'; payload: 'characters' | 'custom' }
-  | { type: 'SET_CUSTOM_DRAFT'; payload: Partial<CustomCallDraft> }
-  | {
-      type: 'SET_SESSION_CONFIG';
-      payload: Partial<PlaygroundState['sessionConfig']>;
-    }
-  | { type: 'SET_INSTRUCTIONS'; payload: string }
   | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
   | { type: 'SET_MEMORY'; payload: boolean }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
+  | {
+      type: 'RESTORE_CUSTOM_CHARACTER';
+      payload: { index: number; preset: Preset };
+    }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
 // Create the reducer function
@@ -70,86 +53,6 @@ function playgroundStateReducer(
   action: Action,
 ): PlaygroundState {
   switch (action.type) {
-    case 'SET_CUSTOM_DRAFT': {
-      const draft = {
-        ...(state.customDraft ?? emptyCustomCallDraft),
-        ...action.payload,
-      };
-      return {
-        ...state,
-        customDraft: draft,
-        ...(state.mode === 'custom'
-          ? {
-              instructions: draft.instructions,
-              sessionConfig: draft.sessionConfig,
-            }
-          : {}),
-      };
-    }
-    case 'SET_CALL_MODE': {
-      if (action.payload === (state.mode ?? 'characters')) return state;
-      if (action.payload === 'custom') {
-        const draft = state.customDraft ?? emptyCustomCallDraft;
-        return {
-          ...state,
-          mode: 'custom',
-          characterPresetId: state.selectedPresetId,
-          selectedPresetId: null,
-          instructions: draft.instructions,
-          sessionConfig: draft.sessionConfig,
-        };
-      }
-      const id = state.characterPresetId ?? state.defaultPresets[0]?.id ?? null;
-      const preset = [...state.defaultPresets, ...state.customCharacters].find(
-        (p) => p.id === id,
-      );
-      return {
-        ...state,
-        mode: 'characters',
-        selectedPresetId: id,
-        instructions: id
-          ? resolveInstructions(id, state.language, [
-              ...state.defaultPresets,
-              ...state.customCharacters,
-            ])
-          : '',
-        sessionConfig: preset?.sessionConfig ?? defaultSessionConfig,
-        customDraft: {
-          ...(state.customDraft ?? emptyCustomCallDraft),
-          instructions: state.instructions,
-          sessionConfig: state.sessionConfig,
-        },
-      };
-    }
-    case 'SET_SESSION_CONFIG':
-      return {
-        ...state,
-        ...(state.mode === 'custom'
-          ? {
-              customDraft: {
-                ...(state.customDraft ?? emptyCustomCallDraft),
-                sessionConfig: { ...state.sessionConfig, ...action.payload },
-              },
-            }
-          : {}),
-        sessionConfig: {
-          ...state.sessionConfig,
-          ...action.payload,
-        },
-      };
-    case 'SET_INSTRUCTIONS':
-      return {
-        ...state,
-        ...(state.mode === 'custom'
-          ? {
-              customDraft: {
-                ...(state.customDraft ?? emptyCustomCallDraft),
-                instructions: action.payload,
-              },
-            }
-          : {}),
-        instructions: action.payload,
-      };
     case 'SET_SCENE_INSTRUCTIONS':
       return {
         ...state,
@@ -159,7 +62,6 @@ function playgroundStateReducer(
       const newState = {
         ...state,
         selectedPresetId: action.payload,
-        mode: 'characters' as const,
       };
 
       const helpers = createPlaygroundStateHelpers(state.defaultPresets);
@@ -254,6 +156,17 @@ function playgroundStateReducer(
         customCharacters: updatedCharacters,
       };
     }
+    case 'RESTORE_CUSTOM_CHARACTER': {
+      const { index, preset } = action.payload;
+      if (state.customCharacters.some((c) => c.id === preset.id)) return state;
+      const customCharacters = [...state.customCharacters];
+      customCharacters.splice(
+        Math.min(index, customCharacters.length),
+        0,
+        preset,
+      );
+      return { ...state, customCharacters };
+    }
     case 'SET_LANGUAGE': {
       const newLanguage = action.payload;
       const allPresets = [...state.defaultPresets, ...state.customCharacters];
@@ -344,12 +257,10 @@ export const PlaygroundStateProvider = ({
     mergedInitialState,
   );
 
+  // Re-selecting reloads the prompt and session config from the stored
+  // preset, which picks up a character that was just saved.
   const selectPreset = (presetId: string | null) => {
-    // Re-selecting the current character would reload its instructions and
-    // session config from the stored preset, discarding unsaved edits.
-    if (presetId !== state.selectedPresetId) {
-      dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
-    }
+    dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
     helpers.updateBrowserUrl(presetId);
   };
 

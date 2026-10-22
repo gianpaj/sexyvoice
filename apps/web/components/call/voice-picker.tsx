@@ -1,150 +1,167 @@
 'use client';
 
-import { Check, Mic } from 'lucide-react';
+import { Mic } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
 import type { SessionConfig } from '@/data/session-config';
 import type { DBVoice } from '@/data/voices';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import { useSamplePlayer } from '@/hooks/use-sample-player';
+import {
+  type SavedCallVoice,
+  savedVoiceSampleUrl,
+  withCallVoice,
+} from '@/lib/call-voices';
 import { cn } from '@/lib/utils';
-import { VoicePlayButton } from './voice-play-button';
+import { ListenButton } from './listen-button';
+
+interface VoiceTile {
+  description: string;
+  id: string;
+  name: string;
+  sampleUrl: string | null;
+  savedId?: string;
+}
 
 interface VoicePickerProps {
   callVoices: DBVoice[];
   config: SessionConfig;
-  disabled: boolean;
+  disabled?: boolean;
+  /** Saved voice to badge as new, such as one cloned in this session. */
+  newVoiceId?: string | null;
   onChange: (config: SessionConfig) => void;
+  /** Shows the Clone a voice tile when given. */
+  onCloneVoice?: () => void;
   savedVoices: SavedCallVoice[];
 }
 
 export function VoicePicker({
   callVoices,
-  savedVoices,
   config,
   disabled,
+  newVoiceId,
   onChange,
+  onCloneVoice,
+  savedVoices,
 }: VoicePickerProps) {
-  const t = useTranslations('call.custom');
-  const preview = useTranslations('call.createCharacter');
-  const [tab, setTab] = useState(config.audioReferenceId ? 'saved' : 'builtin');
-  const voices =
-    tab === 'saved'
-      ? savedVoices.map((v) => ({
-          id: v.id,
-          name: v.name,
-          description: v.locale ?? '',
-          sampleUrl: `/api/audio-references/${v.id}/sample`,
-          saved: true,
-        }))
-      : callVoices.map((v) => ({
-          id: v.id,
-          name: v.name,
-          description: v.description ?? v.type ?? '',
-          sampleUrl: v.sample_url,
-          saved: false,
-        }));
+  const t = useTranslations('call.voices');
+  const player = useSamplePlayer();
+
+  const saved: VoiceTile[] = savedVoices.map((voice) => ({
+    description: t('clonedVoice'),
+    id: voice.id,
+    name: voice.name,
+    sampleUrl: savedVoiceSampleUrl(voice.id),
+    savedId: voice.id,
+  }));
+  const builtIn: VoiceTile[] = callVoices.map((voice) => ({
+    description: voice.description ?? voice.type ?? '',
+    id: voice.id,
+    name: voice.name,
+    sampleUrl: voice.sample_url,
+  }));
+
+  const renderTile = (voice: VoiceTile) => {
+    const selected = voice.savedId
+      ? config.audioReferenceId === voice.savedId
+      : !config.audioReferenceId && config.voice === voice.name;
+    const key = `voice:${voice.id}`;
+    const playing = player.playingKey === key;
+    return (
+      <div
+        className={cn(
+          'flex min-h-[68px] items-center gap-2 rounded-xl border py-2 pr-2 pl-3.5 transition-colors',
+          selected
+            ? 'border-violet-400 bg-violet-950/60'
+            : 'border-slate-800 bg-slate-900/70',
+        )}
+        key={voice.id}
+      >
+        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+          <input
+            checked={selected}
+            className="size-[18px] shrink-0 accent-violet-400"
+            disabled={disabled}
+            name="call-voice"
+            onChange={() =>
+              onChange(
+                withCallVoice(config, {
+                  name: voice.name,
+                  savedId: voice.savedId,
+                }),
+              )
+            }
+            type="radio"
+            value={voice.id}
+          />
+          <span className="flex min-w-0 flex-col">
+            <span className="flex items-center gap-1.5 font-semibold text-[15px] text-slate-50">
+              <span className="truncate">{voice.name}</span>
+              {voice.savedId && voice.savedId === newVoiceId && (
+                <span className="rounded-full bg-violet-400 px-1.5 font-bold text-[11px] text-slate-950">
+                  {t('new')}
+                </span>
+              )}
+            </span>
+            <span className="truncate text-[13px] text-slate-400">
+              {voice.description}
+            </span>
+          </span>
+        </label>
+        {voice.sampleUrl && (
+          <ListenButton
+            ariaLabel={t(playing ? 'stop' : 'play', { name: voice.name })}
+            onClick={() => player.toggle(key, voice.sampleUrl)}
+            playing={playing}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const gridClass =
+    'grid grid-cols-[repeat(auto-fill,minmax(min(180px,100%),1fr))] gap-2.5';
+  const headingClass =
+    'font-semibold text-slate-400 text-xs uppercase tracking-[0.1em]';
 
   return (
-    <Tabs onValueChange={setTab} value={tab}>
-      <TabsList aria-label={t('voiceSources')} className="mb-3" variant="line">
-        <TabsTrigger value="builtin">{t('builtIn')}</TabsTrigger>
-        <TabsTrigger value="saved">
-          {t('myVoices')}
-          {savedVoices.length > 0 && (
-            <span aria-hidden="true" className="text-xs tabular-nums">
-              {savedVoices.length}
-            </span>
-          )}
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent key={tab} value={tab}>
-        {voices.length ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {voices.map((voice) => {
-              const selected = voice.saved
-                ? config.audioReferenceId === voice.id
-                : !config.audioReferenceId && config.voice === voice.name;
-              return (
-                <div
-                  className={cn(
-                    'relative flex min-h-28 rounded-xl border bg-muted/20 transition-colors',
-                    selected
-                      ? 'border-violet-500 bg-violet-500/10'
-                      : 'border-separator1 hover:bg-muted/40',
-                  )}
-                  key={voice.id}
+    <div className="flex flex-col gap-5">
+      {(saved.length > 0 || onCloneVoice) && (
+        <div className="flex flex-col gap-2.5">
+          <h3 className={headingClass}>{t('yourVoices')}</h3>
+          <div className={gridClass}>
+            {saved.map(renderTile)}
+            {onCloneVoice && (
+              <button
+                className="flex min-h-[68px] items-center gap-3 rounded-xl border-[1.5px] border-violet-800/80 border-dashed bg-slate-950/40 px-3.5 py-3 text-left transition-colors hover:bg-violet-950/40 disabled:pointer-events-none disabled:opacity-50"
+                disabled={disabled}
+                onClick={onCloneVoice}
+                type="button"
+              >
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-950 text-violet-300"
                 >
-                  <button
-                    aria-label={voice.name}
-                    aria-pressed={selected}
-                    className="flex min-w-0 flex-1 flex-col items-start gap-2 rounded-xl p-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                    disabled={disabled}
-                    onClick={() =>
-                      onChange({
-                        ...config,
-                        audioReferenceId: voice.saved ? voice.id : undefined,
-                        model: voice.saved
-                          ? ModelId.MISTRAL_TTS
-                          : defaultSessionConfig.model,
-                        voice: voice.name,
-                      })
-                    }
-                    type="button"
-                  >
-                    <span className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                      {selected ? (
-                        <Check className="size-4 text-violet-400" />
-                      ) : (
-                        <Mic className="size-4" />
-                      )}
-                    </span>
-                    <span
-                      className="line-clamp-2 w-full break-words font-medium text-sm"
-                      title={voice.name}
-                    >
-                      {voice.name}
-                    </span>
-                    <span className="line-clamp-2 text-muted-foreground text-xs">
-                      {voice.description}
-                    </span>
-                  </button>
-                  <VoicePlayButton
-                    ariaLabels={{
-                      play: preview('playVoiceSample'),
-                      stop: preview('stopVoiceSample'),
-                    }}
-                    className="absolute top-3 right-2 min-h-10 min-w-10 border-0 bg-transparent"
-                    key={voice.sampleUrl}
-                    prefetch={false}
-                    sampleUrl={voice.sampleUrl}
-                    title={preview('previewVoice').replace(
-                      '__VOICE__',
-                      voice.name,
-                    )}
-                    voiceName={voice.name}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-separator1 border-dashed px-6 py-10 text-center">
-            <Mic className="mx-auto mb-3 size-6 text-muted-foreground" />
-            <p className="font-medium text-sm">
-              {t(tab === 'saved' ? 'noVoices' : 'noBuiltInVoices')}
-            </p>
-            {tab === 'saved' && (
-              <p className="mt-1 text-muted-foreground text-sm">
-                {t('noVoicesHelp')}
-              </p>
+                  <Mic className="size-[18px]" />
+                </span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="font-semibold text-[15px]">
+                    {t('cloneTitle')}
+                  </span>
+                  <span className="text-[13px] text-slate-400">
+                    {t('cloneBody')}
+                  </span>
+                </span>
+              </button>
             )}
           </div>
-        )}
-      </TabsContent>
-    </Tabs>
+        </div>
+      )}
+      {builtIn.length > 0 && (
+        <div className="flex flex-col gap-2.5">
+          <h3 className={headingClass}>{t('builtIn')}</h3>
+          <div className={gridClass}>{builtIn.map(renderTile)}</div>
+        </div>
+      )}
+    </div>
   );
 }

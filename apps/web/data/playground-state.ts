@@ -72,6 +72,7 @@ export const languageInitialInstructions: Record<CallLanguage, string> = {
 
 export const defaultLanguage: CallLanguage = 'en';
 
+/** Unsaved character fields in the creator. */
 export interface CustomCallDraft {
   description: string;
   instructions: string;
@@ -79,18 +80,9 @@ export interface CustomCallDraft {
   sessionConfig: SessionConfig;
 }
 
-export const emptyCustomCallDraft: CustomCallDraft = {
-  name: '',
-  description: '',
-  instructions: '',
-  sessionConfig: { ...defaultSessionConfig },
-};
-
 export interface PlaygroundState {
-  characterPresetId?: string | null;
   /** User-created custom characters */
   customCharacters: Preset[];
-  customDraft?: CustomCallDraft;
   defaultPresets: Preset[];
   initialInstruction: string;
   instructions: string;
@@ -98,7 +90,6 @@ export interface PlaygroundState {
   /** Long-term memory opt-in. When true, the agent remembers distilled facts
    * about the user across calls; off (default) stores nothing. */
   memory: boolean;
-  mode?: 'characters' | 'custom';
   sceneInstructions: string;
   selectedPresetId: string | null;
   selectedSceneId: string | null;
@@ -109,8 +100,6 @@ export const initialInstruction = languageInitialInstructions[defaultLanguage];
 
 // Define the initial state
 export const defaultPlaygroundState: PlaygroundState = {
-  mode: 'characters',
-  customDraft: emptyCustomCallDraft,
   customCharacters: [],
   defaultPresets: [], // Now populated from DB via SSR props
   initialInstruction,

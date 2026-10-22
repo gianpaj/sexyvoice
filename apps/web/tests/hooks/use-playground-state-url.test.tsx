@@ -145,7 +145,7 @@ describe('usePlaygroundState — preset URL', () => {
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 
-  it('keeps unsaved instructions when the current character is re-selected', () => {
+  it('reloads a saved character when it is selected again', () => {
     window.history.replaceState({}, '', '/en/dashboard/call');
 
     const { result } = renderHook(() => usePlaygroundState(), {
@@ -154,13 +154,13 @@ describe('usePlaygroundState — preset URL', () => {
     act(() => result.current.selectPreset(savedCharacter.id));
     act(() =>
       result.current.dispatch({
-        payload: 'Edited but not saved.',
-        type: 'SET_INSTRUCTIONS',
+        payload: { ...savedCharacter, instructions: 'You are Luna, updated.' },
+        type: 'SAVE_CUSTOM_CHARACTER',
       }),
     );
     act(() => result.current.selectPreset(savedCharacter.id));
 
-    expect(result.current.pgState.instructions).toBe('Edited but not saved.');
+    expect(result.current.pgState.instructions).toBe('You are Luna, updated.');
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 });

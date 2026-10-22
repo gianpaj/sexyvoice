@@ -1,5 +1,6 @@
 import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
+import { savedVoiceSampleUrl } from '@/lib/call-voices';
 
 export const MAX_CUSTOM_CHARACTERS = 10;
 
@@ -140,18 +141,30 @@ export async function saveCharacter(
   }
 }
 
-// ─── Dirty check ─────────────────────────────────────────────────────────────
+// ─── Localized fields ───────────────────────────────────────────────────────
 
-/**
- * Returns true if the given instructions differ from what is persisted
- * for the character in the given language.
- */
-export function isInstructionsDirty(
-  preset: Preset,
+/** The character's description in `language`, falling back to English. */
+export function getPresetDescription(preset: Preset, language: string): string {
+  return (
+    preset.localizedDescriptions?.[language] ??
+    preset.localizedDescriptions?.en ??
+    ''
+  );
+}
+
+/** The character's prompt in `language`, falling back to its default prompt. */
+export function getPresetInstructions(
+  preset: Preset | undefined,
   language: string,
-  currentInstructions: string,
-): boolean {
-  const savedInstructions =
-    preset.localizedInstructions?.[language] ?? preset.instructions ?? '';
-  return currentInstructions !== savedInstructions;
+): string {
+  return (
+    preset?.localizedInstructions?.[language] ?? preset?.instructions ?? ''
+  );
+}
+
+/** Sample of the voice the character calls with. */
+export function getPresetSampleUrl(preset: Preset): string | null {
+  const { audioReferenceId } = preset.sessionConfig;
+  if (audioReferenceId) return savedVoiceSampleUrl(audioReferenceId);
+  return preset.voiceSampleUrl ?? null;
 }
