@@ -201,6 +201,9 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
+- `NEXT_PUBLIC_E2E_TEST_MODE`: build-time; `true` disables the browser Sentry
+  client. Set only in the E2E workflow's build step, never on Vercel. The
+  server and edge clients stay off when `E2E_TEST_MODE=true` at runtime.
 - `OTEL_EXPORTER_OTLP_ENDPOINT`: Dash0 OTLP ingress URL. `@vercel/otel`
   exports server traces here; Sentry receives the same spans.
 - `OTEL_EXPORTER_OTLP_HEADERS`: `Authorization=Bearer <dash0-auth-token>`.
