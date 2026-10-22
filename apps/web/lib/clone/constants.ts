@@ -1,5 +1,12 @@
 export type CloneProvider = 'mistral' | 'replicate';
 
+export const VOICE_CLONING_MODELS: readonly string[] = [
+  'resemble-ai/chatterbox-multilingual',
+  'resemble-ai/chatterbox',
+  'voxtral-mini-tts-2603',
+  'voxtral-mini-tts-3-0',
+];
+
 export const VOXTRAL_SUPPORTED_LOCALE_CODES = new Set([
   'ar',
   'de',

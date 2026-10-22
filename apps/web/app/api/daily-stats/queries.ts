@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
 import type { DailyStatsProfileRelation } from './types';
 import {
   applyPageCursor,
@@ -7,13 +8,6 @@ import {
   formatIdList,
   PAGE_SIZE,
 } from './utils';
-
-const VOICE_CLONING_MODELS = [
-  'resemble-ai/chatterbox-multilingual',
-  'resemble-ai/chatterbox',
-  'voxtral-mini-tts-2603',
-  'voxtral-mini-tts-3-0',
-] as const;
 
 // Internal users excluded from daily stats aggregations.
 export const INTERNAL_USER_EMAILS = [
