@@ -383,16 +383,26 @@ is off by default, and its UI toggle is currently hidden.
 
 ### Call Setup
 
-Characters are voice-and-prompt bundles displayed in a circular carousel.
-Custom exposes Built-in voices and My voices, plus a link to the Clone page.
-Its Add a personality accordion starts closed. A voice and nonempty prompt are
-required to call; a name is required to save a reusable character. Custom calls
-require a paid account, including calls with unsaved prompts.
+Characters are voice-and-prompt bundles. The call page
+(`components/call/call-experience.tsx`) has a picker with "Your characters"
+and "Featured" grids. A card opens the call panel, a side sheet (bottom sheet
+on phones) with the voice sample, language, scene, microphone status and
+Start call. During a call the page shows the in-call view; when it ends it
+offers Call again and editing.
 
-The playground reducer preserves custom drafts independently of selected
-characters. The Clone link stores the draft in session storage scoped to the
-user; the return restores it and selects the newly saved voice. Prompt text
-never enters the URL. Saving is optional before starting a custom call.
+Paid users create, duplicate and edit characters in the creator: name, short
+description, personality (with starter examples) and voice. A name, a
+personality and an available voice are required to save, and characters are
+saved before they are called. "Make your own version" of a featured character
+copies its name, description and voice, never its prompt. Deleting a
+character removes it from the list at once; the DELETE request waits until
+the Undo toast closes or the page is hidden.
+
+The creator's Clone a voice dialog records or uploads a sample and saves a
+Mistral profile through the save-only `/api/clone-voice` path, using the call
+language when Voxtral supports it and English otherwise. The Clone page links
+back with `?custom=1&voice=<id>` to start a character with that voice. Prompt
+text never enters the URL; only `?preset=<id>` is written.
 
 Built-in voices use the Grok model. Saved Mistral voices set
 `sessionConfig.model=mistral-tts` and `sessionConfig.audioReferenceId` to an
@@ -405,15 +415,15 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 ### Call Configuration
 
-| Setting           | Current behavior                                                                     |
-| ----------------- | ------------------------------------------------------------------------------------ |
-| Model             | `grok-voice-think-fast-1.0` or `mistral-tts`                                         |
-| Voice             | Public call voice or an owned Mistral profile; retained in saved characters          |
-| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                       |
-| Max output tokens | Nullable; defaults to the agent's model behavior                                     |
-| Instructions      | User prompt for unsaved Custom calls; server-resolved database prompt for characters |
-| Language          | 20 supported call languages; English fallback                                        |
-| Memory            | Paid, opt-in backend; off by default                                                 |
+| Setting           | Current behavior                                                            |
+| ----------------- | --------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-1.0` or `mistral-tts`                                |
+| Voice             | Public call voice or an owned Mistral profile; retained in saved characters |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                              |
+| Max output tokens | Nullable; defaults to the agent's model behavior                            |
+| Instructions      | Server-resolved database prompt for the selected character                  |
+| Language          | 20 supported call languages; English fallback                               |
+| Memory            | Paid, opt-in backend; off by default                                        |
 
 ### Call transcript analysis
 
