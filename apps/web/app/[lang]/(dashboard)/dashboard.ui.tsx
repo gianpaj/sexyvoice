@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';

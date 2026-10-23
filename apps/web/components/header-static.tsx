@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Button } from '@/components/ui/button';
 import { useIsMobileSizes } from '@/hooks/use-mobile';
 import type { Locale } from '@/lib/i18n/i18n-config';
