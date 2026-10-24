@@ -244,23 +244,21 @@ for (const locale of ['en', 'de'] as const) {
     const copiedPrompt = 'You are a friendly guide to the ocean.';
     const updatedPrompt = 'You are a friendly guide to the mountains.';
 
-    await page.getByRole('button', { name: labels.addCustomCharacter }).click();
-    const createDialog = page.getByRole('dialog', {
-      name: labels.createCharacter.dialogTitle,
-    });
-    await createDialog
+    await page
+      .getByRole('tab', { name: labels.custom.custom, exact: true })
+      .click();
+    await page
+      .getByRole('button', { name: labels.custom.personality, exact: false })
+      .click();
+    const createForm = page.getByTestId('custom-character-form');
+    await createForm
       .getByLabel(labels.createCharacter.nameLabel)
       .fill(originalName);
-    await createDialog
-      .getByLabel(labels.createCharacter.instructionsLabel)
-      .fill(originalPrompt);
-    await createDialog
-      .getByRole('button', {
-        exact: true,
-        name: labels.createCharacter.createButton,
-      })
+    await createForm.getByLabel(labels.custom.promptLabel).fill(originalPrompt);
+    await createForm
+      .getByRole('button', { name: labels.custom.saveCharacter, exact: true })
       .click();
-    await expect(createDialog).toBeHidden();
+    await expect(createForm).toBeHidden();
 
     const editor = callPage.configurationForm.getByRole('textbox');
     await expect(editor).toHaveValue(originalPrompt);
@@ -337,3 +335,61 @@ test.describe('Call Dashboard - Unauthenticated', () => {
     await expect(page).toHaveURL(/login/, { timeout: 10_000 });
   });
 });
+
+for (const viewport of ['desktop', 'mobile'] as const) {
+  test(`custom voice and personality flow on ${viewport}`, async ({
+    page,
+    baseURL,
+  }, testInfo) => {
+    if (viewport === 'mobile')
+      await page.setViewportSize({ width: 390, height: 844 });
+    await setupCallPage(page, baseURL, 'paid');
+    await page
+      .getByRole('tab', { name: en.call.custom.custom, exact: true })
+      .click();
+    const personality = page.getByRole('button', { name: /Add a personality/ });
+    await expect(personality).toHaveAttribute('aria-expanded', 'false');
+    await expect(
+      page.getByRole('button', { name: en.call.startCall, exact: true }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole('link', { name: en.call.custom.cloneVoice }),
+    ).toHaveAttribute('href', '/en/dashboard/clone?for=call');
+    await page
+      .getByRole('tab', { name: en.call.custom.myVoices, exact: true })
+      .click();
+    await page
+      .getByRole('button', { name: 'My saved voice', exact: true })
+      .click();
+    await personality.click();
+    await page
+      .getByLabel(en.call.custom.promptLabel)
+      .fill('Tell warm, concise stories.');
+    await expect(
+      page.getByRole('button', { name: en.call.startCall, exact: true }),
+    ).toBeEnabled();
+    await personality.click();
+    await expect(personality).toHaveAttribute('aria-expanded', 'false');
+    await page
+      .getByRole('tab', { name: en.call.custom.characters, exact: true })
+      .click();
+    await page
+      .getByRole('tab', { name: en.call.custom.custom, exact: true })
+      .click();
+    await expect(
+      page.getByRole('button', { name: 'My saved voice', exact: true }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.getByRole('button', { name: en.call.startCall, exact: true }),
+    ).toBeEnabled();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await argosScreenshot(
+      page,
+      `call-custom-${viewport}-${testInfo.project.name}`,
+    );
+  });
+}

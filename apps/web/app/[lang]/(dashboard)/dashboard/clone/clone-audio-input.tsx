@@ -6,7 +6,6 @@ import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
 import PulsatingDots from '@/components/pulsating-dots';
-import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -43,34 +42,6 @@ const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
 const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
-
-const sampleAudios: readonly SampleAudio[] = [
-  {
-    audioExampleOutputSrc:
-      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
-    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
-    id: 1,
-    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
-    language: 'english',
-    name: 'Marilyn Monroe 🇺🇸',
-    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
-  },
-  // {
-  //   id: 2,
-  //   name: 'Morgan Freeman 🇺🇸',
-  //   prompt: 'The most important thing is the mission, not the money',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  // },
-  // {
-  //   id: 3,
-  //   name: 'Audrey Hepburn 🇬🇧',
-  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  // },
-  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
-];
 
 export function CloneAudioInput({
   fileState,
@@ -255,28 +226,16 @@ export function CloneAudioInput({
           <div className="grid w-full gap-2">
             <p className="text-muted-foreground text-xs">{t('tryDemo')}</p>
 
-            <Accordion className="w-full" collapsible type="single">
-              {sampleAudios.map((sample) => (
-                <CloneSampleCard
-                  addFiles={addFiles}
-                  key={sample.id}
-                  onSelectSample={onSelectSample}
-                  sample={sample}
-                  setErrorMessage={(nextErrorMessage) => {
-                    dispatch({
-                      patch: { errorMessage: nextErrorMessage },
-                      type: 'patch',
-                    });
-                  }}
-                  setStatus={(nextStatus: Status) => {
-                    dispatch({
-                      patch: { status: nextStatus },
-                      type: 'patch',
-                    });
-                  }}
-                />
-              ))}
-            </Accordion>
+            <CloneSampleCard
+              addFiles={addFiles}
+              onSelectSample={onSelectSample}
+              setErrorMessage={(errorMessage) =>
+                dispatch({ patch: { errorMessage }, type: 'patch' })
+              }
+              setStatus={(status: Status) =>
+                dispatch({ patch: { status }, type: 'patch' })
+              }
+            />
           </div>
         )
       )}

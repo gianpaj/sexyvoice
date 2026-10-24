@@ -20,11 +20,15 @@ const {
   fetchMock,
   mockEnsureLoaded,
   mockFFmpegState,
+  mockAddFiles,
+  mockUpload,
   mockLanguageSelect,
   mockToastError,
   mockToastSuccess,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
+  mockAddFiles: vi.fn(),
+  mockUpload: { files: [] as { file: File; id: string }[] },
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
   mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
@@ -35,6 +39,21 @@ const {
 const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
   type: 'audio/wav',
 });
+
+vi.mock('@/lib/i18n/navigation', () => ({
+  Link: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -84,16 +103,11 @@ vi.mock('@/hooks/use-file-upload', () => ({
   useFileUpload: () => [
     {
       errors: [],
-      files: [
-        {
-          file: selectedFile,
-          id: 'selected-file',
-        },
-      ],
+      files: mockUpload.files,
       isDragging: false,
     },
     {
-      addFiles: vi.fn(),
+      addFiles: mockAddFiles,
       clearErrors: vi.fn(),
       getInputProps: vi.fn(() => ({})),
       handleDragEnter: vi.fn(),
@@ -129,6 +143,7 @@ const errorCodesDict = {
 } as const;
 
 const dict = {
+  savedVoice: enMessages.clone.savedVoice,
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
   audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
   audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
@@ -232,6 +247,11 @@ const renderClone = (
   props: {
     cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
+    initialSaveForCalls?: boolean;
+    initialDemo?: {
+      speakerId: string;
+      takeId: 'natural' | 'sarcastic' | 'calmSlow';
+    };
     lang?: Locale;
     userHasPaid?: boolean;
   } = {},
@@ -242,10 +262,15 @@ const renderClone = (
       messages={{
         clone: props.cloneMessages ?? dict,
         errorCodes: errorCodesDict,
+        generate: enMessages.generate,
+        landing: enMessages.landing,
+        ttsEditor: enMessages.ttsEditor,
       }}
     >
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
+        initialDemo={props.initialDemo}
+        initialSaveForCalls={props.initialSaveForCalls}
         lang={props.lang ?? 'en'}
         userHasPaid={props.userHasPaid ?? false}
       />
@@ -260,9 +285,41 @@ const renderedLocaleCodes = () => {
 };
 
 describe('NewVoiceClient', () => {
+  it('saves a reusable voice without requiring generated speech text', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ audioReferenceId: 'reference' }), {
+        status: 200,
+      }),
+    );
+    const user = userEvent.setup();
+    renderClone({
+      initialSaveForCalls: true,
+      userHasPaid: true,
+      hasEnoughCredits: false,
+      cloneMessages: enMessages.clone,
+    });
+    expect(
+      screen.queryByLabelText(enMessages.clone.textToConvertLabel),
+    ).not.toBeInTheDocument();
+    await user.type(
+      screen.getByLabelText(enMessages.clone.savedVoice.name),
+      'My voice',
+    );
+    await user.click(screen.getByTestId('clone-legal-consent'));
+    await user.click(screen.getByTestId('clone-generate-button'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body.get('saveVoiceName')).toBe('My voice');
+    expect(body.get('voiceConsent')).toBe('true');
+    expect(
+      screen.getByRole('link', { name: enMessages.clone.savedVoice.useInCall }),
+    ).toHaveAttribute('href', '/dashboard/call?custom=1&voice=reference');
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;
+    mockUpload.files = [{ file: selectedFile, id: 'selected-file' }];
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
@@ -281,11 +338,66 @@ describe('NewVoiceClient', () => {
     vi.unstubAllGlobals();
   });
 
+  it('loads a selected demo reference and tagged sentence without generating', async () => {
+    mockUpload.files = [];
+    fetchMock.mockResolvedValue(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { 'content-type': 'audio/mpeg' },
+      }),
+    );
+    renderClone({ initialDemo: { speakerId: 'heike', takeId: 'calmSlow' } });
+    const input = await screen.findByTestId('clone-text-input');
+    expect(input).toHaveTextContent(
+      'Ach, da bist du ja genau im richtigen Moment.',
+    );
+    await waitFor(() => expect(mockAddFiles).toHaveBeenCalledOnce());
+    const [file] = mockAddFiles.mock.calls[0][0] as File[];
+    expect(file.name).toBe('heike-reference.mp3');
+    expect(file.type).toBe('audio/mpeg');
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      '/demo-clones/voxtral-3/heike-reference.mp3',
+    );
+    expect(screen.getByTestId('clone-legal-consent')).not.toBeChecked();
+  });
+
+  it.each(['http', 'network'])(
+    'shows a demo reference %s failure',
+    async (failure) => {
+      mockUpload.files = [];
+      if (failure === 'http') {
+        fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
+      } else {
+        fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+      }
+
+      renderClone({ initialDemo: { speakerId: 'heike', takeId: 'calmSlow' } });
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        enMessages.landing.demoClone.audioError,
+      );
+      expect(mockAddFiles).not.toHaveBeenCalled();
+      expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
+    },
+  );
+
+  it('keeps a user reference when a demo download completes', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(new Uint8Array([1, 2, 3]), {
+        headers: { 'content-type': 'audio/mpeg' },
+      }),
+    );
+    renderClone({ initialDemo: { speakerId: 'kat', takeId: 'sarcastic' } });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await act(async () => {});
+    expect(mockAddFiles).not.toHaveBeenCalled();
+  });
+
   it('updates text direction without clearing text when switching languages', async () => {
     const user = userEvent.setup();
     renderClone();
 
-    const input = screen.getByTestId('clone-text-input');
+    const input = await screen.findByTestId('clone-text-input');
     const text = 'Keep this text when switching languages.';
     await user.type(input, text);
     expect(input).toHaveAttribute('dir', 'ltr');
@@ -297,11 +409,16 @@ describe('NewVoiceClient', () => {
           type: 'patch',
         });
       });
-      expect(input).toHaveAttribute(
+      const currentInput = await screen.findByTestId('clone-text-input');
+      expect(currentInput).toHaveAttribute(
         'dir',
         code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
       );
-      expect(input).toHaveValue(text);
+      if (currentInput instanceof HTMLTextAreaElement) {
+        expect(currentInput).toHaveValue(text);
+      } else {
+        expect(currentInput).toHaveTextContent(text);
+      }
     }
 
     act(() => {
@@ -310,11 +427,16 @@ describe('NewVoiceClient', () => {
         type: 'patch',
       });
     });
-    expect(input).toHaveAttribute('dir', 'ltr');
-    expect(input).toHaveValue(text);
+    const currentInput = await screen.findByTestId('clone-text-input');
+    expect(currentInput).toHaveAttribute('dir', 'ltr');
+    expect(currentInput).toHaveTextContent(text);
   });
 
-  it.each([['fr', 'Français']])(
+  it.each([
+    ['fr', 'Français'],
+    ['pl', 'Polonais'],
+    ['ca', 'Catalan'],
+  ])(
     'uses the translated name for %s in the audio loading message',
     (code, name) => {
       mockFFmpegState.isLoading = true;
@@ -333,7 +455,7 @@ describe('NewVoiceClient', () => {
     },
   );
 
-  it.each(['zh', 'ja', 'en-multi', 'en'])(
+  it.each(['da', 'fi', 'en-multi', 'en'])(
     'hides the preparation message when switching from French to %s',
     (code) => {
       mockFFmpegState.isLoading = true;
@@ -361,6 +483,23 @@ describe('NewVoiceClient', () => {
       ).not.toBeInTheDocument();
     },
   );
+
+  it('offers the confirmed additional languages with localized names', () => {
+    renderClone();
+    const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+      supportedLocales: { code: string; name: string }[];
+    };
+    expect(lastCall.supportedLocales).toEqual(
+      expect.arrayContaining([
+        { code: 'ca', name: 'Catalan' },
+        { code: 'hu', name: 'Hungarian' },
+        { code: 'pl', name: 'Polish' },
+        { code: 'ro', name: 'Romanian' },
+        { code: 'uk', name: 'Ukrainian' },
+        { code: 'vi', name: 'Vietnamese' },
+      ]),
+    );
+  });
 
   it('lists the page locale first in the language select', () => {
     renderClone({ lang: 'it' });
@@ -450,7 +589,7 @@ describe('NewVoiceClient', () => {
     renderClone();
 
     await user.type(
-      screen.getByLabelText(dict.textToConvertLabel),
+      await screen.findByLabelText(dict.textToConvertLabel),
       'Hello world',
     );
     await user.click(
@@ -503,7 +642,7 @@ describe('NewVoiceClient', () => {
       renderClone();
 
       await user.type(
-        screen.getByLabelText(dict.textToConvertLabel),
+        await screen.findByLabelText(dict.textToConvertLabel),
         'Hello world',
       );
       await user.click(
@@ -547,7 +686,7 @@ describe('NewVoiceClient', () => {
     renderClone();
 
     await user.type(
-      screen.getByLabelText(dict.textToConvertLabel),
+      await screen.findByLabelText(dict.textToConvertLabel),
       'Hello world',
     );
     await user.click(

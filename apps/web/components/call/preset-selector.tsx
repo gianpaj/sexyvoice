@@ -35,20 +35,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { defaultSessionConfig } from '@/data/default-config';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { useConnection } from '@/hooks/use-connection';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
-import {
-  MAX_CUSTOM_CHARACTERS,
-  mapApiCharacterToPreset,
-  saveCharacter,
-} from '@/lib/characters';
-import {
-  CreateCharacterDialog,
-  type NewCharacterPayload,
-} from './create-character-dialog';
+import { MAX_CUSTOM_CHARACTERS, saveCharacter } from '@/lib/characters';
 import { VoicePlayButton } from './voice-play-button';
 
 function getInitials(name: string): string {
@@ -147,11 +138,13 @@ function AvatarButton({
 interface PresetSelectorProps {
   callVoices?: DBVoice[];
   isPaidUser?: boolean;
+  onCreateCharacter: () => void;
 }
 
 const EMPTY_ITEMS: DBVoice[] = [];
 
 export function PresetSelector({
+  onCreateCharacter,
   isPaidUser = false,
   callVoices = EMPTY_ITEMS,
 }: PresetSelectorProps) {
@@ -164,7 +157,6 @@ export function PresetSelector({
 
   const [lastPresetId, setLastPresetId] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [characterToDelete, setCharacterToDelete] = useState<{
     id: string;
     name: string;
@@ -215,35 +207,9 @@ export function PresetSelector({
     selectPreset(presetId);
   };
 
-  const handleOpenCreateDialog = () => {
+  const handleOpenCustom = () => {
     if (!canAddMore || isConnected) return;
-    setShowCreateDialog(true);
-  };
-
-  const handleCreateCharacter = async (payload: NewCharacterPayload) => {
-    const response = await fetch('/api/characters', {
-      body: JSON.stringify({
-        localizedDescriptions: { [pgState.language]: payload.description },
-        localizedPrompts: {},
-        name: payload.name,
-        prompt: payload.prompt,
-        sessionConfig: { ...defaultSessionConfig, ...pgState.sessionConfig },
-        voiceName: payload.voiceName,
-      }),
-      headers: { 'Content-Type': 'application/json' },
-      method: 'POST',
-    });
-
-    const result = await response.json();
-    if (!response.ok) {
-      toast.error(result.error ?? tPresetSelector('failedToCreate'));
-      throw new Error(result.error ?? tPresetSelector('failedToCreate'));
-    }
-
-    const newPreset = mapApiCharacterToPreset(result);
-    dispatch({ payload: newPreset, type: 'SAVE_CUSTOM_CHARACTER' });
-    selectPreset(newPreset.id);
-    toast.success(tPresetSelector('characterCreated'));
+    onCreateCharacter();
   };
 
   // Build updated localizedDescriptions with the new description value
@@ -433,7 +399,7 @@ export function PresetSelector({
             className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-neutral-600 border-dashed bg-neutral-800/50 text-neutral-400 hover:border-violet-500 hover:text-violet-400 sm:h-16 sm:w-16"
             disabled={isConnected}
             isPaidUser={isPaidUser}
-            onClick={handleOpenCreateDialog}
+            onClick={handleOpenCustom}
             premiumTooltip={t('upgradePremiumTooltip')}
           >
             <Plus className="h-5 w-5" />
@@ -625,32 +591,42 @@ export function PresetSelector({
                     {t('voiceLabel')}
                   </Label>
                   <div className="flex items-center gap-2">
-                    <Select
-                      disabled={isConnected}
-                      onValueChange={handleVoiceChange}
-                      value={resolvedVoiceName}
-                    >
-                      <SelectTrigger className="flex-1" id="voice-select">
-                        <SelectValue placeholder={t('voicePlaceholder')} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {callVoices.map((voice) => (
-                          <SelectItem key={voice.id} value={voice.name}>
-                            <span className="flex items-center gap-2">
-                              <span>{voice.name}</span>
-                              {voice.type && (
-                                <span className="text-muted-foreground text-xs">
-                                  — {voice.type}
-                                </span>
-                              )}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {selectedPreset.sessionConfig.audioReferenceId ? (
+                      <span className="flex-1 text-sm">
+                        {selectedPreset.sessionConfig.voice}
+                      </span>
+                    ) : (
+                      <Select
+                        disabled={isConnected}
+                        onValueChange={handleVoiceChange}
+                        value={resolvedVoiceName}
+                      >
+                        <SelectTrigger className="flex-1" id="voice-select">
+                          <SelectValue placeholder={t('voicePlaceholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {callVoices.map((voice) => (
+                            <SelectItem key={voice.id} value={voice.name}>
+                              <span className="flex items-center gap-2">
+                                <span>{voice.name}</span>
+                                {voice.type && (
+                                  <span className="text-muted-foreground text-xs">
+                                    — {voice.type}
+                                  </span>
+                                )}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                     <VoicePlayButton
                       key={resolvedVoiceName}
-                      sampleUrl={resolvedVoice?.sample_url ?? null}
+                      sampleUrl={
+                        selectedPreset.sessionConfig.audioReferenceId
+                          ? `/api/audio-references/${selectedPreset.sessionConfig.audioReferenceId}/sample`
+                          : (resolvedVoice?.sample_url ?? null)
+                      }
                       size="md"
                       voiceName={resolvedVoiceName}
                     />
@@ -672,14 +648,6 @@ export function PresetSelector({
             ))}
         </div>
       </div>
-
-      <CreateCharacterDialog
-        callVoices={callVoices}
-        isPaidUser={isPaidUser}
-        onOpenChange={setShowCreateDialog}
-        onSave={handleCreateCharacter}
-        open={showCreateDialog}
-      />
 
       <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
         <AlertDialogContent>

@@ -17,6 +17,7 @@ import {
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
   E2E_PUBLIC_CALL_CHARACTERS,
+  E2E_SAVED_CALL_VOICES,
   isE2E,
 } from '@/lib/e2e-mocks';
 import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
@@ -61,6 +62,9 @@ vi.mock('next-intl/server', () => ({
   getTranslations: async () => (key: string) => key,
 }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('@/lib/supabase/call-voices', () => ({
+  getSavedCallVoices: vi.fn(async () => []),
+}));
 vi.mock('@/lib/supabase/auth', () => ({ getVerifiedClaims: vi.fn() }));
 vi.mock('@/lib/supabase/queries', () => ({
   getCallVoices: vi.fn(),
@@ -152,6 +156,7 @@ function expectPageProps(
   >['creditTransactions'],
   callVoices: ComponentProps<typeof ConfigurationForm>['callVoices'],
   isPaidUser: boolean,
+  savedVoices: ComponentProps<typeof ConfigurationForm>['savedVoices'] = [],
 ) {
   expect(CreditsSection).toHaveBeenCalledOnce();
   expect(vi.mocked(CreditsSection).mock.calls[0][0]).toEqual({
@@ -165,6 +170,8 @@ function expectPageProps(
   expect(vi.mocked(ConfigurationForm).mock.calls[0][0]).toEqual({
     callVoices,
     isPaidUser,
+    savedVoices,
+    userId,
     lang: 'de',
   });
 }
@@ -231,7 +238,12 @@ describe('call E2E data', () => {
       );
 
       expect(html).toContain('data-e2e-call-fixtures=""');
-      expectPageProps(E2E_CREDIT_TRANSACTIONS, E2E_CALL_VOICES, isPaidUser);
+      expectPageProps(
+        E2E_CREDIT_TRANSACTIONS,
+        E2E_CALL_VOICES,
+        isPaidUser,
+        isPaidUser ? E2E_SAVED_CALL_VOICES : [],
+      );
       expect(DashboardUI).toHaveBeenCalledOnce();
       expect(vi.mocked(DashboardUI).mock.calls[0][0]).toMatchObject({
         creditTransactions: E2E_CREDIT_TRANSACTIONS,

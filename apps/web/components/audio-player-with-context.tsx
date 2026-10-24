@@ -1,11 +1,11 @@
 'use client';
 
-import WavesurferPlayer from '@wavesurfer/react';
 import { Pause, Play } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
 import { useAudio } from '@/components/audio-provider';
+import { AudioWaveform } from '@/components/audio-waveform';
 import { Button } from '@/components/ui/button';
 import { attemptPlayback } from '@/lib/media-playback';
 import { cn } from '@/lib/utils';
@@ -47,8 +47,8 @@ export function AudioPlayerWithContext({
   playAudioTitle,
   showWaveform = false,
   waveformHeight = 48,
-  waveColor = '#a1a1aa',
-  progressColor = '#7c3aed',
+  waveColor,
+  progressColor,
   autoPlay = false,
   onControlsReady,
   onError,
@@ -184,11 +184,7 @@ export function AudioPlayerWithContext({
         )}
       </Button>
       <div className={cn('w-32 flex-1', waveformClassName)}>
-        <WavesurferPlayer
-          barGap={2}
-          barRadius={2}
-          barWidth={2}
-          cursorColor="transparent"
+        <AudioWaveform
           height={waveformHeight}
           onError={onWavesurferError}
           onPause={onPause}

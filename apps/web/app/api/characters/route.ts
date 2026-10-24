@@ -3,14 +3,12 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { normalizeModelId } from '@/data/models';
+import { CLONED_VOICE_ID } from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
-import {
-  countUserCallCharacters,
-  getVoiceIdByName,
-  hasUserPaid,
-} from '@/lib/supabase/queries';
+import { resolveCallVoice } from '@/lib/supabase/call-voices';
+import { countUserCallCharacters, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 const MAX_NAME_LENGTH = 50;
@@ -19,6 +17,7 @@ const MAX_PROMPT_LENGTH = 5000;
 // ── Zod Schemas ──
 
 const sessionConfigSchema = z.object({
+  audioReferenceId: z.uuid().optional(),
   maxOutputTokens: z.number().nullable(),
   // Normalized before it is spread into the session_config JSONB, so a stale
   // client cannot write a retired model id back into a row that was just
@@ -109,13 +108,18 @@ export async function POST(request: Request) {
 
     const body: CreateOrUpdateBody = parsed.data;
 
-    // Validate voice exists in DB
-    let voiceObj: { id: string; name: string; language: string; model: string };
-    try {
-      voiceObj = await getVoiceIdByName(body.voiceName);
-    } catch {
+    const resolvedVoice = await resolveCallVoice(
+      { ...body.sessionConfig, voice: body.voiceName },
+      claims.sub,
+    );
+    if (!resolvedVoice)
       return APIErrorResponse('Voice no longer available', 400);
-    }
+    const voiceObj = {
+      id:
+        body.sessionConfig.model === 'mistral-tts'
+          ? CLONED_VOICE_ID
+          : resolvedVoice.id,
+    };
 
     const isUpdate = !!body.id;
 

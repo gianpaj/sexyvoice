@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { Mistral } from '@mistralai/mistralai';
 import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
@@ -27,11 +26,13 @@ import {
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { getMistralClient, saveMistralVoice } from '@/lib/clone/mistral';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import {
   getCloneTextMaxLength,
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
+import type { VoxtralModel } from '@/lib/clone/voxtral';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { getFalBillingEventCost } from '@/lib/fal-billing';
 import PostHogClient from '@/lib/posthog';
@@ -78,6 +79,8 @@ const FALLBACK_MIN_DURATION = 10;
 const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
 const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
+// Select 'voxtral-mini-tts-2603' to compare with the earlier model.
+const VOXTRAL_MODEL: VoxtralModel = 'voxtral-mini-tts-3-0';
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
@@ -118,6 +121,7 @@ interface FormInput {
   enhanceReferenceAudio: boolean;
   file: File;
   locale: string;
+  saveVoiceName?: string;
   text: string;
 }
 
@@ -146,22 +150,6 @@ class RouteError extends Error {
     this.code = code;
     this.details = details;
   }
-}
-
-let mistralClient: Mistral | null = null;
-
-function getMistralClient(): Mistral {
-  const apiKey = process.env.MISTRAL_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('MISTRAL_API_KEY is not configured');
-  }
-
-  if (!mistralClient) {
-    mistralClient = new Mistral({ apiKey });
-  }
-
-  return mistralClient;
 }
 
 function createRouteError(
@@ -271,6 +259,21 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const enhanceReferenceAudioValue = formData.get(
     CLONE_FORM_FIELDS.enhanceReferenceAudio,
   );
+  const nameValue = formData.get(CLONE_FORM_FIELDS.saveVoiceName);
+  const saveVoiceName =
+    typeof nameValue === 'string' ? nameValue.trim() : undefined;
+  if (
+    nameValue !== null &&
+    (!saveVoiceName ||
+      saveVoiceName.length > 50 ||
+      formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
+  ) {
+    throw createRouteError(
+      'A voice name and permission to save are required',
+      400,
+      'errors.voiceNameAndConsentRequired',
+    );
+  }
   const textValue = formData.get(CLONE_FORM_FIELDS.text);
   const file = formData.get(CLONE_FORM_FIELDS.file);
   const locale = formData.get(CLONE_FORM_FIELDS.locale);
@@ -282,7 +285,7 @@ async function parseFormData(request: Request): Promise<FormInput> {
     enhanceReferenceAudioValue === 'true';
   const localeStr = typeof locale === 'string' ? locale : '';
 
-  if (!(text && audioFile)) {
+  if (!((text || saveVoiceName) && audioFile)) {
     throw createRouteError(
       'Missing required parameters: text and audio file',
       400,
@@ -299,6 +302,7 @@ async function parseFormData(request: Request): Promise<FormInput> {
   }
 
   return {
+    saveVoiceName,
     enhanceReferenceAudio: shouldEnhanceReferenceAudio,
     file: audioFile,
     locale: localeStr,
@@ -868,7 +872,7 @@ async function generateVoiceWithMistral(
   text: string,
   referenceAudioBuffer: Buffer,
 ): Promise<{ buffer: Buffer; modelUsed: string; requestId: string }> {
-  const model = 'voxtral-mini-tts-2603';
+  const model = VOXTRAL_MODEL;
   const client = getMistralClient();
 
   let response: Awaited<ReturnType<typeof client.audio.speech.complete>>;
@@ -1054,12 +1058,14 @@ async function createCloneOutputFilename({
   provider: CloneProvider;
   text: string;
 }): Promise<string> {
+  const providerCacheKey =
+    provider === 'mistral' ? `${provider}-${VOXTRAL_MODEL}` : provider;
   const cacheKeyInput = enhancementEnabled
-    ? `${locale}-${provider}-${text}-${audioHash}-enhanced`
-    : `${locale}-${provider}-${text}-${audioHash}`;
+    ? `${locale}-${providerCacheKey}-${text}-${audioHash}-enhanced`
+    : `${locale}-${providerCacheKey}-${text}-${audioHash}`;
   const hash = await generateHash(cacheKeyInput);
 
-  return `${basePath}/${locale}-${provider}-${hash}.wav`;
+  return `${basePath}/${locale}-${providerCacheKey}-${hash}.wav`;
 }
 
 // ============================================================================
@@ -1133,6 +1139,7 @@ async function runBackgroundTasks(
       provider,
       audioFileData.baseCloneCredits,
       audioFileData.text,
+      VOXTRAL_MODEL,
     ),
     metadata: {
       audioDuration: audioFileData.duration,
@@ -1278,6 +1285,34 @@ export async function POST(request: Request) {
     validateLocale(locale);
 
     const userHasPaid = await hasUserPaid(user.id);
+    if (formInput.saveVoiceName) {
+      if (!userHasPaid)
+        return routeErrorResponse(
+          'Saved voices require a paid account',
+          403,
+          'errors.savedVoiceRequiresPaid',
+        );
+      if (resolveCloneProvider(locale) !== 'mistral')
+        return routeErrorResponse(
+          'This language is not supported for saved voices',
+          400,
+          'errors.savedVoiceLocaleUnsupported',
+        );
+      const processedAudio = await processAudioFile(
+        referenceAudioFile,
+        false,
+        locale,
+        user.id,
+      );
+      validateAudioDuration(processedAudio.duration, 'mistral');
+      const reference = await saveMistralVoice(
+        processedAudio.buffer,
+        formInput.saveVoiceName,
+        locale,
+        user.id,
+      );
+      return NextResponse.json({ audioReferenceId: reference.id });
+    }
     validateTextLength(text, locale, userHasPaid);
 
     // Check credits

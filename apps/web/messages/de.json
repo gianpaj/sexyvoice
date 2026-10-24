@@ -105,12 +105,28 @@
       "pickCharacter": "Wähle einen Charakter"
     },
     "demoClone": {
-      "pickSpeaker": "Wähle eine Stimme",
-      "referenceLabel": "Referenz-Audio",
-      "resultLabel": "Geklonte Stimme",
-      "hearResult": "Ergebnis anhören",
+      "title": "Hör den Unterschied",
+      "subtitle": "Vergleiche Originalaufnahmen, geklonte Stimmen und ausdrucksstarke Sprechweisen.",
+      "pickSpeaker": "Stimme auswählen",
+      "pickLanguage": "Sprache auswählen",
+      "comingSoon": "Demnächst verfügbar",
+      "samplePending": "Für diese Sprache ist noch kein Audio verfügbar. Unten findest du den geplanten Beispieltext.",
+      "deliveryLabel": "Sprechweise auswählen",
+      "sameOriginal": "Wie das Original",
+      "natural": "Natürlich",
+      "sarcastic": "Sarkastisch",
+      "calmSlow": "Ruhig & langsam",
       "playAudio": "Audio abspielen",
-      "preparedExamplesCaption": "Vorbereitete Beispiele. Registriere dich, um deine eigene Stimme zu klonen.",
+      "pauseAudio": "Audio pausieren",
+      "loading": "Audio wird geladen",
+      "clonedVoice": "Geklonte Stimme",
+      "originalVoice": "Originalaufnahme",
+      "hearOriginal": "Original anhören",
+      "backToClone": "Zurück zum Klon",
+      "tryVoice": "Diese Sprechweise verwenden",
+      "signUpAndClone": "Registrieren und klonen",
+      "seek": "Audioposition",
+      "preparedExamplesCaption": "Vorbereitete Beispiele. Anhören ist kostenlos; die Generierung verbraucht Credits.",
       "audioError": "Dieses Audio konnte nicht geladen werden.",
       "retry": "Erneut versuchen"
     },
@@ -179,7 +195,7 @@
     "voiceCloning": {
       "hero": {
         "title": "Deine Stimme, in jeder Sprache",
-        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 23 Sprachen sprechen."
+        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 28 Sprachen sprechen."
       },
       "cta": {
         "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
@@ -244,7 +260,7 @@
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
-              "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
+              "answer": "Das Stimmklonen unterstützt die folgenden 28 Sprachen:\n\n🇪🇸 Katalanisch,\n🇭🇺 Ungarisch,\n🇷🇴 Rumänisch,\n🇺🇦 Ukrainisch,\n🇻🇳 Vietnamesisch,\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
             }
           ]
         },
@@ -675,6 +691,31 @@
       "playVoiceSample": "Stimmprobe abspielen",
       "stopVoiceSample": "Stimmprobe stoppen",
       "previewVoice": "Vorschau der Stimme von __VOICE__"
+    },
+    "custom": {
+      "modeLabel": "Anruf einrichten",
+      "characters": "Charaktere",
+      "custom": "Eigener Charakter",
+      "voiceSources": "Stimmenquelle",
+      "builtIn": "Enthaltene Stimmen",
+      "myVoices": "Meine Stimmen",
+      "voiceHeading": "Wie soll dein Charakter klingen?",
+      "cloneVoice": "Stimme klonen",
+      "noVoices": "Noch keine gespeicherten Stimmen",
+      "noVoicesHelp": "Klone eine Stimme, um sie in deinen Anrufen zu verwenden.",
+      "noBuiltInVoices": "Keine enthaltenen Stimmen verfügbar",
+      "personality": "Persönlichkeit hinzufügen",
+      "promptAdded": "Anweisungen hinzugefügt",
+      "promptRequired": "Anweisungen erforderlich",
+      "nameHelp": "zum Speichern",
+      "optional": "optional",
+      "promptLabel": "Persönlichkeitsanweisungen",
+      "promptHelp": "Beschreibe, wie dein Charakter handeln und sprechen soll. Für einen eigenen Anruf sind Anweisungen erforderlich.",
+      "saveCharacter": "Charakter speichern",
+      "saveOptional": "Du kannst einen Anruf starten, ohne zu speichern.",
+      "characterLimit": "Du kannst bis zu 10 Charaktere speichern.",
+      "paidHelp": "Eigene Anrufe erfordern ein kostenpflichtiges Konto.",
+      "upgrade": "Upgrade"
     }
   },
   "clone": {
@@ -726,7 +767,10 @@
       "textTooLong": "Der Text überschreitet die maximale Länge von __MAX__ Zeichen.",
       "unsupportedAudioFormat": "Nicht unterstütztes Audioformat für das Klonen von Stimmen. Bitte verwenden Sie MP3, OGG/Opus, WebM oder WAV.",
       "unsupportedLocale": "Diese Sprache wird für das Klonen von Stimmen nicht unterstützt.",
-      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen."
+      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen.",
+      "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
+      "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
+      "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -735,7 +779,7 @@
     },
     "crossLanguageInfo": {
       "title": "Stimmübertragung zwischen Sprachen",
-      "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
+      "description": "Klone eine Stimme in einer Sprache und lass sie in jeder der 28 unterstützten Sprachen sprechen. Die einzigartigen Eigenschaften der Stimme bleiben erhalten.",
       "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
     },
     "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden.",
@@ -759,7 +803,16 @@
     "audioProcessorError": "Audioprozessor-Fehler",
     "preparingAudioProcessor": "Audioprozessor für __LANGUAGE__ wird vorbereitet...",
     "removeFile": "Datei entfernen",
-    "convertingAudio": "Audio wird konvertiert"
+    "convertingAudio": "Audio wird konvertiert",
+    "savedVoice": {
+      "modeLabel": "Stimme für Anrufe speichern",
+      "name": "Name der Stimme",
+      "help": "Speichere diese Stimme bei Mistral, um sie unter Meine Stimmen auszuwählen. Der Anbieter bewahrt die Referenzaufnahme auf.",
+      "save": "Stimme speichern",
+      "success": "Stimme gespeichert",
+      "useInCall": "Stimme für einen Anruf verwenden →",
+      "backToCall": "Zurück zum Anruf"
+    }
   },
   "profile": {
     "title": "Profileinstellungen",
@@ -880,7 +933,7 @@
     "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
     "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
     "titleVoiceCloning": "KI-Stimmklonen",
-    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 23 Sprachen sprechen.",
+    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 28 Sprachen sprechen.",
     "/": "",
     "/voice-call": "Sprachanruf",
     "/login": "Anmelden",
@@ -1217,5 +1270,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
     "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
     "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
+  },
+  "ttsEditor": {
+    "label": "Sprechtext",
+    "effects": "Stimmeffekte",
+    "emotions": "Emotionen",
+    "pace": "Tempo",
+    "vocalSounds": "Stimmliche Laute"
   }
 }

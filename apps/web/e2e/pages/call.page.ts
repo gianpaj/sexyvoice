@@ -67,7 +67,7 @@ export class CallPage {
     });
 
     // Credits section (shown on mobile via lg:hidden)
-    this.creditsSection = page.getByText(/credits/i).first();
+    this.creditsSection = page.getByTestId('call-mobile-credits');
 
     // Notice text at the bottom of the page
     this.noticeText = page.getByTestId('call-notice-text');

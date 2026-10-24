@@ -10,8 +10,7 @@
  * The public voice cloning landing page at `/[lang]/voice-cloning`.
  *
  * Enabled everywhere except production so the demo stays reviewable on Vercel
- * previews while its audio is still TTS-generated placeholder material. Flip
- * this to `true` once the cloning model is live.
+ * previews during review of the public demo.
  *
  * Gates: the page itself, the landing page card, the footer link, and the
  * sitemap entry. Only referenced from server components, so the non-public
