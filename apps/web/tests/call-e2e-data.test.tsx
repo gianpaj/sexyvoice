@@ -219,13 +219,13 @@ describe('call E2E data', () => {
     [undefined, false],
     ['invalid', false],
   ] as const)(
-    'shares cookie=%s entitlement across the page and dashboard without layout data calls',
+    'shares cookie=%s entitlement across the page and dashboard without live data calls',
     async (cookie, isPaidUser) => {
       setCallUserCookie(cookie);
       vi.mocked(hasUserPaid).mockResolvedValue(!isPaidUser);
 
       const page = await CallPage({ params: params() });
-      const call = await CallLayout({ children: page, params: params() });
+      const call = CallLayout({ children: page });
       const html = renderToStaticMarkup(
         await DashboardLayout({ children: call, params: params() }),
       );
@@ -240,8 +240,8 @@ describe('call E2E data', () => {
         userId,
       });
       expect(providerProps().initialCustomCharacters).toEqual([]);
-      expect(createClient).toHaveBeenCalledTimes(3);
-      expect(getVerifiedClaims).toHaveBeenCalledTimes(3);
+      expect(createClient).toHaveBeenCalledTimes(2);
+      expect(getVerifiedClaims).toHaveBeenCalledTimes(2);
       expectNoDataCalls();
     },
   );
@@ -261,12 +261,9 @@ describe('call E2E data', () => {
     },
   );
 
-  it('maps deterministic public presets in order without fetching layout data', async () => {
-    const html = renderToStaticMarkup(
-      await CallLayout({ children: <span>Call child</span>, params: params() }),
-    );
+  it('maps deterministic public presets in order without fetching live data', async () => {
+    renderToStaticMarkup(await CallPage({ params: params() }));
 
-    expect(html).toContain('Call child');
     expectAuthenticated();
     expectNoDataCalls();
     const props = providerProps();
@@ -347,12 +344,12 @@ describe.each([
     expect(cookieStore.get).not.toHaveBeenCalled();
   });
 
-  it('uses unpaid database entitlement across the page and layouts despite a paid cookie', async () => {
+  it('uses unpaid database entitlement across the page and dashboard despite a paid cookie', async () => {
     setCallUserCookie('paid');
     vi.mocked(hasUserPaid).mockResolvedValue(false);
 
     const page = await CallPage({ params: params() });
-    const call = await CallLayout({ children: page, params: params() });
+    const call = CallLayout({ children: page });
     const html = renderToStaticMarkup(
       await DashboardLayout({ children: call, params: params() }),
     );
@@ -366,7 +363,7 @@ describe.each([
       lang: 'de',
       userId,
     });
-    expect(hasUserPaid).toHaveBeenCalledTimes(3);
+    expect(hasUserPaid).toHaveBeenCalledTimes(2);
     for (const args of vi.mocked(hasUserPaid).mock.calls) {
       expect(args).toEqual([userId]);
     }
@@ -412,9 +409,7 @@ describe.each([
     vi.mocked(getPublicCallCharacters).mockResolvedValue([publicCharacter]);
     vi.mocked(getUserCallCharacters).mockResolvedValue([customCharacter]);
 
-    renderToStaticMarkup(
-      await CallLayout({ children: null, params: params() }),
-    );
+    renderToStaticMarkup(await CallPage({ params: params() }));
 
     expectAuthenticated();
     expect(getCallInstructionConfig).toHaveBeenCalledOnce();
@@ -453,9 +448,7 @@ describe.each([
 
   it('skips custom characters for unpaid users and handles empty public presets', async () => {
     vi.mocked(hasUserPaid).mockResolvedValue(false);
-    renderToStaticMarkup(
-      await CallLayout({ children: null, params: params() }),
-    );
+    renderToStaticMarkup(await CallPage({ params: params() }));
 
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).not.toHaveBeenCalled();
