@@ -387,6 +387,11 @@ identity for pages, actions, dashboard APIs, browser analytics, and the proxy.
 It returns `null` on SDK auth errors or absent claims. Callers require
 `claims.sub`; ownership, credit, and entitlement checks remain separate.
 
+The proxy matcher skips link prefetches (`next-router-prefetch` or
+`purpose: prefetch` headers). Any client can send those headers, so the proxy
+redirect is not an auth boundary: every page and layout verifies claims before
+it reads user data.
+
 Asymmetric JWTs normally verify locally with cached JWKS; symmetric keys require
 an Auth-server request. Claims do not enforce immediate session revocation or
 current account status. Email and metadata are token snapshots; user-editable
