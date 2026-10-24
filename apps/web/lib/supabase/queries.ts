@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { cache } from 'react';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -645,7 +646,9 @@ export const getPaidTransactions = async (userId: string) => {
   return data;
 };
 
-export const hasUserPaid = async (userId: string): Promise<boolean> => {
+// Deduplicated per server request: the dashboard layout and its pages both
+// check paid status.
+export const hasUserPaid = cache(async (userId: string): Promise<boolean> => {
   const supabase = await createClient();
   // Check if the user has any non-freemium credit transactions.
   const { data: nonFreemiumTransactions, error: nonFreemiumError } =
@@ -661,7 +664,7 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
-};
+});
 
 /**
  * Get the total call duration in seconds for a user.
