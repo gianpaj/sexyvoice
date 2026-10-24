@@ -470,7 +470,15 @@ export function PresetSelector({
         <div
           className={`relative -mx-8 -mt-1 mb-3 sm:mx-0 ${showArrows ? 'sm:px-10' : ''}`}
         >
-          <Carousel opts={{ align: 'start', loop: false, slidesToScroll: 1 }}>
+          <Carousel
+            opts={{
+              align: 'start',
+              // Let mobile swipes reach the edges without snapping short.
+              breakpoints: { '(max-width: 639px)': { dragFree: true } },
+              loop: false,
+              slidesToScroll: 1,
+            }}
+          >
             <CarouselContent className="-ml-2 py-1 pl-8 sm:pl-0">
               {allCharacters.map((preset, index) => {
                 const isSelected = pgState.selectedPresetId === preset.id;
