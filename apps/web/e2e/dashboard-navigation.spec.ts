@@ -13,6 +13,11 @@ const historyPath = '/en/dashboard/history';
 const isHistoryRequest = (url: URL) => url.pathname === historyPath;
 
 test.describe('Dashboard Navigation - Authenticated User', () => {
+  test.skip(
+    !process.env.CI,
+    'Locally the webServer runs `next dev`, which does not prefetch links.',
+  );
+
   test('sidebar History link shows the prefetched skeleton before the page renders', async ({
     page,
   }) => {
