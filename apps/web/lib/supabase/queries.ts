@@ -666,6 +666,26 @@ export const hasUserPaid = cache(async (userId: string): Promise<boolean> => {
   return (nonFreemiumTransactions?.length ?? 0) > 0;
 });
 
+// Deduplicated per server request: the dashboard layout and the Generate,
+// Clone, and Call pages all sum these amounts for the credits widget.
+export const getCreditTransactionAmounts = cache(
+  async (
+    userId: string,
+  ): Promise<Pick<Tables<'credit_transactions'>, 'amount'>[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('credit_transactions')
+      .select('amount')
+      .eq('user_id', userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+);
+
 /**
  * Get the total call duration in seconds for a user.
  * This sums up all duration_seconds from their call_sessions.

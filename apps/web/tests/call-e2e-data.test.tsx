@@ -23,14 +23,12 @@ import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
+  getCreditTransactionAmounts,
   getPublicCallCharacters,
   getUserCallCharacters,
   hasUserPaid,
 } from '@/lib/supabase/queries';
-import {
-  getCreditsQuery,
-  getCreditTransactions,
-} from '@/lib/supabase/queries.client';
+import { getCreditsQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('server-only', () => ({}));
@@ -54,7 +52,6 @@ vi.mock('@/lib/banners/resolve-banner', () => ({
 }));
 vi.mock('@/lib/supabase/queries.client', () => ({
   getCreditsQuery: vi.fn(),
-  getCreditTransactions: vi.fn(),
 }));
 vi.mock('next-intl/server', () => ({
   getMessages: async () => ({}),
@@ -64,6 +61,7 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 vi.mock('@/lib/supabase/auth', () => ({ getVerifiedClaims: vi.fn() }));
 vi.mock('@/lib/supabase/queries', () => ({
   getCallVoices: vi.fn(),
+  getCreditTransactionAmounts: vi.fn(),
   getPublicCallCharacters: vi.fn(),
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
@@ -110,15 +108,7 @@ function setCallUserCookie(value: string | undefined) {
       : undefined,
   );
 }
-const query = {
-  eq: vi.fn().mockReturnThis(),
-  order: vi.fn().mockResolvedValue({ data: liveCredits }),
-  select: vi.fn().mockReturnThis(),
-};
-const from = vi.fn(() => query);
-const supabase = { from } as unknown as Awaited<
-  ReturnType<typeof createClient>
->;
+const supabase = {} as unknown as Awaited<ReturnType<typeof createClient>>;
 
 function providerProps() {
   expect(PlaygroundStateProvider).toHaveBeenCalledOnce();
@@ -132,13 +122,12 @@ function expectAuthenticated() {
 
 function expectNoDataCalls() {
   for (const mock of [
-    from,
     getCallVoices,
     getPublicCallCharacters,
     getUserCallCharacters,
     hasUserPaid,
     getCallInstructionConfig,
-    getCreditTransactions,
+    getCreditTransactionAmounts,
     getCreditsQuery,
     prefetchQuery,
   ]) {
@@ -177,10 +166,7 @@ beforeEach(() => {
   vi.mocked(cookies).mockResolvedValue(
     cookieStore as unknown as Awaited<ReturnType<typeof cookies>>,
   );
-  vi.mocked(getCreditTransactions).mockResolvedValue({
-    data: liveCredits,
-    error: null,
-  } as Awaited<ReturnType<typeof getCreditTransactions>>);
+  vi.mocked(getCreditTransactionAmounts).mockResolvedValue(liveCredits);
   vi.mocked(createClient).mockResolvedValue(supabase);
   vi.mocked(getVerifiedClaims).mockResolvedValue({ sub: userId } as NonNullable<
     Awaited<ReturnType<typeof getVerifiedClaims>>
@@ -367,10 +353,9 @@ describe.each([
     for (const args of vi.mocked(hasUserPaid).mock.calls) {
       expect(args).toEqual([userId]);
     }
-    expect(getCreditTransactions).toHaveBeenCalledExactlyOnceWith(
-      supabase,
-      userId,
-    );
+    // React cache() shares this query across the page and layout per request;
+    // the test renders outside a request, so each one calls the mock.
+    expect(getCreditTransactionAmounts).toHaveBeenCalledTimes(2);
     expect(getCreditsQuery).toHaveBeenCalledExactlyOnceWith(supabase, userId);
     expect(prefetchQuery).toHaveBeenCalledOnce();
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
@@ -469,12 +454,7 @@ describe.each([
     expect(html).not.toContain('data-e2e-call-fixtures');
 
     expectAuthenticated();
-    expect(from).toHaveBeenCalledExactlyOnceWith('credit_transactions');
-    expect(query.select).toHaveBeenCalledExactlyOnceWith('amount');
-    expect(query.eq).toHaveBeenCalledExactlyOnceWith('user_id', userId);
-    expect(query.order).toHaveBeenCalledExactlyOnceWith('created_at', {
-      ascending: false,
-    });
+    expect(getCreditTransactionAmounts).toHaveBeenCalledExactlyOnceWith(userId);
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getCallVoices).toHaveBeenCalledOnce();
     expectPageProps(liveCredits, voices, true);

@@ -27,6 +27,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
+  getCreditTransactionAmounts,
   getPublicCallCharacters,
   getUserCallCharacters,
   hasUserPaid,
@@ -57,25 +58,21 @@ export default async function Call(props: {
 
   const e2e = await getE2ECallUser();
   const [
-    { data: creditTransactions },
+    creditTransactions,
     isPaidUser,
     callVoices,
     { defaultInstructions, initialInstruction, presetInstructions },
     publicCharacters,
   ] = e2e
     ? [
-        { data: E2E_CREDIT_TRANSACTIONS },
+        E2E_CREDIT_TRANSACTIONS,
         e2e.isPaidUser,
         E2E_CALL_VOICES,
         E2E_CALL_INSTRUCTION_CONFIG,
         E2E_PUBLIC_CALL_CHARACTERS,
       ]
     : await Promise.all([
-        supabase
-          .from('credit_transactions')
-          .select('amount')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false }),
+        getCreditTransactionAmounts(userId),
         hasUserPaid(userId),
         getCallVoices(),
         getCallInstructionConfig(),

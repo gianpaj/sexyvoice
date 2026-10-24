@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   getClaims: vi.fn(),
   getCreditsQuery: vi.fn(),
-  getCreditTransactions: vi.fn(),
+  getCreditTransactionAmounts: vi.fn(),
   getUser: vi.fn(),
   hasUserPaid: vi.fn(),
   prefetchQuery: vi.fn(),
@@ -18,10 +18,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({ auth: mocks, from: mocks.from }),
 }));
-vi.mock('@/lib/supabase/queries', () => ({ hasUserPaid: mocks.hasUserPaid }));
+vi.mock('@/lib/supabase/queries', () => ({
+  getCreditTransactionAmounts: mocks.getCreditTransactionAmounts,
+  hasUserPaid: mocks.hasUserPaid,
+}));
 vi.mock('@/lib/supabase/queries.client', () => ({
   getCreditsQuery: mocks.getCreditsQuery,
-  getCreditTransactions: mocks.getCreditTransactions,
 }));
 vi.mock('@supabase-cache-helpers/postgrest-react-query', () => ({
   prefetchQuery: mocks.prefetchQuery,
@@ -77,14 +79,13 @@ beforeEach(() => {
     error: null,
   });
   mocks.hasUserPaid.mockResolvedValue(false);
-  mocks.getCreditTransactions.mockResolvedValue({ data: [] });
+  mocks.getCreditTransactionAmounts.mockResolvedValue([]);
 });
 
 describe('layout, CLI login, and header claims', () => {
   it('prefetches dashboard data for the verified subject without getUser', async () => {
     expect(await layout()).not.toBeNull();
-    expect(mocks.getCreditTransactions).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(mocks.getCreditTransactionAmounts).toHaveBeenCalledWith(
       'claims-user',
     );
     expect(mocks.getCreditsQuery).toHaveBeenCalledWith(
@@ -136,7 +137,7 @@ describe('layout, CLI login, and header claims', () => {
       expect(html).not.toContain('/dashboard/generate');
       expect(mocks.from).not.toHaveBeenCalled();
       expect(mocks.hasUserPaid).not.toHaveBeenCalled();
-      expect(mocks.getCreditTransactions).not.toHaveBeenCalled();
+      expect(mocks.getCreditTransactionAmounts).not.toHaveBeenCalled();
       expect(mocks.prefetchQuery).not.toHaveBeenCalled();
     },
   );

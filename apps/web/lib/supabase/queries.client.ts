@@ -71,17 +71,6 @@ export async function getCredits(client: TypedSupabaseClient, userId: string) {
   return data;
 }
 
-export function getCreditTransactions(
-  client: TypedSupabaseClient,
-  userId: string,
-) {
-  return client
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .throwOnError();
-}
-
 export async function hasUserPaid(
   client: TypedSupabaseClient,
   userId: string,
