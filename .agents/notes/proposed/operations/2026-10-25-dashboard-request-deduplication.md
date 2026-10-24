@@ -32,8 +32,11 @@ runs outside the repository.
 | -------- | -------------------- | -----: | ------: |
 | Generate | Baseline             |     37 |       5 |
 | Generate | Proxy skips prefetch |      9 |       5 |
+| Generate | Shared credit query  |      8 |       5 |
+| Generate | One analytics copy   |      8 |       3 |
 | History  | Baseline             |     37 |       3 |
 | History  | Proxy skips prefetch |      9 |       3 |
+| History  | Shared credit query  |      9 |       3 |
 
 Baseline server breakdown for Generate: 16 Auth `/user`, 15 `profiles`,
 2 `credits`, 3 `credit_transactions`, 1 `voices`.
@@ -53,9 +56,25 @@ queries. A logged-out page load still redirects to login.
 Locale handling needs no proxy: next-intl reads the locale from `[lang]`, and
 public routes already skip the i18n middleware.
 
+## Credit history and analytics
+
+`getCreditTransactionAmounts()` in `apps/web/lib/supabase/queries.ts` selects
+only `amount` and uses React `cache()`. The dashboard layout and the
+Generate, Clone, and Call pages share one query per request. React `cache()`
+lasts for one server render, so a purchase shows on the next request.
+
+`CreditsSection` identifies the user to PostHog and Crisp only when
+`identifyUser` is set. The sidebar copy in `dashboard.ui.tsx` sets it; the
+mobile copies on pages do not.
+
+The remaining browser requests are the balance query and the analytics
+lookups for claims and paid status. The server already knows both claims and
+paid status, so passing them to the sidebar copy could remove two more
+browser requests. That change is out of scope here.
+
 ## Plan
 
 1. Exclude prefetch requests from the proxy matcher. Done.
 2. Share per-request credit transaction amounts and run the browser
-   analytics effect in one `CreditsSection` copy.
+   analytics effect in one `CreditsSection` copy. Done.
 3. Verify claims once per Server Component render.

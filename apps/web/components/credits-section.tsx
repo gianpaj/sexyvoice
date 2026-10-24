@@ -25,12 +25,16 @@ function CreditsSection({
   userId,
   creditTransactions,
   doNotToggleSidebar,
+  identifyUser,
   showMinutes,
 }: {
   lang: Locale;
   userId: string;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[] | null;
   doNotToggleSidebar?: boolean;
+  // Sends the user to PostHog and Crisp. Pages also render a mobile copy of
+  // this section, so only the sidebar copy sets it.
+  identifyUser?: boolean;
   showMinutes?: boolean;
 }) {
   const t = useTranslations('creditsSection');
@@ -54,7 +58,7 @@ function CreditsSection({
   });
 
   useEffect(() => {
-    if (isError || !isCreditBalance(creditsData?.amount)) {
+    if (!identifyUser || isError || !isCreditBalance(creditsData?.amount)) {
       return;
     }
 
@@ -121,7 +125,7 @@ function CreditsSection({
       .catch((error) => {
         console.error('Failed to initialize dashboard layout:', error);
       });
-  }, [creditsData, isError, lang, supabase]);
+  }, [creditsData, identifyUser, isError, lang, supabase]);
 
   if (isPending && userId) {
     return (

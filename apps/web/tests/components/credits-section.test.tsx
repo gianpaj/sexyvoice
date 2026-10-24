@@ -51,13 +51,14 @@ vi.mock('crisp-sdk-web', () => ({
   },
 }));
 
-function renderCredits() {
+function renderCredits({ identifyUser = true } = {}) {
   const client = new QueryClient();
   render(
     <QueryClientProvider client={client}>
       <NextIntlClientProvider locale="en" messages={messages}>
         <CreditsSection
           creditTransactions={[{ amount: 10_000 }]}
+          identifyUser={identifyUser}
           lang="en"
           showMinutes
           userId="user-1"
@@ -256,4 +257,19 @@ it('sends the refreshed balance to Crisp after credits are spent', async () => {
       expect.objectContaining({ creditsLeft: 725, user_id: 'user-1' }),
     ),
   );
+});
+
+it('shows the balance without identifying the user in a mobile copy', async () => {
+  supabase.auth.getClaims.mockResolvedValue({
+    data: { claims: { sub: 'user-1' } },
+    error: null,
+  });
+  vi.mocked(getCredits).mockResolvedValue({ amount: 100 });
+  renderCredits({ identifyUser: false });
+
+  expect(await screen.findByTestId('credits-section')).toBeVisible();
+  expect(supabase.auth.getClaims).not.toHaveBeenCalled();
+  expect(hasUserPaid).not.toHaveBeenCalled();
+  expect(initPostHog).not.toHaveBeenCalled();
+  expect(Crisp.session.setData).not.toHaveBeenCalled();
 });

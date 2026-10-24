@@ -200,6 +200,7 @@ export default function DashboardUI({
           <SidebarFooter>
             <CreditsSection
               creditTransactions={creditTransactions}
+              identifyUser
               lang={lang}
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
