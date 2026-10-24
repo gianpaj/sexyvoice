@@ -11,6 +11,20 @@ on:
     types: [submitted]
   pull_request:
     types: [opened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Same-repository PR number for the controlled experiment
+        type: string
+        required: true
+      mode:
+        description: Run the posting smoke test before the direct-review comparison
+        type: choice
+        required: true
+        default: posting-smoke
+        options:
+          - posting-smoke
+          - direct-review
 
 jobs:
   # Both the original actor and the rerun actor must be explicitly trusted.
@@ -20,6 +34,7 @@ jobs:
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.actor) &&
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.triggering_actor) &&
       (
+        (github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) ||
         (github.event_name == 'pull_request' && github.event.pull_request.draft == false && github.event.pull_request.user.type == 'User') ||
         (github.event_name == 'issue_comment' && github.event.issue.pull_request != null && contains(github.event.comment.body, '@claude review')) ||
         (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude review')) ||
@@ -32,16 +47,32 @@ jobs:
     outputs:
       sha: ${{ steps.review-head.outputs.sha }}
       base: ${{ steps.review-head.outputs.base }}
+      pr: ${{ steps.review-head.outputs.pr }}
+      mode: ${{ steps.review-head.outputs.mode }}
     steps:
       - name: Resolve review commit
         id: review-head
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number || github.event.issue.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
           EVENT_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
           EVENT_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
         run: |
+          if [[ ! "$PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
+            echo '::error::Expected a positive PR number.'
+            exit 1
+          fi
+          mode=slash-review
+          if [[ "$EVENT_NAME" == workflow_dispatch ]]; then
+            case "$INPUT_MODE" in
+              posting-smoke|direct-review) mode="$INPUT_MODE" ;;
+              *) echo '::error::Unsupported review probe mode.'; exit 1 ;;
+            esac
+          fi
+          printf 'pr=%s\nmode=%s\n' "$PR_NUMBER" "$mode" >> "$GITHUB_OUTPUT"
           if [[ -n "$EVENT_HEAD" ]]; then
             # Automatic PR review: the event already supplies both commits.
             printf 'sha=%s\nbase=%s\n' "$EVENT_HEAD" "$EVENT_BASE" >> "$GITHUB_OUTPUT"
@@ -52,7 +83,7 @@ jobs:
             # A trusted requester does not make fork code trusted. Fork authors can
             # push after the request, so reject manual reviews of fork PRs.
             if [[ $(jq -r .isCrossRepository <<< "$pr") == true ]]; then
-              echo '::error::@claude review does not run on fork PRs.'
+              echo '::error::Claude reviews and probes do not run on fork PRs.'
               exit 1
             fi
             jq -r '"sha=" + .headRefOid + "\nbase=" + .baseRefOid' <<< "$pr" >> "$GITHUB_OUTPUT"
@@ -63,7 +94,7 @@ jobs:
     # One review per PR at a time. Newer reviews queue, and GitHub keeps only
     # the newest pending one.
     concurrency:
-      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      group: claude-review-${{ needs.review-context.outputs.pr }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -75,22 +106,39 @@ jobs:
       - name: Checkout review commit
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ needs.review-context.outputs.sha }}
+          # Posting smoke tests use trusted workflow code, not the target PR checkout.
+          ref: ${{ needs.review-context.outputs.mode == 'posting-smoke' && github.workflow_sha || needs.review-context.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
 
       - name: Install pnpm
+        if: needs.review-context.outputs.mode != 'posting-smoke'
         # pnpm's version comes from `packageManager` in package.json.
         uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
       - name: Setup Node.js
+        if: needs.review-context.outputs.mode != 'posting-smoke'
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24.x
           cache: "pnpm"
 
       - name: Install dependencies
+        if: needs.review-context.outputs.mode != 'posting-smoke'
         run: pnpm install --frozen-lockfile
+
+      # Dispatch lacks PR context, so the action does not perform its PR config restore.
+      - name: Restore trusted dispatch configuration
+        if: needs.review-context.outputs.mode == 'direct-review'
+        env:
+          TRUSTED_CONFIG_SHA: ${{ github.workflow_sha }}
+        run: |
+          for path in .claude .mcp.json .claude.json .gitmodules .ripgreprc CLAUDE.md CLAUDE.local.md .husky; do
+            rm -rf -- "$path"
+            if git cat-file -e "$TRUSTED_CONFIG_SHA:$path" 2>/dev/null; then
+              git restore --source "$TRUSTED_CONFIG_SHA" --staged --worktree -- "$path"
+            fi
+          done
 
       # /review-pr and its reviewer agents live in the action's own repository.
       # The runner downloads every action in this job before the first step,
@@ -135,20 +183,16 @@ jobs:
               destination.write_text('---\n' + frontmatter + '---\n' + body)
           PY
 
-      - name: PR Review
-        id: review
-        uses: anthropics/claude-code-action@34968b5981d5d170904281aa3df6f3c0d4a28855 # v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # Allow Claude to read CI runs and logs using its separate GitHub App token.
-          # Job-level permissions only apply to the workflow's GITHUB_TOKEN.
-          additional_permissions: |
-            actions: read
-            checks: read
-          # Agent mode keeps /review-pr at the start of the SDK prompt.
-          prompt: |
-            /review-pr REPO: ${{ github.repository }} PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-
+      - name: Select review prompt
+        id: review-prompt
+        env:
+          REVIEW_MODE: ${{ needs.review-context.outputs.mode }}
+          REVIEW_PR: ${{ needs.review-context.outputs.pr }}
+          REVIEW_REPO: ${{ github.repository }}
+          REVIEW_SHA: ${{ needs.review-context.outputs.sha }}
+          REVIEW_BASE: ${{ needs.review-context.outputs.base }}
+          REVIEW_RUN_KEY: ${{ github.run_id }}/${{ github.run_attempt }}
+          REVIEW_INSTRUCTIONS: |
             The review commit is ${{ needs.review-context.outputs.sha }}.
             Do not replace it with a newer SHA.
             Before reading code or running tests, verify git rev-parse HEAD equals
@@ -176,14 +220,80 @@ jobs:
             Recheck the PR head before posting; if it changed, identify the
             reviewed SHA and state that the newer commit was not reviewed.
             Publish the final assessment as a top-level PR comment using
-            gh pr comment ${{ github.event.pull_request.number || github.event.issue.number }} --repo ${{ github.repository }} --body '<final assessment>'.
+            gh pr comment ${{ needs.review-context.outputs.pr }} --repo ${{ github.repository }} --body '<final assessment>'.
             Pass the body directly as a literal shell argument; do not write a file.
             Do this even if there are no noteworthy findings; returning text alone
             does not publish the review. End that comment with this line exactly:
-            Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-context.outputs.sha }}/${{ needs.review-context.outputs.base }}
+            __REVIEW_COMPLETION_MARKER__
             Include the completion marker only after completing the code review.
             If commit verification fails or you cannot complete the review,
             report the problem in a top-level PR comment without the completion marker.
+        run: |
+          python3 - <<'PY'
+          import os
+          import shlex
+
+          mode = os.environ['REVIEW_MODE']
+          pr = os.environ['REVIEW_PR']
+          repo = os.environ['REVIEW_REPO']
+          identity = '/'.join(os.environ[name] for name in (
+              'REVIEW_RUN_KEY', 'REVIEW_SHA', 'REVIEW_BASE',
+          ))
+          if mode == 'posting-smoke':
+              marker = 'Diagnostic marker: claude-publication-smoke/' + identity
+              body = 'Claude publication smoke test — not a code review.\n\n' + marker
+              command = f'gh pr comment {pr} --repo {repo} --body {shlex.quote(body)}'
+              prompt = (
+                  'This is a publication smoke test, not a code review.\n'
+                  'Execute exactly this one Bash command:\n' + command + '\n\n'
+                  'Do not inspect code or files. Do not run tests or launch subagents.\n'
+                  'Do not invoke the review skill or change code.\n'
+                  'A final response is not a substitute for executing the command.\n'
+                  'After the command, report only whether it succeeded.\n'
+                  'Do not include a review-completion marker.\n'
+              )
+          elif mode in ('slash-review', 'direct-review'):
+              marker = 'Review marker: claude-review/' + identity
+              prefix = f'/review-pr REPO: {repo} PR_NUMBER: {pr}'
+              if mode == 'direct-review':
+                  prefix = (
+                      f'Review REPO: {repo} PR_NUMBER: {pr}.\n'
+                      'First verify HEAD as instructed below. Then use the Agent tool\n'
+                      'to delegate to all five installed reviewers:\n'
+                      '- code-quality-reviewer\n- performance-reviewer\n'
+                      '- test-coverage-reviewer\n- documentation-accuracy-reviewer\n'
+                      '- security-code-reviewer\n'
+                      'Do not invoke the review-pr skill. Give each reviewer the pinned\n'
+                      'commits below, wait for all five, and assess their findings.\n'
+                      'Post only noteworthy findings, but always publish the final assessment.'
+                  )
+              instructions = os.environ['REVIEW_INSTRUCTIONS'].replace(
+                  '__REVIEW_COMPLETION_MARKER__', marker,
+              )
+              prompt = prefix + '\n\n' + instructions
+          else:
+              raise ValueError('Unsupported review probe mode')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('marker=' + marker + '\n')
+              output.write('prompt<<CLAUDE_PROMPT_EOF\n' + prompt.rstrip() + '\nCLAUDE_PROMPT_EOF\n')
+          PY
+
+      - name: PR Review
+        id: review
+        uses: anthropics/claude-code-action@34968b5981d5d170904281aa3df6f3c0d4a28855 # v1
+        env:
+          # The pinned SDK otherwise treats Actions debug mode as a raw-output override.
+          ACTIONS_STEP_DEBUG: "false"
+        with:
+          show_full_output: false
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Allow Claude to read CI runs and logs using its separate GitHub App token.
+          # Job-level permissions only apply to the workflow's GITHUB_TOKEN.
+          additional_permissions: |
+            actions: read
+            checks: read
+          # Agent mode passes the selected prompt through unchanged.
+          prompt: ${{ steps.review-prompt.outputs.prompt }}
           claude_args: |
             --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
             --model "claude-opus-5-5"
@@ -193,6 +303,7 @@ jobs:
         if: ${{ always() }}
         env:
           CLAUDE_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          EXPECTED_PUBLICATION_MARKER: ${{ steps.review-prompt.outputs.marker }}
         run: |
           python3 - <<'PY'
           import json
@@ -208,6 +319,10 @@ jobs:
               'Glob', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite',
               'mcp__github_inline_comment__create_inline_comment',
           }
+          reviewers = (
+              'code-quality-reviewer', 'performance-reviewer', 'test-coverage-reviewer',
+              'documentation-accuracy-reviewer', 'security-code-reviewer',
+          )
 
           def skip_assignments(words, word):
               while re.match(r'^[A-Za-z_][A-Za-z0-9_]*=', word):
@@ -230,18 +345,39 @@ jobs:
                           program = next(words, '')
                       program = skip_assignments(words, program)
                   if program == 'gh':
-                      group, operation = next(words, ''), next(words, '')
-                      if group == 'pr' and operation in ('comment', 'view'):
+                      group = next(words, '')
+                      if group == 'api':
+                          return 'gh_api'
+                      operation = next(words, '')
+                      if group == 'pr' and operation in ('comment', 'view', 'diff'):
                           return 'pr_' + operation
                       if group == 'run' and operation in ('list', 'view', 'watch'):
                           return 'ci_read'
                   if program in ('git', 'pnpm', 'sleep'):
                       return program
+                  if program in ('cat', 'printf', 'echo', 'tee', 'touch'):
+                      return 'file_io'
+                  if program in ('bash', 'sh', 'zsh', '/bin/bash', '/bin/sh', '/bin/zsh'):
+                      return 'shell_wrapper'
+                  if program == 'cd':
+                      return 'shell_setup'
               except ValueError:
                   pass
               return 'other'
 
-          summary = {'execution_log': 'available', 'sdk_result': 'missing'}
+          summary = {
+              'execution_log': 'available', 'sdk_result': 'missing',
+              'registered_review_command': None,
+              'registered_reviewers': {name: None for name in reviewers},
+              'review_pr_skill_requests': 0,
+              'reviewer_requests': {name: 0 for name in reviewers},
+              'final_response_present': False,
+              'final_response_has_marker': False,
+          }
+          expected_marker = os.environ.get('EXPECTED_PUBLICATION_MARKER', '')
+          tool_counts = Counter()
+          tool_sequence = []
+          seen_tool_ids = set()
           denied_tools = Counter()
           denied_bash_operations = Counter()
           requests = set()
@@ -262,7 +398,19 @@ jobs:
           for message in messages:
               if not isinstance(message, dict):
                   continue
+              if message.get('type') == 'system' and message.get('subtype') == 'init':
+                  commands = message.get('slash_commands')
+                  agents = message.get('agents')
+                  if isinstance(commands, list):
+                      summary['registered_review_command'] = 'review-pr' in commands
+                  if isinstance(agents, list):
+                      summary['registered_reviewers'] = {name: name in agents for name in reviewers}
               if message.get('type') == 'result':
+                  response = message.get('result')
+                  summary['final_response_present'] = isinstance(response, str) and bool(response)
+                  summary['final_response_has_marker'] = bool(
+                      isinstance(response, str) and expected_marker and expected_marker in response
+                  )
                   subtype = message.get('subtype')
                   summary['sdk_result'] = (
                       'error' if message.get('is_error') else
@@ -282,16 +430,37 @@ jobs:
               for block in content if isinstance(content, list) else []:
                   if not isinstance(block, dict):
                       continue
-                  if (message.get('type') == 'assistant' and block.get('type') == 'tool_use'
-                          and block.get('name') == 'Bash'
-                          and bash_operation(block.get('input')) == 'pr_comment'
-                          and isinstance(block.get('id'), str)):
-                      requests.add(block['id'])
+                  if message.get('type') == 'assistant' and block.get('type') == 'tool_use':
+                      tool_id = block.get('id')
+                      if isinstance(tool_id, str):
+                          if tool_id in seen_tool_ids:
+                              continue
+                          seen_tool_ids.add(tool_id)
+                      name = block.get('name')
+                      label = name if isinstance(name, str) and name in known_tools else 'other'
+                      tool_counts[label] += 1
+                      if len(tool_sequence) < 40:
+                          tool_sequence.append(label)
+                      tool_input = block.get('input')
+                      tool_input = tool_input if isinstance(tool_input, dict) else {}
+                      skill = tool_input.get('skill')
+                      if (name == 'Skill' and isinstance(skill, str)
+                              and skill.split()[:1] == ['review-pr']):
+                          summary['review_pr_skill_requests'] += 1
+                      reviewer = tool_input.get('subagent_type')
+                      if name in ('Agent', 'Task') and isinstance(reviewer, str) and reviewer in reviewers:
+                          summary['reviewer_requests'][reviewer] += 1
+                      if (name == 'Bash' and isinstance(tool_id, str)
+                              and bash_operation(tool_input) == 'pr_comment'):
+                          requests.add(tool_id)
                   if (message.get('type') == 'user' and block.get('type') == 'tool_result'
                           and isinstance(block.get('tool_use_id'), str)):
                       outcomes[block['tool_use_id']] = 'failed' if block.get('is_error') else 'succeeded'
 
           counts = Counter(outcomes.get(request, 'unconfirmed') for request in requests)
+          summary['tool_counts'] = dict(tool_counts)
+          summary['tool_sequence'] = tool_sequence
+          summary['tool_sequence_truncated'] = sum(tool_counts.values()) > len(tool_sequence)
           summary['denied_tools'] = dict(denied_tools)
           summary['denied_bash_operations'] = dict(denied_bash_operations)
           summary['direct_pr_comment_requests'] = {
@@ -309,11 +478,15 @@ jobs:
         if: ${{ always() }}
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-          # The action strips HTML comments from bodies Claude publishes.
-          REVIEW_RUN_MARKER: "Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-context.outputs.sha }}/${{ needs.review-context.outputs.base }}"
+          PR_NUMBER: ${{ needs.review-context.outputs.pr }}
+          # Smoke tests use a diagnostic marker, never a review-completion marker.
+          REVIEW_RUN_MARKER: ${{ steps.review-prompt.outputs.marker }}
         run: |
-          # A successful action alone does not prove Claude completed the review.
+          # A successful action alone does not prove Claude published the expected comment.
+          if [[ -z "$REVIEW_RUN_MARKER" ]]; then
+            echo '::error::The expected publication marker is missing.'
+            exit 1
+          fi
           gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
             > "$RUNNER_TEMP/claude-comments.json"
           if ! jq -e --arg marker "$REVIEW_RUN_MARKER" '
