@@ -84,6 +84,9 @@ overrides:
   vite@>=7.0.0 <7.3.2: 7.3.7
   whatwg-url: ^14.0.0
 
+patchedDependencies:
+  '@ffmpeg/ffmpeg@0.12.15': ff1be95d6ec3fddc57a9c94ba84d60fc00daffe67caffa796646ee0bba70db35
+
 importers:
 
   .:
@@ -247,7 +250,7 @@ importers:
         version: 1.10.1
       '@ffmpeg/ffmpeg':
         specifier: ^0.12.15
-        version: 0.12.15
+        version: 0.12.15(patch_hash=ff1be95d6ec3fddc57a9c94ba84d60fc00daffe67caffa796646ee0bba70db35)
       '@ffmpeg/util':
         specifier: ^0.12.2
         version: 0.12.2
@@ -10653,7 +10656,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@ffmpeg/ffmpeg@0.12.15':
+  '@ffmpeg/ffmpeg@0.12.15(patch_hash=ff1be95d6ec3fddc57a9c94ba84d60fc00daffe67caffa796646ee0bba70db35)':
     dependencies:
       '@ffmpeg/types': 0.12.4
 

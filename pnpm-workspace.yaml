@@ -76,3 +76,6 @@ allowBuilds:
   protobufjs: true
   redis-memory-server: false
   sharp: true
+
+patchedDependencies:
+  '@ffmpeg/ffmpeg@0.12.15': patches/@ffmpeg__ffmpeg@0.12.15.patch

@@ -1,0 +1,25 @@
+diff --git a/dist/esm/classes.js b/dist/esm/classes.js
+index fae47533aa26ba897030686e25b08527f2688a6b..23fb1360f78a0dd406248c46ad638f124c23cebe 100644
+--- a/dist/esm/classes.js
++++ b/dist/esm/classes.js
+@@ -101,15 +101,11 @@ export class FFmpeg {
+      */
+     load = ({ classWorkerURL, ...config } = {}, { signal } = {}) => {
+         if (!this.#worker) {
+-            this.#worker = classWorkerURL ?
+-                new Worker(new URL(classWorkerURL, import.meta.url), {
+-                    type: "module",
+-                }) :
+-                // We need to duplicated the code here to enable webpack
+-                // to bundle worekr.js here.
+-                new Worker(new URL("./worker.js", import.meta.url), {
+-                    type: "module",
+-                });
++            // Patched: Turbopack rejects the dynamic `new URL(classWorkerURL, ...)`
++            // branch, and this app never passes `classWorkerURL`.
++            this.#worker = new Worker(new URL("./worker.js", import.meta.url), {
++                type: "module",
++            });
+             this.#registerHandlers();
+         }
+         return this.#send({
