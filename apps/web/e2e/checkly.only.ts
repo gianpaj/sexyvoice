@@ -10,7 +10,7 @@ const { expect, test } = require('@playwright/test');
 // ensuring that longer tests conclude before Checkly's browser check timeout of 240 seconds.
 // The default Playwright Test timeout is set at 30 seconds.
 // For additional information on timeouts, visit: https://checklyhq.com/docs/browser-checks/timeouts/
-test.setTimeout(100000);
+test.setTimeout(100_000);
 
 // Set the action timeout to 10 seconds to quickly identify failing actions.
 // By default Playwright Test has no timeout for actions (e.g. clicking an element).
@@ -45,8 +45,8 @@ test('visit page and take screenshot', async ({ page }) => {
   await page
     .getByRole('textbox', { name: 'Password' })
     .fill(process.env.PASSWORD);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await page.waitForURL('**/dashboard/**', { timeout: 10000 });
+  await page.getByRole('button', { exact: true, name: 'Sign in' }).click();
+  await page.waitForURL('**/dashboard/**', { timeout: 10_000 });
   console.log('Authentication successful!');
   console.log('url', page.url);
   // Use domcontentloaded instead of load to avoid hanging on async resources
@@ -57,7 +57,7 @@ test('visit page and take screenshot', async ({ page }) => {
   const textInput = page.getByRole('textbox', {
     name: /enter the text you want to convert to speech/i,
   });
-  await textInput.waitFor({ state: 'visible', timeout: 15000 });
+  await textInput.waitFor({ state: 'visible', timeout: 15_000 });
   // await page.goto('https://sexyvoice.ai/en/dashboard/call')
   await textInput.fill('hello there');
   await page.getByTestId('generate-button').click();

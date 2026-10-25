@@ -35,11 +35,11 @@ describe('/api/v1/billing', () => {
     const apiKeysEq = vi.fn().mockReturnThis();
     const apiKeysMaybeSingle = vi.fn().mockResolvedValue({
       data: {
-        id: 'test-api-key-id',
-        user_id: 'test-user-id',
-        key_hash: 'test-key-hash',
-        is_active: true,
         expires_at: null,
+        id: 'test-api-key-id',
+        is_active: true,
+        key_hash: 'test-key-hash',
+        user_id: 'test-user-id',
       },
       error: null,
     });
@@ -49,14 +49,14 @@ describe('/api/v1/billing', () => {
     const creditTransactionsLimit = vi.fn().mockResolvedValue({
       data: [
         {
-          id: 'txn_1',
-          type: 'topup',
           amount: 500,
-          description: 'Top-up package',
           created_at: '2026-03-01T09:00:00.000Z',
+          description: 'Top-up package',
+          id: 'txn_1',
+          metadata: { package: 'starter' },
           reference_id: 'pi_123',
           subscription_id: null,
-          metadata: { package: 'starter' },
+          type: 'topup',
         },
       ],
       error: null,
@@ -84,8 +84,8 @@ describe('/api/v1/billing', () => {
           select: vi.fn().mockReturnValue({
             eq: creditTransactionsEq,
             in: creditTransactionsIn,
-            order: creditTransactionsOrder,
             limit: creditTransactionsLimit,
+            order: creditTransactionsOrder,
           }),
         };
       }
@@ -103,10 +103,10 @@ describe('/api/v1/billing', () => {
       .mockReturnValueOnce(adminClientMock);
 
     const request = new Request('http://localhost/api/v1/billing', {
-      method: 'GET',
       headers: {
         authorization: TEST_AUTH_HEADER,
       },
+      method: 'GET',
     });
 
     const response = await GET(request);
@@ -123,17 +123,17 @@ describe('/api/v1/billing', () => {
 
   it('returns 429 when rate limit is exceeded', async () => {
     mockRatelimitLimit.mockResolvedValueOnce({
-      success: false,
       limit: 60,
       remaining: 0,
       reset: Date.now() + 60_000,
+      success: false,
     });
 
     const request = new Request('http://localhost/api/v1/billing', {
-      method: 'GET',
       headers: {
         authorization: TEST_AUTH_HEADER,
       },
+      method: 'GET',
     });
 
     const response = await GET(request);

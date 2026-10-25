@@ -2,13 +2,11 @@ import { readFileSync } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 import { parseArgs } from 'node:util';
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
 
-// Load environment variables
-config({
-  path: ['.env', '.env.local'],
-});
+import { loadScriptEnv } from './lib/env.mts';
+import { createScriptAdminClient } from './lib/supabase.mts';
+
+loadScriptEnv();
 
 // UUID validation regex at top level for performance
 const UUID_REGEX =
@@ -42,28 +40,8 @@ interface ProcessingResult {
   username: string;
 }
 
-/**
- * Create Supabase admin client
- */
-function createAdminClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-  }
-  if (!process.env.SUPABASE_SECRET_KEY) {
-    throw new Error('Missing env.SUPABASE_SECRET_KEY');
-  }
-
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SECRET_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: true,
-      },
-    },
-  );
-}
+const createAdminClient = () =>
+  createScriptAdminClient({ persistSession: true });
 
 /**
  * Parse CSV file and extract freeloader records
@@ -91,13 +69,13 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
       }
 
       const record: FreeloaderRecord = {
-        id: parts[0].trim(),
-        username: parts[1].trim(),
         created_at: parts[2].trim(),
+        current_credits: Number.parseFloat(parts[5].trim()),
+        id: parts[0].trim(),
         total_credits_received: Number.parseFloat(parts[3].trim()),
         total_credits_used: Number.parseFloat(parts[4].trim()),
-        current_credits: Number.parseFloat(parts[5].trim()),
         usage_percentage: Number.parseFloat(parts[6].trim()),
+        username: parts[1].trim(),
       };
 
       // Validate UUID format
@@ -113,6 +91,7 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
   } catch (error) {
     throw new Error(
       `Failed to parse CSV file: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
     );
   }
 }
@@ -202,8 +181,8 @@ async function resetUserCredits(
 
   // Use the decrement function to set credits to 0
   const { error } = await supabase.rpc('decrement_user_credits', {
-    user_id_var: userId,
     credit_amount_var: Math.abs(currentCredits),
+    user_id_var: userId,
   });
 
   if (error) {
@@ -222,15 +201,15 @@ async function insertAdjustmentTransaction(
   const supabase = createAdminClient();
 
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
     amount: -Math.abs(creditAmount),
-    type: 'refund',
     description: reason,
     metadata: {
       automated: true,
       script: 'reset-freeloader-credits.ts',
       timestamp: new Date().toISOString(),
     },
+    type: 'refund',
+    user_id: userId,
   });
 
   if (error) {
@@ -250,31 +229,31 @@ async function processUser(
   try {
     if (currentBalance === null) {
       return {
-        userId: record.id,
-        username: record.username,
+        error: 'User not found in credits table',
         previousCredits: 0,
         success: false,
-        error: 'User not found in credits table',
+        userId: record.id,
+        username: record.username,
       };
     }
 
     if (currentBalance <= 0) {
       return {
-        userId: record.id,
-        username: record.username,
+        error: 'Already at 0 or negative',
         previousCredits: currentBalance,
         success: true,
-        error: 'Already at 0 or negative',
+        userId: record.id,
+        username: record.username,
       };
     }
 
     if (dryRun) {
       console.log(`  [DRY RUN] Would reset ${currentBalance} credits to 0`);
       return {
-        userId: record.id,
-        username: record.username,
         previousCredits: currentBalance,
         success: true,
+        userId: record.id,
+        username: record.username,
       };
     }
 
@@ -290,18 +269,18 @@ async function processUser(
     }
 
     return {
-      userId: record.id,
-      username: record.username,
       previousCredits: currentBalance,
       success: true,
+      userId: record.id,
+      username: record.username,
     };
   } catch (error) {
     return {
-      userId: record.id,
-      username: record.username,
+      error: error instanceof Error ? error.message : String(error),
       previousCredits: 0,
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      userId: record.id,
+      username: record.username,
     };
   }
 }
@@ -362,32 +341,32 @@ async function promptUser(
 function parseCliArgs(): CliOptions {
   try {
     const { values, positionals } = parseArgs({
+      allowPositionals: true,
       args: process.argv.slice(2),
       options: {
         dryrun: {
-          type: 'boolean',
           default: false,
-        },
-        limit: {
-          type: 'string',
-          short: 'l',
+          type: 'boolean',
         },
         help: {
-          type: 'boolean',
-          short: 'h',
           default: false,
+          short: 'h',
+          type: 'boolean',
+        },
+        limit: {
+          short: 'l',
+          type: 'string',
         },
       },
-      allowPositionals: true,
     });
 
     return {
       csvPath: positionals[0],
       dryrun: values.dryrun as boolean,
+      help: values.help as boolean,
       limit: values.limit
         ? Number.parseInt(values.limit as string, 10)
         : undefined,
-      help: values.help as boolean,
     };
   } catch (error) {
     console.error('Error parsing arguments:', error);
@@ -672,4 +651,4 @@ async function main() {
 }
 
 // Run the script
-main();
+await main();

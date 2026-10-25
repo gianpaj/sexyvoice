@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { waitForHydration } from '../wait-for-hydration';
+
 /**
  * Page Object Model for Clone Dashboard
  *
@@ -135,19 +137,7 @@ export class ClonePage {
     // Wait for the main clone UI to appear
     await this.textInput.waitFor({ state: 'visible', timeout: 15_000 });
     await expect(this.cardTitle).toBeVisible();
-    // SSR markup appears before React hydration completes. Wait for the
-    // controlled checkbox to receive React internals so interactions hit the
-    // real onCheckedChange handler instead of inert HTML.
-    await this.page.waitForFunction(
-      () => {
-        const el = document.querySelector(
-          '[data-testid="clone-legal-consent"]',
-        );
-        if (!el) return false;
-        return Object.keys(el).some((key) => key.startsWith('__react'));
-      },
-      { timeout: 15_000 },
-    );
+    await waitForHydration(this.page, '[data-testid="clone-legal-consent"]');
   }
 
   // --- Actions ---

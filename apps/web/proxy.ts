@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { updateSession } from '@/lib/supabase/middleware';
+import { updateSession } from '@/lib/supabase/proxy';
 import { routing } from './src/i18n/routing';
 
 const publicRoutesWithLang = (locales: readonly string[]) =>

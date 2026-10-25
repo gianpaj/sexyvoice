@@ -23,9 +23,9 @@ describe('classifyRefund', () => {
     expect(
       classifyRefund({
         metadata: {
-          reason: CHARGEBACK_HOLD_REASON,
-          previousBalance: 223_598,
           disputedPaymentIntent: 'pi_123',
+          previousBalance: 223_598,
+          reason: CHARGEBACK_HOLD_REASON,
         },
       }),
     ).toBe('chargeback_hold');
@@ -35,8 +35,8 @@ describe('classifyRefund', () => {
     expect(
       classifyRefund({
         metadata: {
-          reason: CHARGEBACK_RELEASE_REASON,
           disputedPaymentIntent: 'pi_123',
+          reason: CHARGEBACK_RELEASE_REASON,
         },
       }),
     ).toBe('chargeback_release');

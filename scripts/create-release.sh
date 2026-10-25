@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-VERSION=2026.4.7
-TAG=2026-04-07
+VERSION=2026.9.27
+TAG=2026-09-27
 
 test "$(node -p "require('./apps/web/package.json').version")" = "$VERSION"
 

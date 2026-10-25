@@ -1,0 +1,21 @@
+{
+  "reviewedAt": "2026-10-15",
+  "invoiceMonths": ["2026-07", "2026-08", "2026-09"],
+  "monthlyInvoicesUsd": {
+    "vercel": [43.39, 33.08, 29.59],
+    "flyCallServer": [24.28, 25.09, 15.04],
+    "cloudflare": [10.23, 10.25, 10.46]
+  },
+  "flyAnnualReservationUsd": 72,
+  "confirmedFreeServices": [
+    "Supabase",
+    "LiveKit",
+    "Upstash",
+    "Sentry",
+    "Dash0",
+    "Axiom",
+    "PostHog",
+    "Inngest",
+    "Email"
+  ]
+}

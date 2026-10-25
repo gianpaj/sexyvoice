@@ -41,11 +41,11 @@ export async function setupRedis(): Promise<Redis> {
       port: number | undefined;
     };
   } = {
-    instance: {
-      port: undefined, // auto-assign available port
-    },
     binary: {
       version: '7.2.4', // Use a specific stable version
+    },
+    instance: {
+      port: undefined, // auto-assign available port
     },
   };
 

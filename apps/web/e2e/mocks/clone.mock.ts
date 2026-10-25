@@ -11,9 +11,9 @@ import type { Route } from '@playwright/test';
  * Mock response for a successful voice clone
  */
 export const mockCloneVoiceResponse = {
-  url: 'https://files.sexyvoice.ai/cloned-voices/test-cloned-voice-e2e.wav',
-  creditsUsed: 50,
   creditsRemaining: 950,
+  creditsUsed: 50,
+  url: 'https://files.sexyvoice.ai/cloned-voices/test-cloned-voice-e2e.wav',
   voiceId: 'test-voice-id-e2e',
 };
 
@@ -27,17 +27,17 @@ export async function handleCloneVoice(route: Route) {
   const request = route.request();
 
   console.log('[MOCK] clone-voice called', {
+    contentType: request.headers()['content-type']?.slice(0, 50),
     method: request.method(),
-    contentType: request.headers()['content-type']?.substring(0, 50),
   });
 
   // Simulate processing delay
   await new Promise((resolve) => setTimeout(resolve, 800));
 
   await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
     body: JSON.stringify(mockCloneVoiceResponse),
+    contentType: 'application/json',
+    status: 200,
   });
 }
 
@@ -56,9 +56,9 @@ export async function handleCloneVoiceError(
   );
 
   await route.fulfill({
-    status: statusCode,
-    contentType: 'application/json',
     body: JSON.stringify({ error: errorMessage }),
+    contentType: 'application/json',
+    status: statusCode,
   });
 }
 
@@ -69,12 +69,12 @@ export async function handleCloneVoiceInsufficientCredits(route: Route) {
   console.log('[MOCK] clone-voice INSUFFICIENT CREDITS handler called');
 
   await route.fulfill({
-    status: 402,
-    contentType: 'application/json',
     body: JSON.stringify({
       error: 'Not enough credits',
       errorCode: 'INSUFFICIENT_CREDITS',
     }),
+    contentType: 'application/json',
+    status: 402,
   });
 }
 

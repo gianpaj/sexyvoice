@@ -23,13 +23,13 @@ export type CloneRouteErrorCode =
   | 'errors.invalidFileType'
   | 'errors.missingLocale'
   | 'errors.missingRequiredParameters'
-  | 'errors.providerUnavailable'
   | 'errors.referenceAudioEnhancementInputTooLarge'
   | 'errors.referenceAudioEnhancementInputTooLong'
   | 'errors.textTooLong'
   | 'errors.unsupportedAudioFormat'
   | 'errors.unsupportedLocale'
-  | 'errors.userNotFound';
+  | 'errors.userNotFound'
+  | 'PROVIDER_UNAVAILABLE';
 
 /** Shape of the JSON body returned by every clone-voice error response. */
 export interface CloneErrorResponseBody {

@@ -46,8 +46,8 @@ describe('usePlaygroundState — scene actions', () => {
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SELECTED_SCENE_ID',
           payload: firstScene.id,
+          type: 'SET_SELECTED_SCENE_ID',
         });
       });
 
@@ -58,15 +58,15 @@ describe('usePlaygroundState — scene actions', () => {
     it('loads the new scene text when switching between scenes with unmodified text', () => {
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: firstScene.id,
           sceneInstructions: firstScene.text, // unmodified
+          selectedSceneId: firstScene.id,
         }),
       });
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SELECTED_SCENE_ID',
           payload: secondScene.id,
+          type: 'SET_SELECTED_SCENE_ID',
         });
       });
 
@@ -78,15 +78,15 @@ describe('usePlaygroundState — scene actions', () => {
       const editedText = 'My custom scene instructions';
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: firstScene.id,
           sceneInstructions: editedText, // modified from default
+          selectedSceneId: firstScene.id,
         }),
       });
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SELECTED_SCENE_ID',
           payload: secondScene.id,
+          type: 'SET_SELECTED_SCENE_ID',
         });
       });
 
@@ -97,15 +97,15 @@ describe('usePlaygroundState — scene actions', () => {
     it('clears sceneInstructions when selecting null (no scene) with unmodified text', () => {
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: firstScene.id,
           sceneInstructions: firstScene.text, // unmodified
+          selectedSceneId: firstScene.id,
         }),
       });
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SELECTED_SCENE_ID',
           payload: null,
+          type: 'SET_SELECTED_SCENE_ID',
         });
       });
 
@@ -117,15 +117,15 @@ describe('usePlaygroundState — scene actions', () => {
       const editedText = 'Custom instructions I wrote';
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: firstScene.id,
           sceneInstructions: editedText,
+          selectedSceneId: firstScene.id,
         }),
       });
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SELECTED_SCENE_ID',
           payload: null,
+          type: 'SET_SELECTED_SCENE_ID',
         });
       });
 
@@ -136,15 +136,15 @@ describe('usePlaygroundState — scene actions', () => {
     it('loads scene text when selecting a scene from empty (no prior scene)', () => {
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: null,
           sceneInstructions: '', // empty — "unmodified" from no-scene state
+          selectedSceneId: null,
         }),
       });
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SELECTED_SCENE_ID',
           payload: firstScene.id,
+          type: 'SET_SELECTED_SCENE_ID',
         });
       });
 
@@ -157,16 +157,16 @@ describe('usePlaygroundState — scene actions', () => {
     it('updates sceneInstructions', () => {
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: firstScene.id,
           sceneInstructions: firstScene.text,
+          selectedSceneId: firstScene.id,
         }),
       });
 
       const newText = 'Updated scene instructions';
       act(() => {
         result.current.dispatch({
-          type: 'SET_SCENE_INSTRUCTIONS',
           payload: newText,
+          type: 'SET_SCENE_INSTRUCTIONS',
         });
       });
 
@@ -176,15 +176,15 @@ describe('usePlaygroundState — scene actions', () => {
     it('does not change selectedSceneId when updating instructions', () => {
       const { result } = renderHook(() => usePlaygroundState(), {
         wrapper: makeWrapper({
-          selectedSceneId: firstScene.id,
           sceneInstructions: firstScene.text,
+          selectedSceneId: firstScene.id,
         }),
       });
 
       act(() => {
         result.current.dispatch({
-          type: 'SET_SCENE_INSTRUCTIONS',
           payload: 'new text',
+          type: 'SET_SCENE_INSTRUCTIONS',
         });
       });
 

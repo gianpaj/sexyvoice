@@ -4,10 +4,10 @@ import { XIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Fragment, useEffect, useState } from 'react';
 
-import { dismissBannerAction } from '@/app/[lang]/actions/banners';
 import { Button } from '@/components/ui/button';
+import { isBannerCountdownExpired } from '@/lib/banners/countdown';
 import type { ResolvedBanner } from '@/lib/banners/types';
-import { getCookie } from '@/lib/cookies';
+import { getCookie, setCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
 interface TimeRemaining {
@@ -28,7 +28,7 @@ function calculateTimeRemaining(endDate: string): TimeRemaining | null {
   const end = parsedEnd.getTime();
   const distance = end - now;
 
-  if (distance < 0) {
+  if (isBannerCountdownExpired(endDate, now)) {
     return { days: 0, expired: true, hours: 0, minutes: 0, seconds: 0 };
   }
 
@@ -48,7 +48,10 @@ export function Banner({
   banner: ResolvedBanner;
   inDashboard?: boolean;
 }) {
-  const [isVisible, setIsVisible] = useState(false);
+  const countdownEndDate = banner.countdown?.enabled
+    ? banner.countdown.endDate
+    : undefined;
+  const [isVisible, setIsVisible] = useState(inDashboard === true);
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(
     null,
   );
@@ -56,26 +59,27 @@ export function Banner({
   useEffect(() => {
     let isCancelled = false;
 
-    // Hide immediately so a previously-visible banner doesn't flash while the
-    // async cookie check for the new banner resolves.
-    setIsVisible(false);
+    // Fresh dashboard renders are server-filtered, but cached navigation can
+    // restore stale banner props. Recheck cookies without hiding valid banners.
+    setIsVisible(
+      inDashboard === true && !isBannerCountdownExpired(countdownEndDate),
+    );
 
     const resolveVisibility = async () => {
-      if (!(banner.dismissible && banner.dismissCookieKeys.length > 0)) {
+      if (!banner.dismissible) {
         return true;
       }
 
-      const cookieValues = await Promise.all(
-        banner.dismissCookieKeys.map((cookieKey) => getCookie(cookieKey)),
-      );
-
-      return cookieValues.every((cookieValue) => !cookieValue);
+      const cookieValue = await getCookie(banner.dismiss.cookieKey);
+      return !cookieValue;
     };
 
     resolveVisibility()
       .then((visible) => {
-        if (!isCancelled) {
-          setIsVisible(visible);
+        const shouldShow =
+          visible && !isBannerCountdownExpired(countdownEndDate);
+        if (!(isCancelled || (inDashboard && shouldShow))) {
+          setIsVisible(shouldShow);
         }
       })
       .catch(() => undefined);
@@ -83,7 +87,12 @@ export function Banner({
     return () => {
       isCancelled = true;
     };
-  }, [banner.dismissCookieKeys, banner.dismissible]);
+  }, [
+    banner.dismiss.cookieKey,
+    banner.dismissible,
+    countdownEndDate,
+    inDashboard,
+  ]);
 
   useEffect(() => {
     if (!(banner.countdown?.enabled && banner.countdown.endDate)) {
@@ -124,8 +133,16 @@ export function Banner({
   }, [banner.countdown?.enabled, banner.countdown?.endDate]);
 
   const handleDismissBanner = async () => {
-    await dismissBannerAction(banner.id);
+    const expiryDate = new Date();
+    expiryDate.setTime(
+      expiryDate.getTime() + banner.dismiss.days * 24 * 60 * 60 * 1000,
+    );
+
     setIsVisible(false);
+    await setCookie(banner.dismiss.cookieKey, 'true', {
+      expires: expiryDate,
+      path: '/',
+    });
   };
 
   if (!isVisible) {
@@ -135,15 +152,29 @@ export function Banner({
   return (
     <div
       className={cn('w-full', {
-        'fixed z-50 bg-promo-primary-dark/50 backdrop-blur-sm': inDashboard,
+        'shrink-0 border-promo-accent/20 border-b bg-promo-primary-dark/50':
+          inDashboard,
       })}
+      data-dashboard-banner={inDashboard ? '' : undefined}
       data-promo-theme={banner.theme}
     >
       <div
-        className="relative mx-auto flex flex-col items-center gap-3 px-4 text-white lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4"
-        style={{ paddingBlock: 'clamp(0.5rem, 1.5vw, 1rem)' }}
+        className={cn(
+          'relative mx-auto flex flex-col items-center gap-3 text-white',
+          inDashboard
+            ? 'justify-center gap-2 px-4 pt-3 pb-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-3 sm:px-14 sm:py-[clamp(0.375rem,1.5vw,1rem)]'
+            : 'px-4 lg:container portrait:container sm:grid sm:grid-cols-[1fr_auto] sm:items-center sm:gap-4 lg:grid-cols-[1fr_2fr_1fr]',
+        )}
+        style={{
+          paddingBlock: inDashboard ? undefined : 'clamp(0.5rem, 1.5vw, 1rem)',
+        }}
       >
-        <div className="flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6">
+        <div
+          className={cn(
+            'flex min-w-0 flex-col items-center justify-center gap-3 text-center sm:flex-row sm:gap-6',
+            inDashboard ? 'px-8 sm:px-0' : 'lg:col-start-2',
+          )}
+        >
           <p className="whitespace-pre-line text-wrap font-medium text-sm md:text-base">
             {banner.text}
           </p>
@@ -178,10 +209,19 @@ export function Banner({
             )}
         </div>
 
-        <div className="flex shrink-0 items-center justify-center gap-2">
+        <div
+          className={
+            inDashboard
+              ? 'contents'
+              : 'flex shrink-0 items-center justify-center gap-2 lg:col-start-3 lg:justify-self-end'
+          }
+        >
           <Button
             asChild
-            className="whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark"
+            className={cn(
+              'whitespace-nowrap bg-promo-primary-dark font-semibold hover:bg-promo-text-dark hover:ring-promo-text-dark',
+              inDashboard && 'shrink-0 sm:min-h-10',
+            )}
             effect="ringHover"
             size="sm"
             variant="outline"
@@ -192,7 +232,11 @@ export function Banner({
           {banner.dismissible && (
             <Button
               aria-label={banner.ariaLabelDismiss}
-              className="shrink-0"
+              className={cn(
+                'shrink-0 text-white hover:bg-promo-accent/20 hover:text-white focus-visible:ring-promo-accent',
+                inDashboard &&
+                  'absolute top-0 right-0 size-11 p-0 lg:top-1/2 lg:right-2 lg:-translate-y-1/2',
+              )}
               onClick={handleDismissBanner}
               size="sm"
               variant="ghost"

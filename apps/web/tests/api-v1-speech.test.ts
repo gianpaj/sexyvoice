@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
@@ -15,8 +16,10 @@ import {
 import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
 import {
   mockRatelimitLimit,
+  mockReplicateRun,
   mockUploadFileToR2,
   resetMockGoogleGenAIFactory,
+  server,
   setMockGoogleGenAIFactory,
 } from './setup';
 
@@ -32,13 +35,13 @@ describe('/api/v1/speech', () => {
 
   it('returns 401 when API key is missing', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -51,15 +54,15 @@ describe('/api/v1/speech', () => {
 
   it('returns 400 for invalid request body', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
         input: 'Hello world',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -73,16 +76,16 @@ describe('/api/v1/speech', () => {
 
   it('ignores client request-id and generates prefixed request-id', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
+      body: JSON.stringify({
+        input: 'Hello world',
+        voice: 'tara',
+      }),
       headers: {
         authorization: TEST_AUTH_HEADER,
         'content-type': 'application/json',
         'request-id': 'debug-req-123',
       },
-      body: JSON.stringify({
-        input: 'Hello world',
-        voice: 'tara',
-      }),
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -95,17 +98,17 @@ describe('/api/v1/speech', () => {
 
   it('returns 400 when speed is outside the supported range', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'xai',
         input: 'Hello world',
-        voice: 'eve',
+        model: 'xai',
         speed: 2,
+        voice: 'eve',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -118,17 +121,17 @@ describe('/api/v1/speech', () => {
 
   it('returns 400 when temperature is outside the supported range', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'Hello world',
-        voice: 'kore',
+        model: 'gpro',
         temperature: 3,
+        voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -139,41 +142,71 @@ describe('/api/v1/speech', () => {
     expect(json.error.param).toBe('temperature');
   });
 
-  it('returns 400 when voice model does not match requested model', async () => {
+  it('scopes voice name lookups to the requested model', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    await POST(request);
+
+    expect(vi.mocked(getVoiceIdByNameAdmin)).toHaveBeenCalledWith(
+      'tara',
+      true,
+      [
+        'gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650',
+        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
+      ],
+    );
+  });
+
+  it('returns 404 when the voice does not exist for the requested model', async () => {
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'gpro',
+        voice: 'tara',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(json.error.code).toBe('model_not_found');
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('voice_not_found');
+    expect(json.error.param).toBe('voice');
+    expect(json.error.message).toBe(
+      'Voice "tara" was not found for model "gpro"',
+    );
   });
 
   it('returns 402 when credits are insufficient', async () => {
     vi.mocked(getCreditsAdmin).mockResolvedValueOnce(1);
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world this is a long enough sentence',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -191,16 +224,16 @@ describe('/api/v1/speech', () => {
     );
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world this is a long enough sentence',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -213,22 +246,22 @@ describe('/api/v1/speech', () => {
 
   it('returns 429 when rate limit is exceeded', async () => {
     mockRatelimitLimit.mockResolvedValueOnce({
-      success: false,
       limit: 60,
       remaining: 0,
       reset: Date.now() + 60_000,
+      success: false,
     });
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -240,17 +273,17 @@ describe('/api/v1/speech', () => {
 
   it('returns unsupported_response_format code for unsupported format', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
-        voice: 'tara',
+        model: 'orpheus',
         response_format: 'wav',
+        voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -263,17 +296,17 @@ describe('/api/v1/speech', () => {
 
   it('returns input_too_long for overly long raw input on non-Gemini models', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'x'.repeat(501),
+        model: 'orpheus',
         style: 'aa',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -288,17 +321,17 @@ describe('/api/v1/speech', () => {
 
   it('validates max length against styled text for Gemini models', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'x'.repeat(497),
+        model: 'gpro',
         style: 'aa',
         voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -315,17 +348,17 @@ describe('/api/v1/speech', () => {
     const input = 'hello';
     const style = 'calm and slow';
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input,
+        model: 'orpheus',
         style,
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -334,12 +367,12 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(200);
     expect(json.usage.input_characters).toBe(input.length);
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
-      userId: 'test-user-id',
       amount: estimateCredits(
         input,
         'tara',
         'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
       ),
+      userId: 'test-user-id',
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
       expect.any(String),
@@ -352,12 +385,12 @@ describe('/api/v1/speech', () => {
 
   it('returns 400 for malformed JSON payloads', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: '{bad-json',
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -386,8 +419,8 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 11,
         candidatesTokenCount: 12,
+        promptTokenCount: 11,
         totalTokenCount: 23,
       },
     });
@@ -399,17 +432,17 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'Hello world',
-        voice: 'kore',
+        model: 'gpro',
         seed: 1234,
+        voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -436,8 +469,8 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 11,
         candidatesTokenCount: 12,
+        promptTokenCount: 11,
         totalTokenCount: 23,
       },
     });
@@ -449,17 +482,17 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'Hello world',
-        voice: 'kore',
+        model: 'gpro',
         temperature: 1.2,
+        voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -492,8 +525,8 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 6,
         candidatesTokenCount: 36,
+        promptTokenCount: 6,
         totalTokenCount: 42,
       },
     });
@@ -502,16 +535,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -521,12 +554,12 @@ describe('/api/v1/speech', () => {
     expect(generateContent).toHaveBeenCalled();
     expect(json.credits_used).toBe(actualCredits);
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenNthCalledWith(1, {
-      userId: 'test-user-id',
       amount: reservedCredits,
+      userId: 'test-user-id',
     });
     expect(vi.mocked(reduceCreditsUpToAdmin)).toHaveBeenCalledWith({
-      userId: 'test-user-id',
       amount: actualCredits - reservedCredits,
+      userId: 'test-user-id',
     });
     expect(generateContent.mock.calls[0][0].model).toBe(
       'gemini-3.1-flash-tts-preview',
@@ -534,10 +567,10 @@ describe('/api/v1/speech', () => {
     expect(json.usage.model).toBe('gemini-3.1-flash-tts-preview');
     expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
       expect.objectContaining({
-        dollarAmount: 0.000_726,
-        model: 'gemini-3.1-flash-tts-preview',
-        durationSeconds: 12,
         creditsUsed: actualCredits,
+        dollarAmount: 0.000_726,
+        durationSeconds: 12,
+        model: 'gemini-3.1-flash-tts-preview',
       }),
     );
     expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
@@ -578,8 +611,8 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 6,
         candidatesTokenCount: 36,
+        promptTokenCount: 6,
         totalTokenCount: 42,
       },
     });
@@ -588,16 +621,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input,
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -607,12 +640,12 @@ describe('/api/v1/speech', () => {
     expect(json.credits_used).toBe(creditsDebited);
     expect(json.credits_remaining).toBe(0);
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
-      userId: 'test-user-id',
       amount: reservedCredits,
+      userId: 'test-user-id',
     });
     expect(vi.mocked(reduceCreditsUpToAdmin)).toHaveBeenCalledWith({
-      userId: 'test-user-id',
       amount: actualCredits - reservedCredits,
+      userId: 'test-user-id',
     });
     expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
       expect.objectContaining({ credits_used: creditsDebited }),
@@ -643,8 +676,8 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 11,
         candidatesTokenCount: 12,
+        promptTokenCount: 11,
         totalTokenCount: 23,
       },
     });
@@ -653,16 +686,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input,
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -672,12 +705,12 @@ describe('/api/v1/speech', () => {
     expect(json.credits_used).toBe(actualCredits);
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledOnce();
     expect(vi.mocked(reduceCreditsAdmin)).toHaveBeenCalledWith({
-      userId: 'test-user-id',
       amount: reservedCredits,
+      userId: 'test-user-id',
     });
     expect(vi.mocked(restoreCredits)).toHaveBeenCalledWith({
-      userId: 'test-user-id',
       amount: reservedCredits - actualCredits,
+      userId: 'test-user-id',
     });
     expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
       expect.objectContaining({ credits_used: actualCredits }),
@@ -690,9 +723,9 @@ describe('/api/v1/speech', () => {
   it('accepts an achernar gpro31 Gemini voice row with model gpro31', async () => {
     vi.mocked(getVoiceIdByNameAdmin).mockResolvedValueOnce({
       id: 'voice-achernar-31-id',
-      name: 'achernar',
       language: 'multiple',
       model: 'gpro31',
+      name: 'achernar',
     });
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
@@ -711,8 +744,8 @@ describe('/api/v1/speech', () => {
         },
       ],
       usageMetadata: {
-        promptTokenCount: 6,
         candidatesTokenCount: 36,
+        promptTokenCount: 6,
         totalTokenCount: 42,
       },
     });
@@ -721,16 +754,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -745,23 +778,23 @@ describe('/api/v1/speech', () => {
 
   it('rejects gpro31 requests for gpro DB voices', async () => {
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
     const json = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(json.error.code).toBe('model_not_found');
+    expect(response.status).toBe(404);
+    expect(json.error.code).toBe('voice_not_found');
   });
 
   it('returns provider quota errors from Gemini without capturing exceptions', async () => {
@@ -786,16 +819,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'Hello world',
+        model: 'gpro',
         voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -806,6 +839,121 @@ describe('/api/v1/speech', () => {
     expect(json.error.code).toBe('provider_quota_exceeded');
     expect(generateContent).toHaveBeenCalledTimes(2);
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns a content-policy error and refunds a Gemini SAFETY response', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'SAFETY',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'gpro31',
+        voice: 'achernar',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(422);
+    expect(json.error.type).toBe('invalid_request_error');
+    expect(json.error.code).toBe('content_policy_violation');
+    expect(json.error.param).toBe('input');
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(restoreCredits).toHaveBeenCalledTimes(1);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns 503 and refunds when Gemini returns no audio', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'STOP',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'gpro31',
+        voice: 'achernar',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(json.error.param).toBeNull();
+    expect(generateContent).toHaveBeenCalledTimes(1);
+    expect(restoreCredits).toHaveBeenCalledTimes(1);
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('labels failed policy refunds as content blocked', async () => {
+    const refundError = new Error('Refund failed');
+    vi.mocked(restoreCredits).mockRejectedValueOnce(refundError);
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: { parts: [] },
+          finishReason: 'SAFETY',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({
+      models: { countTokens: vi.fn(), generateContent },
+    }));
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'gpro31',
+        voice: 'achernar',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(422);
+    expect(captureException).toHaveBeenCalledWith(
+      refundError,
+      expect.objectContaining({
+        extra: expect.objectContaining({ context: 'gemini_content_blocked' }),
+      }),
+    );
   });
 
   it('falls back to gemini-2.5-flash-preview-tts when gpro31 primary call fails', async () => {
@@ -830,8 +978,8 @@ describe('/api/v1/speech', () => {
           },
         ],
         usageMetadata: {
-          promptTokenCount: 5,
           candidatesTokenCount: 10,
+          promptTokenCount: 5,
           totalTokenCount: 15,
         },
       });
@@ -841,16 +989,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro31',
         input: 'Hello world',
+        model: 'gpro31',
         voice: 'achernar',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -868,8 +1016,8 @@ describe('/api/v1/speech', () => {
     expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledWith(
       expect.objectContaining({
         dollarAmount: 0.000_103,
-        model: 'gemini-2.5-flash-preview-tts',
         durationSeconds: 12,
+        model: 'gemini-2.5-flash-preview-tts',
       }),
     );
   });
@@ -896,16 +1044,16 @@ describe('/api/v1/speech', () => {
     }));
 
     const request = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'gpro',
         input: 'Hello world',
+        model: 'gpro',
         voice: 'kore',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const response = await POST(request);
@@ -914,35 +1062,195 @@ describe('/api/v1/speech', () => {
     expect(response.status).toBe(503);
     expect(json.error.type).toBe('server_error');
     expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Gemini is temporarily unavailable. Please retry.',
+    );
     expect(generateContent).toHaveBeenCalledTimes(2);
+    expect(restoreCredits).toHaveBeenCalledOnce();
     expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns provider unavailable from transient Grok errors without capture', async () => {
+    server.use(
+      http.post('https://api.x.ai/v1/tts', () =>
+        HttpResponse.json(
+          { error: 'provider failure' },
+          {
+            status: 503,
+          },
+        ),
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'xai',
+        voice: 'eve',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Grok is temporarily unavailable. Please retry.',
+    );
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledWith({
+      amount: expect.any(Number),
+      userId: 'test-user-id',
+    });
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('keeps Grok R2 failures on the platform error path', async () => {
+    const uploadError = new Error('Internal Server Error');
+    mockUploadFileToR2.mockRejectedValueOnce(uploadError);
+    server.use(
+      http.post('https://api.x.ai/v1/tts', () =>
+        HttpResponse.arrayBuffer(new Uint8Array([10, 20, 30, 40]).buffer, {
+          headers: { 'Content-Type': 'audio/mpeg' },
+        }),
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'xai',
+        voice: 'eve',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(uploadError, {
+      extra: {
+        apiKeyId: 'test-api-key-id',
+        endpoint: '/api/v1/speech',
+        requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
+        userId: 'test-user-id',
+      },
+    });
+  });
+
+  it('returns provider unavailable for a transient Replicate rejection', async () => {
+    mockReplicateRun.mockRejectedValueOnce(
+      new Error(
+        'Request to https://api.replicate.com/v1/predictions failed with status 503 Service Unavailable: upstream unavailable',
+      ),
+    );
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'orpheus',
+        voice: 'tara',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('provider_unavailable');
+    expect(json.error.message).toBe(
+      'Replicate is temporarily unavailable. Please retry.',
+    );
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledWith({
+      amount: expect.any(Number),
+      userId: 'test-user-id',
+    });
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
+  it('returns server error for a non-transient Replicate rejection', async () => {
+    const modelError = new Error('Model execution failed: invalid input');
+    mockReplicateRun.mockRejectedValueOnce(modelError);
+
+    const request = new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify({
+        input: 'Hello world',
+        model: 'orpheus',
+        voice: 'tara',
+      }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+    const response = await POST(request);
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.type).toBe('server_error');
+    expect(json.error.code).toBe('server_error');
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(captureException).toHaveBeenCalledWith(modelError, {
+      extra: {
+        apiKeyId: 'test-api-key-id',
+        endpoint: '/api/v1/speech',
+        requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
+        userId: 'test-user-id',
+      },
+    });
   });
 
   it('always generates fresh audio (no caching)', async () => {
     const request1 = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const request2 = new Request('http://localhost/api/v1/speech', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        authorization: TEST_AUTH_HEADER,
-      },
       body: JSON.stringify({
-        model: 'orpheus',
         input: 'Hello world',
+        model: 'orpheus',
         voice: 'tara',
       }),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
     });
 
     const [res1, res2] = await Promise.all([POST(request1), POST(request2)]);

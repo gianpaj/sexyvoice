@@ -6,6 +6,7 @@
       "email": "Adresse e-mail",
       "password": "Mot de passe",
       "submit": "Se connecter",
+      "loading": "Chargement...",
       "forgotPassword": "Mot de passe oublié ?",
       "signInWithGoogle": "Se connecter avec Google",
       "noAccount": "Vous n'avez pas de compte ?",
@@ -20,6 +21,7 @@
       "username": "Nom d'utilisateur",
       "fullName": "Nom complet",
       "submit": "S'inscrire",
+      "loading": "Chargement...",
       "hasAccount": "Vous avez déjà un compte ?",
       "signIn": "Se connecter",
       "error": "Erreur lors de la création du compte",
@@ -412,13 +414,17 @@
         "description": "Un problème est survenu lors du traitement de votre paiement. Veuillez réessayer ou contacter le support si le problème persiste.",
         "dismiss": "Fermer"
       },
-      "checkoutError": "Impossible de créer la session de paiement"
+      "checkoutError": "Impossible de créer la session de paiement",
+      "accountBillingBlocked": "La facturation est suspendue pendant la suppression du compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
+      "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
     },
     "history": {
       "title": "Historique des crédits"
     }
   },
   "creditsSection": {
+    "balanceError": "Impossible de charger votre solde de crédits. Veuillez réessayer.",
+    "retryBalance": "Réessayer",
     "title": "Crédits",
     "topupButton": "Recharger",
     "totalCredits": "Total",
@@ -571,6 +577,8 @@
     }
   },
   "call": {
+    "title": "Appels vocaux",
+    "subtitle": "Choisissez un personnage IA et discutez avec lui en temps réel.",
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
@@ -593,6 +601,7 @@
     "configurationUpdateError": "Erreur lors de la mise à jour de la configuration",
     "agentUnavailable": "Agent indisponible",
     "activeCallError": "Vous avez déjà un appel actif en cours",
+    "instructionsRejected": "Cet appel n’a pas pu démarrer, car le personnage ou la scène n’ont pas passé les contrôles de sécurité du fournisseur d’IA. Modifiez le personnage ou la scène, puis réessayez.",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
     "disconnected": "Déconnecté",
     "chooseCharacter": "À qui voulez-vous parler ?",
@@ -680,6 +689,7 @@
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",
+    "englishChatterbox": "Anglais (Chatterbox)",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "previewTitle": "Aperçu de la voix générée",
@@ -706,7 +716,6 @@
       "guardrailViolation": "Cette demande a été bloquée par une politique de sécurité de clonage vocal d'un tiers. Essayez avec un autre texte ou un autre audio de référence.",
       "insufficientCredits": "Il vous faut __CREDITS__ crédits pour cloner cet audio.",
       "internalError": "Impossible de cloner la voix. Veuillez réessayer.",
-      "providerUnavailable": "Le fournisseur de clonage vocal est temporairement indisponible. Veuillez réessayer.",
       "invalidContentType": "La demande de téléversement n'est pas valide. Veuillez réessayer.",
       "invalidFileType": "Type de fichier non valide. Veuillez téléverser MP3, OGG, Opus, M4A, WAV ou WebM.",
       "missingLocale": "Veuillez sélectionner une langue.",
@@ -790,7 +799,14 @@
         "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• L'utilisation de l'API\n• Les personnages d'appel personnalisés\n• Toutes les données associées de nos serveurs",
         "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
         "cancel": "Annuler",
-        "continue": "Continuer"
+        "continue": "Continuer",
+        "errors": {
+          "manageBilling": "Gérer la facturation",
+          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
+          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer.",
+          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
+          "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
+        }
       }
     },
     "apiKeys": {
@@ -855,8 +871,8 @@
     "description": "Surveillez l'utilisation de l'API et les requêtes au fil du temps."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & générateur de voix",
-    "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues. Essayez gratuitement la synthèse vocale avec clonage vocal et synthèse naturelle de la parole. Commencez avec des crédits gratuits – aucune carte requise.",
+    "defaultTitle": "SexyVoice.ai – Synthèse vocale IA gratuite & appels vocaux en temps réel",
+    "description": "Générez une voix IA expressive avec des émotions dans plus de 24 langues ou parlez en temps réel avec des personnages IA. Synthèse vocale gratuite, clonage vocal et appels vocaux en direct. Commencez avec des crédits gratuits – aucune carte requise.",
     "skipToMainContent": "Aller au contenu principal",
     "descriptionLogin": "Connectez-vous à SexyVoice.ai pour accéder à vos projets vocaux IA, gérer vos crédits et générer de la parole expressive dans plusieurs langues avec clonage vocal avancé.",
     "descriptionSignup": "Rejoignez SexyVoice.ai gratuitement - Obtenez 10 000 crédits pour créer des voix IA réalistes avec des émotions. Synthèse vocale avancée et clonage vocal en 24 langues.",
@@ -876,6 +892,7 @@
     "/dashboard/api-keys": "Clés API",
     "/dashboard/api-billing": "Facturation API",
     "/dashboard/usage": "Utilisation",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",
     "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",
@@ -905,6 +922,26 @@
     "header": "Historique des générations",
     "empty": "Aucun historique pour le moment",
     "downloadError": "Échec du téléchargement de l'audio",
+    "delete": {
+      "cancel": "Annuler",
+      "deleting": "Suppression...",
+      "single": {
+        "trigger": "Supprimer",
+        "title": "Supprimer le fichier audio ?",
+        "description": "Ce fichier audio sera supprimé de votre historique. Cette action est irréversible.",
+        "confirm": "Supprimer",
+        "success": "Fichier audio supprimé",
+        "error": "Impossible de supprimer le fichier audio. Veuillez réessayer."
+      },
+      "all": {
+        "trigger": "Tout supprimer",
+        "title": "Supprimer tous les fichiers audio ?",
+        "description": "{count, plural, one {Le fichier audio sera supprimé de votre historique. Cette action est irréversible.} other {Les # fichiers audio seront supprimés de votre historique. Cette action est irréversible.}}",
+        "confirm": "Tout supprimer",
+        "success": "Tous les fichiers audio ont été supprimés",
+        "error": "Impossible de supprimer tous les fichiers audio. Veuillez réessayer."
+      }
+    },
     "ui": {
       "filterText": "Filtrer le texte...",
       "customizeColumns": "Personnaliser les colonnes",
@@ -1177,6 +1214,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Les adresses e-mail jetables ne sont pas autorisées",
-    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes."
+    "AUTH_PROVIDER_RATELIMIT": "Pour des raisons de sécurité, vous ne pouvez demander ceci qu'après {time} secondes.",
+    "PROVIDER_UNAVAILABLE": "{provider} est temporairement indisponible. Réessayez."
   }
 }

@@ -6,6 +6,7 @@
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "submit": "Anmelden",
+      "loading": "Wird geladen...",
       "forgotPassword": "Passwort vergessen?",
       "signInWithGoogle": "Über Google anmelden",
       "noAccount": "Haben Sie noch kein Konto?",
@@ -20,6 +21,7 @@
       "username": "Benutzername",
       "fullName": "Vollständiger Name",
       "submit": "Registrieren",
+      "loading": "Wird geladen...",
       "hasAccount": "Haben Sie bereits ein Konto?",
       "signIn": "Anmelden",
       "error": "Fehler beim Erstellen des Kontos",
@@ -412,13 +414,17 @@
         "description": "Bei der Verarbeitung Ihrer Zahlung ist ein Problem aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht.",
         "dismiss": "Schließen"
       },
-      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden"
+      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden",
+      "accountBillingBlocked": "Die Abrechnung ist wegen der Kontolöschung pausiert. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+      "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
     },
     "history": {
       "title": "Credit-Verlauf"
     }
   },
   "creditsSection": {
+    "balanceError": "Dein Guthaben konnte nicht geladen werden. Bitte versuche es erneut.",
+    "retryBalance": "Erneut versuchen",
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
@@ -571,6 +577,8 @@
     }
   },
   "call": {
+    "title": "Sprachanrufe",
+    "subtitle": "Wähle einen KI-Charakter und sprich mit ihm in Echtzeit.",
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
@@ -593,6 +601,7 @@
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
+    "instructionsRejected": "Dieser Anruf konnte nicht gestartet werden, weil der Charakter oder die Szene die Sicherheitsprüfungen des KI-Anbieters nicht bestanden haben. Bearbeite den Charakter oder die Szene und versuche es erneut.",
     "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",
@@ -680,6 +689,7 @@
     "generating": "Wird generiert",
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",
+    "englishChatterbox": "Englisch (Chatterbox)",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
     "previewTitle": "Vorschau der generierten Stimme",
@@ -706,7 +716,6 @@
       "guardrailViolation": "Diese Anfrage wurde durch die Sicherheitsrichtlinie eines Drittanbieters für das Klonen von Stimmen blockiert. Bitte versuchen Sie es mit anderem Text oder anderem Referenz-Audio.",
       "insufficientCredits": "Sie benötigen __CREDITS__ Credits, um dieses Audio zu klonen.",
       "internalError": "Die Stimme konnte nicht geklont werden. Bitte versuchen Sie es erneut.",
-      "providerUnavailable": "Der Anbieter für das Klonen von Stimmen ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
       "invalidContentType": "Die Upload-Anfrage ist ungültig. Bitte versuchen Sie es erneut.",
       "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
       "missingLocale": "Bitte wählen Sie eine Sprache.",
@@ -790,7 +799,14 @@
         "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht, einschließlich:\n• Alle generierten Audiodateien\n• Geklonte Stimmen\n• API-Nutzung\n• Benutzerdefinierte Anrufcharaktere\n• Alle zugehörigen Daten von unseren Servern",
         "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
         "cancel": "Abbrechen",
-        "continue": "Weiter"
+        "continue": "Weiter",
+        "errors": {
+          "manageBilling": "Abrechnung verwalten",
+          "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihr Konto löschen.",
+          "subscriptionCheckFailed": "Wir konnten Ihren Abonnementstatus nicht prüfen. Ihr Konto wurde nicht gelöscht. Bitte versuchen Sie es erneut.",
+          "accountBillingBlocked": "Eine frühere Löschanfrage blockiert die Kontolöschung. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+          "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
+        }
       }
     },
     "apiKeys": {
@@ -855,8 +871,8 @@
     "description": "API-Nutzung und Anfragen im Zeitverlauf überwachen."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Kostenloser KI-Text-zu-Sprache- & Stimmengenerator",
-    "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen. Probieren Sie kostenlos Text-zu-Sprache mit Stimmenklonung und natürlicher Sprachsynthese aus. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+    "defaultTitle": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe",
+    "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
     "skipToMainContent": "Zum Hauptinhalt springen",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
@@ -876,6 +892,7 @@
     "/dashboard/api-keys": "API-Schlüssel",
     "/dashboard/api-billing": "API-Abrechnung",
     "/dashboard/usage": "Nutzung",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",
     "titleAudioConverter": "Kostenloser Online Audio-Konverter – MP3, WAV, FLAC & mehr",
@@ -905,6 +922,26 @@
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
     "downloadError": "Audio konnte nicht heruntergeladen werden",
+    "delete": {
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "single": {
+        "trigger": "Löschen",
+        "title": "Audiodatei löschen?",
+        "description": "Diese Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirm": "Löschen",
+        "success": "Audiodatei gelöscht",
+        "error": "Die Audiodatei konnte nicht gelöscht werden. Bitte versuche es erneut."
+      },
+      "all": {
+        "trigger": "Alle löschen",
+        "title": "Alle Audiodateien löschen?",
+        "description": "{count, plural, one {Die Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.} other {Alle # Audiodateien werden aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.}}",
+        "confirm": "Alle löschen",
+        "success": "Alle Audiodateien gelöscht",
+        "error": "Die Audiodateien konnten nicht gelöscht werden. Bitte versuche es erneut."
+      }
+    },
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",
@@ -1177,6 +1214,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
-    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
+    "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
   }
 }

@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { isBannerCountdownExpired } from './countdown';
 import { getBannerDefinition } from './registry';
 import type {
   BannerAudience,
@@ -17,16 +18,12 @@ interface ResolveActiveBannerOptions {
   placement: BannerPlacement;
 }
 
-function getActivePromoBannerId() {
+export function getActivePromoBannerId() {
   if (process.env.NEXT_PUBLIC_PROMO_ENABLED !== 'true') {
     return null;
   }
 
-  return (
-    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER ||
-    process.env.NEXT_PUBLIC_PROMO_TRANSLATIONS ||
-    'blackFridayBanner'
-  );
+  return process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER || null;
 }
 
 function getActiveAnnouncementBannerId() {
@@ -84,6 +81,10 @@ function resolveBanner(
       ? process.env[definition.countdown.endDateEnvVar]
       : undefined;
 
+  if (isBannerCountdownExpired(countdownEndDate)) {
+    return null;
+  }
+
   return {
     ariaLabelDismiss: translation.ariaLabelDismiss,
     countdown: countdownEndDate
@@ -101,10 +102,10 @@ function resolveBanner(
       options.audience === 'loggedIn'
         ? translation.ctaLoggedIn
         : translation.ctaLoggedOut,
-    dismissCookieKeys: [
-      definition.dismiss.cookieKey,
-      ...(definition.dismiss.legacyCookieKeys || []),
-    ],
+    dismiss: {
+      cookieKey: definition.dismiss.cookieKey,
+      days: definition.dismiss.days,
+    },
     dismissible: definition.dismissible ?? true,
     id: definition.id,
     kind: definition.kind,
@@ -128,18 +129,7 @@ export function resolveActiveBanner(
       (banner): banner is NonNullable<ReturnType<typeof getBannerDefinition>> =>
         Boolean(banner),
     )
-    .filter((banner) => {
-      const bannerCookieKeys = [
-        banner.dismiss.cookieKey,
-        ...('legacyCookieKeys' in banner.dismiss
-          ? banner.dismiss.legacyCookieKeys || []
-          : []),
-      ];
-
-      return bannerCookieKeys.every(
-        (cookieKey) => !dismissedCookieKeys.has(cookieKey),
-      );
-    })
+    .filter((banner) => !dismissedCookieKeys.has(banner.dismiss.cookieKey))
     .map((banner) => ({
       banner: resolveBanner(banner, options),
       priority: banner.priority,

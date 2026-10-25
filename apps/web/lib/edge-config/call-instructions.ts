@@ -1,5 +1,5 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
-import { get } from '@vercel/edge-config';
+import { get } from '@vercel/global-config';
 
 import { instructions as fallbackInstructions } from '@/data/default-config';
 import { initialInstruction as fallbackInitialInstruction } from '@/data/playground-state';

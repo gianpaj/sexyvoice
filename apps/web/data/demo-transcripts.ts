@@ -9,36 +9,12 @@ interface DemoCallData {
 
 // TODO: Replace placeholder transcripts with real ones after recording demo calls
 export const demoCallData: Record<string, DemoCallData> = {
-  ramona: {
-    characterId: 'ramona',
-    // audioSrc: '/demo-calls/ramona.mp3',
-    audioSrc: 'https://files.sexyvoice.ai/call-demos/ramona.mp3',
-    durationSeconds: 7.85,
-    transcript: {
-      text: '_',
-      chunks: [
-        {
-          text: 'Hola, mi amor.',
-          timestamp: [0, 1],
-        },
-        {
-          text: 'Tell me what you crave for me tonight.',
-          timestamp: [1, 3],
-        },
-        {
-          text: "Don't keep me waiting, cariño.",
-          timestamp: [3, null],
-        },
-      ],
-    },
-  },
   lily: {
-    characterId: 'lily',
     // audioSrc: '/demo-calls/lily.mp3',
     audioSrc: 'https://files.sexyvoice.ai/call-demos/lily.mp3',
+    characterId: 'lily',
     durationSeconds: 11.9,
     transcript: {
-      text: 'agent',
       chunks: [
         {
           text: 'Hi... um, sorry to bother you...',
@@ -53,15 +29,15 @@ export const demoCallData: Record<string, DemoCallData> = {
           timestamp: [6, null],
         },
       ],
+      text: 'agent',
     },
   },
   rafal: {
-    characterId: 'rafal',
     // audioSrc: '/demo-calls/rafal.mp3',
     audioSrc: 'https://files.sexyvoice.ai/call-demos/rafal.mp3',
+    characterId: 'rafal',
     durationSeconds: 18.84,
     transcript: {
-      text: 'agent',
       chunks: [
         {
           text: 'Hey there, boy. Come closer. ',
@@ -76,6 +52,30 @@ export const demoCallData: Record<string, DemoCallData> = {
           timestamp: [5, null],
         },
       ],
+      text: 'agent',
+    },
+  },
+  ramona: {
+    // audioSrc: '/demo-calls/ramona.mp3',
+    audioSrc: 'https://files.sexyvoice.ai/call-demos/ramona.mp3',
+    characterId: 'ramona',
+    durationSeconds: 7.85,
+    transcript: {
+      chunks: [
+        {
+          text: 'Hola, mi amor.',
+          timestamp: [0, 1],
+        },
+        {
+          text: 'Tell me what you crave for me tonight.',
+          timestamp: [1, 3],
+        },
+        {
+          text: "Don't keep me waiting, cariño.",
+          timestamp: [3, null],
+        },
+      ],
+      text: '_',
     },
   },
 };

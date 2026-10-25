@@ -5,8 +5,20 @@
     "source.fixAll.biome": true,
     "source.organizeImports.biome": true
   },
+  "file_scan_exclusions": [
+    "**/.git",
+    "**/dist",
+    "**/.next",
+    "**/build",
+    ".claude/",
+    "apps/web/lib/disposable-email/deny-domains.json"
+  ],
   "format_on_save": "on",
   "languages": {
+    "Markdown": {
+      "formatter": "prettier",
+      "format_on_save": "on"
+    },
     "JSON": {
       "formatter": {
         "language_server": {
