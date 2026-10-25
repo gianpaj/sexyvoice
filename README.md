@@ -162,6 +162,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`
      - `LIVEKIT_API_SECRET`
+     - `LIVEKIT_AGENT_NAME` - Optional; defaults to `sexycall`, and must match the deployed agent's registered name
    - Stripe
      - `STRIPE_SECRET_KEY`
      - `STRIPE_WEBHOOK_SECRET`

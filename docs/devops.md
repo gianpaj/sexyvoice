@@ -165,6 +165,9 @@ for the creation and playback behavior.
 
 - `LIVEKIT_URL`: server URL returned by `/api/call-token`.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET`: server-only token-signing credentials.
+- `LIVEKIT_AGENT_NAME`: agent dispatch name, default `sexycall`. Match the
+  name registered by the deployed SexyCall worker; a different name leaves
+  calls waiting for an agent.
 - `CALL_SUMMARY_SECRET`: authenticates the call-analysis webhook. Store the same
   value in Supabase Vault as `call_summary_secret`, alongside `app_base_url`, so
   the `pg_net` trigger can call `/api/call-sessions/analyze`.
