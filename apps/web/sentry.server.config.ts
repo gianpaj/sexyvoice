@@ -5,6 +5,8 @@
 // biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 
+import { isE2E } from '@/lib/e2e-mode';
+import { sanitizeServerEvent } from '@/lib/sentry/server-filters';
 import {
   sanitizeSupabaseBreadcrumb,
   sanitizeSupabaseEvent,
@@ -14,13 +16,14 @@ import {
 
 Sentry.init({
   beforeBreadcrumb: sanitizeSupabaseBreadcrumb,
-  beforeSend: sanitizeSupabaseEvent,
+  beforeSend: (event, hint) =>
+    sanitizeSupabaseEvent(sanitizeServerEvent(event), hint),
   beforeSendSpan: sanitizeSupabaseSpan,
   beforeSendTransaction: sanitizeSupabaseTransaction,
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
-  enabled: process.env.NODE_ENV === 'production',
+  enabled: process.env.NODE_ENV === 'production' && !isE2E(),
   enableLogs: true,
   integrations: [
     // Add the Vercel AI SDK integration
@@ -33,6 +36,9 @@ Sentry.init({
   ],
   propagateTraceparent: true,
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
+  // instrumentation.ts registers the OpenTelemetry provider through @vercel/otel.
+  skipOpenTelemetrySetup: true,
+
+  // Samples every exported trace, including the OTLP export to Dash0.
   tracesSampleRate: 0.1,
 });

@@ -1,5 +1,6 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
+
 import { loadScriptEnv } from './lib/env.mts';
 import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
 
@@ -169,17 +170,17 @@ function calculateRefund(
   );
 
   return {
-    totalPurchased,
-    totalFreemium,
-    totalRefunded: totalPurchaseRefunded,
-    totalRefundAdjustment,
     availableCredits,
-    totalSpentUSD,
     creditRate,
     maxRefundCredits,
     maxRefundUSD,
     purchaseTransactions,
     stillOwedCredits,
+    totalFreemium,
+    totalPurchased,
+    totalRefundAdjustment,
+    totalRefunded: totalPurchaseRefunded,
+    totalSpentUSD,
     totalUsedFromEvents,
   };
 }
@@ -235,7 +236,7 @@ async function insertRefundTransaction(options: {
   // Build description
   const description = platformBugReason
     ? `Refund - ${platformBugReason}`
-    : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`;
+    : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().slice(0, 10)} - $${refundUSD.toFixed(2)}`;
 
   // Insert refund transaction
   // Platform bug refund: positive amount (adding credits back to user)
@@ -245,14 +246,14 @@ async function insertRefundTransaction(options: {
     : -Math.abs(refundCredits);
 
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
     amount: transactionAmount,
-    type: 'refund',
     description,
+    metadata,
     reference_id: isPlatformBugRefund
       ? null
       : originalTransaction!.reference_id,
-    metadata,
+    type: 'refund',
+    user_id: userId,
   });
 
   if (error) {
@@ -266,8 +267,8 @@ async function insertRefundTransaction(options: {
     const { error: creditsError } = await supabase.rpc(
       'increment_user_credits',
       {
-        user_id_var: userId,
         credit_amount_var: Math.abs(refundCredits),
+        user_id_var: userId,
       },
     );
 
@@ -280,8 +281,8 @@ async function insertRefundTransaction(options: {
     const { error: creditsError } = await supabase.rpc(
       'decrement_user_credits',
       {
-        user_id_var: userId,
         credit_amount_var: Math.abs(refundCredits),
+        user_id_var: userId,
       },
     );
 
@@ -325,7 +326,7 @@ function displayRefundInfo(calculation: RefundCalculation): void {
   console.log('Purchase/Topup Transactions:');
   for (const transaction of calculation.purchaseTransactions) {
     console.log(
-      `  - ${transaction.created_at.substring(0, 10)} | ${transaction.type.toUpperCase()} | ${transaction.amount} credits | $${transaction.metadata?.dollarAmount?.toFixed(2)} | Ref: ${transaction.reference_id || 'N/A'}`,
+      `  - ${transaction.created_at.slice(0, 10)} | ${transaction.type.toUpperCase()} | ${transaction.amount} credits | $${transaction.metadata?.dollarAmount?.toFixed(2)} | Ref: ${transaction.reference_id || 'N/A'}`,
     );
   }
   console.log('');
@@ -402,7 +403,7 @@ async function selectTransaction(
   for (let i = 0; i < calculation.purchaseTransactions.length; i++) {
     const t = calculation.purchaseTransactions[i];
     console.log(
-      `  ${i + 1}. ${t.created_at.substring(0, 10)} | ${t.amount} credits | $${t.metadata?.dollarAmount?.toFixed(2)} | Ref: ${t.reference_id || 'N/A'}`,
+      `  ${i + 1}. ${t.created_at.slice(0, 10)} | ${t.amount} credits | $${t.metadata?.dollarAmount?.toFixed(2)} | Ref: ${t.reference_id || 'N/A'}`,
     );
   }
 
@@ -416,7 +417,7 @@ async function selectTransaction(
     console.log(
       '\n💡 Skipped transaction selection for platform bug refund (no original transaction will be tracked)',
     );
-    return { transaction: null, skipped: true };
+    return { skipped: true, transaction: null };
   }
 
   const transactionIndex = Number.parseInt(transactionIndexInput, 10) - 1;
@@ -430,8 +431,8 @@ async function selectTransaction(
   }
 
   return {
-    transaction: calculation.purchaseTransactions[transactionIndex],
     skipped: false,
+    transaction: calculation.purchaseTransactions[transactionIndex],
   };
 }
 
@@ -592,7 +593,7 @@ async function main() {
     }
     if (selectedTransaction) {
       console.log(
-        `Original transaction: ${selectedTransaction.id.substring(0, 8)}`,
+        `Original transaction: ${selectedTransaction.id.slice(0, 8)}`,
       );
       console.log(`Reference ID: ${selectedTransaction.reference_id || 'N/A'}`);
     }
@@ -612,12 +613,12 @@ async function main() {
     // Insert refund transaction
     console.log('\nProcessing refund...');
     await insertRefundTransaction({
-      userId,
+      chargeId: chargeId || undefined,
+      originalTransaction: selectedTransaction,
+      platformBugReason,
       refundCredits,
       refundUSD,
-      originalTransaction: selectedTransaction,
-      chargeId: chargeId || undefined,
-      platformBugReason,
+      userId,
     });
 
     console.log('✅ Refund transaction created successfully!\n');
@@ -634,5 +635,4 @@ async function main() {
 }
 
 // Run the script
-// biome-ignore lint/nursery/noFloatingPromises: fine for a script
-main();
+await main();

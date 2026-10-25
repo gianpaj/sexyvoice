@@ -54,7 +54,7 @@ export async function generateMetadata({
       images: [
         {
           alt: 'SexyVoice.ai Blog',
-          height: 630,
+          height: 670,
           url: '/sexyvoice.ai-og-image.jpg',
           width: 1200,
         },

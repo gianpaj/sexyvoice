@@ -1,8 +1,11 @@
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { ApiKeys } from './api-keys';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/api-keys');
 
 export default async function ApiKeysPage(props: {
   params: Promise<{ lang: Locale }>;

@@ -2,6 +2,7 @@
 
 import { AlertCircle, OctagonAlert } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 
 import { handleDeleteAccountAction } from '@/app/actions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -17,13 +18,35 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { STRIPE_BILLING_PORTAL_URL } from '@/lib/stripe/billing-portal';
 
 export function DeleteAccountForm() {
   const t = useTranslations('profile.dangerZone.deleteAccount');
   const locale = useLocale();
 
   const handleDeleteAccount = async () => {
-    await handleDeleteAccountAction({ lang: locale });
+    const result = await handleDeleteAccountAction({ lang: locale });
+    if (result?.error === 'subscriptionExists') {
+      toast.error(t('errors.subscriptionExists'), {
+        action: (
+          <a
+            className="font-medium underline underline-offset-4"
+            href={STRIPE_BILLING_PORTAL_URL}
+          >
+            {t('errors.manageBilling')}
+          </a>
+        ),
+        closeButton: true,
+        duration: Number.POSITIVE_INFINITY,
+      });
+    } else if (result?.error === 'accountBillingBlocked') {
+      toast.error(t('errors.accountBillingBlocked'), {
+        closeButton: true,
+        duration: Number.POSITIVE_INFINITY,
+      });
+    } else if (result?.error) {
+      toast.error(t(`errors.${result.error}`));
+    }
   };
 
   return (

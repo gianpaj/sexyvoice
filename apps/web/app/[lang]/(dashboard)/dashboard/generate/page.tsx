@@ -4,12 +4,15 @@ import { getTranslations } from 'next-intl/server';
 
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/generate');
 
 export default async function GeneratePage(props: {
   params: Promise<{ lang: Locale }>;
@@ -59,7 +62,7 @@ export default async function GeneratePage(props: {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8 pb-16">
       <div>
         <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
           <Wand2 size={26} />
@@ -77,17 +80,15 @@ export default async function GeneratePage(props: {
         />
       </div>
 
-      <div className="grid gap-6 pb-16">
-        {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
-          <GenerateUI
-            hasEnoughCredits={hasEnoughCredits}
-            isPaidUser={isPaidUser}
-            publicVoices={publicVoices}
-          />
-        ) : (
-          <CreditBalanceError />
-        )}
-      </div>
+      {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
+        <GenerateUI
+          hasEnoughCredits={hasEnoughCredits}
+          isPaidUser={isPaidUser}
+          publicVoices={publicVoices}
+        />
+      ) : (
+        <CreditBalanceError />
+      )}
     </div>
   );
 }

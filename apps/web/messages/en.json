@@ -412,7 +412,9 @@
         "description": "There was an issue processing your payment. Please try again or contact support if the problem persists.",
         "dismiss": "Dismiss"
       },
-      "checkoutError": "Failed to create checkout session"
+      "checkoutError": "Failed to create checkout session",
+      "accountBillingBlocked": "Billing is paused for account deletion. Contact support via the dashboard chat or info@sexyvoice.ai.",
+      "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
     },
     "history": {
       "title": "Credit History"
@@ -796,7 +798,14 @@
         "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
-        "continue": "Continue"
+        "continue": "Continue",
+        "errors": {
+          "manageBilling": "Manage billing",
+          "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your account.",
+          "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again.",
+          "accountBillingBlocked": "Account deletion is blocked by an earlier deletion request. Contact support via the dashboard chat or info@sexyvoice.ai.",
+          "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
+        }
       }
     },
     "apiKeys": {
@@ -889,6 +898,7 @@
     "/dashboard/api-keys": "API Keys",
     "/dashboard/api-billing": "API Billing",
     "/dashboard/usage": "Usage",
+    "/dashboard/profile": "Profile",
     "/tools/audio-converter": "Audio Converter",
     "/tools/transcribe": "Audio Transcription",
     "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",

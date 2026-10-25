@@ -414,7 +414,9 @@
         "description": "Bei der Verarbeitung Ihrer Zahlung ist ein Problem aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht.",
         "dismiss": "Schließen"
       },
-      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden"
+      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden",
+      "accountBillingBlocked": "Die Abrechnung ist wegen der Kontolöschung pausiert. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+      "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
     },
     "history": {
       "title": "Credit-Verlauf"
@@ -798,7 +800,14 @@
         "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht, einschließlich:\n• Alle generierten Audiodateien\n• Geklonte Stimmen\n• API-Nutzung\n• Benutzerdefinierte Anrufcharaktere\n• Alle zugehörigen Daten von unseren Servern",
         "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
         "cancel": "Abbrechen",
-        "continue": "Weiter"
+        "continue": "Weiter",
+        "errors": {
+          "manageBilling": "Abrechnung verwalten",
+          "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihr Konto löschen.",
+          "subscriptionCheckFailed": "Wir konnten Ihren Abonnementstatus nicht prüfen. Ihr Konto wurde nicht gelöscht. Bitte versuchen Sie es erneut.",
+          "accountBillingBlocked": "Eine frühere Löschanfrage blockiert die Kontolöschung. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+          "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
+        }
       }
     },
     "apiKeys": {
@@ -884,6 +893,7 @@
     "/dashboard/api-keys": "API-Schlüssel",
     "/dashboard/api-billing": "API-Abrechnung",
     "/dashboard/usage": "Nutzung",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",
     "titleAudioConverter": "Kostenloser Online Audio-Konverter – MP3, WAV, FLAC & mehr",

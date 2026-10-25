@@ -504,9 +504,13 @@ export function useHotKey() {
 }
 
 export function useAISearchContext() {
-  return use(Context)!;
+  const context = use(Context);
+  if (!context) {
+    throw new Error('useAISearchContext must be used within an AISearch');
+  }
+  return context;
 }
 
 function useChatContext() {
-  return use(Context)!.chat;
+  return useAISearchContext().chat;
 }

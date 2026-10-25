@@ -2,18 +2,27 @@
 import * as Sentry from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createOrRetrieveCustomer, stripe } from '@/lib/stripe/stripe-admin';
+import {
+  createOrRetrieveCustomer,
+  expireOpenCheckoutSessions,
+  hasOngoingSubscription,
+  stripe,
+} from '@/lib/stripe/stripe-admin';
 import { createClient } from '@/lib/supabase/server';
 
 // Mock Stripe customers API
 vi.mock('stripe', () => {
   const mockStripe = {
+    checkout: { sessions: { expire: vi.fn(), list: vi.fn() } },
     customers: {
       create: vi.fn(),
       list: vi.fn(),
       retrieve: vi.fn(),
       search: vi.fn(),
       update: vi.fn(),
+    },
+    subscriptions: {
+      list: vi.fn(),
     },
   };
   return {
@@ -24,6 +33,134 @@ vi.mock('stripe', () => {
       }
     },
   };
+});
+
+describe('expireOpenCheckoutSessions()', () => {
+  beforeEach(() => {
+    vi.mocked(stripe.checkout.sessions.list).mockReset();
+    vi.mocked(stripe.checkout.sessions.expire).mockReset();
+  });
+
+  it('expires every open session across pages', async () => {
+    vi.mocked(stripe.checkout.sessions.list)
+      .mockResolvedValueOnce({
+        data: [{ id: 'cs_1' }],
+        has_more: true,
+      } as never)
+      .mockResolvedValueOnce({
+        data: [{ id: 'cs_2' }],
+        has_more: false,
+      } as never);
+
+    await expireOpenCheckoutSessions('cus_123');
+
+    expect(stripe.checkout.sessions.list).toHaveBeenNthCalledWith(1, {
+      customer: 'cus_123',
+      limit: 100,
+      status: 'open',
+    });
+    expect(stripe.checkout.sessions.list).toHaveBeenNthCalledWith(2, {
+      customer: 'cus_123',
+      limit: 100,
+      starting_after: 'cs_1',
+      status: 'open',
+    });
+    expect(stripe.checkout.sessions.expire).toHaveBeenCalledWith('cs_1');
+    expect(stripe.checkout.sessions.expire).toHaveBeenCalledWith('cs_2');
+  });
+
+  it('stops deletion if an open session completes during expiration', async () => {
+    vi.mocked(stripe.checkout.sessions.list).mockResolvedValue({
+      data: [{ id: 'cs_1' }],
+      has_more: false,
+    } as never);
+    vi.mocked(stripe.checkout.sessions.expire).mockRejectedValue(
+      new Error('Session is complete'),
+    );
+
+    await expect(expireOpenCheckoutSessions('cus_123')).rejects.toThrow(
+      'Session is complete',
+    );
+  });
+});
+
+describe('hasOngoingSubscription()', () => {
+  beforeEach(() => {
+    vi.mocked(stripe.subscriptions.list).mockReset();
+  });
+
+  it.each(['active', 'trialing', 'past_due', 'unpaid', 'paused', 'incomplete'])(
+    'blocks account deletion for a %s subscription',
+    async (status) => {
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [{ id: 'sub_123', status }],
+        has_more: false,
+      } as never);
+
+      expect(await hasOngoingSubscription('cus_123')).toBe(true);
+      expect(stripe.subscriptions.list).toHaveBeenCalledWith({
+        customer: 'cus_123',
+        limit: 100,
+        status: 'all',
+      });
+    },
+  );
+
+  it('blocks subscriptions scheduled to cancel at the end of the period', async () => {
+    vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+      data: [{ cancel_at_period_end: true, id: 'sub_123', status: 'active' }],
+      has_more: false,
+    } as never);
+
+    expect(await hasOngoingSubscription('cus_123')).toBe(true);
+  });
+
+  it.each([
+    { data: [] },
+    { data: [{ status: 'canceled' }, { status: 'incomplete_expired' }] },
+  ])('allows deletion with no ongoing subscriptions: %j', async ({ data }) => {
+    vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+      data,
+      has_more: false,
+    } as never);
+
+    expect(await hasOngoingSubscription('cus_123')).toBe(false);
+  });
+
+  it.each([null, undefined, ''])(
+    'skips Stripe when the customer ID is %j',
+    async (customerId) => {
+      expect(await hasOngoingSubscription(customerId)).toBe(false);
+      expect(stripe.subscriptions.list).not.toHaveBeenCalled();
+    },
+  );
+
+  it('finds ongoing subscriptions after a page of ended subscriptions', async () => {
+    vi.mocked(stripe.subscriptions.list)
+      .mockResolvedValueOnce({
+        data: [{ id: 'sub_ended', status: 'canceled' }],
+        has_more: true,
+      } as never)
+      .mockResolvedValueOnce({
+        data: [{ id: 'sub_ongoing', status: 'past_due' }],
+        has_more: false,
+      } as never);
+
+    expect(await hasOngoingSubscription('cus_123')).toBe(true);
+    expect(stripe.subscriptions.list).toHaveBeenLastCalledWith({
+      customer: 'cus_123',
+      limit: 100,
+      starting_after: 'sub_ended',
+      status: 'all',
+    });
+  });
+
+  it('propagates Stripe failures', async () => {
+    const error = new Error('Stripe unavailable');
+    vi.mocked(stripe.subscriptions.list).mockRejectedValue(error);
+
+    await expect(hasOngoingSubscription('cus_123')).rejects.toBe(error);
+  });
 });
 
 describe('createOrRetrieveCustomer()', () => {

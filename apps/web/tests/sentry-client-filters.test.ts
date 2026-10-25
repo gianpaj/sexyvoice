@@ -448,6 +448,50 @@ describe('shouldDropClientSentryEvent', () => {
     ).toBe(false);
   });
 
+  describe('NotReadableError', () => {
+    const notReadable = (
+      mechanism: { handled?: boolean } | undefined,
+      frames: { filename: string; function?: string }[] = [],
+    ) => ({
+      exception: {
+        values: [
+          {
+            mechanism,
+            stacktrace: { frames },
+            type: 'NotReadableError',
+            value: 'The I/O read operation failed.',
+          },
+        ],
+      },
+    });
+
+    it('drops unhandled frame-less rejections', () => {
+      expect(shouldDropClientSentryEvent(notReadable({ handled: false }))).toBe(
+        true,
+      );
+    });
+
+    it('keeps errors the app caught and reported', () => {
+      expect(shouldDropClientSentryEvent(notReadable({ handled: true }))).toBe(
+        false,
+      );
+      expect(shouldDropClientSentryEvent(notReadable(undefined))).toBe(false);
+    });
+
+    it('keeps unhandled rejections with app frames', () => {
+      expect(
+        shouldDropClientSentryEvent(
+          notReadable({ handled: false }, [
+            {
+              filename: 'apps/web/hooks/use-media-recorder.ts',
+              function: 'startRecording',
+            },
+          ]),
+        ),
+      ).toBe(false);
+    });
+  });
+
   it('drops injected browser globals and external worker imports without app frames', () => {
     expect(
       shouldDropClientSentryEvent({

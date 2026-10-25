@@ -276,7 +276,6 @@ describe('Sentry config initialization', () => {
       for (const options of [nodeOptions, edgeOptions]) {
         expect(options).toMatchObject({
           beforeBreadcrumb: privacy.sanitizeSupabaseBreadcrumb,
-          beforeSend: privacy.sanitizeSupabaseEvent,
           beforeSendSpan: privacy.sanitizeSupabaseSpan,
           beforeSendTransaction: privacy.sanitizeSupabaseTransaction,
           debug: false,
@@ -285,10 +284,51 @@ describe('Sentry config initialization', () => {
           tracesSampleRate: 0.1,
         });
       }
+      expect(edgeOptions?.beforeSend).toBe(privacy.sanitizeSupabaseEvent);
       expect(nodeOptions).toHaveProperty('propagateTraceparent', true);
+      expect(nodeOptions).toHaveProperty('skipOpenTelemetrySetup', true);
       expect(edgeOptions).not.toHaveProperty('propagateTraceparent');
     },
   );
+
+  it('applies the server event filter before Supabase privacy on Node', async () => {
+    const { CANCELLED_CHARGE_FLOW } = await import(
+      '@/lib/sentry/server-filters'
+    );
+    const privacy = await import('@/lib/sentry/supabase-privacy');
+    await import('@/sentry.server.config');
+
+    const options = vi.mocked(init).mock.calls[0][0];
+    const hint = {};
+    const event = { message: 'Application error', type: undefined };
+    expect(await options?.beforeSend?.(event, hint)).toBe(event);
+    expect(privacy.sanitizeSupabaseEvent).toHaveBeenLastCalledWith(event, hint);
+
+    const cancelledCharge = {
+      extra: { creditsDebited: 5, model: 'gpro', transcript: 'secret' },
+      tags: { flow: CANCELLED_CHARGE_FLOW },
+      type: undefined,
+    };
+    const result = await options?.beforeSend?.(cancelledCharge, hint);
+    expect(result?.extra).toEqual({ creditsDebited: 5, model: 'gpro' });
+    expect(privacy.sanitizeSupabaseEvent).toHaveBeenLastCalledWith(
+      result,
+      hint,
+    );
+  });
+
+  it('disables Node and Edge Sentry in E2E test mode', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('E2E_TEST_MODE', 'true');
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    await import('@/sentry.server.config');
+    await import('@/sentry.edge.config');
+
+    for (const [options] of vi.mocked(init).mock.calls) {
+      expect(options).toHaveProperty('enabled', false);
+    }
+    expect(init).toHaveBeenCalledTimes(2);
+  });
 
   it('uses browser Sentry propagation with privacy hooks and existing trace/replay sampling', async () => {
     vi.stubGlobal('window', {

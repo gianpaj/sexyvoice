@@ -59,27 +59,30 @@ Restore a specific backup by timestamp:
 
 **Important Notes:**
 
-- ⚠️ This will **DELETE ALL LOCAL DATA**
+- ⚠️ This will DELETE ALL LOCAL DATA
 - The script will prompt for confirmation before proceeding
 - Requires `psql` to be installed and available in PATH
 - Local database URL defaults to `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
 
 ## Complete Workflow
 
-1. **Backup cloud database:**
+1. Start Docker
+
+2. Backup cloud database:
 
    ```bash
+   # from project root
    export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
    ./scripts/db_backups.sh
    ```
 
-2. **Start local Supabase (if not running):**
+3. To restore, start local Supabase:
 
    ```bash
    supabase start
    ```
 
-3. **Restore to local database:**
+4. Restore to local database:
    ```bash
    ./scripts/db_local_restore.sh
    ```

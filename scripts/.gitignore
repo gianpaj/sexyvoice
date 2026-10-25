@@ -13,3 +13,4 @@ generated-speech/
 !tsconfig.json
 
 dispute*.md
+!gemini-38-catalog.json

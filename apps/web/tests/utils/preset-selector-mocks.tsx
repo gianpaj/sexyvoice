@@ -20,12 +20,11 @@ import type { PlaygroundState } from '@/data/playground-state';
 // Mock variables — module-level declarations referenced by vi.mock factories
 // ---------------------------------------------------------------------------
 export const mockConnectionState = { value: 'disconnected' };
-export const mockSearchParams = { value: new URLSearchParams() };
 export const mockToastInfo = vi.fn();
 export const mockDisconnect = vi.fn().mockResolvedValue(undefined);
 export const mockConnect = vi.fn().mockResolvedValue(undefined);
 export const mockDispatch = vi.fn();
-export const mockEncodeToUrlParams = vi.fn().mockReturnValue('');
+export const mockSelectPreset = vi.fn();
 export const mockPgStateRef: { current: PlaygroundState | null } = {
   current: null,
 };
@@ -61,11 +60,6 @@ vi.mock('next/image', () => ({
     // biome-ignore lint/performance/noImgElement: intentional mock of next/image for tests
     <img alt={alt} height={64} src={src} width={64} />
   ),
-}));
-
-/* ---- next/navigation ---- */
-vi.mock('next/navigation', () => ({
-  useSearchParams: () => mockSearchParams.value,
 }));
 
 /* ---- sonner ---- */
@@ -244,7 +238,6 @@ vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
     dispatch: mockDispatch,
     helpers: {
-      encodeToUrlParams: mockEncodeToUrlParams,
       getAllPresets: (state: PlaygroundState) => [
         ...defaultPresetsFixture,
         ...state.customCharacters,
@@ -256,5 +249,6 @@ vi.mock('@/hooks/use-playground-state', () => ({
         ),
     },
     pgState: mockPgStateRef.current,
+    selectPreset: mockSelectPreset,
   }),
 }));

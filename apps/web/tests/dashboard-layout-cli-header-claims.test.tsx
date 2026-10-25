@@ -27,6 +27,7 @@ vi.mock('@supabase-cache-helpers/postgrest-react-query', () => ({
   prefetchQuery: mocks.prefetchQuery,
 }));
 vi.mock('@/lib/e2e-mocks', () => ({ isE2E: () => false }));
+vi.mock('@/lib/e2e-call-user', () => ({ getE2ECallUser: async () => null }));
 vi.mock('@/lib/banners/resolve-banner', () => ({
   resolveActiveBanner: () => null,
 }));

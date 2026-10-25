@@ -6,9 +6,9 @@ The [daily-stats README](../apps/web/app/api/daily-stats/README.md) defines the 
 
 ## Outcome
 
-Show whether collected revenue covers paid and free customers' measured usage costs, excluding fixed costs. Report yesterday and the last 30 complete UTC days. Keep existing 14-day activity statistics.
+Show whether collected revenue covers paid and free customers' measured usage costs and allocated infrastructure overhead. Report yesterday and the last 30 complete UTC days. Keep existing 14-day activity statistics.
 
-The headline is **estimated contribution before payment fees and fixed costs**. This is a cash-period comparison, not recognized revenue or accounting profit. Purchases and consumption can fall in different periods.
+The headline is **estimated contribution before payment fees**. This is a cash-period comparison, not recognized revenue or accounting profit. Purchases and consumption can fall in different periods.
 
 ## Approach
 
@@ -34,10 +34,12 @@ For each period:
 
 ```text
 net collections = purchases and top-ups - cash refunds
-available to cover free usage = net collections - paid usage cost
-estimated contribution = net collections - all measured usage costs
+available to cover free usage = net collections - paid usage cost - allocated overhead
+estimated contribution = net collections - all measured usage costs - allocated overhead
 free usage coverage = available to cover free usage / free usage cost
 ```
+
+The [overhead estimates](../apps/web/app/api/daily-stats/README.md#overhead-estimates) define the invoice baseline, allocation method, and call-server attribution.
 
 All measured usage costs include unclassified usage. If unclassified or unpriced usage exists, label coverage as incomplete and avoid a definitive coverage claim. If free cost is zero, render coverage as N/A. Preserve negative contribution and negative coverage. Round only for display.
 
@@ -88,7 +90,7 @@ Contribution reads bypass the local activity cache and fetch usage and transacti
 
 ### 3. Add the report section
 
-Add a compact section for yesterday and 30 days containing net collections, paid usage cost, free usage cost, total cost, estimated contribution, and free-cost coverage.
+Add a compact section for yesterday and 30 days containing net collections, paid usage cost, free usage cost, total usage cost, allocated overhead, estimated contribution, and free-cost coverage.
 
 Include dashboard, API, and audio-processing costs in the paid/free totals. The report does not display per-feature free usage credits or costs.
 
@@ -105,7 +107,7 @@ Add focused tests for cost resolution and contribution aggregation, then reporti
 - Ordinary calls by both free and paid users with usage events; calls below 10 seconds without events; the exact 10-second threshold; missing inserts; linked call deduplication; events without sessions; model rates; and midnight boundaries.
 - Zero revenue, zero free cost, cash refunds, credit-only refunds, chargeback holds/releases, and manual grants.
 - API and enhancement costs, unclassified users, ongoing calls, incomplete cost coverage, pagination, stale caches, and query failures.
-- Known fixture: $100 revenue, $5 cash refunds, $20 paid cost, $15 free cost yields $60 contribution and 5x coverage. Adding an unknown-cost event makes coverage incomplete.
+- Known fixture: $100 revenue, $5 cash refunds, $20 paid cost, $15 free cost yields contribution of $60 minus allocated overhead and coverage of ($75 minus allocated overhead) / $15. Adding an unknown-cost event makes coverage incomplete.
 
 Run the focused tests, `pnpm fixall`, `pnpm type-check`, and `pnpm test`. Inspect formatter changes for unrelated edits. Compare a mocked report against the fixture; any production reconciliation must be read-only and must not send Telegram messages.
 
@@ -115,11 +117,11 @@ Update `docs/devops.md` with definitions, cost limitations, cache behavior, and 
 
 Implement the daily-stats contribution metrics in sexyvoice-admin after the SexyVoice implementation is complete. Read `plans/2026-09-06-daily-stats-usage-contribution.md` in the SexyVoice repository and inspect its final `usage-costs.ts`, `contribution.ts`, queries, tests, and operational documentation. Use the daily-stats README and implementation as the contract.
 
-The goal is to show whether net collections cover paid and free customers' measured provider costs. Inspect `src/lib/pricing.ts`, `src/lib/gemini-pricing.ts`, and `src/lib/data/financials.ts`: the financial queries filter to paid users, and blanket fallback pricing must not hide missing costs.
+The goal is to show whether net collections cover paid and free customers' measured provider costs and allocated overhead. Inspect `src/lib/pricing.ts`, `src/lib/gemini-pricing.ts`, and `src/lib/data/financials.ts`: the financial queries filter to paid users, and blanket fallback pricing must not hide missing costs.
 
 Match the daily report's UTC periods, purchase-time customer classification, cash refund handling, cost provenance, provider/model fallbacks, event-time attribution, session/event deduplication, and incomplete-coverage behavior. Ordinary calls by free and paid users already attempt usage insertion. Use call sessions to supplement short zero-credit calls and other missing-event cases, following the shipped fallback rules. Preserve the distinction between free customers and promotional credits spent by paying customers. Include API and audio-processing costs.
 
-Extend the financial overview and daily series with net collections, free/paid costs, total measured costs, estimated contribution, and free-cost coverage. Show unpriced and unclassified record counts when present and match the report's incomplete-coverage labels. Per-feature credit/cost breakdowns, cost-basis subtotals, and supplemental/pending call counts are outside this handoff. Label the result before payment fees and fixed costs; do not call it accounting profit. Keep paid-user engagement metrics clearly scoped.
+Extend the financial overview and daily series with net collections, free/paid costs, total measured usage costs, allocated overhead, estimated contribution, and free-cost coverage. Show unpriced and unclassified record counts when present and match the report's incomplete-coverage labels. Per-feature credit/cost breakdowns, cost-basis subtotals, and supplemental/pending call counts are outside this handoff. Match the report's overhead baseline and allocation rules. Label the result before payment fees; do not call it accounting profit. Keep paid-user engagement metrics clearly scoped.
 
 Reuse the implementation's fixtures to prove numerical parity for identical inputs. Do not import files directly across repositories or introduce a shared package solely for this work. Keep cost rules in one module inside the admin repository and document their source. Inspect applicable UI skills before modifying the interface.
 
