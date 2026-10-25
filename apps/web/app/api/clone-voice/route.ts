@@ -12,6 +12,7 @@ import {
   needsConversion,
   trimWavBuffer,
 } from '@/lib/audio-converter';
+import { CLONED_VOICE_ID } from '@/lib/call-voices';
 import {
   CLONE_FORM_FIELDS,
   type CloneErrorResponseBody,
@@ -1120,7 +1121,7 @@ async function runBackgroundTasks(
       creditsUsed,
     },
     userId,
-    voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
+    voiceId: CLONED_VOICE_ID,
   });
 
   if (audioFileDBResult.error) {
