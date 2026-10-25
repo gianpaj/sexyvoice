@@ -69,6 +69,30 @@ test.describe('Dashboard Navigation - Authenticated User', () => {
     );
   });
 
+  test('a click on the current page cancels the pending navigation and hides the bar', async ({
+    page,
+  }) => {
+    await page.goto('/en/dashboard/generate');
+    await waitForHydration(page, `a[href="${historyPath}"]`);
+    await page.waitForLoadState('networkidle');
+
+    // History never answers, so only the cancel can clear the bar.
+    await page.route(
+      (url) => url.pathname === historyPath,
+      () => new Promise(() => {}),
+    );
+
+    const sidebar = page.locator('[data-sidebar="sidebar"]');
+    const bar = page.getByTestId('navigation-pending');
+
+    await sidebar.getByRole('link', { exact: true, name: 'History' }).click();
+    await expect(bar).toHaveCSS('opacity', '1');
+
+    await sidebar.getByRole('link', { exact: true, name: 'Generate' }).click();
+    await expect(bar).toHaveCSS('opacity', '0');
+    await expect(page).toHaveURL('/en/dashboard/generate');
+  });
+
   test.describe('on a phone', () => {
     test.use({ viewport: { height: 844, width: 390 } });
 

@@ -5,8 +5,12 @@
 Dashboard pages have no route-level `loading.tsx`. After a sidebar click,
 `DashboardUI` records the page the click leaves and shows `NavigationPending`
 (`apps/web/components/navigation-pending.tsx`), a top bar that fades in after
-100 ms, until the pathname changes. Clicks on the current page set nothing,
-because no pathname change would clear them.
+100 ms, until the pathname changes.
+
+A click on the current page clears the bar instead. Next.js still navigates on
+a same-URL click, and a new navigation cancels the pending one, so the pathname
+would never change to clear it. A server `redirect()` back to the current
+pathname would also leave the bar on; no dashboard page redirects that way.
 
 Rejected: a `useLinkStatus()` spinner inside the clicked link. Below 768px the
 sidebar is a drawer that closes and unmounts on click, so phone users never saw

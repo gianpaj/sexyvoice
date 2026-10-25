@@ -18,7 +18,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { type MouseEvent, useState } from 'react';
+import { type MouseEvent, useEffect, useState } from 'react';
 
 import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
@@ -63,18 +63,22 @@ export default function DashboardUI({
   const pathname = usePathname();
   const t = useTranslations('pages');
   const tSidebar = useTranslations('sidebar');
-  // The page a sidebar click navigates away from. It resets once the pathname
-  // changes, including on browser back and forward.
+  // The page a sidebar click navigates away from. A click on the current page
+  // clears it: Next.js still navigates, which cancels any pending one.
   const [navigationFrom, setNavigationFrom] = useState<string | null>(null);
-  if (navigationFrom !== null && navigationFrom !== pathname) {
-    setNavigationFrom(null);
-  }
+  // Reset only after a pathname change commits, including browser back and
+  // forward. A reset during render would also run in the pending navigation's
+  // unfinished render, and React would then skip the next clear as a no-op.
+  useEffect(() => {
+    setNavigationFrom((from) => (from === pathname ? from : null));
+  }, [pathname]);
+  const isNavigating = navigationFrom === pathname;
 
   const handleNavigationClick = (event: MouseEvent, href: string) => {
     const opensElsewhere =
       event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-    if (href !== pathname && !opensElsewhere) {
-      setNavigationFrom(pathname);
+    if (!opensElsewhere) {
+      setNavigationFrom(href === pathname ? null : pathname);
     }
   };
 
@@ -155,7 +159,7 @@ export default function DashboardUI({
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen>
         <DashboardAnalytics lang={lang} userId={userId} />
-        <NavigationPending pending={navigationFrom !== null} />
+        <NavigationPending pending={isNavigating} />
         <Sidebar collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
