@@ -901,7 +901,7 @@
     "savedVoice": {
       "modeLabel": "Guardar una voz para llamadas",
       "name": "Nombre de la voz",
-      "help": "Guarda esta voz en Mistral para seleccionarla en Mis voces. El proveedor conserva la muestra de referencia.",
+      "help": "Guarda esta voz para usarla al crear un personaje. El proveedor conserva la muestra de referencia.",
       "save": "Guardar voz",
       "success": "Voz guardada",
       "useInCall": "Usar voz en una llamada →",

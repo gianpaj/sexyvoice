@@ -901,7 +901,7 @@
     "savedVoice": {
       "modeLabel": "Salva una voce per le chiamate",
       "name": "Nome della voce",
-      "help": "Salva questa voce su Mistral per selezionarla in Le mie voci. Il fornitore conserva il campione di riferimento.",
+      "help": "Salva questa voce per usarla quando crei un personaggio. Il fornitore conserva il campione di riferimento.",
       "save": "Salva voce",
       "success": "Voce salvata",
       "useInCall": "Usa la voce in una chiamata →",

@@ -899,7 +899,7 @@
     "savedVoice": {
       "modeLabel": "Save a voice for calls",
       "name": "Voice name",
-      "help": "Save this voice with Mistral so you can select it in My voices. The reference sample is retained by the voice provider.",
+      "help": "Save this voice to use it when creating a character. The voice provider retains the reference sample.",
       "save": "Save voice",
       "success": "Voice saved",
       "useInCall": "Use voice in a call →",

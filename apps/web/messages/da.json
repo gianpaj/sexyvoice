@@ -897,7 +897,7 @@
     "savedVoice": {
       "modeLabel": "Gem en stemme til opkald",
       "name": "Stemmens navn",
-      "help": "Gem denne stemme hos Mistral, så du kan vælge den under Mine stemmer. Udbyderen opbevarer referenceoptagelsen.",
+      "help": "Gem denne stemme, så du kan bruge den, når du opretter en karakter. Udbyderen opbevarer referenceoptagelsen.",
       "save": "Gem stemme",
       "success": "Stemme gemt",
       "useInCall": "Brug stemmen i et opkald →",

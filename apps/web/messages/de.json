@@ -901,7 +901,7 @@
     "savedVoice": {
       "modeLabel": "Stimme für Anrufe speichern",
       "name": "Name der Stimme",
-      "help": "Speichere diese Stimme bei Mistral, um sie unter Meine Stimmen auszuwählen. Der Anbieter bewahrt die Referenzaufnahme auf.",
+      "help": "Speichere diese Stimme, um sie beim Erstellen eines Charakters zu verwenden. Der Anbieter bewahrt die Referenzaufnahme auf.",
       "save": "Stimme speichern",
       "success": "Stimme gespeichert",
       "useInCall": "Stimme für einen Anruf verwenden →",
