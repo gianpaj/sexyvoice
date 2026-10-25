@@ -2,9 +2,17 @@
 
 ## Decision
 
-Dashboard pages have no route-level `loading.tsx`. The clicked sidebar link
-shows `SidebarLinkPending`, a spinner from `useLinkStatus()` that fades in
-after 100 ms, until the next page commits.
+Dashboard pages have no route-level `loading.tsx`. Until the next page
+commits, `apps/web/components/navigation-pending.tsx` shows pending feedback
+that fades in after 100 ms:
+
+- Desktop: the clicked sidebar link shows `SidebarLinkPending`, a spinner from
+  `useLinkStatus()`.
+- Phones: below 768px the sidebar is a drawer that closes on click and
+  unmounts, so `useLinkStatus()` inside the link has nothing to render into.
+  `DashboardUI` records the page a drawer click leaves and shows
+  `MobileNavigationPending`, a top bar, until the pathname changes. Clicks on
+  the current page set nothing, because no pathname change would clear them.
 
 Credits renders its header after the profile lookup and streams
 `CreditsBilling` behind `CreditsBillingSkeleton`. Only that section waits for
@@ -65,13 +73,14 @@ Lighthouse 12 desktop, logged in, median of 3 runs:
 | Credits  | C     |    99 |  718 |        1146 |
 
 These are lab runs from one desktop in Europe. Slow networks and cold
-functions push more navigations past 300 ms; the pending spinner covers those
-without a route fallback. Real-user Core Web Vitals come from Vercel Speed
+functions push more navigations past 300 ms; the pending indicators cover
+those without a route fallback. Real-user Core Web Vitals come from Vercel Speed
 Insights.
 
 ## Verification
 
 `e2e/dashboard-navigation.spec.ts` holds the History request and checks that
-the clicked link's spinner reaches full opacity before the URL changes, then
-hides once the page renders. The full Playwright suite passed against a
+the indicator reaches full opacity before the URL changes, then hides once the
+page renders: the link spinner at desktop width, and the top bar at 390px.
+With the drawer click handler disabled, the phone test fails. The full Playwright suite passed against a
 production E2E build.

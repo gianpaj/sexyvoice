@@ -18,13 +18,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { type MouseEvent, useState } from 'react';
 
 import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
 import { DashboardAnalytics } from '@/components/dashboard-analytics';
+import {
+  MobileNavigationPending,
+  SidebarLinkPending,
+} from '@/components/navigation-pending';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
-import { SidebarLinkPending } from '@/components/sidebar-link-pending';
 import {
   Sidebar,
   SidebarContent,
@@ -39,6 +43,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
@@ -62,6 +67,23 @@ export default function DashboardUI({
   const pathname = usePathname();
   const t = useTranslations('pages');
   const tSidebar = useTranslations('sidebar');
+  const isMobile = useIsMobile();
+  // The page a phone sidebar click navigates away from. It resets once the
+  // pathname changes, including on browser back and forward.
+  const [mobileNavigationFrom, setMobileNavigationFrom] = useState<
+    string | null
+  >(null);
+  if (mobileNavigationFrom !== null && mobileNavigationFrom !== pathname) {
+    setMobileNavigationFrom(null);
+  }
+
+  const handleNavigationClick = (event: MouseEvent, href: string) => {
+    const opensElsewhere =
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    if (isMobile && href !== pathname && !opensElsewhere) {
+      setMobileNavigationFrom(pathname);
+    }
+  };
 
   const navigation = [
     {
@@ -140,6 +162,7 @@ export default function DashboardUI({
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen>
         <DashboardAnalytics lang={lang} userId={userId} />
+        <MobileNavigationPending pending={mobileNavigationFrom !== null} />
         <Sidebar collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
@@ -170,7 +193,12 @@ export default function DashboardUI({
                   {navigation.map((item) => (
                     <SidebarMenuItem key={item.name}>
                       <SidebarMenuButton asChild isActive={item.current}>
-                        <Link href={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={(event) =>
+                            handleNavigationClick(event, item.href)
+                          }
+                        >
                           <item.icon className="mr-3 size-5" />
                           <span className="truncate">{item.name}</span>
                           <SidebarLinkPending />
