@@ -37,7 +37,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 | -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
 | Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
 | Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
-| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               17 |
+| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
 | Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
 | History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
 | Usage    | `/en/dashboard/usage`    | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |

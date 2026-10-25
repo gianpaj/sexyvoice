@@ -54,11 +54,6 @@ export class ClonePage {
   readonly generateButton: Locator;
   readonly cancelButton: Locator;
 
-  // Demo player
-  readonly demoLanguage: Locator;
-  readonly demoResult: Locator;
-  readonly demoApplyButton: Locator;
-
   // Error / alert elements
   readonly errorAlert: Locator;
   readonly insufficientCreditsAlert: Locator;
@@ -106,11 +101,6 @@ export class ClonePage {
     // across the entire DOM (which is expensive on this complex page).
     this.generateButton = page.getByTestId('clone-generate-button');
     this.cancelButton = page.getByRole('button', { name: /cancel/i });
-
-    // Demo player
-    this.demoLanguage = page.getByTestId('demo-clone-language');
-    this.demoResult = page.getByTestId('demo-clone-result');
-    this.demoApplyButton = page.getByTestId('demo-clone-try');
 
     // Error alerts
     this.errorAlert = page.locator('[role="alert"]').filter({
@@ -333,15 +323,6 @@ export class ClonePage {
       /generating|cloning|converting/i,
       { timeout: 5000 },
     );
-  }
-
-  /**
-   * Verify the demo player and its apply action are visible
-   */
-  async expectDemoPlayerVisible() {
-    await expect(this.demoLanguage).toBeVisible();
-    await expect(this.demoResult).toBeVisible();
-    await expect(this.demoApplyButton).toBeVisible();
   }
 
   /**

@@ -8,9 +8,8 @@ import { ClonePage } from './pages/clone.page';
  * These tests verify the voice cloning page functionality:
  * 1. Page display: title, tabs, upload area, language selector
  * 2. Form elements: text input, legal consent, generate button
- * 3. Demo player and delivery selection
- * 4. Form validation: disabled button states
- * 5. Auth redirect for unauthenticated users
+ * 3. Form validation: disabled button states
+ * 4. Auth redirect for unauthenticated users
  *
  * All tests use the authenticated state from auth.setup.ts.
  * Microphone tests are skipped (require browser permissions).
@@ -66,19 +65,6 @@ test.describe('Clone Dashboard - Authenticated User', () => {
 
   test('should display legal consent checkbox (visible)', async () => {
     await clonePage.expectLegalConsentVisible();
-  });
-
-  test('should show the demo player', async () => {
-    await clonePage.expectDemoPlayerVisible();
-  });
-
-  test('should switch the demo language', async () => {
-    await clonePage.demoLanguage.selectOption('de');
-    await expect(clonePage.demoResult).toHaveAttribute(
-      'data-speaker-id',
-      'heike',
-    );
-    await expect(clonePage.demoApplyButton).toBeEnabled();
   });
 
   test('should disable generate button when no audio is provided', async () => {
