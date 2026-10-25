@@ -24,6 +24,7 @@ import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
 import { DashboardAnalytics } from '@/components/dashboard-analytics';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
+import { SidebarLinkPending } from '@/components/sidebar-link-pending';
 import {
   Sidebar,
   SidebarContent,
@@ -171,7 +172,8 @@ export default function DashboardUI({
                       <SidebarMenuButton asChild isActive={item.current}>
                         <Link href={item.href}>
                           <item.icon className="mr-3 size-5" />
-                          <span>{item.name}</span>
+                          <span className="truncate">{item.name}</span>
+                          <SidebarLinkPending />
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
