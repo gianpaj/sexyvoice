@@ -151,8 +151,12 @@ for the creation and playback behavior.
   variable; do not prefix it with `NEXT_PUBLIC_`.
 - `INWORLD_API_KEY`: complete Base64 credential with read and write access for
   call voice cloning and previews. The Fly SexyCall agent must have access to
-  the same workspace. Deploy agent support for `model=inworld-tts` before
-  enabling Inworld in the web app. The agent uses `INWORLD_TTS_MODEL=inworld-tts-2`
+  the same workspace. An unset `CALL_CLONE_PROVIDER` activates Inworld on web
+  deployment. Deploy agent support for `model=inworld-tts` and set its credentials
+  before releasing the web app. To stage the rollout, set
+  `CALL_CLONE_PROVIDER=mistral` in Vercel before deploying, then change it to
+  `inworld` and redeploy when both deployments are ready.
+  The agent uses `INWORLD_TTS_MODEL=inworld-tts-2`
   by default; `inworld-tts-2-flash` is an optional agent override. Keep the
   agent's `MISTRAL_API_KEY` configured while saved Mistral voices are in use.
 - `REPLICATE_API_TOKEN`
