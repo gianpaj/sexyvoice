@@ -7,6 +7,8 @@ and recording form. The server loads `audio_references` through the shared
 owner-scoped `getSavedCallVoices()` query. Creating a saved call voice adds it
 to the client list immediately. Selecting one opens the call character creator
 with that voice, and previews use the private owner-checked sample endpoint.
+Generated previews use the saved R2 WAV when `sample_url` is populated; profiles
+without one retain the provider preview. See [stored samples](../integration/2026-10-25-saved-call-voice-samples.md).
 
 The character creator and dashboard share voice tiles and sample playback.
 Voice selection in the creator remains a radio group; the dashboard's saved

@@ -1,5 +1,6 @@
 import { Mistral } from '@mistralai/mistralai';
 
+import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
 
 let client: Mistral | undefined;
@@ -30,6 +31,19 @@ export async function saveMistralVoice(
     locale,
     userId,
     provider: 'mistral',
+    generateSample: async () => {
+      const speech = await mistral.audio.speech.complete({
+        model: 'voxtral-mini-tts-3-0',
+        input: CALL_VOICE_SAMPLE_TEXT,
+        voiceId: voice.id,
+        responseFormat: 'wav',
+        stream: false,
+      });
+      if (!speech.audioData) throw new Error('Voice sample is missing');
+      return typeof speech.audioData === 'string'
+        ? Buffer.from(speech.audioData, 'base64')
+        : Buffer.from(speech.audioData);
+    },
     deleteVoice: () => mistral.audio.voices.delete({ voiceId: voice.id }),
   });
 }

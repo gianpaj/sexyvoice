@@ -233,12 +233,17 @@ available only for speech generation.
 `POST /api/clone-voice` accepts `saveVoiceName` and `voiceConsent=true` for this
 mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or
 `mistral` for new profiles. `saveInworldVoice` and `saveMistralVoice` create the
-provider voice, and `saveCallVoiceProfile` inserts its provider ID, provider,
-owner, name, and locale into `audio_references`. If the
-insert fails, it attempts to delete the provider voice. The response contains
+provider voice and synthesize the exact English text in `CALL_VOICE_SAMPLE_TEXT`
+using `inworld-tts-2` or `voxtral-mini-tts-3-0`. No language parameter is passed
+to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
+the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
+then inserts the provider ID, provider, owner, name, locale, and `sample_url`
+into `audio_references`. If sample generation, upload, or insertion fails, it
+attempts to clean up the provider voice and any attempted R2 upload. The response contains
 `audioReferenceId` and `provider`. This action charges no speech
-credits. The reference is retained by the selected provider; generated WAVs in `audio_files`
-remain separate from reusable profiles.
+credits; sample synthesis incurs provider costs. The reference is retained by
+the selected provider. The preview is stored on the profile, separately from
+speech generations in `audio_files`.
 
 The Clone page lists the signed-in user's saved Inworld and Mistral profiles
 above the upload and recording form. Previews use the private sample endpoint;
@@ -249,8 +254,12 @@ comparison card; the public voice-cloning page retains its examples.
 Saved voice samples are served through
 `GET /api/audio-references/[id]/sample`. The route authenticates the user,
 checks ownership and a supported call provider, and returns audio with private,
-non-cacheable headers. Provider IDs stay on the server.
-Mistral returns reference WAV audio; Inworld's preview endpoint returns MP3.
+non-cacheable headers. Provider IDs and sample URLs stay on the server.
+Profiles with `sample_url` return the saved R2 WAV without provider calls.
+Reads accept only sample object keys under the owned profile's prefix, never
+arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
+reference WAV audio or Inworld's MP3 preview. Preview playback does not create
+or backfill R2 samples.
 Inworld requires `INWORLD_API_KEY` in the web app and agent, with access to
 the same workspace. Mistral profiles require `MISTRAL_API_KEY` in both.
 Changing the default does not convert existing profiles or voice IDs.

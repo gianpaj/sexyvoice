@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { resolveBaseCloneLocale } from './constants';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
 
@@ -49,6 +50,19 @@ export async function saveInworldVoice(
     locale,
     userId,
     provider: 'inworld',
+    generateSample: async () => {
+      const speech = await inworldRequest('/tts/v1/voice', {
+        method: 'POST',
+        body: JSON.stringify({
+          text: CALL_VOICE_SAMPLE_TEXT,
+          voiceId: voice.voiceId,
+          modelId: 'inworld-tts-2',
+          audioConfig: { audioEncoding: 'LINEAR16' },
+        }),
+      });
+      const { audioContent } = previewResponse.parse(await speech.json());
+      return Buffer.from(audioContent, 'base64');
+    },
     deleteVoice: () =>
       inworldRequest(`/voices/v1/voices/${encodeURIComponent(voice.voiceId)}`, {
         method: 'DELETE',

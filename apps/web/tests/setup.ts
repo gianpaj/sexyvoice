@@ -620,13 +620,17 @@ const mockUploadFileToR2 = vi
   .mockImplementation((filename: string) =>
     Promise.resolve(`https://files.sexyvoice.ai/${filename}`),
   );
+const mockDeleteFileFromR2 = vi.fn().mockResolvedValue(undefined);
+const mockGetFileFromR2 = vi.fn();
 
 vi.mock('@/lib/storage/upload', () => ({
   uploadFileToR2: mockUploadFileToR2,
+  deleteFileFromR2: mockDeleteFileFromR2,
+  getFileFromR2: mockGetFileFromR2,
 }));
 
 // Export mock for test access
-export { mockUploadFileToR2 };
+export { mockDeleteFileFromR2, mockGetFileFromR2, mockUploadFileToR2 };
 
 // Mock Stripe client
 const mockCheckUserPaidStatus = vi

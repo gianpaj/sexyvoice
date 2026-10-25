@@ -9,6 +9,7 @@ import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { supportsCallCloneLocale } from '@/lib/clone/call-voice-config';
 import { getInworldVoiceSample, saveInworldVoice } from '@/lib/clone/inworld';
 import { saveCallVoiceProfile } from '@/lib/clone/save-call-voice-profile';
+import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -47,8 +48,13 @@ describe('Inworld saved voices', () => {
   ])('creates and persists an owned %s clone', async (locale, languageCode) => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(
+      .mockResolvedValueOnce(
         Response.json({ voice: { voiceId: 'workspace__clone' } }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          audioContent: Buffer.from('RIFFsample').toString('base64'),
+        }),
       );
     vi.stubGlobal('fetch', fetchMock);
     await saveInworldVoice(
@@ -68,19 +74,41 @@ describe('Inworld saved voices', () => {
       ],
     });
     expect(mocks.insert).toHaveBeenCalledWith({
+      id: expect.any(String),
       name: 'My voice',
       locale,
       user_id: 'owner',
       provider: 'inworld',
       voice_id: 'workspace__clone',
       is_paid: true,
+      sample_url: expect.stringMatching(
+        /^https:\/\/files\.sexyvoice\.ai\/call-voice-samples\//,
+      ),
     });
+    const [speechUrl, speechOptions] = fetchMock.mock.calls[1];
+    expect(speechUrl).toBe('https://api.inworld.ai/tts/v1/voice');
+    expect(JSON.parse(speechOptions.body)).toEqual({
+      text: "Hello, I'm here to guide you into a world of intimate whispers and sensual bliss.  Just relax and let my voice wrap around you.  What desire shall we explore first?",
+      voiceId: 'workspace__clone',
+      modelId: 'inworld-tts-2',
+      audioConfig: { audioEncoding: 'LINEAR16' },
+    });
+    expect(mockUploadFileToR2).toHaveBeenCalledWith(
+      expect.any(String),
+      Buffer.from('RIFFsample'),
+      'audio/wav',
+    );
   });
   it('deletes a provider voice when saving its ownership record fails', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(
         Response.json({ voice: { voiceId: 'workspace__clone' } }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({
+          audioContent: Buffer.from('RIFFsample').toString('base64'),
+        }),
       )
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchMock);
@@ -95,6 +123,9 @@ describe('Inworld saved voices', () => {
       'https://api.inworld.ai/voices/v1/voices/workspace__clone',
       expect.objectContaining({ method: 'DELETE' }),
     );
+    expect(mockDeleteFileFromR2).toHaveBeenCalledWith(
+      mockUploadFileToR2.mock.calls[0][0],
+    );
   });
   it('does not store invalid provider responses or expose their error bodies', async () => {
     const fetchMock = vi
@@ -105,6 +136,27 @@ describe('Inworld saved voices', () => {
       saveInworldVoice(Buffer.from('audio'), 'My voice', 'en', 'owner'),
     ).rejects.toThrow('Inworld voice request failed (503)');
     expect(mocks.insert).not.toHaveBeenCalled();
+  });
+  it('removes the cloned voice if sample synthesis fails', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json({ voice: { voiceId: 'workspace__clone' } }),
+      )
+      .mockResolvedValueOnce(
+        new Response('private provider body', { status: 503 }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(
+      saveInworldVoice(Buffer.from('audio'), 'Mine', 'en', 'owner'),
+    ).rejects.toThrow('Inworld voice request failed (503)');
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://api.inworld.ai/voices/v1/voices/workspace__clone',
+      expect.objectContaining({ method: 'DELETE' }),
+    );
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mockUploadFileToR2).not.toHaveBeenCalled();
   });
   it('decodes a preview without exposing the provider URL to the client', async () => {
     const fetchMock = vi
@@ -137,6 +189,7 @@ describe('Inworld saved voices', () => {
           userId: 'owner',
           provider,
           deleteVoice,
+          generateSample: async () => Buffer.from('RIFFsample'),
         }),
       ).rejects.toThrow('database unavailable');
       expect(deleteVoice).toHaveBeenCalledOnce();

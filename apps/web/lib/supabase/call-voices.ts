@@ -22,7 +22,7 @@ export async function getOwnedCallVoice(
   const supabase = await createClient();
   const query = supabase
     .from('audio_references')
-    .select('id, name, locale, voice_id, provider')
+    .select('id, name, locale, voice_id, provider, sample_url')
     .eq('id', id)
     .eq('user_id', userId);
   const { data, error } = await (provider
