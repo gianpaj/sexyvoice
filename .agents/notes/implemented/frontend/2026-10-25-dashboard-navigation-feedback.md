@@ -10,7 +10,9 @@ Dashboard pages have no route-level `loading.tsx`. After a sidebar click,
 A click on the current page clears the bar instead. Next.js still navigates on
 a same-URL click, and a new navigation cancels the pending one, so the pathname
 would never change to clear it. A server `redirect()` back to the current
-pathname would also leave the bar on; no dashboard page redirects that way.
+pathname also leaves the bar on. Only Credits does that today: with no profile
+row it redirects to Generate, so a click from Generate keeps the bar on until
+the next navigation.
 
 Rejected: a `useLinkStatus()` spinner inside the clicked link. Below 768px the
 sidebar is a drawer that closes and unmounts on click, so phone users never saw
