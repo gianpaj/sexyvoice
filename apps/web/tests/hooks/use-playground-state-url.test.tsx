@@ -45,6 +45,33 @@ function makeWrapper(initialCustomCharacters: Preset[]) {
 }
 
 describe('usePlaygroundState — preset URL', () => {
+  it.each(['create', 'edit', 'duplicate'])(
+    'preserves saved German prompts on %s',
+    (operation) => {
+      window.history.replaceState({}, '', '/de/dashboard/call');
+      const { result } = renderHook(() => usePlaygroundState(), {
+        wrapper: makeWrapper(operation === 'edit' ? [savedCharacter] : []),
+      });
+      act(() =>
+        result.current.dispatch({ type: 'SET_LANGUAGE', payload: 'de' }),
+      );
+      const response = {
+        ...savedCharacter,
+        localizedInstructions: { en: 'You are Luna.', de: 'Du bist Luna.' },
+      };
+      act(() =>
+        result.current.dispatch({
+          type: 'SAVE_CUSTOM_CHARACTER',
+          payload: response,
+        }),
+      );
+      act(() => result.current.selectPreset(response.id));
+
+      expect(result.current.pgState.customCharacters).toEqual([response]);
+      expect(result.current.pgState.instructions).toBe('Du bist Luna.');
+    },
+  );
+
   it('selects a saved character from an old link without duplicating it', () => {
     const search = `?preset=${savedCharacter.id}&presetName=${savedCharacter.name}&instructions=Old+prompt&sessionConfig.voice=Rex`;
     window.history.replaceState({}, '', `/en/dashboard/call${search}`);

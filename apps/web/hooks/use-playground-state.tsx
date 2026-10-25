@@ -107,30 +107,7 @@ function playgroundStateReducer(
         memory: action.payload,
       };
     case 'SAVE_CUSTOM_CHARACTER': {
-      const language = state.language;
-      const existingCharacter = state.customCharacters.find(
-        (c) => c.id === action.payload.id,
-      );
-
-      // Build updated localizedInstructions
-      const existingLocalized =
-        existingCharacter?.localizedInstructions ||
-        action.payload.localizedInstructions ||
-        {};
-      const updatedLocalized: Partial<Record<string, string>> = {
-        ...existingLocalized,
-        [language]: action.payload.instructions,
-      };
-
-      // If saving in English, also update the default instructions field
-      const updatedPreset: Preset = {
-        ...action.payload,
-        instructions:
-          language === 'en'
-            ? action.payload.instructions
-            : existingCharacter?.instructions || action.payload.instructions,
-        localizedInstructions: updatedLocalized,
-      };
+      const updatedPreset = action.payload;
 
       const updatedCharacters = state.customCharacters.map((character) =>
         character.id === updatedPreset.id ? updatedPreset : character,
