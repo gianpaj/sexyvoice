@@ -31,9 +31,9 @@ const CreateCliLoginSessionSchema = z
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // biome-ignore lint/plugin/use-verified-claims: Confirm the Auth user before issuing a durable CLI credential.
+  const { data: authData } = await supabase.auth.getUser();
+  const { user } = authData;
 
   if (!user) {
     return APIErrorResponse('Unauthorized', 401);

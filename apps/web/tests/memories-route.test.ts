@@ -9,6 +9,7 @@ const mockUser = {
   email: 'test@example.com',
   id: 'a1b2c3d4-5678-4abc-9def-012345678901',
 };
+const mockGetUser = vi.fn();
 let mockIsAuthenticated = true;
 let mockAuthError: { message: string } | null = null;
 let mockDeleteError: { message: string } | null = null;
@@ -29,18 +30,19 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() =>
     Promise.resolve({
       auth: {
-        getUser: vi.fn(() => {
+        getClaims: vi.fn(() => {
           if (mockAuthError) {
             return Promise.resolve({
-              data: { user: null },
+              data: { claims: null },
               error: mockAuthError,
             });
           }
           return Promise.resolve({
-            data: { user: mockIsAuthenticated ? mockUser : null },
+            data: { claims: mockIsAuthenticated ? { sub: mockUser.id } : null },
             error: null,
           });
         }),
+        getUser: mockGetUser,
       },
       from: (table: string) => {
         mockCalls.table = table;
@@ -66,6 +68,7 @@ vi.mock('@/lib/supabase/server', () => ({
 // Import the route handler AFTER the mock is set up
 // ---------------------------------------------------------------------------
 import { DELETE } from '@/app/api/memories/route';
+import { createClient } from '@/lib/supabase/server';
 
 // ---------------------------------------------------------------------------
 // Test suite
@@ -90,7 +93,7 @@ describe('DELETE /api/memories', () => {
     expect(mockCalls.table).toBeNull();
   });
 
-  it('returns 401 when getUser reports an auth error', async () => {
+  it('returns 401 when getClaims reports an auth error', async () => {
     mockAuthError = { message: 'session expired' };
 
     const res = await DELETE();
@@ -108,6 +111,7 @@ describe('DELETE /api/memories', () => {
 
     expect(res.status).toBe(200);
     expect(body).toEqual({ deleted: 3, success: true });
+    expect(mockGetUser).not.toHaveBeenCalled();
     // Erasure must target agent_memories scoped to the current user only.
     expect(mockCalls.table).toBe('agent_memories');
     expect(mockCalls.filter).toEqual({
@@ -134,3 +138,41 @@ describe('DELETE /api/memories', () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe.each([['DELETE', () => DELETE()]] as const)(
+  '%s claims authentication',
+  (_method, invoke) => {
+    it.each([
+      ['missing data', { data: null, error: null }],
+      ['missing claims', { data: { claims: null }, error: null }],
+      ['missing subject', { data: { claims: {} }, error: null }],
+      ['empty subject', { data: { claims: { sub: '' } }, error: null }],
+      ['invalid token', { data: null, error: { message: 'Invalid JWT' } }],
+      [
+        'SDK error with claims',
+        {
+          data: { claims: { sub: 'test-user-id' } },
+          error: { message: 'Verification failed' },
+        },
+      ],
+    ])('rejects %s before data access', async (_name, result) => {
+      vi.clearAllMocks();
+
+      const from = vi.fn();
+      vi.mocked(createClient).mockResolvedValueOnce({
+        auth: {
+          getClaims: vi.fn().mockResolvedValue(result),
+          getUser: vi.fn(),
+        },
+        from,
+      } as never);
+
+      const response = await invoke();
+
+      expect(response.status).toBe(401);
+      expect(await response.json()).toMatchObject({ error: 'Unauthorized' });
+
+      expect(from).not.toHaveBeenCalled();
+    });
+  },
+);

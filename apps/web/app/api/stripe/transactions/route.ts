@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 
 import { APIErrorResponse } from '@/lib/error-ts';
 import { stripe } from '@/lib/stripe/stripe-admin';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -18,14 +19,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if user is authenticated
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
+    const claims = await getVerifiedClaims(supabase);
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
-    const userData = await getUserById(user.id);
+    const userData = await getUserById(claims.sub);
     if (!userData?.stripe_id) {
       return APIErrorResponse('Stripe customer not found', 404);
     }

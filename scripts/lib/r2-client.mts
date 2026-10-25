@@ -16,7 +16,13 @@ import {
 export function createR2Client(
   environment: NodeJS.ProcessEnv = process.env,
 ): R2Client {
-  const client = new S3Client({
+  return createR2ClientAdapter(createR2S3Client(environment));
+}
+
+export function createR2S3Client(
+  environment: NodeJS.ProcessEnv = process.env,
+): S3Client {
+  return new S3Client({
     credentials: {
       accessKeyId: requiredEnv(environment, 'R2_ACCESS_KEY_ID'),
       secretAccessKey: requiredEnv(environment, 'R2_SECRET_ACCESS_KEY'),
@@ -24,8 +30,6 @@ export function createR2Client(
     endpoint: requiredEnv(environment, 'R2_ENDPOINT'),
     region: 'auto',
   });
-
-  return createR2ClientAdapter(client);
 }
 
 export function createR2ClientAdapter(

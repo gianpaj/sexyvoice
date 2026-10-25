@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { PostgrestError } from '@supabase/supabase-js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import CreditsPage from '@/app/[lang]/(dashboard)/dashboard/credits/page';
@@ -104,6 +105,7 @@ describe('CreditsPage auth/profile guards', () => {
       error: null,
       status: 200,
       statusText: 'OK',
+      success: true,
     });
 
     await expect(
@@ -125,13 +127,12 @@ describe('CreditsPage auth/profile guards', () => {
 
   it('captures profile lookup errors as errors and does not redirect as missing profile', async () => {
     const user = { email: 'user@example.com', id: 'user-1' };
-    const profileLookupError = {
+    const profileLookupError = new PostgrestError({
       code: '42501',
       details: '',
       hint: '',
       message: 'permission denied for table profiles',
-      name: 'PostgrestError',
-    };
+    });
     vi.mocked(createClient).mockResolvedValue(createSupabaseMock({ user }));
     vi.mocked(getUserByIdWithError).mockResolvedValue({
       count: null,
@@ -139,6 +140,7 @@ describe('CreditsPage auth/profile guards', () => {
       error: profileLookupError,
       status: 500,
       statusText: 'Internal Server Error',
+      success: false,
     });
 
     await expect(

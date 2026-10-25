@@ -65,6 +65,8 @@ jobs:
         working-directory: apps/web
         run: pnpm run build
         env:
+          # Disables the browser Sentry client in the E2E build
+          NEXT_PUBLIC_E2E_TEST_MODE: "true"
           # Supabase
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}

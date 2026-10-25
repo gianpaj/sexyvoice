@@ -93,6 +93,7 @@ function createAttempt(context: AttemptContext, streaming: boolean) {
             ? calculateGenerateApiDollarAmount({
                 candidatesTokenCount: outputTokens,
                 model: context.model,
+                occurredAt,
                 promptTokenCount: inputTokens,
                 provider: 'google',
                 sourceType: context.sourceType,

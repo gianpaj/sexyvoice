@@ -1,23 +1,32 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { NextIntlClientProvider } from 'next-intl';
+import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
+import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import daMessages from '@/messages/da.json';
+import deMessages from '@/messages/de.json';
+import enMessages from '@/messages/en.json';
+import esMessages from '@/messages/es.json';
+import frMessages from '@/messages/fr.json';
+import itMessages from '@/messages/it.json';
 
 const {
   fetchMock,
   mockEnsureLoaded,
+  mockFFmpegState,
   mockLanguageSelect,
   mockToastError,
   mockToastSuccess,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
+  mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
@@ -51,7 +60,7 @@ vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({
     convert: vi.fn(),
     ensureLoaded: mockEnsureLoaded,
-    isLoading: false,
+    isLoading: mockFFmpegState.isLoading,
   }),
 }));
 
@@ -114,14 +123,6 @@ vi.mock('@/lib/download', () => ({
   downloadUrl: vi.fn(),
 }));
 
-vi.mock('@/lib/i18n/get-translated-languages', () => ({
-  getTranslatedLanguages: (_lang: string, codes: string[]) =>
-    codes.map((code) => ({
-      label: code.toUpperCase(),
-      value: code,
-    })),
-}));
-
 const errorCodesDict = {
   PROVIDER_UNAVAILABLE:
     '{provider} no está disponible temporalmente. Inténtalo de nuevo.',
@@ -146,6 +147,7 @@ const dict = {
   ctaButton: 'Generate Audio',
   downloadAudio: 'Download Audio',
   dragDropText: 'Drag & drop or click to browse',
+  englishChatterbox: 'English (Chatterbox)',
   errorCloning: 'Failed to clone voice',
   errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errors: {
@@ -228,6 +230,7 @@ const dict = {
 
 const renderClone = (
   props: {
+    cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
     lang?: Locale;
     userHasPaid?: boolean;
@@ -236,7 +239,10 @@ const renderClone = (
   render(
     <NextIntlClientProvider
       locale="es"
-      messages={{ clone: dict, errorCodes: errorCodesDict }}
+      messages={{
+        clone: props.cloneMessages ?? dict,
+        errorCodes: errorCodesDict,
+      }}
     >
       <NewVoiceClient
         hasEnoughCredits={props.hasEnoughCredits ?? true}
@@ -256,6 +262,7 @@ const renderedLocaleCodes = () => {
 describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFFmpegState.isLoading = false;
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
@@ -274,17 +281,123 @@ describe('NewVoiceClient', () => {
     vi.unstubAllGlobals();
   });
 
+  it('updates text direction without clearing text when switching languages', async () => {
+    const user = userEvent.setup();
+    renderClone();
+
+    const input = screen.getByTestId('clone-text-input');
+    const text = 'Keep this text when switching languages.';
+    await user.type(input, text);
+    expect(input).toHaveAttribute('dir', 'ltr');
+
+    for (const code of CLONE_SUPPORTED_LOCALE_CODES) {
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(input).toHaveAttribute(
+        'dir',
+        code === 'ar' || code === 'he' ? 'rtl' : 'ltr',
+      );
+      expect(input).toHaveValue(text);
+    }
+
+    act(() => {
+      mockLanguageSelect.mock.lastCall?.[0].dispatch({
+        patch: { selectedLocaleCode: 'en' },
+        type: 'patch',
+      });
+    });
+    expect(input).toHaveAttribute('dir', 'ltr');
+    expect(input).toHaveValue(text);
+  });
+
+  it.each([['fr', 'Français']])(
+    'uses the translated name for %s in the audio loading message',
+    (code, name) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+
+      expect(
+        screen.getByText(`Preparing audio processor for ${name}...`),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it.each(['zh', 'ja', 'en-multi', 'en'])(
+    'hides the preparation message when switching from French to %s',
+    (code) => {
+      mockFFmpegState.isLoading = true;
+      renderClone({ lang: 'fr' });
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: 'fr' },
+          type: 'patch',
+        });
+      });
+      // The fixture supplies English copy; lang: 'fr' localizes the language name.
+      expect(
+        screen.getByText('Preparing audio processor for Français...'),
+      ).toBeInTheDocument();
+
+      act(() => {
+        mockLanguageSelect.mock.lastCall?.[0].dispatch({
+          patch: { selectedLocaleCode: code },
+          type: 'patch',
+        });
+      });
+      expect(
+        screen.queryByText(/Preparing audio processor for/),
+      ).not.toBeInTheDocument();
+    },
+  );
+
   it('lists the page locale first in the language select', () => {
     renderClone({ lang: 'it' });
 
     expect(renderedLocaleCodes()[0]).toBe('it');
   });
 
+  it.each([
+    ['en', enMessages, 'English (Chatterbox)'],
+    ['es', esMessages, 'Inglés (Chatterbox)'],
+    ['de', deMessages, 'Englisch (Chatterbox)'],
+    ['da', daMessages, 'Engelsk (Chatterbox)'],
+    ['it', itMessages, 'Inglese (Chatterbox)'],
+    ['fr', frMessages, 'Anglais (Chatterbox)'],
+  ] as const)(
+    'labels Chatterbox English distinctly in %s',
+    (lang, messages, name) => {
+      renderClone({ cloneMessages: messages.clone, lang });
+
+      const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
+        supportedLocales: { code: string; name: string }[];
+      };
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en-multi')?.name,
+      ).toBe(name);
+      expect(
+        lastCall.supportedLocales.find(({ code }) => code === 'en')?.name,
+      ).not.toBe(name);
+    },
+  );
+
   it('keeps every supported locale when the page locale is hoisted', () => {
     renderClone({ lang: 'it' });
 
     const codes = renderedLocaleCodes();
     expect(codes).toHaveLength(new Set(codes).size);
+    expect([...codes].sort()).toEqual([...CLONE_SUPPORTED_LOCALE_CODES].sort());
     expect(codes).toContain('en');
     expect(codes).toContain('es');
   });

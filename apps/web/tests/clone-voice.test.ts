@@ -12,7 +12,7 @@ import {
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
-  mockSupabaseUnauthenticatedUserOnce,
+  mockSupabaseUnauthenticatedClaimsOnce,
   mockUploadFileToR2,
   server,
 } from './setup';
@@ -661,7 +661,7 @@ describe('Clone Voice API Route', () => {
 
   describe('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
-      mockSupabaseUnauthenticatedUserOnce();
+      mockSupabaseUnauthenticatedClaimsOnce();
 
       const formData = createFormDataWithAudio('Hello world');
 

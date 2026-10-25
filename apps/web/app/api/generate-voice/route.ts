@@ -7,7 +7,6 @@ import {
 } from '@google/genai';
 // biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
-import type { User } from '@supabase/supabase-js';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
@@ -33,7 +32,9 @@ import {
   isTransientProviderFailure,
   type ProviderId,
 } from '@/lib/provider-errors';
+import { CANCELLED_CHARGE_FLOW } from '@/lib/sentry/server-filters';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCredits,
   getVoiceById,
@@ -48,6 +49,7 @@ import {
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildGeminiTtsContents,
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -85,6 +87,11 @@ import {
 } from './gemini-tts';
 
 const { logger, captureException } = Sentry;
+
+interface GenerationIdentity {
+  email?: string;
+  id: string;
+}
 
 /**
  * The Google AI SDK wraps native AbortError into a generic Error whose name
@@ -265,6 +272,30 @@ async function reconcileReservedCredits({
   }
 }
 
+function reportCancelledCharge({
+  creditsDebited,
+  model,
+  signal,
+  transport,
+  userId,
+}: {
+  creditsDebited: number;
+  model: string;
+  signal: AbortSignal;
+  transport: 'json' | 'sse';
+  userId: string;
+}) {
+  if (!signal.aborted || creditsDebited <= 0) return;
+
+  Sentry.captureMessage('Voice generation charge retained after cancellation', {
+    extra: { creditsDebited, model },
+    fingerprint: [CANCELLED_CHARGE_FLOW],
+    level: 'warning',
+    tags: { flow: CANCELLED_CHARGE_FLOW, transport },
+    user: { id: userId },
+  });
+}
+
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -281,10 +312,11 @@ export async function POST(request: Request) {
   let selectedLanguage = '';
   let isSplit = false;
   const outputCodec = 'mp3';
-  let user: User | null = null;
+  let user: GenerationIdentity | null = null;
   let userHasPaid = false;
   let modelUsed = '';
   let reservedCredits = 0;
+  let creditsDebited = 0;
   try {
     if (request.body === null) {
       logger.error('Request body is empty');
@@ -302,6 +334,7 @@ export async function POST(request: Request) {
     styleVariant = body.styleVariant || '';
     selectedLanguage = body.language || '';
     isSplit = body.split === true;
+    const textImproved = body.textImproved === true;
     const stream = body.stream === true;
 
     if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
@@ -330,15 +363,16 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    const { data } = await supabase.auth.getUser();
-    user = data?.user;
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       logger.error('User not found', {
         voiceId,
       });
       return APIErrorResponse('User not found', 401);
     }
+
+    user = { email: claims.email, id: claims.sub };
 
     Sentry.setUser({
       email: user.email,
@@ -525,6 +559,9 @@ export async function POST(request: Request) {
     if (speed !== undefined) {
       hashInput += `-speed:${speed}`;
     }
+    if (voiceObj.model === 'gpro38') {
+      hashInput += `-style:${JSON.stringify(styleVariant ?? '')}`;
+    }
     const hash = await generateHash(hashInput);
 
     const abortController = new AbortController();
@@ -574,15 +611,16 @@ export async function POST(request: Request) {
       if (shouldStream) {
         const body = createSseEvent('done', {
           cached: true,
-          creditsRemaining: currentAmount,
           creditsUsed: 0,
           url: result,
         });
         return new Response(body, { headers: SSE_HEADERS });
       }
 
-      // Return existing audio file URL
-      return NextResponse.json({ url: result }, { status: 200 });
+      return NextResponse.json(
+        { cached: true, creditsUsed: 0, url: result },
+        { status: 200 },
+      );
     }
 
     let replicateResponse: Prediction | undefined;
@@ -602,6 +640,7 @@ export async function POST(request: Request) {
 
       const geminiTTSConfig = buildGeminiTtsConfig({
         abortSignal: abortController.signal,
+        model: voiceObj.model,
         seed,
         temperature,
         voiceName: voiceObj.name,
@@ -611,13 +650,13 @@ export async function POST(request: Request) {
         return streamGeminiTtsResponse({
           ai,
           config: geminiTTSConfig,
-          currentAmount,
           estimate,
           filename,
           provider,
           requestId,
           requestSignal: request.signal,
           reservedCredits: estimate,
+          textImproved,
           styleVariant,
           text,
           user,
@@ -640,7 +679,11 @@ export async function POST(request: Request) {
           () =>
             ai.models.generateContent({
               config: geminiTTSConfig,
-              contents: [{ parts: [{ text }], role: 'user' }],
+              contents: buildGeminiTtsContents({
+                model: voiceObj.model,
+                styleVariant,
+                text,
+              }),
               model,
             }),
         );
@@ -665,6 +708,8 @@ export async function POST(request: Request) {
             reservedCredits = 0;
             return APIErrorResponse('Request aborted', 499);
           }
+
+          if (voiceObj.model === 'gpro38') throw error;
 
           const proErrorMessage =
             error instanceof Error ? error.message : String(error);
@@ -992,7 +1037,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const creditsDebited = await reconcileReservedCredits({
+    creditsDebited = await reconcileReservedCredits({
       actualCredits: creditsUsed,
       context: 'generate_voice_success',
       reservedCredits,
@@ -1033,6 +1078,7 @@ export async function POST(request: Request) {
         usage: {
           ...usage,
           split: isSplit,
+          textImproved,
           userHasPaid,
         },
         userId: user.id,
@@ -1056,6 +1102,8 @@ export async function POST(request: Request) {
       // Insert usage event for tracking (non-blocking)
       await insertUsageEvent({
         creditsUsed: creditsDebited,
+        inputChars: text.length,
+        model: modelUsed,
         quantity: text.length,
         requestId,
         sourceId: audioFileDBResult.data?.id,
@@ -1064,6 +1112,7 @@ export async function POST(request: Request) {
         userId: user.id,
         ...(dollarAmount === undefined ? {} : { dollarAmount }),
         metadata: {
+          ...usage,
           duration,
           model: modelUsed,
           predictionId: replicateResponse?.id ?? null,
@@ -1091,7 +1140,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        creditsRemaining: (currentAmount || 0) - creditsDebited,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       },
@@ -1249,6 +1297,16 @@ export async function POST(request: Request) {
     }
 
     return APIErrorResponse('Failed to generate voice', 500);
+  } finally {
+    if (user) {
+      reportCancelledCharge({
+        creditsDebited,
+        model: modelUsed,
+        signal: request.signal,
+        transport: 'json',
+        userId: user.id,
+      });
+    }
   }
 }
 
@@ -1263,27 +1321,27 @@ function streamGeminiTtsResponse({
   userHasPaid,
   filename,
   estimate,
-  currentAmount,
   styleVariant,
   provider,
   requestSignal,
   requestId,
   reservedCredits,
+  textImproved,
 }: {
   ai: GoogleGenAI;
   text: string;
   config: GenerateContentConfig;
   voiceObj: { id: string; name: string; model: string; language: string };
-  user: { id: string; email?: string };
+  user: GenerationIdentity;
   userHasPaid: boolean;
   filename: string;
   estimate: number;
-  currentAmount: number;
   styleVariant: string;
   provider: ProviderId;
   requestSignal: AbortSignal;
   requestId: string;
   reservedCredits: number;
+  textImproved: boolean;
 }): Response {
   const encoder = new TextEncoder();
   const selectedModel = resolveGeminiTtsModel({
@@ -1311,7 +1369,9 @@ function streamGeminiTtsResponse({
     let streamBlockReason: string | undefined;
     let audioStarted = false;
     let completed = false;
+    let creditsDebited = 0;
     let fallbackAttempted = false;
+    let errorPayload: Record<string, unknown> | undefined;
 
     const getStreamBlockError = () => {
       if (!(streamFinishReason || streamBlockReason)) {
@@ -1463,9 +1523,9 @@ function streamGeminiTtsResponse({
           extra: { model: modelUsed, voice: voiceObj.name },
           user: { id: user.id },
         });
-        await enqueue('error', {
+        errorPayload = {
           error: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-        });
+        };
         return;
       }
 
@@ -1495,7 +1555,7 @@ function streamGeminiTtsResponse({
           { model: modelUsed, userHasPaid },
         );
       }
-      const creditsDebited = await reconcileReservedCredits({
+      creditsDebited = await reconcileReservedCredits({
         actualCredits: creditsUsed,
         context: 'generate_voice_stream_success',
         reservedCredits,
@@ -1523,7 +1583,7 @@ function streamGeminiTtsResponse({
         predictionId: undefined,
         text,
         url: uploadUrl,
-        usage: streamUsage,
+        usage: { ...streamUsage, textImproved },
         userId: user.id,
         voiceId: voiceObj.id,
       });
@@ -1574,7 +1634,6 @@ function streamGeminiTtsResponse({
 
       completed = true;
       await enqueue('done', {
-        creditsRemaining: (currentAmount || 0) - creditsDebited,
         creditsUsed: creditsDebited,
         url: uploadUrl,
       });
@@ -1647,7 +1706,7 @@ function streamGeminiTtsResponse({
         });
       }
 
-      await enqueue('error', {
+      errorPayload = {
         error: clientMessage,
         ...(isTransientProviderError
           ? {
@@ -1655,7 +1714,7 @@ function streamGeminiTtsResponse({
               errorCode: ERROR_CODES.PROVIDER_UNAVAILABLE,
             }
           : {}),
-      });
+      };
     } finally {
       if (!completed) {
         await refundReservedCredits({
@@ -1666,9 +1725,23 @@ function streamGeminiTtsResponse({
       }
 
       try {
-        await writer.close();
-      } catch {
-        // Writer already closed via an early-return path — safe to ignore.
+        // Clients may refresh their credit balance as soon as they receive an error.
+        if (errorPayload) {
+          await enqueue('error', errorPayload);
+        }
+      } finally {
+        try {
+          await writer.close();
+        } catch {
+          // A client disconnect can make closing the writer reject.
+        }
+        reportCancelledCharge({
+          creditsDebited,
+          model: modelUsed,
+          signal: requestSignal,
+          transport: 'sse',
+          userId: user.id,
+        });
       }
     }
   })().catch((error) => {

@@ -21,7 +21,10 @@ import {
   type RouteErrorDetails,
 } from '@/lib/clone/api-types';
 import {
+  CHATTERBOX_SUPPORTED_LOCALE_CODES,
+  CLONE_SUPPORTED_LOCALE_CODES,
   type CloneProvider,
+  resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
@@ -30,6 +33,7 @@ import {
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
+import { getFalBillingEventCost } from '@/lib/fal-billing';
 import PostHogClient from '@/lib/posthog';
 import {
   getProviderErrorMessage,
@@ -39,6 +43,7 @@ import {
   isTransientProviderFailure,
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
@@ -77,35 +82,6 @@ const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
 const REFERENCE_AUDIO_ENHANCEMENT_DOLLARS_PER_SECOND = 0.001;
-
-// Replicate multilinguage supports the following languages
-// https://replicate.com/resemble-ai/chatterbox-multilingual/api/schema
-const SUPPORTED_LOCALE_CODES = [
-  { code: 'ar', value: 'arabic' },
-  { code: 'da', value: 'danish' },
-  { code: 'de', value: 'german' },
-  { code: 'el', value: 'greek' },
-  { code: 'en', value: 'english' },
-  { code: 'en-multi', value: 'english' },
-  { code: 'es', value: 'spanish' },
-  { code: 'fi', value: 'finnish' },
-  { code: 'fr', value: 'french' },
-  { code: 'he', value: 'hebrew' },
-  { code: 'hi', value: 'hindi' },
-  { code: 'it', value: 'italian' },
-  { code: 'ja', value: 'japanese' },
-  { code: 'ko', value: 'korean' },
-  { code: 'ms', value: 'malay' },
-  { code: 'nl', value: 'dutch' },
-  { code: 'no', value: 'norwegian' },
-  { code: 'pl', value: 'polish' },
-  { code: 'pt', value: 'portuguese' },
-  { code: 'ru', value: 'russian' },
-  { code: 'sv', value: 'swedish' },
-  { code: 'sw', value: 'swahili' },
-  { code: 'tr', value: 'turkish' },
-  { code: 'zh', value: 'chinese' },
-];
 
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
@@ -448,53 +424,6 @@ function getReferenceAudioEnhancementDollarCost(
   );
 }
 
-async function getFalBillingEventCost(
-  requestId: string,
-): Promise<number | null> {
-  const adminKey = process.env.FAL_ADMIN_KEY;
-  if (!adminKey) {
-    return null;
-  }
-
-  try {
-    const response = await fetch(
-      `https://api.fal.ai/v1/models/billing-events?request_id=${encodeURIComponent(requestId)}`,
-      {
-        cache: 'no-store',
-        headers: { Authorization: `Key ${adminKey}` },
-        signal: AbortSignal.timeout(5000),
-      },
-    );
-
-    if (!response.ok) {
-      logger.warn('Fal billing events API returned non-ok response', {
-        extra: { requestId, status: response.status },
-      });
-      return null;
-    }
-
-    const data = (await response.json()) as {
-      billing_events?: { cost_estimate_nano_usd?: number }[];
-    };
-    // Assumes one billing event per request_id; Fal may return multiple for retries.
-    const nanoUsd = data.billing_events?.[0]?.cost_estimate_nano_usd;
-
-    if (typeof nanoUsd !== 'number' || nanoUsd < 0) {
-      logger.warn('Fal billing events API returned unexpected cost data', {
-        extra: { nanoUsd, requestId },
-      });
-      return null;
-    }
-
-    return nanoUsd / 1_000_000_000;
-  } catch (err) {
-    logger.warn('Failed to fetch Fal billing event cost', {
-      extra: { errorMessage: getProviderErrorMessage(err), requestId },
-    });
-    return null;
-  }
-}
-
 function validateCreditAmount({
   currentAmount,
   requiredCredits,
@@ -635,10 +564,9 @@ function validateReferenceAudioEnhancementInput(
 }
 
 function validateLocale(locale: string): void {
-  const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
-  if (!localeConfig) {
+  if (!CLONE_SUPPORTED_LOCALE_CODES.has(locale)) {
     throw createRouteError(
-      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${SUPPORTED_LOCALE_CODES.map((l) => l.code).join(', ')}`,
+      `Unsupported language for voice cloning: ${locale}. Supported languages are: ${[...CLONE_SUPPORTED_LOCALE_CODES].join(', ')}`,
       400,
       'errors.unsupportedLocale',
       { locale },
@@ -1022,14 +950,9 @@ async function cloneVoiceWithReplicate(
   locale: string,
   audioReferenceUrl: string,
 ): Promise<{ blob: Blob; modelUsed: string; requestId: string }> {
-  const localeConfig = SUPPORTED_LOCALE_CODES.find((l) => l.code === locale);
-  if (!localeConfig) {
+  const language = resolveBaseCloneLocale(locale);
+  if (!CHATTERBOX_SUPPORTED_LOCALE_CODES.has(language)) {
     throw new Error(`Unsupported locale: ${locale}`);
-  }
-
-  let language = locale;
-  if (locale === 'en-multi') {
-    language = 'en';
   }
 
   const replicate = new Replicate();
@@ -1327,12 +1250,12 @@ export async function POST(request: Request) {
   try {
     // Authentication
     const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    const user = data?.user;
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return routeErrorResponse('User not found', 401, 'errors.userNotFound');
     }
+    const user = { email: claims.email, id: claims.sub };
     userId = user.id;
 
     setUser({

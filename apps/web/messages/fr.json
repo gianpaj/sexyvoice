@@ -414,13 +414,17 @@
         "description": "Un problème est survenu lors du traitement de votre paiement. Veuillez réessayer ou contacter le support si le problème persiste.",
         "dismiss": "Fermer"
       },
-      "checkoutError": "Impossible de créer la session de paiement"
+      "checkoutError": "Impossible de créer la session de paiement",
+      "accountBillingBlocked": "La facturation est suspendue pendant la suppression du compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
+      "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
     },
     "history": {
       "title": "Historique des crédits"
     }
   },
   "creditsSection": {
+    "balanceError": "Impossible de charger votre solde de crédits. Veuillez réessayer.",
+    "retryBalance": "Réessayer",
     "title": "Crédits",
     "topupButton": "Recharger",
     "totalCredits": "Total",
@@ -573,6 +577,8 @@
     }
   },
   "call": {
+    "title": "Appels vocaux",
+    "subtitle": "Choisissez un personnage IA et discutez avec lui en temps réel.",
     "notice1": "Explorez vos désirs les plus profonds en toute intimité.",
     "notice2": "Conversations chiffrées de bout en bout, sans jugement.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits. Le minimum requis est {count}",
@@ -684,6 +690,7 @@
     "generating": "Génération",
     "languageLabel": "Langue",
     "languageSelectPlaceholder": "Sélectionnez une langue",
+    "englishChatterbox": "Anglais (Chatterbox)",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "previewTitle": "Aperçu de la voix générée",
@@ -793,7 +800,14 @@
         "confirmDescription": "Cette action ne peut pas être annulée. Cela supprimera définitivement votre compte, y compris :\n• Tous les fichiers audio générés\n• Les voix clonées\n• L'utilisation de l'API\n• Les personnages d'appel personnalisés\n• Toutes les données associées de nos serveurs",
         "alertTitle": "Confirmez que vous souhaitez supprimer votre compte",
         "cancel": "Annuler",
-        "continue": "Continuer"
+        "continue": "Continuer",
+        "errors": {
+          "manageBilling": "Gérer la facturation",
+          "subscriptionExists": "Votre compte a encore un abonnement Stripe. Résiliez-le dans le portail de facturation et attendez sa fin avant de supprimer votre compte.",
+          "subscriptionCheckFailed": "Nous n'avons pas pu vérifier le statut de votre abonnement. Votre compte n'a pas été supprimé. Veuillez réessayer.",
+          "accountBillingBlocked": "Une demande de suppression antérieure bloque la suppression de votre compte. Contactez l'assistance via le chat du tableau de bord ou info@sexyvoice.ai.",
+          "accountBillingBusy": "Une autre demande de facturation ou de suppression est en cours. Veuillez réessayer plus tard."
+        }
       }
     },
     "apiKeys": {
@@ -879,6 +893,7 @@
     "/dashboard/api-keys": "Clés API",
     "/dashboard/api-billing": "Facturation API",
     "/dashboard/usage": "Utilisation",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Convertisseur Audio",
     "/tools/transcribe": "Transcription Audio",
     "titleAudioConverter": "Convertisseur Audio Gratuit en Ligne – MP3, WAV, FLAC & Plus",

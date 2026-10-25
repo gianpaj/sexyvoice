@@ -75,7 +75,9 @@
         "noLeakedRender": "off",
         // Runtime data can violate TypeScript's static guarantees, so defensive
         // null and exhaustiveness checks are intentional throughout the app.
-        "noUnnecessaryConditions": "off"
+        "noUnnecessaryConditions": "off",
+        // Ultracite core leaves this off; default sort() compares values as strings.
+        "useArraySortCompare": "error"
       },
       "complexity": {
         // Existing generation and audio flows are intentionally orchestration-heavy.
@@ -197,50 +199,23 @@
       }
     },
     {
-      // Enforce the shared APIErrorResponse helper for error responses in the
-      // web app's API route handlers. Scoped here (not global) because other
-      // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
-      "includes": ["apps/web/app/api/**"],
-      "plugins": ["./biome-plugins/use-api-error-response.grit"]
-    },
-    {
-      // Package map insertion order controls checkout telemetry and remains part
-      // of the exported pricing API, so product tier order is intentional.
-      "includes": ["apps/web/lib/stripe/pricing.ts"],
-      "assist": {
-        "actions": {
-          "source": {
-            "useSortedKeys": "off"
-          }
-        }
-      }
-    },
-    {
-      // Keep the LLM schema aligned with the prompt and script. Evidence-first
-      // ordering is an intentional model hint, not a JSON output contract.
-      "includes": ["apps/web/lib/ai/analyze-call.ts"],
-      "assist": {
-        "actions": {
-          "source": {
-            "useSortedKeys": "off"
-          }
-        }
-      }
-    },
-    {
-      // Object order carries prose meaning in these files: comments stay beside
-      // their settings, and scene labels precede the long prompt text.
       "includes": [
-        "apps/web/data/call-scenes.ts",
-        "apps/web/playwright.config.ts"
+        "apps/web/app/**",
+        "!apps/web/app/api/**",
+        "apps/web/components/**",
+        "apps/web/hooks/**",
+        "apps/web/lib/**"
       ],
-      "assist": {
-        "actions": {
-          "source": {
-            "useSortedKeys": "off"
-          }
-        }
-      }
+      "plugins": ["./biome-plugins/use-verified-claims.grit"]
+    },
+    {
+      // API handlers require claims-based identity checks and shared error responses.
+      // Other runtime code uses only the claims rule.
+      "includes": ["apps/web/app/api/**"],
+      "plugins": [
+        "./biome-plugins/use-api-error-response.grit",
+        "./biome-plugins/use-verified-claims.grit"
+      ]
     }
   ]
 }

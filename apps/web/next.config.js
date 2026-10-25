@@ -65,12 +65,6 @@ let nextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
-        hostname: 'avatars.githubusercontent.com',
-        pathname: '**',
-        port: '',
-        protocol: 'https',
-      },
-      {
         hostname: 'images.sexyvoice.ai',
         pathname: '**',
         port: '',

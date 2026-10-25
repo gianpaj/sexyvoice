@@ -6,6 +6,7 @@ import { after } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getMyActiveAudioFilesFilter } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
@@ -25,11 +26,9 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!user) {
+  if (!claims?.sub) {
     throw new Error('User not found');
   }
 
@@ -42,7 +41,7 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
       deleted_at: new Date().toISOString(),
       status: 'deleted',
     })
-    .match(getMyActiveAudioFilesFilter(user.id));
+    .match(getMyActiveAudioFilesFilter(claims.sub));
 
   if (options.scope === 'single') {
     deleteQuery = deleteQuery.eq('id', options.id);
@@ -57,7 +56,7 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
         options.scope === 'single'
           ? { audioId: options.id, errorData: error }
           : { errorData: error, scope: 'all' },
-      user: { email: user.email, id: user.id },
+      user: { email: claims.email, id: claims.sub },
     });
     throw new Error('Failed to delete audio files', { cause: error });
   }
@@ -93,7 +92,7 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
           storageKeys: storageKeyBatch,
         },
         level: 'warning',
-        user: { email: user.email, id: user.id },
+        user: { email: claims.email, id: claims.sub },
       });
     }
   }
@@ -102,7 +101,7 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     after(async () => {
       const posthog = PostHogClient();
       posthog.capture({
-        distinctId: user.id,
+        distinctId: claims.sub,
         event: options.scope === 'single' ? 'delete-audio' : 'delete-all-audio',
         properties:
           options.scope === 'single'

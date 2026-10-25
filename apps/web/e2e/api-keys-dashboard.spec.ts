@@ -47,6 +47,12 @@ test.describe('API Keys Dashboard - Authenticated User', () => {
       waitUntil: 'domcontentloaded',
     });
 
+    // The mocked row renders from a client effect, so it appears only after
+    // hydration. Clicking the SSR button before that does nothing.
+    await expect(
+      page.getByRole('cell', { name: 'Production backend' }),
+    ).toBeVisible({ timeout: 10_000 });
+
     const newKeyButton = page.getByRole('button', { name: /new key/i });
     await expect(newKeyButton).toBeVisible();
 

@@ -22,10 +22,9 @@ export const mockAudioData =
 
 /**
  * Mock response for generate-voice API
- * Matches the structure: { url, creditsUsed, creditsRemaining }
+ * Matches the structure: { url, creditsUsed }
  */
 export const mockGenerateVoiceResponse = {
-  creditsRemaining: 988,
   creditsUsed: 12,
   url: 'https://files.sexyvoice.ai/generated-audio-free/test-audio-e2e.wav',
 };

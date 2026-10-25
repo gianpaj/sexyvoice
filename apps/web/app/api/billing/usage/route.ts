@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 
 type BillingGroupBy = 'source_type' | 'api_key_id' | 'model';
@@ -59,11 +60,9 @@ function bucketStart(date: Date, start: Date, widthDays: number): Date {
 
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!user) {
+  if (!claims?.sub) {
     return APIErrorResponse('Unauthorized', 401);
   }
 
@@ -122,7 +121,7 @@ export async function GET(request: NextRequest) {
     .select(
       'api_key_id, model, requests, source_type, total_credits_used, total_duration_seconds, total_input_chars, total_output_chars, usage_date, user_id',
     )
-    .eq('user_id', user.id)
+    .eq('user_id', claims.sub)
     .gte('usage_date', start.toISOString())
     .lt('usage_date', end.toISOString());
 
