@@ -395,7 +395,7 @@ the display-name mapping before using these voices or enabling public access.
 
 ## Gemini provider usage rollout
 
-Apply `20260908120000_add_gemini_provider_usage.sql` before deploying the code
+Apply `20261025072722_add_gemini_provider_usage.sql` before deploying the code
 that writes `usage_events.event_kind` and token columns, then run
 `pnpm test:db` against the migrated local database. Streaming remains disabled
 by the existing production flag. See
