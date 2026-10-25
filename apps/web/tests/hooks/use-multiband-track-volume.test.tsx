@@ -40,6 +40,20 @@ describe('microphone volume lifecycle', () => {
     vi.unstubAllGlobals();
   });
 
+  it('discards the last recording frame when the stream stops', () => {
+    const { result, rerender } = renderHook(
+      ({ stream }: { stream: MediaStream | null }) =>
+        useMultibandTrackVolume(stream),
+      {
+        initialProps: { stream: {} as MediaStream | null },
+      },
+    );
+    act(() => vi.advanceTimersByTime(10));
+    expect(result.current).toHaveLength(5);
+    rerender({ stream: null });
+    expect(result.current).toEqual([]);
+  });
+
   it('releases each context when the stream changes and on unmount', () => {
     const { rerender, unmount } = renderHook(
       ({ stream }) => useMultibandTrackVolume(stream),
