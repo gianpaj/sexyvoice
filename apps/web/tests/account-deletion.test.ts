@@ -66,8 +66,10 @@ function createReadQuery(result: object) {
 
 function setupAccountDeletion({
   usageResult = { count: 3, error: null },
+  references = [],
 }: {
   usageResult?: { count: number | null; error: Error | null };
+  references?: { id: string; sample_url: string | null }[];
 } = {}) {
   const audioRead = createReadQuery({
     data: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
@@ -76,6 +78,14 @@ function setupAccountDeletion({
   const charactersRead = createReadQuery({ data: [], error: null });
   const apiKeysRead = createReadQuery({ data: [], error: null });
   const usageRead = createReadQuery(usageResult);
+  const referenceUpdate = {
+    eq: vi.fn().mockReturnThis(),
+    then: (resolve: (value: object) => unknown) => resolve({ error: null }),
+  };
+  const referenceRead = {
+    ...createReadQuery({ data: references, error: null }),
+    update: vi.fn(() => referenceUpdate),
+  };
   const sessionSupabase = {
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -89,6 +99,7 @@ function setupAccountDeletion({
       if (table === 'characters') return charactersRead;
       if (table === 'api_keys') return apiKeysRead;
       if (table === 'usage_events') return usageRead;
+      if (table === 'audio_references') return referenceRead;
       throw new Error(`Unexpected table: ${table}`);
     }),
   };
@@ -110,7 +121,13 @@ function setupAccountDeletion({
   vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
   vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
 
-  return { adminSupabase, audioUpdate, sessionSupabase };
+  return {
+    adminSupabase,
+    audioUpdate,
+    sessionSupabase,
+    referenceRead,
+    referenceUpdate,
+  };
 }
 
 describe('account deletion', () => {
@@ -325,6 +342,49 @@ describe('account deletion', () => {
       expect.objectContaining({ usageEventsRetained: 3 }),
     );
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('removes stored call voice samples and clears their URL on account deletion', async () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+    const { referenceRead, referenceUpdate } = setupAccountDeletion({
+      references: [
+        { id, sample_url: `https://files.sexyvoice.ai/${key}` },
+        { id: 'legacy', sample_url: null },
+      ],
+    });
+    await handleDeleteAccountAction({ lang: 'en' });
+    expect(referenceRead.eq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(deleteFileFromR2).toHaveBeenCalledWith(key);
+    expect(referenceRead.update).toHaveBeenCalledOnce();
+    expect(referenceRead.update).toHaveBeenCalledWith({ sample_url: null });
+    expect(referenceUpdate.eq.mock.calls).toEqual([
+      ['id', id],
+      ['user_id', 'user-1'],
+    ]);
+  });
+
+  it('retains the sample URL for cleanup retry if R2 deletion fails', async () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+    const { referenceRead, sessionSupabase } = setupAccountDeletion({
+      references: [{ id, sample_url: `https://files.sexyvoice.ai/${key}` }],
+    });
+    vi.mocked(deleteFileFromR2).mockImplementation(async (candidate) => {
+      if (candidate === key) throw new Error('Sample deletion failed');
+    });
+    await handleDeleteAccountAction({ lang: 'en' });
+    expect(referenceRead.update).not.toHaveBeenCalled();
+    expect(captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: {
+          context: 'call_voice_sample_account_cleanup',
+          referenceId: id,
+        },
+      }),
+    );
+    expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
   });
 
   it('releases billing when database cleanup fails after the Auth update', async () => {

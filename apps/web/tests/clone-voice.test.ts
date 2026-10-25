@@ -98,7 +98,7 @@ const createFormDataWithAudio = (
 
 describe('Clone Voice API Route', () => {
   it.each(['en', 'pl', 'ca'])(
-    'saves an owned %s profile without generating speech or charging speech credits',
+    'saves an owned %s profile without requiring speech text or charging speech credits',
     async (locale) => {
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
       mockSaveMistralVoice.mockResolvedValueOnce({ id: 'reference' });

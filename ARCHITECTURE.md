@@ -200,8 +200,8 @@ flowchart TD
     B --> C["Validate locale, tier text limit, file type, and 4.5 MB size limit"]
     C --> D["Normalize to WAV when supported and trim to provider limit"]
     D --> S{"Save voice for calls?"}
-    S -->|"Yes: paid and consented"| T["Create configured provider voice and owned audio_references row"]
-    T --> U["Return audioReferenceId without generating speech"]
+    S -->|"Yes: paid and consented"| T["Create provider voice, generate R2 preview, and save owned profile"]
+    T --> U["Return audioReferenceId and provider"]
     S -->|"No"| E["Hash processed audio and check Redis output cache"]
     E -->|"Hit"| F["Return cached URL at zero credits"]
     E -->|"Miss"| G{"Enhancement requested?"}
@@ -260,6 +260,8 @@ Reads accept only sample object keys under the owned profile's prefix, never
 arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
 reference WAV audio or Inworld's MP3 preview. Preview playback does not create
 or backfill R2 samples.
+Account deletion removes stored samples and clears their URLs after successful
+R2 deletion. Cleanup failures retain the URL for retry and are reported.
 Inworld requires `INWORLD_API_KEY` in the web app and agent, with access to
 the same workspace. Mistral profiles require `MISTRAL_API_KEY` in both.
 Changing the default does not convert existing profiles or voice IDs.

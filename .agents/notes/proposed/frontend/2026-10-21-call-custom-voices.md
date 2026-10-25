@@ -33,9 +33,10 @@ server-side. A separate voice override for predefined characters is omitted: Cus
 combines a voice with its own prompt, while predefined characters remain bundles.
 
 The Clone page saves profiles through the existing audio normalization path,
-without generating speech or charging speech credits. Provider creation and the
-owned database insert share a helper with cleanup on insert failure. Sample
-playback uses an owner-checked private proxy.
+with an included generated preview and no speech-credit charge. Provider creation,
+preview upload, and the owned database insert share failure cleanup. Sample
+playback uses an owner-checked private proxy. See
+[stored samples](../integration/2026-10-25-saved-call-voice-samples.md).
 
 The Clone link saves a user-scoped draft in session storage. Restoration is
 validated and runs once per mount, including React Strict Mode's effect replay.

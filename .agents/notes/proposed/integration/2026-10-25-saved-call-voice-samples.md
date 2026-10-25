@@ -18,6 +18,10 @@ The existing authenticated preview endpoint checks ownership before reading
 the R2 object. Its URL is not included in client voice lists. R2 reads accept
 only that profile's sample prefix, never arbitrary database URLs or object keys.
 
+Account deletion removes stored sample objects alongside generated audio and
+clears their URLs after successful deletion. Failed deletions retain their
+URL for cleanup retry and are logged with the profile ID.
+
 ## Verification and rollout
 
 Apply `20261025204441_add_audio_reference_sample_url.sql` before deploying the
