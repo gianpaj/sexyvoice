@@ -34,6 +34,7 @@ import {
   getPresetInstructions,
   saveCharacter,
 } from '@/lib/characters';
+import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from './character-avatar';
 import { CloneVoiceDialog } from './clone-voice-dialog';
@@ -50,6 +51,7 @@ export type CreatorIntent =
   | { kind: 'edit' | 'duplicate' | 'remix'; presetId: string };
 
 interface CharacterCreatorProps {
+  callCloneProvider: CallCloneProvider;
   callVoices: DBVoice[];
   intent: CreatorIntent;
   onCancel: () => void;
@@ -92,6 +94,7 @@ function StepBadge({ step }: { step: number }) {
 }
 
 export function CharacterCreator({
+  callCloneProvider,
   callVoices,
   intent,
   onCancel,
@@ -573,6 +576,7 @@ export function CharacterCreator({
       </div>
 
       <CloneVoiceDialog
+        callCloneProvider={callCloneProvider}
         language={language}
         onCreated={onVoiceCreated}
         onOpenChange={setCloneOpen}
@@ -581,6 +585,7 @@ export function CharacterCreator({
             sessionConfig: withCallVoice(sessionConfig, {
               name: voice.name,
               savedId: voice.id,
+              provider: voice.provider,
             }),
           });
           setNewVoiceId(voice.id);

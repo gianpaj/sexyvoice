@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   claims: vi.fn(),
   owned: vi.fn(),
   sample: vi.fn(),
+  inworldSample: vi.fn(),
 }));
 vi.mock(
   'next/server',
@@ -19,6 +20,9 @@ vi.mock('@/lib/clone/mistral', () => ({
   getMistralClient: () => ({
     audio: { voices: { getSampleAudio: mocks.sample } },
   }),
+}));
+vi.mock('@/lib/clone/inworld', () => ({
+  getInworldVoiceSample: mocks.inworldSample,
 }));
 
 import { GET } from '@/app/api/audio-references/[id]/sample/route';
@@ -46,7 +50,10 @@ describe('saved voice sample', () => {
     expect(mocks.owned).toHaveBeenCalledWith(id, 'owner');
   });
   it('proxies the owner sample privately without exposing its provider ID', async () => {
-    mocks.owned.mockResolvedValue({ voice_id: 'provider-id' });
+    mocks.owned.mockResolvedValue({
+      voice_id: 'provider-id',
+      provider: 'mistral',
+    });
     mocks.sample.mockResolvedValue(
       Buffer.from('RIFFsample').toString('base64'),
     );
@@ -54,5 +61,18 @@ describe('saved voice sample', () => {
     expect(await response.text()).toBe('RIFFsample');
     expect(response.headers.get('cache-control')).toBe('private, no-store');
     expect(mocks.sample).toHaveBeenCalledWith({ voiceId: 'provider-id' });
+  });
+  it('plays an owned Inworld preview as private MP3 audio', async () => {
+    mocks.owned.mockResolvedValue({
+      voice_id: 'workspace__clone',
+      provider: 'inworld',
+    });
+    mocks.inworldSample.mockResolvedValue(Buffer.from('MP3sample'));
+    const response = await request();
+    expect(await response.text()).toBe('MP3sample');
+    expect(response.headers.get('content-type')).toBe('audio/mpeg');
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(mocks.inworldSample).toHaveBeenCalledWith('workspace__clone');
+    expect(mocks.sample).not.toHaveBeenCalled();
   });
 });

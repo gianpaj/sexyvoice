@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
 import { getDemoCloneSelection } from '@/data/demo-clone';
+import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -74,6 +75,7 @@ export default async function NewVoicePage(props: {
         <CreditBalanceError />
       ) : (
         <NewVoiceClient
+          callCloneProvider={getCallCloneProvider()}
           hasEnoughCredits={creditBalance >= 10}
           initialDemo={
             selection

@@ -13,6 +13,7 @@ import {
   type CallTokenPlaygroundState,
   callTokenPlaygroundStateSchema,
 } from '@/lib/call-token-schema';
+import { callVoiceProvider } from '@/lib/call-voices';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
@@ -205,7 +206,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!selectedPresetId || model === 'mistral-tts') {
+    if (!selectedPresetId || callVoiceProvider(model)) {
       isPaidUser ??= await hasUserPaid(user.id);
       if (!isPaidUser) {
         return APIErrorResponse(

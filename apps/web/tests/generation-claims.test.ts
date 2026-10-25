@@ -272,14 +272,21 @@ describe('Generation route claims authentication', () => {
     });
   });
 
-  it.each([true, false])(
-    'issues a Mistral token only for an accessible saved voice: %s',
-    async (accessible) => {
+  it.each([
+    { accessible: true, provider: 'mistral', model: 'mistral-tts' },
+    { accessible: false, provider: 'mistral', model: 'mistral-tts' },
+    { accessible: true, provider: 'inworld', model: 'inworld-tts' },
+    { accessible: false, provider: 'inworld', model: 'inworld-tts' },
+    { accessible: false, provider: 'mistral', model: 'inworld-tts' },
+  ])(
+    'issues a $model token only for an accessible $provider voice: $accessible',
+    async ({ accessible, provider, model }) => {
       const id = '11111111-1111-4111-8111-111111111111';
       mocks.reference.mockResolvedValue({
-        data: accessible
-          ? { id, name: 'My voice', voice_id: 'provider-voice' }
-          : null,
+        data:
+          accessible || model !== `${provider}-tts`
+            ? { id, name: 'My voice', voice_id: 'provider-voice', provider }
+            : null,
         error: null,
       });
       vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
@@ -288,7 +295,7 @@ describe('Generation route claims authentication', () => {
           ...callBody,
           sessionConfig: {
             ...callBody.sessionConfig,
-            model: 'mistral-tts',
+            model,
             audioReferenceId: id,
             voice: 'My voice',
           },
@@ -298,12 +305,12 @@ describe('Generation route claims authentication', () => {
       expect(mocks.referenceEq.mock.calls).toEqual([
         ['id', id],
         ['user_id', subject],
-        ['provider', 'mistral'],
+        ['provider', model === 'inworld-tts' ? 'inworld' : 'mistral'],
       ]);
       if (accessible) {
         const metadata = JSON.parse(mocks.token.mock.calls[0][2].metadata);
         expect(metadata).toMatchObject({
-          model: 'mistral-tts',
+          model,
           voice: id,
           user_id: subject,
           instructions: callBody.instructions,

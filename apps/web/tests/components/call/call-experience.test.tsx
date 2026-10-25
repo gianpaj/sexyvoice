@@ -122,6 +122,7 @@ const savedVoice: SavedCallVoice = {
   id: '6f1d9c2a-0000-4000-8000-0000000000aa',
   locale: 'en',
   name: 'My voice',
+  provider: 'mistral',
 };
 
 const clonedVoiceId = '6f1d9c2a-0000-4000-8000-0000000000bb';
@@ -179,7 +180,10 @@ beforeEach(() => {
   window.scrollTo = vi.fn();
   fetchMock = vi.fn(async (url: string, init: RequestInit) => {
     if (url === '/api/clone-voice') {
-      return Response.json({ audioReferenceId: clonedVoiceId });
+      return Response.json({
+        audioReferenceId: clonedVoiceId,
+        provider: 'inworld',
+      });
     }
     const body = JSON.parse(String(init.body));
     if (init.method === 'DELETE') return new Response(null, { status: 200 });
@@ -481,6 +485,23 @@ describe('CallExperience creator', () => {
       within(creator).getByRole('radio', { name: /Radio voice/ }),
     ).toBeChecked();
     expect(within(creator).getByText('New')).toBeInTheDocument();
+    await user.type(within(creator).getByLabelText('Name'), 'Radio host');
+    await user.click(
+      within(creator).getByRole('button', { name: 'Interview coach' }),
+    );
+    await user.click(
+      within(creator).getByRole('button', { name: 'Save character' }),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('call-panel')).toBeInTheDocument(),
+    );
+    expect(lastPostBody()).toMatchObject({
+      sessionConfig: {
+        model: ModelId.INWORLD_TTS,
+        audioReferenceId: clonedVoiceId,
+        voice: 'Radio voice',
+      },
+    });
   });
 });
 

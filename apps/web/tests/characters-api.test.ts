@@ -350,19 +350,46 @@ describe('/api/characters', () => {
   });
 
   it.each([
-    { owner: mockUser.id, provider: 'mistral', status: 201 },
-    { owner: 'other-user', provider: 'mistral', status: 400 },
-    { owner: mockUser.id, provider: 'inworld', status: 400 },
+    {
+      owner: mockUser.id,
+      provider: 'mistral',
+      model: 'mistral-tts',
+      status: 201,
+    },
+    {
+      owner: 'other-user',
+      provider: 'mistral',
+      model: 'mistral-tts',
+      status: 400,
+    },
+    {
+      owner: mockUser.id,
+      provider: 'inworld',
+      model: 'mistral-tts',
+      status: 400,
+    },
+    {
+      owner: mockUser.id,
+      provider: 'inworld',
+      model: 'inworld-tts',
+      status: 201,
+    },
+    {
+      owner: 'other-user',
+      provider: 'inworld',
+      model: 'inworld-tts',
+      status: 400,
+    },
   ])(
     'validates a cloned character voice: $owner $provider',
-    async ({ owner, provider, status }) => {
+    async ({ owner, provider, model, status }) => {
       mockReferenceOwner = owner;
       mockReferenceProvider = provider;
       const body = validCreateBody({
         voiceName: 'My voice',
         sessionConfig: {
           ...validCreateBody().sessionConfig,
-          model: 'mistral-tts',
+          model,
           voice: 'My voice',
           audioReferenceId: referenceId,
         },
@@ -374,7 +401,7 @@ describe('/api/characters', () => {
           voice_id: '420c4014-7d6d-44ef-b87d-962a3124a170',
           session_config: {
             audioReferenceId: referenceId,
-            model: 'mistral-tts',
+            model,
             voice: 'My voice',
           },
         });

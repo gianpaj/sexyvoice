@@ -2,6 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { getInworldVoiceSample } from '@/lib/clone/inworld';
 import { getMistralClient } from '@/lib/clone/mistral';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -20,12 +21,18 @@ export async function GET(
       return APIErrorResponse('Invalid voice ID', 400);
     const reference = await getOwnedCallVoice(id, claims.sub);
     if (!reference) return APIErrorResponse('Voice not found', 404);
-    const audio = await getMistralClient().audio.voices.getSampleAudio({
-      voiceId: reference.voice_id,
-    });
-    return new NextResponse(new Uint8Array(Buffer.from(audio, 'base64')), {
+    const inworld = reference.provider === 'inworld';
+    const audio = inworld
+      ? await getInworldVoiceSample(reference.voice_id)
+      : Buffer.from(
+          await getMistralClient().audio.voices.getSampleAudio({
+            voiceId: reference.voice_id,
+          }),
+          'base64',
+        );
+    return new NextResponse(new Uint8Array(audio), {
       headers: {
-        'Content-Type': 'audio/wav',
+        'Content-Type': inworld ? 'audio/mpeg' : 'audio/wav',
         'Cache-Control': 'private, no-store',
       },
     });

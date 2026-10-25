@@ -19,7 +19,10 @@ import {
   CLONE_FORM_FIELDS,
   type SaveVoiceSuccessResponse,
 } from '@/lib/clone/api-types';
-import { VOXTRAL_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
+import {
+  type CallCloneProvider,
+  supportsCallCloneLocale,
+} from '@/lib/clone/call-voice-config';
 import { readCloneError } from '@/lib/clone/error-message';
 import { createMicrophoneReferenceAudioFile } from '@/lib/clone/microphone-reference-audio';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
@@ -35,7 +38,8 @@ type Step = 'record' | 'confirm' | 'processing' | 'ready';
 type Source = 'record' | 'upload';
 
 interface CloneVoiceDialogProps {
-  /** Call language; saved voices need a Voxtral locale, else English. */
+  callCloneProvider: CallCloneProvider;
+  /** Call language; fall back to English if the clone provider cannot use it. */
   language: string;
   /** The voice is saved on the server once this runs. */
   onCreated: (voice: SavedCallVoice) => void;
@@ -55,6 +59,7 @@ const primaryButton =
   'h-11 rounded-[10px] bg-violet-700 px-[22px] font-semibold text-[15px] text-white hover:bg-violet-600 disabled:pointer-events-none disabled:opacity-50';
 
 export function CloneVoiceDialog({
+  callCloneProvider,
   language,
   onCreated,
   onOpenChange,
@@ -224,7 +229,7 @@ export function CloneVoiceDialog({
     requestRef.current += 1;
     const request = requestRef.current;
     const current = () => requestRef.current === request;
-    const locale = VOXTRAL_SUPPORTED_LOCALE_CODES.has(language)
+    const locale = supportsCallCloneLocale(callCloneProvider, language)
       ? language
       : 'en';
     try {
@@ -255,9 +260,14 @@ export function CloneVoiceDialog({
         }
         return;
       }
-      const { audioReferenceId } =
+      const { audioReferenceId, provider } =
         (await response.json()) as SaveVoiceSuccessResponse;
-      const voice = { id: audioReferenceId, locale, name: name.trim() };
+      const voice = {
+        id: audioReferenceId,
+        locale,
+        name: name.trim(),
+        provider,
+      };
       onCreated(voice);
       if (!current()) return;
       setCreated(voice);

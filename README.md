@@ -541,6 +541,16 @@ Grok text-to-speech voices:
 AI voice calls use the Grok call voices `Ara`, `Carina`, `Eve`, `Leo`, `Rex`,
 and `Sal`.
 
+Custom characters can use owned saved Inworld or Mistral voices.
+`CALL_CLONE_PROVIDER=inworld` selects the provider for new call clones; set it
+to `mistral` to create Mistral profiles. Existing profiles retain their provider.
+Set `INWORLD_API_KEY` to a complete Base64 credential with clone/write access
+and give the SexyCall agent access to the same Inworld workspace. Mistral
+profiles require `MISTRAL_API_KEY` in the web app and agent. Deploy the agent's
+`inworld-tts` support before enabling Inworld cloning in the web deployment.
+See [saved call voices](ARCHITECTURE.md#saved-voices-for-calls) and
+[deployment setup](docs/devops.md#ai-providers).
+
 These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
 
 | Language / Locale             | Code    | Language / Locale     | Code    |

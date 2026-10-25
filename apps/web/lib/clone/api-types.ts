@@ -52,6 +52,7 @@ export interface CloneSuccessResponse {
 
 export interface SaveVoiceSuccessResponse {
   audioReferenceId: string;
+  provider: CallCloneProvider;
 }
 
 /** Names of the multipart form fields accepted by `POST /api/clone-voice`. */
@@ -63,3 +64,5 @@ export const CLONE_FORM_FIELDS = {
   saveVoiceName: 'saveVoiceName',
   voiceConsent: 'voiceConsent',
 } as const;
+
+import type { CallCloneProvider } from './call-voice-config';

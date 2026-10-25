@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { normalizeModelId } from '@/data/models';
-import { CLONED_VOICE_ID } from '@/lib/call-voices';
+import { CLONED_VOICE_ID, callVoiceProvider } from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -115,10 +115,9 @@ export async function POST(request: Request) {
     if (!resolvedVoice)
       return APIErrorResponse('Voice no longer available', 400);
     const voiceObj = {
-      id:
-        body.sessionConfig.model === 'mistral-tts'
-          ? CLONED_VOICE_ID
-          : resolvedVoice.id,
+      id: callVoiceProvider(body.sessionConfig.model)
+        ? CLONED_VOICE_ID
+        : resolvedVoice.id,
     };
 
     const isUpdate = !!body.id;

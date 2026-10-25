@@ -1,7 +1,6 @@
 import { Mistral } from '@mistralai/mistralai';
-import { captureException } from '@sentry/nextjs';
 
-import { createClient } from '@/lib/supabase/server';
+import { saveCallVoiceProfile } from './save-call-voice-profile';
 
 let client: Mistral | undefined;
 
@@ -25,31 +24,12 @@ export async function saveMistralVoice(
     sampleAudio: audio.toString('base64'),
     sampleFilename: 'reference.wav',
   });
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from('audio_references')
-      .insert({
-        name,
-        locale,
-        user_id: userId,
-        provider: 'mistral',
-        voice_id: voice.id,
-        is_paid: true,
-      })
-      .select('id, name, locale')
-      .single();
-    if (error) throw error;
-    if (!data) throw new Error('Voice profile was not saved');
-    return data;
-  } catch (error) {
-    try {
-      await mistral.audio.voices.delete({ voiceId: voice.id });
-    } catch (cleanupError) {
-      captureException(cleanupError, {
-        extra: { context: 'mistral_voice_cleanup', userId },
-      });
-    }
-    throw error;
-  }
+  return saveCallVoiceProfile({
+    voiceId: voice.id,
+    name,
+    locale,
+    userId,
+    provider: 'mistral',
+    deleteVoice: () => mistral.audio.voices.delete({ voiceId: voice.id }),
+  });
 }

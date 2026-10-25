@@ -32,6 +32,10 @@ import {
   type SaveVoiceSuccessResponse,
 } from '@/lib/clone/api-types';
 import {
+  type CallCloneProvider,
+  supportsCallCloneLocale,
+} from '@/lib/clone/call-voice-config';
+import {
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
@@ -108,12 +112,14 @@ interface InitialDemo {
 }
 
 export default function NewVoiceClient({
+  callCloneProvider = 'inworld',
   lang,
   hasEnoughCredits,
   userHasPaid,
   initialDemo,
   initialSaveForCalls = false,
 }: {
+  callCloneProvider?: CallCloneProvider;
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
@@ -123,6 +129,7 @@ export default function NewVoiceClient({
   return (
     <AudioProvider>
       <NewVoiceClientInner
+        callCloneProvider={callCloneProvider}
         hasEnoughCredits={hasEnoughCredits}
         initialDemo={initialDemo}
         initialSaveForCalls={initialSaveForCalls}
@@ -134,12 +141,14 @@ export default function NewVoiceClient({
 }
 
 function NewVoiceClientInner({
+  callCloneProvider,
   lang,
   hasEnoughCredits,
   userHasPaid,
   initialDemo,
   initialSaveForCalls = false,
 }: {
+  callCloneProvider: CallCloneProvider;
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
@@ -192,6 +201,10 @@ function NewVoiceClientInner({
   } = cloneState;
 
   const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocaleCode);
+  const canSaveVoice = supportsCallCloneLocale(
+    callCloneProvider,
+    selectedLocaleCode,
+  );
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
@@ -357,7 +370,7 @@ function NewVoiceClientInner({
 
     if (
       !legalConsentChecked ||
-      (saveVoiceOnly && !(voiceName.trim() && usesVoxtral && userHasPaid))
+      (saveVoiceOnly && !(voiceName.trim() && canSaveVoice && userHasPaid))
     )
       return;
 
@@ -690,7 +703,7 @@ function NewVoiceClientInner({
                     <p className="text-muted-foreground text-sm">
                       {t('savedVoice.help')}
                     </p>
-                    {!usesVoxtral && (
+                    {!canSaveVoice && (
                       <p className="text-destructive text-sm">
                         {t('errors.savedVoiceLocaleUnsupported')}
                       </p>
@@ -762,7 +775,7 @@ function NewVoiceClientInner({
                   (saveVoiceOnly ? voiceName.trim() : text.trim())
                 ) ||
                 (saveVoiceOnly &&
-                  (!(usesVoxtral && userHasPaid) || Boolean(savedVoiceId))) ||
+                  (!(canSaveVoice && userHasPaid) || Boolean(savedVoiceId))) ||
                 status === 'generating' ||
                 !(saveVoiceOnly || hasEnoughCredits) ||
                 convertingMicAudio ||

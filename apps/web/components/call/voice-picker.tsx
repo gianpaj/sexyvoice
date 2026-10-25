@@ -18,6 +18,7 @@ interface VoiceTile {
   description: string;
   id: string;
   name: string;
+  provider?: string;
   sampleUrl: string | null;
   savedId?: string;
 }
@@ -55,6 +56,7 @@ export function VoicePicker({
     name: voice.name,
     sampleUrl: savedVoiceSampleUrl(voice.id),
     savedId: voice.id,
+    provider: voice.provider,
   }));
   const builtIn: VoiceTile[] = callVoices.map((voice) => ({
     description: voice.description ?? voice.type ?? '',
@@ -90,6 +92,7 @@ export function VoicePicker({
                 withCallVoice(config, {
                   name: voice.name,
                   savedId: voice.savedId,
+                  provider: voice.provider,
                 }),
               )
             }

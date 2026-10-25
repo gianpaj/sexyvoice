@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { CallExperience } from '@/components/call/call-experience';
 import { CallFaq } from '@/components/call/call-faq';
 import CreditsSection from '@/components/credits-section';
+import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
@@ -59,6 +60,7 @@ export default async function Call(props: {
   return (
     <div data-e2e-call-fixtures={e2e ? '' : undefined}>
       <CallExperience
+        callCloneProvider={getCallCloneProvider()}
         callVoices={callVoices}
         isPaidUser={isPaidUser}
         mobileCredits={

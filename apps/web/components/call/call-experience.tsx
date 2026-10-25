@@ -22,6 +22,7 @@ import {
 } from '@/hooks/use-sample-player';
 import { type SavedCallVoice, withCallVoice } from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
+import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
@@ -34,6 +35,7 @@ const InCallView = dynamic(
 );
 
 interface CallExperienceProps {
+  callCloneProvider?: CallCloneProvider;
   callVoices: DBVoice[];
   /** Notices and FAQ shown under the character picker. */
   children?: ReactNode;
@@ -69,12 +71,17 @@ function returnedCloneDraft(
     instructions: '',
     name: '',
     sessionConfig: voice
-      ? withCallVoice(sessionConfig, { name: voice.name, savedId: voice.id })
+      ? withCallVoice(sessionConfig, {
+          name: voice.name,
+          savedId: voice.id,
+          provider: voice.provider,
+        })
       : sessionConfig,
   };
 }
 
 function CallExperienceScreens({
+  callCloneProvider = 'inworld',
   callVoices,
   children,
   isPaidUser,
@@ -238,6 +245,7 @@ function CallExperienceScreens({
   } else if (view.name === 'creator') {
     screen = (
       <CharacterCreator
+        callCloneProvider={callCloneProvider}
         callVoices={callVoices}
         intent={view.intent}
         onCancel={() => showView({ name: 'picker' })}

@@ -17,8 +17,12 @@ import {
   server,
 } from './setup';
 
-const { mockSaveMistralVoice } = vi.hoisted(() => ({
+const { mockSaveMistralVoice, mockSaveInworldVoice } = vi.hoisted(() => ({
   mockSaveMistralVoice: vi.fn(),
+  mockSaveInworldVoice: vi.fn(),
+}));
+vi.mock('@/lib/clone/inworld', () => ({
+  saveInworldVoice: mockSaveInworldVoice,
 }));
 vi.mock('@/lib/clone/mistral', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/clone/mistral')>()),
@@ -108,7 +112,10 @@ describe('Clone Voice API Route', () => {
         }),
       );
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({ audioReferenceId: 'reference' });
+      expect(await response.json()).toEqual({
+        audioReferenceId: 'reference',
+        provider: 'mistral',
+      });
       expect(mockSaveMistralVoice).toHaveBeenCalledWith(
         expect.any(Buffer),
         'My voice',
@@ -120,13 +127,79 @@ describe('Clone Voice API Route', () => {
     },
   );
 
+  it.each(['en', 'pl', 'da', 'en-multi'])(
+    'creates a new Inworld call clone for %s when configured',
+    async (locale) => {
+      vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+      mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', 'true');
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        audioReferenceId: 'reference',
+        provider: 'inworld',
+      });
+      expect(mockSaveInworldVoice).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        'My voice',
+        locale,
+        expect.any(String),
+      );
+      expect(mockSaveMistralVoice).not.toHaveBeenCalled();
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(mockReplicateRun).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+    },
+  );
+
   it.each([
-    { paid: false, locale: 'en', consent: 'true', status: 403 },
-    { paid: true, locale: 'da', consent: 'true', status: 400 },
-    { paid: true, locale: 'en', consent: 'false', status: 400 },
+    {
+      paid: false,
+      locale: 'en',
+      consent: 'true',
+      status: 403,
+      provider: 'mistral',
+    },
+    {
+      paid: true,
+      locale: 'da',
+      consent: 'true',
+      status: 400,
+      provider: 'mistral',
+    },
+    {
+      paid: true,
+      locale: 'en',
+      consent: 'false',
+      status: 400,
+      provider: 'mistral',
+    },
+    {
+      paid: false,
+      locale: 'en',
+      consent: 'true',
+      status: 403,
+      provider: 'inworld',
+    },
+    {
+      paid: true,
+      locale: 'en',
+      consent: 'false',
+      status: 400,
+      provider: 'inworld',
+    },
   ])(
     'rejects invalid saved voice requests: $paid $locale $consent',
-    async ({ paid, locale, consent, status }) => {
+    async ({ paid, locale, consent, status, provider }) => {
+      vi.stubEnv('CALL_CLONE_PROVIDER', provider);
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(paid);
       const form = createFormDataWithAudio('', createMockAudioFile(), locale);
       form.set('saveVoiceName', 'My voice');
@@ -139,11 +212,40 @@ describe('Clone Voice API Route', () => {
       );
       expect(response.status).toBe(status);
       expect(mockSaveMistralVoice).not.toHaveBeenCalled();
+      expect(mockSaveInworldVoice).not.toHaveBeenCalled();
     },
   );
 
+  it('trims an Inworld call clone to 30 seconds rather than the speech-cloning limit', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+    const metadata = await import('music-metadata');
+    vi.mocked(metadata.parseBuffer)
+      .mockResolvedValueOnce({ format: { duration: 35 } } as any)
+      .mockResolvedValueOnce({ format: { duration: 35 } } as any)
+      .mockResolvedValueOnce({ format: { duration: 30 } } as any);
+    const form = createFormDataWithAudio(
+      '',
+      createMockAudioFile('long.wav', 'audio/wav', 44 + 35 * 44_100 * 2),
+    );
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(mockSaveInworldVoice.mock.calls[0][0].length).toBe(
+      44 + 30 * 44_100 * 2,
+    );
+  });
+
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'mistral');
     vi.mocked(queries.hasUserPaid).mockReset().mockResolvedValue(false);
 
     const musicMetadata = await import('music-metadata');
