@@ -193,6 +193,7 @@ declare type Database = {
           locale: string | null;
           name: string;
           provider: string;
+          sample_url: string | null;
           updated_at: string | null;
           user_id: string;
           voice_id: string;
@@ -204,6 +205,7 @@ declare type Database = {
           locale?: string | null;
           name: string;
           provider: string;
+          sample_url?: string | null;
           updated_at?: string | null;
           user_id: string;
           voice_id: string;
@@ -215,6 +217,7 @@ declare type Database = {
           locale?: string | null;
           name?: string;
           provider?: string;
+          sample_url?: string | null;
           updated_at?: string | null;
           user_id?: string;
           voice_id?: string;
