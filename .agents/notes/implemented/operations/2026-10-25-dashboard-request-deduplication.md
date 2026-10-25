@@ -36,11 +36,18 @@ Generate, Clone, and Call pages share one query per request. `hasUserPaid()`
 uses the same per-request cache. The cache lasts for one server render, so a
 purchase shows on the next request.
 
-### One analytics copy
+### One analytics component
 
-`CreditsSection` identifies the user to PostHog and Crisp only when
-`identifyUser` is set. The sidebar copy in `dashboard.ui.tsx` sets it; the
-mobile copies on pages do not.
+`DashboardAnalytics` in `apps/web/components/dashboard-analytics.tsx`
+identifies the user to PostHog and Crisp and resends the balance when it
+changes. `DashboardUI` renders it once, outside `<Sidebar>`: below 768px the
+sidebar sits in a Radix `Sheet` that unmounts while closed, so a component
+inside it would not identify phone users. `CreditsSection` only shows the
+balance. Both read the balance through `useCreditsQuery()`, which shares one
+React Query request by key.
+
+Rejected: an `identifyUser` prop on the sidebar `CreditsSection` copy. Review
+found that phone users were then identified only after opening the drawer.
 
 ## Rejected: per-render claims cache
 
@@ -70,15 +77,19 @@ server `fetch` to Supabase. A Playwright script loaded each page as the E2E
 user, waited five seconds, and recorded browser Supabase requests. The
 script ran outside the repository.
 
-| Page     | Step                 | Server | Browser |
-| -------- | -------------------- | -----: | ------: |
-| Generate | Baseline             |     37 |       5 |
-| Generate | Proxy skips prefetch |      9 |       5 |
-| Generate | Shared credit query  |      8 |       5 |
-| Generate | One analytics copy   |      8 |       3 |
-| History  | Baseline             |     37 |       3 |
-| History  | Proxy skips prefetch |      9 |       3 |
-| History  | Shared credit query  |      9 |       3 |
+| Page     | Step                    | Server | Browser |
+| -------- | ----------------------- | -----: | ------: |
+| Generate | Baseline                |     37 |       5 |
+| Generate | Proxy skips prefetch    |      9 |       5 |
+| Generate | Shared credit query     |      8 |       5 |
+| Generate | One analytics component |      8 |       3 |
+| History  | Baseline                |     37 |       3 |
+| History  | Proxy skips prefetch    |      9 |       3 |
+| History  | Shared credit query     |      9 |       3 |
+
+At 390px and 1280px wide, Generate and History each make one browser claims
+lookup and one paid-status query, so identification runs once at both
+widths.
 
 A logged-out request with the prefetch header to each of the nine dashboard
 pages read no user data and made no Supabase queries. A logged-out page load

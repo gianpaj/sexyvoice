@@ -22,6 +22,7 @@ import { useTranslations } from 'next-intl';
 import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
+import { DashboardAnalytics } from '@/components/dashboard-analytics';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
 import {
   Sidebar,
@@ -137,6 +138,7 @@ export default function DashboardUI({
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen>
+        <DashboardAnalytics lang={lang} userId={userId} />
         <Sidebar collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
@@ -200,8 +202,6 @@ export default function DashboardUI({
           <SidebarFooter>
             <CreditsSection
               creditTransactions={creditTransactions}
-              identifyUser
-              lang={lang}
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />

@@ -74,7 +74,6 @@ export default async function GeneratePage(props: {
         <CreditsSection
           creditTransactions={creditTransactions}
           doNotToggleSidebar
-          lang={lang}
           userId={userId}
         />
       </div>

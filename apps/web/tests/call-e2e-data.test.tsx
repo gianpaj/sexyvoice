@@ -146,7 +146,6 @@ function expectPageProps(
   expect(vi.mocked(CreditsSection).mock.calls[0][0]).toEqual({
     creditTransactions,
     doNotToggleSidebar: true,
-    lang: 'de',
     showMinutes: true,
     userId,
   });

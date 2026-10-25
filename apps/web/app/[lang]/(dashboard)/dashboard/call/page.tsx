@@ -119,7 +119,6 @@ export default async function Call(props: {
                 <CreditsSection
                   creditTransactions={creditTransactions}
                   doNotToggleSidebar
-                  lang={lang}
                   showMinutes
                   userId={userId}
                 />

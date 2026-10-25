@@ -1,19 +1,11 @@
 'use client';
 
-import type { JwtPayload } from '@supabase/supabase-js';
-import { useQuery } from '@tanstack/react-query';
-import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
 
+import { useCreditsQuery } from '@/hooks/use-credits-query';
 import { isCreditBalance } from '@/lib/credit-balance';
-import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
-import { initPostHog } from '@/lib/posthog-browser';
-import { getVerifiedClaims } from '@/lib/supabase/auth';
-import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
-import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
 import { CreditBalanceError } from './credit-balance-error';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
@@ -21,24 +13,17 @@ import { useSidebar } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
-  lang,
   userId,
   creditTransactions,
   doNotToggleSidebar,
-  identifyUser,
   showMinutes,
 }: {
-  lang: Locale;
   userId: string;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[] | null;
   doNotToggleSidebar?: boolean;
-  // Sends the user to PostHog and Crisp. Pages also render a mobile copy of
-  // this section, so only the sidebar copy sets it.
-  identifyUser?: boolean;
   showMinutes?: boolean;
 }) {
   const t = useTranslations('creditsSection');
-  const supabase = useSupabaseBrowser();
   const { isMobile, toggleSidebar } = useSidebar();
   const totalCredits =
     creditTransactions?.reduce(
@@ -46,86 +31,7 @@ function CreditsSection({
       0,
     ) || 0;
 
-  const {
-    data: creditsData,
-    isPending,
-    isError,
-  } = useQuery({
-    enabled: !!userId,
-    queryFn: () => getCredits(supabase, userId),
-    queryKey: ['credits', userId],
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (!identifyUser || isError || !isCreditBalance(creditsData?.amount)) {
-      return;
-    }
-
-    const getData = async () => {
-      const claims = await getVerifiedClaims(supabase);
-      if (!claims?.sub) {
-        throw new Error('User not found');
-      }
-
-      const userHasPaid = await hasUserPaid(supabase, claims.sub);
-      return { claims, userHasPaid };
-    };
-
-    const sendUserAnalyticsData = (
-      claims: JwtPayload,
-      credits: Pick<Tables<'credits'>, 'amount'> | null | undefined,
-      userHasPaid: boolean,
-    ) => {
-      const creditsLeft = credits?.amount ?? -1;
-      const metadata = claims.user_metadata;
-      const nickname =
-        (typeof metadata?.full_name === 'string' && metadata.full_name) ||
-        (typeof metadata?.username === 'string' && metadata.username) ||
-        undefined;
-
-      initPostHog()
-        .then((posthog) => {
-          posthog?.identify(claims.sub, {
-            creditsLeft,
-            email: claims.email,
-            name: nickname,
-            userHasPaid,
-          });
-        })
-        .catch(() => undefined);
-
-      if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-        return;
-      }
-
-      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-        locale: lang,
-      });
-
-      if (claims.email) {
-        Crisp.user.setEmail(claims.email);
-      }
-
-      if (nickname) {
-        Crisp.user.setNickname(nickname);
-      }
-
-      Crisp.session.setData({
-        creditsLeft,
-        user_id: claims.sub,
-        userHasPaid,
-      });
-    };
-
-    getData()
-      .then(({ claims, userHasPaid }) => {
-        sendUserAnalyticsData(claims, creditsData, userHasPaid);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize dashboard layout:', error);
-      });
-  }, [creditsData, identifyUser, isError, lang, supabase]);
+  const { data: creditsData, isPending, isError } = useCreditsQuery(userId);
 
   if (isPending && userId) {
     return (

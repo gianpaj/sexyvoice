@@ -50,7 +50,6 @@ export default async function NewVoicePage(props: {
         <CreditsSection
           creditTransactions={creditTransactions}
           doNotToggleSidebar
-          lang={lang}
           userId={userId}
         />
       </div>
