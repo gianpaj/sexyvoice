@@ -42,6 +42,9 @@ catalog:
 
 overrides:
   "@babel/runtime@<7.26.10": ">=7.26.10"
+  # @vercel/otel and Sentry must share one OpenTelemetry API copy: a newer minor
+  # rejects globals registered by an older one and falls back to no-op tracing.
+  "@opentelemetry/api": "1.9.0"
   "@opentelemetry/auto-instrumentations-node": "0.76.0"
   "@opentelemetry/exporter-prometheus": "0.218.0"
   "@opentelemetry/exporter-trace-otlp-http": "0.218.0"

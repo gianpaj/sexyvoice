@@ -321,6 +321,65 @@ For crashes and per-event browser/device details, use
 Gemini failures, use the [application-log investigation](../scripts/README.md#2-correlate-sentry-application-logs).
 Neither requires muting or resolving issues as a deployment check.
 
+#### Supabase tracing
+
+The web app uses Sentry's built-in Supabase instrumentation with
+`sendOperationData: false`. The browser, server, admin, and middleware factories
+call `instrumentSupabase` from `apps/web/lib/supabase/tracing.ts`. Each new client
+needs instrumentation because auth wrapping is per instance. Trace sampling is
+10% in all three Sentry configs; server and edge reporting require production
+`NODE_ENV` and stay off when `E2E_TEST_MODE=true`.
+
+On Node, `@vercel/otel` owns the OpenTelemetry tracer provider
+(`skipOpenTelemetrySetup: true`), and `SentrySpanProcessor` forwards its spans to
+Sentry. `pnpm-workspace.yaml` pins `@opentelemetry/api` to one version for both.
+If they load different minor versions, Sentry sees a no-op tracer and records no
+server spans. Recheck the pin when upgrading Sentry or `@vercel/otel`.
+
+Sentry owns outgoing trace propagation to Supabase. Node and browser configs
+enable `propagateTraceparent: true`; the browser allowlist includes only
+same-origin requests and the configured `NEXT_PUBLIC_SUPABASE_URL` origin.
+`@vercel/otel` propagates context only to the deployment's own Vercel URLs, and
+Sentry does not replace trace headers a request already carries. Do not also
+enable Supabase's `tracePropagation` option or import its `/tracing` runtime: two
+propagation layers can attach different parent span IDs to the same request.
+Server-side Sentry propagation retains its default outbound targets.
+
+Keep the automatic HTTP spans alongside database spans. They provide coverage
+for Auth, Storage, HEAD requests, and RPCs. Sentry's Supabase instrumentation does
+not reliably provide RPC-specific database spans; RPC HTTP spans remain useful.
+The shared trace ID can correlate requests with Supabase API Gateway logs. An
+unsampled request can still carry a trace ID, without a stored Sentry trace.
+Sentry can send baggage on unsampled requests.
+
+`apps/web/lib/sentry/supabase-privacy.ts` sanitizes Supabase integration spans,
+breadcrumbs, automatic errors, and matching HTTP telemetry before Sentry sends
+them, in every runtime:
+
+- Query filters and mutation bodies are excluded. HTTP URLs lose credentials,
+  query strings, and fragments.
+- Automatic Supabase errors retain trace correlation and approved error codes,
+  but discard free-form messages, stacks, and extra error contexts.
+- Table/schema names, URL paths, timings, and span status remain visible. Do not
+  put secrets in object paths or identifiers.
+- Manually captured exceptions, console logs, Replay, attachments, and arbitrary
+  scope data are outside this policy. It is not a general telemetry scrubber.
+- The hooks run only in Sentry's export path. The Dash0 OTLP export receives
+  server spans from `@vercel/otel` unchanged, including full Supabase request
+  URLs with query strings.
+
+The app has no Edge routes; Next.js 16 Proxy runs on Node. Before introducing an
+Edge route, revisit W3C propagation: Sentry's WinterCG fetch integration through
+10.75.0 does not honor `propagateTraceparent`. The edge config still includes
+privacy hooks and supports Supabase spans, but does not promise W3C headers.
+
+For deployment verification, inspect a normal dashboard Supabase request in the
+browser network panel for `traceparent`, `sentry-trace`, and `baggage`. Confirm
+that its trace ID matches a sampled Sentry trace and Supabase API Gateway logs.
+If browser calls to Supabase Edge Functions are added, their CORS allowlist must
+include `traceparent`, `tracestate`, `baggage`, and `sentry-trace`. No log drain is
+configured by this integration.
+
 ## Deployment verification
 
 Verify the deployed commit and target environment before testing. Use test
