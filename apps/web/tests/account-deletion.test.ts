@@ -2,6 +2,8 @@ import { captureException, logger } from '@sentry/nextjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { handleDeleteAccountAction } from '@/app/actions';
+import { deleteInworldVoice } from '@/lib/clone/inworld';
+import { deleteMistralVoice } from '@/lib/clone/mistral';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
   AccountBillingError,
@@ -21,6 +23,8 @@ import { encodedRedirect } from '@/lib/utils';
 vi.mock('@/lib/storage/upload', () => ({
   deleteFileFromR2: vi.fn(),
 }));
+vi.mock('@/lib/clone/inworld', () => ({ deleteInworldVoice: vi.fn() }));
+vi.mock('@/lib/clone/mistral', () => ({ deleteMistralVoice: vi.fn() }));
 
 vi.mock('@/lib/stripe/stripe-admin', () => ({
   expireOpenCheckoutSessions: vi.fn(),
@@ -69,7 +73,12 @@ function setupAccountDeletion({
   references = [],
 }: {
   usageResult?: { count: number | null; error: Error | null };
-  references?: { id: string; sample_url: string | null }[];
+  references?: {
+    id: string;
+    sample_url: string | null;
+    provider?: string;
+    voice_id?: string;
+  }[];
 } = {}) {
   const audioRead = createReadQuery({
     data: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
@@ -84,7 +93,7 @@ function setupAccountDeletion({
   };
   const referenceRead = {
     ...createReadQuery({ data: references, error: null }),
-    update: vi.fn(() => referenceUpdate),
+    delete: vi.fn(() => referenceUpdate),
   };
   const sessionSupabase = {
     auth: {
@@ -141,6 +150,8 @@ describe('account deletion', () => {
     vi.mocked(commitAccountDeletion).mockResolvedValue(undefined);
     vi.mocked(expireOpenCheckoutSessions).mockResolvedValue(undefined);
     vi.mocked(deleteFileFromR2).mockResolvedValue(undefined);
+    vi.mocked(deleteInworldVoice).mockResolvedValue(undefined);
+    vi.mocked(deleteMistralVoice).mockResolvedValue(undefined);
     vi.mocked(getUserByIdWithError).mockResolvedValue({
       data: { stripe_id: 'cus_123' },
       error: null,
@@ -344,22 +355,35 @@ describe('account deletion', () => {
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 
-  it('removes stored call voice samples and clears their URL on account deletion', async () => {
+  it('removes both provider voices, stored samples and owned rows on account deletion', async () => {
     const id = '11111111-1111-4111-8111-111111111111';
     const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
     const { referenceRead, referenceUpdate } = setupAccountDeletion({
       references: [
-        { id, sample_url: `https://files.sexyvoice.ai/${key}` },
-        { id: 'legacy', sample_url: null },
+        {
+          id,
+          sample_url: `https://files.sexyvoice.ai/${key}`,
+          provider: 'inworld',
+          voice_id: 'iw-voice',
+        },
+        {
+          id: 'legacy',
+          sample_url: null,
+          provider: 'mistral',
+          voice_id: 'mi-voice',
+        },
       ],
     });
     await handleDeleteAccountAction({ lang: 'en' });
     expect(referenceRead.eq).toHaveBeenCalledWith('user_id', 'user-1');
     expect(deleteFileFromR2).toHaveBeenCalledWith(key);
-    expect(referenceRead.update).toHaveBeenCalledOnce();
-    expect(referenceRead.update).toHaveBeenCalledWith({ sample_url: null });
+    expect(deleteInworldVoice).toHaveBeenCalledWith('iw-voice');
+    expect(deleteMistralVoice).toHaveBeenCalledWith('mi-voice');
+    expect(referenceRead.delete).toHaveBeenCalledTimes(2);
     expect(referenceUpdate.eq.mock.calls).toEqual([
       ['id', id],
+      ['user_id', 'user-1'],
+      ['id', 'legacy'],
       ['user_id', 'user-1'],
     ]);
   });
@@ -368,13 +392,21 @@ describe('account deletion', () => {
     const id = '11111111-1111-4111-8111-111111111111';
     const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
     const { referenceRead, sessionSupabase } = setupAccountDeletion({
-      references: [{ id, sample_url: `https://files.sexyvoice.ai/${key}` }],
+      references: [
+        {
+          id,
+          sample_url: `https://files.sexyvoice.ai/${key}`,
+          provider: 'inworld',
+          voice_id: 'iw-voice',
+        },
+      ],
     });
     vi.mocked(deleteFileFromR2).mockImplementation(async (candidate) => {
       if (candidate === key) throw new Error('Sample deletion failed');
     });
     await handleDeleteAccountAction({ lang: 'en' });
-    expect(referenceRead.update).not.toHaveBeenCalled();
+    expect(referenceRead.delete).not.toHaveBeenCalled();
+    expect(deleteInworldVoice).toHaveBeenCalledWith('iw-voice');
     expect(captureException).toHaveBeenCalledWith(
       expect.any(Error),
       expect.objectContaining({
@@ -385,6 +417,36 @@ describe('account deletion', () => {
       }),
     );
     expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  it('retains the profile when provider cleanup fails and still removes its R2 sample', async () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+    const { referenceRead } = setupAccountDeletion({
+      references: [
+        {
+          id,
+          sample_url: `https://files.sexyvoice.ai/${key}`,
+          provider: 'mistral',
+          voice_id: 'mi-voice',
+        },
+      ],
+    });
+    vi.mocked(deleteMistralVoice).mockRejectedValueOnce(
+      new Error('Provider unavailable'),
+    );
+    await handleDeleteAccountAction({ lang: 'en' });
+    expect(deleteFileFromR2).toHaveBeenCalledWith(key);
+    expect(referenceRead.delete).not.toHaveBeenCalled();
+    expect(captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: {
+          context: 'call_voice_sample_account_cleanup',
+          referenceId: id,
+        },
+      }),
+    );
   });
 
   it('releases billing when database cleanup fails after the Auth update', async () => {

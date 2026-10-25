@@ -284,7 +284,7 @@
           "questions": [
             {
               "question": "I miei dati vocali sono sicuri?",
-              "answer": "Assolutamente. Tutte le registrazioni vocali e i file generati sono crittografati e conservati in modo sicuro. Quando cloni una voce, eliminiamo il campione vocale caricato e nessun altro può usarlo. Hai il controllo completo sui file audio generati e puoi eliminarli quando vuoi. Non condividiamo mai i dati vocali senza il tuo consenso."
+              "answer": "Le voci salvate per le chiamate sono private del tuo account. Il fornitore conserva il campione per consentirti di riutilizzare la voce. Puoi eliminare i file audio generati dalla dashboard. L’eliminazione dell’account richiede anche la rimozione delle voci salvate e delle loro anteprime."
             },
             {
               "question": "Per cosa posso usare le voci generate?",

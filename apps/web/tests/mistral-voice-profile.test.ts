@@ -19,7 +19,7 @@ vi.mock('@/lib/supabase/server', () => ({
   createClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 
-import { saveMistralVoice } from '@/lib/clone/mistral';
+import { deleteMistralVoice, saveMistralVoice } from '@/lib/clone/mistral';
 import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
 
 beforeEach(() => {
@@ -31,6 +31,15 @@ beforeEach(() => {
     audioData: Buffer.from('RIFFsample').toString('base64'),
   });
   mocks.insert.mockReturnValue({ select: () => ({ single: mocks.single }) });
+});
+
+it('treats an already deleted Mistral voice as successful cleanup', async () => {
+  mocks.remove.mockRejectedValueOnce({ statusCode: 404 });
+  await expect(deleteMistralVoice('gone')).resolves.toBeUndefined();
+  mocks.remove.mockRejectedValueOnce({ statusCode: 503 });
+  await expect(deleteMistralVoice('unavailable')).rejects.toEqual({
+    statusCode: 503,
+  });
 });
 
 describe('saved Mistral profiles', () => {

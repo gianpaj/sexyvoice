@@ -284,7 +284,7 @@
           "questions": [
             {
               "question": "Er mine stemmedata sikre?",
-              "answer": "Absolut. Alle stemmeoptagelser og genererede filer er krypteret og opbevaret sikkert. Når du kloner en stemme, sletter vi den uploadede stemmeprøve, og ingen andre kan bruge den. Du har fuld kontrol over de genererede lydfiler og kan slette dem, når du vil. Vi deler aldrig stemmedata uden dit samtykke."
+              "answer": "Gemte opkaldsstemmer er private for din konto. Stemmeudbyderen beholder optagelsen, så du kan genbruge stemmen. Du kan slette genererede lydfiler i dit dashboard. Når du sletter din konto, anmoder vi også om sletning af gemte stemmer og deres lydprøver."
             },
             {
               "question": "Hvad kan jeg bruge de genererede stemmer til?",

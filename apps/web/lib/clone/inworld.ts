@@ -21,7 +21,9 @@ async function inworldRequest(path: string, init?: RequestInit) {
     cache: 'no-store',
     signal: AbortSignal.timeout(60_000),
   });
-  if (!response.ok) {
+  if (
+    !(response.ok || (init?.method === 'DELETE' && response.status === 404))
+  ) {
     // Provider bodies can contain reference audio or credentials; keep them out of logs.
     throw new Error(`Inworld voice request failed (${response.status})`);
   }
@@ -63,10 +65,13 @@ export async function saveInworldVoice(
       const { audioContent } = previewResponse.parse(await speech.json());
       return Buffer.from(audioContent, 'base64');
     },
-    deleteVoice: () =>
-      inworldRequest(`/voices/v1/voices/${encodeURIComponent(voice.voiceId)}`, {
-        method: 'DELETE',
-      }),
+    deleteVoice: () => deleteInworldVoice(voice.voiceId),
+  });
+}
+
+export async function deleteInworldVoice(voiceId: string) {
+  await inworldRequest(`/voices/v1/voices/${encodeURIComponent(voiceId)}`, {
+    method: 'DELETE',
   });
 }
 

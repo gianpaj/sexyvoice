@@ -260,8 +260,9 @@ Reads accept only sample object keys under the owned profile's prefix, never
 arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
 reference WAV audio or Inworld's MP3 preview. Preview playback does not create
 or backfill R2 samples.
-Account deletion removes stored samples and clears their URLs after successful
-R2 deletion. Cleanup failures retain the URL for retry and are reported.
+Account deletion removes saved voices at their provider and their R2 samples,
+then deletes each owned `audio_references` row. Cleanup failures retain the row
+for support to retry and are reported with the profile ID.
 Inworld requires `INWORLD_API_KEY` in the web app and agent, with access to
 the same workspace. Mistral profiles require `MISTRAL_API_KEY` in both.
 Changing the default does not convert existing profiles or voice IDs.

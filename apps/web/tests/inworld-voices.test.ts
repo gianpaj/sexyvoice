@@ -7,7 +7,11 @@ vi.mock('@/lib/supabase/server', () => ({
 
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { supportsCallCloneLocale } from '@/lib/clone/call-voice-config';
-import { getInworldVoiceSample, saveInworldVoice } from '@/lib/clone/inworld';
+import {
+  deleteInworldVoice,
+  getInworldVoiceSample,
+  saveInworldVoice,
+} from '@/lib/clone/inworld';
 import { saveCallVoiceProfile } from '@/lib/clone/save-call-voice-profile';
 import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
 
@@ -23,6 +27,18 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
+});
+
+it('treats an already deleted Inworld voice as successful cleanup', async () => {
+  const request = vi
+    .fn()
+    .mockResolvedValue(new Response(null, { status: 404 }));
+  vi.stubGlobal('fetch', request);
+  await expect(deleteInworldVoice('voice/id')).resolves.toBeUndefined();
+  expect(request).toHaveBeenCalledWith(
+    'https://api.inworld.ai/voices/v1/voices/voice%2Fid',
+    expect.objectContaining({ method: 'DELETE' }),
+  );
 });
 
 describe('call clone provider configuration', () => {

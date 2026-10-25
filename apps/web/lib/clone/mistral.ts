@@ -1,5 +1,6 @@
 import { Mistral } from '@mistralai/mistralai';
 
+import { getProviderStatusCode } from '@/lib/provider-errors';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
 
@@ -44,6 +45,14 @@ export async function saveMistralVoice(
         ? Buffer.from(speech.audioData, 'base64')
         : Buffer.from(speech.audioData);
     },
-    deleteVoice: () => mistral.audio.voices.delete({ voiceId: voice.id }),
+    deleteVoice: () => deleteMistralVoice(voice.id),
   });
+}
+
+export async function deleteMistralVoice(voiceId: string) {
+  try {
+    await getMistralClient().audio.voices.delete({ voiceId });
+  } catch (error) {
+    if (getProviderStatusCode(error) !== 404) throw error;
+  }
 }

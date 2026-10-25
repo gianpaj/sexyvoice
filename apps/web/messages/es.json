@@ -284,7 +284,7 @@
           "questions": [
             {
               "question": "¿Están seguros mis datos de voz?",
-              "answer": "Absolutamente. Todas las grabaciones de voz y archivos generados están cifrados y almacenados de forma segura. Cuando clonas una voz, eliminamos la muestra de voz cargada y nadie más puede usarla. Tienes control total sobre los archivos de audio generados y puedes eliminarlos cuando quieras. Nunca compartimos datos de voz sin tu consentimiento."
+              "answer": "Las voces guardadas para llamadas son privadas de tu cuenta. El proveedor de voz conserva la muestra para que puedas reutilizar la voz. Puedes eliminar los archivos de audio generados desde tu panel. Al eliminar tu cuenta también se solicita la eliminación de las voces guardadas y sus muestras de escucha."
             },
             {
               "question": "¿Para qué puedo utilizar las voces generadas?",
