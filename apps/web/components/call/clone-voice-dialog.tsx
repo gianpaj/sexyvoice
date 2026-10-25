@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
+import { MicrophoneVisualizer } from '@/components/audio/microphone-visualizer';
 import {
   Dialog,
   DialogContent,
@@ -32,7 +33,6 @@ import { PlayingBars } from './listen-button';
 const MIN_RECORDING_SECONDS = 10;
 const MAX_RECORDING_SECONDS = 60;
 const MAX_NAME_LENGTH = 50;
-const BAR_COUNT = 28;
 
 type Step = 'record' | 'confirm' | 'processing' | 'ready';
 type Source = 'record' | 'upload';
@@ -523,26 +523,17 @@ export function CloneVoiceDialog({
                       </div>
                       <div
                         aria-hidden="true"
-                        className="flex h-9 items-center gap-[3px]"
+                        className={cn(
+                          'flex h-9 items-center',
+                          isRecording && 'text-red-400',
+                          !isRecording && recording && 'text-violet-400',
+                          !(isRecording || recording) && 'text-slate-700',
+                        )}
                       >
-                        {Array.from({ length: BAR_COUNT }, (_, i) => {
-                          let height = 4;
-                          if (isRecording)
-                            height = 6 + ((i * 37 + seconds * 53) % 30);
-                          else if (recording) height = 6 + ((i * 29 + 11) % 24);
-                          return (
-                            <span
-                              className={cn(
-                                'flex-1 rounded-sm',
-                                isRecording && 'bg-red-400',
-                                !isRecording && recording && 'bg-violet-400',
-                                !(isRecording || recording) && 'bg-slate-700',
-                              )}
-                              key={i}
-                              style={{ height }}
-                            />
-                          );
-                        })}
+                        <MicrophoneVisualizer
+                          barColor="currentColor"
+                          mediaStream={recorder.mediaStream}
+                        />
                       </div>
                     </div>
                   </div>

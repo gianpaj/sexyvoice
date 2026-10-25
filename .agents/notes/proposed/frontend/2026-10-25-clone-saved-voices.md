@@ -13,6 +13,10 @@ Voice selection in the creator remains a radio group; the dashboard's saved
 profiles are actions that open the call setup. The main call screen continues
 to show characters rather than a separate voice library.
 
+The Clone page microphone and call clone dialog share
+`components/audio/microphone-visualizer.tsx`. Its nine frequency bands react
+to the recorder's live `MediaStream`; the dialog retains its controls and timer.
+
 The large comparison demo card is absent from the clone form. Demo examples
 belong to the public voice-cloning page; links from that page can still load
 a reference into the dashboard through `initialDemo`.
