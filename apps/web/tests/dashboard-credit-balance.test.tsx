@@ -60,6 +60,7 @@ async function renderPage(
         : {
             data: [],
             eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
             order: vi.fn().mockReturnThis(),
             select: vi.fn().mockReturnThis(),
           },

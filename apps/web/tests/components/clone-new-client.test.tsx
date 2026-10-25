@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import NewVoiceClient from '@/app/[lang]/(dashboard)/dashboard/clone/new.client';
+import type { SavedCallVoice } from '@/lib/call-voices';
 import { CLONE_SUPPORTED_LOCALE_CODES } from '@/lib/clone/constants';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import daMessages from '@/messages/da.json';
@@ -25,6 +26,7 @@ const {
   mockLanguageSelect,
   mockToastError,
   mockToastSuccess,
+  mockNavigate,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   mockAddFiles: vi.fn(),
@@ -34,6 +36,7 @@ const {
   mockLanguageSelect: vi.fn(),
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
+  mockNavigate: vi.fn(),
 }));
 
 const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
@@ -41,6 +44,7 @@ const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
 });
 
 vi.mock('@/lib/i18n/navigation', () => ({
+  useRouter: () => ({ push: mockNavigate }),
   Link: ({
     children,
     href,
@@ -57,10 +61,6 @@ vi.mock('@/lib/i18n/navigation', () => ({
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-
-vi.mock('@/app/[lang]/(dashboard)/dashboard/clone/clone-sample-card', () => ({
-  default: () => <div data-testid="clone-sample-card" />,
 }));
 
 // Stubbed so the locale ordering computed by new.client.tsx can be asserted on
@@ -245,6 +245,7 @@ const dict = {
 
 const renderClone = (
   props: {
+    savedVoices?: SavedCallVoice[];
     cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
     initialSaveForCalls?: boolean;
@@ -260,6 +261,7 @@ const renderClone = (
     <NextIntlClientProvider
       locale="es"
       messages={{
+        call: enMessages.call,
         clone: props.cloneMessages ?? dict,
         errorCodes: errorCodesDict,
         generate: enMessages.generate,
@@ -272,6 +274,7 @@ const renderClone = (
         initialDemo={props.initialDemo}
         initialSaveForCalls={props.initialSaveForCalls}
         lang={props.lang ?? 'en'}
+        savedVoices={props.savedVoices}
         userHasPaid={props.userHasPaid ?? false}
       />
     </NextIntlClientProvider>,
@@ -287,9 +290,12 @@ const renderedLocaleCodes = () => {
 describe('NewVoiceClient', () => {
   it('saves a reusable voice without requiring generated speech text', async () => {
     fetchMock.mockResolvedValueOnce(
-      new Response(JSON.stringify({ audioReferenceId: 'reference' }), {
-        status: 200,
-      }),
+      new Response(
+        JSON.stringify({ audioReferenceId: 'reference', provider: 'inworld' }),
+        {
+          status: 200,
+        },
+      ),
     );
     const user = userEvent.setup();
     renderClone({
@@ -314,6 +320,44 @@ describe('NewVoiceClient', () => {
     expect(
       screen.getByRole('link', { name: enMessages.clone.savedVoice.useInCall }),
     ).toHaveAttribute('href', '/dashboard/call?custom=1&voice=reference');
+    expect(
+      screen.getByRole('button', { name: 'My voice' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Play My voice sample' }),
+    ).toBeInTheDocument();
+  });
+
+  it('lists owned Inworld and Mistral profiles and opens the selected voice in the call creator', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      userHasPaid: true,
+      savedVoices: [
+        {
+          id: 'inworld-reference',
+          name: 'My Inworld voice',
+          locale: 'en',
+          provider: 'inworld',
+        },
+        {
+          id: 'mistral-reference',
+          name: 'My Mistral voice',
+          locale: 'pl',
+          provider: 'mistral',
+        },
+      ],
+    });
+    expect(
+      screen.getByRole('heading', { name: 'Your voices' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'My Mistral voice' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'My Inworld voice' }));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/dashboard/call?custom=1&voice=inworld-reference',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   beforeEach(() => {

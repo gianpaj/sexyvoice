@@ -14,6 +14,7 @@ import {
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
+import { SavedCallVoices } from '@/components/call/voice-picker';
 import { GenerateButton } from '@/components/generate-button';
 import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,6 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import { SamplePlayerProvider } from '@/hooks/use-sample-player';
+import type { SavedCallVoice } from '@/lib/call-voices';
 import {
   CLONE_FORM_FIELDS,
   type CloneSuccessResponse,
@@ -50,13 +53,12 @@ import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { Link } from '@/lib/i18n/navigation';
+import { Link, useRouter } from '@/lib/i18n/navigation';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { CloneAudioInput } from './clone-audio-input';
 import { CloneConsentFields } from './clone-consent-fields';
 import { CloneLanguageSelect } from './clone-language-select';
-import type { SampleAudio } from './clone-sample-card';
 import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
 
@@ -112,6 +114,7 @@ interface InitialDemo {
 }
 
 export default function NewVoiceClient({
+  savedVoices = [],
   callCloneProvider = 'inworld',
   lang,
   hasEnoughCredits,
@@ -119,6 +122,7 @@ export default function NewVoiceClient({
   initialDemo,
   initialSaveForCalls = false,
 }: {
+  savedVoices?: SavedCallVoice[];
   callCloneProvider?: CallCloneProvider;
   lang: Locale;
   hasEnoughCredits: boolean;
@@ -128,19 +132,23 @@ export default function NewVoiceClient({
 }) {
   return (
     <AudioProvider>
-      <NewVoiceClientInner
-        callCloneProvider={callCloneProvider}
-        hasEnoughCredits={hasEnoughCredits}
-        initialDemo={initialDemo}
-        initialSaveForCalls={initialSaveForCalls}
-        lang={lang}
-        userHasPaid={userHasPaid}
-      />
+      <SamplePlayerProvider>
+        <NewVoiceClientInner
+          callCloneProvider={callCloneProvider}
+          hasEnoughCredits={hasEnoughCredits}
+          initialDemo={initialDemo}
+          initialSaveForCalls={initialSaveForCalls}
+          lang={lang}
+          savedVoices={savedVoices}
+          userHasPaid={userHasPaid}
+        />
+      </SamplePlayerProvider>
     </AudioProvider>
   );
 }
 
 function NewVoiceClientInner({
+  savedVoices: initialSavedVoices,
   callCloneProvider,
   lang,
   hasEnoughCredits,
@@ -148,6 +156,7 @@ function NewVoiceClientInner({
   initialDemo,
   initialSaveForCalls = false,
 }: {
+  savedVoices: SavedCallVoice[];
   callCloneProvider: CallCloneProvider;
   lang: Locale;
   hasEnoughCredits: boolean;
@@ -156,6 +165,8 @@ function NewVoiceClientInner({
   initialSaveForCalls?: boolean;
 }) {
   const t = useTranslations('clone');
+  const router = useRouter();
+  const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
   const [saveVoiceOnly, setSaveVoiceOnly] = useState(
     initialSaveForCalls && userHasPaid,
   );
@@ -501,6 +512,17 @@ function NewVoiceClientInner({
         | SaveVoiceSuccessResponse;
       if ('audioReferenceId' in voiceResult) {
         setSavedVoiceId(voiceResult.audioReferenceId);
+        setSavedVoices((voices) => [
+          {
+            id: voiceResult.audioReferenceId,
+            name: voiceName.trim(),
+            locale: selectedLocaleCode,
+            provider: voiceResult.provider,
+          },
+          ...voices.filter(
+            (voice) => voice.id !== voiceResult.audioReferenceId,
+          ),
+        ]);
         dispatch({ patch: { status: 'idle' }, type: 'patch' });
         toast.success(t('savedVoice.success'));
         return;
@@ -581,16 +603,6 @@ function NewVoiceClientInner({
     }
   };
 
-  const onSelectSample = (sample: SampleAudio) => {
-    dispatch({
-      patch: {
-        selectedLocaleCode: sample.locale,
-        text: sample.prompt,
-      },
-      type: 'patch',
-    });
-  };
-
   const onToggleMicrophone = async () => {
     if (micStatus === 'idle' || micStatus === 'stopped') {
       clearMediaStream();
@@ -619,7 +631,14 @@ function NewVoiceClientInner({
 
   return (
     <Card>
-      <CardContent>
+      <CardContent className="space-y-6">
+        <SavedCallVoices
+          disabled={!userHasPaid}
+          onUse={(voice) =>
+            router.push(`/dashboard/call?custom=1&voice=${voice.id}`)
+          }
+          voices={savedVoices}
+        />
         <Tabs
           className="w-full"
           onValueChange={(nextTab) => {
@@ -642,8 +661,10 @@ function NewVoiceClientInner({
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
               <CloneAudioInput
-                dispatch={dispatch}
-                ffmpeg={{ error: ffmpegError, loading: Boolean(ffmpegLoading) }}
+                ffmpeg={{
+                  error: ffmpegError,
+                  loading: Boolean(ffmpegLoading),
+                }}
                 fileActions={fileActions}
                 fileState={fileState}
                 mic={{
@@ -655,7 +676,6 @@ function NewVoiceClientInner({
                   recording: micRecording,
                   status: micStatus,
                 }}
-                onSelectSample={onSelectSample}
                 selectedLocaleCode={selectedLocaleCode}
                 selectedLocaleName={selectedLocaleName}
                 usesVoxtral={usesVoxtral}

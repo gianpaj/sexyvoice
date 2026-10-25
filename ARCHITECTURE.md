@@ -240,6 +240,12 @@ insert fails, it attempts to delete the provider voice. The response contains
 credits. The reference is retained by the selected provider; generated WAVs in `audio_files`
 remain separate from reusable profiles.
 
+The Clone page lists the signed-in user's saved Inworld and Mistral profiles
+above the upload and recording form. Previews use the private sample endpoint;
+selecting a voice opens the call character creator with that profile selected.
+Newly saved voices join the list immediately. The dashboard form has no demo
+comparison card; the public voice-cloning page retains its examples.
+
 Saved voice samples are served through
 `GET /api/audio-references/[id]/sample`. The route authenticates the user,
 checks ownership and a supported call provider, and returns audio with private,
@@ -304,7 +310,7 @@ listed languages are untested.
 
 ### Prepared cloning demos
 
-The public cloning page and dashboard use the same `DemoClonePlayer`: Kat in
+The public cloning page uses `DemoClonePlayer`: Kat in
 English and Heike in German, each with Natural, Sarcastic, and Calm & slow takes
 of one sentence. Kat also has a first-listed “Same as original” example using
 her reference recording's full passage. Natural remains the default.

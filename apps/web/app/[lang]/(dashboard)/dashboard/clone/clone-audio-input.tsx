@@ -2,7 +2,6 @@
 
 import { AlertCircle, PaperclipIcon, UploadIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
 import PulsatingDots from '@/components/pulsating-dots';
@@ -12,9 +11,6 @@ import { Label } from '@/components/ui/label';
 import { formatBytes, type useFileUpload } from '@/hooks/use-file-upload';
 import { formatCloneMessage } from '@/lib/clone/error-message';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import type { SampleAudio } from './clone-sample-card';
-import CloneSampleCard from './clone-sample-card';
-import type { CloneStateAction, Status } from './clone-state';
 
 type FileUploadResult = ReturnType<typeof useFileUpload>;
 
@@ -51,8 +47,6 @@ export function CloneAudioInput({
   usesVoxtral,
   selectedLocaleCode,
   selectedLocaleName,
-  onSelectSample,
-  dispatch,
 }: {
   fileState: FileUploadResult[0];
   fileActions: FileUploadResult[1];
@@ -61,8 +55,6 @@ export function CloneAudioInput({
   usesVoxtral: boolean;
   selectedLocaleCode: string;
   selectedLocaleName: string;
-  onSelectSample: (sample: SampleAudio) => void;
-  dispatch: Dispatch<CloneStateAction>;
 }) {
   const t = useTranslations('clone');
   const { files, isDragging, errors } = fileState;
@@ -74,7 +66,6 @@ export function CloneAudioInput({
     openFileDialog,
     removeFile,
     getInputProps,
-    addFiles,
   } = fileActions;
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
@@ -220,25 +211,7 @@ export function CloneAudioInput({
             <XIcon aria-hidden="true" className="size-6!" />
           </Button>
         </div>
-      ) : (
-        !mic.blob && (
-          // Sample audio demo buttons
-          <div className="grid w-full gap-2">
-            <p className="text-muted-foreground text-xs">{t('tryDemo')}</p>
-
-            <CloneSampleCard
-              addFiles={addFiles}
-              onSelectSample={onSelectSample}
-              setErrorMessage={(errorMessage) =>
-                dispatch({ patch: { errorMessage }, type: 'patch' })
-              }
-              setStatus={(status: Status) =>
-                dispatch({ patch: { status }, type: 'patch' })
-              }
-            />
-          </div>
-        )
-      )}
+      ) : null}
     </div>
   );
 }

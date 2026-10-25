@@ -8,6 +8,7 @@ import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getSavedCallVoices } from '@/lib/supabase/call-voices';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -44,16 +45,21 @@ export default async function NewVoicePage(props: {
     return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const [creditBalance, { data: creditTransactions }, userHasPaid] =
-    await Promise.all([
-      getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
-      supabase
-        .from('credit_transactions')
-        .select('amount')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false }),
-      hasUserPaid(userId),
-    ]);
+  const [
+    creditBalance,
+    { data: creditTransactions },
+    userHasPaid,
+    savedVoices,
+  ] = await Promise.all([
+    getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
+    supabase
+      .from('credit_transactions')
+      .select('amount')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false }),
+    hasUserPaid(userId),
+    getSavedCallVoices(userId),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -84,6 +90,7 @@ export default async function NewVoicePage(props: {
           }
           initialSaveForCalls={searchParams.for === 'call'}
           lang={lang}
+          savedVoices={savedVoices ?? []}
           userHasPaid={userHasPaid}
         />
       )}

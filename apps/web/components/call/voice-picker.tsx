@@ -14,13 +14,133 @@ import {
 import { cn } from '@/lib/utils';
 import { ListenButton } from './listen-button';
 
-interface VoiceTile {
+interface VoiceOption {
   description: string;
   id: string;
   name: string;
   provider?: string;
   sampleUrl: string | null;
   savedId?: string;
+}
+
+const gridClass =
+  'grid grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-2.5';
+const headingClass =
+  'font-semibold text-slate-400 text-xs uppercase tracking-[0.1em]';
+
+function VoiceTile({
+  voice,
+  selected = false,
+  isNew = false,
+  disabled,
+  onPick,
+  onUse,
+}: {
+  voice: VoiceOption;
+  selected?: boolean;
+  isNew?: boolean;
+  disabled?: boolean;
+  onPick?: () => void;
+  onUse?: () => void;
+}) {
+  const t = useTranslations('call.voices');
+  const player = useSamplePlayer();
+  const key = `voice:${voice.id}`;
+  const playing = player.playingKey === key;
+  const content = (
+    <span className="flex min-w-0 flex-col">
+      <span className="flex items-center gap-1.5 font-semibold text-[15px] text-slate-50">
+        <span className="truncate">{voice.name}</span>
+        {isNew && (
+          <span className="rounded-full bg-violet-400 px-1.5 font-bold text-[11px] text-slate-950">
+            {t('new')}
+          </span>
+        )}
+      </span>
+      <span className="truncate text-[13px] text-slate-400">
+        {voice.description}
+      </span>
+    </span>
+  );
+  return (
+    <div
+      className={cn(
+        'flex min-h-[68px] items-center gap-2 rounded-xl border py-2 pr-2 pl-3.5 transition-colors',
+        selected
+          ? 'border-violet-400 bg-violet-950/60'
+          : 'border-slate-800 bg-slate-900/70',
+      )}
+    >
+      {onUse ? (
+        <button
+          aria-label={voice.name}
+          className="flex min-h-11 min-w-0 flex-1 items-center rounded text-left focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-50"
+          disabled={disabled}
+          onClick={onUse}
+          type="button"
+        >
+          {content}
+        </button>
+      ) : (
+        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+          <input
+            checked={selected}
+            className="size-[18px] shrink-0 accent-violet-400"
+            disabled={disabled}
+            name="call-voice"
+            onChange={onPick}
+            type="radio"
+            value={voice.id}
+          />
+          {content}
+        </label>
+      )}
+      {voice.sampleUrl && (
+        <ListenButton
+          ariaLabel={t(playing ? 'stop' : 'play', { name: voice.name })}
+          onClick={() => player.toggle(key, voice.sampleUrl)}
+          playing={playing}
+        />
+      )}
+    </div>
+  );
+}
+
+export function SavedCallVoices({
+  voices,
+  disabled,
+  onUse,
+}: {
+  voices: SavedCallVoice[];
+  disabled?: boolean;
+  onUse: (voice: SavedCallVoice) => void;
+}) {
+  const t = useTranslations('call.voices');
+  if (!voices.length) return null;
+  return (
+    <section
+      aria-labelledby="call-saved-voices"
+      className="flex flex-col gap-3.5"
+    >
+      <h2 className={headingClass} id="call-saved-voices">
+        {t('yourVoices')}
+      </h2>
+      <div className={gridClass}>
+        {voices.map((voice) => (
+          <VoiceTile
+            disabled={disabled}
+            key={voice.id}
+            onUse={() => onUse(voice)}
+            voice={{
+              ...voice,
+              description: t('clonedVoice'),
+              sampleUrl: savedVoiceSampleUrl(voice.id),
+            }}
+          />
+        ))}
+      </div>
+    </section>
+  );
 }
 
 interface VoicePickerProps {
@@ -48,9 +168,8 @@ export function VoicePicker({
   savedVoices,
 }: VoicePickerProps) {
   const t = useTranslations('call.voices');
-  const player = useSamplePlayer();
 
-  const saved: VoiceTile[] = savedVoices.map((voice) => ({
+  const saved: VoiceOption[] = savedVoices.map((voice) => ({
     description: t('clonedVoice'),
     id: voice.id,
     name: voice.name,
@@ -58,76 +177,36 @@ export function VoicePicker({
     savedId: voice.id,
     provider: voice.provider,
   }));
-  const builtIn: VoiceTile[] = callVoices.map((voice) => ({
+  const builtIn: VoiceOption[] = callVoices.map((voice) => ({
     description: voice.description ?? voice.type ?? '',
     id: voice.id,
     name: voice.name,
     sampleUrl: voice.sample_url,
   }));
 
-  const renderTile = (voice: VoiceTile) => {
+  const renderTile = (voice: VoiceOption) => {
     const selected = voice.savedId
       ? config.audioReferenceId === voice.savedId
       : !config.audioReferenceId && config.voice === voice.name;
-    const key = `voice:${voice.id}`;
-    const playing = player.playingKey === key;
     return (
-      <div
-        className={cn(
-          'flex min-h-[68px] items-center gap-2 rounded-xl border py-2 pr-2 pl-3.5 transition-colors',
-          selected
-            ? 'border-violet-400 bg-violet-950/60'
-            : 'border-slate-800 bg-slate-900/70',
-        )}
+      <VoiceTile
+        disabled={disabled}
+        isNew={Boolean(voice.savedId && voice.savedId === newVoiceId)}
         key={voice.id}
-      >
-        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
-          <input
-            checked={selected}
-            className="size-[18px] shrink-0 accent-violet-400"
-            disabled={disabled}
-            name="call-voice"
-            onChange={() =>
-              onChange(
-                withCallVoice(config, {
-                  name: voice.name,
-                  savedId: voice.savedId,
-                  provider: voice.provider,
-                }),
-              )
-            }
-            type="radio"
-            value={voice.id}
-          />
-          <span className="flex min-w-0 flex-col">
-            <span className="flex items-center gap-1.5 font-semibold text-[15px] text-slate-50">
-              <span className="truncate">{voice.name}</span>
-              {voice.savedId && voice.savedId === newVoiceId && (
-                <span className="rounded-full bg-violet-400 px-1.5 font-bold text-[11px] text-slate-950">
-                  {t('new')}
-                </span>
-              )}
-            </span>
-            <span className="truncate text-[13px] text-slate-400">
-              {voice.description}
-            </span>
-          </span>
-        </label>
-        {voice.sampleUrl && (
-          <ListenButton
-            ariaLabel={t(playing ? 'stop' : 'play', { name: voice.name })}
-            onClick={() => player.toggle(key, voice.sampleUrl)}
-            playing={playing}
-          />
-        )}
-      </div>
+        onPick={() =>
+          onChange(
+            withCallVoice(config, {
+              name: voice.name,
+              savedId: voice.savedId,
+              provider: voice.provider,
+            }),
+          )
+        }
+        selected={selected}
+        voice={voice}
+      />
     );
   };
-
-  const gridClass =
-    'grid grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-2.5';
-  const headingClass =
-    'font-semibold text-slate-400 text-xs uppercase tracking-[0.1em]';
 
   return (
     <div
