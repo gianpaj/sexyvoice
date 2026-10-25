@@ -24,10 +24,7 @@ import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
 import { DashboardAnalytics } from '@/components/dashboard-analytics';
-import {
-  MobileNavigationPending,
-  SidebarLinkPending,
-} from '@/components/navigation-pending';
+import { NavigationPending } from '@/components/navigation-pending';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
 import {
   Sidebar,
@@ -43,7 +40,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
 import type { ResolvedBanner } from '@/lib/banners/types';
 import type { Locale } from '@/lib/i18n/i18n-config';
 
@@ -67,21 +63,18 @@ export default function DashboardUI({
   const pathname = usePathname();
   const t = useTranslations('pages');
   const tSidebar = useTranslations('sidebar');
-  const isMobile = useIsMobile();
-  // The page a phone sidebar click navigates away from. It resets once the
-  // pathname changes, including on browser back and forward.
-  const [mobileNavigationFrom, setMobileNavigationFrom] = useState<
-    string | null
-  >(null);
-  if (mobileNavigationFrom !== null && mobileNavigationFrom !== pathname) {
-    setMobileNavigationFrom(null);
+  // The page a sidebar click navigates away from. It resets once the pathname
+  // changes, including on browser back and forward.
+  const [navigationFrom, setNavigationFrom] = useState<string | null>(null);
+  if (navigationFrom !== null && navigationFrom !== pathname) {
+    setNavigationFrom(null);
   }
 
   const handleNavigationClick = (event: MouseEvent, href: string) => {
     const opensElsewhere =
       event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-    if (isMobile && href !== pathname && !opensElsewhere) {
-      setMobileNavigationFrom(pathname);
+    if (href !== pathname && !opensElsewhere) {
+      setNavigationFrom(pathname);
     }
   };
 
@@ -162,7 +155,7 @@ export default function DashboardUI({
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen>
         <DashboardAnalytics lang={lang} userId={userId} />
-        <MobileNavigationPending pending={mobileNavigationFrom !== null} />
+        <NavigationPending pending={navigationFrom !== null} />
         <Sidebar collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
@@ -200,8 +193,7 @@ export default function DashboardUI({
                           }
                         >
                           <item.icon className="mr-3 size-5" />
-                          <span className="truncate">{item.name}</span>
-                          <SidebarLinkPending />
+                          <span>{item.name}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
