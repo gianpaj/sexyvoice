@@ -20,6 +20,8 @@ minimumReleaseAgeExclude:
   - vite@7.3.7
   # Renovate security update: @sentry/nextjs@10.75.2
   - "@sentry/nextjs@10.75.2"
+  # Renovate security update: zod@4.6.6
+  - zod@4.6.6
 
 catalog:
   "@ai-sdk/react": "3.0.292"
@@ -59,7 +61,7 @@ overrides:
   "undici@<=5.28.2": ">=5.28.3"
   "undici@>=4.5.0 <5.28.5": ">=5.28.5"
   "ultracite>zod": "4.3.6"
-  "unbash>zod": "4.3.6"
+  "unbash>zod": "4.6.6"
   "vite@>=7.0.0 <7.3.2": "7.3.7"
   "whatwg-url": "^14.0.0"
 
