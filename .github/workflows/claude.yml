@@ -74,23 +74,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # The five reviewer agents live in the action's own repository. The runner
-      # downloads every action in this job before the first step, so copy them
-      # from that download: the `uses:` pin below is the only version to update.
-      # The action replaces .claude/ in the checkout with the base branch's copy
-      # before Claude starts, so install them as user-level agents instead.
-      - name: Install reviewer agents
+      # /review-pr and its five reviewer agents live in the action's own
+      # repository. The runner downloads every action in this job before the
+      # first step, so copy them from that download: the `uses:` pin below is
+      # the only version to update. The action replaces .claude/ in the checkout
+      # with the base branch's copy before Claude starts, so install them as
+      # user-level config instead.
+      - name: Install /review-pr command and reviewer agents
         run: |
           # The runner's action cache layout is undocumented; fail if it changes.
           shopt -s nullglob
-          dirs=("$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-action/*/.claude/agents)
+          dirs=("$RUNNER_WORKSPACE"/../_actions/anthropics/claude-code-action/*/.claude)
           if (( ${#dirs[@]} != 1 )); then
             echo "::error::Expected one downloaded claude-code-action, found ${#dirs[@]}."
             exit 1
           fi
-          mkdir -p ~/.claude/agents
+          mkdir -p ~/.claude/commands ~/.claude/agents
+          cp "${dirs[0]}/commands/review-pr.md" ~/.claude/commands/
           # The pinned agents have unquoted descriptions containing YAML delimiters.
-          python3 - "${dirs[0]}" <<'PY'
+          python3 - "${dirs[0]}/agents" <<'PY'
           import json
           import re
           import sys
@@ -121,17 +123,12 @@ jobs:
           additional_permissions: |
             actions: read
             checks: read
+          # Agent mode keeps /review-pr at the start of the SDK prompt.
           prompt: |
-            Review pull request #${{ env.PR_NUMBER }} in ${{ github.repository }}.
-            Review the whole PR diff: git diff ${{ steps.pr.outputs.base }}...${{ steps.pr.outputs.sha }}.
-            Do not review newer commits.
+            /review-pr REPO: ${{ github.repository }} PR_NUMBER: ${{ env.PR_NUMBER }}
 
-            Use the Agent tool to run these five reviewers in parallel, giving each
-            the diff command above and asking for noteworthy findings only:
-            code-quality-reviewer, performance-reviewer, test-coverage-reviewer,
-            documentation-accuracy-reviewer, security-code-reviewer.
-            Keep only the findings you also judge noteworthy. Post inline comments
-            for specific lines with mcp__github_inline_comment__create_inline_comment.
+            Review the whole PR diff: git diff ${{ steps.pr.outputs.base }}...${{ steps.pr.outputs.sha }}.
+            Give the reviewers this diff command. Do not review newer commits.
 
             Report the "Run Unit Tests" result for this commit:
             gh run list --repo ${{ github.repository }} --workflow tests.yml --commit ${{ steps.pr.outputs.sha }} --limit 1 --json databaseId,status,conclusion,url
@@ -140,8 +137,9 @@ jobs:
             If it is still pending after that, say so.
 
             Return the final review in the `review` field: a short assessment, the
-            noteworthy findings, and the CI result. Do not post it yourself; the
-            workflow posts it as a PR comment.
+            noteworthy findings, and the CI result. Return it even if there are no
+            noteworthy findings. Inline comments are fine, but do not post the final
+            review as a top-level comment; the workflow posts it.
           claude_args: |
             --json-schema '{"type":"object","properties":{"review":{"type":"string"}},"required":["review"]}'
             --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"

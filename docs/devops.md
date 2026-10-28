@@ -29,9 +29,9 @@ before merging to `main` and after deploying.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
 for review. Pushes do not request another review; comment `@claude review` when
-one is needed. Claude reviews the PR head resolved at the start of the job,
-delegates to the five reviewer agents from the pinned `claude-code-action`, and
-returns its assessment as structured output. The workflow posts that assessment
+one is needed. Claude runs `/review-pr` and its five reviewer agents from the
+pinned `claude-code-action` against the PR head resolved at the start of the
+job, and returns its assessment as structured output. The workflow posts that assessment
 as a top-level PR comment from `github-actions[bot]`. The review's CI report is
 not a merge gate.
 
