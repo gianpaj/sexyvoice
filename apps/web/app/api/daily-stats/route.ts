@@ -1354,7 +1354,7 @@ export async function GET(request: NextRequest) {
     `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
-    `  - Estimated usage cost: $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
+    `  - AI usage (est.): $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,

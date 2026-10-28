@@ -232,7 +232,10 @@ describe('GET /api/daily-stats cache', () => {
     const response = await GET(request());
     assert(response);
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain('$25.00 collected');
+    const report = await response.text();
+    expect(report).toContain('$25.00 collected');
+    expect(report).toContain('AI usage (est.): $0.00 yesterday | 14d: $0.00');
+    expect(report).not.toContain('Estimated usage cost:');
     expect(
       mocks.queries.getCreditTransactionsInRange,
     ).toHaveBeenCalledExactlyOnceWith(

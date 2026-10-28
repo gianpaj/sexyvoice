@@ -56,6 +56,7 @@ on or after that date. This assumes expected WebRTC participant minutes
 (per participant) are included, with no additional per-minute estimate.
 Fly.io and LiveKit are attributed entirely to voice calls and included once in overhead.
 Vercel and Cloudflare are entirely attributable to SexyVoice.
+The Calls section shows `AI usage (est.)`, excluding hosting already in overhead.
 
 September's positive $29.59 Vercel entry is treated as the final charge. Its
 description says "partial refund"; confirm that interpretation against the
