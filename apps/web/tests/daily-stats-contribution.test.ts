@@ -102,15 +102,25 @@ describe('cash contribution', () => {
       }
     },
   );
-  test('unclassified usage alerts regardless of the unpriced share', () => {
+  test('a missing user id does not hide a loss when all usage is priced', () => {
+    // Exercise malformed input despite the database's NOT NULL constraint.
     const malformedEvent = {
       ...event(),
       user_id: null,
     } as unknown as UsageEvent;
-    expect(
-      summarizeContribution(data([malformedEvent]), [], start, end)
-        .coverageAlert,
-    ).toBe(true);
+    const result = summarizeContribution(
+      data([malformedEvent]),
+      [],
+      start,
+      end,
+    );
+    expect(result.totalCost).toBe(15);
+    expect(result.contribution).toBeCloseTo(-15 - overhead);
+    expect(result.coverageAlert).toBe(false);
+    expect(result.contributionAlert).toBe(true);
+    expect(formatContribution('Yesterday', result).join('\n')).not.toMatch(
+      /unpriced|unclassified/,
+    );
   });
   test('counts usage independently of purchase history', () => {
     const result = summarizeContribution(
@@ -131,7 +141,6 @@ describe('cash contribution', () => {
       end,
     );
     expect(result.totalCost).toBe(45);
-    expect(result.unclassified).toBe(0);
     expect(result.netCollections).toBe(100);
   });
   test('manual grants, credit refunds, and dispute holds do not affect cash', () => {
@@ -160,24 +169,18 @@ describe('cash contribution', () => {
     expect(result.netCollections).toBe(100);
     expect(result.contributionAlert).toBe(false);
   });
-  test('missing costs and identities remain visible and trigger an alert', () => {
-    // Exercise malformed input despite the database's NOT NULL constraint.
-    const malformedEvent = {
-      ...event(),
-      user_id: null,
-    } as unknown as UsageEvent;
+  test('missing costs remain visible and trigger an alert', () => {
     const result = summarizeContribution(
-      data([event({ dollar_amount: -1 }), malformedEvent]),
+      data([event({ dollar_amount: -1 }), event()]),
       [],
       start,
       end,
     );
     expect(result.bases.unknown).toBe(1);
     expect(result.totalCost).toBe(15);
-    expect(result.unclassified).toBe(1);
     expect(result.coverageAlert).toBe(true);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      '(1 unpriced, 1 unclassified)',
+      '(1 unpriced)',
     );
   });
   test('includes API/enhancement costs and preserves negative contribution', () => {
@@ -334,7 +337,6 @@ describe('call supplementation', () => {
     );
     expect(result.callCost).toBe(30);
     expect(result.totalCost).toBe(30);
-    expect(result.unclassified).toBe(0);
   });
   test('a linked event outside the window prevents a duplicate session estimate', () => {
     expect(

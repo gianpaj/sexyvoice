@@ -21,10 +21,10 @@ credit-only refunds, and chargeback credit holds/releases do not affect cash.
 
 Estimated contribution equals net collections minus recorded and estimated usage
 costs and allocated overhead. Displayed dollars include only priced records;
-unpriced and unclassified counts stay visible beside the contribution.
+unpriced counts stay visible beside the contribution.
 
 The `coverageAlert` flag triggers a data-quality alert when more than 5% of
-records are unpriced or any usage is unclassified. This threshold controls alert
+records are unpriced. This threshold controls alert
 noise, not cost accuracy: one expensive unknown record can matter below it.
 When `coverageAlert` is false, negative contribution triggers the
 usage-and-overhead alert.
@@ -93,7 +93,7 @@ Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
 
 Each period shows remaining collections and a collections/usage/overhead breakdown
-in two short lines, with unpriced or unclassified counts when present. Invoice
+in two short lines, with unpriced counts when present. Invoice
 provenance and call-estimate limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 

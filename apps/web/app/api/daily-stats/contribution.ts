@@ -29,7 +29,6 @@ interface CostRecord {
   at: string;
   cost: UsageCost;
   feature: string;
-  userId: string | null;
 }
 export interface ContributionData {
   audioUsage: Record<string, unknown>;
@@ -53,7 +52,6 @@ export function buildCostRecords(data: ContributionData): CostRecord[] {
       data.audioUsage[event.source_id ?? ''],
     ),
     feature: event.source_type,
-    userId: event.user_id,
   }));
   for (const call of data.calls) {
     if (linked.has(call.id) || !isFinalCall(call)) continue;
@@ -71,7 +69,6 @@ export function buildCostRecords(data: ContributionData): CostRecord[] {
         call,
       ),
       feature: 'live_call',
-      userId: call.user_id,
     });
   }
   return records;
@@ -112,20 +109,17 @@ export function summarizeContribution(
   }
   let totalCost = 0;
   const bases = { estimated: 0, recorded: 0, unknown: 0 };
-  let unclassified = 0;
   let callCost = 0;
   for (const record of buildCostRecords(data)) {
     if (!inPeriod(record.at)) continue;
     totalCost += record.cost.amount;
     bases[record.cost.basis]++;
-    if (!record.userId) unclassified++;
     if (record.feature === 'live_call') callCost += record.cost.amount;
   }
   const overhead = summarizeOverhead(start, end);
   const recordCount = bases.recorded + bases.estimated + bases.unknown;
-  // Small gaps stay visible in the report without triggering an alert.
-  const coverageAlert =
-    unclassified > 0 || (recordCount > 0 && bases.unknown / recordCount > 0.05);
+  // Unpriced counts stay visible below the alert threshold.
+  const coverageAlert = recordCount > 0 && bases.unknown / recordCount > 0.05;
   return {
     bases,
     callCost,
@@ -136,7 +130,6 @@ export function summarizeContribution(
     netCollections,
     overhead,
     totalCost,
-    unclassified,
   };
 }
 export function formatContribution(
@@ -145,11 +138,8 @@ export function formatContribution(
 ): string[] {
   const usd = (value: number) =>
     `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
-  const gaps = [
-    summary.bases.unknown > 0 ? `${summary.bases.unknown} unpriced` : null,
-    summary.unclassified > 0 ? `${summary.unclassified} unclassified` : null,
-  ].filter(Boolean);
-  const gapLabel = gaps.length > 0 ? ` (${gaps.join(', ')})` : '';
+  const gapLabel =
+    summary.bases.unknown > 0 ? ` (${summary.bases.unknown} unpriced)` : '';
   return [
     `- ${label}: ${usd(summary.contribution)} left${gapLabel}`,
     `  ${usd(summary.netCollections)} collected − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead`,
