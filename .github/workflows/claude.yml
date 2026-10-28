@@ -380,6 +380,7 @@ jobs:
           }
           expected_marker = os.environ.get('EXPECTED_PUBLICATION_MARKER', '')
           tool_counts = Counter()
+          subagent_tool_counts = Counter()
           tool_sequence = []
           seen_tool_ids = set()
           denied_tools = Counter()
@@ -442,9 +443,14 @@ jobs:
                           seen_tool_ids.add(tool_id)
                       name = block.get('name')
                       label = name if isinstance(name, str) and name in known_tools else 'other'
-                      tool_counts[label] += 1
-                      if len(tool_sequence) < 40:
-                          tool_sequence.append(label)
+                      # Subagent frames set parent_tool_use_id; keep them out of the
+                      # main-session sequence so they cannot fill its 40 slots.
+                      if message.get('parent_tool_use_id') is None:
+                          tool_counts[label] += 1
+                          if len(tool_sequence) < 40:
+                              tool_sequence.append(label)
+                      else:
+                          subagent_tool_counts[label] += 1
                       tool_input = block.get('input')
                       tool_input = tool_input if isinstance(tool_input, dict) else {}
                       skill = tool_input.get('skill')
@@ -463,6 +469,7 @@ jobs:
 
           counts = Counter(outcomes.get(request, 'unconfirmed') for request in requests)
           summary['tool_counts'] = dict(tool_counts)
+          summary['subagent_tool_counts'] = dict(subagent_tool_counts)
           summary['tool_sequence'] = tool_sequence
           summary['tool_sequence_truncated'] = sum(tool_counts.values()) > len(tool_sequence)
           summary['denied_tools'] = dict(denied_tools)

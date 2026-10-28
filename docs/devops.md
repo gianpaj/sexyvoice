@@ -40,8 +40,9 @@ or Claude is skipped or cancelled. It writes sanitized diagnostics to the job
 log and step summary: SDK result status, denied tool names from a fixed allowlist,
 denied Bash operation categories, and direct `gh pr comment` request/result
 counts. Diagnostics also report command/reviewer registration, requests for the
-review skill and each of the five reviewers, aggregate tool counts, and the
-first 40 tool names in request order. Missing registration metadata is `null`;
+review skill and each of the five reviewers, main-session tool counts and the
+first 40 main-session tool names in request order, and aggregate subagent tool
+counts. Missing registration metadata is `null`;
 registration and requests do not prove execution or reviewer completion.
 Final-response presence and expected-marker detection are booleans only.
 Command classification supports leading environment assignments and

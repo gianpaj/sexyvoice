@@ -451,6 +451,30 @@ test('bounds the tool sequence at 40 without truncating aggregate counts', () =>
   }
 });
 
+test('sequences only main-session tools and aggregates subagent tools', () => {
+  const subagent = (name: unknown, index: number) => ({
+    ...toolRequest(name, { secret: 'SECRET_INPUT' }),
+    parent_tool_use_id: `agent-${index % 5}`,
+  });
+  const { diagnostics, output } = runDiagnostics([
+    toolRequest('Agent', { subagent_type: 'code-quality-reviewer' }),
+    ...Array.from({ length: 45 }, (_, index) =>
+      subagent(index % 3 === 0 ? 'SECRET_SUBAGENT_TOOL' : 'Read', index),
+    ),
+    { ...toolRequest('Bash'), parent_tool_use_id: null },
+    toolRequest('Bash'),
+  ]);
+  assert.deepEqual(diagnostics.tool_sequence, ['Agent', 'Bash', 'Bash']);
+  assert.equal(diagnostics.tool_sequence_truncated, false);
+  assert.deepEqual(diagnostics.tool_counts, { Agent: 1, Bash: 2 });
+  assert.deepEqual(diagnostics.subagent_tool_counts, { Read: 30, other: 15 });
+  assert.deepEqual(diagnostics.reviewer_requests, {
+    ...reviewerValues(0),
+    'code-quality-reviewer': 1,
+  });
+  assert.doesNotMatch(output, /SECRET/);
+});
+
 test('reports safe defaults when no execution trace can be read', () => {
   for (const execution of [undefined, 'SECRET_INVALID_JSON', {}]) {
     const { diagnostics } = runDiagnostics(
@@ -462,6 +486,7 @@ test('reports safe defaults when no execution trace can be read', () => {
     assert.equal(diagnostics.review_pr_skill_requests, 0);
     assert.deepEqual(diagnostics.reviewer_requests, reviewerValues(0));
     assert.deepEqual(diagnostics.tool_counts, {});
+    assert.deepEqual(diagnostics.subagent_tool_counts, {});
     assert.deepEqual(diagnostics.tool_sequence, []);
     assert.equal(diagnostics.tool_sequence_truncated, false);
     assert.equal(diagnostics.final_response_present, false);
