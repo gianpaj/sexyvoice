@@ -92,9 +92,10 @@ jobs:
   claude-review:
     needs: review-context
     # One review per PR at a time. Newer reviews queue, and GitHub keeps only
-    # the newest pending one.
+    # the newest pending one. Smoke tests queue separately so they never
+    # replace a pending review.
     concurrency:
-      group: claude-review-${{ needs.review-context.outputs.pr }}
+      group: claude-review-${{ needs.review-context.outputs.pr }}${{ needs.review-context.outputs.mode == 'posting-smoke' && '-smoke' || '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

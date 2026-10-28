@@ -292,6 +292,15 @@ test('posting-smoke checks out workflow code and skips dependency setup', () => 
   }
 });
 
+test('posting-smoke queues apart from reviews so it cannot replace one', () => {
+  const job = workflow.split('  claude-review:\n')[1]?.split('    steps:\n')[0];
+  assert.ok(job);
+  assert.match(
+    job,
+    /^ {6}group: claude-review-\$\{\{ needs\.review-context\.outputs\.pr \}\}\$\{\{ needs\.review-context\.outputs\.mode == 'posting-smoke' && '-smoke' \|\| '' \}\}$/m,
+  );
+});
+
 test('direct-review restores exactly the eight trusted configuration paths', () => {
   const step = workflowStep('Restore trusted dispatch configuration');
   assert.match(
