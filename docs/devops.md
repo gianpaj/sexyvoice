@@ -28,75 +28,16 @@ before merging to `main` and after deploying.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
-for review. They pin a PR head and report CI results for that SHA. Pushes do not
-request another Claude review; comment `@claude review` when one is needed.
-Reviews use `/review-pr` in agent mode and publish a final top-level PR comment.
-The workflow verifies publication using a plain-text completion marker from
-`claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
-merge gate.
-
-Within the review job, the workflow attempts diagnostics even when setup fails
-or Claude is skipped or cancelled. It writes sanitized diagnostics to the job
-log and step summary: SDK result status, denied tool names from a fixed allowlist,
-denied Bash operation categories, and direct `gh pr comment` request/result
-counts. Diagnostics also report command/reviewer registration, requests for the
-review skill and each of the five reviewers, main-session tool counts and the
-first 40 main-session tool names in request order, and aggregate subagent tool
-counts. Missing registration metadata is `null`;
-registration and requests do not prove execution or reviewer completion.
-Final-response presence and expected-marker detection are booleans only.
-Command classification supports leading environment assignments and
-`env` prefixes without emitting their values. It does not interpret compound
-shell programs. Request counts do not prove publication; the completion-marker
-check remains authoritative. Missing or invalid traces are reported explicitly.
-Prompts, command arguments, tool results, final responses, and raw execution
-files are not published. Keep `show_full_output` disabled on this public repo.
-The review action also forces `ACTIONS_STEP_DEBUG=false`, because the pinned SDK
-otherwise enables raw output when that variable is `true`.
+for review. Pushes do not request another review; comment `@claude review` when
+one is needed. Claude reviews the PR head resolved at the start of the job,
+delegates to the five reviewer agents from the pinned `claude-code-action`, and
+returns its assessment as structured output. The workflow posts that assessment
+as a top-level PR comment from `github-actions[bot]`. The review's CI report is
+not a merge gate.
 
 Claude GitHub App authentication requires the workflow content to match the
-default branch. A PR that edits `.github/workflows/claude.yml` can verify setup
-steps, but the action skips Claude execution and the publication check fails.
-Verify command expansion, all five reviewer agents, and the final review comment
-on a subsequent review after the workflow reaches the default branch.
-
-### Controlled Claude publication probes
-
-The `Claude Code` workflow accepts manual dispatches on the default branch from
-the same trusted actors as normal reviews. Supply a positive same-repository PR
-number; fork PRs are rejected. Dispatches consume Claude quota and can post PR
-comments that notify subscribers. They do not run automatically.
-
-After the workflow is merged, run one posting smoke test first:
-
-```sh
-gh workflow run claude.yml --ref main -f pr_number=635 -f mode=posting-smoke
-```
-
-This mode checks out trusted workflow code, skips dependency installation, and
-asks Claude to execute one `gh pr comment` command. Its comment says it is not a
-code review and carries a `Diagnostic marker: claude-publication-smoke/...`
-marker. The publication check requires that marker from `claude[bot]`; it cannot
-establish that any code was reviewed.
-
-If posting succeeds, run one plain-instruction comparison on the desired PR:
-
-```sh
-gh workflow run claude.yml --ref main -f pr_number=635 -f mode=direct-review
-```
-
-This mode pins the target PR commits, restores trusted startup configuration
-from the workflow SHA, and explicitly requests all five reviewer agents without
-invoking `/review-pr`. It retains the CI wait budget and real review-completion
-marker. Dispatch does not provide the action's PR-context inline-comment server,
-so this tests top-level publication and delegation, not full tool parity with a
-mention-triggered review. Normal mentions and automatic reviews retain their
-slash-command prompt.
-
-Inspect the selected run's sanitized diagnostics and publication check before
-requesting another run. A denied Bash category identifies a command family, not
-its arguments; shell programs classified as `other` remain intentionally opaque.
-Do not enable raw output or upload execution traces to debug a failed probe.
+default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
+execution; test review changes after they reach the default branch.
 
 ## Deployment targets
 
