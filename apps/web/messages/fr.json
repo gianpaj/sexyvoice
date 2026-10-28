@@ -605,6 +605,7 @@
     "activeCallError": "Vous avez déjà un appel actif en cours",
     "instructionsRejected": "Cet appel n’a pas pu démarrer, car le personnage ou la scène n’ont pas passé les contrôles de sécurité du fournisseur d’IA. Modifiez le personnage ou la scène, puis réessayez.",
     "microphonePermissionDenied": "Accès au microphone refusé. Veuillez autoriser l'accès au microphone et réessayer.",
+    "microphoneUnavailable": "Impossible d’accéder à votre microphone. Vérifiez qu’il est connecté, fermez les autres applications qui l’utilisent et réessayez.",
     "disconnected": "Déconnecté",
     "chooseCharacter": "À qui voulez-vous parler ?",
     "presetRemoved": "Preset supprimé",

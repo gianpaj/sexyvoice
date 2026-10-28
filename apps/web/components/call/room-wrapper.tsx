@@ -5,6 +5,7 @@ import {
   RoomAudioRenderer,
   StartAudio,
 } from '@livekit/components-react';
+import { MediaDeviceFailure } from 'livekit-client';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
@@ -23,14 +24,31 @@ export function RoomWrapper({ children }: { children: ReactNode }) {
   );
 
   // LiveKit's connection effect depends on the identity of onError.
-  const handleError = useCallback(() => {
-    if (hasConnected.current) return;
+  const handleError = useCallback(
+    (error?: Error) => {
+      const failure = MediaDeviceFailure.getFailure(error);
+      const permissionDenied = failure === MediaDeviceFailure.PermissionDenied;
+      const microphoneUnavailable =
+        failure === MediaDeviceFailure.NotFound ||
+        failure === MediaDeviceFailure.DeviceInUse ||
+        error?.name === 'OverconstrainedError' ||
+        error?.name === 'ConstraintNotSatisfiedError';
+      if (hasConnected.current && !permissionDenied && !microphoneUnavailable)
+        return;
 
-    clearTimeout(connectionTimeout.current);
-    hasConnected.current = false;
-    toast.error(t('connectionFailed'));
-    disconnect().catch(() => undefined);
-  }, [disconnect, t]);
+      clearTimeout(connectionTimeout.current);
+      hasConnected.current = false;
+      let message = t('connectionFailed');
+      if (permissionDenied) {
+        message = t('microphonePermissionDenied');
+      } else if (microphoneUnavailable) {
+        message = t('microphoneUnavailable');
+      }
+      toast.error(message);
+      disconnect().catch(() => undefined);
+    },
+    [disconnect, t],
+  );
 
   useEffect(() => {
     if (!(shouldConnect && token)) return;

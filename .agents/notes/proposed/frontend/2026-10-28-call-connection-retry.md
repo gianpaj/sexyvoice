@@ -22,6 +22,13 @@ connection flag before LiveKit can deliver `onError`. Only the final error shows
 the failure notification. An intentional hangup refreshes credits once.
 Ordinary errors after `onConnected` leave this marker and the active room intact;
 `onDisconnected` remains responsible for an established room's teardown.
+LiveKit also reports microphone acquisition failures through `onError`, including
+before `onConnected`. `MediaDeviceFailure` identifies permission, missing-device,
+and busy-device failures; constraint error names need an explicit check because
+the SDK groups them as `Other`. These failures show localized microphone guidance
+and disconnect even after connection, so a call cannot keep consuming credits
+without a working microphone. Ordinary errors and deadline expiry retain the
+connection failure message during setup.
 
 `onError` and its `disconnect` dependency use `useCallback` because LiveKit
 includes `onError` in its connection effect dependencies. Their identity must
@@ -41,9 +48,11 @@ keeps retrying available instead of leaving the controls busy for minutes.
 Component tests cover final failure, fresh-token retry, callback stability,
 initial disconnect ordering, established-room disconnect, intentional hangup,
 credit-refresh failure, the 30-second deadline, timer cleanup, and fresh retry
-deadlines. LiveKit room events are mocked; production rooms and billing settings
+deadlines. They also cover stalled token requests and response bodies, errors
+during established calls, and microphone failures before and after connection.
+LiveKit room events are mocked; production rooms and billing settings
 are outside the test boundary.
 
 `pnpm fixall`, `pnpm type-check`, and `pnpm check-translations` pass. Web Vitest
-passes with 111 files, 1,622 tests, and 18 skips. The full suite uses
+passes with 111 files, 1,634 tests, and 18 skips. The full suite uses
 `--maxWorkers=4` and an isolated Redis binary under `/tmp`.

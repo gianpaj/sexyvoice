@@ -240,6 +240,44 @@ describe('call connection deadline', () => {
 });
 
 describe('call connection recovery', () => {
+  describe.each([false, true])(
+    'microphone failure after connected=%s',
+    (connected) => {
+      it.each([
+        'NotFoundError',
+        'NotReadableError',
+        'OverconstrainedError',
+        'NotAllowedError',
+      ])('ends the call with actionable feedback for %s', async (name) => {
+        vi.useFakeTimers();
+        render(<TestCall />);
+        await startCall();
+        if (connected) act(() => mocks.roomProps?.onConnected?.());
+
+        await act(async () => {
+          mocks.roomProps?.onError?.(new DOMException('', name));
+        });
+
+        expect(mocks.roomProps?.connect).toBe(false);
+        expect(
+          screen.getByRole('button', { name: 'Start call' }),
+        ).toBeEnabled();
+        expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+          name === 'NotAllowedError'
+            ? messages.call.microphonePermissionDenied
+            : messages.call.microphoneUnavailable,
+        );
+        await act(async () => {
+          mocks.roomProps?.onDisconnected?.(DisconnectReason.CLIENT_INITIATED);
+          vi.advanceTimersByTime(60_000);
+        });
+        expect(mocks.toastError).toHaveBeenCalledTimes(1);
+        expect(mocks.toastInfo).not.toHaveBeenCalled();
+        expect(mocks.getClaims).toHaveBeenCalledTimes(1);
+      });
+    },
+  );
+
   it('keeps an established call on an ordinary error and still handles disconnection', async () => {
     render(<TestCall />);
     await startCall();

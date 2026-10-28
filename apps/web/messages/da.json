@@ -601,6 +601,7 @@
     "activeCallError": "Du har allerede et aktivt opkald i gang",
     "instructionsRejected": "Opkaldet kunne ikke starte, fordi karakteren eller scenen ikke bestod AI-udbyderens sikkerhedstjek. Rediger karakteren eller scenen, og prøv igen.",
     "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
+    "microphoneUnavailable": "Kunne ikke få adgang til din mikrofon. Kontrollér, at den er tilsluttet, luk andre apps, der bruger den, og prøv igen.",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",

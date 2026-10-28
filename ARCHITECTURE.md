@@ -293,6 +293,8 @@ resets the controls and refreshes credits; an intentional hangup does not show a
 connection error.
 Ordinary SDK errors after connection leave the call active; the room's
 disconnect event owns recovery from an established call.
+Microphone permission, missing-device, busy-device, and constraint errors show
+localized microphone guidance and disconnect the room, including after connection.
 
 Public character prompt text never reaches the browser. The token route loads
 it with an admin query, chooses the requested localized prompt or English
