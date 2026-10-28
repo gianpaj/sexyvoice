@@ -150,7 +150,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REVIEW: ${{ fromJSON(steps.review.outputs.structured_output).review }}
-        run: gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$REVIEW"
+          REVIEW_SHA: ${{ steps.pr.outputs.sha }}
+        run: |
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body "$REVIEW"$'\n\n'"Reviewed commit: $REVIEW_SHA"
 
   # General-purpose assistant triggered by "@claude" (without "review") in
   # issues, PR comments, and reviews. Can run CI commands and push commits.
