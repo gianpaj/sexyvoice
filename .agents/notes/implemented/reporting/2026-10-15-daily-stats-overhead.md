@@ -33,6 +33,3 @@ in the Telegram report.
 Focused daily-stats tests cover overhead on idle days, negative contribution,
 call-server attribution, and unrounded allocation
 across a 30-day month boundary.
-
-All 102 focused daily-stats tests pass. `pnpm fixall` and `pnpm type-check`
-pass across the workspace.
