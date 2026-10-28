@@ -35,7 +35,7 @@ catalog:
   "ai": "6.0.289"
   "effective-progress": "0.12.0"
   "effect": "4.0.0"
-  "next": "16.3.8"
+  "next": "16.4.3"
   "postcss": "8.5.28"
   "react": "19.2.7"
   "react-dom": "19.2.7"
@@ -80,3 +80,6 @@ allowBuilds:
   protobufjs: true
   redis-memory-server: false
   sharp: true
+
+patchedDependencies:
+  '@ffmpeg/ffmpeg@0.12.15': patches/@ffmpeg__ffmpeg@0.12.15.patch
