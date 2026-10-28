@@ -594,6 +594,7 @@
     "sceneTextLabel": "Scene text",
     "startCall": "Start call",
     "connecting": "Connecting",
+    "connectionFailed": "Couldn't connect to the call. Please try again.",
     "reconnected": "Reconnected",
     "reconnectionFailed": "Reconnection failed",
     "configurationUpdated": "Configuration updated",

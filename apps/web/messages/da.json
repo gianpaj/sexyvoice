@@ -592,6 +592,7 @@
     "sceneTextLabel": "Scenetekst",
     "startCall": "Start et opkald",
     "connecting": "Forbinder",
+    "connectionFailed": "Kunne ikke oprette forbindelse til opkaldet. Prøv igen.",
     "reconnected": "Forbundet igen",
     "reconnectionFailed": "Genforbindelse mislykkedes",
     "configurationUpdated": "Konfiguration opdateret",

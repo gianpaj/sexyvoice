@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import type React from 'react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
@@ -129,13 +129,13 @@ export const ConnectionProvider = ({
     });
   };
 
-  const disconnect = async () => {
+  const disconnect = useCallback(async () => {
     setConnectionDetails((prev) => ({ ...prev, shouldConnect: false }));
     const claims = await getVerifiedClaims(supabase);
     if (claims?.sub) {
       invalidateCredits(queryClient, claims.sub).catch(() => undefined);
     }
-  };
+  }, [queryClient, supabase]);
 
   return (
     <ConnectionContext.Provider

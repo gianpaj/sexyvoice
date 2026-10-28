@@ -596,6 +596,7 @@
     "sceneTextLabel": "Szenentext",
     "startCall": "Anruf starten",
     "connecting": "Verbinden",
+    "connectionFailed": "Die Verbindung zum Anruf konnte nicht hergestellt werden. Bitte versuche es erneut.",
     "reconnected": "Wiederverbunden",
     "reconnectionFailed": "Wiederverbindung fehlgeschlagen",
     "configurationUpdated": "Konfiguration aktualisiert",

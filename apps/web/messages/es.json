@@ -596,6 +596,7 @@
     "sceneTextLabel": "Texto de la escena",
     "startCall": "Llamar",
     "connecting": "Conectando",
+    "connectionFailed": "No se pudo conectar a la llamada. Inténtalo de nuevo.",
     "reconnected": "Reconectado",
     "reconnectionFailed": "Falló la reconexión",
     "configurationUpdated": "Configuración actualizada",
