@@ -12,10 +12,14 @@ charge would duplicate that cost. Idle days still incur the subscription.
 
 Telegram economics uses two short lines per period: remaining collections and
 the collections/usage/overhead breakdown. Missing-cost counts stay visible.
-Cohort costs and repeated hosting detail are omitted from the message. The
-summary omits the unused free-coverage ratio and completeness flag; data-quality
+Repeated hosting detail is omitted from the message. The summary uses a single
+usage-cost total without paid/free cohorts or a free-coverage ratio; data-quality
 alerts and missing-cost counts identify gaps. The feature README documents
 allocation and estimate limitations.
+
+Cached activity reports refresh the contribution window's last 30 days of
+collections. Fresh reports reuse the all-time transaction read required by
+lifetime metrics.
 
 Verification covers the November cutoff, rolling windows and year boundaries,
 idle call periods, contribution deductions, invalid baseline

@@ -18,8 +18,6 @@ costs include other sessions. Short calls alone do not establish a failure.
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,
 credit-only refunds, and chargeback credit holds/releases do not affect cash.
-Usage is paid if it occurs at or after the customer's first positive cash
-purchase; promotional credits spent by paying customers remain paid usage.
 
 Estimated contribution equals net collections minus recorded and estimated usage
 costs and allocated overhead. Displayed dollars include only priced records;
@@ -94,14 +92,12 @@ Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
 
 Each period shows remaining collections and a collections/usage/overhead breakdown
-in two short lines, with unpriced or unclassified counts when present. Cohort
-costs stay in aggregation; invoice provenance and call-estimate
-limitations stay in this README. Linked audio token counts take precedence
+in two short lines, with unpriced or unclassified counts when present. Invoice
+provenance and call-estimate limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 
-Contribution reads both usage and transactions fresh, even during local cached
-activity debugging, so customer classification and collections use fresh payment
-history. This intentionally requires an all-time transaction read on that path.
+Contribution uses fresh usage and collections even during local cached activity
+debugging. See [Query load](#query-load) for transaction read windows.
 
 ## Query load
 
@@ -149,11 +145,10 @@ One guard remains, turning a mis-specified query into an error instead of a
 loop: a cursor value that moves backwards, which means the query is not ordered
 by the column it pages on.
 
-Credit transactions are read once for all time and sliced in memory for every
-reporting window. The per-period reads this replaced were subsets of that same
-range with identical filters and were merged straight back into it, so they
-added load without adding rows. Add new windows as in-memory filters over
-`allCreditTransactions`, not as extra queries.
+Fresh activity reports read credit transactions once for all time to supply
+lifetime and historical metrics, then slice them in memory for each window.
+Cached activity reports refresh only the last 30 days of transactions for
+contribution. Add reporting windows as in-memory filters over the shared read.
 
 Usage events carry no `profiles(username)` embed — PostgREST joins an embed per
 row, and the report labels only its top three users. Resolve names for the few

@@ -97,48 +97,30 @@ export function summarizeContribution(
 ) {
   const inPeriod = (at: string) =>
     Date.parse(at) >= start.getTime() && Date.parse(at) < end.getTime();
-  const firstPurchase = new Map<string, number>();
   let netCollections = 0;
   for (const transaction of transactions) {
-    if (!eligible(transaction)) continue;
+    if (!(eligible(transaction) && inPeriod(transaction.created_at))) continue;
     const dollars = cash(transaction);
     if (['purchase', 'topup'].includes(transaction.type) && dollars > 0) {
-      firstPurchase.set(
-        transaction.user_id,
-        Math.min(
-          firstPurchase.get(transaction.user_id) ?? Number.POSITIVE_INFINITY,
-          Date.parse(transaction.created_at),
-        ),
-      );
-      if (inPeriod(transaction.created_at)) netCollections += dollars;
+      netCollections += dollars;
     } else if (
       transaction.type === 'refund' &&
-      classifyRefund(transaction) === 'refund' &&
-      inPeriod(transaction.created_at)
+      classifyRefund(transaction) === 'refund'
     ) {
       netCollections -= Math.abs(dollars);
     }
   }
-  const totals = { free: 0, paid: 0, unclassified: 0 };
+  let totalCost = 0;
   const bases = { estimated: 0, recorded: 0, unknown: 0 };
   let unclassified = 0;
   let callCost = 0;
   for (const record of buildCostRecords(data)) {
     if (!inPeriod(record.at)) continue;
-    let cohort: 'paid' | 'free' | 'unclassified' = 'unclassified';
-    if (record.userId) {
-      cohort =
-        (firstPurchase.get(record.userId) ?? Number.POSITIVE_INFINITY) <=
-        Date.parse(record.at)
-          ? 'paid'
-          : 'free';
-    }
-    totals[cohort] += record.cost.amount;
+    totalCost += record.cost.amount;
     bases[record.cost.basis]++;
-    if (cohort === 'unclassified') unclassified++;
+    if (!record.userId) unclassified++;
     if (record.feature === 'live_call') callCost += record.cost.amount;
   }
-  const totalCost = totals.paid + totals.free + totals.unclassified;
   const overhead = summarizeOverhead(start, end);
   const recordCount = bases.recorded + bases.estimated + bases.unknown;
   // Small gaps stay visible in the report without triggering an alert.
@@ -154,7 +136,6 @@ export function summarizeContribution(
     netCollections,
     overhead,
     totalCost,
-    totals,
     unclassified,
   };
 }

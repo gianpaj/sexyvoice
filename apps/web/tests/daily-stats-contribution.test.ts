@@ -50,7 +50,7 @@ function purchase(
   };
 }
 describe('cash contribution', () => {
-  test('subtracts paid and free costs from cash after refunds', () => {
+  test('subtracts all usage costs from cash after refunds', () => {
     const result = summarizeContribution(
       data([
         event(),
@@ -112,7 +112,7 @@ describe('cash contribution', () => {
         .coverageAlert,
     ).toBe(true);
   });
-  test('classifies at purchase time and recognizes old purchasers', () => {
+  test('counts usage independently of purchase history', () => {
     const result = summarizeContribution(
       data([
         event({ user_id: 'paid' }),
@@ -130,7 +130,8 @@ describe('cash contribution', () => {
       start,
       end,
     );
-    expect(result.totals).toEqual({ free: 15, paid: 30, unclassified: 0 });
+    expect(result.totalCost).toBe(45);
+    expect(result.unclassified).toBe(0);
     expect(result.netCollections).toBe(100);
   });
   test('manual grants, credit refunds, and dispute holds do not affect cash', () => {
@@ -172,7 +173,8 @@ describe('cash contribution', () => {
       end,
     );
     expect(result.bases.unknown).toBe(1);
-    expect(result.totals.unclassified).toBe(15);
+    expect(result.totalCost).toBe(15);
+    expect(result.unclassified).toBe(1);
     expect(result.coverageAlert).toBe(true);
     expect(formatContribution('Yesterday', result)[0]).toContain(
       '(1 unpriced, 1 unclassified)',
@@ -331,8 +333,8 @@ describe('call supplementation', () => {
       end,
     );
     expect(result.callCost).toBe(30);
-    expect(result.totals.free).toBe(15);
-    expect(result.totals.paid).toBe(15);
+    expect(result.totalCost).toBe(30);
+    expect(result.unclassified).toBe(0);
   });
   test('a linked event outside the window prevents a duplicate session estimate', () => {
     expect(
