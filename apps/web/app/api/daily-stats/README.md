@@ -189,6 +189,6 @@ send Telegram reports, but still requires `TELEGRAM_WEBHOOK_URL` to be set.
 
 ## Verification
 
-Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts tests/daily-stats-fetch-all-pages.test.ts tests/daily-stats-cache.test.ts`.
+Run `pnpm --filter @sexyvoice/web exec vitest run daily-stats`.
 Use read-only queries to investigate actual records. Do not invoke the production
 GET handler for verification; it sends the Telegram report.
