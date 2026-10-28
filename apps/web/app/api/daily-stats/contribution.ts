@@ -140,9 +140,8 @@ export function summarizeContribution(
   }
   const totalCost = totals.paid + totals.free + totals.unclassified;
   const overhead = summarizeOverhead(start, end);
-  const incomplete = bases.unknown > 0 || unclassified > 0;
   const recordCount = bases.recorded + bases.estimated + bases.unknown;
-  // Alert volume is distinct from coverage: small gaps still remain visible.
+  // Small gaps stay visible in the report without triggering an alert.
   const coverageAlert =
     unclassified > 0 || (recordCount > 0 && bases.unknown / recordCount > 0.05);
   return {
@@ -151,12 +150,7 @@ export function summarizeContribution(
     contribution: netCollections - totalCost - overhead.total,
     contributionAlert:
       !coverageAlert && netCollections < totalCost + overhead.total,
-    coverage:
-      incomplete || totals.free === 0
-        ? null
-        : (netCollections - totals.paid - overhead.total) / totals.free,
     coverageAlert,
-    incomplete,
     netCollections,
     overhead,
     totalCost,

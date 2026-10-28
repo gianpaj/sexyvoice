@@ -22,16 +22,14 @@ Usage is paid if it occurs at or after the customer's first positive cash
 purchase; promotional credits spent by paying customers remain paid usage.
 
 Estimated contribution equals net collections minus recorded and estimated usage
-costs and allocated overhead. Free coverage equals net collections minus paid
-usage costs and overhead, divided by free usage costs. Zero free cost renders
-coverage N/A. Unpriced or unclassified
-records mark coverage incomplete; displayed dollars include only priced records.
-The separate coverage alert fires when more than 5% of records are unpriced, or
-any usage is unclassified. Record share controls alert noise, not cost accuracy;
-one expensive unknown record can matter even below that threshold. When the
-coverage alert is off, negative contribution triggers the usage-and-overhead alert.
-Free coverage still stays incomplete for any gap; the alert tolerance does not
-establish dollar accuracy.
+costs and allocated overhead. Displayed dollars include only priced records;
+unpriced and unclassified counts stay visible beside the contribution.
+
+The `coverageAlert` flag triggers a data-quality alert when more than 5% of
+records are unpriced or any usage is unclassified. This threshold controls alert
+noise, not cost accuracy: one expensive unknown record can matter below it.
+When `coverageAlert` is false, negative contribution triggers the
+usage-and-overhead alert.
 
 This is a cash-period comparison before payment fees, not
 accounting profit. Taxes, final dispute losses, unlogged provider attempts,
@@ -69,8 +67,7 @@ Supabase, Upstash, Sentry, Dash0, Axiom, PostHog, Inngest, and email
 are confirmed free by the owner. Inworld, Hetzner, and domain purchases are
 excluded because their attribution to SexyVoice is unconfirmed. AI-provider
 invoices and prepaid credit purchases are excluded from overhead to avoid
-duplicating usage costs. Free coverage reserves overhead before measuring
-how much remains to fund free usage; hosting is not split across user cohorts.
+duplicating usage costs. Hosting is not split across user cohorts.
 
 ## Cost sources
 
@@ -98,7 +95,7 @@ and [xAI pricing](https://docs.x.ai/developers/pricing).
 
 Each period shows remaining collections and a collections/usage/overhead breakdown
 in two short lines, with unpriced or unclassified counts when present. Cohort
-costs and free coverage stay in aggregation; invoice provenance and call-estimate
+costs stay in aggregation; invoice provenance and call-estimate
 limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 

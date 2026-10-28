@@ -12,9 +12,11 @@ charge would duplicate that cost. Idle days still incur the subscription.
 
 Telegram economics uses two short lines per period: remaining collections and
 the collections/usage/overhead breakdown. Missing-cost counts stay visible.
-Cohort costs, free coverage, and repeated hosting detail are omitted from the
-message. The feature README documents allocation and estimate limitations.
+Cohort costs and repeated hosting detail are omitted from the message. The
+summary omits the unused free-coverage ratio and completeness flag; data-quality
+alerts and missing-cost counts identify gaps. The feature README documents
+allocation and estimate limitations.
 
 Verification covers the November cutoff, rolling windows and year boundaries,
-idle call periods, contribution and free-coverage deductions, invalid baseline
+idle call periods, contribution deductions, invalid baseline
 values, and compact output with missing-cost counts.

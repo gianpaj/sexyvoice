@@ -13,8 +13,8 @@ See [the daily-stats README](../../../../apps/web/app/api/daily-stats/README.md#
 for sources, allocation rules, confirmed free services, and the Vercel refund
 ambiguity. `overhead-costs.json` is the canonical numerical baseline.
 
-Subtract overhead from contribution and reserve it before calculating free
-coverage. Include overhead when deciding whether costs exceed collections.
+Subtract overhead from contribution. Include overhead when deciding whether
+costs exceed collections.
 Keep provider overhead detail in the feature README rather than repeating it
 in the Telegram report.
 
@@ -31,7 +31,7 @@ in the Telegram report.
 ## Verification
 
 Focused daily-stats tests cover overhead on idle days, negative contribution,
-free coverage after overhead, call-server attribution, and unrounded allocation
+call-server attribution, and unrounded allocation
 across a 30-day month boundary.
 
 All 102 focused daily-stats tests pass. `pnpm fixall` and `pnpm type-check`
