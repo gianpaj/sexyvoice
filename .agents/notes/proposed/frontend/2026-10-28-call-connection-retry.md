@@ -20,6 +20,8 @@ An initial failed join emits `Disconnected` before `room.connect()` rejects.
 The wrapper tracks whether the room connected so this event does not reset the
 connection flag before LiveKit can deliver `onError`. Only the final error shows
 the failure notification. An intentional hangup refreshes credits once.
+Ordinary errors after `onConnected` leave this marker and the active room intact;
+`onDisconnected` remains responsible for an established room's teardown.
 
 `onError` and its `disconnect` dependency use `useCallback` because LiveKit
 includes `onError` in its connection effect dependencies. Their identity must

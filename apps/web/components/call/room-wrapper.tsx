@@ -24,6 +24,8 @@ export function RoomWrapper({ children }: { children: ReactNode }) {
 
   // LiveKit's connection effect depends on the identity of onError.
   const handleError = useCallback(() => {
+    if (hasConnected.current) return;
+
     clearTimeout(connectionTimeout.current);
     hasConnected.current = false;
     toast.error(t('connectionFailed'));

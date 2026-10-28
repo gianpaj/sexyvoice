@@ -291,6 +291,8 @@ the room, shows a localized message, and resets the call controls so the user ca
 try again with a fresh token. An unexpected disconnect after connection also
 resets the controls and refreshes credits; an intentional hangup does not show a
 connection error.
+Ordinary SDK errors after connection leave the call active; the room's
+disconnect event owns recovery from an established call.
 
 Public character prompt text never reaches the browser. The token route loads
 it with an admin query, chooses the requested localized prompt or English

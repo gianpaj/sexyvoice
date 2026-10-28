@@ -240,6 +240,28 @@ describe('call connection deadline', () => {
 });
 
 describe('call connection recovery', () => {
+  it('keeps an established call on an ordinary error and still handles disconnection', async () => {
+    render(<TestCall />);
+    await startCall();
+    act(() => mocks.roomProps?.onConnected?.());
+
+    await act(async () => {
+      mocks.roomProps?.onError?.(new Error('Transient SDK error'));
+    });
+
+    expect(mocks.roomProps?.connect).toBe(true);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+    expect(mocks.getClaims).not.toHaveBeenCalled();
+
+    await act(async () => {
+      mocks.roomProps?.onDisconnected?.(DisconnectReason.SERVER_SHUTDOWN);
+    });
+
+    expect(mocks.roomProps?.connect).toBe(false);
+    expect(mocks.toastInfo).toHaveBeenCalledExactlyOnceWith('Disconnected');
+    expect(mocks.getClaims).toHaveBeenCalledTimes(1);
+  });
+
   it('resets the button after a final error and retries with a fresh token', async () => {
     render(<TestCall />);
     await startCall();
