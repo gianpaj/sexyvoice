@@ -566,6 +566,7 @@ test('posting-smoke requests one exact publication command without review work',
   );
   assert.match(prompt, /(?:do not|don't|no)[^\n.]*tests/i);
   assert.match(prompt, /(?:do not|don't|no)[^\n.]*(?:subagents|agents)/i);
+  assert.match(prompt, /Do not retry it/);
 });
 
 test('selected output drives the action, diagnostics, and strict publication verifier', () => {

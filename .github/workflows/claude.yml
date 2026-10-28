@@ -250,6 +250,8 @@ jobs:
               prompt = (
                   'This is a publication smoke test, not a code review.\n'
                   'Execute exactly this one Bash command:\n' + command + '\n\n'
+                  'Run it once. Do not retry it, even if the result is unclear;\n'
+                  'each run posts another comment.\n'
                   'Do not inspect code or files. Do not run tests or launch subagents.\n'
                   'Do not invoke the review skill or change code.\n'
                   'A final response is not a substitute for executing the command.\n'
