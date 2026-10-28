@@ -15,7 +15,8 @@ ambiguity. `overhead-costs.json` is the canonical numerical baseline.
 
 Subtract overhead from contribution and reserve it before calculating free
 coverage. Include overhead when deciding whether costs exceed collections.
-Show Fly.io hosting in Calls as an included portion of overhead.
+Keep provider overhead detail in the feature README rather than repeating it
+in the Telegram report.
 
 ## Alternatives and consequences
 

@@ -1,0 +1,20 @@
+# Daily stats LiveKit overhead
+
+`apps/web/app/api/daily-stats/overhead-costs.json` stores the $50 monthly
+LiveKit subscription and its 2026-11-01 UTC start date. `overhead.ts` includes
+the active portion of each reporting window using the existing 12/365 daily
+allocation. October estimates keep their invoice baseline; the admin ledger
+holds the confirmed October payment.
+
+LiveKit is overhead rather than per-call usage. The subscription is assumed to
+cover expected WebRTC participant minutes, so estimating another per-minute
+charge would duplicate that cost. Idle days still incur the subscription.
+
+Telegram economics uses two short lines per period: remaining collections and
+the collections/usage/overhead breakdown. Missing-cost counts stay visible.
+Cohort costs, free coverage, and repeated hosting detail are omitted from the
+message. The feature README documents allocation and estimate limitations.
+
+Verification covers the November cutoff, rolling windows and year boundaries,
+idle call periods, contribution and free-coverage deductions, invalid baseline
+values, and compact output with missing-cost counts.

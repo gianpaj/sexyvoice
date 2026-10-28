@@ -170,18 +170,13 @@ export function formatContribution(
 ): string[] {
   const usd = (value: number) =>
     `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
-  let coverage = 'incomplete';
-  if (!summary.incomplete) {
-    coverage =
-      summary.coverage === null ? 'N/A' : `${summary.coverage.toFixed(2)}x`;
-  }
   const gaps = [
     summary.bases.unknown > 0 ? `${summary.bases.unknown} unpriced` : null,
     summary.unclassified > 0 ? `${summary.unclassified} unclassified` : null,
   ].filter(Boolean);
   const gapLabel = gaps.length > 0 ? ` (${gaps.join(', ')})` : '';
   return [
-    `- ${label}: ${usd(summary.netCollections)} net collections − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead = ${usd(summary.contribution)} remaining${gapLabel}`,
-    `  Paid ${usd(summary.totals.paid)} | Free ${usd(summary.totals.free)} | Free coverage ${coverage}`,
+    `- ${label}: ${usd(summary.contribution)} left${gapLabel}`,
+    `  ${usd(summary.netCollections)} collected − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead`,
   ];
 }

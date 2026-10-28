@@ -42,8 +42,8 @@ retries, and ancillary infrastructure can be absent from the inputs.
 `overhead-costs.json` stores the manually maintained USD invoice baseline;
 `overhead.ts` allocates it over reporting windows. Update the baseline when newer
 invoices are available. Missing invoices are unknown, not zero. This estimate
-uses the same baseline for every report date, including historical reports;
-it does not reconstruct historical infrastructure bills.
+uses the same invoice baseline for every report date; LiveKit applies only from
+its subscription start date. It does not reconstruct historical infrastructure bills.
 
 The source is the `Purchases 2026` CSV export from the contracting purchases
 spreadsheet, reviewed on 2026-10-15. Amounts use its USD column, including VAT
@@ -53,16 +53,19 @@ the September Fly.io and Cloudflare invoices cover August usage.
 
 Fly.io's $72 annual machine reservation is allocated at $6/month in addition
 to its monthly invoices. Monthly averages are multiplied by 12/365 and the
-window's UTC day count; round only for display. The baseline is about
-$73.14/month or $2.40/day. Fly.io is attributed entirely to the voice-call
-server and shown separately in the Calls section, already included in overhead.
+window's UTC day count; round only for display. The invoice and reservation
+baseline is about $73.14/month or $2.40/day. LiveKit adds $50/month from
+2026-11-01, using the same 12/365 daily allocation for the portion of the window
+on or after that date. This assumes expected WebRTC participant minutes
+(per participant) are included, with no additional per-minute estimate.
+Fly.io and LiveKit are attributed entirely to voice calls and included once in overhead.
 Vercel and Cloudflare are entirely attributable to SexyVoice.
 
 September's positive $29.59 Vercel entry is treated as the final charge. Its
 description says "partial refund"; confirm that interpretation against the
 invoice before treating the baseline as reconciled.
 
-Supabase, LiveKit, Upstash, Sentry, Dash0, Axiom, PostHog, Inngest, and email
+Supabase, Upstash, Sentry, Dash0, Axiom, PostHog, Inngest, and email
 are confirmed free by the owner. Inworld, Hetzner, and domain purchases are
 excluded because their attribution to SexyVoice is unconfirmed. AI-provider
 invoices and prepaid credit purchases are excluded from overhead to avoid
@@ -93,8 +96,10 @@ than provider-billed time.
 Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
 
-The report prints two lines per period. Aggregation retains the costs and
-coverage counts used by the report. Linked audio token counts take precedence
+Each period shows remaining collections and a collections/usage/overhead breakdown
+in two short lines, with unpriced or unclassified counts when present. Cohort
+costs and free coverage stay in aggregation; invoice provenance and call-estimate
+limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 
 Contribution reads both usage and transactions fresh, even during local cached

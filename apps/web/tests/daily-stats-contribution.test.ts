@@ -66,9 +66,6 @@ describe('cash contribution', () => {
     expect(result.contribution).toBeCloseTo(60 - overhead);
     expect(result.contributionAlert).toBe(false);
     expect(result.coverage).toBeCloseTo((75 - overhead) / 15);
-    expect(formatContribution('Yesterday', result).join('\n')).toContain(
-      `${((75 - overhead) / 15).toFixed(2)}x`,
-    );
   });
   test('keeps each period to two lines and hides diagnostic detail', () => {
     const result = summarizeContribution(
@@ -79,10 +76,13 @@ describe('cash contribution', () => {
     );
     const lines = formatContribution('Yesterday', result);
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toBe(
-      `- Yesterday: $100.00 net collections − $15.00 usage − $${overhead.toFixed(2)} overhead = $${(85 - overhead).toFixed(2)} remaining`,
+    expect(lines[0]).toBe(`- Yesterday: $${(85 - overhead).toFixed(2)} left`);
+    expect(lines[1]).toBe(
+      `  $100.00 collected − $15.00 usage − $${overhead.toFixed(2)} overhead`,
     );
-    expect(lines.join('\n')).not.toMatch(/Cost records|Session-only|Free tts/);
+    expect(lines.join('\n')).not.toMatch(
+      /Cost records|Session-only|Free tts|Paid|Free coverage/,
+    );
   });
   test.each([0, 1, 5, 6, 100])(
     'alerts only when more than 5%% of records are unpriced: %s',
@@ -177,9 +177,6 @@ describe('cash contribution', () => {
     expect(formatContribution('Yesterday', result)[0]).toContain(
       '(1 unpriced, 1 unclassified)',
     );
-    expect(formatContribution('Yesterday', result).join('\n')).toContain(
-      'coverage incomplete',
-    );
   });
   test('includes API/enhancement costs and preserves negative contribution', () => {
     const result = summarizeContribution(
@@ -194,7 +191,7 @@ describe('cash contribution', () => {
     expect(result.contribution).toBeCloseTo(-30 - overhead);
     expect(result.coverage).toBeCloseTo(-overhead / 30);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      `= -$${(30 + overhead).toFixed(2)} remaining`,
+      `-$${(30 + overhead).toFixed(2)} left`,
     );
   });
   test('subtracts overhead on idle days and alerts when it exceeds collections', () => {
@@ -220,9 +217,25 @@ describe('cash contribution', () => {
     );
     expect(result.overhead.total).toBeCloseTo(72.134_794_52);
     expect(result.overhead.callServer).toBeCloseTo(27.093_698_63);
-    expect(formatContribution('30d', result)[0]).toBe(
-      '- 30d: $0.00 net collections − $0.00 usage − $72.13 overhead = -$72.13 remaining',
+    expect(formatContribution('30d', result)).toEqual([
+      '- 30d: -$72.13 left',
+      '  $0.00 collected − $0.00 usage − $72.13 overhead',
+    ]);
+  });
+
+  test('deducts LiveKit from November collections and free coverage even without calls', () => {
+    const result = summarizeContribution(
+      data([event({ occurred_at: '2026-11-01T12:00:00Z' })]),
+      [purchase({ created_at: '2026-11-01T00:00:00Z' })],
+      new Date('2026-11-01T00:00:00Z'),
+      new Date('2026-11-02T00:00:00Z'),
     );
+    const liveKit = 50 * (12 / 365);
+    expect(result.callCost).toBe(0);
+    expect(result.overhead.liveKit).toBeCloseTo(liveKit);
+    expect(result.overhead.total).toBeCloseTo(overhead + liveKit);
+    expect(result.contribution).toBeCloseTo(85 - overhead - liveKit);
+    expect(result.coverage).toBeCloseTo((100 - overhead - liveKit) / 15);
   });
 });
 describe('call supplementation', () => {
