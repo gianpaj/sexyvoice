@@ -282,7 +282,9 @@ The token route accepts 20 call languages. It requires at least 1,000 credits;
 free users also have a five-minute lifetime call allowance. The current billed
 rate is 1,000 credits per minute.
 
-The browser allows 30 seconds for the initial LiveKit connection, including
+The call-token request has a 30-second deadline covering the response body;
+expiry aborts the request, shows a localized error, and releases the call button.
+The browser allows another 30 seconds for the initial LiveKit connection, including
 regional retries, after the call token is available. Connecting to the room
 clears the deadline. A deadline expiry or terminal connection error disconnects
 the room, shows a localized message, and resets the call controls so the user can

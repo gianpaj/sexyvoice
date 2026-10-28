@@ -20,6 +20,8 @@ import { usePlaygroundState } from './use-playground-state';
 
 export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
 
+const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
+
 interface TokenGeneratorData {
   connect: ConnectFn;
   disconnect: () => Promise<void>;
@@ -103,30 +105,47 @@ export const ConnectionProvider = ({
     await saveCharacterIfDirty(pendingVoiceName);
 
     const resolvedState = helpers.getStateWithFullInstructions(pgState);
-    const response = await fetch('/api/call-token', {
-      body: JSON.stringify(resolvedState),
-      headers: { 'Content-Type': 'application/json' },
-      method: 'POST',
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(
+      () => controller.abort(),
+      TOKEN_REQUEST_TIMEOUT_MS,
+    );
+    try {
+      const response = await fetch('/api/call-token', {
+        body: JSON.stringify(resolvedState),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      if (response.status === 402) {
-        invalidateCredits(queryClient).catch(() => undefined);
-        toast.error(t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }));
-      } else if (response.status === 403) {
-        toast.error(t('freeUserCallLimitExceeded'));
+      if (!response.ok) {
+        if (response.status === 402) {
+          invalidateCredits(queryClient).catch(() => undefined);
+          toast.error(
+            t('notEnoughCredits', { count: MINIMUM_CREDITS_FOR_CALL }),
+          );
+        } else if (response.status === 403) {
+          toast.error(t('freeUserCallLimitExceeded'));
+        }
+        throw new Error('Failed to fetch token');
       }
-      throw new Error('Failed to fetch token');
+
+      const { accessToken, url } = await response.json();
+
+      setConnectionDetails({
+        shouldConnect: true,
+        token: accessToken,
+        voice: resolvedState.sessionConfig.voice,
+        wsUrl: url,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) {
+        toast.error(t('connectionFailed'));
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const { accessToken, url } = await response.json();
-
-    setConnectionDetails({
-      shouldConnect: true,
-      token: accessToken,
-      voice: resolvedState.sessionConfig.voice,
-      wsUrl: url,
-    });
   };
 
   const disconnect = useCallback(async () => {

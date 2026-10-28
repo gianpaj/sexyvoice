@@ -2,6 +2,12 @@
 
 ## Decision
 
+The connection provider aborts token acquisition after 30 seconds, including
+reading the response body. Timeout shows the connection failure message and
+rejects `connect()`, allowing the button's `finally` block to release its busy
+state. Token acquisition and LiveKit joining have separate deadlines, for up to
+60 seconds after character saving and microphone permission finish.
+
 `RoomWrapper` handles LiveKit's terminal connection error and established-room
 disconnect callbacks. The connection provider owns the reset and credit refresh;
 the wrapper owns the localized notifications. SDK regional retries share a

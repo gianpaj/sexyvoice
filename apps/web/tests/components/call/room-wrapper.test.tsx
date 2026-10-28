@@ -120,6 +120,61 @@ afterEach(() => {
 describe('call connection deadline', () => {
   beforeEach(() => vi.useFakeTimers());
 
+  it.each(['request', 'response body'])(
+    'aborts a stalled token %s and allows a fresh retry',
+    async (stage) => {
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+      let signal: AbortSignal | undefined;
+      const pendingToken = (_url: unknown, options?: RequestInit) => {
+        signal = options?.signal ?? undefined;
+        const pending = new Promise<never>((_resolve, reject) => {
+          signal?.addEventListener('abort', () =>
+            reject(new DOMException('Aborted', 'AbortError')),
+          );
+        });
+        if (stage === 'request') return pending;
+        const response = Response.json({});
+        vi.spyOn(response, 'json').mockReturnValue(pending);
+        return Promise.resolve(response);
+      };
+      vi.mocked(fetch).mockImplementationOnce(pendingToken);
+      render(<TestCall />);
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Start call' }));
+      });
+      expect(mocks.roomProps?.connect).toBe(false);
+      expect(screen.getByRole('button', { name: 'Connecting' })).toBeDisabled();
+
+      await act(async () => vi.advanceTimersByTime(29_999));
+      expect(signal?.aborted).toBe(false);
+      await act(async () => vi.advanceTimersByTime(1));
+
+      expect(signal?.aborted).toBe(true);
+      expect(screen.getByRole('button', { name: 'Start call' })).toBeEnabled();
+      expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+        messages.call.connectionFailed,
+      );
+      await startCall();
+      expect(mocks.roomProps?.token).toBe('token-2');
+      expect(fetch).toHaveBeenCalledTimes(2);
+      consoleError.mockRestore();
+    },
+  );
+
+  it('clears the token deadline once the token is ready', async () => {
+    render(<TestCall />);
+    await startCall();
+    const signal = vi.mocked(fetch).mock.calls[0][1]?.signal;
+    act(() => mocks.roomProps?.onConnected?.());
+
+    await act(async () => vi.advanceTimersByTime(60_000));
+
+    expect(signal?.aborted).toBe(false);
+    expect(mocks.toastError).not.toHaveBeenCalled();
+  });
+
   it('ends a pending connection at 30 seconds without extending the deadline on rerender', async () => {
     const { rerender } = render(<TestCall />);
     await startCall();
