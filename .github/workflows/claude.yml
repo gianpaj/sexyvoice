@@ -128,7 +128,8 @@ jobs:
             /review-pr REPO: ${{ github.repository }} PR_NUMBER: ${{ env.PR_NUMBER }}
 
             Review the whole PR diff: git diff ${{ steps.pr.outputs.base }}...${{ steps.pr.outputs.sha }}.
-            Give the reviewers this diff command. Do not review newer commits.
+            Run it and give each reviewer the output; the reviewers cannot run Bash.
+            Do not review newer commits.
 
             Report the "Run Unit Tests" result for this commit:
             gh run list --repo ${{ github.repository }} --workflow tests.yml --commit ${{ steps.pr.outputs.sha }} --limit 1 --json databaseId,status,conclusion,url
