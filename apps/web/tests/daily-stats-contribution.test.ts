@@ -259,6 +259,13 @@ describe('call supplementation', () => {
     );
     expect(result.callCost).toBeCloseTo((5 / 60) * 0.05);
   });
+  test('prices think-fast-1.0 at the 2.0 rate from the xAI switch', () => {
+    const usage = event({ dollar_amount: null, source_type: 'live_call' });
+    const at = (started_at: string) =>
+      resolveUsageCost(usage, { ...call, started_at, ended_at: null }).amount;
+    expect(at('2026-09-13T05:59:59Z')).toBeCloseTo((5 / 60) * 0.05, 10);
+    expect(at('2026-09-13T06:00:00Z')).toBeCloseTo((5 / 60) * 0.08, 10);
+  });
   test('prices a zero-duration session from its sub-second timestamps', () => {
     const result = summarizeContribution(
       {
