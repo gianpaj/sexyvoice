@@ -8,7 +8,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import { DisconnectReason } from 'livekit-client';
+import { DisconnectReason, PublishTrackError } from 'livekit-client';
 import { NextIntlClientProvider } from 'next-intl';
 import type { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -278,27 +278,62 @@ describe('call connection recovery', () => {
     },
   );
 
-  it('keeps an established call on an ordinary error and still handles disconnection', async () => {
-    render(<TestCall />);
-    await startCall();
-    act(() => mocks.roomProps?.onConnected?.());
+  describe.each([false, true])(
+    'unclassified failure after connected=%s',
+    (connected) => {
+      it.each([
+        {
+          scenario: 'publish timeout',
+          error: new PublishTrackError(
+            'publishing rejected as engine not connected within timeout',
+            408,
+          ),
+        },
+        {
+          scenario: 'negotiation failure',
+          error: new Error('failed to negotiate'),
+        },
+        {
+          scenario: 'capture abort',
+          error: new DOMException('Starting audio failed', 'AbortError'),
+        },
+      ])(
+        'ends the call on $scenario with feedback for its connection phase',
+        async ({ error }) => {
+          vi.useFakeTimers();
+          render(<TestCall />);
+          await startCall();
+          if (connected) act(() => mocks.roomProps?.onConnected?.());
 
-    await act(async () => {
-      mocks.roomProps?.onError?.(new Error('Transient SDK error'));
-    });
+          await act(async () => {
+            mocks.roomProps?.onError?.(error);
+          });
 
-    expect(mocks.roomProps?.connect).toBe(true);
-    expect(mocks.toastError).not.toHaveBeenCalled();
-    expect(mocks.getClaims).not.toHaveBeenCalled();
+          expect(mocks.roomProps?.connect).toBe(false);
+          expect(
+            screen.getByRole('button', { name: 'Start call' }),
+          ).toBeEnabled();
+          expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+            connected
+              ? messages.call.microphoneUnavailable
+              : messages.call.connectionFailed,
+          );
+          await act(async () => {
+            mocks.roomProps?.onDisconnected?.(
+              DisconnectReason.CLIENT_INITIATED,
+            );
+            vi.advanceTimersByTime(60_000);
+          });
+          expect(mocks.toastError).toHaveBeenCalledTimes(1);
+          expect(mocks.toastInfo).not.toHaveBeenCalled();
+          expect(mocks.getClaims).toHaveBeenCalledTimes(1);
 
-    await act(async () => {
-      mocks.roomProps?.onDisconnected?.(DisconnectReason.SERVER_SHUTDOWN);
-    });
-
-    expect(mocks.roomProps?.connect).toBe(false);
-    expect(mocks.toastInfo).toHaveBeenCalledExactlyOnceWith('Disconnected');
-    expect(mocks.getClaims).toHaveBeenCalledTimes(1);
-  });
+          await startCall();
+          expect(mocks.roomProps?.token).toBe('token-2');
+        },
+      );
+    },
+  );
 
   it('resets the button after a final error and retries with a fresh token', async () => {
     render(<TestCall />);

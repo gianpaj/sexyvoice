@@ -291,8 +291,11 @@ the room, shows a localized message, and resets the call controls so the user ca
 try again with a fresh token. An unexpected disconnect after connection also
 resets the controls and refreshes credits; an intentional hangup does not show a
 connection error.
-Ordinary SDK errors after connection leave the call active; the room's
-disconnect event owns recovery from an established call.
+
+In this audio-only wrapper, `LiveKitRoom.onError` after connection reports
+microphone acquisition or publishing failures. Every such error shows localized
+microphone guidance and disconnects the room, including publish timeouts,
+negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 

@@ -26,6 +26,7 @@ export function RoomWrapper({ children }: { children: ReactNode }) {
   // LiveKit's connection effect depends on the identity of onError.
   const handleError = useCallback(
     (error?: Error) => {
+      const wasConnected = hasConnected.current;
       const failure = MediaDeviceFailure.getFailure(error);
       const permissionDenied = failure === MediaDeviceFailure.PermissionDenied;
       const microphoneUnavailable =
@@ -33,15 +34,12 @@ export function RoomWrapper({ children }: { children: ReactNode }) {
         failure === MediaDeviceFailure.DeviceInUse ||
         error?.name === 'OverconstrainedError' ||
         error?.name === 'ConstraintNotSatisfiedError';
-      if (hasConnected.current && !permissionDenied && !microphoneUnavailable)
-        return;
-
       clearTimeout(connectionTimeout.current);
       hasConnected.current = false;
       let message = t('connectionFailed');
       if (permissionDenied) {
         message = t('microphonePermissionDenied');
-      } else if (microphoneUnavailable) {
+      } else if (microphoneUnavailable || wasConnected) {
         message = t('microphoneUnavailable');
       }
       toast.error(message);
