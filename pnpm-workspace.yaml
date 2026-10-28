@@ -22,6 +22,8 @@ minimumReleaseAgeExclude:
   - "@sentry/nextjs@10.75.2"
   # Renovate security update: zod@4.6.6
   - zod@4.6.6
+  # Renovate security update: toml@5.0.1
+  - toml@5.0.1
 
 catalog:
   "@ai-sdk/react": "3.0.292"
@@ -55,7 +57,7 @@ overrides:
   "protobufjs@<7.5.8": "7.6.6"
   "protobufjs@>=8.0.0 <8.2.0": "8.4.0"
   # Scope the TOML security fix to this consumer to avoid forcing a major bump on others.
-  "remark-mdx-frontmatter>toml": "4.2.0"
+  "remark-mdx-frontmatter>toml": "5.0.1"
   "require-in-the-middle": "7.5.2"
   "undici@<5.28.4": ">=5.28.4"
   "undici@<=5.28.2": ">=5.28.3"
