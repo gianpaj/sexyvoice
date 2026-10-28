@@ -23,9 +23,30 @@ describe('LiveKit subscription allocation', () => {
     );
     const result = summarizeOverhead(new Date(from), new Date(to));
     expect(result.liveKit).toBeCloseTo(50 * (12 / 365) * days);
-    expect(result.total).toBeCloseTo(
-      result.vercel + result.callServer + result.cloudflare + result.liveKit,
+  });
+
+  test('includes the subscription once in the annual overhead budget', async () => {
+    vi.doMock(baselinePath, () => ({
+      default: {
+        ...costs,
+        flyAnnualReservationUsd: 120,
+        liveKitMonthlyUsd: 50,
+        monthlyInvoicesUsd: {
+          cloudflare: [30],
+          flyCallServer: [20],
+          vercel: [10],
+        },
+      },
+    }));
+    const { summarizeOverhead } = await import(
+      '../app/api/daily-stats/overhead'
     );
+    expect(
+      summarizeOverhead(new Date('2025-11-01'), new Date('2026-11-01')).total,
+    ).toBeCloseTo(840);
+    expect(
+      summarizeOverhead(new Date('2026-11-01'), new Date('2027-11-01')).total,
+    ).toBeCloseTo(1440);
   });
 });
 
