@@ -13,23 +13,15 @@ for (const [provider, amounts] of Object.entries(costs.monthlyInvoicesUsd)) {
   validateAmounts(provider, amounts);
 }
 validateAmounts('Fly.io annual reservation', [costs.flyAnnualReservationUsd]);
+validateAmounts('LiveKit subscription', [costs.liveKitMonthlyUsd]);
+
+const liveKitStartsAt = Date.parse(costs.liveKitStartsAt);
+if (!Number.isFinite(liveKitStartsAt)) {
+  throw new Error('Invalid LiveKit subscription start date');
+}
 
 const average = (amounts: number[]) =>
   amounts.reduce((sum, amount) => sum + amount, 0) / amounts.length;
-
-export function formatOverheadBasis() {
-  const formatter = new Intl.DateTimeFormat('en', {
-    month: 'short',
-    timeZone: 'UTC',
-    year: 'numeric',
-  });
-  const months = costs.invoiceMonths
-    .map((month) => formatter.format(new Date(`${month}-01T00:00:00Z`)))
-    .join(', ');
-  const reservation =
-    costs.flyAnnualReservationUsd > 0 ? ' plus an annual reservation' : '';
-  return `Overhead uses ${months} invoice averages${reservation}.`;
-}
 
 export function summarizeOverhead(start: Date, end: Date) {
   const days = (end.getTime() - start.getTime()) / 86_400_000;
@@ -40,11 +32,17 @@ export function summarizeOverhead(start: Date, end: Date) {
     monthlyToPeriod;
   const vercel = average(monthly.vercel) * monthlyToPeriod;
   const cloudflare = average(monthly.cloudflare) * monthlyToPeriod;
+  const liveKitDays = Math.max(
+    0,
+    (end.getTime() - Math.max(start.getTime(), liveKitStartsAt)) / 86_400_000,
+  );
+  const liveKit = costs.liveKitMonthlyUsd * (12 / 365) * liveKitDays;
 
   return {
     callServer,
     cloudflare,
-    total: vercel + callServer + cloudflare,
+    liveKit,
+    total: vercel + callServer + cloudflare + liveKit,
     vercel,
   };
 }
