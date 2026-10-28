@@ -137,6 +137,9 @@ jobs:
             rm -rf -- "$path"
             if git cat-file -e "$TRUSTED_CONFIG_SHA:$path" 2>/dev/null; then
               git restore --source "$TRUSTED_CONFIG_SHA" --staged --worktree -- "$path"
+            else
+              # Drop PR-only paths from the index too, so no later checkout restores them.
+              git rm -r --cached --quiet --ignore-unmatch -- "$path"
             fi
           done
 

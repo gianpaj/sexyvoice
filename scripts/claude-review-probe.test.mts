@@ -314,6 +314,9 @@ test('direct-review restores exactly the eight trusted configuration paths', () 
     ),
   );
   assert.ok(
+    script.includes('git rm -r --cached --quiet --ignore-unmatch -- "$path"'),
+  );
+  assert.ok(
     workflow.indexOf('      - name: Restore trusted dispatch configuration\n') <
       workflow.indexOf('      - name: PR Review\n'),
     'Trusted configuration must be restored before the action reads it',
@@ -362,6 +365,7 @@ test('restore Bash replaces PR configuration and removes PR-only hooks and files
   }
   for (const path of prOnly) {
     assert.equal(existsSync(join(fixture.repository, path)), false, path);
+    assert.equal(fixture.git('ls-files', '--', path), '', path);
   }
   assert.deepEqual(
     readdirSync(join(fixture.repository, '.claude'), {
