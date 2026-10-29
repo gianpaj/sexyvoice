@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CANCELLED_CHARGE_FLOW,
+  ignoredServerSpans,
   sanitizeServerEvent,
 } from '@/lib/sentry/server-filters';
 
@@ -61,5 +62,25 @@ describe('sanitizeServerEvent', () => {
       type: undefined,
     };
     expect(sanitizeServerEvent(event)).toBe(event);
+  });
+});
+
+describe('ignoredServerSpans', () => {
+  const [{ name, op }] = ignoredServerSpans;
+
+  it('matches the SDK upload to Sentry ingest', () => {
+    expect(op).toBe('http.client');
+    expect(
+      name.test(
+        'POST https://o4509116858695680.ingest.de.sentry.io/api/4509116876193872/envelope/',
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps other outgoing requests and the browser tunnel', () => {
+    expect(
+      name.test('POST https://generativelanguage.googleapis.com/v1beta'),
+    ).toBe(false);
+    expect(name.test('POST /monitoring')).toBe(false);
   });
 });

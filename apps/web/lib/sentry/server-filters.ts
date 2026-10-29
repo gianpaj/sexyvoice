@@ -3,6 +3,13 @@ import type { ErrorEvent } from '@sentry/nextjs';
 export const CANCELLED_CHARGE_FLOW =
   'generation-charge-retained-after-cancellation';
 
+// The SDK's own uploads to Sentry ingest. The transport suppresses tracing for
+// them, but that depends on a single @opentelemetry/api copy (see the override
+// in pnpm-workspace.yaml); this keeps them out of the span quota regardless.
+export const ignoredServerSpans = [
+  { name: /\.sentry\.io\/api\/\d+\/envelope\//, op: 'http.client' },
+];
+
 export function sanitizeServerEvent(event: ErrorEvent): ErrorEvent {
   if (event.tags?.flow !== CANCELLED_CHARGE_FLOW) return event;
 
