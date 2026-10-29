@@ -62,8 +62,8 @@ September's positive $29.59 Vercel entry is treated as the final charge. Its
 description says "partial refund"; confirm that interpretation against the
 invoice before treating the baseline as reconciled.
 
-Supabase, Upstash, Sentry, Dash0, Axiom, PostHog, Inngest, and email
-are confirmed free by the owner. Inworld, Hetzner, and domain purchases are
+Supabase, Upstash, Sentry, Axiom, PostHog, Inngest, and email are confirmed
+free by the owner. Inworld, Hetzner, and domain purchases are
 excluded because their attribution to SexyVoice is unconfirmed. AI-provider
 invoices and prepaid credit purchases are excluded from overhead to avoid
 duplicating usage costs. Hosting is not split across user cohorts.
