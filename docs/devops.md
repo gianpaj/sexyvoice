@@ -303,15 +303,16 @@ and the `/monitoring` browser tunnel. Source maps upload only when
 `VERCEL_ENV=production`; do not expect uploads from preview deployments.
 Confirm the production build uploads maps and that the tunnel reaches Sentry.
 
-`pnpm-workspace.yaml` pins `@opentelemetry/api` to one version. Sentry's
-`suppressTracing` keeps the SDK's own envelope uploads out of traces only when
-`@vercel/otel` and Sentry share that copy. As a backstop, the server and edge
-configs drop `http.client` spans to `*.sentry.io/api/<id>/envelope/` through
-`ignoredServerSpans` in `apps/web/lib/sentry/server-filters.ts`. The filter
-runs inside the Sentry client, so Dash0 still receives those spans if a second
-copy returns. After a release that touches Sentry or OpenTelemetry packages,
-check that `pnpm why -r @opentelemetry/api` lists a single version and that
-Sentry's span usage shows no `http.client` transactions to the ingest host.
+`pnpm-workspace.yaml` pins `@opentelemetry/api` to one version for every
+OpenTelemetry consumer. Sentry's `suppressTracing` keeps the SDK's own envelope
+uploads out of traces only when all of them share that copy. As a backstop, the
+server and edge configs drop `http.client` spans to
+`*.sentry.io/api/<id>/envelope/` through `ignoredServerSpans` in
+`apps/web/lib/sentry/server-filters.ts`. The filter only protects Sentry's span
+quota; context propagation still breaks if a second copy returns. After a
+release that touches Sentry or OpenTelemetry packages, check that
+`pnpm why -r @opentelemetry/api` lists a single version and that Sentry's span
+usage shows no `http.client` transactions to the ingest host.
 
 For crashes and per-event browser/device details, use
 [Sentry issue triage](../scripts/README.md#sentry-issue-triage). For handled

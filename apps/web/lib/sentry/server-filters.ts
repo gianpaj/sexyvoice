@@ -6,7 +6,7 @@ export const CANCELLED_CHARGE_FLOW =
 // The SDK's own uploads to Sentry ingest. The transport suppresses tracing for
 // them, but that depends on a single @opentelemetry/api copy (see the override
 // in pnpm-workspace.yaml). This only keeps them out of Sentry's span quota;
-// Dash0 (the 'auto' OTLP processor) still relies on the override.
+// context propagation still relies on the override.
 export const ignoredServerSpans = [
   {
     name: /^(?:[A-Z]+ )?https?:\/\/[^/?#]+\.sentry\.io\/api\/\d+\/envelope\//,
