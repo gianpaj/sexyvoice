@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { ErrorEvent } from '@sentry/nextjs';
 import { describe, expect, it } from 'vitest';
 
@@ -85,5 +86,18 @@ describe('ignoredServerSpans', () => {
     expect(
       name.test('POST https://example.com/x.sentry.io/api/1/envelope/'),
     ).toBe(false);
+  });
+
+  it('relies on a single @opentelemetry/api copy (pnpm-workspace.yaml override)', () => {
+    const lockfile = readFileSync(
+      new URL('../../../pnpm-lock.yaml', import.meta.url),
+      'utf8',
+    );
+    const versions = new Set(
+      [...lockfile.matchAll(/^ {2}'@opentelemetry\/api@([^']+)':/gm)].map(
+        (match) => match[1],
+      ),
+    );
+    expect([...versions]).toHaveLength(1);
   });
 });
