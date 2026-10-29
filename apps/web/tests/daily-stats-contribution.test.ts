@@ -266,6 +266,37 @@ describe('call supplementation', () => {
     expect(at('2026-09-13T05:59:59Z')).toBeCloseTo((5 / 60) * 0.05, 10);
     expect(at('2026-09-13T06:00:00Z')).toBeCloseTo((5 / 60) * 0.08, 10);
   });
+  test('dates the 1.0 rate by occurred_at when no session is linked', () => {
+    const usage = (occurred_at: string) =>
+      resolveUsageCost(
+        event({
+          dollar_amount: null,
+          duration_seconds: 5,
+          model: 'grok-voice-think-fast-1.0',
+          occurred_at,
+          source_type: 'live_call',
+        }),
+      ).amount;
+    expect(usage('2026-09-13T05:59:59Z')).toBeCloseTo((5 / 60) * 0.05, 10);
+    expect(usage('2026-09-13T06:00:00Z')).toBeCloseTo((5 / 60) * 0.08, 10);
+  });
+  test('uses the current rate without a usable start and for 2.0 calls', () => {
+    const usage = event({ dollar_amount: null, source_type: 'live_call' });
+    expect(
+      resolveUsageCost(usage, {
+        ...call,
+        started_at: 'invalid',
+        ended_at: null,
+      }).amount,
+    ).toBeCloseTo((5 / 60) * 0.08, 10);
+    expect(
+      resolveUsageCost(usage, {
+        ...call,
+        ended_at: null,
+        model: 'grok-voice-think-fast-2.0',
+      }).amount,
+    ).toBeCloseTo((5 / 60) * 0.08, 10);
+  });
   test('prices a zero-duration session from its sub-second timestamps', () => {
     const result = summarizeContribution(
       {
