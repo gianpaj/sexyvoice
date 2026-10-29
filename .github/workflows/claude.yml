@@ -13,9 +13,9 @@ on:
     types: [opened, ready_for_review]
 
 jobs:
+  # Review automatically on opening/ready-for-review, or on "@claude review".
   # Both the original actor and the rerun actor must be explicitly trusted.
-  # Review automatically on opening/ready-for-review, or on explicit request.
-  review-context:
+  claude-review:
     if: |
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.actor) &&
       contains(fromJSON('["gian0pa", "gianpaj"]'), github.triggering_actor) &&
@@ -25,41 +25,6 @@ jobs:
         (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude review')) ||
         (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude review'))
       )
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      sha: ${{ steps.review-head.outputs.sha }}
-      base: ${{ steps.review-head.outputs.base }}
-    steps:
-      - name: Resolve review commit
-        id: review-head
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-          EVENT_HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
-          EVENT_BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
-        run: |
-          if [[ -n "$EVENT_HEAD" ]]; then
-            # Automatic PR review: the event already supplies both commits.
-            printf 'sha=%s\nbase=%s\n' "$EVENT_HEAD" "$EVENT_BASE" >> "$GITHUB_OUTPUT"
-          else
-            # Manual review: resolve the PR's current head/base before checkout.
-            pr=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid,isCrossRepository)
-
-            # A trusted requester does not make fork code trusted. Fork authors can
-            # push after the request, so reject manual reviews of fork PRs.
-            if [[ $(jq -r .isCrossRepository <<< "$pr") == true ]]; then
-              echo '::error::@claude review does not run on fork PRs.'
-              exit 1
-            fi
-            jq -r '"sha=" + .headRefOid + "\nbase=" + .baseRefOid' <<< "$pr" >> "$GITHUB_OUTPUT"
-          fi
-
-  claude-review:
-    needs: review-context
     # One review per PR at a time. Newer reviews queue, and GitHub keeps only
     # the newest pending one.
     concurrency:
@@ -71,11 +36,28 @@ jobs:
       id-token: write
       actions: read # Grants the workflow permission to read CI results
       checks: read # Allows watching check progress
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
     steps:
-      - name: Checkout review commit
+      # Resolve the PR head before installing its dependencies. Comment events
+      # carry no PR SHA, and a fork could push after the maintainer's request.
+      - name: Resolve PR head
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          pr=$(gh pr view "$PR_NUMBER" --json headRefOid,baseRefOid,isCrossRepository)
+          if [[ $(jq -r .isCrossRepository <<< "$pr") == true ]]; then
+            echo '::error::Claude reviews do not run on fork PRs.'
+            exit 1
+          fi
+          jq -r '"sha=" + .headRefOid + "\nbase=" + .baseRefOid' <<< "$pr" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR head
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ needs.review-context.outputs.sha }}
+          ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -92,11 +74,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # /review-pr and its reviewer agents live in the action's own repository.
-      # The runner downloads every action in this job before the first step,
-      # so copy them from that download: the `uses:` pin below is the only
-      # version to update. The action replaces .claude/ in the checkout with
-      # the base branch's copy before Claude starts, so install them as
+      # /review-pr and its five reviewer agents live in the action's own
+      # repository. The runner downloads every action in this job before the
+      # first step, so copy them from that download: the `uses:` pin below is
+      # the only version to update. The action replaces .claude/ in the checkout
+      # with the base branch's copy before Claude starts, so install them as
       # user-level config instead.
       - name: Install /review-pr command and reviewer agents
         run: |
@@ -107,34 +89,30 @@ jobs:
             echo "::error::Expected one downloaded claude-code-action, found ${#dirs[@]}."
             exit 1
           fi
-          src=${dirs[0]}
           mkdir -p ~/.claude/commands ~/.claude/agents
-          cp "$src/commands/review-pr.md" ~/.claude/commands/
+          cp "${dirs[0]}/commands/review-pr.md" ~/.claude/commands/
           # The pinned agents have unquoted descriptions containing YAML delimiters.
-          python3 - "$src/agents" <<'PY'
+          python3 - "${dirs[0]}/agents" <<'PY'
           import json
           import re
           import sys
           from pathlib import Path
 
           for source in Path(sys.argv[1]).glob('*.md'):
-              text = source.read_text()
-              opening, frontmatter, body = text.split('---\n', 2)
-              if opening:
-                  raise ValueError(f'{source}: missing frontmatter opening')
-              frontmatter, count = re.subn(
+              _, frontmatter, body = source.read_text().split('---\n', 2)
+              frontmatter = re.sub(
                   r'^description: (.+)$',
                   lambda match: 'description: ' + json.dumps(match[1]),
                   frontmatter,
                   count=1,
                   flags=re.MULTILINE,
               )
-              if count != 1:
-                  raise ValueError(f'{source}: expected one description')
               destination = Path.home() / '.claude' / 'agents' / source.name
               destination.write_text('---\n' + frontmatter + '---\n' + body)
           PY
 
+      # Claude returns the review as structured output and the next step posts
+      # it, so publication never depends on Claude choosing to comment.
       - name: PR Review
         id: review
         uses: anthropics/claude-code-action@34968b5981d5d170904281aa3df6f3c0d4a28855 # v1
@@ -147,182 +125,37 @@ jobs:
             checks: read
           # Agent mode keeps /review-pr at the start of the SDK prompt.
           prompt: |
-            /review-pr REPO: ${{ github.repository }} PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+            /review-pr REPO: ${{ github.repository }} PR_NUMBER: ${{ env.PR_NUMBER }}
 
-            The review commit is ${{ needs.review-context.outputs.sha }}.
-            Do not replace it with a newer SHA.
-            Before reading code or running tests, verify git rev-parse HEAD equals
-            this SHA. The action may have switched branches during setup; if needed,
-            run git checkout --detach ${{ needs.review-context.outputs.sha }} and verify again.
-            If verification fails, report the mismatch and stop without reviewing.
-            Review the entire PR diff using git diff ${{ needs.review-context.outputs.base }}...${{ needs.review-context.outputs.sha }},
-            not just its latest commit. These base and head SHAs are pinned;
-            do not use a live PR diff from a newer head or base.
-            Before posting the final review, check "Run Unit Tests" for this SHA:
-            gh run list --repo ${{ github.repository }} --workflow tests.yml --event pull_request --commit ${{ needs.review-context.outputs.sha }} --limit 1 --json databaseId,headSha,status,conclusion,url
-            Keep discovery and waiting within a 5-minute total budget.
-            If no run exists yet, retry discovery every 15 seconds using sleep 15.
-            Once a run exists, if it is not completed, use:
-            gh run watch <run-id> --repo ${{ github.repository }} --interval 15 --exit-status
-            Set the Bash tool timeout to the remaining wait budget; do not restart
-            the watch after the budget expires. A nonzero exit can mean CI failed,
-            not that the review should stop. Read the final status and conclusion
-            with gh run view <run-id> --repo ${{ github.repository }} --json headSha,status,conclusion,url.
-            For a failed run, inspect gh run view <run-id> --repo ${{ github.repository }} --log-failed.
-            Include the CI conclusion and run URL in the final review. If CI
-            remains pending, is missing, cancelled, skipped, or inaccessible,
-            report that explicitly rather than claiming validation passed.
-            Never wait for this Claude workflow or use another commit's results.
-            Recheck the PR head before posting; if it changed, identify the
-            reviewed SHA and state that the newer commit was not reviewed.
-            Publish the final assessment as a top-level PR comment using
-            gh pr comment ${{ github.event.pull_request.number || github.event.issue.number }} --repo ${{ github.repository }} --body '<final assessment>'.
-            Pass the body directly as a literal shell argument; do not write a file.
-            Do this even if there are no noteworthy findings; returning text alone
-            does not publish the review. End that comment with this line exactly:
-            Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-context.outputs.sha }}/${{ needs.review-context.outputs.base }}
-            Include the completion marker only after completing the code review.
-            If commit verification fails or you cannot complete the review,
-            report the problem in a top-level PR comment without the completion marker.
+            Review the whole PR diff: git diff ${{ steps.pr.outputs.base }}...${{ steps.pr.outputs.sha }}.
+            Run it and give each reviewer the output; the reviewers cannot run Bash.
+            Do not review newer commits.
+
+            Report the "Run Unit Tests" result for this commit:
+            gh run list --repo ${{ github.repository }} --workflow tests.yml --commit ${{ steps.pr.outputs.sha }} --limit 1 --json databaseId,status,conclusion,url
+            If it is still running, wait at most 5 minutes with
+            gh run watch <run-id> --repo ${{ github.repository }} --interval 15.
+            If it is still pending after that, say so.
+
+            Return the final review in the `review` field: a short assessment, the
+            noteworthy findings, and the CI result. Return it even if there are no
+            noteworthy findings. Inline comments are fine, but put general
+            observations in the review field. Do not post any top-level PR comment;
+            the workflow posts the review.
           claude_args: |
-            --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
+            --json-schema '{"type":"object","properties":{"review":{"type":"string"}},"required":["review"]}'
+            --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh run list:*),Bash(gh run view:*),Bash(gh run watch:*),Bash(sleep 15),mcp__github_inline_comment__create_inline_comment"
             --model "claude-opus-5-5"
             --effort xhigh
 
-      - name: Summarize review execution
-        if: ${{ always() }}
-        env:
-          CLAUDE_EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          import re
-          import shlex
-          from collections import Counter
-          from pathlib import Path
-
-          # Only fixed labels and counts may leave the raw execution trace.
-          known_tools = {
-              'Agent', 'Task', 'Skill', 'Bash', 'Read', 'Write', 'Edit',
-              'Glob', 'Grep', 'WebFetch', 'WebSearch', 'TodoWrite',
-              'mcp__github_inline_comment__create_inline_comment',
-          }
-
-          def skip_assignments(words, word):
-              while re.match(r'^[A-Za-z_][A-Za-z0-9_]*=', word):
-                  word = next(words, '')
-              return word
-
-          def bash_operation(tool_input):
-              command = tool_input.get('command') if isinstance(tool_input, dict) else None
-              if not isinstance(command, str):
-                  return 'other'
-              # Read only the command prefix, not its body or heredoc contents.
-              words = shlex.shlex(command, posix=True)
-              words.whitespace_split = True
-              words.commenters = ''
-              try:
-                  program = skip_assignments(words, next(words, ''))
-                  if program == 'env':
-                      program = next(words, '')
-                      if program == '--':
-                          program = next(words, '')
-                      program = skip_assignments(words, program)
-                  if program == 'gh':
-                      group, operation = next(words, ''), next(words, '')
-                      if group == 'pr' and operation in ('comment', 'view'):
-                          return 'pr_' + operation
-                      if group == 'run' and operation in ('list', 'view', 'watch'):
-                          return 'ci_read'
-                  if program in ('git', 'pnpm', 'sleep'):
-                      return program
-              except ValueError:
-                  pass
-              return 'other'
-
-          summary = {'execution_log': 'available', 'sdk_result': 'missing'}
-          denied_tools = Counter()
-          denied_bash_operations = Counter()
-          requests = set()
-          outcomes = {}
-          path = Path(os.environ.get('CLAUDE_EXECUTION_FILE') or
-                      Path(os.environ['RUNNER_TEMP']) / 'claude-execution-output.json')
-          try:
-              messages = json.loads(path.read_text())
-              if not isinstance(messages, list):
-                  raise ValueError()
-          except OSError:
-              summary['execution_log'] = 'missing'
-              messages = []
-          except (ValueError, UnicodeError):
-              summary['execution_log'] = 'invalid'
-              messages = []
-
-          for message in messages:
-              if not isinstance(message, dict):
-                  continue
-              if message.get('type') == 'result':
-                  subtype = message.get('subtype')
-                  summary['sdk_result'] = (
-                      'error' if message.get('is_error') else
-                      'success' if subtype == 'success' else 'other'
-                  )
-                  denials = message.get('permission_denials', [])
-                  for denial in denials if isinstance(denials, list) else []:
-                      if not isinstance(denial, dict):
-                          continue
-                      name = denial.get('tool_name')
-                      label = name if isinstance(name, str) and name in known_tools else 'other'
-                      denied_tools[label] += 1
-                      if name == 'Bash':
-                          denied_bash_operations[bash_operation(denial.get('tool_input'))] += 1
-              content = message.get('message')
-              content = content.get('content') if isinstance(content, dict) else None
-              for block in content if isinstance(content, list) else []:
-                  if not isinstance(block, dict):
-                      continue
-                  if (message.get('type') == 'assistant' and block.get('type') == 'tool_use'
-                          and block.get('name') == 'Bash'
-                          and bash_operation(block.get('input')) == 'pr_comment'
-                          and isinstance(block.get('id'), str)):
-                      requests.add(block['id'])
-                  if (message.get('type') == 'user' and block.get('type') == 'tool_result'
-                          and isinstance(block.get('tool_use_id'), str)):
-                      outcomes[block['tool_use_id']] = 'failed' if block.get('is_error') else 'succeeded'
-
-          counts = Counter(outcomes.get(request, 'unconfirmed') for request in requests)
-          summary['denied_tools'] = dict(denied_tools)
-          summary['denied_bash_operations'] = dict(denied_bash_operations)
-          summary['direct_pr_comment_requests'] = {
-              'requested': len(requests),
-              **{status: counts[status] for status in ('succeeded', 'failed', 'unconfirmed')},
-          }
-          report = json.dumps(summary, indent=2, sort_keys=True)
-          print(report)
-          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as destination:
-              destination.write('### Claude review diagnostics\n\n```json\n' + report + '\n```\n\n'
-                                'Counts describe tool requests/results, not verified GitHub publication.\n')
-          PY
-
-      - name: Verify review publication
-        if: ${{ always() }}
+      - name: Publish review
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
-          # The action strips HTML comments from bodies Claude publishes.
-          REVIEW_RUN_MARKER: "Review marker: claude-review/${{ github.run_id }}/${{ github.run_attempt }}/${{ needs.review-context.outputs.sha }}/${{ needs.review-context.outputs.base }}"
+          REVIEW: ${{ fromJSON(steps.review.outputs.structured_output).review }}
+          REVIEW_SHA: ${{ steps.pr.outputs.sha }}
         run: |
-          # A successful action alone does not prove Claude completed the review.
-          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
-            > "$RUNNER_TEMP/claude-comments.json"
-          if ! jq -e --arg marker "$REVIEW_RUN_MARKER" '
-            any(.[][]; .user.login == "claude[bot]" and
-              ((.body // "") | contains($marker)))
-          ' "$RUNNER_TEMP/claude-comments.json" > /dev/null; then
-            echo '::error::Claude review publication could not be verified for this run and SHA.'
-            exit 1
-          fi
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --body "$REVIEW"$'\n\n'"Reviewed commit: $REVIEW_SHA"
 
   # General-purpose assistant triggered by "@claude" (without "review") in
   # issues, PR comments, and reviews. Can run CI commands and push commits.

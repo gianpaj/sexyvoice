@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
     getCallSessionDurationsBefore: vi.fn().mockResolvedValue([]),
     getCallSessionsInRange: vi.fn().mockResolvedValue([]),
     getClonedAudioFilesInRange: vi.fn().mockResolvedValue([]),
+    getCreditTransactionsInRange: vi.fn().mockResolvedValue([]),
     getInternalUserIds: vi.fn().mockResolvedValue([]),
     getProfilesInRange: vi.fn().mockResolvedValue([]),
     getProfileUsernamesByIds: vi.fn().mockResolvedValue(new Map()),
@@ -46,6 +47,7 @@ vi.mock('node:fs', async (importOriginal) => ({
 vi.mock('@sentry/nextjs', () => ({
   captureCheckIn: mocks.captureCheckIn,
   captureException: mocks.captureException,
+  flush: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: mocks.createAdminClient,
@@ -143,7 +145,6 @@ describe('GET /api/daily-stats cache', () => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    expect(mocks.getContributionData).not.toHaveBeenCalled();
     expect(mocks.getUserIdByStripeCustomerId).not.toHaveBeenCalled();
     expect(mocks.captureException).not.toHaveBeenCalled();
   });
@@ -200,6 +201,54 @@ describe('GET /api/daily-stats cache', () => {
       expect(mocks.fetch).not.toHaveBeenCalled();
     },
   );
+
+  it('refreshes only 30 days of collections for cached activity', async () => {
+    const cached = {
+      ...validCache(),
+      audioYesterdayResult: { count: 1, data: [{ model: 'xai' }], error: null },
+    };
+    mocks.existsSync.mockReturnValue(true);
+    mocks.readFileSync.mockReturnValue(JSON.stringify(cached));
+    mocks.queries.getInternalUserIds.mockResolvedValueOnce(['internal']);
+    mocks.queries.getCreditTransactionsInRange.mockResolvedValueOnce([
+      {
+        amount: 50_000,
+        created_at: '2026-09-11T12:00:00Z',
+        description: 'Purchase',
+        id: 'payment',
+        metadata: { dollarAmount: 25 },
+        profiles: null,
+        type: 'purchase',
+        user_id: 'customer',
+      },
+    ]);
+    mocks.getContributionData.mockResolvedValueOnce({
+      audioUsage: {},
+      calls: [],
+      events: [],
+      linkedCallIds: [],
+    });
+
+    const response = await GET(request());
+    assert(response);
+    expect(response.status).toBe(200);
+    const report = await response.text();
+    expect(report).toContain('$25.00 collected');
+    expect(report).toContain('AI usage (est.): $0.00 yesterday | 14d: $0.00');
+    expect(report).not.toContain('Estimated usage cost:');
+    expect(
+      mocks.queries.getCreditTransactionsInRange,
+    ).toHaveBeenCalledExactlyOnceWith(
+      mocks.createAdminClient.mock.results[0].value,
+      new Date('2026-08-13T00:00:00Z'),
+      new Date('2026-09-12T00:00:00Z'),
+      ['internal'],
+    );
+    expect(mocks.queries.getAllCreditTransactions).not.toHaveBeenCalled();
+    expect(mocks.getContributionData).toHaveBeenCalledOnce();
+    expect(mocks.writeFileSync).not.toHaveBeenCalled();
+    expect(mocks.fetch).not.toHaveBeenCalled();
+  });
 
   it('writes fresh results when the default cache is missing', async () => {
     const response = await GET(request());

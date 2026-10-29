@@ -28,29 +28,16 @@ before merging to `main` and after deploying.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
-for review. They pin a PR head and report CI results for that SHA. Pushes do not
-request another Claude review; comment `@claude review` when one is needed.
-Reviews use `/review-pr` in agent mode and publish a final top-level PR comment.
-The workflow verifies publication using a plain-text completion marker from
-`claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
-merge gate.
-
-Within the review job, the workflow attempts diagnostics even when setup fails
-or Claude is skipped or cancelled. It writes sanitized diagnostics to the job
-log and step summary: SDK result status, denied tool names from a fixed allowlist,
-denied Bash operation categories, and direct `gh pr comment` request/result
-counts. Command classification supports leading environment assignments and
-`env` prefixes without emitting their values. It does not interpret compound
-shell programs. Request counts do not prove publication; the completion-marker
-check remains authoritative. Missing or invalid traces are reported explicitly.
-Prompts, command arguments, tool results, final responses, and raw execution
-files are not published. Keep `show_full_output` disabled on this public repo.
+for review. Pushes do not request another review; comment `@claude review` when
+one is needed. Claude runs `/review-pr` and its five reviewer agents from the
+pinned `claude-code-action` against the PR head resolved at the start of the
+job, and returns its assessment as structured output. The workflow posts that assessment
+as a top-level PR comment from `github-actions[bot]`. The review's CI report is
+not a merge gate.
 
 Claude GitHub App authentication requires the workflow content to match the
-default branch. A PR that edits `.github/workflows/claude.yml` can verify setup
-steps, but the action skips Claude execution and the publication check fails.
-Verify command expansion, all five reviewer agents, and the final review comment
-on a subsequent review after the workflow reaches the default branch.
+default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
+execution; test review changes after they reach the default branch.
 
 ## Deployment targets
 

@@ -282,6 +282,23 @@ The token route accepts 20 call languages. It requires at least 1,000 credits;
 free users also have a five-minute lifetime call allowance. The current billed
 rate is 1,000 credits per minute.
 
+The call-token request has a 30-second deadline covering the response body;
+expiry aborts the request, shows a localized error, and releases the call button.
+The browser allows another 30 seconds for the initial LiveKit connection, including
+regional retries, after the call token is available. Connecting to the room
+clears the deadline. A deadline expiry or terminal connection error disconnects
+the room, shows a localized message, and resets the call controls so the user can
+try again with a fresh token. An unexpected disconnect after connection also
+resets the controls and refreshes credits; an intentional hangup does not show a
+connection error.
+
+In this audio-only wrapper, `LiveKitRoom.onError` after connection reports
+microphone acquisition or publishing failures. Every such error shows localized
+microphone guidance and disconnects the room, including publish timeouts,
+negotiation failures, and capture aborts without a recognized device error name.
+Microphone permission, missing-device, busy-device, and constraint errors show
+localized microphone guidance and disconnect the room, including after connection.
+
 Public character prompt text never reaches the browser. The token route loads
 it with an admin query, chooses the requested localized prompt or English
 fallback, and places the result in LiveKit token metadata. Custom characters,
@@ -386,6 +403,11 @@ See `apps/web/supabase/migrations/` and
 identity for pages, actions, dashboard APIs, browser analytics, and the proxy.
 It returns `null` on SDK auth errors or absent claims. Callers require
 `claims.sub`; ownership, credit, and entitlement checks remain separate.
+
+The proxy matcher skips link prefetches (`next-router-prefetch` or
+`purpose: prefetch` headers). Any client can send those headers, so the proxy
+redirect is not an auth boundary: every page and layout verifies claims before
+it reads user data.
 
 Asymmetric JWTs normally verify locally with cached JWKS; symmetric keys require
 an Auth-server request. Claims do not enforce immediate session revocation or

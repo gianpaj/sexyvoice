@@ -7,9 +7,10 @@
     "cloudflare": [10.23, 10.25, 10.46]
   },
   "flyAnnualReservationUsd": 72,
+  "liveKitMonthlyUsd": 50,
+  "liveKitStartsAt": "2026-11-01",
   "confirmedFreeServices": [
     "Supabase",
-    "LiveKit",
     "Upstash",
     "Sentry",
     "Axiom",
