@@ -6,7 +6,10 @@
 import * as Sentry from '@sentry/nextjs';
 
 import { isE2E } from '@/lib/e2e-mode';
-import { sanitizeServerEvent } from '@/lib/sentry/server-filters';
+import {
+  ignoredServerSpans,
+  sanitizeServerEvent,
+} from '@/lib/sentry/server-filters';
 
 Sentry.init({
   beforeSend: sanitizeServerEvent,
@@ -15,6 +18,7 @@ Sentry.init({
   dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
   enabled: process.env.NODE_ENV === 'production' && !isE2E(),
   enableLogs: true,
+  ignoreSpans: ignoredServerSpans,
   integrations: [
     // Add the Vercel AI SDK integration
     Sentry.vercelAIIntegration({

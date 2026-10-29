@@ -46,6 +46,12 @@ catalog:
 
 overrides:
   "@babel/runtime@<7.26.10": ">=7.26.10"
+  # One OpenTelemetry API copy for every consumer (Sentry, Next.js, Supabase,
+  # and others). A second minor version sees the registered context manager
+  # as incompatible and gets a no-op one, which breaks Sentry's suppressTracing
+  # and traces its own envelope uploads. @opentelemetry/core 2.x peers on
+  # <1.10.0.
+  "@opentelemetry/api": "1.9.1"
   "@opentelemetry/auto-instrumentations-node": "0.76.0"
   "@opentelemetry/exporter-prometheus": "0.218.0"
   "@opentelemetry/exporter-trace-otlp-http": "0.218.0"
