@@ -82,5 +82,8 @@ describe('ignoredServerSpans', () => {
       name.test('POST https://generativelanguage.googleapis.com/v1beta'),
     ).toBe(false);
     expect(name.test('POST /monitoring')).toBe(false);
+    expect(
+      name.test('POST https://example.com/x.sentry.io/api/1/envelope/'),
+    ).toBe(false);
   });
 });

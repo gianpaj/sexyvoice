@@ -7,7 +7,10 @@ export const CANCELLED_CHARGE_FLOW =
 // them, but that depends on a single @opentelemetry/api copy (see the override
 // in pnpm-workspace.yaml); this keeps them out of the span quota regardless.
 export const ignoredServerSpans = [
-  { name: /\.sentry\.io\/api\/\d+\/envelope\//, op: 'http.client' },
+  {
+    name: /^(?:[A-Z]+ )?https?:\/\/[^/?#]+\.sentry\.io\/api\/\d+\/envelope\//,
+    op: 'http.client',
+  },
 ];
 
 export function sanitizeServerEvent(event: ErrorEvent): ErrorEvent {
