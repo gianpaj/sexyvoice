@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
 import type { ErrorEvent } from '@sentry/nextjs';
 import { describe, expect, it } from 'vitest';
 
 import {
   CANCELLED_CHARGE_FLOW,
+  ignoredServerSpans,
   sanitizeServerEvent,
 } from '@/lib/sentry/server-filters';
 
@@ -61,5 +63,41 @@ describe('sanitizeServerEvent', () => {
       type: undefined,
     };
     expect(sanitizeServerEvent(event)).toBe(event);
+  });
+});
+
+describe('ignoredServerSpans', () => {
+  const [{ name, op }] = ignoredServerSpans;
+
+  it('matches the SDK upload to Sentry ingest', () => {
+    expect(op).toBe('http.client');
+    expect(
+      name.test(
+        'POST https://o4509116858695680.ingest.de.sentry.io/api/4509116876193872/envelope/',
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps other outgoing requests and the browser tunnel', () => {
+    expect(
+      name.test('POST https://generativelanguage.googleapis.com/v1beta'),
+    ).toBe(false);
+    expect(name.test('POST /monitoring')).toBe(false);
+    expect(
+      name.test('POST https://example.com/x.sentry.io/api/1/envelope/'),
+    ).toBe(false);
+  });
+
+  it('relies on a single @opentelemetry/api copy (pnpm-workspace.yaml override)', () => {
+    const lockfile = readFileSync(
+      new URL('../../../pnpm-lock.yaml', import.meta.url),
+      'utf8',
+    );
+    const versions = new Set(
+      [...lockfile.matchAll(/^ {2}'@opentelemetry\/api@([^']+)':/gm)].map(
+        (match) => match[1],
+      ),
+    );
+    expect([...versions]).toHaveLength(1);
   });
 });
