@@ -72,6 +72,14 @@ export const languageInitialInstructions: Record<CallLanguage, string> = {
 
 export const defaultLanguage: CallLanguage = 'en';
 
+/** Unsaved character fields in the creator. */
+export interface CustomCallDraft {
+  description: string;
+  instructions: string;
+  name: string;
+  sessionConfig: SessionConfig;
+}
+
 export interface PlaygroundState {
   /** User-created custom characters */
   customCharacters: Preset[];

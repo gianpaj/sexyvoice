@@ -8,9 +8,8 @@ import { ClonePage } from './pages/clone.page';
  * These tests verify the voice cloning page functionality:
  * 1. Page display: title, tabs, upload area, language selector
  * 2. Form elements: text input, legal consent, generate button
- * 3. Sample audio accordion cards
- * 4. Form validation: disabled button states
- * 5. Auth redirect for unauthenticated users
+ * 3. Form validation: disabled button states
+ * 4. Auth redirect for unauthenticated users
  *
  * All tests use the authenticated state from auth.setup.ts.
  * Microphone tests are skipped (require browser permissions).
@@ -66,14 +65,6 @@ test.describe('Clone Dashboard - Authenticated User', () => {
 
   test('should display legal consent checkbox (visible)', async () => {
     await clonePage.expectLegalConsentVisible();
-  });
-
-  test('should show sample audio accordion items', async () => {
-    await clonePage.expectSampleAudiosPresent();
-  });
-
-  test('should display sample audio accordion items (visible)', async () => {
-    await expect(clonePage.sampleAccordionItems.first()).toBeVisible();
   });
 
   test('should disable generate button when no audio is provided', async () => {

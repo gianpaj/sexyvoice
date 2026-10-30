@@ -39,24 +39,25 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
     });
   };
 
+  // Renders as cells of the call panel's two-column settings grid.
   return (
-    <div
-      className="w-full border-separator1 border-b px-4 py-6 md:px-1"
-      data-testid="call-scene-selector"
-    >
-      <div className="flex w-full items-center justify-between gap-4">
-        <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
-          {t('sceneLabel')}
-        </div>
+    <>
+      <label className="text-slate-300 text-sm" htmlFor="call-scene">
+        {t('sceneLabel')}
+      </label>
+      <div className="flex flex-col gap-1" data-testid="call-scene-selector">
         <Select
           disabled={isConnected}
           onValueChange={handleSceneChange}
           value={selectedValue}
         >
-          <SelectTrigger className="h-9 text-neutral-200">
+          <SelectTrigger
+            className="h-11 w-full border-slate-700/70 bg-slate-950/70"
+            id="call-scene"
+          >
             <SelectValue placeholder={t('scenePlaceholder')} />
           </SelectTrigger>
-          <SelectContent className="max-h-72 overflow-y-auto text-neutral-100">
+          <SelectContent className="max-h-72 overflow-y-auto">
             <SelectItem value={NO_SCENE_VALUE}>{t('sceneNone')}</SelectItem>
             {callScenes.map((scene) => (
               <SelectItem
@@ -70,22 +71,22 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
             ))}
           </SelectContent>
         </Select>
+        {!isPaidUser && (
+          <span className="text-slate-500 text-xs">
+            {t('sceneUpgradeRequired')}
+          </span>
+        )}
       </div>
 
-      {!isPaidUser && (
-        <div className="mt-2 text-right text-muted-foreground text-xs">
-          {t('sceneUpgradeRequired')}
-        </div>
-      )}
-
       {hasEditableScene && (
-        <div className="mt-4 space-y-2">
-          <div className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+        <div className="col-span-2 flex flex-col gap-2">
+          <label className="text-slate-300 text-sm" htmlFor="call-scene-text">
             {t('sceneTextLabel')}
-          </div>
+          </label>
           <Textarea
-            className="min-h-48 bg-transparent font-mono text-xs leading-loose"
+            className="min-h-40 border-slate-700/70 bg-slate-950/70 text-sm leading-relaxed"
             disabled={isConnected}
+            id="call-scene-text"
             onChange={(event) =>
               dispatch({
                 payload: event.target.value,
@@ -96,6 +97,6 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
           />
         </div>
       )}
-    </div>
+    </>
   );
 }

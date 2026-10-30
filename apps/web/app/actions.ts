@@ -5,6 +5,9 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import { getCallVoiceSampleKey } from '@/lib/clone/call-voice-sample';
+import { deleteInworldVoice } from '@/lib/clone/inworld';
+import { deleteMistralVoice } from '@/lib/clone/mistral';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
@@ -167,6 +170,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       { data: customCharacters, error: customCharactersError },
       { data: apiKeys, error: apiKeysError },
       { count: retainedUsageEventsCount, error: usageEventsError },
+      { data: voiceReferences, error: voiceReferencesError },
     ] = await Promise.all([
       supabase.from('audio_files').select().eq('user_id', user.id),
       supabase
@@ -178,9 +182,18 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .from('usage_events')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id),
+      supabase
+        .from('audio_references')
+        .select('id, sample_url, provider, voice_id')
+        .eq('user_id', user.id),
     ]);
 
-    if (audioFilesError || customCharactersError || apiKeysError) {
+    if (
+      audioFilesError ||
+      customCharactersError ||
+      apiKeysError ||
+      voiceReferencesError
+    ) {
       throw new Error('User deletion failed');
     }
 
@@ -220,6 +233,55 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         }
       });
     }
+
+    const sampleReferences = voiceReferences ?? [];
+    const sampleDeletionResults = await Promise.allSettled(
+      sampleReferences.map(async (reference) => {
+        const deleteProviderVoice = async () => {
+          if (reference.provider === 'inworld') {
+            await deleteInworldVoice(reference.voice_id);
+          } else if (reference.provider === 'mistral') {
+            await deleteMistralVoice(reference.voice_id);
+          } else {
+            throw new Error('Unsupported saved voice provider');
+          }
+        };
+        const deleteSample = async () => {
+          if (reference.sample_url) {
+            const key = getCallVoiceSampleKey(
+              reference.sample_url,
+              reference.id,
+            );
+            await deleteFileFromR2(key);
+          }
+        };
+        const deletions = await Promise.allSettled([
+          deleteProviderVoice(),
+          deleteSample(),
+        ]);
+        const failure = deletions.find(
+          (result) => result.status === 'rejected',
+        );
+        if (failure?.status === 'rejected') throw failure.reason;
+        const { error: sampleUpdateError } = await supabase
+          .from('audio_references')
+          .delete()
+          .eq('id', reference.id)
+          .eq('user_id', user.id);
+        if (sampleUpdateError) throw sampleUpdateError;
+      }),
+    );
+    sampleDeletionResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        captureException(result.reason, {
+          extra: {
+            context: 'call_voice_sample_account_cleanup',
+            referenceId: sampleReferences[index].id,
+          },
+          user: { id: user.id },
+        });
+      }
+    });
 
     const admin = createAdminClient();
     const { error: deleteError, data: deleteData } = await admin

@@ -223,6 +223,12 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   requirements.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
+- `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
+  worker's registered agent name. See `docs/devops.md` for dispatch setup.
+- `CALL_CLONE_PROVIDER=inworld|mistral` selects new saved call voice providers
+  and defaults to Inworld. Existing profiles retain their provider and matching
+  call model. `INWORLD_API_KEY` must access the same workspace as the SexyCall
+  agent. See `ARCHITECTURE.md` for saved voices and `docs/devops.md` for setup.
 - Call transcript analysis is async: `/api/call-sessions/analyze` only enqueues
   into `call_analysis_queue`; the `/api/call-sessions/analyze/batch` cron
   drains it through the xAI Batch API. Shared prompt/schema/batch code lives in

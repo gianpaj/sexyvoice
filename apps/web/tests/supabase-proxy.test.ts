@@ -103,6 +103,20 @@ describe('Supabase Proxy', () => {
     expect(redirectLocation(response)).toBe('https://example.com/en/login');
   });
 
+  it('keeps a valid clone demo selection through login', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    mocks.getClaims.mockResolvedValue(unauthenticatedClaims);
+    const response = await updateSession(
+      createRequest('/de/dashboard/clone?demo=heike&take=calmSlow'),
+      'de',
+    );
+    const location = new URL(redirectLocation(response)!);
+    expect(location.pathname).toBe('/de/login');
+    expect(location.searchParams.get('redirect_to')).toBe(
+      '/de/dashboard/clone?demo=heike&take=calmSlow',
+    );
+  });
+
   it('treats getClaims errors as unauthenticated', async () => {
     mocks.getClaims.mockResolvedValue({
       data: null,

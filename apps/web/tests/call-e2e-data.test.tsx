@@ -8,7 +8,7 @@ import CallLayout from '@/app/[lang]/(dashboard)/dashboard/call/layout';
 import CallPage from '@/app/[lang]/(dashboard)/dashboard/call/page';
 import DashboardUI from '@/app/[lang]/(dashboard)/dashboard.ui';
 import DashboardLayout from '@/app/[lang]/(dashboard)/layout';
-import { ConfigurationForm } from '@/components/call/configuration-form';
+import { CallExperience } from '@/components/call/call-experience';
 import CreditsSection from '@/components/credits-section';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
@@ -17,6 +17,7 @@ import {
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
   E2E_PUBLIC_CALL_CHARACTERS,
+  E2E_SAVED_CALL_VOICES,
   isE2E,
 } from '@/lib/e2e-mocks';
 import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
@@ -58,6 +59,9 @@ vi.mock('next-intl/server', () => ({
   getTranslations: async () => (key: string) => key,
 }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('@/lib/supabase/call-voices', () => ({
+  getSavedCallVoices: vi.fn(async () => []),
+}));
 vi.mock('@/lib/supabase/auth', () => ({ getVerifiedClaims: vi.fn() }));
 vi.mock('@/lib/supabase/queries', () => ({
   getCallVoices: vi.fn(),
@@ -86,11 +90,23 @@ vi.mock('@/components/ui/tooltip', () => ({
 vi.mock('@/components/call/room-wrapper', () => ({
   RoomWrapper: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock('@/components/call/configuration-form', () => ({
-  ConfigurationForm: vi.fn(() => null),
+vi.mock('@/components/call/call-experience', () => ({
+  CallExperience: vi.fn(
+    ({
+      children,
+      mobileCredits,
+    }: {
+      children?: ReactNode;
+      mobileCredits?: ReactNode;
+    }) => (
+      <>
+        {mobileCredits}
+        {children}
+      </>
+    ),
+  ),
 }));
 vi.mock('@/components/credits-section', () => ({ default: vi.fn(() => null) }));
-vi.mock('@/components/call/chat', () => ({ Chat: () => null }));
 vi.mock('@/components/call/call-faq', () => ({ CallFaq: () => null }));
 
 const userId = 'verified-call-user';
@@ -139,8 +155,9 @@ function expectPageProps(
   creditTransactions: ComponentProps<
     typeof CreditsSection
   >['creditTransactions'],
-  callVoices: ComponentProps<typeof ConfigurationForm>['callVoices'],
+  callVoices: ComponentProps<typeof CallExperience>['callVoices'],
   isPaidUser: boolean,
+  savedVoices: ComponentProps<typeof CallExperience>['savedVoices'] = [],
 ) {
   expect(CreditsSection).toHaveBeenCalledOnce();
   expect(vi.mocked(CreditsSection).mock.calls[0][0]).toEqual({
@@ -149,12 +166,10 @@ function expectPageProps(
     showMinutes: true,
     userId,
   });
-  expect(ConfigurationForm).toHaveBeenCalledOnce();
-  expect(vi.mocked(ConfigurationForm).mock.calls[0][0]).toEqual({
-    callVoices,
-    isPaidUser,
-    lang: 'de',
-  });
+  expect(CallExperience).toHaveBeenCalledOnce();
+  expect(vi.mocked(CallExperience).mock.calls[0][0]).toEqual(
+    expect.objectContaining({ callVoices, isPaidUser, savedVoices }),
+  );
 }
 
 beforeEach(() => {
@@ -216,7 +231,12 @@ describe('call E2E data', () => {
       );
 
       expect(html).toContain('data-e2e-call-fixtures=""');
-      expectPageProps(E2E_CREDIT_TRANSACTIONS, E2E_CALL_VOICES, isPaidUser);
+      expectPageProps(
+        E2E_CREDIT_TRANSACTIONS,
+        E2E_CALL_VOICES,
+        isPaidUser,
+        isPaidUser ? E2E_SAVED_CALL_VOICES : [],
+      );
       expect(DashboardUI).toHaveBeenCalledOnce();
       expect(vi.mocked(DashboardUI).mock.calls[0][0]).toMatchObject({
         creditTransactions: E2E_CREDIT_TRANSACTIONS,
@@ -307,7 +327,7 @@ describe('call E2E data', () => {
       expectAuthenticated();
       expectNoDataCalls();
       expect(CreditsSection).not.toHaveBeenCalled();
-      expect(ConfigurationForm).not.toHaveBeenCalled();
+      expect(CallExperience).not.toHaveBeenCalled();
     },
   );
 });

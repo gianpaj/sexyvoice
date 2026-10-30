@@ -226,6 +226,7 @@ async function generateTodayStats(): Promise<string> {
           'resemble-ai/chatterbox-multilingual',
           'resemble-ai/chatterbox',
           'voxtral-mini-tts-2603',
+          'voxtral-mini-tts-3-0',
         ])
         .gte('created_at', sevenDaysAgo.toISOString())
         .lt('created_at', now.toISOString()),
@@ -700,6 +701,7 @@ async function generateTodayStats(): Promise<string> {
         grok: 'Grok',
         'orpheus-3b-0.1-ft': 'Orpheus',
         'voxtral-mini-tts-2603': 'Voxtral Clone',
+        'voxtral-mini-tts-3-0': 'Voxtral Clone',
       };
 
       return friendlyModelLabels[normalizedModelName] ?? normalizedModelName;

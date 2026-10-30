@@ -1,5 +1,143 @@
 # Scripts
 
+## Generate prepared cloning demos
+
+The voices, delivery prompts, and supported voice/take pairs live in
+`apps/web/data/clone-demo-config.ts`. Supply authorized, complete reference
+recordings as `kat-reference.mp3` and `heike-reference.mp3` in a local directory.
+Use the intended source version; the bundled reference can differ from the R2
+objects `clone-demos/kat-reference.mp3` and `clone-demos/heike-reference.mp3`.
+
+Frontend-only language slots and translated draft prompts live separately in
+`apps/web/data/clone-demo-languages.ts`. They do not enable generation or imply
+that recordings exist. To publish a language, configure its actual voice with
+its own authorized reference and matching prompt in `clone-demo-config.ts`,
+then publish the corresponding MP3s and manifest entries together. Do not attach
+a draft prompt to an existing recording with different text.
+
+Generate all supported pairs with:
+
+```bash
+pnpm --filter @sexyvoice/scripts exec node \
+  --disable-warning=MODULE_TYPELESS_PACKAGE_JSON generate-clone-demos.mts \
+  --reference-dir /absolute/path/references \
+  --output-dir /absolute/path/new-demo-run
+```
+
+To generate one take, add `--voice kat --take sameOriginal` or
+`--voice kat --take calmSlow`. `sameOriginal` is available only for Kat. Copy only
+the intended result MP3 and its matching request and asset metadata into
+`apps/web/data/clone-demo-assets.json`. Replace a reference preview and its
+metadata only when intentionally publishing a reference change. Keep unrelated
+recordings unchanged.
+
+Requires `MISTRAL_API_KEY`, `ffmpeg`, and `ffprobe`. Optional `--env-file` flags
+load explicit environment files. The script preserves the complete reference;
+it converts a separate copy to mono, 24 kHz WAV for Mistral. Kat has four
+supported takes; Heike has three. Raw generated WAVs remain in the run directory.
+
+Reference playback previews and generated results use 128 kbps MP3. Shared
+normalization in `lib/clone-demo-audio.mts` targets -14 LUFS and limits true peaks
+to -1.5 dBTP. It measures the decoded MP3 and permits up to four encodes from the
+original input to achieve the target within 0.5 LUFS. It never overwrites a source
+or existing output. Failure publishes no output MP3.
+
+`generation.json` records input hashes per request, prompts, full-response
+latency, estimated provider cost, output durations, and MP3 hashes. Request
+metadata is saved before MP3 encoding, so an encoding failure does not require
+another provider request. Recover from the retained WAV rather than generating
+paid audio again. An unrecorded latency is `null`, not an estimate.
+
+Review the clips and confirm that each take speaks the complete prompt before
+publishing assets under `apps/web/public/demo-clones/voxtral-3/`. Merge the
+matching report entries into `apps/web/data/clone-demo-assets.json`; preserve
+per-request source hashes when changing a voice's reference. The web tests
+check asset hashes and prompt consistency. The script does not upload files or
+change database rows.
+
+## Generate waveform peaks
+
+Analyze the final, normalized MP3s before uploading those exact files to R2:
+
+```bash
+pnpm generate-audio-waveforms
+```
+
+The command processes every asset listed in
+`apps/web/data/clone-demo-assets.json`, using local files from
+`apps/web/public/demo-clones/voxtral-3/`. It preserves the other manifest fields
+and adds `waveform: { sourceSha256, peaks }` to each asset. `peaks` contains one
+array per audio channel, with 256 signed, normalized amplitudes per channel,
+rounded to four decimal places. This is ordinary JSON data, not a WaveSurfer
+binary or version-specific format.
+
+For future speaker takes, pass the final local files explicitly:
+
+```bash
+pnpm generate-audio-waveforms path/to/italian-anxious.mp3 path/to/spanish-anxious.mp3
+```
+
+Explicit files add or update manifest entries keyed by filename. Duplicate
+filenames from different directories are rejected. Existing request metadata
+and unrelated assets remain unchanged. Adding waveform metadata does not
+publish a voice or connect a pending language to an existing reference.
+
+Options:
+
+- `--audio-dir <dir>` changes where manifest-listed files are read. Use a local
+  directory of final MP3s or downloads of the exact R2 objects; the script does
+  not fetch remote audio.
+- `--manifest <file>` selects another existing JSON manifest with an `assets`
+  object.
+- `--points <number>` selects 1–4096 peaks per channel; the default is 256.
+- `--force` recomputes matching entries.
+
+FFmpeg and FFprobe are required only for files needing extraction. The script
+skips entries whose audio hash, waveform source hash, and peak count match.
+Changing a recording or the requested resolution triggers regeneration. It
+updates the manifest atomically after all selected files succeed and checks
+for concurrent manifest edits before writing. Audio files are read-only; the command
+makes no provider calls or uploads.
+
+The demo reads these peaks from the bundled manifest. Take and reference changes
+reuse the waveform renderer instead of fetching and decoding MP3s to draw them.
+The native audio element still loads each recording for playback. Missing or
+stale waveform hashes fail with a command to regenerate the data.
+
+## Upload files to R2
+
+`upload-r2-files.mts` uploads any file type, including multiple files selected
+with a shell glob. From the repository root, upload all prepared clone
+demo MP3s with one command:
+
+```bash
+pnpm upload-r2-files --bucket sv-audio-files \
+  --prefix demo-clones/voxtral-3 --content-type audio/mpeg \
+  --public-url https://files.sexyvoice.ai \
+  --env-file apps/web/.env.local \
+  apps/web/public/demo-clones/voxtral-3/*.mp3
+```
+
+Files keep their basenames under the destination prefix. `--bucket` is required;
+`--prefix` defaults to the bucket root. `--content-type` applies to the whole
+batch and defaults to `application/octet-stream`. Paths are relative to the
+working directory. No generation manifest is required.
+
+The command uploads by default. Add `--dry-run` to validate files and print
+all destinations without credentials or network requests. Uploads require
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_ENDPOINT`; repeat
+`--env-file` to load multiple environment files.
+
+The generic command and speech-sample uploader share conditional-write and
+verification logic. They refuse to overwrite different objects and verify R2
+size, content type, and SHA-256 metadata. `--public-url` additionally checks
+public download hashes and content types; omit it for private buckets.
+Failures are printed and produce a nonzero exit status while other files
+continue uploading. Public verification does not test browser CORS; verify
+reference fetching from production and preview origins before switching runtime
+URLs. Uploading does not change runtime URLs, delete local files, or write
+database rows.
+
 ## Restore account billing
 
 Account deletion blocks checkout during cleanup and releases its block when the

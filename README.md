@@ -162,6 +162,7 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`
      - `LIVEKIT_API_SECRET`
+     - `LIVEKIT_AGENT_NAME` - Optional; defaults to `sexycall`, and must match the deployed agent's registered name
    - Stripe
      - `STRIPE_SECRET_KEY`
      - `STRIPE_WEBHOOK_SECRET`
@@ -542,6 +543,20 @@ Grok text-to-speech voices:
 
 AI voice calls use the Grok call voices `Ara`, `Carina`, `Eve`, `Leo`, `Rex`,
 and `Sal`.
+
+Custom characters can use owned saved Inworld or Mistral voices.
+`CALL_CLONE_PROVIDER=inworld` selects the provider for new call clones; set it
+to `mistral` to create Mistral profiles. Existing profiles retain their provider.
+Set `INWORLD_API_KEY` to a complete Base64 credential with clone/write access
+and give the SexyCall agent access to the same Inworld workspace. Mistral
+profiles require `MISTRAL_API_KEY` in the web app and agent. An unset
+`CALL_CLONE_PROVIDER` selects Inworld as soon as this web deployment is released.
+Deploy the agent's `inworld-tts` support and configure `INWORLD_API_KEY` in both
+deployments first. To defer the switch, explicitly set `CALL_CLONE_PROVIDER=mistral`
+in Vercel before releasing the web app; set it to `inworld` and redeploy once
+the agent and credentials are ready.
+See [saved call voices](ARCHITECTURE.md#saved-voices-for-calls) and
+[deployment setup](docs/devops.md#ai-providers).
 
 These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
 

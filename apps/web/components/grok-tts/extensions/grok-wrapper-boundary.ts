@@ -32,6 +32,12 @@ export const WrapperBoundary = Node.create({
 
   name: 'wrapperBoundary',
 
+  renderText({ node }) {
+    return node.attrs.kind === 'open'
+      ? node.attrs.openTag
+      : node.attrs.closeTag;
+  },
+
   parseHTML() {
     return [
       {

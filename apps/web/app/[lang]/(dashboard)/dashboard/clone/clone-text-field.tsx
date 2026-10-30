@@ -1,6 +1,7 @@
 'use client';
 
 import { Crown } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
 
@@ -17,9 +18,15 @@ import {
   CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
   RTL_CLONE_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { formatCloneMessage } from '@/lib/clone/error-message';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
-import { type CloneStateAction, formatCloneMessage } from './clone-state';
+import type { CloneStateAction } from './clone-state';
+
+const TTSEditor = dynamic(
+  () => import('@/components/tts-editor').then((module) => module.TTSEditor),
+  { ssr: false },
+);
 
 export function CloneTextField({
   disabled,
@@ -48,26 +55,48 @@ export function CloneTextField({
   return (
     <>
       <div className="grid w-full gap-2">
-        <Label htmlFor="text-to-convert">{t('textToConvertLabel')}</Label>
-        <SpotlightField>
-          <Textarea
-            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-            data-testid="clone-text-input"
+        <Label htmlFor="text-to-convert" id="text-to-convert-label">
+          {t('textToConvertLabel')}
+        </Label>
+        {usesVoxtral ? (
+          <TTSEditor
+            ariaLabelledBy="text-to-convert-label"
+            charactersLimit={textMaxLength}
             dir={RTL_CLONE_LOCALE_CODES.has(selectedLocaleCode) ? 'rtl' : 'ltr'}
             disabled={disabled}
             id="text-to-convert"
-            maxLength={textMaxLength + CHARACTERS_LIMIT_GRACE}
-            onChange={(e) => {
-              dispatch({
-                patch: { text: e.target.value },
-                type: 'patch',
-              });
-            }}
+            onChange={(value) =>
+              dispatch({ patch: { text: value }, type: 'patch' })
+            }
             placeholder={t('textAreaPlaceholder')}
-            rows={5}
+            provider="voxtral"
+            showCharacterCount={false}
+            testId="clone-text-input"
             value={text}
           />
-        </SpotlightField>
+        ) : (
+          <SpotlightField>
+            <Textarea
+              className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+              data-testid="clone-text-input"
+              dir={
+                RTL_CLONE_LOCALE_CODES.has(selectedLocaleCode) ? 'rtl' : 'ltr'
+              }
+              disabled={disabled}
+              id="text-to-convert"
+              maxLength={textMaxLength + CHARACTERS_LIMIT_GRACE}
+              onChange={(e) => {
+                dispatch({
+                  patch: { text: e.target.value },
+                  type: 'patch',
+                });
+              }}
+              placeholder={t('textAreaPlaceholder')}
+              rows={5}
+              value={text}
+            />
+          </SpotlightField>
+        )}
       </div>
       <div
         className={cn(

@@ -9,11 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useMultibandTrackVolume } from '@/hooks/use-multiband-track-volume';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
+import { MicrophoneVisualizer } from './microphone-visualizer';
 
 interface Props {
   mediaBlob: Blob | null;
@@ -136,8 +135,6 @@ export function MicrophoneMain(props: Props) {
   } = props;
   const [hasPermission, setHasPermission] = useState(false);
 
-  const micMultibandVolume = useMultibandTrackVolume(mediaStream, 9);
-
   useEffect(() => {
     const checkPermission = async () => {
       try {
@@ -184,16 +181,7 @@ export function MicrophoneMain(props: Props) {
             )}
           </Button>
           <div className="flex w-full justify-center">
-            <MultibandAudioVisualizer
-              barColor="#fff"
-              barWidth={4}
-              borderRadius={5}
-              frequencies={micMultibandVolume}
-              gap={2}
-              maxBarHeight={16}
-              minBarHeight={2}
-              state="speaking"
-            />
+            <MicrophoneVisualizer mediaStream={mediaStream} />
           </div>
         </div>
         {hasPermission && <DeviceSelectDropdown />}

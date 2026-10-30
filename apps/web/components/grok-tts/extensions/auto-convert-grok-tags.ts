@@ -6,68 +6,76 @@ import {
   GROK_INSTANT_TAGS,
   GROK_WRAPPING_TAGS,
   type GrokTipTapDocNode,
-  grokTextToTipTapDoc,
-  grokTipTapDocToText,
+  type TtsEditorProvider,
+  ttsTextToTipTapDoc,
+  ttsTipTapDocToText,
 } from '@/lib/tts-editor';
+import { VOXTRAL_TAGS } from '@/lib/voxtral-tags';
 
 const AUTO_CONVERT_GROK_TAGS_PLUGIN_KEY = new PluginKey('autoConvertGrokTags');
 
-const INSTANT_TAGS = GROK_INSTANT_TAGS;
-
 const WRAPPER_OPEN_TAGS = GROK_WRAPPING_TAGS.map(([openTag]) => openTag);
 
-function getTextOffsetFromSelection(doc: ProseMirrorNode, position: number) {
-  let offset = 0;
-
-  doc.descendants((node, pos) => {
-    if (!node.isText) {
-      return;
-    }
-
-    const nodeStart = pos;
-    const nodeEnd = pos + node.nodeSize;
-
-    if (position <= nodeStart) {
-      return false;
-    }
-
-    if (position >= nodeEnd) {
-      offset += node.text?.length ?? 0;
-      return;
-    }
-
-    offset += Math.max(0, position - nodeStart);
-    return false;
-  });
-
-  return offset;
+function getTextOffsetFromSelection(
+  doc: ProseMirrorNode,
+  position: number,
+  provider: TtsEditorProvider,
+) {
+  return ttsTipTapDocToText(doc.cut(0, position).toJSON(), provider).length;
 }
 
-function getSelectionOffsets(doc: ProseMirrorNode, from: number, to: number) {
+function getSelectionOffsets(
+  doc: ProseMirrorNode,
+  from: number,
+  to: number,
+  provider: TtsEditorProvider,
+) {
   return {
-    from: getTextOffsetFromSelection(doc, from),
-    to: getTextOffsetFromSelection(doc, to),
+    from: getTextOffsetFromSelection(doc, from, provider),
+    to: getTextOffsetFromSelection(doc, to, provider),
   };
 }
 
-function resolveTextOffsetToDocPosition(doc: ProseMirrorNode, offset: number) {
+function resolveTextOffsetToDocPosition(
+  doc: ProseMirrorNode,
+  offset: number,
+  provider: TtsEditorProvider,
+) {
   let remaining = Math.max(0, offset);
   let resolvedPosition = 1;
+  let resolved = false;
 
   doc.descendants((node, pos) => {
-    if (!node.isText) {
-      return;
+    if (resolved) return false;
+
+    if (node.isBlock) {
+      if (pos > 0) remaining -= 1;
+      resolvedPosition = pos + 1;
+      if (!node.childCount && remaining <= 0) resolved = true;
+      return !resolved;
     }
 
-    const textLength = node.text?.length ?? 0;
+    const text = ttsTipTapDocToText(
+      {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [node.toJSON()] }],
+      },
+      provider,
+    );
 
-    if (remaining <= textLength) {
-      resolvedPosition = pos + remaining;
+    if (remaining <= text.length) {
+      let nodeOffset = remaining;
+      if (!node.isText) {
+        nodeOffset = remaining > 0 ? node.nodeSize : 0;
+      }
+      resolvedPosition = pos + nodeOffset;
+      resolved = true;
       return false;
     }
 
-    remaining -= textLength;
-    resolvedPosition = pos + textLength;
+    remaining -= text.length;
+    resolvedPosition = pos + node.nodeSize;
+    return false;
   });
 
   return resolvedPosition;
@@ -80,10 +88,15 @@ function docsAreEqual(
   return currentDoc.eq(currentDoc.type.schema.nodeFromJSON(normalizedDoc));
 }
 
-export function normalizePartialInstantTags(input: string) {
+export function normalizePartialInstantTags(
+  input: string,
+  provider: TtsEditorProvider = 'grok',
+) {
   let normalized = input;
 
-  for (const instantTag of INSTANT_TAGS) {
+  for (const instantTag of provider === 'grok'
+    ? GROK_INSTANT_TAGS
+    : VOXTRAL_TAGS) {
     const partialTag = instantTag.slice(1);
 
     normalized = normalized.replaceAll(`[${partialTag}`, instantTag);
@@ -104,8 +117,14 @@ export function normalizePartialWrapperOpeningTags(input: string) {
   return normalized;
 }
 
-export const AutoConvertGrokTags = Extension.create({
+export const AutoConvertGrokTags = Extension.create<{
+  provider: TtsEditorProvider;
+}>({
+  addOptions() {
+    return { provider: 'grok' };
+  },
   addProseMirrorPlugins() {
+    const provider = this.options.provider;
     return [
       new Plugin({
         appendTransaction: (transactions, _oldState, newState) => {
@@ -113,11 +132,19 @@ export const AutoConvertGrokTags = Extension.create({
             return null;
           }
 
-          const currentText = grokTipTapDocToText(newState.doc.toJSON());
-          const normalizedText = normalizePartialWrapperOpeningTags(
-            normalizePartialInstantTags(currentText),
+          const currentText = ttsTipTapDocToText(
+            newState.doc.toJSON(),
+            provider,
           );
-          const normalizedDoc = grokTextToTipTapDoc(normalizedText);
+          const instantText = normalizePartialInstantTags(
+            currentText,
+            provider,
+          );
+          const normalizedText =
+            provider === 'grok'
+              ? normalizePartialWrapperOpeningTags(instantText)
+              : instantText;
+          const normalizedDoc = ttsTextToTipTapDoc(normalizedText, provider);
 
           const docsEqual = docsAreEqual(newState.doc, normalizedDoc);
 
@@ -129,6 +156,7 @@ export const AutoConvertGrokTags = Extension.create({
             newState.doc,
             newState.selection.from,
             newState.selection.to,
+            provider,
           );
 
           const replacement = newState.schema.nodeFromJSON(normalizedDoc);
@@ -141,10 +169,12 @@ export const AutoConvertGrokTags = Extension.create({
           const nextFrom = resolveTextOffsetToDocPosition(
             transaction.doc,
             selectionOffsets.from,
+            provider,
           );
           const nextTo = resolveTextOffsetToDocPosition(
             transaction.doc,
             selectionOffsets.to,
+            provider,
           );
 
           transaction.setSelection(

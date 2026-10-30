@@ -14,6 +14,8 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
+import { TTSEditor } from '@/components/tts-editor';
+import type { TtsEditorProvider } from '@/lib/tts-editor';
 import { GROK_EMPTY_WRAPPING_TEXT } from '@/lib/tts-editor';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import messages from '@/messages/en.json';
@@ -54,9 +56,11 @@ function getSuggestionDecoration(editor: HTMLElement) {
 
 interface EditorProps {
   charactersLimit?: number;
+  disabled?: boolean;
   enforceCharactersLimit?: boolean;
   onChange?: (text: string) => void;
   placeholder?: string;
+  provider?: TtsEditorProvider;
   selectedGrokLanguage?: string;
   setSelectedGrokLanguage?: (text: string) => void;
   value?: string;
@@ -67,20 +71,34 @@ type ResolvedEditorProps = Required<EditorProps>;
 function editorTree(props: ResolvedEditorProps) {
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      <GrokTTSEditor
-        charactersLimit={props.charactersLimit}
-        enforceCharactersLimit={props.enforceCharactersLimit}
-        onChange={props.onChange}
-        placeholder={props.placeholder}
-        selectedGrokLanguage={props.selectedGrokLanguage}
-        setSelectedGrokLanguage={props.setSelectedGrokLanguage}
-        value={props.value}
-      />
+      {props.provider === 'voxtral' ? (
+        <TTSEditor
+          charactersLimit={props.charactersLimit}
+          disabled={props.disabled}
+          enforceCharactersLimit={props.enforceCharactersLimit}
+          onChange={props.onChange}
+          placeholder={props.placeholder}
+          provider="voxtral"
+          value={props.value}
+        />
+      ) : (
+        <GrokTTSEditor
+          charactersLimit={props.charactersLimit}
+          enforceCharactersLimit={props.enforceCharactersLimit}
+          onChange={props.onChange}
+          placeholder={props.placeholder}
+          selectedGrokLanguage={props.selectedGrokLanguage}
+          setSelectedGrokLanguage={props.setSelectedGrokLanguage}
+          value={props.value}
+        />
+      )}
     </NextIntlClientProvider>
   );
 }
 
 function renderEditor({
+  provider = 'grok',
+  disabled = false,
   charactersLimit = 500,
   enforceCharactersLimit = true,
   onChange = vi.fn(),
@@ -90,6 +108,8 @@ function renderEditor({
   value = '',
 }: EditorProps = {}) {
   const props: ResolvedEditorProps = {
+    provider,
+    disabled,
     charactersLimit,
     enforceCharactersLimit,
     onChange,
@@ -456,28 +476,31 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves multiline pasted text while converting supported Grok tags', async () => {
-    const onChange = vi.fn();
-    const pastedText = 'First line\n[pause]\n<soft>Third line</soft>';
+  it.each(['\n', '\r\n', '\r'])(
+    'normalizes %j line endings while pasting Grok tags',
+    async (lineEnding) => {
+      const onChange = vi.fn();
+      const pastedText = 'First line\n[pause]\n<soft>Third line</soft>';
 
-    renderEditor({ onChange });
+      renderEditor({ onChange });
 
-    const editor = await findEditor();
+      const editor = await findEditor();
 
-    pasteIntoEditor(editor, pastedText);
+      pasteIntoEditor(editor, pastedText.replaceAll('\n', lineEnding));
 
-    await waitFor(() => {
-      expect(onChange).toHaveBeenLastCalledWith(pastedText);
-    });
-    expect(
-      Array.from(editor.querySelectorAll('p')).map(
-        (paragraph) => paragraph.textContent,
-      ),
-    ).toEqual(['First line', '[pause]', '<soft>Third line</soft>']);
-    expect(
-      editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
-    ).toHaveLength(3);
-  });
+      await waitFor(() => {
+        expect(onChange).toHaveBeenLastCalledWith(pastedText);
+      });
+      expect(
+        Array.from(editor.querySelectorAll('p')).map(
+          (paragraph) => paragraph.textContent,
+        ),
+      ).toEqual(['First line', '[pause]', '<soft>Third line</soft>']);
+      expect(
+        editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
+      ).toHaveLength(3);
+    },
+  );
 
   it('opens the effects popover and shows available effect actions', async () => {
     const user = userEvent.setup();
@@ -1147,6 +1170,146 @@ describe('GrokTTSEditor', () => {
     ).toBeInTheDocument();
     expect(editor).toHaveTextContent(
       '<soft>Oh baby... </soft> [inhale] [sigh] <build-intensity>yes</build-intensity>',
+    );
+  });
+});
+
+describe('Voxtral TTSEditor', () => {
+  it('preserves unsupported tags when pasting HTML chips from Grok', async () => {
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange });
+    const editor = await findEditor();
+    fireEvent.focus(editor);
+    fireEvent.paste(editor, {
+      clipboardData: {
+        getData: (type: string) =>
+          type === 'text/html'
+            ? '<p><span data-grok-instant-tag="" tag="[pause]">[pause]</span> Hello</p>'
+            : '[pause] Hello',
+        types: ['text/plain', 'text/html'],
+      },
+    });
+    await waitFor(() =>
+      expect(onChange).toHaveBeenLastCalledWith('[pause] Hello'),
+    );
+    expect(
+      editor.querySelector('[data-grok-instant-tag]'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows Voxtral groups without Grok language or wrapper controls', async () => {
+    const user = userEvent.setup();
+    renderEditor({ provider: 'voxtral' });
+    await findEditor();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    );
+    for (const name of [
+      messages.ttsEditor.emotions,
+      messages.ttsEditor.pace,
+      messages.ttsEditor.vocalSounds,
+    ]) {
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    }
+    expect(
+      screen.getByRole('button', { name: '[emotion=sarcastic]' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '[pace=very-slow]' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '[throat clearing]' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '[pause]' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', {
+        name: messages.generate.grok.wrappingEffectPlaceholder,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each(['\n', '\r\n', '\r'])(
+    'normalizes %j line endings while pasting Voxtral tags',
+    async (lineEnding) => {
+      const onChange = vi.fn();
+      const text =
+        "[emotion=sarcastic] I don't need diamonds, darling.\n[pace=slow][sigh] I need stable Wi-Fi and a nap";
+      renderEditor({ provider: 'voxtral', onChange });
+      const editor = await findEditor();
+      pasteIntoEditor(editor, text.replaceAll('\n', lineEnding));
+      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(text));
+      expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(
+        3,
+      );
+    },
+  );
+
+  it('inserts an emotion at the caret without a closing tag', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange, value: 'Hello ' });
+    const editor = await findEditor();
+    placeCaretAtEnd(editor);
+    await user.click(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: '[emotion=sarcastic]' }),
+    );
+    expect(onChange).toHaveBeenLastCalledWith('Hello [emotion=sarcastic]');
+  });
+
+  it('filters autocomplete by the full emotion syntax', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange });
+    const editor = await findEditor();
+    await openSuggestionMenu(user, editor, '[');
+    await user.keyboard('emotion=sarc');
+    await user.click(
+      await screen.findByRole('button', { name: 'emotion=sarcastic' }),
+    );
+    expect(onChange).toHaveBeenLastCalledWith('[emotion=sarcastic]');
+  });
+
+  it('does not insert a tag that exceeds the character limit', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange, charactersLimit: 10 });
+    await findEditor();
+    await user.click(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: '[emotion=sarcastic]' }),
+    );
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('disables editing and tag insertion while generation is pending', async () => {
+    renderEditor({ provider: 'voxtral', disabled: true });
+    const editor = await findEditor();
+    await waitFor(() =>
+      expect(editor).toHaveAttribute('contenteditable', 'false'),
+    );
+    expect(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    ).toBeDisabled();
+  });
+
+  it('reconfigures tags when switching providers without losing input', async () => {
+    const text = '[emotion=sarcastic] Hi [pause]';
+    const { rerenderWith } = renderEditor({ provider: 'voxtral', value: text });
+    let editor = await findEditor();
+    expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(1);
+    rerenderWith({ provider: 'grok', value: text });
+    editor = await findEditor();
+    expect(editor).toHaveTextContent(text);
+    expect(editor.querySelector('[data-grok-instant-tag]')).toHaveTextContent(
+      '[pause]',
     );
   });
 });

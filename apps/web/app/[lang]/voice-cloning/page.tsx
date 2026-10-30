@@ -164,9 +164,11 @@ export default async function VoiceCloningPage(props: Props) {
         <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
-              <HeroWaveform />
-              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+            <div className="z-10 space-y-6 pt-10 pb-16 text-center md:pt-16 md:pb-24">
+              <div className="hidden md:block">
+                <HeroWaveform />
+              </div>
+              <h1 className="text-balance font-bold text-4xl leading-tight sm:text-5xl md:text-6xl">
                 <span className="text-white/90">{firstPart}</span>
                 {titleRestParts && (
                   <>
@@ -183,7 +185,7 @@ export default async function VoiceCloningPage(props: Props) {
                   </>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty text-base text-gray-300 leading-7 sm:text-xl sm:leading-8">
                 {dictLanding.voiceCloning.hero.subtitle}
               </p>
 

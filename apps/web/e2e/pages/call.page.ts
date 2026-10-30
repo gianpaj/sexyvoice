@@ -5,33 +5,26 @@ import { E2E_PUBLIC_CALL_CHARACTERS } from '@/lib/e2e-mocks-shared';
 /**
  * Page Object Model for Call Dashboard
  *
- * Encapsulates interactions with the real-time AI voice call page.
- * The page contains:
- * - Configuration form with language selector and character presets
- * - Connect/Disconnect button for starting/ending calls
- * - Credits section (visible on mobile)
- * - Legal notice text
- * - LiveKit room wrapper (not tested for actual connections)
+ * The page has three screens and a panel:
+ * - Picker: "Your characters" (Create card first) and "Featured" grids
+ * - Creator: name, personality and voice sections with a sticky save bar
+ * - Call panel: a sheet with voice, language, scene, microphone and Start call
+ * - In call / ended (not covered: tests never connect to LiveKit)
  *
  * Usage:
  *   const callPage = new CallPage(page);
  *   await callPage.goto();
- *   await callPage.expectPageVisible();
+ *   await callPage.openCharacter('Lily');
  */
 export class CallPage {
   readonly page: Page;
 
-  // Configuration form elements
-  readonly configurationForm: Locator;
-  readonly languageSelectorTrigger: Locator;
-  readonly languageSelector: Locator;
-  readonly sceneSelectorTrigger: Locator;
-
-  // Character/Preset selection
-  readonly presetCards: Locator;
-
-  // Connect button (shown when not connected)
-  readonly connectButton: Locator;
+  readonly experience: Locator;
+  readonly picker: Locator;
+  readonly ownCharacters: Locator;
+  readonly featuredCharacters: Locator;
+  readonly creator: Locator;
+  readonly panel: Locator;
 
   // Credits section (mobile)
   readonly creditsSection: Locator;
@@ -44,35 +37,19 @@ export class CallPage {
 
   constructor(page: Page) {
     this.page = page;
-
-    // Configuration form container
-    this.configurationForm = page.getByTestId('call-configuration-form');
-
-    // Language selector — a Select component in the configuration form
-    this.languageSelectorTrigger = page.locator('[role="combobox"]').first();
-    this.languageSelector = page.locator('[role="listbox"]');
-    this.sceneSelectorTrigger = page
-      .getByTestId('call-scene-selector')
-      .getByRole('combobox');
-
-    // Character/preset cards — rendered by PresetSelector component
-    // These are buttons or interactive elements within the preset selector area
-    this.presetCards = page.locator(
-      '[class*="preset"], [data-preset-id], [class*="character"]',
+    this.experience = page.getByTestId('call-experience');
+    this.picker = page.getByTestId('character-picker');
+    // Located by heading ID so the same object works in every locale.
+    this.ownCharacters = this.picker.locator(
+      'section[aria-labelledby="call-own"]',
     );
-
-    // Connect button — the main CTA to start a call
-    this.connectButton = page.getByRole('button', {
-      name: 'Start call',
-    });
-
-    // Credits section (shown on mobile via lg:hidden)
-    this.creditsSection = page.getByText(/credits/i).first();
-
-    // Notice text at the bottom of the page
+    this.featuredCharacters = this.picker.locator(
+      'section[aria-labelledby="call-featured"]',
+    );
+    this.creator = page.getByTestId('character-creator');
+    this.panel = page.getByTestId('call-panel');
+    this.creditsSection = page.getByTestId('call-mobile-credits');
     this.noticeText = page.getByTestId('call-notice-text');
-
-    // FAQ section — only rendered while disconnected
     this.callFaq = page.getByTestId('call-faq');
   }
 
@@ -83,15 +60,61 @@ export class CallPage {
     await this.page.goto(`/${locale}/dashboard/call`, {
       waitUntil: 'domcontentloaded',
     });
-    // Wait for the configuration form to appear
-    await this.configurationForm.waitFor({
-      state: 'visible',
-      timeout: 15_000,
-    });
+    await this.picker.waitFor({ state: 'visible', timeout: 15_000 });
   }
 
+  // --- Actions ---
+
+  /** Opens the call panel from a character card. */
+  async openCharacter(name: string) {
+    await this.picker
+      .getByRole('button', { exact: true, name: `Call ${name}` })
+      .click();
+    await expect(this.panel).toBeVisible();
+    await expect(
+      this.panel.getByRole('heading', { exact: true, name }),
+    ).toBeVisible();
+  }
+
+  async openCharacterMenu(name: string, item: 'Edit' | 'Duplicate' | 'Delete') {
+    await this.picker
+      .getByRole('button', { exact: true, name: `More options for ${name}` })
+      .click();
+    await this.page.getByRole('menuitem', { exact: true, name: item }).click();
+  }
+
+  async closePanel() {
+    await this.panel
+      .getByRole('button', { exact: true, name: 'Close' })
+      .click();
+    await expect(this.panel).toBeHidden();
+  }
+
+  // --- Assertions ---
+
+  async expectFixtureCharacters() {
+    await expect(
+      this.page.locator('[data-e2e-call-fixtures]'),
+      'Start the Next.js server with E2E_TEST_MODE=true before taking call screenshots',
+    ).toBeVisible();
+    await expect(this.featuredCharacters.locator('article')).toHaveCount(
+      E2E_PUBLIC_CALL_CHARACTERS.length,
+    );
+    for (const character of E2E_PUBLIC_CALL_CHARACTERS) {
+      const card = this.featuredCharacters.locator(
+        `[data-character-id="${character.id}"]`,
+      );
+      await expect(card).toContainText(character.name);
+      await expect(card).toContainText(character.localized_descriptions.en);
+    }
+  }
+
+  /** Expects the panel's scene options to match the user's plan. */
   async expectSceneOptionsEnabled(enabled: boolean) {
-    await this.sceneSelectorTrigger.click();
+    await this.panel
+      .getByTestId('call-scene-selector')
+      .getByRole('combobox')
+      .click();
     const listbox = this.page.getByRole('listbox');
     await expect(listbox).toBeVisible();
     const options = listbox.getByRole('option');
@@ -106,151 +129,30 @@ export class CallPage {
     await expect(listbox).toBeHidden();
   }
 
-  async expectFixtureCharacters() {
-    await expect(
-      this.page.locator('[data-e2e-call-fixtures]'),
-      'Start the Next.js server with E2E_TEST_MODE=true before taking call screenshots',
-    ).toBeVisible();
-    const characters = this.configurationForm.locator('button[data-selected]');
-    const selectedCharacter = E2E_PUBLIC_CALL_CHARACTERS[0];
-    await expect(characters).toHaveText(
-      E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.name),
-    );
-    await expect(
-      this.configurationForm.locator('button[data-selected="true"]'),
-    ).toHaveText(selectedCharacter.name);
-    await expect(
-      this.configurationForm.getByText(
-        selectedCharacter.localized_descriptions.en,
-        { exact: false },
-      ),
-    ).toBeVisible();
-  }
-
-  // --- Actions ---
-
-  /**
-   * Open the language selector dropdown
-   */
-  async openLanguageSelector() {
-    await this.languageSelectorTrigger.click();
-    await this.languageSelector.waitFor({ state: 'visible', timeout: 5000 });
-  }
-
-  /**
-   * Select a language from the language selector
-   * @param languageName - Name of the language to select (e.g., "English", "Spanish")
-   */
-  async selectLanguage(languageName: string) {
-    await this.openLanguageSelector();
-    const option = this.page.getByRole('option', {
-      name: new RegExp(languageName, 'i'),
-    });
-    await option.waitFor({ state: 'visible', timeout: 5000 });
-    await option.click();
-  }
-
-  /**
-   * Click the connect/call button
-   */
-  async clickConnect() {
-    await this.connectButton.click();
-  }
-
-  // --- Assertions ---
-
-  /**
-   * Verify the call page is visible with the configuration form
-   */
-  async expectPageVisible() {
-    await expect(this.configurationForm).toBeVisible();
-  }
-
-  /**
-   * Verify the configuration form section is visible
-   */
-  async expectConfigurationFormVisible() {
-    await expect(this.configurationForm).toBeVisible();
-  }
-
-  /**
-   * Verify the language selector is visible
-   */
-  async expectLanguageSelectorVisible() {
-    await expect(this.languageSelectorTrigger).toBeVisible();
-  }
-
-  /**
-   * Verify the language selector has multiple options
-   */
-  async expectLanguageSelectorHasOptions() {
-    await this.openLanguageSelector();
+  async expectLanguageOptions() {
+    await this.panel.getByRole('combobox', { name: 'Language' }).click();
     const options = this.page.getByRole('option');
-    const count = await options.count();
-    expect(count).toBeGreaterThan(1);
-    // Close the dropdown
+    expect(await options.count()).toBeGreaterThan(1);
     await this.page.keyboard.press('Escape');
   }
 
-  /**
-   * Verify the connect button is visible
-   */
-  async expectConnectButtonVisible() {
-    await expect(this.connectButton).toBeVisible();
-  }
-
-  /**
-   * Verify the connect button is enabled
-   */
-  async expectConnectButtonEnabled() {
-    await expect(this.connectButton).toBeEnabled({ timeout: 10_000 });
-  }
-
-  /**
-   * Verify the notice text is visible at the bottom of the page
-   */
   async expectNoticeTextVisible() {
     await expect(this.noticeText).toBeVisible();
   }
 
-  /**
-   * Verify the FAQ section is visible (only when no call is in progress)
-   */
   async expectCallFaqVisible() {
     await expect(this.callFaq).toBeVisible();
   }
 
-  /**
-   * Verify the credits section is visible (for mobile viewports)
-   */
   async expectCreditsSectionVisible() {
     await expect(this.creditsSection).toBeVisible({ timeout: 5000 });
   }
 
-  /**
-   * Verify the credits section is hidden (for desktop viewports)
-   */
-  async expectCreditsSectionHidden() {
-    // On desktop, the credits section has lg:hidden class
-    // It may still be in the DOM but not visible
-    await expect(this.creditsSection).toBeHidden({ timeout: 5000 });
-  }
-
-  /**
-   * Verify the page contains preset/character images or names
-   * (at least the configuration form area has character-related content)
-   */
-  async expectCharacterContentPresent() {
-    // The configuration form should have character-related content
-    // This could be character names, images, or preset cards
-    const configArea = this.page.locator('header').first();
-    await expect(configArea).toBeVisible();
-  }
-
-  /**
-   * Verify the page contains a form element for configuration
-   */
-  async expectFormPresent() {
-    await expect(this.configurationForm).toBeVisible();
+  async expectNoHorizontalScroll() {
+    expect(
+      await this.page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
   }
 }

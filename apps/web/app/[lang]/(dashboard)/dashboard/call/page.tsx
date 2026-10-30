@@ -1,9 +1,7 @@
-import { PhoneCall } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
+import { CallExperience } from '@/components/call/call-experience';
 import { CallFaq } from '@/components/call/call-faq';
-import { Chat } from '@/components/call/chat';
-import { ConfigurationForm } from '@/components/call/configuration-form';
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import CreditsSection from '@/components/credits-section';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -11,6 +9,7 @@ import type { CallLanguage } from '@/data/playground-state';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { type CharacterRow, mapCharacterToPreset } from '@/lib/call-presets';
+import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
@@ -18,6 +17,7 @@ import {
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
   E2E_PUBLIC_CALL_CHARACTERS,
+  E2E_SAVED_CALL_VOICES,
 } from '@/lib/e2e-mocks';
 import {
   applyPresetInstructionOverrides,
@@ -25,6 +25,7 @@ import {
 } from '@/lib/edge-config/call-instructions';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getSavedCallVoices } from '@/lib/supabase/call-voices';
 import {
   getCallVoices,
   getCreditTransactionAmounts,
@@ -33,8 +34,6 @@ import {
   hasUserPaid,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-
-// import { PresetShare } from "@/components/preset-share";
 
 export const generateMetadata = createDashboardMetadata('/dashboard/call');
 
@@ -61,6 +60,7 @@ export default async function Call(props: {
     creditTransactions,
     isPaidUser,
     callVoices,
+    savedVoices,
     { defaultInstructions, initialInstruction, presetInstructions },
     publicCharacters,
   ] = e2e
@@ -68,6 +68,7 @@ export default async function Call(props: {
         E2E_CREDIT_TRANSACTIONS,
         e2e.isPaidUser,
         E2E_CALL_VOICES,
+        e2e.isPaidUser ? E2E_SAVED_CALL_VOICES : [],
         E2E_CALL_INSTRUCTION_CONFIG,
         E2E_PUBLIC_CALL_CHARACTERS,
       ]
@@ -75,6 +76,7 @@ export default async function Call(props: {
         getCreditTransactionAmounts(userId),
         hasUserPaid(userId),
         getCallVoices(),
+        getSavedCallVoices(userId),
         getCallInstructionConfig(),
         getPublicCallCharacters(),
       ]);
@@ -105,34 +107,24 @@ export default async function Call(props: {
       <ConnectionProvider>
         <TooltipProvider>
           <RoomWrapper>
-            <div
-              className="mx-auto flex w-full flex-col md:max-w-3xl"
-              data-e2e-call-fixtures={e2e ? '' : undefined}
-            >
-              <div>
-                <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
-                  <PhoneCall size={26} /> {t('title')}
-                </h2>
-                <p className="text-muted-foreground">{t('subtitle')}</p>
-              </div>
-              <div className="lg:hidden">
-                <CreditsSection
-                  creditTransactions={creditTransactions}
-                  doNotToggleSidebar
-                  showMinutes
-                  userId={userId}
-                />
-              </div>
-              <div className="my-6 flex w-full px-0 md:px-4">
-                <ConfigurationForm
-                  callVoices={callVoices}
-                  isPaidUser={isPaidUser}
-                  lang={lang}
-                />
-              </div>
-              <main className="flex w-full flex-1 flex-col md:p-4 lg:mt-16">
-                <div className="mx-auto flex h-full w-full flex-col justify-center gap-5 bg-bg1">
-                  <Chat />
+            <div data-e2e-call-fixtures={e2e ? '' : undefined}>
+              <CallExperience
+                callCloneProvider={getCallCloneProvider()}
+                callVoices={callVoices}
+                isPaidUser={isPaidUser}
+                mobileCredits={
+                  <div className="lg:hidden" data-testid="call-mobile-credits">
+                    <CreditsSection
+                      creditTransactions={creditTransactions}
+                      doNotToggleSidebar
+                      showMinutes
+                      userId={userId}
+                    />
+                  </div>
+                }
+                savedVoices={savedVoices}
+              >
+                <div className="flex flex-col gap-5">
                   <p
                     className="text-center text-foreground text-xs leading-7"
                     data-testid="call-notice-text"
@@ -143,7 +135,7 @@ export default async function Call(props: {
                   </p>
                   <CallFaq />
                 </div>
-              </main>
+              </CallExperience>
             </div>
           </RoomWrapper>
         </TooltipProvider>

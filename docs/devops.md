@@ -131,11 +131,32 @@ a secret, identify every producer and consumer that must change together.
 Keep dashboard and external API buckets separate. Verify bucket CORS for browser
 playback and downloads.
 
+Saved call voice creation synthesizes a WAV preview and uploads it to
+`R2_BUCKET_NAME`. The web app needs R2 read, write, and delete access for
+playback and failure cleanup. Apply
+`20261025204441_add_audio_reference_sample_url.sql` before deploying this flow;
+it adds the nullable `audio_references.sample_url` column. Rows without a URL
+keep their provider preview. See [saved call voices](../ARCHITECTURE.md#saved-voices-for-calls)
+for the creation and playback behavior.
+
 ### AI providers
 
 - `FAL_KEY`
 - `GOOGLE_GENERATIVE_AI_API_KEY`
 - `MISTRAL_API_KEY`: required for the Voxtral cloning path.
+- `CALL_CLONE_PROVIDER`: `inworld` (default) or `mistral` for new saved call
+  voices. Existing profiles retain their provider. This is a server-side
+  variable; do not prefix it with `NEXT_PUBLIC_`.
+- `INWORLD_API_KEY`: complete Base64 credential with read and write access for
+  call voice cloning and previews. The Fly SexyCall agent must have access to
+  the same workspace. An unset `CALL_CLONE_PROVIDER` activates Inworld on web
+  deployment. Deploy agent support for `model=inworld-tts` and set its credentials
+  before releasing the web app. To stage the rollout, set
+  `CALL_CLONE_PROVIDER=mistral` in Vercel before deploying, then change it to
+  `inworld` and redeploy when both deployments are ready.
+  The agent uses `INWORLD_TTS_MODEL=inworld-tts-2`
+  by default; `inworld-tts-2-flash` is an optional agent override. Keep the
+  agent's `MISTRAL_API_KEY` configured while saved Mistral voices are in use.
 - `REPLICATE_API_TOKEN`
 - `XAI_API_KEY`: Grok TTS and call transcript analysis.
 - `XAI_SUMMARY_MODEL`: optional call-analysis model override; default `grok-4.3`.
@@ -146,6 +167,9 @@ playback and downloads.
 
 - `LIVEKIT_URL`: server URL returned by `/api/call-token`.
 - `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET`: server-only token-signing credentials.
+- `LIVEKIT_AGENT_NAME`: agent dispatch name, default `sexycall`. Match the
+  name registered by the deployed SexyCall worker; a different name leaves
+  calls waiting for an agent.
 - `CALL_SUMMARY_SECRET`: authenticates the call-analysis webhook. Store the same
   value in Supabase Vault as `call_summary_secret`, alongside `app_base_url`, so
   the `pg_net` trigger can call `/api/call-sessions/analyze`.
