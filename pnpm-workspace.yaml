@@ -71,6 +71,14 @@ overrides:
   "vite@>=7.0.0 <7.3.2": "7.3.7"
   "whatwg-url": "^14.0.0"
 
+packageExtensions:
+  # @hookform/resolvers imports zod without declaring it, so it resolves
+  # through pnpm's hoisted link. Vercel's cached node_modules can keep that
+  # link pointing at a removed zod version after an upgrade.
+  "@hookform/resolvers":
+    peerDependencies:
+      zod: "*"
+
 allowBuilds:
   "@google/genai": false
   "@parcel/watcher": true

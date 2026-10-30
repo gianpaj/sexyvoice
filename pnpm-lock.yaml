@@ -85,6 +85,8 @@ overrides:
   vite@>=7.0.0 <7.3.2: 7.3.7
   whatwg-url: ^14.0.0
 
+packageExtensionsChecksum: sha256-7EyWhva5Lcamo6pe18OzfUc27A7xbWt39+G/ofluF9k=
+
 patchedDependencies:
   '@ffmpeg/ffmpeg@0.12.15': ff1be95d6ec3fddc57a9c94ba84d60fc00daffe67caffa796646ee0bba70db35
 
@@ -263,7 +265,7 @@ importers:
         version: 2.24.0(supports-color@8.1.1)
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.71.2(react@19.2.7))
+        version: 5.2.2(react-hook-form@7.71.2(react@19.2.7))(zod@4.6.6)
       '@huggingface/transformers':
         specifier: ^3.8.1
         version: 3.8.1
@@ -1537,6 +1539,7 @@ packages:
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
     peerDependencies:
       react-hook-form: ^7.55.0
+      zod: '*'
 
   '@huggingface/jinja@0.5.5':
     resolution: {integrity: sha512-xRlzazC+QZwr6z4ixEqYHo9fgwhTZ3xNSdljlKfUFGZSdlvt166DljRELFUfFytlYOYvo3vTisA/AFOuOAzFQQ==}
@@ -10659,10 +10662,11 @@ snapshots:
       protobufjs: 7.6.6
       yargs: 17.7.2
 
-  '@hookform/resolvers@5.2.2(react-hook-form@7.71.2(react@19.2.7))':
+  '@hookform/resolvers@5.2.2(react-hook-form@7.71.2(react@19.2.7))(zod@4.6.6)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.71.2(react@19.2.7)
+      zod: 4.6.6
 
   '@huggingface/jinja@0.5.5': {}
 
