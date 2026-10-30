@@ -57,8 +57,8 @@ Saved voices are owned provider profiles in `audio_references`; see
   the save either way, so the request runs on and the voice is listed.
 - Edits and duplicates build on the source character's localized prompts and
   descriptions. Only an English edit replaces the default prompt.
-- When LiveKit drops a room by itself, the page calls `disconnect()`; only
-  that clears `shouldConnect`.
+- When LiveKit drops or fails a room, `RoomWrapper` calls `disconnect()`
+  (the only thing that clears `shouldConnect`), so the page doesn't.
 - Opening the creator sends pending deletes first, because the API counts
   characters awaiting deletion against the limit of 10.
 - One shared sample player (`hooks/use-sample-player.tsx`) stops the previous
