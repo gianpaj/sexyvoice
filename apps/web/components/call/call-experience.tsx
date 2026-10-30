@@ -90,7 +90,7 @@ function CallExperienceScreens({
 }: CallExperienceProps) {
   const t = useTranslations('call');
   const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
-  const { connect, disconnect, shouldConnect } = useConnection();
+  const { connect, shouldConnect } = useConnection();
   const connectionState = useConnectionState();
   const { formattedTime } = useCallTimer(connectionState);
   const microphone = useMicrophonePermission();
@@ -127,19 +127,7 @@ function CallExperienceScreens({
       lastDuration.current = formattedTime;
     }
   }, [connectionState, formattedTime]);
-  // LiveKit can drop a room on its own (server ended it, network loss, or a
-  // failed join). Only `disconnect()` clears `shouldConnect`, so do that here
-  // or the call screen would wait on "Connecting…" forever.
-  const roomStarted = useRef(false);
-  useEffect(() => {
-    if (connectionState !== ConnectionState.Disconnected) {
-      roomStarted.current = true;
-      return;
-    }
-    const dropped = roomStarted.current;
-    roomStarted.current = false;
-    if (dropped && shouldConnect) disconnect().catch(() => undefined);
-  }, [connectionState, shouldConnect, disconnect]);
+  // RoomWrapper clears `shouldConnect` when LiveKit drops or fails the room.
   useEffect(() => {
     if (inCall || callPresetId === null) return;
     if (reachedConnected.current) {
