@@ -442,6 +442,7 @@ vi.mock('@/lib/supabase/queries', async () => {
     ...actual,
     getCredits: vi.fn().mockResolvedValue(1000),
     getCreditsAdmin: vi.fn().mockResolvedValue(1000),
+    getCreditTransactionAmounts: vi.fn().mockResolvedValue([]),
     getLatestCreditAllowanceTransactionAdmin: vi.fn().mockResolvedValue(null),
     getUserEmailAdmin: vi.fn().mockResolvedValue('test@example.com'),
     getVoiceById: vi.fn((voiceId: string) => {

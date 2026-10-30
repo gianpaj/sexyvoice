@@ -16,6 +16,12 @@ minimumReleaseAgeExclude:
   - react-dom
   # Renovate security update: music-metadata@11.16.0
   - music-metadata@11.16.0
+  # Renovate security update: vite@7.3.7
+  - vite@7.3.7
+  # Renovate security update: @sentry/nextjs@10.75.2
+  - "@sentry/nextjs@10.75.2"
+  # Renovate security update: zod@4.6.6
+  - zod@4.6.6
 
 catalog:
   "@ai-sdk/react": "3.0.292"
@@ -29,7 +35,7 @@ catalog:
   "ai": "6.0.289"
   "effective-progress": "0.12.0"
   "effect": "4.0.0"
-  "next": "16.3.8"
+  "next": "16.4.3"
   "postcss": "8.5.28"
   "react": "19.2.7"
   "react-dom": "19.2.7"
@@ -40,6 +46,12 @@ catalog:
 
 overrides:
   "@babel/runtime@<7.26.10": ">=7.26.10"
+  # One OpenTelemetry API copy for every consumer (Sentry, Next.js, Supabase,
+  # and others). A second minor version sees the registered context manager
+  # as incompatible and gets a no-op one, which breaks Sentry's suppressTracing
+  # and traces its own envelope uploads. @opentelemetry/core 2.x peers on
+  # <1.10.0.
+  "@opentelemetry/api": "1.9.1"
   "@opentelemetry/auto-instrumentations-node": "0.76.0"
   "@opentelemetry/exporter-prometheus": "0.218.0"
   "@opentelemetry/exporter-trace-otlp-http": "0.218.0"
@@ -55,8 +67,8 @@ overrides:
   "undici@<=5.28.2": ">=5.28.3"
   "undici@>=4.5.0 <5.28.5": ">=5.28.5"
   "ultracite>zod": "4.3.6"
-  "unbash>zod": "4.3.6"
-  "vite@>=7.0.0 <7.3.2": "7.3.6"
+  "unbash>zod": "4.6.6"
+  "vite@>=7.0.0 <7.3.2": "7.3.7"
   "whatwg-url": "^14.0.0"
 
 allowBuilds:
@@ -74,3 +86,6 @@ allowBuilds:
   protobufjs: true
   redis-memory-server: false
   sharp: true
+
+patchedDependencies:
+  '@ffmpeg/ffmpeg@0.12.15': patches/@ffmpeg__ffmpeg@0.12.15.patch

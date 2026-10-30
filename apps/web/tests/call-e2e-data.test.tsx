@@ -24,14 +24,12 @@ import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
+  getCreditTransactionAmounts,
   getPublicCallCharacters,
   getUserCallCharacters,
   hasUserPaid,
 } from '@/lib/supabase/queries';
-import {
-  getCreditsQuery,
-  getCreditTransactions,
-} from '@/lib/supabase/queries.client';
+import { getCreditsQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 
 vi.mock('server-only', () => ({}));
@@ -55,7 +53,6 @@ vi.mock('@/lib/banners/resolve-banner', () => ({
 }));
 vi.mock('@/lib/supabase/queries.client', () => ({
   getCreditsQuery: vi.fn(),
-  getCreditTransactions: vi.fn(),
 }));
 vi.mock('next-intl/server', () => ({
   getMessages: async () => ({}),
@@ -68,6 +65,7 @@ vi.mock('@/lib/supabase/call-voices', () => ({
 vi.mock('@/lib/supabase/auth', () => ({ getVerifiedClaims: vi.fn() }));
 vi.mock('@/lib/supabase/queries', () => ({
   getCallVoices: vi.fn(),
+  getCreditTransactionAmounts: vi.fn(),
   getPublicCallCharacters: vi.fn(),
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
@@ -126,15 +124,7 @@ function setCallUserCookie(value: string | undefined) {
       : undefined,
   );
 }
-const query = {
-  eq: vi.fn().mockReturnThis(),
-  order: vi.fn().mockResolvedValue({ data: liveCredits }),
-  select: vi.fn().mockReturnThis(),
-};
-const from = vi.fn(() => query);
-const supabase = { from } as unknown as Awaited<
-  ReturnType<typeof createClient>
->;
+const supabase = {} as unknown as Awaited<ReturnType<typeof createClient>>;
 
 function providerProps() {
   expect(PlaygroundStateProvider).toHaveBeenCalledOnce();
@@ -148,13 +138,12 @@ function expectAuthenticated() {
 
 function expectNoDataCalls() {
   for (const mock of [
-    from,
     getCallVoices,
     getPublicCallCharacters,
     getUserCallCharacters,
     hasUserPaid,
     getCallInstructionConfig,
-    getCreditTransactions,
+    getCreditTransactionAmounts,
     getCreditsQuery,
     prefetchQuery,
   ]) {
@@ -174,7 +163,6 @@ function expectPageProps(
   expect(vi.mocked(CreditsSection).mock.calls[0][0]).toEqual({
     creditTransactions,
     doNotToggleSidebar: true,
-    lang: 'de',
     showMinutes: true,
     userId,
   });
@@ -192,10 +180,7 @@ beforeEach(() => {
   vi.mocked(cookies).mockResolvedValue(
     cookieStore as unknown as Awaited<ReturnType<typeof cookies>>,
   );
-  vi.mocked(getCreditTransactions).mockResolvedValue({
-    data: liveCredits,
-    error: null,
-  } as Awaited<ReturnType<typeof getCreditTransactions>>);
+  vi.mocked(getCreditTransactionAmounts).mockResolvedValue(liveCredits);
   vi.mocked(createClient).mockResolvedValue(supabase);
   vi.mocked(getVerifiedClaims).mockResolvedValue({ sub: userId } as NonNullable<
     Awaited<ReturnType<typeof getVerifiedClaims>>
@@ -234,13 +219,13 @@ describe('call E2E data', () => {
     [undefined, false],
     ['invalid', false],
   ] as const)(
-    'shares cookie=%s entitlement across the page and dashboard without layout data calls',
+    'shares cookie=%s entitlement across the page and dashboard without live data calls',
     async (cookie, isPaidUser) => {
       setCallUserCookie(cookie);
       vi.mocked(hasUserPaid).mockResolvedValue(!isPaidUser);
 
       const page = await CallPage({ params: params() });
-      const call = await CallLayout({ children: page, params: params() });
+      const call = CallLayout({ children: page });
       const html = renderToStaticMarkup(
         await DashboardLayout({ children: call, params: params() }),
       );
@@ -260,8 +245,8 @@ describe('call E2E data', () => {
         userId,
       });
       expect(providerProps().initialCustomCharacters).toEqual([]);
-      expect(createClient).toHaveBeenCalledTimes(3);
-      expect(getVerifiedClaims).toHaveBeenCalledTimes(3);
+      expect(createClient).toHaveBeenCalledTimes(2);
+      expect(getVerifiedClaims).toHaveBeenCalledTimes(2);
       expectNoDataCalls();
     },
   );
@@ -281,12 +266,9 @@ describe('call E2E data', () => {
     },
   );
 
-  it('maps deterministic public presets in order without fetching layout data', async () => {
-    const html = renderToStaticMarkup(
-      await CallLayout({ children: <span>Call child</span>, params: params() }),
-    );
+  it('maps deterministic public presets in order without fetching live data', async () => {
+    renderToStaticMarkup(await CallPage({ params: params() }));
 
-    expect(html).toContain('Call child');
     expectAuthenticated();
     expectNoDataCalls();
     const props = providerProps();
@@ -367,12 +349,12 @@ describe.each([
     expect(cookieStore.get).not.toHaveBeenCalled();
   });
 
-  it('uses unpaid database entitlement across the page and layouts despite a paid cookie', async () => {
+  it('uses unpaid database entitlement across the page and dashboard despite a paid cookie', async () => {
     setCallUserCookie('paid');
     vi.mocked(hasUserPaid).mockResolvedValue(false);
 
     const page = await CallPage({ params: params() });
-    const call = await CallLayout({ children: page, params: params() });
+    const call = CallLayout({ children: page });
     const html = renderToStaticMarkup(
       await DashboardLayout({ children: call, params: params() }),
     );
@@ -386,14 +368,13 @@ describe.each([
       lang: 'de',
       userId,
     });
-    expect(hasUserPaid).toHaveBeenCalledTimes(3);
+    expect(hasUserPaid).toHaveBeenCalledTimes(2);
     for (const args of vi.mocked(hasUserPaid).mock.calls) {
       expect(args).toEqual([userId]);
     }
-    expect(getCreditTransactions).toHaveBeenCalledExactlyOnceWith(
-      supabase,
-      userId,
-    );
+    // React cache() shares this query across the page and layout per request;
+    // the test renders outside a request, so each one calls the mock.
+    expect(getCreditTransactionAmounts).toHaveBeenCalledTimes(2);
     expect(getCreditsQuery).toHaveBeenCalledExactlyOnceWith(supabase, userId);
     expect(prefetchQuery).toHaveBeenCalledOnce();
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
@@ -432,9 +413,7 @@ describe.each([
     vi.mocked(getPublicCallCharacters).mockResolvedValue([publicCharacter]);
     vi.mocked(getUserCallCharacters).mockResolvedValue([customCharacter]);
 
-    renderToStaticMarkup(
-      await CallLayout({ children: null, params: params() }),
-    );
+    renderToStaticMarkup(await CallPage({ params: params() }));
 
     expectAuthenticated();
     expect(getCallInstructionConfig).toHaveBeenCalledOnce();
@@ -473,9 +452,7 @@ describe.each([
 
   it('skips custom characters for unpaid users and handles empty public presets', async () => {
     vi.mocked(hasUserPaid).mockResolvedValue(false);
-    renderToStaticMarkup(
-      await CallLayout({ children: null, params: params() }),
-    );
+    renderToStaticMarkup(await CallPage({ params: params() }));
 
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).not.toHaveBeenCalled();
@@ -496,12 +473,7 @@ describe.each([
     expect(html).not.toContain('data-e2e-call-fixtures');
 
     expectAuthenticated();
-    expect(from).toHaveBeenCalledExactlyOnceWith('credit_transactions');
-    expect(query.select).toHaveBeenCalledExactlyOnceWith('amount');
-    expect(query.eq).toHaveBeenCalledExactlyOnceWith('user_id', userId);
-    expect(query.order).toHaveBeenCalledExactlyOnceWith('created_at', {
-      ascending: false,
-    });
+    expect(getCreditTransactionAmounts).toHaveBeenCalledExactlyOnceWith(userId);
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getCallVoices).toHaveBeenCalledOnce();
     expectPageProps(liveCredits, voices, true);

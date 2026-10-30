@@ -28,18 +28,16 @@ before merging to `main` and after deploying.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
-for review. They pin a PR head and report CI results for that SHA. Pushes do not
-request another Claude review; comment `@claude review` when one is needed.
-Reviews use `/review-pr` in agent mode and publish a final top-level PR comment.
-The workflow verifies publication using a plain-text completion marker from
-`claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
-merge gate.
+for review. Pushes do not request another review; comment `@claude review` when
+one is needed. Claude runs `/review-pr` and its five reviewer agents from the
+pinned `claude-code-action` against the PR head resolved at the start of the
+job, and returns its assessment as structured output. The workflow posts that assessment
+as a top-level PR comment from `github-actions[bot]`. The review's CI report is
+not a merge gate.
 
 Claude GitHub App authentication requires the workflow content to match the
-default branch. A PR that edits `.github/workflows/claude.yml` can verify setup
-steps, but the action skips Claude execution and the publication check fails.
-Verify command expansion, all five reviewer agents, and the final review comment
-on a subsequent review after the workflow reaches the default branch.
+default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
+execution; test review changes after they reach the default branch.
 
 ## Deployment targets
 
@@ -214,9 +212,9 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: Dash0 OTLP ingress URL. `@vercel/otel`
-  exports server traces here; Sentry receives the same spans.
-- `OTEL_EXPORTER_OTLP_HEADERS`: `Authorization=Bearer <dash0-auth-token>`.
+- `NEXT_PUBLIC_E2E_TEST_MODE`: build-time; `true` disables the browser Sentry
+  client. Set only in the E2E workflow's build step, never on Vercel. The
+  server and edge clients stay off when `E2E_TEST_MODE=true` at runtime.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`
@@ -325,6 +323,17 @@ Before upgrading:
 and the `/monitoring` browser tunnel. Source maps upload only when
 `VERCEL_ENV=production`; do not expect uploads from preview deployments.
 Confirm the production build uploads maps and that the tunnel reaches Sentry.
+
+`pnpm-workspace.yaml` pins `@opentelemetry/api` to one version for every
+OpenTelemetry consumer. Sentry's `suppressTracing` keeps the SDK's own envelope
+uploads out of traces only when all of them share that copy. As a backstop, the
+server and edge configs drop `http.client` spans to
+`*.sentry.io/api/<id>/envelope/` through `ignoredServerSpans` in
+`apps/web/lib/sentry/server-filters.ts`. The filter only protects Sentry's span
+quota; context propagation still breaks if a second copy returns. After a
+release that touches Sentry or OpenTelemetry packages, check that
+`pnpm why -r @opentelemetry/api` lists a single version and that Sentry's span
+usage shows no `http.client` transactions to the ingest host.
 
 For crashes and per-event browser/device details, use
 [Sentry issue triage](../scripts/README.md#sentry-issue-triage). For handled

@@ -50,7 +50,7 @@ function purchase(
   };
 }
 describe('cash contribution', () => {
-  test('subtracts paid and free costs from cash after refunds', () => {
+  test('subtracts all usage costs from cash after refunds', () => {
     const result = summarizeContribution(
       data([
         event(),
@@ -65,10 +65,6 @@ describe('cash contribution', () => {
     );
     expect(result.contribution).toBeCloseTo(60 - overhead);
     expect(result.contributionAlert).toBe(false);
-    expect(result.coverage).toBeCloseTo((75 - overhead) / 15);
-    expect(formatContribution('Yesterday', result).join('\n')).toContain(
-      `${((75 - overhead) / 15).toFixed(2)}x`,
-    );
   });
   test('keeps each period to two lines and hides diagnostic detail', () => {
     const result = summarizeContribution(
@@ -79,10 +75,13 @@ describe('cash contribution', () => {
     );
     const lines = formatContribution('Yesterday', result);
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toBe(
-      `- Yesterday: $100.00 net collections − $15.00 usage − $${overhead.toFixed(2)} overhead = $${(85 - overhead).toFixed(2)} remaining`,
+    expect(lines[0]).toBe(`- Yesterday: $${(85 - overhead).toFixed(2)} left`);
+    expect(lines[1]).toBe(
+      `  $100.00 collected − $15.00 usage − $${overhead.toFixed(2)} overhead`,
     );
-    expect(lines.join('\n')).not.toMatch(/Cost records|Session-only|Free tts/);
+    expect(lines.join('\n')).not.toMatch(
+      /Cost records|Session-only|Free tts|Paid|Free coverage/,
+    );
   });
   test.each([0, 1, 5, 6, 100])(
     'alerts only when more than 5%% of records are unpriced: %s',
@@ -94,23 +93,36 @@ describe('cash contribution', () => {
         }),
       );
       const result = summarizeContribution(data(events), [], start, end);
-      expect(result.incomplete).toBe(unknownCount > 0);
       expect(result.coverageAlert).toBe(unknownCount > 5);
       expect(result.contributionAlert).toBe(unknownCount <= 5);
-      if (unknownCount > 0) expect(result.coverage).toBeNull();
+      if (unknownCount > 0) {
+        expect(formatContribution('Yesterday', result)[0]).toContain(
+          `(${unknownCount} unpriced)`,
+        );
+      }
     },
   );
-  test('unclassified usage alerts regardless of the unpriced share', () => {
+  test('a missing user id does not hide a loss when all usage is priced', () => {
+    // Exercise malformed input despite the database's NOT NULL constraint.
     const malformedEvent = {
       ...event(),
       user_id: null,
     } as unknown as UsageEvent;
-    expect(
-      summarizeContribution(data([malformedEvent]), [], start, end)
-        .coverageAlert,
-    ).toBe(true);
+    const result = summarizeContribution(
+      data([malformedEvent]),
+      [],
+      start,
+      end,
+    );
+    expect(result.totalCost).toBe(15);
+    expect(result.contribution).toBeCloseTo(-15 - overhead);
+    expect(result.coverageAlert).toBe(false);
+    expect(result.contributionAlert).toBe(true);
+    expect(formatContribution('Yesterday', result).join('\n')).not.toMatch(
+      /unpriced|unclassified/,
+    );
   });
-  test('classifies at purchase time and recognizes old purchasers', () => {
+  test('counts usage independently of purchase history', () => {
     const result = summarizeContribution(
       data([
         event({ user_id: 'paid' }),
@@ -128,7 +140,7 @@ describe('cash contribution', () => {
       start,
       end,
     );
-    expect(result.totals).toEqual({ free: 15, paid: 30, unclassified: 0 });
+    expect(result.totalCost).toBe(45);
     expect(result.netCollections).toBe(100);
   });
   test('manual grants, credit refunds, and dispute holds do not affect cash', () => {
@@ -156,29 +168,19 @@ describe('cash contribution', () => {
     );
     expect(result.netCollections).toBe(100);
     expect(result.contributionAlert).toBe(false);
-    expect(result.coverage).toBeNull();
   });
-  test('missing costs and identities make coverage incomplete', () => {
-    // Exercise malformed input despite the database's NOT NULL constraint.
-    const malformedEvent = {
-      ...event(),
-      user_id: null,
-    } as unknown as UsageEvent;
+  test('missing costs remain visible and trigger an alert', () => {
     const result = summarizeContribution(
-      data([event({ dollar_amount: -1 }), malformedEvent]),
+      data([event({ dollar_amount: -1 }), event()]),
       [],
       start,
       end,
     );
     expect(result.bases.unknown).toBe(1);
-    expect(result.totals.unclassified).toBe(15);
-    expect(result.incomplete).toBe(true);
-    expect(result.coverage).toBeNull();
+    expect(result.totalCost).toBe(15);
+    expect(result.coverageAlert).toBe(true);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      '(1 unpriced, 1 unclassified)',
-    );
-    expect(formatContribution('Yesterday', result).join('\n')).toContain(
-      'coverage incomplete',
+      '(1 unpriced)',
     );
   });
   test('includes API/enhancement costs and preserves negative contribution', () => {
@@ -192,9 +194,8 @@ describe('cash contribution', () => {
       end,
     );
     expect(result.contribution).toBeCloseTo(-30 - overhead);
-    expect(result.coverage).toBeCloseTo(-overhead / 30);
     expect(formatContribution('Yesterday', result)[0]).toContain(
-      `= -$${(30 + overhead).toFixed(2)} remaining`,
+      `-$${(30 + overhead).toFixed(2)} left`,
     );
   });
   test('subtracts overhead on idle days and alerts when it exceeds collections', () => {
@@ -209,7 +210,6 @@ describe('cash contribution', () => {
     expect(result.overhead.callServer).toBeCloseTo(0.903_123_29);
     expect(result.contribution).toBeCloseTo(-0.404_493_15);
     expect(result.contributionAlert).toBe(true);
-    expect(result.coverage).toBeNull();
   });
   test('uses unrounded daily averages across a 30-day month boundary', () => {
     const result = summarizeContribution(
@@ -220,9 +220,24 @@ describe('cash contribution', () => {
     );
     expect(result.overhead.total).toBeCloseTo(72.134_794_52);
     expect(result.overhead.callServer).toBeCloseTo(27.093_698_63);
-    expect(formatContribution('30d', result)[0]).toBe(
-      '- 30d: $0.00 net collections − $0.00 usage − $72.13 overhead = -$72.13 remaining',
+    expect(formatContribution('30d', result)).toEqual([
+      '- 30d: -$72.13 left',
+      '  $0.00 collected − $0.00 usage − $72.13 overhead',
+    ]);
+  });
+
+  test('deducts LiveKit from November collections even without calls', () => {
+    const result = summarizeContribution(
+      data([event({ occurred_at: '2026-11-01T12:00:00Z' })]),
+      [purchase({ created_at: '2026-11-01T00:00:00Z' })],
+      new Date('2026-11-01T00:00:00Z'),
+      new Date('2026-11-02T00:00:00Z'),
     );
+    const liveKit = 50 * (12 / 365);
+    expect(result.callCost).toBe(0);
+    expect(result.overhead.liveKit).toBeCloseTo(liveKit);
+    expect(result.overhead.total).toBeCloseTo(overhead + liveKit);
+    expect(result.contribution).toBeCloseTo(85 - overhead - liveKit);
   });
 });
 describe('call supplementation', () => {
@@ -263,7 +278,6 @@ describe('call supplementation', () => {
     expect(result.callCost).toBeCloseTo((0.769 / 60) * 0.05, 10);
     expect(result.bases.estimated).toBe(1);
     expect(result.bases.unknown).toBe(0);
-    expect(result.incomplete).toBe(false);
   });
   test.each([
     undefined,
@@ -322,8 +336,7 @@ describe('call supplementation', () => {
       end,
     );
     expect(result.callCost).toBe(30);
-    expect(result.totals.free).toBe(15);
-    expect(result.totals.paid).toBe(15);
+    expect(result.totalCost).toBe(30);
   });
   test('a linked event outside the window prevents a duplicate session estimate', () => {
     expect(

@@ -18,20 +18,16 @@ costs include other sessions. Short calls alone do not establish a failure.
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,
 credit-only refunds, and chargeback credit holds/releases do not affect cash.
-Usage is paid if it occurs at or after the customer's first positive cash
-purchase; promotional credits spent by paying customers remain paid usage.
 
 Estimated contribution equals net collections minus recorded and estimated usage
-costs and allocated overhead. Free coverage equals net collections minus paid
-usage costs and overhead, divided by free usage costs. Zero free cost renders
-coverage N/A. Unpriced or unclassified
-records mark coverage incomplete; displayed dollars include only priced records.
-The separate coverage alert fires when more than 5% of records are unpriced, or
-any usage is unclassified. Record share controls alert noise, not cost accuracy;
-one expensive unknown record can matter even below that threshold. When the
-coverage alert is off, negative contribution triggers the usage-and-overhead alert.
-Free coverage still stays incomplete for any gap; the alert tolerance does not
-establish dollar accuracy.
+costs and allocated overhead. Displayed dollars include only priced records;
+unpriced counts stay visible beside the contribution.
+
+The `coverageAlert` flag triggers a data-quality alert when more than 5% of
+records are unpriced. This threshold controls alert
+noise, not cost accuracy: one expensive unknown record can matter below it.
+When `coverageAlert` is false, negative contribution triggers the
+usage-and-overhead alert.
 
 This is a cash-period comparison before payment fees, not
 accounting profit. Taxes, final dispute losses, unlogged provider attempts,
@@ -42,8 +38,8 @@ retries, and ancillary infrastructure can be absent from the inputs.
 `overhead-costs.json` stores the manually maintained USD invoice baseline;
 `overhead.ts` allocates it over reporting windows. Update the baseline when newer
 invoices are available. Missing invoices are unknown, not zero. This estimate
-uses the same baseline for every report date, including historical reports;
-it does not reconstruct historical infrastructure bills.
+uses the same invoice baseline for every report date; LiveKit applies only from
+its subscription start date. It does not reconstruct historical infrastructure bills.
 
 The source is the `Purchases 2026` CSV export from the contracting purchases
 spreadsheet, reviewed on 2026-10-15. Amounts use its USD column, including VAT
@@ -53,21 +49,24 @@ the September Fly.io and Cloudflare invoices cover August usage.
 
 Fly.io's $72 annual machine reservation is allocated at $6/month in addition
 to its monthly invoices. Monthly averages are multiplied by 12/365 and the
-window's UTC day count; round only for display. The baseline is about
-$73.14/month or $2.40/day. Fly.io is attributed entirely to the voice-call
-server and shown separately in the Calls section, already included in overhead.
+window's UTC day count; round only for display. The invoice and reservation
+baseline is about $73.14/month or $2.40/day. LiveKit adds $50/month from
+2026-11-01, using the same 12/365 daily allocation for the portion of the window
+on or after that date. This assumes expected WebRTC participant minutes
+(per participant) are included, with no additional per-minute estimate.
+Fly.io and LiveKit are attributed entirely to voice calls and included once in overhead.
 Vercel and Cloudflare are entirely attributable to SexyVoice.
+The Calls section shows `AI usage (est.)`, excluding hosting already in overhead.
 
 September's positive $29.59 Vercel entry is treated as the final charge. Its
 description says "partial refund"; confirm that interpretation against the
 invoice before treating the baseline as reconciled.
 
-Supabase, LiveKit, Upstash, Sentry, Dash0, Axiom, PostHog, Inngest, and email
-are confirmed free by the owner. Inworld, Hetzner, and domain purchases are
+Supabase, Upstash, Sentry, Axiom, PostHog, Inngest, and email are confirmed
+free by the owner. Inworld, Hetzner, and domain purchases are
 excluded because their attribution to SexyVoice is unconfirmed. AI-provider
 invoices and prepaid credit purchases are excluded from overhead to avoid
-duplicating usage costs. Free coverage reserves overhead before measuring
-how much remains to fund free usage; hosting is not split across user cohorts.
+duplicating usage costs. Hosting is not split across user cohorts.
 
 ## Cost sources
 
@@ -93,13 +92,13 @@ than provider-billed time.
 Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
 
-The report prints two lines per period. Aggregation retains the costs and
-coverage counts used by the report. Linked audio token counts take precedence
+Each period shows remaining collections and a collections/usage/overhead breakdown
+in two short lines, with unpriced counts when present. Invoice
+provenance and call-estimate limitations stay in this README. Linked audio token counts take precedence
 over event metadata; valid event counts remain a fallback for missing values.
 
-Contribution reads both usage and transactions fresh, even during local cached
-activity debugging, so customer classification and collections use fresh payment
-history. This intentionally requires an all-time transaction read on that path.
+Contribution uses fresh usage and collections even during local cached activity
+debugging. See [Query load](#query-load) for transaction read windows.
 
 ## Query load
 
@@ -147,11 +146,10 @@ One guard remains, turning a mis-specified query into an error instead of a
 loop: a cursor value that moves backwards, which means the query is not ordered
 by the column it pages on.
 
-Credit transactions are read once for all time and sliced in memory for every
-reporting window. The per-period reads this replaced were subsets of that same
-range with identical filters and were merged straight back into it, so they
-added load without adding rows. Add new windows as in-memory filters over
-`allCreditTransactions`, not as extra queries.
+Fresh activity reports read credit transactions once for all time to supply
+lifetime and historical metrics, then slice them in memory for each window.
+Cached activity reports refresh only the last 30 days of transactions for
+contribution. Add reporting windows as in-memory filters over the shared read.
 
 Usage events carry no `profiles(username)` embed — PostgREST joins an embed per
 row, and the report labels only its top three users. Resolve names for the few
@@ -191,6 +189,6 @@ send Telegram reports, but still requires `TELEGRAM_WEBHOOK_URL` to be set.
 
 ## Verification
 
-Run `pnpm --filter @sexyvoice/web exec vitest run tests/daily-stats-contribution.test.ts tests/daily-stats-contribution-queries.test.ts tests/daily-stats-completed-calls.test.ts tests/daily-stats-fetch-all-pages.test.ts tests/daily-stats-cache.test.ts`.
+Run `pnpm --filter @sexyvoice/web exec vitest run daily-stats`.
 Use read-only queries to investigate actual records. Do not invoke the production
 GET handler for verification; it sends the Telegram report.
