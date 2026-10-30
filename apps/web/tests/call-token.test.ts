@@ -132,7 +132,7 @@ describe('call-token API validation', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept the optional memory opt-in flag', () => {
+    it('should keep an explicit memory flag as sent', () => {
       const base = {
         instructions: 'Test',
         selectedPresetId: null,
@@ -144,15 +144,33 @@ describe('call-token API validation', () => {
         },
       };
 
-      // Present (true/false) and absent are all valid; the paid-only gating is
-      // enforced server-side in the route, not by the schema.
-      for (const memory of [true, false, undefined]) {
+      for (const memory of [true, false]) {
         const result = playgroundStateSchema.safeParse({ ...base, memory });
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.memory).toBe(memory);
         }
       }
+    });
+
+    it('should default memory to on when the flag is absent', () => {
+      // Memory is on for every call. An older client (or a payload built
+      // before the flag existed) must still get memory, so only an explicit
+      // `false` opts out.
+      const payload = {
+        instructions: 'Test',
+        selectedPresetId: null,
+        sessionConfig: {
+          maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      expect(result.data?.memory).toBe(true);
     });
 
     it('should reject a non-boolean memory flag', () => {

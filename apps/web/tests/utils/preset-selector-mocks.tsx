@@ -224,7 +224,7 @@ export function createDefaultPgState(
     initialInstruction: 'Say hi',
     instructions: 'test instructions',
     language: 'en' as const,
-    memory: false,
+    memory: true,
     sceneInstructions: '',
     selectedPresetId: 'ramona',
     selectedSceneId: null,
