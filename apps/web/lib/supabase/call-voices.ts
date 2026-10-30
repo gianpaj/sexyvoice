@@ -1,4 +1,8 @@
 import { callVoiceProvider } from '@/lib/call-voices';
+import {
+  CALL_CLONE_PROVIDERS,
+  type CallCloneProvider,
+} from '@/lib/clone/call-voice-config';
 import { getVoiceIdByName } from './queries';
 import { createClient } from './server';
 
@@ -8,7 +12,7 @@ export async function getSavedCallVoices(userId: string) {
     .from('audio_references')
     .select('id, name, locale, provider')
     .eq('user_id', userId)
-    .in('provider', ['mistral', 'inworld'])
+    .in('provider', CALL_CLONE_PROVIDERS)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return data;
@@ -17,7 +21,7 @@ export async function getSavedCallVoices(userId: string) {
 export async function getOwnedCallVoice(
   id: string,
   userId: string,
-  provider?: 'inworld' | 'mistral',
+  provider?: CallCloneProvider,
 ) {
   const supabase = await createClient();
   const query = supabase
@@ -27,7 +31,7 @@ export async function getOwnedCallVoice(
     .eq('user_id', userId);
   const { data, error } = await (provider
     ? query.eq('provider', provider)
-    : query.in('provider', ['mistral', 'inworld'])
+    : query.in('provider', CALL_CLONE_PROVIDERS)
   ).maybeSingle();
   if (error) throw error;
   return data;

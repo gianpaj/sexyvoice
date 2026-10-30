@@ -3,7 +3,13 @@ import {
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from './constants';
 
-export type CallCloneProvider = 'inworld' | 'mistral';
+export const CALL_CLONE_PROVIDERS = ['inworld', 'mistral'] as const;
+
+export type CallCloneProvider = (typeof CALL_CLONE_PROVIDERS)[number];
+
+export function isCallCloneProvider(value: string): value is CallCloneProvider {
+  return (CALL_CLONE_PROVIDERS as readonly string[]).includes(value);
+}
 
 export function supportsCallCloneLocale(
   provider: CallCloneProvider,

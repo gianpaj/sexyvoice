@@ -1,13 +1,14 @@
 import { defaultSessionConfig } from '@/data/default-config';
 import { ModelId } from '@/data/models';
 import type { SessionConfig } from '@/data/session-config';
+import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 
 export type SavedCallVoice = Pick<
   Tables<'audio_references'>,
   'id' | 'name' | 'locale' | 'provider'
 >;
 
-export function callVoiceProvider(model: string) {
+export function callVoiceProvider(model: string): CallCloneProvider | null {
   if (model === ModelId.MISTRAL_TTS) return 'mistral';
   if (model === ModelId.INWORLD_TTS) return 'inworld';
   return null;
