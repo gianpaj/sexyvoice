@@ -35,6 +35,7 @@ export async function getContributionData(
         .select(
           'id, user_id, source_id, source_type, occurred_at, dollar_amount, model, metadata, input_chars, duration_seconds',
         )
+        .eq('event_kind', 'customer_usage')
         .gte('occurred_at', start.toISOString())
         .lt('occurred_at', end.toISOString());
       if (internalIds.length) query = query.notIn('user_id', internalIds);

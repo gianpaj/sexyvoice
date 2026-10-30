@@ -387,6 +387,35 @@ scripts import the same modules, so every path writes identical rows.
 See `apps/web/supabase/migrations/` and
 `apps/web/lib/supabase/types.d.ts` for the complete schema.
 
+### Gemini provider usage
+
+Gemini dashboard, external speech API, and streaming calls record supplier usage
+through `apps/web/lib/tts/gemini-usage.ts`. In `usage_events`,
+`event_kind = 'provider_attempt'` stores numeric `input_tokens`, `output_tokens`,
+`total_tokens`, the actual model, and an estimated `dollar_amount` priced at the
+attempt's `occurred_at`. Missing counts stay NULL. Cost stays NULL unless both
+input and output counts and model pricing are available. Metadata includes
+parsed error HTTP status, finish/block reason, response ID, and raw usage
+metadata, without prompt text or audio. SDK responses leave HTTP status NULL
+because the SDK exposes no status. Client cancellation is a separate `aborted`
+flag.
+
+Each SDK generation attempt schedules one event. Non-streaming inserts run in
+Next.js `after()`; streaming inserts are awaited inside the background task.
+Fallbacks share the application's `request_id` but retain separate model usage.
+Streaming counts are treated as cumulative snapshots and merged by field rather
+than summed. This is an accounting assumption; per-chunk deltas would require a
+different merge. Google HTTP 400 and 500 failures are excluded; other errors and
+HTTP 200 responses without usable audio are recorded. These records do not prove
+an invoice charge.
+
+Provider attempts have zero credits. Customer events carry the credit deduction
+and audio-file reference; their Gemini cost and tokens are omitted to avoid
+counting the same generation twice. Customer history, summaries, daily
+operation counts, and the daily-stats contribution report exclude provider
+attempts. API cost totals include provider attempts. Existing historical
+customer events retain their recorded costs.
+
 ### Supabase Access Boundaries
 
 - Browser and session-authenticated server code use

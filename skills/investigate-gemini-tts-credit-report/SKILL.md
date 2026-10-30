@@ -39,7 +39,8 @@ Do not execute it. Require explicit human approval as a separate follow-up.
 3. Query Sentry logs for the scoped UTC window using the organization and
    project in the runbook. Start without a level filter so handled warnings are
    included.
-4. Correlate attempts by user ID, timestamp, message, model, response ID,
+4. Read provider-attempt evidence as described in the runbook, correlating
+   `usage_events` by `request_id`. Correlate attempts by user ID, timestamp, message, model, response ID,
    artifact, and credit reservation/refund context. If the user-ID query is
    empty, broaden the Sentry query by response ID, message, or model before
    falling back.
