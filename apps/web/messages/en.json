@@ -260,7 +260,7 @@
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
-              "answer": "Voice cloning supports the following 28 languages:\n\n🇪🇸 Catalan,\n🇭🇺 Hungarian,\n🇷🇴 Romanian,\n🇺🇦 Ukrainian,\n🇻🇳 Vietnamese,\n🇸🇦 Arabic,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\nand 🇹🇷 Turkish."
+              "answer": "Voice cloning supports the following 28 languages:\n\n🇸🇦 Arabic,\n🇪🇸 Catalan,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇭🇺 Hungarian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇴 Romanian,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\nand 🇻🇳 Vietnamese."
             }
           ]
         },
