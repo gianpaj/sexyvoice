@@ -80,7 +80,7 @@ overrides:
   undici@<5.28.4: '>=5.28.4'
   undici@<=5.28.2: '>=5.28.3'
   undici@>=4.5.0 <5.28.5: '>=5.28.5'
-  ultracite>zod: 4.3.6
+  ultracite>zod: 4.6.6
   unbash>zod: 4.6.6
   vite@>=7.0.0 <7.3.2: 7.3.7
   whatwg-url: ^14.0.0
@@ -4653,6 +4653,7 @@ packages:
   '@smithy/core@3.35.1':
     resolution: {integrity: sha512-i4YPS4B6ts7bjn7UwLnGjiZdprOvHvgGobFZsYK3GIY3E5hIqtj0rReU69BcTpGp+fvtraSNXeG1l+jtJvF55w==}
     engines: {node: '>=18.0.0'}
+    deprecated: Deprecated due to a bug in custom logger data redaction. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
@@ -9691,9 +9692,6 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
   zod@4.6.6:
     resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
@@ -18964,7 +18962,7 @@ snapshots:
       semver: 7.8.5
       string-width: 8.2.2
       yaml: 2.9.0
-      zod: 4.3.6
+      zod: 4.6.6
     optionalDependencies:
       '@biomejs/biome': 2.5.14
       eslint: 10.8.0(jiti@2.6.1)(supports-color@8.1.1)
@@ -19383,8 +19381,6 @@ snapshots:
       zod: 4.6.6
 
   zod@3.25.76: {}
-
-  zod@4.3.6: {}
 
   zod@4.6.6: {}
 
