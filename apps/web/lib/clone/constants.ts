@@ -1,5 +1,20 @@
 export type CloneProvider = 'mistral' | 'replicate';
 
+/**
+ * Shortest reference audio accepted per clone provider, in seconds. The
+ * server rejects shorter clips and the recorder warns before upload.
+ * Inworld's documented minimum is 3 seconds:
+ * https://docs.inworld.ai/tts/instant-voice-cloning
+ */
+export const CLONE_MIN_AUDIO_SECONDS: Record<
+  CloneProvider | 'inworld',
+  number
+> = {
+  inworld: 3,
+  mistral: 3,
+  replicate: 10,
+};
+
 export const VOICE_CLONING_MODELS: readonly string[] = [
   'resemble-ai/chatterbox-multilingual',
   'resemble-ai/chatterbox',

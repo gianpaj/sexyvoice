@@ -3,7 +3,7 @@
 import { AlertCircle, PaperclipIcon, UploadIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { MicrophoneMain } from '@/components/audio/microphone-main';
+import { VoiceRecorder } from '@/components/audio/voice-recorder';
 import PulsatingDots from '@/components/pulsating-dots';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -14,35 +14,28 @@ import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 
 type FileUploadResult = ReturnType<typeof useFileUpload>;
 
-type MicStatus =
-  | 'idle'
-  | 'acquiring_media'
-  | 'ready'
-  | 'recording'
-  | 'paused'
-  | 'stopping'
-  | 'stopped'
-  | 'failed';
-
 interface CloneMic {
+  /** A take is in progress or kept, which hides the upload area. */
+  active: boolean;
   blob: Blob | null;
-  mediaBlob: Blob | null;
+  failed: boolean;
+  isRecording: boolean;
   mediaStream: MediaStream | null;
   onClear: () => void;
-  onToggle: () => void;
-  recording: boolean;
-  status: MicStatus;
+  onStart: () => void;
+  onStop: () => void;
+  seconds: number;
+  starting: boolean;
 }
 
-const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
-const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
 
 export function CloneAudioInput({
   fileState,
   fileActions,
   mic,
+  minAudioSeconds,
   ffmpeg,
   usesVoxtral,
   selectedLocaleCode,
@@ -51,6 +44,7 @@ export function CloneAudioInput({
   fileState: FileUploadResult[0];
   fileActions: FileUploadResult[1];
   mic: CloneMic;
+  minAudioSeconds: number;
   ffmpeg: { error: string | null; loading: boolean };
   usesVoxtral: boolean;
   selectedLocaleCode: string;
@@ -70,16 +64,13 @@ export function CloneAudioInput({
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
 
-  const minAudioDuration = usesVoxtral
-    ? VOXTRAL_MIN_AUDIO_DURATION_SECONDS
-    : DEFAULT_MIN_AUDIO_DURATION_SECONDS;
   const referenceAudioGuidance = usesVoxtral
     ? formatCloneMessage(t('referenceAudioGuidanceShort'), {
-        MIN: minAudioDuration,
+        MIN: minAudioSeconds,
         TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
       })
     : formatCloneMessage(t('referenceAudioGuidanceLong'), {
-        MIN: minAudioDuration,
+        MIN: minAudioSeconds,
         TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
       });
 
@@ -88,12 +79,12 @@ export function CloneAudioInput({
       <Label htmlFor="audio-file">{t('audioFileLabel')}</Label>
 
       {/* Drop area */}
-      {!(file || mic.recording) && (
+      {!(file || mic.active) && (
         <button
           className="flex min-h-32 flex-col items-center justify-center rounded-xl border border-input border-dashed p-4 transition-colors hover:bg-accent/50 disabled:pointer-events-none disabled:opacity-50 has-[input:focus]:border-ring has-[input:focus]:ring-[3px] has-[input:focus]:ring-ring/50 data-[dragging=true]:bg-accent/50"
           data-dragging={isDragging || undefined}
           data-testid="clone-upload-dropzone"
-          disabled={Boolean(mic.recording)}
+          disabled={mic.active}
           onClick={openFileDialog}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
@@ -148,12 +139,17 @@ export function CloneAudioInput({
               <AlertDescription>{ffmpeg.error}</AlertDescription>
             </Alert>
           )}
-          <MicrophoneMain
-            mediaBlob={mic.mediaBlob}
+          <VoiceRecorder
+            isRecording={mic.isRecording}
             mediaStream={mic.mediaStream}
-            onClearMediaStream={mic.onClear}
-            onToggleMicrophone={mic.onToggle}
-            status={mic.status}
+            micFailed={mic.failed}
+            minSeconds={minAudioSeconds}
+            onRecordAgain={mic.onClear}
+            onStart={mic.onStart}
+            onStop={mic.onStop}
+            recording={mic.blob}
+            seconds={mic.seconds}
+            starting={mic.starting}
           />
         </div>
       )}
