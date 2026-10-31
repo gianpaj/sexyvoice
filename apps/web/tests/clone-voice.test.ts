@@ -2476,7 +2476,7 @@ describe('Saved voice generation', () => {
       userId: 'test-user-id',
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
-      expect.stringMatching(/^cloned-audio\/de-inworld-/),
+      expect.stringMatching(/^cloned-audio\/de-inworld-inworld-tts-2-/),
       expect.any(Buffer),
       'audio/wav',
     );

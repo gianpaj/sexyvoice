@@ -1355,7 +1355,11 @@ export async function POST(request: Request) {
         text,
         user.email,
       );
-      const filename = `cloned-audio/${locale}-${provider}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
+      // The model is in the key, like one-shot clones, so a model switch
+      // never serves audio from the previous model.
+      const voiceModel =
+        provider === 'inworld' ? INWORLD_TTS_MODEL : VOXTRAL_MODEL;
+      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
       const cachedOutputUrl = await redis.get<string>(filename);
       if (cachedOutputUrl) {
         return NextResponse.json(
