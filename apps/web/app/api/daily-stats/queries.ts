@@ -75,6 +75,7 @@ export function getUsageEventsInRange(
     let query = supabase
       .from('usage_events')
       .select('id, user_id, source_type, credits_used, occurred_at')
+      .eq('event_kind', 'customer_usage')
       .gte('occurred_at', start.toISOString())
       .lt('occurred_at', end.toISOString());
     if (excludeUserIds.length > 0) {

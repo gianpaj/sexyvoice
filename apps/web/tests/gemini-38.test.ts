@@ -193,14 +193,27 @@ describe('Gemini 3.8 integration', () => {
     );
     expect(insertUsageEvent).toHaveBeenCalledWith(
       expect.objectContaining({
+        creditsUsed: 0,
         dollarAmount: 0.000_91,
-        metadata: expect.objectContaining({
-          candidatesTokenCount: '100',
-          promptTokenCount: '20',
-        }),
+        eventKind: 'provider_attempt',
+        inputTokens: 20,
         model: 'gemini-3.8-flash-tts',
+        outputTokens: 100,
+        totalTokens: 120,
       }),
     );
+    const customerEvent = vi
+      .mocked(insertUsageEvent)
+      .mock.calls.map(([event]) => event)
+      .find((event) => event.eventKind !== 'provider_attempt');
+    expect(customerEvent).toMatchObject({
+      dollarAmount: null,
+      metadata: expect.objectContaining({
+        candidatesTokenCount: '100',
+        promptTokenCount: '20',
+      }),
+      model: 'gemini-3.8-flash-tts',
+    });
     expect(mockUploadFileToR2.mock.calls[0][1]).toEqual(wav);
   });
 
@@ -218,7 +231,14 @@ describe('Gemini 3.8 integration', () => {
     expect(response.status).toBeGreaterThanOrEqual(500);
     expect(generateContent).toHaveBeenCalledTimes(1);
     expect(restoreCredits).toHaveBeenCalled();
-    expect(insertUsageEvent).not.toHaveBeenCalled();
+    expect(insertUsageEvent).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        creditsUsed: 0,
+        eventKind: 'provider_attempt',
+        metadata: expect.objectContaining({ outcome: 'error' }),
+        model: 'gemini-3.8-flash-tts',
+      }),
+    );
   });
 
   it.each([

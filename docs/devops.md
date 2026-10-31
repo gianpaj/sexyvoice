@@ -387,3 +387,12 @@ uploader before preparing executable catalog SQL. See the
 manifest verification, and the bucket-root filename convention. The initial
 28 catalog entries have `is_public = false`. Deploy `gpro38` route support and
 the display-name mapping before using these voices or enabling public access.
+
+## Gemini provider usage rollout
+
+Apply `20261025072722_add_gemini_provider_usage.sql` before deploying the code
+that writes `usage_events.event_kind` and token columns, then run
+`pnpm test:db` against the migrated local database. Streaming remains disabled
+by the existing production flag. See
+[Gemini provider usage](../ARCHITECTURE.md#gemini-provider-usage) for recording
+rules.

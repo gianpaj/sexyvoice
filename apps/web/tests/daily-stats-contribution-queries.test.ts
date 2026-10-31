@@ -157,6 +157,12 @@ describe('contribution reads', () => {
       (request) => request.table === 'usage_events',
     );
     expect(eventReads).toHaveLength(2);
+    for (const read of eventReads) {
+      expect(read.operations).toContainEqual([
+        'eq',
+        ['event_kind', 'customer_usage'],
+      ]);
+    }
     expect(
       requests.every((request) =>
         request.operations.some(([method]) => method === 'notIn'),
@@ -178,6 +184,10 @@ describe('contribution reads', () => {
     ]);
   });
   test('cross-window link checks omit date filters and batch audio metadata', async () => {
+    const isLinkCheck = (operations: [string, unknown[]][]) =>
+      operations.some(
+        ([method, args]) => method === 'eq' && args[0] === 'source_type',
+      );
     const { client, requests } = database((table, ops) => {
       if (table === 'audio_files')
         return {
@@ -186,7 +196,7 @@ describe('contribution reads', () => {
         };
       if (table === 'call_sessions')
         return { data: [{ id: 'call', user_id: 'user' }], error: null };
-      if (ops.some(([method]) => method === 'eq'))
+      if (isLinkCheck(ops))
         return { data: [{ source_id: 'call' }], error: null };
       return {
         data: [
@@ -204,7 +214,7 @@ describe('contribution reads', () => {
     expect(result.linkedCallIds).toEqual(['call']);
     expect(result.audioUsage.audio).toEqual({ promptTokenCount: 10 });
     const linkRequest = requests.find((request) =>
-      request.operations.some(([method]) => method === 'eq'),
+      isLinkCheck(request.operations),
     );
     expect(
       linkRequest?.operations.some(([method]) =>

@@ -666,6 +666,7 @@ describe('Generate Voice API Route', () => {
         model:
           'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
         quantity: 11, // "Hello world".length
+        requestId: expect.any(String),
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
         unit: 'chars',
@@ -852,6 +853,7 @@ describe('Generate Voice API Route', () => {
         },
         model: 'xai',
         quantity: 13,
+        requestId: expect.any(String),
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
         unit: 'chars',
@@ -1170,10 +1172,19 @@ describe('Generate Voice API Route', () => {
         voiceId: 'voice-kore-id',
       });
 
+      expect(insertUsageEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          creditsUsed: 0,
+          dollarAmount: 0.000_251,
+          eventKind: 'provider_attempt',
+          inputTokens: 11,
+          outputTokens: 12,
+          totalTokens: 23,
+        }),
+      );
       // Verify usage event was logged for Gemini voice
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 26,
-        dollarAmount: 0.000_251,
         inputChars: 11,
         metadata: {
           candidatesTokenCount: '12',
@@ -1192,6 +1203,7 @@ describe('Generate Voice API Route', () => {
         },
         model: 'gemini-2.5-pro-preview-tts',
         quantity: text.length,
+        requestId: expect.any(String),
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
         unit: 'chars',
@@ -1455,9 +1467,8 @@ describe('Generate Voice API Route', () => {
       expect(insertUsageEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           dollarAmount: 0.000_126,
-          metadata: expect.objectContaining({
-            model: 'gemini-2.5-flash-preview-tts',
-          }),
+          eventKind: 'provider_attempt',
+          model: 'gemini-2.5-flash-preview-tts',
         }),
       );
 
@@ -2656,11 +2667,14 @@ describe('Generate Voice API Route', () => {
       const controller = new AbortController();
       const usageStarted = Promise.withResolvers<void>();
       const finishUsage = Promise.withResolvers<void>();
-      vi.mocked(insertUsageEvent).mockImplementationOnce(async () => {
-        usageStarted.resolve();
-        await finishUsage.promise;
-        return 'usage-id';
-      });
+      // The provider-attempt insert precedes the customer usage insert.
+      vi.mocked(insertUsageEvent)
+        .mockResolvedValueOnce('provider-attempt-id')
+        .mockImplementationOnce(async () => {
+          usageStarted.resolve();
+          await finishUsage.promise;
+          return 'usage-id';
+        });
       const text = 'Hello world '.repeat(10).trim();
       const actualCredits = calculateCreditsFromTokens(23, {
         model: 'gemini-3.1-flash-tts-preview',
@@ -2896,9 +2910,10 @@ describe('Generate Voice API Route', () => {
           userHasPaid: true,
         });
         if (outcome === 'post-reconciliation failure') {
-          vi.mocked(insertUsageEvent).mockRejectedValueOnce(
-            new Error('Usage logging failed'),
-          );
+          // The provider-attempt insert precedes the customer usage insert.
+          vi.mocked(insertUsageEvent)
+            .mockResolvedValueOnce('provider-attempt-id')
+            .mockRejectedValueOnce(new Error('Usage logging failed'));
         }
         const response = await POST(
           new Request('http://localhost/api/generate-voice', {

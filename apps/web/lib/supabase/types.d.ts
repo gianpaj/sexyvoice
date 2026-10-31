@@ -712,6 +712,10 @@ declare type Database = {
           source_type: Database['public']['Enums']['usage_source_type'];
           unit: Database['public']['Enums']['usage_unit_type'];
           user_id: string;
+          event_kind: string;
+          input_tokens: number | null;
+          output_tokens: number | null;
+          total_tokens: number | null;
         };
         Insert: {
           api_key_id?: string | null;
@@ -731,6 +735,10 @@ declare type Database = {
           source_type: Database['public']['Enums']['usage_source_type'];
           unit: Database['public']['Enums']['usage_unit_type'];
           user_id: string;
+          event_kind?: string;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          total_tokens?: number | null;
         };
         Update: {
           api_key_id?: string | null;
@@ -750,6 +758,10 @@ declare type Database = {
           source_type?: Database['public']['Enums']['usage_source_type'];
           unit?: Database['public']['Enums']['usage_unit_type'];
           user_id?: string;
+          event_kind?: string;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          total_tokens?: number | null;
         };
         Relationships: [
           {
