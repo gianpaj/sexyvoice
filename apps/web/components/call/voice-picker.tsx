@@ -145,6 +145,7 @@ function VoiceTile({
   disabled,
   onDelete,
   onPick,
+  onUnpick,
 }: {
   voice: VoiceOption;
   selected?: boolean;
@@ -152,6 +153,8 @@ function VoiceTile({
   disabled?: boolean;
   onDelete?: () => void;
   onPick?: () => void;
+  /** Called when the selected tile is clicked again. */
+  onUnpick?: () => void;
 }) {
   const t = useTranslations('call.voices');
   const player = useSamplePlayer();
@@ -189,6 +192,8 @@ function VoiceTile({
           disabled={disabled}
           name="call-voice"
           onChange={onPick}
+          // A checked radio fires click but not change.
+          onClick={selected ? onUnpick : undefined}
           type="radio"
           value={voice.id}
         />
@@ -216,7 +221,10 @@ function VoiceTile({
   );
 }
 
-/** Saved voices on the Clone page: pick one to speak with, or delete it. */
+/**
+ * Saved voices on the Clone page: pick one to speak with, click it again to
+ * go back to a recording, or delete it.
+ */
 export function SavedCallVoices({
   voices,
   selectedId,
@@ -228,7 +236,7 @@ export function SavedCallVoices({
   selectedId: string | null;
   disabled?: boolean;
   onDelete: (voice: SavedCallVoice) => void;
-  onSelect: (voice: SavedCallVoice) => void;
+  onSelect: (voice: SavedCallVoice | null) => void;
 }) {
   const t = useTranslations('call.voices');
   if (!voices.length) return null;
@@ -251,6 +259,7 @@ export function SavedCallVoices({
             key={voice.id}
             onDelete={act(voice.id, onDelete)}
             onPick={act(voice.id, onSelect)}
+            onUnpick={() => onSelect(null)}
             selected={voice.id === selectedId}
             voice={voice}
           />

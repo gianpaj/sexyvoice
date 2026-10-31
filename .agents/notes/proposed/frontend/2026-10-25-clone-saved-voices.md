@@ -14,7 +14,8 @@ populated; profiles without one retain the provider preview. See
 
 Picking a saved voice makes it the speaker for the form. It replaces the
 recording input, language select, consent and enhancement fields: the voice
-already has a language and consent was given when it was saved.
+already has a language and consent was given when it was saved. Clicking the
+selected voice again, or "Use a recording instead", returns to the recording.
 `/api/clone-voice` takes `savedVoiceId` instead of `file`, looks the row up by
 ID and owner, and speaks with the provider voice ID:
 

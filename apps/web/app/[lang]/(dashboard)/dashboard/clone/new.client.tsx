@@ -690,7 +690,8 @@ function NewVoiceClientInner({
           disabled={status === 'generating'}
           onDelete={setVoiceToDelete}
           onSelect={(voice) => {
-            setSelectedVoiceId(voice.id);
+            setSelectedVoiceId(voice?.id ?? null);
+            if (!voice) return;
             setSaveVoiceOnly(false);
             setSavedVoiceId(null);
           }}

@@ -376,6 +376,29 @@ describe('NewVoiceClient', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('unselects a saved voice when it is clicked again', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice],
+      userHasPaid: true,
+    });
+    const voice = screen.getByRole('radio', { name: /My Inworld voice/ });
+    const using = enMessages.clone.savedVoice.using.replace(
+      '{name}',
+      'My Inworld voice',
+    );
+
+    await user.click(voice);
+    expect(voice).toBeChecked();
+    expect(screen.getByText(using)).toBeInTheDocument();
+
+    await user.click(voice);
+    expect(voice).not.toBeChecked();
+    expect(screen.queryByText(using)).not.toBeInTheDocument();
+    expect(screen.getByTestId('clone-legal-consent')).toBeInTheDocument();
+  });
+
   it('stops saving more voices at the limit of 10', () => {
     renderClone({
       cloneMessages: enMessages.clone,
