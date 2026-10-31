@@ -160,8 +160,7 @@ export function InCallView({
   const muted = connected && !isMicrophoneEnabled;
   let status = t('connecting');
   if (muted) status = t('muted');
-  else if (connected && agentState === 'speaking')
-    status = t('speaking', { name: preset.name });
+  else if (connected && agentState === 'speaking') status = t('speaking');
   else if (connected && agentState === 'thinking') status = t('thinking');
   else if (connected && agentState === 'listening') status = t('listening');
 

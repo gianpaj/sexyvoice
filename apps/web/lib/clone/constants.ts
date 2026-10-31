@@ -9,8 +9,8 @@ export const CLONE_MIN_AUDIO_SECONDS: Record<
   CloneProvider | 'inworld',
   number
 > = {
-  inworld: 10,
-  mistral: 10,
+  inworld: 10, // technically 3
+  mistral: 10, // technically 3
   replicate: 10,
 };
 
