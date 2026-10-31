@@ -29,6 +29,7 @@ import {
 } from '@/lib/clone/call-voice-config';
 import {
   CHATTERBOX_SUPPORTED_LOCALE_CODES,
+  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   type CloneProvider,
   resolveBaseCloneLocale,
@@ -93,9 +94,7 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
-const FALLBACK_MIN_DURATION = 10;
 const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
-const SAVED_VOICE_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
 // Select 'voxtral-mini-tts-2603' to compare with the earlier model.
 const VOXTRAL_MODEL: VoxtralModel = 'voxtral-mini-tts-3-0';
@@ -120,10 +119,6 @@ interface ReplicateError {
 }
 
 type ReplicateResponse = ReplicateOutput | ReplicateError;
-
-interface CloneProviderConstraints {
-  minDurationSeconds: number;
-}
 
 interface ProcessedCloneInputAudio {
   audioHash: string;
@@ -246,20 +241,6 @@ function isVoxtralCloneLocale(locale: string): boolean {
 
 function resolveCloneProvider(locale: string): CloneProvider {
   return isVoxtralCloneLocale(locale) ? 'mistral' : 'replicate';
-}
-
-function getCloneProviderConstraints(
-  provider: CloneProvider | CallCloneProvider,
-): CloneProviderConstraints {
-  if (provider !== 'replicate') {
-    return {
-      minDurationSeconds: SAVED_VOICE_MIN_DURATION,
-    };
-  }
-
-  return {
-    minDurationSeconds: FALLBACK_MIN_DURATION,
-  };
 }
 
 function validateContentType(contentType: string): void {
@@ -424,26 +405,26 @@ function validateAudioDuration(
     );
   }
 
-  const constraints = getCloneProviderConstraints(provider);
+  const minSeconds = CLONE_MIN_AUDIO_SECONDS[provider];
 
-  if (duration < constraints.minDurationSeconds) {
+  if (duration < minSeconds) {
     if (provider !== 'replicate') {
       throw createRouteError(
-        `Reference audio must be at least ${constraints.minDurationSeconds} seconds for voice cloning.`,
+        `Reference audio must be at least ${minSeconds} seconds for voice cloning.`,
         400,
         'errors.audioDurationInvalidVoxtral',
         {
-          MIN: constraints.minDurationSeconds,
+          MIN: minSeconds,
         },
       );
     }
 
     throw createRouteError(
-      `Audio must be at least ${constraints.minDurationSeconds} seconds.`,
+      `Audio must be at least ${minSeconds} seconds.`,
       400,
       'errors.audioDurationInvalidFallback',
       {
-        MIN: constraints.minDurationSeconds,
+        MIN: minSeconds,
       },
     );
   }

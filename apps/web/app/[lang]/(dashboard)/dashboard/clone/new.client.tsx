@@ -40,6 +40,7 @@ import {
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
+  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
@@ -232,6 +233,12 @@ function NewVoiceClientInner({
   } = cloneState;
 
   const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocaleCode);
+  // Saving for calls clones with the call provider; otherwise the locale
+  // picks Voxtral or Chatterbox.
+  let referenceProvider: keyof typeof CLONE_MIN_AUDIO_SECONDS = usesVoxtral
+    ? 'mistral'
+    : 'replicate';
+  if (saveVoiceOnly) referenceProvider = callCloneProvider;
   const canSaveVoice = supportsCallCloneLocale(
     callCloneProvider,
     selectedLocaleCode,
@@ -752,6 +759,7 @@ function NewVoiceClientInner({
                     recording: micRecording,
                     status: micStatus,
                   }}
+                  minAudioSeconds={CLONE_MIN_AUDIO_SECONDS[referenceProvider]}
                   selectedLocaleCode={selectedLocaleCode}
                   selectedLocaleName={selectedLocaleName}
                   usesVoxtral={usesVoxtral}

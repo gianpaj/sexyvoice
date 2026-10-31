@@ -34,9 +34,7 @@ interface CloneMic {
   status: MicStatus;
 }
 
-const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
-const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
 
 export function CloneAudioInput({
@@ -44,6 +42,7 @@ export function CloneAudioInput({
   fileActions,
   mic,
   ffmpeg,
+  minAudioSeconds,
   usesVoxtral,
   selectedLocaleCode,
   selectedLocaleName,
@@ -52,6 +51,8 @@ export function CloneAudioInput({
   fileActions: FileUploadResult[1];
   mic: CloneMic;
   ffmpeg: { error: string | null; loading: boolean };
+  /** Shortest clip the provider that will clone this recording accepts. */
+  minAudioSeconds: number;
   usesVoxtral: boolean;
   selectedLocaleCode: string;
   selectedLocaleName: string;
@@ -70,16 +71,13 @@ export function CloneAudioInput({
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
 
-  const minAudioDuration = usesVoxtral
-    ? VOXTRAL_MIN_AUDIO_DURATION_SECONDS
-    : DEFAULT_MIN_AUDIO_DURATION_SECONDS;
   const referenceAudioGuidance = usesVoxtral
     ? formatCloneMessage(t('referenceAudioGuidanceShort'), {
-        MIN: minAudioDuration,
+        MIN: minAudioSeconds,
         TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
       })
     : formatCloneMessage(t('referenceAudioGuidanceLong'), {
-        MIN: minAudioDuration,
+        MIN: minAudioSeconds,
         TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
       });
 

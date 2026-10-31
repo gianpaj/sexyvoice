@@ -24,13 +24,13 @@ import {
   type CallCloneProvider,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
+import { CLONE_MIN_AUDIO_SECONDS } from '@/lib/clone/constants';
 import { readCloneError } from '@/lib/clone/error-message';
 import { createMicrophoneReferenceAudioFile } from '@/lib/clone/microphone-reference-audio';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { PlayingBars } from './listen-button';
 
-const MIN_RECORDING_SECONDS = 10;
 const MAX_RECORDING_SECONDS = 60;
 const MAX_NAME_LENGTH = 50;
 
@@ -69,6 +69,7 @@ export function CloneVoiceDialog({
 }: CloneVoiceDialogProps) {
   const t = useTranslations('call.clone');
   const tClone = useTranslations('clone');
+  const minRecordingSeconds = CLONE_MIN_AUDIO_SECONDS[callCloneProvider];
   const translateErrorCode = useTranslations('errorCodes');
   const player = useSamplePlayer();
   const { convert, ensureLoaded } = useFFmpeg({ lazyLoad: true });
@@ -208,11 +209,11 @@ export function CloneVoiceDialog({
         return;
       }
       if (!recording) {
-        setProblem(t('needRecording', { seconds: MIN_RECORDING_SECONDS }));
+        setProblem(t('needRecording', { seconds: minRecordingSeconds }));
         return;
       }
-      if (seconds < MIN_RECORDING_SECONDS) {
-        setProblem(t('tooShort', { seconds: MIN_RECORDING_SECONDS }));
+      if (seconds < minRecordingSeconds) {
+        setProblem(t('tooShort', { seconds: minRecordingSeconds }));
         return;
       }
     }

@@ -578,7 +578,7 @@ describe('Clone Voice API Route', () => {
     it('should return 400 when Voxtral reference audio duration is too short', async () => {
       const musicMetadata = await import('music-metadata');
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
-        format: { duration: 2 }, // Less than 3 seconds
+        format: { duration: 9 }, // Less than 10 seconds
       } as any);
 
       const formData = createFormDataWithAudio(
@@ -597,11 +597,11 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe(
-        'Reference audio must be at least 3 seconds for voice cloning.',
+        'Reference audio must be at least 10 seconds for voice cloning.',
       );
       expect(json.code).toBe('errors.audioDurationInvalidVoxtral');
       expect(json.details).toMatchObject({
-        MIN: 3,
+        MIN: 10,
       });
     });
 

@@ -235,9 +235,8 @@ flowchart TD
 The Clone page offers **Save a voice for calls** to paid users. Entering from
 `/dashboard/call` selects this mode. It requires a name, permission to save the
 reference, and a locale supported by the selected provider. The same upload validation, WAV
-normalization, trimming, and minimum duration checks apply. Call clones require
-at least three seconds; Inworld references are trimmed to 30 seconds and Mistral
-references to 25 seconds. Audio cleanup is
+normalization, trimming, and minimum duration checks apply. Inworld references
+are trimmed to 30 seconds and Mistral references to 25 seconds. Audio cleanup is
 available only for speech generation.
 
 `POST /api/clone-voice` accepts `saveVoiceName` and `voiceConsent=true` for this
@@ -295,8 +294,9 @@ Hebrew, Malay, Swedish, and Swahili stay on Chatterbox pending confirmation;
 this routing does not establish that Mistral cannot speak them.
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
-Chatterbox accepts 300. Reference audio must be at least 3 seconds for Voxtral
-and 10 seconds for Chatterbox. Longer references are trimmed to 25 seconds for
+Chatterbox accepts 300. Reference audio must be at least 10 seconds for every
+provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
+separately. Longer references are trimmed to 25 seconds for
 Voxtral or 10 seconds for Chatterbox when conversion permits.
 
 Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is

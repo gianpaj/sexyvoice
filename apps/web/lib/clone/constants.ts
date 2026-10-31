@@ -1,5 +1,19 @@
 export type CloneProvider = 'mistral' | 'replicate';
 
+/**
+ * Shortest reference audio accepted per clone provider, in seconds. The
+ * server rejects shorter clips. Each provider has its own entry so one can
+ * change without the others.
+ */
+export const CLONE_MIN_AUDIO_SECONDS: Record<
+  CloneProvider | 'inworld',
+  number
+> = {
+  inworld: 10,
+  mistral: 10,
+  replicate: 10,
+};
+
 export const VOICE_CLONING_MODELS: readonly string[] = [
   'resemble-ai/chatterbox-multilingual',
   'resemble-ai/chatterbox',
