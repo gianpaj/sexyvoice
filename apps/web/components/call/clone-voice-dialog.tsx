@@ -5,7 +5,10 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
-import { MicrophoneVisualizer } from '@/components/audio/microphone-visualizer';
+import {
+  useRecordingSeconds,
+  VoiceRecorder,
+} from '@/components/audio/voice-recorder';
 import {
   Dialog,
   DialogContent,
@@ -50,9 +53,6 @@ interface CloneVoiceDialogProps {
   savedCount: number;
 }
 
-const formatSeconds = (seconds: number) =>
-  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
-
 const secondaryButton =
   'h-11 rounded-[10px] border border-slate-700/70 px-4 font-medium text-[15px] text-slate-200 hover:bg-slate-800/60 disabled:pointer-events-none disabled:opacity-50';
 const primaryButton =
@@ -69,6 +69,7 @@ export function CloneVoiceDialog({
 }: CloneVoiceDialogProps) {
   const t = useTranslations('call.clone');
   const tClone = useTranslations('clone');
+  const tRecorder = useTranslations('voiceRecorder');
   const translateErrorCode = useTranslations('errorCodes');
   const player = useSamplePlayer();
   const { convert, ensureLoaded } = useFFmpeg({ lazyLoad: true });
@@ -85,14 +86,12 @@ export function CloneVoiceDialog({
   const [step, setStep] = useState<Step>('record');
   const [source, setSource] = useState<Source>(initialSource);
   const [recording, setRecording] = useState<Blob | null>(null);
-  const [seconds, setSeconds] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [name, setName] = useState(defaultName);
   const [consent, setConsent] = useState(false);
   const [triedCreate, setTriedCreate] = useState(false);
   const [created, setCreated] = useState<SavedCallVoice | null>(null);
-  const recordingUrl = useRef<string | null>(null);
   // Set when a recording is stopped to be thrown away: `onStop` fires after
   // the state reset and would otherwise bring the take back.
   const discardStop = useRef(false);
@@ -103,12 +102,11 @@ export function CloneVoiceDialog({
   const recorder = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
     onError: () => {
-      if (canRecord) setProblem(t('micError'));
+      if (canRecord) setProblem(tRecorder('micError'));
     },
     onStart: () => {
       discardStop.current = false;
       setRecording(null);
-      setSeconds(0);
       setProblem(null);
     },
     onStop: (blob) => {
@@ -120,11 +118,7 @@ export function CloneVoiceDialog({
     },
   });
   const isRecording = recorder.status === 'recording';
-
-  // A blocked microphone fails inside the recorder without calling onError.
-  useEffect(() => {
-    if (canRecord && recorder.status === 'failed') setProblem(t('micError'));
-  }, [canRecord, recorder.status, t]);
+  const seconds = useRecordingSeconds(isRecording);
 
   const discardRecording = () => {
     if (isRecording) {
@@ -132,31 +126,13 @@ export function CloneVoiceDialog({
       recorder.stopRecording();
     }
     setRecording(null);
-    setSeconds(0);
   };
-
-  useEffect(() => {
-    if (!isRecording) return;
-    const timer = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(timer);
-  }, [isRecording]);
 
   useEffect(() => {
     if (isRecording && seconds >= MAX_RECORDING_SECONDS) {
       recorder.stopRecording();
     }
   }, [isRecording, seconds, recorder]);
-
-  useEffect(() => {
-    if (recordingUrl.current) URL.revokeObjectURL(recordingUrl.current);
-    recordingUrl.current = recording ? URL.createObjectURL(recording) : null;
-  }, [recording]);
-  useEffect(
-    () => () => {
-      if (recordingUrl.current) URL.revokeObjectURL(recordingUrl.current);
-    },
-    [],
-  );
 
   const reset = () => {
     requestRef.current += 1;
@@ -211,10 +187,8 @@ export function CloneVoiceDialog({
         setProblem(t('needRecording', { seconds: MIN_RECORDING_SECONDS }));
         return;
       }
-      if (seconds < MIN_RECORDING_SECONDS) {
-        setProblem(t('tooShort', { seconds: MIN_RECORDING_SECONDS }));
-        return;
-      }
+      // VoiceRecorder already shows the too-short error.
+      if (seconds < MIN_RECORDING_SECONDS) return;
     }
     player.stop();
     setProblem(null);
@@ -290,11 +264,7 @@ export function CloneVoiceDialog({
   ];
   const stepIndex = { confirm: 1, processing: 1, ready: 2, record: 0 }[step];
 
-  const recordPlaying = player.playingKey === 'clone-recording';
   const createdPlaying = player.playingKey === 'clone-created';
-  let recordLabel = t('recordIdle');
-  if (isRecording) recordLabel = t('recording');
-  else if (recording) recordLabel = t('recorded');
 
   const uploadArea = file ? (
     <div className="flex items-center gap-3 rounded-xl border border-slate-700/70 bg-slate-950/70 py-3 pr-2 pl-4">
@@ -457,99 +427,23 @@ export function CloneVoiceDialog({
                       {t('script')}
                     </blockquote>
                   </div>
-                  <div className="flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-3.5">
-                    {isRecording && (
-                      <button
-                        aria-label={t('stopRecording')}
-                        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-red-600 shadow-[0_0_0_6px_rgba(220,38,38,0.22)]"
-                        onClick={recorder.stopRecording}
-                        type="button"
-                      >
-                        <span className="size-4 rounded-[3px] bg-white" />
-                      </button>
-                    )}
-                    {!isRecording && recording && (
-                      <button
-                        aria-label={
-                          recordPlaying ? t('stopPlayback') : t('playRecording')
-                        }
-                        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-violet-700 text-white"
-                        onClick={() =>
-                          player.toggle('clone-recording', recordingUrl.current)
-                        }
-                        type="button"
-                      >
-                        {recordPlaying ? (
-                          <Square
-                            aria-hidden="true"
-                            className="size-[18px] fill-current"
-                          />
-                        ) : (
-                          <Play
-                            aria-hidden="true"
-                            className="size-[18px] fill-current"
-                          />
-                        )}
-                      </button>
-                    )}
-                    {!(isRecording || recording) && (
-                      <button
-                        aria-label={t('startRecording')}
-                        className="flex size-14 shrink-0 items-center justify-center rounded-full bg-red-600 disabled:opacity-50"
-                        disabled={recorder.status === 'acquiring_media'}
-                        onClick={() => {
-                          recorder
-                            .startRecording()
-                            .catch(() => setProblem(t('micError')));
-                        }}
-                        type="button"
-                      >
-                        <span className="size-[18px] rounded-full bg-white" />
-                      </button>
-                    )}
-                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-slate-200 text-sm">
-                          {recordLabel}
-                        </span>
-                        <span
-                          className={cn(
-                            'text-sm tabular-nums',
-                            isRecording ? 'text-red-300' : 'text-slate-400',
-                          )}
-                        >
-                          {formatSeconds(seconds)}
-                        </span>
-                      </div>
-                      <div
-                        aria-hidden="true"
-                        className={cn(
-                          'flex h-9 items-center',
-                          isRecording && 'text-red-400',
-                          !isRecording && recording && 'text-violet-400',
-                          !(isRecording || recording) && 'text-slate-700',
-                        )}
-                      >
-                        <MicrophoneVisualizer
-                          barColor="currentColor"
-                          mediaStream={recorder.mediaStream}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  {!isRecording && recording && (
-                    <button
-                      className="-ml-3 h-10 self-start rounded-lg px-3 font-semibold text-sm text-violet-300 hover:bg-violet-950/40"
-                      onClick={() => {
-                        player.stop();
-                        setRecording(null);
-                        setSeconds(0);
-                      }}
-                      type="button"
-                    >
-                      {t('recordAgain')}
-                    </button>
-                  )}
+                  <VoiceRecorder
+                    idleHint={t('recordIdle')}
+                    isRecording={isRecording}
+                    mediaStream={recorder.mediaStream}
+                    micFailed={canRecord && recorder.status === 'failed'}
+                    minSeconds={MIN_RECORDING_SECONDS}
+                    onRecordAgain={() => setRecording(null)}
+                    onStart={() => {
+                      recorder
+                        .startRecording()
+                        .catch(() => setProblem(tRecorder('micError')));
+                    }}
+                    onStop={recorder.stopRecording}
+                    recording={recording}
+                    seconds={seconds}
+                    starting={recorder.status === 'acquiring_media'}
+                  />
                 </div>
               ) : (
                 uploadArea

@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
@@ -27,6 +33,7 @@ const {
   mockToastError,
   mockToastSuccess,
   mockNavigate,
+  mockRecorder,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   mockAddFiles: vi.fn(),
@@ -37,6 +44,10 @@ const {
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockNavigate: vi.fn(),
+  mockRecorder: {
+    options: {} as { onStart?: () => void; onStop?: (blob: Blob) => void },
+    status: 'idle',
+  },
 }));
 
 const selectedFile = new File([new Uint8Array([1, 2, 3])], 'reference.wav', {
@@ -87,10 +98,6 @@ vi.mock('@/components/audio-player-with-context', () => ({
   AudioPlayerWithContext: () => <div data-testid="audio-player" />,
 }));
 
-vi.mock('@/components/audio/microphone-main', () => ({
-  MicrophoneMain: () => <div data-testid="microphone-main" />,
-}));
-
 vi.mock('@/components/services/toast', () => ({
   toast: {
     error: mockToastError,
@@ -121,16 +128,17 @@ vi.mock('@/hooks/use-file-upload', () => ({
 }));
 
 vi.mock('@/hooks/use-media-recorder', () => ({
-  default: () => ({
-    clearMediaBlob: vi.fn(),
-    clearMediaStream: vi.fn(),
-    getMediaStream: vi.fn(),
-    mediaBlob: null,
-    mediaStream: null,
-    startRecording: vi.fn(),
-    status: 'idle',
-    stopRecording: vi.fn(),
-  }),
+  default: (options: typeof mockRecorder.options) => {
+    mockRecorder.options = options;
+    return {
+      clearMediaStream: vi.fn(),
+      getMediaStream: vi.fn(),
+      mediaStream: null,
+      startRecording: vi.fn(),
+      status: mockRecorder.status,
+      stopRecording: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -268,6 +276,7 @@ const renderClone = (
         generate: enMessages.generate,
         landing: enMessages.landing,
         ttsEditor: enMessages.ttsEditor,
+        voiceRecorder: enMessages.voiceRecorder,
       }}
     >
       <NewVoiceClient
@@ -483,6 +492,7 @@ describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;
+    mockRecorder.status = 'idle';
     mockUpload.files = [{ file: selectedFile, id: 'selected-file' }];
     fetchMock.mockResolvedValue(
       new Response(
@@ -868,4 +878,49 @@ describe('NewVoiceClient', () => {
       await screen.findByText('You need 252 credits to clone this audio.'),
     ).toBeInTheDocument();
   });
+  it.each([
+    { seconds: 2, tooShort: true },
+    { seconds: 3, tooShort: false },
+  ])(
+    'requires 3 seconds of microphone audio to save an Inworld voice ($seconds s)',
+    ({ seconds, tooShort }) => {
+      vi.useFakeTimers();
+      try {
+        mockUpload.files = [];
+        mockRecorder.status = 'recording';
+        renderClone({
+          cloneMessages: enMessages.clone,
+          initialSaveForCalls: true,
+          userHasPaid: true,
+        });
+        act(() => mockRecorder.options.onStart?.());
+        act(() => vi.advanceTimersByTime(seconds * 1000));
+        mockRecorder.status = 'stopped';
+        act(() =>
+          mockRecorder.options.onStop?.(
+            new Blob(['take'], { type: 'audio/webm' }),
+          ),
+        );
+        fireEvent.change(
+          screen.getByLabelText(enMessages.clone.savedVoice.name),
+          { target: { value: 'My voice' } },
+        );
+        fireEvent.click(screen.getByTestId('clone-legal-consent'));
+
+        const error = enMessages.voiceRecorder.tooShort.replace(
+          '{seconds}',
+          '3',
+        );
+        if (tooShort) {
+          expect(screen.getByRole('alert')).toHaveTextContent(error);
+          expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
+        } else {
+          expect(screen.queryByText(error)).not.toBeInTheDocument();
+          expect(screen.getByTestId('clone-generate-button')).toBeEnabled();
+        }
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
 });

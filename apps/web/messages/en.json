@@ -783,13 +783,7 @@
       "uploadFile": "Upload a file",
       "readAloud": "Read this aloud in a quiet room (about 30 seconds):",
       "script": "The morning ferry leaves at seven, so I usually grab a coffee and watch the harbor wake up. Fishermen shout across the water, gulls argue over breakfast, and the whole town smells of salt and fresh bread. On weekends I take the long way home, past the old lighthouse and the market where everyone seems to know my name.",
-      "startRecording": "Start recording",
-      "stopRecording": "Stop recording",
-      "playRecording": "Play back your recording",
-      "stopPlayback": "Stop playback",
       "recordIdle": "Press record, then read the text above",
-      "recording": "Recording…",
-      "recorded": "Recorded",
       "recordAgain": "Record again",
       "dropFile": "Drop an audio file here, or <browse>browse</browse>",
       "fileHint": "MP3, WAV or M4A · up to {size} · one person talking, no music",
@@ -797,9 +791,7 @@
       "fileTooLarge": "This file is larger than {size}.",
       "needRecording": "Record at least {seconds} seconds first.",
       "stopFirst": "Stop the recording first.",
-      "tooShort": "That was a bit short. Record at least {seconds} seconds.",
       "needFile": "Choose an audio file first.",
-      "micError": "We couldn't use your microphone. Allow it in your browser, then try again.",
       "cancel": "Cancel",
       "next": "Next",
       "back": "Back",
@@ -926,6 +918,19 @@
       "deleteFailed": "Couldn't delete the voice. Try again.",
       "limitReached": "You have {max} saved voices, the maximum. Delete one above to save another."
     }
+  },
+  "voiceRecorder": {
+    "idle": "Press record and talk for at least {seconds} seconds",
+    "keepTalking": "Keep talking: {seconds}s to go",
+    "micError": "We couldn't use your microphone. Allow it in your browser, then try again.",
+    "playRecording": "Play back your recording",
+    "recordAgain": "Record again",
+    "recorded": "Recorded",
+    "recording": "Recording…",
+    "startRecording": "Start recording",
+    "stopPlayback": "Stop playback",
+    "stopRecording": "Stop recording",
+    "tooShort": "That was a bit short. Record at least {seconds} seconds."
   },
   "profile": {
     "title": "Profile Settings",

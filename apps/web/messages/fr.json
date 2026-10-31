@@ -785,13 +785,7 @@
       "uploadFile": "Importer un fichier",
       "readAloud": "Lisez ce texte à voix haute dans un endroit calme (environ 30 secondes) :",
       "script": "Le ferry du matin part à sept heures, alors je prends souvent un café en regardant le port se réveiller. Les pêcheurs s'interpellent d'un bateau à l'autre, les mouettes se disputent le petit-déjeuner et toute la ville sent le sel et le pain frais. Le week-end, je rentre par le chemin le plus long, en passant par le vieux phare et le marché où tout le monde semble connaître mon nom.",
-      "startRecording": "Démarrer l'enregistrement",
-      "stopRecording": "Arrêter l'enregistrement",
-      "playRecording": "Écouter votre enregistrement",
-      "stopPlayback": "Arrêter la lecture",
       "recordIdle": "Appuyez sur Enregistrer, puis lisez le texte ci-dessus",
-      "recording": "Enregistrement…",
-      "recorded": "Enregistré",
       "recordAgain": "Réenregistrer",
       "dropFile": "Déposez un fichier audio ici ou <browse>parcourez</browse>",
       "fileHint": "MP3, WAV ou M4A · jusqu'à {size} · une seule personne qui parle, sans musique",
@@ -799,9 +793,7 @@
       "fileTooLarge": "Ce fichier dépasse {size}.",
       "needRecording": "Enregistrez d'abord au moins {seconds} secondes.",
       "stopFirst": "Arrêtez d'abord l'enregistrement.",
-      "tooShort": "C'est un peu court. Enregistrez au moins {seconds} secondes.",
       "needFile": "Choisissez d'abord un fichier audio.",
-      "micError": "Impossible d'utiliser votre microphone. Autorisez-le dans votre navigateur, puis réessayez.",
       "cancel": "Annuler",
       "next": "Suivant",
       "back": "Retour",
@@ -928,6 +920,19 @@
       "deleteFailed": "Impossible de supprimer la voix. Réessayez.",
       "limitReached": "Vous avez {max} voix enregistrées, le maximum. Supprimez-en une ci-dessus pour en enregistrer une autre."
     }
+  },
+  "voiceRecorder": {
+    "idle": "Appuyez sur Enregistrer et parlez au moins {seconds} secondes",
+    "keepTalking": "Continuez à parler : encore {seconds} s",
+    "micError": "Impossible d'utiliser votre microphone. Autorisez-le dans votre navigateur, puis réessayez.",
+    "playRecording": "Écouter votre enregistrement",
+    "recordAgain": "Réenregistrer",
+    "recorded": "Enregistré",
+    "recording": "Enregistrement…",
+    "startRecording": "Démarrer l'enregistrement",
+    "stopPlayback": "Arrêter la lecture",
+    "stopRecording": "Arrêter l'enregistrement",
+    "tooShort": "C'est un peu court. Enregistrez au moins {seconds} secondes."
   },
   "profile": {
     "title": "Paramètres du profil",
