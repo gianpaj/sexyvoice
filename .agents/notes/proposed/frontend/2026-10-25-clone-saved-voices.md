@@ -84,5 +84,5 @@ with its characters named, showing newly saved voices immediately, and the
 call panel's missing-voice state. Route tests cover Inworld and Mistral
 generation by voice ID, the ownership 404, Inworld's text limit, and deletion
 keeping the row when the provider fails. `supabase/tests/audio_references_security.test.sql` checks the `locale`
-column, policies and grants. Not checked: a real Inworld or Mistral request,
-and the pgTAP suite, which needs the pending migrations applied locally.
+column, policies and grants against a database built from migrations. Not
+checked: a real Inworld or Mistral request.
