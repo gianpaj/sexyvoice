@@ -93,6 +93,11 @@ All endpoints except `GET /api/v1/openapi` require
 never raw keys, and displays a raw key only when it is created. API key
 creation requires a paid account and allows at most 10 active keys per user.
 
+`GET /auth.md` serves the public agent credential provisioning guide from
+`apps/web/public/auth.md` with a `text/markdown` content type. The proxy excludes
+this root path from locale routing and session checks. It documents dashboard
+API-key provisioning; the external API does not issue OAuth tokens.
+
 ### Endpoints
 
 | Method | Path              | Description                                             |

@@ -148,7 +148,7 @@ export const config = {
     {
       // api/ is excluded so next-intl never locale-redirects fetch calls.
       source:
-        '/((?!api/|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
+        '/((?!api/|auth\\.md$|\\.well-known/|markdown-internal/|_next/static|_next/image|seguimiento|monitoring|favicon\\.ico|robots\\.txt|manifest\\.json|[a-z]{2}/tools/|.*\\.(?:svg|png|jpg|jpeg|gif|ico|webp|avif|mp3|xml)$).*)',
       // Link prefetches skip the session check. Every URL carries its locale,
       // pages and layouts verify claims themselves, and the navigation
       // request still runs the proxy.
