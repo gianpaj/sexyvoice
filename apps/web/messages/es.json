@@ -751,7 +751,8 @@
       "stop": "Detener muestra de {name}",
       "showAll": "Ver todas ({count})",
       "showFewer": "Ver menos",
-      "delete": "Eliminar {name}"
+      "delete": "Eliminar {name}",
+      "cloneLimit": "Tienes {max} voces. Elimina una en la página Clonar para guardar otra."
     },
     "inCall": {
       "connecting": "Conectando…",
@@ -874,7 +875,8 @@
       "voiceNameAndConsentRequired": "Introduce un nombre de voz (hasta 50 caracteres) y confirma que tienes permiso para guardarla.",
       "savedVoiceRequiresPaid": "Guardar voces requiere una cuenta de pago.",
       "savedVoiceLocaleUnsupported": "Esta opción de idioma no permite guardar voces para llamadas. Elige otro idioma.",
-      "savedVoiceNotFound": "Esta voz guardada ya no existe."
+      "savedVoiceNotFound": "Esta voz guardada ya no existe.",
+      "savedVoiceLimitReached": "Puedes guardar hasta __MAX__ voces. Elimina una para guardar otra."
     },
     "sampleCard": {
       "sourceAudio": "Fuente audio",
@@ -924,7 +926,8 @@
       "deleteConfirm": "Eliminar voz",
       "cancel": "Cancelar",
       "deleted": "{name} eliminada",
-      "deleteFailed": "No se pudo eliminar la voz. Inténtalo de nuevo."
+      "deleteFailed": "No se pudo eliminar la voz. Inténtalo de nuevo.",
+      "limitReached": "Tienes {max} voces guardadas, el máximo. Elimina una arriba para guardar otra."
     }
   },
   "profile": {

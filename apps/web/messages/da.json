@@ -747,7 +747,8 @@
       "stop": "Stop stemmeprøve af {name}",
       "showAll": "Vis alle ({count})",
       "showFewer": "Vis færre",
-      "delete": "Slet {name}"
+      "delete": "Slet {name}",
+      "cloneLimit": "Du har {max} stemmer. Slet en på Klon-siden for at gemme en ny."
     },
     "inCall": {
       "connecting": "Forbinder…",
@@ -870,7 +871,8 @@
       "voiceNameAndConsentRequired": "Indtast et navn (op til 50 tegn), og bekræft, at du har tilladelse til at gemme stemmen.",
       "savedVoiceRequiresPaid": "Du skal have en betalt konto for at gemme stemmer.",
       "savedVoiceLocaleUnsupported": "Denne sprogmulighed understøtter ikke gemte stemmer til opkald. Vælg et andet sprog.",
-      "savedVoiceNotFound": "Denne gemte stemme findes ikke længere."
+      "savedVoiceNotFound": "Denne gemte stemme findes ikke længere.",
+      "savedVoiceLimitReached": "Du kan gemme op til __MAX__ stemmer. Slet en for at gemme en ny."
     },
     "sampleCard": {
       "sourceAudio": "Kildelyd",
@@ -920,7 +922,8 @@
       "deleteConfirm": "Slet stemme",
       "cancel": "Annuller",
       "deleted": "{name} er slettet",
-      "deleteFailed": "Stemmen kunne ikke slettes. Prøv igen."
+      "deleteFailed": "Stemmen kunne ikke slettes. Prøv igen.",
+      "limitReached": "Du har {max} gemte stemmer, som er maksimum. Slet en ovenfor for at gemme en ny."
     }
   },
   "profile": {

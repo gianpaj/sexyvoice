@@ -135,6 +135,20 @@ describe('VoicePicker', () => {
     expect(screen.getByRole('button', { name: 'Show all (9)' })).toBeVisible();
   });
 
+  it('disables Clone a voice at 10 saved voices', () => {
+    const tenVoices = Array.from({ length: 10 }, (_, i) => ({
+      ...saved[0],
+      id: `saved-limit-${i}`,
+    }));
+    renderPicker('Voice 1', tenVoices);
+
+    const cloneTile = screen.getByRole('button', { name: /^Clone a voice/ });
+    expect(cloneTile).toBeDisabled();
+    expect(cloneTile).toHaveTextContent(
+      messages.call.voices.cloneLimit.replace('{max}', '10'),
+    );
+  });
+
   it('has no toggle when every voice fits', () => {
     renderPicker('Voice 1', saved.slice(0, 3));
 

@@ -751,7 +751,8 @@
       "stop": "Stimmprobe von {name} stoppen",
       "showAll": "Alle anzeigen ({count})",
       "showFewer": "Weniger anzeigen",
-      "delete": "{name} löschen"
+      "delete": "{name} löschen",
+      "cloneLimit": "Du hast {max} Stimmen. Lösche eine auf der Seite „Klonen“, um eine neue zu speichern."
     },
     "inCall": {
       "connecting": "Verbinde…",
@@ -874,7 +875,8 @@
       "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
       "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
       "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache.",
-      "savedVoiceNotFound": "Diese gespeicherte Stimme gibt es nicht mehr."
+      "savedVoiceNotFound": "Diese gespeicherte Stimme gibt es nicht mehr.",
+      "savedVoiceLimitReached": "Du kannst bis zu __MAX__ Stimmen speichern. Lösche eine, um eine neue zu speichern."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -924,7 +926,8 @@
       "deleteConfirm": "Stimme löschen",
       "cancel": "Abbrechen",
       "deleted": "{name} gelöscht",
-      "deleteFailed": "Die Stimme konnte nicht gelöscht werden. Versuch es noch einmal."
+      "deleteFailed": "Die Stimme konnte nicht gelöscht werden. Versuch es noch einmal.",
+      "limitReached": "Du hast {max} gespeicherte Stimmen, das Maximum. Lösche oben eine, um eine neue zu speichern."
     }
   },
   "profile": {

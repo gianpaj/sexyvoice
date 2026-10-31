@@ -24,6 +24,7 @@ import {
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import {
   type CallCloneProvider,
+  MAX_SAVED_CALL_VOICES,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
@@ -58,7 +59,10 @@ import {
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
-import { getOwnedCallVoice } from '@/lib/supabase/call-voices';
+import {
+  countSavedCallVoices,
+  getOwnedCallVoice,
+} from '@/lib/supabase/call-voices';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
@@ -1439,6 +1443,13 @@ export async function POST(request: Request) {
           'Saved voices require a paid account',
           403,
           'errors.savedVoiceRequiresPaid',
+        );
+      if ((await countSavedCallVoices(user.id)) >= MAX_SAVED_CALL_VOICES)
+        return routeErrorResponse(
+          'Saved voice limit reached',
+          403,
+          'errors.savedVoiceLimitReached',
+          { MAX: MAX_SAVED_CALL_VOICES },
         );
       const callProvider = getCallCloneProvider();
       if (!supportsCallCloneLocale(callProvider, locale))

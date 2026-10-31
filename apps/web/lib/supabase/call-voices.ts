@@ -18,6 +18,17 @@ export async function getSavedCallVoices(userId: string) {
   return data;
 }
 
+export async function countSavedCallVoices(userId: string) {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from('audio_references')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .in('provider', CALL_CLONE_PROVIDERS);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 export async function getOwnedCallVoice(
   id: string,
   userId: string,

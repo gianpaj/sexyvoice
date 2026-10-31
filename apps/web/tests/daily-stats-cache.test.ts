@@ -60,6 +60,10 @@ vi.mock('@/app/api/daily-stats/queries', () => mocks.queries);
 vi.mock('@/app/api/daily-stats/contribution-queries', () => ({
   getContributionData: mocks.getContributionData,
 }));
+vi.mock('@/lib/clone/inworld', () => ({
+  countInworldWorkspaceVoices: vi.fn().mockResolvedValue(1234),
+  INWORLD_WORKSPACE_VOICE_LIMIT: 3000,
+}));
 
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
 const REPORT_DATE = '2026-09-12';
@@ -236,6 +240,9 @@ describe('GET /api/daily-stats cache', () => {
     expect(report).toContain('$25.00 collected');
     expect(report).toContain('AI usage (est.): $0.00 yesterday | 14d: $0.00');
     expect(report).not.toContain('Estimated usage cost:');
+    expect(report).toContain(
+      '  - Inworld voices: 1,234 / 3,000 workspace limit',
+    );
     expect(
       mocks.queries.getCreditTransactionsInRange,
     ).toHaveBeenCalledExactlyOnceWith(

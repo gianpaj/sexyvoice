@@ -48,8 +48,18 @@ disappear without rewriting characters.
 Rejected: blocking deletion while characters use the voice, and switching
 those characters to a built-in voice without asking.
 
-Inworld voices count against the workspace's custom voice limit (3,000 on
-Builder) shared by all users. There is no per-user cap yet.
+### Voice limits
+
+Each user can keep 10 saved voices (`MAX_SAVED_CALL_VOICES`). The save path
+counts the user's rows before contacting a provider and returns
+`errors.savedVoiceLimitReached`. At the cap, the Clone page disables "Save a
+voice for calls" and the creator disables Clone a voice; both point to
+deleting one. Concurrent saves can pass the count together and exceed the cap
+by one; that is acceptable for a soft limit.
+
+Inworld voices also count against the workspace's custom voice limit, 3,000 on
+Builder, shared by every user. The daily stats report shows the live count
+under Calls, from `GET /voices/v1/voices` filtered to `owned = "true"`.
 
 The Clone page microphone and call clone dialog share
 `components/audio/microphone-visualizer.tsx`. Its nine frequency bands react

@@ -36,6 +36,7 @@ import {
 } from '@/lib/clone/api-types';
 import {
   type CallCloneProvider,
+  MAX_SAVED_CALL_VOICES,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
@@ -177,7 +178,9 @@ function NewVoiceClientInner({
   const t = useTranslations('clone');
   const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
   const [saveVoiceOnly, setSaveVoiceOnly] = useState(
-    initialSaveForCalls && userHasPaid,
+    initialSaveForCalls &&
+      userHasPaid &&
+      initialSavedVoices.length < MAX_SAVED_CALL_VOICES,
   );
   const [voiceName, setVoiceName] = useState('');
   const [savedVoiceId, setSavedVoiceId] = useState<string | null>(null);
@@ -188,6 +191,7 @@ function NewVoiceClientInner({
   );
   const selectedVoice =
     savedVoices.find((voice) => voice.id === selectedVoiceId) ?? null;
+  const atVoiceLimit = savedVoices.length >= MAX_SAVED_CALL_VOICES;
   const translateErrorCode = useTranslations('errorCodes');
   const demoLabels = useTranslations('landing.demoClone');
   const {
@@ -670,7 +674,9 @@ function NewVoiceClientInner({
         (saveVoiceOnly ? voiceName.trim() : text.trim())
       ) ||
       (saveVoiceOnly &&
-        (!(canSaveVoice && userHasPaid) || Boolean(savedVoiceId))) ||
+        (!(canSaveVoice && userHasPaid) ||
+          Boolean(savedVoiceId) ||
+          atVoiceLimit)) ||
       status === 'generating' ||
       !(saveVoiceOnly || hasEnoughCredits) ||
       convertingMicAudio ||
@@ -776,7 +782,10 @@ function NewVoiceClientInner({
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={saveVoiceOnly}
-                      disabled={status === 'generating'}
+                      disabled={
+                        status === 'generating' ||
+                        (atVoiceLimit && !saveVoiceOnly)
+                      }
                       id="save-voice-only"
                       onCheckedChange={(checked) => {
                         setSaveVoiceOnly(checked === true);
@@ -787,6 +796,13 @@ function NewVoiceClientInner({
                       {t('savedVoice.modeLabel')}
                     </Label>
                   </div>
+                )}
+                {userHasPaid && !selectedVoice && atVoiceLimit && (
+                  <p className="text-muted-foreground text-sm">
+                    {t('savedVoice.limitReached', {
+                      max: MAX_SAVED_CALL_VOICES,
+                    })}
+                  </p>
                 )}
                 {saveVoiceOnly ? (
                   <div className="space-y-2">

@@ -751,7 +751,8 @@
       "stop": "Arrêter l'extrait de {name}",
       "showAll": "Tout afficher ({count})",
       "showFewer": "Afficher moins",
-      "delete": "Supprimer {name}"
+      "delete": "Supprimer {name}",
+      "cloneLimit": "Vous avez {max} voix. Supprimez-en une sur la page Cloner pour en enregistrer une autre."
     },
     "inCall": {
       "connecting": "Connexion…",
@@ -874,7 +875,8 @@
       "voiceNameAndConsentRequired": "Saisissez un nom (50 caractères maximum) et confirmez que vous avez l’autorisation d’enregistrer cette voix.",
       "savedVoiceRequiresPaid": "Un compte payant est nécessaire pour enregistrer des voix.",
       "savedVoiceLocaleUnsupported": "Cette option de langue ne permet pas d’enregistrer une voix pour les appels. Choisissez une autre langue.",
-      "savedVoiceNotFound": "Cette voix enregistrée n’existe plus."
+      "savedVoiceNotFound": "Cette voix enregistrée n’existe plus.",
+      "savedVoiceLimitReached": "Vous pouvez enregistrer jusqu’à __MAX__ voix. Supprimez-en une pour en enregistrer une autre."
     },
     "sampleCard": {
       "sourceAudio": "Audio source",
@@ -924,7 +926,8 @@
       "deleteConfirm": "Supprimer la voix",
       "cancel": "Annuler",
       "deleted": "{name} supprimée",
-      "deleteFailed": "Impossible de supprimer la voix. Réessayez."
+      "deleteFailed": "Impossible de supprimer la voix. Réessayez.",
+      "limitReached": "Vous avez {max} voix enregistrées, le maximum. Supprimez-en une ci-dessus pour en enregistrer une autre."
     }
   },
   "profile": {

@@ -8,6 +8,10 @@ const cloneResponse = z.object({
   voice: z.object({ voiceId: z.string().min(1) }),
 });
 const previewResponse = z.object({ audioContent: z.string().min(1) });
+// Proto3 JSON omits zero, and may encode counts as strings.
+const listVoicesResponse = z.object({
+  totalSize: z.coerce.number().int().nonnegative().default(0),
+});
 
 async function inworldRequest(path: string, init?: RequestInit) {
   const apiKey = process.env.INWORLD_API_KEY;
@@ -59,6 +63,18 @@ export async function saveInworldVoice(
 }
 
 export const INWORLD_TTS_MODEL = 'inworld-tts-2';
+/** Custom voices allowed in the workspace on the Builder plan. */
+export const INWORLD_WORKSPACE_VOICE_LIMIT = 3000;
+
+/** Custom voices in the workspace: clones and designs, not system voices. */
+export async function countInworldWorkspaceVoices() {
+  const query = new URLSearchParams({
+    filter: 'owned = "true"',
+    pageSize: '1',
+  });
+  const response = await inworldRequest(`/voices/v1/voices?${query}`);
+  return listVoicesResponse.parse(await response.json()).totalSize;
+}
 
 /** Speaks `text` in a workspace voice and returns a WAV file. */
 export async function synthesizeInworldSpeech(voiceId: string, text: string) {

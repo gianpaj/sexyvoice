@@ -749,7 +749,8 @@
       "stop": "Stop {name} sample",
       "showAll": "Show all ({count})",
       "showFewer": "Show fewer",
-      "delete": "Delete {name}"
+      "delete": "Delete {name}",
+      "cloneLimit": "You have {max} voices. Delete one on the Clone page to save another."
     },
     "inCall": {
       "connecting": "Connecting…",
@@ -872,7 +873,8 @@
       "voiceNameAndConsentRequired": "Enter a voice name (up to 50 characters) and confirm you have permission to save it.",
       "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
       "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language.",
-      "savedVoiceNotFound": "This saved voice no longer exists."
+      "savedVoiceNotFound": "This saved voice no longer exists.",
+      "savedVoiceLimitReached": "You can save up to __MAX__ voices. Delete one to save another."
     },
     "sampleCard": {
       "sourceAudio": "Source audio",
@@ -922,7 +924,8 @@
       "deleteConfirm": "Delete voice",
       "cancel": "Cancel",
       "deleted": "{name} deleted",
-      "deleteFailed": "Couldn't delete the voice. Try again."
+      "deleteFailed": "Couldn't delete the voice. Try again.",
+      "limitReached": "You have {max} saved voices, the maximum. Delete one above to save another."
     }
   },
   "profile": {

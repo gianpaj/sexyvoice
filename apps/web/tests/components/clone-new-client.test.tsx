@@ -376,6 +376,33 @@ describe('NewVoiceClient', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('stops saving more voices at the limit of 10', () => {
+    renderClone({
+      cloneMessages: enMessages.clone,
+      initialSaveForCalls: true,
+      savedVoices: Array.from({ length: 10 }, (_, index) => ({
+        ...inworldVoice,
+        id: `reference-${index}`,
+        name: `Voice ${index}`,
+      })),
+      userHasPaid: true,
+    });
+
+    expect(
+      screen.getByRole('checkbox', {
+        name: enMessages.clone.savedVoice.modeLabel,
+      }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByLabelText(enMessages.clone.savedVoice.name),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        enMessages.clone.savedVoice.limitReached.replace('{max}', '10'),
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('deletes a saved voice after naming the characters that use it', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ deleted: true }), { status: 200 }),

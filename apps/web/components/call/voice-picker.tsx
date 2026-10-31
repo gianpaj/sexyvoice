@@ -19,6 +19,7 @@ import {
   savedVoiceSampleUrl,
   withCallVoice,
 } from '@/lib/call-voices';
+import { MAX_SAVED_CALL_VOICES } from '@/lib/clone/call-voice-config';
 import { cn } from '@/lib/utils';
 import { ListenButton } from './listen-button';
 
@@ -290,6 +291,7 @@ export function VoicePicker({
   savedVoices,
 }: VoicePickerProps) {
   const t = useTranslations('call.voices');
+  const atVoiceLimit = savedVoices.length >= MAX_SAVED_CALL_VOICES;
 
   const saved: VoiceOption[] = savedVoices.map((voice) => ({
     description: t('clonedVoice'),
@@ -347,7 +349,7 @@ export function VoicePicker({
             onCloneVoice && (
               <button
                 className="flex min-h-[68px] items-center gap-3 rounded-xl border-[1.5px] border-violet-800/80 border-dashed bg-slate-950/40 px-3.5 py-3 text-left transition-colors hover:bg-violet-950/40 disabled:pointer-events-none disabled:opacity-50"
-                disabled={disabled}
+                disabled={disabled || atVoiceLimit}
                 onClick={onCloneVoice}
                 type="button"
               >
@@ -362,7 +364,9 @@ export function VoicePicker({
                     {t('cloneTitle')}
                   </span>
                   <span className="text-[13px] text-slate-400">
-                    {t('cloneBody')}
+                    {atVoiceLimit
+                      ? t('cloneLimit', { max: MAX_SAVED_CALL_VOICES })
+                      : t('cloneBody')}
                   </span>
                 </span>
               </button>

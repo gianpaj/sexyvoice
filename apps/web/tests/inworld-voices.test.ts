@@ -8,6 +8,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { supportsCallCloneLocale } from '@/lib/clone/call-voice-config';
 import {
+  countInworldWorkspaceVoices,
   deleteInworldVoice,
   getInworldVoiceSample,
   saveInworldVoice,
@@ -39,6 +40,20 @@ it('treats an already deleted Inworld voice as successful cleanup', async () => 
     'https://api.inworld.ai/voices/v1/voices/voice%2Fid',
     expect.objectContaining({ method: 'DELETE' }),
   );
+});
+
+it.each([
+  [{ totalSize: 42 }, 42],
+  [{ totalSize: '7' }, 7],
+  [{}, 0],
+])('counts custom workspace voices from %j', async (body, count) => {
+  const request = vi.fn().mockResolvedValue(Response.json(body));
+  vi.stubGlobal('fetch', request);
+  await expect(countInworldWorkspaceVoices()).resolves.toBe(count);
+  const url = new URL(request.mock.calls[0][0]);
+  expect(url.pathname).toBe('/voices/v1/voices');
+  expect(url.searchParams.get('filter')).toBe('owned = "true"');
+  expect(url.searchParams.get('pageSize')).toBe('1');
 });
 
 describe('call clone provider configuration', () => {

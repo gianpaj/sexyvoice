@@ -751,7 +751,8 @@
       "stop": "Ferma l'anteprima di {name}",
       "showAll": "Mostra tutte ({count})",
       "showFewer": "Mostra meno",
-      "delete": "Elimina {name}"
+      "delete": "Elimina {name}",
+      "cloneLimit": "Hai {max} voci. Eliminane una nella pagina Clona per salvarne un'altra."
     },
     "inCall": {
       "connecting": "Connessione…",
@@ -874,7 +875,8 @@
       "voiceNameAndConsentRequired": "Inserisci un nome (fino a 50 caratteri) e conferma di avere il permesso di salvare la voce.",
       "savedVoiceRequiresPaid": "Per salvare le voci è necessario un account a pagamento.",
       "savedVoiceLocaleUnsupported": "Questa opzione di lingua non permette di salvare voci per le chiamate. Scegli un’altra lingua.",
-      "savedVoiceNotFound": "Questa voce salvata non esiste più."
+      "savedVoiceNotFound": "Questa voce salvata non esiste più.",
+      "savedVoiceLimitReached": "Puoi salvare fino a __MAX__ voci. Eliminane una per salvarne un'altra."
     },
     "sampleCard": {
       "sourceAudio": "Audio sorgente",
@@ -924,7 +926,8 @@
       "deleteConfirm": "Elimina voce",
       "cancel": "Annulla",
       "deleted": "{name} eliminata",
-      "deleteFailed": "Impossibile eliminare la voce. Riprova."
+      "deleteFailed": "Impossibile eliminare la voce. Riprova.",
+      "limitReached": "Hai {max} voci salvate, il massimo. Eliminane una qui sopra per salvarne un'altra."
     }
   },
   "profile": {

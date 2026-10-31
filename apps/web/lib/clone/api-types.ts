@@ -14,6 +14,7 @@ export type CloneRouteErrorCode =
   | 'errors.savedVoiceRequiresPaid'
   | 'errors.savedVoiceLocaleUnsupported'
   | 'errors.savedVoiceNotFound'
+  | 'errors.savedVoiceLimitReached'
   | 'errors.audioConversionFailed'
   | 'errors.audioConversionRequiredWebm'
   | 'errors.audioDurationInvalidFallback'

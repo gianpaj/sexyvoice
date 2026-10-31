@@ -18,11 +18,13 @@ import {
 } from './setup';
 
 const {
+  mockCountSavedCallVoices,
   mockGetOwnedCallVoice,
   mockSaveMistralVoice,
   mockSaveInworldVoice,
   mockSynthesizeInworldSpeech,
 } = vi.hoisted(() => ({
+  mockCountSavedCallVoices: vi.fn().mockResolvedValue(0),
   mockGetOwnedCallVoice: vi.fn(),
   mockSaveMistralVoice: vi.fn(),
   mockSaveInworldVoice: vi.fn(),
@@ -34,6 +36,7 @@ vi.mock('@/lib/clone/inworld', () => ({
   synthesizeInworldSpeech: mockSynthesizeInworldSpeech,
 }));
 vi.mock('@/lib/supabase/call-voices', () => ({
+  countSavedCallVoices: mockCountSavedCallVoices,
   getOwnedCallVoice: mockGetOwnedCallVoice,
 }));
 vi.mock('@/lib/clone/mistral', async (importOriginal) => ({
@@ -138,6 +141,27 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     },
   );
+
+  it('refuses to save an 11th voice before contacting a provider', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockCountSavedCallVoices.mockResolvedValueOnce(10);
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    const json = await response.json();
+    expect(response.status).toBe(403);
+    expect(json.code).toBe('errors.savedVoiceLimitReached');
+    expect(json.details).toEqual({ MAX: 10 });
+    expect(mockCountSavedCallVoices).toHaveBeenCalledWith('test-user-id');
+    expect(mockSaveInworldVoice).not.toHaveBeenCalled();
+  });
 
   it.each(['en', 'pl', 'da', 'en-multi'])(
     'creates a new Inworld call clone for %s when configured',
