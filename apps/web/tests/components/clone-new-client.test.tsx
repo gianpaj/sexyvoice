@@ -376,6 +376,24 @@ describe('NewVoiceClient', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('offers Voxtral voice effects only when Voxtral speaks', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice, mistralVoice],
+      userHasPaid: true,
+    });
+    const effects = { name: enMessages.ttsEditor.effects };
+    expect(await screen.findByRole('button', effects)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
+    expect(screen.queryByRole('button', effects)).not.toBeInTheDocument();
+    expect(screen.getByTestId('clone-text-input').tagName).toBe('TEXTAREA');
+
+    await user.click(screen.getByRole('radio', { name: /My Mistral voice/ }));
+    expect(await screen.findByRole('button', effects)).toBeInTheDocument();
+  });
+
   it('unselects a saved voice when it is clicked again', async () => {
     const user = userEvent.setup();
     renderClone({
