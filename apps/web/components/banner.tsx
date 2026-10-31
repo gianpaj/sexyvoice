@@ -2,11 +2,11 @@
 
 import { XIcon } from 'lucide-react';
 import Link from 'next/link';
-import { Fragment, useEffect, useState } from 'react';
+import { type CSSProperties, Fragment, useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { isBannerCountdownExpired } from '@/lib/banners/countdown';
-import type { ResolvedBanner } from '@/lib/banners/types';
+import type { BannerArtwork, ResolvedBanner } from '@/lib/banners/types';
 import { getCookie, setCookie } from '@/lib/cookies';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +39,76 @@ function calculateTimeRemaining(endDate: string): TimeRemaining | null {
     minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
     seconds: Math.floor((distance % (1000 * 60)) / 1000),
   };
+}
+
+function ArtworkPicture({
+  artwork,
+  className,
+}: {
+  artwork: BannerArtwork;
+  className: string;
+}) {
+  return (
+    <picture>
+      <source media="(width < 40rem)" srcSet={artwork.mobile.src} />
+      {/* biome-ignore lint/performance/noImgElement: next/image cannot swap art-directed sources */}
+      <img
+        alt=""
+        className={className}
+        height={artwork.desktop.height}
+        src={artwork.desktop.src}
+        width={artwork.desktop.width}
+      />
+    </picture>
+  );
+}
+
+/**
+ * Pins each half of the artwork to its banner edge at full banner height, so
+ * the corner decorations stay whole at any banner size. Each half is at most
+ * half the image wide, so wide banners never repeat the art. Inner edges fade
+ * into a blurred copy that fills the empty middle.
+ */
+function BannerArtworkLayer({ artwork }: { artwork: BannerArtwork }) {
+  const style = {
+    '--artwork-desktop-half': `${artwork.desktop.width / 2} / ${artwork.desktop.height}`,
+    '--artwork-mobile-half': `${artwork.mobile.width / 2} / ${artwork.mobile.height}`,
+  } as CSSProperties;
+  const half =
+    'absolute inset-y-0 aspect-(--artwork-mobile-half) max-w-1/2 overflow-hidden sm:aspect-(--artwork-desktop-half)';
+  const halfImage = 'absolute inset-y-0 h-full w-auto max-w-none';
+
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      style={style}
+    >
+      <ArtworkPicture
+        artwork={artwork}
+        className="absolute inset-0 size-full scale-125 object-cover blur-2xl"
+      />
+      <div
+        className={cn(
+          half,
+          'left-0 [mask-image:linear-gradient(to_right,black_55%,transparent)]',
+        )}
+      >
+        <ArtworkPicture artwork={artwork} className={cn(halfImage, 'left-0')} />
+      </div>
+      <div
+        className={cn(
+          half,
+          'right-0 [mask-image:linear-gradient(to_left,black_55%,transparent)]',
+        )}
+      >
+        <ArtworkPicture
+          artwork={artwork}
+          className={cn(halfImage, 'right-0')}
+        />
+      </div>
+    </div>
+  );
 }
 
 export function Banner({
@@ -154,10 +224,12 @@ export function Banner({
       className={cn('w-full', {
         'shrink-0 border-promo-accent/20 border-b bg-promo-primary-dark/50':
           inDashboard,
+        'relative isolate': banner.artwork,
       })}
       data-dashboard-banner={inDashboard ? '' : undefined}
       data-promo-theme={banner.theme}
     >
+      {banner.artwork && <BannerArtworkLayer artwork={banner.artwork} />}
       <div
         className={cn(
           'relative mx-auto flex flex-col items-center gap-3 text-white',

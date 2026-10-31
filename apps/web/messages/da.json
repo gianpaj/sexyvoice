@@ -1009,8 +1009,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween-tilbud – Få op til 35% ekstra kreditter ved køb 👻\nTidsbegrænset tilbud 🦇",
-      "ctaLoggedIn": "Få tilbud 🎃",
-      "ctaLoggedOut": "Tilmeld dig nu 🎃",
+      "ctaLoggedIn": "Få tilbud",
+      "ctaLoggedOut": "Få tilbud",
       "ariaLabelDismiss": "Luk Halloween-banner",
       "pricing": {
         "bannerText": "🎃 Halloween-tilbud"
