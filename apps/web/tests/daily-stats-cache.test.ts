@@ -209,7 +209,11 @@ describe('GET /api/daily-stats cache', () => {
   it('refreshes only 30 days of collections for cached activity', async () => {
     const cached = {
       ...validCache(),
-      audioYesterdayResult: { count: 1, data: [{ model: 'xai' }], error: null },
+      audioYesterdayResult: {
+        count: 2,
+        data: [{ model: 'xai' }, { model: 'inworld-tts-2' }],
+        error: null,
+      },
     };
     mocks.existsSync.mockReturnValue(true);
     mocks.readFileSync.mockReturnValue(JSON.stringify(cached));
@@ -243,6 +247,8 @@ describe('GET /api/daily-stats cache', () => {
     expect(report).toContain(
       '  - Inworld voices: 1,234 / 3,000 workspace limit',
     );
+    // Inworld clones count under Cloned, not Top models.
+    expect(report).toMatch(/Top models: (?!.*Inworld).*$/m);
     expect(
       mocks.queries.getCreditTransactionsInRange,
     ).toHaveBeenCalledExactlyOnceWith(

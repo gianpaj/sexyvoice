@@ -641,7 +641,11 @@ export async function GET(request: NextRequest) {
       )
     : undefined;
 
-  const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
+  const cloneModelLabels = new Set([
+    'Chatterbox',
+    'Inworld Clone',
+    'Voxtral Clone',
+  ]);
   const modelCounts = new Map<string, number>();
   for (const audio of audioYesterdayData) {
     const modelName = normalizeModelName(audio.model);
