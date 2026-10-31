@@ -41,7 +41,7 @@ function calculateTimeRemaining(endDate: string): TimeRemaining | null {
   };
 }
 
-function BannerArtworkImage({
+function ArtworkPicture({
   artwork,
   className,
 }: {
@@ -50,7 +50,7 @@ function BannerArtworkImage({
 }) {
   return (
     <picture>
-      <source media="(max-width: 639px)" srcSet={artwork.mobile.src} />
+      <source media="(width < 40rem)" srcSet={artwork.mobile.src} />
       {/* biome-ignore lint/performance/noImgElement: next/image cannot swap art-directed sources */}
       <img
         alt=""
@@ -81,10 +81,10 @@ function BannerArtworkLayer({ artwork }: { artwork: BannerArtwork }) {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10"
+      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       style={style}
     >
-      <BannerArtworkImage
+      <ArtworkPicture
         artwork={artwork}
         className="absolute inset-0 size-full scale-125 object-cover blur-2xl"
       />
@@ -94,10 +94,7 @@ function BannerArtworkLayer({ artwork }: { artwork: BannerArtwork }) {
           'left-0 [mask-image:linear-gradient(to_right,black_55%,transparent)]',
         )}
       >
-        <BannerArtworkImage
-          artwork={artwork}
-          className={cn(halfImage, 'left-0')}
-        />
+        <ArtworkPicture artwork={artwork} className={cn(halfImage, 'left-0')} />
       </div>
       <div
         className={cn(
@@ -105,7 +102,7 @@ function BannerArtworkLayer({ artwork }: { artwork: BannerArtwork }) {
           'right-0 [mask-image:linear-gradient(to_left,black_55%,transparent)]',
         )}
       >
-        <BannerArtworkImage
+        <ArtworkPicture
           artwork={artwork}
           className={cn(halfImage, 'right-0')}
         />
@@ -227,7 +224,7 @@ export function Banner({
       className={cn('w-full', {
         'shrink-0 border-promo-accent/20 border-b bg-promo-primary-dark/50':
           inDashboard,
-        'relative isolate overflow-hidden': banner.artwork,
+        'relative isolate': banner.artwork,
       })}
       data-dashboard-banner={inDashboard ? '' : undefined}
       data-promo-theme={banner.theme}

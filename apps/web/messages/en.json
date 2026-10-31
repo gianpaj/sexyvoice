@@ -1011,8 +1011,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
-      "ctaLoggedIn": "Claim Offer",
-      "ctaLoggedOut": "Claim Offer",
+      "ctaLoggedIn": "Claim offer",
+      "ctaLoggedOut": "Claim offer",
       "ariaLabelDismiss": "Dismiss Halloween banner",
       "pricing": {
         "bannerText": "🎃 Halloween Special"
