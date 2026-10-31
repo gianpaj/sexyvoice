@@ -70,16 +70,22 @@ function AudioPlayer({ blob }: { blob: Blob }) {
 }
 
 function DeviceSelectDropdown() {
-  const deviceSelect = usePersistentMediaDevice();
+  const [listRequested, setListRequested] = useState(false);
+  const deviceSelect = usePersistentMediaDevice({
+    requestPermissions: listRequested,
+  });
+  // Firefox lists one placeholder without an ID until the microphone is used.
+  const devices = deviceSelect.devices.filter((device) => device.deviceId);
 
   const handleDeviceChange = (deviceId: string) => {
     deviceSelect.setActiveMediaDevice(deviceId);
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => open && setListRequested(true)}>
       <DropdownMenuTrigger asChild>
         <Button
+          aria-label="Choose microphone"
           className="rounded-l-none border-gray-700 border-l px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
           variant="secondary"
         >
@@ -96,7 +102,7 @@ function DeviceSelectDropdown() {
           Available inputs
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {deviceSelect.devices.map((device) => (
+        {devices.map((device) => (
           <DropdownMenuCheckboxItem
             checked={device.deviceId === deviceSelect.activeDeviceId}
             className="text-xs"
