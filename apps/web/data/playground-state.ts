@@ -1,4 +1,5 @@
 import { defaultSessionConfig, instructions } from './default-config';
+import { ModelId } from './models';
 import type { Preset } from './presets';
 import type { SessionConfig } from './session-config';
 
@@ -71,6 +72,28 @@ export const languageInitialInstructions: Record<CallLanguage, string> = {
 };
 
 export const defaultLanguage: CallLanguage = 'en';
+
+// `<breathy>` is a Grok realtime cue. Cloned-voice pipelines send the LLM's
+// reply to a TTS model that only reads square-bracket tags, so the LLM must
+// not copy it. Inworld's delivery comes from the agent's steering tag.
+const BREATHY_TAG = /<\/?breathy>/g;
+const TTS_PIPELINE_MODELS: readonly string[] = [
+  ModelId.INWORLD_TTS,
+  ModelId.MISTRAL_TTS,
+];
+
+/** The greeting instruction sent to the agent for a call. */
+export function getInitialInstruction(
+  language: CallLanguage,
+  model: string,
+): string {
+  const instruction =
+    languageInitialInstructions[language] ||
+    languageInitialInstructions[defaultLanguage];
+  return TTS_PIPELINE_MODELS.includes(model)
+    ? instruction.replace(BREATHY_TAG, '')
+    : instruction;
+}
 
 /** Unsaved character fields in the creator. */
 export interface CustomCallDraft {

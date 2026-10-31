@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { callScenes } from '@/data/call-scenes';
 import {
   defaultLanguage,
+  getInitialInstruction,
   languageInitialInstructions,
 } from '@/data/playground-state';
 import {
@@ -255,9 +256,7 @@ export async function POST(request: Request) {
     // Create metadata for agent to start with
     const metadata = {
       character_id: selectedPresetId,
-      initial_instruction:
-        languageInitialInstructions[selectedLanguage] ||
-        languageInitialInstructions[defaultLanguage],
+      initial_instruction: getInitialInstruction(selectedLanguage, model),
       instructions: resolvedInstructions,
       language: selectedLanguage,
       max_output_tokens: maxOutputTokens,
