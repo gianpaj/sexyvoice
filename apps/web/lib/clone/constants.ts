@@ -5,6 +5,8 @@ export const VOICE_CLONING_MODELS: readonly string[] = [
   'resemble-ai/chatterbox',
   'voxtral-mini-tts-2603',
   'voxtral-mini-tts-3-0',
+  // Saved Inworld voices; no other path stores this model.
+  'inworld-tts-2',
 ];
 
 // Confirmed TTS languages; Mistral does not enumerate its full 35-language set.

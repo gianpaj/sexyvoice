@@ -9,13 +9,14 @@ vi.mock('@/lib/supabase/admin', () => ({
 
 afterEach(() => vi.unstubAllEnvs());
 
-it('counts both Voxtral versions and Chatterbox as clones in Wrapped totals', async () => {
+it('counts Voxtral, Chatterbox and saved Inworld voices as clones in Wrapped totals', async () => {
   vi.stubEnv('NODE_ENV', 'development');
   const audio = [
     'voxtral-mini-tts-2603',
     'voxtral-mini-tts-3-0',
     'resemble-ai/chatterbox',
     'resemble-ai/chatterbox-multilingual',
+    'inworld-tts-2',
     'gemini-2.5-pro',
   ].map((model, index) => ({
     created_at: '2026-10-01T00:00:00Z',
@@ -41,7 +42,7 @@ it('counts both Voxtral versions and Chatterbox as clones in Wrapped totals', as
   const response = await GET();
   expect(response.status).toBe(200);
   expect(await response.json()).toMatchObject({
-    totalAudioFiles: 5,
-    totalClonedAudioFiles: 4,
+    totalAudioFiles: 6,
+    totalClonedAudioFiles: 5,
   });
 });
