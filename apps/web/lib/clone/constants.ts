@@ -78,3 +78,5 @@ export const RTL_CLONE_LOCALE_CODES = new Set(['ar', 'he']);
 export const CLONE_TEXT_MAX_LENGTH_NON_VOXTRAL = 300;
 export const CLONE_TEXT_MAX_LENGTH_VOXTRAL_FREE = 1000;
 export const CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID = 4000;
+/** Inworld's non-streaming limit, in UTF-16 code units. */
+export const INWORLD_TEXT_MAX_LENGTH = 2000;

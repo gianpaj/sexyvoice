@@ -14,6 +14,22 @@ export function callVoiceProvider(model: string): CallCloneProvider | null {
   return null;
 }
 
+/** Names of the characters that use each saved voice, by voice ID. */
+export function savedVoiceUsers(
+  characters: { name: string; session_config: unknown }[],
+) {
+  const users: Record<string, string[]> = {};
+  for (const { name, session_config } of characters) {
+    const id = (session_config as { audioReferenceId?: unknown } | null)
+      ?.audioReferenceId;
+    if (typeof id === 'string') {
+      users[id] ??= [];
+      users[id].push(name);
+    }
+  }
+  return users;
+}
+
 // The shared cloned-audio voice row satisfies legacy voices foreign keys.
 // The actual profile is identified by session_config.audioReferenceId.
 export const CLONED_VOICE_ID = '420c4014-7d6d-44ef-b87d-962a3124a170';

@@ -653,7 +653,10 @@
       "micBlockedHelp": "{name} can't hear you yet. Click the lock icon next to the web address, set Microphone to Allow, then try again.",
       "tryAgain": "Try again",
       "makeYourOwn": "Make your own version",
-      "missingPersonality": "Add a personality before you call {name}."
+      "missingPersonality": "Add a personality before you call {name}.",
+      "noVoice": "No voice",
+      "noVoiceHelp": "{name}'s voice was deleted. Choose a new one to call.",
+      "chooseVoice": "Choose a voice"
     },
     "creator": {
       "back": "Voice calls",
@@ -745,7 +748,8 @@
       "play": "Play {name} sample",
       "stop": "Stop {name} sample",
       "showAll": "Show all ({count})",
-      "showFewer": "Show fewer"
+      "showFewer": "Show fewer",
+      "delete": "Delete {name}"
     },
     "inCall": {
       "connecting": "Connecting…",
@@ -867,7 +871,8 @@
       "userNotFound": "Please sign in to clone a voice.",
       "voiceNameAndConsentRequired": "Enter a voice name (up to 50 characters) and confirm you have permission to save it.",
       "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
-      "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language."
+      "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language.",
+      "savedVoiceNotFound": "This saved voice no longer exists."
     },
     "sampleCard": {
       "sourceAudio": "Source audio",
@@ -908,7 +913,16 @@
       "save": "Save voice",
       "success": "Voice saved",
       "useInCall": "Use voice in a call →",
-      "backToCall": "Back to call"
+      "backToCall": "Back to call",
+      "using": "Generating with your saved voice {name}.",
+      "useRecording": "Use a recording instead",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "The voice is removed for good. Audio you already generated stays in History.",
+      "deleteUsedBy": "Used by {names}. They'll need a new voice before their next call. Audio you already generated stays in History.",
+      "deleteConfirm": "Delete voice",
+      "cancel": "Cancel",
+      "deleted": "{name} deleted",
+      "deleteFailed": "Couldn't delete the voice. Try again."
     }
   },
   "profile": {

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Mic } from 'lucide-react';
+import { ChevronDown, Mic, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   type ReactNode,
@@ -142,15 +142,15 @@ function VoiceTile({
   selected = false,
   isNew = false,
   disabled,
+  onDelete,
   onPick,
-  onUse,
 }: {
   voice: VoiceOption;
   selected?: boolean;
   isNew?: boolean;
   disabled?: boolean;
+  onDelete?: () => void;
   onPick?: () => void;
-  onUse?: () => void;
 }) {
   const t = useTranslations('call.voices');
   const player = useSamplePlayer();
@@ -181,30 +181,18 @@ function VoiceTile({
       )}
       data-voice-id={voice.id}
     >
-      {onUse ? (
-        <button
-          aria-label={voice.name}
-          className="flex min-h-11 min-w-0 flex-1 items-center rounded text-left focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-50"
+      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+        <input
+          checked={selected}
+          className="size-[18px] shrink-0 accent-violet-400"
           disabled={disabled}
-          onClick={onUse}
-          type="button"
-        >
-          {content}
-        </button>
-      ) : (
-        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
-          <input
-            checked={selected}
-            className="size-[18px] shrink-0 accent-violet-400"
-            disabled={disabled}
-            name="call-voice"
-            onChange={onPick}
-            type="radio"
-            value={voice.id}
-          />
-          {content}
-        </label>
-      )}
+          name="call-voice"
+          onChange={onPick}
+          type="radio"
+          value={voice.id}
+        />
+        {content}
+      </label>
       {voice.sampleUrl && (
         <ListenButton
           ariaLabel={t(playing ? 'stop' : 'play', { name: voice.name })}
@@ -212,23 +200,44 @@ function VoiceTile({
           playing={playing}
         />
       )}
+      {onDelete && (
+        <button
+          aria-label={t('delete', { name: voice.name })}
+          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-950/40 hover:text-red-300 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-50"
+          disabled={disabled}
+          onClick={onDelete}
+          type="button"
+        >
+          <Trash2 aria-hidden="true" className="size-4" />
+        </button>
+      )}
     </div>
   );
 }
 
+/** Saved voices on the Clone page: pick one to speak with, or delete it. */
 export function SavedCallVoices({
   voices,
+  selectedId,
   disabled,
-  onUse,
+  onDelete,
+  onSelect,
 }: {
   voices: SavedCallVoice[];
+  selectedId: string | null;
   disabled?: boolean;
-  onUse: (voice: SavedCallVoice) => void;
+  onDelete: (voice: SavedCallVoice) => void;
+  onSelect: (voice: SavedCallVoice) => void;
 }) {
   const t = useTranslations('call.voices');
   if (!voices.length) return null;
+  const byId = new Map(voices.map((voice) => [voice.id, voice]));
+  const act = (id: string, action: (voice: SavedCallVoice) => void) => () => {
+    const voice = byId.get(id);
+    if (voice) action(voice);
+  };
   return (
-    <section aria-labelledby="call-saved-voices">
+    <div aria-labelledby="call-saved-voices" role="radiogroup">
       <VoiceGrid
         heading={
           <h2 className={cn(headingClass, 'mb-1')} id="call-saved-voices">
@@ -239,20 +248,20 @@ export function SavedCallVoices({
           <VoiceTile
             disabled={disabled}
             key={voice.id}
-            onUse={() => {
-              const saved = voices.find((v) => v.id === voice.id);
-              if (saved) onUse(saved);
-            }}
+            onDelete={act(voice.id, onDelete)}
+            onPick={act(voice.id, onSelect)}
+            selected={voice.id === selectedId}
             voice={voice}
           />
         )}
+        selectedId={selectedId ?? undefined}
         voices={voices.map((voice) => ({
           ...voice,
           description: t('clonedVoice'),
           sampleUrl: savedVoiceSampleUrl(voice.id),
         }))}
       />
-    </section>
+    </div>
   );
 }
 

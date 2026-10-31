@@ -655,7 +655,10 @@
       "micBlockedHelp": "{name} todavía no puede oírte. Haz clic en el candado junto a la dirección web, permite el micrófono y vuelve a intentarlo.",
       "tryAgain": "Reintentar",
       "makeYourOwn": "Crear tu propia versión",
-      "missingPersonality": "Añade una personalidad antes de llamar a {name}."
+      "missingPersonality": "Añade una personalidad antes de llamar a {name}.",
+      "noVoice": "Sin voz",
+      "noVoiceHelp": "La voz de {name} se eliminó. Elige una nueva para llamar.",
+      "chooseVoice": "Elegir una voz"
     },
     "creator": {
       "back": "Llamadas de voz",
@@ -747,7 +750,8 @@
       "play": "Reproducir muestra de {name}",
       "stop": "Detener muestra de {name}",
       "showAll": "Ver todas ({count})",
-      "showFewer": "Ver menos"
+      "showFewer": "Ver menos",
+      "delete": "Eliminar {name}"
     },
     "inCall": {
       "connecting": "Conectando…",
@@ -869,7 +873,8 @@
       "userNotFound": "Inicia sesión para clonar una voz.",
       "voiceNameAndConsentRequired": "Introduce un nombre de voz (hasta 50 caracteres) y confirma que tienes permiso para guardarla.",
       "savedVoiceRequiresPaid": "Guardar voces requiere una cuenta de pago.",
-      "savedVoiceLocaleUnsupported": "Esta opción de idioma no permite guardar voces para llamadas. Elige otro idioma."
+      "savedVoiceLocaleUnsupported": "Esta opción de idioma no permite guardar voces para llamadas. Elige otro idioma.",
+      "savedVoiceNotFound": "Esta voz guardada ya no existe."
     },
     "sampleCard": {
       "sourceAudio": "Fuente audio",
@@ -910,7 +915,16 @@
       "save": "Guardar voz",
       "success": "Voz guardada",
       "useInCall": "Usar voz en una llamada →",
-      "backToCall": "Volver a la llamada"
+      "backToCall": "Volver a la llamada",
+      "using": "Generando con tu voz guardada {name}.",
+      "useRecording": "Usar una grabación",
+      "deleteTitle": "¿Eliminar {name}?",
+      "deleteBody": "La voz se eliminará para siempre. El audio que ya generaste se queda en el Historial.",
+      "deleteUsedBy": "La usan {names}. Necesitarán una voz nueva antes de su próxima llamada. El audio que ya generaste se queda en el Historial.",
+      "deleteConfirm": "Eliminar voz",
+      "cancel": "Cancelar",
+      "deleted": "{name} eliminada",
+      "deleteFailed": "No se pudo eliminar la voz. Inténtalo de nuevo."
     }
   },
   "profile": {

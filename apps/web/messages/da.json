@@ -651,7 +651,10 @@
       "micBlockedHelp": "{name} kan ikke høre dig endnu. Klik på låsen ved siden af webadressen, tillad mikrofonen, og prøv igen.",
       "tryAgain": "Prøv igen",
       "makeYourOwn": "Lav din egen version",
-      "missingPersonality": "Tilføj en personlighed, før du ringer til {name}."
+      "missingPersonality": "Tilføj en personlighed, før du ringer til {name}.",
+      "noVoice": "Ingen stemme",
+      "noVoiceHelp": "Stemmen til {name} er slettet. Vælg en ny for at ringe.",
+      "chooseVoice": "Vælg en stemme"
     },
     "creator": {
       "back": "Stemmeopkald",
@@ -743,7 +746,8 @@
       "play": "Afspil stemmeprøve af {name}",
       "stop": "Stop stemmeprøve af {name}",
       "showAll": "Vis alle ({count})",
-      "showFewer": "Vis færre"
+      "showFewer": "Vis færre",
+      "delete": "Slet {name}"
     },
     "inCall": {
       "connecting": "Forbinder…",
@@ -865,7 +869,8 @@
       "userNotFound": "Log ind for at klone en stemme.",
       "voiceNameAndConsentRequired": "Indtast et navn (op til 50 tegn), og bekræft, at du har tilladelse til at gemme stemmen.",
       "savedVoiceRequiresPaid": "Du skal have en betalt konto for at gemme stemmer.",
-      "savedVoiceLocaleUnsupported": "Denne sprogmulighed understøtter ikke gemte stemmer til opkald. Vælg et andet sprog."
+      "savedVoiceLocaleUnsupported": "Denne sprogmulighed understøtter ikke gemte stemmer til opkald. Vælg et andet sprog.",
+      "savedVoiceNotFound": "Denne gemte stemme findes ikke længere."
     },
     "sampleCard": {
       "sourceAudio": "Kildelyd",
@@ -906,7 +911,16 @@
       "save": "Gem stemme",
       "success": "Stemme gemt",
       "useInCall": "Brug stemmen i et opkald →",
-      "backToCall": "Tilbage til opkald"
+      "backToCall": "Tilbage til opkald",
+      "using": "Genererer med din gemte stemme {name}.",
+      "useRecording": "Brug en optagelse i stedet",
+      "deleteTitle": "Slet {name}?",
+      "deleteBody": "Stemmen slettes permanent. Lyd, du allerede har genereret, forbliver i Historik.",
+      "deleteUsedBy": "Bruges af {names}. De skal have en ny stemme før næste opkald. Lyd, du allerede har genereret, forbliver i Historik.",
+      "deleteConfirm": "Slet stemme",
+      "cancel": "Annuller",
+      "deleted": "{name} er slettet",
+      "deleteFailed": "Stemmen kunne ikke slettes. Prøv igen."
     }
   },
   "profile": {

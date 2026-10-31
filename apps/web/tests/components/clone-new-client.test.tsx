@@ -255,6 +255,7 @@ const renderClone = (
     };
     lang?: Locale;
     userHasPaid?: boolean;
+    voiceUsers?: Record<string, string[]>;
   } = {},
 ) =>
   render(
@@ -276,6 +277,7 @@ const renderClone = (
         lang={props.lang ?? 'en'}
         savedVoices={props.savedVoices}
         userHasPaid={props.userHasPaid ?? false}
+        voiceUsers={props.voiceUsers}
       />
     </NextIntlClientProvider>,
   );
@@ -320,44 +322,94 @@ describe('NewVoiceClient', () => {
     expect(
       screen.getByRole('link', { name: enMessages.clone.savedVoice.useInCall }),
     ).toHaveAttribute('href', '/dashboard/call?custom=1&voice=reference');
-    expect(
-      screen.getByRole('button', { name: 'My voice' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /My voice/ })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Play My voice sample' }),
     ).toBeInTheDocument();
   });
 
-  it('lists owned Inworld and Mistral profiles and opens the selected voice in the call creator', async () => {
+  const inworldVoice: SavedCallVoice = {
+    id: 'inworld-reference',
+    name: 'My Inworld voice',
+    locale: 'en',
+    provider: 'inworld',
+  };
+  const mistralVoice: SavedCallVoice = {
+    id: 'mistral-reference',
+    name: 'My Mistral voice',
+    locale: 'pl',
+    provider: 'mistral',
+  };
+
+  it('generates speech with a selected saved voice instead of a recording', async () => {
+    mockUpload.files = [];
     const user = userEvent.setup();
     renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice, mistralVoice],
       userHasPaid: true,
-      savedVoices: [
-        {
-          id: 'inworld-reference',
-          name: 'My Inworld voice',
-          locale: 'en',
-          provider: 'inworld',
-        },
-        {
-          id: 'mistral-reference',
-          name: 'My Mistral voice',
-          locale: 'pl',
-          provider: 'mistral',
-        },
-      ],
     });
     expect(
       screen.getByRole('heading', { name: 'Your voices' }),
     ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
+
     expect(
-      screen.getByRole('button', { name: 'My Mistral voice' }),
+      screen.getByText(
+        enMessages.clone.savedVoice.using.replace('{name}', 'My Inworld voice'),
+      ),
     ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'My Inworld voice' }));
-    expect(mockNavigate).toHaveBeenCalledWith(
-      '/dashboard/call?custom=1&voice=inworld-reference',
+    expect(screen.queryByTestId('clone-legal-consent')).not.toBeInTheDocument();
+    await user.type(
+      screen.getByLabelText(enMessages.clone.textToConvertLabel),
+      'Hello there',
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    await user.click(screen.getByTestId('clone-generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body.get('savedVoiceId')).toBe('inworld-reference');
+    expect(body.get('locale')).toBe('en');
+    expect(body.get('text')).toBe('Hello there');
+    expect(body.get('file')).toBeNull();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('deletes a saved voice after naming the characters that use it', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ deleted: true }), { status: 200 }),
+    );
+    const user = userEvent.setup();
+    renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice, mistralVoice],
+      userHasPaid: true,
+      voiceUsers: { 'inworld-reference': ['Max', 'Lily'] },
+    });
+    await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
+
+    await user.click(
+      screen.getByRole('button', { name: 'Delete My Inworld voice' }),
+    );
+    expect(screen.getByText(/^Used by Max .+ Lily\./)).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', {
+        name: enMessages.clone.savedVoice.deleteConfirm,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('radio', { name: /My Inworld voice/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/audio-references/inworld-reference',
+      { method: 'DELETE' },
+    );
+    // The deleted voice was selected, so the recording input is back.
+    expect(screen.getByTestId('clone-legal-consent')).toBeInTheDocument();
   });
 
   beforeEach(() => {

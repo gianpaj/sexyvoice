@@ -655,7 +655,10 @@
       "micBlockedHelp": "{name} kann dich noch nicht hören. Klicke auf das Schloss neben der Webadresse, erlaube das Mikrofon und versuche es erneut.",
       "tryAgain": "Erneut versuchen",
       "makeYourOwn": "Eigene Version erstellen",
-      "missingPersonality": "Füge eine Persönlichkeit hinzu, bevor du {name} anrufst."
+      "missingPersonality": "Füge eine Persönlichkeit hinzu, bevor du {name} anrufst.",
+      "noVoice": "Keine Stimme",
+      "noVoiceHelp": "Die Stimme von {name} wurde gelöscht. Wähle eine neue, um anzurufen.",
+      "chooseVoice": "Stimme wählen"
     },
     "creator": {
       "back": "Sprachanrufe",
@@ -747,7 +750,8 @@
       "play": "Stimmprobe von {name} abspielen",
       "stop": "Stimmprobe von {name} stoppen",
       "showAll": "Alle anzeigen ({count})",
-      "showFewer": "Weniger anzeigen"
+      "showFewer": "Weniger anzeigen",
+      "delete": "{name} löschen"
     },
     "inCall": {
       "connecting": "Verbinde…",
@@ -869,7 +873,8 @@
       "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen.",
       "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
       "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
-      "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache."
+      "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache.",
+      "savedVoiceNotFound": "Diese gespeicherte Stimme gibt es nicht mehr."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -910,7 +915,16 @@
       "save": "Stimme speichern",
       "success": "Stimme gespeichert",
       "useInCall": "Stimme für einen Anruf verwenden →",
-      "backToCall": "Zurück zum Anruf"
+      "backToCall": "Zurück zum Anruf",
+      "using": "Du generierst mit deiner gespeicherten Stimme {name}.",
+      "useRecording": "Stattdessen eine Aufnahme verwenden",
+      "deleteTitle": "{name} löschen?",
+      "deleteBody": "Die Stimme wird endgültig entfernt. Bereits erzeugte Audios bleiben im Verlauf.",
+      "deleteUsedBy": "Verwendet von {names}. Vor dem nächsten Anruf brauchen sie eine neue Stimme. Bereits erzeugte Audios bleiben im Verlauf.",
+      "deleteConfirm": "Stimme löschen",
+      "cancel": "Abbrechen",
+      "deleted": "{name} gelöscht",
+      "deleteFailed": "Die Stimme konnte nicht gelöscht werden. Versuch es noch einmal."
     }
   },
   "profile": {

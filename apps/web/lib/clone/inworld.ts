@@ -52,21 +52,27 @@ export async function saveInworldVoice(
     locale,
     userId,
     provider: 'inworld',
-    generateSample: async () => {
-      const speech = await inworldRequest('/tts/v1/voice', {
-        method: 'POST',
-        body: JSON.stringify({
-          text: CALL_VOICE_SAMPLE_TEXT,
-          voiceId: voice.voiceId,
-          modelId: 'inworld-tts-2',
-          audioConfig: { audioEncoding: 'LINEAR16' },
-        }),
-      });
-      const { audioContent } = previewResponse.parse(await speech.json());
-      return Buffer.from(audioContent, 'base64');
-    },
+    generateSample: () =>
+      synthesizeInworldSpeech(voice.voiceId, CALL_VOICE_SAMPLE_TEXT),
     deleteVoice: () => deleteInworldVoice(voice.voiceId),
   });
+}
+
+export const INWORLD_TTS_MODEL = 'inworld-tts-2';
+
+/** Speaks `text` in a workspace voice and returns a WAV file. */
+export async function synthesizeInworldSpeech(voiceId: string, text: string) {
+  const speech = await inworldRequest('/tts/v1/voice', {
+    method: 'POST',
+    body: JSON.stringify({
+      text,
+      voiceId,
+      modelId: INWORLD_TTS_MODEL,
+      audioConfig: { audioEncoding: 'LINEAR16' },
+    }),
+  });
+  const { audioContent } = previewResponse.parse(await speech.json());
+  return Buffer.from(audioContent, 'base64');
 }
 
 export async function deleteInworldVoice(voiceId: string) {

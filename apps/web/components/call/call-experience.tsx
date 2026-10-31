@@ -300,6 +300,7 @@ function CallExperienceScreens({
         }}
         onStartCall={startCall}
         open={panelOpen && !inCall}
+        savedVoices={savedVoices}
       />
     </div>
   );

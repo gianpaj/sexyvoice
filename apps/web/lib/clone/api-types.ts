@@ -13,6 +13,7 @@ export type CloneRouteErrorCode =
   | 'errors.voiceNameAndConsentRequired'
   | 'errors.savedVoiceRequiresPaid'
   | 'errors.savedVoiceLocaleUnsupported'
+  | 'errors.savedVoiceNotFound'
   | 'errors.audioConversionFailed'
   | 'errors.audioConversionRequiredWebm'
   | 'errors.audioDurationInvalidFallback'
@@ -62,6 +63,7 @@ export const CLONE_FORM_FIELDS = {
   locale: 'locale',
   text: 'text',
   saveVoiceName: 'saveVoiceName',
+  savedVoiceId: 'savedVoiceId',
   voiceConsent: 'voiceConsent',
 } as const;
 

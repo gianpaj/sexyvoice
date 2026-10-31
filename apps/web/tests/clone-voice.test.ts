@@ -17,12 +17,24 @@ import {
   server,
 } from './setup';
 
-const { mockSaveMistralVoice, mockSaveInworldVoice } = vi.hoisted(() => ({
+const {
+  mockGetOwnedCallVoice,
+  mockSaveMistralVoice,
+  mockSaveInworldVoice,
+  mockSynthesizeInworldSpeech,
+} = vi.hoisted(() => ({
+  mockGetOwnedCallVoice: vi.fn(),
   mockSaveMistralVoice: vi.fn(),
   mockSaveInworldVoice: vi.fn(),
+  mockSynthesizeInworldSpeech: vi.fn(),
 }));
 vi.mock('@/lib/clone/inworld', () => ({
+  INWORLD_TTS_MODEL: 'inworld-tts-2',
   saveInworldVoice: mockSaveInworldVoice,
+  synthesizeInworldSpeech: mockSynthesizeInworldSpeech,
+}));
+vi.mock('@/lib/supabase/call-voices', () => ({
+  getOwnedCallVoice: mockGetOwnedCallVoice,
 }));
 vi.mock('@/lib/clone/mistral', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/clone/mistral')>()),
@@ -2385,5 +2397,112 @@ describe('Integration Tests', () => {
     expect(json.url).toBeTruthy();
     expect(json.creditsUsed).toBeGreaterThan(0);
     expect(json.creditsRemaining).toBeDefined();
+  });
+});
+
+describe('Saved voice generation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const savedVoiceId = '11111111-1111-4111-8111-111111111111';
+  const savedVoice = (provider: 'inworld' | 'mistral') => ({
+    id: savedVoiceId,
+    locale: 'de',
+    name: 'My voice',
+    provider,
+    sample_url: null,
+    voice_id: `${provider}-voice`,
+  });
+  const postSavedVoice = (text: string, id = savedVoiceId) => {
+    const form = new FormData();
+    form.append('text', text);
+    form.append('locale', 'en');
+    form.append('savedVoiceId', id);
+    return POST(
+      new Request('http://localhost/api/clone-voice', {
+        body: form,
+        method: 'POST',
+      }),
+    );
+  };
+
+  it('speaks with an owned Inworld voice in its own language', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+    mockSynthesizeInworldSpeech.mockResolvedValueOnce(
+      Buffer.from(createWavHeader(0)),
+    );
+
+    const response = await postSavedVoice('Hello world');
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.creditsUsed).toBe(132);
+    expect(mockGetOwnedCallVoice).toHaveBeenCalledWith(
+      savedVoiceId,
+      'test-user-id',
+    );
+    expect(mockSynthesizeInworldSpeech).toHaveBeenCalledWith(
+      'inworld-voice',
+      'Hello world',
+    );
+    expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).toHaveBeenCalledWith({
+      amount: 132,
+      userId: 'test-user-id',
+    });
+    expect(mockUploadFileToR2).toHaveBeenCalledWith(
+      expect.stringMatching(/^cloned-audio\/de-inworld-/),
+      expect.any(Buffer),
+      'audio/wav',
+    );
+    await flushPromises();
+    expect(queries.saveAudioFile).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'inworld-tts-2' }),
+    );
+  });
+
+  it('speaks with an owned Mistral voice by ID, without reference audio', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('mistral'));
+
+    const response = await postSavedVoice('Hello world');
+
+    expect(response.status).toBe(200);
+    const request = mockMistralSpeechComplete.mock.lastCall?.[0];
+    expect(request).toMatchObject({
+      input: 'Hello world',
+      voiceId: 'mistral-voice',
+    });
+    expect(request).not.toHaveProperty('refAudio');
+    expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 without charging for a voice the user does not own', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(null);
+
+    const response = await postSavedVoice('Hello world');
+
+    expect(response.status).toBe(404);
+    expect((await response.json()).code).toBe('errors.savedVoiceNotFound');
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
+
+  it("rejects text over Inworld's 2,000-character limit", async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+
+    const response = await postSavedVoice('a'.repeat(2001));
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.code).toBe('errors.textTooLong');
+    expect(json.details).toEqual({ MAX: 2000 });
+    expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('rejects a saved voice ID that is not a UUID', async () => {
+    const response = await postSavedVoice('Hello world', 'not-a-uuid');
+
+    expect(response.status).toBe(400);
+    expect(mockGetOwnedCallVoice).not.toHaveBeenCalled();
   });
 });

@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
 import { getDemoCloneSelection } from '@/data/demo-clone';
+import { savedVoiceUsers } from '@/lib/call-voices';
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -12,6 +13,7 @@ import { getSavedCallVoices } from '@/lib/supabase/call-voices';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
 import {
   getCreditTransactionAmounts,
+  getUserCallCharacters,
   hasUserPaid,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -48,13 +50,19 @@ export default async function NewVoicePage(props: {
     return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const [creditBalance, creditTransactions, userHasPaid, savedVoices] =
-    await Promise.all([
-      getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
-      getCreditTransactionAmounts(userId),
-      hasUserPaid(userId),
-      getSavedCallVoices(userId),
-    ]);
+  const [
+    creditBalance,
+    creditTransactions,
+    userHasPaid,
+    savedVoices,
+    characters,
+  ] = await Promise.all([
+    getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
+    getCreditTransactionAmounts(userId),
+    hasUserPaid(userId),
+    getSavedCallVoices(userId),
+    getUserCallCharacters(userId),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -86,6 +94,7 @@ export default async function NewVoicePage(props: {
           lang={lang}
           savedVoices={savedVoices ?? []}
           userHasPaid={userHasPaid}
+          voiceUsers={savedVoiceUsers(characters ?? [])}
         />
       )}
     </div>

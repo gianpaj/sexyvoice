@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Copy,
   Loader2,
+  Mic,
   Pencil,
   PhoneCall,
   Trash2,
@@ -32,6 +33,7 @@ import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
+import type { SavedCallVoice } from '@/lib/call-voices';
 import {
   getPresetDescription,
   getPresetSampleUrl,
@@ -55,6 +57,7 @@ interface CallPanelProps {
   onRetryMicrophone: () => void;
   onStartCall: () => void;
   open: boolean;
+  savedVoices: SavedCallVoice[];
 }
 
 const LANGUAGE_CODES = callLanguages.map(({ value }) => value);
@@ -71,6 +74,7 @@ export function CallPanel({
   onRetryMicrophone,
   onStartCall,
   open,
+  savedVoices,
 }: CallPanelProps) {
   const t = useTranslations('call.panel');
   const tCall = useTranslations('call');
@@ -83,10 +87,20 @@ export function CallPanel({
 
   const isOwn = !preset.isPublic;
   const { name } = preset;
-  const voiceName = preset.voiceName ?? preset.sessionConfig.voice;
-  const voiceDescription = preset.sessionConfig.audioReferenceId
-    ? t('clonedVoice')
-    : callVoices.find((voice) => voice.name === voiceName)?.description;
+  const { audioReferenceId } = preset.sessionConfig;
+  // A deleted saved voice leaves the character without one until it's edited.
+  const voiceMissing =
+    Boolean(audioReferenceId) &&
+    !savedVoices.some((voice) => voice.id === audioReferenceId);
+  const voiceName = voiceMissing
+    ? t('noVoice')
+    : (preset.voiceName ?? preset.sessionConfig.voice);
+  let voiceDescription: string | null | undefined;
+  if (!voiceMissing) {
+    voiceDescription = audioReferenceId
+      ? t('clonedVoice')
+      : callVoices.find((voice) => voice.name === voiceName)?.description;
+  }
   const sampleUrl = getPresetSampleUrl(preset);
   const listenKey = `panel:${preset.id}`;
   const playing = player.playingKey === listenKey;
@@ -95,6 +109,8 @@ export function CallPanel({
     isPaidUser && pgState.customCharacters.length < MAX_CUSTOM_CHARACTERS;
 
   const rowLabel = 'text-slate-300 text-sm';
+  const primaryButton =
+    'flex h-[54px] items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-violet-600 via-indigo-600 to-blue-600 font-semibold text-base text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50';
   const secondaryButton =
     'inline-flex h-11 flex-[1_1_140px] items-center justify-center gap-2 rounded-[10px] border border-slate-700/70 px-4 font-semibold text-sm transition-colors';
 
@@ -144,7 +160,12 @@ export function CallPanel({
           <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-800/40 py-3 pr-3 pl-4">
             <div className="flex min-w-0 flex-col">
               <span className="text-slate-500 text-xs">{t('voice')}</span>
-              <span className="font-semibold text-[15px] text-slate-50">
+              <span
+                className={cn(
+                  'font-semibold text-[15px]',
+                  voiceMissing ? 'text-amber-300' : 'text-slate-50',
+                )}
+              >
                 {voiceName}
                 {voiceDescription && (
                   <span className="font-normal text-slate-400">
@@ -159,7 +180,7 @@ export function CallPanel({
                 playing ? 'picker.stopName' : 'picker.listenTo',
                 { name },
               )}
-              disabled={!sampleUrl}
+              disabled={voiceMissing || !sampleUrl}
               label={tCall(playing ? 'picker.stop' : 'picker.listen')}
               onClick={() => player.toggle(listenKey, sampleUrl)}
               playing={playing}
@@ -253,23 +274,35 @@ export function CallPanel({
               {t('missingPersonality', { name })}
             </p>
           )}
+          {voiceMissing && (
+            <p className="text-amber-300 text-sm">
+              {t('noVoiceHelp', { name })}
+            </p>
+          )}
 
-          <button
-            className="flex h-[54px] items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-violet-600 via-indigo-600 to-blue-600 font-semibold text-base text-white transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
-            disabled={connecting || missingPersonality}
-            onClick={onStartCall}
-            type="button"
-          >
-            {connecting ? (
-              <Loader2
-                aria-hidden="true"
-                className="size-[18px] animate-spin"
-              />
-            ) : (
-              <PhoneCall aria-hidden="true" className="size-[18px]" />
-            )}
-            {connecting ? tCall('connecting') : tCall('startCall')}
-          </button>
+          {voiceMissing ? (
+            <button className={primaryButton} onClick={onEdit} type="button">
+              <Mic aria-hidden="true" className="size-[18px]" />
+              {t('chooseVoice')}
+            </button>
+          ) : (
+            <button
+              className={primaryButton}
+              disabled={connecting || missingPersonality}
+              onClick={onStartCall}
+              type="button"
+            >
+              {connecting ? (
+                <Loader2
+                  aria-hidden="true"
+                  className="size-[18px] animate-spin"
+                />
+              ) : (
+                <PhoneCall aria-hidden="true" className="size-[18px]" />
+              )}
+              {connecting ? tCall('connecting') : tCall('startCall')}
+            </button>
+          )}
 
           {isOwn ? (
             <div className="flex flex-wrap gap-2.5">

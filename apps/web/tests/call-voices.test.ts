@@ -14,7 +14,7 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('@/lib/supabase/queries', () => ({ getVoiceIdByName }));
 
 import { defaultSessionConfig } from '@/data/default-config';
-import { withCallVoice } from '@/lib/call-voices';
+import { savedVoiceUsers, withCallVoice } from '@/lib/call-voices';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
 
 beforeEach(() => {
@@ -130,5 +130,18 @@ describe('call voice resolution', () => {
         'owner',
       ),
     ).toEqual({ id: 'builtin', name: 'Ara' });
+  });
+});
+
+describe('savedVoiceUsers', () => {
+  it('groups character names by the saved voice they use', () => {
+    expect(
+      savedVoiceUsers([
+        { name: 'Max', session_config: { audioReferenceId: 'a' } },
+        { name: 'Lily', session_config: { audioReferenceId: 'a' } },
+        { name: 'Marco', session_config: { voice: 'Rex' } },
+        { name: 'Nina', session_config: null },
+      ]),
+    ).toEqual({ a: ['Max', 'Lily'] });
   });
 });

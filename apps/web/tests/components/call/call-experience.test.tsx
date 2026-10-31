@@ -240,6 +240,38 @@ describe('CallExperience picker', () => {
 });
 
 describe('CallExperience panel', () => {
+  it('asks for a new voice when the saved voice was deleted', async () => {
+    const user = userEvent.setup();
+    renderExperience({
+      customCharacters: [
+        {
+          ...own,
+          sessionConfig: {
+            ...defaultSessionConfig,
+            audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
+            model: ModelId.INWORLD_TTS,
+            voice: 'Deleted voice',
+          },
+          voiceName: 'Deleted voice',
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Call Marco' }));
+    const panel = await screen.findByTestId('call-panel');
+
+    expect(within(panel).getByText('No voice')).toBeInTheDocument();
+    expect(within(panel).queryByText('Deleted voice')).not.toBeInTheDocument();
+    expect(
+      within(panel).queryByRole('button', { name: 'Start call' }),
+    ).not.toBeInTheDocument();
+    await user.click(
+      within(panel).getByRole('button', { name: 'Choose a voice' }),
+    );
+    expect(await screen.findByTestId('character-creator')).toBeVisible();
+    expect(connection.connect).not.toHaveBeenCalled();
+  });
+
   it('opens the panel for a character and starts the call', async () => {
     const user = userEvent.setup();
     const { rerender } = renderExperience();

@@ -2,8 +2,16 @@ import {
   CLONE_TEXT_MAX_LENGTH_NON_VOXTRAL,
   CLONE_TEXT_MAX_LENGTH_VOXTRAL_FREE,
   CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
+  INWORLD_TEXT_MAX_LENGTH,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from './constants';
+
+/** Saved voices belong to paid users, so Mistral voices get the paid limit. */
+export function getSavedVoiceTextMaxLength(provider: string): number {
+  return provider === 'inworld'
+    ? INWORLD_TEXT_MAX_LENGTH
+    : CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID;
+}
 
 export function getCloneTextMaxLength(
   locale: string,

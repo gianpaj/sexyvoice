@@ -146,21 +146,29 @@ describe('VoicePicker', () => {
 });
 
 describe('SavedCallVoices', () => {
-  it('collapses the saved voices on the Clone page', async () => {
+  it('collapses, selects and deletes saved voices on the Clone page', async () => {
     const user = userEvent.setup();
-    const onUse = vi.fn();
+    const onDelete = vi.fn();
+    const onSelect = vi.fn();
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <SamplePlayerProvider>
-          <SavedCallVoices onUse={onUse} voices={saved} />
+          <SavedCallVoices
+            onDelete={onDelete}
+            onSelect={onSelect}
+            selectedId={null}
+            voices={saved}
+          />
         </SamplePlayerProvider>
       </NextIntlClientProvider>,
     );
 
-    expect(screen.queryByRole('button', { name: 'Clone 5' })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /Clone 5/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Show all (5)' }));
-    await user.click(screen.getByRole('button', { name: 'Clone 5' }));
+    await user.click(screen.getByRole('radio', { name: /Clone 5/ }));
+    await user.click(screen.getByRole('button', { name: 'Delete Clone 2' }));
 
-    expect(onUse).toHaveBeenCalledWith(saved[4]);
+    expect(onSelect).toHaveBeenCalledWith(saved[4]);
+    expect(onDelete).toHaveBeenCalledWith(saved[1]);
   });
 });

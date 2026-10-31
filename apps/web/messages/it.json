@@ -655,7 +655,10 @@
       "micBlockedHelp": "{name} non riesce ancora a sentirti. Fai clic sul lucchetto accanto all'indirizzo web, consenti il microfono e riprova.",
       "tryAgain": "Riprova",
       "makeYourOwn": "Crea la tua versione",
-      "missingPersonality": "Aggiungi una personalità prima di chiamare {name}."
+      "missingPersonality": "Aggiungi una personalità prima di chiamare {name}.",
+      "noVoice": "Nessuna voce",
+      "noVoiceHelp": "La voce di {name} è stata eliminata. Scegline una nuova per chiamare.",
+      "chooseVoice": "Scegli una voce"
     },
     "creator": {
       "back": "Chiamate vocali",
@@ -747,7 +750,8 @@
       "play": "Riproduci l'anteprima di {name}",
       "stop": "Ferma l'anteprima di {name}",
       "showAll": "Mostra tutte ({count})",
-      "showFewer": "Mostra meno"
+      "showFewer": "Mostra meno",
+      "delete": "Elimina {name}"
     },
     "inCall": {
       "connecting": "Connessione…",
@@ -869,7 +873,8 @@
       "userNotFound": "Accedi per clonare una voce.",
       "voiceNameAndConsentRequired": "Inserisci un nome (fino a 50 caratteri) e conferma di avere il permesso di salvare la voce.",
       "savedVoiceRequiresPaid": "Per salvare le voci è necessario un account a pagamento.",
-      "savedVoiceLocaleUnsupported": "Questa opzione di lingua non permette di salvare voci per le chiamate. Scegli un’altra lingua."
+      "savedVoiceLocaleUnsupported": "Questa opzione di lingua non permette di salvare voci per le chiamate. Scegli un’altra lingua.",
+      "savedVoiceNotFound": "Questa voce salvata non esiste più."
     },
     "sampleCard": {
       "sourceAudio": "Audio sorgente",
@@ -910,7 +915,16 @@
       "save": "Salva voce",
       "success": "Voce salvata",
       "useInCall": "Usa la voce in una chiamata →",
-      "backToCall": "Torna alla chiamata"
+      "backToCall": "Torna alla chiamata",
+      "using": "Generazione con la tua voce salvata {name}.",
+      "useRecording": "Usa una registrazione",
+      "deleteTitle": "Eliminare {name}?",
+      "deleteBody": "La voce verrà eliminata definitivamente. L’audio già generato resta nella Cronologia.",
+      "deleteUsedBy": "Usata da {names}. Prima della prossima chiamata servirà loro una nuova voce. L’audio già generato resta nella Cronologia.",
+      "deleteConfirm": "Elimina voce",
+      "cancel": "Annulla",
+      "deleted": "{name} eliminata",
+      "deleteFailed": "Impossibile eliminare la voce. Riprova."
     }
   },
   "profile": {
