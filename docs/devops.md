@@ -133,11 +133,20 @@ playback and downloads.
 
 Saved call voice creation synthesizes a WAV preview and uploads it to
 `R2_BUCKET_NAME`. The web app needs R2 read, write, and delete access for
-playback and failure cleanup. Apply
-`20261025204441_add_audio_reference_sample_url.sql` before deploying this flow;
-it adds the nullable `audio_references.sample_url` column. Rows without a URL
-keep their provider preview. See [saved call voices](../ARCHITECTURE.md#saved-voices-for-calls)
-for the creation and playback behavior.
+playback and failure cleanup. Apply these migrations before deploying this
+flow:
+
+- `20261025204441_add_audio_reference_sample_url.sql` adds the nullable
+  `audio_references.sample_url` column. Rows without a URL keep their provider
+  preview.
+- `20261031191404_add_audio_reference_locale.sql` adds `locale`, the language
+  the voice was cloned in.
+- `20261031191500_restrict_audio_reference_writes.sql` leaves users read and
+  delete access only. The server inserts every saved voice, because deletion
+  and generation call the provider with the row's `voice_id`.
+
+See [saved call voices](../ARCHITECTURE.md#saved-voices-for-calls) for the
+creation and playback behavior.
 
 ### AI providers
 
