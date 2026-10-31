@@ -259,6 +259,10 @@ function NewVoiceClientInner({
     }
   }, [usesVoxtral, ensureLoaded, t]);
 
+  // MediaRecorder WebM blobs often report no duration, so time the take.
+  const recordingStartedAt = useRef(0);
+  const [micSeconds, setMicSeconds] = useState<number | null>(null);
+
   const handleStartRecording = async () => {
     try {
       dispatch({ patch: { ffmpegError: null }, type: 'patch' });
@@ -306,6 +310,8 @@ function NewVoiceClientInner({
       });
     },
     onStart: () => {
+      recordingStartedAt.current = Date.now();
+      setMicSeconds(null);
       dispatch({
         patch: {
           ffmpegError: null,
@@ -316,6 +322,7 @@ function NewVoiceClientInner({
       });
     },
     onStop: (blob) => {
+      setMicSeconds((Date.now() - recordingStartedAt.current) / 1000);
       // Store the raw blob - conversion will happen at generation time based on the locale
       dispatch({ patch: { micBlob: blob }, type: 'patch' });
     },
@@ -658,6 +665,7 @@ function NewVoiceClientInner({
   };
 
   const onClearMediaStream = () => {
+    setMicSeconds(null);
     clearMediaStream();
     clearMediaBlob();
     dispatch({
@@ -671,6 +679,12 @@ function NewVoiceClientInner({
   };
 
   const textIsOverLimit = text.length > textMaxLength;
+  const minAudioSeconds = CLONE_MIN_AUDIO_SECONDS[referenceProvider];
+  const micTooShort =
+    !file &&
+    Boolean(micBlob) &&
+    micSeconds !== null &&
+    micSeconds < minAudioSeconds;
   const generateDisabled = selectedVoice
     ? !text.trim() ||
       status === 'generating' ||
@@ -687,6 +701,7 @@ function NewVoiceClientInner({
       status === 'generating' ||
       !(saveVoiceOnly || hasEnoughCredits) ||
       convertingMicAudio ||
+      micTooShort ||
       (!saveVoiceOnly && textIsOverLimit) ||
       !legalConsentChecked;
 
@@ -758,8 +773,9 @@ function NewVoiceClientInner({
                     onToggle: onToggleMicrophone,
                     recording: micRecording,
                     status: micStatus,
+                    tooShort: micTooShort,
                   }}
-                  minAudioSeconds={CLONE_MIN_AUDIO_SECONDS[referenceProvider]}
+                  minAudioSeconds={minAudioSeconds}
                   selectedLocaleCode={selectedLocaleCode}
                   selectedLocaleName={selectedLocaleName}
                   usesVoxtral={usesVoxtral}

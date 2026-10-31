@@ -120,17 +120,27 @@ vi.mock('@/hooks/use-file-upload', () => ({
   ],
 }));
 
+const recorderOptions = vi.hoisted(() => ({
+  current: null as null | {
+    onStart: () => void;
+    onStop: (blob: Blob) => void;
+  },
+}));
+
 vi.mock('@/hooks/use-media-recorder', () => ({
-  default: () => ({
-    clearMediaBlob: vi.fn(),
-    clearMediaStream: vi.fn(),
-    getMediaStream: vi.fn(),
-    mediaBlob: null,
-    mediaStream: null,
-    startRecording: vi.fn(),
-    status: 'idle',
-    stopRecording: vi.fn(),
-  }),
+  default: (options: NonNullable<typeof recorderOptions.current>) => {
+    recorderOptions.current = options;
+    return {
+      clearMediaBlob: vi.fn(),
+      clearMediaStream: vi.fn(),
+      getMediaStream: vi.fn(),
+      mediaBlob: null,
+      mediaStream: null,
+      startRecording: vi.fn(),
+      status: 'idle',
+      stopRecording: vi.fn(),
+    };
+  },
 }));
 
 vi.mock('@/lib/download', () => ({
@@ -392,6 +402,30 @@ describe('NewVoiceClient', () => {
 
     await user.click(screen.getByRole('radio', { name: /My Mistral voice/ }));
     expect(await screen.findByRole('button', effects)).toBeInTheDocument();
+  });
+
+  it('flags a microphone take shorter than the minimum', () => {
+    mockUpload.files = [];
+    renderClone({ cloneMessages: enMessages.clone });
+    const record = (seconds: number) =>
+      act(() => {
+        const now = vi.spyOn(Date, 'now').mockReturnValue(0);
+        recorderOptions.current?.onStart();
+        now.mockReturnValue(seconds * 1000);
+        recorderOptions.current?.onStop(new Blob(['take']));
+        now.mockRestore();
+      });
+    const tooShort =
+      enMessages.clone.errors.audioDurationInvalidVoxtral.replace(
+        '__MIN__',
+        '10',
+      );
+
+    record(2);
+    expect(screen.getByRole('alert')).toHaveTextContent(tooShort);
+
+    record(12);
+    expect(screen.queryByText(tooShort)).not.toBeInTheDocument();
   });
 
   it('unselects a saved voice when it is clicked again', async () => {

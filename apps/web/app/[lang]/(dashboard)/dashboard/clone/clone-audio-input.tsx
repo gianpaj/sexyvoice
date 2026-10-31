@@ -32,6 +32,8 @@ interface CloneMic {
   onToggle: () => void;
   recording: boolean;
   status: MicStatus;
+  /** The finished take is shorter than `minAudioSeconds`. */
+  tooShort: boolean;
 }
 
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
@@ -153,6 +155,13 @@ export function CloneAudioInput({
             onToggleMicrophone={mic.onToggle}
             status={mic.status}
           />
+          {mic.tooShort && (
+            <p className="text-center text-destructive text-xs" role="alert">
+              {formatCloneMessage(t('errors.audioDurationInvalidVoxtral'), {
+                MIN: minAudioSeconds,
+              })}
+            </p>
+          )}
         </div>
       )}
 
