@@ -785,7 +785,13 @@
       "uploadFile": "Subir un archivo",
       "readAloud": "Lee esto en voz alta en un lugar tranquilo (unos 30 segundos):",
       "script": "El ferry de la mañana sale a las siete, así que suelo tomarme un café mientras el puerto se despierta. Los pescadores se gritan de barco a barco, las gaviotas discuten por el desayuno y todo el pueblo huele a sal y a pan recién hecho. Los fines de semana vuelvo a casa por el camino largo, pasando por el viejo faro y el mercado, donde todo el mundo parece saber mi nombre.",
+      "startRecording": "Empezar a grabar",
+      "stopRecording": "Detener la grabación",
+      "playRecording": "Escuchar tu grabación",
+      "stopPlayback": "Detener la reproducción",
       "recordIdle": "Pulsa grabar y lee el texto de arriba",
+      "recording": "Grabando…",
+      "recorded": "Grabado",
       "recordAgain": "Volver a grabar",
       "dropFile": "Arrastra un archivo de audio aquí o <browse>búscalo</browse>",
       "fileHint": "MP3, WAV o M4A · hasta {size} · una sola persona hablando, sin música",
@@ -793,7 +799,9 @@
       "fileTooLarge": "Este archivo supera los {size}.",
       "needRecording": "Graba al menos {seconds} segundos primero.",
       "stopFirst": "Detén la grabación primero.",
+      "tooShort": "Ha sido un poco corto. Graba al menos {seconds} segundos.",
       "needFile": "Elige primero un archivo de audio.",
+      "micError": "No hemos podido usar tu micrófono. Permítelo en tu navegador y vuelve a intentarlo.",
       "cancel": "Cancelar",
       "next": "Siguiente",
       "back": "Atrás",
@@ -920,19 +928,6 @@
       "deleteFailed": "No se pudo eliminar la voz. Inténtalo de nuevo.",
       "limitReached": "Tienes {max} voces guardadas, el máximo. Elimina una arriba para guardar otra."
     }
-  },
-  "voiceRecorder": {
-    "idle": "Pulsa grabar y habla al menos {seconds} segundos",
-    "keepTalking": "Sigue hablando: faltan {seconds} s",
-    "micError": "No hemos podido usar tu micrófono. Permítelo en tu navegador y vuelve a intentarlo.",
-    "playRecording": "Escuchar tu grabación",
-    "recordAgain": "Volver a grabar",
-    "recorded": "Grabado",
-    "recording": "Grabando…",
-    "startRecording": "Empezar a grabar",
-    "stopPlayback": "Detener la reproducción",
-    "stopRecording": "Detener la grabación",
-    "tooShort": "Ha sido un poco corto. Graba al menos {seconds} segundos."
   },
   "profile": {
     "title": "Configuración del Perfil",

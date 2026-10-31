@@ -12,7 +12,6 @@ import {
 } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
-import { useRecordingSeconds } from '@/components/audio/voice-recorder';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
 import { SavedCallVoices } from '@/components/call/voice-picker';
@@ -41,7 +40,6 @@ import {
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
-  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
@@ -238,11 +236,6 @@ function NewVoiceClientInner({
     callCloneProvider,
     selectedLocaleCode,
   );
-  const generateProvider = usesVoxtral ? 'mistral' : 'replicate';
-  const minAudioSeconds =
-    CLONE_MIN_AUDIO_SECONDS[
-      saveVoiceOnly ? callCloneProvider : generateProvider
-    ];
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
@@ -289,7 +282,9 @@ function NewVoiceClientInner({
     startRecording,
     stopRecording,
     clearMediaStream,
+    clearMediaBlob,
     mediaStream,
+    mediaBlob: recorderMediaBlob,
     getMediaStream,
   } = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
@@ -318,8 +313,6 @@ function NewVoiceClientInner({
       dispatch({ patch: { micBlob: blob }, type: 'patch' });
     },
   });
-
-  const recordingSeconds = useRecordingSeconds(micStatus === 'recording');
 
   const supportedLocales = (() => {
     const translated = getTranslatedLanguages(lang, [
@@ -360,11 +353,6 @@ function NewVoiceClientInner({
   const { clearErrors } = fileActions;
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
-  // The recorder shows the error; this only blocks the request.
-  const micTooShort =
-    !(selectedVoice || file) &&
-    micBlob !== null &&
-    recordingSeconds < minAudioSeconds;
 
   const applyInitialReference = useEffectEvent((reference: File) => {
     if (!(file || micBlob || micRecording)) fileActions.addFiles([reference]);
@@ -412,8 +400,6 @@ function NewVoiceClientInner({
       });
       return;
     }
-
-    if (micTooShort) return;
 
     if (
       !(selectedVoice || legalConsentChecked) ||
@@ -653,15 +639,20 @@ function NewVoiceClientInner({
     }
   };
 
-  const onStartMicrophone = async () => {
-    clearMediaStream();
-    // Ask for the microphone before FFmpeg loads, so the prompt shows at once.
-    await getMediaStream();
-    await handleStartRecording();
+  const onToggleMicrophone = async () => {
+    if (micStatus === 'idle' || micStatus === 'stopped') {
+      clearMediaStream();
+      // Request microphone access on first toggle
+      await getMediaStream();
+      await handleStartRecording();
+    } else if (micStatus === 'recording') {
+      stopRecording();
+    }
   };
 
   const onClearMediaStream = () => {
     clearMediaStream();
+    clearMediaBlob();
     dispatch({
       patch: {
         ffmpegError: null,
@@ -689,7 +680,6 @@ function NewVoiceClientInner({
       status === 'generating' ||
       !(saveVoiceOnly || hasEnoughCredits) ||
       convertingMicAudio ||
-      micTooShort ||
       (!saveVoiceOnly && textIsOverLimit) ||
       !legalConsentChecked;
 
@@ -754,20 +744,14 @@ function NewVoiceClientInner({
                   fileActions={fileActions}
                   fileState={fileState}
                   mic={{
-                    active: micRecording,
                     blob: micBlob,
-                    failed: micStatus === 'failed',
-                    isRecording: micStatus === 'recording',
+                    mediaBlob: recorderMediaBlob,
                     mediaStream,
                     onClear: onClearMediaStream,
-                    onStart: () => {
-                      onStartMicrophone().catch(console.error);
-                    },
-                    onStop: stopRecording,
-                    seconds: recordingSeconds,
-                    starting: micStatus === 'acquiring_media',
+                    onToggle: onToggleMicrophone,
+                    recording: micRecording,
+                    status: micStatus,
                   }}
-                  minAudioSeconds={minAudioSeconds}
                   selectedLocaleCode={selectedLocaleCode}
                   selectedLocaleName={selectedLocaleName}
                   usesVoxtral={usesVoxtral}

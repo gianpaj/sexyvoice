@@ -785,7 +785,13 @@
       "uploadFile": "Datei hochladen",
       "readAloud": "Lies das in einem ruhigen Raum laut vor (etwa 30 Sekunden):",
       "script": "Die Morgenfähre legt um sieben ab, also hole ich mir meistens einen Kaffee und sehe zu, wie der Hafen erwacht. Fischer rufen sich über das Wasser zu, Möwen streiten um ihr Frühstück, und die ganze Stadt riecht nach Salz und frischem Brot. Am Wochenende nehme ich den langen Weg nach Hause, vorbei am alten Leuchtturm und am Markt, wo jeder meinen Namen zu kennen scheint.",
+      "startRecording": "Aufnahme starten",
+      "stopRecording": "Aufnahme beenden",
+      "playRecording": "Deine Aufnahme abspielen",
+      "stopPlayback": "Wiedergabe stoppen",
       "recordIdle": "Drück auf Aufnehmen und lies den Text oben vor",
+      "recording": "Aufnahme läuft…",
+      "recorded": "Aufgenommen",
       "recordAgain": "Neu aufnehmen",
       "dropFile": "Audiodatei hierher ziehen oder <browse>durchsuchen</browse>",
       "fileHint": "MP3, WAV oder M4A · bis zu {size} · eine Person spricht, keine Musik",
@@ -793,7 +799,9 @@
       "fileTooLarge": "Diese Datei ist größer als {size}.",
       "needRecording": "Nimm zuerst mindestens {seconds} Sekunden auf.",
       "stopFirst": "Beende zuerst die Aufnahme.",
+      "tooShort": "Das war etwas kurz. Nimm mindestens {seconds} Sekunden auf.",
       "needFile": "Wähle zuerst eine Audiodatei.",
+      "micError": "Dein Mikrofon konnte nicht verwendet werden. Erlaube es in deinem Browser und versuche es erneut.",
       "cancel": "Abbrechen",
       "next": "Weiter",
       "back": "Zurück",
@@ -920,19 +928,6 @@
       "deleteFailed": "Die Stimme konnte nicht gelöscht werden. Versuch es noch einmal.",
       "limitReached": "Du hast {max} gespeicherte Stimmen, das Maximum. Lösche oben eine, um eine neue zu speichern."
     }
-  },
-  "voiceRecorder": {
-    "idle": "Drück auf Aufnehmen und sprich mindestens {seconds} Sekunden",
-    "keepTalking": "Sprich weiter: noch {seconds} s",
-    "micError": "Dein Mikrofon konnte nicht verwendet werden. Erlaube es in deinem Browser und versuche es erneut.",
-    "playRecording": "Deine Aufnahme abspielen",
-    "recordAgain": "Neu aufnehmen",
-    "recorded": "Aufgenommen",
-    "recording": "Aufnahme läuft…",
-    "startRecording": "Aufnahme starten",
-    "stopPlayback": "Wiedergabe stoppen",
-    "stopRecording": "Aufnahme beenden",
-    "tooShort": "Das war etwas kurz. Nimm mindestens {seconds} Sekunden auf."
   },
   "profile": {
     "title": "Profileinstellungen",

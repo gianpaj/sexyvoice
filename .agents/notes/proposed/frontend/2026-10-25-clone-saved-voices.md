@@ -62,11 +62,9 @@ Inworld voices also count against the workspace's custom voice limit, 3,000 on
 Builder, shared by every user. The daily stats report shows the live count
 under Calls, from `GET /voices/v1/voices` filtered to `owned = "true"`.
 
-The Clone page and the call clone dialog share
-`components/audio/voice-recorder.tsx` for recording, progress, the minimum
-duration and playback. Its `microphone-visualizer.tsx` bands react to the live
-`MediaStream`. It has no input device menu; recording uses the browser's
-default microphone.
+The Clone page microphone and call clone dialog share
+`components/audio/microphone-visualizer.tsx`. Its nine frequency bands react
+to the recorder's live `MediaStream`; the dialog retains its controls and timer.
 
 The large comparison demo card is absent from the clone form. Demo examples
 belong to the public voice-cloning page; links from that page can still load

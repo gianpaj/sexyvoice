@@ -785,7 +785,13 @@
       "uploadFile": "Carica un file",
       "readAloud": "Leggi questo testo ad alta voce in un luogo tranquillo (circa 30 secondi):",
       "script": "Il traghetto del mattino parte alle sette, così di solito prendo un caffè e guardo il porto che si sveglia. I pescatori si chiamano da una barca all'altra, i gabbiani litigano per la colazione e tutto il paese profuma di sale e pane fresco. Nel fine settimana torno a casa per la strada più lunga, passando dal vecchio faro e dal mercato, dove sembra che tutti conoscano il mio nome.",
+      "startRecording": "Avvia registrazione",
+      "stopRecording": "Ferma registrazione",
+      "playRecording": "Riascolta la registrazione",
+      "stopPlayback": "Ferma la riproduzione",
       "recordIdle": "Premi registra, poi leggi il testo qui sopra",
+      "recording": "Registrazione in corso…",
+      "recorded": "Registrata",
       "recordAgain": "Registra di nuovo",
       "dropFile": "Trascina qui un file audio oppure <browse>sfoglia</browse>",
       "fileHint": "MP3, WAV o M4A · fino a {size} · una sola persona che parla, senza musica",
@@ -793,7 +799,9 @@
       "fileTooLarge": "Questo file supera {size}.",
       "needRecording": "Registra prima almeno {seconds} secondi.",
       "stopFirst": "Prima ferma la registrazione.",
+      "tooShort": "È un po' breve. Registra almeno {seconds} secondi.",
       "needFile": "Prima scegli un file audio.",
+      "micError": "Impossibile usare il microfono. Consentilo nel browser e riprova.",
       "cancel": "Annulla",
       "next": "Avanti",
       "back": "Indietro",
@@ -920,19 +928,6 @@
       "deleteFailed": "Impossibile eliminare la voce. Riprova.",
       "limitReached": "Hai {max} voci salvate, il massimo. Eliminane una qui sopra per salvarne un'altra."
     }
-  },
-  "voiceRecorder": {
-    "idle": "Premi registra e parla per almeno {seconds} secondi",
-    "keepTalking": "Continua a parlare: mancano {seconds} s",
-    "micError": "Impossibile usare il microfono. Consentilo nel browser e riprova.",
-    "playRecording": "Riascolta la registrazione",
-    "recordAgain": "Registra di nuovo",
-    "recorded": "Registrata",
-    "recording": "Registrazione in corso…",
-    "startRecording": "Avvia registrazione",
-    "stopPlayback": "Ferma la riproduzione",
-    "stopRecording": "Ferma registrazione",
-    "tooShort": "È un po' breve. Registra almeno {seconds} secondi."
   },
   "profile": {
     "title": "Impostazioni profilo",
