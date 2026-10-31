@@ -1013,8 +1013,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Offre Halloween – Obtenez jusqu'à 35% de crédits supplémentaires avec un achat 👻\nOffre à durée limitée 🦇",
-      "ctaLoggedIn": "Obtenir l'offre 🎃",
-      "ctaLoggedOut": "Inscrivez-vous maintenant 🎃",
+      "ctaLoggedIn": "Obtenir l'offre",
+      "ctaLoggedOut": "Obtenir l'offre",
       "ariaLabelDismiss": "Fermer la bannière Halloween",
       "pricing": {
         "bannerText": "🎃 Offre Halloween"
