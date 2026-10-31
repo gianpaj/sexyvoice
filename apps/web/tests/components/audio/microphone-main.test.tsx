@@ -65,5 +65,7 @@ describe('MicrophoneMain device list', () => {
       'USB Microphone',
       'Laptop Mic',
     ]);
+    // One separator, under the heading; none trails the list.
+    expect(screen.getAllByRole('separator')).toHaveLength(1);
   });
 });

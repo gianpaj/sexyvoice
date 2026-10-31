@@ -112,20 +112,6 @@ function DeviceSelectDropdown() {
             {device.label}
           </DropdownMenuCheckboxItem>
         ))}
-        <DropdownMenuSeparator />
-        {/*<DropdownMenuLabel className="text-xs uppercase tracking-widest">
-          Audio Settings
-        </DropdownMenuLabel>*/}
-        {/*<DropdownMenuCheckboxItem
-          className="text-xs"
-          checked={isNoiseFilterEnabled}
-          onCheckedChange={async (checked) => {
-            setNoiseFilterEnabled(checked);
-          }}
-          disabled={isNoiseFilterPending}
-        >
-          Enhanced Noise Filter
-        </DropdownMenuCheckboxItem>*/}
       </DropdownMenuContent>
     </DropdownMenu>
   );
