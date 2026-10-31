@@ -39,6 +39,8 @@ interface CallExperienceProps {
   callVoices: DBVoice[];
   /** Notices and FAQ shown under the character picker. */
   children?: ReactNode;
+  /** Marks the page as rendering E2E fixtures for Playwright. */
+  e2eFixtures?: boolean;
   isPaidUser: boolean;
   /** Credits summary shown above the picker on small screens. */
   mobileCredits?: ReactNode;
@@ -84,6 +86,7 @@ function CallExperienceScreens({
   callCloneProvider = 'inworld',
   callVoices,
   children,
+  e2eFixtures,
   isPaidUser,
   mobileCredits,
   savedVoices: initialSavedVoices,
@@ -276,6 +279,7 @@ function CallExperienceScreens({
   return (
     <div
       className="mx-auto w-full max-w-[1120px]"
+      data-e2e-call-fixtures={e2eFixtures ? '' : undefined}
       data-testid="call-experience"
     >
       {screen}

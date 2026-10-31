@@ -107,36 +107,35 @@ export default async function Call(props: {
       <ConnectionProvider>
         <TooltipProvider>
           <RoomWrapper>
-            <div data-e2e-call-fixtures={e2e ? '' : undefined}>
-              <CallExperience
-                callCloneProvider={getCallCloneProvider()}
-                callVoices={callVoices}
-                isPaidUser={isPaidUser}
-                mobileCredits={
-                  <div className="lg:hidden" data-testid="call-mobile-credits">
-                    <CreditsSection
-                      creditTransactions={creditTransactions}
-                      doNotToggleSidebar
-                      showMinutes
-                      userId={userId}
-                    />
-                  </div>
-                }
-                savedVoices={savedVoices}
-              >
-                <div className="flex flex-col gap-5">
-                  <p
-                    className="text-center text-foreground text-xs leading-7"
-                    data-testid="call-notice-text"
-                  >
-                    {t('notice1')}
-                    <br />
-                    {t('notice2')}
-                  </p>
-                  <CallFaq />
+            <CallExperience
+              callCloneProvider={getCallCloneProvider()}
+              callVoices={callVoices}
+              e2eFixtures={Boolean(e2e)}
+              isPaidUser={isPaidUser}
+              mobileCredits={
+                <div className="lg:hidden" data-testid="call-mobile-credits">
+                  <CreditsSection
+                    creditTransactions={creditTransactions}
+                    doNotToggleSidebar
+                    showMinutes
+                    userId={userId}
+                  />
                 </div>
-              </CallExperience>
-            </div>
+              }
+              savedVoices={savedVoices}
+            >
+              <div className="flex flex-col gap-5">
+                <p
+                  className="text-center text-foreground text-xs leading-7"
+                  data-testid="call-notice-text"
+                >
+                  {t('notice1')}
+                  <br />
+                  {t('notice2')}
+                </p>
+                <CallFaq />
+              </div>
+            </CallExperience>
           </RoomWrapper>
         </TooltipProvider>
       </ConnectionProvider>

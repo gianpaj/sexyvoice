@@ -94,15 +94,17 @@ vi.mock('@/components/call/call-experience', () => ({
   CallExperience: vi.fn(
     ({
       children,
+      e2eFixtures,
       mobileCredits,
     }: {
       children?: ReactNode;
+      e2eFixtures?: boolean;
       mobileCredits?: ReactNode;
     }) => (
-      <>
+      <div data-e2e-call-fixtures={e2eFixtures ? '' : undefined}>
         {mobileCredits}
         {children}
-      </>
+      </div>
     ),
   ),
 }));
