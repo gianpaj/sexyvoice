@@ -14,8 +14,12 @@ Inworld is invalid; create a separate profile from the reference recording.
 The provider-specific creation functions share persistence and compensation:
 if the owner row cannot be stored, delete the newly created provider voice.
 Paid access, consent, file validation, normalization, and duration checks apply
-to both call cloning entry points. Inworld accepts the existing dashboard
-language choices; `no` maps to `nb`, and `en-multi` maps to `en` for its API.
+to both call cloning entry points. Inworld accepts every dashboard language
+except `en-multi`, which only selects Chatterbox for one-off English clips;
+`no` maps to `nb` for its API. Mistral accepts the Voxtral languages. In "Save
+a voice for calls" mode the Clone page lists only the call provider's
+languages, and `supportsCallCloneLocale()` enforces the same rule on the
+server.
 
 ## Ownership and playback
 

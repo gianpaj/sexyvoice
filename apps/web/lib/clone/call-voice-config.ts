@@ -1,7 +1,16 @@
 import {
-  CLONE_SUPPORTED_LOCALE_CODES,
+  CHATTERBOX_SUPPORTED_LOCALE_CODES,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from './constants';
+
+/**
+ * Languages a saved Inworld voice can be cloned in: every Clone page
+ * language. `en-multi` only selects Chatterbox for one-off English clips.
+ */
+const INWORLD_CALL_CLONE_LOCALE_CODES = new Set([
+  ...CHATTERBOX_SUPPORTED_LOCALE_CODES,
+  ...VOXTRAL_SUPPORTED_LOCALE_CODES,
+]);
 
 export const CALL_CLONE_PROVIDERS = ['inworld', 'mistral'] as const;
 
@@ -22,6 +31,6 @@ export function supportsCallCloneLocale(
   locale: string,
 ) {
   return provider === 'inworld'
-    ? CLONE_SUPPORTED_LOCALE_CODES.has(locale)
+    ? INWORLD_CALL_CLONE_LOCALE_CODES.has(locale)
     : VOXTRAL_SUPPORTED_LOCALE_CODES.has(locale);
 }

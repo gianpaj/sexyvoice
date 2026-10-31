@@ -788,7 +788,13 @@ function NewVoiceClientInner({
                     disabled={status === 'generating'}
                     dispatch={dispatch}
                     selectedLocaleCode={selectedLocaleCode}
-                    supportedLocales={supportedLocales}
+                    supportedLocales={
+                      saveVoiceOnly
+                        ? supportedLocales.filter(({ code }) =>
+                            supportsCallCloneLocale(callCloneProvider, code),
+                          )
+                        : supportedLocales
+                    }
                   />
                 )}
 
@@ -804,6 +810,15 @@ function NewVoiceClientInner({
                       onCheckedChange={(checked) => {
                         setSaveVoiceOnly(checked === true);
                         setSavedVoiceId(null);
+                        // Saved voices list plain English, not Chatterbox.
+                        if (
+                          checked === true &&
+                          selectedLocaleCode === 'en-multi'
+                        )
+                          dispatch({
+                            patch: { selectedLocaleCode: 'en' },
+                            type: 'patch',
+                          });
                       }}
                     />
                     <Label htmlFor="save-voice-only">

@@ -404,6 +404,20 @@ describe('NewVoiceClient', () => {
     expect(await screen.findByRole('button', effects)).toBeInTheDocument();
   });
 
+  it('lists only call voice languages when saving a voice', async () => {
+    const user = userEvent.setup();
+    renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });
+    expect(renderedLocaleCodes()).toContain('en-multi');
+
+    await user.click(
+      screen.getByLabelText(enMessages.clone.savedVoice.modeLabel),
+    );
+
+    expect(renderedLocaleCodes()).not.toContain('en-multi');
+    expect(renderedLocaleCodes()).toContain('en');
+    expect(renderedLocaleCodes()).toContain('da');
+  });
+
   it('flags a microphone take shorter than the minimum', () => {
     mockUpload.files = [];
     renderClone({ cloneMessages: enMessages.clone });

@@ -63,6 +63,7 @@ describe('call clone provider configuration', () => {
     vi.stubEnv('CALL_CLONE_PROVIDER', 'mistral');
     expect(getCallCloneProvider()).toBe('mistral');
     expect(supportsCallCloneLocale('inworld', 'da')).toBe(true);
+    expect(supportsCallCloneLocale('inworld', 'en-multi')).toBe(false);
     expect(supportsCallCloneLocale('mistral', 'da')).toBe(false);
   });
   it('rejects invalid configuration instead of contacting another provider', () => {
