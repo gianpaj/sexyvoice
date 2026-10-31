@@ -845,6 +845,8 @@
     "tryDemo": "Eller prøv med en demo:",
     "uploadAudioFile": "Upload lydfil",
     "orUseMicrophone": "eller brug din mikrofon",
+    "micRecord": "Optag",
+    "micStop": "Stop",
     "errors": {
       "noAudioFile": "Vælg venligst en lydfil.",
       "noText": "Indtast venligst noget tekst at konvertere til tale.",

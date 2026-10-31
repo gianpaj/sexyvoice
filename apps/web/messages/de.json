@@ -849,6 +849,8 @@
     "tryDemo": "Oder versuchen Sie es mit einer Demo:",
     "uploadAudioFile": "Audiodatei hochladen",
     "orUseMicrophone": "oder nutzen Sie Ihr Mikrofon",
+    "micRecord": "Aufnehmen",
+    "micStop": "Stopp",
     "errors": {
       "noAudioFile": "Bitte wählen Sie eine Audiodatei aus.",
       "noText": "Bitte geben Sie Text ein, der in Sprache umgewandelt werden soll.",

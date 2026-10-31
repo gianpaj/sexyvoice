@@ -1,4 +1,5 @@
-import { ChevronDown, Mic, MicOff, XIcon } from 'lucide-react';
+import { ChevronDown, Mic, Square, XIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import {
@@ -125,6 +126,8 @@ export function MicrophoneMain(props: Props) {
     onToggleMicrophone,
     onClearMediaStream,
   } = props;
+  const t = useTranslations('clone');
+  const recording = status === 'recording';
   const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
@@ -153,24 +156,17 @@ export function MicrophoneMain(props: Props) {
           )}
         >
           <Button
-            aria-label="Toggle Microphone"
-            className="rounded-r-none rounded-l-md px-3 py-2"
+            className="gap-1.5 rounded-r-none rounded-l-md px-3 py-2"
             disabled={status === 'acquiring_media'}
             onClick={onToggleMicrophone}
-            variant="secondary"
+            variant={recording ? 'destructive' : 'secondary'}
           >
-            {[
-              'paused',
-              'failed',
-              'idle',
-              'acquiring_media',
-              'stopped',
-              'stopping',
-            ].includes(status) ? (
-              <MicOff className="h-4 w-4" />
+            {recording ? (
+              <Square className="size-3.5 fill-current" />
             ) : (
               <Mic className="h-4 w-4" />
             )}
+            {t(recording ? 'micStop' : 'micRecord')}
           </Button>
           <div className="flex w-full justify-center">
             <MicrophoneVisualizer mediaStream={mediaStream} />

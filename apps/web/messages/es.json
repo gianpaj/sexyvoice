@@ -849,6 +849,8 @@
     "tryDemo": "O prueba con una demostración:",
     "uploadAudioFile": "Subir archivo de audio",
     "orUseMicrophone": "o usa tu micrófono",
+    "micRecord": "Grabar",
+    "micStop": "Detener",
     "errors": {
       "noAudioFile": "Por favor selecciona un archivo de audio.",
       "noText": "Por favor ingresa algún texto para convertir en voz.",

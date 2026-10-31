@@ -2,6 +2,8 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ComponentProps } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const useMediaDeviceSelect = vi.hoisted(() => vi.fn());
@@ -11,6 +13,24 @@ vi.mock('@/components/audio/microphone-visualizer', () => ({
 }));
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
+import messages from '@/messages/en.json';
+
+function renderMicrophone(
+  props: Partial<ComponentProps<typeof MicrophoneMain>> = {},
+) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <MicrophoneMain
+        mediaBlob={null}
+        mediaStream={null}
+        onClearMediaStream={vi.fn()}
+        onToggleMicrophone={vi.fn()}
+        status="idle"
+        {...props}
+      />
+    </NextIntlClientProvider>,
+  );
+}
 
 const device = (deviceId: string, label: string) =>
   ({ deviceId, groupId: '', kind: 'audioinput', label }) as MediaDeviceInfo;
@@ -36,18 +56,38 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+describe('MicrophoneMain record button', () => {
+  it('records from a labelled button and stops from a Stop button', async () => {
+    const user = userEvent.setup();
+    const onToggleMicrophone = vi.fn();
+    const { rerender } = renderMicrophone({ onToggleMicrophone });
+
+    await user.click(screen.getByRole('button', { name: 'Record' }));
+    expect(onToggleMicrophone).toHaveBeenCalledOnce();
+
+    rerender(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <MicrophoneMain
+          mediaBlob={null}
+          mediaStream={null}
+          onClearMediaStream={vi.fn()}
+          onToggleMicrophone={onToggleMicrophone}
+          status="recording"
+        />
+      </NextIntlClientProvider>,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Record' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(onToggleMicrophone).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe('MicrophoneMain device list', () => {
   it('lists named inputs once the dropdown is opened', async () => {
     const user = userEvent.setup();
-    render(
-      <MicrophoneMain
-        mediaBlob={null}
-        mediaStream={null}
-        onClearMediaStream={vi.fn()}
-        onToggleMicrophone={vi.fn()}
-        status="idle"
-      />,
-    );
+    renderMicrophone();
     const trigger = await screen.findByRole('button', {
       name: 'Choose microphone',
     });

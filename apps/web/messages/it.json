@@ -849,6 +849,8 @@
     "tryDemo": "Oppure prova con una demo:",
     "uploadAudioFile": "Carica file audio",
     "orUseMicrophone": "o usa il tuo microfono",
+    "micRecord": "Registra",
+    "micStop": "Ferma",
     "errors": {
       "noAudioFile": "Seleziona un file audio.",
       "noText": "Inserisci del testo da convertire in parlato.",

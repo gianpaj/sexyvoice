@@ -847,6 +847,8 @@
     "tryDemo": "Or try with a demo:",
     "uploadAudioFile": "Upload reference audio",
     "orUseMicrophone": "or use your microphone",
+    "micRecord": "Record",
+    "micStop": "Stop",
     "errors": {
       "noAudioFile": "Please select an audio file.",
       "noText": "Please enter some text to convert to speech.",
