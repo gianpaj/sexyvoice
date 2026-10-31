@@ -732,20 +732,9 @@ function NewVoiceClientInner({
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
               {selectedVoice ? (
-                <div className="flex flex-col gap-3 rounded-lg border border-violet-500/40 bg-violet-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm">
-                    {t('savedVoice.using', { name: selectedVoice.name })}
-                  </p>
-                  <Button
-                    className="min-h-11 sm:min-h-9"
-                    disabled={status === 'generating'}
-                    onClick={() => setSelectedVoiceId(null)}
-                    type="button"
-                    variant="outline"
-                  >
-                    {t('savedVoice.useRecording')}
-                  </Button>
-                </div>
+                <p className="rounded-lg border border-violet-500/40 bg-violet-500/10 p-4 text-sm">
+                  {t('savedVoice.using', { name: selectedVoice.name })}
+                </p>
               ) : (
                 <CloneAudioInput
                   ffmpeg={{
