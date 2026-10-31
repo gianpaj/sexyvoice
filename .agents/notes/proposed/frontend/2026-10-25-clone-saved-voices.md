@@ -70,7 +70,11 @@ belong to the public voice-cloning page; links from that page can still load
 a reference into the dashboard through `initialDemo`.
 
 Provider profiles live in the provider workspace. Supabase stores the provider
-ID, owner, name, and locale. Portal-only clones and one-off speech generations
+ID, owner, name, and locale. Only the server writes `audio_references`: the
+save path inserts through the admin client, and users can read and delete their
+own rows but cannot insert or update them. Deletion and generation call the
+provider with the row's `voice_id` and the server's key, so a user-written row
+could delete or speak with any voice in the workspace. Portal-only clones and one-off speech generations
 without an ownership record do not appear as saved call voices.
 
 ## Verification
@@ -79,5 +83,6 @@ Component tests cover generating with a selected saved voice, deleting one
 with its characters named, showing newly saved voices immediately, and the
 call panel's missing-voice state. Route tests cover Inworld and Mistral
 generation by voice ID, the ownership 404, Inworld's text limit, and deletion
-keeping the row when the provider fails. Not checked: a real Inworld or
-Mistral request.
+keeping the row when the provider fails. `supabase/tests/audio_references_security.test.sql` checks the `locale`
+column, policies and grants. Not checked: a real Inworld or Mistral request,
+and the pgTAP suite, which needs the pending migrations applied locally.
