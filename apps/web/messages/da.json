@@ -741,7 +741,9 @@
       "cloneTitle": "Klon en stemme",
       "cloneBody": "Optag 30 sekunder, eller upload et klip",
       "play": "Afspil stemmeprøve af {name}",
-      "stop": "Stop stemmeprøve af {name}"
+      "stop": "Stop stemmeprøve af {name}",
+      "showAll": "Vis alle ({count})",
+      "showFewer": "Vis færre"
     },
     "inCall": {
       "connecting": "Forbinder…",

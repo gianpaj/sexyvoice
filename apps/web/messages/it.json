@@ -745,7 +745,9 @@
       "cloneTitle": "Clona una voce",
       "cloneBody": "Registra 30 secondi o carica un audio",
       "play": "Riproduci l'anteprima di {name}",
-      "stop": "Ferma l'anteprima di {name}"
+      "stop": "Ferma l'anteprima di {name}",
+      "showAll": "Mostra tutte ({count})",
+      "showFewer": "Mostra meno"
     },
     "inCall": {
       "connecting": "Connessione…",

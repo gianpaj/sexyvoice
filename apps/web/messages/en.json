@@ -743,7 +743,9 @@
       "cloneTitle": "Clone a voice",
       "cloneBody": "Record 30 seconds or upload a clip",
       "play": "Play {name} sample",
-      "stop": "Stop {name} sample"
+      "stop": "Stop {name} sample",
+      "showAll": "Show all ({count})",
+      "showFewer": "Show fewer"
     },
     "inCall": {
       "connecting": "Connecting…",

@@ -63,6 +63,11 @@ Saved voices are owned provider profiles in `audio_references`; see
   characters awaiting deletion against the limit of 10.
 - One shared sample player (`hooks/use-sample-player.tsx`) stops the previous
   sample when another starts.
+- Each voice section shows 4 tiles, or 6 from 768px, then "Show all (n)",
+  which expands in place. Saved voices have no cap, so an uncollapsed grid
+  grows without limit. A selected voice past the cut takes the last slot.
+  Clone a voice comes first and counts as a tile. The server render assumes a
+  phone. A carousel was rejected: it hides most options and the selection.
 
 ## Learnings
 

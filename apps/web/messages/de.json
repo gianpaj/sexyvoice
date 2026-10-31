@@ -745,7 +745,9 @@
       "cloneTitle": "Stimme klonen",
       "cloneBody": "Nimm 30 Sekunden auf oder lade einen Clip hoch",
       "play": "Stimmprobe von {name} abspielen",
-      "stop": "Stimmprobe von {name} stoppen"
+      "stop": "Stimmprobe von {name} stoppen",
+      "showAll": "Alle anzeigen ({count})",
+      "showFewer": "Weniger anzeigen"
     },
     "inCall": {
       "connecting": "Verbinde…",

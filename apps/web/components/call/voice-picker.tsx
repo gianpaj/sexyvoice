@@ -1,7 +1,15 @@
 'use client';
 
-import { Mic } from 'lucide-react';
+import { ChevronDown, Mic } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import {
+  type ReactNode,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
+import { flushSync } from 'react-dom';
 
 import type { SessionConfig } from '@/data/session-config';
 import type { DBVoice } from '@/data/voices';
@@ -27,6 +35,107 @@ const gridClass =
   'grid grid-cols-[repeat(auto-fill,minmax(min(220px,100%),1fr))] gap-2.5';
 const headingClass =
   'font-semibold text-slate-400 text-xs uppercase tracking-[0.1em]';
+
+// One column on phones, about three in the creator from 768px.
+const WIDE_QUERY = '(min-width: 768px)';
+
+function subscribeToWidth(onChange: () => void) {
+  const query = window.matchMedia(WIDE_QUERY);
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+}
+
+/** Tiles in a collapsed grid. The server render assumes a phone. */
+function useCollapsedTileCount() {
+  const wide = useSyncExternalStore(
+    subscribeToWidth,
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => false,
+  );
+  return wide ? 6 : 4;
+}
+
+/** The first tiles, with the selected voice in the last slot if it's later. */
+function collapsedVoices(
+  voices: VoiceOption[],
+  limit: number,
+  selectedId?: string,
+) {
+  const shown = voices.slice(0, limit);
+  const selected = voices.find((voice) => voice.id === selectedId);
+  if (!selected || shown.includes(selected)) return shown;
+  return [...shown.slice(0, -1), selected];
+}
+
+function VoiceGrid({
+  heading,
+  leading,
+  renderTile,
+  selectedId,
+  voices,
+}: {
+  heading: ReactNode;
+  /** A tile before the voices, such as Clone a voice. It is always shown. */
+  leading?: ReactNode;
+  renderTile: (voice: VoiceOption) => ReactNode;
+  selectedId?: string;
+  voices: VoiceOption[];
+}) {
+  const t = useTranslations('call.voices');
+  const [expanded, setExpanded] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const gridId = useId();
+  const limit = useCollapsedTileCount() - (leading ? 1 : 0);
+  const collapsible = voices.length > limit;
+  const shown =
+    collapsible && !expanded
+      ? collapsedVoices(voices, limit, selectedId)
+      : voices;
+
+  const toggle = () => {
+    const section = sectionRef.current;
+    if (expanded) {
+      flushSync(() => setExpanded(false));
+      // Don't leave the reader below a list that just got shorter.
+      if (section && section.getBoundingClientRect().top < 0) {
+        section.scrollIntoView({ block: 'start' });
+      }
+      return;
+    }
+    const firstHidden = voices.find((voice) => !shown.includes(voice));
+    flushSync(() => setExpanded(true));
+    const tile = section?.querySelector(`[data-voice-id="${firstHidden?.id}"]`);
+    tile?.querySelector<HTMLElement>('input, button')?.focus();
+  };
+
+  return (
+    <div className="flex flex-col gap-2.5" ref={sectionRef}>
+      {heading}
+      <div className={gridClass} id={gridId}>
+        {leading}
+        {shown.map(renderTile)}
+      </div>
+      {collapsible && (
+        <button
+          aria-controls={gridId}
+          aria-expanded={expanded}
+          className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-slate-800 px-4 font-semibold text-sm text-violet-300 transition-colors hover:bg-slate-900 focus-visible:outline-2 focus-visible:outline-violet-400 md:w-auto md:self-start"
+          onClick={toggle}
+          type="button"
+        >
+          {expanded ? t('showFewer') : t('showAll', { count: voices.length })}
+          <ChevronDown
+            aria-hidden="true"
+            className={cn(
+              'size-4 transition-transform',
+              expanded && 'rotate-180',
+            )}
+          />
+        </button>
+      )}
+    </div>
+  );
+}
 
 function VoiceTile({
   voice,
@@ -70,6 +179,7 @@ function VoiceTile({
           ? 'border-violet-400 bg-violet-950/60'
           : 'border-slate-800 bg-slate-900/70',
       )}
+      data-voice-id={voice.id}
     >
       {onUse ? (
         <button
@@ -118,27 +228,30 @@ export function SavedCallVoices({
   const t = useTranslations('call.voices');
   if (!voices.length) return null;
   return (
-    <section
-      aria-labelledby="call-saved-voices"
-      className="flex flex-col gap-3.5"
-    >
-      <h2 className={headingClass} id="call-saved-voices">
-        {t('yourVoices')}
-      </h2>
-      <div className={gridClass}>
-        {voices.map((voice) => (
+    <section aria-labelledby="call-saved-voices">
+      <VoiceGrid
+        heading={
+          <h2 className={cn(headingClass, 'mb-1')} id="call-saved-voices">
+            {t('yourVoices')}
+          </h2>
+        }
+        renderTile={(voice) => (
           <VoiceTile
             disabled={disabled}
             key={voice.id}
-            onUse={() => onUse(voice)}
-            voice={{
-              ...voice,
-              description: t('clonedVoice'),
-              sampleUrl: savedVoiceSampleUrl(voice.id),
+            onUse={() => {
+              const saved = voices.find((v) => v.id === voice.id);
+              if (saved) onUse(saved);
             }}
+            voice={voice}
           />
-        ))}
-      </div>
+        )}
+        voices={voices.map((voice) => ({
+          ...voice,
+          description: t('clonedVoice'),
+          sampleUrl: savedVoiceSampleUrl(voice.id),
+        }))}
+      />
     </section>
   );
 }
@@ -208,6 +321,10 @@ export function VoicePicker({
     );
   };
 
+  const builtInSelected = config.audioReferenceId
+    ? undefined
+    : builtIn.find((voice) => voice.name === config.voice)?.id;
+
   return (
     <div
       aria-labelledby={labelledBy}
@@ -215,11 +332,10 @@ export function VoicePicker({
       role="radiogroup"
     >
       {(saved.length > 0 || onCloneVoice) && (
-        <div className="flex flex-col gap-2.5">
-          <h3 className={headingClass}>{t('yourVoices')}</h3>
-          <div className={gridClass}>
-            {saved.map(renderTile)}
-            {onCloneVoice && (
+        <VoiceGrid
+          heading={<h3 className={headingClass}>{t('yourVoices')}</h3>}
+          leading={
+            onCloneVoice && (
               <button
                 className="flex min-h-[68px] items-center gap-3 rounded-xl border-[1.5px] border-violet-800/80 border-dashed bg-slate-950/40 px-3.5 py-3 text-left transition-colors hover:bg-violet-950/40 disabled:pointer-events-none disabled:opacity-50"
                 disabled={disabled}
@@ -241,15 +357,20 @@ export function VoicePicker({
                   </span>
                 </span>
               </button>
-            )}
-          </div>
-        </div>
+            )
+          }
+          renderTile={renderTile}
+          selectedId={config.audioReferenceId}
+          voices={saved}
+        />
       )}
       {builtIn.length > 0 && (
-        <div className="flex flex-col gap-2.5">
-          <h3 className={headingClass}>{t('builtIn')}</h3>
-          <div className={gridClass}>{builtIn.map(renderTile)}</div>
-        </div>
+        <VoiceGrid
+          heading={<h3 className={headingClass}>{t('builtIn')}</h3>}
+          renderTile={renderTile}
+          selectedId={builtInSelected}
+          voices={builtIn}
+        />
       )}
     </div>
   );

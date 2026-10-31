@@ -745,7 +745,9 @@
       "cloneTitle": "Clonar una voz",
       "cloneBody": "Graba 30 segundos o sube un audio",
       "play": "Reproducir muestra de {name}",
-      "stop": "Detener muestra de {name}"
+      "stop": "Detener muestra de {name}",
+      "showAll": "Ver todas ({count})",
+      "showFewer": "Ver menos"
     },
     "inCall": {
       "connecting": "Conectando…",
