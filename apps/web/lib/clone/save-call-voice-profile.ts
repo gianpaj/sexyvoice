@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { captureException } from '@sentry/nextjs';
 
 import { deleteFileFromR2, uploadFileToR2 } from '@/lib/storage/upload';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { CallCloneProvider } from './call-voice-config';
 import { createCallVoiceSampleKey } from './call-voice-sample';
 
@@ -30,8 +30,9 @@ export async function saveCallVoiceProfile({
     if (!sample.length) throw new Error('Voice sample is empty');
     sampleKey = createCallVoiceSampleKey(id);
     const sampleUrl = await uploadFileToR2(sampleKey, sample, 'audio/wav');
-    const supabase = await createClient();
-    const { data, error } = await supabase
+    // Users cannot write saved voices: provider and voice_id name a voice
+    // the server deletes and speaks with its own API key.
+    const { data, error } = await createAdminClient()
       .from('audio_references')
       .insert({
         id,

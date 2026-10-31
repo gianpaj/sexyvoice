@@ -15,8 +15,8 @@ vi.mock('@mistralai/mistralai', () => ({
     };
   },
 }));
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: () => ({ from: () => ({ insert: mocks.insert }) }),
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 
 import { deleteMistralVoice, saveMistralVoice } from '@/lib/clone/mistral';

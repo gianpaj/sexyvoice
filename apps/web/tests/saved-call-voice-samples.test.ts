@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ insert: vi.fn(), single: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: () => ({ from: () => ({ insert: mocks.insert }) }),
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: () => ({ from: () => ({ insert: mocks.insert }) }),
 }));
 
 import { saveCallVoiceProfile } from '@/lib/clone/save-call-voice-profile';
