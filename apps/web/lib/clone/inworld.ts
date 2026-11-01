@@ -13,6 +13,12 @@ const listVoicesResponse = z.object({
   totalSize: z.coerce.number().int().nonnegative().default(0),
 });
 
+/** Inworld names Norwegian Bokmål `nb`; plain `no` is an unevaluated tier. */
+function toInworldLanguage(locale: string) {
+  const language = resolveBaseCloneLocale(locale);
+  return language === 'no' ? 'nb' : language;
+}
+
 async function inworldRequest(path: string, init?: RequestInit) {
   const apiKey = process.env.INWORLD_API_KEY;
   if (!apiKey) throw new Error('INWORLD_API_KEY is not configured');
@@ -40,12 +46,11 @@ export async function saveInworldVoice(
   locale: string,
   userId: string,
 ) {
-  const language = resolveBaseCloneLocale(locale);
   const response = await inworldRequest('/voices/v1/voices:clone', {
     method: 'POST',
     body: JSON.stringify({
       displayName: name,
-      languageCode: language === 'no' ? 'nb' : language,
+      languageCode: toInworldLanguage(locale),
       voiceSamples: [{ audioData: audio.toString('base64') }],
     }),
   });
@@ -76,13 +81,22 @@ export async function countInworldWorkspaceVoices() {
   return listVoicesResponse.parse(await response.json()).totalSize;
 }
 
-/** Speaks `text` in a workspace voice and returns a WAV file. */
-export async function synthesizeInworldSpeech(voiceId: string, text: string) {
+/**
+ * Speaks `text` in a workspace voice and returns a WAV file. Without
+ * `locale`, Inworld detects the language from the text. A voice can speak
+ * languages other than the one it was cloned in, without its accent.
+ */
+export async function synthesizeInworldSpeech(
+  voiceId: string,
+  text: string,
+  locale?: string,
+) {
   const speech = await inworldRequest('/tts/v1/voice', {
     method: 'POST',
     body: JSON.stringify({
       text,
       voiceId,
+      ...(locale && { language: toInworldLanguage(locale) }),
       modelId: INWORLD_TTS_MODEL,
       audioConfig: { audioEncoding: 'LINEAR16' },
     }),

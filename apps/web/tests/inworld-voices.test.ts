@@ -12,6 +12,7 @@ import {
   deleteInworldVoice,
   getInworldVoiceSample,
   saveInworldVoice,
+  synthesizeInworldSpeech,
 } from '@/lib/clone/inworld';
 import { saveCallVoiceProfile } from '@/lib/clone/save-call-voice-profile';
 import { mockDeleteFileFromR2, mockUploadFileToR2 } from './setup';
@@ -54,6 +55,20 @@ it.each([
   expect(url.pathname).toBe('/voices/v1/voices');
   expect(url.searchParams.get('filter')).toBe('owned = "true"');
   expect(url.searchParams.get('pageSize')).toBe('1');
+});
+
+it.each([
+  ['es', 'es'],
+  ['no', 'nb'],
+])('asks Inworld to speak %s as %s', async (locale, language) => {
+  const request = vi
+    .fn()
+    .mockResolvedValue(Response.json({ audioContent: 'UklGRg==' }));
+  vi.stubGlobal('fetch', request);
+  await synthesizeInworldSpeech('voice', 'Hola', locale);
+  expect(JSON.parse(request.mock.calls[0][1].body)).toMatchObject({
+    language,
+  });
 });
 
 describe('call clone provider configuration', () => {

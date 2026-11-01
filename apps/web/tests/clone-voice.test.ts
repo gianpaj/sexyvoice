@@ -2457,10 +2457,10 @@ describe('Saved voice generation', () => {
     sample_url: null,
     voice_id: `${provider}-voice`,
   });
-  const postSavedVoice = (text: string, id = savedVoiceId) => {
+  const postSavedVoice = (text: string, id = savedVoiceId, locale = 'en') => {
     const form = new FormData();
     form.append('text', text);
-    form.append('locale', 'en');
+    form.append('locale', locale);
     form.append('savedVoiceId', id);
     return POST(
       new Request('http://localhost/api/clone-voice', {
@@ -2470,13 +2470,13 @@ describe('Saved voice generation', () => {
     );
   };
 
-  it('speaks with an owned Inworld voice in its own language', async () => {
+  it('speaks with an owned Inworld voice in the chosen language', async () => {
     mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
     mockSynthesizeInworldSpeech.mockResolvedValueOnce(
       Buffer.from(createWavHeader(0)),
     );
 
-    const response = await postSavedVoice('Hello world');
+    const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -2488,6 +2488,7 @@ describe('Saved voice generation', () => {
     expect(mockSynthesizeInworldSpeech).toHaveBeenCalledWith(
       'inworld-voice',
       'Hello world',
+      'es',
     );
     expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
     expect(queries.reduceCredits).toHaveBeenCalledWith({
@@ -2495,7 +2496,7 @@ describe('Saved voice generation', () => {
       userId: 'test-user-id',
     });
     expect(mockUploadFileToR2).toHaveBeenCalledWith(
-      expect.stringMatching(/^cloned-audio\/de-inworld-inworld-tts-2-/),
+      expect.stringMatching(/^cloned-audio\/es-inworld-inworld-tts-2-/),
       expect.any(Buffer),
       'audio/wav',
     );
@@ -2505,12 +2506,33 @@ describe('Saved voice generation', () => {
     );
   });
 
+  it('rejects a language an Inworld voice cannot speak', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+
+    const response = await postSavedVoice(
+      'Hello world',
+      savedVoiceId,
+      'en-multi',
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe(
+      'errors.savedVoiceLocaleUnsupported',
+    );
+    expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
   it('speaks with an owned Mistral voice by ID, without reference audio', async () => {
     mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('mistral'));
 
-    const response = await postSavedVoice('Hello world');
+    const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
 
     expect(response.status).toBe(200);
+    expect(mockUploadFileToR2).toHaveBeenCalledWith(
+      expect.stringMatching(/^cloned-audio\/de-mistral-/),
+      expect.any(Buffer),
+      'audio/wav',
+    );
     const request = mockMistralSpeechComplete.mock.lastCall?.[0];
     expect(request).toMatchObject({
       input: 'Hello world',

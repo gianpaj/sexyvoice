@@ -21,6 +21,12 @@ a voice for calls" mode the Clone page lists only the call provider's
 languages, and `supportsCallCloneLocale()` enforces the same rule on the
 server.
 
+Generating with a saved Inworld voice on the Clone page takes any of those
+languages, defaulting to the voice's own, and sends it as Inworld's `language`
+field. Inworld TTS-2 speaks other languages natively, without the cloned
+accent; speaker similarity is highest in the cloned language. A saved Mistral
+voice always speaks its saved locale.
+
 ## Ownership and playback
 
 Lists and samples accept both providers. Character and token validation

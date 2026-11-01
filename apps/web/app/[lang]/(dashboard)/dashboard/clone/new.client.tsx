@@ -192,6 +192,8 @@ function NewVoiceClientInner({
   );
   const selectedVoice =
     savedVoices.find((voice) => voice.id === selectedVoiceId) ?? null;
+  // Inworld voices speak any call language; Mistral voices keep theirs.
+  const voiceKeepsLocale = selectedVoice?.provider === 'mistral';
   const atVoiceLimit = savedVoices.length >= MAX_SAVED_CALL_VOICES;
   const translateErrorCode = useTranslations('errorCodes');
   const demoLabels = useTranslations('landing.demoClone');
@@ -452,7 +454,9 @@ function NewVoiceClientInner({
         formData.append(CLONE_FORM_FIELDS.text, text);
         formData.append(
           CLONE_FORM_FIELDS.locale,
-          selectedVoice.locale ?? selectedLocaleCode,
+          voiceKeepsLocale
+            ? (selectedVoice.locale ?? selectedLocaleCode)
+            : selectedLocaleCode,
         );
         formData.append(CLONE_FORM_FIELDS.savedVoiceId, selectedVoice.id);
       } else {
@@ -716,6 +720,13 @@ function NewVoiceClientInner({
             if (!voice) return;
             setSaveVoiceOnly(false);
             setSavedVoiceId(null);
+            dispatch({
+              patch: {
+                selectedLocaleCode:
+                  voice.locale ?? resolveBaseCloneLocale(selectedLocaleCode),
+              },
+              type: 'patch',
+            });
           }}
           selectedId={selectedVoiceId}
           voices={savedVoices}
@@ -783,15 +794,18 @@ function NewVoiceClientInner({
               )}
 
               <div className="grid w-full gap-6">
-                {!selectedVoice && (
+                {!voiceKeepsLocale && (
                   <CloneLanguageSelect
                     disabled={status === 'generating'}
                     dispatch={dispatch}
                     selectedLocaleCode={selectedLocaleCode}
                     supportedLocales={
-                      saveVoiceOnly
+                      selectedVoice || saveVoiceOnly
                         ? supportedLocales.filter(({ code }) =>
-                            supportsCallCloneLocale(callCloneProvider, code),
+                            supportsCallCloneLocale(
+                              selectedVoice ? 'inworld' : callCloneProvider,
+                              code,
+                            ),
                           )
                         : supportedLocales
                     }
@@ -862,7 +876,9 @@ function NewVoiceClientInner({
                     disabled={status === 'generating'}
                     dispatch={dispatch}
                     selectedLocaleCode={
-                      selectedVoice?.locale ?? selectedLocaleCode
+                      voiceKeepsLocale
+                        ? (selectedVoice.locale ?? selectedLocaleCode)
+                        : selectedLocaleCode
                     }
                     text={text}
                     textMaxLength={textMaxLength}

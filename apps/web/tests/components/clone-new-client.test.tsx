@@ -404,6 +404,41 @@ describe('NewVoiceClient', () => {
     expect(await screen.findByRole('button', effects)).toBeInTheDocument();
   });
 
+  it('lets a saved Inworld voice speak another language', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice, mistralVoice],
+      userHasPaid: true,
+    });
+
+    await user.click(screen.getByRole('radio', { name: /My Mistral voice/ }));
+    expect(
+      screen.queryByTestId('clone-language-select'),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
+    const select = mockLanguageSelect.mock.lastCall?.[0] as {
+      dispatch: (action: unknown) => void;
+      selectedLocaleCode: string;
+    };
+    expect(select.selectedLocaleCode).toBe('en');
+    expect(renderedLocaleCodes()).not.toContain('en-multi');
+    act(() =>
+      select.dispatch({ patch: { selectedLocaleCode: 'es' }, type: 'patch' }),
+    );
+    await user.type(
+      screen.getByLabelText(enMessages.clone.textToConvertLabel),
+      'Hola',
+    );
+    await user.click(screen.getByTestId('clone-generate-button'));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body.get('savedVoiceId')).toBe('inworld-reference');
+    expect(body.get('locale')).toBe('es');
+  });
+
   it('lists only call voice languages when saving a voice', async () => {
     const user = userEvent.setup();
     renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });

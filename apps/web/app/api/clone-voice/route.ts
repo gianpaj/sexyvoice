@@ -1329,7 +1329,14 @@ export async function POST(request: Request) {
         );
       }
       const provider = voice.provider === 'inworld' ? 'inworld' : 'mistral';
-      locale = voice.locale ?? locale;
+      // Inworld voices speak any call language; Mistral voices keep theirs.
+      if (provider === 'mistral') locale = voice.locale ?? locale;
+      else if (!supportsCallCloneLocale(provider, locale))
+        return routeErrorResponse(
+          'This language is not supported for saved voices',
+          400,
+          'errors.savedVoiceLocaleUnsupported',
+        );
       validateSavedVoiceTextLength(text, provider);
       const { currentAmount, estimate } = await validateCredits(
         user.id,
@@ -1364,7 +1371,7 @@ export async function POST(request: Request) {
       let buffer: Buffer;
       let requestId: string;
       if (provider === 'inworld') {
-        buffer = await synthesizeInworldSpeech(voice.voice_id, text);
+        buffer = await synthesizeInworldSpeech(voice.voice_id, text, locale);
         modelUsed = INWORLD_TTS_MODEL;
         requestId = randomUUID();
       } else {
