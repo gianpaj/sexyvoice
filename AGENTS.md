@@ -34,6 +34,11 @@ Nested guidance:
   Read-only commands such as `supabase status` are allowed.
 - Do not revert user changes unless the user explicitly asks.
 - Follow the validation scope in Task Completion Requirements before committing.
+- When UI behaviour changes, grep `apps/web/e2e/` and
+  `apps/web/e2e/E2E_TEST_PLAN.md` as well as the unit tests; unit tests mock
+  what Playwright exercises.
+- Pass explicit file paths to `biome check --write --unsafe`; without paths it
+  rewrites files across the whole app.
 
 ## Maintainability
 
@@ -133,6 +138,10 @@ Use package filters when you only want one app, e.g.
   review suggests it. Prefer simpler code unless manual memoization is required
   for correctness, third-party identity semantics, or a profiler-backed
   performance issue.
+- Components in `apps/web/components/ui/` are owned source, not a package:
+  fix shared behaviour there (cursor, spacing) instead of per use.
+- Show paid features to free users disabled, next to `UpgradeCrown`, rather
+  than hiding them. It links to the plans, so touch screens reach them too.
 - Use kebab-case for files, PascalCase for components, lowercase hyphenated API
   route segments, and snake_case for database names.
 - Shared dependency versions are pinned via the pnpm `catalog:` in
@@ -156,6 +165,10 @@ Use package filters when you only want one app, e.g.
   Next.js navigation helpers.
 - Add or update keys in every `apps/web/messages/*.json` file and run
   `pnpm check-translations` for user-facing copy changes.
+- Match the form of address of the section you edit: German, for example,
+  uses `du` in some sections and `Sie` in others.
+- Voice cloning copy says "your voice" or mentions the rights to a voice, and
+  gives the minimum as 10 seconds (`CLONE_MIN_AUDIO_SECONDS`).
 
 ## Supabase and Database
 
@@ -221,6 +234,11 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   `model = 'gpro31'` should use Gemini 3.1 Flash.
 - Voice cloning uses fal.ai and must respect permission and privacy
   requirements.
+- Mistral TTS blocks sexual content with a 403 `guardrail_violation`, so
+  saved call voices use Inworld.
+- `LiveKitRoom` renders its children one render after
+  `PlaygroundStateProvider` rewrites the URL. Read call page query parameters
+  on the server and pass them to `CallExperience`.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
 - `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
