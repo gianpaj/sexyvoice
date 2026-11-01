@@ -5,7 +5,7 @@ import { Slice } from '@tiptap/pm/model';
 import { TextSelection } from '@tiptap/pm/state';
 import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { ChevronDown, Crown, Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type MouseEvent, use, useEffect, useRef, useState } from 'react';
 
@@ -34,12 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { UpgradeCrown } from '@/components/upgrade-crown';
 import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
 import {
   GROK_EMPTY_WRAPPING_TEXT,
@@ -836,27 +831,14 @@ function ProviderTTSEditor({
                 {enforceCharactersLimit
                   ? `${currentLength} / ${charactersLimit}`
                   : currentLength}
-                <TooltipProvider>
-                  <Tooltip delayDuration={100}>
-                    <TooltipTrigger asChild>
-                      <Crown
-                        className={cn(
-                          'h-3.5 w-3.5 cursor-default',
-                          isPaidUser
-                            ? 'text-muted-foreground/50'
-                            : 'text-yellow-400',
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {isPaidUser
-                          ? tGenerate('paidCharacterLimitTooltip')
-                          : tGenerate('upgradeCharacterLimitTooltip')}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <UpgradeCrown
+                  paid={isPaidUser}
+                  tooltip={
+                    isPaidUser
+                      ? tGenerate('paidCharacterLimitTooltip')
+                      : tGenerate('upgradeCharacterLimitTooltip')
+                  }
+                />
               </div>
             )}
           </div>

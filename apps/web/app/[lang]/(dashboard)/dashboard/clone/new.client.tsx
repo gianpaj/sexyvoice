@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertCircle, CircleStop, Crown, Download } from 'lucide-react';
+import { AlertCircle, CircleStop, Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   useCallback,
@@ -24,12 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { UpgradeCrown } from '@/components/upgrade-crown';
 import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
@@ -865,26 +860,7 @@ function NewVoiceClientInner({
                       {t('savedVoice.modeLabel')}
                     </Label>
                     {!userHasPaid && (
-                      // A link, not just a tooltip: touch screens never hover.
-                      <TooltipProvider>
-                        <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                            <Link
-                              aria-label={t('savedVoice.upgradeTooltip')}
-                              className="inline-flex rounded-sm"
-                              href="/dashboard/credits"
-                            >
-                              <Crown
-                                aria-hidden="true"
-                                className="size-3.5 text-yellow-400"
-                              />
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{t('savedVoice.upgradeTooltip')}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <UpgradeCrown tooltip={t('savedVoice.upgradeTooltip')} />
                     )}
                   </div>
                 )}

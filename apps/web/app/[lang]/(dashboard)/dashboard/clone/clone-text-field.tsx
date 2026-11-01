@@ -1,6 +1,5 @@
 'use client';
 
-import { Crown } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
@@ -8,12 +7,7 @@ import type { Dispatch } from 'react';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { UpgradeCrown } from '@/components/upgrade-crown';
 import {
   CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
   RTL_CLONE_LOCALE_CODES,
@@ -109,29 +103,7 @@ export function CloneTextField({
           {text.length} / {textMaxLength}
         </span>
         {usesVoxtral && (
-          <TooltipProvider>
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger asChild>
-                <button
-                  aria-label={textLimitTooltip}
-                  className="inline-flex"
-                  type="button"
-                >
-                  <Crown
-                    className={cn(
-                      'h-3.5 w-3.5 cursor-default',
-                      userHasPaid
-                        ? 'text-muted-foreground/50'
-                        : 'text-yellow-400',
-                    )}
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{textLimitTooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <UpgradeCrown paid={userHasPaid} tooltip={textLimitTooltip} />
         )}
       </div>
     </>
