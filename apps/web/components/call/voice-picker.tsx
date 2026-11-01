@@ -192,10 +192,10 @@ function VoiceTile({
       )}
       data-voice-id={voice.id}
     >
-      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 has-disabled:cursor-default">
         <input
           checked={selected}
-          className="size-[18px] shrink-0 accent-violet-400"
+          className="size-[18px] shrink-0 cursor-pointer accent-violet-400 disabled:cursor-default"
           disabled={disabled}
           name="call-voice"
           onChange={onPick}

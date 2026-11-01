@@ -599,7 +599,7 @@ export function CloneVoiceDialog({
               >
                 <input
                   checked={consent}
-                  className="mt-0.5 size-5 shrink-0 accent-violet-400"
+                  className="mt-0.5 size-5 shrink-0 cursor-pointer accent-violet-400"
                   onChange={(event) => setConsent(event.target.checked)}
                   type="checkbox"
                 />
