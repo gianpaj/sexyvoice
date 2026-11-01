@@ -255,9 +255,15 @@ the selected provider. The preview is stored on the profile, separately from
 speech generations in `audio_files`.
 
 The Clone page lists the signed-in user's saved Inworld and Mistral profiles
-above the upload and recording form. Previews use the private sample endpoint;
-selecting a voice opens the call character creator with that profile selected.
-Newly saved voices join the list immediately. The dashboard form has no demo
+above the upload and recording form. Previews use the private sample endpoint.
+Selecting a voice replaces the reference audio: the form posts `text`, `locale`,
+and `savedVoiceId`, the route checks ownership, and generation charges credits
+and records an `audio_files` row like a one-off clone. Clicking the selected
+voice again returns to the recording form. An Inworld voice speaks the chosen
+language, defaulting to its own, which the route checks with
+`supportsCallCloneLocale()` and sends as Inworld's `language` field. A Mistral
+voice always speaks its saved locale. Newly saved voices join the list
+immediately. The dashboard form has no demo
 comparison card; the public voice-cloning page retains its examples.
 
 Saved voice samples are served through
