@@ -41,6 +41,7 @@ import {
 } from '@/lib/characters';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import { cn } from '@/lib/utils';
+import { UpgradeCrown } from '../upgrade-crown';
 import { CharacterAvatar } from './character-avatar';
 import { ListenButton } from './listen-button';
 import { SceneSelector } from './scene-selector';
@@ -327,15 +328,22 @@ export function CallPanel({
               </button>
             </div>
           ) : (
-            canRemix && (
-              <button
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border border-slate-700/70 px-3.5 font-semibold text-sm text-violet-100 hover:bg-slate-800/60"
-                onClick={onRemix}
-                type="button"
-              >
-                <Copy aria-hidden="true" className="size-4" />
-                {t('makeYourOwn')}
-              </button>
+            (canRemix || !isPaidUser) && (
+              // Free users see the remix, disabled, with what a plan adds.
+              <div className="flex items-center gap-2.5">
+                <button
+                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-[10px] border border-slate-700/70 px-3.5 font-semibold text-sm text-violet-100 hover:bg-slate-800/60 disabled:pointer-events-none disabled:opacity-50"
+                  disabled={!canRemix}
+                  onClick={onRemix}
+                  type="button"
+                >
+                  <Copy aria-hidden="true" className="size-4" />
+                  {t('makeYourOwn')}
+                </button>
+                {!isPaidUser && (
+                  <UpgradeCrown tooltip={t('makeYourOwnUpgrade')} />
+                )}
+              </div>
             )
           )}
         </div>

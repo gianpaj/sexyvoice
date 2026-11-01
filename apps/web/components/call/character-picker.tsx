@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Sparkles } from 'lucide-react';
+import { Mic, PenLine, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
@@ -95,8 +95,12 @@ export function CharacterPicker({
 
   let createCard: ReactNode;
   if (!isPaidUser) {
+    // The whole card opens the plans; both lines name what a plan adds.
     createCard = (
-      <div className={createCardClass}>
+      <Link
+        className={`${createCardClass} transition-colors hover:bg-violet-950/30 focus-visible:outline-2 focus-visible:outline-violet-400`}
+        href="/dashboard/credits"
+      >
         <span
           aria-hidden="true"
           className="flex size-11 items-center justify-center rounded-full bg-violet-950 text-violet-300"
@@ -104,16 +108,26 @@ export function CharacterPicker({
           <Sparkles className="size-5" />
         </span>
         <span className="font-semibold text-[17px]">{t('createTitle')}</span>
-        <span className="text-slate-400 text-sm leading-snug">
-          {t('createUpgrade')}
+        <span className="flex flex-col gap-1.5 text-slate-400 text-sm leading-snug">
+          <span className="flex items-start gap-2">
+            <PenLine
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-violet-300"
+            />
+            {t('createUpgradePersonality')}
+          </span>
+          <span className="flex items-start gap-2">
+            <Mic
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0 text-violet-300"
+            />
+            {t('createUpgradeVoice')}
+          </span>
         </span>
-        <Link
-          className="font-semibold text-sm text-violet-300 underline-offset-4 hover:underline"
-          href="/dashboard/credits"
-        >
-          {t('upgrade')}
-        </Link>
-      </div>
+        <span className="font-semibold text-sm text-violet-300">
+          {t('upgrade')} →
+        </span>
+      </Link>
     );
   } else if (canAddMore) {
     createCard = (

@@ -75,8 +75,17 @@ vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({ convert: vi.fn(), ensureLoaded: vi.fn() }),
 }));
 vi.mock('@/lib/i18n/navigation', () => ({
-  Link: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  Link: ({
+    children,
+    href,
+    ...props
+  }: {
+    children: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
   useRouter: () => ({ push: routerPush }),
 }));
@@ -235,10 +244,31 @@ describe('CallExperience picker', () => {
     expect(
       screen.queryByRole('button', { name: /Create a character/ }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Upgrade' })).toHaveAttribute(
-      'href',
-      '/dashboard/credits',
+    const upgrade = screen.getByRole('link', { name: /Create a character/ });
+    expect(upgrade).toHaveAttribute('href', '/dashboard/credits');
+    expect(upgrade).toHaveTextContent(
+      messages.call.picker.createUpgradePersonality,
     );
+    expect(upgrade).toHaveTextContent(messages.call.picker.createUpgradeVoice);
+  });
+
+  it('shows free users that Make your own version needs a plan', async () => {
+    const user = userEvent.setup();
+    renderExperience({ customCharacters: [], isPaidUser: false });
+
+    await user.click(screen.getByRole('button', { name: 'Open Lily' }));
+    const panel = await screen.findByTestId('call-panel');
+
+    expect(
+      within(panel).getByRole('button', {
+        name: messages.call.panel.makeYourOwn,
+      }),
+    ).toBeDisabled();
+    expect(
+      within(panel).getByRole('link', {
+        name: messages.call.panel.makeYourOwnUpgrade,
+      }),
+    ).toHaveAttribute('href', '/dashboard/credits');
   });
 });
 
