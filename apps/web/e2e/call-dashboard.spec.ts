@@ -167,7 +167,12 @@ test.describe('Call Dashboard - Authenticated User', () => {
     ).toBeEnabled();
     await expect(
       callPage.panel.getByRole('button', { name: en.call.panel.makeYourOwn }),
-    ).toHaveCount(0);
+    ).toBeDisabled();
+    await expect(
+      callPage.panel.getByRole('link', {
+        name: en.call.panel.makeYourOwnUpgrade,
+      }),
+    ).toHaveAttribute('href', '/en/dashboard/credits');
     await argosScreenshot(page, `call-panel-desktop-${testInfo.project.name}`);
     await callPage.expectLanguageOptions();
     await callPage.expectSceneOptionsEnabled(false);

@@ -158,7 +158,8 @@ Reason:
 #### Authenticated
 
 - the picker shows the fixture featured characters with descriptions
-- free users see an Upgrade link instead of the Create card
+- free users see the Create card as a link to the plans, and the panel's
+  Make your own version disabled next to an upgrade crown
 - the call panel opens from a card, with an enabled Start call, language
   options and scene options gated by plan
 - notice text and FAQ are visible
