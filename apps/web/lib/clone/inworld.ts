@@ -34,10 +34,25 @@ async function inworldRequest(path: string, init?: RequestInit) {
   if (
     !(response.ok || (init?.method === 'DELETE' && response.status === 404))
   ) {
-    // Provider bodies can contain reference audio or credentials; keep them out of logs.
-    throw new Error(`Inworld voice request failed (${response.status})`);
+    const reason = await inworldErrorMessage(response);
+    throw new Error(
+      `Inworld voice request failed (${response.status})${reason ? `: ${reason}` : ''}`,
+    );
   }
   return response;
+}
+
+const inworldError = z.object({ message: z.string().min(1) });
+
+/**
+ * Inworld's error `message`, such as a key lacking write access to voices.
+ * The rest of the body can echo reference audio, so it never reaches logs.
+ */
+async function inworldErrorMessage(response: Response) {
+  const parsed = inworldError.safeParse(
+    await response.json().catch(() => null),
+  );
+  return parsed.success ? parsed.data.message.slice(0, 300) : null;
 }
 
 export async function saveInworldVoice(

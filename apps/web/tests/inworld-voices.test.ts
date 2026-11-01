@@ -185,6 +185,26 @@ describe('Inworld saved voices', () => {
     ).rejects.toThrow('Inworld voice request failed (503)');
     expect(mocks.insert).not.toHaveBeenCalled();
   });
+  it("names Inworld's reason for a rejected request", async () => {
+    const message =
+      "API key has insufficient access level for 'voices' in workspace 'w'";
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json(
+            { code: 7, message, details: [{ audioData: 'private' }] },
+            { status: 403 },
+          ),
+        ),
+    );
+    const save = saveInworldVoice(Buffer.from('audio'), 'Mine', 'en', 'owner');
+    await expect(save).rejects.toThrow(
+      `Inworld voice request failed (403): ${message}`,
+    );
+    await expect(save).rejects.not.toThrow('private');
+  });
   it('removes the cloned voice if sample synthesis fails', async () => {
     const fetchMock = vi
       .fn()
