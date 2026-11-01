@@ -293,7 +293,7 @@
             },
             {
               "question": "¿Cómo consigo el mejor clon?",
-              "answer": "Graba de 10 a 30 segundos de una sola persona hablando con naturalidad en una habitación silenciosa, sin música ni voces de fondo. Los clips más largos se recortan a 30 segundos. Si había ruido, marca \"Limpiar el audio de referencia\". Déjalo desactivado en grabaciones limpias, porque puede empeorar el sonido."
+              "answer": "Graba de 10 a 30 segundos de una sola persona hablando con naturalidad en una habitación silenciosa, sin música ni voces de fondo. Los clips más largos se recortan a 30 segundos. Si había ruido, guarda la voz en la página Clonar y marca \"Limpiar el audio de referencia\". Déjalo desactivado en grabaciones limpias, porque puede empeorar el sonido."
             },
             {
               "question": "¿Puedo clonar la voz de otra persona?",

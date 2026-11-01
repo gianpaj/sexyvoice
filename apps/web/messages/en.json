@@ -293,7 +293,7 @@
             },
             {
               "question": "How do I get the best clone?",
-              "answer": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, tick \"Clean up the reference audio\". Leave it off for clean recordings, as it can make them sound worse."
+              "answer": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick \"Clean up the reference audio\". Leave it off for clean recordings, as it can make them sound worse."
             },
             {
               "question": "Can I clone someone else's voice?",

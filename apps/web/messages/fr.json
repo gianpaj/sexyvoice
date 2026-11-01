@@ -293,7 +293,7 @@
             },
             {
               "question": "Comment obtenir le meilleur clone ?",
-              "answer": "Enregistrez 10 à 30 secondes d'une seule personne parlant naturellement dans une pièce calme, sans musique ni voix en arrière-plan. Les extraits plus longs sont coupés à 30 secondes. Si la pièce était bruyante, cochez « Nettoyer l'audio de référence ». Laissez-le désactivé pour les enregistrements propres, car il peut les dégrader."
+              "answer": "Enregistrez 10 à 30 secondes d'une seule personne parlant naturellement dans une pièce calme, sans musique ni voix en arrière-plan. Les extraits plus longs sont coupés à 30 secondes. Si la pièce était bruyante, enregistrez la voix sur la page Cloner et cochez « Nettoyer l'audio de référence ». Laissez-le désactivé pour les enregistrements propres, car il peut les dégrader."
             },
             {
               "question": "Puis-je cloner la voix de quelqu'un d'autre ?",

@@ -293,7 +293,7 @@
             },
             {
               "question": "Come ottengo il clone migliore?",
-              "answer": "Registra 10–30 secondi di una sola persona che parla in modo naturale in una stanza silenziosa, senza musica né voci di sottofondo. I clip più lunghi vengono tagliati a 30 secondi. Se la stanza era rumorosa, spunta \"Pulisci l'audio di riferimento\". Lascialo disattivato per le registrazioni pulite, perché può peggiorarle."
+              "answer": "Registra 10–30 secondi di una sola persona che parla in modo naturale in una stanza silenziosa, senza musica né voci di sottofondo. I clip più lunghi vengono tagliati a 30 secondi. Se la stanza era rumorosa, salva la voce nella pagina Clona e spunta \"Pulisci l'audio di riferimento\". Lascialo disattivato per le registrazioni pulite, perché può peggiorarle."
             },
             {
               "question": "Posso clonare la voce di un'altra persona?",

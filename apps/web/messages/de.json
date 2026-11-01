@@ -293,7 +293,7 @@
             },
             {
               "question": "Wie bekomme ich den besten Klon?",
-              "answer": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, aktivieren Sie \"Referenz-Audio bereinigen\". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann."
+              "answer": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie \"Referenz-Audio bereinigen\". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann."
             },
             {
               "question": "Kann ich die Stimme einer anderen Person klonen?",
