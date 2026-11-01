@@ -145,11 +145,11 @@
       },
       "voiceCalling": {
         "title": "Live stemmeopkald",
-        "description": "Før telefonsamtaler i realtid med AI-karakterer — naturlige stemmer, øjeblikkelige svar, ingen opsætning nødvendig."
+        "description": "Før samtaler i realtid med AI-karakterer, med vores stemmer eller en, du kloner."
       },
       "voiceCloneDemo": {
         "title": "Klon din stemme",
-        "description": "Prøv den live klon-demo: Hør en stemme, der er genskabt ud fra få sekunders lyd og taler naturligt på flere sprog."
+        "description": "Prøv den live klon-demo: Hør en stemme, der er genskabt ud fra 10 sekunders lyd og taler naturligt på flere sprog."
       }
     },
     "cta": {
@@ -180,10 +180,11 @@
         }
       },
       "customCharacter": {
-        "title": "Skab din egen karakter",
-        "subtitle": "Giv den et navn, en personlighed, en baggrundshistorie og en stemme. Ring så til den, når du vil – den er i rollen hver eneste gang.",
+        "title": "Ring til en karakter med din egen stemme",
+        "subtitle": "Giv den en personlighed, og vælg en af vores stemmer, eller klon en ud fra 10 sekunders lyd: din egen eller en, du har rettighederne til. Ring til den, når du vil – den er i rollen hver eneste gang.",
         "note": "Egne karakterer er inkluderet i alle betalte planer.",
-        "action": "Skab din karakter"
+        "action": "Skab din karakter",
+        "cloningLink": "Se, hvordan stemmekloning virker"
       },
       "cta": {
         "freeCredits": "Start med 10.000 gratis kreditter",
@@ -195,7 +196,13 @@
     "voiceCloning": {
       "hero": {
         "title": "Din stemme, på alle sprog",
-        "subtitle": "Klon en stemme ud fra få sekunders lyd.\nHør den tale naturligt på 28 sprog."
+        "subtitle": "Klon en stemme ud fra 10 sekunders lyd.\nHør den tale naturligt på 28 sprog."
+      },
+      "callSection": {
+        "title": "Ring så til den",
+        "subtitle": "Giv din klonede stemme til en karakter, og tal med den live i realtid.",
+        "note": "Opkald med en klonet stemme er inkluderet i alle betalte planer.",
+        "action": "Prøv et stemmeopkald"
       },
       "cta": {
         "freeCredits": "Start med 10.000 gratis kreditter",

@@ -145,11 +145,11 @@
       },
       "voiceCalling": {
         "title": "Chiamate vocali dal vivo",
-        "description": "Fai conversazioni telefoniche in tempo reale con personaggi IA — voci naturali, risposte istantanee, nessuna configurazione richiesta."
+        "description": "Fai conversazioni in tempo reale con personaggi IA, con le nostre voci o una che cloni."
       },
       "voiceCloneDemo": {
         "title": "Clona la tua voce",
-        "description": "Prova la demo di clonazione dal vivo: ascolta una voce ricreata da pochi secondi di audio, che parla in modo naturale in più lingue."
+        "description": "Prova la demo di clonazione dal vivo: ascolta una voce ricreata da 10 secondi di audio, che parla in modo naturale in più lingue."
       }
     },
     "cta": {
@@ -180,10 +180,11 @@
         }
       },
       "customCharacter": {
-        "title": "Crea il tuo personaggio personalizzato",
-        "subtitle": "Dagli un nome, una personalità, un passato e una voce. Poi chiamalo quando vuoi: risponde sempre restando nel personaggio.",
+        "title": "Chiama un personaggio con la tua voce",
+        "subtitle": "Dagli una personalità, poi scegli una delle nostre voci o clonane una da 10 secondi di audio: la tua o una di cui hai i diritti. Chiamalo quando vuoi: risponde sempre restando nel personaggio.",
         "note": "I personaggi personalizzati sono inclusi in tutti i piani a pagamento.",
-        "action": "Crea il tuo personaggio"
+        "action": "Crea il tuo personaggio",
+        "cloningLink": "Scopri come funziona la clonazione vocale"
       },
       "cta": {
         "freeCredits": "Inizia con 10.000 crediti gratuiti",
@@ -195,7 +196,13 @@
     "voiceCloning": {
       "hero": {
         "title": "La tua voce, in ogni lingua",
-        "subtitle": "Clona una voce da pochi secondi di audio.\nAscoltala parlare in modo naturale in 28 lingue."
+        "subtitle": "Clona una voce da 10 secondi di audio.\nAscoltala parlare in modo naturale in 28 lingue."
+      },
+      "callSection": {
+        "title": "Poi chiamala",
+        "subtitle": "Dai la tua voce clonata a un personaggio e parlaci dal vivo, in tempo reale.",
+        "note": "Le chiamate con una voce clonata sono incluse in tutti i piani a pagamento.",
+        "action": "Prova una chiamata vocale"
       },
       "cta": {
         "freeCredits": "Inizia con 10.000 crediti gratuiti",

@@ -12,6 +12,7 @@ import type { Graph } from 'schema-dts';
 import { Banner } from '@/components/banner';
 import { CardDecorator } from '@/components/card-decorator';
 import { DemoCallSection } from '@/components/demo-call/demo-call-section';
+import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import HeroWaveform from '@/components/hero-waveform';
@@ -252,9 +253,20 @@ export default async function LandingPage(props: Props) {
                   <p className="text-pretty text-gray-400 text-xs">
                     {dictCustomCharacter.note}
                   </p>
+                  <Link
+                    className="hit-area-y-2 mt-2 font-medium text-fuchsia-300 text-sm underline-offset-4 hover:underline"
+                    href="/voice-cloning"
+                  >
+                    {dictCustomCharacter.cloningLink} →
+                  </Link>
                 </div>
               </div>
             </section>
+
+            {/* FAQ Section */}
+            <div className="mx-auto max-w-3xl py-16">
+              <FAQComponent lang={lang} priorityGroupIds={['liveCalling']} />
+            </div>
 
             {/* CTA Section */}
             <div className="space-y-8 py-16 text-center">

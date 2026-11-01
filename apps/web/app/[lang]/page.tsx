@@ -33,7 +33,6 @@ import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
-import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import { routing } from '@/src/i18n/routing';
 import { getSampleAudiosByLanguage } from '../sample-audio';
 
@@ -244,13 +243,7 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div
-              className={`mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 ${
-                VOICE_CLONING_PAGE_ENABLED
-                  ? 'lg:grid-cols-6 lg:*:col-span-2 lg:*:first:col-start-2'
-                  : 'lg:grid-cols-2'
-              }`}
-            >
+            <div className="mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 lg:grid-cols-6 lg:*:col-span-2 lg:*:first:col-start-2">
               <Link
                 className="group max-w-sm rounded-xl"
                 href="/voice-call"
@@ -277,34 +270,32 @@ export default async function LandingPage(props: {
                   </CardContent>
                 </Card>
               </Link>
-              {VOICE_CLONING_PAGE_ENABLED && (
-                <Link
-                  className="group max-w-sm rounded-xl"
-                  href="/voice-cloning"
-                  prefetch
-                >
-                  <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
-                    <CardHeader>
-                      <CardDecorator>
-                        <AudioLines
-                          aria-hidden
-                          className="size-6 text-gray-200 transition-colors group-hover:text-white"
-                        />
-                      </CardDecorator>
+              <Link
+                className="group max-w-sm rounded-xl"
+                href="/voice-cloning"
+                prefetch
+              >
+                <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
+                  <CardHeader>
+                    <CardDecorator>
+                      <AudioLines
+                        aria-hidden
+                        className="size-6 text-gray-200 transition-colors group-hover:text-white"
+                      />
+                    </CardDecorator>
 
-                      <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
-                        {dictLanding.features.voiceCloneDemo.title}
-                      </h3>
-                    </CardHeader>
+                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
+                      {dictLanding.features.voiceCloneDemo.title}
+                    </h3>
+                  </CardHeader>
 
-                    <CardContent>
-                      <p className="text-pretty text-center text-sm text-zinc-300">
-                        {dictLanding.features.voiceCloneDemo.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              )}
+                  <CardContent>
+                    <p className="text-pretty text-center text-sm text-zinc-300">
+                      {dictLanding.features.voiceCloneDemo.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
               <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
                 <CardHeader>
                   <CardDecorator>

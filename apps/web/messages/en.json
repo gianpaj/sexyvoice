@@ -145,11 +145,11 @@
       },
       "voiceCalling": {
         "title": "Live Voice Calls",
-        "description": "Have real-time phone conversations with AI characters — natural voices, instant responses, no setup required."
+        "description": "Have real-time conversations with AI characters, in our voices or one you clone."
       },
       "voiceCloneDemo": {
         "title": "Clone Your Voice",
-        "description": "Try the live cloning demo — hear a voice recreated from seconds of audio, speaking naturally in multiple languages."
+        "description": "Try the live cloning demo: hear a voice recreated from 10 seconds of audio, speaking naturally in multiple languages."
       }
     },
     "cta": {
@@ -180,10 +180,11 @@
         }
       },
       "customCharacter": {
-        "title": "Create your custom character",
-        "subtitle": "Give them a name, a personality, a backstory and a voice. Then call them whenever you want — they pick up in character, every time.",
+        "title": "Call a character in your own voice",
+        "subtitle": "Give them a personality, then pick one of our voices or clone one from 10 seconds of audio: yours, or one you have the rights to. Call them whenever you like, and they pick up in character every time.",
         "note": "Custom characters come with every paid plan.",
-        "action": "Create your character"
+        "action": "Create your character",
+        "cloningLink": "See how voice cloning works"
       },
       "cta": {
         "freeCredits": "Start with 10,000 free credits",
@@ -195,7 +196,13 @@
     "voiceCloning": {
       "hero": {
         "title": "Your voice, in every language",
-        "subtitle": "Clone a voice from a few seconds of audio.\nHear it speak naturally in 28 languages."
+        "subtitle": "Clone a voice from 10 seconds of audio.\nHear it speak naturally in 28 languages."
+      },
+      "callSection": {
+        "title": "Then call it",
+        "subtitle": "Give your cloned voice to a character and talk to it live, in real time.",
+        "note": "Calling with a cloned voice comes with every paid plan.",
+        "action": "Try a voice call"
       },
       "cta": {
         "freeCredits": "Start with 10,000 free credits",

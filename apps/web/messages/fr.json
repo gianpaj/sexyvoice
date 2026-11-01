@@ -145,11 +145,11 @@
       },
       "voiceCalling": {
         "title": "Appels vocaux en direct",
-        "description": "Ayez des conversations téléphoniques en temps réel avec des personnages IA — voix naturelles, réponses instantanées, sans configuration."
+        "description": "Ayez des conversations en temps réel avec des personnages IA, avec nos voix ou une voix que vous clonez."
       },
       "voiceCloneDemo": {
         "title": "Clonez votre voix",
-        "description": "Essayez la démo de clonage en direct : écoutez une voix recréée à partir de quelques secondes d’audio, s’exprimant naturellement dans plusieurs langues."
+        "description": "Essayez la démo de clonage en direct : écoutez une voix recréée à partir de 10 secondes d’audio, s’exprimant naturellement dans plusieurs langues."
       }
     },
     "cta": {
@@ -180,10 +180,11 @@
         }
       },
       "customCharacter": {
-        "title": "Créez votre personnage sur mesure",
-        "subtitle": "Donnez-lui un nom, une personnalité, une histoire et une voix. Appelez-le ensuite quand vous voulez : il reste dans son rôle à chaque fois.",
+        "title": "Appelez un personnage avec votre propre voix",
+        "subtitle": "Donnez-lui une personnalité, puis choisissez l'une de nos voix ou clonez-en une à partir de 10 secondes d'audio : la vôtre, ou une dont vous avez les droits. Appelez-le quand vous voulez : il reste dans son rôle à chaque fois.",
         "note": "Les personnages sur mesure sont inclus dans toutes les formules payantes.",
-        "action": "Créer votre personnage"
+        "action": "Créer votre personnage",
+        "cloningLink": "Découvrir le clonage vocal"
       },
       "cta": {
         "freeCredits": "Commencez avec 10 000 crédits gratuits",
@@ -195,7 +196,13 @@
     "voiceCloning": {
       "hero": {
         "title": "Votre voix, dans toutes les langues",
-        "subtitle": "Clonez une voix à partir de quelques secondes d'audio.\nÉcoutez-la parler naturellement dans 28 langues."
+        "subtitle": "Clonez une voix à partir de 10 secondes d'audio.\nÉcoutez-la parler naturellement dans 28 langues."
+      },
+      "callSection": {
+        "title": "Puis appelez-la",
+        "subtitle": "Donnez votre voix clonée à un personnage et parlez-lui en direct, en temps réel.",
+        "note": "Les appels avec une voix clonée sont inclus dans toutes les formules payantes.",
+        "action": "Essayer un appel vocal"
       },
       "cta": {
         "freeCredits": "Commencez avec 10 000 crédits gratuits",
