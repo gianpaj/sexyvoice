@@ -235,7 +235,7 @@ function VoiceTile({
               onSelect={onDelete}
             >
               <Trash2 aria-hidden="true" />
-              {t('delete', { name: voice.name })}
+              {tPicker('delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

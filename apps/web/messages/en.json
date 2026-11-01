@@ -749,7 +749,6 @@
       "stop": "Stop {name} sample",
       "showAll": "Show all ({count})",
       "showFewer": "Show fewer",
-      "delete": "Delete {name}",
       "cloneLimit": "You have {max} voices. Delete one on the Clone page to save another."
     },
     "inCall": {

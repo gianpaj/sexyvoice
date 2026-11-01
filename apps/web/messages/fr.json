@@ -751,7 +751,6 @@
       "stop": "Arrêter l'extrait de {name}",
       "showAll": "Tout afficher ({count})",
       "showFewer": "Afficher moins",
-      "delete": "Supprimer {name}",
       "cloneLimit": "Vous avez {max} voix. Supprimez-en une sur la page Cloner pour en enregistrer une autre."
     },
     "inCall": {

@@ -183,9 +183,7 @@ describe('SavedCallVoices', () => {
     await user.click(
       screen.getByRole('button', { name: 'More options for Clone 2' }),
     );
-    await user.click(
-      await screen.findByRole('menuitem', { name: 'Delete Clone 2' }),
-    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete' }));
 
     expect(onSelect).toHaveBeenCalledWith(saved[4]);
     expect(onDelete).toHaveBeenCalledWith(saved[1]);

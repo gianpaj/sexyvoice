@@ -747,7 +747,6 @@
       "stop": "Stop stemmeprøve af {name}",
       "showAll": "Vis alle ({count})",
       "showFewer": "Vis færre",
-      "delete": "Slet {name}",
       "cloneLimit": "Du har {max} stemmer. Slet en på Klon-siden for at gemme en ny."
     },
     "inCall": {

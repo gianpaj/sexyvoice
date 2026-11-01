@@ -751,7 +751,6 @@
       "stop": "Ferma l'anteprima di {name}",
       "showAll": "Mostra tutte ({count})",
       "showFewer": "Mostra meno",
-      "delete": "Elimina {name}",
       "cloneLimit": "Hai {max} voci. Eliminane una nella pagina Clona per salvarne un'altra."
     },
     "inCall": {
