@@ -547,7 +547,8 @@ and `Sal`.
 Custom characters can use owned saved Inworld or Mistral voices.
 `CALL_CLONE_PROVIDER=inworld` selects the provider for new call clones; set it
 to `mistral` to create Mistral profiles. Existing profiles retain their provider.
-Set `INWORLD_API_KEY` to a complete Base64 credential with clone/write access
+Set `INWORLD_API_KEY` to the Basic credential exactly as Inworld shows it
+(already Base64; do not encode it again), with clone/write access
 and give the SexyCall agent access to the same Inworld workspace. Mistral
 profiles require `MISTRAL_API_KEY` in the web app and agent. An unset
 `CALL_CLONE_PROVIDER` selects Inworld as soon as this web deployment is released.

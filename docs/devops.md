@@ -156,8 +156,9 @@ creation and playback behavior.
 - `CALL_CLONE_PROVIDER`: `inworld` (default) or `mistral` for new saved call
   voices. Existing profiles retain their provider. This is a server-side
   variable; do not prefix it with `NEXT_PUBLIC_`.
-- `INWORLD_API_KEY`: complete Base64 credential with read and write access for
-  call voice cloning and previews. The Fly SexyCall agent must have access to
+- `INWORLD_API_KEY`: the Basic credential exactly as Inworld shows it, with
+  read and write access for call voice cloning and previews. It is already
+  Base64; encoding it again makes Inworld reject the key as nonexistent. The Fly SexyCall agent must have access to
   the same workspace. An unset `CALL_CLONE_PROVIDER` activates Inworld on web
   deployment. Deploy agent support for `model=inworld-tts` and set its credentials
   before releasing the web app. To stage the rollout, set
