@@ -52,7 +52,6 @@ export function ListenButton({
       type="button"
     >
       <Icon aria-hidden="true" className="size-3.5 fill-current" />
-      {label && playing && <PlayingBars />}
       {label && <span>{label}</span>}
     </button>
   );
