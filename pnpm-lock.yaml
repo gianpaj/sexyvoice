@@ -261,8 +261,8 @@ importers:
         specifier: ^0.27.19
         version: 0.27.20(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@google/genai':
-        specifier: 2.24.0
-        version: 2.24.0(supports-color@8.1.1)
+        specifier: 2.32.0
+        version: 2.32.0(supports-color@8.1.1)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.71.2(react@19.2.7))(zod@4.6.6)
@@ -568,8 +568,8 @@ importers:
         specifier: ^1.10.1
         version: 1.10.1
       '@google/genai':
-        specifier: 2.24.0
-        version: 2.24.0(supports-color@8.1.1)
+        specifier: 2.32.0
+        version: 2.32.0(supports-color@8.1.1)
       '@supabase/supabase-js':
         specifier: 'catalog:'
         version: 2.116.0(@opentelemetry/api@1.9.1)
@@ -1517,8 +1517,8 @@ packages:
       '@types/react':
         optional: true
 
-  '@google/genai@2.24.0':
-    resolution: {integrity: sha512-bIu5eoxF1AaPWs9ivmUJGp1RpDHyapoODvWvnkzRDx2CTIW6UJXFhDdjj0BlRve3ZHMMuEkQBVrA/ALqpW4apA==}
+  '@google/genai@2.32.0':
+    resolution: {integrity: sha512-60c79uXpR0a47bmGqDxbXEBuQUalNmwo5mx5kqb91jIW4FoqpsLSt86DeVhRhtH5+s/16Wqxt3sXzFQn2U1OHQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.25.2
@@ -4653,6 +4653,7 @@ packages:
   '@smithy/core@3.35.1':
     resolution: {integrity: sha512-i4YPS4B6ts7bjn7UwLnGjiZdprOvHvgGobFZsYK3GIY3E5hIqtj0rReU69BcTpGp+fvtraSNXeG1l+jtJvF55w==}
     engines: {node: '>=18.0.0'}
+    deprecated: Deprecated due to a bug in custom logger data redaction. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
 
   '@smithy/credential-provider-imds@4.5.2':
     resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
@@ -10639,7 +10640,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.16
 
-  '@google/genai@2.24.0(supports-color@8.1.1)':
+  '@google/genai@2.32.0(supports-color@8.1.1)':
     dependencies:
       google-auth-library: 10.9.1(supports-color@8.1.1)
       p-retry: 4.6.2
