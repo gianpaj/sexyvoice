@@ -16,6 +16,7 @@ import type { Graph } from 'schema-dts';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -137,7 +138,7 @@ export default async function LandingPage(props: {
           '@type': 'Question' as const,
           acceptedAnswer: {
             '@type': 'Answer' as const,
-            text: q.answer,
+            text: q.answer.replaceAll('{count}', String(CREDITS_PER_MINUTE)),
           },
           name: q.question,
         })),

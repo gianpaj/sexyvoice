@@ -248,11 +248,11 @@
           "questions": [
             {
               "question": "Hvordan fungerer stemmekloning?",
-              "answer": "Vores AI analyserer din stemmeprøve (10 sekunder til 5 minutter) for at lære dens unikke mønstre og karakteristika. Med blot få sekunders ren lyd kan du bygge en digital version af din stemme, der lyder naturlig og realistisk."
+              "answer": "Vores AI analyserer din stemmeprøve (10 sekunder til 5 minutter) for at lære dens unikke mønstre og karakteristika og bygger derefter en digital version af din stemme, der lyder naturlig og realistisk."
             },
             {
               "question": "Kan jeg klone min egen stemme?",
-              "answer": "Ja! Med blot få sekunders ren lyd kan den bygge en digital version af din stemme, der lyder naturlig og realistisk."
+              "answer": "Ja! Optag eller upload mindst 10 sekunders ren lyd, så bygger den en digital version af din stemme, der lyder naturlig og realistisk."
             },
             {
               "question": "Hvordan prissættes stemmekloning?",
@@ -273,8 +273,24 @@
               "answer": "Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale."
             },
             {
+              "question": "Kan jeg ringe til en karakter med min egen stemme?",
+              "answer": "Ja, med et betalt abonnement. Lav en karakter og vælg \"Klon en stemme\", eller klon en på Klon-siden med \"Gem en stemme til opkald\". Optag eller upload mindst 10 sekunders tale, og vælg den som karakterens stemme."
+            },
+            {
               "question": "Hvor meget koster det?",
               "answer": "Live-opkald koster {count} kreditter pr. minut, mens du er forbundet."
+            },
+            {
+              "question": "Koster det mere at ringe med en klonet stemme?",
+              "answer": "Nej. Opkald koster {count} kreditter pr. minut, uanset hvilken stemme du vælger, og det er gratis at gemme en stemme. Afregningen starter, når karakteren er klar til at tale, ikke mens der forbindes."
+            },
+            {
+              "question": "Hvordan får jeg den bedste klon?",
+              "answer": "Optag 10–30 sekunder af én person, der taler naturligt i et stille rum, uden musik eller stemmer i baggrunden. Længere klip forkortes til 30 sekunder. Hvis rummet var støjende, så sæt flueben ved \"Rens referenceaudioen\". Lad den være slået fra ved rene optagelser, da den kan få dem til at lyde dårligere."
+            },
+            {
+              "question": "Kan jeg klone en andens stemme?",
+              "answer": "Kun med deres tilladelse. Du bekræfter, at du har rettighederne, før du kloner, og vores vilkår forbyder at udgive sig for andre og vildlede."
             }
           ]
         },

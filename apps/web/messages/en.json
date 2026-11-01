@@ -248,11 +248,11 @@
           "questions": [
             {
               "question": "How does voice cloning work?",
-              "answer": "Our AI analyzes your voice sample (min 10 seconds) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
+              "answer": "Our AI analyzes your voice sample (at least 10 seconds) to learn its unique patterns and characteristics, then builds a digital version of your voice that sounds natural and realistic."
             },
             {
               "question": "Can I clone my own voice?",
-              "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
+              "answer": "Yes! Record or upload at least 10 seconds of clean audio and it builds a digital version of your voice that sounds natural and realistic."
             },
             {
               "question": "How is voice cloning priced?",
@@ -273,8 +273,24 @@
               "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
+              "question": "Can I call a character in my own voice?",
+              "answer": "Yes, on a paid plan. Create a character and choose \"Clone a voice\", or clone one on the Clone page with \"Save a voice for calls\". Record or upload at least 10 seconds of speech, then pick it as the character's voice."
+            },
+            {
               "question": "How much does it cost?",
               "answer": "Live calling costs {count} credits per minute while you're connected."
+            },
+            {
+              "question": "Does calling with a cloned voice cost more?",
+              "answer": "No. Calls cost {count} credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting."
+            },
+            {
+              "question": "How do I get the best clone?",
+              "answer": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, tick \"Clean up the reference audio\". Leave it off for clean recordings, as it can make them sound worse."
+            },
+            {
+              "question": "Can I clone someone else's voice?",
+              "answer": "Only with their permission. You confirm you have the rights before cloning, and our terms prohibit impersonation and deception."
             }
           ]
         },

@@ -248,11 +248,11 @@
           "questions": [
             {
               "question": "Come funziona la clonazione vocale?",
-              "answer": "La nostra AI analizza il tuo file audio (da 10 secondi a 5 minuti) per apprendere i suoi schemi e caratteristiche uniche. Con solo pochi secondi di audio pulito, puoi creare una versione digitale della tua voce che suona naturale e realistica."
+              "answer": "La nostra AI analizza il tuo file audio (da 10 secondi a 5 minuti) per apprendere i suoi schemi e caratteristiche uniche, poi crea una versione digitale della tua voce che suona naturale e realistica."
             },
             {
               "question": "Posso clonare la mia voce?",
-              "answer": "Sì! Con solo pochi secondi di audio pulito, può creare una versione digitale della tua voce che suona naturale e realistica."
+              "answer": "Sì! Registra o carica almeno 10 secondi di audio pulito e creerà una versione digitale della tua voce che suona naturale e realistica."
             },
             {
               "question": "Come viene calcolato il prezzo della clonazione vocale?",
@@ -273,8 +273,24 @@
               "answer": "Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione."
             },
             {
+              "question": "Posso chiamare un personaggio con la mia voce?",
+              "answer": "Sì, con un piano a pagamento. Crea un personaggio e scegli \"Clona una voce\", oppure clonane una nella pagina Clona con \"Salva una voce per le chiamate\". Registra o carica almeno 10 secondi di parlato, poi sceglila come voce del personaggio."
+            },
+            {
               "question": "Quanto costa?",
               "answer": "Le chiamate live costano {count} crediti al minuto mentre sei connesso."
+            },
+            {
+              "question": "Chiamare con una voce clonata costa di più?",
+              "answer": "No. Le chiamate costano {count} crediti al minuto qualunque voce tu scelga, e salvare una voce è gratis. L'addebito inizia quando il personaggio è pronto a parlare, non durante la connessione."
+            },
+            {
+              "question": "Come ottengo il clone migliore?",
+              "answer": "Registra 10–30 secondi di una sola persona che parla in modo naturale in una stanza silenziosa, senza musica né voci di sottofondo. I clip più lunghi vengono tagliati a 30 secondi. Se la stanza era rumorosa, spunta \"Pulisci l'audio di riferimento\". Lascialo disattivato per le registrazioni pulite, perché può peggiorarle."
+            },
+            {
+              "question": "Posso clonare la voce di un'altra persona?",
+              "answer": "Solo con il suo permesso. Prima di clonare confermi di averne i diritti, e i nostri termini vietano di spacciarsi per altri e di ingannare."
             }
           ]
         },

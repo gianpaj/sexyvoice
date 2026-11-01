@@ -248,11 +248,11 @@
           "questions": [
             {
               "question": "Wie funktioniert das Klonen von Stimmen?",
-              "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+              "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen, und erstellt daraus eine digitale Version Ihrer Stimme, die natürlich und realistisch klingt."
             },
             {
               "question": "Kann ich meine eigene Stimme klonen?",
-              "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+              "answer": "Ja! Nehmen Sie mindestens 10 Sekunden saubere Audio auf oder laden Sie sie hoch, und es entsteht eine digitale Version Ihrer Stimme, die natürlich und realistisch klingt."
             },
             {
               "question": "Wie wird das Klonen von Stimmen berechnet?",
@@ -273,8 +273,24 @@
               "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
             },
             {
+              "question": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
+              "answer": "Ja, mit einem kostenpflichtigen Tarif. Erstellen Sie einen Charakter und wählen Sie \"Stimme klonen\", oder klonen Sie auf der Klonen-Seite eine Stimme mit \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Sprache auf oder laden Sie sie hoch und wählen Sie sie als Stimme des Charakters."
+            },
+            {
               "question": "Was kostet das?",
               "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
+            },
+            {
+              "question": "Kostet ein Anruf mit einer geklonten Stimme mehr?",
+              "answer": "Nein. Anrufe kosten {count} Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens."
+            },
+            {
+              "question": "Wie bekomme ich den besten Klon?",
+              "answer": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, aktivieren Sie \"Referenz-Audio bereinigen\". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann."
+            },
+            {
+              "question": "Kann ich die Stimme einer anderen Person klonen?",
+              "answer": "Nur mit deren Erlaubnis. Sie bestätigen vor dem Klonen, dass Sie die Rechte haben, und unsere Bedingungen verbieten Identitätsmissbrauch und Täuschung."
             }
           ]
         },
