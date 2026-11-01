@@ -913,6 +913,7 @@
     "convertingAudio": "Conversione audio",
     "savedVoice": {
       "modeLabel": "Salva una voce per le chiamate",
+      "upgradeTooltip": "Passa a un piano a pagamento per salvare voci per le chiamate.",
       "name": "Nome della voce",
       "help": "Salva questa voce per usarla quando crei un personaggio. Il fornitore conserva il campione di riferimento.",
       "noiseRemovalHelp": "Rimuove il rumore di fondo. Usalo solo per registrazioni rumorose: può peggiorare un audio già pulito. Gratis.",

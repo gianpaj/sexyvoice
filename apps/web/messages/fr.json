@@ -913,6 +913,7 @@
     "convertingAudio": "Conversion de l'audio",
     "savedVoice": {
       "modeLabel": "Enregistrer une voix pour les appels",
+      "upgradeTooltip": "Passez à une offre payante pour enregistrer des voix pour les appels.",
       "name": "Nom de la voix",
       "help": "Enregistrez cette voix pour l’utiliser lors de la création d’un personnage. Le fournisseur conserve l’échantillon de référence.",
       "noiseRemovalHelp": "Supprime le bruit de fond. À utiliser uniquement pour les enregistrements bruyants : un audio propre peut en sortir dégradé. Gratuit.",

@@ -497,6 +497,19 @@ describe('NewVoiceClient', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows free users Save a voice for calls as an upgrade', () => {
+    renderClone({ cloneMessages: enMessages.clone, userHasPaid: false });
+
+    expect(
+      screen.getByLabelText(enMessages.clone.savedVoice.modeLabel),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('link', {
+        name: enMessages.clone.savedVoice.upgradeTooltip,
+      }),
+    ).toHaveAttribute('href', '/dashboard/credits');
+  });
+
   it('lists only call voice languages when saving a voice', async () => {
     const user = userEvent.setup();
     renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });

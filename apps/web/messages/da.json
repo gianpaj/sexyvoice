@@ -909,6 +909,7 @@
     "convertingAudio": "Konverterer lyd",
     "savedVoice": {
       "modeLabel": "Gem en stemme til opkald",
+      "upgradeTooltip": "Opgrader til en betalt plan for at gemme stemmer til opkald.",
       "name": "Stemmens navn",
       "help": "Gem denne stemme, så du kan bruge den, når du opretter en karakter. Udbyderen opbevarer referenceoptagelsen.",
       "noiseRemovalHelp": "Fjerner baggrundsstøj. Brug det kun til optagelser med støj: det kan få ren lyd til at lyde dårligere. Gratis.",
