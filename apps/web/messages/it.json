@@ -918,6 +918,7 @@
       "help": "Salva questa voce per usarla quando crei un personaggio. Il fornitore conserva il campione di riferimento.",
       "noiseRemovalHelp": "Rimuove il rumore di fondo. Usalo solo per registrazioni rumorose: può peggiorare un audio già pulito. Gratis.",
       "save": "Salva voce",
+      "saving": "Salvataggio della voce",
       "success": "Voce salvata",
       "useInCall": "Usa la voce in una chiamata →",
       "backToCall": "Torna alla chiamata",

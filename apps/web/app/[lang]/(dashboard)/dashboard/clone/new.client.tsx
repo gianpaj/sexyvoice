@@ -959,7 +959,7 @@ function NewVoiceClientInner({
               disabled={generateDisabled}
               generatingText={
                 status === 'generating'
-                  ? `${t('generating')}...`
+                  ? `${t(saveVoiceOnly ? 'savedVoice.saving' : 'generating')}...`
                   : `${t('convertingAudio')}...`
               }
               isGenerating={status === 'generating' || convertingMicAudio}

@@ -474,6 +474,29 @@ describe('NewVoiceClient', () => {
     expect(cleanup()).not.toBeChecked();
   });
 
+  it('says Saving voice while a voice is being saved', async () => {
+    fetchMock.mockReturnValueOnce(new Promise(() => undefined));
+    const user = userEvent.setup();
+    renderClone({
+      initialSaveForCalls: true,
+      userHasPaid: true,
+      cloneMessages: enMessages.clone,
+    });
+    await user.type(
+      screen.getByLabelText(enMessages.clone.savedVoice.name),
+      'My voice',
+    );
+    await user.click(screen.getByTestId('clone-legal-consent'));
+    await user.click(screen.getByTestId('clone-generate-button'));
+
+    expect(
+      await screen.findByText(`${enMessages.clone.savedVoice.saving}...`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(`${enMessages.clone.generating}...`),
+    ).not.toBeInTheDocument();
+  });
+
   it('lists only call voice languages when saving a voice', async () => {
     const user = userEvent.setup();
     renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });

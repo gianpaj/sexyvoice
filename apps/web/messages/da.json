@@ -914,6 +914,7 @@
       "help": "Gem denne stemme, så du kan bruge den, når du opretter en karakter. Udbyderen opbevarer referenceoptagelsen.",
       "noiseRemovalHelp": "Fjerner baggrundsstøj. Brug det kun til optagelser med støj: det kan få ren lyd til at lyde dårligere. Gratis.",
       "save": "Gem stemme",
+      "saving": "Gemmer stemme",
       "success": "Stemme gemt",
       "useInCall": "Brug stemmen i et opkald →",
       "backToCall": "Tilbage til opkald",

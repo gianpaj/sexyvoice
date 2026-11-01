@@ -918,6 +918,7 @@
       "help": "Speichere diese Stimme, um sie beim Erstellen eines Charakters zu verwenden. Der Anbieter bewahrt die Referenzaufnahme auf.",
       "noiseRemovalHelp": "Entfernt Hintergrundgeräusche. Nur für verrauschte Aufnahmen verwenden: Saubere Aufnahmen können dadurch schlechter klingen. Kostenlos.",
       "save": "Stimme speichern",
+      "saving": "Stimme wird gespeichert",
       "success": "Stimme gespeichert",
       "useInCall": "Stimme für einen Anruf verwenden →",
       "backToCall": "Zurück zum Anruf",

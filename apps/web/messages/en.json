@@ -916,6 +916,7 @@
       "help": "Save this voice to use it when creating a character. The voice provider retains the reference sample.",
       "noiseRemovalHelp": "Removes background noise. Use it only for noisy recordings: it can make clean audio sound worse. Free.",
       "save": "Save voice",
+      "saving": "Saving voice",
       "success": "Voice saved",
       "useInCall": "Use voice in a call →",
       "backToCall": "Back to call",
