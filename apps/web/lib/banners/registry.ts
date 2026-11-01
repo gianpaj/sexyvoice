@@ -31,6 +31,21 @@ const bannerRegistry = {
     placements: ['landing', 'dashboard', 'blog'],
     priority: 100,
   },
+  clonedVoiceCallsLaunch: {
+    cta: {
+      loggedInHref: (lang) => `/${lang}/dashboard/clone`,
+      loggedOutHref: (lang) => `/${lang}/login`,
+    },
+    dismiss: {
+      cookieKey: 'banner-cloned-voice-calls-launch-dismissed',
+      days: 14,
+    },
+    id: 'clonedVoiceCallsLaunch',
+    kind: 'announcement',
+    placements: ['landing', 'dashboard', 'blog'],
+    priority: 90,
+    theme: 'blue',
+  },
   expressiveVoicesLaunch: {
     cta: {
       loggedInHref: (lang) => `/${lang}/dashboard/generate`,

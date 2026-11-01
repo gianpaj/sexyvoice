@@ -1216,6 +1216,12 @@
     }
   },
   "announcements": {
+    "clonedVoiceCallsLaunch": {
+      "text": "Klone jede Stimme aus einer 10-Sekunden-Aufnahme und rufe dann eine Figur an, die mit ihr spricht.",
+      "ctaLoggedIn": "Stimme klonen",
+      "ctaLoggedOut": "Anmelden",
+      "ariaLabelDismiss": "Hinweis zu Anrufen mit geklonter Stimme schliessen"
+    },
     "expressiveVoicesLaunch": {
       "text": "Neue, ausdrucksstärkere Stimmen sind da — angetrieben von Gemini 3.1, mit feinerer Kontrolle über Tempo, Atemgeräusche, Tonhöhe, Geschwindigkeit und Intensität.",
       "ctaLoggedIn": "Stimmen testen",

@@ -1214,6 +1214,12 @@
     }
   },
   "announcements": {
+    "clonedVoiceCallsLaunch": {
+      "text": "Clone any voice from a 10-second recording, then call a character who speaks with it.",
+      "ctaLoggedIn": "Clone a voice",
+      "ctaLoggedOut": "Log in",
+      "ariaLabelDismiss": "Dismiss cloned voice calls announcement"
+    },
     "expressiveVoicesLaunch": {
       "text": "New, more expressive voices are here — powered by Gemini 3.1, with finer control over pacing, breaths, pitch, speed, and intensity.",
       "ctaLoggedIn": "Try voices",
