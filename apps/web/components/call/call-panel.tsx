@@ -33,7 +33,7 @@ import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import { type SavedCallVoice, savedVoiceMissing } from '@/lib/call-voices';
+import { callReadiness, type SavedCallVoice } from '@/lib/call-voices';
 import {
   getPresetDescription,
   getPresetSampleUrl,
@@ -89,7 +89,8 @@ export function CallPanel({
   const isOwn = !preset.isPublic;
   const { name } = preset;
   const { audioReferenceId } = preset.sessionConfig;
-  const voiceMissing = savedVoiceMissing(preset.sessionConfig, savedVoices);
+  const { personalityMissing: missingPersonality, voiceMissing } =
+    callReadiness(preset, pgState.instructions, savedVoices);
   const voiceName = voiceMissing
     ? t('noVoice')
     : (preset.voiceName ?? preset.sessionConfig.voice);
@@ -102,7 +103,6 @@ export function CallPanel({
   const sampleUrl = getPresetSampleUrl(preset);
   const listenKey = `panel:${preset.id}`;
   const playing = player.playingKey === listenKey;
-  const missingPersonality = isOwn && !pgState.instructions.trim();
   const canRemix =
     isPaidUser && pgState.customCharacters.length < MAX_CUSTOM_CHARACTERS;
 

@@ -27,8 +27,8 @@ import {
   useSamplePlayer,
 } from '@/hooks/use-sample-player';
 import {
+  callReadiness,
   type SavedCallVoice,
-  savedVoiceMissing,
   withCallVoice,
 } from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
@@ -224,10 +224,7 @@ function CallExperienceScreens({
     setPendingCallId(null);
     if (!preset) return;
     // The panel explains what is missing and how to fix it.
-    const cannotCall =
-      savedVoiceMissing(preset.sessionConfig, savedVoices) ||
-      !(preset.isPublic || pgState.instructions.trim());
-    if (cannotCall) {
+    if (!callReadiness(preset, pgState.instructions, savedVoices).canCall) {
       setPanelOpen(true);
       return;
     }
