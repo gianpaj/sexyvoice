@@ -54,6 +54,8 @@ interface CharacterCreatorProps {
   callCloneProvider: CallCloneProvider;
   callVoices: DBVoice[];
   intent: CreatorIntent;
+  /** Opens the call panel for a saved character, like its card's Call. */
+  onCall: (presetId: string) => void;
   onCancel: () => void;
   onDelete: (preset: Preset) => void;
   onSaved: (preset: Preset, updated: boolean) => void;
@@ -97,6 +99,7 @@ export function CharacterCreator({
   callCloneProvider,
   callVoices,
   intent,
+  onCall,
   onCancel,
   onDelete,
   onSaved,
@@ -178,6 +181,9 @@ export function CharacterCreator({
     : callVoices.find((v) => v.name === sessionConfig.voice);
   const voiceValid = Boolean(savedVoice ?? builtInVoice);
   const complete = !(nameMissing || personalityMissing) && voiceValid;
+  // Only a saved character without edits can call; the panel uses what is
+  // saved, not this form.
+  const canCall = Boolean(editing && !dirty && complete);
 
   let hint = t('ready', { name });
   if (nameMissing && personalityMissing) hint = t('missingNameAndPersonality');
@@ -279,13 +285,15 @@ export function CharacterCreator({
           onClick={togglePreview}
           playing={previewPlaying}
         />
-        <span
-          aria-hidden="true"
-          className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-violet-700 px-[18px] font-semibold text-sm text-white opacity-55"
+        <button
+          className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-violet-700 px-[18px] font-semibold text-sm text-white transition-colors hover:bg-violet-600 focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-55"
+          disabled={!canCall}
+          onClick={() => editing && onCall(editing.id)}
+          type="button"
         >
-          <PhoneCall className="size-[15px]" />
+          <PhoneCall aria-hidden="true" className="size-[15px]" />
           {t('call')}
-        </span>
+        </button>
       </div>
     </div>
   );

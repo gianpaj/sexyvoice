@@ -246,6 +246,10 @@ function CallExperienceScreens({
         callCloneProvider={callCloneProvider}
         callVoices={callVoices}
         intent={view.intent}
+        onCall={(presetId) => {
+          showView({ name: 'picker' });
+          openPanel(presetId);
+        }}
         onCancel={() => showView({ name: 'picker' })}
         onDelete={handleDelete}
         onSaved={handleSaved}

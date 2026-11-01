@@ -390,6 +390,53 @@ describe('CallExperience creator', () => {
     expect(toastMock.success).toHaveBeenCalledWith('Max saved');
   });
 
+  it('calls an unchanged character from the editor preview', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    await user.click(
+      screen.getByRole('button', { name: 'More options for Marco' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+    const creator = await screen.findByTestId('character-creator');
+    const call = within(creator).getByRole('button', { name: 'Call' });
+    expect(call).toBeEnabled();
+
+    await user.type(within(creator).getByLabelText('Name'), 'x');
+    expect(call).toBeDisabled();
+    await user.clear(within(creator).getByLabelText('Name'));
+    await user.type(within(creator).getByLabelText('Name'), 'Marco');
+    // Any edit needs saving first, even one typed back.
+    expect(call).toBeDisabled();
+  });
+
+  it('opens the call panel from the editor preview', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    await user.click(
+      screen.getByRole('button', { name: 'More options for Marco' }),
+    );
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+    const creator = await screen.findByTestId('character-creator');
+
+    await user.click(within(creator).getByRole('button', { name: 'Call' }));
+
+    const panel = await screen.findByTestId('call-panel');
+    expect(within(panel).getByRole('heading', { name: 'Marco' })).toBeVisible();
+    expect(screen.queryByTestId('character-creator')).not.toBeInTheDocument();
+  });
+
+  it('cannot call a new character before it is saved', async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    await user.click(
+      screen.getByRole('button', { name: /Create a character/ }),
+    );
+    const creator = await screen.findByTestId('character-creator');
+    expect(
+      within(creator).getByRole('button', { name: 'Call' }),
+    ).toBeDisabled();
+  });
+
   it('updates an existing character from its menu', async () => {
     const user = userEvent.setup();
     renderExperience();
