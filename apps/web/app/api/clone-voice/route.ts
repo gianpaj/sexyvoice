@@ -1458,14 +1458,21 @@ export async function POST(request: Request) {
         callProvider,
       );
       validateAudioDuration(processedAudio.duration, callProvider);
-      const saveVoice =
-        callProvider === 'inworld' ? saveInworldVoice : saveMistralVoice;
-      const reference = await saveVoice(
-        processedAudio.buffer,
-        formInput.saveVoiceName,
-        locale,
-        user.id,
-      );
+      const reference =
+        callProvider === 'inworld'
+          ? await saveInworldVoice(
+              processedAudio.buffer,
+              formInput.saveVoiceName,
+              locale,
+              user.id,
+              { removeBackgroundNoise: formInput.enhanceReferenceAudio },
+            )
+          : await saveMistralVoice(
+              processedAudio.buffer,
+              formInput.saveVoiceName,
+              locale,
+              user.id,
+            );
       return NextResponse.json({
         audioReferenceId: reference.id,
         provider: callProvider,

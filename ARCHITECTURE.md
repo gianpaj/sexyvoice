@@ -236,8 +236,11 @@ The Clone page offers **Save a voice for calls** to paid users. Entering from
 `/dashboard/call` selects this mode. It requires a name, permission to save the
 reference, and a locale supported by the selected provider. The same upload validation, WAV
 normalization, trimming, and minimum duration checks apply. Inworld references
-are trimmed to 30 seconds and Mistral references to 25 seconds. Audio cleanup is
-available only for speech generation.
+are trimmed to 30 seconds and Mistral references to 25 seconds. The paid
+Replicate cleanup applies only to speech generation. When saving an Inworld
+voice, the same checkbox (`enhanceReferenceAudio`) sets Inworld's free
+`audioProcessingConfig.removeBackgroundNoise` instead. It is off by default
+because Inworld warns it can degrade clean samples. Mistral saves hide it.
 
 `POST /api/clone-voice` accepts `saveVoiceName` and `voiceConsent=true` for this
 mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or

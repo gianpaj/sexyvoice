@@ -7,14 +7,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import type { CloneStateAction } from './clone-state';
 
+/**
+ * `paid`: Replicate cleanup, charged in credits. `inworld`: Inworld's free
+ * noise removal when saving a call voice.
+ */
+export type ReferenceCleanup = 'paid' | 'inworld' | 'none';
+
 export function CloneConsentFields({
-  hideEnhancement = false,
+  cleanup,
   disabled,
   legalConsentChecked,
   referenceAudioEnhancementEnabled,
   dispatch,
 }: {
-  hideEnhancement?: boolean;
+  cleanup: ReferenceCleanup;
   disabled: boolean;
   legalConsentChecked: boolean;
   referenceAudioEnhancementEnabled: boolean;
@@ -24,7 +30,7 @@ export function CloneConsentFields({
 
   return (
     <>
-      {!hideEnhancement && (
+      {cleanup !== 'none' && (
         <div className="flex items-start space-x-2">
           <Checkbox
             checked={referenceAudioEnhancementEnabled}
@@ -47,7 +53,11 @@ export function CloneConsentFields({
               {t('referenceAudioEnhancementLabel')}
             </Label>
             <p className="text-muted-foreground text-xs leading-tight">
-              {t('referenceAudioEnhancementHelp')}
+              {t(
+                cleanup === 'inworld'
+                  ? 'savedVoice.noiseRemovalHelp'
+                  : 'referenceAudioEnhancementHelp',
+              )}
             </p>
           </div>
         </div>

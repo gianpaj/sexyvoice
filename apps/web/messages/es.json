@@ -916,6 +916,7 @@
       "modeLabel": "Guardar una voz para llamadas",
       "name": "Nombre de la voz",
       "help": "Guarda esta voz para usarla al crear un personaje. El proveedor conserva la muestra de referencia.",
+      "noiseRemovalHelp": "Elimina el ruido de fondo. Úsalo solo con grabaciones ruidosas: puede empeorar el sonido de un audio limpio. Gratis.",
       "save": "Guardar voz",
       "success": "Voz guardada",
       "useInCall": "Usar voz en una llamada →",

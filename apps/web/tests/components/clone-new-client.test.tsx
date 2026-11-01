@@ -323,12 +323,19 @@ describe('NewVoiceClient', () => {
       screen.getByLabelText(enMessages.clone.savedVoice.name),
       'My voice',
     );
+    expect(
+      screen.getByText(enMessages.clone.savedVoice.noiseRemovalHelp),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByLabelText(enMessages.clone.referenceAudioEnhancementLabel),
+    );
     await user.click(screen.getByTestId('clone-legal-consent'));
     await user.click(screen.getByTestId('clone-generate-button'));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
     const body = fetchMock.mock.calls[0][1].body as FormData;
     expect(body.get('saveVoiceName')).toBe('My voice');
     expect(body.get('voiceConsent')).toBe('true');
+    expect(body.get('enhanceReferenceAudio')).toBe('true');
     expect(
       screen.getByRole('link', { name: enMessages.clone.savedVoice.useInCall }),
     ).toHaveAttribute('href', '/dashboard/call?custom=1&voice=reference');

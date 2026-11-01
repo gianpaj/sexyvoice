@@ -119,6 +119,7 @@ describe('Inworld saved voices', () => {
       voiceSamples: [
         { audioData: Buffer.from('reference audio').toString('base64') },
       ],
+      audioProcessingConfig: { removeBackgroundNoise: false },
     });
     expect(mocks.insert).toHaveBeenCalledWith({
       id: expect.any(String),

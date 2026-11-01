@@ -188,6 +188,7 @@ describe('Clone Voice API Route', () => {
         'My voice',
         locale,
         expect.any(String),
+        { removeBackgroundNoise: false },
       );
       expect(mockSaveMistralVoice).not.toHaveBeenCalled();
       expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
@@ -195,6 +196,27 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     },
   );
+
+  it('asks Inworld to remove background noise when cleanup is on', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en', true);
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(mockSaveInworldVoice.mock.lastCall?.[4]).toEqual({
+      removeBackgroundNoise: true,
+    });
+    expect(mockReplicateRun).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
 
   it('rejects saving the Chatterbox English option as a call voice', async () => {
     vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');

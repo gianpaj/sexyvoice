@@ -45,6 +45,8 @@ export async function saveInworldVoice(
   name: string,
   locale: string,
   userId: string,
+  // Inworld warns that noise removal can degrade an already clean sample.
+  { removeBackgroundNoise = false } = {},
 ) {
   const response = await inworldRequest('/voices/v1/voices:clone', {
     method: 'POST',
@@ -52,6 +54,7 @@ export async function saveInworldVoice(
       displayName: name,
       languageCode: toInworldLanguage(locale),
       voiceSamples: [{ audioData: audio.toString('base64') }],
+      audioProcessingConfig: { removeBackgroundNoise },
     }),
   });
   const { voice } = cloneResponse.parse(await response.json());

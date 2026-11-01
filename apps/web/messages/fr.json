@@ -916,6 +916,7 @@
       "modeLabel": "Enregistrer une voix pour les appels",
       "name": "Nom de la voix",
       "help": "Enregistrez cette voix pour l’utiliser lors de la création d’un personnage. Le fournisseur conserve l’échantillon de référence.",
+      "noiseRemovalHelp": "Supprime le bruit de fond. À utiliser uniquement pour les enregistrements bruyants : un audio propre peut en sortir dégradé. Gratuit.",
       "save": "Enregistrer la voix",
       "success": "Voix enregistrée",
       "useInCall": "Utiliser la voix dans un appel →",

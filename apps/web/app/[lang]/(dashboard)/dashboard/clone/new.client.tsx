@@ -62,7 +62,10 @@ import { Link } from '@/lib/i18n/navigation';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { CloneAudioInput } from './clone-audio-input';
-import { CloneConsentFields } from './clone-consent-fields';
+import {
+  CloneConsentFields,
+  type ReferenceCleanup,
+} from './clone-consent-fields';
 import { CloneLanguageSelect } from './clone-language-select';
 import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
@@ -689,6 +692,10 @@ function NewVoiceClientInner({
     Boolean(micBlob) &&
     micSeconds !== null &&
     micSeconds < minAudioSeconds;
+  let cleanup: ReferenceCleanup = 'paid';
+  if (saveVoiceOnly)
+    cleanup = callCloneProvider === 'inworld' ? 'inworld' : 'none';
+
   const generateDisabled = selectedVoice
     ? !text.trim() ||
       status === 'generating' ||
@@ -909,9 +916,9 @@ function NewVoiceClientInner({
 
             {!selectedVoice && (
               <CloneConsentFields
+                cleanup={cleanup}
                 disabled={status === 'generating'}
                 dispatch={dispatch}
-                hideEnhancement={saveVoiceOnly}
                 legalConsentChecked={legalConsentChecked}
                 referenceAudioEnhancementEnabled={
                   referenceAudioEnhancementEnabled
