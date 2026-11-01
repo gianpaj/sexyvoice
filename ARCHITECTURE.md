@@ -449,7 +449,10 @@ Characters are voice-and-prompt bundles. The call page
 (`components/call/call-experience.tsx`) has a picker with "Your characters"
 and "Featured" grids. A card opens the call panel, a side sheet (bottom sheet
 on phones) with the voice sample, language, scene, microphone status and
-Start call. During a call the page shows the in-call view; when it ends it
+Start call. A card's Call, and Call in the creator preview of an unchanged
+saved character, start the call directly. They open the panel instead when
+the character has no voice or personality, or the microphone is blocked.
+During a call the page shows the in-call view; when it ends it
 offers Call again and editing.
 
 Paid users create, duplicate and edit characters in the creator: name, short
