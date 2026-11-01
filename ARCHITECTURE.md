@@ -237,7 +237,7 @@ The Clone page offers **Save a voice for calls** to paid users. Entering from
 reference, and a locale supported by the selected provider. The same upload validation, WAV
 normalization, trimming, and minimum duration checks apply. Inworld references
 are trimmed to 30 seconds and Mistral references to 25 seconds. The paid
-Replicate cleanup applies only to speech generation. When saving an Inworld
+fal.ai cleanup (DeepFilterNet 3) applies only to speech generation. When saving an Inworld
 voice, the same checkbox (`enhanceReferenceAudio`) sets Inworld's free
 `audioProcessingConfig.removeBackgroundNoise` instead. It is off by default
 because Inworld warns it can degrade clean samples. Mistral saves hide it.
@@ -390,8 +390,8 @@ selected while the download was pending.
 The landing CTA carries `demo` and `take` into `/[lang]/dashboard/clone`.
 `apps/web/lib/clone/demo-redirect.ts` allows only supported voice/take pairs through
 login, signup, OAuth, and email confirmation. Other signup redirects use the
-default callback. The public cloning page follows the preview gate in
-`apps/web/lib/features.ts`.
+default callback. The public cloning page ends with a section that links to
+`/[lang]/voice-call`, and the voice call page links back to it.
 
 ## Real-time AI Voice Calls
 
@@ -453,13 +453,18 @@ Start call. A card's Call, and Call in the creator preview of an unchanged
 saved character, start the call directly. They open the panel instead when
 the character has no voice or personality, or the microphone is blocked.
 During a call the page shows the in-call view; when it ends it
-offers Call again and editing.
+offers Call again and editing. The in-call timer starts when the agent first
+reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
+starts billing.
 
 Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
 personality and an available voice are required to save, and characters are
 saved before they are called. "Make your own version" of a featured character
-copies its name, description and voice, never its prompt. Deleting a
+copies its name, description and voice, never its prompt. Free users see the
+Create card as a link to the plans, and "Make your own version" disabled next
+to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
+character can call, for both the panel and a card's Call. Deleting a
 character removes it from the list at once; the DELETE request waits until
 the Undo toast closes or the page is hidden.
 

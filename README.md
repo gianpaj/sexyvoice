@@ -41,6 +41,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
+- **Live AI Voice Calls**: Talk to AI characters in real time; paid plans create their own characters and call them in a cloned voice
 - **Voice Selection System**: Choose from 63 public voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
@@ -70,7 +71,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
 - **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `apps/web/messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
-- **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
+- **[Tailwind CSS 4](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 

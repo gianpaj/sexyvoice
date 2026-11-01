@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import type { CloneStateAction } from './clone-state';
 
 /**
- * `paid`: Replicate cleanup, charged in credits. `inworld`: Inworld's free
+ * `paid`: fal.ai cleanup, charged in credits. `inworld`: Inworld's free
  * noise removal when saving a call voice.
  */
 export type ReferenceCleanup = 'paid' | 'inworld' | 'none';

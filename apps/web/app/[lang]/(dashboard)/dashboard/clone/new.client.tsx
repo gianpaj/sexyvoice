@@ -664,7 +664,7 @@ function NewVoiceClientInner({
     });
   };
 
-  // The cleanup checkbox is paid Replicate cleanup when generating and free
+  // The cleanup checkbox is paid fal.ai cleanup when generating and free
   // Inworld noise removal when saving, so neither choice carries over.
   const changeSaveMode = (on: boolean) => {
     setSaveVoiceOnly(on);

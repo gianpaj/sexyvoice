@@ -260,15 +260,6 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 
 ## Deployment constraints
 
-### Feature gates
-
-Review `apps/web/lib/features.ts` before shipping gated pages.
-`VOICE_CLONING_PAGE_ENABLED` allows the public `/[lang]/voice-cloning` page in
-previews and locally, but returns `404` in production while its demo audio is
-placeholder material. The gate must also cover the landing feature card, footer
-link, and sitemap. To ship the page, replace the placeholder audio and enable
-the gate; remove the gate in a follow-up cleanup.
-
 ### Supabase
 
 Verify migration compatibility and generated types before deploying code that

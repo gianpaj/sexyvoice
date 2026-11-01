@@ -232,8 +232,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   Gemini 2.5, `gpro31` for Gemini 3.1 Flash, and `gpro38` for Gemini 3.8 Flash), or xAI Grok TTS. External API
   `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
   `model = 'gpro31'` should use Gemini 3.1 Flash.
-- Voice cloning uses fal.ai and must respect permission and privacy
-  requirements.
+- Voice cloning uses Mistral Voxtral and Replicate Chatterbox for one-off
+  speech and Inworld for saved call voices; fal.ai cleans reference audio. It
+  must respect permission and privacy requirements.
 - Mistral TTS blocks sexual content with a 403 `guardrail_violation`, so
   saved call voices use Inworld.
 - `LiveKitRoom` renders its children one render after
