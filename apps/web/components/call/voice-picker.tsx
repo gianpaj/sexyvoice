@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, Mic, Trash2 } from 'lucide-react';
+import { ChevronDown, Mic, MoreVertical, Trash2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   type ReactNode,
@@ -11,6 +11,12 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { SessionConfig } from '@/data/session-config';
 import type { DBVoice } from '@/data/voices';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
@@ -157,6 +163,7 @@ function VoiceTile({
   onUnpick?: () => void;
 }) {
   const t = useTranslations('call.voices');
+  const tPicker = useTranslations('call.picker');
   const player = useSamplePlayer();
   const key = `voice:${voice.id}`;
   const playing = player.playingKey === key;
@@ -200,22 +207,38 @@ function VoiceTile({
         {content}
       </label>
       {voice.sampleUrl && (
+        // Drawn at 36px; the ::after keeps a 44px touch target.
         <ListenButton
           ariaLabel={t(playing ? 'stop' : 'play', { name: voice.name })}
+          className="relative size-9 after:absolute after:-inset-1 after:content-['']"
           onClick={() => player.toggle(key, voice.sampleUrl)}
           playing={playing}
         />
       )}
       {onDelete && (
-        <button
-          aria-label={t('delete', { name: voice.name })}
-          className="flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-950/40 hover:text-red-300 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-50"
-          disabled={disabled}
-          onClick={onDelete}
-          type="button"
-        >
-          <Trash2 aria-hidden="true" className="size-4" />
-        </button>
+        // Narrow but full height, so it is easy to tap and leaves room for
+        // the name. Deleting is rare, so it sits behind a menu.
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              aria-label={tPicker('moreOptions', { name: voice.name })}
+              className="-ml-1 flex h-11 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-800/60 hover:text-slate-200 focus-visible:outline-2 focus-visible:outline-violet-400 disabled:opacity-50"
+              disabled={disabled}
+              type="button"
+            >
+              <MoreVertical aria-hidden="true" className="size-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="h-10 text-red-300 focus:text-red-200"
+              onSelect={onDelete}
+            >
+              <Trash2 aria-hidden="true" />
+              {t('delete', { name: voice.name })}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </div>
   );

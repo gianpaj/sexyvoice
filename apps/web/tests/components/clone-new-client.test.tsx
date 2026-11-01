@@ -670,7 +670,10 @@ describe('NewVoiceClient', () => {
     await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
 
     await user.click(
-      screen.getByRole('button', { name: 'Delete My Inworld voice' }),
+      screen.getByRole('button', { name: 'More options for My Inworld voice' }),
+    );
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Delete My Inworld voice' }),
     );
     expect(screen.getByText(/^Used by Max .+ Lily\./)).toBeInTheDocument();
     await user.click(

@@ -180,7 +180,12 @@ describe('SavedCallVoices', () => {
     expect(screen.queryByRole('radio', { name: /Clone 5/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Show all (5)' }));
     await user.click(screen.getByRole('radio', { name: /Clone 5/ }));
-    await user.click(screen.getByRole('button', { name: 'Delete Clone 2' }));
+    await user.click(
+      screen.getByRole('button', { name: 'More options for Clone 2' }),
+    );
+    await user.click(
+      await screen.findByRole('menuitem', { name: 'Delete Clone 2' }),
+    );
 
     expect(onSelect).toHaveBeenCalledWith(saved[4]);
     expect(onDelete).toHaveBeenCalledWith(saved[1]);
