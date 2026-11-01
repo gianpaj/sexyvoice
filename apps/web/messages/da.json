@@ -1239,7 +1239,7 @@
   },
   "announcements": {
     "clonedVoiceCallsLaunch": {
-      "text": "Klon enhver stemme fra en optagelse på 10 sekunder, og ring derefter til en karakter, der taler med den.",
+      "text": "Klon din stemme fra en optagelse på 10 sekunder, og ring derefter til en karakter, der taler med den.",
       "ctaLoggedIn": "Klon en stemme",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om opkald med klonet stemme"

@@ -1243,7 +1243,7 @@
   },
   "announcements": {
     "clonedVoiceCallsLaunch": {
-      "text": "Clonez n'importe quelle voix à partir d'un enregistrement de 10 secondes, puis appelez un personnage qui parle avec elle.",
+      "text": "Clonez votre voix à partir d'un enregistrement de 10 secondes, puis appelez un personnage qui parle avec elle.",
       "ctaLoggedIn": "Cloner une voix",
       "ctaLoggedOut": "Se connecter",
       "ariaLabelDismiss": "Fermer l'annonce des appels avec voix clonée"

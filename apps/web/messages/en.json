@@ -1241,7 +1241,7 @@
   },
   "announcements": {
     "clonedVoiceCallsLaunch": {
-      "text": "Clone any voice from a 10-second recording, then call a character who speaks with it.",
+      "text": "Clone your voice from a 10-second recording, then call a character who speaks with it.",
       "ctaLoggedIn": "Clone a voice",
       "ctaLoggedOut": "Log in",
       "ariaLabelDismiss": "Dismiss cloned voice calls announcement"
