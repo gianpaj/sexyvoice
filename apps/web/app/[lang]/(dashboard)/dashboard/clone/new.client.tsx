@@ -265,6 +265,8 @@ function NewVoiceClientInner({
   }, [usesVoxtral, ensureLoaded, t]);
 
   // MediaRecorder WebM blobs often report no duration, so time the take.
+  // The input picked in the microphone menu; unset records from the default.
+  const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
   const recordingStartedAt = useRef(0);
   const [micSeconds, setMicSeconds] = useState<number | null>(null);
 
@@ -303,7 +305,9 @@ function NewVoiceClientInner({
     mediaBlob: recorderMediaBlob,
     getMediaStream,
   } = useMediaRecorder({
-    mediaStreamConstraints: { audio: true },
+    mediaStreamConstraints: {
+      audio: micDeviceId ? { deviceId: { ideal: micDeviceId } } : true,
+    },
     onError: (err) => {
       console.error(err);
       dispatch({
@@ -623,33 +627,6 @@ function NewVoiceClientInner({
     dispatch({ patch: { status: 'idle' }, type: 'patch' });
   }, []);
 
-  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-      event.preventDefault();
-
-      if (
-        status !== 'generating' &&
-        (saveVoiceOnly ? voiceName.trim() : text.trim()) &&
-        (saveVoiceOnly || hasEnoughCredits) &&
-        (selectedVoice || legalConsentChecked)
-      ) {
-        handleGenerate().catch((error) => {
-          console.error('Keyboard shortcut clone generation failed:', error);
-        });
-      }
-    }
-  });
-
-  // Keyboard shortcut handler. onKeyDown is a useEffectEvent, so it already has
-  // a stable identity and can be attached directly.
-  useEffect(() => {
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
-
   const downloadAudio = async () => {
     if (!generatedAudioUrl) return;
 
@@ -727,6 +704,24 @@ function NewVoiceClientInner({
       (!saveVoiceOnly && textIsOverLimit) ||
       !legalConsentChecked;
 
+  // Cmd/Ctrl+Enter does what the Generate button does, only when it is enabled.
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (!((event.metaKey || event.ctrlKey) && event.key === 'Enter')) return;
+    event.preventDefault();
+    if (generateDisabled) return;
+    handleGenerate().catch((error) => {
+      console.error('Keyboard shortcut clone generation failed:', error);
+    });
+  });
+
+  // onKeyDown is a useEffectEvent, so its identity is stable.
+  useEffect(() => {
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+
   return (
     <Card>
       <CardContent className="space-y-6">
@@ -798,6 +793,7 @@ function NewVoiceClientInner({
                     mediaBlob: recorderMediaBlob,
                     mediaStream,
                     onClear: onClearMediaStream,
+                    onDeviceChange: setMicDeviceId,
                     onToggle: onToggleMicrophone,
                     recording: micRecording,
                     status: micStatus,
@@ -840,10 +836,13 @@ function NewVoiceClientInner({
                       id="save-voice-only"
                       onCheckedChange={(checked) => {
                         changeSaveMode(checked === true);
-                        // Saved voices list plain English, not Chatterbox.
+                        // Keep the picker on a language the call provider saves.
                         if (
                           checked === true &&
-                          selectedLocaleCode === 'en-multi'
+                          !supportsCallCloneLocale(
+                            callCloneProvider,
+                            selectedLocaleCode,
+                          )
                         )
                           dispatch({
                             patch: { selectedLocaleCode: 'en' },

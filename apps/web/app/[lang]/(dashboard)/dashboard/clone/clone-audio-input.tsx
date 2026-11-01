@@ -29,6 +29,7 @@ interface CloneMic {
   mediaBlob: Blob | null;
   mediaStream: MediaStream | null;
   onClear: () => void;
+  onDeviceChange: (deviceId: string) => void;
   onToggle: () => void;
   recording: boolean;
   status: MicStatus;
@@ -152,6 +153,7 @@ export function CloneAudioInput({
             mediaBlob={mic.mediaBlob}
             mediaStream={mic.mediaStream}
             onClearMediaStream={mic.onClear}
+            onDeviceChange={mic.onDeviceChange}
             onToggleMicrophone={mic.onToggle}
             status={mic.status}
           />

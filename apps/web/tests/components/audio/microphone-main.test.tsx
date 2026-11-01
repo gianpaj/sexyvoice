@@ -85,6 +85,20 @@ describe('MicrophoneMain record button', () => {
 });
 
 describe('MicrophoneMain device list', () => {
+  it('reports the menu input so the recorder can use it', async () => {
+    useMediaDeviceSelect.mockImplementation(() => ({
+      activeDeviceId: 'usb-mic',
+      className: '',
+      devices: [device('usb-mic', 'USB Microphone')],
+      setActiveMediaDevice: vi.fn().mockResolvedValue(undefined),
+    }));
+    const onDeviceChange = vi.fn();
+    renderMicrophone({ onDeviceChange });
+
+    await screen.findByRole('button', { name: 'Choose microphone' });
+    expect(onDeviceChange).toHaveBeenCalledWith('usb-mic');
+  });
+
   it('lists named inputs once the dropdown is opened', async () => {
     const user = userEvent.setup();
     renderMicrophone();

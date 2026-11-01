@@ -19,6 +19,8 @@ interface Props {
   mediaBlob: Blob | null;
   mediaStream: MediaStream | null;
   onClearMediaStream: () => void;
+  /** Reports the input picked or restored in the menu, for recording. */
+  onDeviceChange?: (deviceId: string) => void;
   onToggleMicrophone: () => void;
   status:
     | 'idle'
@@ -70,11 +72,20 @@ function AudioPlayer({ blob }: { blob: Blob }) {
   );
 }
 
-function DeviceSelectDropdown() {
+function DeviceSelectDropdown({
+  onDeviceChange,
+}: {
+  onDeviceChange?: (deviceId: string) => void;
+}) {
   const [listRequested, setListRequested] = useState(false);
   const deviceSelect = usePersistentMediaDevice({
     requestPermissions: listRequested,
   });
+  // The menu only switches LiveKit's device; the recorder needs it too.
+  const { activeDeviceId } = deviceSelect;
+  useEffect(() => {
+    if (activeDeviceId) onDeviceChange?.(activeDeviceId);
+  }, [activeDeviceId, onDeviceChange]);
   // Firefox lists one placeholder without an ID until the microphone is used.
   const devices = deviceSelect.devices.filter((device) => device.deviceId);
 
@@ -125,6 +136,7 @@ export function MicrophoneMain(props: Props) {
     mediaStream,
     onToggleMicrophone,
     onClearMediaStream,
+    onDeviceChange,
   } = props;
   const t = useTranslations('clone');
   const recording = status === 'recording';
@@ -172,7 +184,9 @@ export function MicrophoneMain(props: Props) {
             <MicrophoneVisualizer mediaStream={mediaStream} />
           </div>
         </div>
-        {hasPermission && <DeviceSelectDropdown />}
+        {hasPermission && (
+          <DeviceSelectDropdown onDeviceChange={onDeviceChange} />
+        )}
       </div>
       {status === 'stopped' && mediaBlob && (
         <div className="mt-6 flex w-full justify-center self-center">

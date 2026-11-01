@@ -24,6 +24,7 @@ const {
   mockAddFiles,
   mockUpload,
   mockLanguageSelect,
+  mockMicrophone,
   mockToastError,
   mockToastSuccess,
   mockNavigate,
@@ -34,6 +35,7 @@ const {
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
   mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
+  mockMicrophone: vi.fn(),
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
   mockNavigate: vi.fn(),
@@ -88,7 +90,10 @@ vi.mock('@/components/audio-player-with-context', () => ({
 }));
 
 vi.mock('@/components/audio/microphone-main', () => ({
-  MicrophoneMain: () => <div data-testid="microphone-main" />,
+  MicrophoneMain: (props: unknown) => {
+    mockMicrophone(props);
+    return <div data-testid="microphone-main" />;
+  },
 }));
 
 vi.mock('@/components/services/toast', () => ({
@@ -122,6 +127,7 @@ vi.mock('@/hooks/use-file-upload', () => ({
 
 const recorderOptions = vi.hoisted(() => ({
   current: null as null | {
+    mediaStreamConstraints: MediaStreamConstraints;
     onStart: () => void;
     onStop: (blob: Blob) => void;
   },
@@ -256,6 +262,7 @@ const dict = {
 const renderClone = (
   props: {
     savedVoices?: SavedCallVoice[];
+    callCloneProvider?: 'inworld' | 'mistral';
     cloneMessages?: AbstractIntlMessages;
     hasEnoughCredits?: boolean;
     initialSaveForCalls?: boolean;
@@ -281,6 +288,7 @@ const renderClone = (
       }}
     >
       <NewVoiceClient
+        callCloneProvider={props.callCloneProvider}
         hasEnoughCredits={props.hasEnoughCredits ?? true}
         initialDemo={props.initialDemo}
         initialSaveForCalls={props.initialSaveForCalls}
@@ -502,6 +510,77 @@ describe('NewVoiceClient', () => {
 
     record(12);
     expect(screen.queryByText(tooShort)).not.toBeInTheDocument();
+  });
+
+  it('records from the microphone picked in the menu', () => {
+    mockUpload.files = [];
+    renderClone({ cloneMessages: enMessages.clone });
+    expect(recorderOptions.current?.mediaStreamConstraints).toEqual({
+      audio: true,
+    });
+
+    const microphone = mockMicrophone.mock.lastCall?.[0] as {
+      onDeviceChange: (deviceId: string) => void;
+    };
+    act(() => microphone.onDeviceChange('usb-mic'));
+
+    expect(recorderOptions.current?.mediaStreamConstraints).toEqual({
+      audio: { deviceId: { ideal: 'usb-mic' } },
+    });
+  });
+
+  it('generates with Cmd/Ctrl+Enter only when Generate is enabled', async () => {
+    mockUpload.files = [];
+    const user = userEvent.setup();
+    renderClone({
+      cloneMessages: enMessages.clone,
+      savedVoices: [inworldVoice],
+      userHasPaid: true,
+    });
+    act(() => {
+      const now = vi.spyOn(Date, 'now').mockReturnValue(0);
+      recorderOptions.current?.onStart();
+      now.mockReturnValue(2000);
+      recorderOptions.current?.onStop(new Blob(['take']));
+      now.mockRestore();
+    });
+    await user.type(
+      screen.getByLabelText(enMessages.clone.textToConvertLabel),
+      'Hello there',
+    );
+    await user.click(screen.getByTestId('clone-legal-consent'));
+    expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
+
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('radio', { name: /My Inworld voice/ }));
+    await user.keyboard('{Control>}{Enter}{/Control}');
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+  });
+
+  it('moves off a language the call provider cannot save', async () => {
+    const user = userEvent.setup();
+    renderClone({
+      callCloneProvider: 'mistral',
+      cloneMessages: enMessages.clone,
+      userHasPaid: true,
+    });
+    const select = () =>
+      mockLanguageSelect.mock.lastCall?.[0] as {
+        dispatch: (action: unknown) => void;
+        selectedLocaleCode: string;
+      };
+    act(() =>
+      select().dispatch({ patch: { selectedLocaleCode: 'da' }, type: 'patch' }),
+    );
+
+    await user.click(
+      screen.getByLabelText(enMessages.clone.savedVoice.modeLabel),
+    );
+
+    expect(select().selectedLocaleCode).toBe('en');
+    expect(renderedLocaleCodes()).not.toContain('da');
   });
 
   it('unselects a saved voice when it is clicked again', async () => {
