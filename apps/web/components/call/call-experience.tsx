@@ -4,7 +4,13 @@ import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+} from 'react';
 import { toast } from 'sonner';
 
 import { defaultSessionConfig } from '@/data/default-config';
@@ -20,7 +26,11 @@ import {
   SamplePlayerProvider,
   useSamplePlayer,
 } from '@/hooks/use-sample-player';
-import { type SavedCallVoice, withCallVoice } from '@/lib/call-voices';
+import {
+  type SavedCallVoice,
+  savedVoiceMissing,
+  withCallVoice,
+} from '@/lib/call-voices';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';
@@ -201,6 +211,34 @@ function CallExperienceScreens({
     }
   };
 
+  // `connect` reads the selected character from state, so a Call outside the
+  // panel selects it first and starts once that render has happened.
+  const [pendingCallId, setPendingCallId] = useState<string | null>(null);
+  const callCharacter = (presetId: string) => {
+    if (connecting || pendingCallId) return;
+    selectPreset(presetId);
+    setPendingCallId(presetId);
+  };
+  const startPendingCall = useEffectEvent(() => {
+    const preset = findPreset(pendingCallId);
+    setPendingCallId(null);
+    if (!preset) return;
+    // The panel explains what is missing and how to fix it.
+    const cannotCall =
+      savedVoiceMissing(preset.sessionConfig, savedVoices) ||
+      !(preset.isPublic || pgState.instructions.trim());
+    if (cannotCall) {
+      setPanelOpen(true);
+      return;
+    }
+    startCall().catch(() => undefined);
+  });
+  useEffect(() => {
+    if (pendingCallId && pgState.selectedPresetId === pendingCallId) {
+      startPendingCall();
+    }
+  }, [pendingCallId, pgState.selectedPresetId]);
+
   const handleSaved = (preset: Preset, updated: boolean) => {
     dispatch({ payload: preset, type: 'SAVE_CUSTOM_CHARACTER' });
     selectPreset(preset.id);
@@ -248,7 +286,7 @@ function CallExperienceScreens({
         intent={view.intent}
         onCall={(presetId) => {
           showView({ name: 'picker' });
-          openPanel(presetId);
+          callCharacter(presetId);
         }}
         onCancel={() => showView({ name: 'picker' })}
         onDelete={handleDelete}
@@ -270,8 +308,12 @@ function CallExperienceScreens({
         </div>
         {mobileCredits}
         <CharacterPicker
+          connectingId={
+            pendingCallId ?? (connecting ? pgState.selectedPresetId : null)
+          }
           highlightId={highlightId}
           isPaidUser={isPaidUser}
+          onCall={callCharacter}
           onCreate={() => openCreator({ kind: 'create' })}
           onDelete={handleDelete}
           onDuplicate={(presetId) =>

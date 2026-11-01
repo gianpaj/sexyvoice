@@ -68,7 +68,7 @@ export class CallPage {
   /** Opens the call panel from a character card. */
   async openCharacter(name: string) {
     await this.picker
-      .getByRole('button', { exact: true, name: `Call ${name}` })
+      .getByRole('button', { exact: true, name: `Open ${name}` })
       .click();
     await expect(this.panel).toBeVisible();
     await expect(

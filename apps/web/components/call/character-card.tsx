@@ -1,6 +1,13 @@
 'use client';
 
-import { Copy, MoreHorizontal, Pencil, PhoneCall, Trash2 } from 'lucide-react';
+import {
+  Copy,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  PhoneCall,
+  Trash2,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import {
@@ -17,7 +24,11 @@ import { CharacterAvatar } from './character-avatar';
 import { ListenButton } from './listen-button';
 
 interface CharacterCardProps {
+  /** This character's call is starting. */
+  connecting?: boolean;
   description: string;
+  /** Another call is starting, so this card's Call waits. */
+  disabled?: boolean;
   highlighted?: boolean;
   /** Edit, duplicate and delete; only for the user's own characters. */
   menu?: {
@@ -25,22 +36,29 @@ interface CharacterCardProps {
     onDuplicate?: () => void;
     onEdit: () => void;
   };
+  /** Starts a call, like the panel's Start call. */
+  onCall: () => void;
   onListen: () => void;
+  /** Opens the call panel. */
   onOpen: () => void;
   playing: boolean;
   preset: Preset;
 }
 
 export function CharacterCard({
+  connecting = false,
   description,
+  disabled = false,
   highlighted,
   menu,
+  onCall,
   onListen,
   onOpen,
   playing,
   preset,
 }: CharacterCardProps) {
   const t = useTranslations('call.picker');
+  const tCall = useTranslations('call');
   const { name } = preset;
 
   return (
@@ -81,12 +99,17 @@ export function CharacterCard({
         />
         <button
           aria-label={t('callName', { name })}
-          className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-violet-700 px-[18px] font-semibold text-sm text-white transition-colors hover:bg-violet-600 focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2"
-          onClick={onOpen}
+          className="inline-flex h-11 items-center gap-2 rounded-[10px] bg-violet-700 px-[18px] font-semibold text-sm text-white transition-colors hover:bg-violet-600 focus-visible:outline-2 focus-visible:outline-violet-400 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-55"
+          disabled={connecting || disabled}
+          onClick={onCall}
           type="button"
         >
-          <PhoneCall aria-hidden="true" className="size-[15px]" />
-          {t('call')}
+          {connecting ? (
+            <Loader2 aria-hidden="true" className="size-[15px] animate-spin" />
+          ) : (
+            <PhoneCall aria-hidden="true" className="size-[15px]" />
+          )}
+          {connecting ? tCall('connecting') : t('call')}
         </button>
       </div>
       {menu && (

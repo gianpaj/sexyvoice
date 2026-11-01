@@ -260,7 +260,7 @@ describe('CallExperience panel', () => {
       ],
     });
 
-    await user.click(screen.getByRole('button', { name: 'Call Marco' }));
+    await user.click(screen.getByRole('button', { name: 'Open Marco' }));
     const panel = await screen.findByTestId('call-panel');
 
     expect(within(panel).getByText('No voice')).toBeInTheDocument();
@@ -275,11 +275,11 @@ describe('CallExperience panel', () => {
     expect(connection.connect).not.toHaveBeenCalled();
   });
 
-  it('opens the panel for a character and starts the call', async () => {
+  it('opens the panel from a card and starts the call', async () => {
     const user = userEvent.setup();
     const { rerender } = renderExperience();
 
-    await user.click(screen.getByRole('button', { name: 'Call Lily' }));
+    await user.click(screen.getByRole('button', { name: 'Open Lily' }));
     const panel = await screen.findByTestId('call-panel');
     expect(within(panel).getByRole('heading', { name: 'Lily' })).toBeVisible();
     expect(within(panel).getByText(/Ara description/)).toBeInTheDocument();
@@ -310,12 +310,62 @@ describe('CallExperience panel', () => {
     expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');
   });
 
-  it('keeps the panel open without connecting when the microphone is blocked', async () => {
+  it("starts a call from a card's Call without opening the panel", async () => {
+    const user = userEvent.setup();
+    renderExperience();
+    connection.connect.mockImplementation(async () => {
+      connection.shouldConnect = true;
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Call Lily' }));
+
+    await waitFor(() => expect(connection.connect).toHaveBeenCalledOnce());
+    expect(microphone.request).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId('call-panel')).not.toBeInTheDocument();
+  });
+
+  it('opens the panel instead when the character has lost its voice', async () => {
+    const user = userEvent.setup();
+    renderExperience({
+      customCharacters: [
+        {
+          ...own,
+          sessionConfig: {
+            ...defaultSessionConfig,
+            audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
+            model: ModelId.INWORLD_TTS,
+            voice: 'Deleted voice',
+          },
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Call Marco' }));
+
+    const panel = await screen.findByTestId('call-panel');
+    expect(
+      within(panel).getByRole('button', { name: 'Choose a voice' }),
+    ).toBeInTheDocument();
+    expect(connection.connect).not.toHaveBeenCalled();
+  });
+
+  it('opens the panel when a Call finds the microphone blocked', async () => {
     const user = userEvent.setup();
     microphone.request.mockResolvedValue(false);
     renderExperience();
 
     await user.click(screen.getByRole('button', { name: 'Call Lily' }));
+
+    expect(await screen.findByTestId('call-panel')).toBeInTheDocument();
+    expect(connection.connect).not.toHaveBeenCalled();
+  });
+
+  it('keeps the panel open without connecting when the microphone is blocked', async () => {
+    const user = userEvent.setup();
+    microphone.request.mockResolvedValue(false);
+    renderExperience();
+
+    await user.click(screen.getByRole('button', { name: 'Open Lily' }));
     const panel = await screen.findByTestId('call-panel');
     await user.click(within(panel).getByRole('button', { name: 'Start call' }));
 
@@ -327,7 +377,7 @@ describe('CallExperience panel', () => {
     const user = userEvent.setup();
     renderExperience();
 
-    await user.click(screen.getByRole('button', { name: 'Call Lily' }));
+    await user.click(screen.getByRole('button', { name: 'Open Lily' }));
     await user.click(
       await screen.findByRole('button', { name: 'Make your own version' }),
     );
@@ -409,7 +459,7 @@ describe('CallExperience creator', () => {
     expect(call).toBeDisabled();
   });
 
-  it('opens the call panel from the editor preview', async () => {
+  it('starts a call from the editor preview', async () => {
     const user = userEvent.setup();
     renderExperience();
     await user.click(
@@ -420,8 +470,7 @@ describe('CallExperience creator', () => {
 
     await user.click(within(creator).getByRole('button', { name: 'Call' }));
 
-    const panel = await screen.findByTestId('call-panel');
-    expect(within(panel).getByRole('heading', { name: 'Marco' })).toBeVisible();
+    await waitFor(() => expect(connection.connect).toHaveBeenCalledOnce());
     expect(screen.queryByTestId('character-creator')).not.toBeInTheDocument();
   });
 

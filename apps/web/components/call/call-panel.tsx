@@ -33,7 +33,7 @@ import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import { type SavedCallVoice, savedVoiceMissing } from '@/lib/call-voices';
 import {
   getPresetDescription,
   getPresetSampleUrl,
@@ -88,10 +88,7 @@ export function CallPanel({
   const isOwn = !preset.isPublic;
   const { name } = preset;
   const { audioReferenceId } = preset.sessionConfig;
-  // A deleted saved voice leaves the character without one until it's edited.
-  const voiceMissing =
-    Boolean(audioReferenceId) &&
-    !savedVoices.some((voice) => voice.id === audioReferenceId);
+  const voiceMissing = savedVoiceMissing(preset.sessionConfig, savedVoices);
   const voiceName = voiceMissing
     ? t('noVoice')
     : (preset.voiceName ?? preset.sessionConfig.voice);

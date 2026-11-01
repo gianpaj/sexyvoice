@@ -16,8 +16,12 @@ import { Link } from '@/lib/i18n/navigation';
 import { CharacterCard } from './character-card';
 
 interface CharacterPickerProps {
+  /** The character whose call is starting, if any. */
+  connectingId?: string | null;
   highlightId?: string | null;
   isPaidUser: boolean;
+  /** Starts a call with the character. */
+  onCall: (presetId: string) => void;
   onCreate: () => void;
   onDelete: (preset: Preset) => void;
   onDuplicate: (presetId: string) => void;
@@ -43,12 +47,14 @@ const createCardClass =
   'flex min-h-[200px] flex-col items-start justify-center gap-2.5 rounded-[14px] border-[1.5px] border-violet-800/80 border-dashed bg-slate-950/40 p-5 text-left';
 
 export function CharacterPicker({
+  connectingId = null,
   highlightId,
   isPaidUser,
   onCreate,
   onDelete,
   onDuplicate,
   onEdit,
+  onCall,
   onOpen,
 }: CharacterPickerProps) {
   const t = useTranslations('call.picker');
@@ -62,7 +68,9 @@ export function CharacterPicker({
     const key = `character:${preset.id}`;
     return (
       <CharacterCard
+        connecting={connectingId === preset.id}
         description={getPresetDescription(preset, pgState.language)}
+        disabled={connectingId !== null}
         highlighted={highlightId === preset.id}
         key={preset.id}
         menu={
@@ -76,6 +84,7 @@ export function CharacterPicker({
               }
             : undefined
         }
+        onCall={() => onCall(preset.id)}
         onListen={() => player.toggle(key, getPresetSampleUrl(preset))}
         onOpen={() => onOpen(preset.id)}
         playing={player.playingKey === key}

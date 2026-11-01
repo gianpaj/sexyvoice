@@ -54,7 +54,7 @@ interface CharacterCreatorProps {
   callCloneProvider: CallCloneProvider;
   callVoices: DBVoice[];
   intent: CreatorIntent;
-  /** Opens the call panel for a saved character, like its card's Call. */
+  /** Starts a call with a saved character, like its card's Call. */
   onCall: (presetId: string) => void;
   onCancel: () => void;
   onDelete: (preset: Preset) => void;
