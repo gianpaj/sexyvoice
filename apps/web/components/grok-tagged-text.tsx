@@ -1,6 +1,10 @@
 import type { ReactNode } from 'react';
 
-import { type GrokEditorToken, parseGrokTtsText } from '@/lib/tts-editor';
+import {
+  type GrokEditorToken,
+  parseTtsText,
+  type TtsEditorProvider,
+} from '@/lib/tts-editor';
 
 const GROK_TAG_CHIP_CLASS =
   'inline-flex rounded bg-gray-700 px-1 py-0.5 font-mono text-xs text-foreground';
@@ -43,14 +47,16 @@ function renderGrokToken(
 
 interface GrokTaggedTextProps {
   className?: string;
+  provider?: TtsEditorProvider;
   text: string;
 }
 
 export function GrokTaggedText({
   text,
   className = GROK_TAG_CHIP_CLASS,
+  provider = 'grok',
 }: GrokTaggedTextProps) {
-  const tokens: GrokEditorToken[] = parseGrokTtsText(text).tokens;
+  const tokens: GrokEditorToken[] = parseTtsText(text, provider).tokens;
 
   return tokens.map((token, index) =>
     renderGrokToken(token, `${index}`, className),

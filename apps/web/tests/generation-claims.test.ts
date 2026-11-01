@@ -21,11 +21,14 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   streamText: vi.fn(),
   token: vi.fn(),
+  reference: vi.fn(),
+  referenceEq: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(async () => ({
     auth: { getClaims: mocks.getClaims, getUser: mocks.getUser },
+    from: () => ({ select: () => ({ eq: mocks.referenceEq }) }),
   })),
 }));
 
@@ -129,6 +132,11 @@ const routes = [
 describe('Generation route claims authentication', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.referenceEq.mockReturnValue({
+      eq: mocks.referenceEq,
+      maybeSingle: mocks.reference,
+    });
+    mocks.reference.mockResolvedValue({ data: null, error: null });
     vi.stubGlobal('crypto', {
       ...globalThis.crypto,
       randomUUID: () => '123e4567-e89b-12d3-a456-426614174001',
@@ -164,6 +172,9 @@ describe('Generation route claims authentication', () => {
           error: null,
         });
 
+        if (name === 'call-token') {
+          vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+        }
         const response = await post(request());
         await response.text();
         await flushPromises();
@@ -259,6 +270,63 @@ describe('Generation route claims authentication', () => {
         expect(provider).not.toHaveBeenCalled();
       }
     });
+  });
+
+  it.each([
+    { accessible: true, provider: 'mistral', model: 'mistral-tts' },
+    { accessible: false, provider: 'mistral', model: 'mistral-tts' },
+    { accessible: true, provider: 'inworld', model: 'inworld-tts' },
+    { accessible: false, provider: 'inworld', model: 'inworld-tts' },
+    { accessible: false, provider: 'mistral', model: 'inworld-tts' },
+  ])(
+    'issues a $model token only for an accessible $provider voice: $accessible',
+    async ({ accessible, provider, model }) => {
+      const id = '11111111-1111-4111-8111-111111111111';
+      mocks.reference.mockResolvedValue({
+        data:
+          accessible || model !== `${provider}-tts`
+            ? { id, name: 'My voice', voice_id: 'provider-voice', provider }
+            : null,
+        error: null,
+      });
+      vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+      const response = await callToken(
+        jsonRequest('call-token', {
+          ...callBody,
+          sessionConfig: {
+            ...callBody.sessionConfig,
+            model,
+            audioReferenceId: id,
+            voice: 'My voice',
+          },
+        }),
+      );
+      expect(response.status).toBe(accessible ? 200 : 404);
+      expect(mocks.referenceEq.mock.calls).toEqual([
+        ['id', id],
+        ['user_id', subject],
+        ['provider', model === 'inworld-tts' ? 'inworld' : 'mistral'],
+      ]);
+      if (accessible) {
+        const metadata = JSON.parse(mocks.token.mock.calls[0][2].metadata);
+        expect(metadata).toMatchObject({
+          model,
+          voice: id,
+          user_id: subject,
+          instructions: callBody.instructions,
+        });
+        expect(JSON.stringify(metadata)).not.toContain('provider-voice');
+      } else expect(mocks.token).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects an empty unsaved personality before issuing a token', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+    const response = await callToken(
+      jsonRequest('call-token', { ...callBody, instructions: '  ' }),
+    );
+    expect(response.status).toBe(400);
+    expect(mocks.token).not.toHaveBeenCalled();
   });
 
   it('keeps the insufficient call credits status', async () => {

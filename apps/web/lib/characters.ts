@@ -1,5 +1,6 @@
 import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
+import { savedVoiceSampleUrl } from '@/lib/call-voices';
 
 export const MAX_CUSTOM_CHARACTERS = 10;
 
@@ -17,6 +18,7 @@ export interface ApiCharacterResponse {
     localized_prompts?: Record<string, string> | null;
   } | null;
   session_config?: {
+    audioReferenceId?: string;
     model?: string;
     voice?: string;
     temperature?: number;
@@ -57,6 +59,7 @@ export function mapApiCharacterToPreset(
     name: character.name,
     promptId: character.prompt_id,
     sessionConfig: {
+      audioReferenceId: sessionConfig.audioReferenceId,
       maxOutputTokens:
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
@@ -66,40 +69,62 @@ export function mapApiCharacterToPreset(
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
     },
     voiceId: character.voice_id,
-    voiceName: character.voices?.name ?? undefined,
+    voiceName: sessionConfig.audioReferenceId
+      ? sessionConfig.voice
+      : (character.voices?.name ?? undefined),
     voiceSampleUrl: character.voices?.sample_url ?? undefined,
   };
 }
 
 // ─── Payload builder ─────────────────────────────────────────────────────────
 
-/**
- * Builds the payload for saving/updating a custom character via POST /api/characters.
- */
-export function buildSaveCharacterPayload(
-  preset: Preset,
-  language: string,
-  instructions: string,
-): SaveCharacterPayload {
-  // Filter out undefined values from Partial<Record<string, string>> fields
-  const filterDefined = (
-    obj: Partial<Record<string, string>> | undefined,
-  ): Partial<Record<string, string>> =>
-    Object.fromEntries(
-      Object.entries(obj ?? {}).filter(([, v]) => v !== undefined),
-    );
+const definedEntries = (
+  record: Partial<Record<string, string>> | undefined,
+): Partial<Record<string, string>> =>
+  Object.fromEntries(
+    Object.entries(record ?? {}).filter(([, value]) => value !== undefined),
+  );
 
+/**
+ * Builds the POST /api/characters payload from the creator's fields. `base`
+ * is the user's own character being edited or duplicated: its other
+ * languages are kept, and only an English edit replaces its default prompt.
+ * `id` is sent only when `update` is set; without it the API creates a copy.
+ */
+export function buildSaveCharacterPayload({
+  base,
+  description,
+  instructions,
+  language,
+  name,
+  sessionConfig,
+  update = false,
+}: {
+  base?: Preset;
+  description: string;
+  instructions: string;
+  language: string;
+  name: string;
+  sessionConfig: Preset['sessionConfig'];
+  update?: boolean;
+}): SaveCharacterPayload {
   return {
-    id: preset.id,
-    localizedDescriptions: filterDefined(preset.localizedDescriptions),
+    ...(update && base ? { id: base.id } : {}),
+    localizedDescriptions: {
+      ...definedEntries(base?.localizedDescriptions),
+      [language]: description,
+    },
     localizedPrompts: {
-      ...filterDefined(preset.localizedInstructions),
+      ...definedEntries(base?.localizedInstructions),
       [language]: instructions,
     },
-    name: preset.name,
-    prompt: instructions,
-    sessionConfig: preset.sessionConfig,
-    voiceName: preset.voiceName ?? preset.sessionConfig.voice,
+    name,
+    prompt:
+      language === 'en' || !base?.instructions
+        ? instructions
+        : base.instructions,
+    sessionConfig,
+    voiceName: sessionConfig.voice,
   };
 }
 
@@ -136,18 +161,30 @@ export async function saveCharacter(
   }
 }
 
-// ─── Dirty check ─────────────────────────────────────────────────────────────
+// ─── Localized fields ───────────────────────────────────────────────────────
 
-/**
- * Returns true if the given instructions differ from what is persisted
- * for the character in the given language.
- */
-export function isInstructionsDirty(
-  preset: Preset,
+/** The character's description in `language`, falling back to English. */
+export function getPresetDescription(preset: Preset, language: string): string {
+  return (
+    preset.localizedDescriptions?.[language] ??
+    preset.localizedDescriptions?.en ??
+    ''
+  );
+}
+
+/** The character's prompt in `language`, falling back to its default prompt. */
+export function getPresetInstructions(
+  preset: Preset | undefined,
   language: string,
-  currentInstructions: string,
-): boolean {
-  const savedInstructions =
-    preset.localizedInstructions?.[language] ?? preset.instructions ?? '';
-  return currentInstructions !== savedInstructions;
+): string {
+  return (
+    preset?.localizedInstructions?.[language] ?? preset?.instructions ?? ''
+  );
+}
+
+/** Sample of the voice the character calls with. */
+export function getPresetSampleUrl(preset: Preset): string | null {
+  const { audioReferenceId } = preset.sessionConfig;
+  if (audioReferenceId) return savedVoiceSampleUrl(audioReferenceId);
+  return preset.voiceSampleUrl ?? null;
 }

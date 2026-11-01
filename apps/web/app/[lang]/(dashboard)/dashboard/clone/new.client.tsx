@@ -8,97 +8,75 @@ import {
   useEffectEvent,
   useReducer,
   useRef,
+  useState,
 } from 'react';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
+import { SavedCallVoices } from '@/components/call/voice-picker';
 import { GenerateButton } from '@/components/generate-button';
 import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UpgradeCrown } from '@/components/upgrade-crown';
+import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
+import { SamplePlayerProvider } from '@/hooks/use-sample-player';
+import type { SavedCallVoice } from '@/lib/call-voices';
 import {
   CLONE_FORM_FIELDS,
-  type CloneErrorResponseBody,
-  type CloneRouteErrorCode,
   type CloneSuccessResponse,
-  type RouteErrorDetails,
+  type SaveVoiceSuccessResponse,
 } from '@/lib/clone/api-types';
 import {
+  type CallCloneProvider,
+  MAX_SAVED_CALL_VOICES,
+  supportsCallCloneLocale,
+} from '@/lib/clone/call-voice-config';
+import {
+  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
+import { formatCloneMessage, readCloneError } from '@/lib/clone/error-message';
 import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
-import { getCloneTextMaxLength } from '@/lib/clone/text-limits';
+import {
+  getCloneTextMaxLength,
+  getSavedVoiceTextMaxLength,
+} from '@/lib/clone/text-limits';
 import { downloadUrl } from '@/lib/download';
-import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+import { cn } from '@/lib/utils';
 import { CloneAudioInput } from './clone-audio-input';
-import { CloneConsentFields } from './clone-consent-fields';
-import { CloneLanguageSelect } from './clone-language-select';
-import type { SampleAudio } from './clone-sample-card';
 import {
-  cloneStateReducer,
-  formatCloneMessage,
-  initialCloneState,
-} from './clone-state';
+  CloneConsentFields,
+  type ReferenceCleanup,
+} from './clone-consent-fields';
+import { CloneLanguageSelect } from './clone-language-select';
+import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
+import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
 
 export type { Status } from './clone-state';
 
 const ALLOWED_TYPES =
   'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
-
-// The server returns `CloneErrorResponseBody`, but proxies and older responses
-// may omit fields, so every field is treated as optional here. `message` is not
-// part of the route contract but can arrive from upstream/proxy error bodies.
-type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
-  message?: string;
-};
-
-type CloneTranslator = ReturnType<typeof useTranslations<'clone'>>;
-type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
-
-const getCloneErrorMessage = (
-  t: CloneTranslator,
-  translateErrorCode: ErrorCodesTranslator,
-  code?: CloneRouteErrorCode,
-  fallbackMessage?: string,
-  details?: RouteErrorDetails,
-): string => {
-  const serverFallback = fallbackMessage || t('errorCloning');
-  if (code === 'PROVIDER_UNAVAILABLE') {
-    return resolveErrorMessage(
-      translateErrorCode,
-      code,
-      details,
-      serverFallback,
-    );
-  }
-
-  if (!code) {
-    return serverFallback;
-  }
-
-  const messageKey = code as Parameters<CloneTranslator>[0];
-  if (!t.has(messageKey)) {
-    return serverFallback;
-  }
-
-  const message = t(messageKey);
-  return formatCloneMessage(message, details ?? {});
-};
 
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
@@ -141,37 +119,89 @@ function PreviewTabContent({
 
 // ─── Public wrapper ───────────────────────────────────────────────────────────
 
+interface InitialDemo {
+  speakerId: string;
+  takeId: CloneDemoTakeId;
+}
+
 export default function NewVoiceClient({
+  savedVoices = [],
+  voiceUsers = {},
+  callCloneProvider = 'inworld',
   lang,
   hasEnoughCredits,
   userHasPaid,
+  initialDemo,
+  initialSaveForCalls = false,
 }: {
+  savedVoices?: SavedCallVoice[];
+  /** Names of the characters that use each saved voice, by voice ID. */
+  voiceUsers?: Record<string, string[]>;
+  callCloneProvider?: CallCloneProvider;
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
+  initialDemo?: InitialDemo;
+  initialSaveForCalls?: boolean;
 }) {
   return (
     <AudioProvider>
-      <NewVoiceClientInner
-        hasEnoughCredits={hasEnoughCredits}
-        lang={lang}
-        userHasPaid={userHasPaid}
-      />
+      <SamplePlayerProvider>
+        <NewVoiceClientInner
+          callCloneProvider={callCloneProvider}
+          hasEnoughCredits={hasEnoughCredits}
+          initialDemo={initialDemo}
+          initialSaveForCalls={initialSaveForCalls}
+          lang={lang}
+          savedVoices={savedVoices}
+          userHasPaid={userHasPaid}
+          voiceUsers={voiceUsers}
+        />
+      </SamplePlayerProvider>
     </AudioProvider>
   );
 }
 
 function NewVoiceClientInner({
+  savedVoices: initialSavedVoices,
+  voiceUsers,
+  callCloneProvider,
   lang,
   hasEnoughCredits,
   userHasPaid,
+  initialDemo,
+  initialSaveForCalls = false,
 }: {
+  savedVoices: SavedCallVoice[];
+  voiceUsers: Record<string, string[]>;
+  callCloneProvider: CallCloneProvider;
   lang: Locale;
   hasEnoughCredits: boolean;
   userHasPaid: boolean;
+  initialDemo?: InitialDemo;
+  initialSaveForCalls?: boolean;
 }) {
   const t = useTranslations('clone');
+  const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
+  const [saveVoiceOnly, setSaveVoiceOnly] = useState(
+    initialSaveForCalls &&
+      userHasPaid &&
+      initialSavedVoices.length < MAX_SAVED_CALL_VOICES,
+  );
+  const [voiceName, setVoiceName] = useState('');
+  const [savedVoiceId, setSavedVoiceId] = useState<string | null>(null);
+  // A saved voice replaces the reference audio for generation.
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string | null>(null);
+  const [voiceToDelete, setVoiceToDelete] = useState<SavedCallVoice | null>(
+    null,
+  );
+  const selectedVoice =
+    savedVoices.find((voice) => voice.id === selectedVoiceId) ?? null;
+  // Inworld voices speak any call language; Mistral voices keep theirs.
+  const voiceKeepsLocale = selectedVoice?.provider === 'mistral';
+  const atVoiceLimit = savedVoices.length >= MAX_SAVED_CALL_VOICES;
   const translateErrorCode = useTranslations('errorCodes');
+  const demoLabels = useTranslations('landing.demoClone');
   const {
     convert: convertWithFFmpeg,
     ensureLoaded,
@@ -179,7 +209,20 @@ function NewVoiceClientInner({
   } = useFFmpeg({ lazyLoad: true });
   const [cloneState, dispatch] = useReducer(
     cloneStateReducer,
-    initialCloneState,
+    initialDemo,
+    (demo) => {
+      const selection = getDemoCloneSelection(
+        demo?.speakerId ?? null,
+        demo?.takeId ?? null,
+      );
+      return selection
+        ? {
+            ...initialCloneState,
+            selectedLocaleCode: selection.speaker.languageCode,
+            text: selection.take.prompt,
+          }
+        : initialCloneState;
+    },
   );
   const {
     activeTab,
@@ -197,6 +240,16 @@ function NewVoiceClientInner({
   } = cloneState;
 
   const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocaleCode);
+  // Saving for calls clones with the call provider; otherwise the locale
+  // picks Voxtral or Chatterbox.
+  let referenceProvider: keyof typeof CLONE_MIN_AUDIO_SECONDS = usesVoxtral
+    ? 'mistral'
+    : 'replicate';
+  if (saveVoiceOnly) referenceProvider = callCloneProvider;
+  const canSaveVoice = supportsCallCloneLocale(
+    callCloneProvider,
+    selectedLocaleCode,
+  );
 
   // Preload FFmpeg when Voxtral locale is selected
   useEffect(() => {
@@ -212,6 +265,12 @@ function NewVoiceClientInner({
       });
     }
   }, [usesVoxtral, ensureLoaded, t]);
+
+  // MediaRecorder WebM blobs often report no duration, so time the take.
+  // The input picked in the microphone menu; unset records from the default.
+  const [micDeviceId, setMicDeviceId] = useState<string | null>(null);
+  const recordingStartedAt = useRef(0);
+  const [micSeconds, setMicSeconds] = useState<number | null>(null);
 
   const handleStartRecording = async () => {
     try {
@@ -248,7 +307,9 @@ function NewVoiceClientInner({
     mediaBlob: recorderMediaBlob,
     getMediaStream,
   } = useMediaRecorder({
-    mediaStreamConstraints: { audio: true },
+    mediaStreamConstraints: {
+      audio: micDeviceId ? { deviceId: { ideal: micDeviceId } } : true,
+    },
     onError: (err) => {
       console.error(err);
       dispatch({
@@ -260,6 +321,8 @@ function NewVoiceClientInner({
       });
     },
     onStart: () => {
+      recordingStartedAt.current = Date.now();
+      setMicSeconds(null);
       dispatch({
         patch: {
           ffmpegError: null,
@@ -270,6 +333,7 @@ function NewVoiceClientInner({
       });
     },
     onStop: (blob) => {
+      setMicSeconds((Date.now() - recordingStartedAt.current) / 1000);
       // Store the raw blob - conversion will happen at generation time based on the locale
       dispatch({ patch: { micBlob: blob }, type: 'patch' });
     },
@@ -300,7 +364,9 @@ function NewVoiceClientInner({
     });
   }, []);
 
-  const textMaxLength = getCloneTextMaxLength(selectedLocaleCode, userHasPaid);
+  const textMaxLength = selectedVoice
+    ? getSavedVoiceTextMaxLength(selectedVoice.provider)
+    : getCloneTextMaxLength(selectedLocaleCode, userHasPaid);
 
   const [fileState, fileActions] = useFileUpload({
     accept: ALLOWED_TYPES,
@@ -313,6 +379,32 @@ function NewVoiceClientInner({
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
 
+  const applyInitialReference = useEffectEvent((reference: File) => {
+    if (!(file || micBlob || micRecording)) fileActions.addFiles([reference]);
+  });
+  const reportInitialReferenceError = useEffectEvent(() => {
+    dispatch({
+      patch: { errorMessage: demoLabels('audioError'), status: 'error' },
+      type: 'patch',
+    });
+  });
+  useEffect(() => {
+    const selection = getDemoCloneSelection(
+      initialDemo?.speakerId ?? null,
+      initialDemo?.takeId ?? null,
+    );
+    if (!selection) return;
+    const controller = new AbortController();
+    loadDemoCloneReference(selection.speaker, controller.signal)
+      .then((reference) => {
+        if (!controller.signal.aborted) applyInitialReference(reference);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) reportInitialReferenceError();
+      });
+    return () => controller.abort();
+  }, [initialDemo?.speakerId, initialDemo?.takeId]);
+
   // Clear custom error message when file upload errors change
   useEffect(() => {
     if (errors.length > 0) {
@@ -323,7 +415,7 @@ function NewVoiceClientInner({
   const abortController = useRef<AbortController | null>(null);
 
   const handleGenerate = async () => {
-    if (!(file || micBlob)) {
+    if (!(selectedVoice || file || micBlob)) {
       dispatch({
         patch: {
           errorMessage: t('errors.noAudioFile'),
@@ -334,7 +426,13 @@ function NewVoiceClientInner({
       return;
     }
 
-    if (!text.trim()) {
+    if (
+      !(selectedVoice || legalConsentChecked) ||
+      (saveVoiceOnly && !(voiceName.trim() && canSaveVoice && userHasPaid))
+    )
+      return;
+
+    if (!(saveVoiceOnly || text.trim())) {
       dispatch({
         patch: {
           errorMessage: t('errors.noText'),
@@ -359,73 +457,96 @@ function NewVoiceClientInner({
     try {
       abortController.current = new AbortController();
 
-      let audioToProcess = file;
-      if (micBlob && !file) {
-        const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+      let formData: FormData;
+      if (selectedVoice) {
+        formData = new FormData();
+        formData.append(CLONE_FORM_FIELDS.text, text);
+        formData.append(
+          CLONE_FORM_FIELDS.locale,
+          voiceKeepsLocale
+            ? (selectedVoice.locale ?? selectedLocaleCode)
+            : selectedLocaleCode,
+        );
+        formData.append(CLONE_FORM_FIELDS.savedVoiceId, selectedVoice.id);
+      } else {
+        let audioToProcess = file;
+        if (micBlob && !file) {
+          const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
 
-        if (shouldConvertMicAudio) {
-          dispatch({
-            patch: { convertingMicAudio: true },
-            type: 'patch',
-          });
-        }
-
-        try {
           if (shouldConvertMicAudio) {
-            await ensureLoaded();
+            dispatch({
+              patch: { convertingMicAudio: true },
+              type: 'patch',
+            });
           }
 
-          audioToProcess = await createMicrophoneReferenceAudioFile(
-            micBlob,
-            convertWithFFmpeg,
-          );
-        } catch (convertError) {
-          console.error('WebM to WAV conversion error:', convertError);
-          // TODO send logs to Sentry
+          try {
+            if (shouldConvertMicAudio) {
+              await ensureLoaded();
+            }
+
+            audioToProcess = await createMicrophoneReferenceAudioFile(
+              micBlob,
+              convertWithFFmpeg,
+            );
+          } catch (convertError) {
+            console.error('WebM to WAV conversion error:', convertError);
+            // TODO send logs to Sentry
+            dispatch({
+              patch: {
+                errorMessage:
+                  convertError instanceof Error
+                    ? formatCloneMessage(
+                        t('audioConversionFailedWithMessage'),
+                        {
+                          ERROR: convertError.message,
+                        },
+                      )
+                    : t('audioConversionFailed'),
+                status: 'error',
+              },
+              type: 'patch',
+            });
+            return;
+          } finally {
+            if (shouldConvertMicAudio) {
+              dispatch({
+                patch: { convertingMicAudio: false },
+                type: 'patch',
+              });
+            }
+          }
+        }
+
+        if (!audioToProcess) {
           dispatch({
             patch: {
-              errorMessage:
-                convertError instanceof Error
-                  ? formatCloneMessage(t('audioConversionFailedWithMessage'), {
-                      ERROR: convertError.message,
-                    })
-                  : t('audioConversionFailed'),
+              errorMessage: t('errors.noAudioFile'),
               status: 'error',
             },
             type: 'patch',
           });
           return;
-        } finally {
-          if (shouldConvertMicAudio) {
-            dispatch({
-              patch: { convertingMicAudio: false },
-              type: 'patch',
-            });
-          }
+        }
+
+        // First upload and process the voice
+        formData = new FormData();
+        formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
+        formData.append(CLONE_FORM_FIELDS.text, text);
+        formData.append(CLONE_FORM_FIELDS.locale, selectedLocaleCode);
+        formData.append(
+          CLONE_FORM_FIELDS.enhanceReferenceAudio,
+          String(referenceAudioEnhancementEnabled),
+        );
+
+        if (saveVoiceOnly) {
+          formData.append(CLONE_FORM_FIELDS.saveVoiceName, voiceName.trim());
+          formData.append(
+            CLONE_FORM_FIELDS.voiceConsent,
+            String(legalConsentChecked),
+          );
         }
       }
-
-      if (!audioToProcess) {
-        dispatch({
-          patch: {
-            errorMessage: t('errors.noAudioFile'),
-            status: 'error',
-          },
-          type: 'patch',
-        });
-        return;
-      }
-
-      // First upload and process the voice
-      const formData = new FormData();
-      formData.append(CLONE_FORM_FIELDS.file, audioToProcess);
-      formData.append(CLONE_FORM_FIELDS.text, text);
-      formData.append(CLONE_FORM_FIELDS.locale, selectedLocaleCode);
-      formData.append(
-        CLONE_FORM_FIELDS.enhanceReferenceAudio,
-        String(referenceAudioEnhancementEnabled),
-      );
-
       voiceRes = await fetch('/api/clone-voice', {
         body: formData,
         method: 'POST',
@@ -433,30 +554,11 @@ function NewVoiceClientInner({
       });
 
       if (!voiceRes.ok) {
-        let errorMessage = t('errorCloning');
-        let voiceResult: CloneErrorResponse | null = null;
-
-        try {
-          voiceResult = (await voiceRes.json()) as CloneErrorResponse;
-        } catch {
-          voiceResult = null;
-        }
-
-        // Older/proxy 413 responses may still arrive without the JSON error contract.
-        if (voiceRes.status === 413 && !voiceResult?.code) {
-          errorMessage = t('errorTooLarge');
-        } else {
-          errorMessage = getCloneErrorMessage(
-            t,
-            translateErrorCode,
-            voiceResult?.code,
-            voiceResult?.message ||
-              voiceResult?.serverMessage ||
-              voiceResult?.error ||
-              errorMessage,
-            voiceResult?.details,
-          );
-        }
+        const errorMessage = await readCloneError(
+          voiceRes,
+          t,
+          translateErrorCode,
+        );
 
         dispatch({
           patch: {
@@ -468,7 +570,26 @@ function NewVoiceClientInner({
         return;
       }
 
-      const voiceResult = (await voiceRes.json()) as CloneSuccessResponse;
+      const voiceResult = (await voiceRes.json()) as
+        | CloneSuccessResponse
+        | SaveVoiceSuccessResponse;
+      if ('audioReferenceId' in voiceResult) {
+        setSavedVoiceId(voiceResult.audioReferenceId);
+        setSavedVoices((voices) => [
+          {
+            id: voiceResult.audioReferenceId,
+            name: voiceName.trim(),
+            locale: selectedLocaleCode,
+            provider: voiceResult.provider,
+          },
+          ...voices.filter(
+            (voice) => voice.id !== voiceResult.audioReferenceId,
+          ),
+        ]);
+        dispatch({ patch: { status: 'idle' }, type: 'patch' });
+        toast.success(t('savedVoice.success'));
+        return;
+      }
 
       toast.success(t('success'));
 
@@ -508,33 +629,6 @@ function NewVoiceClientInner({
     dispatch({ patch: { status: 'idle' }, type: 'patch' });
   }, []);
 
-  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-      event.preventDefault();
-
-      if (
-        status !== 'generating' &&
-        text.trim() &&
-        hasEnoughCredits &&
-        legalConsentChecked
-      ) {
-        handleGenerate().catch((error) => {
-          console.error('Keyboard shortcut clone generation failed:', error);
-        });
-      }
-    }
-  });
-
-  // Keyboard shortcut handler. onKeyDown is a useEffectEvent, so it already has
-  // a stable identity and can be attached directly.
-  useEffect(() => {
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
-
   const downloadAudio = async () => {
     if (!generatedAudioUrl) return;
 
@@ -543,16 +637,6 @@ function NewVoiceClientInner({
     } catch {
       toast.error(t('errorCloning'));
     }
-  };
-
-  const onSelectSample = (sample: SampleAudio) => {
-    dispatch({
-      patch: {
-        selectedLocaleCode: 'en',
-        text: sample.prompt,
-      },
-      type: 'patch',
-    });
   };
 
   const onToggleMicrophone = async () => {
@@ -567,6 +651,7 @@ function NewVoiceClientInner({
   };
 
   const onClearMediaStream = () => {
+    setMicSeconds(null);
     clearMediaStream();
     clearMediaBlob();
     dispatch({
@@ -579,11 +664,99 @@ function NewVoiceClientInner({
     });
   };
 
+  // The cleanup checkbox is paid fal.ai cleanup when generating and free
+  // Inworld noise removal when saving, so neither choice carries over.
+  const changeSaveMode = (on: boolean) => {
+    setSaveVoiceOnly(on);
+    setSavedVoiceId(null);
+    dispatch({
+      patch: { referenceAudioEnhancementEnabled: false },
+      type: 'patch',
+    });
+  };
+
   const textIsOverLimit = text.length > textMaxLength;
+  const minAudioSeconds = CLONE_MIN_AUDIO_SECONDS[referenceProvider];
+  const micTooShort =
+    !file &&
+    Boolean(micBlob) &&
+    micSeconds !== null &&
+    micSeconds < minAudioSeconds;
+  let cleanup: ReferenceCleanup = 'paid';
+  if (saveVoiceOnly)
+    cleanup = callCloneProvider === 'inworld' ? 'inworld' : 'none';
+
+  const generateDisabled = selectedVoice
+    ? !text.trim() ||
+      status === 'generating' ||
+      !hasEnoughCredits ||
+      textIsOverLimit
+    : !(
+        (file || micBlob) &&
+        (saveVoiceOnly ? voiceName.trim() : text.trim())
+      ) ||
+      (saveVoiceOnly &&
+        (!(canSaveVoice && userHasPaid) ||
+          Boolean(savedVoiceId) ||
+          atVoiceLimit)) ||
+      status === 'generating' ||
+      !(saveVoiceOnly || hasEnoughCredits) ||
+      convertingMicAudio ||
+      micTooShort ||
+      (!saveVoiceOnly && textIsOverLimit) ||
+      !legalConsentChecked;
+
+  // Cmd/Ctrl+Enter does what the Generate button does, only when it is enabled.
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (!((event.metaKey || event.ctrlKey) && event.key === 'Enter')) return;
+    event.preventDefault();
+    if (generateDisabled) return;
+    handleGenerate().catch((error) => {
+      console.error('Keyboard shortcut clone generation failed:', error);
+    });
+  });
+
+  // onKeyDown is a useEffectEvent, so its identity is stable.
+  useEffect(() => {
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
   return (
     <Card>
-      <CardContent>
+      <CardContent className="space-y-6">
+        <SavedCallVoices
+          disabled={status === 'generating'}
+          onDelete={setVoiceToDelete}
+          onSelect={(voice) => {
+            setSelectedVoiceId(voice?.id ?? null);
+            if (!voice) return;
+            changeSaveMode(false);
+            dispatch({
+              patch: {
+                selectedLocaleCode:
+                  voice.locale ?? resolveBaseCloneLocale(selectedLocaleCode),
+              },
+              type: 'patch',
+            });
+          }}
+          selectedId={selectedVoiceId}
+          voices={savedVoices}
+        />
+        <DeleteSavedVoiceDialog
+          onClose={() => setVoiceToDelete(null)}
+          onDeleted={(voice) => {
+            setSavedVoices((voices) =>
+              voices.filter(({ id }) => id !== voice.id),
+            );
+            if (selectedVoiceId === voice.id) setSelectedVoiceId(null);
+            if (savedVoiceId === voice.id) setSavedVoiceId(null);
+          }}
+          usedBy={voiceToDelete ? (voiceUsers[voiceToDelete.id] ?? []) : []}
+          voice={voiceToDelete}
+        />
         <Tabs
           className="w-full"
           onValueChange={(nextTab) => {
@@ -596,7 +769,7 @@ function NewVoiceClientInner({
           }}
           value={activeTab}
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 gap-1 rounded-xl bg-muted/40">
             <TabsTrigger value="upload">{t('tabUpload')}</TabsTrigger>
             <TabsTrigger disabled={status !== 'complete'} value="preview">
               {t('tabPreview')}
@@ -605,43 +778,142 @@ function NewVoiceClientInner({
 
           <TabsContent className="space-y-6 py-4" value="upload">
             <div className="grid w-full gap-6">
-              <CloneAudioInput
-                dispatch={dispatch}
-                ffmpeg={{ error: ffmpegError, loading: Boolean(ffmpegLoading) }}
-                fileActions={fileActions}
-                fileState={fileState}
-                mic={{
-                  blob: micBlob,
-                  mediaBlob: recorderMediaBlob,
-                  mediaStream,
-                  onClear: onClearMediaStream,
-                  onToggle: onToggleMicrophone,
-                  recording: micRecording,
-                  status: micStatus,
-                }}
-                onSelectSample={onSelectSample}
-                selectedLocaleCode={selectedLocaleCode}
-                selectedLocaleName={selectedLocaleName}
-                usesVoxtral={usesVoxtral}
-              />
-
-              <div className="grid w-full gap-6">
-                <CloneLanguageSelect
-                  disabled={status === 'generating'}
-                  dispatch={dispatch}
+              {selectedVoice ? (
+                <p className="rounded-lg border border-violet-500/40 bg-violet-500/10 p-4 text-sm">
+                  {t('savedVoice.using', { name: selectedVoice.name })}
+                </p>
+              ) : (
+                <CloneAudioInput
+                  ffmpeg={{
+                    error: ffmpegError,
+                    loading: Boolean(ffmpegLoading),
+                  }}
+                  fileActions={fileActions}
+                  fileState={fileState}
+                  mic={{
+                    blob: micBlob,
+                    mediaBlob: recorderMediaBlob,
+                    mediaStream,
+                    onClear: onClearMediaStream,
+                    onDeviceChange: setMicDeviceId,
+                    onToggle: onToggleMicrophone,
+                    recording: micRecording,
+                    status: micStatus,
+                    tooShort: micTooShort,
+                  }}
+                  minAudioSeconds={minAudioSeconds}
                   selectedLocaleCode={selectedLocaleCode}
-                  supportedLocales={supportedLocales}
-                />
-
-                <CloneTextField
-                  disabled={status === 'generating'}
-                  dispatch={dispatch}
-                  selectedLocaleCode={selectedLocaleCode}
-                  text={text}
-                  textMaxLength={textMaxLength}
-                  userHasPaid={userHasPaid}
+                  selectedLocaleName={selectedLocaleName}
                   usesVoxtral={usesVoxtral}
                 />
+              )}
+
+              <div className="grid w-full gap-6">
+                {!voiceKeepsLocale && (
+                  <CloneLanguageSelect
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    selectedLocaleCode={selectedLocaleCode}
+                    supportedLocales={
+                      selectedVoice || saveVoiceOnly
+                        ? supportedLocales.filter(({ code }) =>
+                            supportsCallCloneLocale(
+                              selectedVoice ? 'inworld' : callCloneProvider,
+                              code,
+                            ),
+                          )
+                        : supportedLocales
+                    }
+                  />
+                )}
+
+                {!selectedVoice && (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={saveVoiceOnly}
+                      disabled={
+                        !userHasPaid ||
+                        status === 'generating' ||
+                        (atVoiceLimit && !saveVoiceOnly)
+                      }
+                      id="save-voice-only"
+                      onCheckedChange={(checked) => {
+                        changeSaveMode(checked === true);
+                        // Keep the picker on a language the call provider saves.
+                        if (
+                          checked === true &&
+                          !supportsCallCloneLocale(
+                            callCloneProvider,
+                            selectedLocaleCode,
+                          )
+                        )
+                          dispatch({
+                            patch: { selectedLocaleCode: 'en' },
+                            type: 'patch',
+                          });
+                      }}
+                    />
+                    <Label
+                      className={cn(!userHasPaid && 'text-muted-foreground')}
+                      htmlFor="save-voice-only"
+                    >
+                      {t('savedVoice.modeLabel')}
+                    </Label>
+                    {!userHasPaid && (
+                      <UpgradeCrown tooltip={t('savedVoice.upgradeTooltip')} />
+                    )}
+                  </div>
+                )}
+                {userHasPaid && !selectedVoice && atVoiceLimit && (
+                  <p className="text-muted-foreground text-sm">
+                    {t('savedVoice.limitReached', {
+                      max: MAX_SAVED_CALL_VOICES,
+                    })}
+                  </p>
+                )}
+                {saveVoiceOnly ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="saved-voice-name">
+                      {t('savedVoice.name')}
+                    </Label>
+                    <Input
+                      disabled={status === 'generating'}
+                      id="saved-voice-name"
+                      maxLength={50}
+                      onChange={(e) => {
+                        setVoiceName(e.target.value);
+                        setSavedVoiceId(null);
+                      }}
+                      value={voiceName}
+                    />
+                    <p className="text-muted-foreground text-sm">
+                      {t('savedVoice.help')}
+                    </p>
+                    {!canSaveVoice && (
+                      <p className="text-destructive text-sm">
+                        {t('errors.savedVoiceLocaleUnsupported')}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <CloneTextField
+                    disabled={status === 'generating'}
+                    dispatch={dispatch}
+                    selectedLocaleCode={
+                      voiceKeepsLocale
+                        ? (selectedVoice.locale ?? selectedLocaleCode)
+                        : selectedLocaleCode
+                    }
+                    text={text}
+                    textMaxLength={textMaxLength}
+                    userHasPaid={userHasPaid}
+                    usesVoxtral={
+                      selectedVoice
+                        ? selectedVoice.provider === 'mistral'
+                        : usesVoxtral
+                    }
+                  />
+                )}
               </div>
             </div>
 
@@ -653,36 +925,50 @@ function NewVoiceClientInner({
               </Alert>
             )}
 
-            {!hasEnoughCredits && (
+            {!(saveVoiceOnly || hasEnoughCredits) && (
               <Alert className="mx-auto w-fit" variant="destructive">
                 <AlertDescription>{t('notEnoughCredits')}</AlertDescription>
               </Alert>
             )}
 
-            <CloneConsentFields
-              disabled={status === 'generating'}
-              dispatch={dispatch}
-              legalConsentChecked={legalConsentChecked}
-              referenceAudioEnhancementEnabled={
-                referenceAudioEnhancementEnabled
-              }
-            />
+            {!selectedVoice && (
+              <CloneConsentFields
+                cleanup={cleanup}
+                disabled={status === 'generating'}
+                dispatch={dispatch}
+                legalConsentChecked={legalConsentChecked}
+                referenceAudioEnhancementEnabled={
+                  referenceAudioEnhancementEnabled
+                }
+              />
+            )}
 
+            {savedVoiceId && (
+              <div className="rounded-lg border border-violet-500/40 bg-violet-500/10 p-4">
+                <p className="mb-2 text-sm">{t('savedVoice.success')}</p>
+                <Button asChild>
+                  <Link href={`/dashboard/call?custom=1&voice=${savedVoiceId}`}>
+                    {t('savedVoice.useInCall')}
+                  </Link>
+                </Button>
+              </div>
+            )}
+            {initialSaveForCalls && (
+              <Link
+                className="inline-block text-muted-foreground text-sm underline underline-offset-4"
+                href="/dashboard/call?custom=1"
+              >
+                {t('savedVoice.backToCall')}
+              </Link>
+            )}
             <GenerateButton
               className="w-full"
-              ctaText={t('ctaButton')}
+              ctaText={t(saveVoiceOnly ? 'savedVoice.save' : 'ctaButton')}
               data-testid="clone-generate-button"
-              disabled={
-                !((file || micBlob) && text.trim()) ||
-                status === 'generating' ||
-                !hasEnoughCredits ||
-                convertingMicAudio ||
-                textIsOverLimit ||
-                !legalConsentChecked
-              }
+              disabled={generateDisabled}
               generatingText={
                 status === 'generating'
-                  ? `${t('generating')}...`
+                  ? `${t(saveVoiceOnly ? 'savedVoice.saving' : 'generating')}...`
                   : `${t('convertingAudio')}...`
               }
               isGenerating={status === 'generating' || convertingMicAudio}

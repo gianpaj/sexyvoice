@@ -93,6 +93,15 @@ export const E2E_CALL_VOICES = [
   },
 ] satisfies NonNullable<Awaited<ReturnType<typeof getCallVoices>>>;
 
+export const E2E_SAVED_CALL_VOICES = [
+  {
+    id: '11111111-1111-4111-8111-111111111111',
+    name: 'My saved voice',
+    provider: 'mistral',
+    locale: 'en',
+  },
+];
+
 export const E2E_CALL_INSTRUCTION_CONFIG = {
   defaultInstructions: 'Keep the conversation friendly and concise.',
   initialInstruction: 'Say hello.',

@@ -1,19 +1,14 @@
 'use client';
 
-import { Crown, Loader2, Maximize2, Minimize2, Sparkles } from 'lucide-react';
+import { Loader2, Maximize2, Minimize2, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 
+import { UpgradeCrown } from '@/components/upgrade-crown';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { AnimatedPromptTextarea } from './audio-generator';
 import { Button } from './ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from './ui/tooltip';
 
 interface NonGrokPromptEditorProps {
   characterCountText?: ReactNode;
@@ -117,27 +112,14 @@ export function NonGrokPromptEditor({
         {characterCountText ?? (
           <>
             {text.length} / {charactersLimit}
-            <TooltipProvider>
-              <Tooltip delayDuration={100}>
-                <TooltipTrigger asChild>
-                  <Crown
-                    className={cn(
-                      'h-3.5 w-3.5 cursor-default',
-                      isPaidUser
-                        ? 'text-muted-foreground/50'
-                        : 'text-yellow-400',
-                    )}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isPaidUser
-                      ? t('paidCharacterLimitTooltip')
-                      : t('upgradeCharacterLimitTooltip')}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <UpgradeCrown
+              paid={isPaidUser}
+              tooltip={
+                isPaidUser
+                  ? t('paidCharacterLimitTooltip')
+                  : t('upgradeCharacterLimitTooltip')
+              }
+            />
           </>
         )}
       </div>

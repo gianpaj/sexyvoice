@@ -7,6 +7,12 @@ import {
   getActivePromoBannerId,
   resolveActiveBanner,
 } from '@/lib/banners/resolve-banner';
+import da from '@/messages/da.json';
+import de from '@/messages/de.json';
+import en from '@/messages/en.json';
+import es from '@/messages/es.json';
+import fr from '@/messages/fr.json';
+import it_ from '@/messages/it.json';
 
 const originalEnv = {
   NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER:
@@ -496,4 +502,45 @@ describe('resolveActiveBanner', () => {
       id: 'expressiveVoicesLaunch',
     });
   });
+
+  it.each([
+    ['loggedIn', '/en/dashboard/clone', 'Clone a voice'],
+    ['loggedOut', '/en/login', 'Log in'],
+  ] as const)(
+    'announces cloned voice calls to %s visitors',
+    (audience, ctaLink, ctaText) => {
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
+      process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER =
+        'clonedVoiceCallsLaunch';
+      unsetEnv('NEXT_PUBLIC_ACTIVE_PROMO_BANNER');
+
+      expect(
+        resolveActiveBanner({
+          audience,
+          lang: 'en',
+          messages: en as IntlMessages,
+          placement: 'landing',
+        }),
+      ).toMatchObject({ ctaLink, ctaText, id: 'clonedVoiceCallsLaunch' });
+    },
+  );
+
+  it.each(Object.entries({ da, de, en, es, fr, it: it_ }))(
+    'has cloned voice call copy in %s',
+    (_locale, localeMessages) => {
+      process.env.NEXT_PUBLIC_PROMO_ENABLED = 'false';
+      process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER =
+        'clonedVoiceCallsLaunch';
+      unsetEnv('NEXT_PUBLIC_ACTIVE_PROMO_BANNER');
+
+      expect(
+        resolveActiveBanner({
+          audience: 'loggedIn',
+          lang: 'en',
+          messages: localeMessages as IntlMessages,
+          placement: 'dashboard',
+        })?.id,
+      ).toBe('clonedVoiceCallsLaunch');
+    },
+  );
 });

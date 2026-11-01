@@ -10,7 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
+import { faqAnswerText } from '@/lib/faq';
 
 export function CallFaq() {
   const connectionState = useConnectionState();
@@ -48,7 +48,7 @@ export function CallFaq() {
               {faq.question}
             </AccordionTrigger>
             <AccordionContent className="whitespace-pre-wrap text-muted-foreground">
-              {faq.answer.replaceAll('{count}', String(CREDITS_PER_MINUTE))}
+              {faqAnswerText(faq.answer)}
             </AccordionContent>
           </AccordionItem>
         ))}

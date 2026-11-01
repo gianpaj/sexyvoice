@@ -17,6 +17,33 @@ import {
   server,
 } from './setup';
 
+const {
+  mockCountSavedCallVoices,
+  mockGetOwnedCallVoice,
+  mockSaveMistralVoice,
+  mockSaveInworldVoice,
+  mockSynthesizeInworldSpeech,
+} = vi.hoisted(() => ({
+  mockCountSavedCallVoices: vi.fn().mockResolvedValue(0),
+  mockGetOwnedCallVoice: vi.fn(),
+  mockSaveMistralVoice: vi.fn(),
+  mockSaveInworldVoice: vi.fn(),
+  mockSynthesizeInworldSpeech: vi.fn(),
+}));
+vi.mock('@/lib/clone/inworld', () => ({
+  INWORLD_TTS_MODEL: 'inworld-tts-2',
+  saveInworldVoice: mockSaveInworldVoice,
+  synthesizeInworldSpeech: mockSynthesizeInworldSpeech,
+}));
+vi.mock('@/lib/supabase/call-voices', () => ({
+  countSavedCallVoices: mockCountSavedCallVoices,
+  getOwnedCallVoice: mockGetOwnedCallVoice,
+}));
+vi.mock('@/lib/clone/mistral', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/clone/mistral')>()),
+  saveMistralVoice: mockSaveMistralVoice,
+}));
+
 // Helper function to create a minimal valid WAV header
 const createWavHeader = (dataSize: number): Uint8Array => {
   const buffer = new ArrayBuffer(44);
@@ -85,8 +112,218 @@ const createFormDataWithAudio = (
 };
 
 describe('Clone Voice API Route', () => {
+  it.each(['en', 'pl', 'ca'])(
+    'saves an owned %s profile without requiring speech text or charging speech credits',
+    async (locale) => {
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+      mockSaveMistralVoice.mockResolvedValueOnce({ id: 'reference' });
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', 'true');
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        audioReferenceId: 'reference',
+        provider: 'mistral',
+      });
+      expect(mockSaveMistralVoice).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        'My voice',
+        locale,
+        expect.any(String),
+      );
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refuses to save an 11th voice before contacting a provider', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockCountSavedCallVoices.mockResolvedValueOnce(10);
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    const json = await response.json();
+    expect(response.status).toBe(403);
+    expect(json.code).toBe('errors.savedVoiceLimitReached');
+    expect(json.details).toEqual({ MAX: 10 });
+    expect(mockCountSavedCallVoices).toHaveBeenCalledWith('test-user-id');
+    expect(mockSaveInworldVoice).not.toHaveBeenCalled();
+  });
+
+  it.each(['en', 'pl', 'da'])(
+    'creates a new Inworld call clone for %s when configured',
+    async (locale) => {
+      vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+      mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', 'true');
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        audioReferenceId: 'reference',
+        provider: 'inworld',
+      });
+      expect(mockSaveInworldVoice).toHaveBeenCalledWith(
+        expect.any(Buffer),
+        'My voice',
+        locale,
+        expect.any(String),
+        { removeBackgroundNoise: false },
+      );
+      expect(mockSaveMistralVoice).not.toHaveBeenCalled();
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(mockReplicateRun).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).not.toHaveBeenCalled();
+    },
+  );
+
+  it('asks Inworld to remove background noise when cleanup is on', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en', true);
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(mockSaveInworldVoice.mock.lastCall?.[4]).toEqual({
+      removeBackgroundNoise: true,
+    });
+    expect(mockReplicateRun).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
+
+  it('rejects saving the Chatterbox English option as a call voice', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en-multi');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe(
+      'errors.savedVoiceLocaleUnsupported',
+    );
+    expect(mockSaveInworldVoice).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      paid: false,
+      locale: 'en',
+      consent: 'true',
+      status: 403,
+      provider: 'mistral',
+    },
+    {
+      paid: true,
+      locale: 'da',
+      consent: 'true',
+      status: 400,
+      provider: 'mistral',
+    },
+    {
+      paid: true,
+      locale: 'en',
+      consent: 'false',
+      status: 400,
+      provider: 'mistral',
+    },
+    {
+      paid: false,
+      locale: 'en',
+      consent: 'true',
+      status: 403,
+      provider: 'inworld',
+    },
+    {
+      paid: true,
+      locale: 'en',
+      consent: 'false',
+      status: 400,
+      provider: 'inworld',
+    },
+  ])(
+    'rejects invalid saved voice requests: $paid $locale $consent',
+    async ({ paid, locale, consent, status, provider }) => {
+      vi.stubEnv('CALL_CLONE_PROVIDER', provider);
+      vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(paid);
+      const form = createFormDataWithAudio('', createMockAudioFile(), locale);
+      form.set('saveVoiceName', 'My voice');
+      form.set('voiceConsent', consent);
+      const response = await POST(
+        new Request('http://localhost/api/clone-voice', {
+          method: 'POST',
+          body: form,
+        }),
+      );
+      expect(response.status).toBe(status);
+      expect(mockSaveMistralVoice).not.toHaveBeenCalled();
+      expect(mockSaveInworldVoice).not.toHaveBeenCalled();
+    },
+  );
+
+  it('trims an Inworld call clone to 30 seconds rather than the speech-cloning limit', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+    const metadata = await import('music-metadata');
+    vi.mocked(metadata.parseBuffer)
+      .mockResolvedValueOnce({ format: { duration: 35 } } as any)
+      .mockResolvedValueOnce({ format: { duration: 35 } } as any)
+      .mockResolvedValueOnce({ format: { duration: 30 } } as any);
+    const form = createFormDataWithAudio(
+      '',
+      createMockAudioFile('long.wav', 'audio/wav', 44 + 35 * 44_100 * 2),
+    );
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(mockSaveInworldVoice.mock.calls[0][0].length).toBe(
+      44 + 30 * 44_100 * 2,
+    );
+  });
+
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'mistral');
+    vi.mocked(queries.hasUserPaid).mockReset().mockResolvedValue(false);
 
     const musicMetadata = await import('music-metadata');
     vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
@@ -209,7 +446,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -235,7 +472,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         longText,
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -259,7 +496,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         validText,
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -382,7 +619,7 @@ describe('Clone Voice API Route', () => {
     it('should return 400 when Voxtral reference audio duration is too short', async () => {
       const musicMetadata = await import('music-metadata');
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
-        format: { duration: 2 }, // Less than 3 seconds
+        format: { duration: 9 }, // Less than 10 seconds
       } as any);
 
       const formData = createFormDataWithAudio(
@@ -401,11 +638,11 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(400);
       expect(json.serverMessage).toBe(
-        'Reference audio must be at least 3 seconds for voice cloning.',
+        'Reference audio must be at least 10 seconds for voice cloning.',
       );
       expect(json.code).toBe('errors.audioDurationInvalidVoxtral');
       expect(json.details).toMatchObject({
-        MIN: 3,
+        MIN: 10,
       });
     });
 
@@ -635,11 +872,11 @@ describe('Clone Voice API Route', () => {
       }
     });
 
-    it('should not reject valid supported locales (Japanese)', async () => {
+    it('should not reject valid supported locales (Danish)', async () => {
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -841,7 +1078,9 @@ describe('Clone Voice API Route', () => {
 
       // Generated output should still be cached
       expect(mockRedisSet).toHaveBeenCalledWith(
-        expect.stringMatching(/^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/),
+        expect.stringMatching(
+          /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
+        ),
         expect.stringContaining('files.sexyvoice.ai'),
       );
     });
@@ -860,7 +1099,9 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(mockRedisGet).toHaveBeenCalledWith(
-        expect.stringMatching(/^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/),
+        expect.stringMatching(
+          /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
+        ),
       );
       expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
     });
@@ -970,7 +1211,7 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio(
         'Hello world',
         createMockAudioFile('long-reference.wav'),
-        'ja',
+        'da',
         true,
       );
 
@@ -1021,7 +1262,7 @@ describe('Clone Voice API Route', () => {
           'audio/wav',
           44 + 30 * 44_100 * 2,
         ),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -1221,7 +1462,7 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({
             errorName: 'SDKError',
-            model: 'voxtral-mini-tts-2603',
+            model: 'voxtral-mini-tts-3-0',
             statusCode: 503,
           }),
         }),
@@ -1272,7 +1513,7 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           credits_used: 252,
           duration: '12.000',
-          model: 'voxtral-mini-tts-2603',
+          model: 'voxtral-mini-tts-3-0',
           usage: { creditsUsed: 252 },
         }),
       );
@@ -1281,12 +1522,12 @@ describe('Clone Voice API Route', () => {
         1,
         expect.objectContaining({
           creditsUsed: 132,
-          dollarAmount: 0.000_176,
+          dollarAmount: 0.000_143,
           metadata: expect.objectContaining({
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
-          model: 'voxtral-mini-tts-2603',
+          model: 'voxtral-mini-tts-3-0',
           quantity: 1,
           requestId: expect.any(String),
           sourceId: 'test-audio-file-id',
@@ -1352,35 +1593,82 @@ describe('Clone Voice API Route', () => {
       );
     });
 
-    it('should successfully clone voice using Mistral Voxtral for supported multilingual locales', async () => {
-      const formData = createFormDataWithAudio(
-        'Bonjour',
-        createMockAudioFile('audio1'),
-        'fr',
-      );
+    it.each([
+      'ca',
+      'el',
+      'hu',
+      'ja',
+      'ko',
+      'no',
+      'pl',
+      'ro',
+      'ru',
+      'tr',
+      'uk',
+      'vi',
+      'zh',
+    ])(
+      'routes %s speech to Voxtral 3 with the Voxtral text limit',
+      async (locale) => {
+        const formData = createFormDataWithAudio(
+          'a'.repeat(301),
+          createMockAudioFile('audio1'),
+          locale,
+        );
 
-      const request = new Request('http://localhost/api/clone-voice', {
-        body: formData,
-        method: 'POST',
-      });
+        const request = new Request('http://localhost/api/clone-voice', {
+          body: formData,
+          method: 'POST',
+        });
 
-      const response = await POST(request);
-      const json = await response.json();
+        const response = await POST(request);
+        const json = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(json.url).toContain('files.sexyvoice.ai');
-      expect(json.creditsUsed).toBeGreaterThan(0);
-      expect(json.creditsRemaining).toBeDefined();
+        expect(response.status).toBe(200);
+        expect(json.url).toContain('files.sexyvoice.ai');
+        expect(json.creditsUsed).toBeGreaterThan(0);
+        expect(json.creditsRemaining).toBeDefined();
 
-      // Supported Voxtral locales should not use the Replicate fallback path
-      expect(mockReplicateRun).not.toHaveBeenCalled();
-    });
+        expect(mockMistralSpeechComplete).toHaveBeenCalledWith(
+          expect.objectContaining({ model: 'voxtral-mini-tts-3-0' }),
+        );
+        expect(mockReplicateRun).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each(['da', 'fi', 'he', 'ms', 'sv', 'sw', 'en-multi'])(
+      'keeps %s on Chatterbox',
+      async (locale) => {
+        const form = createFormDataWithAudio(
+          'Test speech',
+          createMockAudioFile(),
+          locale,
+        );
+        const response = await POST(
+          new Request('http://localhost/api/clone-voice', {
+            body: form,
+            method: 'POST',
+          }),
+        );
+        expect(response.status).toBe(200);
+        expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+        expect(mockReplicateRun).toHaveBeenCalledWith(
+          expect.stringContaining('chatterbox-multilingual'),
+          {
+            input: expect.objectContaining({
+              language: locale === 'en-multi' ? 'en' : locale,
+            }),
+          },
+          expect.any(Function),
+        );
+      },
+    );
 
     it('should optionally enhance reference audio before cloning with Replicate fallback locales', async () => {
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile('audio1.wav'),
-        'ja',
+        'da',
         true,
       );
 
@@ -1434,7 +1722,7 @@ describe('Clone Voice API Route', () => {
         duration: '12.000',
         filename: expect.stringContaining('cloned-audio-free/'),
         isPublic: false,
-        model: 'voxtral-mini-tts-2603',
+        model: 'voxtral-mini-tts-3-0',
         predictionId: expect.any(String),
         text: 'Hello world',
         url: expect.stringContaining('files.sexyvoice.ai'),
@@ -1447,11 +1735,11 @@ describe('Clone Voice API Route', () => {
       expect(queries.insertUsageEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           creditsUsed: 132,
-          dollarAmount: 0.000_176,
+          dollarAmount: 0.000_143,
           metadata: expect.objectContaining({
             audioDuration: 12,
             locale: 'en',
-            model: 'voxtral-mini-tts-2603',
+            model: 'voxtral-mini-tts-3-0',
             provider: 'mistral',
             referenceAudioEnhancementRequestId: null,
             referenceAudioFileMimeType: 'audio/wav',
@@ -1478,9 +1766,9 @@ describe('Clone Voice API Route', () => {
       });
 
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -1507,8 +1795,8 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({
             errorMessage: 'API quota exceeded',
-            language: 'ja',
-            locale: 'ja',
+            language: 'da',
+            locale: 'da',
           }),
         }),
       );
@@ -1523,9 +1811,9 @@ describe('Clone Voice API Route', () => {
       );
 
       const formData = createFormDataWithAudio(
-        'こんにちは',
+        'Hej verden',
         createMockAudioFile(),
-        'ja',
+        'da',
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
@@ -1549,8 +1837,8 @@ describe('Clone Voice API Route', () => {
         expect.objectContaining({
           extra: expect.objectContaining({
             errorName: 'Error',
-            language: 'ja',
-            locale: 'ja',
+            language: 'da',
+            locale: 'da',
           }),
         }),
       );
@@ -1687,10 +1975,10 @@ describe('Clone Voice API Route', () => {
 
       expect(calls).toHaveLength(2);
       expect(calls[0]).toMatch(
-        /^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/,
+        /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
       );
       expect(calls[1]).toMatch(
-        /^cloned-audio-free\/en-mistral-[a-f0-9]+\.wav$/,
+        /^cloned-audio-free\/en-mistral-voxtral-mini-tts-3-0-[a-f0-9]+\.wav$/,
       );
       expect(calls[0]).not.toBe(calls[1]);
     });
@@ -2174,5 +2462,134 @@ describe('Integration Tests', () => {
     expect(json.url).toBeTruthy();
     expect(json.creditsUsed).toBeGreaterThan(0);
     expect(json.creditsRemaining).toBeDefined();
+  });
+});
+
+describe('Saved voice generation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const savedVoiceId = '11111111-1111-4111-8111-111111111111';
+  const savedVoice = (provider: 'inworld' | 'mistral') => ({
+    id: savedVoiceId,
+    locale: 'de',
+    name: 'My voice',
+    provider,
+    sample_url: null,
+    voice_id: `${provider}-voice`,
+  });
+  const postSavedVoice = (text: string, id = savedVoiceId, locale = 'en') => {
+    const form = new FormData();
+    form.append('text', text);
+    form.append('locale', locale);
+    form.append('savedVoiceId', id);
+    return POST(
+      new Request('http://localhost/api/clone-voice', {
+        body: form,
+        method: 'POST',
+      }),
+    );
+  };
+
+  it('speaks with an owned Inworld voice in the chosen language', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+    mockSynthesizeInworldSpeech.mockResolvedValueOnce(
+      Buffer.from(createWavHeader(0)),
+    );
+
+    const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
+    const json = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(json.creditsUsed).toBe(132);
+    expect(mockGetOwnedCallVoice).toHaveBeenCalledWith(
+      savedVoiceId,
+      'test-user-id',
+    );
+    expect(mockSynthesizeInworldSpeech).toHaveBeenCalledWith(
+      'inworld-voice',
+      'Hello world',
+      'es',
+    );
+    expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+    expect(queries.reduceCredits).toHaveBeenCalledWith({
+      amount: 132,
+      userId: 'test-user-id',
+    });
+    expect(mockUploadFileToR2).toHaveBeenCalledWith(
+      expect.stringMatching(/^cloned-audio\/es-inworld-inworld-tts-2-/),
+      expect.any(Buffer),
+      'audio/wav',
+    );
+    await flushPromises();
+    expect(queries.saveAudioFile).toHaveBeenCalledWith(
+      expect.objectContaining({ model: 'inworld-tts-2' }),
+    );
+  });
+
+  it('rejects a language an Inworld voice cannot speak', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+
+    const response = await postSavedVoice(
+      'Hello world',
+      savedVoiceId,
+      'en-multi',
+    );
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe(
+      'errors.savedVoiceLocaleUnsupported',
+    );
+    expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('speaks with an owned Mistral voice by ID, without reference audio', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('mistral'));
+
+    const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
+
+    expect(response.status).toBe(200);
+    expect(mockUploadFileToR2).toHaveBeenCalledWith(
+      expect.stringMatching(/^cloned-audio\/de-mistral-/),
+      expect.any(Buffer),
+      'audio/wav',
+    );
+    const request = mockMistralSpeechComplete.mock.lastCall?.[0];
+    expect(request).toMatchObject({
+      input: 'Hello world',
+      voiceId: 'mistral-voice',
+    });
+    expect(request).not.toHaveProperty('refAudio');
+    expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 without charging for a voice the user does not own', async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(null);
+
+    const response = await postSavedVoice('Hello world');
+
+    expect(response.status).toBe(404);
+    expect((await response.json()).code).toBe('errors.savedVoiceNotFound');
+    expect(queries.reduceCredits).not.toHaveBeenCalled();
+  });
+
+  it("rejects text over Inworld's 2,000-character limit", async () => {
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+
+    const response = await postSavedVoice('a'.repeat(2001));
+    const json = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(json.code).toBe('errors.textTooLong');
+    expect(json.details).toEqual({ MAX: 2000 });
+    expect(mockSynthesizeInworldSpeech).not.toHaveBeenCalled();
+  });
+
+  it('rejects a saved voice ID that is not a UUID', async () => {
+    const response = await postSavedVoice('Hello world', 'not-a-uuid');
+
+    expect(response.status).toBe(400);
+    expect(mockGetOwnedCallVoice).not.toHaveBeenCalled();
   });
 });

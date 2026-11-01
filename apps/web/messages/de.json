@@ -105,12 +105,28 @@
       "pickCharacter": "Wähle einen Charakter"
     },
     "demoClone": {
-      "pickSpeaker": "Wähle eine Stimme",
-      "referenceLabel": "Referenz-Audio",
-      "resultLabel": "Geklonte Stimme",
-      "hearResult": "Ergebnis anhören",
+      "title": "Hör den Unterschied",
+      "subtitle": "Vergleiche Originalaufnahmen, geklonte Stimmen und ausdrucksstarke Sprechweisen.",
+      "pickSpeaker": "Stimme auswählen",
+      "pickLanguage": "Sprache auswählen",
+      "comingSoon": "Demnächst verfügbar",
+      "samplePending": "Für diese Sprache ist noch kein Audio verfügbar. Unten findest du den geplanten Beispieltext.",
+      "deliveryLabel": "Sprechweise auswählen",
+      "sameOriginal": "Wie das Original",
+      "natural": "Natürlich",
+      "sarcastic": "Sarkastisch",
+      "calmSlow": "Ruhig & langsam",
       "playAudio": "Audio abspielen",
-      "preparedExamplesCaption": "Vorbereitete Beispiele. Registriere dich, um deine eigene Stimme zu klonen.",
+      "pauseAudio": "Audio pausieren",
+      "loading": "Audio wird geladen",
+      "clonedVoice": "Geklonte Stimme",
+      "originalVoice": "Originalaufnahme",
+      "hearOriginal": "Original anhören",
+      "backToClone": "Zurück zum Klon",
+      "tryVoice": "Diese Sprechweise verwenden",
+      "signUpAndClone": "Registrieren und klonen",
+      "seek": "Audioposition",
+      "preparedExamplesCaption": "Vorbereitete Beispiele. Anhören ist kostenlos; die Generierung verbraucht Credits.",
       "audioError": "Dieses Audio konnte nicht geladen werden.",
       "retry": "Erneut versuchen"
     },
@@ -129,11 +145,11 @@
       },
       "voiceCalling": {
         "title": "Live-Sprachanrufe",
-        "description": "Führen Sie Telefongespräche in Echtzeit mit KI-Charakteren — natürliche Stimmen, sofortige Antworten, keine Einrichtung nötig."
+        "description": "Führen Sie Gespräche in Echtzeit mit KI-Charakteren, mit unseren Stimmen oder einer, die Sie klonen."
       },
       "voiceCloneDemo": {
         "title": "Klone deine Stimme",
-        "description": "Teste die Live-Klon-Demo: Höre eine Stimme, die aus wenigen Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht."
+        "description": "Teste die Live-Klon-Demo: Höre eine Stimme, die aus 10 Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht."
       }
     },
     "cta": {
@@ -164,10 +180,11 @@
         }
       },
       "customCharacter": {
-        "title": "Erstellen Sie Ihren eigenen Charakter",
-        "subtitle": "Geben Sie ihm einen Namen, eine Persönlichkeit, eine Vorgeschichte und eine Stimme. Rufen Sie ihn dann an, wann immer Sie wollen – er bleibt jedes Mal in seiner Rolle.",
+        "title": "Rufen Sie einen Charakter mit Ihrer eigenen Stimme an",
+        "subtitle": "Geben Sie ihm eine Persönlichkeit und wählen Sie eine unserer Stimmen oder klonen Sie eine aus 10 Sekunden Audio: Ihre eigene oder eine, an der Sie die Rechte haben. Rufen Sie ihn an, wann immer Sie wollen – er bleibt jedes Mal in seiner Rolle.",
         "note": "Eigene Charaktere sind in jedem kostenpflichtigen Tarif enthalten.",
-        "action": "Charakter erstellen"
+        "action": "Charakter erstellen",
+        "cloningLink": "So funktioniert das Klonen von Stimmen"
       },
       "cta": {
         "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
@@ -179,7 +196,13 @@
     "voiceCloning": {
       "hero": {
         "title": "Deine Stimme, in jeder Sprache",
-        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 23 Sprachen sprechen."
+        "subtitle": "Klone eine Stimme aus 10 Sekunden Audio.\nHöre sie natürlich in 28 Sprachen sprechen."
+      },
+      "callSection": {
+        "title": "Dann ruf sie an",
+        "subtitle": "Gib deine geklonte Stimme einem Charakter und sprich live mit ihm, in Echtzeit.",
+        "note": "Anrufe mit einer geklonten Stimme sind in jedem kostenpflichtigen Tarif enthalten.",
+        "action": "Sprachanruf ausprobieren"
       },
       "cta": {
         "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
@@ -232,11 +255,11 @@
           "questions": [
             {
               "question": "Wie funktioniert das Klonen von Stimmen?",
-              "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen. Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+              "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen, und erstellt daraus eine digitale Version Ihrer Stimme, die natürlich und realistisch klingt."
             },
             {
               "question": "Kann ich meine eigene Stimme klonen?",
-              "answer": "Ja! Mit nur wenigen Sekunden sauberer Audio können Sie eine digitale Version Ihrer Stimme erstellen, die natürlich und realistisch klingt."
+              "answer": "Ja! Nehmen Sie mindestens 10 Sekunden saubere Audio auf oder laden Sie sie hoch, und es entsteht eine digitale Version Ihrer Stimme, die natürlich und realistisch klingt."
             },
             {
               "question": "Wie wird das Klonen von Stimmen berechnet?",
@@ -244,7 +267,7 @@
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
-              "answer": "Das Stimmklonen unterstützt die folgenden 23 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\nund 🇹🇷 Türkisch."
+              "answer": "Das Stimmklonen unterstützt die folgenden 28 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇪🇸 Katalanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇴 Rumänisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\n🇹🇷 Türkisch,\n🇺🇦 Ukrainisch,\n🇭🇺 Ungarisch,\nund 🇻🇳 Vietnamesisch."
             }
           ]
         },
@@ -257,8 +280,24 @@
               "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
             },
             {
+              "question": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
+              "answer": "Ja, mit einem kostenpflichtigen Tarif. Erstellen Sie einen Charakter und wählen Sie \"Stimme klonen\", oder klonen Sie auf der Klonen-Seite eine Stimme mit \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Sprache auf oder laden Sie sie hoch und wählen Sie sie als Stimme des Charakters."
+            },
+            {
               "question": "Was kostet das?",
               "answer": "Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind."
+            },
+            {
+              "question": "Kostet ein Anruf mit einer geklonten Stimme mehr?",
+              "answer": "Nein. Anrufe kosten {count} Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens."
+            },
+            {
+              "question": "Wie bekomme ich den besten Klon?",
+              "answer": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie \"Referenz-Audio bereinigen\". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann."
+            },
+            {
+              "question": "Kann ich die Stimme einer anderen Person klonen?",
+              "answer": "Nur mit deren Erlaubnis. Sie bestätigen vor dem Klonen, dass Sie die Rechte haben, und unsere Bedingungen verbieten Identitätsmissbrauch und Täuschung."
             }
           ]
         },
@@ -268,7 +307,7 @@
           "questions": [
             {
               "question": "Sind meine Stimm-Daten sicher?",
-              "answer": "Absolut. Alle Sprachaufnahmen und generierten Dateien sind verschlüsselt und sicher gespeichert. Wenn Sie eine Stimme klonen, löschen wir die hochgeladene Sprachprobe und niemand sonst kann sie verwenden. Sie haben vollständige Kontrolle über die generierten Audiodateien und können diese jederzeit löschen. Wir geben Ihre Stimmendaten niemals ohne Ihre Zustimmung weiter."
+              "answer": "Gespeicherte Anrufstimmen sind nur für Ihr Konto verfügbar. Der Sprachanbieter behält die Aufnahme, damit Sie die Stimme wiederverwenden können. Generierte Audiodateien können Sie im Dashboard löschen. Beim Löschen Ihres Kontos wird auch die Löschung gespeicherter Stimmen und ihrer Hörproben angefordert."
             },
             {
               "question": "Wofür kann ich die generierten Stimmen verwenden?",
@@ -578,15 +617,10 @@
   },
   "call": {
     "title": "Sprachanrufe",
-    "subtitle": "Wähle einen KI-Charakter und sprich mit ihm in Echtzeit.",
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
-    "configurationTitle": "Konfiguration",
-    "memoryLabel": "Erinnerung",
-    "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Es wird nichts gespeichert, sofern es nicht aktiviert ist.",
-    "memoryUpgradeTooltip": "Wechsle zu einem kostenpflichtigen Tarif, damit die Charaktere sich zwischen Anrufen an dich erinnern.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",
@@ -597,86 +631,219 @@
     "startCall": "Anruf starten",
     "connecting": "Verbinden",
     "connectionFailed": "Die Verbindung zum Anruf konnte nicht hergestellt werden. Bitte versuche es erneut.",
-    "reconnected": "Wiederverbunden",
-    "reconnectionFailed": "Wiederverbindung fehlgeschlagen",
-    "configurationUpdated": "Konfiguration aktualisiert",
-    "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
     "instructionsRejected": "Dieser Anruf konnte nicht gestartet werden, weil der Charakter oder die Szene die Sicherheitsprüfungen des KI-Anbieters nicht bestanden haben. Bearbeite den Charakter oder die Szene und versuche es erneut.",
     "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
     "microphoneUnavailable": "Auf dein Mikrofon konnte nicht zugegriffen werden. Prüfe, ob es angeschlossen ist, schließe andere Apps, die es verwenden, und versuche es erneut.",
     "disconnected": "Getrennt",
-    "chooseCharacter": "Mit wem möchtest du sprechen?",
-    "presetRemoved": "Preset entfernt",
-    "deletePreset": "Löschen",
-    "deletePresetConfirm": "Dies kann nicht rückgängig gemacht werden.",
-    "cancel": "Abbrechen",
     "availableInputs": "Verfügbare Eingänge",
     "audioSettings": "Audio-Einstellungen",
     "enhancedNoiseFilter": "Verbesserter Rauschfilter",
-    "disconnect": "Trennen",
-    "instructions": "Anweisungen",
-    "instructionsHelp": "Anweisungen sind eine Systemnachricht, die der Konversation vorangestellt wird, wenn das Modell antwortet. Aktualisierungen werden beim nächsten Gesprächsbeitrag wirksam.",
-    "grokImagineNote": "Hinweis: Grok Imagine fügt zusätzliche Anweisungen für die Bildgenerierung hinzu.",
-    "grokImagineIncluded": "Grok Imagine-Anweisungen enthalten",
-    "addCustomCharacter": "Eigenen Charakter hinzufügen",
-    "addCharacterLabel": "Hinzufügen",
-    "upgradePremiumTooltip": "Upgrade feature",
-    "addDescriptionPlaceholder": "Beschreibung hinzufügen...",
-    "clickToAddDescription": "Klicke, um eine Beschreibung hinzuzufügen...",
-    "characterInstructions": "__NAME__-Anweisungen",
-    "characterFallbackName": "Charakter",
-    "instructionsPlaceholder": "Systemanweisungen eingeben",
-    "voiceLabel": "Stimme",
-    "voicePlaceholder": "Stimme wählen",
-    "voiceSelectorLabel": "Stimme",
-    "voiceSelectorPlaceholder": "Stimme wählen",
-    "deleteCharacterAriaLabel": "__NAME__ löschen",
-    "savePreset": {
-      "save": "Speichern",
-      "saveAsNew": "Als neu speichern",
-      "saveAsNewTitle": "Als neuen Charakter speichern",
-      "saveAsNewDescription": "Dies erstellt einen neuen eigenen Charakter mit den aktuellen Einstellungen.",
-      "nameLabel": "Name",
-      "descriptionLabel": "Beschreibung",
-      "characterCreated": "Charakter erstellt",
-      "characterSaved": "Charakter gespeichert",
-      "failedToCreate": "Charakter konnte nicht erstellt werden",
-      "failedToUpdate": "Charakter konnte nicht aktualisiert werden"
+    "picker": {
+      "subtitle": "Wähle aus, mit wem du sprechen willst, oder erstelle deinen eigenen Charakter.",
+      "yourCharacters": "Deine Charaktere",
+      "featured": "Empfohlen",
+      "createTitle": "Charakter erstellen",
+      "createBody": "Beschreibe, wer er ist. Wähle eine Stimme oder klone deine eigene.",
+      "createUpgradePersonality": "Schreibe, wer sie sind und wie sie sprechen.",
+      "createUpgradeVoice": "Rufe sie mit einer Stimme an, die du klonst: deiner eigenen oder einer, an der du die Rechte hast.",
+      "upgrade": "Upgrade",
+      "createLimit": "Du kannst bis zu {count} Charaktere speichern. Lösche einen, um einen neuen hinzuzufügen.",
+      "listen": "Anhören",
+      "stop": "Stopp",
+      "call": "Anrufen",
+      "listenTo": "{name} anhören",
+      "stopName": "{name} stoppen",
+      "open": "{name} öffnen",
+      "callName": "{name} anrufen",
+      "moreOptions": "Weitere Optionen für {name}",
+      "edit": "Bearbeiten",
+      "duplicate": "Duplizieren",
+      "delete": "Löschen",
+      "deleted": "{name} gelöscht",
+      "restored": "{name} ist wieder da",
+      "undo": "Rückgängig",
+      "deleteFailed": "{name} konnte nicht gelöscht werden und ist wieder in deiner Liste."
     },
-    "presetSelector": {
-      "characterCreated": "Charakter erstellt",
-      "characterUpdated": "Charakter aktualisiert",
-      "characterRemoved": "Charakter entfernt",
-      "voiceUpdated": "Stimme aktualisiert",
-      "failedToCreate": "Charakter konnte nicht erstellt werden",
-      "failedToUpdate": "Charakter konnte nicht aktualisiert werden",
-      "failedToDelete": "Charakter konnte nicht gelöscht werden",
-      "failedToSaveVoice": "Stimme konnte nicht gespeichert werden"
+    "panel": {
+      "featuredCharacter": "Empfohlener Charakter",
+      "yourCharacter": "Dein Charakter",
+      "close": "Schließen",
+      "voice": "Stimme",
+      "clonedVoice": "Deine geklonte Stimme",
+      "microphone": "Mikrofon",
+      "micReady": "Bereit",
+      "micUnknown": "Dein Browser fragt nach",
+      "micBlocked": "Von deinem Browser blockiert",
+      "micBlockedHelp": "{name} kann dich noch nicht hören. Klicke auf das Schloss neben der Webadresse, erlaube das Mikrofon und versuche es erneut.",
+      "tryAgain": "Erneut versuchen",
+      "makeYourOwn": "Eigene Version erstellen",
+      "makeYourOwnUpgrade": "Upgrade, um deine eigene Version mit einer geklonten Stimme zu erstellen.",
+      "missingPersonality": "Füge eine Persönlichkeit hinzu, bevor du {name} anrufst.",
+      "noVoice": "Keine Stimme",
+      "noVoiceHelp": "Die Stimme von {name} wurde gelöscht. Wähle eine neue, um anzurufen.",
+      "chooseVoice": "Stimme wählen"
     },
-    "createCharacter": {
-      "dialogTitle": "Neuen Charakter erstellen",
-      "dialogDescription": "Erstellen Sie einen benutzerdefinierten KI-Charakter mit Ihrer eigenen Persönlichkeit und Stimme.",
-      "nameLabel": "Name",
-      "nameRequired": "*",
-      "namePlaceholder": "z.B. Luna, Marcus, Zara...",
-      "descriptionLabel": "Beschreibung",
-      "descriptionPlaceholder": "Eine kurze Beschreibung Ihres Charakters...",
-      "voiceLabel": "Stimme",
-      "voicePlaceholder": "Stimme wählen",
-      "instructionsLabel": "Anweisungen",
-      "instructionsPlaceholder": "Beschreiben Sie die Persönlichkeit, Sprechmuster und Hintergrundgeschichte Ihres Charakters...",
-      "characterCount": "__COUNT__/5000 Zeichen",
-      "cancelButton": "Abbrechen",
-      "createButton": "Charakter erstellen",
-      "creatingButton": "Erstelle...",
-      "paidUserOnly": "Upgrade feature",
-      "errorNameRequired": "Name ist erforderlich",
-      "errorVoiceRequired": "Bitte wählen Sie eine Stimme",
-      "playVoiceSample": "Stimmprobe abspielen",
-      "stopVoiceSample": "Stimmprobe stoppen",
-      "previewVoice": "Vorschau der Stimme von __VOICE__"
+    "creator": {
+      "back": "Sprachanrufe",
+      "createTitle": "Charakter erstellen",
+      "editTitle": "{name} bearbeiten",
+      "whoIsIt": "Wer ist es?",
+      "name": "Name",
+      "namePlaceholder": "z. B. Max",
+      "nameError": "Gib deinem Charakter einen Namen.",
+      "description": "Kurzbeschreibung",
+      "descriptionPlaceholder": "z. B. Strenger, aber fairer Interview-Coach",
+      "optional": "Optional",
+      "descriptionHelp": "Wird in deiner Liste unter dem Namen angezeigt.",
+      "personality": "Persönlichkeit",
+      "personalityHelp": "Wer ist es, wie spricht er und worüber möchtest du sprechen?",
+      "startFromExample": "Mit einem Beispiel beginnen",
+      "personalityPlaceholder": "Beschreibe deinen Charakter oder beginne mit einem Beispiel oben.",
+      "personalityError": "Beschreibe deinen Charakter oder beginne mit einem Beispiel.",
+      "characterCount": "{count, number} / {max, number}",
+      "exampleReplaced": "Dein Text wurde durch das Beispiel „{label}“ ersetzt",
+      "undo": "Rückgängig",
+      "voice": "Stimme",
+      "missingVoice": "Wähle eine Stimme, um zu speichern.",
+      "clonedVoice": "Deine geklonte Stimme",
+      "preview": "Vorschau",
+      "previewName": "Name",
+      "previewDescription": "Kurzbeschreibung",
+      "previewVoice": "Stimme: {voice}",
+      "previewVoiceWithDescription": "Stimme: {voice} · {description}",
+      "hearVoice": "Diese Stimme anhören",
+      "stopVoice": "Stimmprobe stoppen",
+      "listen": "Anhören",
+      "stop": "Stopp",
+      "call": "Anrufen",
+      "ready": "Fertig. Nach dem Speichern kannst du {name} direkt anrufen.",
+      "missingNameAndPersonality": "Füge einen Namen und eine Persönlichkeit hinzu, um zu speichern.",
+      "missingName": "Füge einen Namen hinzu, um zu speichern.",
+      "missingPersonality": "Füge eine Persönlichkeit hinzu, um zu speichern.",
+      "save": "Charakter speichern",
+      "saveChanges": "Änderungen speichern",
+      "cancel": "Abbrechen",
+      "delete": "Löschen",
+      "saved": "{name} gespeichert",
+      "updated": "{name} aktualisiert",
+      "saveFailed": "{name} konnte nicht gespeichert werden. Versuche es erneut.",
+      "copyName": "{name} (Kopie)",
+      "remixName": "Mein {name}",
+      "discardNewTitle": "Diesen Charakter verwerfen?",
+      "discardNewBody": "Was du bisher geschrieben hast, geht verloren.",
+      "discardEditTitle": "Änderungen verwerfen?",
+      "discardEditBody": "Deine Änderungen werden nicht gespeichert.",
+      "keepEditing": "Weiter bearbeiten",
+      "discard": "Verwerfen",
+      "examples": {
+        "tutor": {
+          "label": "Sprachlehrer",
+          "tagline": "Geduldiger Italienischlehrer",
+          "text": "Du bist ein geduldiger Italienischlehrer aus Bologna.\nWie du sprichst: herzlich und ermutigend. Sprich einfaches Italienisch und wechsle nur ins Deutsche, wenn ich nicht weiterkomme.\nWas wir machen: Alltagsgespräche üben, zum Beispiel Essen bestellen, nach dem Weg fragen und Smalltalk.\nRegeln: Korrigiere jeweils nur einen Fehler und antworte kurz, damit ich die meiste Zeit spreche."
+        },
+        "coach": {
+          "label": "Interview-Coach",
+          "tagline": "Strenger, aber fairer Interview-Coach",
+          "text": "Du bist ein scharfsinniger, aber fairer Coach für Vorstellungsgespräche.\nWie du sprichst: professionell, direkt und ein wenig fordernd.\nWas wir machen: ein realistisches Vorstellungsgespräch für die Stelle, die ich nenne. Stelle jeweils eine Frage und hake bei vagen Antworten nach.\nRegeln: Gib mir nach jeder Antwort einen konkreten Tipp. Bewerte mich am Ende mit einer Zahl von 1 bis 10."
+        },
+        "friend": {
+          "label": "Guter Freund",
+          "tagline": "Entspannter Freund, der zuhört",
+          "text": "Du bist ein herzlicher, entspannter Freund, der sich immer freut, von mir zu hören.\nWie du sprichst: locker und freundlich, mit sanftem Humor.\nWas wir machen: uns austauschen. Frag mich nach meinem Tag und merk dir, was ich dir während des Anrufs erzähle.\nRegeln: Hör mehr zu, als du redest, und gib keine Ratschläge, außer ich frage danach."
+        },
+        "debate": {
+          "label": "Debattierpartner",
+          "tagline": "Vertritt die Gegenseite",
+          "text": "Du bist ein schlagfertiger Debattierpartner.\nWie du sprichst: selbstbewusst und verspielt, nie unhöflich.\nWas wir machen: Ich wähle ein Thema und eine Position, und du vertrittst die Gegenseite mit deinen besten Argumenten.\nRegeln: Jeder Beitrag dauert höchstens 30 Sekunden, und du zeigst die schwächste Stelle meiner Argumentation auf."
+        },
+        "story": {
+          "label": "Geschichtenerzähler",
+          "tagline": "Erfindet Geschichten mit dir",
+          "text": "Du bist ein gemütlicher Geschichtenerzähler mit Gespür für Spannung.\nWie du sprichst: langsam und bildhaft, wie am Lagerfeuer.\nWas wir machen: gemeinsam eine Geschichte erfinden. Halte an den spannenden Stellen inne und frag mich, wie es weitergeht.\nRegeln: Bleib locker und überraschend."
+        }
+      }
+    },
+    "voices": {
+      "yourVoices": "Deine Stimmen",
+      "builtIn": "Integriert",
+      "new": "Neu",
+      "clonedVoice": "Geklonte Stimme",
+      "cloneTitle": "Stimme klonen",
+      "cloneBody": "Nimm 30 Sekunden auf oder lade einen Clip hoch",
+      "play": "Stimmprobe von {name} abspielen",
+      "stop": "Stimmprobe von {name} stoppen",
+      "showAll": "Alle anzeigen ({count})",
+      "showFewer": "Weniger anzeigen",
+      "cloneLimit": "Du hast {max} Stimmen. Lösche eine auf der Seite „Klonen“, um eine neue zu speichern."
+    },
+    "inCall": {
+      "connecting": "Verbinde…",
+      "listening": "Hört zu",
+      "thinking": "Denkt nach…",
+      "speaking": "Spricht",
+      "muted": "Du bist stummgeschaltet",
+      "mute": "Stummschalten",
+      "unmute": "Stummschaltung aufheben",
+      "end": "Anruf beenden",
+      "audioSettings": "Audioeinstellungen"
+    },
+    "ended": {
+      "title": "Anruf mit {name} beendet · {duration}",
+      "editHint": "Nicht ganz richtig? Ändere die Persönlichkeit oder die Stimme und ruf noch einmal an.",
+      "callAgain": "Erneut anrufen",
+      "edit": "{name} bearbeiten",
+      "makeYourOwn": "Eigene Version erstellen",
+      "back": "Zurück zu den Charakteren"
+    },
+    "clone": {
+      "title": "Stimme klonen",
+      "close": "Schließen",
+      "description": "Nimm eine Stimmprobe auf oder lade sie hoch, gib ihr einen Namen und speichere sie für deine Charaktere.",
+      "steps": "Schritte",
+      "stepRecord": "Aufnehmen",
+      "stepConfirm": "Benennen & bestätigen",
+      "stepReady": "Fertig",
+      "recordNow": "Jetzt aufnehmen",
+      "uploadFile": "Datei hochladen",
+      "readAloud": "Lies das in einem ruhigen Raum laut vor (etwa 30 Sekunden):",
+      "script": "Die Morgenfähre legt um sieben ab, also hole ich mir meistens einen Kaffee und sehe zu, wie der Hafen erwacht. Fischer rufen sich über das Wasser zu, Möwen streiten um ihr Frühstück, und die ganze Stadt riecht nach Salz und frischem Brot. Am Wochenende nehme ich den langen Weg nach Hause, vorbei am alten Leuchtturm und am Markt, wo jeder meinen Namen zu kennen scheint.",
+      "startRecording": "Aufnahme starten",
+      "stopRecording": "Aufnahme beenden",
+      "playRecording": "Deine Aufnahme abspielen",
+      "stopPlayback": "Wiedergabe stoppen",
+      "recordIdle": "Drück auf Aufnehmen und lies den Text oben vor",
+      "recording": "Aufnahme läuft…",
+      "recorded": "Aufgenommen",
+      "recordAgain": "Neu aufnehmen",
+      "dropFile": "Audiodatei hierher ziehen oder <browse>durchsuchen</browse>",
+      "fileHint": "MP3, WAV oder M4A · bis zu {size} · eine Person spricht, keine Musik",
+      "removeFile": "Datei entfernen",
+      "fileTooLarge": "Diese Datei ist größer als {size}.",
+      "needRecording": "Nimm zuerst mindestens {seconds} Sekunden auf.",
+      "stopFirst": "Beende zuerst die Aufnahme.",
+      "tooShort": "Das war etwas kurz. Nimm mindestens {seconds} Sekunden auf.",
+      "needFile": "Wähle zuerst eine Audiodatei.",
+      "micError": "Dein Mikrofon konnte nicht verwendet werden. Erlaube es in deinem Browser und versuche es erneut.",
+      "cancel": "Abbrechen",
+      "next": "Weiter",
+      "back": "Zurück",
+      "createVoice": "Stimme erstellen",
+      "nameLabel": "Name dieser Stimme",
+      "nameHelp": "Nur du siehst deine geklonten Stimmen. Der Stimmanbieter speichert die Probe.",
+      "nameError": "Gib dieser Stimme einen Namen.",
+      "defaultName": "Meine Stimme",
+      "defaultNameNumbered": "Meine Stimme {count}",
+      "consentError": "Bitte bestätige, dass du diese Stimme klonen darfst.",
+      "creating": "„{name}“ wird erstellt…",
+      "creatingHelp": "Das dauert meist weniger als eine Minute.",
+      "creatingClose": "Du kannst das schließen. Die Stimme wird trotzdem unter Deine Stimmen gespeichert.",
+      "ready": "„{name}“ ist fertig",
+      "readyHelp": "Hör sie dir an, um zu prüfen, ob sie richtig klingt.",
+      "hearIt": "Anhören",
+      "stop": "Stopp",
+      "useVoice": "Diese Stimme verwenden"
     }
   },
   "clone": {
@@ -706,6 +873,8 @@
     "tryDemo": "Oder versuchen Sie es mit einer Demo:",
     "uploadAudioFile": "Audiodatei hochladen",
     "orUseMicrophone": "oder nutzen Sie Ihr Mikrofon",
+    "micRecord": "Aufnehmen",
+    "micStop": "Stopp",
     "errors": {
       "noAudioFile": "Bitte wählen Sie eine Audiodatei aus.",
       "noText": "Bitte geben Sie Text ein, der in Sprache umgewandelt werden soll.",
@@ -728,7 +897,12 @@
       "textTooLong": "Der Text überschreitet die maximale Länge von __MAX__ Zeichen.",
       "unsupportedAudioFormat": "Nicht unterstütztes Audioformat für das Klonen von Stimmen. Bitte verwenden Sie MP3, OGG/Opus, WebM oder WAV.",
       "unsupportedLocale": "Diese Sprache wird für das Klonen von Stimmen nicht unterstützt.",
-      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen."
+      "userNotFound": "Bitte melden Sie sich an, um eine Stimme zu klonen.",
+      "voiceNameAndConsentRequired": "Gib einen Namen (bis zu 50 Zeichen) ein und bestätige, dass du die Stimme speichern darfst.",
+      "savedVoiceRequiresPaid": "Zum Speichern von Stimmen ist ein kostenpflichtiges Konto erforderlich.",
+      "savedVoiceLocaleUnsupported": "Mit dieser Sprachoption lassen sich keine Stimmen für Anrufe speichern. Wähle eine andere Sprache.",
+      "savedVoiceNotFound": "Diese gespeicherte Stimme gibt es nicht mehr.",
+      "savedVoiceLimitReached": "Du kannst bis zu __MAX__ Stimmen speichern. Lösche eine, um eine neue zu speichern."
     },
     "sampleCard": {
       "sourceAudio": "Quellaudio",
@@ -737,7 +911,7 @@
     },
     "crossLanguageInfo": {
       "title": "Stimmübertragung zwischen Sprachen",
-      "description": "Klonen Sie eine Stimme in einer Sprache und lassen Sie sie fließend in jeder der anderen 23 unterstützten Sprachen sprechen, während Sie die einzigartigen Eigenschaften des Sprechers bewahren.",
+      "description": "Klone eine Stimme in einer Sprache und lass sie in jeder der 28 unterstützten Sprachen sprechen. Die einzigartigen Eigenschaften der Stimme bleiben erhalten.",
       "example": "Beispiel: Laden Sie eine Sprachprobe eines englischen Sprechers hoch → Generieren Sie französische Sprache in seiner Stimme"
     },
     "legalConsentCheckbox": "Durch die Nutzung der Stimmklonung bestätigen Sie, dass Sie alle rechtlichen Einwilligungen/Rechte zum Klonen dieser Stimmproben haben und dass Sie nichts Generiertes für illegale oder schädliche Zwecke verwenden werden.",
@@ -761,7 +935,28 @@
     "audioProcessorError": "Audioprozessor-Fehler",
     "preparingAudioProcessor": "Audioprozessor für __LANGUAGE__ wird vorbereitet...",
     "removeFile": "Datei entfernen",
-    "convertingAudio": "Audio wird konvertiert"
+    "convertingAudio": "Audio wird konvertiert",
+    "savedVoice": {
+      "modeLabel": "Stimme für Anrufe speichern",
+      "upgradeTooltip": "Wechseln Sie zu einem kostenpflichtigen Tarif, um Stimmen für Anrufe zu speichern.",
+      "name": "Name der Stimme",
+      "help": "Speichere diese Stimme, um sie beim Erstellen eines Charakters zu verwenden. Der Anbieter bewahrt die Referenzaufnahme auf.",
+      "noiseRemovalHelp": "Entfernt Hintergrundgeräusche. Nur für verrauschte Aufnahmen verwenden: Saubere Aufnahmen können dadurch schlechter klingen. Kostenlos.",
+      "save": "Stimme speichern",
+      "saving": "Stimme wird gespeichert",
+      "success": "Stimme gespeichert",
+      "useInCall": "Stimme für einen Anruf verwenden →",
+      "backToCall": "Zurück zum Anruf",
+      "using": "Du generierst mit deiner gespeicherten Stimme {name}. Klicke sie erneut an, um eine Aufnahme zu verwenden.",
+      "deleteTitle": "{name} löschen?",
+      "deleteBody": "Die Stimme wird endgültig entfernt. Bereits erzeugte Audios bleiben im Verlauf.",
+      "deleteUsedBy": "Verwendet von {names}. Vor dem nächsten Anruf brauchen sie eine neue Stimme. Bereits erzeugte Audios bleiben im Verlauf.",
+      "deleteConfirm": "Stimme löschen",
+      "cancel": "Abbrechen",
+      "deleted": "{name} gelöscht",
+      "deleteFailed": "Die Stimme konnte nicht gelöscht werden. Versuch es noch einmal.",
+      "limitReached": "Du hast {max} gespeicherte Stimmen, das Maximum. Lösche oben eine, um eine neue zu speichern."
+    }
   },
   "profile": {
     "title": "Profileinstellungen",
@@ -882,7 +1077,7 @@
     "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
     "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
     "titleVoiceCloning": "KI-Stimmklonen",
-    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 23 Sprachen sprechen.",
+    "descriptionVoiceCloning": "Klone eine Stimme aus 10 Sekunden Audio und höre sie natürlich in 28 Sprachen sprechen.",
     "/": "",
     "/voice-call": "Sprachanruf",
     "/login": "Anmelden",
@@ -1047,6 +1242,12 @@
     }
   },
   "announcements": {
+    "clonedVoiceCallsLaunch": {
+      "text": "Klone deine Stimme aus einer 10-Sekunden-Aufnahme und rufe dann eine Figur an, die mit ihr spricht.",
+      "ctaLoggedIn": "Stimme klonen",
+      "ctaLoggedOut": "Anmelden",
+      "ariaLabelDismiss": "Hinweis zu Anrufen mit geklonter Stimme schliessen"
+    },
     "expressiveVoicesLaunch": {
       "text": "Neue, ausdrucksstärkere Stimmen sind da — angetrieben von Gemini 3.1, mit feinerer Kontrolle über Tempo, Atemgeräusche, Tonhöhe, Geschwindigkeit und Intensität.",
       "ctaLoggedIn": "Stimmen testen",
@@ -1219,5 +1420,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
     "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
     "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
+  },
+  "ttsEditor": {
+    "label": "Sprechtext",
+    "effects": "Stimmeffekte",
+    "emotions": "Emotionen",
+    "pace": "Tempo",
+    "vocalSounds": "Stimmliche Laute"
   }
 }

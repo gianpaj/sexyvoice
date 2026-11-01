@@ -62,7 +62,7 @@ export function SidebarFooterMenu({ lang }: { lang: Locale }) {
             <DropdownMenuItem asChild>
               <Link href="https://docs.sexyvoice.ai" target="_blank">
                 Documentation
-                <ExternalLink className="ml-3 size-3" />
+                <ExternalLink className="ml-1 size-3" />
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSignOut}>

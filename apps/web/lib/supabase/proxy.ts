@@ -1,6 +1,7 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
 import { getVerifiedClaims } from './auth';
@@ -80,8 +81,13 @@ export const updateSession = async (
     const dashboardPath = isDashboardPath(pathname, locale);
 
     if (!isAuthenticated && dashboardPath) {
+      const loginUrl = new URL(`/${locale}/login`, request.url);
+      const demoRedirect = getCloneDemoRedirect(
+        pathname + request.nextUrl.search,
+      );
+      if (demoRedirect) loginUrl.searchParams.set('redirect_to', demoRedirect);
       const redirectResponse = redirectWithSupabaseCookies(
-        new URL(`/${locale}/login`, request.url),
+        loginUrl,
         supabaseResponse,
       );
 

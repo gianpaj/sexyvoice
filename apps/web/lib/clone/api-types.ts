@@ -10,6 +10,11 @@ export type RouteErrorDetails = Record<
 >;
 
 export type CloneRouteErrorCode =
+  | 'errors.voiceNameAndConsentRequired'
+  | 'errors.savedVoiceRequiresPaid'
+  | 'errors.savedVoiceLocaleUnsupported'
+  | 'errors.savedVoiceNotFound'
+  | 'errors.savedVoiceLimitReached'
   | 'errors.audioConversionFailed'
   | 'errors.audioConversionRequiredWebm'
   | 'errors.audioDurationInvalidFallback'
@@ -47,10 +52,20 @@ export interface CloneSuccessResponse {
   url: string;
 }
 
+export interface SaveVoiceSuccessResponse {
+  audioReferenceId: string;
+  provider: CallCloneProvider;
+}
+
 /** Names of the multipart form fields accepted by `POST /api/clone-voice`. */
 export const CLONE_FORM_FIELDS = {
   enhanceReferenceAudio: 'enhanceReferenceAudio',
   file: 'file',
   locale: 'locale',
   text: 'text',
+  saveVoiceName: 'saveVoiceName',
+  savedVoiceId: 'savedVoiceId',
+  voiceConsent: 'voiceConsent',
 } as const;
+
+import type { CallCloneProvider } from './call-voice-config';

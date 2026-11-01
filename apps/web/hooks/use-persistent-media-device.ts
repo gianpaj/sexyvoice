@@ -12,12 +12,21 @@ function handleDeviceSelectionError(error: unknown) {
  * Automatically loads the last selected audio device from localStorage
  * and saves new selections for future sessions.
  *
+ * Firefox hides device IDs and labels until the page has used the
+ * microphone, even with permission granted. `requestPermissions` lets
+ * LiveKit briefly open the microphone to list them; set it only after the
+ * user asks for the list.
+ *
  * @returns The media device select object from useMediaDeviceSelect
  */
-export function usePersistentMediaDevice() {
+export function usePersistentMediaDevice({
+  requestPermissions = false,
+}: {
+  requestPermissions?: boolean;
+} = {}) {
   const deviceSelect = useMediaDeviceSelect({
     kind: 'audioinput',
-    requestPermissions: false,
+    requestPermissions,
   });
   const hasInitialized = useRef(false);
 

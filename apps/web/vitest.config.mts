@@ -46,6 +46,9 @@ export default defineConfig({
       }
       return true;
     },
+    // next-intl imports `next/navigation` without an extension, which Node's
+    // ESM resolver rejects; let Vite resolve it for components using its Link.
+    server: { deps: { inline: ['next-intl'] } },
     setupFiles: ['./tests/setup.ts'],
     testTimeout: 30_000, // 30 seconds default timeout for all tests
   },

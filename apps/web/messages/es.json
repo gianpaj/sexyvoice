@@ -105,12 +105,28 @@
       "pickCharacter": "Elige un personaje"
     },
     "demoClone": {
+      "title": "Escucha la diferencia",
+      "subtitle": "Compara grabaciones originales, voces clonadas e interpretaciones expresivas.",
       "pickSpeaker": "Elige una voz",
-      "referenceLabel": "Audio de referencia",
-      "resultLabel": "Voz clonada",
-      "hearResult": "Escuchar el resultado",
+      "pickLanguage": "Elige un idioma",
+      "comingSoon": "Próximamente",
+      "samplePending": "El audio en este idioma aún no está disponible. Consulta el texto previsto para la muestra a continuación.",
+      "deliveryLabel": "Elige la interpretación",
+      "sameOriginal": "Igual que el original",
+      "natural": "Natural",
+      "sarcastic": "Sarcástica",
+      "calmSlow": "Calmada y lenta",
       "playAudio": "Reproducir audio",
-      "preparedExamplesCaption": "Ejemplos preparados. Regístrate para clonar tu propia voz.",
+      "pauseAudio": "Pausar audio",
+      "loading": "Cargando audio",
+      "clonedVoice": "Voz clonada",
+      "originalVoice": "Grabación original",
+      "hearOriginal": "Escuchar el original",
+      "backToClone": "Volver al clon",
+      "tryVoice": "Usar esta interpretación",
+      "signUpAndClone": "Regístrate y clona",
+      "seek": "Posición del audio",
+      "preparedExamplesCaption": "Ejemplos preparados. Escucharlos es gratis; generar audio consume créditos.",
       "audioError": "No se pudo cargar este audio.",
       "retry": "Reintentar"
     },
@@ -129,11 +145,11 @@
       },
       "voiceCalling": {
         "title": "Llamadas de Voz en Vivo",
-        "description": "Mantén conversaciones telefónicas en tiempo real con personajes de IA — voces naturales, respuestas instantáneas, sin configuración."
+        "description": "Mantén conversaciones en tiempo real con personajes de IA, con nuestras voces o una que clones."
       },
       "voiceCloneDemo": {
         "title": "Clona tu voz",
-        "description": "Prueba la demo de clonación en directo: escucha una voz recreada a partir de unos segundos de audio, hablando con naturalidad en varios idiomas."
+        "description": "Prueba la demo de clonación en directo: escucha una voz recreada a partir de 10 segundos de audio, hablando con naturalidad en varios idiomas."
       }
     },
     "cta": {
@@ -164,10 +180,11 @@
         }
       },
       "customCharacter": {
-        "title": "Crea tu personaje personalizado",
-        "subtitle": "Dale un nombre, una personalidad, una historia y una voz. Luego llámalo cuando quieras: siempre responde en su papel.",
+        "title": "Llama a un personaje con tu propia voz",
+        "subtitle": "Dale una personalidad y elige una de nuestras voces o clona una con 10 segundos de audio: la tuya o una de la que tengas los derechos. Llámalo cuando quieras: siempre responde en su papel.",
         "note": "Los personajes personalizados están incluidos en todos los planes de pago.",
-        "action": "Crear tu personaje"
+        "action": "Crear tu personaje",
+        "cloningLink": "Descubre cómo funciona la clonación de voz"
       },
       "cta": {
         "freeCredits": "Comienza con 10,000 créditos gratis",
@@ -179,7 +196,13 @@
     "voiceCloning": {
       "hero": {
         "title": "Tu voz, en todos los idiomas",
-        "subtitle": "Clona una voz con unos segundos de audio.\nEscúchala hablar con naturalidad en 23 idiomas."
+        "subtitle": "Clona una voz con 10 segundos de audio.\nEscúchala hablar con naturalidad en 28 idiomas."
+      },
+      "callSection": {
+        "title": "Luego, llámala",
+        "subtitle": "Dale tu voz clonada a un personaje y habla con él en directo, en tiempo real.",
+        "note": "Las llamadas con voz clonada están incluidas en todos los planes de pago.",
+        "action": "Probar una llamada"
       },
       "cta": {
         "freeCredits": "Comienza con 10,000 créditos gratis",
@@ -232,11 +255,11 @@
           "questions": [
             {
               "question": "¿Cómo funciona la clonación de voz?",
-              "answer": "Nuestra IA analiza tu muestra de voz (10 segundos a 5 minutos) para aprender sus patrones y características únicas. Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
+              "answer": "Nuestra IA analiza tu muestra de voz (10 segundos a 5 minutos) para aprender sus patrones y características únicas, y crea una versión digital de tu voz que suena natural y realista."
             },
             {
               "question": "¿Puedo clonar mi propia voz?",
-              "answer": "¡Sí! Con solo unos segundos de audio limpio, puedes crear una versión digital de tu voz que suene natural y realista."
+              "answer": "¡Sí! Graba o sube al menos 10 segundos de audio limpio y se creará una versión digital de tu voz que suena natural y realista."
             },
             {
               "question": "¿Cómo se cobra la clonación de voz?",
@@ -244,7 +267,7 @@
             },
             {
               "question": "¿Qué idiomas soporta la clonación de voz?",
-              "answer": "La clonación de voz soporta los siguientes 23 idiomas:\n\n🇩🇪 Alemán,\n🇸🇦 Árabe,\n🇨🇳 Chino mandarín,\n🇰🇷 Coreano,\n🇩🇰 Danés,\n🇪🇸 Español,\n🇫🇮 Finlandés,\n🇫🇷 Francés,\n🇬🇷 Griego,\n🇮🇱 Hebreo,\n🇮🇳 Hindi,\n🇳🇱 Holandés,\n🇬🇧 Inglés,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇲🇾 Malayo,\n🇳🇴 Noruego,\n🇵🇱 Polaco,\n🇵🇹 Portugués,\n🇷🇺 Ruso,\n🇰🇪 Suajili,\n🇸🇪 Sueco,\ny 🇹🇷 Turco."
+              "answer": "La clonación de voz soporta los siguientes 28 idiomas:\n\n🇩🇪 Alemán,\n🇸🇦 Árabe,\n🇪🇸 Catalán,\n🇨🇳 Chino mandarín,\n🇰🇷 Coreano,\n🇩🇰 Danés,\n🇪🇸 Español,\n🇫🇮 Finlandés,\n🇫🇷 Francés,\n🇬🇷 Griego,\n🇮🇱 Hebreo,\n🇮🇳 Hindi,\n🇳🇱 Holandés,\n🇭🇺 Húngaro,\n🇬🇧 Inglés,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇲🇾 Malayo,\n🇳🇴 Noruego,\n🇵🇱 Polaco,\n🇵🇹 Portugués,\n🇷🇴 Rumano,\n🇷🇺 Ruso,\n🇰🇪 Suajili,\n🇸🇪 Sueco,\n🇹🇷 Turco,\n🇺🇦 Ucraniano,\ny 🇻🇳 Vietnamita."
             }
           ]
         },
@@ -257,8 +280,24 @@
               "answer": "Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real."
             },
             {
+              "question": "¿Puedo llamar a un personaje con mi propia voz?",
+              "answer": "Sí, con un plan de pago. Crea un personaje y elige \"Clonar una voz\", o clona una en la página Clonar con \"Guardar una voz para llamadas\". Graba o sube al menos 10 segundos de voz y elígela como la voz del personaje."
+            },
+            {
               "question": "¿Cuánto cuesta?",
               "answer": "Las llamadas en vivo cuestan {count} créditos por minuto mientras estás conectado."
+            },
+            {
+              "question": "¿Cuesta más llamar con una voz clonada?",
+              "answer": "No. Las llamadas cuestan {count} créditos por minuto sea cual sea la voz que elijas, y guardar una voz es gratis. La facturación empieza cuando el personaje está listo para hablar, no mientras se conecta."
+            },
+            {
+              "question": "¿Cómo consigo el mejor clon?",
+              "answer": "Graba de 10 a 30 segundos de una sola persona hablando con naturalidad en una habitación silenciosa, sin música ni voces de fondo. Los clips más largos se recortan a 30 segundos. Si había ruido, guarda la voz en la página Clonar y marca \"Limpiar el audio de referencia\". Déjalo desactivado en grabaciones limpias, porque puede empeorar el sonido."
+            },
+            {
+              "question": "¿Puedo clonar la voz de otra persona?",
+              "answer": "Solo con su permiso. Antes de clonar confirmas que tienes los derechos, y nuestros términos prohíben la suplantación y el engaño."
             }
           ]
         },
@@ -268,7 +307,7 @@
           "questions": [
             {
               "question": "¿Están seguros mis datos de voz?",
-              "answer": "Absolutamente. Todas las grabaciones de voz y archivos generados están cifrados y almacenados de forma segura. Cuando clonas una voz, eliminamos la muestra de voz cargada y nadie más puede usarla. Tienes control total sobre los archivos de audio generados y puedes eliminarlos cuando quieras. Nunca compartimos datos de voz sin tu consentimiento."
+              "answer": "Las voces guardadas para llamadas son privadas de tu cuenta. El proveedor de voz conserva la muestra para que puedas reutilizar la voz. Puedes eliminar los archivos de audio generados desde tu panel. Al eliminar tu cuenta también se solicita la eliminación de las voces guardadas y sus muestras de escucha."
             },
             {
               "question": "¿Para qué puedo utilizar las voces generadas?",
@@ -578,15 +617,10 @@
   },
   "call": {
     "title": "Llamadas de voz",
-    "subtitle": "Elige un personaje de IA y habla con él en tiempo real.",
     "notice1": "Explora tus deseos más profundos en total privacidad.",
     "notice2": "Conversaciones cifradas de extremo a extremo, sin juzgar.",
     "notEnoughCredits": "No tienes suficientes créditos. El mínimo requerido es {count}",
     "freeUserCallLimitExceeded": "Los usuarios gratuitos están limitados a 5 minutos de llamadas. Por favor, actualiza tu cuenta para continuar.",
-    "configurationTitle": "Configuración",
-    "memoryLabel": "Memoria",
-    "memoryDescription": "Deja que los personajes te recuerden entre llamadas. No se guarda nada a menos que esté activado.",
-    "memoryUpgradeTooltip": "Actualiza a un plan de pago para que los personajes te recuerden entre llamadas.",
     "languageLabel": "Idioma",
     "languagePlaceholder": "Elige un idioma",
     "sceneLabel": "Escena",
@@ -597,86 +631,219 @@
     "startCall": "Llamar",
     "connecting": "Conectando",
     "connectionFailed": "No se pudo conectar a la llamada. Inténtalo de nuevo.",
-    "reconnected": "Reconectado",
-    "reconnectionFailed": "Falló la reconexión",
-    "configurationUpdated": "Configuración actualizada",
-    "configurationUpdateError": "Error al actualizar la configuración",
     "agentUnavailable": "Agente no disponible",
     "activeCallError": "Ya tienes una llamada activa en curso",
     "instructionsRejected": "Esta llamada no pudo iniciarse porque el personaje o la escena no superaron las comprobaciones de seguridad del proveedor de IA. Edita el personaje o la escena e inténtalo de nuevo.",
     "microphonePermissionDenied": "Acceso al micrófono denegado. Por favor, permite el acceso al micrófono e inténtalo de nuevo.",
     "microphoneUnavailable": "No se pudo acceder al micrófono. Comprueba que esté conectado, cierra otras aplicaciones que lo estén usando e inténtalo de nuevo.",
     "disconnected": "Desconectado",
-    "chooseCharacter": "¿Con quién quieres hablar?",
-    "presetRemoved": "Preset eliminado",
-    "deletePreset": "Eliminar",
-    "deletePresetConfirm": "Esto no se puede deshacer.",
-    "cancel": "Cancelar",
     "availableInputs": "Entradas disponibles",
     "audioSettings": "Configuración de audio",
     "enhancedNoiseFilter": "Filtro de ruido mejorado",
-    "disconnect": "Desconectar",
-    "instructions": "Instrucciones",
-    "instructionsHelp": "Las instrucciones son un mensaje del sistema que se antepone a la conversación cada vez que el modelo responde. Las actualizaciones se reflejarán en el siguiente turno de conversación.",
-    "grokImagineNote": "Nota: Grok Imagine añade instrucciones adicionales para la generación de imágenes.",
-    "grokImagineIncluded": "Instrucciones de Grok Imagine incluidas",
-    "addCustomCharacter": "Agregar personaje personalizado",
-    "addCharacterLabel": "Agregar",
-    "upgradePremiumTooltip": "Upgrade feature",
-    "addDescriptionPlaceholder": "Agregar una descripción...",
-    "clickToAddDescription": "Haz clic para agregar una descripción...",
-    "characterInstructions": "Instrucciones de __NAME__",
-    "characterFallbackName": "Personaje",
-    "instructionsPlaceholder": "Ingresa instrucciones del sistema",
-    "voiceLabel": "Voz",
-    "voicePlaceholder": "Elige una voz",
-    "voiceSelectorLabel": "Voz",
-    "voiceSelectorPlaceholder": "Elige una voz",
-    "deleteCharacterAriaLabel": "Eliminar __NAME__",
-    "savePreset": {
-      "save": "Guardar",
-      "saveAsNew": "Guardar como nuevo",
-      "saveAsNewTitle": "Guardar como nuevo personaje",
-      "saveAsNewDescription": "Esto creará un nuevo personaje personalizado con la configuración actual.",
-      "nameLabel": "Nombre",
-      "descriptionLabel": "Descripción",
-      "characterCreated": "Personaje creado",
-      "characterSaved": "Personaje guardado",
-      "failedToCreate": "Error al crear personaje",
-      "failedToUpdate": "Error al actualizar personaje"
+    "picker": {
+      "subtitle": "Elige con quién hablar o crea tu propio personaje.",
+      "yourCharacters": "Tus personajes",
+      "featured": "Destacados",
+      "createTitle": "Crear un personaje",
+      "createBody": "Describe quién es. Elige una voz o clona la tuya.",
+      "createUpgradePersonality": "Escribe quiénes son y cómo hablan.",
+      "createUpgradeVoice": "Llámalos con una voz que clones: la tuya o una de la que tengas los derechos.",
+      "upgrade": "Mejorar plan",
+      "createLimit": "Puedes guardar hasta {count} personajes. Elimina uno para añadir otro.",
+      "listen": "Escuchar",
+      "stop": "Detener",
+      "call": "Llamar",
+      "listenTo": "Escuchar a {name}",
+      "stopName": "Detener a {name}",
+      "open": "Abrir {name}",
+      "callName": "Llamar a {name}",
+      "moreOptions": "Más opciones para {name}",
+      "edit": "Editar",
+      "duplicate": "Duplicar",
+      "delete": "Eliminar",
+      "deleted": "{name} eliminado",
+      "restored": "{name} ha vuelto",
+      "undo": "Deshacer",
+      "deleteFailed": "No se pudo eliminar {name}. Vuelve a estar en tu lista."
     },
-    "presetSelector": {
-      "characterCreated": "Personaje creado",
-      "characterUpdated": "Personaje actualizado",
-      "characterRemoved": "Personaje eliminado",
-      "voiceUpdated": "Voz actualizada",
-      "failedToCreate": "Error al crear personaje",
-      "failedToUpdate": "Error al actualizar personaje",
-      "failedToDelete": "Error al eliminar personaje",
-      "failedToSaveVoice": "Error al guardar voz"
+    "panel": {
+      "featuredCharacter": "Personaje destacado",
+      "yourCharacter": "Tu personaje",
+      "close": "Cerrar",
+      "voice": "Voz",
+      "clonedVoice": "Tu voz clonada",
+      "microphone": "Micrófono",
+      "micReady": "Listo",
+      "micUnknown": "Tu navegador te lo pedirá",
+      "micBlocked": "Bloqueado por tu navegador",
+      "micBlockedHelp": "{name} todavía no puede oírte. Haz clic en el candado junto a la dirección web, permite el micrófono y vuelve a intentarlo.",
+      "tryAgain": "Reintentar",
+      "makeYourOwn": "Crear tu propia versión",
+      "makeYourOwnUpgrade": "Mejora tu plan para crear tu propia versión con una voz que clones.",
+      "missingPersonality": "Añade una personalidad antes de llamar a {name}.",
+      "noVoice": "Sin voz",
+      "noVoiceHelp": "La voz de {name} se eliminó. Elige una nueva para llamar.",
+      "chooseVoice": "Elegir una voz"
     },
-    "createCharacter": {
-      "dialogTitle": "Crear Nuevo Personaje",
-      "dialogDescription": "Crea un personaje de IA personalizado con tu propia personalidad y voz.",
-      "nameLabel": "Nombre",
-      "nameRequired": "*",
-      "namePlaceholder": "ej., Luna, Marcus, Zara...",
-      "descriptionLabel": "Descripción",
-      "descriptionPlaceholder": "Una breve descripción de tu personaje...",
-      "voiceLabel": "Voz",
-      "voicePlaceholder": "Elige una voz",
-      "instructionsLabel": "Instrucciones",
-      "instructionsPlaceholder": "Describe la personalidad de tu personaje, patrones de habla, historia...",
-      "characterCount": "__COUNT__/5000 caracteres",
-      "cancelButton": "Cancelar",
-      "createButton": "Crear Personaje",
-      "creatingButton": "Creando...",
-      "paidUserOnly": "Upgrade feature",
-      "errorNameRequired": "El nombre es obligatorio",
-      "errorVoiceRequired": "Por favor selecciona una voz",
-      "playVoiceSample": "Reproducir muestra de voz",
-      "stopVoiceSample": "Detener muestra de voz",
-      "previewVoice": "Vista previa de la voz de __VOICE__"
+    "creator": {
+      "back": "Llamadas de voz",
+      "createTitle": "Crear un personaje",
+      "editTitle": "Editar {name}",
+      "whoIsIt": "¿Quién es?",
+      "name": "Nombre",
+      "namePlaceholder": "p. ej., Max",
+      "nameError": "Ponle un nombre a tu personaje.",
+      "description": "Descripción breve",
+      "descriptionPlaceholder": "p. ej., Coach de entrevistas exigente pero justo",
+      "optional": "Opcional",
+      "descriptionHelp": "Se muestra bajo el nombre en tu lista.",
+      "personality": "Personalidad",
+      "personalityHelp": "¿Quién es, cómo habla y de qué quieres hablar?",
+      "startFromExample": "Empieza con un ejemplo",
+      "personalityPlaceholder": "Describe a tu personaje o empieza con uno de los ejemplos de arriba.",
+      "personalityError": "Describe a tu personaje o empieza con un ejemplo.",
+      "characterCount": "{count, number} / {max, number}",
+      "exampleReplaced": "Se reemplazó tu texto por el ejemplo «{label}»",
+      "undo": "Deshacer",
+      "voice": "Voz",
+      "missingVoice": "Elige una voz para guardar.",
+      "clonedVoice": "Tu voz clonada",
+      "preview": "Vista previa",
+      "previewName": "Nombre",
+      "previewDescription": "Descripción breve",
+      "previewVoice": "Voz: {voice}",
+      "previewVoiceWithDescription": "Voz: {voice} · {description}",
+      "hearVoice": "Escuchar esta voz",
+      "stopVoice": "Detener la muestra de voz",
+      "listen": "Escuchar",
+      "stop": "Detener",
+      "call": "Llamar",
+      "ready": "Listo. Podrás llamar a {name} en cuanto lo guardes.",
+      "missingNameAndPersonality": "Añade un nombre y una personalidad para guardar.",
+      "missingName": "Añade un nombre para guardar.",
+      "missingPersonality": "Añade una personalidad para guardar.",
+      "save": "Guardar personaje",
+      "saveChanges": "Guardar cambios",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "saved": "{name} guardado",
+      "updated": "{name} actualizado",
+      "saveFailed": "No se pudo guardar {name}. Inténtalo de nuevo.",
+      "copyName": "Copia de {name}",
+      "remixName": "Mi {name}",
+      "discardNewTitle": "¿Descartar este personaje?",
+      "discardNewBody": "Perderás lo que has escrito hasta ahora.",
+      "discardEditTitle": "¿Descartar los cambios?",
+      "discardEditBody": "Tus cambios no se guardarán.",
+      "keepEditing": "Seguir editando",
+      "discard": "Descartar",
+      "examples": {
+        "tutor": {
+          "label": "Profesor de idiomas",
+          "tagline": "Profesor de italiano paciente",
+          "text": "Eres un profesor de italiano paciente de Bolonia.\nCómo hablas: con calidez y ánimo. Habla en un italiano sencillo y cambia al español solo cuando me atasque.\nQué hacemos: practicar conversaciones cotidianas, como pedir comida, preguntar direcciones o charlar.\nReglas: corrige un error cada vez y responde con frases cortas para que yo hable la mayor parte del tiempo."
+        },
+        "coach": {
+          "label": "Coach de entrevistas",
+          "tagline": "Coach de entrevistas exigente pero justo",
+          "text": "Eres un coach de entrevistas de trabajo agudo pero justo.\nCómo hablas: profesional, directo y algo exigente.\nQué hacemos: una entrevista realista para el puesto que te diga. Haz una pregunta cada vez y profundiza cuando mi respuesta sea vaga.\nReglas: después de cada respuesta, dame un consejo concreto. Al final, puntúame del 1 al 10."
+        },
+        "friend": {
+          "label": "Amigo que apoya",
+          "tagline": "Amigo tranquilo que escucha",
+          "text": "Eres un amigo cálido y tranquilo que siempre se alegra de saber de mí.\nCómo hablas: de forma informal y amable, con un humor suave.\nQué hacemos: ponernos al día. Pregúntame por mi día y recuerda lo que te cuente durante la llamada.\nReglas: escucha más de lo que hablas y no des consejos a menos que te los pida."
+        },
+        "debate": {
+          "label": "Rival de debate",
+          "tagline": "Defiende la postura contraria",
+          "text": "Eres un rival de debate ingenioso.\nCómo hablas: con seguridad y picardía, nunca con mala educación.\nQué hacemos: yo elijo un tema y una postura, y tú defiendes la contraria con tus mejores argumentos.\nReglas: que cada turno dure menos de 30 segundos y señala el punto más débil de mi argumento."
+        },
+        "story": {
+          "label": "Cuentacuentos",
+          "tagline": "Inventa historias contigo",
+          "text": "Eres un cuentacuentos acogedor con talento para el suspense.\nCómo hablas: despacio y con imágenes vivas, como junto a una hoguera.\nQué hacemos: inventar una historia juntos. Haz una pausa en los momentos emocionantes y pregúntame qué pasa después.\nReglas: que sea ligera y sorprendente."
+        }
+      }
+    },
+    "voices": {
+      "yourVoices": "Tus voces",
+      "builtIn": "Integradas",
+      "new": "Nueva",
+      "clonedVoice": "Voz clonada",
+      "cloneTitle": "Clonar una voz",
+      "cloneBody": "Graba 30 segundos o sube un audio",
+      "play": "Reproducir muestra de {name}",
+      "stop": "Detener muestra de {name}",
+      "showAll": "Ver todas ({count})",
+      "showFewer": "Ver menos",
+      "cloneLimit": "Tienes {max} voces. Elimina una en la página Clonar para guardar otra."
+    },
+    "inCall": {
+      "connecting": "Conectando…",
+      "listening": "Escuchando",
+      "thinking": "Pensando…",
+      "speaking": "Hablando",
+      "muted": "Tu micrófono está silenciado",
+      "mute": "Silenciar",
+      "unmute": "Activar micrófono",
+      "end": "Colgar",
+      "audioSettings": "Ajustes de audio"
+    },
+    "ended": {
+      "title": "Llamada con {name} finalizada · {duration}",
+      "editHint": "¿No es lo que esperabas? Cambia la personalidad o la voz y vuelve a llamar.",
+      "callAgain": "Volver a llamar",
+      "edit": "Editar {name}",
+      "makeYourOwn": "Crear tu propia versión",
+      "back": "Volver a los personajes"
+    },
+    "clone": {
+      "title": "Clonar una voz",
+      "close": "Cerrar",
+      "description": "Graba o sube una muestra de voz, ponle nombre y guárdala para tus personajes.",
+      "steps": "Pasos",
+      "stepRecord": "Grabar",
+      "stepConfirm": "Nombre y confirmación",
+      "stepReady": "Lista",
+      "recordNow": "Grabar ahora",
+      "uploadFile": "Subir un archivo",
+      "readAloud": "Lee esto en voz alta en un lugar tranquilo (unos 30 segundos):",
+      "script": "El ferry de la mañana sale a las siete, así que suelo tomarme un café mientras el puerto se despierta. Los pescadores se gritan de barco a barco, las gaviotas discuten por el desayuno y todo el pueblo huele a sal y a pan recién hecho. Los fines de semana vuelvo a casa por el camino largo, pasando por el viejo faro y el mercado, donde todo el mundo parece saber mi nombre.",
+      "startRecording": "Empezar a grabar",
+      "stopRecording": "Detener la grabación",
+      "playRecording": "Escuchar tu grabación",
+      "stopPlayback": "Detener la reproducción",
+      "recordIdle": "Pulsa grabar y lee el texto de arriba",
+      "recording": "Grabando…",
+      "recorded": "Grabado",
+      "recordAgain": "Volver a grabar",
+      "dropFile": "Arrastra un archivo de audio aquí o <browse>búscalo</browse>",
+      "fileHint": "MP3, WAV o M4A · hasta {size} · una sola persona hablando, sin música",
+      "removeFile": "Quitar archivo",
+      "fileTooLarge": "Este archivo supera los {size}.",
+      "needRecording": "Graba al menos {seconds} segundos primero.",
+      "stopFirst": "Detén la grabación primero.",
+      "tooShort": "Ha sido un poco corto. Graba al menos {seconds} segundos.",
+      "needFile": "Elige primero un archivo de audio.",
+      "micError": "No hemos podido usar tu micrófono. Permítelo en tu navegador y vuelve a intentarlo.",
+      "cancel": "Cancelar",
+      "next": "Siguiente",
+      "back": "Atrás",
+      "createVoice": "Crear voz",
+      "nameLabel": "Nombre de esta voz",
+      "nameHelp": "Solo tú puedes ver tus voces clonadas. El proveedor de voz conserva la muestra.",
+      "nameError": "Ponle un nombre a esta voz.",
+      "defaultName": "Mi voz",
+      "defaultNameNumbered": "Mi voz {count}",
+      "consentError": "Confirma que tienes permiso para clonar esta voz.",
+      "creating": "Creando «{name}»…",
+      "creatingHelp": "Suele tardar menos de un minuto.",
+      "creatingClose": "Puedes cerrar esta ventana. La voz se guardará igualmente en Tus voces.",
+      "ready": "«{name}» está lista",
+      "readyHelp": "Escúchala para comprobar que suena bien.",
+      "hearIt": "Escuchar",
+      "stop": "Detener",
+      "useVoice": "Usar esta voz"
     }
   },
   "clone": {
@@ -706,6 +873,8 @@
     "tryDemo": "O prueba con una demostración:",
     "uploadAudioFile": "Subir archivo de audio",
     "orUseMicrophone": "o usa tu micrófono",
+    "micRecord": "Grabar",
+    "micStop": "Detener",
     "errors": {
       "noAudioFile": "Por favor selecciona un archivo de audio.",
       "noText": "Por favor ingresa algún texto para convertir en voz.",
@@ -728,7 +897,12 @@
       "textTooLong": "El texto supera la longitud máxima de __MAX__ caracteres.",
       "unsupportedAudioFormat": "Formato de audio no compatible para la clonación de voz. Usa MP3, OGG/Opus, WebM o WAV.",
       "unsupportedLocale": "Este idioma no es compatible con la clonación de voz.",
-      "userNotFound": "Inicia sesión para clonar una voz."
+      "userNotFound": "Inicia sesión para clonar una voz.",
+      "voiceNameAndConsentRequired": "Introduce un nombre de voz (hasta 50 caracteres) y confirma que tienes permiso para guardarla.",
+      "savedVoiceRequiresPaid": "Guardar voces requiere una cuenta de pago.",
+      "savedVoiceLocaleUnsupported": "Esta opción de idioma no permite guardar voces para llamadas. Elige otro idioma.",
+      "savedVoiceNotFound": "Esta voz guardada ya no existe.",
+      "savedVoiceLimitReached": "Puedes guardar hasta __MAX__ voces. Elimina una para guardar otra."
     },
     "sampleCard": {
       "sourceAudio": "Fuente audio",
@@ -737,7 +911,7 @@
     },
     "crossLanguageInfo": {
       "title": "Transferencia de Voz Entre Idiomas",
-      "description": "Clona una voz en un idioma y hazla hablar con fluidez en cualquiera de los otros 23 idiomas soportados mientras se preservan las características únicas del hablante.",
+      "description": "Clona una voz en un idioma y hazla hablar en cualquiera de los 28 idiomas compatibles conservando las características únicas del hablante.",
       "example": "Ejemplo: Sube una muestra de voz de un hablante en inglés → Genera un discurso en francés con su voz"
     },
     "legalConsentCheckbox": "Al usar la clonación de voz, certificas que tienes todos los consentimientos/derechos legales para clonar estas muestras de voz y que no usarás nada de lo generado para fines ilegales o dañinos.",
@@ -761,7 +935,28 @@
     "audioProcessorError": "Error del procesador de audio",
     "preparingAudioProcessor": "Preparando procesador de audio para __LANGUAGE__...",
     "removeFile": "Eliminar archivo",
-    "convertingAudio": "Convirtiendo audio"
+    "convertingAudio": "Convirtiendo audio",
+    "savedVoice": {
+      "modeLabel": "Guardar una voz para llamadas",
+      "upgradeTooltip": "Actualiza a un plan de pago para guardar voces para llamadas.",
+      "name": "Nombre de la voz",
+      "help": "Guarda esta voz para usarla al crear un personaje. El proveedor conserva la muestra de referencia.",
+      "noiseRemovalHelp": "Elimina el ruido de fondo. Úsalo solo con grabaciones ruidosas: puede empeorar el sonido de un audio limpio. Gratis.",
+      "save": "Guardar voz",
+      "saving": "Guardando voz",
+      "success": "Voz guardada",
+      "useInCall": "Usar voz en una llamada →",
+      "backToCall": "Volver a la llamada",
+      "using": "Generando con tu voz guardada {name}. Haz clic de nuevo en ella para usar una grabación.",
+      "deleteTitle": "¿Eliminar {name}?",
+      "deleteBody": "La voz se eliminará para siempre. El audio que ya generaste se queda en el Historial.",
+      "deleteUsedBy": "La usan {names}. Necesitarán una voz nueva antes de su próxima llamada. El audio que ya generaste se queda en el Historial.",
+      "deleteConfirm": "Eliminar voz",
+      "cancel": "Cancelar",
+      "deleted": "{name} eliminada",
+      "deleteFailed": "No se pudo eliminar la voz. Inténtalo de nuevo.",
+      "limitReached": "Tienes {max} voces guardadas, el máximo. Elimina una arriba para guardar otra."
+    }
   },
   "profile": {
     "title": "Configuración del Perfil",
@@ -882,7 +1077,7 @@
     "titleVoiceCall": "Llamadas de Voz con IA – Habla con Personajes IA en Vivo",
     "descriptionVoiceCall": "Haz llamadas telefónicas en vivo con IA y tus voces favoritas. Habla en tiempo real con personajes de IA – conversaciones naturales gracias a la tecnología de voz de SexyVoice.ai.",
     "titleVoiceCloning": "Clonación de voz con IA",
-    "descriptionVoiceCloning": "Clona una voz con unos segundos de audio y escúchala hablar con naturalidad en 23 idiomas.",
+    "descriptionVoiceCloning": "Clona una voz con 10 segundos de audio y escúchala hablar con naturalidad en 28 idiomas.",
     "/": "",
     "/voice-call": "Llamada de Voz",
     "/login": "Iniciar sesión",
@@ -1047,6 +1242,12 @@
     }
   },
   "announcements": {
+    "clonedVoiceCallsLaunch": {
+      "text": "Clona tu voz con una grabación de 10 segundos y llama a un personaje que hable con ella.",
+      "ctaLoggedIn": "Clonar una voz",
+      "ctaLoggedOut": "Iniciar sesion",
+      "ariaLabelDismiss": "Cerrar anuncio de llamadas con voz clonada"
+    },
     "expressiveVoicesLaunch": {
       "text": "Llegan nuevas voces más expresivas, impulsadas por Gemini 3.1, con un control más preciso sobre el ritmo, las respiraciones, el tono, la velocidad y la intensidad.",
       "ctaLoggedIn": "Probar voces",
@@ -1219,5 +1420,12 @@
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Las direcciones de correo desechables no están permitidas",
     "AUTH_PROVIDER_RATELIMIT": "Por razones de seguridad, solo puedes solicitar esto después de {time} segundos.",
     "PROVIDER_UNAVAILABLE": "{provider} no está disponible temporalmente. Inténtalo de nuevo."
+  },
+  "ttsEditor": {
+    "label": "Texto de voz",
+    "effects": "Efectos de voz",
+    "emotions": "Emociones",
+    "pace": "Ritmo",
+    "vocalSounds": "Sonidos vocales"
   }
 }

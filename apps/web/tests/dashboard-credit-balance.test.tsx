@@ -20,6 +20,7 @@ vi.mock('next-intl/server', () => ({
 vi.mock('@/components/credits-section', () => ({ default: () => null }));
 vi.mock('@/lib/supabase/queries', () => ({
   getCreditTransactionAmounts: vi.fn().mockResolvedValue([]),
+  getUserCallCharacters: vi.fn().mockResolvedValue([]),
   hasUserPaid: vi.fn().mockResolvedValue(false),
 }));
 vi.mock(
@@ -61,6 +62,7 @@ async function renderPage(
         : {
             data: [],
             eq: vi.fn().mockReturnThis(),
+            in: vi.fn().mockReturnThis(),
             order: vi.fn().mockReturnThis(),
             select: vi.fn().mockReturnThis(),
           },

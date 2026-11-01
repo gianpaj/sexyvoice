@@ -66,8 +66,9 @@ export const useMultibandTrackVolume = (
     return () => {
       source.disconnect();
       clearInterval(interval);
+      ctx.close();
     };
   }, [mediaStream, loPass, hiPass, bands]);
 
-  return frequencyBands;
+  return mediaStream ? frequencyBands : [];
 };

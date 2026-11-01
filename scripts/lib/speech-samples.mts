@@ -1,9 +1,11 @@
-import { createHash } from 'node:crypto';
 import { lstat, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { GenerateContentResponseUsageMetadata } from '@google/genai';
 
 import voiceNames from '../../apps/web/lib/voice-names.ts';
+import { sha256 } from './r2-file-upload.mts';
+
+export { sha256 } from './r2-file-upload.mts';
 
 export interface SampleVoice {
   filename: string;
@@ -90,15 +92,12 @@ export async function readSampleCatalog(
   return catalog;
 }
 
-export function sha256(bytes: Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
-}
-
 export async function readVerifiedSample(
   directory: string,
   sample: GeneratedSample,
 ): Promise<Buffer> {
   assertSampleVoice(sample);
+
   const filename = path.join(directory, sample.filename);
   const stat = await lstat(filename);
   if (!stat.isFile() || stat.isSymbolicLink())

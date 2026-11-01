@@ -1,6 +1,6 @@
-import { Sparkles } from 'lucide-react';
+import { PhoneCall, Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import {
   getMessages,
   getTranslations,
@@ -17,7 +17,6 @@ import HeroWaveform from '@/components/hero-waveform';
 import { JsonLd } from '@/components/json-ld';
 import { Button } from '@/components/ui/button';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
-import { VOICE_CLONING_PAGE_ENABLED } from '@/lib/features';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { routing } from '@/src/i18n/routing';
@@ -70,10 +69,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function VoiceCloningPage(props: Props) {
-  if (!VOICE_CLONING_PAGE_ENABLED) {
-    notFound();
-  }
-
   const { lang } = await props.params;
 
   // Validate that the language is a supported locale
@@ -164,9 +159,11 @@ export default async function VoiceCloningPage(props: Props) {
         <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
-              <HeroWaveform />
-              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+            <div className="z-10 space-y-6 pt-10 pb-16 text-center md:pt-16 md:pb-24">
+              <div className="hidden md:block">
+                <HeroWaveform />
+              </div>
+              <h1 className="text-balance font-bold text-4xl leading-tight sm:text-5xl md:text-6xl">
                 <span className="text-white/90">{firstPart}</span>
                 {titleRestParts && (
                   <>
@@ -183,12 +180,42 @@ export default async function VoiceCloningPage(props: Props) {
                   </>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
+              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty text-base text-gray-300 leading-7 sm:text-xl sm:leading-8">
                 {dictLanding.voiceCloning.hero.subtitle}
               </p>
 
               <DemoCloneSection lang={lang} />
             </div>
+
+            {/* Calling Section */}
+            <section className="mx-auto max-w-3xl py-16">
+              <div className="space-y-6 rounded-2xl border border-fuchsia-800/60 bg-white/5 p-8 text-center md:p-12">
+                <div className="inline-flex items-center rounded-full bg-fuchsia-600/20 p-3 text-fuchsia-300">
+                  <PhoneCall aria-hidden className="size-6" />
+                </div>
+                <h2 className="text-balance font-bold text-3xl text-white md:text-4xl">
+                  {dictLanding.voiceCloning.callSection.title}
+                </h2>
+                <p className="mx-auto max-w-2xl text-pretty text-gray-300 text-lg leading-8">
+                  {dictLanding.voiceCloning.callSection.subtitle}
+                </p>
+                <div className="flex flex-col items-center gap-2">
+                  <Button
+                    asChild
+                    className="hit-area-4 bg-fuchsia-600 hover:bg-fuchsia-700"
+                    effect="ringHover"
+                    size="lg"
+                  >
+                    <Link href="/voice-call">
+                      {dictLanding.voiceCloning.callSection.action}
+                    </Link>
+                  </Button>
+                  <p className="text-pretty text-gray-400 text-xs">
+                    {dictLanding.voiceCloning.callSection.note}
+                  </p>
+                </div>
+              </div>
+            </section>
 
             {/* FAQ Section */}
             <div className="mx-auto max-w-3xl py-16">

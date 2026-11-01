@@ -15,8 +15,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { faqAnswerText } from '@/lib/faq';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import {
   Accordion,
   AccordionContent,
@@ -56,7 +56,7 @@ interface FaqLink {
 }
 
 function renderAnswer(answer: string, link?: FaqLink) {
-  const processed = answer.replace('{count}', String(CREDITS_PER_MINUTE));
+  const processed = faqAnswerText(answer);
   if (!link) return processed;
   const parts = processed.split('{link}');
   if (parts.length !== 2) return processed;

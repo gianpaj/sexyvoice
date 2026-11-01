@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Response } from '@playwright/test';
 
 import type { ApiCharacterResponse } from '@/lib/characters';
 import { E2E_CALL_USER_COOKIE } from '@/lib/e2e-mocks-shared';
@@ -11,10 +11,10 @@ import { CallPage } from './pages/call.page';
 /**
  * Call Dashboard E2E Tests
  *
- * These tests verify the real-time AI voice call page functionality:
- * 1. Configuration form display (language selector, character presets)
- * 2. Connect button presence
- * 3. Notice text at the bottom of the page
+ * These tests cover the character picker, the call panel and the creator:
+ * 1. Fixture characters, credits, notices and FAQ on the picker
+ * 2. Panel settings (language, scene gating) and Start call
+ * 3. Creating, duplicating, editing and deleting characters
  * 4. Auth redirect for unauthenticated users
  *
  * All tests use the authenticated state from auth.setup.ts.
@@ -39,7 +39,6 @@ async function setupCallPage(
   ]);
   // Mock the call-token endpoint to prevent real LiveKit connections
   await page.route('**/api/call-token', async (route) => {
-    console.log('[MOCK] call-token intercepted — not connecting to LiveKit');
     await route.fulfill({
       body: JSON.stringify({
         accessToken: 'mock-token-for-e2e',
@@ -87,6 +86,54 @@ async function setupCallPage(
   return callPage;
 }
 
+/**
+ * Keeps character writes in the browser test. An ID denotes an update, so
+ * the mock must not treat an empty or unknown ID as a successful creation.
+ */
+async function mockCharacterWrites(page: Page) {
+  const characters = new Map<string, ApiCharacterResponse>();
+  const deletes: string[] = [];
+  await page.route('**/api/characters', async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON();
+    if (request.method() === 'DELETE') {
+      deletes.push(body.id);
+      characters.delete(body.id);
+      await route.fulfill({ json: { success: true }, status: 200 });
+      return;
+    }
+    if (body.id !== undefined && !characters.has(body.id)) {
+      await route.fulfill({
+        json: { error: 'Invalid character ID' },
+        status: 400,
+      });
+      return;
+    }
+    const character: ApiCharacterResponse = {
+      id: body.id ?? crypto.randomUUID(),
+      is_public: false,
+      localized_descriptions: body.localizedDescriptions,
+      name: body.name,
+      prompts: {
+        localized_prompts: body.localizedPrompts,
+        prompt: body.prompt,
+      },
+      session_config: body.sessionConfig,
+      voices: { name: body.voiceName },
+    };
+    characters.set(character.id, character);
+    await route.fulfill({
+      json: character,
+      status: body.id === undefined ? 201 : 200,
+    });
+  });
+  return { characters, deletes };
+}
+
+const isCharacterPost = (response: Response) =>
+  response.url().endsWith('/api/characters') &&
+  response.request().method() === 'POST';
+
 test.describe('Call Dashboard - Authenticated User', () => {
   let callPage: CallPage;
 
@@ -98,74 +145,66 @@ test.describe('Call Dashboard - Authenticated User', () => {
     await page.unroute('**/*');
   });
 
-  test('should display the call page correctly', async ({ page }, testInfo) => {
-    // Verify configuration form is visible
-    await callPage.expectPageVisible();
-    await callPage.expectConfigurationFormVisible();
+  test('should display the character picker', async ({ page }, testInfo) => {
     await callPage.expectFixtureCharacters();
+    await expect(
+      callPage.ownCharacters.getByRole('link', {
+        name: en.call.picker.upgrade,
+      }),
+    ).toHaveAttribute('href', '/en/dashboard/credits');
     await argosScreenshot(
       page,
       `call-dashboard-desktop-${testInfo.project.name}`,
     );
+  });
+
+  test('should open the call panel with settings for free users', async ({
+    page,
+  }, testInfo) => {
+    await callPage.openCharacter('Lily');
+    await expect(
+      callPage.panel.getByRole('button', { name: en.call.startCall }),
+    ).toBeEnabled();
+    await expect(
+      callPage.panel.getByRole('button', { name: en.call.panel.makeYourOwn }),
+    ).toBeDisabled();
+    await expect(
+      callPage.panel.getByRole('link', {
+        name: en.call.panel.makeYourOwnUpgrade,
+      }),
+    ).toHaveAttribute('href', '/en/dashboard/credits');
+    await argosScreenshot(page, `call-panel-desktop-${testInfo.project.name}`);
+    await callPage.expectLanguageOptions();
     await callPage.expectSceneOptionsEnabled(false);
   });
 
-  test('should display language selector', async () => {
-    await callPage.expectLanguageSelectorVisible();
-  });
-
-  test('should display language selector with multiple options', async () => {
-    await callPage.expectLanguageSelectorHasOptions();
-  });
-
-  test('should display connect/call button', async () => {
-    await callPage.expectConnectButtonVisible();
-  });
-
-  test('should display notice text', async () => {
+  test('should display notice text and FAQ', async () => {
     await callPage.expectNoticeTextVisible();
-  });
-
-  test('should display the FAQ section when disconnected', async () => {
     await callPage.expectCallFaqVisible();
-  });
-
-  test('should display configuration form with form element', async () => {
-    await callPage.expectFormPresent();
-  });
-
-  test('should display character/preset content area', async () => {
-    await callPage.expectCharacterContentPresent();
-  });
-
-  test('should have connect button enabled', async () => {
-    await callPage.expectConnectButtonEnabled();
   });
 });
 
 test.describe('Call Dashboard - Mobile Viewport', () => {
   test.use({ viewport: { height: 812, width: 375 } });
 
-  let callPage: CallPage;
-
-  test.beforeEach(async ({ page, baseURL }) => {
-    callPage = await setupCallPage(page, baseURL);
-  });
-
   test.afterEach(async ({ page }) => {
     await page.unroute('**/*');
   });
 
-  test('should display credits section on mobile', async ({
+  test('should display credits, characters and a bottom-sheet panel', async ({
     page,
+    baseURL,
   }, testInfo) => {
+    const callPage = await setupCallPage(page, baseURL);
     await callPage.expectCreditsSectionVisible();
     await callPage.expectFixtureCharacters();
+    await callPage.expectNoHorizontalScroll();
     await argosScreenshot(
       page,
       `call-dashboard-mobile-${testInfo.project.name}`,
     );
-    await callPage.expectSceneOptionsEnabled(false);
+    await callPage.openCharacter('Ramona');
+    await argosScreenshot(page, `call-panel-mobile-${testInfo.project.name}`);
   });
 });
 
@@ -184,148 +223,210 @@ for (const viewport of ['desktop', 'mobile'] as const) {
       baseURL,
     }, testInfo) => {
       const callPage = await setupCallPage(page, baseURL, 'paid');
-      await callPage.expectPageVisible();
-      await callPage.expectConfigurationFormVisible();
       if (viewport === 'mobile') {
         await callPage.expectCreditsSectionVisible();
       }
       await callPage.expectFixtureCharacters();
+      await expect(
+        callPage.ownCharacters.getByRole('button', {
+          name: new RegExp(en.call.picker.createTitle),
+        }),
+      ).toBeVisible();
       await argosScreenshot(
         page,
         `call-dashboard-paid-${viewport}-${testInfo.project.name}`,
       );
+      await callPage.openCharacter('Lily');
       await callPage.expectSceneOptionsEnabled(true);
+    });
+
+    test('creator with a saved voice and an example', async ({
+      page,
+      baseURL,
+    }, testInfo) => {
+      const callPage = await setupCallPage(page, baseURL, 'paid');
+      await callPage.ownCharacters
+        .getByRole('button', { name: new RegExp(en.call.picker.createTitle) })
+        .click();
+      const { creator } = callPage;
+      await expect(creator).toBeVisible();
+      await creator
+        .getByRole('button', { exact: true, name: en.call.creator.save })
+        .click();
+      await expect(
+        creator.getByText(en.call.creator.nameError, { exact: true }),
+      ).toBeVisible();
+      await creator
+        .getByLabel(en.call.creator.name, { exact: true })
+        .fill('Max');
+      await creator
+        .getByRole('button', {
+          exact: true,
+          name: en.call.creator.examples.coach.label,
+        })
+        .click();
+      await creator.getByRole('radio', { name: /My saved voice/ }).check();
+      await expect(
+        page.getByText(en.call.creator.ready.replace('{name}', 'Max')),
+      ).toBeVisible();
+      await callPage.expectNoHorizontalScroll();
+      await argosScreenshot(
+        page,
+        `call-creator-${viewport}-${testInfo.project.name}`,
+      );
+
+      await creator
+        .getByRole('button', { name: new RegExp(en.call.voices.cloneTitle) })
+        .click();
+      const cloneDialog = page.getByTestId('clone-voice-dialog');
+      await expect(
+        cloneDialog.getByRole('button', { name: en.call.clone.recordNow }),
+      ).toBeVisible();
+      await cloneDialog
+        .getByRole('button', { exact: true, name: en.call.clone.next })
+        .click();
+      await expect(
+        cloneDialog.getByText(
+          en.call.clone.needRecording.replace('{seconds}', '10'),
+        ),
+      ).toBeVisible();
+      await argosScreenshot(
+        page,
+        `call-clone-${viewport}-${testInfo.project.name}`,
+      );
     });
   });
 }
 
 for (const locale of ['en', 'de'] as const) {
-  test(`should save a new character copy and update it in ${locale}`, async ({
+  test(`creates, duplicates and edits characters in ${locale}`, async ({
     page,
     baseURL,
   }) => {
     const labels = (locale === 'de' ? de : en).call;
-    const characters = new Map<string, ApiCharacterResponse>();
-
-    // Keep writes in this browser test. An ID denotes an update, so the mock
-    // must not treat an empty or unknown ID as a successful creation.
-    await page.route('**/api/characters', async (route) => {
-      const body = route.request().postDataJSON();
-      if (body.id !== undefined && !characters.has(body.id)) {
-        await route.fulfill({
-          json: { error: 'Invalid character ID' },
-          status: 400,
-        });
-        return;
-      }
-      const character: ApiCharacterResponse = {
-        id: body.id ?? crypto.randomUUID(),
-        is_public: false,
-        localized_descriptions: body.localizedDescriptions,
-        name: body.name,
-        prompts: {
-          localized_prompts: body.localizedPrompts,
-          prompt: body.prompt,
-        },
-        session_config: body.sessionConfig,
-        voices: { name: body.voiceName },
-      };
-      characters.set(character.id, character);
-      await route.fulfill({
-        json: character,
-        status: body.id === undefined ? 201 : 200,
-      });
-    });
-
+    const { characters } = await mockCharacterWrites(page);
     const callPage = await setupCallPage(page, baseURL, 'paid', locale);
-    const originalName = 'Original story';
-    const copyName = 'Copied story';
+    const { creator } = callPage;
     const originalPrompt = 'You are a friendly guide to the night sky.';
-    const copiedPrompt = 'You are a friendly guide to the ocean.';
     const updatedPrompt = 'You are a friendly guide to the mountains.';
+    const copyName = labels.creator.copyName.replace('{name}', 'Stargazer');
 
-    await page.getByRole('button', { name: labels.addCustomCharacter }).click();
-    const createDialog = page.getByRole('dialog', {
-      name: labels.createCharacter.dialogTitle,
-    });
-    await createDialog
-      .getByLabel(labels.createCharacter.nameLabel)
-      .fill(originalName);
-    await createDialog
-      .getByLabel(labels.createCharacter.instructionsLabel)
+    // Create
+    await callPage.ownCharacters
+      .getByRole('button', { name: new RegExp(labels.picker.createTitle) })
+      .click();
+    await creator
+      .getByLabel(labels.creator.name, { exact: true })
+      .fill('Stargazer');
+    await creator
+      .getByRole('textbox', { name: labels.creator.personality })
       .fill(originalPrompt);
-    await createDialog
-      .getByRole('button', {
-        exact: true,
-        name: labels.createCharacter.createButton,
-      })
+    const createResponse = page.waitForResponse(isCharacterPost);
+    await creator
+      .getByRole('button', { exact: true, name: labels.creator.save })
       .click();
-    await expect(createDialog).toBeHidden();
-
-    const editor = callPage.configurationForm.getByRole('textbox');
-    await expect(editor).toHaveValue(originalPrompt);
-    await editor.fill(copiedPrompt);
-    await page
-      .getByRole('button', {
-        exact: true,
-        name: labels.savePreset.saveAsNew,
-      })
-      .click();
-    const copyDialog = page.getByRole('dialog', {
-      name: labels.savePreset.saveAsNewTitle,
-    });
-    await copyDialog.getByLabel(labels.savePreset.nameLabel).fill(copyName);
-    const copyResponsePromise = page.waitForResponse('**/api/characters');
-    await copyDialog
-      .getByRole('button', {
-        exact: true,
-        name: labels.savePreset.save,
-      })
-      .click();
-    const copyResponse = await copyResponsePromise;
-    expect(copyResponse.request().postDataJSON()).not.toHaveProperty('id');
-    expect(copyResponse.status()).toBe(201);
-    const copy = (await copyResponse.json()) as ApiCharacterResponse;
-    expect(copy.prompts?.localized_prompts?.[locale]).toBe(copiedPrompt);
-    await expect(copyDialog).toBeHidden();
-    const selectedCharacter = callPage.configurationForm.locator(
-      'button[data-selected="true"]',
-    );
-    await expect(selectedCharacter).toContainText(copyName);
-    await expect(editor).toHaveValue(copiedPrompt);
+    const created = await createResponse;
+    expect(created.request().postDataJSON()).not.toHaveProperty('id');
+    expect(created.status()).toBe(201);
     await expect(
-      page.getByRole('button', { exact: true, name: labels.startCall }),
-    ).toBeEnabled();
-
-    const characterCards = callPage.configurationForm.locator(
-      'button[data-selected]',
-    );
-    const originalCard = characterCards.filter({ hasText: originalName });
-    const copyCard = characterCards.filter({ hasText: copyName });
-
-    // Selecting the original must restore its saved story, not the copy's text.
-    await originalCard.click();
-    await expect(editor).toHaveValue(originalPrompt);
-    await copyCard.click();
-    await expect(editor).toHaveValue(copiedPrompt);
-    await editor.fill(updatedPrompt);
-    const updateResponsePromise = page.waitForResponse('**/api/characters');
-    await page
-      .getByRole('button', { exact: true, name: labels.savePreset.save })
-      .click();
-    const updateResponse = await updateResponsePromise;
-    expect(updateResponse.request().postDataJSON().id).toBe(copy.id);
-    expect(updateResponse.status()).toBe(200);
-    await expect(
-      page.getByText(labels.savePreset.characterSaved, { exact: true }),
+      callPage.panel.getByRole('heading', { exact: true, name: 'Stargazer' }),
     ).toBeVisible();
-    await originalCard.click();
-    await expect(editor).toHaveValue(originalPrompt);
-    await copyCard.click();
-    await expect(editor).toHaveValue(updatedPrompt);
+    await expect(
+      callPage.panel.getByRole('button', { name: labels.startCall }),
+    ).toBeEnabled();
+    await callPage.panel
+      .getByRole('button', { exact: true, name: labels.panel.close })
+      .click();
+
+    // Duplicate keeps the prompt and saves a new character
+    await page
+      .getByRole('button', {
+        exact: true,
+        name: labels.picker.moreOptions.replace('{name}', 'Stargazer'),
+      })
+      .click();
+    await page
+      .getByRole('menuitem', { exact: true, name: labels.picker.duplicate })
+      .click();
+    await expect(
+      creator.getByLabel(labels.creator.name, { exact: true }),
+    ).toHaveValue(copyName);
+    const copyResponse = page.waitForResponse(isCharacterPost);
+    await creator
+      .getByRole('button', { exact: true, name: labels.creator.save })
+      .click();
+    const copy = (await (await copyResponse).json()) as ApiCharacterResponse;
+    expect(copy.prompts?.localized_prompts?.[locale]).toBe(originalPrompt);
+    await callPage.panel
+      .getByRole('button', { exact: true, name: labels.panel.close })
+      .click();
+
+    // Edit the copy; the original keeps its prompt
+    await page
+      .getByRole('button', {
+        exact: true,
+        name: labels.picker.moreOptions.replace('{name}', copyName),
+      })
+      .click();
+    await page
+      .getByRole('menuitem', { exact: true, name: labels.picker.edit })
+      .click();
+    const personality = creator.getByRole('textbox', {
+      name: labels.creator.personality,
+    });
+    await expect(personality).toHaveValue(originalPrompt);
+    await personality.fill(updatedPrompt);
+    const updateResponse = page.waitForResponse(isCharacterPost);
+    await creator
+      .getByRole('button', { exact: true, name: labels.creator.saveChanges })
+      .click();
+    const updated = await updateResponse;
+    expect(updated.request().postDataJSON().id).toBe(copy.id);
+    expect(updated.status()).toBe(200);
     expect(characters.size).toBe(2);
+    const stored = [...characters.values()].map(
+      (c) => c.prompts?.localized_prompts?.[locale],
+    );
+    expect(stored).toHaveLength(2);
+    expect(stored).toEqual(
+      expect.arrayContaining([originalPrompt, updatedPrompt]),
+    );
   });
 }
+
+test('delete waits for the Undo toast and Undo keeps the character', async ({
+  page,
+  baseURL,
+}) => {
+  const { deletes } = await mockCharacterWrites(page);
+  const callPage = await setupCallPage(page, baseURL, 'paid');
+  await callPage.ownCharacters
+    .getByRole('button', { name: new RegExp(en.call.picker.createTitle) })
+    .click();
+  await callPage.creator
+    .getByLabel(en.call.creator.name, { exact: true })
+    .fill('Temp');
+  await callPage.creator
+    .getByRole('button', {
+      exact: true,
+      name: en.call.creator.examples.friend.label,
+    })
+    .click();
+  await callPage.creator
+    .getByRole('button', { exact: true, name: en.call.creator.save })
+    .click();
+  await callPage.closePanel();
+
+  await callPage.openCharacterMenu('Temp', 'Delete');
+  await expect(
+    callPage.ownCharacters.getByRole('button', { name: 'Open Temp' }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { exact: true, name: 'Undo' }).click();
+  await expect(
+    callPage.ownCharacters.getByRole('button', { name: 'Open Temp' }),
+  ).toBeVisible();
+  expect(deletes).toEqual([]);
+});
 
 test.describe('Call Dashboard - Unauthenticated', () => {
   test.use({ storageState: { cookies: [], origins: [] } });

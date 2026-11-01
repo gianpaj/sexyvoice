@@ -1,4 +1,6 @@
 export const ModelId = {
+  MISTRAL_TTS: 'mistral-tts',
+  INWORLD_TTS: 'inworld-tts',
   // Grok Voice Agent model
   GROK_VOICE_THINK_FAST_1_0: 'grok-voice-think-fast-1.0',
   GROK_VOICE_THINK_FAST_2_0: 'grok-voice-think-fast-2.0',

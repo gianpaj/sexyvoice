@@ -2,20 +2,15 @@
 
 import { AlertCircle, PaperclipIcon, UploadIcon, XIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
 import PulsatingDots from '@/components/pulsating-dots';
-import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { formatBytes, type useFileUpload } from '@/hooks/use-file-upload';
+import { formatCloneMessage } from '@/lib/clone/error-message';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
-import type { SampleAudio } from './clone-sample-card';
-import CloneSampleCard from './clone-sample-card';
-import type { Status } from './clone-state';
-import { type CloneStateAction, formatCloneMessage } from './clone-state';
 
 type FileUploadResult = ReturnType<typeof useFileUpload>;
 
@@ -34,64 +29,36 @@ interface CloneMic {
   mediaBlob: Blob | null;
   mediaStream: MediaStream | null;
   onClear: () => void;
+  onDeviceChange: (deviceId: string) => void;
   onToggle: () => void;
   recording: boolean;
   status: MicStatus;
+  /** The finished take is shorter than `minAudioSeconds`. */
+  tooShort: boolean;
 }
 
-const DEFAULT_MIN_AUDIO_DURATION_SECONDS = 10;
 const DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS = 10;
-const VOXTRAL_MIN_AUDIO_DURATION_SECONDS = 3;
 const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
-
-const sampleAudios: readonly SampleAudio[] = [
-  {
-    audioExampleOutputSrc:
-      'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
-    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
-    id: 1,
-    image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
-    language: 'english',
-    name: 'Marilyn Monroe 🇺🇸',
-    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
-  },
-  // {
-  //   id: 2,
-  //   name: 'Morgan Freeman 🇺🇸',
-  //   prompt: 'The most important thing is the mission, not the money',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  //   audioSrc: 'clone-en-audio-samples/morgan_freeman.mp3',
-  // },
-  // {
-  //   id: 3,
-  //   name: 'Audrey Hepburn 🇬🇧',
-  //   prompt: 'Elegance is not about being noticed, it is about being remembered',
-  //   audioExampleOutputSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  //   audioSrc: 'clone-en-audio-samples/audrey_hepburn.mp3',
-  // },
-  // https://maskgct.github.io/audios/celeb_samples/rick_0.wav
-];
 
 export function CloneAudioInput({
   fileState,
   fileActions,
   mic,
   ffmpeg,
+  minAudioSeconds,
   usesVoxtral,
   selectedLocaleCode,
   selectedLocaleName,
-  onSelectSample,
-  dispatch,
 }: {
   fileState: FileUploadResult[0];
   fileActions: FileUploadResult[1];
   mic: CloneMic;
   ffmpeg: { error: string | null; loading: boolean };
+  /** Shortest clip the provider that will clone this recording accepts. */
+  minAudioSeconds: number;
   usesVoxtral: boolean;
   selectedLocaleCode: string;
   selectedLocaleName: string;
-  onSelectSample: (sample: SampleAudio) => void;
-  dispatch: Dispatch<CloneStateAction>;
 }) {
   const t = useTranslations('clone');
   const { files, isDragging, errors } = fileState;
@@ -103,21 +70,17 @@ export function CloneAudioInput({
     openFileDialog,
     removeFile,
     getInputProps,
-    addFiles,
   } = fileActions;
 
   const file = files[0]?.file instanceof File ? files[0].file : null;
 
-  const minAudioDuration = usesVoxtral
-    ? VOXTRAL_MIN_AUDIO_DURATION_SECONDS
-    : DEFAULT_MIN_AUDIO_DURATION_SECONDS;
   const referenceAudioGuidance = usesVoxtral
     ? formatCloneMessage(t('referenceAudioGuidanceShort'), {
-        MIN: minAudioDuration,
+        MIN: minAudioSeconds,
         TRIM_SECONDS: VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS,
       })
     : formatCloneMessage(t('referenceAudioGuidanceLong'), {
-        MIN: minAudioDuration,
+        MIN: minAudioSeconds,
         TRIM_SECONDS: DEFAULT_REFERENCE_AUDIO_TRIM_SECONDS,
       });
 
@@ -190,9 +153,17 @@ export function CloneAudioInput({
             mediaBlob={mic.mediaBlob}
             mediaStream={mic.mediaStream}
             onClearMediaStream={mic.onClear}
+            onDeviceChange={mic.onDeviceChange}
             onToggleMicrophone={mic.onToggle}
             status={mic.status}
           />
+          {mic.tooShort && (
+            <p className="text-center text-destructive text-xs" role="alert">
+              {formatCloneMessage(t('errors.audioDurationInvalidVoxtral'), {
+                MIN: minAudioSeconds,
+              })}
+            </p>
+          )}
         </div>
       )}
 
@@ -249,37 +220,7 @@ export function CloneAudioInput({
             <XIcon aria-hidden="true" className="size-6!" />
           </Button>
         </div>
-      ) : (
-        !mic.blob && (
-          // Sample audio demo buttons
-          <div className="grid w-full gap-2">
-            <p className="text-muted-foreground text-xs">{t('tryDemo')}</p>
-
-            <Accordion className="w-full" collapsible type="single">
-              {sampleAudios.map((sample) => (
-                <CloneSampleCard
-                  addFiles={addFiles}
-                  key={sample.id}
-                  onSelectSample={onSelectSample}
-                  sample={sample}
-                  setErrorMessage={(nextErrorMessage) => {
-                    dispatch({
-                      patch: { errorMessage: nextErrorMessage },
-                      type: 'patch',
-                    });
-                  }}
-                  setStatus={(nextStatus: Status) => {
-                    dispatch({
-                      patch: { status: nextStatus },
-                      type: 'patch',
-                    });
-                  }}
-                />
-              ))}
-            </Accordion>
-          </div>
-        )
-      )}
+      ) : null}
     </div>
   );
 }
