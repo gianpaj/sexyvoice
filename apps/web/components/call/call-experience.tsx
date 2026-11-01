@@ -44,6 +44,13 @@ interface CallExperienceProps {
   isPaidUser: boolean;
   /** Credits summary shown above the picker on small screens. */
   mobileCredits?: ReactNode;
+  /**
+   * Set when the Clone page links back with `?custom=1&voice=<id>`: open the
+   * creator with that saved voice. The page reads the query on the server
+   * because `PlaygroundStateProvider` rewrites the URL before LiveKitRoom
+   * mounts this component.
+   */
+  returnFromClone?: { voiceId: string | null } | null;
   savedVoices: SavedCallVoice[];
 }
 
@@ -57,16 +64,10 @@ export function CallExperience(props: CallExperienceProps) {
 
 type View = { name: 'picker' } | { name: 'creator'; intent: CreatorIntent };
 
-/**
- * The Clone page links back with `?custom=1&voice=<id>` to start a character
- * with the voice it just saved.
- */
+/** A new character with the voice the Clone page just saved, if found. */
 function returnedCloneDraft(
-  savedVoices: SavedCallVoice[],
-): CustomCallDraft | null {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('custom') !== '1') return null;
-  const voice = savedVoices.find((v) => v.id === params.get('voice'));
+  voice: SavedCallVoice | undefined,
+): CustomCallDraft {
   const sessionConfig = { ...defaultSessionConfig };
   return {
     description: '',
@@ -89,6 +90,7 @@ function CallExperienceScreens({
   e2eFixtures,
   isPaidUser,
   mobileCredits,
+  returnFromClone,
   savedVoices: initialSavedVoices,
 }: CallExperienceProps) {
   const t = useTranslations('call');
@@ -163,9 +165,14 @@ function CallExperienceScreens({
   // creator with the draft and the new voice.
   // biome-ignore lint/correctness/useExhaustiveDependencies: initial URL only
   useEffect(() => {
-    const draft = returnedCloneDraft(savedVoices);
-    if (draft && canCreate) {
-      setView({ intent: { draft, kind: 'create' }, name: 'creator' });
+    if (returnFromClone && canCreate) {
+      const voice = savedVoices.find(
+        ({ id }) => id === returnFromClone.voiceId,
+      );
+      setView({
+        intent: { draft: returnedCloneDraft(voice), kind: 'create' },
+        name: 'creator',
+      });
       return;
     }
     const presetId = helpers.getPresetIdFromUrlParams(window.location.search);

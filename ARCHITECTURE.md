@@ -463,8 +463,11 @@ the Undo toast closes or the page is hidden.
 The creator's Clone a voice dialog records or uploads a sample and saves a
 profile through the save-only `/api/clone-voice` path, using the call
 language when the configured provider supports it and English otherwise. The Clone page links
-back with `?custom=1&voice=<id>` to start a character with that voice. Prompt
-text never enters the URL; only `?preset=<id>` is written.
+back with `?custom=1&voice=<id>` to start a character with that voice. The
+call page reads that query on the server and passes it to `CallExperience`
+as `returnFromClone`. `PlaygroundStateProvider` rewrites the URL on mount,
+before `LiveKitRoom` renders its children. Prompt text never enters the URL;
+only `?preset=<id>` is written.
 
 Built-in voices use the Grok model. Saved voices set
 `sessionConfig.model=inworld-tts|mistral-tts` according to their saved provider,

@@ -39,8 +39,17 @@ export const generateMetadata = createDashboardMetadata('/dashboard/call');
 
 export default async function Call(props: {
   params: Promise<{ lang: Locale }>;
+  searchParams: Promise<{
+    custom?: string | string[];
+    voice?: string | string[];
+  }>;
 }) {
   const { lang } = await props.params;
+  const { custom, voice } = await props.searchParams;
+  const returnFromClone =
+    custom === '1'
+      ? { voiceId: typeof voice === 'string' ? voice : null }
+      : null;
 
   const [t, tProfile] = await Promise.all([
     getTranslations({ locale: lang, namespace: 'call' }),
@@ -122,6 +131,7 @@ export default async function Call(props: {
                   />
                 </div>
               }
+              returnFromClone={returnFromClone}
               savedVoices={savedVoices}
             >
               <div className="flex flex-col gap-5">

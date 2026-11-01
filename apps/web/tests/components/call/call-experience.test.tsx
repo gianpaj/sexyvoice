@@ -131,9 +131,11 @@ let fetchMock: ReturnType<typeof vi.fn>;
 function renderExperience({
   customCharacters = [own],
   isPaidUser = true,
+  returnFromClone = null,
 }: {
   customCharacters?: Preset[];
   isPaidUser?: boolean;
+  returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
@@ -145,6 +147,7 @@ function renderExperience({
         <CallExperience
           callVoices={callVoices}
           isPaidUser={isPaidUser}
+          returnFromClone={returnFromClone}
           savedVoices={[savedVoice]}
         >
           <p>Footer</p>
@@ -437,19 +440,25 @@ describe('CallExperience creator', () => {
   });
 
   it('starts a character with the voice saved on the Clone page', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      `/en/dashboard/call?custom=1&voice=${savedVoice.id}`,
-    );
-    renderExperience();
+    // The real provider strips the query before LiveKitRoom mounts the
+    // experience, so the page passes the clone return as a prop.
+    window.history.replaceState({}, '', '/en/dashboard/call');
+    renderExperience({ returnFromClone: { voiceId: savedVoice.id } });
 
     const creator = await screen.findByTestId('character-creator');
     expect(within(creator).getByLabelText('Name')).toHaveValue('');
     expect(
       within(creator).getByRole('radio', { name: /My voice/ }),
     ).toBeChecked();
-    expect(window.location.search).toBe('');
+  });
+
+  it('starts an empty character when the saved voice is unknown', async () => {
+    renderExperience({ returnFromClone: { voiceId: null } });
+
+    const creator = await screen.findByTestId('character-creator');
+    expect(
+      within(creator).getByRole('radio', { name: /My voice/ }),
+    ).not.toBeChecked();
   });
 
   it('clones a voice from an upload and selects it', async () => {

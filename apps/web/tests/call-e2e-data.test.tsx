@@ -226,7 +226,10 @@ describe('call E2E data', () => {
       setCallUserCookie(cookie);
       vi.mocked(hasUserPaid).mockResolvedValue(!isPaidUser);
 
-      const page = await CallPage({ params: params() });
+      const page = await CallPage({
+        params: params(),
+        searchParams: Promise.resolve({}),
+      });
       const call = CallLayout({ children: page });
       const html = renderToStaticMarkup(
         await DashboardLayout({ children: call, params: params() }),
@@ -269,7 +272,9 @@ describe('call E2E data', () => {
   );
 
   it('maps deterministic public presets in order without fetching live data', async () => {
-    renderToStaticMarkup(await CallPage({ params: params() }));
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
 
     expectAuthenticated();
     expectNoDataCalls();
@@ -308,8 +313,23 @@ describe('call E2E data', () => {
     });
   });
 
+  it('hands a return from the Clone page to the experience', async () => {
+    renderToStaticMarkup(
+      await CallPage({
+        params: params(),
+        searchParams: Promise.resolve({ custom: '1', voice: 'voice-id' }),
+      }),
+    );
+
+    expect(
+      vi.mocked(CallExperience).mock.lastCall?.[0].returnFromClone,
+    ).toEqual({ voiceId: 'voice-id' });
+  });
+
   it('passes fixture credits and voices with unpaid entitlement to the page', async () => {
-    const html = renderToStaticMarkup(await CallPage({ params: params() }));
+    const html = renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
     expect(html).toContain('data-e2e-call-fixtures=""');
 
     expectAuthenticated();
@@ -323,7 +343,9 @@ describe('call E2E data', () => {
       vi.stubEnv('VERCEL_ENV', env);
       vi.mocked(getVerifiedClaims).mockResolvedValue(null);
 
-      const html = renderToStaticMarkup(await CallPage({ params: params() }));
+      const html = renderToStaticMarkup(
+        await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+      );
 
       expect(html).toContain('notLoggedIn');
       expectAuthenticated();
@@ -355,7 +377,10 @@ describe.each([
     setCallUserCookie('paid');
     vi.mocked(hasUserPaid).mockResolvedValue(false);
 
-    const page = await CallPage({ params: params() });
+    const page = await CallPage({
+      params: params(),
+      searchParams: Promise.resolve({}),
+    });
     const call = CallLayout({ children: page });
     const html = renderToStaticMarkup(
       await DashboardLayout({ children: call, params: params() }),
@@ -415,7 +440,9 @@ describe.each([
     vi.mocked(getPublicCallCharacters).mockResolvedValue([publicCharacter]);
     vi.mocked(getUserCallCharacters).mockResolvedValue([customCharacter]);
 
-    renderToStaticMarkup(await CallPage({ params: params() }));
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
 
     expectAuthenticated();
     expect(getCallInstructionConfig).toHaveBeenCalledOnce();
@@ -454,7 +481,9 @@ describe.each([
 
   it('skips custom characters for unpaid users and handles empty public presets', async () => {
     vi.mocked(hasUserPaid).mockResolvedValue(false);
-    renderToStaticMarkup(await CallPage({ params: params() }));
+    renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
 
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).not.toHaveBeenCalled();
@@ -471,7 +500,9 @@ describe.each([
     ];
     vi.mocked(getCallVoices).mockResolvedValue(voices);
 
-    const html = renderToStaticMarkup(await CallPage({ params: params() }));
+    const html = renderToStaticMarkup(
+      await CallPage({ params: params(), searchParams: Promise.resolve({}) }),
+    );
     expect(html).not.toContain('data-e2e-call-fixtures');
 
     expectAuthenticated();
