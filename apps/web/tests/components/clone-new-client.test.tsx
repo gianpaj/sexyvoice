@@ -446,6 +446,26 @@ describe('NewVoiceClient', () => {
     expect(body.get('locale')).toBe('es');
   });
 
+  it('never carries free noise removal over to paid cleanup', async () => {
+    const user = userEvent.setup();
+    renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });
+    const cleanup = () =>
+      screen.getByLabelText(enMessages.clone.referenceAudioEnhancementLabel);
+    const saveMode = screen.getByLabelText(
+      enMessages.clone.savedVoice.modeLabel,
+    );
+
+    await user.click(saveMode);
+    await user.click(cleanup());
+    expect(cleanup()).toBeChecked();
+    await user.click(saveMode);
+    expect(cleanup()).not.toBeChecked();
+
+    await user.click(cleanup());
+    await user.click(saveMode);
+    expect(cleanup()).not.toBeChecked();
+  });
+
   it('lists only call voice languages when saving a voice', async () => {
     const user = userEvent.setup();
     renderClone({ cloneMessages: enMessages.clone, userHasPaid: true });

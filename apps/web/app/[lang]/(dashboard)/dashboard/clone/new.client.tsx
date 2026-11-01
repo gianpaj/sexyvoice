@@ -685,6 +685,17 @@ function NewVoiceClientInner({
     });
   };
 
+  // The cleanup checkbox is paid Replicate cleanup when generating and free
+  // Inworld noise removal when saving, so neither choice carries over.
+  const changeSaveMode = (on: boolean) => {
+    setSaveVoiceOnly(on);
+    setSavedVoiceId(null);
+    dispatch({
+      patch: { referenceAudioEnhancementEnabled: false },
+      type: 'patch',
+    });
+  };
+
   const textIsOverLimit = text.length > textMaxLength;
   const minAudioSeconds = CLONE_MIN_AUDIO_SECONDS[referenceProvider];
   const micTooShort =
@@ -725,8 +736,7 @@ function NewVoiceClientInner({
           onSelect={(voice) => {
             setSelectedVoiceId(voice?.id ?? null);
             if (!voice) return;
-            setSaveVoiceOnly(false);
-            setSavedVoiceId(null);
+            changeSaveMode(false);
             dispatch({
               patch: {
                 selectedLocaleCode:
@@ -829,8 +839,7 @@ function NewVoiceClientInner({
                       }
                       id="save-voice-only"
                       onCheckedChange={(checked) => {
-                        setSaveVoiceOnly(checked === true);
-                        setSavedVoiceId(null);
+                        changeSaveMode(checked === true);
                         // Saved voices list plain English, not Chatterbox.
                         if (
                           checked === true &&
