@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Rufen Sie einen Charakter mit Ihrer eigenen Stimme an",
         "subtitle": "Geben Sie ihm eine Persönlichkeit und wählen Sie eine unserer Stimmen oder klonen Sie eine aus 10 Sekunden Audio: Ihre eigene oder eine, an der Sie die Rechte haben. Rufen Sie ihn an, wann immer Sie wollen – er bleibt jedes Mal in seiner Rolle.",
-        "note": "Eigene Charaktere sind in jedem kostenpflichtigen Tarif enthalten.",
+        "note": "Eigene Charaktere mit einer Credit-Aufladung oder einem Abo freischalten.",
         "action": "Charakter erstellen",
         "cloningLink": "So funktioniert das Klonen von Stimmen"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Dann ruf sie an",
         "subtitle": "Gib deine geklonte Stimme einem Charakter und sprich live mit ihm, in Echtzeit.",
-        "note": "Anrufe mit einer geklonten Stimme sind in jedem kostenpflichtigen Tarif enthalten.",
+        "note": "Anrufe mit geklonter Stimme mit einer Credit-Aufladung oder einem Abo freischalten.",
         "action": "Sprachanruf ausprobieren"
       },
       "cta": {
@@ -237,11 +237,11 @@
       "groups": [
         {
           "id": "voiceCreation",
-          "category": "Stimmerstellung und Stile",
+          "category": "Stimmgenerierung und Stil",
           "questions": [
             {
-              "question": "Welche Sprachen werden für die Sprachgenerierung unterstützt?",
-              "answer": "Die Sprachunterstützung hängt von der ausgewählten Stimme und dem Modell ab.\n\n**Gemini 2.5 Stimmen (Standard)** unterstützen 24 Sprachen, darunter:\n🇪🇬 Arabisch, 🇧🇩 Bengali, 🇩🇪 Deutsch, 🇺🇸 Englisch, 🇫🇷 Französisch, 🇮🇳 Hindi, 🇮🇩 Indonesisch, 🇮🇹 Italienisch, 🇯🇵 Japanisch, 🇰🇷 Koreanisch, 🇮🇳 Marathi, 🇳🇱 Niederländisch, 🇵🇱 Polnisch, 🇧🇷 Portugiesisch, 🇷🇴 Rumänisch, 🇷🇺 Russisch, 🇺🇸 Spanisch, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇭 Thailändisch, 🇹🇷 Türkisch, 🇺🇦 Ukrainisch, und 🇻🇳 Vietnamesisch.\n\n**Gemini 3.1 Stimmen (bei Aktivierung von \"Neues KI-Modell verwenden\")** unterstützen 70+ Sprachen in 80+ regionalen Varianten, inklusive allem oben genannten plus: Afrikaans, Albanisch, Amharisch, Armenisch, Aserbaidschanisch, Baskisch, Bulgarisch, Katalanisch, Chinesisch, Kroatisch, Tschechisch, Dänisch, Estnisch, Filipino, Finnisch, Galizisch, Georgisch, Griechisch, Gujarati, Hebräisch, Ungarisch, Isländisch, Irisch, Javanisch, Kannada, Kasachisch, Lettisch, Litauisch, Mazedonisch, Malaiisch, Maltesisch, Norwegisch, Persisch, Punjabi, Serbisch, Slowakisch, Slowenisch, Suaheli, Schwedisch, Urdu, Usbekisch, Walisisch, Zulu und mehr.\n\nAndere Stimmen sind sprachspezifisch:\n🇬🇧 Dan (Englisch UK), 🇮🇹 Pietro (Italienisch), 🇺🇸 Emma, Josh, Tara (Englisch US), 🇪🇸 Javi (Spanisch).\n\nWählen Sie Ihre Stimme basierend auf Ihrer Zielsprache für die natürlichsten Ergebnisse."
+              "question": "In welchen Sprachen kann ich Sprache erzeugen?",
+              "answer": "Die verfügbaren Sprachen hängen von Stimme und Modell ab. Gemini-3.1-Stimmen unterstützen über 70 Sprachen, Gemini-2.5-Stimmen 24. Andere Modelle haben eine eigene Sprachauswahl. Wählen Sie eine Stimme für Ihre Zielsprache und hören Sie sich eine Vorschau an. Die Sprachen für das Stimmklonen stehen weiter unten."
             },
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
@@ -255,19 +255,23 @@
           "questions": [
             {
               "question": "Wie funktioniert das Klonen von Stimmen?",
-              "answer": "Unsere KI analysiert Ihre Sprachprobe (10 Sekunden bis 5 Minuten), um deren einzigartige Muster und Eigenschaften zu lernen, und erstellt daraus eine digitale Version Ihrer Stimme, die natürlich und realistisch klingt."
+              "answer": "Nehmen Sie mindestens 10 Sekunden Ihrer eigenen Stimme auf oder laden Sie eine Stimme hoch, die Sie verwenden dürfen. Unsere KI nutzt die Aufnahme, um ihren Klang nachzubilden. Erzeugen Sie sofort Sprache oder speichern Sie die Stimme für später."
             },
             {
               "question": "Kann ich meine eigene Stimme klonen?",
-              "answer": "Ja! Nehmen Sie mindestens 10 Sekunden saubere Audio auf oder laden Sie sie hoch, und es entsteht eine digitale Version Ihrer Stimme, die natürlich und realistisch klingt."
+              "answer": "Ja! Nehmen Sie mindestens 10 Sekunden klarer Sprache auf oder laden Sie eine Aufnahme hoch. Sie können daraus Sprache erzeugen oder Ihre Stimme für später speichern, wenn Sie Credits gekauft haben."
             },
             {
               "question": "Wie wird das Klonen von Stimmen berechnet?",
-              "answer": "Das Klonen von Stimmen wird nach der Menge der erzeugten Sprache berechnet, daher verbrauchen längere Texte mehr Credits. Es kostet mehr als die normale Sprachgenerierung, weil geklonte Stimmen ein teureres Modell verwenden, um eine bestimmte Stimme präzise nachzubilden."
+              "answer": "Das Speichern einer Stimme ist nach einer einmaligen Credit-Aufladung oder einer Abonnementzahlung kostenlos. Die Spracherzeugung verbraucht Credits je nach Text; längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben."
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",
               "answer": "Das Stimmklonen unterstützt die folgenden 28 Sprachen:\n\n🇸🇦 Arabisch,\n🇩🇰 Dänisch,\n🇩🇪 Deutsch,\n🇬🇧 Englisch,\n🇫🇮 Finnisch,\n🇫🇷 Französisch,\n🇬🇷 Griechisch,\n🇮🇱 Hebräisch,\n🇮🇳 Hindi,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇪🇸 Katalanisch,\n🇰🇷 Koreanisch,\n🇲🇾 Malaiisch,\n🇨🇳 Mandarin-Chinesisch,\n🇳🇱 Niederländisch,\n🇳🇴 Norwegisch,\n🇵🇱 Polnisch,\n🇵🇹 Portugiesisch,\n🇷🇴 Rumänisch,\n🇷🇺 Russisch,\n🇸🇪 Schwedisch,\n🇪🇸 Spanisch,\n🇰🇪 Suaheli,\n🇹🇷 Türkisch,\n🇺🇦 Ukrainisch,\n🇭🇺 Ungarisch,\nund 🇻🇳 Vietnamesisch."
+            },
+            {
+              "question": "Kann ich meine geklonte Stimme speichern und wiederverwenden?",
+              "answer": "Ja. Zahlende Nutzer können bis zu 10 Stimmen speichern und für die Stimmgenerierung oder Live-Anrufe wiederverwenden. Wählen Sie eine gespeicherte Stimme auf der Klonen-Seite, um Sprache zu erzeugen, oder weisen Sie sie beim Erstellen einem Charakter zu."
             }
           ]
         },
@@ -281,7 +285,7 @@
             },
             {
               "question": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
-              "answer": "Ja, mit einem kostenpflichtigen Tarif. Erstellen Sie einen Charakter und wählen Sie \"Stimme klonen\", oder klonen Sie auf der Klonen-Seite eine Stimme mit \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Sprache auf oder laden Sie sie hoch und wählen Sie sie als Stimme des Charakters."
+              "answer": "Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie \"Stimme klonen\", oder nutzen Sie \"Stimme für Anrufe speichern\" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters."
             },
             {
               "question": "Was kostet das?",
@@ -297,7 +301,7 @@
             },
             {
               "question": "Kann ich die Stimme einer anderen Person klonen?",
-              "answer": "Nur mit deren Erlaubnis. Sie bestätigen vor dem Klonen, dass Sie die Rechte haben, und unsere Bedingungen verbieten Identitätsmissbrauch und Täuschung."
+              "answer": "Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen."
             }
           ]
         },
@@ -310,8 +314,8 @@
               "answer": "Gespeicherte Anrufstimmen sind nur für Ihr Konto verfügbar. Der Sprachanbieter behält die Aufnahme, damit Sie die Stimme wiederverwenden können. Generierte Audiodateien können Sie im Dashboard löschen. Beim Löschen Ihres Kontos wird auch die Löschung gespeicherter Stimmen und ihrer Hörproben angefordert."
             },
             {
-              "question": "Wofür kann ich die generierten Stimmen verwenden?",
-              "answer": "Kreative verwenden unsere Stimmen für Videos, Podcasts, Hörbücher, Social-Media-Inhalte, Spiele, E-Learning und vieles mehr. Es ist eine einfache Möglichkeit, eine konsistente Audioqualität zu gewährleisten. Denken Sie nur daran, dass unsere Nutzungsbedingungen Täuschung oder Identitätsdiebstahl verbieten."
+              "question": "Wofür kann ich die Stimmgenerierung nutzen?",
+              "answer": "Erstellen Sie Audio für Videos, Podcasts, Hörbücher, Spiele, Kurse und soziale Medien. Verwenden Sie nur Stimmen und Inhalte, für die Sie die Rechte haben."
             }
           ]
         },
@@ -321,7 +325,7 @@
           "questions": [
             {
               "question": "Wie viele Credits benötige ich?",
-              "answer": "Ungefähr 1.000 Credits entsprechen 1 Minute Audio-Generierung. Neue Benutzer erhalten 10.000 kostenlose Credits (etwa 5 minuten Sprache). Unser Starter-Plan enthält 25.000 monatliche Credits, während Pro 300.000 Credits für größere Projekte bietet. Wählen Sie, was für Ihre Bedürfnisse am besten geeignet ist."
+              "answer": "Neue Nutzer erhalten 10.000 kostenlose Credits. Wie viel Sprache Sie erzeugen können, hängt von Stimme, Modell und Text ab. Kaufen Sie Credits einmalig oder erhalten Sie monatliche Credits mit einem Abonnement. Stimmgenerierung und Anrufe nutzen dasselbe Guthaben."
             },
             {
               "question": "Warum SexyVoice.ai wählen?",
@@ -335,7 +339,7 @@
           "questions": [
             {
               "question": "Haben Sie eine API für Entwickler?",
-              "answer": "Ja! Unsere API ermöglicht Entwicklern, Sprachgenerierung in Apps, Websites und Spiele einzubinden. Sie können Sprache auf Abruf und programmgesteuert erstellen. Siehe die {link}.",
+              "answer": "Ja. Unsere API ermöglicht Stimmgenerierung in Apps, Websites und Spielen mit denselben Credits wie Ihr Dashboard. Stimmklonen und Live-Anrufe sind in der Web-App verfügbar. Lesen Sie die {link}.",
               "link": {
                 "url": "https://docs.sexyvoice.ai",
                 "text": "Dokumentation"
@@ -482,7 +486,7 @@
     "estimateCreditsButton": "Credits schätzen",
     "fullscreenTitle": "Vollbild",
     "generating": "Wird generiert",
-    "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
+    "gproLimitExceeded": "Sie haben das kostenlose Limit von __COUNT__ Generierungen mit diesem Modell erreicht. Kaufen Sie Credits, um es weiter zu nutzen.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
@@ -490,9 +494,9 @@
     "success": "Audio erfolgreich generiert!",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
     "paidStyleLimitTooltip": "Sie haben ein 2,5× Stil-Limit",
-    "upgradeStyleLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2,5× Stil-Limit zu erhalten",
+    "upgradeStyleLimitTooltip": "Kaufen Sie Credits für ein 2,5× Stillimit",
     "paidCharacterLimitTooltip": "Sie haben ein 2× Zeichenlimit",
-    "upgradeCharacterLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2× Zeichenlimit zu erhalten",
+    "upgradeCharacterLimitTooltip": "Kaufen Sie Credits für ein 2× Textlimit",
     "title": "Audio generieren",
     "grok": {
       "inlineEffectPlaceholder": "Inline-Effekt einfügen",
@@ -620,7 +624,7 @@
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
-    "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
+    "freeUserCallLimitExceeded": "Ihr kostenloses Kontingent beträgt insgesamt 5 Minuten für alle Anrufe. Kaufen Sie Credits, um weiterzutelefonieren.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",
@@ -847,7 +851,7 @@
     }
   },
   "clone": {
-    "audioFileLabel": "Audiodatei",
+    "audioFileLabel": "Stimmprobe",
     "cancelButton": "Abbrechen",
     "ctaButton": "Audio generieren",
     "downloadAudio": "Audio herunterladen",
@@ -862,7 +866,7 @@
     "englishChatterbox": "Englisch (Chatterbox)",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
-    "previewTitle": "Vorschau der generierten Stimme",
+    "previewTitle": "Audiovorschau",
     "subtitle": "Laden Sie ein Audiobeispiel hoch, geben Sie Ihren Text ein und generieren Sie sofort Sprache mit der geklonten Stimme",
     "success": "Audio erfolgreich generiert!",
     "tabPreview": "Vorschau",
@@ -924,7 +928,7 @@
     "referenceAudioGuidanceShort": "Verwenden Sie einen sauberen Referenzclip mit nur einer sprechenden Person von mindestens __MIN__ Sekunden. Es werden nur die ersten __TRIM_SECONDS__ Sekunden verwendet.",
     "referenceAudioGuidanceLong": "Verwenden Sie einen klaren Referenzclip von mindestens __MIN__ Sekunden. Es werden nur die ersten __TRIM_SECONDS__ Sekunden verwendet.",
     "paidTextLimitTooltip": "Zahlende Nutzer können längere Sprache mit bis zu __MAX__ Zeichen klonen.",
-    "upgradeTextLimitTooltip": "Wechseln Sie zu einem kostenpflichtigen Tarif, um längere Sprache mit bis zu __MAX__ Zeichen zu klonen.",
+    "upgradeTextLimitTooltip": "Kaufen Sie Credits, um längere Texte mit bis zu __MAX__ Zeichen zu vertonen.",
     "audioDurationUnknown": "Die Audiodauer konnte nicht ermittelt werden.",
     "audioDurationInvalidVoxtral": "Das Referenz-Audio muss für das Klonen der Stimme mindestens __MIN__ Sekunden lang sein.",
     "audioDurationInvalidFallback": "Das Audio muss mindestens __MIN__ Sekunden lang sein.",
@@ -938,7 +942,7 @@
     "convertingAudio": "Audio wird konvertiert",
     "savedVoice": {
       "modeLabel": "Stimme für Anrufe speichern",
-      "upgradeTooltip": "Wechseln Sie zu einem kostenpflichtigen Tarif, um Stimmen für Anrufe zu speichern.",
+      "upgradeTooltip": "Kaufe Credits, um Stimmen für Anrufe zu speichern.",
       "name": "Name der Stimme",
       "help": "Speichere diese Stimme, um sie beim Erstellen eines Charakters zu verwenden. Der Anbieter bewahrt die Referenzaufnahme auf.",
       "noiseRemovalHelp": "Entfernt Hintergrundgeräusche. Nur für verrauschte Aufnahmen verwenden: Saubere Aufnahmen können dadurch schlechter klingen. Kostenlos.",
@@ -1072,8 +1076,8 @@
     "defaultTitle": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe",
     "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
     "skipToMainContent": "Zum Hauptinhalt springen",
-    "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
-    "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
+    "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um Sprache zu erzeugen, gespeicherte Stimmen zu nutzen, mit KI-Charakteren zu sprechen und Ihr Credit-Guthaben zu verwalten.",
+    "descriptionSignup": "Erstellen Sie ein kostenloses SexyVoice.ai-Konto und erhalten Sie 10.000 Credits. Erzeugen Sie ausdrucksstarke Stimmen, klonen Sie Ihre eigene und sprechen Sie mit KI-Charakteren.",
     "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
     "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
     "titleVoiceCloning": "KI-Stimmklonen",
@@ -1159,10 +1163,10 @@
       "operations": "Operationen",
       "noData": "Keine Nutzungsdaten",
       "byType": {
-        "tts": "TTS",
+        "tts": "Stimmgenerierung",
         "voice_cloning": "Stimmklonen",
         "live_call": "Live-Anruf",
-        "audio_processing": "Audioverarbeitung"
+        "audio_processing": "Audiobereinigung"
       }
     },
     "table": {

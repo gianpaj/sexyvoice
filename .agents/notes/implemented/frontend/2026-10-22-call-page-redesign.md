@@ -37,7 +37,7 @@ Saved voices are owned provider profiles in `audio_references`; see
 - Design hex colors map to Tailwind slate/violet classes. The site is
   dark-only and already uses Inter.
 - "Make your own version" copies the name, description and voice, never the
-  prompt. Public prompts stay server-side.
+  prompt. Predefined character prompts stay server-side.
 - No avatar color picker or picture upload. `characters` has no color column,
   and uploads need storage. Initials take a stable color from the ID.
 - Characters are saved before calling; the design has no unsaved custom call.
@@ -52,7 +52,9 @@ Saved voices are owned provider profiles in `audio_references`; see
 - The clone consent uses the Clone page's legal text
   (`clone.legalConsentCheckbox`), not the design's shorter line. The help text
   says the provider keeps the sample.
-- Saved voices use the call language when Voxtral supports it, else English.
+- New saved voices use the call language when the configured cloning provider
+  supports it, otherwise English. See the provider rules in
+  [saved voices](../../../../ARCHITECTURE.md#saved-voices-for-calls).
 - Closing the clone dialog while it saves does not abort: the server finishes
   the save either way, so the request runs on and the voice is listed.
 - Edits and duplicates build on the source character's localized prompts and
@@ -62,10 +64,12 @@ Saved voices are owned provider profiles in `audio_references`; see
 - Opening the creator sends pending deletes first, because the API counts
   characters awaiting deletion against the limit of 10.
 - One shared sample player (`hooks/use-sample-player.tsx`) stops the previous
-  sample when another starts.
+  sample when another starts. Listen uses the saved voice sample when selected,
+  otherwise the character intro in the call language, English intro, or built-in
+  voice sample, in that order.
 - Each voice section shows 4 tiles, or 6 from 768px, then "Show all (n)",
-  which expands in place. Saved voices have no cap, so an uncollapsed grid
-  grows without limit. A selected voice past the cut takes the last slot.
+  which expands in place. Each user can save up to 10 voices. A selected voice
+  past the cut takes the last slot.
   Clone a voice comes first and counts as a tile. The server render assumes a
   phone. A carousel was rejected: it hides most options and the selection.
 
@@ -91,7 +95,6 @@ Saved voices are owned provider profiles in `audio_references`; see
 ## Not done
 
 - Avatar color or picture per character (needs schema and storage).
-- A greeting preview in the character's voice; Listen plays the voice sample.
 - `useCallTimer` restarts at zero after a LiveKit reconnect, so the ended
   screen shows only the last stretch of such a call.
 

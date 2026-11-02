@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Call a character in your own voice",
         "subtitle": "Give them a personality, then pick one of our voices or clone one from 10 seconds of audio: yours, or one you have the rights to. Call them whenever you like, and they pick up in character every time.",
-        "note": "Custom characters come with every paid plan.",
+        "note": "Unlock custom characters with a top-up or subscription.",
         "action": "Create your character",
         "cloningLink": "See how voice cloning works"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Then call it",
         "subtitle": "Give your cloned voice to a character and talk to it live, in real time.",
-        "note": "Calling with a cloned voice comes with every paid plan.",
+        "note": "Unlock cloned-voice calls with a top-up or subscription.",
         "action": "Try a voice call"
       },
       "cta": {
@@ -237,11 +237,11 @@
       "groups": [
         {
           "id": "voiceCreation",
-          "category": "Voice creation & styles",
+          "category": "Voice generation & styles",
           "questions": [
             {
-              "question": "Which languages are supported for Speech Generation?",
-              "answer": "Language support depends on the selected voice and model.\n\n**Gemini 2.5 voices (default)** support 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\nand 🇻🇳 Vietnamese (Vietnam).\n\n**Gemini 3.1 voices (when \"Use new AI model\" is enabled)** support 70+ languages across 80+ regional locales, including everything above plus:\nAfrikaans, Albanian, Amharic, Armenian, Azerbaijani, Basque, Bulgarian, Catalan, Chinese Simplified, Chinese Traditional, Croatian, Czech, Danish, Estonian, Filipino/Tagalog, Finnish, Galician, Georgian, Greek, Gujarati, Hebrew, Hungarian, Icelandic, Irish, Javanese, Kannada, Kazakh, Latvian, Lithuanian, Macedonian, Malay, Maltese, Norwegian, Persian, Punjabi, Serbian, Slovak, Slovenian, Swahili, Swedish, Urdu, Uzbek, Welsh, Zulu, and more regional variants of English, Spanish, French, Portuguese, and Arabic.\n\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
+              "question": "Which languages can I generate speech in?",
+              "answer": "Language support depends on your voice and model. Gemini 3.1 voices support 70+ languages, while Gemini 2.5 voices support 24. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below."
             },
             {
               "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
@@ -255,19 +255,23 @@
           "questions": [
             {
               "question": "How does voice cloning work?",
-              "answer": "Our AI analyzes your voice sample (at least 10 seconds) to learn its unique patterns and characteristics, then builds a digital version of your voice that sounds natural and realistic."
+              "answer": "Record or upload at least 10 seconds of your voice, or a voice you have permission to use. Our AI uses the sample to recreate how it sounds. Generate speech right away, or save the voice to use again."
             },
             {
               "question": "Can I clone my own voice?",
-              "answer": "Yes! Record or upload at least 10 seconds of clean audio and it builds a digital version of your voice that sounds natural and realistic."
+              "answer": "Yes! Record or upload at least 10 seconds of clean audio. You can generate speech from the recording, or save your voice for later if you have bought credits."
             },
             {
               "question": "How is voice cloning priced?",
-              "answer": "Voice cloning is priced based on the amount of speech you generate, so longer scripts use more credits. It costs more than regular voice generation because cloned voices rely on a more expensive model to reproduce a specific voice accurately."
+              "answer": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech uses credits based on your text; longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
               "answer": "Voice cloning supports the following 28 languages:\n\n🇸🇦 Arabic,\n🇪🇸 Catalan,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇭🇺 Hungarian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇴 Romanian,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\nand 🇻🇳 Vietnamese."
+            },
+            {
+              "question": "Can I save my cloned voice and use it again?",
+              "answer": "Yes. Paid users can save up to 10 voices and reuse them for voice generation or live calls. Select a saved voice on the Clone page to generate speech, or choose it as the voice when creating a character."
             }
           ]
         },
@@ -281,7 +285,7 @@
             },
             {
               "question": "Can I call a character in my own voice?",
-              "answer": "Yes, on a paid plan. Create a character and choose \"Clone a voice\", or clone one on the Clone page with \"Save a voice for calls\". Record or upload at least 10 seconds of speech, then pick it as the character's voice."
+              "answer": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose \"Clone a voice\", or use \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice."
             },
             {
               "question": "How much does it cost?",
@@ -297,7 +301,7 @@
             },
             {
               "question": "Can I clone someone else's voice?",
-              "answer": "Only with their permission. You confirm you have the rights before cloning, and our terms prohibit impersonation and deception."
+              "answer": "Only with their permission. Before cloning, you must confirm that you have the rights to use the voice."
             }
           ]
         },
@@ -310,8 +314,8 @@
               "answer": "Saved call voices are private to your account. The voice provider retains the reference so you can reuse the voice. You can delete generated audio files in your dashboard. Account deletion also requests removal of saved voices and their previews."
             },
             {
-              "question": "What can I use the generated voices for?",
-              "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
+              "question": "What can I use voice generation for?",
+              "answer": "Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use."
             }
           ]
         },
@@ -321,7 +325,7 @@
           "questions": [
             {
               "question": "How many credits do I need?",
-              "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 5 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
+              "answer": "New users get 10,000 free credits. How much speech you can generate depends on the voice, model, and text. Buy credits once with a top-up, or get monthly credits with a subscription. Voice generation and calls use the same balance."
             },
             {
               "question": "Why choose SexyVoice.ai?",
@@ -335,7 +339,7 @@
           "questions": [
             {
               "question": "Do you have an API for developers?",
-              "answer": "Yes! Our API lets developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and programmatically. See the {link}.",
+              "answer": "Yes. Our API lets you add voice generation to apps, websites, and games using the same credits as your dashboard. Voice cloning and live calls are available in the web app. See the {link}.",
               "link": {
                 "url": "https://docs.sexyvoice.ai",
                 "text": "documentation"
@@ -480,7 +484,7 @@
     "estimateCreditsButton": "Estimate credits",
     "fullscreenTitle": "Fullscreen",
     "generating": "Generating",
-    "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
+    "gproLimitExceeded": "You have reached the free limit of __COUNT__ generations with this model. Buy credits to keep using it.",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "playAudio": "Play Audio",
     "resetPlayer": "Reset Player",
@@ -488,9 +492,9 @@
     "success": "Audio generated successfully!",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "paidStyleLimitTooltip": "You have a 2.5× style limit",
-    "upgradeStyleLimitTooltip": "Upgrade to a paid plan for 2.5× style limit",
+    "upgradeStyleLimitTooltip": "Buy credits for a 2.5× style limit",
     "paidCharacterLimitTooltip": "You have a 2× character limit",
-    "upgradeCharacterLimitTooltip": "Upgrade to a paid plan for 2× character limit",
+    "upgradeCharacterLimitTooltip": "Buy credits for a 2× text limit",
     "title": "Generate Audio",
     "grok": {
       "inlineEffectPlaceholder": "Insert tags",
@@ -618,7 +622,7 @@
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
     "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
-    "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
+    "freeUserCallLimitExceeded": "Your free allowance is 5 minutes across all calls. Buy credits to keep calling.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
@@ -845,7 +849,7 @@
     }
   },
   "clone": {
-    "audioFileLabel": "Audio File",
+    "audioFileLabel": "Voice sample",
     "cancelButton": "Cancel",
     "ctaButton": "Generate Audio",
     "downloadAudio": "Download Audio",
@@ -860,7 +864,7 @@
     "englishChatterbox": "English (Chatterbox)",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "playAudio": "Play Audio",
-    "previewTitle": "Generated Voice Preview",
+    "previewTitle": "Audio preview",
     "subtitle": "Upload an audio sample, enter your text, and generate speech in the cloned voice instantly",
     "success": "Audio generated successfully!",
     "tabPreview": "Preview",
@@ -922,7 +926,7 @@
     "referenceAudioGuidanceShort": "For best results: use a clean, single-speaker clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
     "referenceAudioGuidanceLong": "Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
     "paidTextLimitTooltip": "Paid users can clone longer speech with up to __MAX__ characters.",
-    "upgradeTextLimitTooltip": "Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.",
+    "upgradeTextLimitTooltip": "Buy credits to generate longer speech, up to __MAX__ characters.",
     "audioDurationUnknown": "Could not determine audio duration.",
     "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
     "audioDurationInvalidFallback": "Audio must be at least __MIN__ seconds.",
@@ -936,7 +940,7 @@
     "convertingAudio": "Converting audio",
     "savedVoice": {
       "modeLabel": "Save a voice for calls",
-      "upgradeTooltip": "Upgrade to a paid plan to save voices for calls.",
+      "upgradeTooltip": "Buy credits to save voices for calls.",
       "name": "Voice name",
       "help": "Save this voice to use it when creating a character. The voice provider retains the reference sample.",
       "noiseRemovalHelp": "Removes background noise. Use it only for noisy recordings: it can make clean audio sound worse. Free.",
@@ -1070,8 +1074,8 @@
     "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
     "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
-    "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
-    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
+    "descriptionLogin": "Sign in to generate speech, reuse your saved voices, talk to AI characters, and manage your credit balance on SexyVoice.ai.",
+    "descriptionSignup": "Create a free SexyVoice.ai account and get 10,000 credits. Try expressive voice generation, clone your own voice, and talk to AI characters.",
     "titleVoiceCall": "AI Voice Calling – Talk to Live AI Characters",
     "descriptionVoiceCall": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
     "titleVoiceCloning": "AI Voice Cloning",
@@ -1157,10 +1161,10 @@
       "operations": "Operations",
       "noData": "No usage data",
       "byType": {
-        "tts": "TTS",
+        "tts": "Voice generation",
         "voice_cloning": "Voice Cloning",
         "live_call": "Live Call",
-        "audio_processing": "Audio Processing"
+        "audio_processing": "Audio cleanup"
       }
     },
     "table": {
