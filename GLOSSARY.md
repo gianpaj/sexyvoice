@@ -143,9 +143,9 @@ available.
 _Avoid_: User with no credits, canceled subscriber
 
 **Credit transaction**:
-A record of credits granted or returned to a user, including free allocations,
-paid purchases, and credit refunds. Spending on an activity belongs to its
-usage event.
+A record of credits added to or deducted from a user's balance outside activity
+spending, including allocations, purchases, refunds, and chargeback holds or
+releases. Spending on an activity belongs to its usage event.
 _Avoid_: Usage event, generation charge
 
 **Usage event**:

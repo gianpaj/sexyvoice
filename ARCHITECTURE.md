@@ -562,8 +562,9 @@ scripts import the same modules, so every path writes identical rows.
   configuration.
 - `audio_files` stores generated-audio metadata, R2 URLs, duration, model, and
   billed credits.
-- `credits` stores the credit balance; `credit_transactions` records grants,
-  purchases, and credit refunds. Activity spending is recorded in `usage_events`.
+- `credits` stores the credit balance; `credit_transactions` records credits added
+  or deducted outside activity spending, including grants, purchases, refunds, and
+  chargeback holds or releases. Activity spending is recorded in `usage_events`.
 - `usage_events` stores normalized metering for dashboard TTS, API TTS, voice
   cloning, audio processing, and live calls.
 - `api_keys` stores HMAC hashes, display prefixes, scopes, expiry, and last-use
