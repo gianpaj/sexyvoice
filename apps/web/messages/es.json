@@ -1245,13 +1245,13 @@
     "clonedVoiceCallsLaunch": {
       "text": "Clona tu voz con una grabación de 10 segundos y llama a un personaje que hable con ella.",
       "ctaLoggedIn": "Clonar una voz",
-      "ctaLoggedOut": "Iniciar sesion",
+      "ctaLoggedOut": "Iniciar sesión",
       "ariaLabelDismiss": "Cerrar anuncio de llamadas con voz clonada"
     },
     "expressiveVoicesLaunch": {
       "text": "Llegan nuevas voces más expresivas, impulsadas por Gemini 3.1, con un control más preciso sobre el ritmo, las respiraciones, el tono, la velocidad y la intensidad.",
       "ctaLoggedIn": "Probar voces",
-      "ctaLoggedOut": "Iniciar sesion",
+      "ctaLoggedOut": "Iniciar sesión",
       "ariaLabelDismiss": "Cerrar anuncio de voces expresivas"
     }
   },

@@ -71,6 +71,6 @@ and call a character that speaks with it. Related notes:
       adding a "which languages can a cloned voice speak" FAQ.
 - [ ] Align the non-English FAQ sample range ("10 seconds to 5 minutes") with
       English ("at least 10 seconds").
-- [ ] Fix announcement typos: German "schliessen", Spanish "Iniciar sesion".
+- [x] Fix announcement typos: German "schliessen", Spanish "Iniciar sesion".
 - [ ] Keep cloned voices consistent across replies: sexycall #106.
 - [ ] Add Inworld voice effects to the Clone page editor: sexyvoice #675.
