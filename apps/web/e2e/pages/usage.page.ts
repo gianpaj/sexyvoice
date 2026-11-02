@@ -132,9 +132,9 @@ export class UsagePage {
       all: /^all$/i,
       api_tts: /^api tts$/i,
       api_voice_cloning: /^api voice cloning$/i,
-      audio_processing: /^audio processing$/i,
+      audio_processing: /^audio cleanup$/i,
       live_call: /^live call$/i,
-      tts: /^tts$/i,
+      tts: /^voice generation$/i,
       voice_cloning: /^voice cloning$/i,
     };
 
