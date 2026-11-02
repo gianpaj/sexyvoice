@@ -29,8 +29,10 @@ interface CharacterPickerProps {
   onOpen: (presetId: string) => void;
 }
 
+// auto-fit drops empty columns, so a short row of capped cards is centred.
+// Phones keep one full-width column.
 const GRID =
-  'grid grid-cols-[repeat(auto-fill,minmax(min(250px,100%),1fr))] gap-4';
+  'grid grid-cols-1 justify-center gap-4 sm:grid-cols-[repeat(auto-fit,minmax(250px,268px))]';
 
 function SectionHeading({ children, id }: { children: ReactNode; id: string }) {
   return (
