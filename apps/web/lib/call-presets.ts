@@ -89,9 +89,10 @@ export function mapCharacterToPreset(character: CharacterRow): Preset {
     voiceName: sessionConfig.audioReferenceId
       ? sessionConfig.voice
       : (voice?.name ?? undefined),
-    voiceSampleUrl:
-      ('sample_url' in character ? character.sample_url : null) ??
-      voice?.sample_url ??
-      undefined,
+    localizedSampleUrls:
+      'localized_sample_urls' in character
+        ? toStringRecord(character.localized_sample_urls)
+        : {},
+    voiceSampleUrl: voice?.sample_url ?? undefined,
   };
 }

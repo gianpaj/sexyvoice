@@ -100,7 +100,7 @@ export function CallPanel({
       ? t('clonedVoice')
       : callVoices.find((voice) => voice.name === voiceName)?.description;
   }
-  const sampleUrl = getPresetSampleUrl(preset);
+  const sampleUrl = getPresetSampleUrl(preset, pgState.language);
   const listenKey = `panel:${preset.id}`;
   const playing = player.playingKey === listenKey;
   const canRemix =

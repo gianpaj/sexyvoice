@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { type CharacterRow, mapCharacterToPreset } from '@/lib/call-presets';
+import { getPresetSampleUrl } from '@/lib/characters';
+
+const VOICE_SAMPLE = 'https://files.example/ara.mp3';
+const INTROS = {
+  de: 'https://files.example/characters/de/lily.mp3',
+  en: 'https://files.example/characters/en/lily.mp3',
+};
 
 const row = (overrides: Record<string, unknown> = {}) =>
   ({
@@ -8,34 +15,40 @@ const row = (overrides: Record<string, unknown> = {}) =>
     image: 'lily.webp',
     is_public: true,
     localized_descriptions: {},
+    localized_sample_urls: null,
     name: 'Lily',
     prompt_id: 'prompt',
     prompts: { type: 'call' },
-    sample_url: null,
     session_config: { voice: 'Ara' },
     sort_order: 0,
     voice_id: 'voice',
-    voices: { name: 'Ara', sample_url: 'https://files.example/ara.mp3' },
+    voices: { name: 'Ara', sample_url: VOICE_SAMPLE },
     ...overrides,
   }) as unknown as CharacterRow;
 
-describe('mapCharacterToPreset', () => {
-  it('plays the character sample when it has one', () => {
-    const preset = mapCharacterToPreset(
-      row({ sample_url: 'https://files.example/characters/lily.mp3' }),
-    );
-    expect(preset.voiceSampleUrl).toBe(
-      'https://files.example/characters/lily.mp3',
-    );
+describe('character samples', () => {
+  const lily = mapCharacterToPreset(row({ localized_sample_urls: INTROS }));
+
+  it('plays the intro in the call language', () => {
+    expect(getPresetSampleUrl(lily, 'de')).toBe(INTROS.de);
   });
 
-  it('falls back to the voice sample', () => {
-    expect(mapCharacterToPreset(row()).voiceSampleUrl).toBe(
-      'https://files.example/ara.mp3',
+  it('falls back to the English intro', () => {
+    expect(getPresetSampleUrl(lily, 'ja')).toBe(INTROS.en);
+  });
+
+  it('falls back to the voice sample without intros', () => {
+    expect(getPresetSampleUrl(mapCharacterToPreset(row()), 'de')).toBe(
+      VOICE_SAMPLE,
     );
-    const { sample_url: _, ...userRow } = row() as Record<string, unknown>;
+    const { localized_sample_urls: _, ...userRow } = row() as Record<
+      string,
+      unknown
+    >;
     expect(
-      mapCharacterToPreset(userRow as unknown as CharacterRow).voiceSampleUrl,
-    ).toBe('https://files.example/ara.mp3');
+      getPresetSampleUrl(
+        mapCharacterToPreset(userRow as unknown as CharacterRow),
+      ),
+    ).toBe(VOICE_SAMPLE);
   });
 });

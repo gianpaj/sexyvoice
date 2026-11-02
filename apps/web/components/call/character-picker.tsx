@@ -87,7 +87,9 @@ export function CharacterPicker({
             : undefined
         }
         onCall={() => onCall(preset.id)}
-        onListen={() => player.toggle(key, getPresetSampleUrl(preset))}
+        onListen={() =>
+          player.toggle(key, getPresetSampleUrl(preset, pgState.language))
+        }
         onOpen={() => onOpen(preset.id)}
         playing={player.playingKey === key}
         preset={preset}

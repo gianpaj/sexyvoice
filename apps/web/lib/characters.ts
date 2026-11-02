@@ -182,9 +182,20 @@ export function getPresetInstructions(
   );
 }
 
-/** Sample of the voice the character calls with. */
-export function getPresetSampleUrl(preset: Preset): string | null {
+/**
+ * Sample for a character's Play button: its saved voice, else its intro in
+ * the call language (or English), else the sample of its built-in voice.
+ */
+export function getPresetSampleUrl(
+  preset: Preset,
+  language = 'en',
+): string | null {
   const { audioReferenceId } = preset.sessionConfig;
   if (audioReferenceId) return savedVoiceSampleUrl(audioReferenceId);
-  return preset.voiceSampleUrl ?? null;
+  return (
+    preset.localizedSampleUrls?.[language] ??
+    preset.localizedSampleUrls?.en ??
+    preset.voiceSampleUrl ??
+    null
+  );
 }
