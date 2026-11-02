@@ -263,7 +263,7 @@
             },
             {
               "question": "Hvordan prissættes stemmekloning?",
-              "answer": "Det er gratis at gemme en stemme, når du har købt kreditter én gang eller betalt for et abonnement. Talegenerering bruger kreditter ud fra teksten; længere tekster bruger flere. Liveopkald bruger kreditter til opkaldstaksten. Dit dashboard og API deler samme saldo."
+              "answer": "Det er gratis at gemme en stemme, når du har købt kreditter én gang eller betalt for et abonnement. Tale med en klonet stemme bruger flere kreditter end vores standardstemmer, og længere tekster bruger flere. Liveopkald bruger kreditter til opkaldstaksten. Dit dashboard og API deler samme saldo."
             },
             {
               "question": "Hvilke sprog understøttes for stemmekloning?",

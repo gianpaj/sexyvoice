@@ -263,7 +263,7 @@
             },
             {
               "question": "Wie wird das Klonen von Stimmen berechnet?",
-              "answer": "Das Speichern einer Stimme ist nach einer einmaligen Credit-Aufladung oder einer Abonnementzahlung kostenlos. Die Spracherzeugung verbraucht Credits je nach Text; längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben."
+              "answer": "Das Speichern einer Stimme ist nach einer einmaligen Credit-Aufladung oder einer Abonnementzahlung kostenlos. Sprache mit einer geklonten Stimme verbraucht mehr Credits als mit unseren Standardstimmen. Längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben."
             },
             {
               "question": "Welche Sprachen werden für das Stimmklonen unterstützt?",

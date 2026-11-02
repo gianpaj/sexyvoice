@@ -263,7 +263,7 @@
             },
             {
               "question": "¿Cómo se cobra la clonación de voz?",
-              "answer": "Guardar una voz es gratis después de una recarga o un pago de suscripción. Generar voz consume créditos según el texto; los textos más largos consumen más. Las llamadas en directo se cobran a la tarifa de llamadas. El panel y la API comparten el mismo saldo."
+              "answer": "Guardar una voz es gratis después de una recarga o un pago de suscripción. Generar audio con una voz clonada consume más créditos que con nuestras voces estándar, y los textos más largos consumen más. Las llamadas en directo se cobran a la tarifa de llamadas. El panel y la API comparten el mismo saldo."
             },
             {
               "question": "¿Qué idiomas soporta la clonación de voz?",

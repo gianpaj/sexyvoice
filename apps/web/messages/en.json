@@ -263,7 +263,7 @@
             },
             {
               "question": "How is voice cloning priced?",
-              "answer": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech uses credits based on your text; longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
+              "answer": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
             },
             {
               "question": "Which languages are supported for Voice Cloning?",

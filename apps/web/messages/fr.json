@@ -263,7 +263,7 @@
             },
             {
               "question": "Comment est tarifé le clonage vocal ?",
-              "answer": "Enregistrer une voix est gratuit après une recharge ou un paiement d'abonnement. Générer de la parole utilise des crédits selon le texte ; les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde."
+              "answer": "Enregistrer une voix est gratuit après une recharge ou un paiement d'abonnement. Générer de la parole avec une voix clonée utilise plus de crédits que nos voix standard, et les textes longs en consomment plus. Les appels en direct sont facturés au tarif des appels. Le tableau de bord et l'API partagent le même solde."
             },
             {
               "question": "Quelles langues sont supportées pour le clonage vocal ?",

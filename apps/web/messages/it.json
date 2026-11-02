@@ -263,7 +263,7 @@
             },
             {
               "question": "Come viene calcolato il prezzo della clonazione vocale?",
-              "answer": "Salvare una voce è gratis dopo una ricarica o un pagamento di abbonamento. Generare il parlato consuma crediti in base al testo; i testi più lunghi ne consumano di più. Le chiamate live usano la tariffa delle chiamate. Dashboard e API condividono lo stesso saldo."
+              "answer": "Salvare una voce è gratis dopo una ricarica o un pagamento di abbonamento. Generare il parlato con una voce clonata consuma più crediti rispetto alle nostre voci standard, e i testi più lunghi ne consumano di più. Le chiamate live usano la tariffa delle chiamate. Dashboard e API condividono lo stesso saldo."
             },
             {
               "question": "Quali lingue supporta la clonazione vocale?",
