@@ -3,10 +3,12 @@
 import { useState } from 'react';
 
 import { AudioGenerator } from '@/components/audio-generator';
-import { VoiceSelector } from '@/components/voice-selector';
+import { AudioProvider } from '@/components/audio-provider';
+import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
+import { VoiceSettingsCard } from '@/components/voice-settings-card';
+import { useGenerationSettings } from '@/hooks/use-generation-settings';
 import { getTtsProvider } from '@/lib/utils';
-import { getFeaturedVoice } from '@/lib/voices';
-import { AudioProvider } from '../clone/audio-provider';
+import { compareVoices, getFeaturedVoice } from '@/lib/voices';
 
 interface GenerateUIProps {
   hasEnoughCredits: boolean;
@@ -22,19 +24,28 @@ export function GenerateUI({
   hasEnoughCredits,
   isPaidUser,
 }: GenerateUIProps) {
-  const initialVoiceId =
-    getFeaturedVoice(publicVoices)?.id || publicVoices[0]?.id || '';
+  // One order for the picker and the default voice; see compareVoices.
+  const voices = [...publicVoices].sort(compareVoices);
+  const initialVoiceId = getFeaturedVoice(voices)?.id || voices[0]?.id || '';
   const [selectedVoice, setSelectedVoice] = useState(initialVoiceId);
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
-  const selectedVoiceSample = publicVoices.find(
-    (file) => file.id === selectedVoice,
-  );
+  const { settings, updateSettings, resetSettings } = useGenerationSettings();
+  const selectedVoiceSample = voices.find((file) => file.id === selectedVoice);
   const isGeminiVoice = getTtsProvider(selectedVoiceSample?.model) === 'gemini';
   return (
     <div className="flex flex-col gap-6">
-      <VoiceSelector
+      <div className="flex justify-end">
+        <GenerationSettingsPanel
+          isPaidUser={isPaidUser}
+          resetSettings={resetSettings}
+          selectedVoice={selectedVoiceSample}
+          settings={settings}
+          updateSettings={updateSettings}
+        />
+      </div>
+      <VoiceSettingsCard
         isPaidUser={isPaidUser}
-        publicVoices={publicVoices}
+        publicVoices={voices}
         selectedStyle={isGeminiVoice ? selectedStyle : undefined}
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}
@@ -46,6 +57,7 @@ export function GenerateUI({
           isPaidUser={isPaidUser}
           selectedStyle={isGeminiVoice ? selectedStyle : undefined}
           selectedVoice={selectedVoiceSample}
+          settings={settings}
         />
       </AudioProvider>
     </div>

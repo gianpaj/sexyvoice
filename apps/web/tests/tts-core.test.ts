@@ -12,9 +12,11 @@ import {
   generateGeminiAudio,
   getGeminiProviderFailure,
   isAbortError,
-  selectGeminiModel,
 } from '@/lib/tts/gemini';
-import { buildStyledText } from '@/lib/tts/prompt';
+import {
+  buildGeminiTtsPrompt,
+  resolveGeminiTtsModel,
+} from '@/lib/tts/gemini-prompt';
 
 const audioResponse = (
   finishReason: FinishReason | undefined,
@@ -42,13 +44,12 @@ const audioResponse = (
     ...(blockReason ? { promptFeedback: { blockReason } } : {}),
   }) as unknown as GenerateContentResponse;
 
-describe('buildStyledText', () => {
+describe('buildGeminiTtsPrompt', () => {
   it('labels style and transcript for gpro31', () => {
     expect(
-      buildStyledText({
-        dbModel: 'gpro31',
-        isGeminiVoice: true,
-        style: 'whisper',
+      buildGeminiTtsPrompt({
+        model: 'gpro31',
+        styleVariant: 'whisper',
         text: 'hello',
       }),
     ).toBe("### DIRECTOR'S NOTES\nStyle: whisper\n\n## TRANSCRIPT\nhello");
@@ -56,55 +57,42 @@ describe('buildStyledText', () => {
 
   it('uses an inline prefix for non-3.1 gemini models', () => {
     expect(
-      buildStyledText({
-        dbModel: 'gpro',
-        isGeminiVoice: true,
-        style: 'angry',
+      buildGeminiTtsPrompt({
+        model: 'gpro',
+        styleVariant: 'angry',
         text: 'hello',
       }),
     ).toBe('angry: hello');
   });
 
-  it('returns the raw text when not a gemini voice', () => {
-    expect(
-      buildStyledText({
-        dbModel: 'xai',
-        isGeminiVoice: false,
-        style: 'angry',
-        text: 'hello',
-      }),
-    ).toBe('hello');
-  });
-
   it('returns the raw text when no style is given', () => {
     expect(
-      buildStyledText({
-        dbModel: 'gpro31',
-        isGeminiVoice: true,
+      buildGeminiTtsPrompt({
+        model: 'gpro31',
         text: 'hello',
       }),
     ).toBe('hello');
   });
 });
 
-describe('selectGeminiModel', () => {
+describe('resolveGeminiTtsModel', () => {
   it('returns 2.5 flash for free gpro users', () => {
-    expect(selectGeminiModel({ dbModel: 'gpro', userHasPaid: false })).toBe(
+    expect(resolveGeminiTtsModel({ model: 'gpro', userHasPaid: false })).toBe(
       GEMINI_FLASH_MODEL,
     );
   });
 
   it('returns 3.1 for gpro31 regardless of tier (free taste of 3.1)', () => {
-    expect(selectGeminiModel({ dbModel: 'gpro31', userHasPaid: false })).toBe(
+    expect(resolveGeminiTtsModel({ model: 'gpro31', userHasPaid: false })).toBe(
       'gemini-3.1-flash-tts-preview',
     );
-    expect(selectGeminiModel({ dbModel: 'gpro31', userHasPaid: true })).toBe(
+    expect(resolveGeminiTtsModel({ model: 'gpro31', userHasPaid: true })).toBe(
       'gemini-3.1-flash-tts-preview',
     );
   });
 
   it('returns the pro model for paid gpro', () => {
-    expect(selectGeminiModel({ dbModel: 'gpro', userHasPaid: true })).toBe(
+    expect(resolveGeminiTtsModel({ model: 'gpro', userHasPaid: true })).toBe(
       'gemini-2.5-pro-preview-tts',
     );
   });
@@ -137,6 +125,21 @@ describe('classifyGeminiAudio', () => {
     const result = classifyGeminiAudio(audioResponse(FinishReason.STOP, false));
     expect(result.errorCode).toBe('NO_AUDIO_DATA');
     expect(result.isNoAudioData).toBe(true);
+  });
+
+  it.each([FinishReason.SAFETY, FinishReason.BLOCKLIST, FinishReason.SPII])(
+    'classifies %s as a content block',
+    (reason) => {
+      expect(classifyGeminiAudio(audioResponse(reason, false)).errorCode).toBe(
+        'PROHIBITED_CONTENT',
+      );
+    },
+  );
+
+  it('classifies OTHER without audio as a retryable no-audio response', () => {
+    expect(
+      classifyGeminiAudio(audioResponse(FinishReason.OTHER, false)).errorCode,
+    ).toBe('NO_AUDIO_DATA');
   });
 
   it('flags other non-STOP finish reasons as a generic block', () => {
@@ -177,7 +180,7 @@ describe('generateGeminiAudio', () => {
     const result = await generateGeminiAudio({
       ai,
       primaryModel: 'gemini-2.5-pro-preview-tts',
-      text: 'hi',
+      contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
       config: {},
     });
 
@@ -197,7 +200,7 @@ describe('generateGeminiAudio', () => {
     const result = await generateGeminiAudio({
       ai,
       primaryModel: 'gemini-2.5-pro-preview-tts',
-      text: 'hi',
+      contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
       config: {},
     });
 
@@ -215,11 +218,39 @@ describe('generateGeminiAudio', () => {
       generateGeminiAudio({
         ai,
         primaryModel: GEMINI_FLASH_MODEL,
-        text: 'hi',
+        contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
         config: {},
       }),
     ).rejects.toBe(primaryError);
     expect(generateContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves 3.8 speech metadata and never retries its extended voices on 2.5', async () => {
+    const providerError = new Error('3.8 unavailable');
+    const generateContent = vi.fn().mockRejectedValue(providerError);
+    const contents = [
+      {
+        role: 'user',
+        parts: [{ text: 'Hola', speechMetadata: { style: 'Paciente' } }],
+      },
+    ];
+    const config = {
+      speechConfig: { voiceConfig: { voice: 'es-es-tutor-12' } },
+    };
+
+    await expect(
+      generateGeminiAudio({
+        ai: makeAi(generateContent),
+        primaryModel: 'gemini-3.8-flash-tts',
+        contents,
+        config,
+      }),
+    ).rejects.toBe(providerError);
+    expect(generateContent).toHaveBeenCalledExactlyOnceWith({
+      model: 'gemini-3.8-flash-tts',
+      contents,
+      config,
+    });
   });
 
   it('rethrows aborts without attempting the fallback', async () => {
@@ -232,7 +263,7 @@ describe('generateGeminiAudio', () => {
       generateGeminiAudio({
         ai,
         primaryModel: 'gemini-2.5-pro-preview-tts',
-        text: 'hi',
+        contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
         config: {},
       }),
     ).rejects.toBe(abortError);
@@ -251,7 +282,7 @@ describe('generateGeminiAudio', () => {
     const error = await generateGeminiAudio({
       ai,
       primaryModel: 'gemini-2.5-pro-preview-tts',
-      text: 'hi',
+      contents: [{ role: 'user', parts: [{ text: 'hi' }] }],
       config: {},
     }).catch((e) => e);
 
@@ -264,7 +295,7 @@ describe('generateGeminiAudio', () => {
 describe('getGeminiProviderFailure', () => {
   it('returns null for non-provider errors', () => {
     expect(
-      getGeminiProviderFailure(new Error('boom'), new Error('bang')),
+      getGeminiProviderFailure([new Error('boom'), new Error('bang')]),
     ).toBeNull();
   });
 });

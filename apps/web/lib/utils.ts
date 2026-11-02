@@ -23,8 +23,8 @@ export function formatDate(
 ): string {
   const date = new Date(input);
   return date.toLocaleDateString('en-US', {
-    month: 'long',
     day: 'numeric',
+    month: 'long',
     year: 'numeric',
     ...(withTime && {
       hour: '2-digit',
@@ -48,6 +48,8 @@ const GROK_TTS_DOLLARS_PER_MILLION_CHARS = 4.2;
 // so free users get 3.1 audio for the price of 2.5. Charge them double for 3.1
 // voices to compensate. Paid users run 2.5 Pro for `gpro` (same cost as 3.1),
 // so they are not affected.
+// Gemini 3.8 (`gpro38`) has no free-tier surcharge, including after Google's
+// promotional rate ends on 2027-01-01. That is a product decision, not a gap.
 const GEMINI_31_FREE_CREDIT_MULTIPLIER = 2;
 
 // `model` may be the stored voice token (`gpro31`), used by the estimate and the
@@ -66,7 +68,7 @@ function getGemini31FreeMultiplier(
 }
 
 export function getTtsProvider(model?: string): TtsProvider {
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     return 'gemini';
   }
 
@@ -125,7 +127,7 @@ function getCreditMultiplier(
       break;
   }
 
-  if (model === 'gpro' || model === 'gpro31') {
+  if (model === 'gpro' || model === 'gpro31' || model === 'gpro38') {
     multiplier = GEMINI_CREDIT_MULTIPLIER;
   }
 
@@ -249,10 +251,6 @@ export function calculateCreditsFromTokens(
   return Math.ceil(normalizedTokens * CREDITS_PER_TOKEN * multiplier);
 }
 
-export function capitalizeFirstLetter(str: string) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 /**
  * Redirects to a specified path with an encoded message as a query parameter.
  * @param {('error' | 'success')} type - The type of message, either 'error' or 'success'.
@@ -296,8 +294,8 @@ export function extractMetadata(
       return;
     }
     return {
-      promptTokenCount: metadata.promptTokenCount.toString(),
       candidatesTokenCount: metadata.candidatesTokenCount.toString(),
+      promptTokenCount: metadata.promptTokenCount.toString(),
       totalTokenCount: metadata.totalTokenCount.toString(),
     } as const;
   }
@@ -312,17 +310,16 @@ export function extractMetadata(
 }
 
 export const ERROR_CODES = {
-  THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
   FREE_QUOTA_EXCEEDED: 'FREE_QUOTA_EXCEEDED',
-  PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
-  OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
-  NO_AUDIO_DATA: 'NO_AUDIO_DATA',
   GEMINI_INPUT_TOO_LONG: 'GEMINI_INPUT_TOO_LONG',
-  REPLICATE_ERROR: 'REPLICATE_ERROR',
-  XAI_TTS_ERROR: 'XAI_TTS_ERROR',
-  GEMINI_PROVIDER_UNAVAILABLE: 'GEMINI_PROVIDER_UNAVAILABLE',
-  PROVIDER_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
+  NO_AUDIO_DATA: 'NO_AUDIO_DATA',
+  OTHER_GEMINI_BLOCK: 'OTHER_GEMINI_BLOCK',
+  PROHIBITED_CONTENT: 'PROHIBITED_CONTENT',
+  PROVIDER_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',
+  REPLICATE_ERROR: 'REPLICATE_ERROR',
+  THIRD_P_QUOTA_EXCEEDED: 'THIRD_P_QUOTA_EXCEEDED',
+  XAI_TTS_ERROR: 'XAI_TTS_ERROR',
 } as const;
 
 /**
@@ -332,17 +329,16 @@ export const ERROR_CODES = {
  * - 503: Service temporarily unavailable (quota exceeded / transient upstream)
  */
 const ERROR_STATUS_CODES: Record<keyof typeof ERROR_CODES, number> = {
-  PROHIBITED_CONTENT: 422,
   FREE_QUOTA_EXCEEDED: 503,
-  OTHER_GEMINI_BLOCK: 500,
-  NO_AUDIO_DATA: 503,
   GEMINI_INPUT_TOO_LONG: 400,
-  REPLICATE_ERROR: 500,
-  XAI_TTS_ERROR: 500,
-  GEMINI_PROVIDER_UNAVAILABLE: 503,
-  PROVIDER_UNAVAILABLE: 503,
-  THIRD_P_QUOTA_EXCEEDED: 503,
   INTERNAL_SERVER_ERROR: 500,
+  NO_AUDIO_DATA: 503,
+  OTHER_GEMINI_BLOCK: 500,
+  PROHIBITED_CONTENT: 422,
+  PROVIDER_UNAVAILABLE: 503,
+  REPLICATE_ERROR: 500,
+  THIRD_P_QUOTA_EXCEEDED: 503,
+  XAI_TTS_ERROR: 500,
 };
 
 export const getErrorStatusCode = (
@@ -358,21 +354,27 @@ export const getErrorMessage = (
   errorCode: keyof typeof ERROR_CODES | unknown,
   service: string,
 ) => {
-  const errorMessages: Record<
-    keyof typeof ERROR_CODES,
-    { [key: string]: string }
+  // PROVIDER_UNAVAILABLE is intentionally absent because its message requires
+  // provider interpolation. Server routes use getProviderUnavailableMessage().
+  const errorMessages: Partial<
+    Record<keyof typeof ERROR_CODES, { [key: string]: string }>
   > = {
-    // INVALID_API_KEY: {
-    //   default: 'The provided API key is invalid.',
-    //   'voice-generation': 'The voice generation API key is invalid.',
-    // },
-    THIRD_P_QUOTA_EXCEEDED: {
-      default:
-        'We have exceeded our third-party API current quota, please try later or tomorrow',
-    },
     FREE_QUOTA_EXCEEDED: {
       default:
         'Free users have exceeded the quota. Please try tomorrow or upgrade your account to continue',
+    },
+    GEMINI_INPUT_TOO_LONG: {
+      default:
+        'Your text is too long for this voice. Please shorten it or use Split mode.',
+    },
+    INTERNAL_SERVER_ERROR: {
+      default: 'An internal server error occurred. Please try again later.',
+    },
+    NO_AUDIO_DATA: {
+      default: 'Voice generation returned no audio, please retry',
+    },
+    OTHER_GEMINI_BLOCK: {
+      default: 'Voice generation failed, please retry',
     },
     // UNAUTHORIZED: {
     //   default: 'You are not authorized to perform this action.',
@@ -386,33 +388,19 @@ export const getErrorMessage = (
       default:
         'Content generation prohibited. Please modify your text input and try again',
     },
-    OTHER_GEMINI_BLOCK: {
-      default: 'Voice generation failed, please retry',
-    },
-    NO_AUDIO_DATA: {
-      default: 'Voice generation returned no audio, please retry',
-    },
-    GEMINI_INPUT_TOO_LONG: {
-      default:
-        'Your text is too long for this voice. Please shorten it or use Split mode.',
-    },
     REPLICATE_ERROR: {
       default: 'Voice generation failed, please retry',
     },
+    // INVALID_API_KEY: {
+    //   default: 'The provided API key is invalid.',
+    //   'voice-generation': 'The voice generation API key is invalid.',
+    // },
+    THIRD_P_QUOTA_EXCEEDED: {
+      default:
+        'We have exceeded our third-party API current quota, please try later or tomorrow',
+    },
     XAI_TTS_ERROR: {
       default: 'Voice generation failed, please retry',
-    },
-    GEMINI_PROVIDER_UNAVAILABLE: {
-      default:
-        'Voice generation service temporarily unavailable. Please retry.',
-    },
-    PROVIDER_UNAVAILABLE: {
-      default: 'Provider is temporarily unavailable. Please try again.',
-      'voice-cloning':
-        'Voice cloning provider is temporarily unavailable. Please try again.',
-    },
-    INTERNAL_SERVER_ERROR: {
-      default: 'An internal server error occurred. Please try again later.',
     },
   };
 

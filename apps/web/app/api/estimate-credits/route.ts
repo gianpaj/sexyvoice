@@ -3,9 +3,11 @@ import { NextResponse } from 'next/server';
 
 import { getCharactersLimit } from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import {
+  buildGeminiTtsContents,
   buildGeminiTtsPrompt,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -44,7 +46,7 @@ async function validateRequestBody(
       };
     }
 
-    return { ok: true, data: { text, voiceId, styleVariant } };
+    return { data: { styleVariant, text, voiceId }, ok: true };
   } catch (error) {
     if (error instanceof SyntaxError) {
       return {
@@ -58,17 +60,16 @@ async function validateRequestBody(
 
 async function validateUser(): Promise<ValidationResult<{ id: string }>> {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!user) {
+  if (!claims?.sub) {
     return {
       ok: false,
       response: APIErrorResponse('User not found', 401),
     };
   }
 
-  return { ok: true, data: user };
+  return { data: { id: claims.sub }, ok: true };
 }
 
 async function validateVoice(
@@ -95,7 +96,7 @@ async function validateVoice(
     };
   }
 
-  return { ok: true, data: voiceObj };
+  return { data: voiceObj, ok: true };
 }
 
 function validateTextLength(
@@ -115,7 +116,7 @@ function validateTextLength(
     };
   }
 
-  return { ok: true, data: null };
+  return { data: null, ok: true };
 }
 
 function validateApiKey(): ValidationResult<string> {
@@ -128,7 +129,7 @@ function validateApiKey(): ValidationResult<string> {
     };
   }
 
-  return { ok: true, data: apiKey };
+  return { data: apiKey, ok: true };
 }
 
 export async function POST(request: Request) {
@@ -174,7 +175,7 @@ export async function POST(request: Request) {
     // Build the exact same prompt and target the same model the generation
     // route will use, so the token count reflects the real request. The model
     // and prompt format differ by voice (gpro31 vs gpro) and by user tier.
-    const finalText = buildGeminiTtsPrompt({ model, text, styleVariant });
+    const finalText = buildGeminiTtsPrompt({ model, styleVariant, text });
     const estimateModel = resolveGeminiTtsModel({
       model,
       userHasPaid: isPaidUser,
@@ -182,8 +183,12 @@ export async function POST(request: Request) {
     const ai = new GoogleGenAI({ apiKey: apiKeyResult.data });
 
     const tokenResponse = await ai.models.countTokens({
+      contents: buildGeminiTtsContents({
+        model,
+        styleVariant,
+        text: finalText,
+      }),
       model: estimateModel,
-      contents: [{ parts: [{ text: finalText }], role: 'user' }],
     });
 
     const inputTokens = tokenResponse.totalTokens ?? 0;
@@ -192,7 +197,7 @@ export async function POST(request: Request) {
     // Characters per second ~ 15 (faster speech)
     // Tokens per second of audio ~ 32 (based on documentation)
     const CHARACTERS_PER_SECOND = 15;
-    const TOKENS_PER_SECOND = 32;
+    const TOKENS_PER_SECOND = model === 'gpro38' ? 25 : 32;
 
     // Base the audio-duration estimate on the full spoken payload. For gpro31
     // the style is delivered as direction (it shapes pacing/delivery), so the
@@ -216,8 +221,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({
-      tokens: totalEstimatedTokens,
       estimatedCredits: credits,
+      tokens: totalEstimatedTokens,
     });
   } catch (error) {
     console.error('Estimate credits error:', error);

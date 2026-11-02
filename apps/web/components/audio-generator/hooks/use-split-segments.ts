@@ -56,8 +56,8 @@ export function useSplitSegments({
     }
     setSplitStorageKey('');
     let cancelled = false;
-    buildSplitStorageKey(selectedVoiceName, text, generationContext).then(
-      (key) => {
+    buildSplitStorageKey(selectedVoiceName, text, generationContext)
+      .then((key) => {
         if (!cancelled) {
           // Remove the old localStorage entry when the key changes to prevent
           // unbounded growth from unique text hashes accumulating over time.
@@ -68,8 +68,8 @@ export function useSplitSegments({
           prevSplitStorageKeyRef.current = key;
           setSplitStorageKey(key);
         }
-      },
-    );
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -83,10 +83,10 @@ export function useSplitSegments({
     }
 
     const baseSegments = splitSegmentTexts.map((segmentText) => ({
-      id: getStableId(segmentText),
-      text: segmentText,
-      status: 'idle' as const,
       audioUrl: '',
+      id: getStableId(segmentText),
+      status: 'idle' as const,
+      text: segmentText,
     }));
 
     if (typeof window === 'undefined') {
@@ -121,8 +121,8 @@ export function useSplitSegments({
           if (cachedUrl) {
             return {
               ...segment,
-              status: 'success' as const,
               audioUrl: cachedUrl,
+              status: 'success' as const,
             };
           }
           return segment;
@@ -134,8 +134,8 @@ export function useSplitSegments({
         ) {
           return {
             ...segment,
-            status: 'success' as const,
             audioUrl: persistedSegment.audioUrl,
+            status: 'success' as const,
           };
         }
 
@@ -143,8 +143,8 @@ export function useSplitSegments({
         if (cachedUrl) {
           return {
             ...segment,
-            status: 'success' as const,
             audioUrl: cachedUrl,
+            status: 'success' as const,
           };
         }
 
@@ -174,12 +174,12 @@ export function useSplitSegments({
     }
 
     const payload: PersistedSplitSegments = {
-      segments: splitSegments.map((segment) => ({
-        text: segment.text,
-        status: segment.status,
-        audioUrl: segment.audioUrl || undefined,
-      })),
       generatedByText: splitGeneratedByText,
+      segments: splitSegments.map((segment) => ({
+        audioUrl: segment.audioUrl || undefined,
+        status: segment.status,
+        text: segment.text,
+      })),
     };
 
     window.localStorage.setItem(splitStorageKey, JSON.stringify(payload));
@@ -200,7 +200,7 @@ export function useSplitSegments({
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
         currentIndex === index
-          ? { ...item, status: 'generating', audioUrl: '' }
+          ? { ...item, audioUrl: '', status: 'generating' }
           : item,
       ),
     );
@@ -214,7 +214,7 @@ export function useSplitSegments({
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
         currentIndex === index
-          ? { ...item, status: 'success', audioUrl: url }
+          ? { ...item, audioUrl: url, status: 'success' }
           : item,
       ),
     );
@@ -228,7 +228,7 @@ export function useSplitSegments({
     setSplitSegments((current) =>
       current.map((item, currentIndex) =>
         currentIndex === index
-          ? { ...item, status: 'idle', audioUrl: '' }
+          ? { ...item, audioUrl: '', status: 'idle' }
           : item,
       ),
     );
@@ -256,29 +256,29 @@ export function useSplitSegments({
         if (cachedUrl) {
           return {
             ...item,
-            text: nextText,
-            status: 'success',
             audioUrl: cachedUrl,
+            status: 'success',
+            text: nextText,
           };
         }
 
         return {
           ...item,
-          text: nextText,
-          status: 'idle',
           audioUrl: '',
+          status: 'idle',
+          text: nextText,
         };
       }),
     );
   };
 
   return {
-    splitSegments,
     allSegmentsGenerated,
+    markSegmentFailed,
     markSegmentGenerating,
     markSegmentIdle,
     markSegmentSuccess,
-    markSegmentFailed,
+    splitSegments,
     updateSegmentText,
   };
 }

@@ -104,6 +104,8 @@ export function useFloatingElement(
   }, [reference, refs]);
 
   return {
+    getFloatingProps,
+    getReferenceProps,
     isMounted,
     ref: refs.setFloating,
     style: {
@@ -111,7 +113,5 @@ export function useFloatingElement(
       ...floatingStyles,
       zIndex,
     },
-    getFloatingProps,
-    getReferenceProps,
   };
 }

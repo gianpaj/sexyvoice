@@ -1,8 +1,9 @@
+import { captureException } from '@sentry/nextjs';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/v1/speech/route';
-import { saveAudioFileAdmin } from '@/lib/supabase/queries';
+import { restoreCredits, saveAudioFileAdmin } from '@/lib/supabase/queries';
 import {
   mockReplicateRun,
   mockUploadFileToR2,
@@ -16,17 +17,17 @@ import {
 // ---------------------------------------------------------------------------
 
 const mockValidateApiKey = vi.fn().mockResolvedValue({
-  userId: 'test-user-id',
   apiKeyId: 'test-api-key-id',
   keyHash: 'test-key-hash',
+  userId: 'test-user-id',
 });
 
 const mockUpdateApiKeyLastUsed = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('@/lib/api/auth', () => ({
-  validateApiKey: (...args: unknown[]) => mockValidateApiKey(...args),
   updateApiKeyLastUsed: (...args: unknown[]) =>
     mockUpdateApiKeyLastUsed(...args),
+  validateApiKey: (...args: unknown[]) => mockValidateApiKey(...args),
 }));
 
 const mockConsumeRateLimit = vi.fn().mockResolvedValue({
@@ -58,12 +59,12 @@ function speechRequest(
   authHeader = TEST_AUTH_HEADER,
 ) {
   return new Request('http://localhost/api/v1/speech', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: authHeader,
-    },
     body: JSON.stringify(body),
+    headers: {
+      authorization: authHeader,
+      'content-type': 'application/json',
+    },
+    method: 'POST',
   });
 }
 
@@ -77,9 +78,9 @@ describe('V1 Speech API Route', () => {
 
     // Reset to default successful responses
     mockValidateApiKey.mockResolvedValue({
-      userId: 'test-user-id',
       apiKeyId: 'test-api-key-id',
       keyHash: 'test-key-hash',
+      userId: 'test-user-id',
     });
     mockConsumeRateLimit.mockResolvedValue({
       allowed: true,
@@ -96,9 +97,9 @@ describe('V1 Speech API Route', () => {
   describe('Authentication', () => {
     it('should return 401 when authorization header is missing', async () => {
       const request = new Request('http://localhost/api/v1/speech', {
-        method: 'POST',
+        body: JSON.stringify({ input: 'Hello', model: 'xai', voice: 'eve' }),
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -112,7 +113,7 @@ describe('V1 Speech API Route', () => {
       mockValidateApiKey.mockResolvedValue(null);
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'xai', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -129,7 +130,7 @@ describe('V1 Speech API Route', () => {
       });
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'xai', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -138,13 +139,50 @@ describe('V1 Speech API Route', () => {
     });
   });
 
+  it.each(['gemini', 'replicate'])(
+    'refunds a cancelled %s request without reporting a server error',
+    async (provider) => {
+      const controller = new AbortController();
+      const abort = () => {
+        controller.abort();
+        throw new DOMException('The request was aborted', 'AbortError');
+      };
+      const generateContent = vi.fn().mockImplementation(abort);
+      if (provider === 'gemini') {
+        setMockGoogleGenAIFactory(() => ({
+          models: { countTokens: vi.fn(), generateContent },
+        }));
+      } else {
+        mockReplicateRun.mockImplementationOnce(abort);
+      }
+      const request = new Request(
+        speechRequest({
+          input: 'Hello',
+          model: provider === 'gemini' ? 'gpro' : 'orpheus',
+          voice: provider === 'gemini' ? 'kore' : 'tara',
+        }),
+        { signal: controller.signal },
+      );
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(499);
+      expect(restoreCredits).toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(mockUpdateApiKeyLastUsed).toHaveBeenCalledWith('test-key-hash');
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      if (provider === 'gemini')
+        expect(generateContent).toHaveBeenCalledTimes(1);
+    },
+  );
+
   // -------------------------------------------------------------------------
   // Input validation
   // -------------------------------------------------------------------------
   describe('Input Validation', () => {
     it('should return 400 for invalid model', async () => {
       const response = await POST(
-        speechRequest({ model: 'nonexistent', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'nonexistent', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -154,7 +192,7 @@ describe('V1 Speech API Route', () => {
 
     it('should return 400 when input is empty', async () => {
       const response = await POST(
-        speechRequest({ model: 'xai', input: '', voice: 'eve' }),
+        speechRequest({ input: '', model: 'xai', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -165,8 +203,8 @@ describe('V1 Speech API Route', () => {
     it('should return 404 when voice is not found', async () => {
       const response = await POST(
         speechRequest({
-          model: 'xai',
           input: 'Hello',
+          model: 'xai',
           voice: 'nonexistent-voice',
         }),
       );
@@ -193,8 +231,8 @@ describe('V1 Speech API Route', () => {
     it('should return 400 when voiceId is combined with voice and model', async () => {
       const response = await POST(
         speechRequest({
-          model: 'xai',
           input: 'Hello',
+          model: 'xai',
           voice: 'eve',
           voiceId: 'voice-eve-id',
         }),
@@ -217,25 +255,25 @@ describe('V1 Speech API Route', () => {
       expect(json.error.param).toBe('model');
     });
 
-    it('should return 400 when voice model does not match requested model', async () => {
+    it('should return 404 when the voice does not exist for the requested model', async () => {
       // eve is a grok voice, but requesting orpheus model
       const response = await POST(
-        speechRequest({ model: 'orpheus', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'orpheus', voice: 'eve' }),
       );
       const json = await response.json();
 
-      expect(response.status).toBe(400);
-      expect(json.error.code).toBe('model_not_found');
+      expect(response.status).toBe(404);
+      expect(json.error.code).toBe('voice_not_found');
     });
 
     it('should return 400 for unsupported response_format', async () => {
       // orpheus only supports mp3, requesting wav should fail
       const response = await POST(
         speechRequest({
-          model: 'orpheus',
           input: 'Hello',
-          voice: 'tara',
+          model: 'orpheus',
           response_format: 'wav',
+          voice: 'tara',
         }),
       );
       const json = await response.json();
@@ -252,55 +290,60 @@ describe('V1 Speech API Route', () => {
     it.each([
       ['gpro', 'kore', 'gemini-2.5-pro-preview-tts'],
       ['gpro31', 'achernar', 'gemini-3.1-flash-tts-preview'],
-    ] as const)('should generate Gemini speech for model "%s" using %s', async (model, voice, expectedGeminiModel) => {
-      const generateContent = vi.fn().mockResolvedValue({
-        candidates: [
-          {
-            content: {
-              parts: [
-                {
-                  inlineData: {
-                    data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
-                    mimeType: 'audio/wav',
+    ] as const)(
+      'should generate Gemini speech for model "%s" using %s',
+      async (model, voice, expectedGeminiModel) => {
+        const generateContent = vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                      mimeType: 'audio/wav',
+                    },
                   },
-                },
-              ],
+                ],
+              },
+              finishReason: 'STOP',
             },
-            finishReason: 'STOP',
+          ],
+          usageMetadata: {
+            candidatesTokenCount: 12,
+            promptTokenCount: 11,
+            totalTokenCount: 23,
           },
-        ],
-        usageMetadata: {
-          promptTokenCount: 11,
-          candidatesTokenCount: 12,
-          totalTokenCount: 23,
-        },
-      });
-      setMockGoogleGenAIFactory(() => ({
-        models: {
-          countTokens: vi.fn(),
-          generateContent,
-        },
-      }));
+        });
+        setMockGoogleGenAIFactory(() => ({
+          models: {
+            countTokens: vi.fn(),
+            generateContent,
+          },
+        }));
 
-      const response = await POST(
-        speechRequest({
-          model,
-          input: 'Hello from Gemini',
-          voice,
-        }),
-      );
-      const json = await response.json();
+        const response = await POST(
+          speechRequest({
+            input: 'Hello from Gemini',
+            model,
+            voice,
+          }),
+        );
+        const json = await response.json();
 
-      expect(response.status).toBe(200);
-      expect(generateContent).toHaveBeenCalledWith(
-        expect.objectContaining({
-          model: expectedGeminiModel,
-          contents: [{ parts: [{ text: 'Hello from Gemini' }], role: 'user' }],
-        }),
-      );
-      expect(json.url).toContain('.wav');
-      expect(json.usage.model).toBe(expectedGeminiModel);
-    });
+        expect(response.status).toBe(200);
+        expect(generateContent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            contents: [
+              { parts: [{ text: 'Hello from Gemini' }], role: 'user' },
+            ],
+            model: expectedGeminiModel,
+          }),
+        );
+        expect(json.url).toContain('.wav');
+        expect(json.usage.model).toBe(expectedGeminiModel);
+      },
+    );
 
     it('should generate Gemini speech from voiceId without voice or model', async () => {
       const generateContent = vi.fn().mockResolvedValue({
@@ -320,8 +363,8 @@ describe('V1 Speech API Route', () => {
           },
         ],
         usageMetadata: {
-          promptTokenCount: 11,
           candidatesTokenCount: 12,
+          promptTokenCount: 11,
           totalTokenCount: 23,
         },
       });
@@ -343,10 +386,10 @@ describe('V1 Speech API Route', () => {
       expect(response.status).toBe(200);
       expect(generateContent).toHaveBeenCalledWith(
         expect.objectContaining({
-          model: 'gemini-3.1-flash-tts-preview',
           contents: [
             { parts: [{ text: 'Hello from a voice ID' }], role: 'user' },
           ],
+          model: 'gemini-3.1-flash-tts-preview',
         }),
       );
       expect(json.url).toContain('achernar-');
@@ -356,8 +399,8 @@ describe('V1 Speech API Route', () => {
     it('should generate Orpheus speech for model "orpheus"', async () => {
       const response = await POST(
         speechRequest({
-          model: 'orpheus',
           input: 'Hello from Orpheus',
+          model: 'orpheus',
           voice: 'tara',
         }),
       );
@@ -405,7 +448,7 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello world', voice: 'eve' }),
+        speechRequest({ input: 'Hello world', model: 'xai', voice: 'eve' }),
       );
       const json = await response.json();
 
@@ -420,6 +463,31 @@ describe('V1 Speech API Route', () => {
       expect(vi.mocked(saveAudioFileAdmin)).toHaveBeenCalledWith(
         expect.objectContaining({ duration: '12' }),
       );
+    });
+
+    it('should forward speed to the xAI TTS request for Grok voices', async () => {
+      server.use(
+        http.post('https://api.x.ai/v1/tts', async ({ request }) => {
+          const body = (await request.json()) as { speed?: number };
+
+          expect(body.speed).toBe(1.2);
+
+          return HttpResponse.arrayBuffer(new Uint8Array([1, 2, 3, 4]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          });
+        }),
+      );
+
+      const response = await POST(
+        speechRequest({
+          input: 'Hello world',
+          model: 'xai',
+          speed: 1.2,
+          voice: 'eve',
+        }),
+      );
+
+      expect(response.status).toBe(200);
     });
 
     it('should generate voice using Grok with wav format', async () => {
@@ -439,10 +507,10 @@ describe('V1 Speech API Route', () => {
 
       const response = await POST(
         speechRequest({
-          model: 'xai',
           input: 'Hello world',
-          voice: 'eve',
+          model: 'xai',
           response_format: 'wav',
+          voice: 'eve',
         }),
       );
       const json = await response.json();
@@ -463,10 +531,10 @@ describe('V1 Speech API Route', () => {
 
       const mp3Response = await POST(
         speechRequest({
-          model: 'xai',
           input: 'Hello',
-          voice: 'eve',
+          model: 'xai',
           response_format: 'mp3',
+          voice: 'eve',
         }),
       );
       expect(mp3Response.status).toBe(200);
@@ -487,12 +555,12 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hola mundo', voice: 'sal' }),
+        speechRequest({ input: 'Hola mundo', model: 'xai', voice: 'sal' }),
       );
       expect(response.status).toBe(200);
     });
 
-    it('should return 500 when xAI TTS request fails', async () => {
+    it('returns provider unavailable without capture when xAI TTS fails', async () => {
       server.use(
         http.post('https://api.x.ai/v1/tts', () =>
           HttpResponse.json(
@@ -503,12 +571,16 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'xai', voice: 'eve' }),
       );
       const json = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(json.error.code).toBe('server_error');
+      expect(response.status).toBe(503);
+      expect(json.error.code).toBe('provider_unavailable');
+      expect(json.error.message).toBe(
+        'Grok is temporarily unavailable. Please retry.',
+      );
+      expect(captureException).not.toHaveBeenCalled();
     });
 
     it('should include rate limit headers in response', async () => {
@@ -521,7 +593,7 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'xai', voice: 'eve' }),
       );
 
       expect(response.headers.get('X-RateLimit-Limit-Requests')).toBeDefined();
@@ -542,7 +614,7 @@ describe('V1 Speech API Route', () => {
       );
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'xai', voice: 'eve' }),
       );
 
       expect(response.status).toBe(200);
@@ -569,10 +641,10 @@ describe('V1 Speech API Route', () => {
 
       const response = await POST(
         speechRequest({
-          model: 'xai',
           input: 'Hello world',
-          voice: 'eve',
+          model: 'xai',
           style: 'happy',
+          voice: 'eve',
         }),
       );
 
@@ -590,7 +662,7 @@ describe('V1 Speech API Route', () => {
       vi.mocked(getCreditsAdmin).mockResolvedValueOnce(0);
 
       const response = await POST(
-        speechRequest({ model: 'xai', input: 'Hello', voice: 'eve' }),
+        speechRequest({ input: 'Hello', model: 'xai', voice: 'eve' }),
       );
       const json = await response.json();
 

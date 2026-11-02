@@ -26,7 +26,7 @@ export function calculateStartPosition(
     return cursorPosition;
   }
 
-  const textLength = commandText.substring(triggerCharIndex).length;
+  const textLength = commandText.slice(triggerCharIndex).length;
 
   return cursorPosition - textLength;
 }

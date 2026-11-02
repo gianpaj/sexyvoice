@@ -96,32 +96,32 @@ export function CliLoginClient({
 
   const handleContinue = async () => {
     dispatch({
-      type: 'patch',
       patch: {
-        isLoading: true,
         error: null,
+        isLoading: true,
       },
+      type: 'patch',
     });
 
     try {
       const response = await fetch('/api/cli-login-sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           api_key_id: isCreatingNew ? undefined : selectedKeyId,
           callback_url: callbackUrl,
           name: isCreatingNew ? newKeyName : undefined,
           state,
         }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
       });
       const json = await response.json();
       if (!response.ok) {
         dispatch({
-          type: 'patch',
           patch: {
             error: json.error ?? t('errors.startFailed'),
             isLoading: false,
           },
+          type: 'patch',
         });
         return;
       }
@@ -133,15 +133,14 @@ export function CliLoginClient({
         redirectUrl.protocol === 'http:' || redirectUrl.protocol === 'https:';
       if (!(isAllowedHost && isAllowedProtocol)) {
         dispatch({
-          type: 'patch',
           patch: { error: 'Invalid redirect target', isLoading: false },
+          type: 'patch',
         });
         return;
       }
       window.location.assign(json.redirect_url);
     } catch (caughtError) {
       dispatch({
-        type: 'patch',
         patch: {
           error:
             caughtError instanceof Error
@@ -149,6 +148,7 @@ export function CliLoginClient({
               : t('errors.startFailed'),
           isLoading: false,
         },
+        type: 'patch',
       });
     }
   };
@@ -182,11 +182,11 @@ export function CliLoginClient({
                     name="api-key"
                     onChange={() => {
                       dispatch({
-                        type: 'patch',
                         patch: {
-                          selectedKeyId: key.id,
                           isCreatingNew: false,
+                          selectedKeyId: key.id,
                         },
+                        type: 'patch',
                       });
                     }}
                     type="radio"
@@ -226,13 +226,13 @@ export function CliLoginClient({
                 }
 
                 dispatch({
-                  type: 'patch',
                   patch: {
                     isCreatingNew: next,
                     ...(!next && selectedKeyId.length === 0 && keys[0]?.id
                       ? { selectedKeyId: keys[0].id }
                       : {}),
                   },
+                  type: 'patch',
                 });
               }}
             />
@@ -247,8 +247,8 @@ export function CliLoginClient({
             disabled={!(isCreatingNew && hasCreateAccess)}
             onChange={(event) => {
               dispatch({
-                type: 'patch',
                 patch: { newKeyName: event.target.value },
+                type: 'patch',
               });
             }}
             placeholder={t('createNew.placeholder')}

@@ -1,5 +1,7 @@
 import type { GenerateContentResponse } from '@google/genai';
 
+import { getTtsProvider } from '@/lib/utils';
+
 /**
  * Gemini may return a text/safety part before the audio part, so scan all
  * candidates and parts for the first one carrying inline audio data instead
@@ -26,8 +28,24 @@ export function extractInlineAudio(response: GenerateContentResponse | null): {
 export const GEMINI_AUDIO_TAGS =
   '[cheerfully], [whispering], [laughing], [pause], [excited], [sadly], [nervously], [slowly], [fast], [breathily], [sighing], [giggling]';
 
-// Emotion tags for each voice based on language
-export const getEmotionTags = (language: string) => {
+// Gemini 3.8 inline vocal tags. English tags apply to every transcript language.
+// https://ai.google.dev/gemini-api/docs/speech-generation
+export const GEMINI_38_AUDIO_TAGS =
+  '<argh>, <breath>, <heavy breath>, <exhales>, <cackle>, <cheer>, <chuckle>, <chuckles>, <cough>, <cry>, <gasp>, <giggle>, <groan>, <growl>, <grunt>, <grr>, <hiss>, <laugh>, <laughter>, <moan>, <pant>, <pff>, <phew>, <scream>, <shout>, <shriek>, <sigh>, <sighs>, <sneeze>, <snicker>, <snort>, <sob>, <throat-clearing>, <tsk>, <whimper>, <whispers>, <whispering>, <yawn>, <short pause>, <long pause>';
+
+/**
+ * Inline emotion tags a voice understands, or undefined when the model has no
+ * inline tag set (Gemini 2.5, Gemini 3.1, Grok). Orpheus tags vary by language.
+ */
+export const getEmotionTags = ({
+  language,
+  model,
+}: {
+  language: string;
+  model: string;
+}) => {
+  if (model === 'gpro38') return GEMINI_38_AUDIO_TAGS;
+  if (getTtsProvider(model) !== 'replicate') return;
   if (language.startsWith('it-')) {
     return '<sigh>, <laugh>, <cough>, <sniffle>, <groan>, <yawn>, <gemito>, <gasp>';
   }
@@ -46,7 +64,12 @@ export const getCharactersLimit = (model: string, isPaidUser = false) => {
   if (!isPaidUser) {
     return DEFAULT_LIMIT;
   }
-  if (model === 'gpro' || model === 'gpro31' || model === 'xai') {
+  if (
+    model === 'gpro' ||
+    model === 'gpro31' ||
+    model === 'gpro38' ||
+    model === 'xai'
+  ) {
     return PAID_LIMIT;
   }
   return DEFAULT_LIMIT;

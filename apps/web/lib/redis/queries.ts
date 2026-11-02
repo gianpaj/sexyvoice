@@ -128,16 +128,16 @@ async function scanSubscriptions(): Promise<SubscriptionScanResult> {
   const mrrByPriceId = getSubscriptionMrrByPriceId();
   const acc: SubscriptionScanAccumulator = {
     activeCount: 0,
+    closestDueTime: Number.POSITIVE_INFINITY,
     mrr: 0,
     mrrUnknownCount: 0,
     nextDueSubscription: null,
-    closestDueTime: Number.POSITIVE_INFINITY,
   };
 
   do {
     const [nextCursor, keys]: [string, string[]] = await redis.scan(cursor, {
-      match: 'stripe:customer:*',
       count: 500, // hint: return ~500 keys per iteration instead of the default ~10
+      match: 'stripe:customer:*',
     });
     cursor = nextCursor;
 

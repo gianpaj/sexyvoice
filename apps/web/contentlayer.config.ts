@@ -43,115 +43,115 @@ const getSlug = (path: string) => {
 };
 
 const Post = defineDocumentType(() => ({
-  name: 'Post',
-  filePathPattern: 'posts/**/*.mdx',
-  contentType: 'mdx',
-  fields: {
-    title: {
-      type: 'string',
-      description: 'The title of the post',
-      required: true,
-    },
-    description: {
-      type: 'string',
-      description: 'The description of the post',
-      required: true,
-    },
-    author: {
-      type: 'string',
-      description: 'The author of the post',
-      required: false,
-    },
-    draft: {
-      type: 'boolean',
-      description: 'Whether the post is a draft',
-      required: false,
-    },
-    keywords: {
-      type: 'list',
-      of: { type: 'string' },
-      description: 'The keywords of the post',
-      required: false,
-    },
-    date: {
-      type: 'date',
-      description: 'The date of the post',
-      required: true,
-    },
-    image: {
-      type: 'string',
-      description: 'The image URL of the post',
-    },
-    displayImageCover: {
-      type: 'boolean',
-      description: 'Whether to display the image cover',
-      required: false,
-    },
-  },
   computedFields: {
     locale: {
-      type: 'string',
       resolve: (doc) => getLocale(doc._raw.sourceFilePath),
+      type: 'string',
     },
     slug: {
-      type: 'string',
       resolve: (doc) => getSlug(doc._raw.sourceFilePath),
-    },
-    url: {
       type: 'string',
-      resolve: (doc) => `/blog/${getSlug(doc._raw.sourceFilePath)}`,
     },
     slugAsParams: {
-      type: 'string',
       resolve: (doc) => getSlug(doc._raw.sourceFilePath),
+      type: 'string',
+    },
+    url: {
+      resolve: (doc) => `/blog/${getSlug(doc._raw.sourceFilePath)}`,
+      type: 'string',
     },
   },
+  contentType: 'mdx',
+  fields: {
+    author: {
+      description: 'The author of the post',
+      required: false,
+      type: 'string',
+    },
+    date: {
+      description: 'The date of the post',
+      required: true,
+      type: 'date',
+    },
+    description: {
+      description: 'The description of the post',
+      required: true,
+      type: 'string',
+    },
+    displayImageCover: {
+      description: 'Whether to display the image cover',
+      required: false,
+      type: 'boolean',
+    },
+    draft: {
+      description: 'Whether the post is a draft',
+      required: false,
+      type: 'boolean',
+    },
+    image: {
+      description: 'The image URL of the post',
+      type: 'string',
+    },
+    keywords: {
+      description: 'The keywords of the post',
+      of: { type: 'string' },
+      required: false,
+      type: 'list',
+    },
+    title: {
+      description: 'The title of the post',
+      required: true,
+      type: 'string',
+    },
+  },
+  filePathPattern: 'posts/**/*.mdx',
+  name: 'Post',
 }));
 
 const PolicyPage = defineDocumentType(() => ({
-  name: 'PolicyPage',
-  filePathPattern: 'policies/**/*.mdx',
-  contentType: 'mdx',
-  fields: {
-    title: {
-      type: 'string',
-      description: 'The page title',
-      required: true,
-    },
-    description: {
-      type: 'string',
-      description: 'Meta description for SEO',
-      required: false,
-    },
-    updated: {
-      type: 'string',
-      description: 'Last updated date text',
-      required: true,
-    },
-  },
   computedFields: {
     locale: {
-      type: 'string',
       resolve: (doc) => getLocale(doc._raw.sourceFilePath),
+      type: 'string',
     },
     slug: {
-      type: 'string',
       resolve: (doc) => getSlug(doc._raw.sourceFilePath),
+      type: 'string',
     },
     url: {
-      type: 'string',
       resolve: (doc) =>
         `/${getLocale(doc._raw.sourceFilePath)}/${getSlug(doc._raw.sourceFilePath)}`,
+      type: 'string',
     },
   },
+  contentType: 'mdx',
+  fields: {
+    description: {
+      description: 'Meta description for SEO',
+      required: false,
+      type: 'string',
+    },
+    title: {
+      description: 'The page title',
+      required: true,
+      type: 'string',
+    },
+    updated: {
+      description: 'Last updated date text',
+      required: true,
+      type: 'string',
+    },
+  },
+  filePathPattern: 'policies/**/*.mdx',
+  name: 'PolicyPage',
 }));
 
 export default makeSource({
-  contentDirPath: '.',
   contentDirInclude: ['posts', 'policies'],
+  contentDirPath: '.',
   documentTypes: [Post, PolicyPage],
   mdx: {
-    remarkPlugins: [remarkGfm],
     rehypePlugins: [rehypeHighlight, rehypeHighlightLines],
+    remarkPlugins: [remarkGfm],
   },
 });

@@ -49,6 +49,7 @@ import {
   grokTextToTipTapDoc,
   grokTipTapDocToText,
 } from '@/lib/tts-editor';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
@@ -81,25 +82,25 @@ function isKnownInstantTag(tag: string): tag is GrokInstantTag {
 }
 
 const XAI_LANGUAGE_OPTIONS = [
-  { value: 'ar-EG', label: 'langArabicEgypt' },
-  { value: 'ar-SA', label: 'langArabicSaudiArabia' },
-  { value: 'ar-AE', label: 'langArabicUnitedArabEmirates' },
-  { value: 'bn', label: 'langBengali' },
-  { value: 'zh', label: 'langChinese' },
-  { value: 'fr', label: 'langFrench' },
-  { value: 'de', label: 'langGerman' },
-  { value: 'hi', label: 'langHindi' },
-  { value: 'id', label: 'langIndonesian' },
-  { value: 'it', label: 'langItalian' },
-  { value: 'ja', label: 'langJapanese' },
-  { value: 'ko', label: 'langKorean' },
-  { value: 'pt-BR', label: 'langPortugueseBrazil' },
-  { value: 'pt-PT', label: 'langPortuguesePortugal' },
-  { value: 'ru', label: 'langRussian' },
-  { value: 'es-ES', label: 'langSpanishSpain' },
-  { value: 'es-MX', label: 'langSpanishMexico' },
-  { value: 'tr', label: 'langTurkish' },
-  { value: 'vi', label: 'langVietnamese' },
+  { label: 'langArabicEgypt', value: 'ar-EG' },
+  { label: 'langArabicSaudiArabia', value: 'ar-SA' },
+  { label: 'langArabicUnitedArabEmirates', value: 'ar-AE' },
+  { label: 'langBengali', value: 'bn' },
+  { label: 'langChinese', value: 'zh' },
+  { label: 'langFrench', value: 'fr' },
+  { label: 'langGerman', value: 'de' },
+  { label: 'langHindi', value: 'hi' },
+  { label: 'langIndonesian', value: 'id' },
+  { label: 'langItalian', value: 'it' },
+  { label: 'langJapanese', value: 'ja' },
+  { label: 'langKorean', value: 'ko' },
+  { label: 'langPortugueseBrazil', value: 'pt-BR' },
+  { label: 'langPortuguesePortugal', value: 'pt-PT' },
+  { label: 'langRussian', value: 'ru' },
+  { label: 'langSpanishSpain', value: 'es-ES' },
+  { label: 'langSpanishMexico', value: 'es-MX' },
+  { label: 'langTurkish', value: 'tr' },
+  { label: 'langVietnamese', value: 'vi' },
 ] as const;
 
 interface GrokTTSEditorProps {
@@ -207,6 +208,34 @@ function moveEditorSelectionToEnd(
   return selection;
 }
 
+interface AppliedEditorContent {
+  selection: EditorSelectionSnapshot;
+  text: string;
+}
+
+/**
+ * Replaces the document without re-entering `onUpdate`, and reports what the
+ * editor actually ended up with.
+ *
+ * `plainTextToDoc(text)` is only a request: ProseMirror coerces it to the
+ * schema and `AutoConvertGrokTags` can rewrite it again in an appended
+ * transaction, so the round trip is not guaranteed to be the identity. Because
+ * `emitUpdate: false` suppresses the update that used to report the result,
+ * callers must reconcile against the returned `text` rather than assume the
+ * text they passed in was applied verbatim.
+ */
+function applyEditorContent(
+  editor: EditorInstance,
+  text: string,
+): AppliedEditorContent {
+  editor.commands.setContent(plainTextToDoc(text), { emitUpdate: false });
+
+  return {
+    selection: moveEditorSelectionToEnd(editor),
+    text: grokTipTapDocToText(editor.getJSON()),
+  };
+}
+
 interface GrokSlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
@@ -223,10 +252,10 @@ function createInstantTagSuggestionItem(
   onSelect: () => void,
 ): SuggestionItem {
   return {
-    title: tag.label,
-    subtext: tag.description,
     keywords: [tag.label, tag.tag, tag.description],
     onSelect,
+    subtext: tag.description,
+    title: tag.label,
   };
 }
 
@@ -235,10 +264,10 @@ function createWrapperTagSuggestionItem(
   onSelect: () => void,
 ): SuggestionItem {
   return {
-    title: tag.label,
-    subtext: tag.description,
     keywords: [tag.label, tag.tag, tag.closeTag, tag.description],
     onSelect,
+    subtext: tag.description,
+    title: tag.label,
   };
 }
 
@@ -273,6 +302,7 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
             enabledItems: [],
             showGroups: false,
           }}
+          deleteQueryOnEscape={false}
           key={menu.pluginKey}
           pluginKey={menu.pluginKey}
         />
@@ -297,6 +327,7 @@ export function GrokTTSEditor({
   const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
+  const onChangeRef = useRef(onChange);
   const contentResetSelectionRef = useRef<EditorSelectionSnapshot | null>(null);
   const lastSelectionRef = useRef<EditorSelectionSnapshot>({
     empty: true,
@@ -307,10 +338,27 @@ export function GrokTTSEditor({
   useEffect(() => {
     charactersLimitRef.current = charactersLimit;
     enforceCharactersLimitRef.current = enforceCharactersLimit;
-  }, [charactersLimit, enforceCharactersLimit]);
+    onChangeRef.current = onChange;
+  }, [charactersLimit, enforceCharactersLimit, onChange]);
 
   const editor = useEditor({
-    immediatelyRender: false,
+    content: plainTextToDoc(value),
+    editorProps: {
+      attributes: {
+        'aria-label': placeholder ?? 'TTS editor',
+        'aria-multiline': 'true',
+        autoCorrect: 'false',
+        class:
+          'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
+        'data-testid': 'generate-textarea',
+        role: 'textbox',
+        spellCheck: 'false',
+      },
+      handleDOMEvents: {
+        keydown: () => false,
+      },
+      handleTextInput: () => false,
+    },
     extensions: [
       StarterKit.configure({
         blockquote: false,
@@ -328,8 +376,8 @@ export function GrokTTSEditor({
         strike: false,
       }),
       Placeholder.configure({
-        placeholder,
         emptyNodeClass: 'is-empty with-slash',
+        placeholder,
       }),
       InstantTag,
       WrapperBoundary,
@@ -337,23 +385,7 @@ export function GrokTTSEditor({
       AutoConvertGrokTags,
       UiState,
     ],
-    content: plainTextToDoc(value),
-    editorProps: {
-      attributes: {
-        'data-testid': 'generate-textarea',
-        'aria-label': placeholder ?? 'TTS editor',
-        role: 'textbox',
-        'aria-multiline': 'true',
-        class:
-          'min-h-[8rem] w-full bg-transparent text-sm leading-6 outline-none whitespace-pre-wrap break-words',
-        autoCorrect: 'false',
-        spellCheck: 'false',
-      },
-      handleDOMEvents: {
-        keydown: () => false,
-      },
-      handleTextInput: () => false,
-    },
+    immediatelyRender: false,
     onCreate: ({ editor: nextEditor }) => {
       lastSelectionRef.current = getEditorSelectionSnapshot(nextEditor);
     },
@@ -373,15 +405,19 @@ export function GrokTTSEditor({
     },
     onUpdate: ({ editor: nextEditor }) => {
       const fullText = grokTipTapDocToText(nextEditor.getJSON());
-      const text = enforceCharactersLimitRef.current
-        ? fullText.slice(0, charactersLimitRef.current + 10)
+      // Clamps user input only, mirroring `maxLength` on the other limited
+      // textareas. Text arriving from the parent is applied as given — see the
+      // content synchronization effect below.
+      const clampedText = enforceCharactersLimitRef.current
+        ? fullText.slice(0, charactersLimitRef.current + CHARACTERS_LIMIT_GRACE)
         : fullText;
+      let text = fullText;
 
-      if (text !== fullText) {
-        nextEditor.commands.setContent(plainTextToDoc(text));
-        const resetSelection = moveEditorSelectionToEnd(nextEditor);
-        lastSelectionRef.current = resetSelection;
-        contentResetSelectionRef.current = resetSelection;
+      if (clampedText !== fullText) {
+        const applied = applyEditorContent(nextEditor, clampedText);
+        lastSelectionRef.current = applied.selection;
+        contentResetSelectionRef.current = applied.selection;
+        text = applied.text;
       }
 
       setCurrentLength(text.length);
@@ -400,11 +436,30 @@ export function GrokTTSEditor({
       return;
     }
 
-    editor.commands.setContent(plainTextToDoc(value));
-    const resetSelection = moveEditorSelectionToEnd(editor);
-    lastSelectionRef.current = resetSelection;
-    contentResetSelectionRef.current = resetSelection;
-    setCurrentLength(value.length);
+    // Apply external values without character-limit clamping. audio-generator.tsx
+    // shares one text state between this editor and the non-Grok editor, and
+    // Split mode can temporarily disable enforcement. The red counter shows
+    // the overage, while textIsOverLimit in the parent blocks generation.
+    // The next user edit passes through onUpdate and clamps the document to the
+    // active limit plus grace.
+    const applied = applyEditorContent(editor, value);
+    lastSelectionRef.current = applied.selection;
+    contentResetSelectionRef.current = applied.selection;
+    setCurrentLength(applied.text.length);
+
+    // `applyEditorContent` suppresses the update that used to push the applied
+    // text back out, so reconcile here instead: when the editor clamps or
+    // normalizes what it was handed, the parent would otherwise keep a value
+    // that no longer matches the visible document. `applied.text` was read back
+    // from the editor, so the next pass hits the early return above and this
+    // settles after one extra render.
+    //
+    // Read through the ref rather than depending on `onChange`, so an inline
+    // parent callback cannot make this effect re-run — and reset the document
+    // and caret — on renders where `value` did not change.
+    if (applied.text !== value) {
+      onChangeRef.current(applied.text);
+    }
   }, [editor, value]);
 
   const insertInstantTag = (tag: InstantTagDef) => {
@@ -545,11 +600,11 @@ export function GrokTTSEditor({
   }, [handleInsertTag]);
 
   const translatedGrokLanguages = [
-    { value: 'auto', label: t('langAutomatic') },
-    { value: 'en', label: t('langEnglish') },
+    { label: t('langAutomatic'), value: 'auto' },
+    { label: t('langEnglish'), value: 'en' },
     ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
-      value,
       label: t(label as Parameters<typeof t>[0]),
+      value,
     })),
   ];
 

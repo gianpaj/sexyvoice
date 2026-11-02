@@ -17,14 +17,14 @@ export function PaymentStatus() {
   const canceled = searchParams.get('canceled');
   const error = searchParams.get('error');
 
-  const status: 'success' | 'canceled' | 'error' | null =
-    success === 'true'
-      ? 'success'
-      : canceled === 'true'
-        ? 'canceled'
-        : error
-          ? 'error'
-          : null;
+  let status: 'success' | 'canceled' | 'error' | null = null;
+  if (success === 'true') {
+    status = 'success';
+  } else if (canceled === 'true') {
+    status = 'canceled';
+  } else if (error) {
+    status = 'error';
+  }
 
   const [isVisible, setIsVisible] = useState(() => status !== null);
 

@@ -102,15 +102,15 @@ export function VoicePlayButton({
 
   // Size mappings
   const sizeClasses = {
-    sm: 'h-7 w-7',
-    md: 'h-8 w-8',
     lg: 'h-9 w-9',
+    md: 'h-8 w-8',
+    sm: 'h-7 w-7',
   };
 
   const iconSizes = {
-    sm: 'h-3 w-3',
-    md: 'h-4 w-4',
     lg: 'h-5 w-5',
+    md: 'h-4 w-4',
+    sm: 'h-3 w-3',
   };
 
   if (variant === 'button') {

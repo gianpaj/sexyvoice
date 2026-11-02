@@ -23,12 +23,12 @@ if (
 }
 
 const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: R2_ENDPOINT,
   credentials: {
     accessKeyId: R2_ACCESS_KEY_ID,
     secretAccessKey: R2_SECRET_ACCESS_KEY,
   },
+  endpoint: R2_ENDPOINT,
+  region: 'auto',
 });
 
 export const uploadFileToR2 = async (
@@ -39,11 +39,11 @@ export const uploadFileToR2 = async (
   publicBaseUrl: string = DEFAULT_PUBLIC_URL,
 ) => {
   const params: PutObjectCommandInput = {
-    Bucket: bucketName,
-    Key: filename,
-    Body: buffer,
     ACL: 'public-read',
+    Body: buffer,
+    Bucket: bucketName,
     ContentType: contentType,
+    Key: filename,
   };
 
   await s3Client.send(new PutObjectCommand(params));

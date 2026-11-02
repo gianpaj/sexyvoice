@@ -65,7 +65,7 @@ export function ConnectButton() {
 
   useEffect(() => {
     if (initiateConnectionFlag) {
-      initiateConnection();
+      initiateConnection().catch(() => undefined);
       setInitiateConnectionFlag(false);
     }
   }, [initiateConnectionFlag, initiateConnection]);

@@ -1,19 +1,10 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
 import type { BannerDefinition } from './types';
 
-function getLegacyPromoCookieKeys() {
-  if (!process.env.NEXT_PUBLIC_PROMO_ID) {
-    return [];
-  }
-
-  return [`${process.env.NEXT_PUBLIC_PROMO_ID}-dismissed`];
-}
-
 function getPromoDismiss(cookieKey: string) {
   return {
     cookieKey,
     days: 30,
-    legacyCookieKeys: getLegacyPromoCookieKeys(),
   };
 }
 
@@ -27,12 +18,12 @@ function creditsHref(lang: Locale) {
 
 const bannerRegistry = {
   blackFridayBanner: {
+    countdown: {
+      endDateEnvVar: 'NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE',
+    },
     cta: {
       loggedInHref: creditsHref,
       loggedOutHref: signupHref,
-    },
-    countdown: {
-      endDateEnvVar: 'NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE',
     },
     dismiss: getPromoDismiss('banner-black-friday-dismissed'),
     id: 'blackFridayBanner',
@@ -56,6 +47,18 @@ const bannerRegistry = {
     theme: 'blue',
   },
   halloweenBanner: {
+    artwork: {
+      desktop: {
+        height: 264,
+        src: '/images/banners/halloween-desktop.webp',
+        width: 2196,
+      },
+      mobile: {
+        height: 480,
+        src: '/images/banners/halloween-mobile.webp',
+        width: 1131,
+      },
+    },
     cta: {
       loggedInHref: creditsHref,
       loggedOutHref: signupHref,
@@ -79,6 +82,6 @@ const bannerRegistry = {
   },
 } satisfies Record<string, BannerDefinition>;
 
-export function getBannerDefinition(id: string) {
+export function getBannerDefinition(id: string): BannerDefinition | undefined {
   return bannerRegistry[id as keyof typeof bannerRegistry];
 }

@@ -88,10 +88,10 @@ export async function POST(request: Request) {
 
   const { error: signUpError, data } = await supabase.auth.signUp({
     email,
-    password,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
     },
+    password,
   });
 
   if (signUpError || !data.user) {
@@ -105,14 +105,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: parsedError,
         data,
+        error: parsedError,
       },
       {
-        status: isRateLimitError ? 429 : 400,
         headers: hasRetryAfter
           ? { 'Retry-After': String(parsedError?.seconds) }
           : undefined,
+        status: isRateLimitError ? 429 : 400,
       },
     );
   }

@@ -10,5 +10,7 @@ generated-speech/
 
 *.json
 !package.json
+!tsconfig.json
 
 dispute*.md
+!gemini-38-catalog.json

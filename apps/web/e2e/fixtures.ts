@@ -9,9 +9,9 @@ export const test = base.extend({
     // credits table — ProgressCircle renders at a fixed 50% (5 000 / 10 000)
     await page.route('**/rest/v1/credits*', (route) =>
       route.fulfill({
-        status: 200,
-        contentType: 'application/json',
         body: JSON.stringify({ amount: 5000 }),
+        contentType: 'application/json',
+        status: 200,
       }),
     );
 

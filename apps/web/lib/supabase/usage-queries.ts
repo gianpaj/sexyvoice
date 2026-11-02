@@ -79,16 +79,16 @@ function buildSummaryFromRpcData(
   }> | null,
 ): MonthlyUsageSummary {
   const summary: MonthlyUsageSummary = {
+    bySourceType: {
+      api_tts: { count: 0, credits: 0 },
+      api_voice_cloning: { count: 0, credits: 0 },
+      audio_processing: { count: 0, credits: 0 },
+      live_call: { count: 0, credits: 0 },
+      tts: { count: 0, credits: 0 },
+      voice_cloning: { count: 0, credits: 0 },
+    },
     totalCredits: 0,
     totalOperations: 0,
-    bySourceType: {
-      tts: { credits: 0, count: 0 },
-      voice_cloning: { credits: 0, count: 0 },
-      live_call: { credits: 0, count: 0 },
-      audio_processing: { credits: 0, count: 0 },
-      api_tts: { credits: 0, count: 0 },
-      api_voice_cloning: { credits: 0, count: 0 },
-    },
   };
 
   for (const row of data ?? []) {
@@ -121,8 +121,8 @@ export async function getMonthlyUsageSummary(
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const { data, error } = await client.rpc('get_usage_summary', {
-    p_user_id: userId,
     p_start_date: startOfMonth.toISOString(),
+    p_user_id: userId,
   });
 
   if (error) {

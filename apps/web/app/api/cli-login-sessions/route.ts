@@ -29,15 +29,13 @@ const CreateCliLoginSessionSchema = z
     path: ['api_key_id'],
   });
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this is a complex endpoint
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  // biome-ignore lint/plugin/use-verified-claims: Confirm the Auth user before issuing a durable CLI credential.
+  const { data: authData } = await supabase.auth.getUser();
+  const { user } = authData;
 
-  if (authError || !user) {
+  if (!user) {
     return APIErrorResponse('Unauthorized', 401);
   }
 
@@ -113,14 +111,14 @@ export async function POST(request: Request) {
   const { data: newKey, error: newKeyError } = await admin
     .from('api_keys')
     .insert({
-      user_id: user.id,
-      key_hash: generated.hash,
-      key_prefix: generated.prefix,
-      name: replacementName,
-      permissions: selectedKey?.permissions ?? { scopes: ['voice:generate'] },
-      metadata: selectedKey?.metadata ?? {},
       expires_at: selectedKey?.expires_at ?? null,
       is_active: true,
+      key_hash: generated.hash,
+      key_prefix: generated.prefix,
+      metadata: selectedKey?.metadata ?? {},
+      name: replacementName,
+      permissions: selectedKey?.permissions ?? { scopes: ['voice:generate'] },
+      user_id: user.id,
     })
     .select('id')
     .single();
@@ -137,14 +135,14 @@ export async function POST(request: Request) {
   const { error: sessionError } = await admin
     .from('cli_login_sessions')
     .insert({
-      user_id: user.id,
-      old_api_key_id: selectedKey?.id ?? null,
-      new_api_key_id: newKey.id,
-      token_hash: hashCliExchangeToken(exchangeToken),
-      encrypted_api_key: encryptCliApiKey(generated.key),
       callback_url,
-      state,
+      encrypted_api_key: encryptCliApiKey(generated.key),
       expires_at: expiresAt,
+      new_api_key_id: newKey.id,
+      old_api_key_id: selectedKey?.id ?? null,
+      state,
+      token_hash: hashCliExchangeToken(exchangeToken),
+      user_id: user.id,
     });
 
   if (sessionError) {

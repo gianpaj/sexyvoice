@@ -68,14 +68,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: policy.title,
-    description: policy.description,
     alternates: {
       canonical: `https://sexyvoice.ai/${lang}/${policySlug}`,
       languages: Object.fromEntries(
         routing.locales.map((locale) => [locale, `/${locale}/${policySlug}`]),
       ),
     },
+    description: policy.description,
+    title: policy.title,
   } satisfies Metadata;
 }
 

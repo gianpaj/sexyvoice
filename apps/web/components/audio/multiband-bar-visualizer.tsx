@@ -3,7 +3,10 @@ import { useEffect, useReducer } from 'react';
 
 type VisualizerState = 'listening' | 'idle' | 'speaking' | 'thinking';
 
-type ThinkingState = { direction: 'left' | 'right'; index: number };
+interface ThinkingState {
+  direction: 'left' | 'right';
+  index: number;
+}
 type ThinkingAction =
   | { center: number; type: 'reset' }
   | { max: number; type: 'tick' };
@@ -53,21 +56,21 @@ export const MultibandAudioVisualizer = ({
   });
 
   const centerIndex = Math.floor(summedFrequencies.length / 2);
-  const [thinking, dispatch] = useReducer(thinkingReducer, {
+  const [_thinking, dispatch] = useReducer(thinkingReducer, {
     direction: 'right',
     index: centerIndex,
   });
 
   useEffect(() => {
     if (state !== 'thinking') {
-      dispatch({ type: 'reset', center: centerIndex });
+      dispatch({ center: centerIndex, type: 'reset' });
       return;
     }
     const timeout = setTimeout(() => {
-      dispatch({ type: 'tick', max: summedFrequencies.length - 1 });
+      dispatch({ max: summedFrequencies.length - 1, type: 'tick' });
     }, 200);
     return () => clearTimeout(timeout);
-  }, [state, centerIndex, thinking]);
+  }, [state, centerIndex, summedFrequencies.length]);
 
   return (
     <div
@@ -88,10 +91,6 @@ export const MultibandAudioVisualizer = ({
             key={`frequency-${index}`}
             style={{
               backgroundColor: barColor,
-              height: `${minBarHeight + frequency * (maxBarHeight - minBarHeight)}px`,
-              width: `${barWidth}px`,
-              transition:
-                'background-color 0.35s ease-out, transform 0.25s ease-out',
               // transform,
               borderRadius: `${borderRadius}px`,
               boxShadow:
@@ -100,6 +99,10 @@ export const MultibandAudioVisualizer = ({
                   : `${0.1 * barWidth}px ${
                       0.1 * barWidth
                     }px 0px 0px rgba(0, 0, 0, 0.1)`,
+              height: `${minBarHeight + frequency * (maxBarHeight - minBarHeight)}px`,
+              transition:
+                'background-color 0.35s ease-out, transform 0.25s ease-out',
+              width: `${barWidth}px`,
             }}
           />
         );

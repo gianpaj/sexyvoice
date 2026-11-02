@@ -1,37 +1,29 @@
 'use client';
 
-import type { User } from '@supabase/supabase-js';
-import { useQuery } from '@tanstack/react-query';
-import { Crisp } from 'crisp-sdk-web';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
 
-import type { Locale } from '@/lib/i18n/i18n-config';
+import { useCreditsQuery } from '@/hooks/use-credits-query';
+import { isCreditBalance } from '@/lib/credit-balance';
 import { Link } from '@/lib/i18n/navigation';
-import { initPostHog } from '@/lib/posthog-browser';
-import useSupabaseBrowser from '@/lib/supabase/client';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
-import { getCredits, hasUserPaid } from '@/lib/supabase/queries.client';
+import { CreditBalanceError } from './credit-balance-error';
 import { Button } from './ui/button';
 import { ProgressCircle } from './ui/circular-progress';
 import { useSidebar } from './ui/sidebar';
 import { Skeleton } from './ui/skeleton';
 
 function CreditsSection({
-  lang,
   userId,
   creditTransactions,
   doNotToggleSidebar,
   showMinutes,
 }: {
-  lang: Locale;
   userId: string;
   creditTransactions: Pick<Tables<'credit_transactions'>, 'amount'>[] | null;
   doNotToggleSidebar?: boolean;
   showMinutes?: boolean;
 }) {
   const t = useTranslations('creditsSection');
-  const supabase = useSupabaseBrowser();
   const { isMobile, toggleSidebar } = useSidebar();
   const totalCredits =
     creditTransactions?.reduce(
@@ -39,90 +31,28 @@ function CreditsSection({
       0,
     ) || 0;
 
-  const { data: creditsData } = useQuery({
-    queryKey: ['credits', userId],
-    enabled: !!userId,
-    queryFn: () => getCredits(supabase, userId),
-  });
+  const { data: creditsData, isPending, isError } = useCreditsQuery(userId);
 
-  useEffect(() => {
-    if (!creditsData) {
-      return;
-    }
-
-    const getData = async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      if (!user) {
-        throw new Error('User not found');
-      }
-
-      const userHasPaid = await hasUserPaid(supabase, user.id);
-      return { user, userHasPaid };
-    };
-
-    const sendUserAnalyticsData = (
-      user: User,
-      credits: Pick<Tables<'credits'>, 'amount'> | null | undefined,
-      userHasPaid: boolean,
-    ) => {
-      const creditsLeft = credits?.amount ?? -1;
-
-      initPostHog()
-        .then((posthog) => {
-          posthog?.identify(user.id, {
-            email: user.email,
-            name: user.user_metadata.full_name || user.user_metadata.username,
-            creditsLeft,
-            userHasPaid,
-          });
-        })
-        .catch(() => undefined);
-
-      if (!process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID) {
-        return;
-      }
-
-      Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID, {
-        locale: lang,
-      });
-
-      if (user.email) {
-        Crisp.user.setEmail(user.email);
-      }
-
-      const nickname =
-        user.user_metadata.full_name || user.user_metadata.username;
-      if (nickname) {
-        Crisp.user.setNickname(nickname);
-      }
-
-      Crisp.session.setData({
-        user_id: user.id,
-        creditsLeft,
-        userHasPaid,
-      });
-    };
-
-    getData()
-      .then(({ user, userHasPaid }) => {
-        sendUserAnalyticsData(user, creditsData, userHasPaid);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize dashboard layout:', error);
-      });
-  }, [creditsData, lang, supabase]);
-
-  if (!creditsData) {
+  if (isPending && userId) {
     return (
       <Skeleton
-        className="h-[150px] w-full rounded-lg"
+        className="h-[150px] w-full rounded-lg group-data-[collapsible=icon]:hidden"
         data-visual-test-no-radius
       />
     );
   }
 
-  const minutesRemaining = Math.floor(creditsData.amount / CREDITS_PER_MINUTE);
+  if (isError || !isCreditBalance(creditsData?.amount)) {
+    return (
+      <div className="group-data-[collapsible=icon]:hidden">
+        <CreditBalanceError />
+      </div>
+    );
+  }
+
+  const minutesRemaining = Math.floor(
+    Math.max(0, creditsData.amount) / CREDITS_PER_MINUTE,
+  );
 
   return (
     <div

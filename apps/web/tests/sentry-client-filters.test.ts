@@ -9,9 +9,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'NotFoundError',
-              value:
-                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
@@ -20,6 +17,34 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'NotFoundError',
+              value:
+                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'react-dom-client.production.js',
+                    function: 'commitDeletionEffectsOnFiber',
+                  },
+                  {
+                    filename: '[native code]',
+                    function: 'removeChild',
+                  },
+                ],
+              },
+              type: 'NotFoundError',
+              value: 'The object can not be found here.',
             },
           ],
         },
@@ -33,9 +58,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'Error',
-              value:
-                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
@@ -44,6 +66,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'Error',
+              value:
+                "Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.",
             },
           ],
         },
@@ -55,8 +80,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: "Cannot read properties of null (reading 'tagName')",
               stacktrace: {
                 frames: [
                   {
@@ -65,6 +88,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
             },
           ],
         },
@@ -78,9 +103,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'NotFoundError',
-              value:
-                "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
               stacktrace: {
                 frames: [
                   {
@@ -90,6 +112,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'NotFoundError',
+              value:
+                "Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.",
             },
           ],
         },
@@ -120,14 +145,81 @@ describe('shouldDropClientSentryEvent', () => {
     );
   });
 
+  it('drops framework-only Next client transient exceptions', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'react-server-dom-turbopack-client.browser.production.js',
+                    function: 'close',
+                  },
+                ],
+              },
+              type: 'Error',
+              value: 'Connection closed.',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'node_modules/next/src/client/components/router-reducer/reducers/server-action-reducer.ts',
+                    function: 'fetchServerAction',
+                  },
+                ],
+              },
+              type: 'Error',
+              value: 'An unexpected response was received from the server.',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps Next client transient exceptions with app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/app/[lang]/login/actions.ts',
+                    function: 'login',
+                  },
+                ],
+              },
+              type: 'Error',
+              value: 'An unexpected response was received from the server.',
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+  });
+
   it('drops PostHog recorder security errors', () => {
     expect(
       shouldDropClientSentryEvent({
         exception: {
           values: [
             {
-              type: 'SecurityError',
-              value: "Permission to call 'get parentNode' denied.",
               stacktrace: {
                 frames: [
                   {
@@ -136,6 +228,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'SecurityError',
+              value: "Permission to call 'get parentNode' denied.",
             },
           ],
         },
@@ -149,8 +243,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: "Cannot read properties of null (reading 'tagName')",
               stacktrace: {
                 frames: [
                   {
@@ -159,6 +251,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
             },
           ],
         },
@@ -170,8 +264,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: "Cannot read properties of null (reading 'tagName')",
               stacktrace: {
                 frames: [
                   {
@@ -180,6 +272,8 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value: "Cannot read properties of null (reading 'tagName')",
             },
           ],
         },
@@ -193,13 +287,13 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'InvalidAccessError',
-              value: 'Track has ended',
               stacktrace: {
                 frames: [
                   { filename: '[native code]', function: 'applyConstraints' },
                 ],
               },
+              type: 'InvalidAccessError',
+              value: 'Track has ended',
             },
           ],
         },
@@ -224,17 +318,111 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'CompileError',
-              value:
-                'WebAssembly.Module(): Compiling function failed: Wasm SIMD unsupported',
               stacktrace: {
                 frames: [{ filename: 'blob:app:///krisp-worker' }],
               },
+              type: 'CompileError',
+              value:
+                'WebAssembly.Module(): Compiling function failed: Wasm SIMD unsupported',
             },
           ],
         },
       }),
     ).toBe(true);
+  });
+
+  it('drops framework-only React render loop noise', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'react-dom-client.production.js',
+                    function: 'dispatchSetStateInternal',
+                  },
+                ],
+              },
+              type: 'Error',
+              value:
+                'Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate.',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'next/src/client/components/app-router.tsx',
+                    function: 'Router',
+                  },
+                  {
+                    filename: 'react-dom-client.production.js',
+                    function: 'updateWorkInProgressHook',
+                  },
+                ],
+              },
+              type: 'Error',
+              value: 'Rendered more hooks than during the previous render.',
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps React render loop errors with app or shared chunk frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/components/audio-generator.tsx',
+                    function: 'AudioGenerator',
+                  },
+                ],
+              },
+              type: 'Error',
+              value: 'Maximum update depth exceeded.',
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'https://sexyvoice.ai/_next/static/chunks/1234.js',
+                    module: 'react-dom-client',
+                  },
+                ],
+              },
+              type: 'Error',
+              value: 'Maximum update depth exceeded.',
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
   });
 
   it('keeps Wasm SIMD errors with app frames', () => {
@@ -243,8 +431,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'CompileError',
-              value: 'Wasm SIMD unsupported',
               stacktrace: {
                 frames: [
                   {
@@ -253,11 +439,57 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'CompileError',
+              value: 'Wasm SIMD unsupported',
             },
           ],
         },
       }),
     ).toBe(false);
+  });
+
+  describe('NotReadableError', () => {
+    const notReadable = (
+      mechanism: { handled?: boolean } | undefined,
+      frames: { filename: string; function?: string }[] = [],
+    ) => ({
+      exception: {
+        values: [
+          {
+            mechanism,
+            stacktrace: { frames },
+            type: 'NotReadableError',
+            value: 'The I/O read operation failed.',
+          },
+        ],
+      },
+    });
+
+    it('drops unhandled frame-less rejections', () => {
+      expect(shouldDropClientSentryEvent(notReadable({ handled: false }))).toBe(
+        true,
+      );
+    });
+
+    it('keeps errors the app caught and reported', () => {
+      expect(shouldDropClientSentryEvent(notReadable({ handled: true }))).toBe(
+        false,
+      );
+      expect(shouldDropClientSentryEvent(notReadable(undefined))).toBe(false);
+    });
+
+    it('keeps unhandled rejections with app frames', () => {
+      expect(
+        shouldDropClientSentryEvent(
+          notReadable({ handled: false }, [
+            {
+              filename: 'apps/web/hooks/use-media-recorder.ts',
+              function: 'startRecording',
+            },
+          ]),
+        ),
+      ).toBe(false);
+    });
   });
 
   it('drops injected browser globals and external worker imports without app frames', () => {
@@ -266,11 +498,11 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'ReferenceError',
-              value: "Can't find variable: __firefox__",
               stacktrace: {
                 frames: [{ filename: 'app:///en', function: 'global code' }],
               },
+              type: 'ReferenceError',
+              value: "Can't find variable: __firefox__",
             },
           ],
         },
@@ -282,12 +514,12 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value:
-                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
               stacktrace: {
                 frames: [{ filename: 'app:///en', function: 'global code' }],
               },
+              type: 'TypeError',
+              value:
+                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
             },
           ],
         },
@@ -306,6 +538,52 @@ describe('shouldDropClientSentryEvent', () => {
         },
       }),
     ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'app:///_next/static/chunks/turbopack-worker-0g5kymvzkx-yr.js',
+                    function: 'global code',
+                  },
+                ],
+              },
+              type: 'Error',
+              value:
+                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice.ai/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'app:///_next/static/chunks/turbopack-worker-0g5kymvzkx-yr.js',
+                    function: 'global code',
+                  },
+                ],
+              },
+              type: 'Error',
+              value:
+                "Uncaught NetworkError: Failed to execute 'importScripts' on 'WorkerGlobalScope': The script at 'https://sexyvoice-git-fix-sentry.vercel.app/_next/static/chunks/0a1ki9igslyi1.js?dpl=dpl_F6PAqfgpYrrgLMxCTpLSnibogqzK' failed to load.",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
   });
 
   it('does not drop injected browser global text with app frames', () => {
@@ -314,9 +592,6 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value:
-                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
               stacktrace: {
                 frames: [
                   {
@@ -325,6 +600,9 @@ describe('shouldDropClientSentryEvent', () => {
                   },
                 ],
               },
+              type: 'TypeError',
+              value:
+                "undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
             },
           ],
         },
@@ -351,15 +629,64 @@ describe('shouldDropClientSentryEvent', () => {
         exception: {
           values: [
             {
-              type: 'TypeError',
-              value: 'network error',
               stacktrace: {
                 frames: [{ filename: '[native code]', function: 'fetch' }],
               },
+              type: 'TypeError',
+              value: 'network error',
             },
           ],
         },
       }),
     ).toBe(true);
+  });
+
+  it('drops ProseMirror selection collapse noise without app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename:
+                      'node_modules/.pnpm/prosemirror-view@1.41.6/node_modules/prosemirror-view/dist/index.js',
+                    function: 'df.setSelection',
+                  },
+                ],
+              },
+              type: 'IndexSizeError',
+              value:
+                "Failed to execute 'collapse' on 'Selection': The offset 37 is larger than the node's length (36).",
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps ProseMirror selection errors with app frames', () => {
+    expect(
+      shouldDropClientSentryEvent({
+        exception: {
+          values: [
+            {
+              stacktrace: {
+                frames: [
+                  {
+                    filename: 'apps/web/components/grok-tts-editor.tsx',
+                    function: 'restoreSelection',
+                  },
+                ],
+              },
+              type: 'IndexSizeError',
+              value:
+                "Failed to execute 'collapse' on 'Selection': The offset 37 is larger than the node's length (36).",
+            },
+          ],
+        },
+      }),
+    ).toBe(false);
   });
 });

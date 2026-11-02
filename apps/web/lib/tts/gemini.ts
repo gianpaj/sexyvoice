@@ -1,5 +1,6 @@
 import {
-  FinishReason,
+  type Content,
+  type FinishReason,
   type GenerateContentConfig,
   type GenerateContentResponse,
   type GoogleGenAI,
@@ -8,16 +9,26 @@ import {
 } from '@google/genai';
 
 import { extractInlineAudio } from '@/lib/ai';
+import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
+import {
+  buildGeminiVoiceConfig,
+  GEMINI_TTS_38,
+  GEMINI_TTS_FLASH_FREE,
+} from '@/lib/tts/gemini-prompt';
+import {
+  classifyGeminiTtsResponse,
+  geminiOutcomeToErrorCode,
+} from '@/lib/tts/gemini-response';
 import { ERROR_CODES, getErrorMessage } from '@/lib/utils';
+import { parseGoogleApiError } from '@/utils/google-errors';
 import {
   getGoogleApiErrorStatus,
   isGoogleQuotaError,
   isGoogleTransientProviderError,
 } from '@/utils/google-rpc-status';
-import { parseGoogleApiError } from '@/utils/googleErrors';
 
 /** Fallback model used when the primary Gemini TTS model fails. */
-export const GEMINI_FLASH_MODEL = 'gemini-2.5-flash-preview-tts';
+export const GEMINI_FLASH_MODEL = GEMINI_TTS_FLASH_FREE;
 
 /**
  * The Google AI SDK wraps native AbortError into a generic Error whose name
@@ -33,27 +44,28 @@ export function isAbortError(error: unknown): boolean {
 
 /**
  * Build the Gemini TTS request config. `abortSignal` is optional so callers
- * that do not wire client-abort handling (e.g. the external API) can omit it.
+ * without a request lifecycle can omit it.
  */
 export function buildGeminiTtsConfig({
   voiceName,
+  model,
   seed,
+  temperature,
   abortSignal,
 }: {
   voiceName: string;
+  model?: string;
   seed?: number;
+  temperature?: number;
   abortSignal?: AbortSignal;
 }): GenerateContentConfig {
   return {
     ...(abortSignal ? { abortSignal } : {}),
     responseModalities: ['AUDIO'],
     ...(seed === undefined ? {} : { seed }),
+    ...(temperature === undefined ? {} : { temperature }),
     speechConfig: {
-      voiceConfig: {
-        prebuiltVoiceConfig: {
-          voiceName: voiceName.charAt(0).toUpperCase() + voiceName.slice(1),
-        },
-      },
+      voiceConfig: buildGeminiVoiceConfig(voiceName, model),
     },
     safetySettings: [
       {
@@ -62,35 +74,6 @@ export function buildGeminiTtsConfig({
       },
     ],
   };
-}
-
-/**
- * Resolve the effective Gemini model id for a request.
- * - gpro31 (any tier): gemini-3.1-flash-tts-preview
- * - gpro paid: gemini-2.5-pro-preview-tts
- * - gpro free: gemini-2.5-flash-preview-tts
- *
- * gpro31 always synthesizes with Gemini 3.1 so free users get a consistent
- * "taste" of 3.1 (matching the streaming path) as an upgrade funnel, rather
- * than a 2.5-flash fallback that varied by request path and text length.
- * `generateGeminiAudio` still falls back to flash if the 3.1 call fails.
- *
- * The external API always generates at the "paid" tier (pass userHasPaid:true).
- */
-export function selectGeminiModel({
-  dbModel,
-  userHasPaid,
-}: {
-  dbModel: string;
-  userHasPaid: boolean;
-}): string {
-  if (dbModel === 'gpro31') {
-    return 'gemini-3.1-flash-tts-preview';
-  }
-  if (!userHasPaid) {
-    return GEMINI_FLASH_MODEL;
-  }
-  return 'gemini-2.5-pro-preview-tts';
 }
 
 export interface GeminiAudioClassification {
@@ -119,26 +102,14 @@ export function classifyGeminiAudio(
   const finishReason = response?.candidates?.[0]?.finishReason;
   const blockReason = response?.promptFeedback?.blockReason;
 
-  const isProhibitedContent =
-    finishReason === FinishReason.PROHIBITED_CONTENT ||
-    blockReason === 'PROHIBITED_CONTENT';
-  // Finished normally but no audio came back — transient provider glitch
-  // rather than a content block, so surface it as retryable.
-  const isNoAudioData =
-    finishReason === FinishReason.STOP && !(data && mimeType);
-
-  const isSuccess = finishReason === FinishReason.STOP && !!data && !!mimeType;
-
-  let errorCode: GeminiAudioClassification['errorCode'] = null;
-  if (!isSuccess) {
-    if (isProhibitedContent) {
-      errorCode = 'PROHIBITED_CONTENT';
-    } else if (isNoAudioData) {
-      errorCode = 'NO_AUDIO_DATA';
-    } else {
-      errorCode = 'OTHER_GEMINI_BLOCK';
-    }
-  }
+  const outcome = classifyGeminiTtsResponse({
+    blockReason,
+    finishReason,
+    hasAudio: Boolean(data && mimeType),
+  });
+  const isProhibitedContent = outcome === 'content_blocked';
+  const isNoAudioData = outcome === 'no_audio';
+  const errorCode = geminiOutcomeToErrorCode(outcome) ?? null;
 
   return {
     data,
@@ -156,13 +127,15 @@ export class GeminiGenerationError extends Error {
   readonly proError: unknown;
   readonly flashError: unknown;
 
-  constructor(proError: unknown, flashError: unknown) {
+  constructor(proError: unknown, options: ErrorOptions & { cause: unknown }) {
+    const flashError = options.cause;
     const proMessage =
       proError instanceof Error ? proError.message : String(proError);
     const flashMessage =
       flashError instanceof Error ? flashError.message : String(flashError);
     super(
       `Both Gemini models failed. Pro error: ${proMessage}. Flash error: ${flashMessage}`,
+      options,
     );
     this.name = 'GeminiGenerationError';
     this.proError = proError;
@@ -181,7 +154,7 @@ export interface GeminiGenerationResult {
  * Run Gemini TTS generation with a single flash fallback.
  *
  * Calls `primaryModel` first. On failure it retries with the flash model,
- * unless the primary model already *is* flash (then the error propagates) or
+ * unless the primary is Flash or 3.8, whose extended voices require 3.8, or
  * the failure is an abort (rethrown so the caller can short-circuit). When
  * both models fail it throws {@link GeminiGenerationError} carrying both
  * underlying errors so callers can map provider quota/transient failures.
@@ -189,15 +162,14 @@ export interface GeminiGenerationResult {
 export async function generateGeminiAudio({
   ai,
   primaryModel,
-  text,
+  contents,
   config,
 }: {
   ai: GoogleGenAI;
   primaryModel: string;
-  text: string;
+  contents: Content[];
   config: GenerateContentConfig;
 }): Promise<GeminiGenerationResult> {
-  const contents = [{ role: 'user', parts: [{ text }] }];
   try {
     const response = await ai.models.generateContent({
       model: primaryModel,
@@ -210,8 +182,8 @@ export async function generateGeminiAudio({
     if (isAbortError(primaryError)) {
       throw primaryError;
     }
-    // Primary already was the flash model — nothing left to fall back to.
-    if (primaryModel === GEMINI_FLASH_MODEL) {
+    // Flash has no fallback; 3.8 extended voices require their selected model.
+    if (primaryModel === GEMINI_FLASH_MODEL || primaryModel === GEMINI_TTS_38) {
       throw primaryError;
     }
     try {
@@ -225,7 +197,9 @@ export async function generateGeminiAudio({
       if (isAbortError(flashError)) {
         throw flashError;
       }
-      throw new GeminiGenerationError(primaryError, flashError);
+      throw new GeminiGenerationError(primaryError, {
+        cause: flashError,
+      });
     }
   }
 }
@@ -240,25 +214,22 @@ export interface GeminiProviderFailure {
 }
 
 /**
- * Map a Gemini pro/flash failure pair to a structured provider failure
- * (quota exhausted or transient unavailability). Returns null when the
- * failure is not a recognised provider-side condition.
+ * Classify Gemini attempt errors, including a single 3.8 attempt. Quota is
+ * judged on the final attempt; transient failures can come from any attempt.
  */
 export function getGeminiProviderFailure(
-  proError: unknown,
-  flashError: unknown,
+  attemptErrors: unknown[],
 ): GeminiProviderFailure | null {
-  const proGoogleError = parseGoogleApiError(proError);
-  const flashGoogleError = parseGoogleApiError(flashError);
-  const parsedErrors = [proGoogleError, flashGoogleError].filter(
-    (error): error is NonNullable<typeof error> => error !== null,
-  );
+  const parsedErrors = attemptErrors
+    .map((error) => parseGoogleApiError(error))
+    .filter((error): error is NonNullable<typeof error> => error !== null);
+  const finalGoogleError = parseGoogleApiError(attemptErrors.at(-1));
 
-  if (flashGoogleError && isGoogleQuotaError(flashGoogleError)) {
+  if (finalGoogleError && isGoogleQuotaError(finalGoogleError)) {
     return {
       code: 'provider_quota_exceeded',
-      googleCode: flashGoogleError.code,
-      googleStatus: getGoogleApiErrorStatus(flashGoogleError),
+      googleCode: finalGoogleError.code,
+      googleStatus: getGoogleApiErrorStatus(finalGoogleError),
       message: getErrorMessage(
         ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
         'voice-generation',
@@ -277,10 +248,7 @@ export function getGeminiProviderFailure(
       code: 'provider_unavailable',
       googleCode: transientError.code,
       googleStatus: getGoogleApiErrorStatus(transientError),
-      message: getErrorMessage(
-        ERROR_CODES.GEMINI_PROVIDER_UNAVAILABLE,
-        'voice-generation',
-      ),
+      message: getProviderUnavailableMessage('gemini'),
       status: 503,
       type: 'server_error',
     };

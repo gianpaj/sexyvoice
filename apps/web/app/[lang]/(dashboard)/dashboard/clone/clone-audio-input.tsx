@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { Dispatch } from 'react';
 
 import { MicrophoneMain } from '@/components/audio/microphone-main';
-import PulsatingDots from '@/components/PulsatingDots';
+import PulsatingDots from '@/components/pulsating-dots';
 import { Accordion } from '@/components/ui/accordion';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -46,14 +46,14 @@ const VOXTRAL_REFERENCE_AUDIO_TRIM_SECONDS = 25;
 
 const sampleAudios: readonly SampleAudio[] = [
   {
-    id: 1,
-    name: 'Marilyn Monroe 🇺🇸',
-    language: 'english',
-    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
-    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
     audioExampleOutputSrc:
       'clone-en-audio-samples/marilyn_monroe-diamonds-wifi.mp3',
+    audioSrc: 'clone-en-audio-samples/marilyn_monroe-1952.mp3',
+    id: 1,
     image: 'https://images.sexyvoice.ai/clone/marilyn-monroe.avif',
+    language: 'english',
+    name: 'Marilyn Monroe 🇺🇸',
+    prompt: "I don't need diamonds, darling. I need stable Wi-Fi and a nap",
   },
   // {
   //   id: 2,
@@ -78,7 +78,8 @@ export function CloneAudioInput({
   mic,
   ffmpeg,
   usesVoxtral,
-  selectedLocale,
+  selectedLocaleCode,
+  selectedLocaleName,
   onSelectSample,
   dispatch,
 }: {
@@ -87,7 +88,8 @@ export function CloneAudioInput({
   mic: CloneMic;
   ffmpeg: { error: string | null; loading: boolean };
   usesVoxtral: boolean;
-  selectedLocale: { code: string; value: string };
+  selectedLocaleCode: string;
+  selectedLocaleName: string;
   onSelectSample: (sample: SampleAudio) => void;
   dispatch: Dispatch<CloneStateAction>;
 }) {
@@ -194,13 +196,12 @@ export function CloneAudioInput({
         </div>
       )}
 
-      {/* FFmpeg loading message for non-English locales */}
-      {ffmpeg.loading && selectedLocale.code !== 'en' && (
+      {ffmpeg.loading && usesVoxtral && selectedLocaleCode !== 'en' && (
         <div className="text-center text-muted-foreground text-xs">
           <span className="flex items-center justify-center gap-2">
             <PulsatingDots />
             {formatCloneMessage(t('preparingAudioProcessor'), {
-              LANGUAGE: selectedLocale.value,
+              LANGUAGE: selectedLocaleName,
             })}
           </span>
         </div>
@@ -263,14 +264,14 @@ export function CloneAudioInput({
                   sample={sample}
                   setErrorMessage={(nextErrorMessage) => {
                     dispatch({
-                      type: 'patch',
                       patch: { errorMessage: nextErrorMessage },
+                      type: 'patch',
                     });
                   }}
                   setStatus={(nextStatus: Status) => {
                     dispatch({
-                      type: 'patch',
                       patch: { status: nextStatus },
+                      type: 'patch',
                     });
                   }}
                 />

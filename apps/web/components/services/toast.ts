@@ -19,17 +19,15 @@ export const toast = Object.assign(
     sonnerToast(message, { ...defaultToastOptions, ...data }),
   {
     ...sonnerToast,
-    success: (message: React.ReactNode, data?: ExternalToast) =>
-      sonnerToast.success(message, { ...defaultToastOptions, ...data }),
+
+    error: (message: React.ReactNode, data?: ExternalToast) =>
+      sonnerToast.error(message, { ...defaultToastOptions, ...data }),
 
     info: (message: React.ReactNode, data?: ExternalToast) =>
       sonnerToast.info(message, { ...defaultToastOptions, ...data }),
 
-    warning: (message: React.ReactNode, data?: ExternalToast) =>
-      sonnerToast.warning(message, { ...defaultToastOptions, ...data }),
-
-    error: (message: React.ReactNode, data?: ExternalToast) =>
-      sonnerToast.error(message, { ...defaultToastOptions, ...data }),
+    loading: (message: React.ReactNode, data?: ExternalToast) =>
+      sonnerToast.loading(message, { ...defaultToastOptions, ...data }),
 
     // custom() doesn't use the default duration
 
@@ -40,8 +38,10 @@ export const toast = Object.assign(
       promise: Promise<ToastData>,
       data?: PromiseData<ToastData>,
     ) => sonnerToast.promise(promise, { ...defaultToastOptions, ...data }),
+    success: (message: React.ReactNode, data?: ExternalToast) =>
+      sonnerToast.success(message, { ...defaultToastOptions, ...data }),
 
-    loading: (message: React.ReactNode, data?: ExternalToast) =>
-      sonnerToast.loading(message, { ...defaultToastOptions, ...data }),
+    warning: (message: React.ReactNode, data?: ExternalToast) =>
+      sonnerToast.warning(message, { ...defaultToastOptions, ...data }),
   },
 );

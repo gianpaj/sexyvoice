@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { waitForHydration } from '../wait-for-hydration';
+
 /**
  * Page Object Model for Credits Dashboard
  *
@@ -187,6 +189,9 @@ export class CreditsPage {
       visibleAlert = this.canceledAlert;
     }
 
+    // The page streams in behind a loading skeleton, so the alert can be
+    // visible before React attaches the dismiss handler.
+    await waitForHydration(this.page, '[role="alert"] button');
     await visibleAlert
       .getByRole('button', { name: /dismiss/i })
       .evaluate((element) => (element as HTMLElement).click());

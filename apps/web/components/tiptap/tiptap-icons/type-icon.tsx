@@ -2,8 +2,10 @@ type SvgProps = React.ComponentPropsWithoutRef<'svg'>;
 
 export const TypeIcon = ({ className, ...props }: SvgProps) => (
   <svg
+    aria-hidden="true"
     className={className}
     fill="currentColor"
+    focusable="false"
     height="24"
     viewBox="0 0 24 24"
     width="24"

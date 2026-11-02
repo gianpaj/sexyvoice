@@ -149,7 +149,9 @@ export function MicrophoneMain(props: Props) {
         setHasPermission(false);
       }
     };
-    checkPermission();
+    checkPermission().catch(() => {
+      setHasPermission(false);
+    });
   }, []);
 
   return (

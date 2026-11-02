@@ -68,7 +68,7 @@ export function useGenerationProgressToast(voiceName?: string) {
   );
 
   return {
-    showGenerationProgressToast,
     dismissGenerationProgressToast,
+    showGenerationProgressToast,
   };
 }

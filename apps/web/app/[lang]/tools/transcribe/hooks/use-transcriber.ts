@@ -68,17 +68,17 @@ function transcriberReducer(
     case 'load-model':
       return {
         ...state,
-        state: 'loading',
-        error: null,
         downloadProgress: [],
+        error: null,
+        state: 'loading',
       };
     case 'transcribe-start':
       return {
         ...state,
-        state: 'transcribing',
         error: null,
-        transcript: null,
         partialTranscript: '',
+        state: 'transcribing',
+        transcript: null,
       };
     case 'ready':
       return {
@@ -116,27 +116,27 @@ function transcriberReducer(
     case 'complete':
       return {
         ...state,
+        error: null,
+        partialTranscript: '',
         state: 'ready',
         transcript: action.data,
-        partialTranscript: '',
-        error: null,
       };
     case 'error':
       return {
         ...state,
-        state: 'idle',
         downloadProgress: [],
-        transcript: null,
-        partialTranscript: '',
         error: action.data,
+        partialTranscript: '',
+        state: 'idle',
+        transcript: null,
       };
     case 'reset':
       return {
         ...state,
+        error: null,
+        partialTranscript: '',
         state: state.state === 'ready' ? 'ready' : 'idle',
         transcript: null,
-        partialTranscript: '',
-        error: null,
       };
     default:
       return state;
@@ -162,19 +162,19 @@ export function useTranscriber(): UseTranscriberReturn {
 
       switch (type) {
         case 'download':
-          dispatch({ type: 'download', data });
+          dispatch({ data, type: 'download' });
           break;
         case 'ready':
           dispatch({ type: 'ready' });
           break;
         case 'update':
-          dispatch({ type: 'update', data: data?.text ?? '' });
+          dispatch({ data: data?.text ?? '', type: 'update' });
           break;
         case 'complete':
-          dispatch({ type: 'complete', data });
+          dispatch({ data, type: 'complete' });
           break;
         case 'error':
-          dispatch({ type: 'error', data });
+          dispatch({ data, type: 'error' });
           break;
         default:
           break;
@@ -193,7 +193,7 @@ export function useTranscriber(): UseTranscriberReturn {
 
   const loadModel = (model: string, quantized: boolean) => {
     dispatch({ type: 'load-model' });
-    workerRef.current?.postMessage({ type: 'load', model, quantized });
+    workerRef.current?.postMessage({ model, quantized, type: 'load' });
   };
 
   const transcribe = (
@@ -203,10 +203,10 @@ export function useTranscriber(): UseTranscriberReturn {
   ) => {
     dispatch({ type: 'transcribe-start' });
     workerRef.current?.postMessage({
-      type: 'transcribe',
       audio,
       language,
       subtask,
+      type: 'transcribe',
     });
   };
 
@@ -215,13 +215,13 @@ export function useTranscriber(): UseTranscriberReturn {
   };
 
   return {
-    state,
-    transcript,
-    partialTranscript,
     downloadProgress,
     error,
     loadModel,
-    transcribe,
+    partialTranscript,
     reset,
+    state,
+    transcribe,
+    transcript,
   };
 }

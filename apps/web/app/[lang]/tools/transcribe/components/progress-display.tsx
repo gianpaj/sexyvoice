@@ -13,7 +13,10 @@ interface Props {
 export function ProgressDisplay({ progress, isTranscribing }: Props) {
   const t = useTranslations('transcribe.progress');
   const downloadingFiles = progress.filter(
-    (p) => p.status === 'progress' && p.progress != null,
+    (p) =>
+      p.status === 'progress' &&
+      p.progress !== null &&
+      p.progress !== undefined,
   );
   const totalProgress =
     downloadingFiles.length > 0
@@ -35,18 +38,18 @@ export function ProgressDisplay({ progress, isTranscribing }: Props) {
           style={{ height: '18px' }}
         >
           {[
-            { key: 'progress-wave-1', height: 10, delay: '0s' },
-            { key: 'progress-wave-2', height: 16, delay: '0.12s' },
-            { key: 'progress-wave-3', height: 18, delay: '0.24s' },
-            { key: 'progress-wave-4', height: 12, delay: '0.36s' },
-            { key: 'progress-wave-5', height: 14, delay: '0.48s' },
+            { delay: '0s', height: 10, key: 'progress-wave-1' },
+            { delay: '0.12s', height: 16, key: 'progress-wave-2' },
+            { delay: '0.24s', height: 18, key: 'progress-wave-3' },
+            { delay: '0.36s', height: 12, key: 'progress-wave-4' },
+            { delay: '0.48s', height: 14, key: 'progress-wave-5' },
           ].map((wave) => (
             <div
               className="wave-bar"
               key={wave.key}
               style={{
-                height: `${wave.height}px`,
                 animationDelay: wave.delay,
+                height: `${wave.height}px`,
               }}
             />
           ))}
