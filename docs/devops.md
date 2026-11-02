@@ -148,6 +148,11 @@ flow:
 See [saved call voices](../ARCHITECTURE.md#saved-voices-for-calls) for the
 creation and playback behavior.
 
+The call page reads `characters.localized_sample_urls`, which points at the
+featured characters' intros in R2 under `characters/{lang}/`. Apply
+`20261102180000_add_character_localized_sample_urls.sql` before deploying it;
+without the column, the call page fails to load.
+
 ### AI providers
 
 - `FAL_KEY`
