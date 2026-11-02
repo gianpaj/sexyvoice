@@ -47,6 +47,18 @@ const bannerRegistry = {
     theme: 'blue',
   },
   halloweenBanner: {
+    artwork: {
+      desktop: {
+        height: 264,
+        src: '/images/banners/halloween-desktop.webp',
+        width: 2196,
+      },
+      mobile: {
+        height: 480,
+        src: '/images/banners/halloween-mobile.webp',
+        width: 1131,
+      },
+    },
     cta: {
       loggedInHref: creditsHref,
       loggedOutHref: signupHref,

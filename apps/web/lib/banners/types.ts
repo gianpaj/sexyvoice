@@ -5,6 +5,21 @@ export type BannerKind = 'announcement' | 'promo';
 export type BannerPlacement = 'blog' | 'dashboard' | 'landing';
 export type BannerTheme = 'blue' | 'orange' | 'pink';
 
+export interface BannerArtworkImage {
+  height: number;
+  src: string;
+  width: number;
+}
+
+/**
+ * Background art with decorations at both ends and an empty middle.
+ * The mobile image applies below the `sm` breakpoint.
+ */
+export interface BannerArtwork {
+  desktop: BannerArtworkImage;
+  mobile: BannerArtworkImage;
+}
+
 export interface BannerCountdownLabels {
   days: string;
   hours: string;
@@ -22,6 +37,7 @@ export interface BannerTranslation {
 }
 
 export interface BannerDefinition {
+  artwork?: BannerArtwork;
   countdown?: {
     endDateEnvVar: string;
   };
@@ -43,6 +59,7 @@ export interface BannerDefinition {
 
 export interface ResolvedBanner {
   ariaLabelDismiss: string;
+  artwork?: BannerArtwork;
   countdown?: {
     enabled: boolean;
     endDate: string;

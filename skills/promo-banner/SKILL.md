@@ -182,6 +182,26 @@ billing modes use one translated bonus label and the promo color while a promo
 is enabled. Without a promo, monthly subscription bonuses stay green and
 one-time bonuses are hidden. Keep this presentation consistent across locales.
 
+## Background artwork
+
+A registry entry can set `artwork` with a `desktop` and `mobile` image
+(`src`, `width`, `height`). The mobile image applies below the `sm`
+breakpoint. Only `halloweenBanner` sets it, using WebP files in
+`apps/web/public/images/banners/`.
+
+`BannerArtworkLayer` in `apps/web/components/banner.tsx` pins each half of the
+image to its banner edge at full banner height and fills the middle with a
+blurred copy. So the art must:
+
+- keep all decorations near the left and right ends;
+- leave the middle dark and nearly empty for white text and the CTA;
+- use a wide desktop ratio (8:1) and a shorter mobile ratio (21:9).
+
+Generate art with Gemini's `gemini-nano-banana-2.1` model, which supports 8:1
+(`gemini-3-pro-image` rejects it). Prompt for no text or logos, then resize to
+about 264px tall (desktop) and 480px tall (mobile) WebP and record the final
+dimensions in the registry.
+
 ## Public banner layout
 
 At desktop widths, public banners center the copy between equal side columns

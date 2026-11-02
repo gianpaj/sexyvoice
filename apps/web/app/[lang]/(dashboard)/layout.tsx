@@ -13,11 +13,11 @@ import { getE2ECallUser } from '@/lib/e2e-call-user';
 import { E2E_CREDIT_TRANSACTIONS } from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
-import { hasUserPaid } from '@/lib/supabase/queries';
 import {
-  getCreditsQuery,
-  getCreditTransactions,
-} from '@/lib/supabase/queries.client';
+  getCreditTransactionAmounts,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
+import { getCreditsQuery } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
 import DashboardUI from './dashboard.ui';
 
@@ -49,10 +49,10 @@ export default async function DashboardLayout(props: {
   });
 
   const e2e = await getE2ECallUser();
-  const [{ data: creditTransactions }, isPaidUser] = e2e
-    ? [{ data: E2E_CREDIT_TRANSACTIONS }, e2e.isPaidUser]
+  const [creditTransactions, isPaidUser] = e2e
+    ? [E2E_CREDIT_TRANSACTIONS, e2e.isPaidUser]
     : await Promise.all([
-        getCreditTransactions(supabase, claims.sub),
+        getCreditTransactionAmounts(claims.sub),
         hasUserPaid(claims.sub),
       ]);
   if (!e2e) {
@@ -64,7 +64,7 @@ export default async function DashboardLayout(props: {
       <HydrationBoundary state={dehydrate(queryClient)}>
         <DashboardUI
           activeBanner={activeBanner}
-          creditTransactions={creditTransactions ?? []}
+          creditTransactions={creditTransactions}
           isPaidUser={isPaidUser}
           lang={lang}
           userId={claims.sub}

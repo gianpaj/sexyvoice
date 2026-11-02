@@ -442,6 +442,7 @@ async function fetchUsageAggregates(
       let query = supabase
         .from('usage_events')
         .select('id, user_id, credits_used, occurred_at, created_at')
+        .eq('event_kind', 'customer_usage')
         .in('user_id', userIdBatch)
         .lte('created_at', auditAsOf)
         .order('id', { ascending: true })

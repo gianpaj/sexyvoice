@@ -367,7 +367,8 @@ pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 1 --limit 2
 1. Sets a fixed audit cutoff with a five-minute safety lag.
 2. Finds balances updated during the requested window using stable keyset
    pagination.
-3. Fetches those users' recorded transaction and usage history up to the cutoff.
+3. Fetches those users' recorded transaction and customer usage history up to the
+   cutoff. Provider attempts do not count toward usage events or last usage time.
 4. Rechecks balances and skips any account that changed during the audit.
 5. Compares stable balances with the balance explained by the recorded ledger.
 6. Prints a summary and, when it flags users, writes a permission-restricted CSV
