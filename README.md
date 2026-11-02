@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://sexyvoice.ai">
-    <img alt="SexyVoice.ai - AI Voice Generation Platform" src="./public/sexyvoice.ai-og-image.jpg" width="640">
+    <img alt="SexyVoice.ai - AI Voice Generation Platform" src="./apps/web/public/sexyvoice.ai-og-image.jpg" width="640">
   </a>
 </p>
 
@@ -16,31 +16,35 @@
   <a href="#-getting-started">🚀 Quick Start</a> •
   <a href="#-features">✨ Features</a> •
   <a href="#%EF%B8%8F-tech-stack">🛠️ Tech Stack</a> •
-  <a href="./docs/devops.md">⚙️ DevOps Guide</a>
+  <a href="./docs/devops.md">⚙️ Deployment and release checks</a>
 </p>
 
 ---
 
 ## 🌟 About
 
-- Generate AI voices in 20+ languages with voice cloning support
-- Voice selection system with customizable options
+- Generate AI voices in 24+ supported languages and locales
+- 63 public voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`)
+- Voice cloning support across 20+ supported languages
+
 <!-- - Public library of generated voices ranked by usage and votes -->
+
 - Credit-based usage system
 - User authentication and profile management (Google)
 - [Architecture Overview](./ARCHITECTURE.md)
 
-SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with both pre-made voices and custom voice cloning capabilities.
+SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with featured Gemini and Grok voices, plus custom voice cloning capabilities.
 
 ## ✨ Features
 
 ### 🎯 Core Functionality
 
-- **AI Voice Generation**: Create realistic voices powered by state-of-the-art AI models
+- **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
-- **Voice Selection System**: Choose from a variety of customizable voice options
-- **Multi-language Support**: Generate voices and clone in 20+ languages including English, Spanish, German, French, Italian, Danish, Japanese, Korean, and more
+- **Voice Selection System**: Choose from 63 public voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
+- **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
+
 <!-- - **Public Voice Library**: Browse and discover popular voices ranked by community usage and votes -->
 
 ### 🔐 User Experience
@@ -64,7 +68,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Frontend
 
 - **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
-- **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
+- **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `apps/web/messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
 - **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
@@ -73,7 +77,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 ### Backend & Database
 
 - **[Supabase](https://supabase.com)** - Authentication and PostgreSQL database with SSR support
-- **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations *(planned)*
+- **[Drizzle ORM](https://orm.drizzle.team)** - Type-safe database operations _(planned)_
 - **[Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)** - Scalable audio file storage with global CDN
 
 ### DevOps & Monitoring
@@ -91,6 +95,17 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Contentlayer](https://contentlayer.dev)** - Type-safe content management
 - **[Husky](https://typicode.github.io/husky)** - Git hooks for automated tasks
 - **[lint-staged](https://github.com/okonet/lint-staged)** - Runs commands on staged files
+
+## Repository Layout
+
+- `apps/web` - Next.js web app deployed to Vercel.
+- `apps/docs` - Fumadocs docs app for `docs.sexyvoice.ai`.
+- `scripts` - operational scripts kept outside the web app as
+  `@sexyvoice/scripts`.
+- `docs` - internal engineering and operational docs.
+
+Root commands are orchestrated with Turborepo. Use package filters when you
+only want one app, for example `pnpm --filter @sexyvoice/web dev`.
 
 ## 🚀 Getting Started
 
@@ -118,70 +133,79 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 3. **Set up environment variables**
 
    ```bash
-   cp .env.example .env.local
+   cp apps/web/.env.example apps/web/.env.local
    ```
 
-   Fill in the required environment variables as defined in [`.env.example`](.env.example):
+   Fill in the required environment variables as defined in
+   [`apps/web/.env.example`](apps/web/.env.example):
    - Supabase
-      - `NEXT_PUBLIC_SUPABASE_URL`
-      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-      - `SUPABASE_SERVICE_ROLE_KEY` - For admin access to Supabase (used in Telegram bot cronjob)
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Safe for browser clients; database access remains controlled by RLS
+     - `SUPABASE_SECRET_KEY` - Server-only admin key that bypasses RLS; never expose it to clients or use a `NEXT_PUBLIC_` prefix
    - Your Redis (Upstash)
-      - `KV_REST_API_URL`
-      - `KV_REST_API_TOKEN`
+     - `KV_REST_API_URL`
+     - `KV_REST_API_TOKEN`
    - Cloudflare R2 storage
-      - `R2_ACCESS_KEY_ID`
-      - `R2_SECRET_ACCESS_KEY`
-      - `R2_BUCKET_NAME`
-      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
-      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
+     - `R2_ACCESS_KEY_ID`
+     - `R2_SECRET_ACCESS_KEY`
+     - `R2_BUCKET_NAME`
+     - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
+     - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
    - AI 3rd party services
-      - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-      - `FAL_KEY` - Your fal.ai API key for voice cloning
-      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-      - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation
+     - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
+     - `FAL_KEY` - Your fal.ai API key for voice cloning
+     - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
+     - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation and call transcript analysis
+     - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
+     - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
    - Real-time Calls (LiveKit)
-      - `LIVEKIT_URL`
-      - `LIVEKIT_API_KEY`
-      - `LIVEKIT_API_SECRET`
+     - `LIVEKIT_URL`
+     - `LIVEKIT_API_KEY`
+     - `LIVEKIT_API_SECRET`
    - Stripe
-      - `STRIPE_SECRET_KEY`
-      - `STRIPE_WEBHOOK_SECRET`
-      - `STRIPE_PRICING_ID` - Stripe pricing ID for Pricing table
-      - `STRIPE_PUBLISHABLE_KEY` - for Stripe Pricing table
-      - `STRIPE_TOPUP_5_PRICE_ID`
-      - `STRIPE_TOPUP_10_PRICE_ID`
-      - `STRIPE_TOPUP_99_PRICE_ID`
+     - `STRIPE_SECRET_KEY`
+     - `STRIPE_WEBHOOK_SECRET`
+     - `STRIPE_TOPUP_STARTER_PRICE_ID`
+     - `STRIPE_TOPUP_STANDARD_PRICE_ID`
+     - `STRIPE_TOPUP_PRO_PRICE_ID`
+     - `STRIPE_SUBSCRIPTION_STARTER_PRICE_ID`
+     - `STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID`
+     - `STRIPE_SUBSCRIPTION_PRO_PRICE_ID`
+     - `STRIPE_SUBSCRIPTION_FIRST_MONTH_COUPON_ID` - Optional Stripe coupon applied automatically for eligible first-time subscribers
+     - `STRIPE_SUBSCRIPTION_FIRST_MONTH_DISCOUNT_PERCENT` - Optional first-month discount percentage used to display discounted subscription pricing when the coupon is configured
    - Banner and promotion configuration
-      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
-      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `messages.promos.*` and `lib/banners/registry.ts`
-      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `messages.announcements.*` and `lib/banners/registry.ts`
-      - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
-      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
-      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
-      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
-      - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
-      - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
-      - `NEXT_PUBLIC_PROMO_BONUS_PRO`
+     - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
+     - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+     - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
+     - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
+     - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
+     - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
+     - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
+     - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
+     - `NEXT_PUBLIC_PROMO_BONUS_PRO`
    - Telegram cronjob
-      - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
-      - `CRON_SECRET` - For securing the API route - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
+     - `TELEGRAM_WEBHOOK_URL` - for daily stats notifications
+     - `CRON_SECRET` - For securing the cron API routes (`/api/daily-stats`, `/api/call-sessions/analyze/batch`) - See [Managing Cron Jobs](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs)
    - Axiom logging (optional)
-      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
+     - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
    - API key security
-      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
+     - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
    - Vercel Edge Config (optional)
-      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
+     - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
+   - E2E builds only
+     - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry
 
-   For the full environment variable reference, deployment setup, infrastructure notes, and operational guidance, see [DevOps Guide](./docs/devops.md).
+   For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
 
 4. **Set up Supabase**
    - Create a new project at Supabase
    - Run database migrations:
 
    ```bash
+   cd apps/web
    supabase db push
+   cd ../..
    ```
 
 5. **Start the development server**
@@ -191,39 +215,53 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
    ```
 
 6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+   The web app runs through Portless at [https://sv.dev](https://sv.dev).
+   The `portless.json` app name only sets the route name; `PORTLESS_TLD=dev`
+   in `apps/web/package.json` makes the route use `.dev` instead of the
+   default `.localhost`.
+
+   If you previously installed the Portless startup service, it may restart the
+   default `.localhost` proxy on port 443 and block `.dev`. Remove the service
+   before starting the app:
+
+   ```bash
+   sudo portless service uninstall
+   sudo portless proxy stop
+   pnpm dev
+   ```
 
 ### Banner System
 
 The app uses a shared banner system for both promotions and announcements:
 
-- `components/banner.tsx` renders the banner UI
-- `lib/banners/registry.ts` defines supported banners
-- `lib/banners/resolve-banner.ts` resolves the single visible banner per placement
-- `app/[lang]/actions/banners.ts` handles dismissal cookies
+- `apps/web/components/banner.tsx` renders the banner UI
+- `apps/web/lib/banners/registry.ts` defines supported banners
+- `apps/web/lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `apps/web/components/banner.tsx` writes dismissal cookies through
+  `apps/web/lib/cookies.ts`
 
-Banner copy is localized in `messages.promos.*` and `messages.announcements.*`.
+Banner copy is localized in `apps/web/messages/*.json`.
 Only one banner is shown at a time, and each banner has its own dismiss cookie.
 
 ## 🧪 Development
 
 ### Available Scripts
 
-| Command                   | Description                             |
-| ------------------------- | --------------------------------------- |
-| `pnpm dev`                | Start development server with Turbopack |
-| `pnpm build`              | Build production application            |
-| `pnpm start`              | Start production server                 |
-| `pnpm test`               | Run test suite                          |
-| `pnpm test:watch`         | Run tests in watch mode                 |
-| `pnpm lint`               | Lint codebase with Biome                |
-| `pnpm lint:fix`           | Fix linting issues automatically        |
-| `pnpm type-check`         | Run TypeScript type checking            |
-| `pnpm format`             | Format code with Biome                  |
-| `pnpm check-translations` | Validate all locale files have matching keys |
-| `pnpm build:content`      | Build content layer                     |
-| `pnpm clean`              | Clean unused dependencies with Knip     |
-| `pnpm fixall`             | Run all fixes: lint, format, and check  |
+| Command                            | Description                                  |
+| ---------------------------------- | -------------------------------------------- |
+| `pnpm dev`                         | Start all workspace dev tasks                |
+| `pnpm --filter @sexyvoice/web dev` | Start only the web app dev server            |
+| `pnpm build`                       | Build workspace apps with Turbo              |
+| `pnpm test`                        | Run test suites                              |
+| `pnpm test:db`                     | Run Supabase pgTAP tests locally             |
+| `pnpm test:ui`                     | Run Vitest UI for the web app                |
+| `pnpm lint`                        | Lint web and docs code with Biome            |
+| `pnpm type-check`                  | Run TypeScript type checking                 |
+| `pnpm format`                      | Check web and docs formatting with Biome     |
+| `pnpm check-translations`          | Validate all locale files have matching keys |
+| `pnpm build:content`               | Build web app content layer                  |
+| `pnpm clean`                       | Check unused dependencies with Knip          |
+| `pnpm fixall`                      | Apply Biome format, lint, and assist fixes   |
 
 ### Testing
 
@@ -233,10 +271,17 @@ Run the test suite:
 pnpm test
 ```
 
-For continuous testing during development:
+After applying pending migrations to the local Supabase database, run the
+pgTAP database tests:
 
 ```bash
-pnpm test:watch
+pnpm test:db
+```
+
+For the Vitest UI during development:
+
+```bash
+pnpm test:ui
 ```
 
 ### Database Operations
@@ -250,13 +295,17 @@ pnpm run generate-supabase-types
 Push schema changes to Supabase:
 
 ```bash
+cd apps/web
 supabase db push
+cd ../..
 ```
 
 Fetch database migrations:
 
 ```bash
+cd apps/web
 supabase migration fetch
+cd ../..
 ```
 
 Backup database and schema:
@@ -265,6 +314,16 @@ Backup database and schema:
 export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
 sh ./scripts/db_backups.sh
 ```
+
+### Docs site (Fumadocs)
+
+The docs site at `docs.sexyvoice.ai` is a Fumadocs (Next.js) app in
+`apps/docs`. Content lives in `apps/docs/content/`.
+
+- Run it locally with `pnpm --filter @sexyvoice/docs dev`.
+- Regenerate the external API reference with
+  `pnpm --filter @sexyvoice/docs generate-openapi-docs` after changing the
+  `/api/v1/*` request/response schemas.
 
 ### Video Generation
 
@@ -308,12 +367,14 @@ SexyVoice.ai implements multiple security layers:
 ## 🤝 Contributing
 
 <!-- We welcome contributions! Please see the [contribution guidelines](CONTRIBUTING.md) for details on how to: -->
+
 We welcome contributions!
 
 - Report bugs
 - Suggest features
 - Submit pull requests
-- Review the [DevOps Guide](./docs/devops.md) for environment variables, deployment, infrastructure, and operational setup changes
+- Review [Deployment and release checks](./docs/devops.md) when changing environment variables, infrastructure, or deployment configuration
+
 <!-- - Follow the code of conduct -->
 
 ### Setup
@@ -331,6 +392,8 @@ cspell link add @cspell/dict-es-es
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fgianpaj%2Fsexyvoice.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fgianpaj%2Fsexyvoice?ref=badge_large)
 
 ## 🔗 Links
 
@@ -354,13 +417,42 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 - ✅ Real-time AI voice calls with configurable AI agents
 - ✅ API access
 
-### Supported Languages by these Google Gemini TTS Models
+### Supported Voice Families and Languages
 
-- Puck
-- Zephyr
-- Gacrux
-- Kore
-- Sulafat
+The public catalog has 63 voices: 57 text-to-speech voices and 6 voices for AI
+voice calls. Public voices live in the `voices` table, and `GET /api/v1/voices`
+returns the text-to-speech subset.
+
+| Family               | Model alias | Feature | Public voices | Languages                              |
+| -------------------- | ----------- | ------- | ------------- | -------------------------------------- |
+| Gemini 3.8 Flash TTS | `gpro38`    | `tts`   | 28            | Multilingual, plus `es-ES` and `es-MX` |
+| Gemini 3.1 Flash TTS | `gpro31`    | `tts`   | 11            | Multilingual (70+ languages)           |
+| Gemini 2.5 Pro TTS   | `gpro`      | `tts`   | 11            | Multilingual (24 languages)            |
+| xAI Grok             | `xai`       | `tts`   | 7             | Multilingual with automatic detection  |
+| xAI Grok             | `xai`       | `call`  | 6             | Multilingual                           |
+
+#### Google Gemini multilingual voices (`gpro`, `gpro31`, `gpro38`)
+
+The same eleven Gemini voice identities exist under each Gemini model alias, so
+one name maps to three catalog rows. Select by `voiceId`, or pass the `model`
+alias together with the `voice` name.
+
+| Voice        | Character  |
+| ------------ | ---------- |
+| `achernar`   | Soft       |
+| `aoede`      | Breezy     |
+| `autonoe`    | Bright     |
+| `callirrhoe` | Easy-going |
+| `despina`    | Smooth     |
+| `erinome`    | Clear      |
+| `gacrux`     | Mature     |
+| `kore`       | Firm       |
+| `puck`       | Upbeat     |
+| `sulafat`    | Warm       |
+| `zephyr`     | Bright     |
+
+Gemini 2.5 Pro (`gpro`) voices support style prompting and the following
+language/locale set:
 
 | Language               | BCP-47 Code              | Language             | BCP-47 Code |
 | ---------------------- | ------------------------ | -------------------- | ----------- |
@@ -376,6 +468,95 @@ SexyVoice.ai is actively developed and maintained. Check the [roadmap](https://s
 | Ukrainian (Ukraine)    | `uk-UA`                  | Bengali (Bangladesh) | `bn-BD`     |
 | English (India)        | `en-IN` & `hi-IN` bundle | Marathi (India)      | `mr-IN`     |
 | Tamil (India)          | `ta-IN`                  | Telugu (India)       | `te-IN`     |
+
+#### Gemini 3.1 Flash TTS — 70+ languages across 80+ locales (`gpro31`)
+
+Use `gpro31` only with voices returned by `/api/v1/voices` as `model: "gpro31"`.
+Voices returned as `gpro` stay on Gemini 2.5 Pro.
+
+Supports all 24 languages above, plus (non-exhaustive):
+Afrikaans (`af-ZA`), Albanian (`sq-AL`), Amharic (`am-ET`), Armenian (`hy-AM`),
+Azerbaijani (`az-AZ`), Basque (`eu-ES`), Bulgarian (`bg-BG`), Catalan (`ca-ES`),
+Chinese Simplified (`zh-CN`), Chinese Traditional (`zh-TW`), Croatian (`hr-HR`),
+Czech (`cs-CZ`), Danish (`da-DK`), Estonian (`et-EE`), Filipino/Tagalog (`fil-PH`),
+Finnish (`fi-FI`), Galician (`gl-ES`), Georgian (`ka-GE`), Greek (`el-GR`),
+Gujarati (`gu-IN`), Hebrew (`he-IL`), Hungarian (`hu-HU`), Icelandic (`is-IS`),
+Irish (`ga-IE`), Javanese (`jv-ID`), Kannada (`kn-IN`), Kazakh (`kk-KZ`),
+Latvian (`lv-LV`), Lithuanian (`lt-LT`), Macedonian (`mk-MK`), Malay (`ms-MY`),
+Maltese (`mt-MT`), Norwegian Bokmål (`nb-NO`), Persian (`fa-IR`), Punjabi (`pa-IN`),
+Serbian (`sr-RS`), Slovak (`sk-SK`), Slovenian (`sl-SI`), Swahili (`sw-KE`),
+Swedish (`sv-SE`), Urdu (`ur-PK`), Uzbek (`uz-UZ`), Welsh (`cy-GB`), Zulu (`zu-ZA`).
+Plus English, Spanish, French, Portuguese, and Arabic regional variants.
+
+> Full list: https://cloud.google.com/text-to-speech/docs/gemini-tts#language_availability
+
+Gemini 3.1 also supports 200+ inline audio expression tags (`[cheerfully]`, `[whispering]`, `[pause]`, etc.).
+
+#### Gemini 3.8 Flash TTS (`gpro38`)
+
+Use `gpro38` only with voices returned by `/api/v1/voices` as
+`model: "gpro38"`. Gemini 3.8 rows cover the eleven multilingual identities
+above plus 17 Spanish role voices. Each Spanish voice description records its
+role, accent, and pitch.
+
+Castilian Spanish (`es-ES`):
+
+| Voice                | Role                  | Type   | Pitch  |
+| -------------------- | --------------------- | ------ | ------ |
+| `es-es-advisor-8`    | Authoritative Advisor | Female | Low    |
+| `es-es-assistant-3`  | Digital Assistant     | Male   | Low    |
+| `es-es-commercial-7` | Commercial Voiceover  | Female | Medium |
+| `es-es-concierge-3`  | Concierge             | Female | Medium |
+| `es-es-csagent-6`    | Call Center Agent     | Female | Low    |
+| `es-es-podcaster-7`  | Podcaster             | Male   | Low    |
+| `es-es-techagent-5`  | Tech Advisor          | Female | Medium |
+| `es-es-training-12`  | Training Voiceover    | Female | High   |
+| `es-es-tutor-12`     | Tutor                 | Female | Medium |
+
+Mexican Spanish (`es-MX`, provider locale `es-419`):
+
+| Voice                 | Role                  | Type    | Pitch  |
+| --------------------- | --------------------- | ------- | ------ |
+| `es-419-advisor-4`    | Authoritative Advisor | Female  | High   |
+| `es-419-assistant-9`  | Digital Assistant     | Male    | Medium |
+| `es-419-commercial-1` | Commercial Voiceover  | Male    | Low    |
+| `es-419-concierge-5`  | Concierge             | Female  | High   |
+| `es-419-csagent-8`    | Call Center Agent     | Neutral | Medium |
+| `es-419-podcaster-1`  | Podcaster             | Male    | Low    |
+| `es-419-training-8`   | Training Voiceover    | Female  | Medium |
+| `es-419-tutor-3`      | Tutor                 | Female  | Low    |
+
+#### xAI Grok (`xai`) expressive voices
+
+Grok text-to-speech voices:
+
+| Voice    | Character                            |
+| -------- | ------------------------------------ |
+| `ara`    | Warm and friendly                    |
+| `carina` | Breathy and enthusiastic             |
+| `eve`    | Engaging and upbeat                  |
+| `leo`    | Authoritative and strong             |
+| `rex`    | Confident and clear                  |
+| `sal`    | Versatile voice                      |
+| `zagan`  | Powerful, dramatic, and unmistakable |
+
+AI voice calls use the Grok call voices `Ara`, `Carina`, `Eve`, `Leo`, `Rex`,
+and `Sal`.
+
+These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
+
+| Language / Locale             | Code    | Language / Locale     | Code    |
+| ----------------------------- | ------- | --------------------- | ------- |
+| English                       | `en`    | Japanese              | `ja`    |
+| Arabic (Egypt)                | `ar-EG` | Korean                | `ko`    |
+| Arabic (Saudi Arabia)         | `ar-SA` | Portuguese (Brazil)   | `pt-BR` |
+| Arabic (United Arab Emirates) | `ar-AE` | Portuguese (Portugal) | `pt-PT` |
+| Bengali                       | `bn`    | Russian               | `ru`    |
+| Chinese (Simplified)          | `zh`    | Spanish (Spain)       | `es-ES` |
+| French                        | `fr`    | Spanish (Mexico)      | `es-MX` |
+| German                        | `de`    | Turkish               | `tr`    |
+| Hindi                         | `hi`    | Vietnamese            | `vi`    |
+| Indonesian                    | `id`    | Italian               | `it`    |
 
 ---
 

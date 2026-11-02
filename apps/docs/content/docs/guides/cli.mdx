@@ -1,0 +1,171 @@
+---
+title: "SexyVoice CLI"
+description: "Install and use the SexyVoice command-line tool for speech generation, voice lookup, curl output, and local playback"
+icon: "terminal"
+---
+
+The SexyVoice CLI is a command-line client for the SexyVoice speech API. Use it to log in, list voices, generate speech, save or play audio, and print equivalent `curl` requests for debugging.
+
+## Prerequisites
+
+- A SexyVoice account
+- API access with enough credits to generate speech
+- One of the installation methods below
+
+## Install
+
+### Shell script
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gianpaj/sexyvoice-cli/main/install.sh | sh
+```
+
+To install a specific version, pass the version to the installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gianpaj/sexyvoice-cli/main/install.sh | sh -s v0.1.0
+```
+
+### From source
+
+```bash
+go install github.com/gianpaj/sexyvoice-cli@latest
+```
+
+### Homebrew
+
+If the Homebrew formula is available, install the CLI from the tap:
+
+```bash
+brew install gianpaj/sexyvoice-cli/sexyvoice-cli
+```
+
+## Quick start
+
+```bash
+# Open the dashboard login flow and save an API key locally
+sexyvoice login
+
+# Generate speech and play it immediately
+sexyvoice tts "Hello from SexyVoice" --voice achernar --model-id gpro
+
+# Save generated speech to a file
+sexyvoice tts "Hello from SexyVoice" --voice achernar --model-id gpro -o hello.wav
+
+# List available voices
+sexyvoice voices
+
+# Print the equivalent curl request
+sexyvoice curl "Hello from SexyVoice" --voice achernar --model-id gpro --format wav
+```
+
+## Commands
+
+### `sexyvoice login`
+
+Open the SexyVoice dashboard in your browser and save an API key locally. The login flow can reuse an existing API key by rotating it and storing the replacement key on your machine.
+
+### `sexyvoice tts TEXT`
+
+Generate speech audio from text.
+
+Common flags:
+
+| Flag         | Short | Description                            |
+| ------------ | ----- | -------------------------------------- |
+| `--voice`    | `-v`  | Voice name to use                      |
+| `--model-id` | `-m`  | Model ID: `gpro`, `grok`, or `orpheus` |
+| `--format`   | `-f`  | Response format: `wav` or `mp3`        |
+| `--style`    |       | Optional style prompt                  |
+| `--seed`     |       | Optional deterministic seed            |
+| `--output`   | `-o`  | Save to a file, or use `-` for stdout  |
+| `--play`     | `-p`  | Play audio locally                     |
+| `--json`     |       | Emit CLI result metadata as JSON       |
+
+### `sexyvoice voices`
+
+List voices available from `GET /api/v1/voices`. The output includes voice names, model IDs, languages, formats, style support, and voice IDs.
+
+```bash
+sexyvoice voices
+```
+
+Use `--json` when you need machine-readable output:
+
+```bash
+sexyvoice voices --json
+```
+
+### `sexyvoice curl TEXT`
+
+Print the equivalent `curl` request for the speech endpoint. Use this when you want to debug a request or move from the CLI to a backend integration.
+
+```bash
+sexyvoice curl "Hello from SexyVoice" --voice achernar --model-id gpro --format wav
+```
+
+### `sexyvoice key`
+
+Print the resolved API key with no trailing newline.
+
+```bash
+sexyvoice key
+```
+
+<Callout type="warn">
+  Only run `sexyvoice key` in a private terminal. Do not paste API keys into logs, tickets,
+  screenshots, or client-side code.
+</Callout>
+
+### `sexyvoice config`
+
+Manage config environments in `~/.sexyvoice/sexyvoice.toml`.
+
+```bash
+sexyvoice config
+```
+
+### `sexyvoice play FILE`
+
+Play a local WAV or MP3 file.
+
+```bash
+sexyvoice play hello.wav
+```
+
+### `sexyvoice logout`
+
+Remove the saved local API key.
+
+```bash
+sexyvoice logout
+```
+
+## Configuration
+
+| Item                     | Location                       |
+| ------------------------ | ------------------------------ |
+| Config directory         | `~/.sexyvoice/`                |
+| Config file              | `~/.sexyvoice/sexyvoice.toml`  |
+| Env API key override     | `SEXYVOICE_API_KEY`            |
+| Env API URL override     | `SEXYVOICE_API_URL`            |
+| Env auth prefix override | `SEXYVOICE_AUTH_HEADER_PREFIX` |
+
+Default API URL:
+
+```text
+https://sexyvoice.ai/api/v1/speech
+```
+
+## How it works
+
+- `sexyvoice login` opens a browser-based dashboard flow and stores an API key locally.
+- The CLI validates API keys against `GET /api/v1/models`.
+- `sexyvoice tts` calls `POST /api/v1/speech` and downloads the returned audio URL for playback or saving.
+- `sexyvoice curl` prints the request you can adapt for scripts, servers, and tests.
+
+## Next steps
+
+- Read the [API Quickstart](./api) to integrate speech generation into your app.
+- Browse the [API Reference](../api-reference/api) for endpoint details.
+- Use the [Grok Voices & Speech Tags](./grok-speech-tags) guide for expressive Grok speech.

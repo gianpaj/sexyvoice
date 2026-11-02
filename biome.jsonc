@@ -1,4 +1,11 @@
 {
+  "extends": [
+    "ultracite/biome/core",
+    "ultracite/biome/next",
+    "ultracite/biome/react",
+    "ultracite/biome/tanstack",
+    "ultracite/biome/vitest"
+  ],
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "vcs": {
     "enabled": true,
@@ -8,14 +15,17 @@
   "files": {
     "ignoreUnknown": true,
     "includes": [
-      "**",
       "!**/venv",
       "!**/.venv",
       "!**/node_modules",
-      "!components/ui",
-      "!.next",
-      "!dist",
-      "!build"
+      "!**/.next",
+      "!**/dist",
+      "!**/build",
+      "!**/.claude",
+      "!apps/web/components/ui",
+      "!apps/web/app/globals.css",
+      "!apps/web/lib/disposable-email/deny-domains.json",
+      "!apps/web/next-env.d.ts"
     ]
   },
   "formatter": {
@@ -26,7 +36,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useLiteralEnumMembers": "error",
         "useNodejsImportProtocol": "error",
@@ -53,21 +63,42 @@
         "useImportType": "error",
         "useExportType": "error",
         "noUselessElse": "error",
-        "useShorthandFunctionType": "error"
+        "useShorthandFunctionType": "error",
+        // These syntax preferences create broad churn without improving safety.
+        "noIncrementDecrement": "off",
+        "useDestructuring": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off",
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noShadow": "off",
+        "noLeakedRender": "off",
+        // Runtime data can violate TypeScript's static guarantees, so defensive
+        // null and exhaustiveness checks are intentional throughout the app.
+        "noUnnecessaryConditions": "off",
+        // Ultracite core leaves this off; default sort() compares values as strings.
+        "useArraySortCompare": "error"
+      },
+      "complexity": {
+        // Existing generation and audio flows are intentionally orchestration-heavy.
+        // Refactor them independently rather than as part of a lint upgrade.
+        "noExcessiveCognitiveComplexity": "off"
       },
       "correctness": {
         "useUniqueElementIds": "off",
         "noNextAsyncClientComponent": "error"
       },
       "nursery": {
-        "noShadow": "off",
-        "noLeakedRender": "off"
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error"
       },
       "performance": {
+        // React Compiler handles function identity optimization where useful.
+        "noJsxPropsBind": "off",
+        // Pagination and media-processing loops often require ordered awaits.
+        "noAwaitInLoops": "off",
+        // Tiptap primitives intentionally expose small public entry points.
+        "noBarrelFile": "off",
         "noNamespaceImport": "warn",
         "useTopLevelRegex": "off"
       }
@@ -115,8 +146,76 @@
       "tailwindDirectives": true
     }
   },
-  "extends": [
-    "ultracite/core",
-    "ultracite/next"
+  "overrides": [
+    {
+      // Test helpers intentionally use async mocks, assertion helpers, and
+      // documented skips that do not represent production defects.
+      "includes": ["apps/web/tests/**", "apps/web/e2e/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noForEach": "off"
+          },
+          "suspicious": {
+            "noEmptyBlockStatements": "off",
+            "noMisplacedAssertion": "off",
+            "noSkippedTests": "info",
+            "noThenProperty": "off",
+            "useAwait": "off"
+          }
+        }
+      }
+    },
+    {
+      // Browser API shims need no-op methods, loose boundary types, and
+      // bitwise byte operations to match the APIs they replace.
+      "includes": ["apps/web/tests/setup.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noUselessConstructor": "off"
+          },
+          "suspicious": {
+            "noBitwiseOperators": "off",
+            "noEmptyBlockStatements": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      // Supabase Edge Functions run on Deno and receive untyped PostgREST
+      // result shapes at this integration boundary.
+      "includes": ["apps/web/supabase/functions/**"],
+      "javascript": {
+        "globals": ["Deno"]
+      },
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/web/app/**",
+        "!apps/web/app/api/**",
+        "apps/web/components/**",
+        "apps/web/hooks/**",
+        "apps/web/lib/**"
+      ],
+      "plugins": ["./biome-plugins/use-verified-claims.grit"]
+    },
+    {
+      // API handlers require claims-based identity checks and shared error responses.
+      // Other runtime code uses only the claims rule.
+      "includes": ["apps/web/app/api/**"],
+      "plugins": [
+        "./biome-plugins/use-api-error-response.grit",
+        "./biome-plugins/use-verified-claims.grit"
+      ]
+    }
   ]
 }

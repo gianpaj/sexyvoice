@@ -1,19 +1,16 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { createClient } from '@supabase/supabase-js';
-import { config } from 'dotenv';
 
-// Load environment variables
-config({
-  path: ['.env', '.env.local'],
-});
+import { loadScriptEnv } from './lib/env.mts';
+import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+
+loadScriptEnv();
 
 interface CreditTransaction {
-  id: string;
-  user_id: string;
   amount: number;
-  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  created_at: string;
   description: string;
+  id: string;
   metadata: {
     dollarAmount?: number;
     priceId?: string;
@@ -21,49 +18,23 @@ interface CreditTransaction {
     [key: string]: unknown;
   } | null;
   reference_id: string | null;
-  created_at: string;
-}
-
-interface AudioFile {
-  id: string;
-  credits_used: number;
-  created_at: string;
+  type: 'purchase' | 'topup' | 'usage' | 'freemium' | 'refund';
+  user_id: string;
 }
 
 interface RefundCalculation {
-  totalPurchased: number;
-  totalUsed: number;
-  totalRefunded: number;
-  totalRefundAdjustment: number;
   availableCredits: number;
-  totalSpentUSD: number;
   creditRate: number;
   maxRefundCredits: number;
   maxRefundUSD: number;
   purchaseTransactions: CreditTransaction[];
-}
-
-/**
- * Create Supabase admin client
- */
-function createAdminClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-  }
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('Missing env.SUPABASE_SERVICE_ROLE_KEY');
-  }
-
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    },
-  );
+  stillOwedCredits: number;
+  totalFreemium: number;
+  totalPurchased: number;
+  totalRefundAdjustment: number;
+  totalRefunded: number;
+  totalSpentUSD: number;
+  totalUsedFromEvents: number;
 }
 
 /**
@@ -112,23 +83,19 @@ async function getUserCreditBalance(userId: string): Promise<number> {
   return data?.amount || 0;
 }
 
-/**
- * Get total credits used by user from audio files
- */
-async function getTotalCreditsUsed(userId: string): Promise<number> {
+async function getTotalCreditsUsedFromEvents(userId: string): Promise<number> {
   const supabase = createAdminClient();
-
   const { data, error } = await supabase
-    .from('audio_files')
+    .from('usage_events')
     .select('credits_used')
     .eq('user_id', userId);
-
   if (error) {
-    throw new Error(`Failed to fetch audio files: ${error.message}`);
+    throw new Error(`Failed to fetch usage events: ${error.message}`);
   }
-
-  const audioFiles = data as AudioFile[];
-  return audioFiles.reduce((sum, file) => sum + (file.credits_used || 0), 0);
+  return (data as { credits_used: number }[]).reduce(
+    (sum, row) => sum + (row.credits_used || 0),
+    0,
+  );
 }
 
 /**
@@ -136,7 +103,8 @@ async function getTotalCreditsUsed(userId: string): Promise<number> {
  */
 function calculateRefund(
   transactions: CreditTransaction[],
-  totalCreditsUsed: number,
+  userCreditBalance: number,
+  totalUsedFromEvents: number,
 ): RefundCalculation {
   // Filter purchase and topup transactions with dollar amounts
   const purchaseTransactions = transactions.filter(
@@ -152,7 +120,6 @@ function calculateRefund(
     );
   }
 
-  // Calculate totals
   const totalPurchased = transactions
     .filter((t) => t.type === 'purchase' || t.type === 'topup')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -162,54 +129,59 @@ function calculateRefund(
     0,
   );
 
-  // Calculate total freemium credits
-  const totalFreemium = transactions
-    .filter((t) => t.type === 'freemium')
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // Calculate refund adjustments
   // Platform bug refunds: positive amounts (credits added back)
   // Purchase refunds: negative amounts (credits taken back)
   const totalRefundAdjustment = transactions
     .filter((t) => t.type === 'refund')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  // Calculate purchase refunds only (negative amounts, for max refund calculation)
+  // Purchase refunds only (negative amounts) — used to cap max USD refund
   const totalPurchaseRefunded = transactions
     .filter((t) => t.type === 'refund' && t.amount < 0)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
-  // Calculate available credits: total added (purchase + topup + freemium) minus used, plus/minus refund adjustments
-  const totalCreditsAdded = totalPurchased + totalFreemium;
+  const totalFreemium = transactions
+    .filter((t) => t.type === 'freemium')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  const availableCredits =
-    totalCreditsAdded - totalCreditsUsed + totalRefundAdjustment;
+  // credits table is the source of truth for available balance
+  const availableCredits = userCreditBalance;
 
-  // Calculate credit rate (USD per credit)
   const creditRate = totalSpentUSD / totalPurchased;
 
-  const totalPurchaseCreditsUsed = Math.max(
+  // Cap USD refund at actual balance AND at total purchased credits minus already-USD-refunded.
+  // This prevents refunding freemium credits as cash, and prevents double USD refunds.
+  const maxRefundCredits = Math.max(
     0,
-    totalCreditsUsed - totalFreemium,
+    Math.min(userCreditBalance, totalPurchased - totalPurchaseRefunded),
   );
-
-  // Max refund is based on purchase unused credits minus purchase refunds (USD refunds only)
-  const unusedCredits =
-    totalPurchased - totalPurchaseCreditsUsed - totalPurchaseRefunded;
-  const maxRefundCredits = Math.max(0, unusedCredits);
   const maxRefundUSD = maxRefundCredits * creditRate;
 
+  // How many overcharged credits are still outstanding after all refunds given so far.
+  // expected balance (if no overcharge) = totalAdded - totalUSDRefunded - usage_events_sum
+  // still_owed = expected - actual
+  const totalAdded = totalPurchased + totalFreemium;
+  const stillOwedCredits = Math.max(
+    0,
+    totalAdded -
+      totalPurchaseRefunded -
+      totalUsedFromEvents -
+      userCreditBalance,
+  );
+
   return {
-    totalPurchased,
-    totalUsed: totalCreditsUsed,
-    totalRefunded: totalPurchaseRefunded, // Only purchase refunds (USD refunds)
-    totalRefundAdjustment,
     availableCredits,
-    totalSpentUSD,
     creditRate,
     maxRefundCredits,
     maxRefundUSD,
     purchaseTransactions,
+    stillOwedCredits,
+    totalFreemium,
+    totalPurchased,
+    totalRefundAdjustment,
+    totalRefunded: totalPurchaseRefunded,
+    totalSpentUSD,
+    totalUsedFromEvents,
   };
 }
 
@@ -264,7 +236,7 @@ async function insertRefundTransaction(options: {
   // Build description
   const description = platformBugReason
     ? `Refund - ${platformBugReason}`
-    : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().substring(0, 10)} - $${refundUSD.toFixed(2)}`;
+    : `Refund for transaction of ${new Date(originalTransaction!.created_at).toISOString().slice(0, 10)} - $${refundUSD.toFixed(2)}`;
 
   // Insert refund transaction
   // Platform bug refund: positive amount (adding credits back to user)
@@ -274,14 +246,14 @@ async function insertRefundTransaction(options: {
     : -Math.abs(refundCredits);
 
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
     amount: transactionAmount,
-    type: 'refund',
     description,
+    metadata,
     reference_id: isPlatformBugRefund
       ? null
       : originalTransaction!.reference_id,
-    metadata,
+    type: 'refund',
+    user_id: userId,
   });
 
   if (error) {
@@ -295,8 +267,8 @@ async function insertRefundTransaction(options: {
     const { error: creditsError } = await supabase.rpc(
       'increment_user_credits',
       {
-        user_id_var: userId,
         credit_amount_var: Math.abs(refundCredits),
+        user_id_var: userId,
       },
     );
 
@@ -309,8 +281,8 @@ async function insertRefundTransaction(options: {
     const { error: creditsError } = await supabase.rpc(
       'decrement_user_credits',
       {
-        user_id_var: userId,
         credit_amount_var: Math.abs(refundCredits),
+        user_id_var: userId,
       },
     );
 
@@ -327,13 +299,23 @@ async function insertRefundTransaction(options: {
  */
 function displayRefundInfo(calculation: RefundCalculation): void {
   console.log('\n=== Credit Refund Calculation ===\n');
-  console.log(`Total Credits Purchased: ${calculation.totalPurchased}`);
-  console.log(`Total Credits Used: ${calculation.totalUsed}`);
+  console.log(`Total Credits Purchased:       ${calculation.totalPurchased}`);
+  console.log(`Total Freemium Credits:        ${calculation.totalFreemium}`);
   console.log(
-    `Total Refund Adjustment: ${calculation.totalRefundAdjustment >= 0 ? '+' : ''}${calculation.totalRefundAdjustment}`,
+    `Legitimate Usage (events):     ${calculation.totalUsedFromEvents}`,
   );
-  console.log(`Total Purchase Refunds (USD): ${calculation.totalRefunded}`);
-  console.log(`Available Credits: ${calculation.availableCredits}`);
+  console.log(`Available Credits (balance):   ${calculation.availableCredits}`);
+  console.log(
+    `Refund Adjustment (all):       ${calculation.totalRefundAdjustment >= 0 ? '+' : ''}${calculation.totalRefundAdjustment}`,
+  );
+  console.log(`USD Refunds Given:             ${calculation.totalRefunded}`);
+  if (calculation.stillOwedCredits > 0) {
+    console.log(
+      `\n⚠️  Still owed to user:         ${calculation.stillOwedCredits} credits (overcharged but not yet refunded)`,
+    );
+  } else {
+    console.log('\n✅ Overcharge fully compensated');
+  }
   console.log(`Total Spent: $${calculation.totalSpentUSD.toFixed(2)}`);
   console.log(
     `Credit Rate: $${calculation.creditRate.toFixed(5)} per credit\n`,
@@ -344,7 +326,7 @@ function displayRefundInfo(calculation: RefundCalculation): void {
   console.log('Purchase/Topup Transactions:');
   for (const transaction of calculation.purchaseTransactions) {
     console.log(
-      `  - ${transaction.created_at.substring(0, 10)} | ${transaction.type.toUpperCase()} | ${transaction.amount} credits | $${transaction.metadata?.dollarAmount?.toFixed(2)} | Ref: ${transaction.reference_id || 'N/A'}`,
+      `  - ${transaction.created_at.slice(0, 10)} | ${transaction.type.toUpperCase()} | ${transaction.amount} credits | $${transaction.metadata?.dollarAmount?.toFixed(2)} | Ref: ${transaction.reference_id || 'N/A'}`,
     );
   }
   console.log('');
@@ -421,7 +403,7 @@ async function selectTransaction(
   for (let i = 0; i < calculation.purchaseTransactions.length; i++) {
     const t = calculation.purchaseTransactions[i];
     console.log(
-      `  ${i + 1}. ${t.created_at.substring(0, 10)} | ${t.amount} credits | $${t.metadata?.dollarAmount?.toFixed(2)} | Ref: ${t.reference_id || 'N/A'}`,
+      `  ${i + 1}. ${t.created_at.slice(0, 10)} | ${t.amount} credits | $${t.metadata?.dollarAmount?.toFixed(2)} | Ref: ${t.reference_id || 'N/A'}`,
     );
   }
 
@@ -435,7 +417,7 @@ async function selectTransaction(
     console.log(
       '\n💡 Skipped transaction selection for platform bug refund (no original transaction will be tracked)',
     );
-    return { transaction: null, skipped: true };
+    return { skipped: true, transaction: null };
   }
 
   const transactionIndex = Number.parseInt(transactionIndexInput, 10) - 1;
@@ -449,8 +431,8 @@ async function selectTransaction(
   }
 
   return {
-    transaction: calculation.purchaseTransactions[transactionIndex],
     skipped: false,
+    transaction: calculation.purchaseTransactions[transactionIndex],
   };
 }
 
@@ -512,11 +494,11 @@ async function main() {
     console.log('Fetching credit transactions...');
     const transactions = await getCreditTransactions(userId);
 
-    console.log('Calculating credits used...');
-    const totalCreditsUsed = await getTotalCreditsUsed(userId);
-
     console.log('Fetching user credit balance...');
-    const userCreditBalance = await getUserCreditBalance(userId);
+    const [userCreditBalance, totalUsedFromEvents] = await Promise.all([
+      getUserCreditBalance(userId),
+      getTotalCreditsUsedFromEvents(userId),
+    ]);
 
     // Check if user has only freemium transactions
     const hasPaidTransactions = transactions.some(
@@ -534,18 +516,12 @@ async function main() {
       return;
     }
 
-    // Calculate refund
-    const calculation = calculateRefund(transactions, totalCreditsUsed);
-
-    // Validate that calculated available credits match the credits table
-    if (calculation.availableCredits !== userCreditBalance) {
-      throw new Error(
-        'Credit mismatch detected!\n' +
-          `  Calculated from transactions: ${calculation.availableCredits}\n` +
-          `  Actual balance in credits table: ${userCreditBalance}\n` +
-          '  Please investigate data integrity before processing refund.',
-      );
-    }
+    // Calculate refund using credits table as source of truth for available balance
+    const calculation = calculateRefund(
+      transactions,
+      userCreditBalance,
+      totalUsedFromEvents,
+    );
 
     // Display info
     displayRefundInfo(calculation);
@@ -617,7 +593,7 @@ async function main() {
     }
     if (selectedTransaction) {
       console.log(
-        `Original transaction: ${selectedTransaction.id.substring(0, 8)}`,
+        `Original transaction: ${selectedTransaction.id.slice(0, 8)}`,
       );
       console.log(`Reference ID: ${selectedTransaction.reference_id || 'N/A'}`);
     }
@@ -637,12 +613,12 @@ async function main() {
     // Insert refund transaction
     console.log('\nProcessing refund...');
     await insertRefundTransaction({
-      userId,
+      chargeId: chargeId || undefined,
+      originalTransaction: selectedTransaction,
+      platformBugReason,
       refundCredits,
       refundUSD,
-      originalTransaction: selectedTransaction,
-      chargeId: chargeId || undefined,
-      platformBugReason,
+      userId,
     });
 
     console.log('✅ Refund transaction created successfully!\n');
@@ -659,4 +635,4 @@ async function main() {
 }
 
 // Run the script
-main();
+await main();

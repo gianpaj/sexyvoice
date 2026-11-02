@@ -1,0 +1,92 @@
+import { Wand2 } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
+
+import { CreditBalanceError } from '@/components/credit-balance-error';
+import CreditsSection from '@/components/credits-section';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
+import {
+  getCreditTransactionAmounts,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
+import { GenerateUI } from './generateui.client';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/generate');
+
+export default async function GeneratePage(props: {
+  params: Promise<{ lang: Locale }>;
+}) {
+  const { lang } = await props.params;
+  const t = await getTranslations('generate');
+  const supabase = await createClient();
+
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) {
+    redirect(`/${lang}/login`);
+  }
+
+  const creditBalance = await getDashboardCreditBalance(
+    supabase,
+    userId,
+    'dashboard/generate',
+  );
+  const isPlaywrightCreditsBypassEnabled =
+    process.env.E2E_TEST_MODE === 'true' &&
+    !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
+    claims.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
+  const hasEnoughCredits =
+    (creditBalance !== null && creditBalance >= 10) ||
+    isPlaywrightCreditsBypassEnabled;
+
+  const [creditTransactions, isPaidUser, { data: publicVoices }] =
+    await Promise.all([
+      getCreditTransactionAmounts(userId),
+      hasUserPaid(userId),
+      supabase
+        .from('voices')
+        .select('*')
+        .eq('feature', 'tts')
+        .eq('is_public', true)
+        .order('sort_order')
+        .order('name'),
+    ]);
+
+  if (!publicVoices) {
+    return <div>No public voices found</div>;
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-8 pb-16">
+      <div>
+        <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
+          <Wand2 size={26} />
+          {t('title')}
+        </h2>
+        <p className="text-muted-foreground">{t('subtitle')}</p>
+      </div>
+
+      <div className="lg:hidden">
+        <CreditsSection
+          creditTransactions={creditTransactions}
+          doNotToggleSidebar
+          userId={userId}
+        />
+      </div>
+
+      {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
+        <GenerateUI
+          hasEnoughCredits={hasEnoughCredits}
+          isPaidUser={isPaidUser}
+          publicVoices={publicVoices}
+        />
+      ) : (
+        <CreditBalanceError />
+      )}
+    </div>
+  );
+}

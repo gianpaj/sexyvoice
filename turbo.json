@@ -1,0 +1,56 @@
+{
+  "$schema": "https://v2-10-12.turborepo.dev/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": ["OPENROUTER_API_KEY", "OPENROUTER_MODEL"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        ".contentlayer/**"
+      ]
+    },
+    "build:content": {
+      "outputs": [".contentlayer/**"]
+    },
+    "check-translations": {
+      "outputs": []
+    },
+    "clean": {
+      "outputs": []
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "fixall": {
+      "cache": false
+    },
+    "format": {
+      "outputs": []
+    },
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:db": {
+      "cache": false
+    },
+    "test:ui": {
+      "cache": false,
+      "persistent": true
+    },
+    "type-check": {
+      "dependsOn": ["^type-check", "build:content"],
+      "outputs": []
+    }
+  }
+}
