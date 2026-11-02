@@ -36,6 +36,7 @@ const getDefaultSuccessPath = (type: EmailOtpType, locale: string) =>
     : `/${locale}/dashboard`;
 
 export async function GET(request: Request) {
+  const responseHeaders = new Headers();
   // Email auth links use token_hash + verifyOtp so confirmation and recovery
   // links do not depend on a browser-local PKCE code verifier.
   // https://supabase.com/docs/guides/auth/auth-email-templates#redirecting-the-user-to-a-server-side-endpoint
@@ -76,7 +77,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}${loginPath}`);
   }
 
-  const supabase = await createClient();
+  const supabase = await createClient(responseHeaders);
   const { data, error } = await supabase.auth.verifyOtp({
     token_hash: tokenHash,
     type,
@@ -96,26 +97,39 @@ export async function GET(request: Request) {
       },
     });
 
-    return NextResponse.redirect(`${origin}${loginPath}`);
+    return NextResponse.redirect(`${origin}${loginPath}`, {
+      headers: responseHeaders,
+    });
   }
 
   if (isSignupEmailOtpType(type)) {
-    const user = data.user ?? (await supabase.auth.getUser()).data.user;
+    try {
+      // biome-ignore lint/plugin/use-verified-claims: Signup provisioning needs the full user after OTP verification.
+      const user = data.user ?? (await supabase.auth.getUser()).data.user;
 
-    if (user) {
-      await recordSignupSideEffects(user, 'email');
-    } else {
-      captureMessage('Email signup confirmation completed without a user.', {
-        level: 'error',
+      if (user) {
+        await recordSignupSideEffects(user, 'email');
+      } else {
+        captureMessage('Email signup confirmation completed without a user.', {
+          level: 'error',
+          tags: {
+            area: 'auth',
+            flow: 'email-auth-confirm',
+            error_type: 'missing-confirmed-user',
+          },
+          extra: {
+            type,
+            redirectTo,
+            safeRedirectPath,
+          },
+        });
+      }
+    } catch (error) {
+      captureException(error, {
         tags: {
           area: 'auth',
           flow: 'email-auth-confirm',
-          error_type: 'missing-confirmed-user',
-        },
-        extra: {
-          type,
-          redirectTo,
-          safeRedirectPath,
+          error_type: 'signup-side-effects-failed',
         },
       });
     }
@@ -123,5 +137,6 @@ export async function GET(request: Request) {
 
   return createAuthRedirectResponse(
     `${origin}${safeRedirectPath ?? getDefaultSuccessPath(type, locale)}`,
+    responseHeaders,
   );
 }

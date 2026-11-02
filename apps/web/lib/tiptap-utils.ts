@@ -11,19 +11,19 @@ export function cn(
 }
 
 const MAC_SYMBOLS: Record<string, string> = {
-  mod: '⌘',
-  command: '⌘',
-  meta: '⌘',
-  ctrl: '⌃',
-  control: '⌃',
   alt: '⌥',
-  option: '⌥',
-  shift: '⇧',
   backspace: 'Del',
+  capslock: '⇪',
+  command: '⌘',
+  control: '⌃',
+  ctrl: '⌃',
   delete: '⌦',
   enter: '⏎',
   escape: '⎋',
-  capslock: '⇪',
+  meta: '⌘',
+  mod: '⌘',
+  option: '⌥',
+  shift: '⇧',
 } as const;
 
 function isMac(): boolean {
@@ -84,7 +84,7 @@ export function isNodeTypeSelected(
   nodeTypeNames: string[] = [],
   checkAncestorNodes = false,
 ): boolean {
-  if (!(editor && editor.state.selection)) return false;
+  if (!editor?.state.selection) return false;
 
   const { selection } = editor.state;
   if (selection.empty) return false;

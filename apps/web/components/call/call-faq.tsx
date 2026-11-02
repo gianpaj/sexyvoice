@@ -2,6 +2,7 @@
 
 import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
+import { useMessages } from 'next-intl';
 
 import {
   Accordion,
@@ -11,22 +12,15 @@ import {
 } from '@/components/ui/accordion';
 import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 
-interface CallFaqQuestion {
-  answer: string;
-  question: string;
-}
-
-export function CallFaq({
-  title,
-  questions,
-}: {
-  title: string;
-  questions: CallFaqQuestion[];
-}) {
+export function CallFaq() {
   const connectionState = useConnectionState();
+  const messages = useMessages();
+  const callFaq = messages.landing?.faq?.groups?.find(
+    (group) => group.id === 'liveCalling',
+  );
 
   // Hide the FAQ while a call is connecting or in progress.
-  if (connectionState !== ConnectionState.Disconnected) {
+  if (connectionState !== ConnectionState.Disconnected || !callFaq) {
     return null;
   }
 
@@ -36,7 +30,7 @@ export function CallFaq({
       data-testid="call-faq"
     >
       <h2 className="mb-4 text-center font-semibold text-foreground text-lg">
-        {title}
+        {callFaq.category}
       </h2>
       <Accordion
         className="w-full rounded-md border border-border"
@@ -44,7 +38,7 @@ export function CallFaq({
         defaultValue="item-0"
         type="single"
       >
-        {questions.map((faq, i) => (
+        {callFaq.questions.map((faq, i) => (
           <AccordionItem
             className="border-border px-5"
             key={i}

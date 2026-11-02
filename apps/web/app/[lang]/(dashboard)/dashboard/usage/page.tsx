@@ -1,7 +1,15 @@
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
+import {
+  E2E_ALL_TIME_USAGE_SUMMARY,
+  E2E_MONTHLY_USAGE_SUMMARY,
+  E2E_USAGE_REFERENCE_DATE,
+  isE2E,
+} from '@/lib/e2e-mocks';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 import {
   getAllTimeUsageSummary,
@@ -11,6 +19,8 @@ import {
 import { DataTable } from './data-table';
 import { SummaryCard } from './summary-card';
 
+export const generateMetadata = createDashboardMetadata('/dashboard/usage');
+
 export default async function UsagePage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
@@ -19,31 +29,38 @@ export default async function UsagePage(props: {
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) return null;
 
-  // Fetch summary data server-side for initial render
-  const [monthlySummary, allTimeSummary] = await Promise.all([
-    getMonthlyUsageSummary(supabase, user.id),
-    getAllTimeUsageSummary(supabase, user.id),
-  ]);
+  // Fetch summary data server-side for initial render. The summary cards are
+  // server-rendered with no client refetch, so in E2E mode they bypass the
+  // `/api/usage-events` route stub — serve deterministic mock summaries (and a
+  // pinned month label) so the Argos screenshot is stable.
+  const e2e = isE2E();
+  const [monthlySummary, allTimeSummary] = e2e
+    ? [E2E_MONTHLY_USAGE_SUMMARY, E2E_ALL_TIME_USAGE_SUMMARY]
+    : await Promise.all([
+        getMonthlyUsageSummary(supabase, userId),
+        getAllTimeUsageSummary(supabase, userId),
+      ]);
 
-  // Get month name for display
-  const currentMonth = new Date().toLocaleDateString(lang, {
+  // Get month name for display. In E2E mode use a pinned reference date so the
+  // screenshot is stable, while still formatting via the active locale.
+  const referenceDate = e2e ? E2E_USAGE_REFERENCE_DATE : new Date();
+  const currentMonth = referenceDate.toLocaleDateString(lang, {
     month: 'long',
     year: 'numeric',
   });
 
   // Source type labels for display
   const sourceTypeLabels: Record<UsageSourceType, string> = {
-    tts: t('summary.byType.tts'),
-    voice_cloning: t('summary.byType.voice_cloning'),
-    live_call: t('summary.byType.live_call'),
-    audio_processing: t('summary.byType.audio_processing'),
     api_tts: 'API TTS',
     api_voice_cloning: 'API Voice Cloning',
+    audio_processing: t('summary.byType.audio_processing'),
+    live_call: t('summary.byType.live_call'),
+    tts: t('summary.byType.tts'),
+    voice_cloning: t('summary.byType.voice_cloning'),
   };
 
   return (

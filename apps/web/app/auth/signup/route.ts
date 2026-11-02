@@ -4,9 +4,7 @@ import z from 'zod';
 import { isDisposableEmail } from '@/lib/disposable-email';
 import { isE2E } from '@/lib/e2e-mode';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
-import {
-  getRequestOrigin,
-} from '@/lib/supabase/auth-redirect';
+import { getRequestOrigin } from '@/lib/supabase/auth-redirect';
 import { createClient } from '@/lib/supabase/server';
 
 interface ParsedError {
@@ -113,10 +111,10 @@ export async function POST(request: Request) {
 
   const { error: signUpError, data } = await supabase.auth.signUp({
     email,
-    password,
     options: {
       emailRedirectTo,
     },
+    password,
   });
 
   if (signUpError || !data.user) {
@@ -130,14 +128,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       {
-        error: parsedError,
         data,
+        error: parsedError,
       },
       {
-        status: isRateLimitError ? 429 : 400,
         headers: hasRetryAfter
           ? { 'Retry-After': String(parsedError?.seconds) }
           : undefined,
+        status: isRateLimitError ? 429 : 400,
       },
     );
   }

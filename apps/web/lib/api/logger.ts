@@ -49,8 +49,8 @@ export function createLogger({
 
   async function log(fields: LogFields): Promise<void> {
     axiom.ingest(DATASET, {
-      requestId,
       endpoint,
+      requestId,
       ...fields,
       durationMs: Date.now() - startTime,
     });

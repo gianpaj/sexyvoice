@@ -20,7 +20,7 @@ export function getTranslatedLanguages(
       const label = name
         ? `${name.charAt(0).toUpperCase()}${name.slice(1)}`
         : code;
-      return { value: code, label };
+      return { label, value: code };
     })
     .sort((a, b) => a.label.localeCompare(b.label, locale));
 }

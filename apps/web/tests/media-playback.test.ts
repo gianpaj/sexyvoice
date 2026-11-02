@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  attemptPlayback,
-  isExpectedPlaybackError,
-} from '@/lib/media-playback';
+import { attemptPlayback, isExpectedPlaybackError } from '@/lib/media-playback';
 
 describe('media-playback', () => {
   describe('isExpectedPlaybackError', () => {
@@ -29,9 +26,7 @@ describe('media-playback', () => {
       ).toBe(true);
       expect(
         isExpectedPlaybackError(
-          new Error(
-            'The play() request was interrupted by a call to pause().',
-          ),
+          new Error('The play() request was interrupted by a call to pause().'),
         ),
       ).toBe(true);
     });
@@ -43,9 +38,9 @@ describe('media-playback', () => {
 
   describe('attemptPlayback', () => {
     it('returns true on successful playback', async () => {
-      await expect(
-        attemptPlayback(() => Promise.resolve()),
-      ).resolves.toBe(true);
+      await expect(attemptPlayback(() => Promise.resolve())).resolves.toBe(
+        true,
+      );
     });
 
     it('swallows expected playback errors and calls failure handler', async () => {
@@ -53,10 +48,7 @@ describe('media-playback', () => {
 
       await expect(
         attemptPlayback(
-          () =>
-            Promise.reject(
-              new DOMException('Denied', 'NotAllowedError'),
-            ),
+          () => Promise.reject(new DOMException('Denied', 'NotAllowedError')),
           onFailure,
         ),
       ).resolves.toBe(false);

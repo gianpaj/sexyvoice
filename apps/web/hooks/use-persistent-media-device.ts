@@ -3,6 +3,10 @@ import { useEffect, useRef } from 'react';
 
 const AUDIO_DEVICE_STORAGE_KEY = 'sv_audio_device_id';
 
+function handleDeviceSelectionError(error: unknown) {
+  console.warn('Failed to select audio input device:', error);
+}
+
 /**
  * Custom hook for managing persistent audio device selection.
  * Automatically loads the last selected audio device from localStorage
@@ -30,7 +34,9 @@ export function usePersistentMediaDevice() {
           (device) => device.deviceId === savedDeviceId,
         );
         if (deviceExists) {
-          deviceSelect.setActiveMediaDevice(savedDeviceId);
+          deviceSelect
+            .setActiveMediaDevice(savedDeviceId)
+            .catch(handleDeviceSelectionError);
         }
       }
       hasInitialized.current = true;
@@ -46,7 +52,9 @@ export function usePersistentMediaDevice() {
    * @param deviceId - The device ID to set as active
    */
   const setPersistentMediaDevice = (deviceId: string) => {
-    deviceSelect.setActiveMediaDevice(deviceId);
+    deviceSelect
+      .setActiveMediaDevice(deviceId)
+      .catch(handleDeviceSelectionError);
     localStorage.setItem(AUDIO_DEVICE_STORAGE_KEY, deviceId);
   };
 

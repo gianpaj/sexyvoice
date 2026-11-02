@@ -97,10 +97,10 @@ export class UsagePage {
 
     // Pagination
     this.previousButton = page.getByRole('button', {
-      name: 'Previous',
       exact: true,
+      name: 'Previous',
     });
-    this.nextButton = page.getByRole('button', { name: 'Next', exact: true });
+    this.nextButton = page.getByRole('button', { exact: true, name: 'Next' });
     this.pageInfo = page.getByText(/page\s+\d+/i);
 
     // Error state
@@ -130,12 +130,12 @@ export class UsagePage {
 
     const optionNameBySourceType: Record<string, RegExp> = {
       all: /^all$/i,
-      tts: /^tts$/i,
-      voice_cloning: /^voice cloning$/i,
-      live_call: /^live call$/i,
-      audio_processing: /^audio processing$/i,
       api_tts: /^api tts$/i,
       api_voice_cloning: /^api voice cloning$/i,
+      audio_processing: /^audio processing$/i,
+      live_call: /^live call$/i,
+      tts: /^tts$/i,
+      voice_cloning: /^voice cloning$/i,
     };
 
     const option = this.page.getByRole('option', {

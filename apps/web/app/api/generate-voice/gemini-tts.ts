@@ -6,33 +6,35 @@ import {
 } from '@google/genai';
 
 import { convertToWav } from '@/lib/audio';
+import { buildGeminiVoiceConfig } from '@/lib/tts/gemini-prompt';
 
 export function buildGeminiTtsConfig({
   voiceName,
+  model,
   seed,
+  temperature,
   abortSignal,
 }: {
   voiceName: string;
+  model?: string;
   seed?: number;
+  temperature?: number;
   abortSignal: AbortSignal;
 }): GenerateContentConfig {
   return {
     abortSignal,
     responseModalities: ['AUDIO'],
     ...(seed === undefined ? {} : { seed }),
-    speechConfig: {
-      voiceConfig: {
-        prebuiltVoiceConfig: {
-          voiceName: voiceName.charAt(0).toUpperCase() + voiceName.slice(1),
-        },
-      },
-    },
+    ...(temperature === undefined ? {} : { temperature }),
     safetySettings: [
       {
         category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
         threshold: HarmBlockThreshold.BLOCK_NONE,
       },
     ],
+    speechConfig: {
+      voiceConfig: buildGeminiVoiceConfig(voiceName, model),
+    },
   };
 }
 
@@ -81,8 +83,8 @@ export function createSseEvent(
 }
 
 export const SSE_HEADERS = {
-  'Content-Type': 'text/event-stream',
   'Cache-Control': 'no-cache, no-transform',
   Connection: 'keep-alive',
+  'Content-Type': 'text/event-stream',
   'X-Accel-Buffering': 'no',
 } as const;

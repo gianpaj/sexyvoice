@@ -187,7 +187,10 @@ export function useStreamingWaveformPlayer(): StreamingWaveformPlayer {
   }, []);
 
   const getHandoff = useCallback(
-    () => ({ time: handoffTimeRef.current, wasPlaying: handoffPlayingRef.current }),
+    () => ({
+      time: handoffTimeRef.current,
+      wasPlaying: handoffPlayingRef.current,
+    }),
     [],
   );
 
@@ -209,17 +212,17 @@ export function useStreamingWaveformPlayer(): StreamingWaveformPlayer {
   }, [getDuration]);
 
   return {
-    phase,
-    isLivePlaying,
-    hadAudio,
-    wavBlob,
-    pushChunk,
     finalize,
-    togglePlayPause,
-    reset,
-    getPeaks,
-    getDuration,
     getCurrentTime,
+    getDuration,
     getHandoff,
+    getPeaks,
+    hadAudio,
+    isLivePlaying,
+    phase,
+    pushChunk,
+    reset,
+    togglePlayPause,
+    wavBlob,
   };
 }

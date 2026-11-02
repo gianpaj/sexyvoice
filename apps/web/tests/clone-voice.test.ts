@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/clone-voice/route';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+// biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
 import {
   flushPromises,
@@ -11,6 +12,7 @@ import {
   mockRedisGet,
   mockRedisSet,
   mockReplicateRun,
+  mockSupabaseUnauthenticatedClaimsOnce,
   mockUploadFileToR2,
   server,
 } from './setup';
@@ -95,11 +97,11 @@ describe('Clone Voice API Route', () => {
   describe('Input Validation', () => {
     it('should return 400 when content-type is not multipart/form-data', async () => {
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
+        body: JSON.stringify({ text: 'Hello world' }),
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ text: 'Hello world' }),
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -119,8 +121,8 @@ describe('Clone Voice API Route', () => {
       formData.append('locale', 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -139,8 +141,8 @@ describe('Clone Voice API Route', () => {
       formData.append('locale', 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -161,8 +163,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -187,8 +189,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -211,8 +213,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -237,8 +239,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -261,8 +263,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -286,8 +288,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -313,8 +315,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -338,8 +340,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -359,8 +361,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world', largeFile, 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -390,8 +392,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -432,8 +434,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -459,8 +461,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -478,18 +480,18 @@ describe('Clone Voice API Route', () => {
         Buffer.from(await createMockAudioFile().arrayBuffer()),
       );
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
+        common: {},
         format: {
-          container: 'Ogg',
           codec: 'Opus',
+          container: 'Ogg',
           duration: 12,
-          sampleRate: 48_000,
-          numberOfChannels: 1,
           hasAudio: true,
           hasVideo: false,
+          numberOfChannels: 1,
+          sampleRate: 48_000,
         },
         native: { vorbis: [] },
         quality: { warnings: [] },
-        common: {},
       } as any);
 
       const oggFile = new File(['test'], 'normal-opus-12s.ogg', {
@@ -498,8 +500,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world', oggFile, 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -514,18 +516,18 @@ describe('Clone Voice API Route', () => {
         Buffer.from(await createMockAudioFile().arrayBuffer()),
       );
       vi.spyOn(musicMetadata, 'parseBuffer').mockResolvedValue({
+        common: {},
         format: {
-          container: 'Ogg',
           codec: 'Opus',
+          container: 'Ogg',
           duration: 12,
-          sampleRate: 48_000,
-          numberOfChannels: 1,
           hasAudio: true,
           hasVideo: false,
+          numberOfChannels: 1,
+          sampleRate: 48_000,
         },
         native: { vorbis: [] },
         quality: { warnings: [] },
-        common: {},
       } as any);
 
       const oggFile = new File(['test'], 'normal-opus-12s.ogg', {
@@ -534,8 +536,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world', oggFile, 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -550,8 +552,8 @@ describe('Clone Voice API Route', () => {
       // Note: locale is not appended
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -570,8 +572,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -594,8 +596,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -618,8 +620,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -641,8 +643,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -657,20 +659,15 @@ describe('Clone Voice API Route', () => {
     });
   });
 
-  describe.skip('Authentication', () => {
+  describe('Authentication', () => {
     it('should return 401 when user is not authenticated', async () => {
-      // Mock unauthenticated user
-      server.use(
-        http.get('https://*.supabase.co/auth/v1/user', () =>
-          HttpResponse.json({ user: null }),
-        ),
-      );
+      mockSupabaseUnauthenticatedClaimsOnce();
 
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -689,8 +686,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world this is a test');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -715,8 +712,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -735,12 +732,35 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     });
 
+    it('should return 402 when atomic credit reservation fails after precheck', async () => {
+      vi.mocked(queries.reduceCredits).mockRejectedValueOnce(
+        new Error('Insufficient credits', {
+          cause: queries.INSUFFICIENT_CREDITS_ERROR_CODE,
+        }),
+      );
+
+      const formData = createFormDataWithAudio('Hello world');
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        body: formData,
+        method: 'POST',
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(402);
+      expect(json.code).toBe('errors.insufficientCredits');
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(queries.restoreCredits).not.toHaveBeenCalled();
+    });
+
     it('should allow voice cloning when user has sufficient credits', async () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -756,8 +776,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -780,8 +800,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -789,9 +809,9 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json).toEqual({
-        url: cachedOutputUrl,
-        creditsUsed: 0,
         creditsRemaining: 1000,
+        creditsUsed: 0,
+        url: cachedOutputUrl,
       });
       expect(mockUploadFileToR2).not.toHaveBeenCalled();
       expect(queries.reduceCredits).not.toHaveBeenCalled();
@@ -805,8 +825,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -832,8 +852,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -852,8 +872,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -871,8 +891,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -880,9 +900,9 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json).toEqual({
-        url: cachedOutputUrl,
-        creditsUsed: 0,
         creditsRemaining: 1000,
+        creditsUsed: 0,
+        url: cachedOutputUrl,
       });
 
       expect(mockRedisGet).toHaveBeenNthCalledWith(
@@ -912,8 +932,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -921,9 +941,9 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(json).toEqual({
-        url: cachedOutputUrl,
-        creditsUsed: 0,
         creditsRemaining: 1000,
+        creditsUsed: 0,
+        url: cachedOutputUrl,
       });
       expect(mockFalSubscribe).not.toHaveBeenCalled();
       expect(mockUploadFileToR2).not.toHaveBeenCalled();
@@ -955,8 +975,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -969,14 +989,14 @@ describe('Clone Voice API Route', () => {
       expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          sourceType: 'audio_processing',
-          quantity: 10,
-          durationSeconds: 10,
           creditsUsed: 100,
           dollarAmount: 0.002_600_646,
+          durationSeconds: 10,
           metadata: expect.objectContaining({
             referenceAudioTrimmed: true,
           }),
+          quantity: 10,
+          sourceType: 'audio_processing',
         }),
       );
     });
@@ -1005,8 +1025,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1049,8 +1069,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1063,14 +1083,14 @@ describe('Clone Voice API Route', () => {
       expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          sourceType: 'audio_processing',
-          quantity: 25,
-          durationSeconds: 25,
           creditsUsed: 250,
           dollarAmount: 0.002_600_646,
+          durationSeconds: 25,
           metadata: expect.objectContaining({
             referenceAudioTrimmed: true,
           }),
+          quantity: 25,
+          sourceType: 'audio_processing',
         }),
       );
     });
@@ -1085,8 +1105,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1100,12 +1120,12 @@ describe('Clone Voice API Route', () => {
 
     it('should return a translated client error for Mistral guardrail violations', async () => {
       const guardrailBody = {
-        object: 'error',
-        message: 'Request blocked by guardrail policy',
-        type: 'guardrail_violation',
-        param: null,
         code: '1920',
+        message: 'Request blocked by guardrail policy',
+        object: 'error',
+        param: null,
         raw_status_code: 403,
+        type: 'guardrail_violation',
       };
       const guardrailError = Object.assign(
         new Error(
@@ -1126,8 +1146,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1139,8 +1159,79 @@ describe('Clone Voice API Route', () => {
         'This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.',
       );
       expect(json.details).toEqual({ provider: 'mistral' });
-      expect(queries.reduceCredits).not.toHaveBeenCalled();
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        amount: 132,
+        userId: 'test-user-id',
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        amount: 132,
+        userId: 'test-user-id',
+      });
       expect(queries.saveAudioFile).not.toHaveBeenCalled();
+    });
+
+    it('returns a typed 503 without Sentry capture for Mistral failures', async () => {
+      const { captureException, logger } = await import('@sentry/nextjs');
+      const providerError = Object.assign(
+        new Error(
+          'API error occurred: Status 503. Body: upstream connect error or disconnect/reset before headers. reset reason: overflow',
+        ),
+        {
+          name: 'SDKError',
+          statusCode: 503,
+        },
+      );
+      mockMistralSpeechComplete.mockRejectedValueOnce(providerError);
+
+      const formData = createFormDataWithAudio(
+        'Hello world',
+        createMockAudioFile('audio1'),
+        'en',
+      );
+      const request = new Request('http://localhost/api/clone-voice', {
+        body: formData,
+        method: 'POST',
+      });
+
+      const response = await POST(request);
+      const json = await response.json();
+
+      expect(response.status).toBe(503);
+      expect(json.error).toBe(
+        'Mistral is temporarily unavailable. Please retry. (503)',
+      );
+      expect(json.serverMessage).toBe(
+        'Mistral is temporarily unavailable. Please retry.',
+      );
+      expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Mistral' });
+      expect(queries.reduceCredits).toHaveBeenCalledWith({
+        amount: 132,
+        userId: 'test-user-id',
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        amount: 132,
+        userId: 'test-user-id',
+      });
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Mistral voice cloning provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorName: 'SDKError',
+            model: 'voxtral-mini-tts-2603',
+            statusCode: 503,
+          }),
+        }),
+      );
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extra: expect.objectContaining({ text: expect.anything() }),
+        }),
+      );
     });
 
     it('should optionally enhance reference audio before cloning with Mistral', async () => {
@@ -1152,8 +1243,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1174,8 +1265,8 @@ describe('Clone Voice API Route', () => {
       );
       expect(mockUploadFileToR2).toHaveBeenCalledTimes(1);
       expect(queries.reduceCredits).toHaveBeenCalledWith({
-        userId: 'test-user-id',
         amount: 252,
+        userId: 'test-user-id',
       });
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1189,39 +1280,39 @@ describe('Clone Voice API Route', () => {
       expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
-          sourceType: 'voice_cloning',
-          sourceId: 'test-audio-file-id',
           creditsUsed: 132,
-          quantity: 1,
-          unit: 'operation',
-          userId: 'test-user-id',
-          model: 'voxtral-mini-tts-2603',
-          requestId: expect.any(String),
           dollarAmount: 0.000_176,
           metadata: expect.objectContaining({
             referenceAudioEnhancementRequestId: 'test-fal-request-id',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
+          model: 'voxtral-mini-tts-2603',
+          quantity: 1,
+          requestId: expect.any(String),
+          sourceId: 'test-audio-file-id',
+          sourceType: 'voice_cloning',
+          unit: 'operation',
+          userId: 'test-user-id',
         }),
       );
       expect(queries.insertUsageEvent).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
-          sourceType: 'audio_processing',
-          sourceId: 'test-audio-file-id',
-          requestId: 'test-fal-request-id',
-          model: 'fal-ai/deepfilternet3',
-          unit: 'secs',
-          quantity: 12,
-          durationSeconds: 12,
           creditsUsed: 120,
           dollarAmount: 0.002_600_646,
+          durationSeconds: 12,
           metadata: expect.objectContaining({
-            operation: 'reference_audio_enhancement',
-            model: 'fal-ai/deepfilternet3',
             locale: 'en',
+            model: 'fal-ai/deepfilternet3',
+            operation: 'reference_audio_enhancement',
             referenceAudioProcessedMimeType: 'audio/wav',
           }),
+          model: 'fal-ai/deepfilternet3',
+          quantity: 12,
+          requestId: 'test-fal-request-id',
+          sourceId: 'test-audio-file-id',
+          sourceType: 'audio_processing',
+          unit: 'secs',
         }),
       );
     });
@@ -1239,8 +1330,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
         signal: controller.signal,
       });
 
@@ -1269,8 +1360,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1294,8 +1385,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1330,8 +1421,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1339,47 +1430,48 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(200);
       expect(queries.saveAudioFile).toHaveBeenCalledWith({
-        userId: 'test-user-id',
+        credits_used: expect.any(Number),
+        duration: '12.000',
         filename: expect.stringContaining('cloned-audio-free/'),
-        text: 'Hello world',
-        url: expect.stringContaining('files.sexyvoice.ai'),
+        isPublic: false,
         model: 'voxtral-mini-tts-2603',
         predictionId: expect.any(String),
-        isPublic: false,
-        voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
-        duration: '12.000',
-        credits_used: expect.any(Number),
+        text: 'Hello world',
+        url: expect.stringContaining('files.sexyvoice.ai'),
         usage: { creditsUsed: 132 },
+        userId: 'test-user-id',
+        voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
       });
 
       // Verify usage event was logged for voice cloning
       expect(queries.insertUsageEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          userId: 'test-user-id',
-          sourceType: 'voice_cloning',
-          sourceId: 'test-audio-file-id',
-          unit: 'operation',
-          quantity: 1,
           creditsUsed: 132,
           dollarAmount: 0.000_176,
           metadata: expect.objectContaining({
-            model: 'voxtral-mini-tts-2603',
-            locale: 'en',
-            provider: 'mistral',
-            textPreview: 'Hello world',
-            textLength: 11,
             audioDuration: 12,
+            locale: 'en',
+            model: 'voxtral-mini-tts-2603',
+            provider: 'mistral',
             referenceAudioEnhancementRequestId: null,
             referenceAudioFileMimeType: 'audio/wav',
             referenceAudioProcessedMimeType: 'audio/wav',
             requestId: expect.any(String),
+            textLength: 11,
+            textPreview: 'Hello world',
             userHasPaid: false,
           }),
+          quantity: 1,
+          sourceId: 'test-audio-file-id',
+          sourceType: 'voice_cloning',
+          unit: 'operation',
+          userId: 'test-user-id',
         }),
       );
     });
 
     it('should handle Replicate API errors gracefully', async () => {
+      const { captureException, logger } = await import('@sentry/nextjs');
       // Mock Replicate to return an error for a fallback locale
       mockReplicateRun.mockResolvedValueOnce({
         error: 'API quota exceeded',
@@ -1392,8 +1484,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1401,14 +1493,29 @@ describe('Clone Voice API Route', () => {
 
       expect(response.status).toBe(503);
       expect(json.error).toBe(
-        'Voice cloning provider is temporarily unavailable. Please try again. (503)',
+        'Replicate is temporarily unavailable. Please retry. (503)',
       );
-      expect(json.code).toBe('errors.providerUnavailable');
-      expect(json.details).toEqual({ provider: 'replicate' });
+      expect(json.serverMessage).toBe(
+        'Replicate is temporarily unavailable. Please retry.',
+      );
+      expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Replicate' });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
+      expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Replicate voice cloning provider failed',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorMessage: 'API quota exceeded',
+            language: 'ja',
+            locale: 'ja',
+          }),
+        }),
+      );
     });
 
     it('returns a typed 503 without Sentry capture for Replicate 5xx failures', async () => {
-      const { captureException } = await import('@sentry/nextjs');
+      const { captureException, logger } = await import('@sentry/nextjs');
       mockReplicateRun.mockRejectedValueOnce(
         new Error(
           'Request to https://api.replicate.com/v1/predictions failed with status 502 Bad Gateway',
@@ -1422,17 +1529,31 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
       const json = await response.json();
 
       expect(response.status).toBe(503);
-      expect(json.code).toBe('errors.providerUnavailable');
-      expect(json.details).toEqual({ provider: 'replicate' });
+      expect(json.error).toBe(
+        'Replicate is temporarily unavailable. Please retry. (503)',
+      );
+      expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+      expect(json.details).toEqual({ provider: 'Replicate' });
+      expect(queries.restoreCredits).toHaveBeenCalledOnce();
       expect(captureException).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Replicate voice cloning provider unavailable',
+        expect.objectContaining({
+          extra: expect.objectContaining({
+            errorName: 'Error',
+            language: 'ja',
+            locale: 'ja',
+          }),
+        }),
+      );
     });
 
     it('should handle request abortion gracefully', async () => {
@@ -1441,8 +1562,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
         signal: controller.signal,
       });
 
@@ -1470,8 +1591,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1490,8 +1611,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world', unicodeFile);
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1512,13 +1633,13 @@ describe('Clone Voice API Route', () => {
       const formData2 = createFormDataWithAudio('Different text');
 
       const request1 = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData1,
+        method: 'POST',
       });
 
       const request2 = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData2,
+        method: 'POST',
       });
 
       const response1 = await POST(request1);
@@ -1548,13 +1669,13 @@ describe('Clone Voice API Route', () => {
       );
 
       const request1 = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData1,
+        method: 'POST',
       });
 
       const request2 = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData2,
+        method: 'POST',
       });
 
       await POST(request1);
@@ -1589,13 +1710,13 @@ describe('Clone Voice API Route', () => {
       );
 
       const request1 = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData1,
+        method: 'POST',
       });
 
       const request2 = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData2,
+        method: 'POST',
       });
 
       await POST(request1);
@@ -1622,8 +1743,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world', webmFile, 'en');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1656,8 +1777,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1679,8 +1800,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1706,8 +1827,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       await POST(request);
@@ -1729,8 +1850,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1755,8 +1876,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1790,8 +1911,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1818,8 +1939,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1839,8 +1960,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1861,8 +1982,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1873,8 +1994,12 @@ describe('Clone Voice API Route', () => {
       expect(json.url).toContain('files.sexyvoice.ai');
       expect(json.creditsUsed).toBe(132);
       expect(queries.reduceCredits).toHaveBeenCalledWith({
+        amount: 252,
         userId: 'test-user-id',
-        amount: 132,
+      });
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        amount: 120,
+        userId: 'test-user-id',
       });
       expect(queries.saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1903,8 +2028,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1934,8 +2059,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1950,8 +2075,8 @@ describe('Clone Voice API Route', () => {
       mockFalSubscribe.mockResolvedValueOnce({
         data: {
           audio_file: {
-            url: 'https://example.com/enhanced-audio.wav',
             content_type: 'audio/wav',
+            url: 'https://example.com/enhanced-audio.wav',
           },
         },
         requestId: 'test-fal-request-id',
@@ -1965,8 +2090,8 @@ describe('Clone Voice API Route', () => {
       );
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -1983,8 +2108,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2001,8 +2126,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world');
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2018,8 +2143,8 @@ describe('Clone Voice API Route', () => {
       const formData = createFormDataWithAudio('Hello world', wavFile);
 
       const request = new Request('http://localhost/api/clone-voice', {
-        method: 'POST',
         body: formData,
+        method: 'POST',
       });
 
       const response = await POST(request);
@@ -2038,8 +2163,8 @@ describe('Integration Tests', () => {
     formData.append('locale', 'en');
 
     const request = new Request('http://localhost/api/clone-voice', {
-      method: 'POST',
       body: formData,
+      method: 'POST',
     });
 
     const response = await POST(request);

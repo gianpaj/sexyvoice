@@ -6,6 +6,7 @@
       "email": "E-Mail-Adresse",
       "password": "Passwort",
       "submit": "Anmelden",
+      "loading": "Wird geladen...",
       "forgotPassword": "Passwort vergessen?",
       "signInWithGoogle": "Über Google anmelden",
       "noAccount": "Haben Sie noch kein Konto?",
@@ -20,6 +21,7 @@
       "username": "Benutzername",
       "fullName": "Vollständiger Name",
       "submit": "Registrieren",
+      "loading": "Wird geladen...",
       "hasAccount": "Haben Sie bereits ein Konto?",
       "signIn": "Anmelden",
       "error": "Fehler beim Erstellen des Kontos",
@@ -97,6 +99,21 @@
       "noCreditCard": "Keine Kreditkarte erforderlich",
       "signIn": "Anmelden"
     },
+    "demoCall": {
+      "playButton": "Demo anrufen",
+      "stopButton": "Stopp",
+      "pickCharacter": "Wähle einen Charakter"
+    },
+    "demoClone": {
+      "pickSpeaker": "Wähle eine Stimme",
+      "referenceLabel": "Referenz-Audio",
+      "resultLabel": "Geklonte Stimme",
+      "hearResult": "Ergebnis anhören",
+      "playAudio": "Audio abspielen",
+      "preparedExamplesCaption": "Vorbereitete Beispiele. Registriere dich, um deine eigene Stimme zu klonen.",
+      "audioError": "Dieses Audio konnte nicht geladen werden.",
+      "retry": "Erneut versuchen"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natürliche Stimmen",
@@ -109,6 +126,14 @@
       "security": {
         "title": "Sicher & Privat",
         "description": "Ihre Stimm-Daten sind mit unternehmenstauglicher Sicherheit geschützt. Volle Kontrolle über Datenschutzeinstellungen und Nutzung."
+      },
+      "voiceCalling": {
+        "title": "Live-Sprachanrufe",
+        "description": "Führen Sie Telefongespräche in Echtzeit mit KI-Charakteren — natürliche Stimmen, sofortige Antworten, keine Einrichtung nötig."
+      },
+      "voiceCloneDemo": {
+        "title": "Klone deine Stimme",
+        "description": "Teste die Live-Klon-Demo: Höre eine Stimme, die aus wenigen Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht."
       }
     },
     "cta": {
@@ -116,6 +141,52 @@
       "title": "Bereit, Ihre Stimme zu finden?",
       "subtitle": "Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen, um realistische, emotionsreiche Sprache zu erstellen.",
       "action": "Erstellen sie ihre erste stimme"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Sprechen Sie mit KI-Charakteren, live in Echtzeit",
+        "subtitle": "Live-KI-Telefonate mit natürlichen, ausdrucksstarken Stimmen.\nWählen Sie einen Charakter und legen Sie sofort los."
+      },
+      "privacy": {
+        "title": "Grenzenlos, verschlüsselt.",
+        "subtitle": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre. Keine Filter, keine Urteile, niemand hört mit.",
+        "unrestricted": {
+          "title": "Kein Thema ist tabu",
+          "description": "Sagen Sie, was Sie wollen, und wie Sie wollen. Ihr Charakter zuckt nicht zusammen und belehrt Sie nicht."
+        },
+        "encrypted": {
+          "title": "Ende-zu-Ende verschlüsselt",
+          "description": "Jeder Anruf wird bei der Übertragung verschlüsselt. Kein Mensch hört Ihre Gespräche mit."
+        },
+        "forgotten": {
+          "title": "Standardmäßig vergessen",
+          "description": "Zwischen den Anrufen bleibt nichts erhalten, solange Sie die Erinnerung nicht selbst aktivieren."
+        }
+      },
+      "customCharacter": {
+        "title": "Erstellen Sie Ihren eigenen Charakter",
+        "subtitle": "Geben Sie ihm einen Namen, eine Persönlichkeit, eine Vorgeschichte und eine Stimme. Rufen Sie ihn dann an, wann immer Sie wollen – er bleibt jedes Mal in seiner Rolle.",
+        "note": "Eigene Charaktere sind in jedem kostenpflichtigen Tarif enthalten.",
+        "action": "Charakter erstellen"
+      },
+      "cta": {
+        "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
+        "title": "Bereit, eine Stimme zum Leben zu erwecken?",
+        "subtitle": "Starten Sie einen Live-Anruf mit einem beliebigen Charakter und erleben Sie eine natürliche KI-Unterhaltung in Echtzeit.",
+        "action": "Sprachanruf starten"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Deine Stimme, in jeder Sprache",
+        "subtitle": "Klone eine Stimme aus wenigen Sekunden Audio.\nHöre sie natürlich in 23 Sprachen sprechen."
+      },
+      "cta": {
+        "freeCredits": "Starten Sie mit 10.000 kostenlosen Credits",
+        "title": "Bereit, deine eigene Stimme zu klonen?",
+        "subtitle": "Lade eine kurze Probe hoch und höre dich in jeder unterstützten Sprache sprechen.",
+        "action": "Stimme klonen"
+      }
     },
     "generator": {
       "title": "Probieren Sie es jetzt aus",
@@ -296,6 +367,11 @@
         ]
       }
     },
+    "subscriptionScheduledToCancel": {
+      "title": "Ihr monatlicher Credit-Plan endet demnächst",
+      "description": "Ihr monatlicher Credit-Plan ist noch bis zum {date} aktiv, wird danach aber nicht verlängert und fügt keine weiteren monatlichen Credits hinzu. Sie können alle Credits in Ihrem Konto weiter nutzen. Um die Stufe zu wechseln, verwalten Sie Ihr Abonnement in Stripe.",
+      "manageButton": "Abonnement verwalten"
+    },
     "topup": {
       "title": "Credits kaufen",
       "description": "Füllen Sie Ihre Credits sofort auf oder abonnieren Sie und erhalten Sie mehr Credits",
@@ -338,13 +414,17 @@
         "description": "Bei der Verarbeitung Ihrer Zahlung ist ein Problem aufgetreten. Bitte versuchen Sie es erneut oder wenden Sie sich an den Support, wenn das Problem weiterhin besteht.",
         "dismiss": "Schließen"
       },
-      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden"
+      "checkoutError": "Checkout-Sitzung konnte nicht erstellt werden",
+      "accountBillingBlocked": "Die Abrechnung ist wegen der Kontolöschung pausiert. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+      "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
     },
     "history": {
       "title": "Credit-Verlauf"
     }
   },
   "creditsSection": {
+    "balanceError": "Dein Guthaben konnte nicht geladen werden. Bitte versuche es erneut.",
+    "retryBalance": "Erneut versuchen",
     "title": "Guthaben",
     "topupButton": "Aufladen",
     "totalCredits": "Gesamt",
@@ -365,14 +445,16 @@
     "generating": "Wird generiert",
     "gproLimitExceeded": "Sie haben das Limit von __COUNT__ mehrsprachigen Sprachgenerierungen als kostenloser Nutzer überschritten. Bitte versuchen Sie eine andere Stimme oder upgraden Sie Ihren Plan für unbegrenzten Zugang.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
-    "paidCharacterLimitTooltip": "Zahlende Nutzer haben ein 2× Zeichenlimit",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
     "subtitle": "Wählen Sie eine Stimme und generieren Sie Audio aus Text",
     "success": "Audio erfolgreich generiert!",
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
-    "title": "Audio generieren",
+    "paidStyleLimitTooltip": "Sie haben ein 2,5× Stil-Limit",
+    "upgradeStyleLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2,5× Stil-Limit zu erhalten",
+    "paidCharacterLimitTooltip": "Sie haben ein 2× Zeichenlimit",
     "upgradeCharacterLimitTooltip": "Führen Sie ein Upgrade auf einen kostenpflichtigen Tarif durch, um ein 2× Zeichenlimit zu erhalten",
+    "title": "Audio generieren",
     "grok": {
       "inlineEffectPlaceholder": "Inline-Effekt einfügen",
       "wrappingEffectPlaceholder": "Mit Stil-Tag umschließen",
@@ -461,14 +543,50 @@
       "splitToggleDisabled": "Das Aufteilen von Text in Audios ist für zahlende Nutzer verfügbar.",
       "tooManySegments": "Aufgeteilter Text darf höchstens __COUNT__ Segmente haben. Kürzen Sie den Text oder führen Sie Segmente vor der Generierung zusammen.",
       "downloadAllFailed": "Alle Segmente konnten nicht heruntergeladen werden."
+    },
+    "advancedSettings": {
+      "trigger": "Erweitert",
+      "activeCount": "{count, plural, one {# geänderte Einstellung} other {# geänderte Einstellungen}}",
+      "title": "Erweiterte Einstellungen",
+      "subtitle": "Optimiere, wie dein Audio erzeugt wird.",
+      "default": "Standard",
+      "reset": "Zurücksetzen",
+      "upgradeToUnlock": "Upgrade zum Freischalten",
+      "noSettings": "Keine erweiterten Einstellungen für diese Stimme.",
+      "seed": {
+        "label": "Seed",
+        "description": "Lege einen festen Seed für reproduzierbare Ergebnisse fest. Leer lassen für einen zufälligen Seed.",
+        "placeholder": "Zufällig",
+        "randomize": "Seed zufällig wählen"
+      },
+      "streaming": {
+        "label": "Streaming",
+        "description": "Audio streamen, während es erzeugt wird (nur Gemini 3.1).",
+        "auto": "Auto",
+        "on": "An",
+        "off": "Aus"
+      },
+      "temperature": {
+        "label": "Temperatur",
+        "description": "Höhere Werte machen die Wiedergabe abwechslungsreicher und ausdrucksstärker."
+      },
+      "speed": {
+        "label": "Geschwindigkeit",
+        "description": "Passe an, wie schnell die Stimme spricht."
+      }
     }
   },
   "call": {
+    "title": "Sprachanrufe",
+    "subtitle": "Wähle einen KI-Charakter und sprich mit ihm in Echtzeit.",
     "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
     "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
     "freeUserCallLimitExceeded": "Kostenlose Nutzer sind auf 5 minuten Anrufe begrenzt. Bitte upgraden Sie, um fortzufahren.",
     "configurationTitle": "Konfiguration",
+    "memoryLabel": "Erinnerung",
+    "memoryDescription": "Lass die Charaktere sich zwischen Anrufen an dich erinnern. Es wird nichts gespeichert, sofern es nicht aktiviert ist.",
+    "memoryUpgradeTooltip": "Wechsle zu einem kostenpflichtigen Tarif, damit die Charaktere sich zwischen Anrufen an dich erinnern.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",
@@ -478,13 +596,16 @@
     "sceneTextLabel": "Szenentext",
     "startCall": "Anruf starten",
     "connecting": "Verbinden",
+    "connectionFailed": "Die Verbindung zum Anruf konnte nicht hergestellt werden. Bitte versuche es erneut.",
     "reconnected": "Wiederverbunden",
     "reconnectionFailed": "Wiederverbindung fehlgeschlagen",
     "configurationUpdated": "Konfiguration aktualisiert",
     "configurationUpdateError": "Fehler beim Aktualisieren der Konfiguration",
     "agentUnavailable": "Agent nicht verfügbar",
     "activeCallError": "Du hast bereits einen aktiven Anruf",
+    "instructionsRejected": "Dieser Anruf konnte nicht gestartet werden, weil der Charakter oder die Szene die Sicherheitsprüfungen des KI-Anbieters nicht bestanden haben. Bearbeite den Charakter oder die Szene und versuche es erneut.",
     "microphonePermissionDenied": "Mikrofonzugriff verweigert. Bitte erlaube den Mikrofonzugriff und versuche es erneut.",
+    "microphoneUnavailable": "Auf dein Mikrofon konnte nicht zugegriffen werden. Prüfe, ob es angeschlossen ist, schließe andere Apps, die es verwenden, und versuche es erneut.",
     "disconnected": "Getrennt",
     "chooseCharacter": "Mit wem möchtest du sprechen?",
     "presetRemoved": "Preset entfernt",
@@ -571,6 +692,7 @@
     "generating": "Wird generiert",
     "languageLabel": "Sprache",
     "languageSelectPlaceholder": "Wählen Sie eine Sprache",
+    "englishChatterbox": "Englisch (Chatterbox)",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
     "previewTitle": "Vorschau der generierten Stimme",
@@ -597,7 +719,6 @@
       "guardrailViolation": "Diese Anfrage wurde durch die Sicherheitsrichtlinie eines Drittanbieters für das Klonen von Stimmen blockiert. Bitte versuchen Sie es mit anderem Text oder anderem Referenz-Audio.",
       "insufficientCredits": "Sie benötigen __CREDITS__ Credits, um dieses Audio zu klonen.",
       "internalError": "Die Stimme konnte nicht geklont werden. Bitte versuchen Sie es erneut.",
-      "providerUnavailable": "Der Anbieter für das Klonen von Stimmen ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
       "invalidContentType": "Die Upload-Anfrage ist ungültig. Bitte versuchen Sie es erneut.",
       "invalidFileType": "Ungültiger Dateityp. Bitte laden Sie MP3, OGG, Opus, M4A, WAV oder WebM hoch.",
       "missingLocale": "Bitte wählen Sie eine Sprache.",
@@ -681,7 +802,14 @@
         "confirmDescription": "Diese Aktion kann nicht rückgängig gemacht werden. Dadurch wird Ihr Konto dauerhaft gelöscht, einschließlich:\n• Alle generierten Audiodateien\n• Geklonte Stimmen\n• API-Nutzung\n• Benutzerdefinierte Anrufcharaktere\n• Alle zugehörigen Daten von unseren Servern",
         "alertTitle": "Bestätigen Sie, dass Sie Ihr Konto löschen möchten",
         "cancel": "Abbrechen",
-        "continue": "Weiter"
+        "continue": "Weiter",
+        "errors": {
+          "manageBilling": "Abrechnung verwalten",
+          "subscriptionExists": "Für Ihr Konto besteht noch ein Stripe-Abonnement. Kündigen Sie es im Abrechnungsportal und warten Sie, bis es endet, bevor Sie Ihr Konto löschen.",
+          "subscriptionCheckFailed": "Wir konnten Ihren Abonnementstatus nicht prüfen. Ihr Konto wurde nicht gelöscht. Bitte versuchen Sie es erneut.",
+          "accountBillingBlocked": "Eine frühere Löschanfrage blockiert die Kontolöschung. Kontaktieren Sie den Support über den Chat im Dashboard oder info@sexyvoice.ai.",
+          "accountBillingBusy": "Eine andere Abrechnungs- oder Löschanfrage wird bearbeitet. Bitte versuchen Sie es später erneut."
+        }
       }
     },
     "apiKeys": {
@@ -729,18 +857,34 @@
         "cancel": "Abbrechen",
         "confirm": "Widerrufen"
       }
+    },
+    "memory": {
+      "title": "Sprachanruf-Erinnerung",
+      "description": "Wenn du die Erinnerungsfunktion während Anrufen aktivierst, merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
+      "button": "Alle Erinnerungen löschen",
+      "confirmTitle": "Alle Sprachanruf-Erinnerungen löschen?",
+      "confirmDescription": "Dadurch wird dauerhaft alles gelöscht, was sich die Charaktere aus früheren Anrufen über dich gemerkt haben. Dies kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "continue": "Löschen",
+      "success": "Deine Sprachanruf-Erinnerungen wurden gelöscht.",
+      "error": "Deine Erinnerungen konnten nicht gelöscht werden. Bitte versuche es erneut."
     }
   },
   "apiBilling": {
-    "description": "API-Nutzung, Anfragen und Kosten im Zeitverlauf überwachen."
+    "description": "API-Nutzung und Anfragen im Zeitverlauf überwachen."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Kostenloser KI-Text-zu-Sprache- & Stimmengenerator",
-    "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen. Probieren Sie kostenlos Text-zu-Sprache mit Stimmenklonung und natürlicher Sprachsynthese aus. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+    "defaultTitle": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe",
+    "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
     "skipToMainContent": "Zum Hauptinhalt springen",
     "descriptionLogin": "Melden Sie sich bei SexyVoice.ai an, um auf Ihre KI-Sprachprojekte zuzugreifen, Credits zu verwalten und ausdrucksstarke Sprache in mehreren Sprachen zu generieren.",
     "descriptionSignup": "Treten Sie SexyVoice.ai kostenlos bei - Erhalten Sie 10.000 Credits, um realistische KI-Stimmen mit Emotionen zu erstellen. Text-zu-Sprache in 24 Sprachen.",
+    "titleVoiceCall": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
+    "descriptionVoiceCall": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
+    "titleVoiceCloning": "KI-Stimmklonen",
+    "descriptionVoiceCloning": "Klone eine Stimme aus wenigen Sekunden Audio und höre sie natürlich in 23 Sprachen sprechen.",
     "/": "",
+    "/voice-call": "Sprachanruf",
     "/login": "Anmelden",
     "/signup": "Mit E-Mail oder Google registrieren",
     "/dashboard/call": "Anruf",
@@ -751,6 +895,7 @@
     "/dashboard/api-keys": "API-Schlüssel",
     "/dashboard/api-billing": "API-Abrechnung",
     "/dashboard/usage": "Nutzung",
+    "/dashboard/profile": "Profil",
     "/tools/audio-converter": "Audio-Konverter",
     "/tools/transcribe": "Audio-Transkription",
     "titleAudioConverter": "Kostenloser Online Audio-Konverter – MP3, WAV, FLAC & mehr",
@@ -780,6 +925,26 @@
     "header": "Generierungsverlauf",
     "empty": "Noch kein Verlauf",
     "downloadError": "Audio konnte nicht heruntergeladen werden",
+    "delete": {
+      "cancel": "Abbrechen",
+      "deleting": "Wird gelöscht...",
+      "single": {
+        "trigger": "Löschen",
+        "title": "Audiodatei löschen?",
+        "description": "Diese Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.",
+        "confirm": "Löschen",
+        "success": "Audiodatei gelöscht",
+        "error": "Die Audiodatei konnte nicht gelöscht werden. Bitte versuche es erneut."
+      },
+      "all": {
+        "trigger": "Alle löschen",
+        "title": "Alle Audiodateien löschen?",
+        "description": "{count, plural, one {Die Audiodatei wird aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.} other {Alle # Audiodateien werden aus deinem Verlauf entfernt. Diese Aktion kann nicht rückgängig gemacht werden.}}",
+        "confirm": "Alle löschen",
+        "success": "Alle Audiodateien gelöscht",
+        "error": "Die Audiodateien konnten nicht gelöscht werden. Bitte versuche es erneut."
+      }
+    },
     "ui": {
       "filterText": "Text filtern...",
       "customizeColumns": "Spalten anpassen",
@@ -831,6 +996,7 @@
   },
   "footer": {
     "tagline": "KI-gestützte Sprachgenerierung. Erstellen Sie natürliches, ausdrucksstarkes Audio in Sekunden.",
+    "featuresHeading": "Funktionen",
     "toolsHeading": "Werkzeuge",
     "companyHeading": "Unternehmen",
     "legalHeading": "Rechtliches",
@@ -840,13 +1006,15 @@
     "copyright": "SexyVoice.ai. Alle Rechte vorbehalten.",
     "audioConverter": "Kostenloser Audio-Konverter",
     "transcribe": "Kostenlose Audio-Transkription",
-    "audioJoiner": "Kostenloser Audio-Zusammenfüger"
+    "audioJoiner": "Kostenloser Audio-Zusammenfüger",
+    "voiceCalling": "KI-Sprachanrufe",
+    "voiceCloning": "Stimmklonen"
   },
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Erhalten Sie bis zu 35% Extra-Credits bei einem Kauf 👻\nZeitlich begrenztes Angebot 🦇",
-      "ctaLoggedIn": "Credits erhalten",
-      "ctaLoggedOut": "Jetzt registrieren",
+      "ctaLoggedIn": "Angebot sichern",
+      "ctaLoggedOut": "Angebot sichern",
       "ariaLabelDismiss": "Halloween-Banner schließen",
       "pricing": {
         "bannerText": "🎃 Halloween-Special"
@@ -1049,6 +1217,7 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Einweg-E-Mail-Adressen sind nicht erlaubt",
-    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern."
+    "AUTH_PROVIDER_RATELIMIT": "Aus Sicherheitsgründen können Sie dies nur nach {time} Sekunden anfordern.",
+    "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
   }
 }

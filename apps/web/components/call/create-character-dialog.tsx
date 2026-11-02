@@ -80,10 +80,10 @@ export function CreateCharacterDialog({
     setIsSaving(true);
     try {
       await onSave({
-        name: name.trim(),
         description: description.trim(),
-        voiceName,
+        name: name.trim(),
         prompt: prompt.trim(),
+        voiceName,
       });
       onOpenChange(false);
     } catch (error) {

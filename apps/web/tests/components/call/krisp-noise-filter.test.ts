@@ -39,6 +39,13 @@ describe('Krisp noise filter guards', () => {
         name: 'DOMException',
       }),
     ).toBe(true);
+    expect(
+      isExpectedKrispNoiseFilterError(
+        new WebAssembly.CompileError(
+          'WebAssembly.Module(): Compiling function failed: Wasm SIMD unsupported',
+        ),
+      ),
+    ).toBe(true);
     expect(isExpectedKrispNoiseFilterError(new Error('boom'))).toBe(false);
   });
 

@@ -90,9 +90,8 @@ const getLocaleFromAcceptLanguage = (
 
 export const getLocaleFromRedirectPath = (
   redirectPath: string | null,
-): Locale => {
-  return getSupportedLocale(redirectPath?.split('/')[1]) ?? i18n.defaultLocale;
-};
+): Locale =>
+  getSupportedLocale(redirectPath?.split('/')[1]) ?? i18n.defaultLocale;
 
 export const getLocaleFromAuthHints = ({
   acceptLanguage,
@@ -102,17 +101,14 @@ export const getLocaleFromAuthHints = ({
   acceptLanguage: string | null;
   locale: string | null;
   redirectPath: string | null;
-}): Locale => {
-  return (
-    getSupportedLocale(redirectPath?.split('/')[1]) ??
-    getSupportedLocale(locale) ??
-    getLocaleFromAcceptLanguage(acceptLanguage) ??
-    i18n.defaultLocale
-  );
-};
+}): Locale =>
+  getSupportedLocale(redirectPath?.split('/')[1]) ??
+  getSupportedLocale(locale) ??
+  getLocaleFromAcceptLanguage(acceptLanguage) ??
+  i18n.defaultLocale;
 
-export const createAuthRedirectResponse = (url: string) => {
-  const response = NextResponse.redirect(url);
+export const createAuthRedirectResponse = (url: string, headers?: Headers) => {
+  const response = NextResponse.redirect(url, { headers });
   const markerValue = createAuthCallbackMarkerValue();
 
   if (markerValue) {

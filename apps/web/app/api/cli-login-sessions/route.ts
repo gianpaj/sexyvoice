@@ -10,6 +10,7 @@ import {
   hashCliExchangeToken,
   isAllowedCliCallbackUrl,
 } from '@/lib/api/cli-login';
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -28,32 +29,27 @@ const CreateCliLoginSessionSchema = z
     path: ['api_key_id'],
   });
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: this is a complex endpoint
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  // biome-ignore lint/plugin/use-verified-claims: Confirm the Auth user before issuing a durable CLI credential.
+  const { data: authData } = await supabase.auth.getUser();
+  const { user } = authData;
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user) {
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const payload = await request.json().catch(() => null);
   const parsed = CreateCliLoginSessionSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 },
-    );
+    return APIErrorResponse('Invalid request body', 400);
   }
 
   const { api_key_id, callback_url, name, state } = parsed.data;
   if (!isAllowedCliCallbackUrl(callback_url)) {
-    return NextResponse.json(
-      { error: 'Callback URL must target localhost or 127.0.0.1 over HTTP' },
-      { status: 400 },
+    return APIErrorResponse(
+      'Callback URL must target localhost or 127.0.0.1 over HTTP',
+      400,
     );
   }
 
@@ -72,22 +68,22 @@ export async function POST(request: Request) {
       .eq('is_active', true)
       .maybeSingle();
 
-    if (error || !data) {
-      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
+    if (error) {
+      return APIErrorResponse('Failed to fetch API key', 500);
+    }
+    if (!data) {
+      return APIErrorResponse('API key not found', 404);
     }
     if (data.expires_at && new Date(data.expires_at) <= new Date()) {
-      return NextResponse.json(
-        { error: 'Selected API key is expired' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Selected API key is expired', 400);
     }
     selectedKey = data;
   } else {
     const isPaidUser = await hasUserPaid(user.id);
     if (!isPaidUser) {
-      return NextResponse.json(
-        { error: 'A subscription or top-up is required to create API keys' },
-        { status: 403 },
+      return APIErrorResponse(
+        'A subscription or top-up is required to create API keys',
+        403,
       );
     }
 
@@ -98,16 +94,13 @@ export async function POST(request: Request) {
       .eq('is_active', true);
 
     if (countError) {
-      return NextResponse.json(
-        { error: 'Failed to count API keys' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to count API keys', 500);
     }
 
     if ((count ?? 0) >= MAX_ACTIVE_API_KEYS) {
-      return NextResponse.json(
-        { error: `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed` },
-        { status: 400 },
+      return APIErrorResponse(
+        `Maximum of ${MAX_ACTIVE_API_KEYS} active API keys allowed`,
+        400,
       );
     }
   }
@@ -118,23 +111,20 @@ export async function POST(request: Request) {
   const { data: newKey, error: newKeyError } = await admin
     .from('api_keys')
     .insert({
-      user_id: user.id,
-      key_hash: generated.hash,
-      key_prefix: generated.prefix,
-      name: replacementName,
-      permissions: selectedKey?.permissions ?? { scopes: ['voice:generate'] },
-      metadata: selectedKey?.metadata ?? {},
       expires_at: selectedKey?.expires_at ?? null,
       is_active: true,
+      key_hash: generated.hash,
+      key_prefix: generated.prefix,
+      metadata: selectedKey?.metadata ?? {},
+      name: replacementName,
+      permissions: selectedKey?.permissions ?? { scopes: ['voice:generate'] },
+      user_id: user.id,
     })
     .select('id')
     .single();
 
   if (newKeyError || !newKey) {
-    return NextResponse.json(
-      { error: 'Failed to create replacement API key' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to create replacement API key', 500);
   }
 
   const exchangeToken = generateCliExchangeToken();
@@ -145,22 +135,19 @@ export async function POST(request: Request) {
   const { error: sessionError } = await admin
     .from('cli_login_sessions')
     .insert({
-      user_id: user.id,
-      old_api_key_id: selectedKey?.id ?? null,
-      new_api_key_id: newKey.id,
-      token_hash: hashCliExchangeToken(exchangeToken),
-      encrypted_api_key: encryptCliApiKey(generated.key),
       callback_url,
-      state,
+      encrypted_api_key: encryptCliApiKey(generated.key),
       expires_at: expiresAt,
+      new_api_key_id: newKey.id,
+      old_api_key_id: selectedKey?.id ?? null,
+      state,
+      token_hash: hashCliExchangeToken(exchangeToken),
+      user_id: user.id,
     });
 
   if (sessionError) {
     await admin.from('api_keys').delete().eq('id', newKey.id);
-    return NextResponse.json(
-      { error: 'Failed to create CLI login session' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to create CLI login session', 500);
   }
 
   return NextResponse.json(

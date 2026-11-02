@@ -29,15 +29,55 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
+    });
+
+    it('upgrades a retired model id instead of forwarding it to the agent', () => {
+      // A stale tab or a shared URL can still post 1.0. Forwarding it verbatim
+      // would run the old model while charging the current rate.
+      const payload = {
+        instructions: 'Test instructions',
+        selectedPresetId: null,
+        sessionConfig: {
+          maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      expect(result.data?.sessionConfig.model).toBe(
+        'grok-voice-think-fast-1.0',
+      );
+    });
+
+    it('falls back to the default for an unknown model id', () => {
+      const payload = {
+        instructions: 'Test instructions',
+        selectedPresetId: null,
+        sessionConfig: {
+          maxOutputTokens: null,
+          model: 'totally-made-up-model',
+          temperature: 0.8,
+          voice: 'Ara',
+        },
+      };
+
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+      expect(result.data?.sessionConfig.model).toBe(
+        'grok-voice-think-fast-1.0',
+      );
     });
 
     it('should accept a payload with selectedPresetId (UUID)', () => {
@@ -46,10 +86,10 @@ describe('call-token API validation', () => {
         language: 'en' as const,
         selectedPresetId: '123e4567-e89b-12d3-a456-426614174000',
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: 1000,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -63,12 +103,12 @@ describe('call-token API validation', () => {
         language: 'en' as const,
         sceneInstructions: 'Use the late-night train setting.',
         selectedPresetId: null,
-        selectedSceneId: 'stranger-on-the-train',
+        selectedSceneId: 'bartender-after-closing',
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -82,14 +122,53 @@ describe('call-token API validation', () => {
         selectedPresetId: null,
         selectedSceneId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
+    });
+
+    it('should accept the optional memory opt-in flag', () => {
+      const base = {
+        instructions: 'Test',
+        selectedPresetId: null,
+        sessionConfig: {
+          maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
+        },
+      };
+
+      // Present (true/false) and absent are all valid; the paid-only gating is
+      // enforced server-side in the route, not by the schema.
+      for (const memory of [true, false, undefined]) {
+        const result = playgroundStateSchema.safeParse({ ...base, memory });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.memory).toBe(memory);
+        }
+      }
+    });
+
+    it('should reject a non-boolean memory flag', () => {
+      const payload = {
+        instructions: 'Test',
+        memory: 'yes',
+        selectedPresetId: null,
+        sessionConfig: {
+          maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
+        },
+      };
+      const result = playgroundStateSchema.safeParse(payload);
+      expect(result.success).toBe(false);
     });
 
     it('should accept every known scene ID', () => {
@@ -99,10 +178,10 @@ describe('call-token API validation', () => {
           selectedPresetId: null,
           selectedSceneId: scene.id,
           sessionConfig: {
-            model: 'grok-voice-think-fast-1.0',
-            voice: 'Ara',
-            temperature: 0.8,
             maxOutputTokens: null,
+            model: 'grok-voice-think-fast-1.0',
+            temperature: 0.8,
+            voice: 'Ara',
           },
         };
         const result = playgroundStateSchema.safeParse(payload);
@@ -112,17 +191,17 @@ describe('call-token API validation', () => {
 
     it('should ignore client fields not needed for the call token', () => {
       const payload = {
+        customCharacters: [],
+        initialInstruction: 'Say hello',
         instructions: 'Test instructions',
         language: 'es' as const,
         selectedPresetId: '123e4567-e89b-12d3-a456-426614174000',
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Eve',
-          temperature: 1.2,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 1.2,
+          voice: 'Eve',
         },
-        customCharacters: [],
-        initialInstruction: 'Say hello',
       };
 
       const result = playgroundStateSchema.safeParse(payload);
@@ -163,10 +242,10 @@ describe('call-token API validation', () => {
           language: lang,
           selectedPresetId: null,
           sessionConfig: {
-            model: 'test',
-            voice: 'Ara',
-            temperature: 0.8,
             maxOutputTokens: null,
+            model: 'test',
+            temperature: 0.8,
+            voice: 'Ara',
           },
         };
 
@@ -181,10 +260,10 @@ describe('call-token API validation', () => {
       const payload = {
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -208,10 +287,10 @@ describe('call-token API validation', () => {
         selectedPresetId: null,
         selectedSceneId: 'totally-made-up-scene',
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
       const result = playgroundStateSchema.safeParse(payload);
@@ -223,10 +302,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: 'not-a-valid-uuid',
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -240,10 +319,10 @@ describe('call-token API validation', () => {
         language: 'invalid',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -256,10 +335,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 2.5, // Max is 2.0
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 2.5, // Max is 1.0
+          voice: 'Ara',
         },
       };
 
@@ -272,10 +351,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: -0.5, // Min is 0
           maxOutputTokens: null,
+          model: 'grok-voice-think-fast-1.0',
+          temperature: -0.5, // Min is 0
+          voice: 'Ara',
         },
       };
 
@@ -288,9 +367,9 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
+          maxOutputTokens: null,
           model: 'grok-voice-think-fast-1.0',
           temperature: 0.8,
-          maxOutputTokens: null,
         },
       };
 
@@ -303,10 +382,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'grok-voice-think-fast-1.0',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: '1000', // Should be number or null
+          model: 'grok-voice-think-fast-1.0',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -321,10 +400,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'test',
-          voice: 'Ara',
-          temperature: 0.6,
           maxOutputTokens: null,
+          model: 'test',
+          temperature: 0.6,
+          voice: 'Ara',
         },
       };
 
@@ -337,10 +416,10 @@ describe('call-token API validation', () => {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'test',
-          voice: 'Ara',
-          temperature: 1.2,
           maxOutputTokens: null,
+          model: 'test',
+          temperature: 1.2,
+          voice: 'Ara',
         },
       };
 
@@ -353,10 +432,10 @@ describe('call-token API validation', () => {
         instructions: '',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'test',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'test',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -369,10 +448,10 @@ describe('call-token API validation', () => {
         instructions: 'Test',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'test',
-          voice: 'Ara',
-          temperature: 0.8,
           maxOutputTokens: null,
+          model: 'test',
+          temperature: 0.8,
+          voice: 'Ara',
         },
       };
 
@@ -387,10 +466,10 @@ describe('call-token API validation', () => {
         // Missing instructions (required)
         selectedPresetId: 'not-a-uuid', // Invalid UUID format
         sessionConfig: {
-          model: 'test',
-          voice: 'Ara',
-          temperature: 3.0, // Out of range
           maxOutputTokens: null,
+          model: 'test',
+          temperature: 3.0, // Out of range
+          voice: 'Ara',
         },
       };
 
@@ -419,10 +498,10 @@ describe('call-token API validation', () => {
         instructions: 'Test',
         selectedPresetId: null,
         sessionConfig: {
-          model: 'test',
-          voice: 'Ara',
-          temperature: -1, // Below minimum
           maxOutputTokens: 'invalid', // Should be number or null
+          model: 'test',
+          temperature: -1, // Below minimum
+          voice: 'Ara',
         },
       };
 

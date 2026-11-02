@@ -21,10 +21,10 @@ export function createApiError(params: {
 }): ApiErrorBody {
   return ErrorResponseSchema.parse({
     error: {
-      message: params.message,
-      type: params.type,
-      param: params.param ?? null,
       code: params.code,
+      message: params.message,
+      param: params.param ?? null,
+      type: params.type,
     },
   });
 }
@@ -33,9 +33,9 @@ export function zodErrorToApiError(error: ZodError): ApiErrorBody {
   const issue = error.issues[0];
   const param = issue?.path[0];
   return createApiError({
-    message: issue?.message ?? 'Invalid request body',
-    type: 'invalid_request_error',
     code: 'invalid_request',
+    message: issue?.message ?? 'Invalid request body',
     param: typeof param === 'string' ? param : null,
+    type: 'invalid_request_error',
   });
 }

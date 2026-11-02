@@ -22,11 +22,11 @@ export const WrapperBoundary = Node.create({
     };
   },
 
+  atom: true,
+
   group: 'inline',
 
   inline: true,
-
-  atom: true,
 
   marks: '',
 
@@ -75,12 +75,12 @@ export const WrapperBoundary = Node.create({
     return [
       'span',
       mergeAttributes(rest, {
+        class: GROK_TAG_CHIP_CLASS,
+        contenteditable: 'false',
         'data-grok-wrapper-boundary-kind': kind,
         'data-grok-wrapper-boundary-node': '',
         'data-grok-wrapper-close-tag': closeTag,
         'data-grok-wrapper-open-tag': openTag,
-        class: GROK_TAG_CHIP_CLASS,
-        contenteditable: 'false',
       }),
       text,
     ];

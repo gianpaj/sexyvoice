@@ -28,7 +28,9 @@ test.describe('Email auth links', () => {
       data?: { emailRedirectTo?: string };
     };
 
-    expect(signupPayload.data?.emailRedirectTo).toBe(`${appOrigin}/en/dashboard`);
+    expect(signupPayload.data?.emailRedirectTo).toBe(
+      `${appOrigin}/en/dashboard`,
+    );
     expect(signupPayload.data?.emailRedirectTo).not.toContain('/auth/callback');
     expect(signupBody).toMatchObject({
       email,

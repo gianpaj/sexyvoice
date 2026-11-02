@@ -57,6 +57,7 @@ export function isExpectedKrispNoiseFilterError(error: unknown): boolean {
     name === 'InvalidAccessError' ||
     normalizedMessage.includes('track has ended') ||
     normalizedMessage.includes('wasm_or_worker_not_ready') ||
+    normalizedMessage.includes('wasm simd unsupported') ||
     normalizedMessage.includes('applyconstraints')
   );
 }

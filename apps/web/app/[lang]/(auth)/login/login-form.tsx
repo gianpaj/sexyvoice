@@ -59,10 +59,10 @@ export function LoginForm({ lang }: { lang: Locale }) {
 
     const callbackUrl = `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
       options: {
         redirectTo: callbackUrl,
       },
+      provider: 'google',
     });
 
     if (error) {
@@ -111,7 +111,7 @@ export function LoginForm({ lang }: { lang: Locale }) {
       <div className="relative">
         {lastUsedAuthFixed === 'email' && <LastUsedBanner />}
         <Button className="w-full" disabled={isLoading} type="submit">
-          {isLoading ? 'Loading...' : t('submit')}
+          {isLoading ? t('loading') : t('submit')}
         </Button>
       </div>
 

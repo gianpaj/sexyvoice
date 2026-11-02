@@ -1,7 +1,6 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-
-import { appName, gitConfig } from './shared';
 import { AudioLinesIcon } from 'lucide-react';
+import { appName, gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
   return {

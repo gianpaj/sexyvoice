@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET() {
@@ -26,18 +27,12 @@ export async function GET() {
 
     if (error) {
       console.error(error);
-      return NextResponse.json(
-        { error: 'Failed to fetch audio files' },
-        { status: 500 },
-      );
+      return APIErrorResponse('Failed to fetch audio files', 500);
     }
 
     return NextResponse.json(audioFiles);
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Internal server error', 500);
   }
 }

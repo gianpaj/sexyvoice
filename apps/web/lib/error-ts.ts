@@ -17,6 +17,10 @@ export class APIError extends Error {
 
   constructor(message: string, response: Response, body?: object) {
     super();
+    // `error` mirrors `serverMessage` (the raw message without the status
+    // suffix) so clients reading `data.error` keep working after routes
+    // migrate from `NextResponse.json({ error }, ...)` to `APIErrorResponse`.
+    this.error = message;
     this.message = `${message} (${response.status})`;
     this.status = response.status;
     this.serverMessage = message;
@@ -40,16 +44,42 @@ export class APIError extends Error {
   }
 }
 
-export const APIErrorResponse = (errorMsg: string, statusCode: number) =>
-  NextResponse.json(
+/**
+ * Standard helper for returning JSON error responses from API routes. Use this
+ * instead of `NextResponse.json({ error }, { status })` so every route returns a
+ * consistent error body: `{ error, message, status, serverMessage, retryAfter }`.
+ *
+ * Pass `extra` to include additional fields (e.g. `details`) in the body, and
+ * `headers` to attach response headers (e.g. rate-limit headers).
+ */
+export const APIErrorResponse = (
+  errorMsg: string,
+  statusCode: number,
+  extra?: Record<string, unknown>,
+  headers?: HeadersInit,
+) => {
+  const response = NextResponse.json(
     new APIError(
       errorMsg,
       new Response(errorMsg, {
         status: statusCode,
       }),
+      extra,
     ),
     { status: statusCode },
   );
+
+  if (headers) {
+    // Normalize so both `Headers` instances and plain objects are applied
+    // reliably (passing a `Headers` instance via the init object does not
+    // always merge).
+    new Headers(headers).forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
+};
 
 // export function isAPIError(v: unknown): v is APIError {
 //   return isError(v) && 'status' in v;

@@ -11,8 +11,7 @@ export interface TextShimmerProps {
   spread?: number;
 }
 
-const loadFeatures = () =>
-  import('./features').then((res) => res.domAnimation);
+const loadFeatures = () => import('./features').then((res) => res.domAnimation);
 
 export function TextShimmer({
   children,
@@ -42,9 +41,9 @@ export function TextShimmer({
           } as React.CSSProperties
         }
         transition={{
-          repeat: Number.POSITIVE_INFINITY,
           duration,
           ease: 'linear',
+          repeat: Number.POSITIVE_INFINITY,
         }}
       >
         {children}

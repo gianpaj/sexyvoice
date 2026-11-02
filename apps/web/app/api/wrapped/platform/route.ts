@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 interface CreditTransaction {
@@ -150,7 +151,7 @@ function calculateTopVoices(audioFiles: AudioFile[], limit = 5) {
       if (existing) {
         existing.count += 1;
       } else {
-        voiceCounts.set(voiceName, { name: voiceName, count: 1 });
+        voiceCounts.set(voiceName, { count: 1, name: voiceName });
       }
     }
   }
@@ -216,10 +217,10 @@ function calculateMonthlyStats(
       year: 'numeric',
     });
     return {
-      month: monthName,
       audioCount: monthlyAudio.get(monthKey) ?? 0,
-      userCount: monthlyUsers.get(monthKey) ?? 0,
+      month: monthName,
       revenue: monthlyRevenue.get(monthKey) ?? 0,
+      userCount: monthlyUsers.get(monthKey) ?? 0,
     };
   });
 }
@@ -245,11 +246,11 @@ function calculateCoreStats(audioFiles: AudioFile[]) {
   const totalUniqueVoicesUsed = new Set(audioFiles.map((f) => f.voice_id)).size;
 
   return {
-    totalAudioFiles,
-    totalDurationSeconds,
-    totalCharactersGenerated,
-    longestTextCharacters,
     averageTextLength,
+    longestTextCharacters,
+    totalAudioFiles,
+    totalCharactersGenerated,
+    totalDurationSeconds,
     totalUniqueVoicesUsed,
   };
 }
@@ -272,9 +273,9 @@ function calculateRevenueStats(creditTransactions: CreditTransaction[]) {
   }
 
   return {
-    totalRevenue,
-    totalRefunds,
     netRevenue: totalRevenue - totalRefunds,
+    totalRefunds,
+    totalRevenue,
   };
 }
 
@@ -283,9 +284,7 @@ export async function GET() {
     const isProd = process.env.NODE_ENV === 'production';
 
     if (isProd) {
-      return new NextResponse('Unauthorized', {
-        status: 401,
-      });
+      return APIErrorResponse('Unauthorized', 401);
     }
 
     const supabase = createAdminClient();
@@ -352,15 +351,15 @@ export async function GET() {
 
     const stats: PlatformWrappedStats = {
       ...coreStats,
-      totalUsers: profiles.length,
-      totalPaidUsers: uniquePaidUsers,
-      totalVoiceClones: userVoices.length,
       totalClonedAudioFiles: clonedAudioFiles.length,
+      totalPaidUsers: uniquePaidUsers,
+      totalUsers: profiles.length,
+      totalVoiceClones: userVoices.length,
       ...revenueStats,
-      topVoices,
+      daysSinceLaunch,
       monthlyStats,
       platformLaunchDate: PLATFORM_LAUNCH_DATE,
-      daysSinceLaunch,
+      topVoices,
     };
 
     // Cache for 5 minutes
@@ -371,9 +370,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching platform wrapped stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch platform stats' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch platform stats', 500);
   }
 }

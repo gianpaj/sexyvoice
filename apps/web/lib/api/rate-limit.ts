@@ -9,14 +9,14 @@ const WINDOW_DURATION = `${WINDOW_SECONDS} s` as const;
 const BUCKET_MAX_SIZE = RATE_LIMIT_DEFAULT.requestsPerMinute;
 
 const ratelimit = new Ratelimit({
-  redis,
+  analytics: true,
   limiter: Ratelimit.tokenBucket(
     RATE_LIMIT_DEFAULT.requestsPerMinute,
     WINDOW_DURATION,
     BUCKET_MAX_SIZE,
   ),
-  analytics: true,
   prefix: 'external_api:ratelimit',
+  redis,
 });
 
 export interface RateLimitState {

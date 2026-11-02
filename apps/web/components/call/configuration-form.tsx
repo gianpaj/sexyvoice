@@ -60,9 +60,9 @@ export function ConfigurationForm({
   const connectionState = useConnectionState();
   const { localParticipant } = useLocalParticipant();
   const form = useForm<z.infer<typeof ConfigurationFormSchema>>({
-    resolver: zodResolver(ConfigurationFormSchema),
     defaultValues: { ...defaultSessionConfig },
     mode: 'onChange',
+    resolver: zodResolver(ConfigurationFormSchema),
   });
   // eslint-disable-next-line react-compiler/react-memo-exhaustive-deps
   const formValues = form.watch();
@@ -89,10 +89,10 @@ export function ConfigurationForm({
     const fullInstructions = helpers.getFullInstructions(pgState);
     const attributes: { [key: string]: string | number | boolean } = {
       instructions: fullInstructions,
-      model: values.model,
-      voice: values.voice,
-      temperature: values.temperature,
       max_output_tokens: values.maxOutputTokens || '',
+      model: values.model,
+      temperature: values.temperature,
+      voice: values.voice,
     };
     if (!agent?.identity) {
       return;
@@ -195,7 +195,7 @@ export function ConfigurationForm({
 
     // Set a new timeout to perform the update after 500ms of inactivity
     debounceTimeoutRef.current = setTimeout(() => {
-      updateConfig();
+      updateConfig().catch(() => undefined);
     }, 500); // Adjust delay as needed
   }, [updateConfig]);
 
@@ -211,8 +211,8 @@ export function ConfigurationForm({
   useEffect(() => {
     if (form.formState.isValid && form.formState.isDirty) {
       dispatch({
-        type: 'SET_SESSION_CONFIG',
         payload: formValues,
+        type: 'SET_SESSION_CONFIG',
       });
     }
   }, [formValues, dispatch, form]);
@@ -239,7 +239,7 @@ export function ConfigurationForm({
   // };
 
   const handleLanguageChange = (value: string) => {
-    dispatch({ type: 'SET_LANGUAGE', payload: value as CallLanguage });
+    dispatch({ payload: value as CallLanguage, type: 'SET_LANGUAGE' });
   };
   const displayLanguage = true;
 
@@ -279,6 +279,37 @@ export function ConfigurationForm({
             </Select>
           </div>
         )}
+
+        {/* Memory opt-in (paid users only) */}
+        {/*<Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <div className="flex w-full items-center justify-between gap-4 border-separator1 border-b px-4 py-4 md:px-1">
+              <label className="flex flex-col gap-1" htmlFor="memory-toggle">
+                <span className="font-semibold text-neutral-400 text-xs uppercase tracking-widest">
+                  {t('memoryLabel')}
+                </span>
+                <span className="text-neutral-300 text-xs normal-case">
+                  {t('memoryDescription')}
+                </span>
+              </label>
+              <Switch
+                checked={isPaidUser && pgState.memory}
+                disabled={
+                  !isPaidUser || connectionState === ConnectionState.Connected
+                }
+                id="memory-toggle"
+                onCheckedChange={(checked) =>
+                  dispatch({ type: 'SET_MEMORY', payload: checked })
+                }
+              />
+            </div>
+          </TooltipTrigger>
+          {!isPaidUser && (
+            <TooltipContent className="TooltipContent">
+              <p>{t('memoryUpgradeTooltip')}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>*/}
 
         {/* Character Selection */}
         <div className="w-full border-separator1 border-b px-4 py-6 md:px-1">

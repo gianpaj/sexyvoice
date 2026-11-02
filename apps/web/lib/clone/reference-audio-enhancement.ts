@@ -40,8 +40,10 @@ function assertAllowedEnhancedAudioUrl(url: string): void {
 
   try {
     parsedUrl = new URL(url);
-  } catch {
-    throw new Error('Reference audio enhancement returned an invalid URL');
+  } catch (error) {
+    throw new Error('Reference audio enhancement returned an invalid URL', {
+      cause: error,
+    });
   }
 
   const hostname = parsedUrl.hostname.toLowerCase();
@@ -115,13 +117,13 @@ export async function enhanceReferenceAudio({
   });
 
   const falResult = await fal.subscribe(REFERENCE_AUDIO_ENHANCEMENT_MODEL, {
+    abortSignal: requestSignal,
     input: {
       audio_format: 'wav',
       audio_url: inputFile,
       bitrate: '16k',
     },
     logs: false,
-    abortSignal: requestSignal,
   });
 
   const falData = falResult.data as FalEnhancedAudioResponse;

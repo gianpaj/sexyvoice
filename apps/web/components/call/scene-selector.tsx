@@ -34,8 +34,8 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
     if (!isPaidUser || isConnected) return;
 
     dispatch({
-      type: 'SET_SELECTED_SCENE_ID',
       payload: value === NO_SCENE_VALUE ? null : value,
+      type: 'SET_SELECTED_SCENE_ID',
     });
   };
 
@@ -88,8 +88,8 @@ export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
             disabled={isConnected}
             onChange={(event) =>
               dispatch({
-                type: 'SET_SCENE_INSTRUCTIONS',
                 payload: event.target.value,
+                type: 'SET_SCENE_INSTRUCTIONS',
               })
             }
             value={pgState.sceneInstructions}

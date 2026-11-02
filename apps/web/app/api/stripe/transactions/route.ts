@@ -1,7 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 
+import { APIErrorResponse } from '@/lib/error-ts';
 import { stripe } from '@/lib/stripe/stripe-admin';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: NextRequest) {
@@ -10,21 +13,24 @@ export async function GET(request: NextRequest) {
     const stripeId = searchParams.get('stripeId');
 
     if (!stripeId) {
-      return NextResponse.json(
-        { error: 'Stripe ID is required' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Stripe ID is required', 400);
     }
 
     const supabase = await createClient();
 
     // Check if user is authenticated
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (!user || error) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const claims = await getVerifiedClaims(supabase);
+    if (!claims?.sub) {
+      return APIErrorResponse('Unauthorized', 401);
+    }
+
+    const userData = await getUserById(claims.sub);
+    if (!userData?.stripe_id) {
+      return APIErrorResponse('Stripe customer not found', 404);
+    }
+
+    if (userData.stripe_id !== stripeId) {
+      return APIErrorResponse('Forbidden', 403);
     }
 
     // Get active subscriptions for this customer
@@ -56,27 +62,26 @@ export async function GET(request: NextRequest) {
     const subscriptionTransactions = subscriptions.data.map((subscription) => {
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       return {
-        id: subscription.id,
         amount: subscription.items.data[0]?.price?.unit_amount || 0,
-        type: 'subscription',
-        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
         created: subscription.created,
-        status: subscription.status,
         current_period_end: subscription.current_period_end,
         current_period_start: subscription.current_period_start,
+        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
+        id: subscription.id,
         invoice_id: typeof invoice === 'object' ? invoice.id : invoice,
+        status: subscription.status,
+        type: 'subscription',
       };
     });
 
     // Combine transactions and sort by created date
-    const transactions = subscriptionTransactions.toSorted((a, b) => b.created - a.created);
+    const transactions = subscriptionTransactions.toSorted(
+      (a, b) => b.created - a.created,
+    );
 
     return NextResponse.json(transactions);
   } catch (error) {
     console.error('Error fetching Stripe transactions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch transactions' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch transactions', 500);
   }
 }

@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { cache } from 'react';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -147,16 +148,74 @@ export async function getCredits(userId: string): Promise<number> {
   return data.amount;
 }
 
+export const INSUFFICIENT_CREDITS_ERROR_CODE = 'INSUFFICIENT_CREDITS';
+
+interface CreditErrorLike {
+  cause?: unknown;
+  code?: unknown;
+  details?: unknown;
+  hint?: unknown;
+  message?: unknown;
+}
+
+export function isInsufficientCreditsError(error: unknown): boolean {
+  if (
+    error instanceof Error &&
+    error.cause === INSUFFICIENT_CREDITS_ERROR_CODE
+  ) {
+    return true;
+  }
+
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
+
+  const maybeError = error as CreditErrorLike;
+  const errorContext = [
+    maybeError.message,
+    maybeError.details,
+    maybeError.hint,
+    maybeError.code,
+  ]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
+
+  return /insufficient credits/i.test(errorContext);
+}
+
+function toCreditDebitError(error: unknown): unknown {
+  if (!isInsufficientCreditsError(error)) {
+    return error;
+  }
+
+  return new Error('Insufficient credits', {
+    cause: INSUFFICIENT_CREDITS_ERROR_CODE,
+  });
+}
+
+/**
+ * Voice names repeat across models (the same Gemini identity exists as
+ * `gpro`, `gpro31`, and `gpro38` rows), so pass `models` whenever the caller
+ * knows the model. Without it the oldest matching row wins, which keeps
+ * existing name-only callers on the voice they resolved before newer rows
+ * were added. Equal timestamps are ordered by ID for a stable result.
+ */
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
+  models?: readonly string[],
 ): Promise<{ id: string; name: string; language: string; model: string }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from('voices')
     .select('id, name, language, model')
     .eq('name', voiceName)
-    .eq('is_public', isPublic)
+    .eq('is_public', isPublic);
+  if (models) query = query.in('model', [...models]);
+  const { data, error } = await query
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(1)
     .single();
 
   if (error) throw error;
@@ -191,11 +250,49 @@ export async function reduceCredits({
 
   // Decrement user credits by the specified amount using an RPC call
   const { error: creditsError } = await supabase.rpc('decrement_user_credits', {
-    user_id_var: userId,
     credit_amount_var: Math.abs(amount),
+    user_id_var: userId,
   });
 
-  if (creditsError) throw creditsError;
+  if (creditsError) throw toCreditDebitError(creditsError);
+}
+
+export async function reduceCreditsUpTo({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<number> {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return 0;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('decrement_user_credits_up_to', {
+    credit_amount_var: creditAmount,
+    user_id_var: userId,
+  });
+
+  if (error) throw toCreditDebitError(error);
+
+  return data ?? 0;
+}
+
+export async function restoreCredits({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}) {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return;
+  }
+
+  await updateUserCredits(userId, creditAmount);
 }
 
 export async function saveAudioFile({
@@ -228,17 +325,17 @@ export async function saveAudioFile({
   return supabase
     .from('audio_files')
     .insert({
-      user_id: userId,
+      credits_used,
+      duration: Number.parseFloat(duration),
+      is_public: isPublic,
+      model,
+      prediction_id: predictionId,
       storage_key: filename,
       text_content: text,
       url,
-      model,
-      prediction_id: predictionId,
-      is_public: isPublic,
-      voice_id: voiceId,
-      duration: Number.parseFloat(duration),
-      credits_used,
       usage,
+      user_id: userId,
+      voice_id: voiceId,
     })
     .select('id')
     .single();
@@ -262,20 +359,20 @@ export const insertUsageEvent = async (
     const { data, error } = await supabase
       .from('usage_events')
       .insert({
-        user_id: params.userId,
-        source_type: params.sourceType,
+        api_key_id: params.apiKeyId ?? null,
+        credits_used: params.creditsUsed,
+        dollar_amount: params.dollarAmount ?? null,
+        duration_seconds: params.durationSeconds ?? null,
+        input_chars: params.inputChars ?? null,
+        metadata: (params.metadata ?? {}) as Json,
+        model: params.model ?? null,
+        output_chars: params.outputChars ?? null,
+        quantity: params.quantity,
         request_id: params.requestId ?? null,
         source_id: params.sourceId ?? null,
-        api_key_id: params.apiKeyId ?? null,
-        model: params.model ?? null,
-        input_chars: params.inputChars ?? null,
-        output_chars: params.outputChars ?? null,
-        duration_seconds: params.durationSeconds ?? null,
-        dollar_amount: params.dollarAmount ?? null,
+        source_type: params.sourceType,
         unit: params.unit,
-        quantity: params.quantity,
-        credits_used: params.creditsUsed,
-        metadata: (params.metadata ?? {}) as Json,
+        user_id: params.userId,
       })
       .select('id')
       .single();
@@ -283,8 +380,8 @@ export const insertUsageEvent = async (
     if (error) {
       captureException(error, {
         extra: {
-          params,
           context: 'insertUsageEvent',
+          params,
         },
       });
       console.error('Failed to insert usage event:', error);
@@ -295,8 +392,8 @@ export const insertUsageEvent = async (
   } catch (error) {
     captureException(error, {
       extra: {
-        params,
         context: 'insertUsageEvent',
+        params,
       },
     });
     console.error('Failed to insert usage event:', error);
@@ -339,6 +436,36 @@ export const getUserByStripeCustomerId = async (customerId: string) => {
   return data;
 };
 
+/**
+ * Non-blocking duplicate-credit guard. Lookup failures are logged and treated
+ * as "no prior credit" because `unique_reference_topup_idx` and
+ * `unique_reference_purchase_idx` reject duplicate inserts (see
+ * `isCreditTransactionReferenceConflict`).
+ */
+const findCreditTransactionByReference = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  referenceId: string,
+) => {
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('reference_id', referenceId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking existing credit transaction:', {
+      error: error.message,
+      referenceId,
+      userId,
+    });
+    return null;
+  }
+
+  return data;
+};
+
 export const insertSubscriptionCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
@@ -348,27 +475,22 @@ export const insertSubscriptionCreditTransaction = async (
 ) => {
   const supabase = createAdminClient();
 
-  try {
-    // Check if transaction already exists using reference_id (payment_intent)
-    // This prevents duplicate credits when multiple webhook events fire
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check if transaction already exists using reference_id (payment_intent)
+  // This prevents duplicate credits when multiple webhook events fire
+  const existing = await findCreditTransactionByReference(
+    supabase,
+    userId,
+    paymentIntentId,
+  );
 
-    if (data) {
-      console.log('Subscription transaction already exists', {
-        userId,
-        paymentIntentId,
-        subscriptionId,
-        data,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existing) {
+    console.log('Subscription transaction already exists', {
+      data: existing,
+      paymentIntentId,
+      subscriptionId,
+      userId,
+    });
+    return;
   }
 
   // Check if this is the user's first subscription transaction
@@ -384,33 +506,33 @@ export const insertSubscriptionCreditTransaction = async (
 
   // Insert the transaction with reference_id (payment_intent)
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
-    reference_id: paymentIntentId,
-    subscription_id: subscriptionId,
     amount: creditAmount,
-    type: 'purchase',
     description: `Subscription payment - $${dollarAmount} (includes ${Math.round((SUBSCRIPTION_BONUS_MULTIPLIER - 1) * 100)}% bonus)`,
     metadata: {
       dollarAmount,
       isFirstSubscription,
     },
+    reference_id: paymentIntentId,
+    subscription_id: subscriptionId,
+    type: 'purchase',
+    user_id: userId,
   });
 
   if (error) {
     if (isCreditTransactionReferenceConflict(error)) {
       console.log('Subscription transaction already exists', {
-        userId,
         paymentIntentId,
         subscriptionId,
+        userId,
       });
       return;
     }
 
     console.error('Error inserting subscription transaction:', {
-      userId,
-      subscriptionId,
-      paymentIntentId,
       error: error.message,
+      paymentIntentId,
+      subscriptionId,
+      userId,
     });
     throw error;
   }
@@ -429,25 +551,20 @@ export const insertTopupCreditTransaction = async (
 ) => {
   const supabase = createAdminClient();
 
-  try {
-    // Check if transaction already exists to prevent duplicates
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check if transaction already exists to prevent duplicates
+  const existing = await findCreditTransactionByReference(
+    supabase,
+    userId,
+    paymentIntentId,
+  );
 
-    if (data) {
-      console.log('Topup transaction already exists', {
-        userId,
-        paymentIntentId,
-        data,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existing) {
+    console.log('Topup transaction already exists', {
+      data: existing,
+      paymentIntentId,
+      userId,
+    });
+    return;
   }
 
   // Check if this is the user's first transaction (topup)
@@ -462,24 +579,24 @@ export const insertTopupCreditTransaction = async (
 
   // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
-    user_id: userId,
     amount: creditAmount,
-    type: 'topup',
     description: `Credit top-up - $${dollarAmount}`,
-    reference_id: paymentIntentId,
     metadata: {
-      packageId,
       dollarAmount,
       isFirstTopup,
+      packageId,
       ...(promo && { promo }),
     },
+    reference_id: paymentIntentId,
+    type: 'topup',
+    user_id: userId,
   });
 
   if (error) {
     if (isCreditTransactionReferenceConflict(error)) {
       console.log('Topup transaction already exists', {
-        userId,
         paymentIntentId,
+        userId,
       });
       return;
     }
@@ -491,19 +608,25 @@ export const insertTopupCreditTransaction = async (
   await updateUserCredits(userId, creditAmount);
 };
 
-const isCreditTransactionReferenceConflict = (error: {
+export const isCreditTransactionReferenceConflict = (error: {
   code?: string;
+  details?: string;
   message?: string;
-}): boolean =>
-  error.code === '23505' &&
-  /unique_reference|reference_id/i.test(error.message ?? '');
+}): boolean => {
+  const conflictContext = `${error.message ?? ''} ${error.details ?? ''}`;
+
+  return (
+    error.code === '23505' &&
+    /unique_reference|reference_id/i.test(conflictContext)
+  );
+};
 
 const updateUserCredits = async (userId: string, creditAmount: number) => {
   const supabase = createAdminClient();
 
   const { error } = await supabase.rpc('increment_user_credits', {
-    user_id_var: userId,
     credit_amount_var: creditAmount,
+    user_id_var: userId,
   });
 
   if (error) throw error;
@@ -523,7 +646,9 @@ export const getPaidTransactions = async (userId: string) => {
   return data;
 };
 
-export const hasUserPaid = async (userId: string): Promise<boolean> => {
+// Deduplicated per server request: the dashboard layout and its pages both
+// check paid status.
+export const hasUserPaid = cache(async (userId: string): Promise<boolean> => {
   const supabase = await createClient();
   // Check if the user has any non-freemium credit transactions.
   const { data: nonFreemiumTransactions, error: nonFreemiumError } =
@@ -539,7 +664,27 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
-};
+});
+
+// Deduplicated per server request: the dashboard layout and the Generate,
+// Clone, and Call pages all sum these amounts for the credits widget.
+export const getCreditTransactionAmounts = cache(
+  async (
+    userId: string,
+  ): Promise<Pick<Tables<'credit_transactions'>, 'amount'>[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('credit_transactions')
+      .select('amount')
+      .eq('user_id', userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+);
 
 /**
  * Get the total call duration in seconds for a user.
@@ -557,7 +702,7 @@ export const getTotalCallDurationSeconds = async (
 
   if (error) {
     captureException(error, {
-      extra: { userId, context: 'getTotalCallDurationSeconds' },
+      extra: { context: 'getTotalCallDurationSeconds', userId },
     });
     throw error;
   }
@@ -605,16 +750,23 @@ export async function getCreditsAdmin(userId: string): Promise<number> {
   return data?.amount ?? 0;
 }
 
+/** Admin variant of {@link getVoiceIdByName}; same model scoping rules. */
 export async function getVoiceIdByNameAdmin(
   voiceName: string,
   isPublic = true,
+  models?: readonly string[],
 ): Promise<{ id: string; name: string; language: string; model: string }> {
   const admin = createAdminClient();
-  const { data, error } = await admin
+  let query = admin
     .from('voices')
     .select('id, name, language, model')
     .eq('name', voiceName)
-    .eq('is_public', isPublic)
+    .eq('is_public', isPublic);
+  if (models) query = query.in('model', [...models]);
+  const { data, error } = await query
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(1)
     .single();
 
   if (error) throw error;
@@ -649,11 +801,34 @@ export async function reduceCreditsAdmin({
 }) {
   const admin = createAdminClient();
   const { error } = await admin.rpc('decrement_user_credits', {
-    user_id_var: userId,
     credit_amount_var: Math.abs(amount),
+    user_id_var: userId,
   });
 
-  if (error) throw error;
+  if (error) throw toCreditDebitError(error);
+}
+
+export async function reduceCreditsUpToAdmin({
+  userId,
+  amount,
+}: {
+  userId: string;
+  amount: number;
+}): Promise<number> {
+  const creditAmount = Math.abs(amount);
+  if (creditAmount === 0) {
+    return 0;
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc('decrement_user_credits_up_to', {
+    credit_amount_var: creditAmount,
+    user_id_var: userId,
+  });
+
+  if (error) throw toCreditDebitError(error);
+
+  return data ?? 0;
 }
 
 // biome-ignore lint/suspicious/useAwait: server action
@@ -674,17 +849,17 @@ export async function saveAudioFileAdmin(params: {
   return admin
     .from('audio_files')
     .insert({
-      user_id: params.userId,
+      credits_used: params.credits_used,
+      duration: Number.parseFloat(params.duration),
+      is_public: params.isPublic,
+      model: params.model,
+      prediction_id: params.predictionId,
       storage_key: params.filename,
       text_content: params.text,
       url: params.url,
-      model: params.model,
-      prediction_id: params.predictionId,
-      is_public: params.isPublic,
-      voice_id: params.voiceId,
-      duration: Number.parseFloat(params.duration),
-      credits_used: params.credits_used,
       usage: params.usage,
+      user_id: params.userId,
+      voice_id: params.voiceId,
     })
     .select('id')
     .single();

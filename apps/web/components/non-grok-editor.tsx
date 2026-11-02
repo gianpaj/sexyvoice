@@ -4,6 +4,7 @@ import { Crown, Loader2, Maximize2, Minimize2, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { AnimatedPromptTextarea } from './audio-generator';
 import { Button } from './ui/button';
@@ -62,7 +63,7 @@ export function NonGrokPromptEditor({
         maxLength={
           textareaMaxLength === null
             ? undefined
-            : (textareaMaxLength ?? charactersLimit + 10)
+            : (textareaMaxLength ?? charactersLimit + CHARACTERS_LIMIT_GRACE)
         }
         onChange={(e) => onTextChange(e.target.value)}
         placeholder={t('textAreaPlaceholder')}
@@ -109,7 +110,7 @@ export function NonGrokPromptEditor({
       <div
         className={cn(
           'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-          textIsOverLimit ? 'font-bold text-red-500' : '',
+          textIsOverLimit && 'text-red-500',
         )}
         data-testid="generate-character-count"
       >

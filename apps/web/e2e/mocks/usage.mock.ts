@@ -1,5 +1,10 @@
 import type { Route } from '@playwright/test';
 
+import {
+  E2E_ALL_TIME_USAGE_SUMMARY_VALUES,
+  E2E_MONTHLY_USAGE_SUMMARY_VALUES,
+} from '@/lib/e2e-mocks-shared';
+
 /**
  * Usage Dashboard Mock Handlers
  *
@@ -12,107 +17,90 @@ import type { Route } from '@playwright/test';
  */
 export const mockUsageEvents = [
   {
-    id: 'evt-001',
-    user_id: 'test-user-id',
-    source_type: 'tts',
-    quantity: 150,
-    unit: 'chars',
     credits_used: 12,
-    occurred_at: '2025-01-15T10:30:00.000Z',
+    id: 'evt-001',
     metadata: {
-      voiceName: 'Zephyr',
       textPreview: 'Hello, this is a test message for voice generation.',
+      voiceName: 'Zephyr',
     },
+    occurred_at: '2025-01-15T10:30:00.000Z',
+    quantity: 150,
+    source_type: 'tts',
+    unit: 'chars',
+    user_id: 'test-user-id',
   },
   {
-    id: 'evt-002',
-    user_id: 'test-user-id',
-    source_type: 'voice_cloning',
-    quantity: 1,
-    unit: 'operation',
     credits_used: 50,
-    occurred_at: '2025-01-14T15:45:00.000Z',
+    id: 'evt-002',
     metadata: {
       voiceName: 'My Custom Voice',
     },
+    occurred_at: '2025-01-14T15:45:00.000Z',
+    quantity: 1,
+    source_type: 'voice_cloning',
+    unit: 'operation',
+    user_id: 'test-user-id',
   },
   {
-    id: 'evt-003',
-    user_id: 'test-user-id',
-    source_type: 'live_call',
-    quantity: 3,
-    unit: 'mins',
     credits_used: 30,
-    occurred_at: '2025-01-13T09:00:00.000Z',
+    id: 'evt-003',
     metadata: {
-      voiceName: 'Ara',
       textPreview: 'Live call session with AI agent',
+      voiceName: 'Ara',
     },
+    occurred_at: '2025-01-13T09:00:00.000Z',
+    quantity: 3,
+    source_type: 'live_call',
+    unit: 'mins',
+    user_id: 'test-user-id',
   },
   {
-    id: 'evt-004',
-    user_id: 'test-user-id',
-    source_type: 'tts',
-    quantity: 300,
-    unit: 'chars',
     credits_used: 24,
-    occurred_at: '2025-01-12T14:20:00.000Z',
+    id: 'evt-004',
     metadata: {
-      voiceName: 'Poe',
       textPreview: 'Another text-to-speech generation test.',
+      voiceName: 'Poe',
     },
+    occurred_at: '2025-01-12T14:20:00.000Z',
+    quantity: 300,
+    source_type: 'tts',
+    unit: 'chars',
+    user_id: 'test-user-id',
   },
   {
-    id: 'evt-005',
-    user_id: 'test-user-id',
-    source_type: 'audio_processing',
-    quantity: 45,
-    unit: 'secs',
     credits_used: 5,
-    occurred_at: '2025-01-11T11:00:00.000Z',
+    id: 'evt-005',
     metadata: {},
+    occurred_at: '2025-01-11T11:00:00.000Z',
+    quantity: 45,
+    source_type: 'audio_processing',
+    unit: 'secs',
+    user_id: 'test-user-id',
   },
 ];
 
 /**
- * Mock monthly summary data
+ * Mock monthly summary data — shared with the server-side summary-card mock via
+ * `lib/e2e-mocks-shared.ts` so the table and the cards can never drift apart.
  */
-export const mockMonthlySummary = {
-  totalCredits: 121,
-  totalOperations: 5,
-  bySourceType: {
-    tts: { credits: 36, count: 2 },
-    voice_cloning: { credits: 50, count: 1 },
-    live_call: { credits: 30, count: 1 },
-    audio_processing: { credits: 5, count: 1 },
-  },
-};
+export const mockMonthlySummary = E2E_MONTHLY_USAGE_SUMMARY_VALUES;
 
 /**
- * Mock all-time summary data
+ * Mock all-time summary data — shared source of truth (see above).
  */
-export const mockAllTimeSummary = {
-  totalCredits: 542,
-  totalOperations: 23,
-  bySourceType: {
-    tts: { credits: 250, count: 12 },
-    voice_cloning: { credits: 150, count: 3 },
-    live_call: { credits: 120, count: 6 },
-    audio_processing: { credits: 22, count: 2 },
-  },
-};
+export const mockAllTimeSummary = E2E_ALL_TIME_USAGE_SUMMARY_VALUES;
 
 /**
  * Mock paginated response for /api/usage-events
  */
 export const mockUsageEventsResponse = {
+  allTimeSummary: mockAllTimeSummary,
   data: mockUsageEvents,
-  totalCount: mockUsageEvents.length,
-  totalPages: 1,
+  monthlySummary: mockMonthlySummary,
   page: 1,
   pageSize: 20,
-  monthlySummary: mockMonthlySummary,
-  allTimeSummary: mockAllTimeSummary,
+  totalCount: mockUsageEvents.length,
+  totalPages: 1,
 };
 
 /**
@@ -131,10 +119,10 @@ export async function handleUsageEvents(route: Route) {
   const includeSummary = url.searchParams.get('includeSummary') === 'true';
 
   console.log('[MOCK] usage-events called with:', {
+    includeSummary,
     page,
     pageSize,
     sourceType,
-    includeSummary,
   });
 
   // Filter by source type if specified
@@ -154,10 +142,10 @@ export async function handleUsageEvents(route: Route) {
 
   const response: Record<string, unknown> = {
     data: paginatedEvents,
-    totalCount: filteredEvents.length,
-    totalPages: Math.ceil(filteredEvents.length / pageSize),
     page,
     pageSize,
+    totalCount: filteredEvents.length,
+    totalPages: Math.ceil(filteredEvents.length / pageSize),
   };
 
   if (includeSummary) {
@@ -166,9 +154,9 @@ export async function handleUsageEvents(route: Route) {
   }
 
   await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
     body: JSON.stringify(response),
+    contentType: 'application/json',
+    status: 200,
   });
 }
 
@@ -183,31 +171,31 @@ export async function handleUsageEventsEmpty(route: Route) {
 
   const responseBody: Record<string, unknown> = {
     data: [],
-    totalCount: 0,
-    totalPages: 0,
     page: 1,
     pageSize: 20,
+    totalCount: 0,
+    totalPages: 0,
   };
 
   if (includeSummary) {
     const emptySummary = {
+      bySourceType: {
+        audio_processing: { count: 0, credits: 0 },
+        live_call: { count: 0, credits: 0 },
+        tts: { count: 0, credits: 0 },
+        voice_cloning: { count: 0, credits: 0 },
+      },
       totalCredits: 0,
       totalOperations: 0,
-      bySourceType: {
-        tts: { credits: 0, count: 0 },
-        voice_cloning: { credits: 0, count: 0 },
-        live_call: { credits: 0, count: 0 },
-        audio_processing: { credits: 0, count: 0 },
-      },
     };
     responseBody.monthlySummary = emptySummary;
     responseBody.allTimeSummary = emptySummary;
   }
 
   await route.fulfill({
-    status: 200,
-    contentType: 'application/json',
     body: JSON.stringify(responseBody),
+    contentType: 'application/json',
+    status: 200,
   });
 }
 
@@ -218,9 +206,9 @@ export async function handleUsageEventsError(route: Route) {
   console.log('[MOCK] usage-events ERROR handler called');
 
   await route.fulfill({
-    status: 500,
-    contentType: 'application/json',
     body: JSON.stringify({ error: 'Internal server error' }),
+    contentType: 'application/json',
+    status: 500,
   });
 }
 

@@ -19,8 +19,8 @@ function formatDate(
 ): string {
   const date = new Date(input);
   return date.toLocaleDateString('en-US', {
-    month: 'numeric',
     day: 'numeric',
+    month: 'numeric',
     year: 'numeric',
     ...(withTime && {
       hour: '2-digit',
@@ -38,12 +38,12 @@ function DateTimeCell({ value }: { value: string }) {
 }
 
 const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
-  tts: 'bg-purple-100 text-purple-900 border-purple-200',
-  voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
-  live_call: 'bg-green-100 text-green-900 border-green-200',
-  audio_processing: 'bg-orange-100 text-orange-900 border-orange-200',
   api_tts: 'bg-indigo-100 text-indigo-900 border-indigo-200',
   api_voice_cloning: 'bg-rose-100 text-rose-900 border-rose-200',
+  audio_processing: 'bg-orange-100 text-orange-900 border-orange-200',
+  live_call: 'bg-green-100 text-green-900 border-green-200',
+  tts: 'bg-purple-100 text-purple-900 border-purple-200',
+  voice_cloning: 'bg-blue-100 text-blue-900 border-blue-200',
 };
 
 /**
@@ -132,17 +132,17 @@ export function useColumns(): ColumnDef<UsageEvent>[] {
   return useMemo(
     () => [
       {
-        id: 'source_type',
         accessorKey: 'source_type',
-        header: t('table.sourceType'),
         cell: ({ row }) => {
           const sourceType = row.original.source_type as UsageSourceType;
-          const label =
-            sourceType === 'api_tts'
-              ? 'API TTS'
-              : sourceType === 'api_voice_cloning'
-                ? 'API Voice Cloning'
-                : t(`summary.byType.${sourceType}`);
+          let label: string;
+          if (sourceType === 'api_tts') {
+            label = 'API TTS';
+          } else if (sourceType === 'api_voice_cloning') {
+            label = 'API Voice Cloning';
+          } else {
+            label = t(`summary.byType.${sourceType}`);
+          }
           return (
             <Badge
               className={`${SOURCE_TYPE_COLORS[sourceType]} border`}
@@ -152,27 +152,29 @@ export function useColumns(): ColumnDef<UsageEvent>[] {
             </Badge>
           );
         },
+        header: t('table.sourceType'),
+        id: 'source_type',
       },
       {
-        id: 'quantity',
         accessorKey: 'quantity',
-        header: t('table.quantity'),
         cell: ({ row }) =>
           formatQuantity(
             row.original.quantity,
             row.original.unit as UsageUnitType,
             tUnits,
           ),
+        header: t('table.quantity'),
+        id: 'quantity',
       },
       {
-        id: 'credits_used',
         accessorKey: 'credits_used',
-        header: t('table.creditsUsed'),
         cell: ({ row }) => row.original.credits_used.toLocaleString(),
+        header: t('table.creditsUsed'),
+        id: 'credits_used',
       },
       {
-        id: 'occurred_at',
         accessorKey: 'occurred_at',
+        cell: ({ row }) => <DateTimeCell value={row.original.occurred_at} />,
         header: ({ column }) => (
           <Button
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -182,13 +184,13 @@ export function useColumns(): ColumnDef<UsageEvent>[] {
             <ArrowUpDown className="ml-2 size-4" />
           </Button>
         ),
-        cell: ({ row }) => <DateTimeCell value={row.original.occurred_at} />,
+        id: 'occurred_at',
       },
       {
-        id: 'details',
         accessorKey: 'metadata',
-        header: t('table.details'),
         cell: ({ row }) => <DetailsCell metadata={row.original.metadata} />,
+        header: t('table.details'),
+        id: 'details',
       },
     ],
     [t, tUnits],

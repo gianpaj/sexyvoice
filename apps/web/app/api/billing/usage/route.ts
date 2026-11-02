@@ -1,6 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 
 type BillingGroupBy = 'source_type' | 'api_key_id' | 'model';
@@ -13,7 +15,6 @@ interface ApiUsageDailyRow {
   requests: number;
   source_type: string;
   total_credits_used: number;
-  total_dollar_amount: number;
   total_duration_seconds: number;
   total_input_chars: number;
   total_output_chars: number;
@@ -57,16 +58,12 @@ function bucketStart(date: Date, start: Date, widthDays: number): Date {
   return addDays(start, bucketOffset);
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Endpoint supports multiple filter/group/bucket query modes.
 export async function GET(request: NextRequest) {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!claims?.sub) {
+    return APIErrorResponse('Unauthorized', 401);
   }
 
   const params = request.nextUrl.searchParams;
@@ -89,25 +86,19 @@ export async function GET(request: NextRequest) {
   const end = floorToUtcDay(endBeforeEpoch);
 
   if (end <= start) {
-    return NextResponse.json(
-      { error: 'ending_before must be after starting_on' },
-      { status: 400 },
-    );
+    return APIErrorResponse('ending_before must be after starting_on', 400);
   }
 
   const bucketWidth = (params.get('bucket_width') ?? '1d') as BucketWidth;
   if (!(bucketWidth === '1d' || bucketWidth === '7d')) {
-    return NextResponse.json(
-      { error: 'bucket_width must be 1d or 7d' },
-      { status: 400 },
-    );
+    return APIErrorResponse('bucket_width must be 1d or 7d', 400);
   }
 
   const groupBy = params.get('group_by') as BillingGroupBy | null;
   if (groupBy && !['source_type', 'api_key_id', 'model'].includes(groupBy)) {
-    return NextResponse.json(
-      { error: 'group_by must be source_type, api_key_id, or model' },
-      { status: 400 },
+    return APIErrorResponse(
+      'group_by must be source_type, api_key_id, or model',
+      400,
     );
   }
 
@@ -120,18 +111,17 @@ export async function GET(request: NextRequest) {
       'api_voice_cloning',
     ];
     if (!validSourceTypes.includes(sourceTypeParam as ApiUsageSourceType)) {
-      return NextResponse.json(
-        { error: 'Invalid source_type for API billing usage' },
-        { status: 400 },
-      );
+      return APIErrorResponse('Invalid source_type for API billing usage', 400);
     }
     sourceType = sourceTypeParam as ApiUsageSourceType;
   }
 
   let query = supabase
     .from('api_usage_daily')
-    .select('*')
-    .eq('user_id', user.id)
+    .select(
+      'api_key_id, model, requests, source_type, total_credits_used, total_duration_seconds, total_input_chars, total_output_chars, usage_date, user_id',
+    )
+    .eq('user_id', claims.sub)
     .gte('usage_date', start.toISOString())
     .lt('usage_date', end.toISOString());
 
@@ -147,10 +137,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: 'Failed to fetch billing usage' },
-      { status: 500 },
-    );
+    return APIErrorResponse('Failed to fetch billing usage', 500);
   }
 
   const rows = (data ?? []) as ApiUsageDailyRow[];
@@ -170,7 +157,6 @@ export async function GET(request: NextRequest) {
           total_input_chars: number;
           total_output_chars: number;
           total_duration_seconds: number;
-          total_dollar_amount: number;
           total_credits_used: number;
         }
       >;
@@ -185,9 +171,9 @@ export async function GET(request: NextRequest) {
 
     if (!bucketMap.has(bucketKey)) {
       bucketMap.set(bucketKey, {
-        start: currentBucketStart,
         end: currentBucketEnd,
         groups: new Map(),
+        start: currentBucketStart,
       });
     }
 
@@ -200,15 +186,14 @@ export async function GET(request: NextRequest) {
 
     if (!bucket.groups.has(groupKey)) {
       bucket.groups.set(groupKey, {
-        source_type: groupBy === 'source_type' ? row.source_type : null,
         api_key_id: groupBy === 'api_key_id' ? row.api_key_id : null,
         model: groupBy === 'model' ? row.model : null,
         requests: 0,
+        source_type: groupBy === 'source_type' ? row.source_type : null,
+        total_credits_used: 0,
+        total_duration_seconds: 0,
         total_input_chars: 0,
         total_output_chars: 0,
-        total_duration_seconds: 0,
-        total_dollar_amount: 0,
-        total_credits_used: 0,
       });
     }
 
@@ -221,29 +206,28 @@ export async function GET(request: NextRequest) {
     group.total_input_chars += row.total_input_chars;
     group.total_output_chars += row.total_output_chars;
     group.total_duration_seconds += row.total_duration_seconds;
-    group.total_dollar_amount += row.total_dollar_amount;
     group.total_credits_used += row.total_credits_used;
   }
 
   const buckets = Array.from(bucketMap.values()).map((bucket) => ({
-    object: 'bucket' as const,
-    start_time: Math.floor(bucket.start.getTime() / 1000),
     end_time: Math.floor(bucket.end.getTime() / 1000),
-    start_time_iso: bucket.start.toISOString(),
     end_time_iso: bucket.end.toISOString(),
+    object: 'bucket' as const,
     results: Array.from(bucket.groups.values()),
+    start_time: Math.floor(bucket.start.getTime() / 1000),
+    start_time_iso: bucket.start.toISOString(),
   }));
 
   return NextResponse.json({
-    object: 'list',
+    api_key_id: apiKeyId,
     bucket_width: bucketWidth,
-    start_time: Math.floor(start.getTime() / 1000),
+    data: buckets,
     end_time: Math.floor(end.getTime() / 1000),
-    start_time_iso: start.toISOString(),
     end_time_iso: end.toISOString(),
     group_by: groupBy,
+    object: 'list',
     source_type: sourceType ?? null,
-    api_key_id: apiKeyId,
-    data: buckets,
+    start_time: Math.floor(start.getTime() / 1000),
+    start_time_iso: start.toISOString(),
   });
 }

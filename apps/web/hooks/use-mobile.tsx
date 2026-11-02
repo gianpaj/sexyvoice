@@ -48,9 +48,9 @@ export function useIsMobileSizes() {
   }, []);
 
   return {
+    innerWidth,
     isMobile375: !!isMobile375,
     isMobile414: !!isMobile414,
     isMobile430: !!isMobile430,
-    innerWidth,
   };
 }

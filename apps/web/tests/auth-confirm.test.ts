@@ -16,10 +16,9 @@ vi.mock('next/server', () => ({
       const response = new Response(null, {
         ...responseInit,
         status: typeof init === 'number' ? init : (responseInit?.status ?? 307),
-        headers: {
-          location: String(url),
-        },
+        headers: new Headers(responseInit?.headers),
       });
+      response.headers.set('location', String(url));
 
       return Object.assign(response, {
         cookies: {
@@ -50,6 +49,70 @@ vi.mock('next/server', () => ({
 describe('Email auth confirm route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it.each([null, new Error('Invalid token')])(
+    'preserves auth cache headers after OTP verification',
+    async (error) => {
+      vi.mocked(createClient).mockImplementationOnce(async (headers) => {
+        headers?.set('cache-control', 'private, no-store');
+        return {
+          auth: {
+            verifyOtp: vi.fn().mockResolvedValue({
+              data: { user: null },
+              error,
+            }),
+          },
+        } as unknown as Awaited<ReturnType<typeof createClient>>;
+      });
+
+      const response = await GET(
+        new Request(
+          'https://sexyvoice.ai/auth/confirm?token_hash=hash&type=recovery',
+        ),
+      );
+
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+      expect(response.headers.get('location')).toBe(
+        error
+          ? 'https://sexyvoice.ai/en/login'
+          : 'https://sexyvoice.ai/en/protected/update-password',
+      );
+    },
+  );
+
+  it('redirects confirmed users when signup provisioning fails', async () => {
+    const error = new Error('Stripe unavailable');
+    vi.mocked(recordSignupSideEffects).mockRejectedValueOnce(error);
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        verifyOtp: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-id', email: 'user@example.com' } },
+          error: null,
+        }),
+      },
+    } as unknown as Awaited<ReturnType<typeof createClient>>);
+
+    const response = await GET(
+      new Request(
+        'https://sexyvoice.ai/auth/confirm?token_hash=hash&type=signup&redirect_to=/fr/dashboard',
+      ),
+    );
+
+    expect(response.headers.get('location')).toBe(
+      'https://sexyvoice.ai/fr/dashboard',
+    );
+    expect(response.headers.get('set-cookie')).toContain(
+      'sv_auth_callback_ok=',
+    );
+    expect(captureException).toHaveBeenCalledWith(
+      error,
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          error_type: 'signup-side-effects-failed',
+        }),
+      }),
+    );
   });
 
   it('verifies token_hash links and redirects to a same-origin destination', async () => {
