@@ -6,7 +6,7 @@ test.describe('Email auth links', () => {
   test('email signup sends a final destination instead of /auth/callback', async ({
     page,
   }) => {
-    const email = `auth-email-${Date.now()}@example.com`;
+    const email = `auth-email-${Date.now()}@example.test`;
 
     await page.goto('/en/signup');
     const appOrigin = new URL(page.url()).origin;
@@ -23,6 +23,7 @@ test.describe('Email auth links', () => {
     await page.getByRole('button', { name: 'Sign up', exact: true }).click();
 
     const signupResponse = await signupResponsePromise;
+    expect(signupResponse.status()).toBe(201);
     const signupBody = JSON.parse(signupResponse.request().postData() ?? '{}');
     const signupPayload = (await signupResponse.json()) as {
       data?: { emailRedirectTo?: string };
