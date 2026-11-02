@@ -24,7 +24,7 @@
 ## 🌟 About
 
 - Generate AI voices in 24+ supported languages and locales
-- 63 public voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`)
+- 57 public speech voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`), plus 6 built-in voices for calls
 - Voice cloning across 28 languages
 - Credit-based usage system
 - User authentication and profile management (Google)
@@ -43,7 +43,7 @@ dashboard. See [GLOSSARY.md](./GLOSSARY.md) for domain names and definitions.
 - **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
 - **Live AI Voice Calls**: Talk to AI characters in real time; paid users can create characters and choose a cloned voice
-- **Voice Selection System**: Choose from 63 public voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
+- **Voice Selection System**: Choose from 57 public speech voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 
