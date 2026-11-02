@@ -25,7 +25,7 @@ import { buildSaveCharacterPayload, saveCharacter } from '@/lib/characters';
 export function PresetSave() {
   const connectionState = useConnectionState();
   const isConnected = connectionState === ConnectionState.Connected;
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
   const t = useTranslations('call.savePreset');
   const selectedPreset = helpers.getSelectedPreset(pgState);
   const defaultPresets = helpers.getDefaultPresets();
@@ -54,7 +54,6 @@ export function PresetSave() {
   // Save as new character (opens dialog)
   const handleSaveAsNew = async () => {
     const result = await saveCharacter({
-      id: '',
       localizedDescriptions: { [pgState.language]: description },
       localizedPrompts: { [pgState.language]: pgState.instructions },
       name,
@@ -68,7 +67,7 @@ export function PresetSave() {
     }
 
     dispatch({ payload: result.preset, type: 'SAVE_CUSTOM_CHARACTER' });
-    dispatch({ payload: result.preset.id, type: 'SET_SELECTED_PRESET_ID' });
+    selectPreset(result.preset.id);
     setOpen(false);
     toast.success(t('characterCreated'));
   };

@@ -26,8 +26,8 @@ function text(value: string): GrokTtsToken {
 
 function instant(tag: GrokInstantTag): GrokTtsToken {
   return {
-    type: 'instant-tag',
     tag,
+    type: 'instant-tag',
   };
 }
 
@@ -37,10 +37,10 @@ function wrapper(
   children: GrokTtsToken[],
 ): GrokTtsToken {
   return {
-    type: 'wrapper-tag',
-    openTag,
-    closeTag,
     children,
+    closeTag,
+    openTag,
+    type: 'wrapper-tag',
   };
 }
 

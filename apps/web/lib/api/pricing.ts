@@ -7,6 +7,7 @@ interface PricingInput {
   durationSeconds?: number | null;
   inputChars?: number | null;
   model?: ExternalModel | null;
+  occurredAt?: string | Date;
   outputChars?: number | null;
   promptTokenCount?: number | string | null;
   provider: ExternalProvider;
@@ -61,7 +62,27 @@ function getPriceConfig({
   sourceType,
   provider,
   model,
-}: Pick<PricingInput, 'sourceType' | 'provider' | 'model'>): PriceConfig {
+  occurredAt,
+}: Pick<
+  PricingInput,
+  'sourceType' | 'provider' | 'model' | 'occurredAt'
+>): PriceConfig {
+  // Standard tier: https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash-tts
+  if (
+    provider === 'google' &&
+    model === 'gemini-3.8-flash-tts' &&
+    (sourceType === 'tts' || sourceType === 'api_tts')
+  ) {
+    const timestamp =
+      occurredAt === undefined ? Date.now() : new Date(occurredAt).getTime();
+    if (!Number.isFinite(timestamp))
+      throw new Error('Invalid provider pricing date');
+    const promotional = timestamp < Date.parse('2027-01-01T00:00:00Z');
+    return {
+      perInputToken: promotional ? 0.000_000_5 : 0.000_001,
+      perOutputToken: promotional ? 0.000_009 : 0.000_018,
+    };
+  }
   const modelKey = model ?? '*';
   const sourceKey = `${sourceType}:${provider}:${modelKey}`;
   const wildcardKey = `${sourceType}:${provider}:*`;

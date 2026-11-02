@@ -1,6 +1,5 @@
 import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
-
 import { HistoryPage } from './pages/history.page';
 
 /**

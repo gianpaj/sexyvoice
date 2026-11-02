@@ -4,11 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ensureUserApplicationState } from '@/lib/supabase/ensure-user-application-state';
 
-vi.mock('server-only', () => ({}));
-
 const user = {
   createdAt: '2025-08-29T11:38:46.727Z',
   email: 'returning@example.com',
+  getCreatedAt: vi.fn(async () => '2025-08-29T11:38:46.727Z'),
   id: 'returning-user-id',
 };
 
@@ -27,7 +26,8 @@ function createAdminMock({
     data: profile,
     error: profileError,
   });
-  const eq = vi.fn().mockReturnValue({ maybeSingle });
+  const retry = vi.fn().mockReturnValue({ maybeSingle });
+  const eq = vi.fn().mockReturnValue({ retry });
   const select = vi.fn().mockReturnValue({ eq });
   const from = vi.fn().mockReturnValue({ select });
   const rpc = vi.fn().mockResolvedValue({
@@ -35,7 +35,7 @@ function createAdminMock({
     error: restoreError,
   });
 
-  return { from, rpc };
+  return { from, retry, rpc };
 }
 
 describe('ensureUserApplicationState', () => {
@@ -51,9 +51,41 @@ describe('ensureUserApplicationState', () => {
 
     await expect(ensureUserApplicationState(user)).resolves.toBe('existing');
 
+    expect(user.getCreatedAt).not.toHaveBeenCalled();
     expect(admin.from).toHaveBeenCalledWith('profiles');
+    expect(admin.retry).toHaveBeenCalledWith(false);
     expect(admin.rpc).not.toHaveBeenCalled();
     expect(captureMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not fetch the Auth date when the profile lookup fails', async () => {
+    const admin = createAdminMock({
+      profile: null,
+      profileError: { message: 'Database unavailable' },
+    });
+    vi.mocked(createAdminClient).mockReturnValue(admin as never);
+
+    await expect(ensureUserApplicationState(user)).rejects.toThrow(
+      'Failed to check user application state.',
+    );
+
+    expect(user.getCreatedAt).not.toHaveBeenCalled();
+    expect(admin.rpc).not.toHaveBeenCalled();
+  });
+
+  it('does not restore when the Auth date lookup fails', async () => {
+    const admin = createAdminMock({ profile: null });
+    vi.mocked(createAdminClient).mockReturnValue(admin as never);
+    const lookupError = new Error('Auth unavailable');
+
+    await expect(
+      ensureUserApplicationState({
+        ...user,
+        getCreatedAt: vi.fn().mockRejectedValue(lookupError),
+      }),
+    ).rejects.toBe(lookupError);
+
+    expect(admin.rpc).not.toHaveBeenCalled();
   });
 
   it('accepts an existing profile when the Auth user has no email', async () => {
@@ -83,8 +115,8 @@ describe('ensureUserApplicationState', () => {
     );
 
     expect(admin.rpc).not.toHaveBeenCalled();
+    expect(user.getCreatedAt).not.toHaveBeenCalled();
     expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
-      extra: { authCreatedAt: user.createdAt },
       tags: {
         area: 'auth',
         flow: 'inactive-user-reactivation',
@@ -102,6 +134,7 @@ describe('ensureUserApplicationState', () => {
 
     await expect(ensureUserApplicationState(user)).resolves.toBe('restored');
 
+    expect(user.getCreatedAt).toHaveBeenCalledOnce();
     expect(admin.rpc).toHaveBeenCalledWith('restore_inactive_user', {
       p_auth_created_at: user.createdAt,
       p_email: user.email,

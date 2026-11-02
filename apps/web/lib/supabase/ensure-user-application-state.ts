@@ -5,8 +5,8 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { createAdminClient } from './admin';
 
 interface ApplicationStateUser {
-  createdAt: string;
   email: string | null | undefined;
+  getCreatedAt: () => Promise<string>;
   id: string;
 }
 
@@ -31,6 +31,8 @@ export async function ensureUserApplicationState(
     .from('profiles')
     .select('id')
     .eq('id', user.id)
+    // This best-effort check blocks dashboard rendering; avoid retry backoff.
+    .retry(false)
     .maybeSingle();
 
   if (profileError) {
@@ -39,7 +41,6 @@ export async function ensureUserApplicationState(
     });
     captureException(error, {
       extra: {
-        authCreatedAt: user.createdAt,
         profileError,
       },
       ...getTelemetryContext(user),
@@ -56,16 +57,16 @@ export async function ensureUserApplicationState(
       'Cannot restore inactive user application state without an email.',
     );
     captureException(error, {
-      extra: { authCreatedAt: user.createdAt },
       ...getTelemetryContext(user),
     });
     throw error;
   }
 
+  const createdAt = await user.getCreatedAt();
   const { data: restored, error: restoreError } = await admin.rpc(
     'restore_inactive_user',
     {
-      p_auth_created_at: user.createdAt,
+      p_auth_created_at: createdAt,
       p_email: user.email,
       p_user_id: user.id,
     },
@@ -83,7 +84,7 @@ export async function ensureUserApplicationState(
 
     captureException(error, {
       extra: {
-        authCreatedAt: user.createdAt,
+        authCreatedAt: createdAt,
         restoreError,
       },
       ...telemetryContext,
@@ -102,7 +103,7 @@ export async function ensureUserApplicationState(
   }
 
   captureMessage('Restored inactive user application state.', {
-    extra: { authCreatedAt: user.createdAt },
+    extra: { authCreatedAt: createdAt },
     level: 'info',
     ...getTelemetryContext(user),
   });

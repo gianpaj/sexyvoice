@@ -1,0 +1,147 @@
+import {
+  costMetadata,
+  resolveUsageCost,
+  type UsageCost,
+  type UsageEventCostInput,
+} from '@/lib/usage-costs';
+import { summarizeOverhead } from './overhead';
+import { classifyRefund } from './utils';
+
+export type UsageEvent = UsageEventCostInput &
+  Pick<Tables<'usage_events'>, 'id' | 'occurred_at' | 'source_id' | 'user_id'>;
+
+export type CallSession = Pick<
+  Tables<'call_sessions'>,
+  | 'duration_seconds'
+  | 'ended_at'
+  | 'id'
+  | 'model'
+  | 'started_at'
+  | 'status'
+  | 'user_id'
+>;
+
+export type CreditTransaction = Pick<
+  Tables<'credit_transactions'>,
+  'created_at' | 'description' | 'metadata' | 'type' | 'user_id'
+>;
+interface CostRecord {
+  at: string;
+  cost: UsageCost;
+  feature: string;
+}
+export interface ContributionData {
+  audioUsage: Record<string, unknown>;
+  calls: CallSession[];
+  events: UsageEvent[];
+  linkedCallIds: string[];
+}
+export function buildCostRecords(data: ContributionData): CostRecord[] {
+  const calls = new Map(data.calls.map((call) => [call.id, call]));
+  const linked = new Set([
+    ...data.linkedCallIds,
+    ...data.events
+      .filter((event) => event.source_type === 'live_call')
+      .map((event) => event.source_id),
+  ]);
+  const records: CostRecord[] = data.events.map((event) => ({
+    at: event.occurred_at,
+    cost: resolveUsageCost(
+      event,
+      calls.get(event.source_id ?? ''),
+      data.audioUsage[event.source_id ?? ''],
+    ),
+    feature: event.source_type,
+  }));
+  for (const call of data.calls) {
+    if (linked.has(call.id) || !isFinalCall(call)) continue;
+    records.push({
+      at: call.ended_at ?? call.started_at,
+      cost: resolveUsageCost(
+        {
+          dollar_amount: null,
+          duration_seconds: call.duration_seconds,
+          input_chars: null,
+          metadata: {},
+          model: call.model,
+          source_type: 'live_call',
+        },
+        call,
+      ),
+      feature: 'live_call',
+    });
+  }
+  return records;
+}
+function isFinalCall(call: CallSession) {
+  return (
+    call.ended_at !== null ||
+    ['completed', 'failed', 'error', 'disconnected'].includes(call.status)
+  );
+}
+function cash(transaction: CreditTransaction): number {
+  const value = costMetadata(transaction.metadata).dollarAmount;
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+function eligible(transaction: CreditTransaction) {
+  return !transaction.description.toLowerCase().includes('manual');
+}
+export function summarizeContribution(
+  data: ContributionData,
+  transactions: CreditTransaction[],
+  start: Date,
+  end: Date,
+) {
+  const inPeriod = (at: string) =>
+    Date.parse(at) >= start.getTime() && Date.parse(at) < end.getTime();
+  let netCollections = 0;
+  for (const transaction of transactions) {
+    if (!(eligible(transaction) && inPeriod(transaction.created_at))) continue;
+    const dollars = cash(transaction);
+    if (['purchase', 'topup'].includes(transaction.type) && dollars > 0) {
+      netCollections += dollars;
+    } else if (
+      transaction.type === 'refund' &&
+      classifyRefund(transaction) === 'refund'
+    ) {
+      netCollections -= Math.abs(dollars);
+    }
+  }
+  let totalCost = 0;
+  const bases = { estimated: 0, recorded: 0, unknown: 0 };
+  let callCost = 0;
+  for (const record of buildCostRecords(data)) {
+    if (!inPeriod(record.at)) continue;
+    totalCost += record.cost.amount;
+    bases[record.cost.basis]++;
+    if (record.feature === 'live_call') callCost += record.cost.amount;
+  }
+  const overhead = summarizeOverhead(start, end);
+  const recordCount = bases.recorded + bases.estimated + bases.unknown;
+  // Unpriced counts stay visible below the alert threshold.
+  const coverageAlert = recordCount > 0 && bases.unknown / recordCount > 0.05;
+  return {
+    bases,
+    callCost,
+    contribution: netCollections - totalCost - overhead.total,
+    contributionAlert:
+      !coverageAlert && netCollections < totalCost + overhead.total,
+    coverageAlert,
+    netCollections,
+    overhead,
+    totalCost,
+  };
+}
+export function formatContribution(
+  label: string,
+  summary: ReturnType<typeof summarizeContribution>,
+): string[] {
+  const usd = (value: number) =>
+    `${value < 0 ? '-' : ''}$${Math.abs(value).toFixed(2)}`;
+  const gapLabel =
+    summary.bases.unknown > 0 ? ` (${summary.bases.unknown} unpriced)` : '';
+  return [
+    `- ${label}: ${usd(summary.contribution)} left${gapLabel}`,
+    `  ${usd(summary.netCollections)} collected − ${usd(summary.totalCost)} usage − ${usd(summary.overhead.total)} overhead`,
+  ];
+}

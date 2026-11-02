@@ -15,7 +15,6 @@
   "files": {
     "ignoreUnknown": true,
     "includes": [
-      "**",
       "!**/venv",
       "!**/.venv",
       "!**/node_modules",
@@ -76,7 +75,9 @@
         "noLeakedRender": "off",
         // Runtime data can violate TypeScript's static guarantees, so defensive
         // null and exhaustiveness checks are intentional throughout the app.
-        "noUnnecessaryConditions": "off"
+        "noUnnecessaryConditions": "off",
+        // Ultracite core leaves this off; default sort() compares values as strings.
+        "useArraySortCompare": "error"
       },
       "complexity": {
         // Existing generation and audio flows are intentionally orchestration-heavy.
@@ -147,35 +148,74 @@
   },
   "overrides": [
     {
-      // Enforce the shared APIErrorResponse helper for error responses in the
-      // web app's API route handlers. Scoped here (not global) because other
-      // surfaces — e.g. app/auth/* — have their own deliberate error contracts.
+      // Test helpers intentionally use async mocks, assertion helpers, and
+      // documented skips that do not represent production defects.
+      "includes": ["apps/web/tests/**", "apps/web/e2e/**"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noForEach": "off"
+          },
+          "suspicious": {
+            "noEmptyBlockStatements": "off",
+            "noMisplacedAssertion": "off",
+            "noSkippedTests": "info",
+            "noThenProperty": "off",
+            "useAwait": "off"
+          }
+        }
+      }
+    },
+    {
+      // Browser API shims need no-op methods, loose boundary types, and
+      // bitwise byte operations to match the APIs they replace.
+      "includes": ["apps/web/tests/setup.ts"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noUselessConstructor": "off"
+          },
+          "suspicious": {
+            "noBitwiseOperators": "off",
+            "noEmptyBlockStatements": "off",
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      // Supabase Edge Functions run on Deno and receive untyped PostgREST
+      // result shapes at this integration boundary.
+      "includes": ["apps/web/supabase/functions/**"],
+      "javascript": {
+        "globals": ["Deno"]
+      },
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "apps/web/app/**",
+        "!apps/web/app/api/**",
+        "apps/web/components/**",
+        "apps/web/hooks/**",
+        "apps/web/lib/**"
+      ],
+      "plugins": ["./biome-plugins/use-verified-claims.grit"]
+    },
+    {
+      // API handlers require claims-based identity checks and shared error responses.
+      // Other runtime code uses only the claims rule.
       "includes": ["apps/web/app/api/**"],
-      "plugins": ["./biome-plugins/use-api-error-response.grit"]
-    },
-    {
-      // Package map insertion order controls checkout telemetry and remains part
-      // of the exported pricing API, so product tier order is intentional.
-      "includes": ["apps/web/lib/stripe/pricing.ts"],
-      "assist": {
-        "actions": {
-          "source": {
-            "useSortedKeys": "off"
-          }
-        }
-      }
-    },
-    {
-      // Keep the LLM schema aligned with the prompt and script. Evidence-first
-      // ordering is an intentional model hint, not a JSON output contract.
-      "includes": ["apps/web/lib/ai/analyze-call.ts"],
-      "assist": {
-        "actions": {
-          "source": {
-            "useSortedKeys": "off"
-          }
-        }
-      }
+      "plugins": [
+        "./biome-plugins/use-api-error-response.grit",
+        "./biome-plugins/use-verified-claims.grit"
+      ]
     }
   ]
 }

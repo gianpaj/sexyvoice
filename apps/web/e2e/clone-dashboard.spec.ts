@@ -1,6 +1,5 @@
 import { argosScreenshot } from './argos-screenshot';
 import { expect, test } from './fixtures';
-
 import { ClonePage } from './pages/clone.page';
 
 /**

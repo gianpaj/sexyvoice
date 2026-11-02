@@ -55,7 +55,7 @@ const PremiumActionButton = React.forwardRef<
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center transition-all',
+          'inline-flex items-center justify-center transition-all duration-300',
           disabled && 'pointer-events-none opacity-50',
           className,
         )}

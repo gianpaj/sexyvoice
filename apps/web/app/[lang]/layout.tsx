@@ -36,7 +36,8 @@ export async function generateMetadata(
 
   if (!routing.locales.includes(lang)) {
     return {
-      title: 'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator',
+      title:
+        'SexyVoice.ai – Free AI Text-to-Speech, Voice Cloning & Real-Time Voice Calls',
     };
   }
 
@@ -57,6 +58,10 @@ export async function generateMetadata(
 
   return {
     description,
+    icons: {
+      apple: '/apple-touch-icon.png',
+      icon: '/favicon.ico',
+    },
     metadataBase: new URL(
       process.env.NODE_ENV === 'production'
         ? 'https://sexyvoice.ai'
@@ -84,11 +89,20 @@ export async function generateMetadata(
         template: '%s | SexyVoice.ai',
       },
       ...(openGraph?.url ? { url: openGraph.url } : {}),
-      ...(openGraph?.images ? { images: openGraph.images } : {}),
+      images: openGraph?.images ?? [
+        {
+          alt: 'SexyVoice.ai',
+          height: 670,
+          url: '/sexyvoice.ai-og-image.jpg',
+          width: 1200,
+        },
+      ],
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
       description,
+      images: ['/sexyvoice.ai-og-image.jpg'],
       title: {
         default: pages.defaultTitle,
         template: '%s | SexyVoice.ai',
@@ -114,6 +128,10 @@ export default async function LangLayout({
 
   return (
     <html lang={lang}>
+      <head>
+        {/* The site is dark-only; tell the Dark Reader extension to stay off */}
+        <meta name="darkreader-lock" />
+      </head>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
           {messages.pages.skipToMainContent}

@@ -1,5 +1,4 @@
 import { argosScreenshot } from './argos-screenshot';
-
 import { expect, test } from './fixtures';
 import { CreditsPage } from './pages/credits.page';
 

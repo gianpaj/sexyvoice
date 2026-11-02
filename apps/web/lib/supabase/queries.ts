@@ -1,4 +1,5 @@
 import { captureException } from '@sentry/nextjs';
+import { cache } from 'react';
 
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -192,16 +193,29 @@ function toCreditDebitError(error: unknown): unknown {
   });
 }
 
+/**
+ * Voice names repeat across models (the same Gemini identity exists as
+ * `gpro`, `gpro31`, and `gpro38` rows), so pass `models` whenever the caller
+ * knows the model. Without it the oldest matching row wins, which keeps
+ * existing name-only callers on the voice they resolved before newer rows
+ * were added. Equal timestamps are ordered by ID for a stable result.
+ */
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
+  models?: readonly string[],
 ): Promise<{ id: string; name: string; language: string; model: string }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from('voices')
     .select('id, name, language, model')
     .eq('name', voiceName)
-    .eq('is_public', isPublic)
+    .eq('is_public', isPublic);
+  if (models) query = query.in('model', [...models]);
+  const { data, error } = await query
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(1)
     .single();
 
   if (error) throw error;
@@ -422,6 +436,36 @@ export const getUserByStripeCustomerId = async (customerId: string) => {
   return data;
 };
 
+/**
+ * Non-blocking duplicate-credit guard. Lookup failures are logged and treated
+ * as "no prior credit" because `unique_reference_topup_idx` and
+ * `unique_reference_purchase_idx` reject duplicate inserts (see
+ * `isCreditTransactionReferenceConflict`).
+ */
+const findCreditTransactionByReference = async (
+  supabase: ReturnType<typeof createAdminClient>,
+  userId: string,
+  referenceId: string,
+) => {
+  const { data, error } = await supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('reference_id', referenceId)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error checking existing credit transaction:', {
+      error: error.message,
+      referenceId,
+      userId,
+    });
+    return null;
+  }
+
+  return data;
+};
+
 export const insertSubscriptionCreditTransaction = async (
   userId: string,
   paymentIntentId: string,
@@ -431,27 +475,22 @@ export const insertSubscriptionCreditTransaction = async (
 ) => {
   const supabase = createAdminClient();
 
-  try {
-    // Check if transaction already exists using reference_id (payment_intent)
-    // This prevents duplicate credits when multiple webhook events fire
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check if transaction already exists using reference_id (payment_intent)
+  // This prevents duplicate credits when multiple webhook events fire
+  const existing = await findCreditTransactionByReference(
+    supabase,
+    userId,
+    paymentIntentId,
+  );
 
-    if (data) {
-      console.log('Subscription transaction already exists', {
-        data,
-        paymentIntentId,
-        subscriptionId,
-        userId,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existing) {
+    console.log('Subscription transaction already exists', {
+      data: existing,
+      paymentIntentId,
+      subscriptionId,
+      userId,
+    });
+    return;
   }
 
   // Check if this is the user's first subscription transaction
@@ -512,25 +551,20 @@ export const insertTopupCreditTransaction = async (
 ) => {
   const supabase = createAdminClient();
 
-  try {
-    // Check if transaction already exists to prevent duplicates
-    const { data } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('reference_id', paymentIntentId)
-      .single();
+  // Check if transaction already exists to prevent duplicates
+  const existing = await findCreditTransactionByReference(
+    supabase,
+    userId,
+    paymentIntentId,
+  );
 
-    if (data) {
-      console.log('Topup transaction already exists', {
-        data,
-        paymentIntentId,
-        userId,
-      });
-      return;
-    }
-  } catch {
-    // Transaction doesn't exist, continue with insertion
+  if (existing) {
+    console.log('Topup transaction already exists', {
+      data: existing,
+      paymentIntentId,
+      userId,
+    });
+    return;
   }
 
   // Check if this is the user's first transaction (topup)
@@ -612,7 +646,9 @@ export const getPaidTransactions = async (userId: string) => {
   return data;
 };
 
-export const hasUserPaid = async (userId: string): Promise<boolean> => {
+// Deduplicated per server request: the dashboard layout and its pages both
+// check paid status.
+export const hasUserPaid = cache(async (userId: string): Promise<boolean> => {
   const supabase = await createClient();
   // Check if the user has any non-freemium credit transactions.
   const { data: nonFreemiumTransactions, error: nonFreemiumError } =
@@ -628,7 +664,27 @@ export const hasUserPaid = async (userId: string): Promise<boolean> => {
 
   // Return true if there is at least one non-freemium (i.e., purchase) transaction.
   return (nonFreemiumTransactions?.length ?? 0) > 0;
-};
+});
+
+// Deduplicated per server request: the dashboard layout and the Generate,
+// Clone, and Call pages all sum these amounts for the credits widget.
+export const getCreditTransactionAmounts = cache(
+  async (
+    userId: string,
+  ): Promise<Pick<Tables<'credit_transactions'>, 'amount'>[]> => {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('credit_transactions')
+      .select('amount')
+      .eq('user_id', userId);
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+);
 
 /**
  * Get the total call duration in seconds for a user.
@@ -694,16 +750,23 @@ export async function getCreditsAdmin(userId: string): Promise<number> {
   return data?.amount ?? 0;
 }
 
+/** Admin variant of {@link getVoiceIdByName}; same model scoping rules. */
 export async function getVoiceIdByNameAdmin(
   voiceName: string,
   isPublic = true,
+  models?: readonly string[],
 ): Promise<{ id: string; name: string; language: string; model: string }> {
   const admin = createAdminClient();
-  const { data, error } = await admin
+  let query = admin
     .from('voices')
     .select('id, name, language, model')
     .eq('name', voiceName)
-    .eq('is_public', isPublic)
+    .eq('is_public', isPublic);
+  if (models) query = query.in('model', [...models]);
+  const { data, error } = await query
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(1)
     .single();
 
   if (error) throw error;

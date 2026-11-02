@@ -2,11 +2,20 @@ import { Wand2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
+import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { hasUserPaid } from '@/lib/supabase/queries';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
+import {
+  getCreditTransactionAmounts,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
+
+export const generateMetadata = createDashboardMetadata('/dashboard/generate');
 
 export default async function GeneratePage(props: {
   params: Promise<{ lang: Locale }>;
@@ -15,36 +24,28 @@ export default async function GeneratePage(props: {
   const t = await getTranslations('generate');
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  const userId = user?.id;
-  if (!userId || error) {
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) {
     redirect(`/${lang}/login`);
   }
 
-  const { data: creditsData } = (await supabase
-    .from('credits')
-    .select('amount')
-    .eq('user_id', userId)
-    .single()) || { amount: 0 };
-  const credits = creditsData || { amount: 0 };
+  const creditBalance = await getDashboardCreditBalance(
+    supabase,
+    userId,
+    'dashboard/generate',
+  );
   const isPlaywrightCreditsBypassEnabled =
     process.env.E2E_TEST_MODE === 'true' &&
     !!process.env.PLAYWRIGHT_TEST_USER_EMAIL &&
-    user?.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
+    claims.email === process.env.PLAYWRIGHT_TEST_USER_EMAIL;
   const hasEnoughCredits =
-    credits.amount >= 10 || isPlaywrightCreditsBypassEnabled;
+    (creditBalance !== null && creditBalance >= 10) ||
+    isPlaywrightCreditsBypassEnabled;
 
-  const [{ data: creditTransactions }, isPaidUser, { data: publicVoices }] =
+  const [creditTransactions, isPaidUser, { data: publicVoices }] =
     await Promise.all([
-      supabase
-        .from('credit_transactions')
-        .select('amount')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false }),
+      getCreditTransactionAmounts(userId),
       hasUserPaid(userId),
       supabase
         .from('voices')
@@ -60,7 +61,7 @@ export default async function GeneratePage(props: {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8 pb-16">
       <div>
         <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
           <Wand2 size={26} />
@@ -71,20 +72,21 @@ export default async function GeneratePage(props: {
 
       <div className="lg:hidden">
         <CreditsSection
-          creditTransactions={creditTransactions || []}
+          creditTransactions={creditTransactions}
           doNotToggleSidebar
-          lang={lang}
           userId={userId}
         />
       </div>
 
-      <div className="grid gap-6 pb-16">
+      {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
         <GenerateUI
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
           publicVoices={publicVoices}
         />
-      </div>
+      ) : (
+        <CreditBalanceError />
+      )}
     </div>
   );
 }

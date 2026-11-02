@@ -36,8 +36,10 @@ import useSupabaseBrowser from '@/lib/supabase/client';
 import {
   type AudioFileAndVoicesRes,
   getMyAudioFiles,
+  getMyAudioFilesCount,
 } from '@/lib/supabase/queries.client';
 import { useColumns } from './columns';
+import { DeleteAllButton } from './delete-all-button';
 
 interface DataTableProps {
   showApiColumns: boolean;
@@ -55,6 +57,11 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
     enabled: !!userId,
     queryFn: () => getMyAudioFiles(supabase, userId),
     queryKey: ['audio_files', userId],
+  });
+  const { data: totalCount = 0 } = useQuery({
+    enabled: !!userId,
+    queryFn: () => getMyAudioFilesCount(supabase, userId),
+    queryKey: ['audio_files_count', userId],
   });
   const columns = useColumns({ showApiColumns });
 
@@ -94,6 +101,11 @@ export function DataTable({ userId, showApiColumns }: DataTableProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <DeleteAllButton
+            count={totalCount}
+            disabled={totalCount === 0}
+            userId={userId}
+          />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="outline">

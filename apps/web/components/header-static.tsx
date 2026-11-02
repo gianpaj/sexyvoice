@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Button } from '@/components/ui/button';
 import { useIsMobileSizes } from '@/hooks/use-mobile';
 import type { Locale } from '@/lib/i18n/i18n-config';
@@ -15,7 +15,7 @@ export function HeaderStatic() {
   const { isMobile375 } = useIsMobileSizes();
 
   return (
-    <header className="border-gray-700 border-b bg-gray-900">
+    <header className="border-gray-800/20 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
           className="hit-area-2 flex items-end gap-0"

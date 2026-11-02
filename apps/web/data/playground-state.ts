@@ -25,26 +25,26 @@ export type CallLanguage =
   | 'zh';
 
 export const callLanguages: Array<{ value: CallLanguage; label: string }> = [
-  { value: 'ar', label: 'Arabic' },
-  { value: 'cs', label: 'Czech' },
-  { value: 'da', label: 'Danish' },
-  { value: 'de', label: 'German' },
-  { value: 'en', label: 'English' },
-  { value: 'es', label: 'Spanish' },
-  { value: 'fi', label: 'Finnish' },
-  { value: 'fr', label: 'French' },
-  { value: 'hi', label: 'Hindi' },
-  { value: 'it', label: 'Italian' },
-  { value: 'ja', label: 'Japanese' },
-  { value: 'ko', label: 'Korean' },
-  { value: 'nl', label: 'Dutch' },
-  { value: 'no', label: 'Norwegian' },
-  { value: 'pl', label: 'Polish' },
-  { value: 'pt', label: 'Portuguese' },
-  { value: 'ru', label: 'Russian' },
-  { value: 'sv', label: 'Swedish' },
-  { value: 'tr', label: 'Turkish' },
-  { value: 'zh', label: 'Chinese (Mandarin)' },
+  { label: 'Arabic', value: 'ar' },
+  { label: 'Czech', value: 'cs' },
+  { label: 'Danish', value: 'da' },
+  { label: 'German', value: 'de' },
+  { label: 'English', value: 'en' },
+  { label: 'Spanish', value: 'es' },
+  { label: 'Finnish', value: 'fi' },
+  { label: 'French', value: 'fr' },
+  { label: 'Hindi', value: 'hi' },
+  { label: 'Italian', value: 'it' },
+  { label: 'Japanese', value: 'ja' },
+  { label: 'Korean', value: 'ko' },
+  { label: 'Dutch', value: 'nl' },
+  { label: 'Norwegian', value: 'no' },
+  { label: 'Polish', value: 'pl' },
+  { label: 'Portuguese', value: 'pt' },
+  { label: 'Russian', value: 'ru' },
+  { label: 'Swedish', value: 'sv' },
+  { label: 'Turkish', value: 'tr' },
+  { label: 'Chinese (Mandarin)', value: 'zh' },
 ];
 
 export const languageInitialInstructions: Record<CallLanguage, string> = {
@@ -92,14 +92,14 @@ export const initialInstruction = languageInitialInstructions[defaultLanguage];
 
 // Define the initial state
 export const defaultPlaygroundState: PlaygroundState = {
-  sessionConfig: { ...defaultSessionConfig },
   customCharacters: [],
-  selectedPresetId: null,
-  selectedSceneId: null,
-  sceneInstructions: '',
+  defaultPresets: [], // Now populated from DB via SSR props
+  initialInstruction,
   instructions,
   language: defaultLanguage,
   memory: false,
-  initialInstruction,
-  defaultPresets: [], // Now populated from DB via SSR props
+  sceneInstructions: '',
+  selectedPresetId: null,
+  selectedSceneId: null,
+  sessionConfig: { ...defaultSessionConfig },
 };

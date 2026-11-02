@@ -13,10 +13,91 @@ import {
   E2E_USER_ID,
 } from './e2e-mocks-shared';
 import { isE2E as isE2EMode } from './e2e-mode';
+import type { getCallInstructionConfig } from './edge-config/call-instructions';
+import type { getCallVoices } from './supabase/queries';
 import type { AudioFileAndVoicesRes } from './supabase/queries.client';
 import type { MonthlyUsageSummary } from './supabase/usage-queries';
 
+export { E2E_PUBLIC_CALL_CHARACTERS } from './e2e-mocks-shared';
+
 export const isE2E = isE2EMode;
+
+// Public query fields captured from the linked database on 2026-09-18.
+// No user IDs or prompt text; keep these snapshots independent of live data.
+export const E2E_CALL_VOICES = [
+  {
+    description: 'Warm and friendly',
+    feature: 'call',
+    id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
+    language: 'multiple',
+    model: 'xai',
+    name: 'Ara',
+    sample_url: 'https://files.sexyvoice.ai/ara.mp3',
+    sort_order: 0,
+    type: 'Female',
+  },
+  {
+    description: 'Soft, empathetic, and soothing',
+    feature: 'call',
+    id: '23a09156-34dc-4454-8f73-9214c21f7f81',
+    language: 'multiple',
+    model: 'xai',
+    name: 'Carina',
+    sample_url: 'https://files.sexyvoice.ai/carina-intimate-whispers.mp3',
+    sort_order: 0,
+    type: 'Female',
+  },
+  {
+    description: 'Confident and clear',
+    feature: 'call',
+    id: 'e580b7f2-1d13-4442-af3e-b1515425de47',
+    language: 'multiple',
+    model: 'xai',
+    name: 'Rex',
+    sample_url: 'https://files.sexyvoice.ai/rex.mp3',
+    sort_order: 1,
+    type: 'Male',
+  },
+  {
+    description: 'Versatile voice',
+    feature: 'call',
+    id: '0d2f2652-858a-430e-8a4f-ce4b6c624474',
+    language: 'multiple',
+    model: 'xai',
+    name: 'Sal',
+    sample_url: 'https://files.sexyvoice.ai/sal.mp3',
+    sort_order: 2,
+    type: 'Neutral',
+  },
+  {
+    description: 'Engaging and upbeat',
+    feature: 'call',
+    id: 'f832da16-5fe7-4823-9c99-b0f738e39b68',
+    language: 'multiple',
+    model: 'xai',
+    name: 'Eve',
+    sample_url: 'https://files.sexyvoice.ai/eve.mp3',
+    sort_order: 3,
+    type: 'Female',
+  },
+  {
+    description: 'Authoritative and strong',
+    feature: 'call',
+    id: '7a22375b-5b5c-44d7-998c-6095cf60768b',
+    language: 'multiple',
+    model: 'xai',
+    name: 'Leo',
+    sample_url: 'https://files.sexyvoice.ai/leo-intimate-whispers.mp3',
+    sort_order: 4,
+    type: 'Male',
+  },
+] satisfies NonNullable<Awaited<ReturnType<typeof getCallVoices>>>;
+
+export const E2E_CALL_INSTRUCTION_CONFIG = {
+  defaultInstructions: 'Keep the conversation friendly and concise.',
+  initialInstruction: 'Say hello.',
+  presetInstructions: undefined,
+} satisfies Awaited<ReturnType<typeof getCallInstructionConfig>>;
 
 type CreditTransactionRow = Tables<'credit_transactions'>;
 

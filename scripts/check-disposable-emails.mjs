@@ -71,13 +71,13 @@ if (!(SUPABASE_URL && SUPABASE_SECRET_KEY)) {
 // ---------------------------------------------------------------------------
 function parseArgs(argv) {
   const args = {
-    limit: 10_000,
-    days: null,
-    out: process.cwd(),
     clone: true,
-    resetCredits: false,
-    dryRun: false,
+    days: null,
     domainsOnly: false,
+    dryRun: false,
+    limit: 10_000,
+    out: process.cwd(),
+    resetCredits: false,
     yes: false,
   };
   const rest = [...argv];
@@ -262,11 +262,11 @@ async function resetFlaggedCredits(supabase, flagged, dryRun, domainsOnly) {
   }
 
   const result = {
+    creditsRemoved: 0,
+    failed: 0,
+    paid: 0,
     reset: 0,
     skipped: 0,
-    paid: 0,
-    failed: 0,
-    creditsRemoved: 0,
   };
   const ts = new Date().toISOString();
 
@@ -328,19 +328,19 @@ async function zeroUserCredits(supabase, flag, current, ts) {
   // Audit trail: record the removal as a negative transaction.
   const source = flag.by_amieiro ? 'amieiro denyDomains' : 'npm package';
   const { error: txError } = await supabase.from('credit_transactions').insert({
-    user_id: flag.id,
     amount: -Math.abs(current),
-    type: RESET_TX_TYPE,
     description: `Credits reset to 0 — disposable email signup (${flag.domain})`,
     metadata: {
       automated: true,
-      script: 'check-disposable-emails.mjs',
-      reason: 'disposable_email',
-      domain: flag.domain,
       detected_by: source,
+      domain: flag.domain,
       previous_amount: current,
+      reason: 'disposable_email',
+      script: 'check-disposable-emails.mjs',
       timestamp: ts,
     },
+    type: RESET_TX_TYPE,
+    user_id: flag.id,
   });
   if (txError) {
     // Balance was already zeroed; surface the audit failure loudly.
@@ -468,7 +468,7 @@ async function fetchRecentProfiles(supabase) {
 /** Classify each profile's email against both disposable sources. */
 function classifyProfiles(profiles, denySet) {
   const flagged = [];
-  const stats = { withEmail: 0, pkg: 0, amieiro: 0, either: 0, both: 0 };
+  const stats = { amieiro: 0, both: 0, either: 0, pkg: 0, withEmail: 0 };
   const domainCounts = new Map(); // disposable domain -> count
 
   for (const profile of profiles) {
@@ -495,16 +495,16 @@ function classifyProfiles(profiles, denySet) {
 
     domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1);
     flagged.push({
-      id: profile.id,
-      email,
-      domain,
-      created_at: profile.created_at,
-      by_package: byPkg,
       by_amieiro: byAmieiro,
+      by_package: byPkg,
+      created_at: profile.created_at,
+      domain,
+      email,
+      id: profile.id,
     });
   }
 
-  return { flagged, stats, domainCounts };
+  return { domainCounts, flagged, stats };
 }
 
 async function main() {

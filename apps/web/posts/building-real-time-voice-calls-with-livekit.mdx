@@ -198,18 +198,19 @@ The `/api/call-token` route is the gateway between our frontend and LiveKit. It 
 // app/api/call-token/route.ts
 import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol';
 import { AccessToken } from 'livekit-server-sdk';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 
 export async function POST(request: Request) {
   // 1. Authenticate user
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (!data?.user) {
+  if (!claims?.sub) {
     return APIErrorResponse('User not found', 401);
   }
 
   // 2. Check credits
-  const currentAmount = await getCredits(user.id);
+  const currentAmount = await getCredits(claims.sub);
   if (currentAmount < MINIMUM_CREDITS_FOR_CALL) {
     return APIErrorResponse('Insufficient credits', 402);
   }
@@ -225,7 +226,7 @@ export async function POST(request: Request) {
     voice: voiceObj.id,
     temperature: playgroundState.sessionConfig.temperature,
     language: selectedLanguage,
-    user_id: user.id,
+    user_id: claims.sub,
   };
 
   // 5. Create access token with room grants
