@@ -100,10 +100,10 @@ sentiment, conversation quality, and response issues.
 _Avoid_: Call transcript, memory, call summary
 
 **Memory**:
-Facts about a user retained across voice calls to support later conversations.
-Memory belongs to the user across characters and is separate from a call's
-transcript or analysis.
-_Avoid_: Character memory, call transcript, call analysis
+Facts about a user retained across voice calls, separate from a call's transcript
+or analysis. Memories are shared across characters by default and can be scoped
+to a single character.
+_Avoid_: Call transcript, call analysis
 
 ### Credits and billing
 
