@@ -59,7 +59,8 @@ errors.
 
 If you disconnect during Gemini or Replicate generation, `POST /api/v1/speech`
 cancels the provider request and refunds reserved credits. The handler returns
-an empty HTTP `499` response without the JSON error envelope or request headers.
+an empty HTTP `499` response without the JSON error envelope, `request-id`, or
+rate-limit response headers.
 A disconnected client may not receive this response.
 
 ## Debugging with request-id
