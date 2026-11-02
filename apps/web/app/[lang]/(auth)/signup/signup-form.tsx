@@ -61,7 +61,7 @@ export function SignUpForm({ lang }: { lang: Locale }) {
       }
 
       const res = await fetch('/auth/signup', {
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, lang }),
         headers: {
           'Content-Type': 'application/json',
         },

@@ -300,9 +300,9 @@ The `stripe-admin.test.ts` file uses Vitest with comprehensive mocking for Strip
 
 ```typescript
 vi.mock("@/lib/stripe/stripe-admin", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/stripe/stripe-admin")>(
-    "@/lib/stripe/stripe-admin",
-  );
+  const actual = await vi.importActual<
+    typeof import("@/lib/stripe/stripe-admin")
+  >("@/lib/stripe/stripe-admin");
 
   return {
     ...actual,
@@ -350,7 +350,10 @@ beforeEach(() => {
 This allows testing the Supabase query chain:
 
 ```typescript
-await supabase.from("profiles").update({ stripe_id: customerId }).eq("id", userId);
+await supabase
+  .from("profiles")
+  .update({ stripe_id: customerId })
+  .eq("id", userId);
 ```
 
 ### Sentry Mock Setup

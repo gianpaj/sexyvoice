@@ -2,27 +2,16 @@ import { createHash } from 'node:crypto';
 import { captureException, captureMessage } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 
-import PostHogClient from '@/lib/posthog';
-import { createOrRetrieveCustomer } from '@/lib/stripe/stripe-admin';
-import { OAUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
+import { recordSignupSideEffects } from '@/lib/auth/signup-side-effects';
+import { verifyAuthCallbackMarkerValue } from '@/lib/supabase/auth-callback-marker';
 import {
-  createOauthCallbackMarkerValue,
-  OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-  verifyOauthCallbackMarkerValue,
-} from '@/lib/supabase/oauth-callback-marker';
+  createAuthRedirectResponse,
+  getLocaleFromRedirectPath,
+  getSafeAuthRedirectPath,
+} from '@/lib/supabase/auth-redirect';
+import { AUTH_CALLBACK_COOKIE_NAME } from '@/lib/supabase/constants';
 import { createClient } from '@/lib/supabase/server';
 import { routing } from '@/src/i18n/routing';
-
-const isSafeRedirectPath = (value: string | null) =>
-  Boolean(value?.startsWith('/') && !value.startsWith('//'));
-
-const getLocaleFromRedirectPath = (redirectPath: string | null) => {
-  const locale = redirectPath?.split('/')[1];
-
-  return routing.locales.includes(locale as (typeof routing.locales)[number])
-    ? locale
-    : routing.defaultLocale;
-};
 
 const getOauthCodeFingerprint = (code: string | null) => {
   if (!code) {
@@ -116,7 +105,7 @@ const isCodeChallengeMismatchError = (error: unknown) => {
   );
 };
 
-function getKnownOauthCallbackFailure(error: unknown): {
+function getKnownAuthCallbackFailure(error: unknown): {
   errorType: string;
   message: string;
 } | null {
@@ -144,7 +133,7 @@ function getKnownOauthCallbackFailure(error: unknown): {
   return null;
 }
 
-const getOauthCallbackCookieContext = (request: Request) => {
+const getAuthCallbackCookieContext = (request: Request) => {
   const cookieHeader = request.headers.get('cookie') ?? '';
   const cookies = parseCookieHeader(cookieHeader);
   const cookieNames = cookies.map(({ name }) => name);
@@ -152,15 +141,15 @@ const getOauthCallbackCookieContext = (request: Request) => {
     const lowerName = name.toLowerCase();
     return lowerName.startsWith('sb-') || lowerName.includes('supabase');
   });
-  const oauthCallbackMarkerCookie = cookies.find(
-    ({ name }) => name === OAUTH_CALLBACK_COOKIE_NAME,
+  const authCallbackMarkerCookie = cookies.find(
+    ({ name }) => name === AUTH_CALLBACK_COOKIE_NAME,
   );
 
   return {
     cookieCount: cookieNames.length,
     hasCookieHeader: Boolean(cookieHeader),
-    hasOauthCallbackMarkerCookie: cookieNames.includes(
-      OAUTH_CALLBACK_COOKIE_NAME,
+    hasAuthCallbackMarkerCookie: cookieNames.includes(
+      AUTH_CALLBACK_COOKIE_NAME,
     ),
     hasSupabaseAuthCookie: supabaseCookieNames.some((name) =>
       name.includes('auth-token'),
@@ -168,18 +157,18 @@ const getOauthCallbackCookieContext = (request: Request) => {
     hasSupabaseCodeVerifierCookie: supabaseCookieNames.some((name) =>
       /^sb-.+-auth-token-code-verifier(?:\.\d+)?$/.test(name),
     ),
-    hasValidOauthCallbackMarkerCookie: verifyOauthCallbackMarkerValue(
-      oauthCallbackMarkerCookie?.value,
+    hasValidAuthCallbackMarkerCookie: verifyAuthCallbackMarkerValue(
+      authCallbackMarkerCookie?.value,
     ),
     supabaseCookieCount: supabaseCookieNames.length,
   };
 };
 
-const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
+const clearAuthCallbackMarkerCookie = (response: NextResponse) => {
   response.cookies.set({
     httpOnly: true,
     maxAge: 0,
-    name: OAUTH_CALLBACK_COOKIE_NAME,
+    name: AUTH_CALLBACK_COOKIE_NAME,
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
@@ -189,27 +178,8 @@ const clearOauthCallbackMarkerCookie = (response: NextResponse) => {
   return response;
 };
 
-const createOauthRedirectResponse = (url: string, headers: Headers) => {
-  const response = NextResponse.redirect(url, { headers });
-  const markerValue = createOauthCallbackMarkerValue();
-
-  if (markerValue) {
-    response.cookies.set({
-      httpOnly: true,
-      maxAge: OAUTH_CALLBACK_COOKIE_MAX_AGE_SECONDS,
-      name: OAUTH_CALLBACK_COOKIE_NAME,
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      value: markerValue,
-    });
-  }
-
-  return response;
-};
-
 const createOauthFailureRedirectResponse = (url: string, headers: Headers) =>
-  clearOauthCallbackMarkerCookie(NextResponse.redirect(url, { headers }));
+  clearAuthCallbackMarkerCookie(NextResponse.redirect(url, { headers }));
 
 export async function GET(request: Request) {
   const responseHeaders = new Headers();
@@ -220,18 +190,19 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const origin = requestUrl.origin;
   const redirectTo = requestUrl.searchParams.get('redirect_to');
-  const locale = getLocaleFromRedirectPath(redirectTo);
+  const safeRedirectPath = getSafeAuthRedirectPath(redirectTo, origin);
+  const locale = getLocaleFromRedirectPath(safeRedirectPath);
   const loginPath = `/${locale}/login`;
   const oauthCodeContext = getOauthCodeFingerprint(code);
-  const oauthCookieContext = getOauthCallbackCookieContext(request);
+  const authCookieContext = getAuthCallbackCookieContext(request);
   const createSafePostAuthRedirectResponse = () =>
-    createOauthRedirectResponse(
-      isSafeRedirectPath(redirectTo)
-        ? `${origin}${redirectTo}`
+    createAuthRedirectResponse(
+      safeRedirectPath
+        ? `${origin}${safeRedirectPath}`
         : `${origin}/${routing.defaultLocale}/dashboard`,
       responseHeaders,
     );
-  const reportKnownOauthCallbackFailure = (
+  const reportKnownAuthCallbackFailure = (
     message: string,
     errorType: string,
     error: unknown,
@@ -244,7 +215,7 @@ export async function GET(request: Request) {
           locale,
           redirectTo,
           ...oauthCodeContext,
-          ...oauthCookieContext,
+          ...authCookieContext,
           errorCode: getErrorStringProperty(error, 'code') || null,
           errorMessage: getErrorMessage(error),
           errorName: getErrorStringProperty(error, 'name') || null,
@@ -271,8 +242,8 @@ export async function GET(request: Request) {
     // per-flow slots and index can remain and must not block this shortcut.
     // Dashboard middleware still validates the session before granting access.
     if (
-      oauthCookieContext.hasValidOauthCallbackMarkerCookie &&
-      !oauthCookieContext.hasSupabaseCodeVerifierCookie
+      authCookieContext.hasValidAuthCallbackMarkerCookie &&
+      !authCookieContext.hasSupabaseCodeVerifierCookie
     ) {
       return createSafePostAuthRedirectResponse();
     }
@@ -284,12 +255,12 @@ export async function GET(request: Request) {
     } = await supabase.auth.exchangeCodeForSession(code);
 
     if (exchangeError) {
-      const knownOauthCallbackFailure =
-        getKnownOauthCallbackFailure(exchangeError);
-      if (knownOauthCallbackFailure) {
-        return reportKnownOauthCallbackFailure(
-          knownOauthCallbackFailure.message,
-          knownOauthCallbackFailure.errorType,
+      const knownAuthCallbackFailure =
+        getKnownAuthCallbackFailure(exchangeError);
+      if (knownAuthCallbackFailure) {
+        return reportKnownAuthCallbackFailure(
+          knownAuthCallbackFailure.message,
+          knownAuthCallbackFailure.errorType,
           exchangeError,
         );
       }
@@ -299,7 +270,7 @@ export async function GET(request: Request) {
           locale,
           redirectTo,
           ...oauthCodeContext,
-          ...oauthCookieContext,
+          ...authCookieContext,
         },
         tags: {
           area: 'auth',
@@ -313,8 +284,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const email = user?.email;
-    if (!email) {
+    if (!user?.email) {
       captureMessage('OAuth callback completed without a user email.', {
         extra: {
           locale,
@@ -334,51 +304,29 @@ export async function GET(request: Request) {
       );
     }
 
-    // Add Stripe customer creation
-    if (user) {
-      const stripe_id = await createOrRetrieveCustomer(user.id, user.email!);
-      if (!stripe_id) {
-        console.error('Failed to create Stripe customer.');
-        captureMessage('Failed to create Stripe customer.', {
-          level: 'error',
-          user: { email: user.email, id: user.id },
-        });
-      }
+    await recordSignupSideEffects(
+      user,
+      user.app_metadata.provider === 'email' ? 'email' : 'social',
+    );
 
-      const posthog = PostHogClient();
-
-      const login_type =
-        user.app_metadata.provider === 'email' ? 'email' : 'social';
-
-      posthog.capture({
-        distinctId: user.id,
-        event: 'sign-up',
-        properties: {
-          login_type,
-          //   is_free_trial: true,
-        },
-      });
-      await posthog.shutdown();
-    }
-
-    if (isSafeRedirectPath(redirectTo)) {
-      return createOauthRedirectResponse(
-        `${origin}${redirectTo}`,
+    if (safeRedirectPath) {
+      return createAuthRedirectResponse(
+        `${origin}${safeRedirectPath}`,
         responseHeaders,
       );
     }
 
     // URL to redirect to after sign up process completes
-    return createOauthRedirectResponse(
+    return createAuthRedirectResponse(
       `${origin}/${routing.defaultLocale}/dashboard`,
       responseHeaders,
     );
   } catch (error) {
-    const knownOauthCallbackFailure = getKnownOauthCallbackFailure(error);
-    if (knownOauthCallbackFailure) {
-      return reportKnownOauthCallbackFailure(
-        knownOauthCallbackFailure.message,
-        knownOauthCallbackFailure.errorType,
+    const knownAuthCallbackFailure = getKnownAuthCallbackFailure(error);
+    if (knownAuthCallbackFailure) {
+      return reportKnownAuthCallbackFailure(
+        knownAuthCallbackFailure.message,
+        knownAuthCallbackFailure.errorType,
         error,
       );
     }
@@ -388,7 +336,7 @@ export async function GET(request: Request) {
         locale,
         redirectTo,
         ...oauthCodeContext,
-        ...oauthCookieContext,
+        ...authCookieContext,
       },
       tags: {
         area: 'auth',

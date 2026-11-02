@@ -1,7 +1,6 @@
 'use server';
 // biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
@@ -18,6 +17,7 @@ import {
   hasOngoingSubscription,
 } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { getSiteUrlOrigin } from '@/lib/supabase/auth-redirect';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
@@ -45,11 +45,16 @@ export const forgotPasswordAction = async (formData: FormData) => {
   }
 
   const supabase = await createClient();
-  const origin = (await headers()).get('origin');
+  const origin = getSiteUrlOrigin();
   const callbackUrl = formData.get('callbackUrl')?.toString();
+  const updatePasswordPath = `/${lang}/protected/update-password?email=${encodeURIComponent(email)}`;
+
+  if (!origin) {
+    return encodedRedirect('error', `/${lang}/reset-password`, 'generic_error');
+  }
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?redirect_to=/${lang}/protected/update-password&email=${encodeURIComponent(email)}`,
+    redirectTo: new URL(updatePasswordPath, origin).toString(),
   });
 
   if (error) {

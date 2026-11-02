@@ -4,10 +4,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { isE2E } from '@/lib/e2e-mode';
 import { routing } from '@/src/i18n/routing';
 import { getVerifiedClaims } from './auth';
-import { OAUTH_CALLBACK_COOKIE_NAME } from './constants';
+import { verifyAuthCallbackMarkerValue } from './auth-callback-marker';
+import { AUTH_CALLBACK_COOKIE_NAME } from './constants';
 import { ensureUserApplicationState } from './ensure-user-application-state';
 import { copyAuthResponse, createMiddlewareClient } from './middleware-client';
-import { verifyOauthCallbackMarkerValue } from './oauth-callback-marker';
 
 const routesPerLocale = (routes: string[]): string[] =>
   routing.locales.flatMap((locale) =>
@@ -16,11 +16,11 @@ const routesPerLocale = (routes: string[]): string[] =>
     ),
   );
 
-const clearOauthCallbackCookie = (response: NextResponse) => {
+const clearAuthCallbackCookie = (response: NextResponse) => {
   response.cookies.set({
     httpOnly: true,
     maxAge: 0,
-    name: OAUTH_CALLBACK_COOKIE_NAME,
+    name: AUTH_CALLBACK_COOKIE_NAME,
     path: '/',
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
@@ -34,6 +34,7 @@ const publicRoutes = [
   '/api/health',
   '/auth/signup',
   '/auth/callback',
+  '/auth/confirm',
   ...routesPerLocale([
     '/',
     '/signup',
@@ -63,11 +64,11 @@ export const updateSession = async (
 
   try {
     const { pathname } = request.nextUrl;
-    const rawOauthCallbackMarker = request.cookies.get(
-      OAUTH_CALLBACK_COOKIE_NAME,
+    const rawAuthCallbackMarker = request.cookies.get(
+      AUTH_CALLBACK_COOKIE_NAME,
     )?.value;
-    const hasOauthCallbackMarker = verifyOauthCallbackMarkerValue(
-      rawOauthCallbackMarker,
+    const hasAuthCallbackMarker = verifyAuthCallbackMarkerValue(
+      rawAuthCallbackMarker,
     );
 
     const supabase = createMiddlewareClient(request, supabaseResponse);
@@ -85,9 +86,9 @@ export const updateSession = async (
         supabaseResponse,
       );
 
-      if (hasOauthCallbackMarker) {
+      if (hasAuthCallbackMarker) {
         captureMessage(
-          'OAuth callback completed but dashboard session was missing.',
+          'Auth callback completed but dashboard session was missing.',
           {
             extra: {
               locale,
@@ -96,22 +97,22 @@ export const updateSession = async (
             level: 'error',
             tags: {
               area: 'auth',
-              flow: 'oauth-callback',
+              flow: 'auth-callback',
             },
           },
         );
 
-        return clearOauthCallbackCookie(redirectResponse);
+        return clearAuthCallbackCookie(redirectResponse);
       }
 
       console.log(
-        'Dashboard request missing user without valid OAuth callback marker',
+        'Dashboard request missing user without valid auth callback marker',
         {
-          hasOauthCallbackMarker,
-          hasRawOauthCallbackMarker: Boolean(rawOauthCallbackMarker),
+          hasAuthCallbackMarker,
+          hasRawAuthCallbackMarker: Boolean(rawAuthCallbackMarker),
           locale,
           pathname,
-          rawOauthCallbackMarkerLength: rawOauthCallbackMarker?.length ?? 0,
+          rawAuthCallbackMarkerLength: rawAuthCallbackMarker?.length ?? 0,
         },
       );
 
@@ -169,8 +170,8 @@ export const updateSession = async (
       );
     }
 
-    if (hasOauthCallbackMarker && dashboardPath) {
-      return clearOauthCallbackCookie(supabaseResponse);
+    if (hasAuthCallbackMarker && dashboardPath) {
+      return clearAuthCallbackCookie(supabaseResponse);
     }
 
     // Preserve the locale rewrite, refreshed request cookies, and auth cache headers.
