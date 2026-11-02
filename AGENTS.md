@@ -138,8 +138,11 @@ Use package filters when you only want one app, e.g.
   review suggests it. Prefer simpler code unless manual memoization is required
   for correctness, third-party identity semantics, or a profiler-backed
   performance issue.
-- Components in `apps/web/components/ui/` are owned source, not a package:
-  fix shared behaviour there (cursor, spacing) instead of per use.
+- Keep `apps/web/components/ui/` as close to the shadcn/ui install as
+  possible, so upstream fixes can be pulled and our edits reapplied. Limit
+  edits there to small class changes that every use needs, such as the menu
+  item cursor. Put larger behaviour in a wrapper component or at the call
+  site.
 - Show paid features to free users disabled, next to `UpgradeCrown`, rather
   than hiding them. It links to the plans, so touch screens reach them too.
 - Use kebab-case for files, PascalCase for components, lowercase hyphenated API
