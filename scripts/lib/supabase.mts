@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
 interface ScriptAdminClientOptions {
+  fetch?: typeof fetch;
   persistSession?: boolean;
 }
 
 export function createScriptAdminClient({
+  fetch: customFetch,
   persistSession = false,
 }: ScriptAdminClientOptions = {}) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,5 +24,6 @@ export function createScriptAdminClient({
       autoRefreshToken: false,
       persistSession,
     },
+    ...(customFetch && { global: { fetch: customFetch } }),
   });
 }

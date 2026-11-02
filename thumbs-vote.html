@@ -1,27 +1,27 @@
 <!-- https://codepen.io/an_apco/pen/ZEMqvyP -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>SVG Thumbs Vote Button</title>
     <style>
     body {
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       min-height: 100vh;
       margin: 0;
-      background-color: #f0f0f0;
       font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
     }
 
     .vote {
+      padding: 0;
+      cursor: pointer;
+      outline: none;
       background: none;
       border: none;
-      cursor: pointer;
-      padding: 0;
-      outline: none;
     }
 
     svg {
@@ -89,8 +89,14 @@
     </style>
   </head>
   <body>
-    <button class="vote" data-state="neutral" aria-label="Like or dislike">
-      <svg viewBox="0 0 40 40" width="40" height="40">
+    <button
+      aria-label="Like or dislike"
+      class="vote"
+      data-state="neutral"
+      type="button"
+    >
+      <svg height="40" viewBox="0 0 40 40" width="40">
+        <title>Thumb</title>
         <path
           class="hand"
           d="m17.5,29.71c-.55,0-1.02-.2-1.41-.59-.39-.39-.59-.86-.59-1.41v-10.18c0-.27.05-.52.16-.76.11-.24.25-.45.44-.64l5.43-5.4c.25-.23.55-.38.89-.42.34-.05.67,0,.99.17.32.17.55.4.69.7.14.3.17.61.09.92l-1.12,4.6h5.45c.53,0,1,.2,1.4.6.4.4.6.87.6,1.4v2c0,.12-.01.24-.04.38-.02.13-.06.26-.11.38l-3,7.05c-.15.33-.4.62-.75.85-.35.23-.72.35-1.1.35h-8Zm-6,0c-.55,0-1.02-.2-1.41-.59-.39-.39-.59-.86-.59-1.41v-9c0-.55.2-1.02.59-1.41.39-.39.86-.59,1.41-.59s1.02.2,1.41.59c.39.39.59.86.59,1.41v9c0,.55-.2,1.02-.59,1.41-.39.39-.86.59-1.41.59Z"

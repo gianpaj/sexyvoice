@@ -177,7 +177,6 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `NEXT_PUBLIC_PROMO_ENABLED` - Enables promo banners and bonus-credit pricing
      - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER` - Active promo banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
      - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER` - Active announcement banner id from `apps/web/messages/*.json` and `apps/web/lib/banners/registry.ts`
-     - `NEXT_PUBLIC_PROMO_TRANSLATIONS` - Legacy fallback for active promo banner selection
      - `NEXT_PUBLIC_PROMO_THEME` - Banner theme (`pink`, `orange`, `blue`)
      - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` - Optional countdown end date for promo banners that support it
      - `NEXT_PUBLIC_PROMO_ID` - Promo identifier still used by Stripe metadata and credit bonus flows
@@ -194,6 +193,8 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
    - Vercel Edge Config (optional)
      - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
+   - E2E builds only
+     - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry
 
    For environment variables, infrastructure configuration, and release verification, see [Deployment and release checks](./docs/devops.md).
 

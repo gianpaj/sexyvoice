@@ -66,6 +66,50 @@ describe('Generate Voice API Route', () => {
     resetMockGoogleGenAIFactory();
   });
 
+  describe('Text improvement metadata', () => {
+    it.each([
+      { textImproved: true, expected: true },
+      { textImproved: false, expected: false },
+      { textImproved: undefined, expected: false },
+      { textImproved: 'true', expected: false },
+    ])(
+      'stores $textImproved as $expected for JSON and SSE',
+      async ({ textImproved, expected }) => {
+        const { saveAudioFile } = await import('@/lib/supabase/queries');
+        streamingOverride.enabled = true;
+        try {
+          for (const stream of [false, true]) {
+            vi.mocked(saveAudioFile).mockClear();
+            const response = await POST(
+              new Request('http://localhost/api/generate-voice', {
+                body: JSON.stringify({
+                  text: 'Hello [happy]',
+                  voiceId: 'voice-achernar-31-id',
+                  textImproved,
+                  stream,
+                }),
+                headers: { 'content-type': 'application/json' },
+                method: 'POST',
+              }),
+            );
+            expect(response.status).toBe(200);
+            if (stream) await readSseBody(response);
+            else await response.json();
+            await vi.waitFor(() =>
+              expect(saveAudioFile).toHaveBeenCalledWith(
+                expect.objectContaining({
+                  usage: expect.objectContaining({ textImproved: expected }),
+                }),
+              ),
+            );
+          }
+        } finally {
+          streamingOverride.enabled = undefined;
+        }
+      },
+    );
+  });
+
   describe('Input Validation', () => {
     it('should return 400 when request body is null', async () => {
       const request = new Request('http://localhost/api/generate-voice', {
@@ -597,7 +641,7 @@ describe('Generate Voice API Route', () => {
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/tara-[a-f0-9]+\.wav$/,
         ),
-        usage: { split: false, userHasPaid: false },
+        usage: { split: false, textImproved: false, userHasPaid: false },
         userId: 'test-user-id',
         voiceId: 'voice-tara-id',
       });
@@ -784,7 +828,7 @@ describe('Generate Voice API Route', () => {
         url: expect.stringMatching(
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/eve-[a-f0-9]+\.mp3$/,
         ),
-        usage: { split: false, userHasPaid: false },
+        usage: { split: false, textImproved: false, userHasPaid: false },
         userId: 'test-user-id',
         voiceId: 'voice-eve-id',
       });
@@ -1115,6 +1159,7 @@ describe('Generate Voice API Route', () => {
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
         usage: {
+          textImproved: false,
           candidatesTokenCount: '12',
           promptTokenCount: '11',
           split: false,
@@ -1396,6 +1441,7 @@ describe('Generate Voice API Route', () => {
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio-free\/kore-[a-f0-9]+\.wav$/,
         ),
         usage: {
+          textImproved: false,
           candidatesTokenCount: '12',
           promptTokenCount: '11',
           split: false,
@@ -1577,6 +1623,7 @@ describe('Generate Voice API Route', () => {
           /^https:\/\/files\.sexyvoice\.ai\/generated-audio\/kore-[a-f0-9]+\.wav$/,
         ),
         usage: {
+          textImproved: false,
           candidatesTokenCount: '12',
           promptTokenCount: '11',
           split: false,
@@ -3258,7 +3305,7 @@ describe('Generate Voice API Route', () => {
       expect(saveAudioFile).toHaveBeenCalledWith(
         expect.objectContaining({
           model: 'gemini-2.5-flash-preview-tts',
-          usage: { stream: true, userHasPaid: true },
+          usage: { stream: true, textImproved: false, userHasPaid: true },
         }),
       );
       expect(Sentry.captureException).not.toHaveBeenCalled();

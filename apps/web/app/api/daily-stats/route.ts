@@ -29,6 +29,7 @@ import {
   getCallSessionDurationsBefore,
   getCallSessionsInRange,
   getClonedAudioFilesInRange,
+  getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
   getProfileUsernamesByIds,
@@ -102,7 +103,6 @@ export async function GET(request: NextRequest) {
     ? { 'Cache-Control': 'no-store', 'X-Daily-Stats-Cache': 'bypass' }
     : undefined;
   const previousDay = subtractDays(today, 1);
-  const twoDaysAgo = subtractDays(today, 2);
   const fourteenDaysAgo = subtractDays(today, ROLLING_WINDOW_DAYS);
   const thirtyDaysAgo = subtractDays(today, 30);
   // Use previousDay for MTD calculations since we're reporting on that day's month
@@ -719,12 +719,6 @@ export async function GET(request: NextRequest) {
       transaction.created_at >= previousDay.toISOString() &&
       transaction.created_at < today.toISOString(),
   );
-  const refundsPrevCount = refundTransactions.filter(
-    (transaction) =>
-      transaction.created_at >= twoDaysAgo.toISOString() &&
-      transaction.created_at < previousDay.toISOString(),
-  ).length;
-  const refundsTotalCount = refundTransactions.length;
 
   // Chargeback dispute activity (holds vs releases). Hold rows carry a negative
   // `amount` (credits frozen), release rows a positive `amount` (credits
@@ -881,19 +875,21 @@ export async function GET(request: NextRequest) {
     (prevMtdRevenue + twoMonthsAgoMtdRevenue + threeMonthsAgoMtdRevenue) / 3;
 
   const creditsTodayCount = purchasePrevDayData.length;
-  const refundsTodayCount = refundsPrevDayData.length;
 
-  // Contribution uses fresh usage and payment history together. Cached purchases
-  // could misclassify fresh usage or understate collections; cached activity
-  // metrics are only for local debugging and do not feed this calculation.
+  // Contribution uses fresh usage and collections; cached activity can omit payments.
   const contributionData = await _timed(
     `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
     getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
   );
   const contributionTransactions = loadedFromValidCache
     ? await _timed(
-        `credit_transactions:all_time paginated (cached path) < ${today.toISOString().slice(0, 10)}`,
-        getAllCreditTransactions(supabase, today, internalUserIds),
+        `credit_transactions:30d paginated (cached path) ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCreditTransactionsInRange(
+          supabase,
+          thirtyDaysAgo,
+          today,
+          internalUserIds,
+        ),
       )
     : allCreditTransactions;
   const contributionYesterday = summarizeContribution(
@@ -1219,7 +1215,7 @@ export async function GET(request: NextRequest) {
       ? 'Usage cost coverage is incomplete'
       : null,
     contributionYesterday.contributionAlert
-      ? 'Recorded/estimated usage costs exceeded net collections yesterday'
+      ? 'Estimated usage and overhead costs exceeded net collections yesterday'
       : null,
     totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
       ? `Paid usage is concentrated: top 3 users drove ${top3UsageSharePct}%`
@@ -1327,10 +1323,9 @@ export async function GET(request: NextRequest) {
       ? ['', '🚨 Alerts', ...alerts.map((alert) => `- ${alert}`)]
       : []),
     '',
-    '💸 Usage economics (estimated, before fees/fixed costs)',
+    '💸 Usage economics (est., before fees)',
     ...formatContribution('Yesterday', contributionYesterday),
     ...formatContribution('30d', contribution30d),
-    'Call estimates omit $0.004 per text input and tool charges; totals are not invoice-reconciled.',
     '',
     '🔻 Funnel',
     `- New profiles: ${profilesTodayCount}`,
@@ -1359,7 +1354,7 @@ export async function GET(request: NextRequest) {
     `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
-    `  - Estimated usage cost: $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
+    `  - AI usage (est.): $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,
@@ -1373,14 +1368,7 @@ export async function GET(request: NextRequest) {
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount}: ${topCustomersList}`,
     '',
-    ...(refundsTodayCount > 0
-      ? [
-          `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
-          `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Yesterday: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
-        ]
-      : [
-          `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
-        ]),
+    `🔄 Refunds: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)} yesterday | All-time: $${Math.abs(totalRefundAmountUsd).toFixed(2)}`,
     ...(chargebackTransactions.length > 0
       ? [
           `⚖️ Chargebacks: ${chargebackHoldsTodayCount} held / ${chargebackReleasesTodayCount} released today`,

@@ -8,7 +8,10 @@ import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
-import { hasUserPaid } from '@/lib/supabase/queries';
+import {
+  getCreditTransactionAmounts,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { GenerateUI } from './generateui.client';
 
@@ -40,13 +43,9 @@ export default async function GeneratePage(props: {
     (creditBalance !== null && creditBalance >= 10) ||
     isPlaywrightCreditsBypassEnabled;
 
-  const [{ data: creditTransactions }, isPaidUser, { data: publicVoices }] =
+  const [creditTransactions, isPaidUser, { data: publicVoices }] =
     await Promise.all([
-      supabase
-        .from('credit_transactions')
-        .select('amount')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false }),
+      getCreditTransactionAmounts(userId),
       hasUserPaid(userId),
       supabase
         .from('voices')
@@ -62,7 +61,7 @@ export default async function GeneratePage(props: {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl space-y-8 pb-16">
       <div>
         <h2 className="flex items-center gap-2 font-bold text-3xl tracking-tight">
           <Wand2 size={26} />
@@ -73,24 +72,21 @@ export default async function GeneratePage(props: {
 
       <div className="lg:hidden">
         <CreditsSection
-          creditTransactions={creditTransactions || []}
+          creditTransactions={creditTransactions}
           doNotToggleSidebar
-          lang={lang}
           userId={userId}
         />
       </div>
 
-      <div className="grid gap-6 pb-16">
-        {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
-          <GenerateUI
-            hasEnoughCredits={hasEnoughCredits}
-            isPaidUser={isPaidUser}
-            publicVoices={publicVoices}
-          />
-        ) : (
-          <CreditBalanceError />
-        )}
-      </div>
+      {creditBalance !== null || isPlaywrightCreditsBypassEnabled ? (
+        <GenerateUI
+          hasEnoughCredits={hasEnoughCredits}
+          isPaidUser={isPaidUser}
+          publicVoices={publicVoices}
+        />
+      ) : (
+        <CreditBalanceError />
+      )}
     </div>
   );
 }

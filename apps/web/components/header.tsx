@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { getMessages } from 'next-intl/server';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';

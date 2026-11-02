@@ -211,7 +211,7 @@ export default async function LandingPage(props: Props) {
                     className="mx-auto max-w-sm shadow-zinc-950/5"
                     key={title}
                   >
-                    <CardHeader className="pb-3">
+                    <CardHeader>
                       <CardDecorator>
                         <Icon aria-hidden className="size-6 text-gray-200" />
                       </CardDecorator>

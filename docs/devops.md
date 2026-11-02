@@ -27,9 +27,17 @@ before merging to `main` and after deploying.
   migrations already applied when migrations or pgTAP tests change.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
-Claude reviews pin a PR head and report CI results for that SHA. Pushes do not
-request another Claude review; comment `@claude review` when one is needed.
-The review's CI report is not a workflow dependency or a guaranteed merge gate.
+Claude reviews run automatically when a non-draft PR opens or is marked ready
+for review. Pushes do not request another review; comment `@claude review` when
+one is needed. Claude runs `/review-pr` and its five reviewer agents from the
+pinned `claude-code-action` against the PR head resolved at the start of the
+job, and returns its assessment as structured output. The workflow posts that assessment
+as a top-level PR comment from `github-actions[bot]`. The review's CI report is
+not a merge gate.
+
+Claude GitHub App authentication requires the workflow content to match the
+default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
+execution; test review changes after they reach the default branch.
 
 ## Deployment targets
 
@@ -180,9 +188,9 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `SENTRY_AUTH_TOKEN`
 - `SENTRY_ORG`
 - `SENTRY_PROJECT`
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: Dash0 OTLP ingress URL. `@vercel/otel`
-  exports server traces here; Sentry receives the same spans.
-- `OTEL_EXPORTER_OTLP_HEADERS`: `Authorization=Bearer <dash0-auth-token>`.
+- `NEXT_PUBLIC_E2E_TEST_MODE`: build-time; `true` disables the browser Sentry
+  client. Set only in the E2E workflow's build step, never on Vercel. The
+  server and edge clients stay off when `E2E_TEST_MODE=true` at runtime.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`
@@ -204,12 +212,13 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `NEXT_PUBLIC_PROMO_ENABLED`: enables promo banners, bonus-credit pricing, and
   promo metadata, not announcement banners.
 - `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`: promo ID from the banner registry and
-  localized messages; requires `NEXT_PUBLIC_PROMO_ENABLED=true`.
+  localized messages; requires `NEXT_PUBLIC_PROMO_ENABLED=true`. When unset or
+  empty, no promo banner is selected; bonus-credit pricing remains controlled by
+  the promo flag.
 - `NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER`: announcement ID, independent of the
   promo flag.
 - `NEXT_PUBLIC_PROMO_ID`
 - `NEXT_PUBLIC_PROMO_THEME`
-- `NEXT_PUBLIC_PROMO_TRANSLATIONS`
 - `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE`
 - `NEXT_PUBLIC_PROMO_BONUS_STARTER`
 - `NEXT_PUBLIC_PROMO_BONUS_STANDARD`
@@ -233,12 +242,74 @@ uses a changed schema. Keep privileged keys server-only and preserve RLS.
 Application auth, retry, and cookie behavior is documented under
 [Supabase access boundaries](../ARCHITECTURE.md#supabase-access-boundaries).
 
+#### Local Supabase versions and data
+
+`apps/web/supabase/config.toml` selects Postgres 17 and the local project ID
+`sexyvoice.ai-pg17`. Run local CLI commands with `--workdir apps/web` from the
+repository root. The project ID selects Docker resources; it does not change
+which hosted project is linked.
+
+The retained `supabase_db_sexyvoice.ai` volume contains Postgres 15 data. Do not
+start it with Postgres 17 or delete it with `stop --no-backup` or Docker volume
+pruning. Local cleanup cron jobs are disabled in the restored PG17 database.
+See the [local upgrade record](../.agents/notes/implemented/operations/2026-09-30-local-postgres-17-upgrade.md)
+for backup locations, verification, and restore caveats.
+
+#### Supabase upgrade maintenance windows
+
+Prefer Saturday 10:00–12:00 UTC; use Wednesday 09:00–11:00 UTC as the
+alternative. These are recommended windows, not a scheduled upgrade. Keep UTC
+as the scheduling reference: CEST is UTC+2 and CET is UTC+1.
+
+| Priority    | Window (UTC)          | CEST / CET                | Average usage events, 8 weeks / latest 4 |
+| ----------- | --------------------- | ------------------------- | ---------------------------------------- |
+| Preferred   | Saturday 10:00–12:00  | 12:00–14:00 / 11:00–13:00 | 12.4 / 9.3                               |
+| Alternative | Wednesday 09:00–11:00 | 11:00–13:00 / 10:00–12:00 | 14.0 / 14.5                              |
+
+The 2026-09-30 assessment used read-only Supabase CLI queries for eight complete
+weeks, August 5–September 29, with a separate September 2–29 comparison. Counts
+cover each full two-hour window. Saturday had 4–25 usage events and 0–1
+overlapping calls per window; Wednesday had 7–27 events and 0–3 overlapping
+calls. Average distinct usage users were 5.1 and 5.3, respectively.
+
+These figures measure recorded product usage, including external API TTS, not
+all HTTP requests or database load. Failed attempts may be absent. Recheck
+recent activity before scheduling; neither window guarantees zero traffic.
+
+Before upgrading:
+
+- Review the [Supabase upgrade guidance](https://supabase.com/docs/guides/platform/upgrading),
+  Dashboard eligibility warnings, and project-specific downtime estimate.
+  Reserve two hours for the operation and verification, not as an estimate of
+  database downtime. Extend the window if the Dashboard estimate requires it.
+- Confirm a recent usable backup and notify users of the scheduled outage.
+- Check scheduled jobs. Database audio cleanup runs at 03:17 and 03:47 UTC,
+  outside both windows. The Vercel schedules documented under
+  [Notifications and background jobs](#notifications-and-background-jobs)
+  include call-analysis batching every 15 minutes, which overlaps either window.
+  Plan for interrupted runs and verify queue recovery afterward.
+- After upgrading, verify sign-in, generation, credit balances, external API
+  requests, and calls; check logs for errors and slow queries. Follow the
+  [deployment verification](#deployment-verification) precautions for production
+  tests.
+
 ### Sentry
 
 `apps/web/next.config.js` configures org `sexyvoiceai`, project `sexyvoice-ai`,
 and the `/monitoring` browser tunnel. Source maps upload only when
 `VERCEL_ENV=production`; do not expect uploads from preview deployments.
 Confirm the production build uploads maps and that the tunnel reaches Sentry.
+
+`pnpm-workspace.yaml` pins `@opentelemetry/api` to one version for every
+OpenTelemetry consumer. Sentry's `suppressTracing` keeps the SDK's own envelope
+uploads out of traces only when all of them share that copy. As a backstop, the
+server and edge configs drop `http.client` spans to
+`*.sentry.io/api/<id>/envelope/` through `ignoredServerSpans` in
+`apps/web/lib/sentry/server-filters.ts`. The filter only protects Sentry's span
+quota; context propagation still breaks if a second copy returns. After a
+release that touches Sentry or OpenTelemetry packages, check that
+`pnpm why -r @opentelemetry/api` lists a single version and that Sentry's span
+usage shows no `http.client` transactions to the ingest host.
 
 For crashes and per-event browser/device details, use
 [Sentry issue triage](../scripts/README.md#sentry-issue-triage). For handled

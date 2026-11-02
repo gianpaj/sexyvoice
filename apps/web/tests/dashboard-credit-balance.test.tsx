@@ -19,6 +19,7 @@ vi.mock('next-intl/server', () => ({
 }));
 vi.mock('@/components/credits-section', () => ({ default: () => null }));
 vi.mock('@/lib/supabase/queries', () => ({
+  getCreditTransactionAmounts: vi.fn().mockResolvedValue([]),
   hasUserPaid: vi.fn().mockResolvedValue(false),
 }));
 vi.mock(

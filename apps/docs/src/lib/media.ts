@@ -9,17 +9,17 @@ export const mediaAdapters: Record<string, MediaAdapter> = {
     // returns code that inits a `body` variable, used for request body
     generateExample(_data, ctx) {
       if (ctx.lang === 'js') {
-        return `const body = "hello world"`;
+        return 'const body = "hello world"';
       }
 
       if (ctx.lang === 'python') {
-        return `body = "hello world"`;
+        return 'body = "hello world"';
       }
 
       if (ctx.lang === 'go' && 'addImport' in ctx) {
         ctx.addImport('strings');
 
-        return `body := strings.NewReader("hello world")`;
+        return 'body := strings.NewReader("hello world")';
       }
     },
   },
