@@ -493,7 +493,7 @@
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "paidStyleLimitTooltip": "You have a 2.5× style limit",
     "upgradeStyleLimitTooltip": "Buy credits for a 2.5× style limit",
-    "paidCharacterLimitTooltip": "You have a 2× character limit",
+    "paidCharacterLimitTooltip": "You have a 2× text limit",
     "upgradeCharacterLimitTooltip": "Buy credits for a 2× text limit",
     "title": "Generate Audio",
     "grok": {

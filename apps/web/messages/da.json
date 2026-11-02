@@ -491,7 +491,7 @@
     "textAreaPlaceholder": "Indtast teksten, du vil omdanne til tale...",
     "paidStyleLimitTooltip": "Du har en 2,5× stilgrænse",
     "upgradeStyleLimitTooltip": "Køb kreditter for en 2,5× stilgrænse",
-    "paidCharacterLimitTooltip": "Du har en 2× tegngrænse",
+    "paidCharacterLimitTooltip": "Du har en 2× tekstgrænse",
     "upgradeCharacterLimitTooltip": "Køb kreditter for en 2× tekstgrænse",
     "title": "Generer lyd",
     "grok": {

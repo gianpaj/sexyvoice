@@ -495,7 +495,7 @@
     "textAreaPlaceholder": "Entrez le texte que vous souhaitez convertir en parole...",
     "paidStyleLimitTooltip": "Vous bénéficiez d'une limite de style 2,5×",
     "upgradeStyleLimitTooltip": "Achetez des crédits pour une limite de style 2,5× plus grande",
-    "paidCharacterLimitTooltip": "Vous bénéficiez d'une limite de caractères 2×",
+    "paidCharacterLimitTooltip": "Vous bénéficiez d'une limite de texte 2× plus grande",
     "upgradeCharacterLimitTooltip": "Achetez des crédits pour une limite de texte 2× plus grande",
     "title": "Générer de l'audio",
     "grok": {

@@ -495,7 +495,7 @@
     "textAreaPlaceholder": "Geben Sie den Text ein, den Sie in Sprache umwandeln möchten...",
     "paidStyleLimitTooltip": "Sie haben ein 2,5× Stil-Limit",
     "upgradeStyleLimitTooltip": "Kaufen Sie Credits für ein 2,5× Stillimit",
-    "paidCharacterLimitTooltip": "Sie haben ein 2× Zeichenlimit",
+    "paidCharacterLimitTooltip": "Sie haben ein 2× Textlimit",
     "upgradeCharacterLimitTooltip": "Kaufen Sie Credits für ein 2× Textlimit",
     "title": "Audio generieren",
     "grok": {
