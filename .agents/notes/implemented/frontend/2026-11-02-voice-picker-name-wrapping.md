@@ -7,6 +7,10 @@ inside list rows. The selected-voice trigger grows with its content and keeps a
 Names and descriptions use `min-w-0 max-w-full break-words`. The width constraints
 let unbroken names wrap inside flex rows without covering the selection icon.
 
+The selected model dot stays beside its metadata in a single flex row. The text
+shrinks and wraps inside its span, so a long description cannot leave the dot
+on a row by itself.
+
 The picker uses `getVoiceDisplayName()` for names. Its filters, keyboard controls,
 and audio preview progress remain part of the shared component.
 

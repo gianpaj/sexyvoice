@@ -292,7 +292,7 @@ export function VoicePicker({
                 <span className="min-w-0 max-w-full break-words font-medium text-sm leading-tight">
                   {getVoiceDisplayName(selected)}
                 </span>
-                <span className="flex flex-wrap items-center gap-1.5 text-muted-foreground text-xs">
+                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
                   <span className="min-w-0 max-w-full break-words">
                     {selectedModel} &middot; {selected.description ?? ''}
