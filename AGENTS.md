@@ -32,6 +32,10 @@ Nested guidance:
   looping.
 - Never execute `supabase` CLI commands or SQL queries that can write data.
   Read-only commands such as `supabase status` are allowed.
+- Never run a migration file's SQL with `supabase db query` or any other ad hoc
+  SQL, even when the user asks for a query. Only `supabase db push` applies a
+  migration and records it in the migration history; run directly, the change
+  lands but the history does not. Offer the user the `db push` instead.
 - Do not revert user changes unless the user explicitly asks.
 - Follow the validation scope in Task Completion Requirements before committing.
 - When UI behaviour changes, grep `apps/web/e2e/` and
