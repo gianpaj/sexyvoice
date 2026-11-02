@@ -193,6 +193,7 @@ declare type Database = {
           locale: string | null;
           name: string;
           provider: string;
+          sample_url: string | null;
           updated_at: string | null;
           user_id: string;
           voice_id: string;
@@ -204,6 +205,7 @@ declare type Database = {
           locale?: string | null;
           name: string;
           provider: string;
+          sample_url?: string | null;
           updated_at?: string | null;
           user_id: string;
           voice_id: string;
@@ -215,6 +217,7 @@ declare type Database = {
           locale?: string | null;
           name?: string;
           provider?: string;
+          sample_url?: string | null;
           updated_at?: string | null;
           user_id?: string;
           voice_id?: string;
@@ -444,6 +447,7 @@ declare type Database = {
           image: string | null;
           is_public: boolean;
           localized_descriptions: Json | null;
+          localized_sample_urls: Json | null;
           name: string;
           prompt_id: string;
           session_config: Json;
@@ -458,6 +462,7 @@ declare type Database = {
           image?: string | null;
           is_public?: boolean;
           localized_descriptions?: Json | null;
+          localized_sample_urls?: Json | null;
           name: string;
           prompt_id: string;
           session_config?: Json;
@@ -472,6 +477,7 @@ declare type Database = {
           image?: string | null;
           is_public?: boolean;
           localized_descriptions?: Json | null;
+          localized_sample_urls?: Json | null;
           name?: string;
           prompt_id?: string;
           session_config?: Json;

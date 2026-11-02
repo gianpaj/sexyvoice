@@ -23,7 +23,7 @@ flowchart LR
     SessionRoutes --> Supabase["Supabase Auth + PostgreSQL"]
     V1 --> Supabase
     Token --> LiveKit["LiveKit room"]
-    LiveKit --> Agent["sexycall agent<br/>grok-voice-think-fast-1.0"]
+    LiveKit --> Agent["sexycall agent<br/>Grok realtime or Inworld/Mistral TTS"]
     Agent --> Supabase
     Supabase --> Analysis["Call-analysis webhook"]
     Analysis --> XAI["xAI structured analysis"]
@@ -74,7 +74,7 @@ The repository has three main workspaces:
 | Dashboard and API TTS    | `gpro31`                          | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
 | Dashboard and API TTS    | `xai`                             | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
 | Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
-| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-2603` or Replicate Chatterbox Multilingual     | See the cloning locale table below                                        |
+| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
 | Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
 | Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
@@ -214,7 +214,10 @@ flowchart TD
     A["Multipart text, locale, and reference audio"] --> B["Authenticate Supabase session"]
     B --> C["Validate locale, tier text limit, file type, and 4.5 MB size limit"]
     C --> D["Normalize to WAV when supported and trim to provider limit"]
-    D --> E["Hash processed audio and check Redis output cache"]
+    D --> S{"Save voice for calls?"}
+    S -->|"Yes: paid and consented"| T["Create provider voice, generate R2 preview, and save owned profile"]
+    T --> U["Return audioReferenceId and provider"]
+    S -->|"No"| E["Hash processed audio and check Redis output cache"]
     E -->|"Hit"| F["Return cached URL at zero credits"]
     E -->|"Miss"| G{"Enhancement requested?"}
     G -->|"Yes"| H["Reserve clone + enhancement credits"]
@@ -232,16 +235,82 @@ flowchart TD
     P --> Q["Next.js after(): save metadata, usage events, and analytics"]
 ```
 
+### Saved Voices for Calls
+
+The Clone page offers **Save a voice for calls** to paid users. Entering from
+`/dashboard/call` selects this mode. It requires a name, permission to save the
+reference, and a locale supported by the selected provider. The same upload validation, WAV
+normalization, trimming, and minimum duration checks apply. Inworld references
+are trimmed to 30 seconds and Mistral references to 25 seconds. The paid
+fal.ai cleanup (DeepFilterNet 3) applies only to speech generation. When saving an Inworld
+voice, the same checkbox (`enhanceReferenceAudio`) sets Inworld's free
+`audioProcessingConfig.removeBackgroundNoise` instead. It is off by default
+because Inworld warns it can degrade clean samples. Mistral saves hide it.
+
+`POST /api/clone-voice` accepts `saveVoiceName` and `voiceConsent=true` for this
+mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or
+`mistral` for new profiles. `saveInworldVoice` and `saveMistralVoice` create the
+provider voice and synthesize the exact English text in `CALL_VOICE_SAMPLE_TEXT`
+using `inworld-tts-2` or `voxtral-mini-tts-3-0`. No language parameter is passed
+to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
+the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
+then inserts the provider ID, provider, owner, name, locale, and `sample_url`
+into `audio_references`. If sample generation, upload, or insertion fails, it
+attempts to clean up the provider voice and any attempted R2 upload. The response contains
+`audioReferenceId` and `provider`. This action charges no speech
+credits; sample synthesis incurs provider costs. The reference is retained by
+the selected provider. The preview is stored on the profile, separately from
+speech generations in `audio_files`.
+
+The Clone page lists the signed-in user's saved Inworld and Mistral profiles
+above the upload and recording form. Previews use the private sample endpoint.
+Selecting a voice replaces the reference audio: the form posts `text`, `locale`,
+and `savedVoiceId`, the route checks ownership, and generation charges credits
+and records an `audio_files` row like a one-off clone. Clicking the selected
+voice again returns to the recording form. An Inworld voice speaks the chosen
+language, defaulting to its own, which the route checks with
+`supportsCallCloneLocale()` and sends as Inworld's `language` field. A Mistral
+voice always speaks its saved locale. Newly saved voices join the list
+immediately. The dashboard form has no demo
+comparison card; the public voice-cloning page retains its examples.
+
+Saved voice samples are served through
+`GET /api/audio-references/[id]/sample`. The route authenticates the user,
+checks ownership and a supported call provider, and returns audio with private,
+non-cacheable headers. Provider IDs and sample URLs stay on the server.
+Profiles with `sample_url` return the saved R2 WAV without provider calls.
+Reads accept only sample object keys under the owned profile's prefix, never
+arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
+reference WAV audio or Inworld's MP3 preview. Preview playback does not create
+or backfill R2 samples.
+Account deletion removes saved voices at their provider and their R2 samples,
+then deletes each owned `audio_references` row. Cleanup failures retain the row
+for support to retry and are reported with the profile ID.
+Inworld requires `INWORLD_API_KEY` in the web app and agent, with access to
+the same workspace. Mistral profiles require `MISTRAL_API_KEY` in both.
+Changing the default does not convert existing profiles or voice IDs.
+
 ### Locale Routing
 
-| Locale group            | Locales                                                                                        | Model                                 | Provider  |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
-| Voxtral                 | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
-| Chatterbox Multilingual | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
+| Locale group            | Locales                                                                                                                            | Model                                 | Provider  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral                 | `ar`, `ca`, `de`, `el`, `en`, `es`, `fr`, `hi`, `hu`, `it`, `ja`, `ko`, `nl`, `no`, `pl`, `pt`, `ro`, `ru`, `tr`, `uk`, `vi`, `zh` | `voxtral-mini-tts-3-0`                | Mistral   |
+| Chatterbox Multilingual | `da`, `en-multi`, `fi`, `he`, `ms`, `sv`, `sw`                                                                                     | `resemble-ai/chatterbox-multilingual` | Replicate |
+
+The dashboard language dropdown and `POST /api/clone-voice` use
+`apps/web/lib/clone/constants.ts` for the same locale list and provider routing.
+The list contains 28 languages plus the explicit English Chatterbox option.
+Mistral confirms 21 languages in its
+[TTS preset table](https://docs.mistral.ai/studio/audio/specs-and-limits/languages)
+and Greek in its [launch article](https://mistral.ai/news/voxtral-3/).
+Its claimed 35-language coverage is not fully enumerated. Danish, Finnish,
+Hebrew, Malay, Swedish, and Swahili stay on Chatterbox pending confirmation;
+this routing does not establish that Mistral cannot speak them.
 
 Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
-Chatterbox accepts 300. Reference audio must be at least 3 seconds for Voxtral
-and 10 seconds for Chatterbox. Longer references are trimmed to 25 seconds for
+Chatterbox accepts 300. Reference audio must be at least 10 seconds for every
+provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
+separately. Longer references are trimmed to 25 seconds for
 Voxtral or 10 seconds for Chatterbox when conversion permits.
 
 Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is
@@ -260,13 +329,82 @@ bounded retries through `fetchWithRetry`. If the lookup fails, it emits one
 Sentry warning and the route records an estimated cost instead. Retry limits
 live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline.
 
+### Tagged speech editing
+
+`apps/web/components/tts-editor.tsx` shares the Tiptap editor between Grok speech
+and Voxtral cloning. The provider selects its tag catalog, autocomplete, and
+unsupported-tag highlighting. Grok supports instant tags and paired wrappers;
+Voxtral supports 34 emotion tags, pace tags, and the documented vocal sounds in
+`apps/web/lib/voxtral-tags.ts`. Voxtral tags apply to the following text without
+a closing tag. The clone form uses a textarea for Chatterbox locales.
+
+`apps/web/lib/tts-editor.ts` parses and serializes provider tags as plain text.
+Copying preserves tag syntax and line breaks; unknown tags remain literal text.
+The API receives the text unchanged. Tag characters count toward the existing
+text limits. Mistral documents tag behavior as tested in English; its other
+listed languages are untested.
+
+### Prepared cloning demos
+
+The public cloning page uses `DemoClonePlayer`: Kat in
+English and Heike in German, each with Natural, Sarcastic, and Calm & slow takes
+of one sentence. Kat also has a first-listed “Same as original” example using
+her reference recording's full passage. Natural remains the default.
+`apps/web/data/clone-demo-config.ts` defines prompts and supported voice/take
+pairs through `getCloneDemoTakes()`.
+
+`apps/web/data/clone-demo-languages.ts` defines nine language slots and staged
+anxious prompts. `getDemoCloneLanguages()` joins these slots to actual published
+speakers. The website locale is selected and listed first; unsupported locales
+fall back to English. Browser language does not override that choice. Kat and
+Heike are playable; other languages show planned text and a coming-soon notice
+without audio, delivery controls, or a demo CTA. Each added voice requires its
+own reference and matching generated assets; staged prompts are not transcripts
+for existing recordings.
+
+All prepared takes use `voxtral-mini-tts-3-0`. References and results are bundled
+under `apps/web/public/demo-clones/voxtral-3/`; playback makes no generation
+request. `clone-demo-assets.json` records durations, source and asset hashes,
+latency when captured, estimated cost, and precomputed waveform peaks. Each
+asset's `waveform.sourceSha256` binds its per-channel peaks to the final MP3.
+The local extraction workflow lives in
+[waveform generation](scripts/README.md#generate-waveform-peaks). Each
+`DemoCloneClip` exposes its cached peak arrays directly from the manifest;
+missing or stale waveform hashes reject the asset with regeneration guidance.
+The renderer uses these peaks without a waveform MP3 fetch or audio decode.
+
+Kat's full reference and same-text
+result target -14 LUFS; the remaining prepared recordings are unchanged.
+See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
+asset workflow.
+
+The player uses one native audio element for the selected take or original
+recording. `NativeAudioWaveform` retains one WaveSurfer instance per native media
+element and interaction mode. It keeps the current waveform visible during a
+source switch, then calls `load(url, peaks, duration)` after matching metadata.
+Take, reference, and retry changes update the existing renderer rather than
+remounting it. Cleanup aborts the instance's signal before destruction. Visual
+defaults are shared with the other audio players. Changing language or delivery stops playback. Unsupported voice/take combinations
+fall back to Natural. The prompt appears above the player with highlighted
+tags; selecting the prompt excludes its decorative quotation marks.
+Applying a demo loads its reference, prompt, and
+language into the cloning form. Consent and generation require explicit user
+actions. Reference downloads do not replace a file or recording the user has
+selected while the download was pending.
+
+The landing CTA carries `demo` and `take` into `/[lang]/dashboard/clone`.
+`apps/web/lib/clone/demo-redirect.ts` allows only supported voice/take pairs through
+login, signup, OAuth, and email confirmation. Other signup redirects use the
+default callback. The public cloning page ends with a section that links to
+`/[lang]/voice-call`, and the voice call page links back to it.
+
 ## Real-time AI Voice Calls
 
 Endpoint: `POST /api/call-token`
 
 ```mermaid
 flowchart TD
-    A["Choose language, character, scene, and voice"] --> B["POST /api/call-token"]
+    A["Choose a character or a custom voice and personality"] --> B["POST /api/call-token"]
     B --> C["Authenticate Supabase session"]
     C --> D["Check minimum credits and free-user lifetime call limit"]
     D --> E["Validate configuration and normalize the call model"]
@@ -276,7 +414,7 @@ flowchart TD
     H --> I["Mint LiveKit token with server-resolved metadata"]
     I --> J["Dispatch the sexycall agent"]
     J --> K["Browser and agent join the WebRTC room"]
-    K --> L["Agent runs grok-voice-think-fast-1.0"]
+    K --> L["Agent runs Grok realtime or STT + LLM + Inworld/Mistral TTS"]
     L --> M["Agent meters credits and writes call session, transcript, and usage"]
     M --> N["Client disconnects and refreshes credit balance"]
     M --> O["Supabase webhook requests analysis for eligible completed calls"]
@@ -310,17 +448,61 @@ fallback, and places the result in LiveKit token metadata. Custom characters,
 custom scenes, and the long-term memory backend require a paid account. Memory
 is off by default, and its UI toggle is currently hidden.
 
+### Call Setup
+
+Characters are voice-and-prompt bundles. The call page
+(`components/call/call-experience.tsx`) has a picker with "Your characters"
+and "Featured" grids. A card opens the call panel, a side sheet (bottom sheet
+on phones) with the voice sample, language, scene, microphone status and
+Start call. A card's Call, and Call in the creator preview of an unchanged
+saved character, start the call directly. They open the panel instead when
+the character has no voice or personality, or the microphone is blocked.
+During a call the page shows the in-call view; when it ends it
+offers Call again and editing. The in-call timer starts when the agent first
+reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
+starts billing.
+
+Paid users create, duplicate and edit characters in the creator: name, short
+description, personality (with starter examples) and voice. A name, a
+personality and an available voice are required to save, and characters are
+saved before they are called. "Make your own version" of a featured character
+copies its name, description and voice, never its prompt. Free users see the
+Create card as a link to the plans, and "Make your own version" disabled next
+to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
+character can call, for both the panel and a card's Call. Deleting a
+character removes it from the list at once; the DELETE request waits until
+the Undo toast closes or the page is hidden.
+
+The creator's Clone a voice dialog records or uploads a sample and saves a
+profile through the save-only `/api/clone-voice` path, using the call
+language when the configured provider supports it and English otherwise. The Clone page links
+back with `?custom=1&voice=<id>` to start a character with that voice. The
+call page reads that query on the server and passes it to `CallExperience`
+as `returnFromClone`. `PlaygroundStateProvider` rewrites the URL on mount,
+before `LiveKitRoom` renders its children. Prompt text never enters the URL;
+only `?preset=<id>` is written.
+
+Built-in voices use the Grok model. Saved voices set
+`sessionConfig.model=inworld-tts|mistral-tts` according to their saved provider,
+and `sessionConfig.audioReferenceId` to an
+owned `audio_references` row. The token route rechecks ownership and provider,
+then sends the reference row ID as the LiveKit `voice` metadata value. The
+agent resolves the provider voice and runs STT, an LLM, and the matching TTS plugin.
+The shared cloned-audio `voices` row satisfies the legacy foreign keys on
+characters and call sessions; the saved reference stays in session config and
+call-session metadata. Selecting a built-in voice clears the saved reference.
+
 ### Call Configuration
 
-| Setting           | Current behavior                                                                      |
-| ----------------- | ------------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-1.0`                                                           |
-| Voice             | Stored per character, selected from public call voices, and resolved to a database ID |
-| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                        |
-| Max output tokens | Nullable; defaults to the agent's model behavior                                      |
-| Instructions      | Edge Config defaults for non-character calls; database prompts for characters         |
-| Language          | 20 supported call languages; English fallback                                         |
-| Memory            | Paid, opt-in backend; off by default                                                  |
+| Setting           | Current behavior                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-1.0`, `inworld-tts`, or `mistral-tts`                        |
+| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                    |
+| Instructions      | Server-resolved database prompt for the selected character                          |
+| Language          | 20 supported call languages; English fallback                                       |
+| Memory            | Paid, opt-in backend; off by default                                                |
 
 ### Call transcript analysis
 

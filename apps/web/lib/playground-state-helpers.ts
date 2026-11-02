@@ -5,12 +5,15 @@ import type { SessionConfig } from '@/data/session-config';
 const PRESET_PARAM = 'preset';
 
 /**
- * Query params the call page owns. `preset` is the one it still writes; the
- * rest are from links that used to carry the prompt and session settings.
- * Everything else in the URL belongs to someone else and is left alone.
+ * Query params the call page owns. `preset` is the one it still writes;
+ * `custom` and `voice` come back from the Clone page; the rest are from links
+ * that used to carry the prompt and session settings. Everything else in the
+ * URL belongs to someone else and is left alone.
  */
 const isOwnedUrlParam = (key: string) =>
   key === PRESET_PARAM ||
+  key === 'custom' ||
+  key === 'voice' ||
   key === 'instructions' ||
   key === 'presetName' ||
   key === 'presetDescription' ||
@@ -25,7 +28,7 @@ export interface CallTokenPlaygroundState {
   selectedSceneId: PlaygroundState['selectedSceneId'];
   sessionConfig: Pick<
     SessionConfig,
-    'maxOutputTokens' | 'model' | 'temperature' | 'voice'
+    'audioReferenceId' | 'maxOutputTokens' | 'model' | 'temperature' | 'voice'
   >;
 }
 
@@ -86,6 +89,7 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
         selectedPresetId: state.selectedPresetId,
         selectedSceneId: state.selectedSceneId,
         sessionConfig: {
+          audioReferenceId: state.sessionConfig.audioReferenceId,
           maxOutputTokens: state.sessionConfig.maxOutputTokens,
           model: state.sessionConfig.model,
           temperature: state.sessionConfig.temperature,

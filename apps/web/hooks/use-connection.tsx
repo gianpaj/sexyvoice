@@ -7,18 +7,13 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
-import {
-  buildSaveCharacterPayload,
-  isInstructionsDirty,
-  saveCharacter,
-} from '@/lib/characters';
 import { invalidateCredits } from '@/lib/credits-query';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import { usePlaygroundState } from './use-playground-state';
 
-export type ConnectFn = (pendingVoiceName?: string | null) => Promise<void>;
+export type ConnectFn = () => Promise<void>;
 
 const TOKEN_REQUEST_TIMEOUT_MS = 30_000;
 
@@ -51,59 +46,9 @@ export const ConnectionProvider = ({
   const t = useTranslations('call');
   const queryClient = useQueryClient();
   const supabase = useSupabaseBrowser();
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const { pgState, helpers } = usePlaygroundState();
 
-  /**
-   * If the selected custom character has unsaved instruction or voice changes,
-   * persist them before connecting so the call uses the latest version.
-   * Throws if the save fails (aborting the connection attempt).
-   */
-  const saveCharacterIfDirty = async (pendingVoiceName?: string | null) => {
-    const selectedPreset = helpers.getSelectedPreset(pgState);
-    if (!selectedPreset || selectedPreset.isPublic) return;
-
-    const currentInstructions = helpers.getFullInstructions(pgState);
-    const instructionsDirty = isInstructionsDirty(
-      selectedPreset,
-      pgState.language,
-      currentInstructions,
-    );
-    const voiceDirty = Boolean(
-      pendingVoiceName && pendingVoiceName !== selectedPreset.voiceName,
-    );
-
-    if (!(instructionsDirty || voiceDirty)) return;
-
-    const presetToSave =
-      voiceDirty && pendingVoiceName
-        ? {
-            ...selectedPreset,
-            sessionConfig: {
-              ...selectedPreset.sessionConfig,
-              voice: pendingVoiceName,
-            },
-            voiceName: pendingVoiceName,
-          }
-        : selectedPreset;
-
-    const payload = buildSaveCharacterPayload(
-      presetToSave,
-      pgState.language,
-      currentInstructions,
-    );
-
-    const result = await saveCharacter(payload);
-    if (!result.ok) {
-      toast.error(result.error);
-      throw new Error(result.error);
-    }
-
-    dispatch({ payload: result.preset, type: 'SAVE_CUSTOM_CHARACTER' });
-  };
-
-  const connect: ConnectFn = async (pendingVoiceName) => {
-    await saveCharacterIfDirty(pendingVoiceName);
-
+  const connect: ConnectFn = async () => {
     const resolvedState = helpers.getStateWithFullInstructions(pgState);
     const controller = new AbortController();
     const timeout = setTimeout(

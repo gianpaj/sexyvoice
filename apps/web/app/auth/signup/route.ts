@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import z from 'zod';
 
+import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import { isDisposableEmail } from '@/lib/disposable-email';
 import { createClient } from '@/lib/supabase/server';
 
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
   const schema = z.object({
     email: z.email(),
     password: z.string().min(6).max(72),
+    redirectTo: z.string().max(500).optional(),
   });
 
   const result = schema.safeParse(body);
@@ -78,6 +80,8 @@ export async function POST(request: Request) {
   }
 
   const { email, password } = result.data;
+  const redirectTo = getCloneDemoRedirect(result.data.redirectTo);
+  const emailRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback${redirectTo ? `?redirect_to=${encodeURIComponent(redirectTo)}` : ''}`;
 
   if (isDisposableEmail(email)) {
     return NextResponse.json(
@@ -89,7 +93,7 @@ export async function POST(request: Request) {
   const { error: signUpError, data } = await supabase.auth.signUp({
     email,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      emailRedirectTo,
     },
     password,
   });

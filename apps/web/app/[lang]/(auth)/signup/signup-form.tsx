@@ -13,7 +13,13 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export function SignUpForm({ lang }: { lang: Locale }) {
+export function SignUpForm({
+  lang,
+  redirectTo,
+}: {
+  lang: Locale;
+  redirectTo?: string | null;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +67,11 @@ export function SignUpForm({ lang }: { lang: Locale }) {
       }
 
       const res = await fetch('/auth/signup', {
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          ...(redirectTo ? { redirectTo } : {}),
+        }),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -86,7 +96,9 @@ export function SignUpForm({ lang }: { lang: Locale }) {
         console.error(signUpError, data);
         // TODO: handle if user already exists. Supabase returns a fake user if the email is already registered. (https://github.com/supabase/auth/issues/1517)
         if (signUpError?.message === 'VALIDATION_ERROR_EMAIL_EXISTS') {
-          router.push(`/${lang}/login?email=${encodeURIComponent(email)}`);
+          const query = new URLSearchParams({ email });
+          if (redirectTo) query.set('redirect_to', redirectTo);
+          router.push(`/${lang}/login?${query}`);
         } else {
           setError(resolveSignUpErrorMessage(signUpError ?? {}));
         }
@@ -104,11 +116,11 @@ export function SignUpForm({ lang }: { lang: Locale }) {
     setIsLoading(true);
     setError(null);
 
-    const redirectTo = encodeURIComponent(`/${lang}/dashboard`);
+    const nextPath = encodeURIComponent(redirectTo ?? `/${lang}/dashboard`);
 
     const { error } = await supabase.auth.signInWithOAuth({
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?redirect_to=${redirectTo}`,
+        redirectTo: `${window.location.origin}/auth/callback?redirect_to=${nextPath}`,
       },
       provider: 'google',
     });
@@ -166,7 +178,10 @@ export function SignUpForm({ lang }: { lang: Locale }) {
         {t('hasAccount')}{' '}
         <Link
           className="text-blue-600 hover:text-blue-500"
-          href={`/${lang}/login`}
+          href={{
+            pathname: `/${lang}/login`,
+            query: redirectTo ? { redirect_to: redirectTo } : {},
+          }}
         >
           {t('signIn')}
         </Link>

@@ -19,6 +19,7 @@
     "fix": "ultracite fix",
     "fixall": "turbo run fixall",
     "format": "turbo run format",
+    "generate-audio-waveforms": "node scripts/generate-audio-waveforms.mts",
     "generate-gemini-speech-samples": "pnpm --filter @sexyvoice/scripts generate-gemini-speech-samples",
     "generate-supabase-types": "pnpm --filter @sexyvoice/web generate-supabase-types",
     "generate-supabase-types:local": "pnpm --filter @sexyvoice/web generate-supabase-types:local",
@@ -37,6 +38,7 @@
     "test:ui": "turbo run test:ui --filter=@sexyvoice/web",
     "test-gemini-tts-stream": "pnpm --filter @sexyvoice/scripts test-gemini-tts-stream",
     "type-check": "turbo run type-check",
+    "upload-r2-files": "node scripts/upload-r2-files.mts",
     "upload-speech-samples": "pnpm --filter @sexyvoice/scripts upload-speech-samples"
   },
   "devDependencies": {

@@ -6,6 +6,10 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import {
+  countInworldWorkspaceVoices,
+  INWORLD_WORKSPACE_VOICE_LIMIT,
+} from '@/lib/clone/inworld';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatContribution, summarizeContribution } from './contribution';
 import { getContributionData } from './contribution-queries';
@@ -637,7 +641,11 @@ export async function GET(request: NextRequest) {
       )
     : undefined;
 
-  const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
+  const cloneModelLabels = new Set([
+    'Chatterbox',
+    'Inworld Clone',
+    'Voxtral Clone',
+  ]);
   const modelCounts = new Map<string, number>();
   for (const audio of audioYesterdayData) {
     const modelName = normalizeModelName(audio.model);
@@ -1307,6 +1315,19 @@ export async function GET(request: NextRequest) {
     mrrUnknownCount > 0 ? `, ${mrrUnknownCount} unpriced` : ''
   }`;
 
+  // A live count, so it stays out of the activity cache.
+  const inworldVoiceCount = await countInworldWorkspaceVoices().catch(
+    (error) => {
+      console.error('Failed to count Inworld voices:', error);
+      Sentry.captureException(error);
+      return null;
+    },
+  );
+  const inworldVoicesDisplay =
+    inworldVoiceCount === null
+      ? 'unavailable'
+      : `${inworldVoiceCount.toLocaleString()} / ${INWORLD_WORKSPACE_VOICE_LIMIT.toLocaleString()} workspace limit`;
+
   const revenueSummaryLines = [
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg14dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg14dRevenue).toFixed(2)} vs ${ROLLING_WINDOW_LABEL} avg)`,
     `  - ${ROLLING_WINDOW_LABEL}: $${total14dRevenue.toFixed(2)} (avg $${avg14dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
@@ -1356,6 +1377,7 @@ export async function GET(request: NextRequest) {
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
     `  - AI usage (est.): $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
+    `  - Inworld voices: ${inworldVoicesDisplay}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${profiles14dCount} (avg ${(profiles14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,

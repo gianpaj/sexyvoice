@@ -61,6 +61,7 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
       tr: '22 yaşında utangaç, itaatkâr öğrenci kız. Memnun etmeyi sever, çekingen, uysal.',
       zh: '22岁害羞、顺从的女大学生。喜欢取悦他人，犹豫不决，乖巧听话。',
     },
+    localized_sample_urls: null,
     name: 'Lily',
     prompt_id: '00000000-0000-4000-a000-000000000102',
     prompts: {
@@ -105,6 +106,7 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
       tr: '40 yaşında dominant iş kadını. Dikkat çeker, kontrol ondadır – sen ona tabisin.',
       zh: '40岁的强势女商人。引人注目，她掌控一切——你是她的下属。',
     },
+    localized_sample_urls: null,
     name: 'Ramona',
     prompt_id: '00000000-0000-4000-a000-000000000101',
     prompts: {
@@ -149,6 +151,7 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
       tr: '35 yaşında dominant eski asker komutan. İri, kaslı, kıllı, disiplini sever.',
       zh: '35岁的强势前军事指挥官。高大、肌肉发达、毛发浓密，喜欢纪律。',
     },
+    localized_sample_urls: null,
     name: 'Rafal',
     prompt_id: '00000000-0000-4000-a000-000000000104',
     prompts: {

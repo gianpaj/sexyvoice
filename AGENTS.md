@@ -32,8 +32,17 @@ Nested guidance:
   looping.
 - Never execute `supabase` CLI commands or SQL queries that can write data.
   Read-only commands such as `supabase status` are allowed.
+- Never run a migration file's SQL with `supabase db query` or any other ad hoc
+  SQL, even when the user asks for a query. Only `supabase db push` applies a
+  migration and records it in the migration history; run directly, the change
+  lands but the history does not. Offer the user the `db push` instead.
 - Do not revert user changes unless the user explicitly asks.
 - Follow the validation scope in Task Completion Requirements before committing.
+- When UI behaviour changes, grep `apps/web/e2e/` and
+  `apps/web/e2e/E2E_TEST_PLAN.md` as well as the unit tests; unit tests mock
+  what Playwright exercises.
+- Pass explicit file paths to `biome check --write --unsafe`; without paths it
+  rewrites files across the whole app.
 
 ## Maintainability
 
@@ -133,6 +142,15 @@ Use package filters when you only want one app, e.g.
   review suggests it. Prefer simpler code unless manual memoization is required
   for correctness, third-party identity semantics, or a profiler-backed
   performance issue.
+- Keep `apps/web/components/ui/` as close to the shadcn/ui install as
+  possible, so upstream fixes can be pulled and our edits reapplied. Limit
+  edits there to small class changes that every use needs, such as the menu
+  item cursor. Put larger behaviour in a wrapper component or at the call
+  site.
+- Show paid features to free users disabled, next to `UpgradeCrown`, rather
+  than hiding them. It links to the plans, so touch screens reach them too.
+- Check UI changes signed in as both a free and a paid user; the two see
+  different controls.
 - Use kebab-case for files, PascalCase for components, lowercase hyphenated API
   route segments, and snake_case for database names.
 - Shared dependency versions are pinned via the pnpm `catalog:` in
@@ -156,6 +174,10 @@ Use package filters when you only want one app, e.g.
   Next.js navigation helpers.
 - Add or update keys in every `apps/web/messages/*.json` file and run
   `pnpm check-translations` for user-facing copy changes.
+- Match the form of address of the section you edit: German, for example,
+  uses `du` in some sections and `Sie` in others.
+- Voice cloning copy says "your voice" or mentions the rights to a voice, and
+  gives the minimum as 10 seconds (`CLONE_MIN_AUDIO_SECONDS`).
 
 ## Supabase and Database
 
@@ -219,10 +241,25 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   Gemini 2.5, `gpro31` for Gemini 3.1 Flash, and `gpro38` for Gemini 3.8 Flash), or xAI Grok TTS. External API
   `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
   `model = 'gpro31'` should use Gemini 3.1 Flash.
-- Voice cloning uses fal.ai and must respect permission and privacy
-  requirements.
+- Voice cloning uses Mistral Voxtral and Replicate Chatterbox for one-off
+  speech and Inworld for saved call voices; fal.ai cleans reference audio. It
+  must respect permission and privacy requirements.
+- Mistral TTS blocks sexual content with a 403 `guardrail_violation`, so
+  saved call voices use Inworld.
+- `LiveKitRoom` renders its children one render after
+  `PlaygroundStateProvider` rewrites the URL. Read call page query parameters
+  on the server and pass them to `CallExperience`.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
+- `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
+  worker's registered agent name. See `docs/devops.md` for dispatch setup.
+- The call agent lives in the `gianpaj/sexycall` repo (Python, LiveKit
+  Agents). Call features often change both repos: deploy the agent before
+  merging a web change that depends on it.
+- `CALL_CLONE_PROVIDER=inworld|mistral` selects new saved call voice providers
+  and defaults to Inworld. Existing profiles retain their provider and matching
+  call model. `INWORLD_API_KEY` must access the same workspace as the SexyCall
+  agent. See `ARCHITECTURE.md` for saved voices and `docs/devops.md` for setup.
 - Call transcript analysis is async: `/api/call-sessions/analyze` only enqueues
   into `call_analysis_queue`; the `/api/call-sessions/analyze/batch` cron
   drains it through the xAI Batch API. Shared prompt/schema/batch code lives in

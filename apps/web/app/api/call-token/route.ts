@@ -7,18 +7,20 @@ import { z } from 'zod';
 import { callScenes } from '@/data/call-scenes';
 import {
   defaultLanguage,
+  getInitialInstruction,
   languageInitialInstructions,
 } from '@/data/playground-state';
 import {
   type CallTokenPlaygroundState,
   callTokenPlaygroundStateSchema,
 } from '@/lib/call-token-schema';
+import { callVoiceProvider } from '@/lib/call-voices';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { resolveCallVoice } from '@/lib/supabase/call-voices';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
   getCredits,
-  getVoiceIdByName,
   hasUserPaid,
   isFreeUserOverCallLimit,
   resolveCharacterPrompt,
@@ -125,7 +127,10 @@ export async function POST(request: Request) {
       : defaultLanguage;
 
     // Validate voice exists in DB
-    const voiceObj = await getVoiceIdByName(voice);
+    const voiceObj = await resolveCallVoice(
+      playgroundState.sessionConfig,
+      user.id,
+    );
 
     if (!voiceObj) {
       captureException('Voice not found', { extra: { voice } });
@@ -202,6 +207,19 @@ export async function POST(request: Request) {
       }
     }
 
+    if (!selectedPresetId || callVoiceProvider(model)) {
+      isPaidUser ??= await hasUserPaid(user.id);
+      if (!isPaidUser) {
+        return APIErrorResponse(
+          'Custom characters require a paid account',
+          403,
+        );
+      }
+      if (!resolvedInstructions.trim()) {
+        return APIErrorResponse('A personality prompt is required', 400);
+      }
+    }
+
     if (sceneInstructions?.trim()) {
       if (isPaidUser === undefined) {
         isPaidUser = await hasUserPaid(user.id);
@@ -238,9 +256,7 @@ export async function POST(request: Request) {
     // Create metadata for agent to start with
     const metadata = {
       character_id: selectedPresetId,
-      initial_instruction:
-        languageInitialInstructions[selectedLanguage] ||
-        languageInitialInstructions[defaultLanguage],
+      initial_instruction: getInitialInstruction(selectedLanguage, model),
       instructions: resolvedInstructions,
       language: selectedLanguage,
       max_output_tokens: maxOutputTokens,
@@ -276,7 +292,8 @@ export async function POST(request: Request) {
     at.roomConfig = new RoomConfiguration({
       agents: [
         new RoomAgentDispatch({
-          agentName: 'sexycall',
+          // Must match the agent's LIVEKIT_AGENT_NAME; use a dev name locally.
+          agentName: process.env.LIVEKIT_AGENT_NAME || 'sexycall',
         }),
       ],
       name: roomName,
