@@ -42,6 +42,15 @@ let nextConfig = {
       {
         headers: [
           {
+            key: 'Content-Type',
+            value: 'text/markdown; charset=utf-8',
+          },
+        ],
+        source: '/auth.md',
+      },
+      {
+        headers: [
+          {
             key: 'Content-Security-Policy',
             value: cspHeader.replace(/\n/g, ''),
           },

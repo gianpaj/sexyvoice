@@ -82,12 +82,15 @@ and skip link checks for sessions already matched to an in-window event.
 model-specific estimates when data permits. Recorded costs are not necessarily
 invoice-verified. Unknown models, missing dimensions, and negative sentinels stay
 unpriced. Zero-duration calls can use a valid sub-second timestamp difference.
+Grok voice calls are estimated at $0.08 per minute. `grok-voice-think-fast-1.0`
+calls that started before 2026-09-13 06:00 UTC use $0.05, the rate xAI billed
+until it moved 1.0 to the 2.0 price.
+
 Call duration estimates omit xAI's $0.004 per text input and tool charges. For
-example, 10 text inputs add $0.04, equal to 80% of a one-minute $0.05 audio
-estimate or 50% of a one-minute $0.08 estimate. This illustrates sensitivity,
-not observed input volume; the report cannot quantify the omitted total from
-duration alone. Stored call costs can reflect customer billing buckets rather
-than provider-billed time.
+example, 10 text inputs add $0.04, equal to 50% of a one-minute $0.08 audio
+estimate. This illustrates sensitivity, not observed input volume; the report
+cannot quantify the omitted total from duration alone. Stored call costs can
+reflect customer billing buckets rather than provider-billed time.
 
 Rate references: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing)
 and [xAI pricing](https://docs.x.ai/developers/pricing).
