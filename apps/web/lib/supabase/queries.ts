@@ -35,7 +35,8 @@ export async function getCallVoices() {
 
 /**
  * Get public (predefined) call characters for SSR.
- * Joins with voices to get voice name + sample_url.
+ * Joins with voices to get voice name + sample_url. A character's own
+ * sample_url, when set, replaces the voice sample.
  * Does NOT include prompt text — predefined prompts never reach the client.
  */
 export async function getPublicCallCharacters() {
@@ -45,6 +46,7 @@ export async function getPublicCallCharacters() {
     .select(
       `
       id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      sample_url,
       voice_id,
       voices ( name, sample_url ),
       prompt_id,

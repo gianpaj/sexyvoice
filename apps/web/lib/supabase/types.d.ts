@@ -449,6 +449,7 @@ declare type Database = {
           localized_descriptions: Json | null;
           name: string;
           prompt_id: string;
+          sample_url: string | null;
           session_config: Json;
           sort_order: number;
           updated_at: string | null;
@@ -463,6 +464,7 @@ declare type Database = {
           localized_descriptions?: Json | null;
           name: string;
           prompt_id: string;
+          sample_url?: string | null;
           session_config?: Json;
           sort_order?: number;
           updated_at?: string | null;
@@ -477,6 +479,7 @@ declare type Database = {
           localized_descriptions?: Json | null;
           name?: string;
           prompt_id?: string;
+          sample_url?: string | null;
           session_config?: Json;
           sort_order?: number;
           updated_at?: string | null;
