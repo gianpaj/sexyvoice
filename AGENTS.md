@@ -145,6 +145,8 @@ Use package filters when you only want one app, e.g.
   site.
 - Show paid features to free users disabled, next to `UpgradeCrown`, rather
   than hiding them. It links to the plans, so touch screens reach them too.
+- Check UI changes signed in as both a free and a paid user; the two see
+  different controls.
 - Use kebab-case for files, PascalCase for components, lowercase hyphenated API
   route segments, and snake_case for database names.
 - Shared dependency versions are pinned via the pnpm `catalog:` in
@@ -247,6 +249,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   text must never be exposed to the client.
 - `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
   worker's registered agent name. See `docs/devops.md` for dispatch setup.
+- The call agent lives in the `gianpaj/sexycall` repo (Python, LiveKit
+  Agents). Call features often change both repos: deploy the agent before
+  merging a web change that depends on it.
 - `CALL_CLONE_PROVIDER=inworld|mistral` selects new saved call voice providers
   and defaults to Inworld. Existing profiles retain their provider and matching
   call model. `INWORLD_API_KEY` must access the same workspace as the SexyCall
