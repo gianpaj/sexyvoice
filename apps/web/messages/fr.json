@@ -1166,7 +1166,9 @@
         "tts": "Génération vocale",
         "voice_cloning": "Clonage vocal",
         "live_call": "Appel en direct",
-        "audio_processing": "Nettoyage audio"
+        "audio_processing": "Nettoyage audio",
+        "api_tts": "Génération vocale API",
+        "api_voice_cloning": "Clonage vocal API"
       }
     },
     "table": {

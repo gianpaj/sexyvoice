@@ -1162,7 +1162,9 @@
         "tts": "Stemmegenerering",
         "voice_cloning": "Stemmekloning",
         "live_call": "Live-opkald",
-        "audio_processing": "Lydrensning"
+        "audio_processing": "Lydrensning",
+        "api_tts": "Stemmegenerering via API",
+        "api_voice_cloning": "Stemmekloning via API"
       }
     },
     "table": {

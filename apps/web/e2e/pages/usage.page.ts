@@ -130,7 +130,7 @@ export class UsagePage {
 
     const optionNameBySourceType: Record<string, RegExp> = {
       all: /^all$/i,
-      api_tts: /^api tts$/i,
+      api_tts: /^api voice generation$/i,
       api_voice_cloning: /^api voice cloning$/i,
       audio_processing: /^audio cleanup$/i,
       live_call: /^live call$/i,

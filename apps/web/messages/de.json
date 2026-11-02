@@ -1166,7 +1166,9 @@
         "tts": "Stimmgenerierung",
         "voice_cloning": "Stimmklonen",
         "live_call": "Live-Anruf",
-        "audio_processing": "Audiobereinigung"
+        "audio_processing": "Audiobereinigung",
+        "api_tts": "API-Stimmgenerierung",
+        "api_voice_cloning": "API-Stimmklonen"
       }
     },
     "table": {
