@@ -87,6 +87,7 @@ function resolveBanner(
 
   return {
     ariaLabelDismiss: translation.ariaLabelDismiss,
+    artwork: definition.artwork,
     countdown: countdownEndDate
       ? {
           enabled: true,

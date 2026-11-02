@@ -592,6 +592,7 @@
     "sceneTextLabel": "Scenetekst",
     "startCall": "Start et opkald",
     "connecting": "Forbinder",
+    "connectionFailed": "Kunne ikke oprette forbindelse til opkaldet. Prøv igen.",
     "reconnected": "Forbundet igen",
     "reconnectionFailed": "Genforbindelse mislykkedes",
     "configurationUpdated": "Konfiguration opdateret",
@@ -600,6 +601,7 @@
     "activeCallError": "Du har allerede et aktivt opkald i gang",
     "instructionsRejected": "Opkaldet kunne ikke starte, fordi karakteren eller scenen ikke bestod AI-udbyderens sikkerhedstjek. Rediger karakteren eller scenen, og prøv igen.",
     "microphonePermissionDenied": "Mikrofonadgang nægtet. Tillad venligst mikrofonadgang og prøv igen.",
+    "microphoneUnavailable": "Kunne ikke få adgang til din mikrofon. Kontrollér, at den er tilsluttet, luk andre apps, der bruger den, og prøv igen.",
     "disconnected": "Afbrudt",
     "chooseCharacter": "Hvem vil du tale med?",
     "presetRemoved": "Preset fjernet",
@@ -1007,8 +1009,8 @@
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween-tilbud – Få op til 35% ekstra kreditter ved køb 👻\nTidsbegrænset tilbud 🦇",
-      "ctaLoggedIn": "Få tilbud 🎃",
-      "ctaLoggedOut": "Tilmeld dig nu 🎃",
+      "ctaLoggedIn": "Få tilbud",
+      "ctaLoggedOut": "Få tilbud",
       "ariaLabelDismiss": "Luk Halloween-banner",
       "pricing": {
         "bannerText": "🎃 Halloween-tilbud"

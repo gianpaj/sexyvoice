@@ -9,7 +9,6 @@ import { NextResponse } from 'next/server';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatContribution, summarizeContribution } from './contribution';
 import { getContributionData } from './contribution-queries';
-import { formatOverheadBasis } from './overhead';
 
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
@@ -30,6 +29,7 @@ import {
   getCallSessionDurationsBefore,
   getCallSessionsInRange,
   getClonedAudioFilesInRange,
+  getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
   getProfileUsernamesByIds,
@@ -876,17 +876,20 @@ export async function GET(request: NextRequest) {
 
   const creditsTodayCount = purchasePrevDayData.length;
 
-  // Contribution uses fresh usage and payment history together. Cached purchases
-  // could misclassify fresh usage or understate collections; cached activity
-  // metrics are only for local debugging and do not feed this calculation.
+  // Contribution uses fresh usage and collections; cached activity can omit payments.
   const contributionData = await _timed(
     `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
     getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
   );
   const contributionTransactions = loadedFromValidCache
     ? await _timed(
-        `credit_transactions:all_time paginated (cached path) < ${today.toISOString().slice(0, 10)}`,
-        getAllCreditTransactions(supabase, today, internalUserIds),
+        `credit_transactions:30d paginated (cached path) ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCreditTransactionsInRange(
+          supabase,
+          thirtyDaysAgo,
+          today,
+          internalUserIds,
+        ),
       )
     : allCreditTransactions;
   const contributionYesterday = summarizeContribution(
@@ -1320,11 +1323,9 @@ export async function GET(request: NextRequest) {
       ? ['', '🚨 Alerts', ...alerts.map((alert) => `- ${alert}`)]
       : []),
     '',
-    '💸 Usage economics (estimated, before payment fees)',
+    '💸 Usage economics (est., before fees)',
     ...formatContribution('Yesterday', contributionYesterday),
     ...formatContribution('30d', contribution30d),
-    formatOverheadBasis(),
-    'Call estimates omit $0.004 per text input and tool charges; totals are not invoice-reconciled.',
     '',
     '🔻 Funnel',
     `- New profiles: ${profilesTodayCount}`,
@@ -1353,8 +1354,7 @@ export async function GET(request: NextRequest) {
     `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
-    `  - Estimated usage cost: $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
-    `  - Fly.io call-server hosting (included in overhead): $${contributionYesterday.overhead.callServer.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.overhead.callServer.toFixed(2)}`,
+    `  - AI usage (est.): $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,

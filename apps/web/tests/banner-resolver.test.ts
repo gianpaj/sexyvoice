@@ -60,6 +60,15 @@ const messages = {
       },
       text: 'Black Friday Sale',
     },
+    halloweenBanner: {
+      ariaLabelDismiss: 'Dismiss Halloween banner',
+      ctaLoggedIn: 'Claim offer',
+      ctaLoggedOut: 'Sign up now',
+      pricing: {
+        bannerText: 'Halloween Special',
+      },
+      text: 'Halloween Special',
+    },
   },
 } as IntlMessages;
 
@@ -169,6 +178,27 @@ describe('resolveActiveBanner', () => {
       enabled: true,
       endDate: '2026-12-01T00:00:00.000Z',
     });
+  });
+
+  it('attaches artwork only to the Halloween promo', () => {
+    process.env.NEXT_PUBLIC_PROMO_ENABLED = 'true';
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'halloweenBanner';
+    unsetEnv('NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER');
+
+    const options = {
+      audience: 'loggedOut',
+      lang: 'en',
+      messages,
+      placement: 'landing',
+    } as const;
+
+    expect(resolveActiveBanner(options)?.artwork).toMatchObject({
+      desktop: { src: '/images/banners/halloween-desktop.webp' },
+      mobile: { src: '/images/banners/halloween-mobile.webp' },
+    });
+
+    process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER = 'blackFridayBanner';
+    expect(resolveActiveBanner(options)?.artwork).toBeUndefined();
   });
 
   it('returns null when promos are enabled without a selected banner', () => {

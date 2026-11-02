@@ -28,7 +28,7 @@ const savedCharacter: Preset = {
   sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
 };
 
-// Mirrors the wiring in app/[lang]/(dashboard)/dashboard/call/layout.tsx, which
+// Mirrors the wiring in app/[lang]/(dashboard)/dashboard/call/page.tsx, which
 // seeds the first public character as the initial selection.
 function makeWrapper(initialCustomCharacters: Preset[]) {
   return function Wrapper({ children }: { children: ReactNode }) {

@@ -28,29 +28,16 @@ before merging to `main` and after deploying.
 - Confirm feature gates and commit-message deployment skips are intentional.
 
 Claude reviews run automatically when a non-draft PR opens or is marked ready
-for review. They pin a PR head and report CI results for that SHA. Pushes do not
-request another Claude review; comment `@claude review` when one is needed.
-Reviews use `/review-pr` in agent mode and publish a final top-level PR comment.
-The workflow verifies publication using a plain-text completion marker from
-`claude[bot]`. The review's CI report is not a workflow dependency or a guaranteed
-merge gate.
-
-Within the review job, the workflow attempts diagnostics even when setup fails
-or Claude is skipped or cancelled. It writes sanitized diagnostics to the job
-log and step summary: SDK result status, denied tool names from a fixed allowlist,
-denied Bash operation categories, and direct `gh pr comment` request/result
-counts. Command classification supports leading environment assignments and
-`env` prefixes without emitting their values. It does not interpret compound
-shell programs. Request counts do not prove publication; the completion-marker
-check remains authoritative. Missing or invalid traces are reported explicitly.
-Prompts, command arguments, tool results, final responses, and raw execution
-files are not published. Keep `show_full_output` disabled on this public repo.
+for review. Pushes do not request another review; comment `@claude review` when
+one is needed. Claude runs `/review-pr` and its five reviewer agents from the
+pinned `claude-code-action` against the PR head resolved at the start of the
+job, and returns its assessment as structured output. The workflow posts that assessment
+as a top-level PR comment from `github-actions[bot]`. The review's CI report is
+not a merge gate.
 
 Claude GitHub App authentication requires the workflow content to match the
-default branch. A PR that edits `.github/workflows/claude.yml` can verify setup
-steps, but the action skips Claude execution and the publication check fails.
-Verify command expansion, all five reviewer agents, and the final review comment
-on a subsequent review after the workflow reaches the default branch.
+default branch. A PR that edits `.github/workflows/claude.yml` skips Claude
+execution; test review changes after they reach the default branch.
 
 ## Deployment targets
 
@@ -204,9 +191,6 @@ payload contains `defaultInstructions`, `initialInstruction`, and
 - `NEXT_PUBLIC_E2E_TEST_MODE`: build-time; `true` disables the browser Sentry
   client. Set only in the E2E workflow's build step, never on Vercel. The
   server and edge clients stay off when `E2E_TEST_MODE=true` at runtime.
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: Dash0 OTLP ingress URL. `@vercel/otel`
-  exports server traces here; Sentry receives the same spans.
-- `OTEL_EXPORTER_OTLP_HEADERS`: `Authorization=Bearer <dash0-auth-token>`.
 - `AXIOM_TOKEN`
 - `NEXT_PUBLIC_POSTHOG_KEY`
 - `NEXT_PUBLIC_POSTHOG_HOST`
@@ -316,6 +300,17 @@ and the `/monitoring` browser tunnel. Source maps upload only when
 `VERCEL_ENV=production`; do not expect uploads from preview deployments.
 Confirm the production build uploads maps and that the tunnel reaches Sentry.
 
+`pnpm-workspace.yaml` pins `@opentelemetry/api` to one version for every
+OpenTelemetry consumer. Sentry's `suppressTracing` keeps the SDK's own envelope
+uploads out of traces only when all of them share that copy. As a backstop, the
+server and edge configs drop `http.client` spans to
+`*.sentry.io/api/<id>/envelope/` through `ignoredServerSpans` in
+`apps/web/lib/sentry/server-filters.ts`. The filter only protects Sentry's span
+quota; context propagation still breaks if a second copy returns. After a
+release that touches Sentry or OpenTelemetry packages, check that
+`pnpm why -r @opentelemetry/api` lists a single version and that Sentry's span
+usage shows no `http.client` transactions to the ingest host.
+
 For crashes and per-event browser/device details, use
 [Sentry issue triage](../scripts/README.md#sentry-issue-triage). For handled
 Gemini failures, use the [application-log investigation](../scripts/README.md#2-correlate-sentry-application-logs).
@@ -330,16 +325,13 @@ needs instrumentation because auth wrapping is per instance. Trace sampling is
 10% in all three Sentry configs; server and edge reporting require production
 `NODE_ENV` and stay off when `E2E_TEST_MODE=true`.
 
-On Node, `@vercel/otel` owns the OpenTelemetry tracer provider
-(`skipOpenTelemetrySetup: true`), and `SentrySpanProcessor` forwards its spans to
-Sentry. `pnpm-workspace.yaml` pins `@opentelemetry/api` to one version for both.
-If they load different minor versions, Sentry sees a no-op tracer and records no
-server spans. Recheck the pin when upgrading Sentry or `@vercel/otel`.
+On Node, Sentry owns the OpenTelemetry tracer provider. Keep its automatic
+setup enabled and preserve `ignoredServerSpans` alongside the privacy hooks.
+The shared OpenTelemetry API pin and envelope filter are described above.
 
 Sentry owns outgoing trace propagation to Supabase. Node and browser configs
 enable `propagateTraceparent: true`; the browser allowlist includes only
 same-origin requests and the configured `NEXT_PUBLIC_SUPABASE_URL` origin.
-`@vercel/otel` propagates context only to the deployment's own Vercel URLs, and
 Sentry does not replace trace headers a request already carries. Do not also
 enable Supabase's `tracePropagation` option or import its `/tracing` runtime: two
 propagation layers can attach different parent span IDs to the same request.
@@ -364,13 +356,10 @@ them, in every runtime:
   put secrets in object paths or identifiers.
 - Manually captured exceptions, console logs, Replay, attachments, and arbitrary
   scope data are outside this policy. It is not a general telemetry scrubber.
-- The hooks run only in Sentry's export path. The Dash0 OTLP export receives
-  server spans from `@vercel/otel` unchanged, including full Supabase request
-  URLs with query strings.
 
 The app has no Edge routes; Next.js 16 Proxy runs on Node. Before introducing an
 Edge route, revisit W3C propagation: Sentry's WinterCG fetch integration through
-10.75.0 does not honor `propagateTraceparent`. The edge config still includes
+10.75.2 does not honor `propagateTraceparent`. The edge config still includes
 privacy hooks and supports Supabase spans, but does not promise W3C headers.
 
 For deployment verification, inspect a normal dashboard Supabase request in the

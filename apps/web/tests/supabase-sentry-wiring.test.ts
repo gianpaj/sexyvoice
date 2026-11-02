@@ -286,7 +286,12 @@ describe('Sentry config initialization', () => {
       }
       expect(edgeOptions?.beforeSend).toBe(privacy.sanitizeSupabaseEvent);
       expect(nodeOptions).toHaveProperty('propagateTraceparent', true);
-      expect(nodeOptions).toHaveProperty('skipOpenTelemetrySetup', true);
+      expect(nodeOptions).not.toHaveProperty('skipOpenTelemetrySetup');
+      const { ignoredServerSpans } = await import(
+        '@/lib/sentry/server-filters'
+      );
+      expect(nodeOptions?.ignoreSpans).toBe(ignoredServerSpans);
+      expect(edgeOptions?.ignoreSpans).toBe(ignoredServerSpans);
       expect(edgeOptions).not.toHaveProperty('propagateTraceparent');
     },
   );
