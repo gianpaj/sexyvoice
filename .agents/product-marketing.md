@@ -158,7 +158,7 @@ Explain saving and reuse where a customer needs to choose between the flows.
 
 - 10,000 free credits ≈ 10 minutes of speech at the published ~1,000 credits/minute rule of thumb, no card required. Actual burn rate varies a lot by voice and model — see the table below before quoting a duration.
 - Live calls cost 1,000 credits/minute
-- Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first purchase or top-up (`isFreeUserOverCallLimit` → `hasUserPaid`). The in-product string says it correctly: "Free users are limited to 5 minutes of calls."
+- Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first purchase or top-up (`isFreeUserOverCallLimit` → `hasUserPaid`).
 - Pro is 37.5% cheaper per credit than Standard; subscriptions add 15% more credits
 - Voice cloning from as little as 10 seconds of audio
 - Site available in 6 languages: EN, ES, DE, DA, IT, FR
