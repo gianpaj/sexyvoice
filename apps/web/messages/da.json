@@ -923,7 +923,7 @@
     "microphoneError": "Mikrofonfejl",
     "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
     "referenceAudioGuidanceLong": "Brug et klart referenceklip på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
-    "paidTextLimitTooltip": "Betalende brugere kan klone længere tale med op til __MAX__ tegn.",
+    "paidTextLimitTooltip": "Du kan generere længere tale med op til __MAX__ tegn.",
     "upgradeTextLimitTooltip": "Køb kreditter for at generere længere tale med op til __MAX__ tegn.",
     "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
     "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",

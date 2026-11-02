@@ -927,7 +927,7 @@
     "microphoneError": "Errore del microfono",
     "referenceAudioGuidanceShort": "Per risultati migliori: usa un clip di riferimento pulito, con una sola voce e di almeno __MIN__ secondi. Vengono usati solo i primi __TRIM_SECONDS__ secondi.",
     "referenceAudioGuidanceLong": "Usa un clip di riferimento chiaro di almeno __MIN__ secondi. Vengono usati solo i primi __TRIM_SECONDS__ secondi.",
-    "paidTextLimitTooltip": "Gli utenti a pagamento possono clonare parlato più lungo con fino a __MAX__ caratteri.",
+    "paidTextLimitTooltip": "Puoi generare parlato con testi fino a __MAX__ caratteri.",
     "upgradeTextLimitTooltip": "Acquista crediti per generare parlato con testi fino a __MAX__ caratteri.",
     "audioDurationUnknown": "Impossibile determinare la durata dell'audio.",
     "audioDurationInvalidVoxtral": "L'audio di riferimento deve durare almeno __MIN__ secondi per la clonazione vocale.",

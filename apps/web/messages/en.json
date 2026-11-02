@@ -925,7 +925,7 @@
     "microphoneError": "Microphone error",
     "referenceAudioGuidanceShort": "For best results: use a clean, single-speaker clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
     "referenceAudioGuidanceLong": "Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
-    "paidTextLimitTooltip": "Paid users can clone longer speech with up to __MAX__ characters.",
+    "paidTextLimitTooltip": "You can generate longer speech, up to __MAX__ characters.",
     "upgradeTextLimitTooltip": "Buy credits to generate longer speech, up to __MAX__ characters.",
     "audioDurationUnknown": "Could not determine audio duration.",
     "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",

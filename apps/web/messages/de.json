@@ -927,7 +927,7 @@
     "microphoneError": "Mikrofonfehler",
     "referenceAudioGuidanceShort": "Verwenden Sie einen sauberen Referenzclip mit nur einer sprechenden Person von mindestens __MIN__ Sekunden. Es werden nur die ersten __TRIM_SECONDS__ Sekunden verwendet.",
     "referenceAudioGuidanceLong": "Verwenden Sie einen klaren Referenzclip von mindestens __MIN__ Sekunden. Es werden nur die ersten __TRIM_SECONDS__ Sekunden verwendet.",
-    "paidTextLimitTooltip": "Zahlende Nutzer können längere Sprache mit bis zu __MAX__ Zeichen klonen.",
+    "paidTextLimitTooltip": "Sie können längere Texte mit bis zu __MAX__ Zeichen vertonen.",
     "upgradeTextLimitTooltip": "Kaufen Sie Credits, um längere Texte mit bis zu __MAX__ Zeichen zu vertonen.",
     "audioDurationUnknown": "Die Audiodauer konnte nicht ermittelt werden.",
     "audioDurationInvalidVoxtral": "Das Referenz-Audio muss für das Klonen der Stimme mindestens __MIN__ Sekunden lang sein.",
