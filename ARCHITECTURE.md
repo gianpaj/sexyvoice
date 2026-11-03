@@ -461,6 +461,10 @@ The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories
 remain until erased with the Profile page's delete action, which calls
 `DELETE /api/memories`. Memory controls live only on the Profile page.
+Account deletion also erases every memory row and its embedding across all
+character scopes. Both deletion paths use `lib/supabase/memories.ts` to filter
+by the authenticated user. A failed memory erasure blocks the account-deletion
+success response and is reported to Sentry.
 
 ### Call Setup
 
