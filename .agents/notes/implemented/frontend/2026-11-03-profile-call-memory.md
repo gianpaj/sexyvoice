@@ -13,7 +13,8 @@ paid entitlements and ownership checks remain separate.
 
 Read current Auth data when issuing a memory-enabled call token. A stale
 JWT must not override a saved opt-out, including on another device. Failed
-preference reads block token issuance. Explicit `memory: false` requests
+preference reads log a warning and disable memory for the call. Explicit
+`memory: false` requests
 remain an additional opt-out. The setting applies at call start; it does
 not change active calls or delete stored memories.
 
@@ -30,11 +31,9 @@ not change active calls or delete stored memories.
 
 - `pnpm fixall`, `pnpm type-check`, translation checks, and `git diff --check`
   pass. English and Spanish privacy content builds through Contentlayer.
-- Focused schema, payload, route, and profile UI coverage passes: 90 tests.
-- The full web run passes 1,958 tests in 136 files. Two Redis suites cannot
-  bind a port in the sandbox; rerunning those with local process access
-  passes all 49 tests. All 138 files pass across these runs, with 18 skipped
-  tests outside the Redis suites.
+- Focused schema, payload, route, and profile UI coverage passes: 96 tests.
+- The full web run passes 2,013 tests in all 138 files, with 18 skipped tests.
+  The Redis suites require local socket access outside the sandbox.
 - Preference tests cover free calls, absent preferences, explicit per-call
   opt-outs, stale JWT metadata, failed reads, and a changed account setting
   applied to the next call. UI tests cover saving both values, failed saves,
@@ -61,7 +60,17 @@ hook. This limitation exists in the checked agent main branch. See
 [LiveKit's realtime turn detection requirement](https://docs.livekit.io/agents/logic/nodes/#on-user-turn-completed).
 
 Verification passes 72 existing agent tests plus five isolated lifecycle and
-SDK checks, and all 59 web generation-route tests including the Inworld
+SDK checks, and all 62 web generation-route tests including the Inworld
 preference cases. Agent checks use an exact-main snapshot under `/tmp`, real
 model constructors, and fake embedding, extraction, and database boundaries.
 No live calls or production data writes are part of this verification.
+
+## Review decisions
+
+An unreadable preference disables memory and logs a warning while allowing the
+call to start. This respects every opt-out without making optional memory an
+availability dependency. The lookup overlaps voice and character resolution.
+
+Default-on collection follows the requested product behavior. It does not
+record affirmative consent, and the review objection about consent remains
+open. The implementation does not establish a lawful basis for collection.

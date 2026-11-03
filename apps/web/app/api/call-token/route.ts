@@ -40,6 +40,25 @@ function appendSceneInstructions(
   return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
 }
 
+async function resolveMemoryPreference(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<boolean> {
+  try {
+    // biome-ignore lint/plugin/use-verified-claims: Read the saved preference so stale JWT metadata cannot override an opt-out.
+    const { data, error } = await supabase.auth.getUser();
+    if (error || data?.user?.id !== userId) {
+      throw new Error('Memory preference unavailable');
+    }
+    return isCallMemoryEnabled(data.user.user_metadata);
+  } catch {
+    logger.warn('Memory preference unavailable; starting call without memory', {
+      user: { id: userId },
+    });
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   let user: { id: string; email?: string } | null = null;
   try {
@@ -126,6 +145,10 @@ export async function POST(request: Request) {
     const selectedLanguage = languageInitialInstructions[language]
       ? language
       : defaultLanguage;
+
+    const memoryPreference = memory
+      ? resolveMemoryPreference(supabase, user.id)
+      : Promise.resolve(false);
 
     // Validate voice exists in DB
     const voiceObj = await resolveCallVoice(
@@ -235,15 +258,7 @@ export async function POST(request: Request) {
       );
     }
 
-    let memoryEnabled = false;
-    if (memory) {
-      // biome-ignore lint/plugin/use-verified-claims: Read the current memory preference so stale JWT metadata cannot override an opt-out.
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user || data.user.id !== user.id) {
-        return APIErrorResponse('Failed to load memory preference', 503);
-      }
-      memoryEnabled = isCallMemoryEnabled(data.user.user_metadata);
-    }
+    const memoryEnabled = await memoryPreference;
 
     const defaultSceneText = callScenes.find(
       (s) => s.id === selectedSceneId,

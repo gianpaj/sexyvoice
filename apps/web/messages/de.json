@@ -175,8 +175,8 @@
           "description": "Jeder Anruf wird bei der Übertragung verschlüsselt. Kein Mensch hört Ihre Gespräche mit."
         },
         "forgotten": {
-          "title": "Du bestimmst, was bleibt",
-          "description": "Charaktere erinnern sich standardmäßig zwischen Anrufen an dich. Schalte die Erinnerung aus oder lösche gespeicherte Erinnerungen in deinem Profil."
+          "title": "Sie bestimmen, was bleibt",
+          "description": "Charaktere erinnern sich standardmäßig zwischen Anrufen an Sie. Schalten Sie die Erinnerung aus oder löschen Sie gespeicherte Erinnerungen in Ihrem Profil."
         }
       },
       "customCharacter": {

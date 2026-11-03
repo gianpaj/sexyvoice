@@ -1,3 +1,4 @@
+import { logger } from '@sentry/nextjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as callToken } from '@/app/api/call-token/route';
@@ -334,6 +335,7 @@ describe('Generation route claims authentication', () => {
   );
 
   it.each([
+    { data: null, error: null },
     { data: { user: null }, error: null },
     {
       data: { user: { id: subject, user_metadata: {} } },
@@ -341,17 +343,49 @@ describe('Generation route claims authentication', () => {
     },
     { data: { user: { id: 'another-user', user_metadata: {} } }, error: null },
   ])(
-    'does not issue a token when the memory preference cannot be read',
+    'starts without memory when the memory preference cannot be read',
     async (result) => {
       vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
       mocks.getUser.mockResolvedValue(result);
 
       const response = await callToken(jsonRequest('call-token', callBody));
 
-      expect(response.status).toBe(503);
-      expect(mocks.token).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(JSON.parse(mocks.token.mock.calls[0][2].metadata).memory).toBe(
+        false,
+      );
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Memory preference unavailable; starting call without memory',
+        { user: { id: subject } },
+      );
     },
   );
+
+  it('starts without memory when the preference lookup throws', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+    mocks.getUser.mockRejectedValue(new Error('Auth unavailable'));
+
+    const response = await callToken(jsonRequest('call-token', callBody));
+
+    expect(response.status).toBe(200);
+    expect(JSON.parse(mocks.token.mock.calls[0][2].metadata).memory).toBe(
+      false,
+    );
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('starts preference and voice lookups together', async () => {
+    vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+    const voice = await queries.getVoiceIdByName('eve');
+    vi.mocked(queries.getVoiceIdByName).mockImplementationOnce(async () => {
+      expect(mocks.getUser).toHaveBeenCalledOnce();
+      return voice;
+    });
+
+    const response = await callToken(jsonRequest('call-token', callBody));
+
+    expect(response.status).toBe(200);
+  });
 
   it('reads a changed profile preference for the next call with the same claims', async () => {
     vi.mocked(queries.hasUserPaid).mockResolvedValue(true);

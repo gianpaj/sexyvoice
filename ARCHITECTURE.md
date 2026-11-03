@@ -452,7 +452,8 @@ page's Voice Call Memory switch saves `call_memory_enabled` in Auth
 `user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
 absent preference to enabled. The call-token route reads the current preference
 with `getUser()` for each memory-enabled request; JWT metadata is a snapshot
-and cannot override a saved opt-out. A failed lookup blocks token issuance.
+and cannot override a saved opt-out. The lookup overlaps voice and character
+resolution. A failed lookup logs a warning and starts the call without memory.
 An explicit request flag of `memory: false` also disables memory. This is a
 user preference, not an entitlement or authorization check.
 
@@ -515,7 +516,7 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 | Max output tokens | Nullable; defaults to the agent's model behavior                                    |
 | Instructions      | Server-resolved database prompt for the selected character                          |
 | Language          | 20 supported call languages; English fallback                                       |
-| Memory            | Paid, opt-in backend; off by default                                                |
+| Memory            | On by default for all accounts; saved Profile opt-out                               |
 
 ### Call transcript analysis
 
