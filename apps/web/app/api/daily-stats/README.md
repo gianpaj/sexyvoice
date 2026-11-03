@@ -14,6 +14,11 @@ and `duration_seconds > 10`, regardless of end reason. It counts calls
 by `started_at` for yesterday and 14 complete UTC days. Total calls and usage
 costs include other sessions. Short calls alone do not establish a failure.
 
+The Calls section's `Cloned voices` line counts sessions using saved Inworld
+or Mistral voices for yesterday and 14 complete UTC days. It uses
+`callVoiceProvider(call_sessions.model)` and includes every session status,
+matching total calls. Internal users are excluded from both counts.
+
 ## Usage contribution
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,

@@ -232,10 +232,26 @@ describe('contribution reads', () => {
     ]);
     expect(calls).toHaveLength(PAGE_SIZE + 1);
     expect(requests).toHaveLength(2);
-    expect(requests[0].operations).toContainEqual([
-      'notIn',
-      ['user_id', ['internal']],
-    ]);
+    for (const request of requests) {
+      expect(request.operations).toContainEqual([
+        'select',
+        [
+          'id, started_at, duration_seconds, credits_used, status, free_call, model',
+        ],
+      ]);
+      expect(request.operations).toContainEqual([
+        'notIn',
+        ['user_id', ['internal']],
+      ]);
+      expect(request.operations).toContainEqual([
+        'gte',
+        ['started_at', start.toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'lt',
+        ['started_at', end.toISOString()],
+      ]);
+    }
     expect(calls[PAGE_SIZE].id).toBe('1-0');
     expect(requests[1].operations).toContainEqual([
       'gte',
