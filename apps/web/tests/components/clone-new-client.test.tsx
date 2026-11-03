@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type AbstractIntlMessages, NextIntlClientProvider } from 'next-intl';
@@ -259,6 +260,8 @@ const dict = {
   uploadAudioFile: 'Upload audio file',
 } as const;
 
+let queryClient: QueryClient;
+
 const renderClone = (
   props: {
     savedVoices?: SavedCallVoice[];
@@ -276,29 +279,48 @@ const renderClone = (
   } = {},
 ) =>
   render(
-    <NextIntlClientProvider
-      locale="es"
-      messages={{
-        call: enMessages.call,
-        clone: props.cloneMessages ?? dict,
-        errorCodes: errorCodesDict,
-        generate: enMessages.generate,
-        landing: enMessages.landing,
-        ttsEditor: enMessages.ttsEditor,
-      }}
-    >
-      <NewVoiceClient
-        callCloneProvider={props.callCloneProvider}
-        hasEnoughCredits={props.hasEnoughCredits ?? true}
-        initialDemo={props.initialDemo}
-        initialSaveForCalls={props.initialSaveForCalls}
-        lang={props.lang ?? 'en'}
-        savedVoices={props.savedVoices}
-        userHasPaid={props.userHasPaid ?? false}
-        voiceUsers={props.voiceUsers}
-      />
-    </NextIntlClientProvider>,
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider
+        locale="es"
+        messages={{
+          call: enMessages.call,
+          clone: props.cloneMessages ?? dict,
+          errorCodes: errorCodesDict,
+          generate: enMessages.generate,
+          landing: enMessages.landing,
+          ttsEditor: enMessages.ttsEditor,
+        }}
+      >
+        <NewVoiceClient
+          callCloneProvider={props.callCloneProvider}
+          hasEnoughCredits={props.hasEnoughCredits ?? true}
+          initialDemo={props.initialDemo}
+          initialSaveForCalls={props.initialSaveForCalls}
+          lang={props.lang ?? 'en'}
+          savedVoices={props.savedVoices}
+          userHasPaid={props.userHasPaid ?? false}
+          voiceUsers={props.voiceUsers}
+        />
+      </NextIntlClientProvider>
+    </QueryClientProvider>,
   );
+
+const submitClone = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.type(
+    await screen.findByLabelText(dict.textToConvertLabel),
+    'Hello world',
+  );
+  await user.click(
+    screen.getByRole('checkbox', {
+      name: dict.legalConsentCheckbox,
+    }),
+  );
+  await user.click(
+    screen.getByRole('button', {
+      name: /generate audio/i,
+    }),
+  );
+};
 
 const renderedLocaleCodes = () => {
   const lastCall = mockLanguageSelect.mock.lastCall?.[0] as {
@@ -709,6 +731,7 @@ describe('NewVoiceClient', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;
+    queryClient = new QueryClient();
     mockUpload.files = [{ file: selectedFile, id: 'selected-file' }];
     fetchMock.mockResolvedValue(
       new Response(
@@ -1031,20 +1054,7 @@ describe('NewVoiceClient', () => {
 
       renderClone();
 
-      await user.type(
-        await screen.findByLabelText(dict.textToConvertLabel),
-        'Hello world',
-      );
-      await user.click(
-        screen.getByRole('checkbox', {
-          name: dict.legalConsentCheckbox,
-        }),
-      );
-      await user.click(
-        screen.getByRole('button', {
-          name: /generate audio/i,
-        }),
-      );
+      await submitClone(user);
 
       expect(
         await screen.findByText(
@@ -1075,23 +1085,87 @@ describe('NewVoiceClient', () => {
 
     renderClone();
 
-    await user.type(
-      await screen.findByLabelText(dict.textToConvertLabel),
-      'Hello world',
-    );
-    await user.click(
-      screen.getByRole('checkbox', {
-        name: dict.legalConsentCheckbox,
-      }),
-    );
-    await user.click(
-      screen.getByRole('button', {
-        name: /generate audio/i,
-      }),
-    );
+    await submitClone(user);
 
     expect(
       await screen.findByText('You need 252 credits to clone this audio.'),
     ).toBeInTheDocument();
+  });
+  describe('credit refresh', () => {
+    it('refreshes credits after a successful clone', async () => {
+      const user = userEvent.setup();
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+
+      renderClone();
+      await submitClone(user);
+
+      await waitFor(() => expect(mockToastSuccess).toHaveBeenCalled());
+      expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
+        queryKey: ['credits'],
+      });
+    });
+
+    it('refreshes credits after a server-reported failure', async () => {
+      const user = userEvent.setup();
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      fetchMock.mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 'errors.internalError',
+            error: 'An unexpected error occurred while cloning voice.',
+            status: 500,
+          }),
+          { headers: { 'content-type': 'application/json' }, status: 500 },
+        ),
+      );
+
+      renderClone();
+      await submitClone(user);
+
+      await waitFor(() =>
+        expect(invalidateQueries).toHaveBeenCalledExactlyOnceWith({
+          queryKey: ['credits'],
+        }),
+      );
+    });
+
+    it('does not refresh credits when the clone is cancelled', async () => {
+      const user = userEvent.setup();
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      fetchMock.mockImplementationOnce(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => {
+              reject(new Error('signal is aborted without reason'));
+            });
+          }),
+      );
+
+      renderClone();
+      await submitClone(user);
+      await user.click(
+        await screen.findByRole('button', { name: dict.cancelButton }),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: dict.cancelButton }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
+
+    it('does not refresh credits when the request fails without a response', async () => {
+      const user = userEvent.setup();
+      const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');
+      fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+      renderClone();
+      await submitClone(user);
+
+      expect(await screen.findByText('Failed to fetch')).toBeInTheDocument();
+      expect(invalidateQueries).not.toHaveBeenCalled();
+    });
   });
 });
