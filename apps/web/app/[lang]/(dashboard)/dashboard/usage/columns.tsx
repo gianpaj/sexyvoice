@@ -135,14 +135,7 @@ export function useColumns(): ColumnDef<UsageEvent>[] {
         accessorKey: 'source_type',
         cell: ({ row }) => {
           const sourceType = row.original.source_type as UsageSourceType;
-          let label: string;
-          if (sourceType === 'api_tts') {
-            label = 'API TTS';
-          } else if (sourceType === 'api_voice_cloning') {
-            label = 'API Voice Cloning';
-          } else {
-            label = t(`summary.byType.${sourceType}`);
-          }
+          const label = t(`summary.byType.${sourceType}`);
           return (
             <Badge
               className={`${SOURCE_TYPE_COLORS[sourceType]} border`}

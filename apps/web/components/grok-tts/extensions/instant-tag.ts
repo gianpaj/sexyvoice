@@ -1,18 +1,16 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 
 import {
-  GROK_INSTANT_TAGS,
   GROK_TAG_CHIP_CLASS,
-  type GrokInstantTag,
+  isKnownTtsTag,
+  type TtsEditorProvider,
+  type TtsInstantTag,
 } from '@/lib/tts-editor';
 
-const INSTANT_TAGS = new Set(GROK_INSTANT_TAGS);
-
-function isGrokInstantTag(tag: string): tag is GrokInstantTag {
-  return INSTANT_TAGS.has(tag as GrokInstantTag);
-}
-
-export const InstantTag = Node.create({
+export const InstantTag = Node.create<{ provider: TtsEditorProvider }>({
+  addOptions() {
+    return { provider: 'grok' };
+  },
   addAttributes() {
     return {
       tag: {
@@ -54,11 +52,13 @@ export const InstantTag = Node.create({
   renderText({ node }) {
     const tag = node.attrs.tag;
 
-    return typeof tag === 'string' && isGrokInstantTag(tag) ? tag : '';
+    return typeof tag === 'string' && isKnownTtsTag(tag, this.options.provider)
+      ? tag
+      : '';
   },
 });
 
-export function createInstantTagNode(tag: GrokInstantTag) {
+export function createInstantTagNode(tag: TtsInstantTag) {
   return {
     attrs: {
       tag,

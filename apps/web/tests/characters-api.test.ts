@@ -12,6 +12,9 @@ let mockIsAuthenticated = true;
 let mockHasUserPaid = true;
 let mockCustomCharacterCount = 0;
 let mockVoiceExists = true;
+let mockReferenceOwner = mockUser.id;
+let mockReferenceProvider = 'mistral';
+const referenceId = '11111111-1111-4111-8111-111111111111';
 
 // Track DB operations for assertions
 const insertedPrompts: Record<string, unknown>[] = [];
@@ -121,8 +124,27 @@ function createQueryBuilder(tableName: string) {
     return resolveQuery();
   };
 
+  builder.maybeSingle = builder.single;
+
   // Resolve the builder into a result
   function resolveQuery(): { data: unknown; error: unknown; count?: number } {
+    if (_table === 'audio_references') {
+      const row = {
+        id: referenceId,
+        user_id: mockReferenceOwner,
+        provider: mockReferenceProvider,
+        name: 'My voice',
+        voice_id: 'provider-voice',
+      };
+      return {
+        data: _filters.every(
+          ({ column, value }) => row[column as keyof typeof row] === value,
+        )
+          ? row
+          : null,
+        error: null,
+      };
+    }
     // ── prompts table ──
     if (_table === 'prompts') {
       if (_operation === 'insert') {
@@ -317,6 +339,8 @@ describe('/api/characters', () => {
     mockHasUserPaid = true;
     mockCustomCharacterCount = 0;
     mockVoiceExists = true;
+    mockReferenceOwner = mockUser.id;
+    mockReferenceProvider = 'mistral';
     insertedPrompts.length = 0;
     insertedCharacters.length = 0;
     updatedPrompts.length = 0;
@@ -324,6 +348,69 @@ describe('/api/characters', () => {
     deletedCharacterIds.length = 0;
     deletedPromptIds.length = 0;
   });
+
+  it.each([
+    {
+      owner: mockUser.id,
+      provider: 'mistral',
+      model: 'mistral-tts',
+      status: 201,
+    },
+    {
+      owner: 'other-user',
+      provider: 'mistral',
+      model: 'mistral-tts',
+      status: 400,
+    },
+    {
+      owner: mockUser.id,
+      provider: 'inworld',
+      model: 'mistral-tts',
+      status: 400,
+    },
+    {
+      owner: mockUser.id,
+      provider: 'inworld',
+      model: 'inworld-tts',
+      status: 201,
+    },
+    {
+      owner: 'other-user',
+      provider: 'inworld',
+      model: 'inworld-tts',
+      status: 400,
+    },
+  ])(
+    'validates a cloned character voice: $owner $provider',
+    async ({ owner, provider, model, status }) => {
+      mockReferenceOwner = owner;
+      mockReferenceProvider = provider;
+      const body = validCreateBody({
+        voiceName: 'My voice',
+        sessionConfig: {
+          ...validCreateBody().sessionConfig,
+          model,
+          voice: 'My voice',
+          audioReferenceId: referenceId,
+        },
+      });
+      const response = await POST(makeRequest(body));
+      expect(response.status).toBe(status);
+      if (status === 201) {
+        expect(insertedCharacters[0]).toMatchObject({
+          voice_id: '420c4014-7d6d-44ef-b87d-962a3124a170',
+          session_config: {
+            audioReferenceId: referenceId,
+            model,
+            voice: 'My voice',
+          },
+        });
+      } else {
+        expect(insertedCharacters).toHaveLength(0);
+        expect(insertedPrompts).toHaveLength(0);
+      }
+    },
+  );
 
   // ─── Authentication ────────────────────────────────────────────────
   describe('authentication', () => {

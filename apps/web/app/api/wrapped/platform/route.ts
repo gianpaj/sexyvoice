@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -68,11 +69,6 @@ interface Profile {
   created_at: string | null;
   id: string;
 }
-
-const CLONE_MODELS = [
-  'resemble-ai/chatterbox',
-  'resemble-ai/chatterbox-multilingual',
-];
 
 // Platform launch date (you can adjust this)
 const PLATFORM_LAUNCH_DATE = '2025-04-25';
@@ -336,7 +332,7 @@ export async function GET() {
 
     // Voice cloning stats
     const clonedAudioFiles = audioFiles.filter((file) =>
-      CLONE_MODELS.includes(file.model),
+      VOICE_CLONING_MODELS.includes(file.model),
     );
 
     // Unique paid users

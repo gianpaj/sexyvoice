@@ -1,91 +1,76 @@
 'use client';
 
+import { useVoiceAssistant } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface UseCallTimerResult {
-  /** Elapsed time in seconds since the call was connected */
+  /** Seconds since the agent was first ready in this connection */
   elapsedSeconds: number;
   /** Formatted time string in MM:SS or HH:MM:SS format */
   formattedTime: string;
   /** Whether the timer is currently running */
   isRunning: boolean;
-  /** Reset the timer to zero */
-  reset: () => void;
 }
 
+/** The agent reports these once its voice pipeline is running. */
+const READY_AGENT_STATES = new Set<string>([
+  'listening',
+  'thinking',
+  'speaking',
+]);
+
 /**
- * Hook to track the duration of a call since connection was established.
+ * Tracks the call duration the way SexyCall bills it.
  *
- * @param connectionState - The current LiveKit connection state
- * @returns Object containing elapsed time, formatted time string, and timer state
+ * The agent starts billing when it starts its voice pipeline, which is when it
+ * first reports `listening`, `thinking` or `speaking`. The timer starts then,
+ * not when the room connects, and runs until the room disconnects, so an agent
+ * restarting its pipeline mid-call does not reset it.
+ *
+ * Must be used inside a LiveKit room.
  */
 export function useCallTimer(
   connectionState: ConnectionState,
 ): UseCallTimerResult {
+  const { state: agentState } = useVoiceAssistant();
+  const connected = connectionState === ConnectionState.Connected;
+  const agentReady = READY_AGENT_STATES.has(agentState);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-
-  const isConnected = connectionState === ConnectionState.Connected;
 
   useEffect(() => {
-    if (isConnected) {
-      // Start the timer when connected
-      if (!startTimeRef.current) {
-        startTimeRef.current = Date.now();
-      }
-
-      intervalRef.current = setInterval(() => {
-        if (startTimeRef.current) {
-          const elapsed = Math.floor(
-            (Date.now() - startTimeRef.current) / 1000,
-          );
-          setElapsedSeconds(elapsed);
-        }
-      }, 1000);
-    } else {
-      // Stop the timer when disconnected
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      // Reset when disconnected
-      startTimeRef.current = null;
+    if (!connected) {
+      setStartedAt(null);
       setElapsedSeconds(0);
+    } else if (agentReady) {
+      setStartedAt((started) => started ?? Date.now());
     }
+  }, [connected, agentReady]);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isConnected]);
-
-  const reset = () => {
-    startTimeRef.current = isConnected ? Date.now() : null;
-    setElapsedSeconds(0);
-  };
-
-  const formatTime = (totalSeconds: number): string => {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    const pad = (num: number): string => num.toString().padStart(2, '0');
-
-    if (hours > 0) {
-      return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-    }
-
-    return `${pad(minutes)}:${pad(seconds)}`;
-  };
+  useEffect(() => {
+    if (startedAt === null) return;
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [startedAt]);
 
   return {
     elapsedSeconds,
     formattedTime: formatTime(elapsedSeconds),
-    isRunning: isConnected,
-    reset,
+    isRunning: startedAt !== null,
   };
+}
+
+function formatTime(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (num: number): string => num.toString().padStart(2, '0');
+
+  if (hours > 0) {
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${pad(minutes)}:${pad(seconds)}`;
 }

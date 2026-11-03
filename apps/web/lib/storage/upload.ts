@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   PutObjectCommand,
   type PutObjectCommandInput,
   S3Client,
@@ -57,4 +58,15 @@ export const deleteFileFromR2 = async (filename: string) => {
   };
 
   await s3Client.send(new DeleteObjectCommand(params));
+};
+
+export const getFileFromR2 = async (filename: string) => {
+  const { Body } = await s3Client.send(
+    new GetObjectCommand({
+      Bucket: R2_BUCKET_NAME,
+      Key: filename,
+    }),
+  );
+  if (!Body) throw new Error('Stored audio is unavailable');
+  return Body.transformToByteArray();
 };

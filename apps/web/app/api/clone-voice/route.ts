@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { Mistral } from '@mistralai/mistralai';
 import { captureException, logger, setUser } from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
+import { z } from 'zod';
 
 import { generateHash, getAudioDuration } from '@/lib/audio';
 import {
@@ -13,6 +13,7 @@ import {
   needsConversion,
   trimWavBuffer,
 } from '@/lib/audio-converter';
+import { CLONED_VOICE_ID } from '@/lib/call-voices';
 import {
   CLONE_FORM_FIELDS,
   type CloneErrorResponseBody,
@@ -20,18 +21,33 @@ import {
   type CloneSuccessResponse,
   type RouteErrorDetails,
 } from '@/lib/clone/api-types';
+import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
+import {
+  type CallCloneProvider,
+  MAX_SAVED_CALL_VOICES,
+  supportsCallCloneLocale,
+} from '@/lib/clone/call-voice-config';
 import {
   CHATTERBOX_SUPPORTED_LOCALE_CODES,
+  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   type CloneProvider,
   resolveBaseCloneLocale,
   VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
+import {
+  INWORLD_TTS_MODEL,
+  saveInworldVoice,
+  synthesizeInworldSpeech,
+} from '@/lib/clone/inworld';
+import { getMistralClient, saveMistralVoice } from '@/lib/clone/mistral';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import {
   getCloneTextMaxLength,
+  getSavedVoiceTextMaxLength,
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
+import type { VoxtralModel } from '@/lib/clone/voxtral';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { getFalBillingEventCost } from '@/lib/fal-billing';
 import PostHogClient from '@/lib/posthog';
@@ -44,6 +60,10 @@ import {
 } from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
+import {
+  countSavedCallVoices,
+  getOwnedCallVoice,
+} from '@/lib/supabase/call-voices';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
@@ -74,10 +94,10 @@ const ALLOWED_TYPES = [
   'application/octet-stream',
 ];
 
-const FALLBACK_MIN_DURATION = 10;
 const REPLICATE_REFERENCE_AUDIO_MAX_DURATION = 10;
-const VOXTRAL_MIN_DURATION = 3;
 const VOXTRAL_MAX_DURATION = 25;
+// Select 'voxtral-mini-tts-2603' to compare with the earlier model.
+const VOXTRAL_MODEL: VoxtralModel = 'voxtral-mini-tts-3-0';
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_DURATION = 60;
 const REFERENCE_AUDIO_ENHANCEMENT_MAX_INPUT_BYTES = 25 * 1024 * 1024;
 const REFERENCE_AUDIO_ENHANCEMENT_CREDITS_PER_SECOND = 10;
@@ -100,10 +120,6 @@ interface ReplicateError {
 
 type ReplicateResponse = ReplicateOutput | ReplicateError;
 
-interface CloneProviderConstraints {
-  minDurationSeconds: number;
-}
-
 interface ProcessedCloneInputAudio {
   audioHash: string;
   buffer: Buffer;
@@ -116,8 +132,11 @@ interface ProcessedCloneInputAudio {
 
 interface FormInput {
   enhanceReferenceAudio: boolean;
-  file: File;
+  file: File | null;
   locale: string;
+  /** Speak with a saved voice instead of cloning from `file`. */
+  savedVoiceId?: string;
+  saveVoiceName?: string;
   text: string;
 }
 
@@ -146,22 +165,6 @@ class RouteError extends Error {
     this.code = code;
     this.details = details;
   }
-}
-
-let mistralClient: Mistral | null = null;
-
-function getMistralClient(): Mistral {
-  const apiKey = process.env.MISTRAL_API_KEY;
-
-  if (!apiKey) {
-    throw new Error('MISTRAL_API_KEY is not configured');
-  }
-
-  if (!mistralClient) {
-    mistralClient = new Mistral({ apiKey });
-  }
-
-  return mistralClient;
 }
 
 function createRouteError(
@@ -240,20 +243,6 @@ function resolveCloneProvider(locale: string): CloneProvider {
   return isVoxtralCloneLocale(locale) ? 'mistral' : 'replicate';
 }
 
-function getCloneProviderConstraints(
-  provider: CloneProvider,
-): CloneProviderConstraints {
-  if (provider === 'mistral') {
-    return {
-      minDurationSeconds: VOXTRAL_MIN_DURATION,
-    };
-  }
-
-  return {
-    minDurationSeconds: FALLBACK_MIN_DURATION,
-  };
-}
-
 function validateContentType(contentType: string): void {
   if (!contentType.startsWith('multipart/form-data')) {
     throw createRouteError(
@@ -271,6 +260,21 @@ async function parseFormData(request: Request): Promise<FormInput> {
   const enhanceReferenceAudioValue = formData.get(
     CLONE_FORM_FIELDS.enhanceReferenceAudio,
   );
+  const nameValue = formData.get(CLONE_FORM_FIELDS.saveVoiceName);
+  const saveVoiceName =
+    typeof nameValue === 'string' ? nameValue.trim() : undefined;
+  if (
+    nameValue !== null &&
+    (!saveVoiceName ||
+      saveVoiceName.length > 50 ||
+      formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
+  ) {
+    throw createRouteError(
+      'A voice name and permission to save are required',
+      400,
+      'errors.voiceNameAndConsentRequired',
+    );
+  }
   const textValue = formData.get(CLONE_FORM_FIELDS.text);
   const file = formData.get(CLONE_FORM_FIELDS.file);
   const locale = formData.get(CLONE_FORM_FIELDS.locale);
@@ -282,7 +286,23 @@ async function parseFormData(request: Request): Promise<FormInput> {
     enhanceReferenceAudioValue === 'true';
   const localeStr = typeof locale === 'string' ? locale : '';
 
-  if (!(text && audioFile)) {
+  const savedVoiceValue = formData.get(CLONE_FORM_FIELDS.savedVoiceId);
+  const savedVoiceId =
+    typeof savedVoiceValue === 'string' && savedVoiceValue
+      ? savedVoiceValue
+      : undefined;
+  if (
+    savedVoiceId &&
+    (saveVoiceName || !z.uuid().safeParse(savedVoiceId).success)
+  ) {
+    throw createRouteError(
+      'Invalid saved voice',
+      400,
+      'errors.missingRequiredParameters',
+    );
+  }
+
+  if (!((text || saveVoiceName) && (audioFile || savedVoiceId))) {
     throw createRouteError(
       'Missing required parameters: text and audio file',
       400,
@@ -299,9 +319,11 @@ async function parseFormData(request: Request): Promise<FormInput> {
   }
 
   return {
+    saveVoiceName,
     enhanceReferenceAudio: shouldEnhanceReferenceAudio,
     file: audioFile,
     locale: localeStr,
+    savedVoiceId,
     text,
   };
 }
@@ -324,6 +346,20 @@ function validateTextLength(
     {
       MAX: maxLength,
     },
+  );
+}
+
+function validateSavedVoiceTextLength(
+  text: string,
+  provider: CallCloneProvider,
+): void {
+  const maxLength = getSavedVoiceTextMaxLength(provider);
+  if (text.length <= maxLength) return;
+  throw createRouteError(
+    `Text exceeds the maximum length of ${maxLength} characters`,
+    400,
+    'errors.textTooLong',
+    { MAX: maxLength },
   );
 }
 
@@ -359,7 +395,7 @@ function isWebmMimeType(mimeType: string): boolean {
 
 function validateAudioDuration(
   duration: number | null,
-  provider: CloneProvider,
+  provider: CloneProvider | CallCloneProvider,
 ): void {
   if (duration === null) {
     throw createRouteError(
@@ -369,26 +405,26 @@ function validateAudioDuration(
     );
   }
 
-  const constraints = getCloneProviderConstraints(provider);
+  const minSeconds = CLONE_MIN_AUDIO_SECONDS[provider];
 
-  if (duration < constraints.minDurationSeconds) {
-    if (provider === 'mistral') {
+  if (duration < minSeconds) {
+    if (provider !== 'replicate') {
       throw createRouteError(
-        `Reference audio must be at least ${constraints.minDurationSeconds} seconds for voice cloning.`,
+        `Reference audio must be at least ${minSeconds} seconds for voice cloning.`,
         400,
         'errors.audioDurationInvalidVoxtral',
         {
-          MIN: constraints.minDurationSeconds,
+          MIN: minSeconds,
         },
       );
     }
 
     throw createRouteError(
-      `Audio must be at least ${constraints.minDurationSeconds} seconds.`,
+      `Audio must be at least ${minSeconds} seconds.`,
       400,
       'errors.audioDurationInvalidFallback',
       {
-        MIN: constraints.minDurationSeconds,
+        MIN: minSeconds,
       },
     );
   }
@@ -602,6 +638,7 @@ async function processAudioFile(
   enhancementEnabled: boolean,
   locale: string,
   userId: string,
+  callProvider?: CallCloneProvider,
 ): Promise<ProcessedCloneInputAudio> {
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -629,14 +666,14 @@ async function processAudioFile(
   let processedMimeType = normalizedMimeType;
   let sourceDuration = await getAudioDuration(buffer, normalizedMimeType);
   let wasTrimmed = false;
-  const provider = resolveCloneProvider(locale);
+  const provider = callProvider ?? resolveCloneProvider(locale);
 
   const canNormalizeToWav = isConversionSupported(
     normalizedMimeType,
     file.name,
   );
   const shouldNormalizeToWav =
-    provider === 'mistral' || enhancementEnabled || canNormalizeToWav;
+    provider !== 'replicate' || enhancementEnabled || canNormalizeToWav;
 
   // Convert to WAV for providers that need normalized reference audio
   if (shouldNormalizeToWav && needsConversion(normalizedMimeType)) {
@@ -740,10 +777,11 @@ async function processAudioFile(
   let duration = await getAudioDuration(processedBuffer, processedMimeType);
   sourceDuration ??= duration;
 
-  const referenceAudioMaxDuration =
-    provider === 'mistral'
-      ? VOXTRAL_MAX_DURATION
-      : REPLICATE_REFERENCE_AUDIO_MAX_DURATION;
+  const referenceAudioMaxDuration = {
+    inworld: 30,
+    mistral: VOXTRAL_MAX_DURATION,
+    replicate: REPLICATE_REFERENCE_AUDIO_MAX_DURATION,
+  }[provider];
 
   if (duration !== null && duration > referenceAudioMaxDuration) {
     const trimmedBuffer = trimWavBuffer(
@@ -769,7 +807,7 @@ async function processAudioFile(
         },
         user: { id: userId },
       });
-    } else if (provider === 'mistral') {
+    } else if (provider !== 'replicate') {
       throw createRouteError(
         'Failed to trim reference audio for voice cloning.',
         400,
@@ -866,9 +904,9 @@ function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
 
 async function generateVoiceWithMistral(
   text: string,
-  referenceAudioBuffer: Buffer,
+  voice: { referenceAudio: Buffer } | { voiceId: string },
 ): Promise<{ buffer: Buffer; modelUsed: string; requestId: string }> {
-  const model = 'voxtral-mini-tts-2603';
+  const model = VOXTRAL_MODEL;
   const client = getMistralClient();
 
   let response: Awaited<ReturnType<typeof client.audio.speech.complete>>;
@@ -876,7 +914,9 @@ async function generateVoiceWithMistral(
     response = await client.audio.speech.complete({
       input: text,
       model,
-      refAudio: referenceAudioBuffer.toString('base64'),
+      ...('voiceId' in voice
+        ? { voiceId: voice.voiceId }
+        : { refAudio: voice.referenceAudio.toString('base64') }),
       responseFormat: 'wav',
     });
   } catch (error) {
@@ -1054,12 +1094,14 @@ async function createCloneOutputFilename({
   provider: CloneProvider;
   text: string;
 }): Promise<string> {
+  const providerCacheKey =
+    provider === 'mistral' ? `${provider}-${VOXTRAL_MODEL}` : provider;
   const cacheKeyInput = enhancementEnabled
-    ? `${locale}-${provider}-${text}-${audioHash}-enhanced`
-    : `${locale}-${provider}-${text}-${audioHash}`;
+    ? `${locale}-${providerCacheKey}-${text}-${audioHash}-enhanced`
+    : `${locale}-${providerCacheKey}-${text}-${audioHash}`;
   const hash = await generateHash(cacheKeyInput);
 
-  return `${basePath}/${locale}-${provider}-${hash}.wav`;
+  return `${basePath}/${locale}-${providerCacheKey}-${hash}.wav`;
 }
 
 // ============================================================================
@@ -1069,9 +1111,10 @@ async function createCloneOutputFilename({
 async function runBackgroundTasks(
   userId: string,
   creditsUsed: number,
-  provider: CloneProvider,
+  provider: CloneProvider | CallCloneProvider,
   audioFileData: {
     baseCloneCredits: number;
+    savedVoiceId?: string;
     filename: string;
     referenceAudioEnhancementCredits: number;
     referenceAudioEnhancementDollarAmount: number;
@@ -1106,7 +1149,7 @@ async function runBackgroundTasks(
       creditsUsed,
     },
     userId,
-    voiceId: '420c4014-7d6d-44ef-b87d-962a3124a170',
+    voiceId: CLONED_VOICE_ID,
   });
 
   if (audioFileDBResult.error) {
@@ -1133,6 +1176,7 @@ async function runBackgroundTasks(
       provider,
       audioFileData.baseCloneCredits,
       audioFileData.text,
+      VOXTRAL_MODEL,
     ),
     metadata: {
       audioDuration: audioFileData.duration,
@@ -1148,6 +1192,7 @@ async function runBackgroundTasks(
         audioFileData.referenceAudioProcessedMimeType,
       referenceAudioTrimmed: audioFileData.referenceAudioTrimmed,
       requestId: audioFileData.requestId,
+      savedVoiceId: audioFileData.savedVoiceId,
       textLength: audioFileData.text.length,
       textPreview: audioFileData.text.slice(0, 100),
       userHasPaid,
@@ -1272,12 +1317,167 @@ export async function POST(request: Request) {
     locale = formInput.locale;
     referenceAudioFile = formInput.file;
 
-    // Validate inputs
-    validateFileType(referenceAudioFile);
-    validateFileSize(referenceAudioFile);
     validateLocale(locale);
 
+    if (formInput.savedVoiceId) {
+      const voice = await getOwnedCallVoice(formInput.savedVoiceId, user.id);
+      if (!voice) {
+        return routeErrorResponse(
+          'Saved voice not found',
+          404,
+          'errors.savedVoiceNotFound',
+        );
+      }
+      const provider = voice.provider === 'inworld' ? 'inworld' : 'mistral';
+      // Inworld voices speak any call language; Mistral voices keep theirs.
+      if (provider === 'mistral') locale = voice.locale ?? locale;
+      else if (!supportsCallCloneLocale(provider, locale))
+        return routeErrorResponse(
+          'This language is not supported for saved voices',
+          400,
+          'errors.savedVoiceLocaleUnsupported',
+        );
+      validateSavedVoiceTextLength(text, provider);
+      const { currentAmount, estimate } = await validateCredits(
+        user.id,
+        text,
+        user.email,
+      );
+      // The model is in the key, like one-shot clones, so a model switch
+      // never serves audio from the previous model.
+      const voiceModel =
+        provider === 'inworld' ? INWORLD_TTS_MODEL : VOXTRAL_MODEL;
+      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
+      const cachedOutputUrl = await redis.get<string>(filename);
+      if (cachedOutputUrl) {
+        return NextResponse.json(
+          {
+            creditsRemaining: currentAmount || 0,
+            creditsUsed: 0,
+            url: cachedOutputUrl,
+          } satisfies CloneSuccessResponse,
+          { status: 200 },
+        );
+      }
+      await reserveCloneCredits({
+        currentAmount,
+        requiredCredits: estimate,
+        text,
+        userEmail: user.email,
+        userId: user.id,
+      });
+      reservedCredits = estimate;
+
+      let buffer: Buffer;
+      let requestId: string;
+      if (provider === 'inworld') {
+        buffer = await synthesizeInworldSpeech(voice.voice_id, text, locale);
+        modelUsed = INWORLD_TTS_MODEL;
+        requestId = randomUUID();
+      } else {
+        ({ buffer, modelUsed, requestId } = await generateVoiceWithMistral(
+          text,
+          { voiceId: voice.voice_id },
+        ));
+      }
+      const outputUrl = await uploadGeneratedAudio(
+        buffer,
+        filename,
+        'audio/wav',
+      );
+      const audioDuration = (await getAudioDuration(buffer, 'audio/wav')) ?? 0;
+      reservedCredits = 0;
+      const savedVoiceLocale = locale;
+      const savedVoiceModel = modelUsed;
+      after(async () => {
+        await runBackgroundTasks(user.id, estimate, provider, {
+          baseCloneCredits: estimate,
+          duration: audioDuration,
+          filename,
+          locale: savedVoiceLocale,
+          modelUsed: savedVoiceModel,
+          referenceAudioEnhanced: false,
+          referenceAudioEnhancementCredits: 0,
+          referenceAudioEnhancementDollarAmount: 0,
+          referenceAudioFileMimeType: '',
+          referenceAudioProcessedMimeType: '',
+          referenceAudioTrimmed: false,
+          requestId,
+          savedVoiceId: voice.id,
+          text,
+          url: outputUrl,
+        });
+      });
+      return NextResponse.json(
+        {
+          creditsRemaining: (currentAmount || 0) - estimate,
+          creditsUsed: estimate,
+          url: outputUrl,
+        } satisfies CloneSuccessResponse,
+        { status: 200 },
+      );
+    }
+
+    if (!referenceAudioFile) {
+      throw createRouteError(
+        'Missing required parameters: text and audio file',
+        400,
+        'errors.missingRequiredParameters',
+      );
+    }
+    validateFileType(referenceAudioFile);
+    validateFileSize(referenceAudioFile);
+
     const userHasPaid = await hasUserPaid(user.id);
+    if (formInput.saveVoiceName) {
+      if (!userHasPaid)
+        return routeErrorResponse(
+          'Saved voices require a paid account',
+          403,
+          'errors.savedVoiceRequiresPaid',
+        );
+      if ((await countSavedCallVoices(user.id)) >= MAX_SAVED_CALL_VOICES)
+        return routeErrorResponse(
+          'Saved voice limit reached',
+          403,
+          'errors.savedVoiceLimitReached',
+          { MAX: MAX_SAVED_CALL_VOICES },
+        );
+      const callProvider = getCallCloneProvider();
+      if (!supportsCallCloneLocale(callProvider, locale))
+        return routeErrorResponse(
+          'This language is not supported for saved voices',
+          400,
+          'errors.savedVoiceLocaleUnsupported',
+        );
+      const processedAudio = await processAudioFile(
+        referenceAudioFile,
+        false,
+        locale,
+        user.id,
+        callProvider,
+      );
+      validateAudioDuration(processedAudio.duration, callProvider);
+      const reference =
+        callProvider === 'inworld'
+          ? await saveInworldVoice(
+              processedAudio.buffer,
+              formInput.saveVoiceName,
+              locale,
+              user.id,
+              { removeBackgroundNoise: formInput.enhanceReferenceAudio },
+            )
+          : await saveMistralVoice(
+              processedAudio.buffer,
+              formInput.saveVoiceName,
+              locale,
+              user.id,
+            );
+      return NextResponse.json({
+        audioReferenceId: reference.id,
+        provider: callProvider,
+      });
+    }
     validateTextLength(text, locale, userHasPaid);
 
     // Check credits
@@ -1466,10 +1666,9 @@ export async function POST(request: Request) {
     let requestId: string;
 
     if (provider === 'mistral') {
-      const result = await generateVoiceWithMistral(
-        text,
-        cloneInputAudio.buffer,
-      );
+      const result = await generateVoiceWithMistral(text, {
+        referenceAudio: cloneInputAudio.buffer,
+      });
 
       outputUrl = await uploadGeneratedAudio(
         result.buffer,

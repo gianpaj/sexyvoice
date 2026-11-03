@@ -45,6 +45,7 @@ export async function getPublicCallCharacters() {
     .select(
       `
       id, name, localized_descriptions, image, session_config, sort_order, is_public,
+      localized_sample_urls,
       voice_id,
       voices ( name, sample_url ),
       prompt_id,
