@@ -10,6 +10,7 @@ import {
   getInitialInstruction,
   languageInitialInstructions,
 } from '@/data/playground-state';
+import { isCallMemoryEnabled } from '@/lib/call-memory';
 import {
   type CallTokenPlaygroundState,
   callTokenPlaygroundStateSchema,
@@ -234,15 +235,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Long-term memory is a paid-only feature. Enforce server-side so a stale
-    // or tampered client can't enable it for a free user. Reuse the lazily
-    // resolved paid-status flag to avoid an extra query when possible.
     let memoryEnabled = false;
     if (memory) {
-      if (isPaidUser === undefined) {
-        isPaidUser = await hasUserPaid(user.id);
+      // biome-ignore lint/plugin/use-verified-claims: Read the current memory preference so stale JWT metadata cannot override an opt-out.
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user || data.user.id !== user.id) {
+        return APIErrorResponse('Failed to load memory preference', 503);
       }
-      memoryEnabled = isPaidUser;
+      memoryEnabled = isCallMemoryEnabled(data.user.user_metadata);
     }
 
     const defaultSceneText = callScenes.find(
@@ -260,9 +260,7 @@ export async function POST(request: Request) {
       instructions: resolvedInstructions,
       language: selectedLanguage,
       max_output_tokens: maxOutputTokens,
-      // Long-term memory opt-in (paid users only). Absent/false → the agent
-      // stores nothing. Scope is per-user only for now (sexycall defaults
-      // memory_scope to "user"); per-character scope is deferred.
+      // The account preference and an explicit per-call opt-out both apply.
       memory: memoryEnabled,
       model,
       scene_id: selectedSceneId ?? null,

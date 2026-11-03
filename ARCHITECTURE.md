@@ -409,7 +409,7 @@ flowchart TD
     C --> D["Check minimum credits and free-user lifetime call limit"]
     D --> E["Validate configuration and normalize the call model"]
     E --> F["Resolve character prompt from PostgreSQL"]
-    F --> G["Authorize paid custom-character, scene, and memory features"]
+    F --> G["Authorize paid custom-character and scene features"]
     G --> H["Resolve voice ID"]
     H --> I["Mint LiveKit token with server-resolved metadata"]
     I --> J["Dispatch the sexycall agent"]
@@ -444,9 +444,22 @@ localized microphone guidance and disconnect the room, including after connectio
 
 Public character prompt text never reaches the browser. The token route loads
 it with an admin query, chooses the requested localized prompt or English
-fallback, and places the result in LiveKit token metadata. Custom characters,
-custom scenes, and the long-term memory backend require a paid account. Memory
-is off by default, and its UI toggle is currently hidden.
+fallback, and places the result in LiveKit token metadata. Custom characters
+and custom scenes require a paid account.
+
+Long-term memory is on by default for free and paid accounts. The Profile
+page's Voice Call Memory switch saves `call_memory_enabled` in Auth
+`user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
+absent preference to enabled. The call-token route reads the current preference
+with `getUser()` for each memory-enabled request; JWT metadata is a snapshot
+and cannot override a saved opt-out. A failed lookup blocks token issuance.
+An explicit request flag of `memory: false` also disables memory. This is a
+user preference, not an entitlement or authorization check.
+
+The setting applies when a call starts, across characters and devices. When
+off, the agent neither loads nor saves memories for that call. Stored memories
+remain until erased with the Profile page's delete action, which calls
+`DELETE /api/memories`. Memory controls live only on the Profile page.
 
 ### Call Setup
 
@@ -604,7 +617,8 @@ current account status. Email and metadata are token snapshots; user-editable
 Fresh `getUser()` lookups are reserved for:
 
 - Current email on the credits page for Stripe customer linking and on the
-  profile page for password verification.
+  profile page for password verification, plus the current memory preference
+  on the profile page and in `POST /api/call-token`.
 - Auth `created_at` during proxy restoration when the profile is missing and
   an email is present.
 - Account deletion and durable credential issuance in `POST /api/api-keys`

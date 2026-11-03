@@ -41,10 +41,8 @@ export const callTokenPlaygroundStateSchema = z.object({
       'zh',
     ] as const)
     .optional(),
-  // Long-term memory (opt-in). When true, the agent (sexycall) preloads and
-  // stores distilled facts for this user across calls. Off/absent → nothing is
-  // stored.
-  memory: z.boolean().optional(),
+  // The saved profile preference applies even when the client requests memory.
+  memory: z.boolean().default(true),
   sceneInstructions: z.string().nullable().optional(),
   selectedPresetId: z.uuid().nullable(),
   selectedSceneId: z

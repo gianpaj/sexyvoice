@@ -175,8 +175,8 @@
           "description": "Jeder Anruf wird bei der Übertragung verschlüsselt. Kein Mensch hört Ihre Gespräche mit."
         },
         "forgotten": {
-          "title": "Standardmäßig vergessen",
-          "description": "Zwischen den Anrufen bleibt nichts erhalten, solange Sie die Erinnerung nicht selbst aktivieren."
+          "title": "Du bestimmst, was bleibt",
+          "description": "Charaktere erinnern sich standardmäßig zwischen Anrufen an dich. Schalte die Erinnerung aus oder lösche gespeicherte Erinnerungen in deinem Profil."
         }
       },
       "customCharacter": {
@@ -1055,14 +1055,17 @@
     },
     "memory": {
       "title": "Sprachanruf-Erinnerung",
-      "description": "Wenn du die Erinnerungsfunktion während Anrufen aktivierst, merken sich die Charaktere einige Angaben über dich, um die Kontinuität zu wahren. Hier kannst du alles löschen.",
+      "description": "Charaktere merken sich standardmäßig Details zwischen Anrufen. Schalte die Erinnerung aus, damit in künftigen Anrufen keine Erinnerungen verwendet oder gespeichert werden. Gespeicherte Erinnerungen bleiben erhalten, bis du sie löschst.",
       "button": "Alle Erinnerungen löschen",
       "confirmTitle": "Alle Sprachanruf-Erinnerungen löschen?",
       "confirmDescription": "Dadurch wird dauerhaft alles gelöscht, was sich die Charaktere aus früheren Anrufen über dich gemerkt haben. Dies kann nicht rückgängig gemacht werden.",
       "cancel": "Abbrechen",
       "continue": "Löschen",
       "success": "Deine Sprachanruf-Erinnerungen wurden gelöscht.",
-      "error": "Deine Erinnerungen konnten nicht gelöscht werden. Bitte versuche es erneut."
+      "error": "Deine Erinnerungen konnten nicht gelöscht werden. Bitte versuche es erneut.",
+      "settingLabel": "Zwischen Anrufen erinnern",
+      "settingSaved": "Erinnerungseinstellung gespeichert.",
+      "settingError": "Deine Erinnerungseinstellung konnte nicht gespeichert werden. Bitte versuche es erneut."
     }
   },
   "apiBilling": {

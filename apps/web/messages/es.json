@@ -175,8 +175,8 @@
           "description": "Cada llamada se cifra en tránsito. Ninguna persona escucha tus conversaciones."
         },
         "forgotten": {
-          "title": "Olvidado por defecto",
-          "description": "No se guarda nada entre llamadas a menos que actives la memoria tú mismo."
+          "title": "Tú controlas la memoria",
+          "description": "Los personajes te recuerdan entre llamadas de forma predeterminada. Desactiva la memoria o elimina los recuerdos guardados desde tu perfil."
         }
       },
       "customCharacter": {
@@ -1055,14 +1055,17 @@
     },
     "memory": {
       "title": "Memoria de llamadas de voz",
-      "description": "Si activas la memoria durante las llamadas, los personajes recuerdan algunos datos sobre ti para mantener la continuidad. Aquí puedes borrarlo todo.",
+      "description": "Los personajes recuerdan detalles entre llamadas de forma predeterminada. Desactiva la memoria para dejar de usar y guardar recuerdos en futuras llamadas. Los recuerdos guardados se conservan hasta que los elimines.",
       "button": "Eliminar todas las memorias",
       "confirmTitle": "¿Eliminar todas las memorias de las llamadas de voz?",
       "confirmDescription": "Esto borra de forma permanente todo lo que los personajes han recordado sobre ti en llamadas anteriores. No se puede deshacer.",
       "cancel": "Cancelar",
       "continue": "Eliminar",
       "success": "Tus memorias de llamadas de voz se han eliminado.",
-      "error": "No se han podido eliminar tus memorias. Inténtalo de nuevo."
+      "error": "No se han podido eliminar tus memorias. Inténtalo de nuevo.",
+      "settingLabel": "Recordar entre llamadas",
+      "settingSaved": "Configuración de memoria guardada.",
+      "settingError": "No se pudo guardar la configuración de memoria. Inténtalo de nuevo."
     }
   },
   "apiBilling": {

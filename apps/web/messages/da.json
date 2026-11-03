@@ -175,8 +175,8 @@
           "description": "Hvert opkald krypteres undervejs. Intet menneske lytter til dine samtaler."
         },
         "forgotten": {
-          "title": "Glemt som standard",
-          "description": "Intet føres videre mellem opkald, medmindre du selv slår hukommelsen til."
+          "title": "Du styrer hukommelsen",
+          "description": "Karaktererne husker dig som standard mellem opkald. Slå hukommelsen fra, eller slet gemte minder fra din profil."
         }
       },
       "customCharacter": {
@@ -1051,14 +1051,17 @@
     },
     "memory": {
       "title": "Hukommelse for stemmeopkald",
-      "description": "Hvis du slår hukommelse til under opkald, husker karaktererne nogle få oplysninger om dig for at bevare sammenhængen. Du kan slette det hele her.",
+      "description": "Karaktererne husker som standard detaljer mellem opkald. Slå hukommelsen fra for at stoppe brug og lagring af minder i fremtidige opkald. Gemte minder beholdes, indtil du sletter dem.",
       "button": "Slet al hukommelse",
       "confirmTitle": "Slet al hukommelse fra stemmeopkald?",
       "confirmDescription": "Dette sletter permanent alt, hvad karaktererne har husket om dig fra tidligere opkald. Det kan ikke fortrydes.",
       "cancel": "Annuller",
       "continue": "Slet",
       "success": "Din hukommelse fra stemmeopkald blev slettet.",
-      "error": "Din hukommelse kunne ikke slettes. Prøv igen."
+      "error": "Din hukommelse kunne ikke slettes. Prøv igen.",
+      "settingLabel": "Husk mellem opkald",
+      "settingSaved": "Hukommelsesindstilling gemt.",
+      "settingError": "Din hukommelsesindstilling kunne ikke gemmes. Prøv igen."
     }
   },
   "apiBilling": {

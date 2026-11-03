@@ -175,8 +175,8 @@
           "description": "Chaque appel est chiffré pendant son transit. Aucun humain n'écoute vos conversations."
         },
         "forgotten": {
-          "title": "Oublié par défaut",
-          "description": "Rien ne subsiste d'un appel à l'autre, sauf si vous activez vous-même la mémoire."
+          "title": "Vous contrôlez la mémoire",
+          "description": "Les personnages se souviennent de vous entre les appels par défaut. Désactivez la mémoire ou supprimez les souvenirs enregistrés depuis votre profil."
         }
       },
       "customCharacter": {
@@ -1055,14 +1055,17 @@
     },
     "memory": {
       "title": "Mémoire des appels vocaux",
-      "description": "Si vous activez la mémoire pendant les appels, les personnages retiennent quelques informations sur vous pour assurer la continuité. Vous pouvez tout effacer ici.",
+      "description": "Les personnages retiennent par défaut des détails entre les appels. Désactivez la mémoire pour ne plus utiliser ni enregistrer de souvenirs lors des prochains appels. Les souvenirs enregistrés sont conservés jusqu’à leur suppression.",
       "button": "Supprimer toutes les mémoires",
       "confirmTitle": "Supprimer toutes les mémoires des appels vocaux ?",
       "confirmDescription": "Cela efface définitivement tout ce que les personnages ont retenu de vous lors des appels précédents. Cette action est irréversible.",
       "cancel": "Annuler",
       "continue": "Supprimer",
       "success": "Vos mémoires d’appels vocaux ont été supprimées.",
-      "error": "Impossible de supprimer vos mémoires. Veuillez réessayer."
+      "error": "Impossible de supprimer vos mémoires. Veuillez réessayer.",
+      "settingLabel": "Se souvenir entre les appels",
+      "settingSaved": "Préférence de mémoire enregistrée.",
+      "settingError": "Impossible d’enregistrer votre préférence de mémoire. Réessayez."
     }
   },
   "apiBilling": {
