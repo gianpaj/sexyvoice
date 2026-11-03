@@ -9,9 +9,13 @@ import type { Content, VoiceConfig } from '@google/genai';
 
 export const GEMINI_TTS_38 = 'gemini-3.8-flash-tts';
 
+function assertGeminiTtsModel(model: string): asserts model is 'gpro38' {
+  if (model !== 'gpro38') throw new Error('Unsupported Gemini TTS model');
+}
+
 /** Reject unsupported catalogs rather than selecting a different provider model. */
 export function resolveGeminiTtsModel({ model }: { model: string }): string {
-  if (model !== 'gpro38') throw new Error('Unsupported Gemini TTS model');
+  assertGeminiTtsModel(model);
   return GEMINI_TTS_38;
 }
 
@@ -49,10 +53,10 @@ export function buildGeminiVoiceConfig(
   voiceName: string,
   model: string,
 ): VoiceConfig {
-  const isExtendedId = model === 'gpro38' && voiceName.includes('-');
+  assertGeminiTtsModel(model);
+  const isExtendedId = voiceName.includes('-');
   const name = isExtendedId
     ? voiceName
     : voiceName.charAt(0).toUpperCase() + voiceName.slice(1);
-  resolveGeminiTtsModel({ model });
   return { voice: name };
 }
