@@ -182,7 +182,7 @@
       "customCharacter": {
         "title": "Ring til en karakter med din egen stemme",
         "subtitle": "Giv den en personlighed, og vælg en af vores stemmer, eller klon en ud fra 10 sekunders lyd: din egen eller en, du har rettighederne til. Ring til den, når du vil – den er i rollen hver eneste gang.",
-        "note": "Egne karakterer er inkluderet i alle betalte planer.",
+        "note": "Lås op for egne karakterer med et kreditkøb eller abonnement.",
         "action": "Skab din karakter",
         "cloningLink": "Se, hvordan stemmekloning virker"
       },
@@ -201,7 +201,7 @@
       "callSection": {
         "title": "Ring så til den",
         "subtitle": "Giv din klonede stemme til en karakter, og tal med den live i realtid.",
-        "note": "Opkald med en klonet stemme er inkluderet i alle betalte planer.",
+        "note": "Lås op for opkald med klonede stemmer med et kreditkøb eller abonnement.",
         "action": "Prøv et stemmeopkald"
       },
       "cta": {
@@ -237,11 +237,11 @@
       "groups": [
         {
           "id": "voiceCreation",
-          "category": "Stemmeoprettelse & stilarter",
+          "category": "Stemmegenerering og stil",
           "questions": [
             {
-              "question": "Hvilke sprog understøttes for talesyntese?",
-              "answer": "Sprogunderstøttelse afhænger af den valgte stemme og model.\n\n**Gemini 2.5 stemmer (standard)** understøtter 24 sprog, herunder:\n🇪🇬 Arabisk, 🇧🇩 Bengalsk, 🇺🇸 Engelsk, 🇫🇷 Fransk, 🇮🇳 Hindi, 🇳🇱 Hollandsk, 🇮🇩 Indonesisk, 🇮🇹 Italiensk, 🇯🇵 Japansk, 🇰🇷 Koreansk, 🇮🇳 Marathi, 🇵🇱 Polsk, 🇧🇷 Portugisisk, 🇷🇴 Rumænsk, 🇷🇺 Russisk, 🇺🇸 Spansk, 🇮🇳 Tamil, 🇮🇳 Telugu, 🇹🇭 Thai, 🇹🇷 Tyrkisk, 🇩🇪 Tysk, 🇺🇦 Ukrainsk, og 🇻🇳 Vietnamesisk.\n\n**Gemini 3.1 stemmer (ved aktivering af \"Brug ny AI-model\")** understøtter 70+ sprog på tværs af 80+ regionale varianter, herunder alt ovenstående plus: Afrikaans, Albansk, Amharisk, Armensk, Aserbajdsjansk, Baskisk, Bulgarsk, Catalansk, Kinesisk, Kroatisk, Tjekkisk, Dansk, Estisk, Filippinsk, Finsk, Galicisk, Georgisk, Græsk, Gujarati, Hebraisk, Ungarsk, Islandsk, Irsk, Javanesisk, Kannada, Kasakhisk, Lettisk, Litauisk, Makedonsk, Malayisk, Maltesisk, Norsk, Persisk, Punjabi, Serbisk, Slovakisk, Slovensk, Swahili, Svensk, Urdu, Usbekisk, Walisisk, Zulu og mere.\n\nAndre stemmer er sprogspecifikke:\n🇬🇧 Dan (Engelsk UK), 🇮🇹 Pietro (Italiensk), 🇺🇸 Emma, Josh, Tara (Engelsk US), 🇪🇸 Javi (Spansk).\n\nVælg din stemme baseret på dit målsprog for de mest naturlige resultater."
+              "question": "Hvilke sprog kan jeg generere tale på?",
+              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.1-stemmer understøtter over 70 sprog, mens Gemini 2.5-stemmer understøtter 24. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -255,19 +255,23 @@
           "questions": [
             {
               "question": "Hvordan fungerer stemmekloning?",
-              "answer": "Vores AI analyserer din stemmeprøve (10 sekunder til 5 minutter) for at lære dens unikke mønstre og karakteristika og bygger derefter en digital version af din stemme, der lyder naturlig og realistisk."
+              "answer": "Optag eller upload mindst 10 sekunder af din egen stemme eller en stemme, du har tilladelse til at bruge. Vores AI bruger prøven til at genskabe lyden. Generer tale med det samme, eller gem stemmen til senere."
             },
             {
               "question": "Kan jeg klone min egen stemme?",
-              "answer": "Ja! Optag eller upload mindst 10 sekunders ren lyd, så bygger den en digital version af din stemme, der lyder naturlig og realistisk."
+              "answer": "Ja! Optag eller upload mindst 10 sekunders ren lyd. Du kan generere tale fra optagelsen eller gemme din stemme til senere, hvis du har købt kreditter."
             },
             {
               "question": "Hvordan prissættes stemmekloning?",
-              "answer": "Stemmekloning prissættes ud fra mængden af tale, du genererer, så længere tekster bruger flere kreditter. Det koster mere end almindelig stemmegenerering, fordi klonede stemmer bruger en dyrere model til præcist at gengive en bestemt stemme."
+              "answer": "Det er gratis at gemme en stemme, når du har købt kreditter én gang eller betalt for et abonnement. Tale med en klonet stemme bruger flere kreditter end vores standardstemmer, og længere tekster bruger flere. Liveopkald bruger kreditter til opkaldstaksten. Dit dashboard og API deler samme saldo."
             },
             {
               "question": "Hvilke sprog understøttes for stemmekloning?",
               "answer": "Stemmekloning understøtter følgende 28 sprog:\n\n🇸🇦 Arabisk,\n🇪🇸 Catalansk,\n🇩🇰 Dansk,\n🇬🇧 Engelsk,\n🇫🇮 Finsk,\n🇫🇷 Fransk,\n🇬🇷 Græsk,\n🇮🇱 Hebraisk,\n🇮🇳 Hindi,\n🇳🇱 Hollandsk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇲🇾 Malajisk,\n🇨🇳 Mandarin-kinesisk,\n🇳🇴 Norsk,\n🇵🇱 Polsk,\n🇵🇹 Portugisisk,\n🇷🇴 Rumænsk,\n🇷🇺 Russisk,\n🇪🇸 Spansk,\n🇸🇪 Svensk,\n🇰🇪 Swahili,\n🇹🇷 Tyrkisk,\n🇩🇪 Tysk,\n🇺🇦 Ukrainsk,\n🇭🇺 Ungarsk,\nog 🇻🇳 Vietnamesisk."
+            },
+            {
+              "question": "Kan jeg gemme min klonede stemme og bruge den igen?",
+              "answer": "Ja. Betalende brugere kan gemme op til 10 stemmer og genbruge dem til stemmegenerering eller liveopkald. Vælg en gemt stemme på Klon-siden for at generere tale, eller vælg den som stemme, når du opretter en karakter."
             }
           ]
         },
@@ -281,7 +285,7 @@
             },
             {
               "question": "Kan jeg ringe til en karakter med min egen stemme?",
-              "answer": "Ja, med et betalt abonnement. Lav en karakter og vælg \"Klon en stemme\", eller klon en på Klon-siden med \"Gem en stemme til opkald\". Optag eller upload mindst 10 sekunders tale, og vælg den som karakterens stemme."
+              "answer": "Ja. Et engangskøb af kreditter eller en abonnementsbetaling låser op for gemte stemmer. Opret en karakter og vælg \"Klon en stemme\", eller brug \"Gem en stemme til opkald\" på Klon-siden. Optag eller upload mindst 10 sekunder af din stemme, og vælg den som karakterens stemme."
             },
             {
               "question": "Hvor meget koster det?",
@@ -297,7 +301,7 @@
             },
             {
               "question": "Kan jeg klone en andens stemme?",
-              "answer": "Kun med deres tilladelse. Du bekræfter, at du har rettighederne, før du kloner, og vores vilkår forbyder at udgive sig for andre og vildlede."
+              "answer": "Kun med deres tilladelse. Før du kloner, skal du bekræfte, at du har rettighederne til at bruge stemmen."
             }
           ]
         },
@@ -310,8 +314,8 @@
               "answer": "Gemte opkaldsstemmer er private for din konto. Stemmeudbyderen beholder optagelsen, så du kan genbruge stemmen. Du kan slette genererede lydfiler i dit dashboard. Når du sletter din konto, anmoder vi også om sletning af gemte stemmer og deres lydprøver."
             },
             {
-              "question": "Hvad kan jeg bruge de genererede stemmer til?",
-              "answer": "Skabere bruger vores stemmer til videoer, podcasts, lydbøger, socialt indhold, spil, e-learning og mere. Det er en nem måde at bevare konsekvent lydkvalitet. Husk bare at vores vilkår forbyder bedrag eller efterligning."
+              "question": "Hvad kan jeg bruge stemmegenerering til?",
+              "answer": "Lav lyd til videoer, podcasts, lydbøger, spil, kurser og opslag på sociale medier. Brug kun stemmer og indhold, du har rettighederne til."
             }
           ]
         },
@@ -321,7 +325,7 @@
           "questions": [
             {
               "question": "Hvor mange kreditter har jeg brug for?",
-              "answer": "Ca. 1.000 kreditter giver 1 minuts lydgenerering. Nye brugere får 10.000 gratis kreditter (ca. 5 minutters tale). Vores Starter-plan inkluderer 25.000 månedlige kreditter, mens Pro tilbyder 300.000 kreditter til større projekter. Vælg hvad der passer til dine behov."
+              "answer": "Nye brugere får 10.000 gratis kreditter. Hvor meget tale du kan generere, afhænger af stemmen, modellen og teksten. Køb kreditter én gang, eller få månedlige kreditter med et abonnement. Stemmegenerering og opkald bruger samme saldo."
             },
             {
               "question": "Hvorfor vælge SexyVoice.ai?",
@@ -335,7 +339,7 @@
           "questions": [
             {
               "question": "Har I en API til udviklere?",
-              "answer": "Ja! Vores API lader udviklere tilføje stemmegenerering til apps, hjemmesider og spil. Du kan oprette tale on demand og programmatisk. Se {link}.",
+              "answer": "Ja. Vores API giver dig stemmegenerering i apps, hjemmesider og spil med de samme kreditter som dit dashboard. Stemmekloning og liveopkald findes i webappen. Se {link}.",
               "link": {
                 "url": "https://docs.sexyvoice.ai",
                 "text": "dokumentationen"
@@ -478,7 +482,7 @@
     "estimateCreditsButton": "Estimér credits",
     "fullscreenTitle": "Fuld skærm",
     "generating": "Genererer",
-    "gproLimitExceeded": "Du har overskredet grænsen på __COUNT__ flersprogede stemmegenereringer som gratis bruger. Prøv en anden stemme eller opgrader din plan for ubegrænset adgang.",
+    "gproLimitExceeded": "Du har nået gratisgrænsen på __COUNT__ genereringer med denne model. Køb kreditter for at fortsætte med den.",
     "notEnoughCredits": "Du har ikke nok credits til at generere lyd.",
     "playAudio": "Afspil lyd",
     "resetPlayer": "Nulstil afspiller",
@@ -486,9 +490,9 @@
     "success": "Lyd genereret!",
     "textAreaPlaceholder": "Indtast teksten, du vil omdanne til tale...",
     "paidStyleLimitTooltip": "Du har en 2,5× stilgrænse",
-    "upgradeStyleLimitTooltip": "Opgrader til en betalt plan for 2,5× stilgrænse",
-    "paidCharacterLimitTooltip": "Du har en 2× tegngrænse",
-    "upgradeCharacterLimitTooltip": "Opgrader til en betalt plan for 2× tegngrænse",
+    "upgradeStyleLimitTooltip": "Køb kreditter for en 2,5× stilgrænse",
+    "paidCharacterLimitTooltip": "Du har en 2× tekstgrænse",
+    "upgradeCharacterLimitTooltip": "Køb kreditter for en 2× tekstgrænse",
     "title": "Generer lyd",
     "grok": {
       "inlineEffectPlaceholder": "Indsæt inline-effekt",
@@ -616,7 +620,7 @@
     "notice1": "Udforsk dine dybeste ønsker i total privatliv.",
     "notice2": "End-to-end krypterede, fordomsfrie samtaler.",
     "notEnoughCredits": "Du har ikke nok kreditter. Minimum påkrævet er {count}",
-    "freeUserCallLimitExceeded": "Gratis brugere er begrænset til 5 minutters opkald. Opgrader venligst for at fortsætte.",
+    "freeUserCallLimitExceeded": "Du har 5 gratis minutter i alt på tværs af alle opkald. Køb kreditter for at fortsætte.",
     "languageLabel": "Sprog",
     "languagePlaceholder": "Vælg sprog",
     "sceneLabel": "Scene",
@@ -843,7 +847,7 @@
     }
   },
   "clone": {
-    "audioFileLabel": "Lydfil",
+    "audioFileLabel": "Stemmeprøve",
     "cancelButton": "Annuller",
     "ctaButton": "Generer lyd",
     "downloadAudio": "Download lyd",
@@ -858,7 +862,7 @@
     "englishChatterbox": "Engelsk (Chatterbox)",
     "notEnoughCredits": "Du har ikke nok kreditter til at generere lyd.",
     "playAudio": "Afspil lyd",
-    "previewTitle": "Forhåndsvisning af genereret stemme",
+    "previewTitle": "Forhåndsvisning af lyd",
     "subtitle": "Upload en lydprøve, indtast din tekst, og generer tale med den klonede stemme med det samme",
     "success": "Lyd genereret!",
     "tabPreview": "Forhåndsvisning",
@@ -919,8 +923,8 @@
     "microphoneError": "Mikrofonfejl",
     "referenceAudioGuidanceShort": "Brug et rent referenceklip med én taler på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
     "referenceAudioGuidanceLong": "Brug et klart referenceklip på mindst __MIN__ sekunder. Kun de første __TRIM_SECONDS__ sekunder bruges.",
-    "paidTextLimitTooltip": "Betalende brugere kan klone længere tale med op til __MAX__ tegn.",
-    "upgradeTextLimitTooltip": "Opgrader til en betalt plan for at klone længere tale med op til __MAX__ tegn.",
+    "paidTextLimitTooltip": "Du kan generere længere tale med op til __MAX__ tegn.",
+    "upgradeTextLimitTooltip": "Køb kreditter for at generere længere tale med op til __MAX__ tegn.",
     "audioDurationUnknown": "Kunne ikke bestemme lydens varighed.",
     "audioDurationInvalidVoxtral": "Referenceaudio skal være mindst __MIN__ sekunder til stemmekloning.",
     "audioDurationInvalidFallback": "Audio skal være mindst __MIN__ sekunder.",
@@ -934,7 +938,7 @@
     "convertingAudio": "Konverterer lyd",
     "savedVoice": {
       "modeLabel": "Gem en stemme til opkald",
-      "upgradeTooltip": "Opgrader til en betalt plan for at gemme stemmer til opkald.",
+      "upgradeTooltip": "Køb kreditter for at gemme stemmer til opkald.",
       "name": "Stemmens navn",
       "help": "Gem denne stemme, så du kan bruge den, når du opretter en karakter. Udbyderen opbevarer referenceoptagelsen.",
       "noiseRemovalHelp": "Fjerner baggrundsstøj. Brug det kun til optagelser med støj: det kan få ren lyd til at lyde dårligere. Gratis.",
@@ -1068,8 +1072,8 @@
     "defaultTitle": "SexyVoice.ai – Gratis AI tekst-til-tale & stemmeopkald i realtid",
     "description": "Generer udtryksfuld AI-tale med følelser på 24+ sprog, eller tal i realtid med AI-karakterer. Gratis tekst-til-tale, stemmekloning og live stemmeopkald. Start med gratis credits – intet kort påkrævet.",
     "skipToMainContent": "Spring til hovedindhold",
-    "descriptionLogin": "Log ind på SexyVoice.ai for at få adgang til dine AI-stemmeprojekter, administrere kreditter og generere udtryksfuld tale på flere sprog med avanceret stemmekloning.",
-    "descriptionSignup": "Tilmeld dig SexyVoice.ai gratis - Få 10.000 kreditter til at skabe realistiske AI-stemmer med følelser. Avanceret tekst-til-tale og stemmekloning på 24 sprog.",
+    "descriptionLogin": "Log ind for at generere tale, genbruge gemte stemmer, tale med AI-karakterer og administrere din kreditsaldo på SexyVoice.ai.",
+    "descriptionSignup": "Opret en gratis SexyVoice.ai-konto og få 10.000 kreditter. Prøv udtryksfuld stemmegenerering, klon din egen stemme, og tal med AI-karakterer.",
     "titleVoiceCall": "AI-stemmeopkald – Tal live med AI-karakterer",
     "descriptionVoiceCall": "Før live AI-telefonopkald med dine yndlingsstemmer. Tal i realtid med AI-karakterer – naturlige samtaler drevet af SexyVoice.ai's stemmeteknologi.",
     "titleVoiceCloning": "AI-stemmekloning",
@@ -1155,10 +1159,12 @@
       "operations": "Operationer",
       "noData": "Ingen forbrugsdata",
       "byType": {
-        "tts": "TTS",
+        "tts": "Stemmegenerering",
         "voice_cloning": "Stemmekloning",
         "live_call": "Live-opkald",
-        "audio_processing": "Lydbehandling"
+        "audio_processing": "Lydrensning",
+        "api_tts": "Stemmegenerering via API",
+        "api_voice_cloning": "Stemmekloning via API"
       }
     },
     "table": {

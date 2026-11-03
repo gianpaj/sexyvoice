@@ -67,16 +67,16 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature                  | Public or stored ID               | Runtime provider/model                                                   | Notes                                                                     |
-| ------------------------ | --------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Dashboard TTS            | `gpro`                            | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
-| External API TTS         | `gpro`                            | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
-| Dashboard and API TTS    | `gpro31`                          | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
-| Dashboard and API TTS    | `xai`                             | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
-| Dashboard and API TTS    | `orpheus`                         | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
-| Voice cloning            | Locale-dependent                  | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
-| Real-time calls          | `grok-voice-think-fast-1.0`       | xAI Grok Voice Agent                                                     | Current call model                                                        |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3` | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
+| Feature                  | Public or stored ID                                       | Runtime provider/model                                                   | Notes                                                                     |
+| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dashboard TTS            | `gpro`                                                    | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
+| External API TTS         | `gpro`                                                    | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
+| Dashboard and API TTS    | `gpro31`                                                  | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
+| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
+| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
+| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
+| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
 
@@ -158,7 +158,7 @@ query variants for user-scoped data. Public voice listing uses the regular
 Supabase client and public RLS policy. Never expose `SUPABASE_SECRET_KEY` to a
 browser or use it in a `NEXT_PUBLIC_` variable.
 
-## Dashboard Voice Generation
+## Dashboard Speech Generation
 
 Endpoint: `POST /api/generate-voice`
 
@@ -442,7 +442,7 @@ negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 
-Public character prompt text never reaches the browser. The token route loads
+Predefined character prompt text never reaches the browser. The token route loads
 it with an admin query, chooses the requested localized prompt or English
 fallback, and places the result in LiveKit token metadata. Custom characters,
 custom scenes, and the long-term memory backend require a paid account. Memory
@@ -554,12 +554,17 @@ scripts import the same modules, so every path writes identical rows.
 ### Core PostgreSQL Tables
 
 - `profiles` stores application users linked to Supabase Auth.
-- `voices` stores public TTS/call voices and user-created voices.
+- `voices` stores catalog voices for speech generation and calls, including the
+  shared cloned-audio row used by legacy foreign keys.
+- `audio_references` stores owned saved voices, provider IDs, locales, and preview
+  metadata. These profiles are separate from generated audio.
 - `prompts` and `characters` store localized call personalities and session
   configuration.
 - `audio_files` stores generated-audio metadata, R2 URLs, duration, model, and
   billed credits.
-- `credits` and `credit_transactions` store balances and purchases.
+- `credits` stores the credit balance; `credit_transactions` records credits added
+  or deducted outside activity spending, including grants, purchases, refunds, and
+  chargeback holds or releases. Activity spending is recorded in `usage_events`.
 - `usage_events` stores normalized metering for dashboard TTS, API TTS, voice
   cloning, audio processing, and live calls.
 - `api_keys` stores HMAC hashes, display prefixes, scopes, expiry, and last-use

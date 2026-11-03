@@ -226,9 +226,11 @@ export function DataTable() {
               <SelectItem value="audio_processing">
                 {t('summary.byType.audio_processing')}
               </SelectItem>
-              <SelectItem value="api_tts">API TTS</SelectItem>
+              <SelectItem value="api_tts">
+                {t('summary.byType.api_tts')}
+              </SelectItem>
               <SelectItem value="api_voice_cloning">
-                API Voice Cloning
+                {t('summary.byType.api_voice_cloning')}
               </SelectItem>
             </SelectContent>
           </Select>

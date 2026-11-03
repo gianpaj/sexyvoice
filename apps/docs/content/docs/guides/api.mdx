@@ -1,7 +1,7 @@
 ---
-title: "API Quickstart"
-description: "How to authenticate, generate speech, and check billing with SexyVoice API"
-icon: "code-xml"
+title: 'API Quickstart'
+description: 'How to authenticate, generate speech, and check billing with SexyVoice API'
+icon: 'code-xml'
 ---
 
 Use the API when you want to generate speech from your own backend or app.
@@ -10,7 +10,7 @@ Use the API when you want to generate speech from your own backend or app.
 
 - A SexyVoice account
 - API key from **Dashboard -> API Keys**
-- Paid account
+- A top-up or subscription payment to unlock API keys, plus enough credits to generate speech
 
 ## 1. Authenticate
 
@@ -116,7 +116,9 @@ Successful response includes:
 - `credits_remaining`
 - `usage`
 
-## 3. Check Balance
+## 3. Check credit balance
+
+The API uses the same credit balance as your dashboard.
 
 ```bash
 curl -X GET 'https://sexyvoice.ai/api/v1/billing' \

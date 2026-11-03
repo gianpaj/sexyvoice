@@ -1,56 +1,100 @@
 ---
-title: "Voice Cloning"
-description: "Create a custom AI voice from an audio sample"
-# icon: "copy"
+title: 'Voice Cloning'
+description: 'Clone your voice to generate speech or use it in live AI calls'
 ---
 
 import { Step, Steps } from 'fumadocs-ui/components/steps';
-import { Banner } from 'fumadocs-ui/components/banner';
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
-Voice Cloning lets you create a custom AI voice from a short audio sample. Upload a recording or use your microphone, then generate speech in that voice.
+Create a custom AI voice from a short audio sample. Generate speech right away,
+or save your voice to use again for voice generation and live calls.
 
-<Callout>
-**Requirements for your audio sample:**
-- **Duration**: 10 seconds to 5 minutes
-- **Formats**: MP3, WAV, OGG, M4A, or WebM
-- **Max file size**: 4.5 MB
-</Callout>
+Only clone your own voice or a voice you have permission to use.
 
-## How to Clone a Voice
+## Before you start
+
+- Record or upload at least 10 seconds of one person speaking clearly.
+- Upload an MP3, WAV, OGG, Opus, M4A, or WebM file, up to 4.5 MB.
+- Use a quiet recording without music or background voices. Longer clips are
+  trimmed, so the first part should contain clear speech.
+- Saving a voice requires a top-up or subscription payment. Generating audio
+  requires enough credits in your balance.
+
+## Generate speech from a recording
 
 <Steps>
-  <Step title="Provide an audio sample">
-    Either **upload a file** by dragging it into the upload area, or click the microphone icon to **record** directly in your browser.
+  <Step title="Provide reference audio">
+    On the Clone page, upload a file or record with your microphone. Reference
+    audio is the recording of the voice you want to reproduce.
   </Step>
-  <Step title="Select language">
-    Choose the language for your cloned voice from the dropdown.
+  <Step title="Choose a language and enter text">
+    Choose the language for the generated speech. Enter the words you want the
+    voice to say. The form shows the text limit for your language and account.
   </Step>
-  <Step title="Enter text">
-    Type the text you want the cloned voice to speak. Maximum 500 characters for English, 300 for other languages.
-  </Step>
-  <Step title="Generate">
-    Check the consent box, then click **Generate** or press `Cmd+Enter` (Mac) / `Ctrl+Enter` (Windows).
+  <Step title="Generate audio">
+    Confirm that you have permission to use the voice, then click **Generate
+    Audio**. You can also press `Cmd+Enter` on Mac or `Ctrl+Enter` on Windows.
+    Preview and download the result when it is ready.
   </Step>
 </Steps>
 
-## Supported Languages
+Generating from a recording creates an audio file. To keep a voice for later,
+use the save option below.
+
+## Save a voice for later
+
+Turn on **Save a voice for calls**, provide a recording, enter a name, and
+confirm permission to save the voice. Click **Save voice**. You can also clone
+and save a voice while creating a [character for calls](./voice-call).
+
+You can keep up to 10 saved voices. They are private to your account, and the
+voice provider retains the reference sample so you can reuse them.
+
+- For speech generation, select a saved voice above the Clone form and enter
+  text. Select it again to return to recording or uploading reference audio.
+- For calls, choose the saved voice when creating or editing a character. A
+  character combines a personality prompt with a voice.
+- To delete a saved voice, use its Delete action on the Clone page. Generated
+  audio stays in History. Characters using that voice need a replacement before
+  their next call.
+
+## Text limits
+
+| Generation method         | Text limit                                            |
+| ------------------------- | ----------------------------------------------------- |
+| Recording with Voxtral    | 1,000 characters for free users; 4,000 for paid users |
+| Recording with Chatterbox | 300 characters                                        |
+| Saved Inworld voice       | 2,000 characters                                      |
+| Saved Mistral voice       | 4,000 characters                                      |
+
+The language determines which model handles generation from a recording.
+Inworld saved voices can generate speech in the language you select. Mistral
+saved voices use the language they were saved with.
+
+## Supported languages
 
 <Accordions>
-  <Accordion title="View all 23 languages">
-    Arabic, Chinese, Danish, Dutch, English, Finnish, French, German, Greek, Hebrew, Hindi, Italian, Japanese, Korean, Malay, Norwegian, Polish, Portuguese, Russian, Spanish, Swahili, Swedish, Turkish
+  <Accordion title="View all 28 cloning languages">
+    Arabic, Catalan, Chinese, Danish, Dutch, English, Finnish, French, German,
+    Greek, Hebrew, Hindi, Hungarian, Italian, Japanese, Korean, Malay,
+    Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swahili, Swedish,
+    Turkish, Ukrainian, Vietnamese.
   </Accordion>
 </Accordions>
 
-## Tips for Best Results
+The save mode shows languages supported by the configured voice provider.
+Reference audio is trimmed to the first 30 seconds for saved Inworld voices,
+25 seconds for Mistral, or 10 seconds for Chatterbox when audio conversion permits.
 
-- **Use clear audio** — Minimize background noise and ensure the speaker is easy to hear
-- **Single speaker only** — The sample should contain just one person speaking
-- **Natural speech** — Conversational speech works better than reading or acting
-- **Longer is better** — Samples closer to 5 minutes produce higher quality clones
+## Audio cleanup and credits
 
-## Credits
+Saving a voice is free for paid users. Generating speech from a recording or a
+saved cloned voice uses more credits than our standard voices; longer scripts
+use more credits. Calls use the [live-call rate](./voice-call#credits), whichever
+voice you choose. All use your existing credit balance.
 
-Credits are calculated based on the length of text you generate. Cloned voice generation uses more credits than standard voices.
-
-Check your credit balance at the top of the page before generating.
+When generating from a recording, optional **Clean up the reference audio**
+costs 10 credits per second of trimmed reference audio when cleanup succeeds.
+When saving an Inworld voice, that option removes background noise for free.
+Use it for noisy recordings; it can make clean audio sound worse. It is not
+offered when saving a Mistral voice.

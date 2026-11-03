@@ -4,6 +4,8 @@ This is the repo-specific operating guide for SexyVoice.ai. Keep it short:
 put durable agent rules here, and move product or architecture detail to linked
 docs (`README.md`, `ARCHITECTURE.md`, `docs/devops.md`).
 
+Use [GLOSSARY.md](./GLOSSARY.md) for domain names and definitions.
+
 Nested guidance:
 
 - `apps/docs/AGENTS.md` - rules specific to the Fumadocs docs app. The
@@ -63,7 +65,7 @@ Don't take shortcuts by just adding local logic to solve a problem.
 ## Project Snapshot
 
 SexyVoice.ai is a Next.js 16, React 19, TypeScript 5.9, Supabase, and
-Tailwind CSS 4 app for AI voice generation, voice cloning, audio tools, and
+Tailwind CSS 4 app for speech generation, voice cloning, audio tools, and
 LiveKit-powered AI voice calls.
 
 Core integrations: Supabase, Cloudflare R2, Upstash Redis, Replicate, fal.ai,
@@ -237,7 +239,7 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   deletes a main-bucket object.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
-- Voice generation can involve Replicate, Google Gemini TTS (models `gpro` for
+- Speech generation can involve Replicate, Google Gemini TTS (models `gpro` for
   Gemini 2.5, `gpro31` for Gemini 3.1 Flash, and `gpro38` for Gemini 3.8 Flash), or xAI Grok TTS. External API
   `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
   `model = 'gpro31'` should use Gemini 3.1 Flash.
