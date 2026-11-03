@@ -421,12 +421,11 @@ export async function POST(request: Request) {
     const ttsProvider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
-    const finalText = input;
 
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
     if (
-      finalText.length + (model === 'gpro38' ? (style?.length ?? 0) : 0) >
+      input.length + (model === 'gpro38' ? (style?.length ?? 0) : 0) >
       maxLength
     ) {
       const lengthErrorMessage =
@@ -438,7 +437,7 @@ export async function POST(request: Request) {
         errorCode: 'input_too_long',
         model,
         status: 400,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -476,14 +475,14 @@ export async function POST(request: Request) {
     }
 
     const currentCredits = await getCreditsAdmin(userId);
-    const estimatedCredits = estimateCredits(finalText, voice, voiceObj.model);
+    const estimatedCredits = estimateCredits(input, voice, voiceObj.model);
     if (currentCredits < estimatedCredits) {
       await log({
         apiKeyId: authResult.apiKeyId,
         errorCode: 'insufficient_credits',
         model,
         status: 402,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -510,7 +509,7 @@ export async function POST(request: Request) {
         errorCode: 'insufficient_credits',
         model,
         status: 402,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -551,7 +550,7 @@ export async function POST(request: Request) {
         model: modelUsed,
         provider,
         status: 503,
-        textLength: finalText.length,
+        textLength: input.length,
         userId,
         voice,
       });
@@ -599,7 +598,7 @@ export async function POST(request: Request) {
           providerCode: providerFailure.googleCode,
           providerStatus: providerFailure.googleStatus,
           status: providerFailure.status,
-          textLength: finalText.length,
+          textLength: input.length,
           userId,
           voice,
         });
@@ -621,7 +620,7 @@ export async function POST(request: Request) {
           contents: buildGeminiTtsContents({
             model,
             styleVariant: style,
-            text: finalText,
+            text: input,
           }),
           model: modelUsed,
         });
@@ -659,7 +658,7 @@ export async function POST(request: Request) {
           isGeminiVoice,
           model: modelUsed,
           status: httpStatus,
-          textLength: finalText.length,
+          textLength: input.length,
           userId,
           voice,
         });
@@ -696,7 +695,7 @@ export async function POST(request: Request) {
           codec,
           language: voiceObj.language ?? 'en',
           speed,
-          text: finalText,
+          text: input,
           voiceId: voice,
         });
       } catch (error) {
@@ -721,7 +720,7 @@ export async function POST(request: Request) {
           model: modelUsed,
           provider,
           status: 500,
-          textLength: finalText.length,
+          textLength: input.length,
           userId,
           voice,
         });
@@ -751,7 +750,7 @@ export async function POST(request: Request) {
       try {
         output = (await replicate.run(
           voiceObj.model as `${string}/${string}`,
-          { input: { text: finalText, voice } },
+          { input: { text: input, voice } },
           (prediction: Prediction) => {
             replicateResponse = prediction;
           },
@@ -824,7 +823,7 @@ export async function POST(request: Request) {
         'candidatesTokenCount' in usageMetadata
           ? usageMetadata.candidatesTokenCount
           : null,
-      inputChars: finalText.length,
+      inputChars: input.length,
       model: modelUsed,
       promptTokenCount:
         isGeminiVoice && usageMetadata && 'promptTokenCount' in usageMetadata
@@ -841,7 +840,7 @@ export async function POST(request: Request) {
         isPublic: false,
         model: modelUsed,
         predictionId: replicateResponse?.id,
-        text: finalText,
+        text: input,
         url: uploadUrl,
         usage: {
           ...usageMetadata,
@@ -862,12 +861,12 @@ export async function POST(request: Request) {
       creditsUsed: creditsDebited,
       dollarAmount,
       durationSeconds,
-      inputChars: finalText.length,
+      inputChars: input.length,
       metadata: {
         ...usageMetadata,
         model: modelUsed,
-        textLength: finalText.length,
-        textPreview: finalText.slice(0, 100),
+        textLength: input.length,
+        textPreview: input.slice(0, 100),
         voiceId: voiceObj.id,
         voiceName: voice,
         ...(seed === undefined ? {} : { seed }),
@@ -877,7 +876,7 @@ export async function POST(request: Request) {
         userHasPaid,
       },
       model: modelUsed,
-      quantity: finalText.length,
+      quantity: input.length,
       requestId,
       sourceId: audioFileResult.data?.id ?? null,
       sourceType: 'api_tts',
@@ -897,7 +896,7 @@ export async function POST(request: Request) {
       model: modelUsed,
       provider,
       status: 200,
-      textLength: finalText.length,
+      textLength: input.length,
       userHasPaid,
       userId,
       voice,
@@ -910,7 +909,7 @@ export async function POST(request: Request) {
         credits_used: creditsDebited,
         url: uploadUrl,
         usage: {
-          input_characters: finalText.length,
+          input_characters: input.length,
           model: modelUsed,
         },
       },
