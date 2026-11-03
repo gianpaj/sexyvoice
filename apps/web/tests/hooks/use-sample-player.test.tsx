@@ -57,6 +57,73 @@ describe('useSamplePlayer', () => {
     expect(result.current.playingKey).toBeNull();
   });
 
+  it.each(['stop', 'switch'])(
+    'ignores an interrupted play rejection after %s and replay',
+    async (action) => {
+      const { result } = renderHook(() => useSamplePlayer(), { wrapper });
+      act(() => result.current.toggle('a', '/a.mp3'));
+      const audio = FakeAudio.instances[0];
+      let rejectPlayback: (error: Error) => void = () => {};
+      audio.play.mockImplementationOnce(
+        () =>
+          new Promise<void>((_resolve, reject) => {
+            rejectPlayback = reject;
+          }),
+      );
+      act(() => result.current.toggle('pending', '/pending.mp3'));
+      act(() => {
+        if (action === 'stop') result.current.stop();
+        else result.current.toggle('b', '/b.mp3');
+      });
+      act(() => result.current.toggle('pending', '/pending.mp3'));
+
+      await act(async () =>
+        rejectPlayback(new DOMException('Playback interrupted', 'AbortError')),
+      );
+
+      expect(result.current.playingKey).toBe('pending');
+      act(() => audio.onended?.());
+      expect(result.current.playingKey).toBeNull();
+    },
+  );
+
+  it.each(['onended', 'onerror'] as const)(
+    'ignores an old %s callback after replaying the same sample',
+    (event) => {
+      const { result } = renderHook(() => useSamplePlayer(), { wrapper });
+      act(() => result.current.toggle('a', '/a.mp3'));
+      const oldCallback = FakeAudio.instances[0][event];
+      act(() => result.current.stop());
+      act(() => result.current.toggle('a', '/a.mp3'));
+
+      act(() => oldCallback?.());
+
+      expect(result.current.playingKey).toBe('a');
+    },
+  );
+
+  it('clears the playing key when the active play request fails', async () => {
+    const { result } = renderHook(() => useSamplePlayer(), { wrapper });
+    act(() => result.current.toggle('a', '/a.mp3'));
+    const audio = FakeAudio.instances[0];
+    audio.play.mockRejectedValueOnce(
+      new DOMException('Unsupported audio', 'NotSupportedError'),
+    );
+
+    await act(async () => result.current.toggle('b', '/b.mp3'));
+
+    expect(result.current.playingKey).toBeNull();
+  });
+
+  it('clears the playing key when the active sample has a media error', () => {
+    const { result } = renderHook(() => useSamplePlayer(), { wrapper });
+    act(() => result.current.toggle('a', '/a.mp3'));
+
+    act(() => FakeAudio.instances[0].onerror?.());
+
+    expect(result.current.playingKey).toBeNull();
+  });
+
   it('ignores samples without a URL', () => {
     const { result } = renderHook(() => useSamplePlayer(), { wrapper });
 

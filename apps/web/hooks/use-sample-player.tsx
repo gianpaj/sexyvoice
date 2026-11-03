@@ -25,9 +25,11 @@ const SamplePlayerContext = createContext<SamplePlayer | undefined>(undefined);
  */
 export function SamplePlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackIdRef = useRef(0);
   const [playingKey, setPlayingKey] = useState<string | null>(null);
 
   const stop = () => {
+    playbackIdRef.current += 1;
     audioRef.current?.pause();
     setPlayingKey(null);
   };
@@ -41,17 +43,26 @@ export function SamplePlayerProvider({ children }: { children: ReactNode }) {
 
     audioRef.current ??= new Audio();
     const audio = audioRef.current;
+    const playbackId = ++playbackIdRef.current;
     audio.pause();
     audio.src = url;
-    const clear = () =>
-      setPlayingKey((current) => (current === key ? null : current));
+    // Interrupted play requests can reject after the same sample restarts.
+    const clear = () => {
+      if (playbackIdRef.current === playbackId) setPlayingKey(null);
+    };
     audio.onended = clear;
     audio.onerror = clear;
     setPlayingKey(key);
     audio.play().catch(clear);
   };
 
-  useEffect(() => () => audioRef.current?.pause(), []);
+  useEffect(
+    () => () => {
+      playbackIdRef.current += 1;
+      audioRef.current?.pause();
+    },
+    [],
+  );
 
   return (
     <SamplePlayerContext.Provider value={{ playingKey, stop, toggle }}>
