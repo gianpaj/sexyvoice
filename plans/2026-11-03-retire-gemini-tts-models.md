@@ -17,7 +17,7 @@ removal before that date. See the [deprecation schedule](https://aistudio.google
 The text LLM in `apps/web/app/api/generate-text/route.ts` uses
 `gemini-3.1-flash-lite` and is outside this retirement scope.
 
-Status: proposed implementation; database inspection is complete.
+Status: runtime implementation is complete. Browser and release checks remain.
 
 ## Supabase findings
 
@@ -39,34 +39,34 @@ Counts are a dated snapshot; repeat the read-only checks before release.
 
 ## 1. Remove the catalogs from generation
 
-- [ ] Use shared model eligibility logic for dashboard and API catalog queries,
+- [x] Use shared model eligibility logic for dashboard and API catalog queries,
       generation, credit estimation, and voice lookup by name or UUID.
-- [ ] Exclude `gpro` and `gpro31` from available voices and model catalogs.
-- [ ] Reject retired voice UUIDs and model aliases before cache access,
+- [x] Exclude `gpro` and `gpro31` from available voices and model catalogs.
+- [x] Reject retired voice UUIDs and model aliases before cache access,
       provider requests, or credit charges. Preserve structured API errors.
-- [ ] Require callers to select a supported voice explicitly. Do not silently
+- [x] Require callers to select a supported voice explicitly. Do not silently
       redirect retired model aliases or UUIDs to Gemini 3.8.
-- [ ] Check dashboard defaults and history-to-generation actions so they select
+- [x] Check dashboard defaults and history-to-generation actions so they select
       supported voices. Keep existing Gemini 3.8 behavior for free and paid users.
 
 ## 2. Delete obsolete runtime paths
 
-- [ ] Remove Gemini 2.5 and 3.1 request construction and Flash TTS fallbacks from
+- [x] Remove Gemini 2.5 and 3.1 request construction and Flash TTS fallbacks from
       dashboard and external API generation and credit estimation.
-- [ ] Remove the disabled 3.1 streaming path, its controls, settings, and helpers
+- [x] Remove the disabled 3.1 streaming path, its controls, settings, and helpers
       where they have no remaining callers.
-- [ ] Remove retired-model tag prompts, limits, surcharges, and the `gpro`-only
+- [x] Remove retired-model tag prompts, limits, surcharges, and the `gpro`-only
       free-generation gate. Preserve shared helpers used by supported models.
-- [ ] Remove retired model aliases from live API schemas, catalogs, and formats.
-- [ ] Keep the text LLM; remove its TTS tag branches specific to retired models.
+- [x] Remove retired model aliases from live API schemas, catalogs, and formats.
+- [x] Keep the text LLM; remove its TTS tag branches specific to retired models.
 
 ## 3. Preserve historical data
 
-- [ ] Keep the 22 voice rows and their UUIDs, metadata, and public visibility.
+- [x] Keep the 22 voice rows and their UUIDs, metadata, and public visibility.
       Audio history joins those rows; voice RLS relies on their visibility.
-- [ ] Keep audio records, R2 objects, usage events, and credit transactions.
+- [x] Keep audio records, R2 objects, usage events, and credit transactions.
       Do not rewrite historical `voice_id` or provider-model values.
-- [ ] Retain old model labels and pricing only where historical reporting needs
+- [x] Retain old model labels and pricing only where historical reporting needs
       them, including `lib/usage-costs.ts` and `lib/api/pricing.ts`.
 
 No database schema change or data migration is required for this approach.
@@ -74,18 +74,36 @@ Catalog and request eligibility enforce retirement while history remains readabl
 
 ## 4. Update documentation and verify
 
-- [ ] Update `ARCHITECTURE.md`, applicable repository guidance, public API docs,
+- [x] Update `ARCHITECTURE.md`, applicable repository guidance, public API docs,
       and examples to list supported generation models.
-- [ ] Regenerate the docs app's OpenAPI output after updating API schemas.
-- [ ] Update affected localized labels and run `pnpm check-translations` when
+- [x] Regenerate the docs app's OpenAPI output after updating API schemas.
+- [x] Update affected localized labels and run `pnpm check-translations` when
       message files change. Keep the existing UI layout.
-- [ ] Cover retired models by name and UUID, credit estimation, cached requests,
+- [x] Cover retired models by name and UUID, credit estimation, cached requests,
       catalog filtering, and rejection without charging or provider calls.
-- [ ] Verify history names, playback, downloads, and provider-cost recovery.
-- [ ] Verify Gemini 3.8 generation and estimates for free and paid users, plus
+- [ ] Verify signed-in history playback and downloads. Read-only history-name
+      joins, R2 availability, and provider-cost recovery checks pass.
+- [x] Verify Gemini 3.8 generation and estimates for free and paid users, plus
       unaffected Grok and Replicate generation.
-- [ ] Update the relevant unit tests, Playwright coverage, and E2E test plan.
-      Run `pnpm fixall`, `pnpm type-check`, `pnpm test`, and focused Playwright tests.
+- [x] Update the relevant unit tests, Playwright coverage, and E2E test plan.
+      Run `pnpm fixall`, `pnpm type-check`, `pnpm test`, and translation parity.
+- [ ] Run the generate and history Playwright specs with test credentials. The
+      focused catalog attempt stops in authentication setup because the test
+      email and password are absent.
+
+## Verification evidence
+
+The full suite passes 2,003 web tests and 131 script tests. Formatting, type
+checks, translation parity, and `git diff --check` pass. The docs generator
+accepts a local schema path; generation from the branch schema succeeds.
+
+Read-only checks at 2026-11-03 22:32 UTC returned 35 public voices with the
+retirement filter and confirmed all 22 retired rows remain public. One active
+historical audio row per retired catalog resolved its original voice name and
+returned HTTP 200 from R2. No database or storage writes ran.
+
+See the [implementation note](../.agents/notes/proposed/tts/2026-11-03-gemini-tts-retirement.md)
+for decisions and verification limits.
 
 ## Release verification
 
