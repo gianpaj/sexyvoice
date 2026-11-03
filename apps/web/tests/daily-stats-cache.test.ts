@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/api/daily-stats/route';
+import { ModelId } from '@/data/models';
 
 const mocks = vi.hoisted(() => ({
   captureCheckIn: vi.fn(() => 'test-check-in'),
@@ -89,7 +90,7 @@ function validCache() {
     reportDate: REPORT_DATE,
     subscriptionsMrr: null,
     usageEvents14dResult: emptyResult,
-    version: 4,
+    version: 5,
   };
 }
 
@@ -243,6 +244,7 @@ describe('GET /api/daily-stats cache', () => {
     const report = await response.text();
     expect(report).toContain('$25.00 collected');
     expect(report).toContain('AI usage (est.): $0.00 yesterday | 14d: $0.00');
+    expect(report).toContain('Cloned voices: 0 yesterday | 0 in 14d');
     expect(report).not.toContain('Estimated usage cost:');
     expect(report).toContain(
       '  - Inworld voices: 1,234 / 3,000 workspace limit',
@@ -261,6 +263,82 @@ describe('GET /api/daily-stats cache', () => {
     expect(mocks.getContributionData).toHaveBeenCalledOnce();
     expect(mocks.writeFileSync).not.toHaveBeenCalled();
     expect(mocks.fetch).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    'reports cloned voice calls for both periods with cached activity=%s',
+    async (cached) => {
+      const audio = [{ model: 'xai' }];
+      mocks.getContributionData.mockResolvedValueOnce({
+        audioUsage: {},
+        calls: [],
+        events: [],
+        linkedCallIds: [],
+      });
+      const calls = [
+        {
+          model: ModelId.INWORLD_TTS,
+          started_at: '2026-09-10T23:59:59.999Z',
+          status: 'completed',
+        },
+        {
+          model: ModelId.MISTRAL_TTS,
+          started_at: '2026-09-11T00:00:00Z',
+          status: 'completed',
+        },
+        {
+          model: ModelId.INWORLD_TTS,
+          started_at: '2026-09-11T12:00:00Z',
+          status: 'failed',
+        },
+        {
+          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+          started_at: '2026-09-11T13:00:00Z',
+          status: 'completed',
+        },
+      ].map((call, index) => ({
+        credits_used: 0,
+        duration_seconds: 0,
+        free_call: false,
+        id: `call-${index}`,
+        ...call,
+      }));
+      if (cached) {
+        mocks.existsSync.mockReturnValue(true);
+        mocks.readFileSync.mockReturnValue(
+          JSON.stringify({
+            ...validCache(),
+            audioYesterdayResult: { data: audio, error: null },
+            callSessions14dResult: { data: calls, error: null },
+          }),
+        );
+      } else {
+        mocks.queries.getAudioFilesInRange.mockResolvedValueOnce(audio);
+        mocks.queries.getCallSessionsInRange.mockResolvedValueOnce(calls);
+      }
+
+      const response = await GET(request());
+      assert(response);
+      expect(response.status).toBe(200);
+      const report = await response.text();
+      expect(report).toContain('📞 Calls: 3');
+      expect(report).toContain('Cloned voices: 2 yesterday | 3 in 14d');
+      expect(mocks.fetch).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refreshes activity caches without call models', async () => {
+    mocks.existsSync.mockReturnValue(true);
+    mocks.readFileSync.mockReturnValue(
+      JSON.stringify({ ...validCache(), version: 4 }),
+    );
+
+    const response = await GET(request());
+    assert(response);
+    expect(response.status).toBe(200);
+    expectFreshQueries();
+    expect(mocks.queries.getCallSessionsInRange).toHaveBeenCalledOnce();
+    expect(mocks.writeFileSync).toHaveBeenCalledOnce();
   });
 
   it('writes fresh results when the default cache is missing', async () => {
@@ -284,7 +362,7 @@ describe('GET /api/daily-stats cache', () => {
       audioYesterdayResult: { data: [], error: null },
       reportDate: REPORT_DATE,
       usageEvents14dResult: { data: [], error: null },
-      version: 4,
+      version: 5,
     });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
