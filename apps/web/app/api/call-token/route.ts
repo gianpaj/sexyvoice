@@ -10,6 +10,7 @@ import {
   getInitialInstruction,
   languageInitialInstructions,
 } from '@/data/playground-state';
+import { isCallMemoryEnabled } from '@/lib/call-memory';
 import {
   type CallTokenPlaygroundState,
   callTokenPlaygroundStateSchema,
@@ -37,6 +38,25 @@ function appendSceneInstructions(
   }
 
   return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
+}
+
+async function resolveMemoryPreference(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+): Promise<boolean> {
+  try {
+    // biome-ignore lint/plugin/use-verified-claims: Read the saved preference so stale JWT metadata cannot override an opt-out.
+    const { data, error } = await supabase.auth.getUser();
+    if (error || data?.user?.id !== userId) {
+      throw new Error('Memory preference unavailable');
+    }
+    return isCallMemoryEnabled(data.user.user_metadata);
+  } catch {
+    logger.warn('Memory preference unavailable; starting call without memory', {
+      user: { id: userId },
+    });
+    return false;
+  }
 }
 
 export async function POST(request: Request) {
@@ -125,6 +145,10 @@ export async function POST(request: Request) {
     const selectedLanguage = languageInitialInstructions[language]
       ? language
       : defaultLanguage;
+
+    const memoryPreference = memory
+      ? resolveMemoryPreference(supabase, user.id)
+      : Promise.resolve(false);
 
     // Validate voice exists in DB
     const voiceObj = await resolveCallVoice(
@@ -234,16 +258,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Long-term memory is a paid-only feature. Enforce server-side so a stale
-    // or tampered client can't enable it for a free user. Reuse the lazily
-    // resolved paid-status flag to avoid an extra query when possible.
-    let memoryEnabled = false;
-    if (memory) {
-      if (isPaidUser === undefined) {
-        isPaidUser = await hasUserPaid(user.id);
-      }
-      memoryEnabled = isPaidUser;
-    }
+    const memoryEnabled = await memoryPreference;
 
     const defaultSceneText = callScenes.find(
       (s) => s.id === selectedSceneId,
@@ -260,9 +275,7 @@ export async function POST(request: Request) {
       instructions: resolvedInstructions,
       language: selectedLanguage,
       max_output_tokens: maxOutputTokens,
-      // Long-term memory opt-in (paid users only). Absent/false → the agent
-      // stores nothing. Scope is per-user only for now (sexycall defaults
-      // memory_scope to "user"); per-character scope is deferred.
+      // The account preference and an explicit per-call opt-out both apply.
       memory: memoryEnabled,
       model,
       scene_id: selectedSceneId ?? null,

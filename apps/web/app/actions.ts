@@ -19,6 +19,7 @@ import {
   hasOngoingSubscription,
 } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { deleteUserMemories } from '@/lib/supabase/memories';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
@@ -169,6 +170,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       { data: apiKeys, error: apiKeysError },
       { count: retainedUsageEventsCount, error: usageEventsError },
       { data: voiceReferences, error: voiceReferencesError },
+      { data: deletedMemories, error: memoriesDeleteError },
     ] = await Promise.all([
       supabase.from('audio_files').select().eq('user_id', user.id),
       supabase
@@ -184,7 +186,16 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .from('audio_references')
         .select('id, sample_url, provider, voice_id')
         .eq('user_id', user.id),
+      deleteUserMemories(supabase, user.id),
     ]);
+
+    if (memoriesDeleteError) {
+      captureException(memoriesDeleteError, {
+        extra: { context: 'call_memory_account_cleanup' },
+        user: { id: user.id },
+      });
+      throw new Error('User deletion failed');
+    }
 
     if (
       audioFilesError ||
@@ -303,6 +314,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysDeleted: apiKeys ? apiKeys.length : 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: customCharacters?.length ?? 0,
+      deletedMemories: deletedMemories?.length ?? 0,
       // usage_events is an immutable audit log protected from deletion by the
       // database. Report retained rows instead of claiming they were removed.
       usageEventsRetained: retainedUsageEventsCount,
@@ -313,6 +325,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysDeleted: apiKeys?.length ?? 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: customCharacters?.length ?? 0,
+      deletedMemories: deletedMemories?.length ?? 0,
       usageEventsRetained: retainedUsageEventsCount,
       userId: user.id,
     });

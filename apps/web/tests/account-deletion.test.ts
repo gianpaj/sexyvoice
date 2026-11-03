@@ -70,9 +70,11 @@ function createReadQuery(result: object) {
 
 function setupAccountDeletion({
   usageResult = { count: 3, error: null },
+  memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
   references = [],
 }: {
   usageResult?: { count: number | null; error: Error | null };
+  memoryResult?: { data: { id: number }[] | null; error: Error | null };
   references?: {
     id: string;
     sample_url: string | null;
@@ -87,6 +89,11 @@ function setupAccountDeletion({
   const charactersRead = createReadQuery({ data: [], error: null });
   const apiKeysRead = createReadQuery({ data: [], error: null });
   const usageRead = createReadQuery(usageResult);
+  const memoryDelete = {
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockResolvedValue(memoryResult),
+  };
   const referenceUpdate = {
     eq: vi.fn().mockReturnThis(),
     then: (resolve: (value: object) => unknown) => resolve({ error: null }),
@@ -109,6 +116,7 @@ function setupAccountDeletion({
       if (table === 'api_keys') return apiKeysRead;
       if (table === 'usage_events') return usageRead;
       if (table === 'audio_references') return referenceRead;
+      if (table === 'agent_memories') return memoryDelete;
       throw new Error(`Unexpected table: ${table}`);
     }),
   };
@@ -133,6 +141,7 @@ function setupAccountDeletion({
   return {
     adminSupabase,
     audioUpdate,
+    memoryDelete,
     sessionSupabase,
     referenceRead,
     referenceUpdate,
@@ -352,6 +361,61 @@ describe('account deletion', () => {
       'User deleted',
       expect.objectContaining({ usageEventsRetained: 3 }),
     );
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('erases all memory scopes for only the authenticated user', async () => {
+    const { sessionSupabase, memoryDelete } = setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(sessionSupabase.from).toHaveBeenCalledWith('agent_memories');
+    expect(memoryDelete.delete).toHaveBeenCalledOnce();
+    expect(memoryDelete.eq.mock.calls).toEqual([['user_id', 'user-1']]);
+    expect(memoryDelete.select).toHaveBeenCalledWith('id');
+    expect(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    ).toBeLessThan(memoryDelete.delete.mock.invocationCallOrder[0]);
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ deletedMemories: 2 }),
+    );
+  });
+
+  it('allows deletion when the user has no memories', async () => {
+    const { sessionSupabase } = setupAccountDeletion({
+      memoryResult: { data: [], error: null },
+    });
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ deletedMemories: 0 }),
+    );
+    expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  it('fails deletion when memory erasure fails and releases billing', async () => {
+    const memoryError = new Error('Memory deletion unavailable');
+    const { sessionSupabase } = setupAccountDeletion({
+      memoryResult: { data: null, error: memoryError },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(memoryError, {
+      extra: { context: 'call_memory_account_cleanup' },
+      user: { id: 'user-1' },
+    });
+    expect(logger.info).not.toHaveBeenCalledWith(
+      'User deleted',
+      expect.anything(),
+    );
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
     expect(releaseAccountBillingOperation).toHaveBeenCalled();
   });
 

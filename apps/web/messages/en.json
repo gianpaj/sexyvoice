@@ -175,8 +175,8 @@
           "description": "Every call is encrypted in transit. No human ever listens to your conversations."
         },
         "forgotten": {
-          "title": "Forgotten by default",
-          "description": "Nothing carries over between calls unless you switch memory on yourself."
+          "title": "Memory you control",
+          "description": "Characters remember you between calls by default. Turn memory off or delete stored memories from your profile."
         }
       },
       "customCharacter": {
@@ -1057,14 +1057,17 @@
     },
     "memory": {
       "title": "Voice Call Memory",
-      "description": "If you turn on memory during calls, the characters remember a few details about you to keep continuity. You can erase all of it here.",
+      "description": "Characters remember details between calls by default. Turn memory off to stop using and saving memories in future calls. Stored memories stay until you delete them.",
       "button": "Delete all memories",
       "confirmTitle": "Delete all voice call memories?",
       "confirmDescription": "This permanently erases everything the characters have remembered about you from past calls. This cannot be undone.",
       "cancel": "Cancel",
       "continue": "Delete",
       "success": "Your voice call memories were deleted.",
-      "error": "Couldn't delete your memories. Please try again."
+      "error": "Couldn't delete your memories. Please try again.",
+      "settingLabel": "Remember between calls",
+      "settingSaved": "Memory setting saved.",
+      "settingError": "Couldn't save your memory setting. Please try again."
     }
   },
   "apiBilling": {
