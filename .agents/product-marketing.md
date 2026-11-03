@@ -88,7 +88,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 
 - Expressive by default — models interpret emotional and logical context; emotion tags for laughter, sighs, coughs; style prompting ("British accent," "seductive tone")
 - Three modes in one platform and one credit balance: generation, cloning, and live real-time calling
-- Language breadth — coverage depends on the feature, and speech generation goes widest: 70+ languages on Gemini 3.1, 24 on Gemini 2.5, fewer on other voice models. Cloning covers 28 languages. See the coverage table under Proof Points before quoting a number.
+- Language breadth — coverage depends on the feature, and speech generation goes widest: over 130 languages on Gemini 3.8, fewer on other voice models. Cloning covers 28 languages. See the coverage table under Proof Points before quoting a number.
 - Model choice under one API — Google Gemini (2.5 and 3.1 Flash), xAI Grok, and Replicate/Orpheus
 - Real developer surface — REST API v1, API keys, CLI login, usage/billing dashboards, OpenAPI-generated docs at docs.sexyvoice.ai
 - Transparent credit pricing published on the site; free tier with no card
@@ -172,8 +172,7 @@ audience without qualifying it.
 
 | Voice / model                                                        | Credits per minute | 10,000 free credits ≈ |
 | -------------------------------------------------------------------- | ------------------ | --------------------- |
-| Gemini `gpro` (any user), or `gpro31` for paid users (×1.1)          | ~660               | ~15 min               |
-| Gemini `gpro31` for free users (×2.2 — 2× surcharge)                 | ~1,320             | ~7.5 min              |
+| Gemini `gpro38` on either tier (×1.1)                                | ~660               | ~15 min               |
 | Grok voices (~1 credit/character)                                    | ~1,000             | ~10 min               |
 | Default / other voices (×4)                                          | ~2,400             | ~4 min                |
 | Named IT/ES voices — pietro, giulia, carlo, javi, sergio, maria (×8) | ~4,800             | ~2 min                |
@@ -182,11 +181,11 @@ audience without qualifying it.
 **Language coverage by feature.** There is no single platform-wide language
 number — always scope the claim to the feature, and to the voice/model where it
 varies. Speech generation is the widest, and Gemini goes furthest.
+See [Google's language coverage](https://aistudio.google.com/docs/speech-generation#languages).
 
 | Feature                                          | Languages        | Notes                                                                                                                                                 |
 | ------------------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Speech generation — Gemini 3.1 (`gpro31`)        | 70+              | Our widest coverage; the number to use when leading on language breadth                                                                               |
-| Speech generation — Gemini 2.5 (`gpro`)          | 24               | Default model                                                                                                                                         |
+| Speech generation — Gemini 3.8 (`gpro38`)        | 130+             | Our widest coverage; the number to use when leading on language breadth                                                                               |
 | Speech generation — other voices (Grok, Orpheus) | Varies, narrower | Several are single-language; check the voice before quoting                                                                                           |
 | Voice cloning                                    | 28               | Coverage depends on the cloning flow and saved voice provider                                                                                         |
 | Transcription (Whisper)                          | **[unverified]** | Page meta says "99+ languages"; the on-page FAQ says the multilingual Whisper models support 32. Pick one and fix the site copy before citing either. |
@@ -198,7 +197,7 @@ varies. Speech generation is the widest, and Gemini goes furthest.
 | Theme              | Proof                                                                                                     |
 | ------------------ | --------------------------------------------------------------------------------------------------------- |
 | Expressive quality | Context-aware models; emotion tags; style prompting; Gemini + Grok voice families                         |
-| Breadth            | Up to 70+ speech generation languages (Gemini 3.1); 28 cloning languages                                  |
+| Breadth            | Over 130 speech generation languages (Gemini 3.8); 28 cloning languages                                   |
 | All-in-one         | Generation, cloning, and live calling in one web app on one credit balance                                |
 | Developer-ready    | Live speech-generation API v1, API keys, CLI, OpenAPI docs, usage and billing dashboards                  |
 | Privacy            | Owned saved call voices, account deletion requests provider cleanup, offline browser tools with no upload |

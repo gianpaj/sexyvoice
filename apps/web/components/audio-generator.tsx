@@ -29,25 +29,16 @@ import {
   DEFAULT_GENERATION_SETTINGS,
   type GenerationSettings,
 } from '@/hooks/use-generation-settings';
-import {
-  estimateTokenCount,
-  GEMINI_CHARS_PER_TOKEN,
-  GEMINI_STREAMING_ENABLED,
-  getCharactersLimit,
-  getGeminiCombinedTokenLimit,
-  getGeminiStyleCharacterLimit,
-} from '@/lib/ai';
+import { getCharactersLimit, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
 import { cn, getTtsProvider } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
-import { useStreamingWaveformPlayer } from './audio-generator/hooks/use-streaming-waveform-player';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
   generateRetrySeed,
@@ -59,7 +50,6 @@ import {
   AudioPlayerWithContext,
 } from './audio-player-with-context';
 import { GenerateButton } from './generate-button';
-import { StreamingWaveformPlayer } from './streaming-waveform-player';
 
 const NonGrokPromptEditor = dynamic(
   () => import('./non-grok-editor').then((mod) => mod.NonGrokPromptEditor),
@@ -145,85 +135,9 @@ function CreditEstimator({
   );
 }
 
-const STREAM_TEXT_THRESHOLD = 300;
-
-// ── SSE client parser ─────────────────────────────────────────────────────
-interface SseAudioEvent {
-  data: string;
-  mimeType: string;
-}
-
-interface SseDoneEvent {
+interface GenerateVoiceResult {
   cached?: boolean;
-  creditsUsed: number;
   url: string;
-}
-
-type GenerateVoiceResult = Pick<SseDoneEvent, 'cached' | 'url'>;
-
-interface SseErrorEvent {
-  details?: unknown;
-  error: string;
-  errorCode?: string;
-  serverMessage?: string;
-}
-
-interface ParseSseStreamCallbacks {
-  onAudio: (event: SseAudioEvent) => void;
-  onDone: (event: SseDoneEvent) => void;
-  onError: (event: SseErrorEvent) => void;
-}
-
-async function parseSseStream(
-  response: Response,
-  callbacks: ParseSseStreamCallbacks,
-): Promise<void> {
-  const reader = response.body!.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-
-      // Process complete SSE blocks (separated by blank lines)
-      const blocks = buffer.split('\n\n');
-      buffer = blocks.pop() ?? ''; // last incomplete block stays in buffer
-
-      for (const block of blocks) {
-        const lines = block.split('\n');
-        let eventType = '';
-        let dataStr = '';
-
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            eventType = line.slice(7).trim();
-          } else if (line.startsWith('data: ')) {
-            dataStr = line.slice(6).trim();
-          }
-        }
-
-        if (!(eventType && dataStr)) continue;
-
-        try {
-          const payload = JSON.parse(dataStr);
-          if (eventType === 'audio') {
-            callbacks.onAudio(payload as SseAudioEvent);
-          } else if (eventType === 'done') {
-            callbacks.onDone(payload as SseDoneEvent);
-          } else if (eventType === 'error') {
-            callbacks.onError(payload as SseErrorEvent);
-          }
-        } catch {
-          // malformed JSON — skip
-        }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
 }
 
 interface AudioGeneratorProps {
@@ -265,10 +179,7 @@ function throwGenerateVoiceError(
     const messageKey = data.errorCode as Parameters<typeof t>[0];
     if (t.has(messageKey)) {
       const errorMessage = t(messageKey);
-      throw new APIError(
-        errorMessage.replace('__COUNT__', MAX_FREE_GENERATIONS.toString()),
-        response,
-      );
+      throw new APIError(errorMessage, response);
     }
   }
 
@@ -325,15 +236,6 @@ export function AudioGenerator({
   const abortController = useRef<AbortController | null>(null);
   const retryAbortController = useRef<AbortController | null>(null);
 
-  // Live waveform + Web Audio engine for the gpro31 streaming path. The methods
-  // are stable (useCallback); destructure them for use in memoized callbacks.
-  const streamingPlayer = useStreamingWaveformPlayer();
-  const {
-    pushChunk: pushStreamChunk,
-    finalize: finalizeStream,
-    reset: resetStream,
-  } = streamingPlayer;
-
   const audio = useAudio();
   const {
     join: joinSegments,
@@ -344,36 +246,14 @@ export function AudioGenerator({
   const provider = getTtsProvider(selectedVoice?.model);
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
-  // Only gemini-3.1 (gpro31) returns audio progressively. The 2.5 models
-  // synthesize the whole clip and return it in a single chunk, so streaming
-  // there gives no time-to-first-audio benefit — keep them on the JSON path.
-  // HOTFIX: gated behind GEMINI_STREAMING_ENABLED (currently false) because
-  // progressive streaming corrupted some gpro31 generations.
-  const isStreamingModel =
-    GEMINI_STREAMING_ENABLED && selectedVoice?.model === 'gpro31';
-  // Rough speech-rate estimate (~15 chars/sec) so the streaming waveform fills
-  // toward the expected total length before the exact duration is known.
-  const estimatedStreamDurationSec = Math.max(1, Math.round(text.length / 15));
-  const showEnhanceButton =
-    provider === 'replicate' ||
-    (provider === 'gemini' &&
-      (selectedVoice?.model === 'gpro31' || selectedVoice?.model === 'gpro38'));
+  const showEnhanceButton = provider === 'replicate' || isGeminiVoice;
   const canEstimateCredits = isGeminiVoice || isGrokVoice;
 
-  // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
-  // and the style, so its transcript "character limit" is that token budget
-  // expressed in approximate characters. Other voices keep the per-tier cap.
-  // HOTFIX: while streaming is disabled (GEMINI_STREAMING_ENABLED === false)
-  // gpro31 reverts to the standard per-tier character limits and the separate
-  // style-prompt cap, like the Gemini 2.5 voices.
-  const isGemini31 =
-    GEMINI_STREAMING_ENABLED &&
-    isGeminiVoice &&
-    selectedVoice?.model === 'gpro31';
   const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
-  const charactersLimit = isGemini31
-    ? getGeminiCombinedTokenLimit(isPaidUser) * GEMINI_CHARS_PER_TOKEN
-    : getCharactersLimit(selectedVoice?.model || '', isPaidUser);
+  const charactersLimit = getCharactersLimit(
+    selectedVoice?.model || '',
+    isPaidUser,
+  );
   const splitSegmentTexts = useMemo(
     () =>
       splitLongTextIntoSegments(text, {
@@ -396,21 +276,11 @@ export function AudioGenerator({
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
     shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
-  // Gemini 2.5 voices have a separate character-bounded style prompt; gpro31
-  // folds the style into the combined token budget checked below.
   const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
   const styleIsOverLimit =
-    isGeminiVoice && !isGemini31 && styleText.length > styleCharacterLimit;
-  const combinedTokenLimit = getGeminiCombinedTokenLimit(isPaidUser);
-  const combinedTokenEstimate = isGemini31
-    ? estimateTokenCount(styleText ? `${styleText}\n${text}` : text)
-    : 0;
-  const combinedIsOverLimit =
-    isGemini31 && combinedTokenEstimate > combinedTokenLimit;
+    isGeminiVoice && styleText.length > styleCharacterLimit;
   const textIsOverLimit =
-    !shouldDisableCharactersLimit &&
-    (isGemini31 ? combinedIsOverLimit : text.length > charactersLimit);
-  // Any input limit (transcript, style, or combined token budget) blocks generation.
+    !shouldDisableCharactersLimit && text.length > charactersLimit;
   const inputIsOverLimit = textIsOverLimit || styleIsOverLimit;
   const {
     splitSegments,
@@ -501,85 +371,6 @@ export function AudioGenerator({
     ],
   );
 
-  const requestGenerateVoiceStream = useCallback(
-    async (
-      segmentText: string,
-      signal: AbortSignal,
-    ): Promise<GenerateVoiceResult> => {
-      if (!selectedVoice) {
-        throw new APIError(t('error'), new Response(null, { status: 400 }));
-      }
-
-      const response = await fetch('/api/generate-voice', {
-        body: JSON.stringify({
-          stream: true,
-          styleVariant: selectedStyle ?? '',
-          text: segmentText,
-          textImproved,
-          voiceId: selectedVoice.id,
-          ...(settings.seed === null ? {} : { seed: settings.seed }),
-          ...(settings.temperature === null
-            ? {}
-            : { temperature: settings.temperature }),
-        }),
-        headers: { 'Content-Type': 'application/json' },
-        method: 'POST',
-        signal,
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throwGenerateVoiceError(t, translateErrorCode, data, response);
-      }
-
-      // The streaming player owns the Web Audio engine, peak accumulation, and
-      // the live→file handoff. Here we just feed it PCM chunks as they arrive.
-      return new Promise<GenerateVoiceResult>((resolve, reject) => {
-        parseSseStream(response, {
-          onAudio: ({ data, mimeType }) => {
-            if (signal.aborted) return;
-            pushStreamChunk(data, mimeType);
-          },
-          onDone: ({ cached, url }) => {
-            // Assemble the WAV and arrange the handoff; live playback continues
-            // until the buffered tail finishes (see the hook). A cache hit sends
-            // no audio chunks, so `finalize` is a no-op and the standard file
-            // player handles the persisted URL instead.
-            finalizeStream();
-            resolve({ cached, url });
-          },
-          onError: ({ details, error, errorCode, serverMessage }) => {
-            resetStream();
-            const serverFallback = error || serverMessage || t('error');
-            reject(
-              new APIError(
-                resolveErrorMessage(
-                  translateErrorCode,
-                  errorCode,
-                  details,
-                  serverFallback,
-                ),
-                new Response(null, { status: 500 }),
-              ),
-            );
-          },
-        }).catch(reject);
-      });
-    },
-    [
-      t,
-      translateErrorCode,
-      textImproved,
-      finalizeStream,
-      pushStreamChunk,
-      resetStream,
-      selectedStyle,
-      selectedVoice,
-      settings.seed,
-      settings.temperature,
-    ],
-  );
-
   const requestGenerateVoice = useCallback(
     async (
       segmentText: string,
@@ -587,25 +378,14 @@ export function AudioGenerator({
       seed?: number,
       split = false,
     ): Promise<string> => {
-      // `auto` keeps the length-based heuristic; `on`/`off` are explicit
-      // overrides. Streaming only applies to gpro31 in the non-split path.
-      let shouldStream = segmentText.length > STREAM_TEXT_THRESHOLD;
-      if (settings.streamMode === 'on') {
-        shouldStream = true;
-      } else if (settings.streamMode === 'off') {
-        shouldStream = false;
-      }
-      const useStream =
-        isGeminiVoice &&
-        isStreamingModel &&
-        !shouldUseSplitMode &&
-        shouldStream;
-
       let cached = false;
       try {
-        const result = useStream
-          ? await requestGenerateVoiceStream(segmentText, signal)
-          : await requestGenerateVoiceJson(segmentText, signal, seed, split);
+        const result = await requestGenerateVoiceJson(
+          segmentText,
+          signal,
+          seed,
+          split,
+        );
         cached = result.cached === true;
         return result.url;
       } finally {
@@ -616,15 +396,7 @@ export function AudioGenerator({
         }
       }
     },
-    [
-      isGeminiVoice,
-      isStreamingModel,
-      queryClient,
-      requestGenerateVoiceJson,
-      requestGenerateVoiceStream,
-      shouldUseSplitMode,
-      settings.streamMode,
-    ],
+    [queryClient, requestGenerateVoiceJson],
   );
 
   const generateSingleAudio = useCallback(async () => {
@@ -771,9 +543,8 @@ export function AudioGenerator({
     }
 
     setIsGenerating(true);
-    // Clear any previous result/streaming player before a new generation.
+    // Clear the previous result before a new generation.
     setAudioURL('');
-    resetStream();
     try {
       if (shouldUseSplitMode) {
         await generateSplitAudios();
@@ -791,7 +562,6 @@ export function AudioGenerator({
     dismissGenerationProgressToast,
     generateSingleAudio,
     generateSplitAudios,
-    resetStream,
     selectedVoice,
     shouldUseSplitMode,
     splitSegmentTexts.length,
@@ -802,8 +572,7 @@ export function AudioGenerator({
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-    resetStream();
-  }, [resetStream]);
+  }, []);
 
   const handleRetrySegment = useCallback(
     async (segmentIndex: number) => {
@@ -1286,73 +1055,37 @@ export function AudioGenerator({
           </div>
 
           <div className="flex justify-start gap-2 sm:w-full">
-            {!shouldUseSplitMode && streamingPlayer.phase !== 'idle' && (
+            {!shouldUseSplitMode && audioURL && (
               <>
-                <StreamingWaveformPlayer
+                <AudioPlayerWithContext
+                  autoPlay
                   className="rounded-md"
-                  controller={streamingPlayer}
-                  estimatedDurationSec={estimatedStreamDurationSec}
                   onControlsReady={handleControlsReady}
                   playAudioTitle={t('playAudio')}
                   progressColor="#8b5cf6"
+                  showWaveform
+                  url={audioURL}
                   waveColor="#888888"
                   waveformClassName="w-48"
                 />
-                {streamingPlayer.phase === 'file' && (
-                  <>
-                    <Button
-                      onClick={resetPlayer}
-                      size="icon"
-                      title={t('resetPlayer')}
-                      variant="secondary"
-                    >
-                      <RotateCcw className="size-6" />
-                    </Button>
-                    <Button
-                      onClick={downloadAudio}
-                      size="icon"
-                      title={t('downloadAudio')}
-                      variant="secondary"
-                    >
-                      <Download className="size-6" />
-                    </Button>
-                  </>
-                )}
+                <Button
+                  onClick={resetPlayer}
+                  size="icon"
+                  title={t('resetPlayer')}
+                  variant="secondary"
+                >
+                  <RotateCcw className="size-6" />
+                </Button>
+                <Button
+                  onClick={downloadAudio}
+                  size="icon"
+                  title={t('downloadAudio')}
+                  variant="secondary"
+                >
+                  <Download className="size-6" />
+                </Button>
               </>
             )}
-            {!shouldUseSplitMode &&
-              streamingPlayer.phase === 'idle' &&
-              audioURL && (
-                <>
-                  <AudioPlayerWithContext
-                    autoPlay
-                    className="rounded-md"
-                    onControlsReady={handleControlsReady}
-                    playAudioTitle={t('playAudio')}
-                    progressColor="#8b5cf6"
-                    showWaveform
-                    url={audioURL}
-                    waveColor="#888888"
-                    waveformClassName="w-48"
-                  />
-                  <Button
-                    onClick={resetPlayer}
-                    size="icon"
-                    title={t('resetPlayer')}
-                    variant="secondary"
-                  >
-                    <RotateCcw className="size-6" />
-                  </Button>
-                  <Button
-                    onClick={downloadAudio}
-                    size="icon"
-                    title={t('downloadAudio')}
-                    variant="secondary"
-                  >
-                    <Download className="size-6" />
-                  </Button>
-                </>
-              )}
           </div>
         </div>
         {shouldUseSplitMode && (

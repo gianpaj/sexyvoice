@@ -486,7 +486,6 @@
     "estimateCreditsButton": "Estimer les crédits",
     "fullscreenTitle": "Plein écran",
     "generating": "Génération",
-    "gproLimitExceeded": "Vous avez atteint la limite gratuite de __COUNT__ générations avec ce modèle. Achetez des crédits pour continuer à l’utiliser.",
     "notEnoughCredits": "Vous n'avez pas assez de crédits pour générer de l'audio.",
     "playAudio": "Lire l'audio",
     "resetPlayer": "Réinitialiser le lecteur",
@@ -549,7 +548,7 @@
       "multilingualGroupLabel": "Multilingue 🌍",
       "selectStyleTextareaPlaceholder": "Décrivez le style de votre dialogue, par ex. \"Lisez ceci dans un chuchotement dramatique\"",
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
-      "geminiInfo": "Il prend en charge 24 langues :\n🇪🇬 Arabe (égyptien),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Néerlandais (Pays-Bas),\n🇺🇸 Anglais (États-Unis),\n🇮🇳 Anglais/Hindi (Inde),\n🇫🇷 Français (France),\n🇩🇪 Allemand (Allemagne),\n🇮🇳 Hindi (Inde),\n🇮🇩 Indonésien (Indonésie),\n🇮🇹 Italien (Italie),\n🇯🇵 Japonais (Japon),\n🇰🇷 Coréen (Corée),\n🇮🇳 Marathi (Inde),\n🇵🇱 Polonais (Pologne),\n🇧🇷 Portugais (Brésil),\n🇷🇴 Roumain (Roumanie),\n🇷🇺 Russe (Russie),\n🇺🇸 Espagnol (États-Unis),\n🇮🇳 Tamil (Inde),\n🇮🇳 Telugu (Inde),\n🇹🇭 Thaï (Thaïlande),\n🇹🇷 Turc (Turquie),\n🇺🇦 Ukrainien (Ukraine),\n🇻🇳 Vietnamien (Vietnam)",
+      "geminiInfo": "Gemini 3.8 TTS prend en charge plus de 130 langues. Les instructions de style contrôlent le ton et le rythme ; les balises dans le texte ajoutent des sons vocaux.",
       "grokInfo": "Prend en charge des balises expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast> et prend en charge 24 langues :\n🇪🇬 Arabe (Égypte, Arabie saoudite et EAU),\n🇧🇩 Bengali,\n🇳🇱 Néerlandais (Pays-Bas),\n🇨🇳 Chinois (simplifié),\n🇺🇸 Anglais,\n🇫🇷 Français,\n🇩🇪 Allemand,\n🇮🇳 Hindi,\n🇮🇩 Indonésien,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇰🇷 Coréen,\n🇧🇷 Portugais (Brésil, Portugal),\n🇷🇺 Russe,\n🇪🇸 Espagnol (Mexique, Espagne),\n🇹🇷 Turc,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien",
       "featuredBadge": "En vedette",
       "selectVoicePlaceholder": "Sélectionner une voix...",
@@ -601,13 +600,6 @@
         "description": "Fixez une graine pour des résultats reproductibles. Laissez vide pour une graine aléatoire.",
         "placeholder": "Aléatoire",
         "randomize": "Graine aléatoire"
-      },
-      "streaming": {
-        "label": "Diffusion",
-        "description": "Diffusez l'audio au fur et à mesure de sa génération (Gemini 3.1 uniquement).",
-        "auto": "Auto",
-        "on": "Activé",
-        "off": "Désactivé"
       },
       "temperature": {
         "label": "Température",

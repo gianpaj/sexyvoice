@@ -7,17 +7,22 @@ const { getVoiceIdByName, getVoiceIdByNameAdmin } = await vi.importActual<
   typeof import('@/lib/supabase/queries')
 >('@/lib/supabase/queries');
 
+const { getVoiceById, getVoiceByIdAdmin } = await vi.importActual<
+  typeof import('@/lib/supabase/queries')
+>('@/lib/supabase/queries');
+
 type VoiceRow = Pick<
   Tables<'voices'>,
-  'id' | 'name' | 'model' | 'language' | 'created_at' | 'is_public'
+  'id' | 'name' | 'model' | 'language' | 'created_at' | 'is_public' | 'feature'
 >;
 
 const original: VoiceRow = {
+  feature: 'tts',
   created_at: '2026-09-23T00:00:00Z',
   id: '00000000-0000-4000-8000-000000000001',
   is_public: true,
   language: 'multiple',
-  model: 'gpro',
+  model: 'xai',
   name: 'kore',
 };
 const newer: VoiceRow = {
@@ -45,7 +50,13 @@ function database(rows: VoiceRow[]) {
       return query;
     },
     select: () => query,
-    single: () => {
+    not: (key: keyof VoiceRow, _operator: string, values: string) => {
+      matching = matching.filter(
+        (row) => !values.slice(1, -1).split(',').includes(String(row[key])),
+      );
+      return query;
+    },
+    maybeSingle: () => {
       matching.sort((a, b) => {
         for (const key of ordering) {
           const comparison = String(a[key]).localeCompare(String(b[key]));
@@ -77,9 +88,9 @@ for (const [label, lookup] of [
   describe(`${label} voice name lookup`, () => {
     it('resolves timestamp ties to the same ID regardless of row order', async () => {
       useRows([newer, original]);
-      expect((await lookup('kore')).id).toBe(original.id);
+      expect((await lookup('kore'))?.id).toBe(original.id);
       useRows([original, newer]);
-      expect((await lookup('kore')).id).toBe(original.id);
+      expect((await lookup('kore'))?.id).toBe(original.id);
     });
 
     it('keeps the oldest public row ahead of a lower ID', async () => {
@@ -88,12 +99,38 @@ for (const [label, lookup] of [
         { ...newer, created_at: '2025-01-01T00:00:00Z', is_public: false },
         newer,
       ]);
-      expect((await lookup('kore')).id).toBe(newer.id);
+      expect((await lookup('kore'))?.id).toBe(newer.id);
     });
 
     it('honors the requested model before choosing a row', async () => {
       useRows([original, newer]);
-      expect((await lookup('kore', true, ['gpro38'])).id).toBe(newer.id);
+      expect((await lookup('kore', true, ['gpro38']))?.id).toBe(newer.id);
     });
+
+    it.each(['gpro', 'gpro31'])(
+      'excludes %s even when it is the oldest matching name',
+      async (model) => {
+        useRows([{ ...original, model }, newer]);
+        expect((await lookup('kore'))?.id).toBe(newer.id);
+        expect(await lookup('kore', true, [model])).toBeNull();
+      },
+    );
+  });
+}
+
+for (const [label, lookup] of [
+  ['session', getVoiceById],
+  ['admin', getVoiceByIdAdmin],
+] as const) {
+  describe(`${label} voice UUID lookup`, () => {
+    it.each(['gpro', 'gpro31'])(
+      'rejects %s without selecting its 3.8 namesake',
+      async (model) => {
+        useRows([{ ...original, model }, newer]);
+        expect(await lookup(original.id)).toBeNull();
+        useRows([{ ...original, model }, newer]);
+        expect((await lookup(newer.id))?.model).toBe('gpro38');
+      },
+    );
   });
 }

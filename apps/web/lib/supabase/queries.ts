@@ -1,12 +1,10 @@
 import { captureException } from '@sentry/nextjs';
 import { cache } from 'react';
 
+import { RETIRED_TTS_MODELS_FILTER } from '@/lib/tts/models';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
-import {
-  FREE_USER_CALL_LIMIT_SECONDS,
-  MAX_FREE_GENERATIONS,
-} from './constants';
+import { FREE_USER_CALL_LIMIT_SECONDS } from './constants';
 import { createClient } from './server';
 
 // Types for usage event tracking
@@ -194,22 +192,20 @@ function toCreditDebitError(error: unknown): unknown {
   });
 }
 
-/**
- * Voice names repeat across models (the same Gemini identity exists as
- * `gpro`, `gpro31`, and `gpro38` rows), so pass `models` whenever the caller
- * knows the model. Without it the oldest matching row wins, which keeps
- * existing name-only callers on the voice they resolved before newer rows
- * were added. Equal timestamps are ordered by ID for a stable result.
- */
+/** Scope name lookups by model; equal timestamps are ordered by ID. */
 export async function getVoiceIdByName(
   voiceName: string,
   isPublic = true,
   models?: readonly string[],
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const supabase = await createClient();
   let query = supabase
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('name', voiceName)
     .eq('is_public', isPublic);
   if (models) query = query.in('model', [...models]);
@@ -217,7 +213,7 @@ export async function getVoiceIdByName(
     .order('created_at', { ascending: true })
     .order('id', { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -226,14 +222,18 @@ export async function getVoiceIdByName(
 
 export async function getVoiceById(
   voiceId: string,
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('id', voiceId)
     .eq('is_public', true)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -756,11 +756,15 @@ export async function getVoiceIdByNameAdmin(
   voiceName: string,
   isPublic = true,
   models?: readonly string[],
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const admin = createAdminClient();
   let query = admin
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('name', voiceName)
     .eq('is_public', isPublic);
   if (models) query = query.in('model', [...models]);
@@ -768,7 +772,7 @@ export async function getVoiceIdByNameAdmin(
     .order('created_at', { ascending: true })
     .order('id', { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -778,15 +782,19 @@ export async function getVoiceIdByNameAdmin(
 export async function getVoiceByIdAdmin(
   voiceId: string,
   isPublic = true,
-): Promise<{ id: string; name: string; language: string; model: string }> {
+): Promise<Pick<
+  Tables<'voices'>,
+  'id' | 'name' | 'language' | 'model'
+> | null> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('voices')
     .select('id, name, language, model')
+    .not('model', 'in', RETIRED_TTS_MODELS_FILTER)
     .eq('id', voiceId)
     .eq('feature', 'tts')
     .eq('is_public', isPublic)
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
 
@@ -878,22 +886,3 @@ export async function hasUserPaidAdmin(userId: string): Promise<boolean> {
 
   return (data?.length ?? 0) > 0;
 }
-
-export const isFreemiumUserOverLimit = async (
-  userId: string,
-): Promise<boolean> => {
-  const supabase = await createClient();
-  // TODO: use redis instead
-  // If the user is a freemium user, count their voice model 'gpro' audio files.
-  const { count, error } = await supabase
-    .from('audio_files')
-    .select('id, voices!inner(model)', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('voices.model', 'gpro');
-
-  if (error) {
-    throw error;
-  }
-
-  return (count ?? 0) >= MAX_FREE_GENERATIONS;
-};

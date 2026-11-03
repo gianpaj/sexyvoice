@@ -239,10 +239,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   deletes a main-bucket object.
 - Dashboard audio uses `R2_BUCKET_NAME`; external API audio uses
   `R2_SPEECH_API_BUCKET_NAME` and `R2_SPEECH_API_PUBLIC_URL`.
-- Speech generation can involve Replicate, Google Gemini TTS (models `gpro` for
-  Gemini 2.5, `gpro31` for Gemini 3.1 Flash, and `gpro38` for Gemini 3.8 Flash), or xAI Grok TTS. External API
-  `gpro` voices should stay on Gemini 2.5 Pro; only DB voices with
-  `model = 'gpro31'` should use Gemini 3.1 Flash.
+- Speech generation uses Replicate, Google Gemini 3.8 TTS (`gpro38`), or xAI
+  Grok TTS. `lib/tts/models.ts` excludes retired `gpro` and `gpro31` voices from
+  new generation; keep their database rows public for audio history joins.
 - Voice cloning uses Mistral Voxtral and Replicate Chatterbox for one-off
   speech and Inworld for saved call voices; fal.ai cleans reference audio. It
   must respect permission and privacy requirements.

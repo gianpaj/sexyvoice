@@ -51,7 +51,6 @@ import {
 } from '@/lib/supabase/queries';
 import {
   buildGeminiTtsContents,
-  buildGeminiTtsPrompt,
   buildGeminiVoiceConfig,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
@@ -59,6 +58,7 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
+import { isActiveTtsModel } from '@/lib/tts/models';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -87,18 +87,10 @@ interface GeminiProviderFailure {
   type: 'rate_limit_error' | 'server_error';
 }
 
-/**
- * Classify the errors from every Gemini attempt, in order. Quota is judged on
- * the final attempt only, since an earlier model hitting its quota while the
- * fallback still fails for another reason is not a quota outcome.
- */
 function getGeminiProviderFailure(
-  attemptErrors: unknown[],
+  error: unknown,
 ): GeminiProviderFailure | null {
-  const parsedErrors = attemptErrors
-    .map((error) => parseGoogleApiError(error))
-    .filter((error): error is NonNullable<typeof error> => error !== null);
-  const finalGoogleError = parseGoogleApiError(attemptErrors.at(-1));
+  const finalGoogleError = parseGoogleApiError(error);
 
   if (finalGoogleError && isGoogleQuotaError(finalGoogleError)) {
     return {
@@ -114,15 +106,11 @@ function getGeminiProviderFailure(
     };
   }
 
-  const transientError = parsedErrors.find((error) =>
-    isGoogleTransientProviderError(error),
-  );
-
-  if (transientError) {
+  if (finalGoogleError && isGoogleTransientProviderError(finalGoogleError)) {
     return {
       code: 'provider_unavailable',
-      googleCode: transientError.code,
-      googleStatus: getGoogleApiErrorStatus(transientError),
+      googleCode: finalGoogleError.code,
+      googleStatus: getGoogleApiErrorStatus(finalGoogleError),
       message: getProviderUnavailableMessage('gemini'),
       status: 503,
       type: 'server_error',
@@ -381,7 +369,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!voiceObj) {
+    if (!(voiceObj && isActiveTtsModel(voiceObj.model))) {
       await log({
         apiKeyId: authResult.apiKeyId,
         errorCode: 'voice_not_found',
@@ -433,14 +421,7 @@ export async function POST(request: Request) {
     const ttsProvider = getTtsProvider(voiceObj.model);
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
-    const finalText =
-      isGeminiVoice && style
-        ? buildGeminiTtsPrompt({
-            model: voiceObj.model,
-            styleVariant: style,
-            text: input,
-          })
-        : input;
+    const finalText = input;
 
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
@@ -603,10 +584,8 @@ export async function POST(request: Request) {
         },
       };
 
-      const respondToGeminiProviderFailure = async (
-        attemptErrors: unknown[],
-      ) => {
-        const providerFailure = getGeminiProviderFailure(attemptErrors);
+      const respondToGeminiProviderFailure = async (error: unknown) => {
+        const providerFailure = getGeminiProviderFailure(error);
         if (!providerFailure) return null;
 
         await refundReservedCredits('gemini_provider_failure');
@@ -636,7 +615,7 @@ export async function POST(request: Request) {
       };
 
       try {
-        modelUsed = resolveGeminiTtsModel({ model, userHasPaid: true });
+        modelUsed = resolveGeminiTtsModel({ model });
         geminiResponse = await ai.models.generateContent({
           config,
           contents: buildGeminiTtsContents({
@@ -646,38 +625,10 @@ export async function POST(request: Request) {
           }),
           model: modelUsed,
         });
-      } catch (proError) {
-        if (model === 'gpro38') {
-          // No 2.5 fallback: it cannot serve the extended 3.8 voice ids.
-          const failureResponse = await respondToGeminiProviderFailure([
-            proError,
-          ]);
-          if (failureResponse) return failureResponse;
-          throw proError;
-        }
-        modelUsed = 'gemini-2.5-flash-preview-tts';
-        try {
-          geminiResponse = await ai.models.generateContent({
-            config,
-            contents: buildGeminiTtsContents({
-              model,
-              styleVariant: style,
-              text: finalText,
-            }),
-            model: modelUsed,
-          });
-        } catch (flashError) {
-          const failureResponse = await respondToGeminiProviderFailure([
-            proError,
-            flashError,
-          ]);
-          if (failureResponse) return failureResponse;
-
-          throw new Error(
-            `Both Gemini models failed. Pro error: ${proError instanceof Error ? proError.message : String(proError)}. Flash error: ${flashError instanceof Error ? flashError.message : String(flashError)}`,
-            { cause: flashError },
-          );
-        }
+      } catch (error) {
+        const failureResponse = await respondToGeminiProviderFailure(error);
+        if (failureResponse) return failureResponse;
+        throw error;
       }
 
       const { data, mimeType } = extractInlineAudio(geminiResponse);

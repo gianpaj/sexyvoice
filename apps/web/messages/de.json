@@ -486,7 +486,6 @@
     "estimateCreditsButton": "Credits schätzen",
     "fullscreenTitle": "Vollbild",
     "generating": "Wird generiert",
-    "gproLimitExceeded": "Sie haben das kostenlose Limit von __COUNT__ Generierungen mit diesem Modell erreicht. Kaufen Sie Credits, um es weiter zu nutzen.",
     "notEnoughCredits": "Sie haben nicht genügend Credits, um Audio zu generieren.",
     "playAudio": "Audio abspielen",
     "resetPlayer": "Player zurücksetzen",
@@ -549,7 +548,7 @@
       "multilingualGroupLabel": "Mehrsprachig 🌍",
       "selectStyleTextareaPlaceholder": "Beschreiben Sie den Stil Ihres Dialogs, z.B. \"Lesen Sie dies in einem dramatischen Flüstern\"",
       "toolTipEmotionTags": "Unterstützte Emotions-Tags:",
-      "geminiInfo": "Es unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägyptisch),\n🇧🇩 Bengali (Bangladesch),\n🇳🇱 Niederländisch (Niederlande),\n🇺🇸 Englisch (US),\n🇮🇳 Englisch/Hindi (Indien),\n🇫🇷 Französisch (Frankreich),\n🇩🇪 Deutsch (Deutschland),\n🇮🇳 Hindi (Indien),\n🇮🇩 Indonesisch (Indonesien),\n🇮🇹 Italienisch (Italien),\n🇯🇵 Japanisch (Japan),\n🇰🇷 Koreanisch (Korea),\n🇮🇳 Marathi (Indien),\n🇵🇱 Polnisch (Polen),\n🇧🇷 Portugiesisch (Brasilien),\n🇷🇴 Rumänisch (Rumänien),\n🇷🇺 Russisch (Russland),\n🇺🇸 Spanisch (US),\n🇮🇳 Tamil (Indien),\n🇮🇳 Telugu (Indien),\n🇹🇭 Thailändisch (Thailand),\n🇹🇷 Türkisch (Türkei),\n🇺🇦 Ukrainisch (Ukraine),\n🇻🇳 Vietnamesisch (Vietnam)",
+      "geminiInfo": "Gemini 3.8 TTS unterstützt über 130 Sprachen. Stilanweisungen steuern Tonfall und Tempo; eingefügte Tags ergänzen stimmliche Laute.",
       "grokInfo": "Unterstützt ausdrucksstarke Tags wie [laugh] und\numschließende Tags wie <fast>...</fast> und unterstützt 24 Sprachen:\n🇪🇬 Arabisch (Ägypten, Saudi-Arabien und VAE),\n🇧🇩 Bengali,\n🇳🇱 Niederländisch (Niederlande),\n🇨🇳 Chinesisch (vereinfacht),\n🇺🇸 Englisch,\n🇫🇷 Französisch,\n🇩🇪 Deutsch,\n🇮🇳 Hindi,\n🇮🇩 Indonesisch,\n🇮🇹 Italienisch,\n🇯🇵 Japanisch,\n🇰🇷 Koreanisch,\n🇧🇷 Portugiesisch (Brasilien, Portugal),\n🇷🇺 Russisch,\n🇪🇸 Spanisch (Mexiko, Spanien),\n🇹🇷 Türkisch,\n🇺🇦 Ukrainisch,\n🇻🇳 Vietnamesisch",
       "featuredBadge": "Empfohlen",
       "selectVoicePlaceholder": "Stimme auswählen...",
@@ -601,13 +600,6 @@
         "description": "Lege einen festen Seed für reproduzierbare Ergebnisse fest. Leer lassen für einen zufälligen Seed.",
         "placeholder": "Zufällig",
         "randomize": "Seed zufällig wählen"
-      },
-      "streaming": {
-        "label": "Streaming",
-        "description": "Audio streamen, während es erzeugt wird (nur Gemini 3.1).",
-        "auto": "Auto",
-        "on": "An",
-        "off": "Aus"
       },
       "temperature": {
         "label": "Temperatur",
