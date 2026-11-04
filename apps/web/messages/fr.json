@@ -241,7 +241,7 @@
           "questions": [
             {
               "question": "Dans quelles langues puis-je générer de la parole ?",
-              "answer": "Les langues dépendent de la voix et du modèle. Les voix Gemini 3.1 prennent en charge plus de 70 langues, et les voix Gemini 2.5, 24. Les autres modèles ont leur propre sélection. Choisissez une voix pour votre langue et écoutez un aperçu. Le clonage a sa propre liste de langues ci-dessous."
+              "answer": "Les langues dépendent de la voix et du modèle. Les voix Gemini 3.8 prennent en charge plus de 130 langues. Les autres modèles ont leur propre sélection. Choisissez une voix pour votre langue et écoutez un aperçu. Le clonage a sa propre liste de langues ci-dessous."
             },
             {
               "question": "Puis-je faire parler une voix avec un accent ou un style spécifique, comme britannique ou pirate🏴‍☠️ ?",
@@ -1250,7 +1250,7 @@
       "ariaLabelDismiss": "Fermer l'annonce des appels avec voix clonée"
     },
     "expressiveVoicesLaunch": {
-      "text": "De nouvelles voix plus expressives sont arrivées — propulsées par Gemini 3.1, avec un contrôle plus fin du rythme, des respirations, de la hauteur, de la vitesse et de l'intensité.",
+      "text": "De nouvelles voix plus expressives sont arrivées — propulsées par Gemini 3.8, avec un contrôle plus fin du rythme, des respirations, de la hauteur, de la vitesse et de l'intensité.",
       "ctaLoggedIn": "Essayer les voix",
       "ctaLoggedOut": "Se connecter",
       "ariaLabelDismiss": "Fermer l'annonce des voix expressives"

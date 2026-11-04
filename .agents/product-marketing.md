@@ -1,7 +1,7 @@
 # Product Marketing Context
 
-**Document version:** v5
-**Last updated:** 2026-08-01
+**Document version:** v7
+**Last updated:** 2026-11-04
 
 > Shared positioning context, written to the canonical path the external
 > product-marketing skill toolchain looks for. No skill checked into this repo
@@ -14,7 +14,7 @@
 
 ## Product Overview
 
-**One-liner:** Expressive AI voices — generate, clone, and talk to them live, in 70+ languages.
+**One-liner:** Expressive AI voices for speech generation in over 130 languages, voice cloning, and live calls.
 **What it does:** SexyVoice.ai turns text into natural, emotion-rich speech, clones a voice from as little as 10 seconds of audio, and runs real-time voice conversations with AI characters. All three are available in the web app. The developer API and CLI cover **speech generation only** — see "What the API actually covers" below.
 
 **Product category:** AI voice platform — text-to-speech, voice cloning, and real-time conversational voice
@@ -50,13 +50,13 @@ programmatically. The public v1 surface is `/speech`, `/voices`, `/models`,
 
 Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a B2B buying committee.
 
-| Persona                             | Cares about                                   | Challenge                                               | Value we promise                                                       |
-| ----------------------------------- | --------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Content Creator                     | Consistent, professional-grade audio at scale | Recording and re-recording eats the production schedule | Emotion-rich generation in minutes, reusable cloned voices             |
-| Storyteller / Character Creator     | Voices that act, not just read                | Standard TTS is flat and kills immersion                | Emotion tags, style prompting, per-character voices, live calling      |
-| Localization / Multilingual Creator | Reaching audiences in their own language      | Voice talent per language is expensive and slow         | One cloned voice across 28 cloning languages; 70+ generation languages |
-| Developer / Indie Studio            | API quality, docs, predictable cost           | Building or stitching speech infra is a distraction     | Live REST API, CLI, OpenAPI docs, per-request credit billing           |
-| Hobbyist                            | Trying AI voice cheaply                       | Upfront cost and complexity of other tools              | 10,000 free credits, no credit card, free browser-based audio tools    |
+| Persona                             | Cares about                                   | Challenge                                               | Value we promise                                                        |
+| ----------------------------------- | --------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Content Creator                     | Consistent, professional-grade audio at scale | Recording and re-recording eats the production schedule | Emotion-rich generation in minutes, reusable cloned voices              |
+| Storyteller / Character Creator     | Voices that act, not just read                | Standard TTS is flat and kills immersion                | Emotion tags, style prompting, per-character voices, live calling       |
+| Localization / Multilingual Creator | Reaching audiences in their own language      | Voice talent per language is expensive and slow         | One cloned voice across 28 cloning languages; 130+ generation languages |
+| Developer / Indie Studio            | API quality, docs, predictable cost           | Building or stitching speech infra is a distraction     | Live REST API, CLI, OpenAPI docs, per-request credit billing            |
+| Hobbyist                            | Trying AI voice cheaply                       | Upfront cost and complexity of other tools              | 10,000 free credits, no credit card, free browser-based audio tools     |
 
 **Anti-persona:** Buyers who need enterprise procurement, contractual uptime SLAs, or on-prem/self-hosted deployment. Also anyone wanting to impersonate a real person — we don't want that use case, though see the note under Objections: our published terms don't currently forbid it in so many words.
 
@@ -89,7 +89,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 - Expressive by default — models interpret emotional and logical context; emotion tags for laughter, sighs, coughs; style prompting ("British accent," "seductive tone")
 - Three modes in one platform and one credit balance: generation, cloning, and live real-time calling
 - Language breadth — coverage depends on the feature, and speech generation goes widest: over 130 languages on Gemini 3.8, fewer on other voice models. Cloning covers 28 languages. See the coverage table under Proof Points before quoting a number.
-- Model choice under one API — Google Gemini (2.5 and 3.1 Flash), xAI Grok, and Replicate/Orpheus
+- Model choice under one API — Google Gemini 3.8 Flash, xAI Grok, and Replicate/Orpheus
 - Real developer surface — REST API v1, API keys, CLI login, usage/billing dashboards, OpenAPI-generated docs at docs.sexyvoice.ai
 - Transparent credit pricing published on the site; free tier with no card
 - Free browser-based audio tools (transcription, conversion, joining) that run offline with no upload
@@ -117,7 +117,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 ## Switching Dynamics
 
 **Push:** Flat, robotic output that undercuts production value; per-minute costs that scale badly; language gaps that block localization; juggling separate tools for generation, cloning, and realtime voice.
-**Pull:** Emotion-rich output; live calling; 70+ languages; a free tier with no card; an API and CLI that work today; published credit math.
+**Pull:** Emotion-rich output; live calling; speech generation in over 130 languages; a free tier with no card; an API and CLI that work today; published credit math.
 **Habit:** Existing voice libraries and prompt workflows on incumbents; scripts already wired to another vendor's API; the muscle memory of just recording it themselves.
 **Anxiety:** "Will quality match what I'm used to?" · "Will my cloned voice actually sound like me?" · "Is a smaller platform going to be around and stable?" · "What happens to my voice sample?"
 
@@ -212,6 +212,8 @@ See [Google's language coverage](https://aistudio.google.com/docs/speech-generat
 ## Changelog
 
 _Newest first. One line per revision: what changed and why._
+
+- v7 (2026-11-04). Align generation claims with Gemini 3.8 and its 130+ supported languages.
 
 - v6 (2026-08-11) — Reverted the live-call rate from 1,000 to 1,100 credits/minute ($0.05) alongside the downgrade to the grok-voice-think-fast-1.0 voice model.
 - v5 (2026-08-01) — Raised the live-call rate from 1,000 to 1,100 credits/minute ($0.55) alongside the upgrade to the grok-voice-think-fast-2.0 voice model. The "~1,000 credits ≈ 1 minute" rule of thumb is unchanged: it is about speech generation, not calls, and the two rates are no longer the same number.

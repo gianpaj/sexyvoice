@@ -35,7 +35,7 @@ branch's API contract while generated pages keep their published schema ID.
 ## Verification
 
 Formatting, type checks, and translation parity pass. The full suite passes
-2,003 web tests and 131 script tests. Catalog tests cover retired aliases and
+2,002 web tests and 131 script tests. Catalog tests cover retired aliases and
 UUIDs, cache rejection, charging, and selection of a supported default. Gemini
 3.8 tests exercise free and paid users; historical pricing tests remain green.
 
@@ -44,7 +44,21 @@ public voices after filtering and confirmed all 22 retired rows remain public.
 One active historical audio row from each retired catalog resolved its original
 voice name and returned HTTP 200 from R2. No database or storage writes ran.
 
-The focused Playwright attempt stopped in authentication setup because
-`PLAYWRIGHT_TEST_USER_EMAIL` and `PLAYWRIGHT_TEST_USER_PASSWORD` are absent.
-Run the new catalog test and the generate/history specs with those credentials
-before release. Deployment and production telemetry checks remain release work.
+CI run `41738272130` passed all 119 Playwright tests on head `67e9a2a`, including
+the generate and history specs. Local browser runs require the test credentials
+from CI. Deployment and production telemetry checks remain release work.
+
+## Review decisions
+
+Prototype commit `67e9a2a` is preserved on `archive/character-voice-prototypes`.
+The retirement branch excludes it. Root ignore rules cover `.superpowers/` and
+`supabase/.temp/` so local tool state stays outside the retirement source.
+
+Keep the client eligibility check before default selection as well as the
+database filter. Both use the shared retirement rule, and the default-selection
+regression exercises unfiltered props.
+
+Shared `useLocalStorage` resolves functional updates against a value captured
+by the current render, including on `main`. Current generation controls issue
+one update per event. General batching support belongs in a separate storage
+hook change.

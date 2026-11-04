@@ -241,7 +241,7 @@
           "questions": [
             {
               "question": "Which languages can I generate speech in?",
-              "answer": "Language support depends on your voice and model. Gemini 3.1 voices support 70+ languages, while Gemini 2.5 voices support 24. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below."
+              "answer": "Language support depends on your voice and model. Gemini 3.8 voices support over 130 languages. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below."
             },
             {
               "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
@@ -1248,7 +1248,7 @@
       "ariaLabelDismiss": "Dismiss cloned voice calls announcement"
     },
     "expressiveVoicesLaunch": {
-      "text": "New, more expressive voices are here — powered by Gemini 3.1, with finer control over pacing, breaths, pitch, speed, and intensity.",
+      "text": "New, more expressive voices are here — powered by Gemini 3.8, with finer control over pacing, breaths, pitch, speed, and intensity.",
       "ctaLoggedIn": "Try voices",
       "ctaLoggedOut": "Log in",
       "ariaLabelDismiss": "Dismiss expressive voices announcement"

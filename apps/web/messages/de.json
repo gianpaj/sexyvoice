@@ -241,7 +241,7 @@
           "questions": [
             {
               "question": "In welchen Sprachen kann ich Sprache erzeugen?",
-              "answer": "Die verfügbaren Sprachen hängen von Stimme und Modell ab. Gemini-3.1-Stimmen unterstützen über 70 Sprachen, Gemini-2.5-Stimmen 24. Andere Modelle haben eine eigene Sprachauswahl. Wählen Sie eine Stimme für Ihre Zielsprache und hören Sie sich eine Vorschau an. Die Sprachen für das Stimmklonen stehen weiter unten."
+              "answer": "Die verfügbaren Sprachen hängen von Stimme und Modell ab. Gemini-3.8-Stimmen unterstützen über 130 Sprachen. Andere Modelle haben eine eigene Sprachauswahl. Wählen Sie eine Stimme für Ihre Zielsprache und hören Sie sich eine Vorschau an. Die Sprachen für das Stimmklonen stehen weiter unten."
             },
             {
               "question": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
@@ -1250,7 +1250,7 @@
       "ariaLabelDismiss": "Hinweis zu Anrufen mit geklonter Stimme schließen"
     },
     "expressiveVoicesLaunch": {
-      "text": "Neue, ausdrucksstärkere Stimmen sind da — angetrieben von Gemini 3.1, mit feinerer Kontrolle über Tempo, Atemgeräusche, Tonhöhe, Geschwindigkeit und Intensität.",
+      "text": "Neue, ausdrucksstärkere Stimmen sind da — angetrieben von Gemini 3.8, mit feinerer Kontrolle über Tempo, Atemgeräusche, Tonhöhe, Geschwindigkeit und Intensität.",
       "ctaLoggedIn": "Stimmen testen",
       "ctaLoggedOut": "Anmelden",
       "ariaLabelDismiss": "Hinweis zu expressiven Stimmen schließen"

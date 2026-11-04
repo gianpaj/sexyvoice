@@ -17,7 +17,8 @@ removal before that date. See the [deprecation schedule](https://aistudio.google
 The text LLM in `apps/web/app/api/generate-text/route.ts` uses
 `gemini-3.1-flash-lite` and is outside this retirement scope.
 
-Status: runtime implementation is complete. Browser and release checks remain.
+Status: runtime implementation and browser checks are complete. Production
+release checks remain.
 
 ## Supabase findings
 
@@ -81,19 +82,19 @@ Catalog and request eligibility enforce retirement while history remains readabl
       message files change. Keep the existing UI layout.
 - [x] Cover retired models by name and UUID, credit estimation, cached requests,
       catalog filtering, and rejection without charging or provider calls.
-- [ ] Verify signed-in history playback and downloads. Read-only history-name
+- [x] Verify signed-in history playback and downloads. Read-only history-name
       joins, R2 availability, and provider-cost recovery checks pass.
 - [x] Verify Gemini 3.8 generation and estimates for free and paid users, plus
       unaffected Grok and Replicate generation.
 - [x] Update the relevant unit tests, Playwright coverage, and E2E test plan.
       Run `pnpm fixall`, `pnpm type-check`, `pnpm test`, and translation parity.
-- [ ] Run the generate and history Playwright specs with test credentials. The
-      focused catalog attempt stops in authentication setup because the test
-      email and password are absent.
+- [x] Run the generate and history Playwright specs with test credentials.
+      CI run `41738272130` passed all 119 Playwright tests on head `67e9a2a`.
+      Local browser runs require the test credentials from CI.
 
 ## Verification evidence
 
-The full suite passes 2,003 web tests and 131 script tests. Formatting, type
+The full suite passes 2,002 web tests and 131 script tests. Formatting, type
 checks, translation parity, and `git diff --check` pass. The docs generator
 accepts a local schema path; generation from the branch schema succeeds.
 

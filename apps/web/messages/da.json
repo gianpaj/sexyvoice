@@ -241,7 +241,7 @@
           "questions": [
             {
               "question": "Hvilke sprog kan jeg generere tale på?",
-              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.1-stemmer understøtter over 70 sprog, mens Gemini 2.5-stemmer understøtter 24. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
+              "answer": "Sprogunderstøttelsen afhænger af stemmen og modellen. Gemini 3.8-stemmer understøtter over 130 sprog. Andre modeller har deres egne sprogvalg. Vælg en stemme til dit sprog, og lyt til en prøve. Stemmekloning har sin egen sprogliste nedenfor."
             },
             {
               "question": "Kan jeg få en stemme til at tale med en bestemt accent eller stil, som britisk eller pirat🏴‍☠️?",
@@ -1246,7 +1246,7 @@
       "ariaLabelDismiss": "Luk besked om opkald med klonet stemme"
     },
     "expressiveVoicesLaunch": {
-      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.1, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
+      "text": "Nye, mere udtryksfulde stemmer er her — drevet af Gemini 3.8, med finere kontrol over tempo, vejrtrækninger, toneleje, hastighed og intensitet.",
       "ctaLoggedIn": "Proev stemmer",
       "ctaLoggedOut": "Log ind",
       "ariaLabelDismiss": "Luk besked om ekspressive stemmer"
