@@ -12,25 +12,64 @@ on:
   # Allow manual trigger
   workflow_dispatch:
 
+# A newer push to a PR supersedes its running build. Pushes to main each run
+# to completion: the next main run checks only its own diff, so a cancelled
+# run would leave its changes untested.
 concurrency:
   group: ${{ github.ref }}-e2e
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
+  # E2E runs only when the web app or its build inputs changed. A PR compares
+  # with its base branch, so a docs-only PR skips E2E and a PR that also
+  # changed code re-runs it on every push. A push to main compares with the
+  # previous main commit. Manual runs always test.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # paths-filter lists PR files through the API.
+      pull-requests: read
+    outputs:
+      e2e: ${{ github.event_name == 'workflow_dispatch' && 'true' || steps.filter.outputs.e2e }}
+    steps:
+      # Push events diff with git; PR events need no checkout.
+      - name: Checkout code
+        if: github.event_name == 'push'
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 1
+          # paths-filter fetches the previous main commit.
+          persist-credentials: true
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          filters: |
+            e2e:
+              - "apps/web/**"
+              - "patches/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "turbo.json"
+              - ".github/workflows/e2e-tests.yml"
+
   e2e:
+    needs: changes
     environment: Production
     # Skip drafts and pushes by dependency bots (renovate/dependabot) to save
     # CI cost. github.actor is whoever triggered this run, so a human commit
     # on a bot PR still gets E2E coverage. github-actions[bot] (Claude-created
     # PRs) is allowed.
     if: >-
-      (
+      needs.changes.outputs.e2e == 'true' && ((
         github.event.pull_request.draft == false &&
         github.actor != 'renovate[bot]' &&
         github.actor != 'dependabot[bot]'
       ) ||
       github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch'
+      github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
