@@ -49,6 +49,7 @@ jobs:
           filters: |
             e2e:
               - "apps/web/**"
+              - "packages/**"
               - "patches/**"
               - "package.json"
               - "pnpm-lock.yaml"
