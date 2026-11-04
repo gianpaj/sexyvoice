@@ -382,6 +382,16 @@ pnpm run prepare-gemini-voice-sql -- \
   --out generated-speech/gemini-38/add-voices.sql
 ```
 
+Friendly labels come from `apps/web/lib/voice-names.ts`. Selectors and the
+local listening page show these names; database names, API identifiers, provider
+requests, filenames, and cache identities retain the provider IDs.
+
+This command validates catalog, generation, local file hashes, and verified upload
+records. It writes SQL without executing it. Deploy `gpro38` support before using
+these voices for generation. Database writes follow the
+[database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
+authorizes an exception.
+
 ### Custom Gemini 3.8 voices
 
 Voices designed or replicated in AI Studio have IDs such as
@@ -394,16 +404,6 @@ before it expires; a new ID needs a new `voices` row and display label.
 
 Generate a custom voice sample from its own one-voice catalog and output
 directory, so the 28-voice batch stays unchanged.
-
-Friendly labels come from `apps/web/lib/voice-names.ts`. Selectors and the
-local listening page show these names; database names, API identifiers, provider
-requests, filenames, and cache identities retain the provider IDs.
-
-This command validates catalog, generation, local file hashes, and verified upload
-records. It writes SQL without executing it. Deploy `gpro38` support before using
-these voices for generation. Database writes follow the
-[database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
-authorizes an exception.
 
 ## Audio cleanup comparison
 
