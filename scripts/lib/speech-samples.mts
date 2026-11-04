@@ -50,7 +50,7 @@ export function assertSampleVoice(value: SampleVoice): void {
       throw new Error(`Missing sample ${key}`);
     }
   }
-  if (!/^[a-z0-9][a-z0-9-]*$/i.test(value.name)) {
+  if (!/^[a-z0-9][a-z0-9_-]*$/i.test(value.name)) {
     throw new Error(`Invalid provider voice: ${value.name}`);
   }
   if (/^ca(?:-|$)/i.test(value.language) || /^ca-/i.test(value.name)) {

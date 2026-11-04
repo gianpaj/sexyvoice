@@ -99,6 +99,9 @@ describe('Gemini 3.8 integration', () => {
       voice: voice.name,
     });
     expect(buildGeminiVoiceConfig('kore', 'gpro38')).toEqual({ voice: 'Kore' });
+    expect(buildGeminiVoiceConfig('voice_1n3ne2q96iaf', 'gpro38')).toEqual({
+      voice: 'voice_1n3ne2q96iaf',
+    });
     expect(buildGeminiVoiceConfig(voice.name, 'gpro31')).toEqual({
       prebuiltVoiceConfig: { voiceName: 'Es-es-tutor-12' },
     });

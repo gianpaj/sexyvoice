@@ -16,6 +16,7 @@ const GEMINI_38_DISPLAY_NAMES: Record<string, string> = {
   'es-es-techagent-5': 'Lucía',
   'es-es-training-12': 'Alba',
   'es-es-tutor-12': 'Sofía',
+  voice_1n3ne2q96iaf: 'Vivienne',
 };
 
 /** Display labels only. Keep the stored name for provider requests and API identifiers. */
