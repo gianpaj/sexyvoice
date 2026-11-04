@@ -382,7 +382,7 @@ pnpm run prepare-gemini-voice-sql -- \
   --out generated-speech/gemini-38/add-voices.sql
 ```
 
-Friendly Spanish labels come from `apps/web/lib/voice-names.ts`. Selectors and the
+Friendly labels come from `apps/web/lib/voice-names.ts`. Selectors and the
 local listening page show these names; database names, API identifiers, provider
 requests, filenames, and cache identities retain the provider IDs.
 
@@ -391,6 +391,19 @@ records. It writes SQL without executing it. Deploy `gpro38` support before usin
 these voices for generation. Database writes follow the
 [database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
 authorizes an exception.
+
+### Custom Gemini 3.8 voices
+
+Voices designed or replicated in AI Studio have IDs such as
+`voice_1n3ne2q96iaf` (Vivienne, created 2026-11-04). Unlike shared library IDs,
+a stored voice belongs to the Google project that created it, so
+`GOOGLE_GENERATIVE_AI_API_KEY` must come from that project; any other key gets
+`404 NOT_FOUND`. Google caps stored voices at 200 per project and gives them a
+[1-year TTL](https://aistudio.google.com/docs/voice-design). Recreate the voice
+before it expires; a new ID needs a new `voices` row and display label.
+
+Generate a custom voice sample from its own one-voice catalog and output
+directory, so the 28-voice batch stays unchanged.
 
 ## Audio cleanup comparison
 
