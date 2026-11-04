@@ -156,7 +156,10 @@ without the column, the call page fails to load.
 ### AI providers
 
 - `FAL_KEY`
-- `GOOGLE_GENERATIVE_AI_API_KEY`
+- `GOOGLE_GENERATIVE_AI_API_KEY`: must belong to Google project
+  `455901324227`, which owns the custom Gemini 3.8 voices. A key from another
+  project returns `404 NOT_FOUND` for them. See
+  [custom Gemini 3.8 voices](../scripts/README.md#custom-gemini-38-voices).
 - `MISTRAL_API_KEY`: required for the Voxtral cloning path.
 - `CALL_CLONE_PROVIDER`: `inworld` (default) or `mistral` for new saved call
   voices. Existing profiles retain their provider. This is a server-side
