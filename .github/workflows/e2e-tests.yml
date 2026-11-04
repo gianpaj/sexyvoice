@@ -12,11 +12,12 @@ on:
   # Allow manual trigger
   workflow_dispatch:
 
-# A newer push to a PR supersedes its running build. Pushes to main each run
-# to completion: the next main run checks only its own diff, so a cancelled
-# run would leave its changes untested.
+# A newer push to a PR supersedes its running build. Each main push gets its
+# own group, so no main run is cancelled or displaced while pending: a main
+# run checks only its own diff, so a dropped run would leave its changes
+# untested.
 concurrency:
-  group: ${{ github.ref }}-e2e
+  group: ${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}-e2e
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
