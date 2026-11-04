@@ -20,6 +20,7 @@ import {
 } from '@/lib/tts/gemini-prompt';
 import { resolveUsageCost } from '@/lib/usage-costs';
 import { estimateCredits, getTtsProvider } from '@/lib/utils';
+import { getVoiceDisplayName } from '@/lib/voice-names';
 import {
   mockRedisGet,
   mockUploadFileToR2,
@@ -102,6 +103,9 @@ describe('Gemini 3.8 integration', () => {
     expect(buildGeminiVoiceConfig('voice_1n3ne2q96iaf', 'gpro38')).toEqual({
       voice: 'voice_1n3ne2q96iaf',
     });
+    expect(
+      getVoiceDisplayName({ model: 'gpro38', name: 'voice_1n3ne2q96iaf' }),
+    ).toBe('Vivienne');
     expect(buildGeminiVoiceConfig(voice.name, 'gpro31')).toEqual({
       prebuiltVoiceConfig: { voiceName: 'Es-es-tutor-12' },
     });
