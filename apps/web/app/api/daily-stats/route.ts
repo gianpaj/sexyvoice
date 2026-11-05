@@ -410,7 +410,7 @@ export async function GET(request: NextRequest) {
         })),
       ),
       _timed(
-        `characters:${ROLLING_WINDOW_LABEL} paginated`,
+        `characters:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         getCharactersInRange(
           supabase,
           fourteenDaysAgo,
