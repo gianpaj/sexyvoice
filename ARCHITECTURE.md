@@ -480,10 +480,6 @@ offers Call again and editing. The in-call timer starts when the agent first
 reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
 starts billing.
 
-The daily stats report counts new private characters for yesterday and the
-rolling 14-day window by `characters.created_at`, excluding internal users.
-Deleted characters are absent from these counts.
-
 Paid users create, duplicate and edit characters in the creator: name, short
 description, personality (with starter examples) and voice. A name, a
 personality and an available voice are required to save, and characters are
