@@ -188,7 +188,13 @@ export function PricingCards({
                 </div>
                 <div className="flex items-baseline gap-0.5">
                   <span className="font-bold text-3xl tabular-nums">
-                    ${plan.price}
+                    {format.number(plan.price, {
+                      style: 'currency',
+                      currency: 'USD',
+                      minimumFractionDigits: Number.isInteger(plan.price)
+                        ? 0
+                        : 2,
+                    })}
                   </span>
                   <span className="text-muted-foreground text-sm">
                     {plan.billing ??

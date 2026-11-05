@@ -46,6 +46,7 @@ describe('pricing bonus presentation', () => {
     );
 
     expect(screen.getByText('Renews monthly. Cancel anytime.')).toBeVisible();
+    expect(screen.getByText('$2.50', { exact: true })).toBeVisible();
     expect(
       screen.getByText('$2.50 for your first month, then $5.00/month.'),
     ).toBeVisible();
