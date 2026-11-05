@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CreditsFaq } from '@/components/credits-faq';
-import { faqAnswerText } from '@/lib/faq';
+import { CREDITS_PER_MINUTE } from '@/lib/supabase/constants';
 import english from '@/messages/en.json';
 import spanish from '@/messages/es.json';
 
@@ -34,7 +34,11 @@ describe('CreditsFaq', () => {
       ).toBeVisible();
       for (const faq of group.questions) {
         await user.click(screen.getByRole('button', { name: faq.question }));
-        expect(screen.getByText(faqAnswerText(faq.answer))).toBeVisible();
+        const expectedAnswer = faq.answer.replaceAll(
+          '{count}',
+          String(CREDITS_PER_MINUTE),
+        );
+        expect(screen.getByText(expectedAnswer)).toBeVisible();
       }
     },
   );
