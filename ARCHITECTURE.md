@@ -571,7 +571,8 @@ scripts import the same modules, so every path writes identical rows.
 
 ### Core PostgreSQL Tables
 
-- `profiles` stores application users linked to Supabase Auth.
+- `profiles` stores application users linked to Supabase Auth. `username` holds
+  the sign-up email, so RLS lets users read only their own row.
 - `voices` stores catalog voices for speech generation and calls, including the
   shared cloned-audio row used by legacy foreign keys.
 - `audio_references` stores owned saved voices, provider IDs, locales, and preview
@@ -602,8 +603,8 @@ See `apps/web/supabase/migrations/` and
 - Browser and session-authenticated server code use
   `apps/web/lib/supabase/server.ts` or the browser client and rely on RLS.
 - Trusted server routes use `createAdminClient()` only when a service identity
-  must access another user's rows, such as resolving an API key owner or a
-  protected character prompt.
+  must access another user's rows, such as resolving an API key owner, the user
+  behind a Stripe customer, or a protected character prompt.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for the browser.
   `SUPABASE_SECRET_KEY` bypasses RLS and must remain server-only.
 

@@ -414,8 +414,10 @@ export const getUserByIdWithError = async (userId: string) => {
   return supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
+// Stripe webhooks and cron jobs have no user session, and RLS limits profile
+// reads to their owner.
 export const getUserIdByStripeCustomerId = async (customerId: string) => {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from('profiles')
@@ -424,17 +426,6 @@ export const getUserIdByStripeCustomerId = async (customerId: string) => {
     .single();
 
   return data?.id;
-};
-
-export const getUserByStripeCustomerId = async (customerId: string) => {
-  const supabase = await createClient();
-
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('stripe_id', customerId)
-    .single();
-  return data;
 };
 
 /**
