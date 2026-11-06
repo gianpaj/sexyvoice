@@ -5,11 +5,8 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
-import {
-  calculateCreditsFromTokens,
-  estimateCredits,
-  getErrorMessage,
-} from '@/lib/utils';
+import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
+import { getErrorMessage } from '@/lib/utils';
 import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
 import {
   flushPromises,
@@ -23,6 +20,9 @@ import {
   server,
   setMockGoogleGenAIFactory,
 } from './setup';
+
+const estimateCredits = (text: string, voice: string, model: string) =>
+  getTtsModel(model)?.estimateCredits(text, voice) ?? 0;
 
 describe('Generate Voice API Route', () => {
   beforeEach(() => {
@@ -340,7 +340,7 @@ describe('Generate Voice API Route', () => {
     it('should return 402 when user has insufficient credits for Grok voice', async () => {
       const queries = await import('@/lib/supabase/queries');
       const text = 'a'.repeat(101);
-      const estimate = estimateCredits(text, 'eve', 'grok');
+      const estimate = estimateCredits(text, 'eve', 'xai');
 
       vi.mocked(queries.getCredits).mockResolvedValueOnce(estimate - 1);
 
@@ -530,13 +530,12 @@ describe('Generate Voice API Route', () => {
       const { saveAudioFile, insertUsageEvent, getVoiceById } = await import(
         '@/lib/supabase/queries'
       );
-      // The generate-voice route uses the raw DB model string (not the external
-      // API model ID), so restore the original Replicate versioned model for tara.
+      // The route reads the stored Replicate model path from the voice row.
       vi.mocked(getVoiceById).mockResolvedValueOnce({
         id: 'voice-tara-id',
         language: 'en',
         model:
-          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         name: 'tara',
       });
       const request = new Request('http://localhost/api/generate-voice', {
@@ -589,7 +588,7 @@ describe('Generate Voice API Route', () => {
         ),
         isPublic: false,
         model:
-          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         predictionId: undefined,
         text: 'Hello world',
         url: expect.stringMatching(
@@ -607,7 +606,7 @@ describe('Generate Voice API Route', () => {
         metadata: {
           duration: '12',
           model:
-            'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+            'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
           predictionId: null,
           provider: 'replicate',
           split: false,
@@ -618,7 +617,7 @@ describe('Generate Voice API Route', () => {
           voiceName: 'tara',
         },
         model:
-          'lucataco/xtts-v2:684bc3855b37866c0c65add2ff39c78f3dea3f4ff103a436465326e0f438d55e',
+          'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
         quantity: 11, // "Hello world".length
         sourceId: 'test-audio-file-id',
         sourceType: 'tts',
@@ -1067,7 +1066,7 @@ describe('Generate Voice API Route', () => {
 
       const text = 'Hello world';
       const reservedCredits = estimateCredits(text, 'kore', 'gpro38');
-      const actualCredits = calculateCreditsFromTokens(23);
+      const actualCredits = creditsFromTokens(23);
       const request = new Request('http://localhost/api/generate-voice', {
         body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
         headers: {
@@ -1169,7 +1168,7 @@ describe('Generate Voice API Route', () => {
 
       const text = 'Hello world '.repeat(5).trim();
       const reservedCredits = estimateCredits(text, 'kore', 'gpro38');
-      const actualCredits = calculateCreditsFromTokens(23);
+      const actualCredits = creditsFromTokens(23);
       const request = new Request('http://localhost/api/generate-voice', {
         body: JSON.stringify({ text, voiceId: 'voice-kore-id' }),
         headers: {
@@ -1217,7 +1216,7 @@ describe('Generate Voice API Route', () => {
 
       const text = 'Hello world';
       const reservedCredits = estimateCredits(text, 'kore', 'gpro38');
-      const actualCredits = calculateCreditsFromTokens(23);
+      const actualCredits = creditsFromTokens(23);
       const availableExtraCredits = 1;
       const creditsDebited = reservedCredits + availableExtraCredits;
 
@@ -2217,7 +2216,7 @@ describe('Generate Voice API Route', () => {
           });
         }
         const text = 'Hello world '.repeat(10).trim();
-        const actualCredits = calculateCreditsFromTokens(23);
+        const actualCredits = creditsFromTokens(23);
         const response = await POST(
           new Request('http://localhost/api/generate-voice', {
             body: JSON.stringify({

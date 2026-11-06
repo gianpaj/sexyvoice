@@ -1,7 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextResponse } from 'next/server';
 
-import { getCharactersLimit } from '@/lib/ai';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getVoiceById, hasUserPaid } from '@/lib/supabase/queries';
@@ -10,12 +9,12 @@ import {
   buildGeminiTtsContents,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
-import { isActiveTtsModel } from '@/lib/tts/models';
 import {
-  calculateCreditsFromTokens,
-  estimateGrokCredits,
-  getTtsProvider,
-} from '@/lib/utils';
+  creditsFromTokens,
+  getTextLimit,
+  getTtsModel,
+  type TtsModel,
+} from '@/lib/tts/models';
 
 type ValidationResult<T> =
   | { ok: true; data: T }
@@ -74,19 +73,18 @@ async function validateUser(): Promise<ValidationResult<{ id: string }>> {
 
 async function validateVoice(
   voiceId: string,
-): Promise<ValidationResult<{ model: string }>> {
+): Promise<ValidationResult<{ model: string; ttsModel: TtsModel }>> {
   const voiceObj = await getVoiceById(voiceId);
+  const ttsModel = getTtsModel(voiceObj?.model);
 
-  if (!(voiceObj && isActiveTtsModel(voiceObj.model))) {
+  if (!(voiceObj && ttsModel)) {
     return {
       ok: false,
       response: APIErrorResponse('Voice not found', 404),
     };
   }
 
-  const provider = getTtsProvider(voiceObj.model);
-
-  if (!(provider === 'gemini' || provider === 'grok')) {
+  if (!ttsModel.canEstimate) {
     return {
       ok: false,
       response: APIErrorResponse(
@@ -96,15 +94,15 @@ async function validateVoice(
     };
   }
 
-  return { data: voiceObj, ok: true };
+  return { data: { model: voiceObj.model, ttsModel }, ok: true };
 }
 
 function validateTextLength(
   text: string,
-  model: string,
+  ttsModel: TtsModel,
   isPaidUser: boolean,
 ): ValidationResult<null> {
-  const maxLength = getCharactersLimit(model, isPaidUser);
+  const maxLength = getTextLimit(ttsModel, isPaidUser);
 
   if (text.length > maxLength) {
     return {
@@ -153,14 +151,14 @@ export async function POST(request: Request) {
 
     const isPaidUser = await hasUserPaid(userResult.data.id);
 
-    const model = voiceResult.data.model;
-    const textError = validateTextLength(text, model, isPaidUser);
+    const { model, ttsModel } = voiceResult.data;
+    const textError = validateTextLength(text, ttsModel, isPaidUser);
     if (!textError.ok) {
       return textError.response;
     }
 
-    if (getTtsProvider(model) === 'grok') {
-      const credits = estimateGrokCredits(text);
+    if (ttsModel.provider === 'grok') {
+      const credits = ttsModel.estimateCredits(text, '');
 
       return NextResponse.json({
         estimatedCredits: credits,
@@ -199,7 +197,7 @@ export async function POST(request: Request) {
 
     const totalEstimatedTokens = inputTokens + estimatedOutputTokens;
 
-    const credits = calculateCreditsFromTokens(totalEstimatedTokens);
+    const credits = creditsFromTokens(totalEstimatedTokens);
 
     return NextResponse.json({
       estimatedCredits: credits,

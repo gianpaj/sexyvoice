@@ -29,13 +29,13 @@ import {
   DEFAULT_GENERATION_SETTINGS,
   type GenerationSettings,
 } from '@/hooks/use-generation-settings';
-import { getCharactersLimit, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { cn, getTtsProvider } from '@/lib/utils';
+import { getStyleLimit, getTextLimit, getTtsModel } from '@/lib/tts/models';
+import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
@@ -243,17 +243,14 @@ export function AudioGenerator({
     isLoading: isJoinerLoading,
   } = useFFmpegJoiner();
 
-  const provider = getTtsProvider(selectedVoice?.model);
-  const isGeminiVoice = provider === 'gemini';
-  const isGrokVoice = provider === 'grok';
-  const showEnhanceButton = provider === 'replicate' || isGeminiVoice;
-  const canEstimateCredits = isGeminiVoice || isGrokVoice;
+  const ttsModel = getTtsModel(selectedVoice?.model);
+  const isGeminiVoice = ttsModel?.provider === 'gemini';
+  const isGrokVoice = ttsModel?.provider === 'grok';
+  const showEnhanceButton = Boolean(ttsModel?.enhancePrompt);
+  const canEstimateCredits = Boolean(ttsModel?.canEstimate);
 
   const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
-  const charactersLimit = getCharactersLimit(
-    selectedVoice?.model || '',
-    isPaidUser,
-  );
+  const charactersLimit = ttsModel ? getTextLimit(ttsModel, isPaidUser) : 0;
   const splitSegmentTexts = useMemo(
     () =>
       splitLongTextIntoSegments(text, {
@@ -276,9 +273,11 @@ export function AudioGenerator({
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
     shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
-  const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
+  const styleCharacterLimit = ttsModel
+    ? getStyleLimit(ttsModel, isPaidUser)
+    : null;
   const styleIsOverLimit =
-    isGeminiVoice && styleText.length > styleCharacterLimit;
+    styleCharacterLimit !== null && styleText.length > styleCharacterLimit;
   const textIsOverLimit =
     !shouldDisableCharactersLimit && text.length > charactersLimit;
   const inputIsOverLimit = textIsOverLimit || styleIsOverLimit;
@@ -814,7 +813,6 @@ export function AudioGenerator({
       const enhancedText = await complete(originalText, {
         body: {
           selectedVoiceLanguage: selectedVoice.language,
-          ttsProvider: provider,
           voiceModel: selectedVoice.model,
         },
       });

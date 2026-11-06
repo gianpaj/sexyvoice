@@ -999,9 +999,9 @@ not as proof of truncation or authorization for a refund.
 
 ### Why truncation can cause an overcharge
 
-Gemini TTS credits are `ceil(totalTokenCount * 1.1 * multiplier)` where
+Gemini TTS credits are `ceil(totalTokenCount * 1.1)` where
 `totalTokenCount = promptTokenCount + candidatesTokenCount` (see
-`apps/web/lib/utils.ts` → `calculateCreditsFromTokens`). If the model reads a
+`apps/web/lib/tts/models.ts` → `creditsFromTokens`). If the model reads a
 long prompt but produces only part of the requested speech, the prompt tokens
 can still contribute to the charge.
 

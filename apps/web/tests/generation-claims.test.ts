@@ -97,6 +97,7 @@ const routes = [
       jsonRequest('generate-text', {
         prompt: 'Hello world',
         selectedVoiceLanguage: 'en',
+        voiceModel: 'gpro38',
       }),
   },
   {

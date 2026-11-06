@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-text/route';
-import { GEMINI_38_AUDIO_TAGS } from '@/lib/ai';
+import { GEMINI_38_AUDIO_TAGS } from '@/lib/tts/models';
 
 const { streamText } = vi.hoisted(() => ({ streamText: vi.fn() }));
 vi.mock('ai', () => ({ streamText }));

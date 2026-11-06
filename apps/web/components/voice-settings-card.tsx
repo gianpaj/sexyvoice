@@ -19,10 +19,10 @@ import {
 } from '@/components/ui/card';
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { VoicePicker } from '@/components/voice-picker';
-import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
+import { getStyleLimit, getTtsModel } from '@/lib/tts/models';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { cn, getTtsProvider } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
@@ -51,13 +51,19 @@ export function VoiceSettingsCard({
   isPaidUser?: boolean;
 }) {
   const t = useTranslations('generate');
-  const provider = getTtsProvider(selectedVoice?.model);
-  const isGeminiVoice = provider === 'gemini';
-  const isGrokVoice = provider === 'grok';
-  const emotionTags = selectedVoice ? getEmotionTags(selectedVoice) : undefined;
-  const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
+  const ttsModel = getTtsModel(selectedVoice?.model);
+  const isGeminiVoice = ttsModel?.provider === 'gemini';
+  const isGrokVoice = ttsModel?.provider === 'grok';
+  const emotionTags =
+    selectedVoice && ttsModel
+      ? ttsModel.inlineTags(selectedVoice.language)
+      : undefined;
+  const styleCharacterLimit = ttsModel
+    ? getStyleLimit(ttsModel, isPaidUser)
+    : null;
   const styleLength = selectedStyle?.length ?? 0;
-  const isStyleOverLimit = isGeminiVoice && styleLength > styleCharacterLimit;
+  const isStyleOverLimit =
+    styleCharacterLimit !== null && styleLength > styleCharacterLimit;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -156,7 +162,7 @@ export function VoiceSettingsCard({
             </div>
           )}
         </AudioProvider>
-        {isGeminiVoice && (
+        {styleCharacterLimit !== null && (
           <div className="relative">
             <Textarea
               className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"

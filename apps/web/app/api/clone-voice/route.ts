@@ -41,6 +41,7 @@ import {
   synthesizeInworldSpeech,
 } from '@/lib/clone/inworld';
 import { getMistralClient, saveMistralVoice } from '@/lib/clone/mistral';
+import { estimateCloneCredits, getCloneDollarCost } from '@/lib/clone/pricing';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import {
   getCloneTextMaxLength,
@@ -75,7 +76,6 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-import { estimateCredits, getDollarCost } from '@/lib/utils';
 
 const ALLOWED_TYPES = [
   'audio/mpeg',
@@ -616,7 +616,7 @@ async function validateCredits(
   userEmail?: string,
 ): Promise<{ currentAmount: number; estimate: number }> {
   const currentAmount = await getCredits(userId);
-  const estimate = estimateCredits(text, 'clone');
+  const estimate = estimateCloneCredits(text);
 
   validateCreditAmount({
     currentAmount,
@@ -1172,7 +1172,7 @@ async function runBackgroundTasks(
   // Insert usage event for tracking voice cloning (non-blocking)
   await insertUsageEvent({
     creditsUsed: audioFileData.baseCloneCredits,
-    dollarAmount: getDollarCost(
+    dollarAmount: getCloneDollarCost(
       provider,
       audioFileData.baseCloneCredits,
       audioFileData.text,

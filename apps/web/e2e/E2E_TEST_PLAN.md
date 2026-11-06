@@ -134,7 +134,8 @@ Implemented mock/helper files:
 Notes:
 
 - Gemini estimation returns a fixed mock response
-- Grok estimation is provider-aware and uses `estimateGrokCredits(text)`
+- Grok estimation is provider-aware and uses the catalog estimate
+  (`TTS_MODELS.xai.estimateCredits`)
 - `/api/generate-text` mock matches the current `streamProtocol: 'text'` client behavior
 
 ### Intentional gap

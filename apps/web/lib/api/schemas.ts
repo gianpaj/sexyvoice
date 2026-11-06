@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TTS_MODEL_IDS } from '@/lib/tts/models';
+
 export const ErrorTypeSchema = z.enum([
   'invalid_request_error',
   'authentication_error',
@@ -22,7 +24,7 @@ export const ErrorResponseSchema = z.object({
   }),
 });
 
-const ExternalApiModelSchema = z.enum(['gpro38', 'orpheus', 'xai']);
+const ExternalApiModelSchema = z.enum(TTS_MODEL_IDS);
 
 export const VoiceGenerationRequestSchema = z
   .strictObject({
@@ -137,7 +139,7 @@ export const VoiceInfoSchema = z.object({
   formats: z.array(z.enum(['wav', 'mp3'])),
   id: z.string(),
   language: z.string(),
-  model: z.enum(['gpro38', 'orpheus', 'xai']),
+  model: ExternalApiModelSchema,
   name: z.string(),
   supports_style: z
     .boolean()
@@ -149,7 +151,7 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro38', 'orpheus', 'xai']),
+  id: ExternalApiModelSchema,
   max_input_length: z.number().int().positive(),
   name: z.string(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),

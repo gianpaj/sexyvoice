@@ -6,7 +6,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { describe, expect, it, vi } from 'vitest';
 
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
-import { getEmotionTags } from '@/lib/ai';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -16,13 +15,6 @@ vi.mock('@/components/audio-provider', () => ({
 
 vi.mock('@/components/audio-player-with-context', () => ({
   AudioPlayerWithContext: () => <div data-testid="audio-player" />,
-}));
-
-vi.mock('@/lib/ai', () => ({
-  getEmotionTags: vi.fn(() => null),
-  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 2500 : 1000,
-  ),
 }));
 
 vi.mock('@/lib/react-textarea-autosize', () => ({
@@ -238,21 +230,26 @@ describe('VoiceSettingsCard', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('passes the selected voice to the emotion-tag lookup', () => {
-    const spanishTags =
-      '<groan>, <chuckle>, <gasp>, <resoplido>, <laugh>, <yawn>, <cough>';
-    vi.mocked(getEmotionTags).mockClear().mockReturnValue(spanishTags);
-    const gemini38 = createVoice({
-      id: 'voice-gemini-38',
-      language: 'es-ES 🇪🇸',
-      model: 'gpro38',
-      name: 'es-es-tutor-12',
-      sample_prompt: 'Hola',
+  it('lists the inline tags the selected voice performs', async () => {
+    const user = userEvent.setup();
+    renderVoiceSettingsCard({
+      selectedVoice: createVoice({
+        id: 'voice-gemini-38',
+        language: 'es-ES 🇪🇸',
+        model: 'gpro38',
+        name: 'es-es-tutor-12',
+        sample_prompt: 'Hola',
+        sample_url: 'https://files.example.com/sample.wav',
+      }),
     });
 
-    renderVoiceSettingsCard({ selectedVoice: gemini38 });
+    const tagsButton = screen.getAllByRole('button', { name: '' }).at(-1);
+    if (!tagsButton) throw new Error('Expected the inline tags button');
+    await user.hover(tagsButton);
 
-    expect(getEmotionTags).toHaveBeenCalledWith(gemini38);
+    expect((await screen.findAllByText(/<laughter>/)).length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('shows the selected voice name in the trigger button', () => {

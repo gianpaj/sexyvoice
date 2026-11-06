@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { GenerationSettings } from '@/hooks/use-generation-settings';
-import { getTtsProvider } from '@/lib/utils';
+import { getTtsModel } from '@/lib/tts/models';
 
 interface GenerationSettingsPanelProps {
   isPaidUser: boolean;
@@ -159,7 +159,7 @@ export function GenerationSettingsPanel({
 }: GenerationSettingsPanelProps) {
   const t = useTranslations('generate.advancedSettings');
 
-  const provider = getTtsProvider(selectedVoice?.model);
+  const provider = getTtsModel(selectedVoice?.model)?.provider;
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const upgradeTooltip = t('upgradeToUnlock');

@@ -13,7 +13,11 @@ import {
   restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
-import { calculateCreditsFromTokens, estimateCredits } from '@/lib/utils';
+import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
+
+const estimateCredits = (text: string, voice: string, model: string) =>
+  getTtsModel(model)?.estimateCredits(text, voice) ?? 0;
+
 import {
   mockRatelimitLimit,
   mockReplicateRun,
@@ -507,7 +511,7 @@ describe('/api/v1/speech', () => {
       'achernar',
       'gpro38',
     );
-    const actualCredits = calculateCreditsFromTokens(42);
+    const actualCredits = creditsFromTokens(42);
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
         {
@@ -583,7 +587,7 @@ describe('/api/v1/speech', () => {
   it('deducts remaining available credits when API Gemini usage exceeds the reserved estimate', async () => {
     const input = 'Hello world';
     const reservedCredits = estimateCredits(input, 'achernar', 'gpro38');
-    const actualCredits = calculateCreditsFromTokens(42);
+    const actualCredits = creditsFromTokens(42);
     const remainingCredits = 1;
     const creditsDebited = reservedCredits + remainingCredits;
 
@@ -656,7 +660,7 @@ describe('/api/v1/speech', () => {
   it('refunds unused reserved credits when API Gemini token usage is below estimate', async () => {
     const input = 'Hello world '.repeat(5).trim();
     const reservedCredits = estimateCredits(input, 'achernar', 'gpro38');
-    const actualCredits = calculateCreditsFromTokens(23);
+    const actualCredits = creditsFromTokens(23);
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
         {

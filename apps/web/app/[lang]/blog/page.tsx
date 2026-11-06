@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
-import { calculateReadingTime, cn, countWords } from '@/lib/utils';
+import { calculateReadingTime, countWords } from '@/lib/text';
+import { cn } from '@/lib/utils';
 import { routing } from '@/src/i18n/routing';
 
 export const dynamicParams = false;

@@ -17,7 +17,7 @@ import {
   createArticleSchema,
   createBreadcrumbSchema,
 } from '@/lib/structured-data';
-import { calculateReadingTime, countWords } from '@/lib/utils';
+import { calculateReadingTime, countWords } from '@/lib/text';
 import { routing } from '@/src/i18n/routing';
 
 export const dynamicParams = false;

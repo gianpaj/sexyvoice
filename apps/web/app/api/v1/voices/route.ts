@@ -1,16 +1,18 @@
 import { captureException } from '@sentry/nextjs';
 
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
-import { EXTERNAL_API_MODELS } from '@/lib/api/constants';
 import {
   externalApiErrorResponse,
   getExternalApiRequestId,
 } from '@/lib/api/external-errors';
-import { resolveExternalModelId } from '@/lib/api/model';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { createClient } from '@/lib/supabase/server';
-import { RETIRED_TTS_MODELS_FILTER } from '@/lib/tts/models';
+import {
+  getTtsModelId,
+  RETIRED_TTS_MODELS_FILTER,
+  TTS_MODELS,
+} from '@/lib/tts/models';
 
 export async function GET(request: Request) {
   const requestId = getExternalApiRequestId();
@@ -55,18 +57,18 @@ export async function GET(request: Request) {
     }
 
     const voices = (data ?? []).flatMap((voice) => {
-      const model = resolveExternalModelId(voice.model);
+      const model = getTtsModelId(voice.model);
       if (!model) {
         return [];
       }
       return [
         {
-          formats: [...EXTERNAL_API_MODELS[model].supportedFormats],
+          formats: [...TTS_MODELS[model].formats],
           id: voice.id,
           language: voice.language,
           model,
           name: voice.name,
-          supports_style: model === 'gpro38',
+          supports_style: TTS_MODELS[model].styleLimit !== null,
         },
       ];
     });

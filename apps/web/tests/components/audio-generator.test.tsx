@@ -127,26 +127,6 @@ vi.mock('@/components/grok-tts-editor', () => ({
   ),
 }));
 
-vi.mock('@/lib/ai', () => ({
-  getCharactersLimit: vi.fn((model?: string, isPaidUser?: boolean) => {
-    if (model === 'gpro38') {
-      return isPaidUser ? 1000 : 500;
-    }
-
-    if (model === 'xai') {
-      return isPaidUser ? 1000 : 500;
-    }
-
-    return 500;
-  }),
-  getGeminiCombinedTokenLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 8192 : 400,
-  ),
-  getGeminiStyleCharacterLimit: vi.fn((isPaidUser?: boolean) =>
-    isPaidUser ? 2500 : 1000,
-  ),
-}));
-
 vi.mock('@/lib/download', () => ({
   downloadUrl: vi.fn(),
 }));

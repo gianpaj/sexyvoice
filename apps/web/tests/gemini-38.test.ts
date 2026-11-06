@@ -18,8 +18,8 @@ import {
   buildGeminiVoiceConfig,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import { getTtsModel, TTS_MODELS } from '@/lib/tts/models';
 import { resolveUsageCost } from '@/lib/usage-costs';
-import { estimateCredits, getTtsProvider } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import {
   mockRedisGet,
@@ -107,8 +107,8 @@ describe('Gemini 3.8 integration', () => {
     expect(resolveGeminiTtsModel({ model: 'gpro38' })).toBe(
       'gemini-3.8-flash-tts',
     );
-    expect(getTtsProvider('gpro38')).toBe('gemini');
-    expect(estimateCredits(text, voice.name, 'gpro38')).toBe(27);
+    expect(getTtsModel('gpro38')?.provider).toBe('gemini');
+    expect(TTS_MODELS.gpro38.estimateCredits(text, voice.name)).toBe(27);
   });
 
   it.each(['tts', 'api_tts'] as const)(

@@ -5,11 +5,6 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 import Replicate, { type Prediction } from 'replicate';
 
-import {
-  extractInlineAudio,
-  getCharactersLimit,
-  getGeminiStyleCharacterLimit,
-} from '@/lib/ai';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
 import { APIErrorResponse } from '@/lib/error-ts';
@@ -44,18 +39,21 @@ import {
 } from '@/lib/tts/gemini-prompt';
 import {
   classifyGeminiTtsResponse,
+  extractInlineAudio,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
-import { isActiveTtsModel } from '@/lib/tts/models';
+import {
+  creditsFromTokens,
+  getStyleLimit,
+  getTextLimit,
+  getTtsModel,
+} from '@/lib/tts/models';
 import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
-  calculateCreditsFromTokens,
   ERROR_CODES,
-  estimateCredits,
   extractMetadata,
   getErrorMessage,
   getErrorStatusCode,
-  getTtsProvider,
 } from '@/lib/utils';
 import { parseGoogleApiError } from '@/utils/google-errors';
 import {
@@ -357,8 +355,9 @@ export async function POST(request: Request) {
     });
 
     const voiceObj = await getVoiceById(voiceId);
+    const ttsModel = getTtsModel(voiceObj?.model);
 
-    if (!(voiceObj && isActiveTtsModel(voiceObj.model))) {
+    if (!(voiceObj && ttsModel)) {
       const error = new Error('Voice not found');
       captureException(error, { extra: { text, voiceId } });
       return APIErrorResponse('Voice not found', 404);
@@ -366,7 +365,7 @@ export async function POST(request: Request) {
 
     voiceName = voiceObj.name;
 
-    const provider = getTtsProvider(voiceObj.model);
+    const { provider } = ttsModel;
     const isGeminiVoice = provider === 'gemini';
     const isGrokVoice = provider === 'grok';
     userHasPaid = await hasUserPaid(user.id);
@@ -384,26 +383,24 @@ export async function POST(request: Request) {
     // entries that all collapse to the same clamped audio on generation.
     const speed = normalizeXaiTtsSpeed(requestedSpeed);
 
-    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
+    const maxLength = getTextLimit(ttsModel, userHasPaid);
     if (text.length > maxLength) {
       return APIErrorResponse(
         `Text exceeds the maximum length of ${maxLength} characters`,
         400,
       );
     }
-    if (isGeminiVoice && styleVariant) {
-      const styleLimit = getGeminiStyleCharacterLimit(userHasPaid);
-      if (styleVariant.length > styleLimit) {
-        return APIErrorResponse(
-          `Style exceeds the maximum length of ${styleLimit} characters`,
-          400,
-        );
-      }
+    const styleLimit = getStyleLimit(ttsModel, userHasPaid);
+    if (styleLimit !== null && styleVariant.length > styleLimit) {
+      return APIErrorResponse(
+        `Style exceeds the maximum length of ${styleLimit} characters`,
+        400,
+      );
     }
 
     const currentAmount = await getCredits(user.id);
 
-    const estimate = estimateCredits(text, voiceObj.name, voiceObj.model);
+    const estimate = ttsModel.estimateCredits(text, voiceObj.name);
 
     // console.log({
     //   estimate,
@@ -442,7 +439,7 @@ export async function POST(request: Request) {
     if (speed !== undefined) {
       hashInput += `-speed:${speed}`;
     }
-    if (voiceObj.model === 'gpro38') {
+    if (styleLimit !== null) {
       hashInput += `-style:${JSON.stringify(styleVariant ?? '')}`;
     }
     const hash = await generateHash(hashInput);
@@ -767,7 +764,7 @@ export async function POST(request: Request) {
     );
 
     if (isGeminiVoice && usage) {
-      creditsUsed = calculateCreditsFromTokens(
+      creditsUsed = creditsFromTokens(
         Number.parseInt(usage.totalTokenCount, 10),
       );
     }

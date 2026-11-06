@@ -8,9 +8,9 @@
  *
  * Why this happens
  * ----------------
- * Credits for Gemini TTS are `ceil(totalTokenCount * 1.1 * multiplier)` where
+ * Credits for Gemini TTS are `ceil(totalTokenCount * 1.1)` where
  * `totalTokenCount = promptTokenCount + candidatesTokenCount`
- * (see apps/web/lib/utils.ts:calculateCreditsFromTokens). A long transcript that
+ * (see apps/web/lib/tts/models.ts:creditsFromTokens). A long transcript that
  * the model fails to fully voice still produces a large `promptTokenCount`, so
  * the user pays for the whole script but only receives a few seconds of audio.
  *

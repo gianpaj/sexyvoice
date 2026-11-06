@@ -1,26 +1,28 @@
+import { getTtsModelId, TTS_MODEL_IDS } from '@/lib/tts/models';
+
 const FEATURED_VOICE_SORT_ORDER = 0;
 
-export function isFeaturedVoice(
-  voice: Pick<Tables<'voices'>, 'sort_order'>,
-): boolean {
+function isFeaturedVoice(voice: Pick<Tables<'voices'>, 'sort_order'>): boolean {
   return voice.sort_order === FEATURED_VOICE_SORT_ORDER;
 }
 
 type SortableVoice = Pick<Tables<'voices'>, 'model' | 'name' | 'sort_order'>;
 
+function catalogOrder(dbModel: string): number {
+  const id = getTtsModelId(dbModel);
+  return id ? TTS_MODEL_IDS.indexOf(id) : TTS_MODEL_IDS.length;
+}
+
 /**
- * Shared voice order: featured first, then by name. The same Gemini identity
- * (`achernar`, `kore`, ...) exists under several models at the same
- * `sort_order`, so ties follow `VOICE_MODELS`, which puts the newest Gemini
- * first. The generate page sorts its voice list with this before rendering
- * the picker or choosing the default voice.
+ * Voice order: featured first, then by name, then by catalog model. The
+ * generate page sorts its voice list with this before rendering the picker or
+ * choosing the default voice.
  */
 export function compareVoices(a: SortableVoice, b: SortableVoice): number {
   return (
     a.sort_order - b.sort_order ||
     a.name.localeCompare(b.name) ||
-    VOICE_MODELS.indexOf(getDisplayModel(a.model)) -
-      VOICE_MODELS.indexOf(getDisplayModel(b.model))
+    catalogOrder(a.model) - catalogOrder(b.model)
   );
 }
 
@@ -31,49 +33,6 @@ export function getFeaturedVoice(
   return voices.find(isFeaturedVoice);
 }
 
-// ── Voice selector types & constants ─────────────────────────────────────────
-
-export type VoiceModel = 'Gemini 3.8' | 'Grok' | 'Replicate';
 export type VoiceGender = 'Female' | 'Male' | 'Neutral';
 
-export const VOICE_MODELS: VoiceModel[] = ['Gemini 3.8', 'Grok', 'Replicate'];
-
 export const VOICE_GENDERS: VoiceGender[] = ['Female', 'Male', 'Neutral'];
-
-export const MODEL_COLORS: Record<VoiceModel, string> = {
-  'Gemini 3.8': '#72B5E9',
-  Grok: '#65B88F',
-  Replicate: '#EEBB2D',
-};
-
-/** Minimal shape expected by VoicePicker — a subset of Tables<'voices'>. */
-export interface Voice {
-  description: string;
-  gender: VoiceGender;
-  id: string;
-  model: VoiceModel;
-  name: string;
-  sampleUrl?: string | null;
-}
-
-/** Fallback empty list; callers always pass real voices. */
-export const VOICES: Voice[] = [];
-
-/** Maps the raw DB model string to a human-readable VoiceModel label. */
-export function getDisplayModel(dbModel: string): VoiceModel {
-  if (dbModel === 'gpro38') return 'Gemini 3.8';
-  if (dbModel === 'xai') return 'Grok';
-  return 'Replicate';
-}
-
-/** Converts a Supabase voices row to the VoicePicker Voice shape. */
-export function toVoice(voice: Tables<'voices'>): Voice {
-  return {
-    description: voice.description ?? '',
-    gender: (voice.type as VoiceGender | null) ?? 'Neutral',
-    id: voice.id,
-    model: getDisplayModel(voice.model),
-    name: voice.name,
-    sampleUrl: voice.sample_url,
-  };
-}

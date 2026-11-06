@@ -8,7 +8,6 @@ import {
 import { captureException } from '@sentry/nextjs';
 import Replicate, { type Prediction } from 'replicate';
 
-import { extractInlineAudio, getCharactersLimit } from '@/lib/ai';
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
 import {
@@ -16,12 +15,6 @@ import {
   getExternalApiRequestId,
 } from '@/lib/api/external-errors';
 import { createLogger } from '@/lib/api/logger';
-import {
-  getDefaultFormat,
-  isFormatSupported,
-  resolveDbModelIds,
-  resolveExternalModelId,
-} from '@/lib/api/model';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
@@ -56,18 +49,21 @@ import {
 } from '@/lib/tts/gemini-prompt';
 import {
   classifyGeminiTtsResponse,
+  extractInlineAudio,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
-import { isActiveTtsModel } from '@/lib/tts/models';
+import {
+  creditsFromTokens,
+  getTextLimit,
+  getTtsModelId,
+  TTS_MODELS,
+} from '@/lib/tts/models';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
-  calculateCreditsFromTokens,
   ERROR_CODES,
-  estimateCredits,
   extractMetadata,
   getErrorMessage,
   getErrorStatusCode,
-  getTtsProvider,
 } from '@/lib/utils';
 import { parseGoogleApiError } from '@/utils/google-errors';
 import {
@@ -345,7 +341,7 @@ export async function POST(request: Request) {
       parsed.data;
     const requestedVoice = parsed.data.voice;
     const requestedVoiceId = parsed.data.voiceId;
-    let model = parsed.data.model;
+    const requestedModel = parsed.data.model;
 
     const userId = authResult.userId;
 
@@ -362,18 +358,19 @@ export async function POST(request: Request) {
         voiceObj = await getVoiceIdByNameAdmin(
           requestedVoice,
           true,
-          model ? resolveDbModelIds(model) : undefined,
+          requestedModel ? TTS_MODELS[requestedModel].dbModels : undefined,
         );
       } catch {
         voiceObj = null;
       }
     }
 
-    if (!(voiceObj && isActiveTtsModel(voiceObj.model))) {
+    const model = getTtsModelId(voiceObj?.model);
+    if (!(voiceObj && model)) {
       await log({
         apiKeyId: authResult.apiKeyId,
         errorCode: 'voice_not_found',
-        model,
+        model: requestedModel,
         status: 404,
         userId,
         voice: requestedVoice,
@@ -384,7 +381,7 @@ export async function POST(request: Request) {
           code: 'voice_not_found',
           message: requestedVoiceId
             ? `Voice ID "${requestedVoiceId}" was not found`
-            : `Voice "${requestedVoice}" was not found for model "${model}"`,
+            : `Voice "${requestedVoice}" was not found for model "${requestedModel}"`,
           param: requestedVoiceId ? 'voiceId' : 'voice',
           type: 'not_found_error',
         }),
@@ -393,39 +390,15 @@ export async function POST(request: Request) {
     }
 
     const voice = voiceObj.name;
-    if (requestedVoiceId) {
-      model = resolveExternalModelId(voiceObj.model) ?? undefined;
-    }
-
-    if (!model) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'voice_not_found',
-        model: voiceObj.model,
-        status: 404,
-        userId,
-        voice,
-        voiceId: requestedVoiceId,
-      });
-      return respond(
-        createApiError({
-          code: 'voice_not_found',
-          message: `Voice ID "${requestedVoiceId}" was not found`,
-          param: 'voiceId',
-          type: 'not_found_error',
-        }),
-        { status: 404 },
-      );
-    }
-
-    const ttsProvider = getTtsProvider(voiceObj.model);
+    const ttsModel = TTS_MODELS[model];
+    const ttsProvider = ttsModel.provider;
     const isGeminiVoice = ttsProvider === 'gemini';
     const isGrokVoice = ttsProvider === 'grok';
 
     const userHasPaid = await hasUserPaidAdmin(userId);
-    const maxLength = getCharactersLimit(voiceObj.model, userHasPaid);
+    const maxLength = getTextLimit(ttsModel, userHasPaid);
     if (
-      input.length + (model === 'gpro38' ? (style?.length ?? 0) : 0) >
+      input.length + (ttsModel.styleLimit ? (style?.length ?? 0) : 0) >
       maxLength
     ) {
       const lengthErrorMessage =
@@ -452,9 +425,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const defaultFormat = getDefaultFormat(model);
-    const chosenFormat = response_format ?? defaultFormat;
-    if (!isFormatSupported(model, chosenFormat)) {
+    const chosenFormat = response_format ?? ttsModel.formats[0];
+    if (!(ttsModel.formats as readonly string[]).includes(chosenFormat)) {
       await log({
         apiKeyId: authResult.apiKeyId,
         errorCode: 'unsupported_response_format',
@@ -475,7 +447,7 @@ export async function POST(request: Request) {
     }
 
     const currentCredits = await getCreditsAdmin(userId);
-    const estimatedCredits = estimateCredits(input, voice, voiceObj.model);
+    const estimatedCredits = ttsModel.estimateCredits(input, voice);
     if (currentCredits < estimatedCredits) {
       await log({
         apiKeyId: authResult.apiKeyId,
@@ -806,7 +778,7 @@ export async function POST(request: Request) {
       replicateResponse,
     );
     if (isGeminiVoice && usageMetadata?.totalTokenCount) {
-      creditsUsed = calculateCreditsFromTokens(
+      creditsUsed = creditsFromTokens(
         Number.parseInt(usageMetadata.totalTokenCount, 10),
       );
     }

@@ -3,9 +3,9 @@ import {
   externalApiErrorResponse,
   getExternalApiRequestId,
 } from '@/lib/api/external-errors';
-import { getModelCatalogResponse } from '@/lib/api/model';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
+import { TTS_MODEL_IDS, TTS_MODELS } from '@/lib/tts/models';
 
 export async function GET(request: Request) {
   const requestId = getExternalApiRequestId();
@@ -38,7 +38,12 @@ export async function GET(request: Request) {
 
   return jsonWithRateLimitHeaders(
     {
-      data: getModelCatalogResponse(),
+      data: TTS_MODEL_IDS.map((id) => ({
+        id,
+        max_input_length: TTS_MODELS[id].textLimit.paid,
+        name: TTS_MODELS[id].name,
+        supported_formats: [...TTS_MODELS[id].formats],
+      })),
     },
     { status: 200 },
     rateLimit,
