@@ -1,8 +1,9 @@
 /**
  * Audio converter utility using wasm-audio-decoders
  *
- * Converts MP3, OGG (Opus/Vorbis), and WebM/Opus audio files to WAV format
- * for use with voice cloning APIs that require WAV input.
+ * Converts MP3 and OGG (Opus/Vorbis) audio files to WAV format for use with
+ * voice cloning APIs that require WAV input. The browser converts WebM
+ * recordings before upload.
  *
  * Uses:
  * - mpg123-decoder for MP3 files
@@ -14,7 +15,9 @@ import { OggVorbisDecoder } from '@wasm-audio-decoders/ogg-vorbis';
 import { MPEGDecoder } from 'mpg123-decoder';
 import { OggOpusDecoder } from 'ogg-opus-decoder';
 
-export type SupportedAudioFormat = 'mp3' | 'ogg' | 'opus' | 'vorbis' | 'webm';
+import { isWav } from './audio';
+
+export type SupportedAudioFormat = 'mp3' | 'ogg' | 'vorbis' | 'webm';
 
 export class AudioDecodeError extends Error {
   decoderMessage?: string;
@@ -301,11 +304,7 @@ export function trimWavBuffer(
   wavBuffer: Buffer,
   maxDurationSeconds: number,
 ): Buffer | null {
-  if (
-    wavBuffer.length < 44 ||
-    wavBuffer.subarray(0, 4).toString('ascii') !== 'RIFF' ||
-    wavBuffer.subarray(8, 12).toString('ascii') !== 'WAVE'
-  ) {
+  if (wavBuffer.length < 44 || !isWav(wavBuffer)) {
     return null;
   }
 
@@ -387,8 +386,7 @@ export async function convertToWav(
         decoded = await decodeMp3(audioData);
         break;
 
-      case 'ogg':
-      case 'opus': {
+      case 'ogg': {
         // Try Opus first, fall back to Vorbis.
         // Some files (e.g. WhatsApp .opus) are parsed by ogg-opus-decoder without
         // throwing but return 0 decoded channels — treat that as a decode failure

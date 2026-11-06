@@ -1,5 +1,6 @@
 import { Mistral } from '@mistralai/mistralai';
 
+import { isWav } from '@/lib/audio';
 import { getProviderStatusCode } from '@/lib/provider-errors';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { CLONE_PROVIDERS } from './providers';
@@ -7,11 +8,46 @@ import { saveCallVoiceProfile } from './save-call-voice-profile';
 
 let client: Mistral | undefined;
 
-export function getMistralClient() {
+function getMistralClient() {
   const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) throw new Error('MISTRAL_API_KEY is not configured');
   client ??= new Mistral({ apiKey });
   return client;
+}
+
+/** Speaks `text` with a saved voice or a reference clip; returns WAV audio. */
+export async function synthesizeMistralSpeech(
+  text: string,
+  voice: { referenceAudio: Buffer } | { voiceId: string },
+): Promise<Buffer> {
+  const { audioData } = await getMistralClient().audio.speech.complete({
+    input: text,
+    model: CLONE_PROVIDERS.mistral.model,
+    ...('voiceId' in voice
+      ? { voiceId: voice.voiceId }
+      : { refAudio: voice.referenceAudio.toString('base64') }),
+    responseFormat: 'wav',
+    stream: false,
+  });
+  if (!audioData) {
+    throw new Error('Mistral Voxtral response did not include audio data');
+  }
+  const audio =
+    typeof audioData === 'string'
+      ? Buffer.from(audioData, 'base64')
+      : Buffer.from(audioData);
+  if (!isWav(audio)) {
+    throw new Error('Mistral Voxtral response did not return a valid WAV file');
+  }
+  return audio;
+}
+
+/** The voice's stored sample, as WAV audio. */
+export async function getMistralVoiceSample(voiceId: string): Promise<Buffer> {
+  return Buffer.from(
+    await getMistralClient().audio.voices.getSampleAudio({ voiceId }),
+    'base64',
+  );
 }
 
 export async function saveMistralVoice(
@@ -33,19 +69,8 @@ export async function saveMistralVoice(
     locale,
     userId,
     provider: 'mistral',
-    generateSample: async () => {
-      const speech = await mistral.audio.speech.complete({
-        model: CLONE_PROVIDERS.mistral.model,
-        input: CALL_VOICE_SAMPLE_TEXT,
-        voiceId: voice.id,
-        responseFormat: 'wav',
-        stream: false,
-      });
-      if (!speech.audioData) throw new Error('Voice sample is missing');
-      return typeof speech.audioData === 'string'
-        ? Buffer.from(speech.audioData, 'base64')
-        : Buffer.from(speech.audioData);
-    },
+    generateSample: () =>
+      synthesizeMistralSpeech(CALL_VOICE_SAMPLE_TEXT, { voiceId: voice.id }),
     deleteVoice: () => deleteMistralVoice(voice.id),
   });
 }

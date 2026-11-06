@@ -34,7 +34,7 @@ import {
   resolveBaseCloneLocale,
 } from '@/lib/clone/constants';
 import { saveInworldVoice, synthesizeInworldSpeech } from '@/lib/clone/inworld';
-import { getMistralClient, saveMistralVoice } from '@/lib/clone/mistral';
+import { saveMistralVoice, synthesizeMistralSpeech } from '@/lib/clone/mistral';
 import { cloneProviderCost, estimateCloneCredits } from '@/lib/clone/pricing';
 import {
   CLONE_PROVIDERS,
@@ -969,18 +969,12 @@ async function generateVoiceWithMistral(
   voice: { referenceAudio: Buffer } | { voiceId: string },
 ): Promise<{ buffer: Buffer; modelUsed: string; requestId: string }> {
   const model = CLONE_PROVIDERS.mistral.model;
-  const client = getMistralClient();
-
-  let response: Awaited<ReturnType<typeof client.audio.speech.complete>>;
   try {
-    response = await client.audio.speech.complete({
-      input: text,
-      model,
-      ...('voiceId' in voice
-        ? { voiceId: voice.voiceId }
-        : { refAudio: voice.referenceAudio.toString('base64') }),
-      responseFormat: 'wav',
-    });
+    return {
+      buffer: await synthesizeMistralSpeech(text, voice),
+      modelUsed: model,
+      requestId: randomUUID(),
+    };
   } catch (error) {
     if (isMistralGuardrailError(error)) {
       const payload = getMistralErrorPayload(error);
@@ -1016,35 +1010,6 @@ async function generateVoiceWithMistral(
 
     throw error;
   }
-
-  const audioData = response.audioData;
-  if (!audioData) {
-    throw new Error('Mistral Voxtral response did not include audio data');
-  }
-
-  let buffer: Buffer;
-  if (typeof audioData === 'string') {
-    buffer = Buffer.from(audioData, 'base64');
-  } else {
-    buffer = Buffer.from(audioData);
-  }
-
-  if (buffer.length === 0) {
-    throw new Error('Mistral Voxtral response returned empty audio data');
-  }
-
-  const riffHeader = buffer.subarray(0, 4).toString('ascii');
-  const waveHeader = buffer.subarray(8, 12).toString('ascii');
-
-  if (riffHeader !== 'RIFF' || waveHeader !== 'WAVE') {
-    throw new Error('Mistral Voxtral response did not return a valid WAV file');
-  }
-
-  return {
-    buffer,
-    modelUsed: model,
-    requestId: randomUUID(),
-  };
 }
 
 async function cloneVoiceWithReplicate(
