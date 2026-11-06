@@ -18,7 +18,7 @@ import {
   isBatchSettled,
   waitForBatch,
 } from '@/lib/ai/xai-batch';
-import { APIErrorResponse } from '@/lib/error-ts';
+import { rejectUnauthorizedCron } from '@/lib/cron-auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
   claimPendingCallAnalyses,
@@ -415,19 +415,10 @@ async function submitPending(supabase: TypedSupabaseClient, run: RunLog) {
 }
 
 export async function GET(request: NextRequest) {
-  // Vercel cron sends `Authorization: Bearer $CRON_SECRET`. Fail closed when
-  // the secret is unset: otherwise a literal `Bearer undefined` would match and
-  // anyone could start paid xAI batches. Local development skips auth like
-  // /api/daily-stats does.
-  if (process.env.NODE_ENV === 'production') {
-    const secret = process.env.CRON_SECRET;
-    if (!secret) {
-      Sentry.captureMessage('CRON_SECRET is not configured');
-      return APIErrorResponse('Server misconfigured', 500);
-    }
-    if (request.headers.get('authorization') !== `Bearer ${secret}`) {
-      return APIErrorResponse('Unauthorized', 401);
-    }
+  // An unauthenticated run would start paid xAI batches.
+  const unauthorized = rejectUnauthorizedCron(request);
+  if (unauthorized) {
+    return unauthorized;
   }
 
   const supabase = createAdminClient();

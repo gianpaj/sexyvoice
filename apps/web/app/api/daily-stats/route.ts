@@ -11,6 +11,7 @@ import {
   countInworldWorkspaceVoices,
   INWORLD_WORKSPACE_VOICE_LIMIT,
 } from '@/lib/clone/inworld';
+import { rejectUnauthorizedCron } from '@/lib/cron-auth';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatContribution, summarizeContribution } from './contribution';
 import { getContributionData } from './contribution-queries';
@@ -74,9 +75,9 @@ export const maxDuration = 300;
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
 
-  const authHeader = request.headers.get('authorization');
-  if (isProd && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return APIErrorResponse('Unauthorized', 401);
+  const unauthorized = rejectUnauthorizedCron(request);
+  if (unauthorized) {
+    return unauthorized;
   }
 
   const webhook = process.env.TELEGRAM_WEBHOOK_URL;

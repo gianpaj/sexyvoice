@@ -9,6 +9,7 @@ import { ModelId } from '@/data/models';
 const mocks = vi.hoisted(() => ({
   captureCheckIn: vi.fn(() => 'test-check-in'),
   captureException: vi.fn(),
+  captureMessage: vi.fn(),
   createAdminClient: vi.fn(),
   existsSync: vi.fn(),
   fetch: vi.fn<typeof fetch>(),
@@ -48,6 +49,7 @@ vi.mock('node:fs', async (importOriginal) => ({
 vi.mock('@sentry/nextjs', () => ({
   captureCheckIn: mocks.captureCheckIn,
   captureException: mocks.captureException,
+  captureMessage: mocks.captureMessage,
   flush: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock('@/lib/supabase/admin', () => ({
@@ -393,6 +395,22 @@ describe('GET /api/daily-stats cache', () => {
       for (const queryMock of Object.values(mocks.redis)) {
         expect(queryMock).not.toHaveBeenCalled();
       }
+      expect(mocks.fetch).not.toHaveBeenCalled();
+      expect(mocks.captureCheckIn).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when CRON_SECRET is unset instead of accepting "Bearer undefined"', async () => {
+      vi.stubEnv('CRON_SECRET', undefined);
+
+      const response = await GET(request('', 'Bearer undefined'));
+      assert(response);
+
+      expect(response.status).toBe(500);
+      expect(mocks.captureMessage).toHaveBeenCalledExactlyOnceWith(
+        'CRON_SECRET is not configured',
+      );
+      expectNoCacheAccess();
+      expect(mocks.createAdminClient).not.toHaveBeenCalled();
       expect(mocks.fetch).not.toHaveBeenCalled();
       expect(mocks.captureCheckIn).not.toHaveBeenCalled();
     });
