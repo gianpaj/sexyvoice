@@ -4,19 +4,16 @@
  * Check how many recent signups use a disposable email domain, and optionally
  * reset those users' credits. See HELP for the options.
  *
- * Two independent sources are used so the results can be cross-checked:
- *   1. The `disposable-email-domains-js` npm package (the same one used by
- *      the web app's signup route — apps/web/app/auth/signup/route.ts).
- *   2. The `denyDomains.txt` list from amieiro/disposable-email-domains,
- *      which is cloned (shallow) into scripts/.cache on first run.
+ * Signup checks two sources, and the counts keep them apart:
+ *   1. The `disposable-email-domains-js` npm package.
+ *   2. The amieiro/disposable-email-domains list bundled for signup
+ *      (lib/deny-domains.mts). Run sync-deny-domains first for a fresh list.
  */
 
-import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { fileURLToPath } from 'node:url';
 import {
   isDisposableEmail,
   isDisposableEmailDomain,
@@ -30,10 +27,9 @@ import {
   runScript,
 } from './lib/cli.mts';
 import { toCsv } from './lib/csv.mts';
+import { AMIEIRO_REPO, readDenyDomains } from './lib/deny-domains.mts';
 import { adjustCredits, readBalances, readPaidUserIds } from './lib/ledger.mts';
 import { createScriptAdminClient } from './lib/supabase.mts';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const HELP = `Count recent signups whose email domain is disposable, and optionally
 reset their credits to 0. Paid users are never reset.
@@ -43,7 +39,6 @@ Usage: pnpm check-disposable-emails [options]
   --limit <n>      Most recent profiles to check (default: 10000)
   --days <n>       Only profiles created in the last <n> days, within --limit
   --out <dir>      Directory for the summary and CSV (default: working directory)
-  --no-clone       Use the cached amieiro list without cloning or updating it
   --reset-credits  Reset the flagged users' credits to 0, with a ledger row each
   --dry-run        With --reset-credits, report what would change
   --domains-only   Print email domains instead of addresses in reset logs
@@ -58,14 +53,12 @@ function readOptions() {
       'dry-run': { default: false, type: 'boolean' },
       help: { default: false, short: 'h', type: 'boolean' },
       limit: { default: '10000', type: 'string' },
-      'no-clone': { default: false, type: 'boolean' },
       out: { type: 'string' },
       'reset-credits': { default: false, type: 'boolean' },
       yes: { default: false, type: 'boolean' },
     },
   });
   const options = {
-    clone: !values['no-clone'],
     days: values.days === undefined ? null : Number(values.days),
     domainsOnly: values['domains-only'],
     dryRun: values['dry-run'],
@@ -88,58 +81,6 @@ function readOptions() {
 }
 
 let args;
-
-// ---------------------------------------------------------------------------
-// amieiro/disposable-email-domains -> denyDomains.txt
-// ---------------------------------------------------------------------------
-const AMIEIRO_REPO = 'https://github.com/amieiro/disposable-email-domains';
-const CACHE_DIR = join(__dirname, '.cache');
-const REPO_DIR = join(CACHE_DIR, 'disposable-email-domains');
-const DENY_FILE = join(REPO_DIR, 'denyDomains.txt');
-
-function ensureAmieiroList() {
-  if (!existsSync(CACHE_DIR)) {
-    mkdirSync(CACHE_DIR, { recursive: true });
-  }
-
-  if (existsSync(join(REPO_DIR, '.git'))) {
-    if (args.clone) {
-      console.log('Updating cached amieiro/disposable-email-domains...');
-      try {
-        execFileSync('git', ['-C', REPO_DIR, 'pull', '--ff-only', '--quiet'], {
-          stdio: 'inherit',
-        });
-      } catch {
-        console.warn('  Could not update repo; using cached copy.');
-      }
-    }
-  } else if (args.clone) {
-    console.log(`Cloning ${AMIEIRO_REPO} (shallow)...`);
-    execFileSync(
-      'git',
-      ['clone', '--depth', '1', '--quiet', AMIEIRO_REPO, REPO_DIR],
-      { stdio: 'inherit' },
-    );
-  } else {
-    throw new Error(
-      `--no-clone given but no cached repo at ${REPO_DIR}. Remove --no-clone to clone it.`,
-    );
-  }
-
-  if (!existsSync(DENY_FILE)) {
-    throw new Error(`denyDomains.txt not found at ${DENY_FILE}`);
-  }
-
-  const lines = readFileSync(DENY_FILE, 'utf8').split('\n');
-  const set = new Set();
-  for (const line of lines) {
-    const domain = line.trim().toLowerCase();
-    if (domain && !domain.startsWith('#')) {
-      set.add(domain);
-    }
-  }
-  return set;
-}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -414,8 +355,8 @@ async function main() {
     return;
   }
 
-  const denySet = ensureAmieiroList();
-  console.log(`amieiro denyDomains.txt: ${denySet.size} domains loaded\n`);
+  const denySet = readDenyDomains();
+  console.log(`Bundled amieiro list: ${denySet.size} domains\n`);
 
   loadScriptEnv();
   // A dry run or a plain check only reads; a live reset also writes.
@@ -481,7 +422,7 @@ async function main() {
   lines.push('');
   lines.push('Sources:');
   lines.push('  1. npm: disposable-email-domains-js');
-  lines.push(`  2. ${AMIEIRO_REPO} (denyDomains.txt)`);
+  lines.push(`  2. ${AMIEIRO_REPO} (bundled for signup)`);
   lines.push('');
 
   const summary = lines.join('\n');

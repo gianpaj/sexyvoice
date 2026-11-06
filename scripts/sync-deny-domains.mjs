@@ -21,17 +21,13 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { parseCliArgs, runScript } from './lib/cli.mts';
+import { AMIEIRO_REPO, DENY_DOMAINS_FILE } from './lib/deny-domains.mts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const AMIEIRO_REPO = 'https://github.com/amieiro/disposable-email-domains';
 const CACHE_DIR = join(__dirname, '.cache');
 const REPO_DIR = join(CACHE_DIR, 'disposable-email-domains');
 const DENY_FILE = join(REPO_DIR, 'denyDomains.txt');
-const OUT_FILE = join(
-  __dirname,
-  '../apps/web/lib/disposable-email/deny-domains.json',
-);
 
 function ensureRepo() {
   if (!existsSync(CACHE_DIR)) {
@@ -81,8 +77,8 @@ function main() {
   console.log(`Loaded ${domains.length} unique domains`);
 
   // Minified JSON array — kept out of the formatter via .biomeignore.
-  writeFileSync(OUT_FILE, JSON.stringify(domains), 'utf8');
-  console.log(`Wrote ${domains.length} domains to ${OUT_FILE}`);
+  writeFileSync(DENY_DOMAINS_FILE, JSON.stringify(domains), 'utf8');
+  console.log(`Wrote ${domains.length} domains to ${DENY_DOMAINS_FILE}`);
 }
 
 runScript(import.meta.url, main);
