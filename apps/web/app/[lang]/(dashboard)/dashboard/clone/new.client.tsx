@@ -313,10 +313,7 @@ function NewVoiceClientInner({
     onError: (err) => {
       console.error(err);
       dispatch({
-        patch: {
-          ffmpegError:
-            err instanceof Error ? err.message : t('microphoneError'),
-        },
+        patch: { ffmpegError: t('microphoneError') },
         type: 'patch',
       });
     },
@@ -354,34 +351,27 @@ function NewVoiceClientInner({
       ({ code }) => code === resolveBaseCloneLocale(selectedLocaleCode),
     )?.name ?? selectedLocaleCode;
 
-  const onFilesAdded = useCallback(() => {
-    dispatch({
-      patch: {
-        errorMessage: '',
-        status: 'idle',
-      },
-      type: 'patch',
-    });
-  }, []);
-
   // Saved voices belong to paid users, so they get the paid limit.
   const textMaxLength = selectedVoice
     ? cloneTextLimit(savedVoiceProvider(selectedVoice.provider), true)
     : cloneTextLimit(oneOffProvider, userHasPaid);
 
-  const [fileState, fileActions] = useFileUpload({
+  const upload = useFileUpload({
     accept: REFERENCE_AUDIO_ACCEPT,
     maxSize: REFERENCE_AUDIO_MAX_BYTES,
-    multiple: false,
-    onFilesAdded,
+    // A new pick replaces the previous error.
+    onFileChosen: (accepted) =>
+      dispatch({
+        patch: accepted
+          ? { errorMessage: '', status: 'idle' }
+          : { errorMessage: '' },
+        type: 'patch',
+      }),
   });
-  const { files, errors } = fileState;
-  const { clearErrors } = fileActions;
-
-  const file = files[0]?.file instanceof File ? files[0].file : null;
+  const { file } = upload;
 
   const applyInitialReference = useEffectEvent((reference: File) => {
-    if (!(file || micBlob || micRecording)) fileActions.addFiles([reference]);
+    if (!(file || micBlob || micRecording)) upload.addFile(reference);
   });
   const reportInitialReferenceError = useEffectEvent(() => {
     dispatch({
@@ -405,13 +395,6 @@ function NewVoiceClientInner({
       });
     return () => controller.abort();
   }, [initialDemo?.speakerId, initialDemo?.takeId]);
-
-  // Clear custom error message when file upload errors change
-  useEffect(() => {
-    if (errors.length > 0) {
-      dispatch({ patch: { errorMessage: '' }, type: 'patch' });
-    }
-  }, [errors]);
 
   const abortController = useRef<AbortController | null>(null);
   const queryClient = useQueryClient();
@@ -446,7 +429,7 @@ function NewVoiceClientInner({
     }
 
     // Clear both custom errors and file upload errors
-    clearErrors();
+    upload.clearError();
     dispatch({
       patch: {
         errorMessage: '',
@@ -641,7 +624,12 @@ function NewVoiceClientInner({
   };
 
   const onToggleMicrophone = async () => {
-    if (micStatus === 'idle' || micStatus === 'stopped') {
+    // A failed start (blocked microphone) can be retried once access is allowed.
+    if (
+      micStatus === 'idle' ||
+      micStatus === 'stopped' ||
+      micStatus === 'failed'
+    ) {
       clearMediaStream();
       // Request microphone access on first toggle
       await getMediaStream();
@@ -790,8 +778,6 @@ function NewVoiceClientInner({
                     error: ffmpegError,
                     loading: Boolean(ffmpegLoading),
                   }}
-                  fileActions={fileActions}
-                  fileState={fileState}
                   maxAudioSeconds={maxReferenceSeconds}
                   mic={{
                     blob: micBlob,
@@ -807,6 +793,7 @@ function NewVoiceClientInner({
                   minAudioSeconds={minAudioSeconds}
                   selectedLocaleCode={selectedLocaleCode}
                   selectedLocaleName={selectedLocaleName}
+                  upload={upload}
                   usesVoxtral={usesVoxtral}
                 />
               )}

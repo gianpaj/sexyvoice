@@ -1,161 +1,53 @@
 import { useEffect, useRef, useState } from 'react';
 
-/**
- * Checks whether the argument is a valid object i.e (key-value pair).
- * @param {any} o
- */
-function isObject(o: unknown): o is Record<string, unknown> {
-  return Boolean(o && !Array.isArray(o) && typeof o === 'object');
-}
+export type RecorderStatus =
+  | 'idle'
+  | 'acquiring_media'
+  | 'ready'
+  | 'recording'
+  | 'stopping'
+  | 'stopped'
+  | 'failed';
 
-/**
- * Checks whether media type(audio/video) constraints are valid.
- * @param {MediaStreamConstraints} mediaType
- */
-function validateMediaTrackConstraints(
-  mediaType: MediaTrackConstraints | boolean,
-): void {
-  let supportedMediaConstraints: MediaTrackSupportedConstraints | null = null;
-
-  if (navigator.mediaDevices) {
-    supportedMediaConstraints =
-      navigator.mediaDevices.getSupportedConstraints();
-  }
-
-  if (supportedMediaConstraints === null) {
-    return;
-  }
-
-  const unSupportedMediaConstraints = Object.keys(
-    mediaType as Record<string, unknown>,
-  ).filter(
-    (constraint) =>
-      !supportedMediaConstraints![
-        constraint as keyof MediaTrackSupportedConstraints
-      ],
-  );
-
-  if (unSupportedMediaConstraints.length !== 0) {
-    const toText = unSupportedMediaConstraints.join(',');
-    console.error(
-      `The following constraints ${toText} are not supported on this browser.`,
-    );
-  }
-}
-
-const noop = (): void => {
-  // noop function
-};
-
-type ErrorCallback = (error: Error) => void;
-
-/**
- * @callback Callback
- * @param {Blob} blob
- *
- * @callback ErrorCallback
- * @param {Error} error
- */
 interface MediaRecorderProps {
-  blobOptions?: BlobPropertyBag;
-  customMediaStream?: MediaStream;
-  mediaRecorderOptions?: MediaRecorderOptions;
   mediaStreamConstraints?: MediaStreamConstraints;
-  onDataAvailable?: (data: Blob) => void;
-  onError?: ErrorCallback;
+  /** Called when the browser cannot record or the microphone is unavailable. */
+  onError?: (error: Error) => void;
   onStart?: () => void;
   onStop?: (blob: Blob) => void;
-  recordScreen?: boolean;
 }
 
-interface MediaRecorderHookOptions {
-  clearMediaBlob: () => void;
-  clearMediaStream: () => void;
-  error?: unknown;
-  getMediaStream: () => Promise<MediaStream | undefined>;
-  isAudioMuted: boolean;
-  liveStream: MediaStream | null;
-  mediaBlob: Blob | null;
-  mediaStream: MediaStream | null;
-  muteAudio: () => void;
-  pauseRecording: () => void;
-  resumeRecording: () => void;
-  startRecording: (timeSlice?: number) => Promise<void>;
-  status:
-    | 'idle'
-    | 'acquiring_media'
-    | 'ready'
-    | 'recording'
-    | 'paused'
-    | 'stopping'
-    | 'stopped'
-    | 'failed';
-  stopRecording: () => void;
-  unMuteAudio: () => void;
-}
+const toError = (error: unknown) =>
+  error instanceof Error ? error : new Error(String(error));
 
+/** Records audio takes from the microphone with `MediaRecorder`. */
 export default function useMediaRecorder({
-  blobOptions,
-  recordScreen,
-  customMediaStream,
-  onStop = noop,
-  onStart = noop,
-  onError = noop,
-  mediaRecorderOptions,
-  onDataAvailable = noop,
   mediaStreamConstraints = {},
-}: MediaRecorderProps): MediaRecorderHookOptions {
+  onError,
+  onStart,
+  onStop,
+}: MediaRecorderProps) {
   const mediaChunks = useRef<Blob[]>([]);
   const mediaStream = useRef<MediaStream | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const [status, setStatus] =
-    useState<MediaRecorderHookOptions['status']>('idle');
-  const [errorCache, cacheError] = useState<unknown>(null);
-  const [mediaBlobCache, cacheMediaBlob] = useState<Blob | null>(null);
-  const [isAudioMutedCache, cacheIsAudioMuted] = useState(false);
+  const [supported] = useState(
+    () => typeof window !== 'undefined' && 'MediaRecorder' in window,
+  );
+  const [status, setStatus] = useState<RecorderStatus>('idle');
+  const [mediaBlob, setMediaBlob] = useState<Blob | null>(null);
 
   async function getMediaStream(): Promise<MediaStream | undefined> {
-    if (errorCache) {
-      cacheError(null);
-    }
-
     setStatus('acquiring_media');
-
-    if (customMediaStream && customMediaStream instanceof MediaStream) {
-      mediaStream.current = customMediaStream;
-      return customMediaStream;
-    }
-
     try {
-      let stream: MediaStream;
-
-      if (recordScreen) {
-        stream = await window.navigator.mediaDevices.getDisplayMedia(
-          mediaStreamConstraints,
-        );
-      } else {
-        stream = await window.navigator.mediaDevices.getUserMedia(
-          mediaStreamConstraints,
-        );
-      }
-
-      if (recordScreen && mediaStreamConstraints?.audio) {
-        const audioStream = await window.navigator.mediaDevices.getUserMedia({
-          audio: mediaStreamConstraints.audio,
-        });
-
-        for (const audioTrack of audioStream.getAudioTracks()) {
-          stream.addTrack(audioTrack);
-        }
-      }
-
+      const stream = await navigator.mediaDevices.getUserMedia(
+        mediaStreamConstraints,
+      );
       mediaStream.current = stream;
       setStatus('ready');
-
       return stream;
-    } catch (err: unknown) {
-      cacheError(err);
+    } catch (error) {
       setStatus('failed');
+      onError?.(toError(error));
     }
   }
 
@@ -169,176 +61,93 @@ export default function useMediaRecorder({
     }
   }
 
-  async function startRecording(timeSlice?: number): Promise<void> {
-    if (errorCache) {
-      cacheError(null);
+  function handleDataAvailable(event: BlobEvent): void {
+    if (event.data.size) {
+      mediaChunks.current.push(event.data);
     }
+  }
 
+  function handleStop(): void {
+    let blob = new Blob();
+    const [sampleChunk] = mediaChunks.current;
+    if (sampleChunk) {
+      blob = new Blob(mediaChunks.current, { type: sampleChunk.type });
+      setMediaBlob(blob);
+    }
+    setStatus('stopped');
+    onStop?.(blob);
+  }
+
+  function handleError(error: Error): void {
+    setStatus('idle');
+    onError?.(error);
+  }
+
+  function handleRecorderError(event: Event): void {
+    handleError(toError((event as Event & { error?: unknown }).error));
+  }
+
+  async function startRecording(): Promise<void> {
     if (!mediaStream.current) {
       await getMediaStream();
     }
+    if (!mediaStream.current) {
+      return;
+    }
 
     mediaChunks.current = [];
-
-    if (mediaStream.current) {
-      mediaRecorder.current = new MediaRecorder(
-        mediaStream.current,
-        mediaRecorderOptions,
-      );
+    try {
+      mediaRecorder.current = new MediaRecorder(mediaStream.current);
       mediaRecorder.current.addEventListener(
         'dataavailable',
         handleDataAvailable,
       );
       mediaRecorder.current.addEventListener('stop', handleStop);
-      mediaRecorder.current.addEventListener('error', handleError);
-
-      try {
-        mediaRecorder.current.start(timeSlice);
-        setStatus('recording');
-        onStart();
-      } catch (error) {
-        handleError({
-          error: error instanceof Error ? error : new Error(String(error)),
-        } as Event & { error: Error });
-      }
-    }
-  }
-
-  function handleDataAvailable(e: BlobEvent): void {
-    if (e.data.size) {
-      mediaChunks.current.push(e.data);
-    }
-    onDataAvailable(e.data);
-  }
-
-  function handleStop(): void {
-    let blob = new Blob();
-
-    if (mediaChunks.current.length) {
-      const [sampleChunk] = mediaChunks.current;
-
-      const blobPropertyBag = { type: sampleChunk.type, ...blobOptions };
-
-      blob = new Blob(mediaChunks.current, blobPropertyBag);
-
-      cacheMediaBlob(blob);
-    }
-
-    setStatus('stopped');
-    onStop(blob);
-  }
-
-  function handleError(e: Event & { error: Error }): void {
-    cacheError(e.error);
-    setStatus('idle');
-    onError(e.error);
-  }
-
-  function muteAudio(mute: boolean): void {
-    cacheIsAudioMuted(mute);
-
-    if (mediaStream.current) {
-      for (const audioTrack of mediaStream.current.getAudioTracks()) {
-        audioTrack.enabled = !mute;
-      }
-    }
-  }
-
-  function pauseRecording(): void {
-    if (mediaRecorder.current && mediaRecorder.current.state === 'recording') {
-      mediaRecorder.current.pause();
-      setStatus('paused');
-    }
-  }
-
-  function resumeRecording(): void {
-    if (mediaRecorder.current && mediaRecorder.current.state === 'paused') {
-      mediaRecorder.current.resume();
+      mediaRecorder.current.addEventListener('error', handleRecorderError);
+      mediaRecorder.current.start();
       setStatus('recording');
+      onStart?.();
+    } catch (error) {
+      handleError(toError(error));
     }
   }
 
   function stopRecording(): void {
     if (mediaRecorder.current) {
       setStatus('stopping');
+      // The recorder fires `dataavailable` and `stop` after this returns.
       mediaRecorder.current.stop();
-      // not sure whether to place clean up in useEffect?
-      // If placed in useEffect the handler functions become dependencies of useEffect
-      mediaRecorder.current.removeEventListener(
-        'dataavailable',
-        handleDataAvailable,
-      );
-      mediaRecorder.current.removeEventListener('stop', handleStop);
-      mediaRecorder.current.removeEventListener('error', handleError);
       mediaRecorder.current = null;
-      if (!customMediaStream) {
-        clearMediaStream();
-      }
+      clearMediaStream();
     }
   }
 
   function clearMediaBlob(): void {
-    cacheMediaBlob(null);
+    setMediaBlob(null);
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reports support once per configuration
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reports support once
   useEffect(() => {
     // Reported rather than thrown: a throw here would unmount the whole page,
     // including upload paths that work without a recorder.
-    if (!window.MediaRecorder) {
+    if (!supported) {
       setStatus('failed');
-      onError(
-        new ReferenceError(
-          'MediaRecorder is not supported in this browser. Please ensure that you are running the latest version of chrome/firefox/edge.',
-        ),
-      );
-      return;
-    }
-
-    if (recordScreen && !window.navigator.mediaDevices.getDisplayMedia) {
-      throw new ReferenceError(
-        'This browser does not support screen capturing.',
+      onError?.(
+        new ReferenceError('MediaRecorder is not supported in this browser.'),
       );
     }
-
-    if (isObject(mediaStreamConstraints.video)) {
-      validateMediaTrackConstraints(mediaStreamConstraints.video);
-    }
-
-    if (isObject(mediaStreamConstraints.audio)) {
-      validateMediaTrackConstraints(mediaStreamConstraints.audio);
-    }
-
-    if (
-      mediaRecorderOptions?.mimeType &&
-      !MediaRecorder.isTypeSupported(mediaRecorderOptions.mimeType)
-    ) {
-      console.error(
-        'The specified MIME type supplied to MediaRecorder is not supported by this browser.',
-      );
-    }
-  }, [mediaStreamConstraints, mediaRecorderOptions, recordScreen]);
+  }, []);
 
   return {
     clearMediaBlob,
     clearMediaStream,
-    error: errorCache,
     getMediaStream,
-    isAudioMuted: isAudioMutedCache,
-    get liveStream() {
-      if (mediaStream.current) {
-        return new MediaStream(mediaStream.current.getTracks());
-      }
-      return null;
-    },
-    mediaBlob: mediaBlobCache,
+    mediaBlob,
     mediaStream: mediaStream.current,
-    muteAudio: () => muteAudio(true),
-    pauseRecording,
-    resumeRecording,
     startRecording,
     status,
     stopRecording,
-    unMuteAudio: () => muteAudio(false),
+    /** False in browsers without `MediaRecorder`; they can still upload. */
+    supported,
   };
 }

@@ -12,6 +12,19 @@ export const nanoid = customAlphabet(
   7,
 ); // 7-character random string
 
+/** Human-readable size, such as `4.5MB`. */
+export function formatBytes(bytes: number, decimals = 2): string {
+  if (bytes === 0) {
+    return '0 Bytes';
+  }
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    sizes.length - 1,
+  );
+  return `${Number.parseFloat((bytes / 1024 ** i).toFixed(Math.max(0, decimals)))}${sizes[i]}`;
+}
+
 export function formatDate(
   input: string | number | Date,
   { withTime = false }: { withTime?: boolean } = {},

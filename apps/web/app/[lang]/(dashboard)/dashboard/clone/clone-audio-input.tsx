@@ -8,21 +8,11 @@ import PulsatingDots from '@/components/pulsating-dots';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { formatBytes, type useFileUpload } from '@/hooks/use-file-upload';
+import type { FileUpload } from '@/hooks/use-file-upload';
+import type { RecorderStatus } from '@/hooks/use-media-recorder';
 import { formatCloneMessage } from '@/lib/clone/error-message';
 import { REFERENCE_AUDIO_MAX_BYTES } from '@/lib/clone/reference-audio';
-
-type FileUploadResult = ReturnType<typeof useFileUpload>;
-
-type MicStatus =
-  | 'idle'
-  | 'acquiring_media'
-  | 'ready'
-  | 'recording'
-  | 'paused'
-  | 'stopping'
-  | 'stopped'
-  | 'failed';
+import { formatBytes } from '@/lib/utils';
 
 interface CloneMic {
   blob: Blob | null;
@@ -32,14 +22,13 @@ interface CloneMic {
   onDeviceChange: (deviceId: string) => void;
   onToggle: () => void;
   recording: boolean;
-  status: MicStatus;
+  status: RecorderStatus;
   /** The finished take is shorter than `minAudioSeconds`. */
   tooShort: boolean;
 }
 
 export function CloneAudioInput({
-  fileState,
-  fileActions,
+  upload,
   mic,
   ffmpeg,
   maxAudioSeconds,
@@ -48,8 +37,7 @@ export function CloneAudioInput({
   selectedLocaleCode,
   selectedLocaleName,
 }: {
-  fileState: FileUploadResult[0];
-  fileActions: FileUploadResult[1];
+  upload: FileUpload;
   mic: CloneMic;
   ffmpeg: { error: string | null; loading: boolean };
   /** The cloning provider uses only this many seconds of the clip. */
@@ -61,18 +49,18 @@ export function CloneAudioInput({
   selectedLocaleName: string;
 }) {
   const t = useTranslations('clone');
-  const { files, isDragging, errors } = fileState;
   const {
+    error,
+    file,
     handleDragEnter,
     handleDragLeave,
     handleDragOver,
     handleDrop,
+    inputProps,
+    isDragging,
     openFileDialog,
     removeFile,
-    getInputProps,
-  } = fileActions;
-
-  const file = files[0]?.file instanceof File ? files[0].file : null;
+  } = upload;
 
   const referenceAudioGuidance = formatCloneMessage(
     usesVoxtral
@@ -100,8 +88,8 @@ export function CloneAudioInput({
           type="button"
         >
           <input
-            {...getInputProps()}
-            aria-label="Upload audio file"
+            {...inputProps}
+            aria-label={t('uploadAudioFile')}
             className="sr-only"
             disabled={Boolean(file) || Boolean(mic.blob)}
           />
@@ -176,22 +164,19 @@ export function CloneAudioInput({
       )}
 
       {/* File upload errors */}
-      {errors.length > 0 && (
+      {error && (
         <div
           className="flex items-center gap-1 text-destructive text-xs"
           role="alert"
         >
           <AlertCircle className="size-3 shrink-0" />
-          <span>{errors[0]}</span>
+          <span>{t(`errors.${error}`)}</span>
         </div>
       )}
 
       {/* Selected file display */}
       {file ? (
-        <div
-          className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2"
-          key={files[0]?.id}
-        >
+        <div className="flex items-center justify-between gap-2 rounded-xl border px-4 py-2">
           <div className="flex items-center gap-3 overflow-hidden">
             <PaperclipIcon
               aria-hidden="true"
@@ -210,7 +195,7 @@ export function CloneAudioInput({
           <Button
             aria-label={t('removeFile')}
             className="-me-2 size-12 text-muted-foreground/80 hover:bg-transparent hover:text-foreground"
-            onClick={() => removeFile(files[0]?.id)}
+            onClick={removeFile}
             size="icon"
             variant="ghost"
           >

@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { RecorderStatus } from '@/hooks/use-media-recorder';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
@@ -22,15 +23,7 @@ interface Props {
   /** Reports the input picked or restored in the menu, for recording. */
   onDeviceChange?: (deviceId: string) => void;
   onToggleMicrophone: () => void;
-  status:
-    | 'idle'
-    | 'acquiring_media'
-    | 'ready'
-    | 'recording'
-    | 'paused'
-    | 'stopping'
-    | 'stopped'
-    | 'failed';
+  status: RecorderStatus;
 }
 
 function AudioPlayer({ blob }: { blob: Blob }) {
@@ -42,18 +35,10 @@ function AudioPlayer({ blob }: { blob: Blob }) {
       return;
     }
 
-    // Use setTimeout to defer URL creation to next tick
-    // This fixes a race condition where the audio element
-    // tries to load before the blob is fully ready
-    let url: string | null = null;
-    url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
     setAudioUrl(url);
 
-    return () => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    };
+    return () => URL.revokeObjectURL(url);
   }, [blob]);
 
   if (!audioUrl) return null;

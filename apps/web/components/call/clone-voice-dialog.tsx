@@ -12,7 +12,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatBytes } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/call-voices';
@@ -32,7 +31,7 @@ import {
   REFERENCE_AUDIO_MAX_BYTES,
   VOICE_NAME_MAX_LENGTH,
 } from '@/lib/clone/reference-audio';
-import { cn } from '@/lib/utils';
+import { cn, formatBytes } from '@/lib/utils';
 import { PlayingBars } from './listen-button';
 
 const MAX_RECORDING_SECONDS = 60;
@@ -82,13 +81,7 @@ export function CloneVoiceDialog({
     savedCount
       ? t('defaultNameNumbered', { count: savedCount + 1 })
       : t('defaultName');
-  // Browsers without MediaRecorder can still upload a clip.
-  const [canRecord] = useState(
-    () => typeof window !== 'undefined' && 'MediaRecorder' in window,
-  );
-  const initialSource: Source = canRecord ? 'record' : 'upload';
   const [step, setStep] = useState<Step>('record');
-  const [source, setSource] = useState<Source>(initialSource);
   const [recording, setRecording] = useState<Blob | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [file, setFile] = useState<File | null>(null);
@@ -108,7 +101,7 @@ export function CloneVoiceDialog({
   const recorder = useMediaRecorder({
     mediaStreamConstraints: { audio: true },
     onError: () => {
-      if (canRecord) setProblem(t('micError'));
+      if (recorder.supported) setProblem(t('micError'));
     },
     onStart: () => {
       discardStop.current = false;
@@ -125,11 +118,10 @@ export function CloneVoiceDialog({
     },
   });
   const isRecording = recorder.status === 'recording';
-
-  // A blocked microphone fails inside the recorder without calling onError.
-  useEffect(() => {
-    if (canRecord && recorder.status === 'failed') setProblem(t('micError'));
-  }, [canRecord, recorder.status, t]);
+  // Browsers without MediaRecorder can still upload a clip.
+  const canRecord = recorder.supported;
+  const initialSource: Source = canRecord ? 'record' : 'upload';
+  const [source, setSource] = useState<Source>(initialSource);
 
   const discardRecording = () => {
     if (isRecording) {

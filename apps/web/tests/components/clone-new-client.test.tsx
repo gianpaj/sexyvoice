@@ -22,7 +22,7 @@ const {
   fetchMock,
   mockEnsureLoaded,
   mockFFmpegState,
-  mockAddFiles,
+  mockAddFile,
   mockUpload,
   mockLanguageSelect,
   mockMicrophone,
@@ -31,8 +31,8 @@ const {
   mockNavigate,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
-  mockAddFiles: vi.fn(),
-  mockUpload: { files: [] as { file: File; id: string }[] },
+  mockAddFile: vi.fn(),
+  mockUpload: { file: null as File | null },
   mockEnsureLoaded: vi.fn().mockResolvedValue(undefined),
   mockFFmpegState: { isLoading: false },
   mockLanguageSelect: vi.fn(),
@@ -105,25 +105,20 @@ vi.mock('@/components/services/toast', () => ({
 }));
 
 vi.mock('@/hooks/use-file-upload', () => ({
-  formatBytes: () => '1 MB',
-  useFileUpload: () => [
-    {
-      errors: [],
-      files: mockUpload.files,
-      isDragging: false,
-    },
-    {
-      addFiles: mockAddFiles,
-      clearErrors: vi.fn(),
-      getInputProps: vi.fn(() => ({})),
-      handleDragEnter: vi.fn(),
-      handleDragLeave: vi.fn(),
-      handleDragOver: vi.fn(),
-      handleDrop: vi.fn(),
-      openFileDialog: vi.fn(),
-      removeFile: vi.fn(),
-    },
-  ],
+  useFileUpload: () => ({
+    addFile: mockAddFile,
+    clearError: vi.fn(),
+    error: null,
+    file: mockUpload.file,
+    handleDragEnter: vi.fn(),
+    handleDragLeave: vi.fn(),
+    handleDragOver: vi.fn(),
+    handleDrop: vi.fn(),
+    inputProps: {},
+    isDragging: false,
+    openFileDialog: vi.fn(),
+    removeFile: vi.fn(),
+  }),
 }));
 
 const recorderOptions = vi.hoisted(() => ({
@@ -331,7 +326,7 @@ const renderedLocaleCodes = () => {
 
 describe('NewVoiceClient', () => {
   it('tells the user how much reference audio the cloning provider keeps', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     renderClone({ lang: 'en' });
     expect(
       await screen.findByText(/Only the first 25 seconds are used/),
@@ -339,7 +334,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('shows the Inworld trim length when saving a voice for calls', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     renderClone({
       callCloneProvider: 'inworld',
       initialSaveForCalls: true,
@@ -416,7 +411,7 @@ describe('NewVoiceClient', () => {
   };
 
   it('generates speech with a selected saved voice instead of a recording', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     const user = userEvent.setup();
     renderClone({
       cloneMessages: enMessages.clone,
@@ -574,7 +569,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('flags a microphone take shorter than the minimum', () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     renderClone({ cloneMessages: enMessages.clone });
     const record = (seconds: number) =>
       act(() => {
@@ -598,7 +593,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('records from the microphone picked in the menu', () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     renderClone({ cloneMessages: enMessages.clone });
     expect(recorderOptions.current?.mediaStreamConstraints).toEqual({
       audio: true,
@@ -615,7 +610,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('generates with Cmd/Ctrl+Enter only when Generate is enabled', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     const user = userEvent.setup();
     renderClone({
       cloneMessages: enMessages.clone,
@@ -759,7 +754,7 @@ describe('NewVoiceClient', () => {
     vi.clearAllMocks();
     mockFFmpegState.isLoading = false;
     queryClient = new QueryClient();
-    mockUpload.files = [{ file: selectedFile, id: 'selected-file' }];
+    mockUpload.file = selectedFile;
     fetchMock.mockResolvedValue(
       new Response(
         JSON.stringify({ url: 'https://files.sexyvoice.ai/generated.wav' }),
@@ -779,7 +774,7 @@ describe('NewVoiceClient', () => {
   });
 
   it('loads a selected demo reference and tagged sentence without generating', async () => {
-    mockUpload.files = [];
+    mockUpload.file = null;
     fetchMock.mockResolvedValue(
       new Response(new Uint8Array([1, 2, 3]), {
         headers: { 'content-type': 'audio/mpeg' },
@@ -790,8 +785,8 @@ describe('NewVoiceClient', () => {
     expect(input).toHaveTextContent(
       'Ach, da bist du ja genau im richtigen Moment.',
     );
-    await waitFor(() => expect(mockAddFiles).toHaveBeenCalledOnce());
-    const [file] = mockAddFiles.mock.calls[0][0] as File[];
+    await waitFor(() => expect(mockAddFile).toHaveBeenCalledOnce());
+    const file = mockAddFile.mock.calls[0][0] as File;
     expect(file.name).toBe('heike-reference.mp3');
     expect(file.type).toBe('audio/mpeg');
     expect(fetchMock).toHaveBeenCalledOnce();
@@ -804,7 +799,7 @@ describe('NewVoiceClient', () => {
   it.each(['http', 'network'])(
     'shows a demo reference %s failure',
     async (failure) => {
-      mockUpload.files = [];
+      mockUpload.file = null;
       if (failure === 'http') {
         fetchMock.mockResolvedValue(new Response(null, { status: 404 }));
       } else {
@@ -816,7 +811,7 @@ describe('NewVoiceClient', () => {
       expect(await screen.findByRole('alert')).toHaveTextContent(
         enMessages.landing.demoClone.audioError,
       );
-      expect(mockAddFiles).not.toHaveBeenCalled();
+      expect(mockAddFile).not.toHaveBeenCalled();
       expect(screen.getByTestId('clone-generate-button')).toBeDisabled();
     },
   );
@@ -830,7 +825,7 @@ describe('NewVoiceClient', () => {
     renderClone({ initialDemo: { speakerId: 'kat', takeId: 'sarcastic' } });
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     await act(async () => {});
-    expect(mockAddFiles).not.toHaveBeenCalled();
+    expect(mockAddFile).not.toHaveBeenCalled();
   });
 
   it('updates text direction without clearing text when switching languages', async () => {
