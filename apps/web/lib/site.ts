@@ -10,6 +10,18 @@ export const SITE_URL = (
 
 export const SITE_NAME = 'SexyVoice.ai';
 
+/** The square logo that structured data names for the organization. */
+export const SITE_LOGO = {
+  height: 512,
+  url: `${SITE_URL}/web-app-manifest-512x512.png`,
+  width: 512,
+};
+
+export const SOCIAL_LINKS = {
+  instagram: 'https://instagram.com/sexyvoice_ai',
+  x: 'https://x.com/sexyvoiceai',
+} as const;
+
 /** Public origin of the R2 bucket that serves sample and demo audio. */
 export const FILES_URL = 'https://files.sexyvoice.ai';
 

@@ -7,7 +7,6 @@ import {
   setRequestLocale,
 } from 'next-intl/server';
 import ReactDOM from 'react-dom';
-import type { Graph } from 'schema-dts';
 
 import { Banner } from '@/components/banner';
 import { CardDecorator } from '@/components/card-decorator';
@@ -24,6 +23,7 @@ import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { pageMetadata } from '@/lib/page-metadata';
+import { graph, organization, webPage, webSite } from '@/lib/structured-data';
 import { routing } from '@/src/i18n/routing';
 
 interface Props {
@@ -87,51 +87,16 @@ export default async function LandingPage(props: Props) {
     { Icon: EyeOff, ...dictPrivacy.forgotten },
   ];
 
-  const siteUrl = `https://sexyvoice.ai/${lang}/voice-call`;
-
-  const jsonLd: Graph = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@id': 'https://sexyvoice.ai/#organization',
-        '@type': 'Organization',
-        logo: 'https://sexyvoice.ai/web-app-manifest-192x192.png',
-        name: 'SexyVoice.ai',
-        sameAs: [
-          'https://x.com/sexyvoiceai',
-          'https://instagram.com/sexyvoice_ai',
-        ],
-        url: 'https://sexyvoice.ai',
-      },
-      {
-        '@id': 'https://sexyvoice.ai/#website',
-        '@type': 'WebSite',
-        description: messages.pages.description,
-        inLanguage: lang,
-        name: 'SexyVoice.ai',
-        publisher: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        url: 'https://sexyvoice.ai',
-      },
-      {
-        '@id': `${siteUrl}/#webpage`,
-        '@type': 'WebPage',
-        about: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        description:
-          messages.pages.descriptionVoiceCall ||
-          dictLanding.voiceCall.hero.subtitle,
-        inLanguage: lang,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
-        name: messages.pages.titleVoiceCall || dictLanding.voiceCall.hero.title,
-        url: siteUrl,
-      },
-    ],
-  };
+  const jsonLd = graph(
+    organization(),
+    webSite({ description: messages.pages.description, lang }),
+    webPage({
+      description: messages.pages.descriptionVoiceCall,
+      lang,
+      name: messages.pages.titleVoiceCall,
+      path: '/voice-call',
+    }),
+  );
 
   return (
     <>

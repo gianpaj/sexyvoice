@@ -1,13 +1,15 @@
+import { SITE_URL } from '@/lib/site';
+
 export const dynamic = 'force-static';
 
 export function GET() {
   const catalog = {
     linkset: [
       {
-        anchor: 'https://sexyvoice.ai/api/v1',
+        anchor: `${SITE_URL}/api/v1`,
         'service-desc': [
           {
-            href: 'https://sexyvoice.ai/api/v1/openapi',
+            href: `${SITE_URL}/api/v1/openapi`,
             type: 'application/openapi+json',
           },
         ],
@@ -19,7 +21,7 @@ export function GET() {
         ],
         status: [
           {
-            href: 'https://sexyvoice.ai/api/health',
+            href: `${SITE_URL}/api/health`,
           },
         ],
       },

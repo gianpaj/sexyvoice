@@ -1,4 +1,5 @@
 import type { TranscriptionResult } from '@/app/[lang]/tools/transcribe/hooks/use-transcriber';
+import { FILES_URL } from '@/lib/site';
 
 interface DemoCallData {
   audioSrc: string;
@@ -11,7 +12,7 @@ interface DemoCallData {
 export const demoCallData: Record<string, DemoCallData> = {
   lily: {
     // audioSrc: '/demo-calls/lily.mp3',
-    audioSrc: 'https://files.sexyvoice.ai/call-demos/lily.mp3',
+    audioSrc: `${FILES_URL}/call-demos/lily.mp3`,
     characterId: 'lily',
     durationSeconds: 11.9,
     transcript: {
@@ -34,7 +35,7 @@ export const demoCallData: Record<string, DemoCallData> = {
   },
   rafal: {
     // audioSrc: '/demo-calls/rafal.mp3',
-    audioSrc: 'https://files.sexyvoice.ai/call-demos/rafal.mp3',
+    audioSrc: `${FILES_URL}/call-demos/rafal.mp3`,
     characterId: 'rafal',
     durationSeconds: 18.84,
     transcript: {
@@ -57,7 +58,7 @@ export const demoCallData: Record<string, DemoCallData> = {
   },
   ramona: {
     // audioSrc: '/demo-calls/ramona.mp3',
-    audioSrc: 'https://files.sexyvoice.ai/call-demos/ramona.mp3',
+    audioSrc: `${FILES_URL}/call-demos/ramona.mp3`,
     characterId: 'ramona',
     durationSeconds: 7.85,
     transcript: {

@@ -14,10 +14,12 @@ import { Mdx } from '@/components/mdx-components';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
-import { SITE_NAME } from '@/lib/site';
+import { SITE_LOGO, SITE_NAME, SITE_URL } from '@/lib/site';
 import {
-  createArticleSchema,
-  createBreadcrumbSchema,
+  breadcrumbList,
+  graph,
+  organization,
+  techArticle,
 } from '@/lib/structured-data';
 import { calculateReadingTime, countWords } from '@/lib/text';
 import { routing } from '@/src/i18n/routing';
@@ -124,65 +126,29 @@ const PostLayout = async (props: {
     notFound();
   }
 
-  // Generate structured data for better LLM understanding
-  const articleSchema = createArticleSchema(
-    post.title,
-    post.description,
-    post.date,
-    post.slug,
-    post.locale,
-  );
-
-  const breadcrumbSchema = createBreadcrumbSchema([
-    { name: 'Home', url: `https://sexyvoice.ai/${lang}` },
-    // { name: 'Blog', url: `https://sexyvoice.ai/${lang}/blog` },
-    {
-      name: post.title,
-      url: `https://sexyvoice.ai/${post.locale}/blog/${post.slug}`,
-    },
-  ]);
-
   const wordCount = countWords(post.body.raw);
   const readingTime = calculateReadingTime(wordCount);
+  const path = `/blog/${post.slug}`;
+  const jsonLd = graph(
+    organization(),
+    techArticle({
+      date: post.date,
+      description: post.description,
+      lang: post.locale as Locale,
+      path,
+      readingMinutes: readingTime,
+      title: post.title,
+      wordCount,
+    }),
+    breadcrumbList(lang, [
+      { name: messages.landing.homeLabel, path: '/' },
+      { name: post.title, path },
+    ]),
+  );
 
   return (
     <>
-      {/* Enhanced Structured Data for LLM Understanding */}
-      <JsonLd
-        data={{
-          ...articleSchema,
-          about: [
-            {
-              '@type': 'Thing',
-              description:
-                'Artificial intelligence technology for replicating human voices',
-              name: 'AI Voice Cloning',
-            },
-            {
-              '@type': 'Thing',
-              description: 'Computer generation of human-like speech from text',
-              name: 'Speech Synthesis',
-            },
-            {
-              '@type': 'Thing',
-              description: 'AI algorithms that learn patterns from data',
-              name: 'Machine Learning',
-            },
-          ],
-          mainEntity: {
-            '@type': 'TechArticle',
-            dependencies: 'Basic understanding of AI concepts',
-            description: post.description,
-            name: post.title,
-            proficiencyLevel: 'Beginner to Advanced',
-          },
-          timeRequired: `PT${readingTime}M`,
-          wordCount,
-        }}
-        id="article-schema"
-      />
-
-      <JsonLd data={breadcrumbSchema} id="breadcrumb-schema" />
+      <JsonLd data={jsonLd} />
 
       {activeBanner && <Banner banner={activeBanner} />}
 
@@ -305,13 +271,10 @@ const PostLayout = async (props: {
                     {post.author}
                   </a>
                 ) : (
-                  <span itemProp="name">{post.author || 'SexyVoice.ai'}</span>
+                  <span itemProp="name">{post.author || SITE_NAME}</span>
                 )}
-                <meta content="https://sexyvoice.ai" itemProp="url" />
-                <meta
-                  content="https://sexyvoice.ai/sexyvoice.png"
-                  itemProp="logo"
-                />
+                <meta content={SITE_URL} itemProp="url" />
+                <meta content={SITE_LOGO.url} itemProp="logo" />
               </div>
             </div>
 
@@ -322,19 +285,16 @@ const PostLayout = async (props: {
               itemScope
               itemType="https://schema.org/Organization"
             >
-              <meta content="SexyVoice.ai" itemProp="name" />
-              <meta content="https://sexyvoice.ai" itemProp="url" />
+              <meta content={SITE_NAME} itemProp="name" />
+              <meta content={SITE_URL} itemProp="url" />
               <div
                 itemProp="logo"
                 itemScope
                 itemType="https://schema.org/ImageObject"
               >
-                <meta
-                  content="https://sexyvoice.ai/sexyvoice.png"
-                  itemProp="url"
-                />
-                <meta content="512" itemProp="width" />
-                <meta content="512" itemProp="height" />
+                <meta content={SITE_LOGO.url} itemProp="url" />
+                <meta content={String(SITE_LOGO.width)} itemProp="width" />
+                <meta content={String(SITE_LOGO.height)} itemProp="height" />
               </div>
             </div>
 

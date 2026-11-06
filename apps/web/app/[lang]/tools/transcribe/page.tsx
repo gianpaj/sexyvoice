@@ -1,13 +1,20 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import type { Graph } from 'schema-dts';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { JsonLd } from '@/components/json-ld';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
-import { SITE_NAME } from '@/lib/site';
+import { SITE_NAME, SITE_URL } from '@/lib/site';
+import {
+  breadcrumbList,
+  faqPage,
+  graph,
+  howTo,
+  organization,
+  webApplication,
+} from '@/lib/structured-data';
 import TranscribeClient from './transcribe.client';
 
 interface Props {
@@ -46,123 +53,67 @@ export default async function TranscribePage({ params }: Props) {
     answer: string;
   }>;
 
-  const url = `https://sexyvoice.ai/${lang}/tools/transcribe`;
-  const title = tPages('titleTranscribe') || t('title');
-  const description = tPages('descriptionTranscribe') || t('subtitle');
+  const tLanding = await getTranslations({
+    locale: lang,
+    namespace: 'landing',
+  });
+  const path = '/tools/transcribe';
+  const title = tPages('titleTranscribe');
+  const description = tPages('descriptionTranscribe');
 
-  const jsonLd: Graph = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@id': `${url}/#webapp`,
-        '@type': 'WebApplication',
-        applicationCategory: 'MultimediaApplication',
+  const jsonLd = graph(
+    organization(),
+    webApplication({
+      description,
+      extra: {
         applicationSubCategory: 'Audio Transcription',
-        browserRequirements:
-          'Requires a modern browser with WebAssembly support',
-        description,
         featureList:
           'Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English',
-        inLanguage: lang,
-        isAccessibleForFree: true,
-        name: title,
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'USD',
+        screenshot: `${SITE_URL}/posts/free-audio-transcription-tool.webp`,
+      },
+      lang,
+      name: title,
+      path,
+    }),
+    howTo({
+      description,
+      lang,
+      name: title,
+      path,
+      steps: [
+        {
+          name: 'Open the transcription tool',
+          text: 'Navigate to the free audio transcription tool on SexyVoice.ai.',
         },
-        operatingSystem: 'Any',
-        publisher: {
-          '@id': 'https://sexyvoice.ai/#organization',
+        {
+          name: 'Add your audio',
+          text: 'Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.',
         },
-        screenshot:
-          'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
-        url,
-      },
-      {
-        '@id': `${url}/#howto`,
-        '@type': 'HowTo',
-        description,
-        inLanguage: lang,
-        name: title,
-        step: [
-          {
-            '@type': 'HowToStep',
-            name: 'Open the transcription tool',
-            position: 1,
-            text: 'Navigate to the free audio transcription tool on SexyVoice.ai.',
-            url,
-          },
-          {
-            '@type': 'HowToStep',
-            name: 'Add your audio',
-            position: 2,
-            text: 'Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.',
-            url,
-          },
-          {
-            '@type': 'HowToStep',
-            name: 'Choose a Whisper model',
-            position: 3,
-            text: 'Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.',
-            url,
-          },
-          {
-            '@type': 'HowToStep',
-            name: 'Select language and task',
-            position: 4,
-            text: 'Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.',
-            url,
-          },
-          {
-            '@type': 'HowToStep',
-            name: 'Transcribe',
-            position: 5,
-            text: 'Click "Load Model & Transcribe". The model downloads once and is cached for future use.',
-            url,
-          },
-          {
-            '@type': 'HowToStep',
-            name: 'Copy your transcript',
-            position: 6,
-            text: 'Your timestamped transcript appears instantly. Copy it with one click.',
-            url,
-          },
-        ],
-        totalTime: 'PT2M',
-      },
-      {
-        '@id': `${url}/#faq`,
-        '@type': 'FAQPage',
-        inLanguage: lang,
-        mainEntity: faqItems.map((item) => ({
-          '@type': 'Question',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: item.answer,
-          },
-          name: item.question,
-        })),
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            item: `https://sexyvoice.ai/${lang}`,
-            name: 'Home',
-            position: 1,
-          },
-          {
-            '@type': 'ListItem',
-            item: url,
-            name: tPages('/tools/transcribe') || 'Audio Transcription',
-            position: 2,
-          },
-        ],
-      },
-    ],
-  };
+        {
+          name: 'Choose a Whisper model',
+          text: 'Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.',
+        },
+        {
+          name: 'Select language and task',
+          text: 'Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.',
+        },
+        {
+          name: 'Transcribe',
+          text: 'Click "Load Model & Transcribe". The model downloads once and is cached for future use.',
+        },
+        {
+          name: 'Copy your transcript',
+          text: 'Your timestamped transcript appears instantly. Copy it with one click.',
+        },
+      ],
+      totalTime: 'PT2M',
+    }),
+    faqPage({ lang, path, questions: faqItems }),
+    breadcrumbList(lang, [
+      { name: tLanding('homeLabel'), path: '/' },
+      { name: tPages('/tools/transcribe'), path },
+    ]),
+  );
 
   return (
     <>

@@ -17,13 +17,19 @@ import {
   setRequestLocale,
 } from 'next-intl/server';
 import { preconnect } from 'react-dom';
-import type { Graph } from 'schema-dts';
 
 import { faqAnswerText } from '@/lib/faq';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { pageMetadata } from '@/lib/page-metadata';
 import { FILES_URL } from '@/lib/site';
+import {
+  faqPage,
+  graph,
+  organization,
+  webPage,
+  webSite,
+} from '@/lib/structured-data';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -103,67 +109,29 @@ export default async function LandingPage(props: {
     (group) => group.questions,
   );
 
-  const siteUrl = `https://sexyvoice.ai/${lang}`;
-
-  const jsonLd: Graph = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@id': 'https://sexyvoice.ai/#organization',
-        '@type': 'Organization',
-        logo: 'https://sexyvoice.ai/web-app-manifest-192x192.png',
-        name: 'SexyVoice.ai',
-        sameAs: [
-          'https://x.com/sexyvoiceai',
-          'https://instagram.com/sexyvoice_ai',
-        ],
-        url: 'https://sexyvoice.ai',
-      },
-      {
-        '@id': 'https://sexyvoice.ai/#website',
-        '@type': 'WebSite',
-        description: messages.pages.description,
-        inLanguage: lang,
-        name: 'SexyVoice.ai',
-        publisher: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        url: 'https://sexyvoice.ai',
-      },
-      {
-        '@id': `${siteUrl}/#webpage`,
-        '@type': 'WebPage',
-        about: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        description: messages.pages.description,
-        inLanguage: lang,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
-        name: messages.pages.defaultTitle,
-        url: siteUrl,
-      },
-      {
-        '@id': `${siteUrl}/#faq`,
-        '@type': 'FAQPage',
-        isPartOf: {
-          '@id': `${siteUrl}/#webpage`,
-        },
-        mainEntity: faqQuestions.map((q) => ({
-          '@type': 'Question' as const,
-          acceptedAnswer: {
-            '@type': 'Answer' as const,
-            text: faqAnswerText(
-              q.answer,
-              (q as { link?: { text: string } }).link,
-            ),
-          },
-          name: q.question,
-        })),
-      },
-    ],
-  };
+  const page = webPage({
+    description: messages.pages.description,
+    lang,
+    name: messages.pages.defaultTitle,
+    path: '/',
+  });
+  const jsonLd = graph(
+    organization(),
+    webSite({ description: messages.pages.description, lang }),
+    page,
+    faqPage({
+      isPartOf: page,
+      lang,
+      path: '/',
+      questions: faqQuestions.map((q) => ({
+        answer: faqAnswerText(
+          q.answer,
+          (q as { link?: { text: string } }).link,
+        ),
+        question: q.question,
+      })),
+    }),
+  );
 
   return (
     <>

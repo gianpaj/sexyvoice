@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getMessages } from 'next-intl/server';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { SITE_NAME, SOCIAL_LINKS } from '@/lib/site';
 
 async function Footer({ lang }: { lang: Locale }) {
   const dict = ((await getMessages({ locale: lang })) as IntlMessages).footer;
@@ -18,7 +19,7 @@ async function Footer({ lang }: { lang: Locale }) {
               className="inline-block font-bold text-foreground text-lg tracking-tight"
               href={`/${lang}`}
             >
-              SexyVoice.ai
+              {SITE_NAME}
             </Link>
             <p className="mt-2 max-w-xs text-muted-foreground text-sm leading-relaxed">
               {dict.tagline}
@@ -28,7 +29,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <Link
                 aria-label="Twitter/X"
                 className="hit-area-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-                href="https://x.com/sexyvoiceai"
+                href={SOCIAL_LINKS.x}
                 rel="noopener noreferrer"
                 target="_blank"
               >
@@ -37,7 +38,7 @@ async function Footer({ lang }: { lang: Locale }) {
               <Link
                 aria-label="Instagram"
                 className="hit-area-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
-                href="https://instagram.com/sexyvoice_ai"
+                href={SOCIAL_LINKS.instagram}
                 rel="noopener noreferrer"
                 target="_blank"
               >

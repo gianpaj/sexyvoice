@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
-import type { Graph } from 'schema-dts';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -8,6 +7,12 @@ import { JsonLd } from '@/components/json-ld';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
 import { SITE_NAME } from '@/lib/site';
+import {
+  breadcrumbList,
+  graph,
+  organization,
+  webApplication,
+} from '@/lib/structured-data';
 import AudioConverterClient from './audio-converter.client';
 
 interface Props {
@@ -37,54 +42,25 @@ export default async function AudioConverterPage({ params }: Props) {
     namespace: 'audioConverter',
   });
   const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
+  const tLanding = await getTranslations({
+    locale: lang,
+    namespace: 'landing',
+  });
+  const path = '/tools/audio-converter';
 
-  const url = `https://sexyvoice.ai/${lang}/tools/audio-converter`;
-  const title = tPages('titleAudioConverter') || t('title');
-  const description = tPages('descriptionAudioConverter') || t('subtitle');
-
-  const jsonLd: Graph = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@id': `${url}/#webapp`,
-        '@type': 'WebApplication',
-        applicationCategory: 'MultimediaApplication',
-        browserRequirements:
-          'Requires a modern browser with WebAssembly support',
-        description,
-        inLanguage: lang,
-        isAccessibleForFree: true,
-        name: title,
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'USD',
-        },
-        operatingSystem: 'Any',
-        publisher: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        url,
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          {
-            '@type': 'ListItem',
-            item: `https://sexyvoice.ai/${lang}`,
-            name: 'Home',
-            position: 1,
-          },
-          {
-            '@type': 'ListItem',
-            item: url,
-            name: tPages('/tools/audio-converter') || 'Audio Converter',
-            position: 2,
-          },
-        ],
-      },
-    ],
-  };
+  const jsonLd = graph(
+    organization(),
+    webApplication({
+      description: tPages('descriptionAudioConverter'),
+      lang,
+      name: tPages('titleAudioConverter'),
+      path,
+    }),
+    breadcrumbList(lang, [
+      { name: tLanding('homeLabel'), path: '/' },
+      { name: tPages('/tools/audio-converter'), path },
+    ]),
+  );
 
   return (
     <>

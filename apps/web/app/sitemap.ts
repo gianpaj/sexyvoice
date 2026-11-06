@@ -5,9 +5,8 @@ import { allPosts } from 'contentlayer/generated';
 import { globby } from 'globby';
 import type { MetadataRoute } from 'next';
 
+import { SITE_URL as BASE_URL } from '@/lib/site';
 import { routing } from '@/src/i18n/routing';
-
-const BASE_URL = 'https://sexyvoice.ai';
 
 /**
  * Derive the URL path from a page file path.

@@ -18,6 +18,7 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
 import { SITE_NAME } from '@/lib/site';
+import { breadcrumbList, graph, itemList } from '@/lib/structured-data';
 import { calculateReadingTime, countWords } from '@/lib/text';
 import { cn } from '@/lib/utils';
 import { routing } from '@/src/i18n/routing';
@@ -82,7 +83,7 @@ export default async function BlogIndexPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
-  const blogName = `SexyVoice.ai ${dictLanding.blogLabel}`;
+  const blogName = `${SITE_NAME} ${dictLanding.blogLabel}`;
   const pageTitle = `${dictLanding.latestPosts} | ${blogName}`;
   const cookieStore = await cookies();
   const dismissedCookieKeys = cookieStore
@@ -99,44 +100,25 @@ export default async function BlogIndexPage(props: {
 
   const posts = getLatestPostsByLang(lang);
 
-  const itemListSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: posts.map((post, index) => ({
-      '@type': 'ListItem',
-      name: post.title,
-      position: index + 1,
-      url: `https://sexyvoice.ai/${lang}${post.url}`,
-    })),
-    name: pageTitle,
-    numberOfItems: posts.length,
-    url: `https://sexyvoice.ai/${lang}/blog`,
-  };
-
-  const breadcrumbSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        item: `https://sexyvoice.ai/${lang}`,
-        name: dictLanding.homeLabel,
-        position: 1,
-      },
-      {
-        '@type': 'ListItem',
-        item: `https://sexyvoice.ai/${lang}/blog`,
-        name: dictLanding.blogLabel,
-        position: 2,
-      },
-    ],
-  };
+  const jsonLd = graph(
+    itemList({
+      items: posts.map((post) => ({
+        name: post.title,
+        path: `/blog/${post.slug}`,
+      })),
+      lang,
+      name: pageTitle,
+      path: '/blog',
+    }),
+    breadcrumbList(lang, [
+      { name: dictLanding.homeLabel, path: '/' },
+      { name: dictLanding.blogLabel, path: '/blog' },
+    ]),
+  );
 
   return (
     <>
-      {/* Structured Data for search engines and LLM understanding */}
-      <JsonLd data={itemListSchema} id="blog-list-schema" />
-      <JsonLd data={breadcrumbSchema} id="breadcrumb-schema" />
+      <JsonLd data={jsonLd} />
       {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">

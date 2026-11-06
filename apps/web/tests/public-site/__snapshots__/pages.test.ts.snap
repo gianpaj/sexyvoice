@@ -62,6 +62,17 @@ exports[`audioConverter page > structured data in de 1`] = `
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
         "@id": "https://sexyvoice.ai/de/tools/audio-converter/#webapp",
         "@type": "WebApplication",
         "applicationCategory": "MultimediaApplication",
@@ -87,7 +98,7 @@ exports[`audioConverter page > structured data in de 1`] = `
           {
             "@type": "ListItem",
             "item": "https://sexyvoice.ai/de",
-            "name": "Home",
+            "name": "Startseite",
             "position": 1,
           },
           {
@@ -108,6 +119,17 @@ exports[`audioConverter page > structured data in en 1`] = `
   {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
       {
         "@id": "https://sexyvoice.ai/en/tools/audio-converter/#webapp",
         "@type": "WebApplication",
@@ -212,6 +234,17 @@ exports[`audioJoiner page > structured data in de 1`] = `
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
         "@id": "https://sexyvoice.ai/de/tools/audio-joiner/#webapp",
         "@type": "WebApplication",
         "applicationCategory": "MultimediaApplication",
@@ -238,7 +271,7 @@ exports[`audioJoiner page > structured data in de 1`] = `
           {
             "@type": "ListItem",
             "item": "https://sexyvoice.ai/de",
-            "name": "Home",
+            "name": "Startseite",
             "position": 1,
           },
           {
@@ -259,6 +292,17 @@ exports[`audioJoiner page > structured data in en 1`] = `
   {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
       {
         "@id": "https://sexyvoice.ai/en/tools/audio-joiner/#webapp",
         "@type": "WebApplication",
@@ -363,34 +407,37 @@ exports[`blog page > structured data in de 1`] = `
 [
   {
     "@context": "https://schema.org",
-    "@type": "ItemList",
-    "itemListElement": [
+    "@graph": [
       {
-        "@type": "ListItem",
-        "name": "KI-Sprachanrufe in Echtzeit",
-        "position": 1,
-        "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
-      },
-    ],
-    "name": "Neueste Beiträge | SexyVoice.ai Blog",
-    "numberOfItems": 1,
-    "url": "https://sexyvoice.ai/de/blog",
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "item": "https://sexyvoice.ai/de",
-        "name": "Startseite",
-        "position": 1,
+        "@type": "ItemList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "name": "KI-Sprachanrufe in Echtzeit",
+            "position": 1,
+            "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+          },
+        ],
+        "name": "Neueste Beiträge | SexyVoice.ai Blog",
+        "numberOfItems": 1,
+        "url": "https://sexyvoice.ai/de/blog",
       },
       {
-        "@type": "ListItem",
-        "item": "https://sexyvoice.ai/de/blog",
-        "name": "Blog",
-        "position": 2,
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de",
+            "name": "Startseite",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de/blog",
+            "name": "Blog",
+            "position": 2,
+          },
+        ],
       },
     ],
   },
@@ -401,40 +448,43 @@ exports[`blog page > structured data in en 1`] = `
 [
   {
     "@context": "https://schema.org",
-    "@type": "ItemList",
-    "itemListElement": [
+    "@graph": [
       {
-        "@type": "ListItem",
-        "name": "Real-time AI Voice Calls",
-        "position": 1,
-        "url": "https://sexyvoice.ai/en/blog/realtime-ai-voice-call",
+        "@type": "ItemList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "name": "Real-time AI Voice Calls",
+            "position": 1,
+            "url": "https://sexyvoice.ai/en/blog/realtime-ai-voice-call",
+          },
+          {
+            "@type": "ListItem",
+            "name": "Hello from SexyVoice.ai",
+            "position": 2,
+            "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+          },
+        ],
+        "name": "Latest Posts | SexyVoice.ai Blog",
+        "numberOfItems": 2,
+        "url": "https://sexyvoice.ai/en/blog",
       },
       {
-        "@type": "ListItem",
-        "name": "Hello from SexyVoice.ai",
-        "position": 2,
-        "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
-      },
-    ],
-    "name": "Latest Posts | SexyVoice.ai Blog",
-    "numberOfItems": 2,
-    "url": "https://sexyvoice.ai/en/blog",
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "item": "https://sexyvoice.ai/en",
-        "name": "Home",
-        "position": 1,
-      },
-      {
-        "@type": "ListItem",
-        "item": "https://sexyvoice.ai/en/blog",
-        "name": "Blog",
-        "position": 2,
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en/blog",
+            "name": "Blog",
+            "position": 2,
+          },
+        ],
       },
     ],
   },
@@ -455,78 +505,85 @@ exports[`de blog post realtime-ai-voice-call > renders 1`] = `
   "jsonLd": [
     {
       "@context": "https://schema.org",
-      "@type": "TechArticle",
-      "about": [
+      "@graph": [
         {
-          "@type": "Thing",
-          "description": "Artificial intelligence technology for replicating human voices",
-          "name": "AI Voice Cloning",
+          "@id": "https://sexyvoice.ai/#organization",
+          "@type": "Organization",
+          "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+          "name": "SexyVoice.ai",
+          "sameAs": [
+            "https://instagram.com/sexyvoice_ai",
+            "https://x.com/sexyvoiceai",
+          ],
+          "url": "https://sexyvoice.ai",
         },
         {
-          "@type": "Thing",
-          "description": "Computer generation of human-like speech from text",
-          "name": "Speech Synthesis",
+          "@type": "TechArticle",
+          "about": [
+            {
+              "@type": "Thing",
+              "description": "Artificial intelligence technology for replicating human voices",
+              "name": "AI Voice Cloning",
+            },
+            {
+              "@type": "Thing",
+              "description": "Computer generation of human-like speech from text",
+              "name": "Speech Synthesis",
+            },
+            {
+              "@type": "Thing",
+              "description": "AI algorithms that learn patterns from data",
+              "name": "Machine Learning",
+            },
+          ],
+          "articleSection": "Technology",
+          "author": {
+            "@id": "https://sexyvoice.ai/#organization",
+          },
+          "dateModified": "2026-01-15T00:00:00.000Z",
+          "datePublished": "2026-01-15T00:00:00.000Z",
+          "description": "Sprich in Echtzeit mit KI-Charakteren.",
+          "headline": "KI-Sprachanrufe in Echtzeit",
+          "inLanguage": "de",
+          "isAccessibleForFree": true,
+          "keywords": [
+            "AI voice cloning",
+            "voice synthesis",
+            "text-to-speech",
+            "neural networks",
+            "speech generation",
+            "voice technology",
+          ],
+          "mainEntity": {
+            "@type": "TechArticle",
+            "dependencies": "Basic understanding of AI concepts",
+            "description": "Sprich in Echtzeit mit KI-Charakteren.",
+            "name": "KI-Sprachanrufe in Echtzeit",
+            "proficiencyLevel": "Beginner to Advanced",
+          },
+          "publisher": {
+            "@id": "https://sexyvoice.ai/#organization",
+          },
+          "timeRequired": "PT1M",
+          "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+          "wordCount": 5,
         },
         {
-          "@type": "Thing",
-          "description": "AI algorithms that learn patterns from data",
-          "name": "Machine Learning",
-        },
-      ],
-      "articleSection": "Technology",
-      "author": {
-        "@type": "Organization",
-        "name": "SexyVoice.ai",
-        "url": "https://sexyvoice.ai",
-      },
-      "dateModified": "2026-01-15T00:00:00.000Z",
-      "datePublished": "2026-01-15T00:00:00.000Z",
-      "description": "Sprich in Echtzeit mit KI-Charakteren.",
-      "headline": "KI-Sprachanrufe in Echtzeit",
-      "inLanguage": "de",
-      "isAccessibleForFree": true,
-      "keywords": [
-        "AI voice cloning",
-        "voice synthesis",
-        "text-to-speech",
-        "neural networks",
-        "speech generation",
-        "voice technology",
-      ],
-      "mainEntity": {
-        "@type": "TechArticle",
-        "dependencies": "Basic understanding of AI concepts",
-        "description": "Sprich in Echtzeit mit KI-Charakteren.",
-        "name": "KI-Sprachanrufe in Echtzeit",
-        "proficiencyLevel": "Beginner to Advanced",
-      },
-      "publisher": {
-        "@type": "Organization",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://sexyvoice.ai/sexyvoice.png",
-        },
-        "name": "SexyVoice.ai",
-      },
-      "timeRequired": "PT1M",
-      "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
-      "wordCount": 5,
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "item": "https://sexyvoice.ai/de",
-          "name": "Home",
-          "position": 1,
-        },
-        {
-          "@type": "ListItem",
-          "item": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
-          "name": "KI-Sprachanrufe in Echtzeit",
-          "position": 2,
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "item": "https://sexyvoice.ai/de",
+              "name": "Startseite",
+              "position": 1,
+            },
+            {
+              "@type": "ListItem",
+              "item": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+              "name": "KI-Sprachanrufe in Echtzeit",
+              "position": 2,
+            },
+          ],
         },
       ],
     },
@@ -567,78 +624,85 @@ exports[`en blog post hello-from-sexyvoice > renders 1`] = `
   "jsonLd": [
     {
       "@context": "https://schema.org",
-      "@type": "TechArticle",
-      "about": [
+      "@graph": [
         {
-          "@type": "Thing",
-          "description": "Artificial intelligence technology for replicating human voices",
-          "name": "AI Voice Cloning",
+          "@id": "https://sexyvoice.ai/#organization",
+          "@type": "Organization",
+          "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+          "name": "SexyVoice.ai",
+          "sameAs": [
+            "https://instagram.com/sexyvoice_ai",
+            "https://x.com/sexyvoiceai",
+          ],
+          "url": "https://sexyvoice.ai",
         },
         {
-          "@type": "Thing",
-          "description": "Computer generation of human-like speech from text",
-          "name": "Speech Synthesis",
+          "@type": "TechArticle",
+          "about": [
+            {
+              "@type": "Thing",
+              "description": "Artificial intelligence technology for replicating human voices",
+              "name": "AI Voice Cloning",
+            },
+            {
+              "@type": "Thing",
+              "description": "Computer generation of human-like speech from text",
+              "name": "Speech Synthesis",
+            },
+            {
+              "@type": "Thing",
+              "description": "AI algorithms that learn patterns from data",
+              "name": "Machine Learning",
+            },
+          ],
+          "articleSection": "Technology",
+          "author": {
+            "@id": "https://sexyvoice.ai/#organization",
+          },
+          "dateModified": "2025-04-28T00:00:00.000Z",
+          "datePublished": "2025-04-28T00:00:00.000Z",
+          "description": "Next-gen voice AI for synthesis and dubbing.",
+          "headline": "Hello from SexyVoice.ai",
+          "inLanguage": "en",
+          "isAccessibleForFree": true,
+          "keywords": [
+            "AI voice cloning",
+            "voice synthesis",
+            "text-to-speech",
+            "neural networks",
+            "speech generation",
+            "voice technology",
+          ],
+          "mainEntity": {
+            "@type": "TechArticle",
+            "dependencies": "Basic understanding of AI concepts",
+            "description": "Next-gen voice AI for synthesis and dubbing.",
+            "name": "Hello from SexyVoice.ai",
+            "proficiencyLevel": "Beginner to Advanced",
+          },
+          "publisher": {
+            "@id": "https://sexyvoice.ai/#organization",
+          },
+          "timeRequired": "PT1M",
+          "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+          "wordCount": 5,
         },
         {
-          "@type": "Thing",
-          "description": "AI algorithms that learn patterns from data",
-          "name": "Machine Learning",
-        },
-      ],
-      "articleSection": "Technology",
-      "author": {
-        "@type": "Organization",
-        "name": "SexyVoice.ai",
-        "url": "https://sexyvoice.ai",
-      },
-      "dateModified": "2025-04-28T00:00:00.000Z",
-      "datePublished": "2025-04-28T00:00:00.000Z",
-      "description": "Next-gen voice AI for synthesis and dubbing.",
-      "headline": "Hello from SexyVoice.ai",
-      "inLanguage": "en",
-      "isAccessibleForFree": true,
-      "keywords": [
-        "AI voice cloning",
-        "voice synthesis",
-        "text-to-speech",
-        "neural networks",
-        "speech generation",
-        "voice technology",
-      ],
-      "mainEntity": {
-        "@type": "TechArticle",
-        "dependencies": "Basic understanding of AI concepts",
-        "description": "Next-gen voice AI for synthesis and dubbing.",
-        "name": "Hello from SexyVoice.ai",
-        "proficiencyLevel": "Beginner to Advanced",
-      },
-      "publisher": {
-        "@type": "Organization",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://sexyvoice.ai/sexyvoice.png",
-        },
-        "name": "SexyVoice.ai",
-      },
-      "timeRequired": "PT1M",
-      "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
-      "wordCount": 5,
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "item": "https://sexyvoice.ai/en",
-          "name": "Home",
-          "position": 1,
-        },
-        {
-          "@type": "ListItem",
-          "item": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
-          "name": "Hello from SexyVoice.ai",
-          "position": 2,
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "item": "https://sexyvoice.ai/en",
+              "name": "Home",
+              "position": 1,
+            },
+            {
+              "@type": "ListItem",
+              "item": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+              "name": "Hello from SexyVoice.ai",
+              "position": 2,
+            },
+          ],
         },
       ],
     },
@@ -750,11 +814,11 @@ exports[`landing page > structured data in de 1`] = `
       {
         "@id": "https://sexyvoice.ai/#organization",
         "@type": "Organization",
-        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
         "name": "SexyVoice.ai",
         "sameAs": [
-          "https://x.com/sexyvoiceai",
           "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
         ],
         "url": "https://sexyvoice.ai",
       },
@@ -786,6 +850,7 @@ exports[`landing page > structured data in de 1`] = `
       {
         "@id": "https://sexyvoice.ai/de/#faq",
         "@type": "FAQPage",
+        "inLanguage": "de",
         "isPartOf": {
           "@id": "https://sexyvoice.ai/de/#webpage",
         },
@@ -978,11 +1043,11 @@ exports[`landing page > structured data in en 1`] = `
       {
         "@id": "https://sexyvoice.ai/#organization",
         "@type": "Organization",
-        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
         "name": "SexyVoice.ai",
         "sameAs": [
-          "https://x.com/sexyvoiceai",
           "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
         ],
         "url": "https://sexyvoice.ai",
       },
@@ -1014,6 +1079,7 @@ exports[`landing page > structured data in en 1`] = `
       {
         "@id": "https://sexyvoice.ai/en/#faq",
         "@type": "FAQPage",
+        "inLanguage": "en",
         "isPartOf": {
           "@id": "https://sexyvoice.ai/en/#webpage",
         },
@@ -1536,6 +1602,17 @@ exports[`transcribe page > structured data in de 1`] = `
     "@context": "https://schema.org",
     "@graph": [
       {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
         "@id": "https://sexyvoice.ai/de/tools/transcribe/#webapp",
         "@type": "WebApplication",
         "applicationCategory": "MultimediaApplication",
@@ -1671,7 +1748,7 @@ exports[`transcribe page > structured data in de 1`] = `
           {
             "@type": "ListItem",
             "item": "https://sexyvoice.ai/de",
-            "name": "Home",
+            "name": "Startseite",
             "position": 1,
           },
           {
@@ -1692,6 +1769,17 @@ exports[`transcribe page > structured data in en 1`] = `
   {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
       {
         "@id": "https://sexyvoice.ai/en/tools/transcribe/#webapp",
         "@type": "WebApplication",
@@ -1912,11 +2000,11 @@ exports[`voiceCall page > structured data in de 1`] = `
       {
         "@id": "https://sexyvoice.ai/#organization",
         "@type": "Organization",
-        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
         "name": "SexyVoice.ai",
         "sameAs": [
-          "https://x.com/sexyvoiceai",
           "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
         ],
         "url": "https://sexyvoice.ai",
       },
@@ -1958,11 +2046,11 @@ exports[`voiceCall page > structured data in en 1`] = `
       {
         "@id": "https://sexyvoice.ai/#organization",
         "@type": "Organization",
-        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
         "name": "SexyVoice.ai",
         "sameAs": [
-          "https://x.com/sexyvoiceai",
           "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
         ],
         "url": "https://sexyvoice.ai",
       },
@@ -2064,11 +2152,11 @@ exports[`voiceCloning page > structured data in de 1`] = `
       {
         "@id": "https://sexyvoice.ai/#organization",
         "@type": "Organization",
-        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
         "name": "SexyVoice.ai",
         "sameAs": [
-          "https://x.com/sexyvoiceai",
           "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
         ],
         "url": "https://sexyvoice.ai",
       },
@@ -2110,11 +2198,11 @@ exports[`voiceCloning page > structured data in en 1`] = `
       {
         "@id": "https://sexyvoice.ai/#organization",
         "@type": "Organization",
-        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "logo": "https://sexyvoice.ai/web-app-manifest-512x512.png",
         "name": "SexyVoice.ai",
         "sameAs": [
-          "https://x.com/sexyvoiceai",
           "https://instagram.com/sexyvoice_ai",
+          "https://x.com/sexyvoiceai",
         ],
         "url": "https://sexyvoice.ai",
       },

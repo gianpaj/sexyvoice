@@ -1,8 +1,7 @@
 import type { PolicyPage, Post } from 'contentlayer/generated';
 
 import type { Locale } from '@/lib/i18n/i18n-config';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sexyvoice.ai';
+import { SITE_URL } from '@/lib/site';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 

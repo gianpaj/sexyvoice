@@ -6,7 +6,6 @@ import {
   getTranslations,
   setRequestLocale,
 } from 'next-intl/server';
-import type { Graph } from 'schema-dts';
 
 import { Banner } from '@/components/banner';
 import { DemoCloneSection } from '@/components/demo-clone/demo-clone-section';
@@ -20,6 +19,7 @@ import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { pageMetadata } from '@/lib/page-metadata';
+import { graph, organization, webPage, webSite } from '@/lib/structured-data';
 import { routing } from '@/src/i18n/routing';
 
 interface Props {
@@ -72,51 +72,16 @@ export default async function VoiceCloningPage(props: Props) {
   const titleRestParts =
     commaIndex === -1 ? '' : heroTitle.slice(commaIndex + 1);
 
-  const siteUrl = `https://sexyvoice.ai/${lang}/voice-cloning`;
-
-  const jsonLd: Graph = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@id': 'https://sexyvoice.ai/#organization',
-        '@type': 'Organization',
-        logo: 'https://sexyvoice.ai/web-app-manifest-192x192.png',
-        name: 'SexyVoice.ai',
-        sameAs: [
-          'https://x.com/sexyvoiceai',
-          'https://instagram.com/sexyvoice_ai',
-        ],
-        url: 'https://sexyvoice.ai',
-      },
-      {
-        '@id': 'https://sexyvoice.ai/#website',
-        '@type': 'WebSite',
-        description: messages.pages.description,
-        inLanguage: lang,
-        name: 'SexyVoice.ai',
-        publisher: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        url: 'https://sexyvoice.ai',
-      },
-      {
-        '@id': `${siteUrl}/#webpage`,
-        '@type': 'WebPage',
-        about: {
-          '@id': 'https://sexyvoice.ai/#organization',
-        },
-        description:
-          messages.pages.descriptionVoiceCloning ||
-          dictLanding.voiceCloning.hero.subtitle,
-        inLanguage: lang,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
-        name: messages.pages.titleVoiceCloning || heroTitle,
-        url: siteUrl,
-      },
-    ],
-  };
+  const jsonLd = graph(
+    organization(),
+    webSite({ description: messages.pages.description, lang }),
+    webPage({
+      description: messages.pages.descriptionVoiceCloning,
+      lang,
+      name: messages.pages.titleVoiceCloning,
+      path: '/voice-cloning',
+    }),
+  );
 
   return (
     <>
