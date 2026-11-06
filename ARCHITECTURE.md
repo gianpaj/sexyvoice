@@ -732,6 +732,19 @@ query retries. Direct browser reads remain single-attempt. The proxy's
 is best-effort. Read, Auth lookup, and restoration failures are reported to
 Sentry without blocking a claims-authenticated dashboard request.
 
+### Stripe webhooks
+
+`POST /api/stripe/webhook` grants credits for top-ups and subscription payments
+and syncs subscription status to Redis. It returns 400 for a missing or invalid
+signature and 500 when a handled event fails, so Stripe retries the delivery.
+A paid event with an unknown price ID or customer counts as a failure because
+it granted no credits. A top-up session without the expected metadata is
+reported and acknowledged, since a retry cannot repair it. Ignored event types
+return 200. Each failure is reported to Sentry once.
+
+Grants dedupe by payment intent (`credit_transactions.reference_id`), so a
+retried event cannot grant twice.
+
 ### Credit balance sync
 
 `CreditsSection` displays the stored balance through `useCreditsQuery` and its

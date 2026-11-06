@@ -99,7 +99,7 @@ describe('Stripe Webhook Route', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should handle constructEvent throwing an error (invalid signature)', async () => {
+    it('should return 400 when constructEvent rejects the signature', async () => {
       const event = createMockEvent(
         'checkout.session.completed',
         createMockCheckoutSession('payment'),
@@ -124,9 +124,14 @@ describe('Stripe Webhook Route', () => {
 
       const response = await POST(request);
 
-      // Should still return 200 (webhook acknowledged) but error logged
-      expect(response.status).toBe(200);
-      expect(Sentry.captureException).toHaveBeenCalled();
+      expect(response.status).toBe(400);
+      expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ message: 'Invalid signature' }),
+        expect.objectContaining({
+          tags: { event_type: 'invalid_signature', section: 'stripe_webhook' },
+        }),
+      );
+      expect(insertTopupCreditTransaction).not.toHaveBeenCalled();
     });
 
     it('should process webhook with valid signature', async () => {
@@ -152,6 +157,7 @@ describe('Stripe Webhook Route', () => {
         'starter',
         undefined,
       );
+      expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });
 
@@ -209,7 +215,7 @@ describe('Stripe Webhook Route', () => {
       );
     });
 
-    it('should log error and continue when topup metadata is missing', async () => {
+    it('should report and acknowledge a topup with missing metadata', async () => {
       const session = createMockCheckoutSession('payment', {
         type: 'topup',
         // Missing userId, credits, dollarAmount
@@ -218,8 +224,10 @@ describe('Stripe Webhook Route', () => {
       const request = createMockRequest('checkout.session.completed', session);
       const response = await POST(request);
 
+      // A retry cannot repair the session's metadata.
       expect(response.status).toBe(200);
-      expect(Sentry.captureException).toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
+      expect(insertTopupCreditTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -331,6 +339,37 @@ describe('Stripe Webhook Route', () => {
         'sub_test123',
         28_750, // 25,000 * 1.15 (subscription bonus)
         10,
+      );
+    });
+
+    it('should fail the event when the subscription price is unknown', async () => {
+      const subscription = createMockSubscription('price_unknown');
+
+      vi.mocked(stripe.subscriptions.list).mockResolvedValue({
+        data: [subscription],
+      } as any);
+      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      const session = createMockCheckoutSession('subscription');
+      session.payment_intent = 'pi_unknown_price';
+
+      const request = createMockRequest('checkout.session.completed', session);
+      const response = await POST(request);
+
+      // Credits were not granted, so Stripe must retry once the price is known.
+      expect(response.status).toBe(500);
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          message: 'Unknown subscription price ID: "price_unknown"',
+        }),
+        expect.objectContaining({
+          tags: {
+            event_type: 'checkout.session.completed',
+            section: 'stripe_webhook',
+          },
+        }),
       );
     });
   });
@@ -503,6 +542,37 @@ describe('Stripe Webhook Route', () => {
             originalDiscountPercent;
         }
       }
+    });
+
+    it('should fail the event when the subscription price is unknown', async () => {
+      const subscription = createMockSubscription('price_unknown');
+      vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
+      vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
+
+      const invoice = createMockInvoice(
+        'sub_test123',
+        'cus_test123',
+        'pi_unknown_price',
+        'price_unknown',
+        'subscription_cycle',
+      );
+
+      const request = createMockRequest('invoice.payment_succeeded', invoice);
+      const response = await POST(request);
+
+      expect(response.status).toBe(500);
+      expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          message: 'Unknown subscription price ID: "price_unknown"',
+        }),
+        expect.objectContaining({
+          tags: {
+            event_type: 'invoice.payment_succeeded',
+            section: 'stripe_webhook',
+          },
+        }),
+      );
     });
   });
 
@@ -1030,7 +1100,7 @@ describe('Stripe Webhook Route', () => {
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
 
-    it('should log error when user not found in database during invoice payment', async () => {
+    it('should fail the event when the customer has no user during invoice payment', async () => {
       const customerId = 'cus_unknown';
       const subscriptionId = 'sub_test123';
       const paymentIntentId = 'pi_test_no_user';
@@ -1059,20 +1129,23 @@ describe('Stripe Webhook Route', () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(200);
-      const json = await response.json();
-      expect(json).toEqual({ received: true });
+      // Credits were not granted, so Stripe must retry.
+      expect(response.status).toBe(500);
 
-      expect(Sentry.captureException).toHaveBeenCalledWith(
-        expect.any(Error),
+      expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
-          extra: expect.objectContaining({
-            customer_id: customerId,
-          }),
-          tags: expect.objectContaining({
-            event_type: 'invoice_payment_succeeded',
-          }),
+          message: `User not found with stripe_id: "${customerId}"`,
         }),
+        {
+          extra: {
+            event_id: expect.stringMatching(/^evt_test_/),
+            object_id: 'in_test123',
+          },
+          tags: {
+            event_type: 'invoice.payment_succeeded',
+            section: 'stripe_webhook',
+          },
+        },
       );
       expect(insertSubscriptionCreditTransaction).not.toHaveBeenCalled();
     });
@@ -1092,8 +1165,8 @@ describe('Stripe Webhook Route', () => {
   });
 
   describe('Error Handling', () => {
-    it('should report database errors to Sentry', async () => {
-      vi.mocked(insertTopupCreditTransaction).mockRejectedValue(
+    it('should return 500 and report a failed grant once', async () => {
+      vi.mocked(insertTopupCreditTransaction).mockRejectedValueOnce(
         new Error('Database connection failed'),
       );
 
@@ -1106,22 +1179,25 @@ describe('Stripe Webhook Route', () => {
       });
 
       const request = createMockRequest('checkout.session.completed', session);
-      await POST(request);
+      const response = await POST(request);
 
-      expect(Sentry.captureException).toHaveBeenCalledWith(
+      // A 500 makes Stripe retry; the grant dedupes by payment intent.
+      expect(response.status).toBe(500);
+      expect(Sentry.captureException).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({
-          message: expect.stringContaining('Database'),
+          message: 'Database connection failed',
         }),
         expect.objectContaining({
-          tags: expect.objectContaining({
+          tags: {
+            event_type: 'checkout.session.completed',
             section: 'stripe_webhook',
-          }),
+          },
         }),
       );
     });
 
-    it('should handle Stripe API errors gracefully', async () => {
-      vi.mocked(stripe.subscriptions.list).mockRejectedValue(
+    it('should return 500 and report a Stripe API error once', async () => {
+      vi.mocked(stripe.subscriptions.list).mockRejectedValueOnce(
         new Error('Stripe API error'),
       );
 
@@ -1131,8 +1207,8 @@ describe('Stripe Webhook Route', () => {
 
       const response = await POST(request);
 
-      expect(response.status).toBe(200);
-      expect(Sentry.captureException).toHaveBeenCalled();
+      expect(response.status).toBe(500);
+      expect(Sentry.captureException).toHaveBeenCalledOnce();
     });
   });
 });
