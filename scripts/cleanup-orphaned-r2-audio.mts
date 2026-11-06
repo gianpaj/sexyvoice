@@ -9,6 +9,7 @@ import {
   requiredEnv,
   runScript,
 } from './lib/cli.mts';
+import { isNodeError } from './lib/guards.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
   type AudioUrlCache,
@@ -24,7 +25,6 @@ import {
   filterAllowedInventoryObjects,
   type InventorySummaryEntry,
   MINIMUM_AGE_DAYS,
-  objectIdentity,
   parseCleanupCliArgs,
   recheckCandidates,
   type StorageKeyPageSource,
@@ -37,6 +37,7 @@ import {
   downloadWithoutOverwrite,
   formatBytes,
   listAllObjects,
+  objectIdentity,
   type R2Client,
   type R2ObjectMetadata,
   resolveLocalObjectPath,
@@ -713,13 +714,6 @@ function printActionSummary(
 
 function fileTimestamp(date: Date): string {
   return date.toISOString().replace(/[:.]/g, '-');
-}
-
-function isNodeError(
-  error: unknown,
-  code: string,
-): error is NodeJS.ErrnoException {
-  return error instanceof Error && 'code' in error && error.code === code;
 }
 
 async function main(): Promise<void> {

@@ -1,5 +1,6 @@
 /// <reference path="../../apps/web/lib/supabase/types.d.ts" />
 
+import { r2ObjectKey, r2PublicUrl } from './r2-keys.mts';
 import type { UploadManifest } from './speech-sample-upload.mts';
 import type {
   SampleCatalog,
@@ -74,11 +75,8 @@ export function prepareVoiceCatalogSql(
       throw new Error('Duplicate catalog entry');
     ids.add(voice.id);
     identities.add(identity);
-    const key =
-      catalog.folder === '.'
-        ? voice.filename
-        : `${catalog.folder}/${voice.filename}`;
-    const url = new URL(key, `${catalog.publicUrl}/`).href;
+    const key = r2ObjectKey(catalog.folder, voice.filename);
+    const url = r2PublicUrl(catalog.publicUrl, key);
     if (!draft) {
       const sample = generated?.samples.find((item) => item.id === voice.id);
       const upload = uploads?.verified.find((item) => item.id === voice.id);

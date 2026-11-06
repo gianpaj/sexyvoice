@@ -20,6 +20,8 @@ import {
   downloadWithoutOverwrite,
   formatBytes,
   listAllObjects,
+  locationIdentity,
+  objectIdentity,
   parseByteSize,
   type R2Client,
   type R2Location,
@@ -191,7 +193,7 @@ export function resolveBackupSources(
       prefix: separator === -1 ? '' : value.slice(separator + 1),
     };
     assertR2BucketName(location.bucket);
-    unique.set(sourceIdentity(location), location);
+    unique.set(locationIdentity(location), location);
   }
 
   const locations = [...unique.values()];
@@ -255,7 +257,7 @@ export async function runBackup(
         reason: errorMessage(listing.reason),
       });
     } else {
-      objectsBySource.set(sourceIdentity(source), listing.value);
+      objectsBySource.set(locationIdentity(source), listing.value);
     }
   }
 
@@ -501,7 +503,7 @@ function createBackupReport({
   const byBucket = new Map<string, BucketStatusSummary>();
   const byStatus = new Map<BackupStatus, StatusSummary>();
   for (const result of results) {
-    const sourceKey = `${sourceIdentity(result)}\0${result.status}`;
+    const sourceKey = `${locationIdentity(result)}\0${result.status}`;
     const sourceTotal = bySource.get(sourceKey) ?? {
       bucket: result.bucket,
       bytes: 0,
@@ -546,7 +548,7 @@ function createBackupReport({
     results,
     schemaVersion: REPORT_SCHEMA_VERSION,
     sourceTotals: sources.map((source) => {
-      const objects = objectsBySource.get(sourceIdentity(source)) ?? [];
+      const objects = objectsBySource.get(locationIdentity(source)) ?? [];
       return {
         ...source,
         bytes: totalBytes(objects),
@@ -579,7 +581,7 @@ function printSourceTotals(
 ): void {
   log('Source totals');
   for (const source of sources) {
-    const objects = objectsBySource.get(sourceIdentity(source)) ?? [];
+    const objects = objectsBySource.get(locationIdentity(source)) ?? [];
     log(
       `  ${displaySource(source)}: ${objects.length} objects, ${formatBytes(totalBytes(objects))}`,
     );
@@ -693,16 +695,6 @@ function totalBytes(objects: Array<{ size: number }>): number {
 function formatDuration(milliseconds: number): string {
   const seconds = milliseconds / 1000;
   return seconds < 10 ? `${seconds.toFixed(1)}s` : `${Math.round(seconds)}s`;
-}
-
-function sourceIdentity(source: R2Location): string {
-  return `${source.bucket}\0${source.prefix}`;
-}
-
-function objectIdentity(
-  object: Pick<R2ObjectMetadata, 'bucket' | 'key'>,
-): string {
-  return `${object.bucket}\0${object.key}`;
 }
 
 function displaySource(source: R2Location): string {

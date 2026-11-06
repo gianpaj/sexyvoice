@@ -1,8 +1,12 @@
 import storageLayout from '../../apps/web/lib/storage/layout.ts';
 import { parseCliArgs } from './cli.mts';
+import { isRecord } from './guards.mts';
 import {
+  assertR2BucketName,
   compareR2ObjectsOldestFirst as compareOldestFirst,
+  locationIdentity,
   normalizeEtag,
+  objectIdentity,
   parseByteSize,
   type R2Client,
   type R2DeleteResponse,
@@ -13,8 +17,6 @@ import {
 
 const { AUDIO_FOLDERS } = storageLayout;
 
-export type CleanupR2Client = R2Client;
-export type AllowedLocation = R2Location;
 export type { R2ObjectMetadata } from './r2-transfer.mts';
 
 export const MANIFEST_SCHEMA_VERSION = 1;
@@ -115,16 +117,16 @@ export interface DeleteResult {
 export function buildAllowedLocations({
   apiBucket,
   mainBucket,
-}: CleanupConfig): AllowedLocation[] {
+}: CleanupConfig): R2Location[] {
   const locations = [
     { bucket: mainBucket, prefix: `${AUDIO_FOLDERS.speech.free}/` },
     { bucket: mainBucket, prefix: `${AUDIO_FOLDERS.clone.free}/` },
     { bucket: apiBucket, prefix: `${AUDIO_FOLDERS.speech.free}/` },
   ];
 
-  const unique = new Map<string, AllowedLocation>();
+  const unique = new Map<string, R2Location>();
   for (const location of locations) {
-    assertBucketName(location.bucket);
+    assertR2BucketName(location.bucket);
     unique.set(`${location.bucket}\0${location.prefix}`, location);
   }
 
@@ -220,8 +222,8 @@ export function isAtLeastDaysOld(
 export function findAllowedLocation(
   bucket: string,
   key: string,
-  locations: AllowedLocation[],
-): AllowedLocation | undefined {
+  locations: R2Location[],
+): R2Location | undefined {
   return locations.find(
     (location) => location.bucket === bucket && key.startsWith(location.prefix),
   );
@@ -231,7 +233,7 @@ export function analyzeInventory(
   objects: R2ObjectMetadata[],
   databaseKeys: ReadonlySet<string>,
   now: Date,
-  locations: AllowedLocation[],
+  locations: R2Location[],
 ): InventoryAnalysis {
   const summaries = new Map<string, InventorySummaryEntry>();
   for (const location of locations) {
@@ -337,7 +339,7 @@ export function summarizeBuckets(
 
 export function filterAllowedInventoryObjects(
   objects: R2ObjectMetadata[],
-  locations: AllowedLocation[],
+  locations: R2Location[],
 ): R2ObjectMetadata[] {
   return objects.flatMap((object) => {
     const location = findAllowedLocation(object.bucket, object.key, locations);
@@ -498,8 +500,8 @@ export async function fetchAllStorageKeys(
 export async function recheckCandidates(
   candidates: R2ObjectMetadata[],
   databaseKeys: ReadonlySet<string>,
-  client: CleanupR2Client,
-  locations: AllowedLocation[],
+  client: R2Client,
+  locations: R2Location[],
   now: Date,
 ): Promise<RecheckResult[]> {
   const results: RecheckResult[] = [];
@@ -560,7 +562,7 @@ export async function evictDeletedAudioCache(
 }
 
 export async function deleteCandidatesInBatches(
-  client: CleanupR2Client,
+  client: R2Client,
   candidates: R2ObjectMetadata[],
   batchSize = DEFAULT_DELETE_BATCH_SIZE,
 ): Promise<DeleteResult[]> {
@@ -619,12 +621,6 @@ export async function deleteCandidatesInBatches(
   return results;
 }
 
-export function objectIdentity(
-  object: Pick<R2ObjectMetadata, 'bucket' | 'key'>,
-) {
-  return `${object.bucket}\0${object.key}`;
-}
-
 function validateBucketTotals(
   input: unknown,
   config: CleanupConfig,
@@ -678,7 +674,7 @@ function validateBucketTotals(
 
 function validateInventorySummary(
   input: unknown,
-  locations: AllowedLocation[],
+  locations: R2Location[],
   candidateSummary: ManifestSummaryEntry[],
 ): InventorySummaryEntry[] {
   if (!Array.isArray(input)) {
@@ -853,32 +849,14 @@ function addObject(totals: ObjectTotals, object: R2ObjectMetadata): void {
   totals.count += 1;
 }
 
-function locationIdentity(
-  location: Pick<AllowedLocation, 'bucket' | 'prefix'>,
-): string {
-  return `${location.bucket}\0${location.prefix}`;
-}
-
 function compareLocationSummary(
-  left: Pick<AllowedLocation, 'bucket' | 'prefix'>,
-  right: Pick<AllowedLocation, 'bucket' | 'prefix'>,
+  left: Pick<R2Location, 'bucket' | 'prefix'>,
+  right: Pick<R2Location, 'bucket' | 'prefix'>,
 ): number {
   return (
     left.bucket.localeCompare(right.bucket) ||
     left.prefix.localeCompare(right.prefix)
   );
-}
-
-function assertBucketName(bucket: string): void {
-  if (
-    !bucket ||
-    bucket === '.' ||
-    bucket === '..' ||
-    bucket.includes('/') ||
-    bucket.includes('\\')
-  ) {
-    throw new Error(`Unsafe R2 bucket name: ${bucket}`);
-  }
 }
 
 function assertIsoDate(value: unknown, label: string): asserts value is string {
@@ -889,8 +867,4 @@ function assertIsoDate(value: unknown, label: string): asserts value is string {
   ) {
     throw new Error(`${label} must be an ISO timestamp`);
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

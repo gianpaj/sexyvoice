@@ -4,6 +4,12 @@ import type { S3Client } from '@aws-sdk/client-s3';
 
 import { uploadR2File } from './r2-file-upload.mts';
 import {
+  parsePublicOrigin,
+  r2Folder,
+  r2ObjectKey,
+  r2PublicUrl,
+} from './r2-keys.mts';
+import {
   assertUniqueSamples,
   type GeneratedSample,
   readVerifiedSample,
@@ -50,38 +56,20 @@ export async function planSampleUploads(options: {
   publicUrl: string;
   samples: GeneratedSample[];
 }): Promise<UploadTarget[]> {
-  const { directory, samples } = options;
-  const prefix = options.prefix === '.' ? '' : options.prefix;
-  if (
-    prefix.length > 0 &&
-    prefix.split('/').some((part) => !/^[a-zA-Z0-9_-]+$/.test(part))
-  ) {
-    throw new Error(
-      'Folder must contain nonempty path segments using letters, numbers, underscores or hyphens',
-    );
-  }
-  const base = new URL(options.publicUrl);
-  if (
-    base.protocol !== 'https:' ||
-    base.username ||
-    base.password ||
-    base.search ||
-    base.hash ||
-    base.pathname !== '/'
-  ) {
-    throw new Error('Public URL must be an HTTPS origin');
-  }
+  const { directory, publicUrl, samples } = options;
+  const folder = r2Folder(options.prefix);
+  parsePublicOrigin(publicUrl);
   assertUniqueSamples(samples);
   const targets: UploadTarget[] = [];
   for (const sample of samples) {
     await readVerifiedSample(directory, sample);
-    const key = prefix ? `${prefix}/${sample.filename}` : sample.filename;
+    const key = r2ObjectKey(folder, sample.filename);
     targets.push({
       filename: sample.filename,
       id: sample.id,
       key,
       sha256: sample.sha256,
-      url: new URL(key, base).href,
+      url: r2PublicUrl(publicUrl, key),
     });
   }
   return targets;

@@ -7,6 +7,7 @@ import {
 } from '@aws-sdk/client-s3';
 
 import { requiredEnv } from './cli.mts';
+import { isRecord } from './guards.mts';
 import {
   normalizeEtag,
   type R2Client,
@@ -138,7 +139,7 @@ function isNotFound(error: unknown): boolean {
   return hasAwsErrorStatus(error, 404, 'NotFound', 'NoSuchKey');
 }
 
-function isPreconditionFailed(error: unknown): boolean {
+export function isPreconditionFailed(error: unknown): boolean {
   return hasAwsErrorStatus(error, 412, 'PreconditionFailed');
 }
 
@@ -155,8 +156,4 @@ function hasAwsErrorStatus(
     names.includes(String(error.name)) ||
     metadata?.httpStatusCode === statusCode
   );
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

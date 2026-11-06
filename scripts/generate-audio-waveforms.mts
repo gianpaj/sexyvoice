@@ -15,10 +15,7 @@ import {
   extractAudioWaveform,
 } from './lib/audio-waveform-peaks.mts';
 import { inputPath, parseCliArgs, runScript } from './lib/cli.mts';
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+import { isRecord } from './lib/guards.mts';
 
 function sha256(path: string): string {
   return createHash('sha256').update(readFileSync(path)).digest('hex');

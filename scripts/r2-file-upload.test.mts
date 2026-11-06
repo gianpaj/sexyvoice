@@ -96,7 +96,7 @@ test('rejects missing files, directories, symlinks, duplicate destinations, and 
       planR2FileUploads([file, duplicate], ''),
       /Duplicate destination/,
     );
-    await assert.rejects(planR2FileUploads([file], '../bad'), /Prefix/);
+    await assert.rejects(planR2FileUploads([file], '../bad'), /Folder/);
     await assert.rejects(
       planR2FileUploads([file], 'demo', 'https://files.sexyvoice.ai/path'),
       /HTTPS origin/,
