@@ -742,8 +742,11 @@ it granted no credits. A top-up session without the expected metadata is
 reported and acknowledged, since a retry cannot repair it. Ignored event types
 return 200. Each failure is reported to Sentry once.
 
-Grants dedupe by payment intent (`credit_transactions.reference_id`), so a
-retried event cannot grant twice.
+The `grant_purchased_credits` database function records the credit transaction
+and adds its credits in one transaction, so a failed balance update leaves no
+row behind to block the retry. It grants nothing for a payment intent
+(`credit_transactions.reference_id`) that is already recorded, so a retried
+event cannot grant twice.
 
 ### Credit balance sync
 
