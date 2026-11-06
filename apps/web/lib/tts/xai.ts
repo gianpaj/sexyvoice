@@ -1,24 +1,15 @@
+import { GROK_LANGUAGES } from './models';
+
 export type XaiTtsCodec = 'mp3' | 'wav';
 
 export interface GenerateXaiTtsInput {
   codec?: XaiTtsCodec;
   language: string;
   signal?: AbortSignal;
-  /** Speech speed multiplier. Clamped to the xAI-supported 0.7–1.5 range. */
+  /** Speech speed multiplier within `SPEECH_SETTINGS.speed`. */
   speed?: number;
   text: string;
   voiceId: string;
-}
-
-const XAI_TTS_MIN_SPEED = 0.7;
-const XAI_TTS_MAX_SPEED = 1.5;
-
-/** Clamp a speed multiplier to the range the xAI TTS API accepts. */
-export function normalizeXaiTtsSpeed(speed?: number): number | undefined {
-  if (typeof speed !== 'number' || Number.isNaN(speed)) {
-    return;
-  }
-  return Math.min(XAI_TTS_MAX_SPEED, Math.max(XAI_TTS_MIN_SPEED, speed));
 }
 
 export interface GenerateXaiTtsResult {
@@ -30,30 +21,14 @@ export interface GenerateXaiTtsResult {
 const XAI_TTS_URL = 'https://api.x.ai/v1/tts';
 const DEFAULT_XAI_TTS_CODEC: XaiTtsCodec = 'mp3';
 
+// Each offered language maps to itself; bare codes pick a default region.
 const XAI_LANGUAGE_MAP: Record<string, string> = {
+  ...Object.fromEntries(
+    GROK_LANGUAGES.map((language) => [language.toLowerCase(), language]),
+  ),
   ar: 'ar-SA',
-  'ar-ae': 'ar-AE',
-  'ar-eg': 'ar-EG',
-  'ar-sa': 'ar-SA',
-  bn: 'bn',
-  de: 'de',
-  en: 'en',
   es: 'es-ES',
-  'es-es': 'es-ES',
-  'es-mx': 'es-MX',
-  fr: 'fr',
-  hi: 'hi',
-  id: 'id',
-  it: 'it',
-  ja: 'ja',
-  ko: 'ko',
   pt: 'pt-BR',
-  'pt-br': 'pt-BR',
-  'pt-pt': 'pt-PT',
-  ru: 'ru',
-  tr: 'tr',
-  vi: 'vi',
-  zh: 'zh',
 };
 
 export function normalizeXaiTtsCodec(codec?: string): XaiTtsCodec {
@@ -120,7 +95,6 @@ export async function generateXaiTts({
 
   const normalizedCodec = normalizeXaiTtsCodec(codec);
   const normalizedLanguage = normalizeXaiTtsLanguage(language);
-  const normalizedSpeed = normalizeXaiTtsSpeed(speed);
 
   const response = await fetch(XAI_TTS_URL, {
     body: JSON.stringify({
@@ -130,7 +104,7 @@ export async function generateXaiTts({
       },
       text,
       voice_id: voiceId,
-      ...(normalizedSpeed === undefined ? {} : { speed: normalizedSpeed }),
+      ...(speed === undefined ? {} : { speed }),
     }),
     headers: {
       Authorization: `Bearer ${apiKey}`,

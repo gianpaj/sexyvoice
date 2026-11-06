@@ -130,6 +130,36 @@ const ORPHEUS_SPANISH_ITALIAN_VOICES = new Set([
   'sergio',
 ]);
 
+/**
+ * Languages a Grok request can choose; `auto` lets xAI detect the language.
+ * The dashboard offers them in this order.
+ */
+export const GROK_LANGUAGES = [
+  'auto',
+  'en',
+  'ar-EG',
+  'ar-SA',
+  'ar-AE',
+  'bn',
+  'zh',
+  'fr',
+  'de',
+  'hi',
+  'id',
+  'it',
+  'ja',
+  'ko',
+  'pt-BR',
+  'pt-PT',
+  'ru',
+  'es-ES',
+  'es-MX',
+  'tr',
+  'vi',
+] as const;
+
+export type GrokLanguage = (typeof GROK_LANGUAGES)[number];
+
 const NO_SETTINGS: TtsModel['settings'] = {
   language: false,
   seed: false,

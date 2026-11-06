@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
+import { SPEECH_SETTINGS } from '@/lib/tts/generation-input';
 import { TTS_MODEL_IDS } from '@/lib/tts/models';
+
+const { speed: SPEED, temperature: TEMPERATURE } = SPEECH_SETTINGS;
 
 export const ErrorTypeSchema = z.enum([
   'invalid_request_error',
@@ -51,11 +54,11 @@ export const VoiceGenerationRequestSchema = z
       ),
     speed: z
       .number()
-      .min(0.7)
-      .max(1.5)
+      .min(SPEED.min)
+      .max(SPEED.max)
       .optional()
       .describe(
-        'Speech speed multiplier for Grok (xai) voices. Range 0.7-1.5. Ignored by other models.',
+        `Speech speed multiplier for Grok (xai) voices. Range ${SPEED.min}-${SPEED.max}. Ignored by other models.`,
       ),
     style: z
       .string()
@@ -63,11 +66,11 @@ export const VoiceGenerationRequestSchema = z
       .describe('Emotion/style variant (e.g., "happy", "sad", "whisper")'),
     temperature: z
       .number()
-      .min(0)
-      .max(2)
+      .min(TEMPERATURE.min)
+      .max(TEMPERATURE.max)
       .optional()
       .describe(
-        'Sampling temperature for Gemini voices (gpro38). Range 0-2; higher is more expressive. Ignored by other models.',
+        `Sampling temperature for Gemini voices (gpro38). Range ${TEMPERATURE.min}-${TEMPERATURE.max}; higher is more expressive. Ignored by other models.`,
       ),
     voice: z
       .string()

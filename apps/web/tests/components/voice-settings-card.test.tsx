@@ -39,6 +39,8 @@ const baseDict = {
     multilingualGroupLabel: 'Gemini',
     noVoicesFound: 'No voices found',
     noVoicesFoundHint: 'Try a different search or clear the filters.',
+    orpheusInfo:
+      'Model: Orpheus-TTS (text-to-speech AI model) - Commercial use ✔️',
     previewVoice: 'Preview {name}',
     searchPlaceholder: 'Search name, style, or model...',
     selectStyleTextareaPlaceholder: 'Describe the speaking style',

@@ -34,14 +34,17 @@ import { downloadUrl } from '@/lib/download';
 import { APIError } from '@/lib/error-ts';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { getStyleLimit, getTextLimit, getTtsModel } from '@/lib/tts/models';
+import {
+  randomSeed,
+  validateGenerationInput,
+} from '@/lib/tts/generation-input';
+import { getTtsModel } from '@/lib/tts/models';
 import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
 import { SplitSegmentsPanel } from './audio-generator/split-segments-panel';
 import {
-  generateRetrySeed,
   SPLIT_SEGMENT_MAX_COUNT,
   splitLongTextIntoSegments,
 } from './audio-generator/split-segments-utils';
@@ -249,8 +252,14 @@ export function AudioGenerator({
   const showEnhanceButton = Boolean(ttsModel?.enhancePrompt);
   const canEstimateCredits = Boolean(ttsModel?.canEstimate);
 
-  const styleText = isGeminiVoice ? (selectedStyle ?? '') : '';
-  const charactersLimit = ttsModel ? getTextLimit(ttsModel, isPaidUser) : 0;
+  const input = ttsModel
+    ? validateGenerationInput(ttsModel, {
+        isPaidUser,
+        style: selectedStyle,
+        text,
+      })
+    : null;
+  const charactersLimit = input?.textLimit ?? 0;
   const splitSegmentTexts = useMemo(
     () =>
       splitLongTextIntoSegments(text, {
@@ -273,14 +282,9 @@ export function AudioGenerator({
   const shouldDisableCharactersLimit = isPaidUser && splitTextAudios;
   const shouldUseSplitMode =
     shouldDisableCharactersLimit && splitSegmentTexts.length > 1;
-  const styleCharacterLimit = ttsModel
-    ? getStyleLimit(ttsModel, isPaidUser)
-    : null;
-  const styleIsOverLimit =
-    styleCharacterLimit !== null && styleText.length > styleCharacterLimit;
   const textIsOverLimit =
-    !shouldDisableCharactersLimit && text.length > charactersLimit;
-  const inputIsOverLimit = textIsOverLimit || styleIsOverLimit;
+    !shouldDisableCharactersLimit && Boolean(input?.textTooLong);
+  const inputIsOverLimit = textIsOverLimit || Boolean(input?.styleTooLong);
   const {
     splitSegments,
     allSegmentsGenerated,
@@ -316,32 +320,30 @@ export function AudioGenerator({
       seed?: number,
       split = false,
     ): Promise<GenerateVoiceResult> => {
-      if (!selectedVoice) {
+      if (!(selectedVoice && ttsModel)) {
         throw new APIError(t('error'), new Response(null, { status: 400 }));
       }
 
-      // An explicit seed argument (e.g. a segment retry re-roll) wins; otherwise
-      // fall back to the user's pinned seed — but only for Gemini, which is the
-      // only provider that uses it. Sending it on Grok/Replicate would do
-      // nothing but fragment their cache and force needless regenerations.
-      const effectiveSeed =
-        seed ?? (isGeminiVoice ? (settings.seed ?? undefined) : undefined);
+      // A retry's fresh seed replaces the pinned one. Settings the voice
+      // ignores are not sent, so they cannot split its cache.
+      const request = validateGenerationInput(ttsModel, {
+        isPaidUser,
+        settings: {
+          ...settings,
+          language: selectedGrokLanguage,
+          seed: seed ?? settings.seed,
+        },
+        style: selectedStyle,
+      });
 
       const response = await fetch('/api/generate-voice', {
         body: JSON.stringify({
-          language: isGrokVoice ? selectedGrokLanguage : undefined,
-          styleVariant: isGeminiVoice ? selectedStyle : '',
+          ...request.settings,
+          split,
+          styleVariant: request.style ?? '',
           text: segmentText,
           textImproved,
           voiceId: selectedVoice.id,
-          ...(effectiveSeed === undefined ? {} : { seed: effectiveSeed }),
-          ...(isGeminiVoice && settings.temperature !== null
-            ? { temperature: settings.temperature }
-            : {}),
-          ...(isGrokVoice && settings.speed !== null
-            ? { speed: settings.speed }
-            : {}),
-          split,
         }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
@@ -359,14 +361,12 @@ export function AudioGenerator({
       t,
       translateErrorCode,
       textImproved,
-      isGeminiVoice,
-      isGrokVoice,
+      isPaidUser,
       selectedGrokLanguage,
       selectedStyle,
       selectedVoice,
-      settings.seed,
-      settings.speed,
-      settings.temperature,
+      settings,
+      ttsModel,
     ],
   );
 
@@ -580,7 +580,7 @@ export function AudioGenerator({
         return;
       }
 
-      const seed = generateRetrySeed();
+      const seed = randomSeed();
       retryAbortController.current = new AbortController();
 
       setIsGenerating(true);
@@ -832,7 +832,7 @@ export function AudioGenerator({
 
       const response = await fetch('/api/estimate-credits', {
         body: JSON.stringify({
-          styleVariant: isGeminiVoice ? selectedStyle : '',
+          styleVariant: input?.style ?? '',
           text: textToEstimate,
           voiceId: selectedVoice.id,
         }),
@@ -855,7 +855,7 @@ export function AudioGenerator({
 
       return value;
     },
-    [canEstimateCredits, isGeminiVoice, selectedStyle, selectedVoice, t],
+    [canEstimateCredits, input?.style, selectedVoice, t],
   );
 
   const handleEstimateCredits = async () => {

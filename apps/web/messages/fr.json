@@ -534,6 +534,7 @@
       "toolTipEmotionTags": "Balises d'émotion prises en charge :",
       "geminiInfo": "Gemini 3.8 TTS prend en charge plus de 130 langues. Les instructions de style contrôlent le ton et le rythme ; les balises dans le texte ajoutent des sons vocaux.",
       "grokInfo": "Prend en charge des balises expressives comme [laugh] et\ndes balises englobantes comme <fast>...</fast> et prend en charge 24 langues :\n🇪🇬 Arabe (Égypte, Arabie saoudite et EAU),\n🇧🇩 Bengali,\n🇳🇱 Néerlandais (Pays-Bas),\n🇨🇳 Chinois (simplifié),\n🇺🇸 Anglais,\n🇫🇷 Français,\n🇩🇪 Allemand,\n🇮🇳 Hindi,\n🇮🇩 Indonésien,\n🇮🇹 Italien,\n🇯🇵 Japonais,\n🇰🇷 Coréen,\n🇧🇷 Portugais (Brésil, Portugal),\n🇷🇺 Russe,\n🇪🇸 Espagnol (Mexique, Espagne),\n🇹🇷 Turc,\n🇺🇦 Ukrainien,\n🇻🇳 Vietnamien",
+      "orpheusInfo": "Modèle : Orpheus-TTS (modèle d'IA de synthèse vocale) - Usage commercial ✔️",
       "featuredBadge": "En vedette",
       "selectVoicePlaceholder": "Sélectionner une voix...",
       "searchPlaceholder": "Rechercher par nom, style ou modèle...",

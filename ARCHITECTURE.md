@@ -189,11 +189,16 @@ access or charging. Historical voice rows remain public so history joins,
 playback, and downloads can resolve their names and audio. Provider-cost
 reporting retains the retired models' historical rates.
 
-The route enforces model- and tier-specific text limits: 500 characters by
-default and 1,000 for paid Gemini and Grok requests. Gemini accepts style,
-seed, and temperature; seed and temperature require a paid account. Grok
-accepts a speech-speed multiplier. Provider-affecting advanced settings create
-distinct cache keys.
+`validateGenerationInput` in `apps/web/lib/tts/generation-input.ts` holds the
+input rules the dashboard and the three speech routes share. Text limits are
+500 characters by default and 1,000 for paid Gemini and Grok requests. Gemini
+takes a style with its own limit (1,000 characters, 2,500 when paid), a seed,
+and a temperature; seed and temperature require a paid account. Grok takes a
+speech-speed multiplier and a language from `GROK_LANGUAGES`. The dashboard
+route drops settings the voice ignores or the plan excludes and clamps the
+rest, so only settings the provider receives create distinct cache keys. The
+external API instead counts the style toward the input limit and rejects
+settings out of range.
 
 The dashboard sends `textImproved` to record whether Improve text succeeded in
 the current edit chain, not whether the current text still contains AI-added

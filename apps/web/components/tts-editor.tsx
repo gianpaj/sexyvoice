@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/select';
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
+import { GROK_LANGUAGES, type GrokLanguage } from '@/lib/tts/models';
 import {
   GROK_EMPTY_WRAPPING_TEXT,
   GROK_INSTANT_TAG_DEFINITIONS,
@@ -84,27 +85,29 @@ const WRAPPING_TAGS = GROK_WRAPPING_TAG_DEFINITIONS.map(
 type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
 type TagDef = InstantTagDef | WrapperTagDef;
 
-const XAI_LANGUAGE_OPTIONS = [
-  { label: 'langArabicEgypt', value: 'ar-EG' },
-  { label: 'langArabicSaudiArabia', value: 'ar-SA' },
-  { label: 'langArabicUnitedArabEmirates', value: 'ar-AE' },
-  { label: 'langBengali', value: 'bn' },
-  { label: 'langChinese', value: 'zh' },
-  { label: 'langFrench', value: 'fr' },
-  { label: 'langGerman', value: 'de' },
-  { label: 'langHindi', value: 'hi' },
-  { label: 'langIndonesian', value: 'id' },
-  { label: 'langItalian', value: 'it' },
-  { label: 'langJapanese', value: 'ja' },
-  { label: 'langKorean', value: 'ko' },
-  { label: 'langPortugueseBrazil', value: 'pt-BR' },
-  { label: 'langPortuguesePortugal', value: 'pt-PT' },
-  { label: 'langRussian', value: 'ru' },
-  { label: 'langSpanishSpain', value: 'es-ES' },
-  { label: 'langSpanishMexico', value: 'es-MX' },
-  { label: 'langTurkish', value: 'tr' },
-  { label: 'langVietnamese', value: 'vi' },
-] as const;
+const GROK_LANGUAGE_LABEL_KEYS = {
+  'ar-AE': 'langArabicUnitedArabEmirates',
+  'ar-EG': 'langArabicEgypt',
+  'ar-SA': 'langArabicSaudiArabia',
+  auto: 'langAutomatic',
+  bn: 'langBengali',
+  de: 'langGerman',
+  en: 'langEnglish',
+  'es-ES': 'langSpanishSpain',
+  'es-MX': 'langSpanishMexico',
+  fr: 'langFrench',
+  hi: 'langHindi',
+  id: 'langIndonesian',
+  it: 'langItalian',
+  ja: 'langJapanese',
+  ko: 'langKorean',
+  'pt-BR': 'langPortugueseBrazil',
+  'pt-PT': 'langPortuguesePortugal',
+  ru: 'langRussian',
+  tr: 'langTurkish',
+  vi: 'langVietnamese',
+  zh: 'langChinese',
+} as const satisfies Record<GrokLanguage, string>;
 
 interface BaseTTSEditorProps {
   ariaLabelledBy?: string;
@@ -659,14 +662,10 @@ function ProviderTTSEditor({
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional "latest ref" sync — handleInsertTag is rebuilt each render on purpose so the long-lived slash-menu callbacks always invoke the current closure.
   }, [handleInsertTag]);
 
-  const translatedGrokLanguages = [
-    { label: t('langAutomatic'), value: 'auto' },
-    { label: t('langEnglish'), value: 'en' },
-    ...XAI_LANGUAGE_OPTIONS.map(({ value, label }) => ({
-      label: t(label as Parameters<typeof t>[0]),
-      value,
-    })),
-  ];
+  const translatedGrokLanguages = GROK_LANGUAGES.map((value) => ({
+    label: t(GROK_LANGUAGE_LABEL_KEYS[value]),
+    value,
+  }));
 
   const slashMenus: GrokSlashMenuConfig[] = [
     {

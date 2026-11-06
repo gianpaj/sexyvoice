@@ -532,6 +532,7 @@
       "toolTipEmotionTags": "Supported emotion tags:",
       "geminiInfo": "Gemini 3.8 TTS supports over 130 languages. Style instructions control tone and pace; inline tags add vocal sounds.",
       "grokInfo": "Supports expressive tags like [laugh] and\nwrapping tags like <fast>...</fast> and supports 24 languages:\n🇪🇬 Arabic (Egypt, Saudi Arabia and UAE),\n🇧🇩 Bengali,\n🇳🇱 Dutch (Netherlands),\n🇨🇳 Chinese (Simplified),\n🇺🇸 English,\n🇫🇷 French,\n🇩🇪 German,\n🇮🇳 Hindi,\n🇮🇩 Indonesian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇧🇷 Portuguese (Brazil, Portugal),\n🇷🇺 Russian,\n🇪🇸 Spanish (Mexico, Spain),\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\n🇻🇳 Vietnamese",
+      "orpheusInfo": "Model: Orpheus-TTS (text-to-speech AI model) - Commercial use ✔️",
       "featuredBadge": "Featured",
       "selectVoicePlaceholder": "Select a voice...",
       "searchPlaceholder": "Search name, style, or model...",

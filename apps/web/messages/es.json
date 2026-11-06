@@ -534,6 +534,7 @@
       "toolTipEmotionTags": "Etiquetas de emoción soportadas:",
       "geminiInfo": "Gemini 3.8 TTS admite más de 130 idiomas. Las instrucciones de estilo controlan el tono y el ritmo; las etiquetas insertadas añaden sonidos vocales.",
       "grokInfo": "Admite etiquetas expresivas como [laugh] y\netiquetas envolventes como <fast>...</fast> y admite 24 idiomas:\n🇪🇬 Árabe (Egipto, Arabia Saudí y EAU),\n🇧🇩 Bengalí,\n🇳🇱 Neerlandés (Países Bajos),\n🇨🇳 Chino (simplificado),\n🇺🇸 Inglés,\n🇫🇷 Francés,\n🇩🇪 Alemán,\n🇮🇳 Hindi,\n🇮🇩 Indonesio,\n🇮🇹 Italiano,\n🇯🇵 Japonés,\n🇰🇷 Coreano,\n🇧🇷 Portugués (Brasil, Portugal),\n🇷🇺 Ruso,\n🇪🇸 Español (México, España),\n🇹🇷 Turco,\n🇺🇦 Ucraniano,\n🇻🇳 Vietnamita",
+      "orpheusInfo": "Modelo: Orpheus-TTS (modelo de IA de texto a voz) - Uso comercial ✔️",
       "featuredBadge": "Destacada",
       "selectVoicePlaceholder": "Seleccionar una voz...",
       "searchPlaceholder": "Buscar por nombre, estilo o modelo...",

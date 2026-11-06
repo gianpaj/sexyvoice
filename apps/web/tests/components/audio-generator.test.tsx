@@ -1978,9 +1978,13 @@ describe('AudioGenerator', () => {
       },
     );
 
-    it.each(['gpro38', 'xai', ORPHEUS_MODEL])(
-      're-rolls a failed %s segment with a fresh retry seed',
-      async (model) => {
+    it.each([
+      { model: 'gpro38', usesSeed: true },
+      { model: 'xai', usesSeed: false },
+      { model: ORPHEUS_MODEL, usesSeed: false },
+    ])(
+      'retries a failed $model segment with a fresh seed when the model uses seeds',
+      async ({ model, usesSeed }) => {
         const user = userEvent.setup();
         const firstSegment = `${'A'.repeat(300)}.`;
         const secondSegment = `${'B'.repeat(300)}.`;
@@ -2027,13 +2031,16 @@ describe('AudioGenerator', () => {
 
         await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
         const retrySeed = getFetchRequestBody(fetchMock, 1).seed;
-        expect(getFetchRequestBody(fetchMock, 0).seed).toBe(
-          model === 'gpro38' ? 42 : undefined,
-        );
+        expect(getFetchRequestBody(fetchMock, 1).text).toBe(firstSegment);
+        if (!usesSeed) {
+          expect(getFetchRequestBody(fetchMock, 0).seed).toBeUndefined();
+          expect(retrySeed).toBeUndefined();
+          return;
+        }
+        expect(getFetchRequestBody(fetchMock, 0).seed).toBe(42);
         expect(Number.isInteger(retrySeed)).toBe(true);
         expect(retrySeed).toBeGreaterThanOrEqual(1_000_000);
         expect(retrySeed).toBeLessThan(10_000_000);
-        expect(getFetchRequestBody(fetchMock, 1).text).toBe(firstSegment);
       },
     );
   });

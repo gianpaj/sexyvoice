@@ -530,6 +530,7 @@
       "toolTipEmotionTags": "Understøttede følelsestags:",
       "geminiInfo": "Gemini 3.8 TTS understøtter over 130 sprog. Stilinstruktioner styrer tone og tempo; indlejrede tags tilføjer stemmelyde.",
       "grokInfo": "Understøtter udtryksfulde tags som [laugh] og\nomsluttende tags som <fast>...</fast> og understøtter 24 sprog:\n🇪🇬 Arabisk (Egypten, Saudi-Arabien og UAE),\n🇧🇩 Bengali,\n🇳🇱 Hollandsk (Nederlandene),\n🇨🇳 Kinesisk (forenklet),\n🇺🇸 Engelsk,\n🇫🇷 Fransk,\n🇩🇪 Tysk,\n🇮🇳 Hindi,\n🇮🇩 Indonesisk,\n🇮🇹 Italiensk,\n🇯🇵 Japansk,\n🇰🇷 Koreansk,\n🇧🇷 Portugisisk (Brasilien, Portugal),\n🇷🇺 Russisk,\n🇪🇸 Spansk (Mexico, Spanien),\n🇹🇷 Tyrkisk,\n🇺🇦 Ukrainsk,\n🇻🇳 Vietnamesisk",
+      "orpheusInfo": "Model: Orpheus-TTS (AI-model til tekst-til-tale) - Kommerciel brug ✔️",
       "featuredBadge": "Fremhævet",
       "selectVoicePlaceholder": "Vælg en stemme...",
       "searchPlaceholder": "Søg efter navn, stil eller model...",

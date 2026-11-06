@@ -25,19 +25,14 @@ import {
 import { createClient } from '@/lib/supabase/server';
 import { dashboardSpeechKey } from '@/lib/tts/cache-key';
 import { resolveGeminiTtsModel } from '@/lib/tts/gemini-prompt';
-import {
-  creditsFromTokens,
-  getStyleLimit,
-  getTextLimit,
-  getTtsModel,
-} from '@/lib/tts/models';
+import { validateGenerationInput } from '@/lib/tts/generation-input';
+import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
 import { speechProviderCost } from '@/lib/tts/provider-cost';
 import {
   isAbortError,
   SpeechError,
   synthesizeSpeech,
 } from '@/lib/tts/synthesize';
-import { normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 
 const { logger, captureException } = Sentry;
 
@@ -104,10 +99,6 @@ export async function POST(request: Request) {
   let text = '';
   let voiceId = '';
   let voiceName = '';
-  let styleVariant = '';
-  let seed: number | undefined;
-  let selectedLanguage = '';
-  let isSplit = false;
   let user: GenerationIdentity | null = null;
   let userHasPaid = false;
   let modelUsed = '';
@@ -127,26 +118,9 @@ export async function POST(request: Request) {
     }
     text = body.text || '';
     voiceId = body.voiceId || '';
-    styleVariant = body.styleVariant || '';
-    selectedLanguage = body.language || '';
-    isSplit = body.split === true;
+    const styleVariant: string = body.styleVariant || '';
+    const isSplit = body.split === true;
     const textImproved = body.textImproved === true;
-
-    if (Number.isSafeInteger(body.seed) && body.seed >= 0) {
-      seed = body.seed;
-    }
-
-    // Advanced generation settings. `seed` and `temperature` (Gemini) are paid
-    // features and are gated by `userHasPaid` below; `speed` (Grok) is available
-    // to everyone and is clamped to the supported range before use.
-    const requestedTemperature =
-      typeof body.temperature === 'number' && Number.isFinite(body.temperature)
-        ? Math.min(2, Math.max(0, body.temperature))
-        : undefined;
-    const requestedSpeed =
-      typeof body.speed === 'number' && Number.isFinite(body.speed)
-        ? body.speed
-        : undefined;
 
     if (!(text && voiceId)) {
       logger.error('Missing required parameters: text or voiceId', {
@@ -186,33 +160,27 @@ export async function POST(request: Request) {
     voiceName = voiceObj.name;
     userHasPaid = await hasUserPaid(user.id);
 
-    // Seed and temperature are paid-only knobs: ignore them for free users even
-    // if the client forged them into the request. Manual seed is UI-locked and
-    // the only other seed source (segment retries) is itself paid-only, so this
-    // never strips a seed a free user legitimately set.
-    if (!userHasPaid) {
-      seed = undefined;
-    }
-    const temperature = userHasPaid ? requestedTemperature : undefined;
-    // Clamp speed to the supported range before it reaches the cache key, so
-    // out-of-range values (e.g. speed=100) can't mint unbounded distinct cache
-    // entries that all collapse to the same clamped audio on generation.
-    const speed = normalizeXaiTtsSpeed(requestedSpeed);
-
-    const maxLength = getTextLimit(ttsModel, userHasPaid);
-    if (text.length > maxLength) {
+    // Settings the voice ignores or the user's plan excludes are dropped, and
+    // numbers are clamped, before they reach the cache key.
+    const input = validateGenerationInput(ttsModel, {
+      isPaidUser: userHasPaid,
+      settings: body,
+      style: styleVariant,
+      text,
+    });
+    if (input.textTooLong) {
       return APIErrorResponse(
-        `Text exceeds the maximum length of ${maxLength} characters`,
+        `Text exceeds the maximum length of ${input.textLimit} characters`,
         400,
       );
     }
-    const styleLimit = getStyleLimit(ttsModel, userHasPaid);
-    if (styleLimit !== null && styleVariant.length > styleLimit) {
+    if (input.styleTooLong) {
       return APIErrorResponse(
-        `Style exceeds the maximum length of ${styleLimit} characters`,
+        `Style exceeds the maximum length of ${input.styleLimit} characters`,
         400,
       );
     }
+    const { language, seed, speed, temperature } = input.settings;
 
     const currentAmount = await getCredits(user.id);
 
@@ -239,15 +207,12 @@ export async function POST(request: Request) {
 
     const filename = await dashboardSpeechKey({
       isPaidUser: userHasPaid,
-      language:
-        ttsModel.settings.language && selectedLanguage !== 'auto'
-          ? selectedLanguage || undefined
-          : undefined,
+      language: language === 'auto' ? undefined : language,
       provider: ttsModel.provider,
       runtimeModel: effectiveModel,
       seed,
       speed,
-      style: styleLimit === null ? undefined : styleVariant,
+      style: input.style,
       temperature,
       text,
       voiceName: voiceObj.name,
@@ -302,12 +267,12 @@ export async function POST(request: Request) {
       {
         codec: 'mp3',
         dbModel: voiceObj.model,
-        language: selectedLanguage || voiceObj.language,
+        language: language || voiceObj.language,
         model: ttsModel,
         seed,
         signal: abortController.signal,
         speed,
-        style: styleVariant,
+        style: input.style,
         temperature,
         text,
         voiceName: voiceObj.name,

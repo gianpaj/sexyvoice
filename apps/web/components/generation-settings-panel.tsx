@@ -4,7 +4,6 @@ import { Dices, RotateCcw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type ReactNode, useState } from 'react';
 
-import { generateRetrySeed } from '@/components/audio-generator/split-segments-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -24,6 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import type { GenerationSettings } from '@/hooks/use-generation-settings';
+import { randomSeed, SPEECH_SETTINGS } from '@/lib/tts/generation-input';
 import { getTtsModel } from '@/lib/tts/models';
 
 interface GenerationSettingsPanelProps {
@@ -35,20 +35,19 @@ interface GenerationSettingsPanelProps {
 }
 
 /**
- * Wraps a block of premium-only controls: for free users it dims and disables
- * the controls, overlays the Sparkles badge, and shows an "upgrade" tooltip —
- * mirroring the treatment in `premium-action-button.tsx`.
+ * Wraps a locked paid control: it dims and disables the control, overlays the
+ * Sparkles badge, and shows an "upgrade" tooltip.
  */
 function PremiumField({
-  isPaidUser,
+  locked,
   tooltip,
   children,
 }: {
   children: ReactNode;
-  isPaidUser: boolean;
+  locked: boolean;
   tooltip: string;
 }) {
-  if (isPaidUser) {
+  if (!locked) {
     return <>{children}</>;
   }
 
@@ -159,22 +158,20 @@ export function GenerationSettingsPanel({
 }: GenerationSettingsPanelProps) {
   const t = useTranslations('generate.advancedSettings');
 
-  const provider = getTtsModel(selectedVoice?.model)?.provider;
-  const isGeminiVoice = provider === 'gemini';
-  const isGrokVoice = provider === 'grok';
+  const honours = getTtsModel(selectedVoice?.model)?.settings;
   const upgradeTooltip = t('upgradeToUnlock');
+  const locked = (setting: keyof GenerationSettings) =>
+    SPEECH_SETTINGS[setting].paid && !isPaidUser;
+  const { seed, speed, temperature } = SPEECH_SETTINGS;
 
-  const hasAnySettings = isGeminiVoice || isGrokVoice;
-
-  // Count only the settings whose controls are actually visible for the current
-  // voice, so the badge matches the panel and clears on reset.
-  let activeCount = 0;
-  if (isGeminiVoice) {
-    if (settings.seed !== null) activeCount += 1;
-    if (settings.temperature !== null) activeCount += 1;
-  } else if (isGrokVoice && settings.speed !== null) {
-    activeCount += 1;
-  }
+  // Count only the settings this voice shows, so the badge matches the panel
+  // and clears on reset.
+  const shownSettings = (['seed', 'temperature', 'speed'] as const).filter(
+    (setting) => honours?.[setting],
+  );
+  const activeCount = shownSettings.filter(
+    (setting) => settings[setting] !== null,
+  ).length;
 
   return (
     <Sheet>
@@ -212,90 +209,93 @@ export function GenerationSettingsPanel({
         </SheetHeader>
 
         <div className="flex flex-col gap-6 px-4">
-          {!hasAnySettings && (
+          {shownSettings.length === 0 && (
             <p className="text-muted-foreground text-sm">{t('noSettings')}</p>
           )}
 
-          {isGeminiVoice && (
-            <>
-              <PremiumField isPaidUser={isPaidUser} tooltip={upgradeTooltip}>
-                <SettingRow
-                  description={t('seed.description')}
-                  title={t('seed.label')}
-                >
-                  <div className="flex items-center gap-2">
-                    <Input
-                      className="h-9"
-                      inputMode="numeric"
-                      min={0}
-                      onChange={(event) => {
-                        const raw = event.target.value;
-                        if (raw === '') {
-                          updateSettings({ seed: null });
-                          return;
-                        }
-                        const parsed = Number.parseInt(raw, 10);
-                        updateSettings({
-                          seed: Number.isNaN(parsed)
-                            ? null
-                            : Math.max(0, parsed),
-                        });
-                      }}
-                      placeholder={t('seed.placeholder')}
-                      step={1}
-                      type="number"
-                      value={settings.seed ?? ''}
-                    />
-                    <Button
-                      aria-label={t('seed.randomize')}
-                      className="h-9 w-9 shrink-0"
-                      onClick={() =>
-                        updateSettings({ seed: generateRetrySeed() })
+          {honours?.seed && (
+            <PremiumField locked={locked('seed')} tooltip={upgradeTooltip}>
+              <SettingRow
+                description={t('seed.description')}
+                title={t('seed.label')}
+              >
+                <div className="flex items-center gap-2">
+                  <Input
+                    className="h-9"
+                    inputMode="numeric"
+                    min={seed.min}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      if (raw === '') {
+                        updateSettings({ seed: null });
+                        return;
                       }
-                      size="icon"
-                      type="button"
-                      variant="secondary"
-                    >
-                      <Dices className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </SettingRow>
-              </PremiumField>
-
-              <PremiumField isPaidUser={isPaidUser} tooltip={upgradeTooltip}>
-                <SettingRow
-                  description={t('temperature.description')}
-                  title={t('temperature.label')}
-                >
-                  <DraftSlider
-                    defaultLabel={t('default')}
-                    format={(value) => value.toFixed(1)}
-                    max={2}
-                    min={0}
-                    onCommit={(value) => updateSettings({ temperature: value })}
-                    step={0.1}
-                    value={settings.temperature}
+                      const parsed = Number.parseInt(raw, 10);
+                      updateSettings({
+                        seed: Number.isNaN(parsed)
+                          ? null
+                          : Math.max(seed.min, parsed),
+                      });
+                    }}
+                    placeholder={t('seed.placeholder')}
+                    step={1}
+                    type="number"
+                    value={settings.seed ?? ''}
                   />
-                </SettingRow>
-              </PremiumField>
-            </>
+                  <Button
+                    aria-label={t('seed.randomize')}
+                    className="h-9 w-9 shrink-0"
+                    onClick={() => updateSettings({ seed: randomSeed() })}
+                    size="icon"
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Dices className="h-4 w-4" />
+                  </Button>
+                </div>
+              </SettingRow>
+            </PremiumField>
           )}
 
-          {isGrokVoice && (
-            <SettingRow
-              description={t('speed.description')}
-              title={t('speed.label')}
+          {honours?.temperature && (
+            <PremiumField
+              locked={locked('temperature')}
+              tooltip={upgradeTooltip}
             >
-              <DraftSlider
-                defaultLabel={t('default')}
-                format={(value) => `${value.toFixed(2)}×`}
-                max={1.5}
-                min={0.7}
-                onCommit={(value) => updateSettings({ speed: value })}
-                step={0.05}
-                value={settings.speed}
-              />
-            </SettingRow>
+              <SettingRow
+                description={t('temperature.description')}
+                title={t('temperature.label')}
+              >
+                <DraftSlider
+                  defaultLabel={t('default')}
+                  format={(value) => value.toFixed(1)}
+                  max={temperature.max}
+                  min={temperature.min}
+                  onCommit={(value) => updateSettings({ temperature: value })}
+                  step={temperature.step}
+                  value={settings.temperature}
+                />
+              </SettingRow>
+            </PremiumField>
+          )}
+
+          {honours?.speed && (
+            <PremiumField locked={locked('speed')} tooltip={upgradeTooltip}>
+              <SettingRow
+                description={t('speed.description')}
+                title={t('speed.label')}
+              >
+                <DraftSlider
+                  defaultLabel={t('default')}
+                  format={(value) => `${value.toFixed(2)}×`}
+                  max={speed.max}
+                  min={speed.min}
+                  onCommit={(value) => updateSettings({ speed: value })}
+                  step={speed.step}
+                  value={settings.speed}
+                />
+              </SettingRow>
+            </PremiumField>
           )}
         </div>
 

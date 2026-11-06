@@ -2286,7 +2286,7 @@ describe('Generate Voice API Route', () => {
       },
     );
 
-    it('keys Grok audio by a seed and temperature it does not use', async () => {
+    it('ignores a seed and temperature Grok does not use', async () => {
       await payAs(true);
       server.use(
         http.post('https://api.x.ai/v1/tts', () =>
@@ -2308,8 +2308,6 @@ describe('Generate Voice API Route', () => {
           isPaidUser: true,
           provider: 'grok',
           runtimeModel: 'xai',
-          seed: 7,
-          temperature: 1,
           text: 'Hello world',
           voiceName: 'eve',
         }),

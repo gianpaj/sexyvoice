@@ -18,9 +18,9 @@ import {
   isInsufficientCreditsError,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
+import { validateGenerationInput } from '@/lib/tts/generation-input';
 import {
   creditsFromTokens,
-  getTextLimit,
   getTtsModelId,
   TTS_MODELS,
   type TtsProvider,
@@ -207,15 +207,18 @@ export const POST = withExternalApi(
       const isGrokVoice = ttsModel.provider === 'grok';
 
       const userHasPaid = await hasUserPaidAdmin(userId);
-      const maxLength = getTextLimit(ttsModel, userHasPaid);
-      if (
-        input.length + (ttsModel.styleLimit ? (style?.length ?? 0) : 0) >
-        maxLength
-      ) {
-        const lengthErrorMessage =
-          isGeminiVoice && style
-            ? `The input text exceeds the maximum length of ${maxLength} characters after applying style`
-            : `The input text exceeds the maximum length of ${maxLength} characters`;
+      // Unlike the dashboard, the external API has no separate style limit:
+      // the style counts toward the input limit. Settings are validated by
+      // VoiceGenerationRequestSchema, which rejects values out of range.
+      const check = validateGenerationInput(ttsModel, {
+        isPaidUser: userHasPaid,
+        style,
+        text: input,
+      });
+      if (input.length + (check.style?.length ?? 0) > check.textLimit) {
+        const lengthErrorMessage = check.style
+          ? `The input text exceeds the maximum length of ${check.textLimit} characters after applying style`
+          : `The input text exceeds the maximum length of ${check.textLimit} characters`;
         await log({
           apiKeyId: auth.apiKeyId,
           errorCode: 'input_too_long',

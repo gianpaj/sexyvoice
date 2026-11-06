@@ -20,7 +20,8 @@ import {
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { VoicePicker } from '@/components/voice-picker';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
-import { getStyleLimit, getTtsModel } from '@/lib/tts/models';
+import { validateGenerationInput } from '@/lib/tts/generation-input';
+import { getTtsModel, type TtsProvider } from '@/lib/tts/models';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
@@ -34,6 +35,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
+
+const MODEL_INFO_KEYS = {
+  gemini: 'voiceSelector.geminiInfo',
+  grok: 'voiceSelector.grokInfo',
+  replicate: 'voiceSelector.orpheusInfo',
+} as const satisfies Record<TtsProvider, string>;
 
 export function VoiceSettingsCard({
   publicVoices,
@@ -52,18 +59,16 @@ export function VoiceSettingsCard({
 }) {
   const t = useTranslations('generate');
   const ttsModel = getTtsModel(selectedVoice?.model);
-  const isGeminiVoice = ttsModel?.provider === 'gemini';
   const isGrokVoice = ttsModel?.provider === 'grok';
   const emotionTags =
     selectedVoice && ttsModel
       ? ttsModel.inlineTags(selectedVoice.language)
       : undefined;
-  const styleCharacterLimit = ttsModel
-    ? getStyleLimit(ttsModel, isPaidUser)
+  const styleCheck = ttsModel
+    ? validateGenerationInput(ttsModel, { isPaidUser, style: selectedStyle })
     : null;
+  const styleCharacterLimit = styleCheck?.styleLimit ?? null;
   const styleLength = selectedStyle?.length ?? 0;
-  const isStyleOverLimit =
-    styleCharacterLimit !== null && styleLength > styleCharacterLimit;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -91,14 +96,7 @@ export function VoiceSettingsCard({
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="whitespace-break-spaces lg:max-w-80">
-                {isGeminiVoice && <p>{t('voiceSelector.geminiInfo')}</p>}
-                {isGrokVoice && <p>{t('voiceSelector.grokInfo')}</p>}
-                {!(isGeminiVoice || isGrokVoice) && (
-                  <p>
-                    Model: Orpheus-TTS (text-to-speech AI model) - Commercial
-                    use ✔️
-                  </p>
-                )}
+                {ttsModel && <p>{t(MODEL_INFO_KEYS[ttsModel.provider])}</p>}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -194,7 +192,7 @@ export function VoiceSettingsCard({
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                isStyleOverLimit && 'text-red-500',
+                styleCheck?.styleTooLong && 'text-red-500',
               )}
             >
               <p

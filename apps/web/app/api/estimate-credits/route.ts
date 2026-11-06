@@ -9,9 +9,9 @@ import {
   buildGeminiTtsContents,
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
+import { validateGenerationInput } from '@/lib/tts/generation-input';
 import {
   creditsFromTokens,
-  getTextLimit,
   getTtsModel,
   type TtsModel,
 } from '@/lib/tts/models';
@@ -97,26 +97,6 @@ async function validateVoice(
   return { data: { model: voiceObj.model, ttsModel }, ok: true };
 }
 
-function validateTextLength(
-  text: string,
-  ttsModel: TtsModel,
-  isPaidUser: boolean,
-): ValidationResult<null> {
-  const maxLength = getTextLimit(ttsModel, isPaidUser);
-
-  if (text.length > maxLength) {
-    return {
-      ok: false,
-      response: APIErrorResponse(
-        `Text exceeds the maximum length of ${maxLength} characters`,
-        400,
-      ),
-    };
-  }
-
-  return { data: null, ok: true };
-}
-
 function validateApiKey(): ValidationResult<string> {
   const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
 
@@ -152,9 +132,22 @@ export async function POST(request: Request) {
     const isPaidUser = await hasUserPaid(userResult.data.id);
 
     const { model, ttsModel } = voiceResult.data;
-    const textError = validateTextLength(text, ttsModel, isPaidUser);
-    if (!textError.ok) {
-      return textError.response;
+    const input = validateGenerationInput(ttsModel, {
+      isPaidUser,
+      style: styleVariant,
+      text,
+    });
+    if (input.textTooLong) {
+      return APIErrorResponse(
+        `Text exceeds the maximum length of ${input.textLimit} characters`,
+        400,
+      );
+    }
+    if (input.styleTooLong) {
+      return APIErrorResponse(
+        `Style exceeds the maximum length of ${input.styleLimit} characters`,
+        400,
+      );
     }
 
     if (ttsModel.provider === 'grok') {
@@ -176,7 +169,7 @@ export async function POST(request: Request) {
     const tokenResponse = await ai.models.countTokens({
       contents: buildGeminiTtsContents({
         model,
-        styleVariant,
+        styleVariant: input.style,
         text,
       }),
       model: estimateModel,

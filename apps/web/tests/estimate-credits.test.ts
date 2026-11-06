@@ -196,8 +196,8 @@ describe('Estimate Credits API Route', () => {
     expect(json.error).toContain('500 characters');
   });
 
-  it('estimates a Gemini style over the generation limit', async () => {
-    mockCountTokens.mockResolvedValueOnce({ totalTokens: 360 });
+  it('returns 400 when a Gemini style exceeds the style limit', async () => {
+    mockCountTokens.mockClear();
 
     const response = await POST(
       new Request('http://localhost/api/estimate-credits', {
@@ -211,7 +211,11 @@ describe('Estimate Credits API Route', () => {
       }),
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toBe(
+      'Style exceeds the maximum length of 1000 characters',
+    );
+    expect(mockCountTokens).not.toHaveBeenCalled();
   });
 
   it('returns 400 when request body has malformed JSON', async () => {
