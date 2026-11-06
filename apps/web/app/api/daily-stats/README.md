@@ -19,6 +19,11 @@ or Mistral voices for yesterday and 14 complete UTC days. It uses
 `callVoiceProvider(call_sessions.model)` and includes every session status,
 matching total calls. Internal users are excluded from both counts.
 
+The `New characters` line counts private characters by `characters.created_at`
+for yesterday and 14 complete UTC days. Internal users and featured public
+characters (`is_public = true`) are excluded. Deleted characters are absent
+from these counts.
+
 ## Usage contribution
 
 Net collections are cash purchases/top-ups minus cash refunds. Manual grants,

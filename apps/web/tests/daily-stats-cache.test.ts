@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
     getAudioFilesInRange: vi.fn().mockResolvedValue([]),
     getCallSessionDurationsBefore: vi.fn().mockResolvedValue([]),
     getCallSessionsInRange: vi.fn().mockResolvedValue([]),
+    getCharactersInRange: vi.fn().mockResolvedValue([]),
     getClonedAudioFilesInRange: vi.fn().mockResolvedValue([]),
     getCreditTransactionsInRange: vi.fn().mockResolvedValue([]),
     getInternalUserIds: vi.fn().mockResolvedValue([]),
@@ -84,13 +85,14 @@ function validCache() {
     callSessionsAllTimeDurationResult: emptyResult,
     callSessionsTotalCountResult: emptyResult,
     clonesResult: emptyResult,
+    characters14dResult: emptyResult,
     nextSubscriptionDueForPayment: null,
     profilesRecentResult: emptyResult,
     profilesTotalCountResult: emptyResult,
     reportDate: REPORT_DATE,
     subscriptionsMrr: null,
     usageEvents14dResult: emptyResult,
-    version: 5,
+    version: 6,
   };
 }
 
@@ -327,16 +329,68 @@ describe('GET /api/daily-stats cache', () => {
     },
   );
 
-  it('refreshes activity caches without call models', async () => {
+  it.each([false, true])(
+    'reports new characters for both periods with cached activity=%s',
+    async (cached) => {
+      const audio = [{ model: 'xai' }];
+      const characters = [
+        { id: 'earlier', created_at: '2026-09-10T23:59:59.999Z' },
+        { id: 'midnight', created_at: '2026-09-11T00:00:00Z' },
+        { id: 'later', created_at: '2026-09-11T23:59:59.999Z' },
+      ];
+      mocks.queries.getInternalUserIds.mockResolvedValueOnce(['internal']);
+      mocks.getContributionData.mockResolvedValueOnce({
+        audioUsage: {},
+        calls: [],
+        events: [],
+        linkedCallIds: [],
+      });
+      if (cached) {
+        mocks.existsSync.mockReturnValue(true);
+        mocks.readFileSync.mockReturnValue(
+          JSON.stringify({
+            ...validCache(),
+            audioYesterdayResult: { data: audio, error: null },
+            characters14dResult: { data: characters, error: null },
+          }),
+        );
+      } else {
+        mocks.queries.getAudioFilesInRange.mockResolvedValueOnce(audio);
+        mocks.queries.getCharactersInRange.mockResolvedValueOnce(characters);
+      }
+
+      const response = await GET(request());
+      assert(response);
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain(
+        'New characters: 2 yesterday | 3 in 14d',
+      );
+      if (cached) {
+        expect(mocks.queries.getCharactersInRange).not.toHaveBeenCalled();
+      } else {
+        expect(
+          mocks.queries.getCharactersInRange,
+        ).toHaveBeenCalledExactlyOnceWith(
+          mocks.createAdminClient.mock.results[0].value,
+          new Date('2026-08-29T00:00:00Z'),
+          new Date('2026-09-12T00:00:00Z'),
+          ['internal'],
+        );
+      }
+    },
+  );
+
+  it('refreshes activity caches without character counts', async () => {
     mocks.existsSync.mockReturnValue(true);
     mocks.readFileSync.mockReturnValue(
-      JSON.stringify({ ...validCache(), version: 4 }),
+      JSON.stringify({ ...validCache(), version: 5 }),
     );
 
     const response = await GET(request());
     assert(response);
     expect(response.status).toBe(200);
     expectFreshQueries();
+    expect(mocks.queries.getCharactersInRange).toHaveBeenCalledOnce();
     expect(mocks.queries.getCallSessionsInRange).toHaveBeenCalledOnce();
     expect(mocks.writeFileSync).toHaveBeenCalledOnce();
   });
@@ -362,7 +416,7 @@ describe('GET /api/daily-stats cache', () => {
       audioYesterdayResult: { data: [], error: null },
       reportDate: REPORT_DATE,
       usageEvents14dResult: { data: [], error: null },
-      version: 5,
+      version: 6,
     });
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
