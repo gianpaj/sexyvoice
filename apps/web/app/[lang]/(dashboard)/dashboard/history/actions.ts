@@ -1,17 +1,14 @@
 'use server';
 
 import { captureException } from '@sentry/nextjs';
-import { Redis } from '@upstash/redis';
 import { after } from 'next/server';
 
 import PostHogClient from '@/lib/posthog';
+import { evictAudioUrlCache } from '@/lib/redis/audio-url-cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getMyActiveAudioFilesFilter } from '@/lib/supabase/queries.client';
 import { createClient } from '@/lib/supabase/server';
-
-const redis = Redis.fromEnv();
-const CACHE_DELETE_BATCH_SIZE = 100;
 
 type DeleteAudioFilesOptions =
   | { scope: 'all' }
@@ -65,37 +62,10 @@ async function deleteAudioFiles(options: DeleteAudioFilesOptions) {
     throw new Error('Audio file not found or unauthorized');
   }
 
-  const storageKeys = [
-    ...new Set(deletedAudioFiles.map(({ storage_key }) => storage_key)),
-  ];
-
-  for (
-    let index = 0;
-    index < storageKeys.length;
-    index += CACHE_DELETE_BATCH_SIZE
-  ) {
-    const storageKeyBatch = storageKeys.slice(
-      index,
-      index + CACHE_DELETE_BATCH_SIZE,
-    );
-    try {
-      // Cache keys are shared across users. Match the existing single-delete
-      // behavior even though another user's identical request may become a
-      // cache miss and consume credits after this eviction.
-      await redis.del(...storageKeyBatch);
-    } catch (cacheError) {
-      // The database is authoritative. A cache outage must not report a
-      // successful soft delete as failed.
-      captureException(cacheError, {
-        extra: {
-          deletedCount: deletedAudioFiles.length,
-          storageKeys: storageKeyBatch,
-        },
-        level: 'warning',
-        user: { email: claims.email, id: claims.sub },
-      });
-    }
-  }
+  await evictAudioUrlCache(
+    deletedAudioFiles.map(({ storage_key }) => storage_key),
+    { email: claims.email, id: claims.sub },
+  );
 
   if (deletedAudioFiles.length > 0) {
     after(async () => {

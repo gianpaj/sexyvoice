@@ -658,6 +658,11 @@ The action's `finally` releases its reservation and block after cleanup succeeds
 or fails; token checks prevent stale requests from releasing another request's
 block.
 
+After the commit, account deletion deactivates the user's API keys and deletes
+their generated audio from R2. External API audio (`usage.sourceType` is
+`api_tts`) lives in `R2_SPEECH_API_BUCKET_NAME`. Other audio lives in
+`R2_BUCKET_NAME`, and its dashboard cache entries are evicted after deletion.
+
 Auth users remain able to sign in and check out after deletion finishes.
 Inactive profiles removed by the retention script are restored on dashboard
 return through `ensureUserApplicationState`. Billing recovery does not restore
@@ -789,6 +794,10 @@ TTL. Cache hits return the existing URL and consume zero credits.
   enhancement mode.
 - Paid and free dashboard TTS outputs use separate R2 path prefixes.
 - `/api/v1/speech` bypasses this cache and always generates fresh audio.
+
+The Redis key of each entry is the output's main-bucket R2 key, stored as
+`audio_files.storage_key`. History and account deletion evict entries through
+`apps/web/lib/redis/audio-url-cache.ts`.
 
 External API rate limiting uses an Upstash token bucket with a capacity and
 refill rate of 60 requests per minute per API key hash.
