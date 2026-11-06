@@ -62,15 +62,18 @@ describe('external API pricing', () => {
     expect(amount).toBe(0.015);
   });
 
-  it('calculates xai tts pricing', () => {
-    const amount = calculateGenerateApiDollarAmount({
-      inputChars: 1000,
-      model: 'xai',
-      provider: 'xai',
-      sourceType: 'api_tts',
-    });
-    expect(amount).toBe(0.015);
-  });
+  it.each(['tts', 'api_tts'] as const)(
+    'calculates Grok %s cost at $15 per million characters',
+    (sourceType) => {
+      const amount = calculateGenerateApiDollarAmount({
+        inputChars: 1000,
+        model: 'xai',
+        provider: 'xai',
+        sourceType,
+      });
+      expect(amount).toBe(0.015);
+    },
+  );
 
   it('returns zero when no model pricing is configured', () => {
     const amount = calculateGenerateApiDollarAmount({
