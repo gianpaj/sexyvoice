@@ -235,7 +235,8 @@ The Stripe webhook tests cover:
   - Promo code handling
 - Subscription checkouts (mode: 'subscription')
   - Customer data syncing to Redis
-  - Initial subscription credit awards
+  - Credits awarded only through `invoice.payment_succeeded`, including initial
+    payments and renewals
 
 ### Stripe Admin (`stripe-admin.test.ts`)
 
