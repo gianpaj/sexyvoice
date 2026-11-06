@@ -4,13 +4,7 @@ import { useConnectionState } from '@livekit/components-react';
 import { ConnectionState } from 'livekit-client';
 import { useMessages } from 'next-intl';
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import { faqAnswerText } from '@/lib/faq';
+import { FaqGroupAccordion } from '@/components/faq-group-accordion';
 
 export function CallFaq() {
   const connectionState = useConnectionState();
@@ -32,27 +26,12 @@ export function CallFaq() {
       <h2 className="mb-4 text-center font-semibold text-foreground text-lg">
         {callFaq.category}
       </h2>
-      <Accordion
+      <FaqGroupAccordion
         className="w-full rounded-md border border-border"
-        collapsible
-        defaultValue="item-0"
-        type="single"
-      >
-        {callFaq.questions.map((faq, i) => (
-          <AccordionItem
-            className="border-border px-5"
-            key={i}
-            value={`item-${i}`}
-          >
-            <AccordionTrigger className="text-foreground">
-              {faq.question}
-            </AccordionTrigger>
-            <AccordionContent className="whitespace-pre-wrap text-muted-foreground">
-              {faqAnswerText(faq.answer)}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+        defaultOpen
+        itemClassName="border-border px-5"
+        questions={callFaq.questions}
+      />
     </section>
   );
 }

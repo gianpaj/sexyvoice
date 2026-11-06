@@ -32,6 +32,45 @@ const plan: PlanData = {
 describe('pricing bonus presentation', () => {
   afterEach(cleanup);
 
+  it('shows the renewal price for an introductory offer and updates the commitment on toggle', async () => {
+    const user = userEvent.setup();
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PricingCards
+          isPromoEnabled={false}
+          promoTheme="orange"
+          subscriptionPlans={[{ ...plan, price: 2.5, recurringPrice: 5 }]}
+          topupPlans={[plan]}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getByText('Renews monthly. Cancel anytime.')).toBeVisible();
+    expect(screen.getByText('$2.50', { exact: true })).toBeVisible();
+    expect(
+      screen.getByText('$2.50 for your first month, then $5.00/month.'),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'One-time' }));
+    expect(screen.getByText('One payment. No subscription.')).toBeVisible();
+    expect(
+      screen.queryByText('$2.50 for your first month, then $5.00/month.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('omits introductory pricing when the monthly price stays the same', () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PricingCards
+          isPromoEnabled={false}
+          promoTheme="orange"
+          subscriptionPlans={[{ ...plan, recurringPrice: plan.price }]}
+          topupPlans={[plan]}
+        />
+      </NextIntlClientProvider>,
+    );
+    expect(screen.queryByText(/for your first month/)).not.toBeInTheDocument();
+  });
+
   it.each([
     { locale: 'en' as const, translations: messages },
     { locale: 'es' as const, translations: spanishMessages },
