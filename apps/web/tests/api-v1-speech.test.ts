@@ -930,7 +930,7 @@ describe('/api/v1/speech', () => {
     expect(captureException).toHaveBeenCalledWith(
       refundError,
       expect.objectContaining({
-        extra: expect.objectContaining({ context: 'gemini_content_blocked' }),
+        extra: expect.objectContaining({ context: 'speech_content_blocked' }),
       }),
     );
   });
@@ -1130,12 +1130,12 @@ describe('/api/v1/speech', () => {
     expect(restoreCredits).toHaveBeenCalledOnce();
     expect(captureException).toHaveBeenCalledOnce();
     expect(captureException).toHaveBeenCalledWith(modelError, {
-      extra: {
+      extra: expect.objectContaining({
         apiKeyId: 'test-api-key-id',
         endpoint: '/api/v1/speech',
         requestId: expect.stringMatching(/^req_sv_[0-9a-f]{32}$/),
-        userId: 'test-user-id',
-      },
+      }),
+      user: { id: 'test-user-id' },
     });
   });
 

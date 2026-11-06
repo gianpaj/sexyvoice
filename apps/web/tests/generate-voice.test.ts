@@ -5,9 +5,9 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
+import type { GoogleApiErrorWithStatus } from '@/lib/tts/google-errors';
 import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
-import { getErrorMessage } from '@/lib/utils';
-import type { GoogleApiErrorWithStatus } from '@/utils/google-rpc-status';
+import { SPEECH_ERROR_MESSAGES } from '@/lib/tts/synthesize';
 import {
   flushPromises,
   mockRedisGet,
@@ -690,17 +690,11 @@ describe('Generate Voice API Route', () => {
       expect(json.errorCode).toBeUndefined();
       expect(json.details).toBeUndefined();
       expect(restoreCredits).toHaveBeenCalledOnce();
-      const capturedError = expect.objectContaining({
-        cause: modelError,
-        message: 'Voice generation failed, please retry',
-        voiceGenerationErrorCode: 'REPLICATE_ERROR',
-      });
       expect(Sentry.captureException).toHaveBeenCalledOnce();
-      expect(Sentry.captureException).toHaveBeenCalledWith(capturedError, {
+      expect(Sentry.captureException).toHaveBeenCalledWith(modelError, {
         extra: {
-          errorData: capturedError,
           model: expect.stringContaining('lucataco/orpheus'),
-          text: 'Hello world',
+          textLength: 'Hello world'.length,
           voice: 'tara',
         },
         user: { email: 'test@example.com', id: 'test-user-id' },
@@ -841,7 +835,7 @@ describe('Generate Voice API Route', () => {
             codec: 'mp3',
             language: 'en',
             model: 'xai',
-            text: 'Hello world',
+            textLength: 'Hello world'.length,
             voice: 'eve',
           },
           user: { email: 'test@example.com', id: 'test-user-id' },
@@ -1559,9 +1553,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(422);
-      expect(json.error).toBe(
-        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-      );
+      expect(json.error).toBe(SPEECH_ERROR_MESSAGES.unexpected_response);
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(Sentry.logger.warn).toHaveBeenCalledWith(
         'Gemini rejected TTS request',
@@ -1664,9 +1656,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(429);
-      expect(json.error).toContain(
-        getErrorMessage('FREE_QUOTA_EXCEEDED', 'voice-generation'),
-      );
+      expect(json.error).toContain(SPEECH_ERROR_MESSAGES.quota_exceeded);
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 
@@ -1698,9 +1688,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
-      expect(json.error).toBe(
-        getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
-      );
+      expect(json.error).toBe(SPEECH_ERROR_MESSAGES.no_audio);
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(Sentry.logger.warn).toHaveBeenCalledWith(
         'Gemini voice generation returned no audio data',
@@ -1749,9 +1737,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(503);
-      expect(json.error).toBe(
-        getErrorMessage('NO_AUDIO_DATA', 'voice-generation'),
-      );
+      expect(json.error).toBe(SPEECH_ERROR_MESSAGES.no_audio);
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(Sentry.logger.warn).toHaveBeenCalledWith(
         'Gemini voice generation returned no audio data',
@@ -1804,9 +1790,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBe(
-        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-      );
+      expect(json.error).toBe(SPEECH_ERROR_MESSAGES.unexpected_response);
       expect(Sentry.captureException).toHaveBeenCalledTimes(1);
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1817,7 +1801,6 @@ describe('Generate Voice API Route', () => {
             blockReason: undefined,
             finishReason: undefined,
             hasData: false,
-            isNoAudioData: false,
             mimeType: undefined,
             model: 'gemini-3.8-flash-tts',
             voice: 'kore',
@@ -1827,7 +1810,7 @@ describe('Generate Voice API Route', () => {
       );
       expect(Sentry.captureException).not.toHaveBeenCalledWith(
         expect.objectContaining({
-          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+          message: SPEECH_ERROR_MESSAGES.unexpected_response,
         }),
         expect.anything(),
       );
@@ -1868,9 +1851,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(500);
-      expect(json.error).toBe(
-        getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
-      );
+      expect(json.error).toBe(SPEECH_ERROR_MESSAGES.unexpected_response);
       expect(Sentry.captureException).toHaveBeenCalledTimes(1);
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1889,7 +1870,7 @@ describe('Generate Voice API Route', () => {
       );
       expect(Sentry.captureException).not.toHaveBeenCalledWith(
         expect.objectContaining({
-          message: getErrorMessage('OTHER_GEMINI_BLOCK', 'voice-generation'),
+          message: SPEECH_ERROR_MESSAGES.unexpected_response,
         }),
         expect.anything(),
       );
@@ -1939,9 +1920,7 @@ describe('Generate Voice API Route', () => {
         const json = await response.json();
 
         expect(response.status).toBe(422);
-        expect(json.error).toBe(
-          getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
-        );
+        expect(json.error).toBe(SPEECH_ERROR_MESSAGES.content_blocked);
         expect(restoreCredits).toHaveBeenCalledTimes(1);
         expect(Sentry.captureException).not.toHaveBeenCalled();
         expect(Sentry.logger.warn).toHaveBeenCalledWith(
@@ -1984,9 +1963,7 @@ describe('Generate Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(422);
-      expect(json.error).toBe(
-        getErrorMessage('PROHIBITED_CONTENT', 'voice-generation'),
-      );
+      expect(json.error).toBe(SPEECH_ERROR_MESSAGES.content_blocked);
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });

@@ -1,12 +1,4 @@
-import {
-  type GenerateContentConfig,
-  type GenerateContentResponse,
-  GoogleGenAI,
-  HarmBlockThreshold,
-  HarmCategory,
-} from '@google/genai';
 import { captureException } from '@sentry/nextjs';
-import Replicate, { type Prediction } from 'replicate';
 
 import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
@@ -19,20 +11,11 @@ import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { consumeRateLimit } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
-import {
-  convertToWav,
-  formatDurationSeconds,
-  getAudioDuration,
-} from '@/lib/audio';
+import { formatDurationSeconds, getAudioDuration } from '@/lib/audio';
 import {
   type CreditReservation,
   reserveCredits,
 } from '@/lib/credits/reservation';
-import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
-import {
-  getProviderErrorMessage,
-  isTransientProviderFailure,
-} from '@/lib/provider-errors';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -44,95 +27,81 @@ import {
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import {
-  buildGeminiTtsContents,
-  buildGeminiVoiceConfig,
-  resolveGeminiTtsModel,
-} from '@/lib/tts/gemini-prompt';
-import {
-  classifyGeminiTtsResponse,
-  extractInlineAudio,
-  geminiOutcomeToErrorCode,
-} from '@/lib/tts/gemini-response';
-import {
   creditsFromTokens,
   getTextLimit,
   getTtsModelId,
   TTS_MODELS,
+  type TtsProvider,
 } from '@/lib/tts/models';
-import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
-import {
-  ERROR_CODES,
-  extractMetadata,
-  getErrorMessage,
-  getErrorStatusCode,
-} from '@/lib/utils';
-import { parseGoogleApiError } from '@/utils/google-errors';
-import {
-  getGoogleApiErrorStatus,
-  isGoogleQuotaError,
-  isGoogleTransientProviderError,
-} from '@/utils/google-rpc-status';
+import { SpeechError, synthesizeSpeech } from '@/lib/tts/synthesize';
+import { normalizeXaiTtsCodec } from '@/lib/tts/xai';
 
 const ENDPOINT = '/api/v1/speech';
 
-interface GeminiProviderFailure {
-  code: string;
-  googleCode?: number;
-  googleStatus?: string;
-  message: string;
-  status: number;
-  type: 'rate_limit_error' | 'server_error';
-}
+const PRICING_PROVIDERS = {
+  gemini: 'google',
+  grok: 'xai',
+  replicate: 'replicate',
+} as const satisfies Record<TtsProvider, string>;
 
-function getGeminiProviderFailure(
-  error: unknown,
-): GeminiProviderFailure | null {
-  const finalGoogleError = parseGoogleApiError(error);
-
-  if (finalGoogleError && isGoogleQuotaError(finalGoogleError)) {
-    return {
-      code: 'provider_quota_exceeded',
-      googleCode: finalGoogleError.code,
-      googleStatus: getGoogleApiErrorStatus(finalGoogleError),
-      message: getErrorMessage(
-        ERROR_CODES.THIRD_P_QUOTA_EXCEEDED,
-        'voice-generation',
-      ),
-      status: 429,
-      type: 'rate_limit_error',
-    };
+/** External API error for each reason a provider produced no audio. */
+function speechErrorBody(error: SpeechError) {
+  switch (error.kind) {
+    case 'content_blocked':
+      return {
+        code: 'content_policy_violation',
+        message: error.message,
+        param: 'input',
+        status: 422,
+        type: 'invalid_request_error',
+      } as const;
+    case 'input_too_long':
+      return {
+        code: 'input_too_long',
+        message: error.message,
+        param: 'input',
+        status: 400,
+        type: 'invalid_request_error',
+      } as const;
+    case 'no_audio':
+      return {
+        code: 'server_error',
+        message: error.message,
+        status: 503,
+        type: 'server_error',
+      } as const;
+    case 'provider_unavailable':
+      return {
+        code: 'provider_unavailable',
+        message: error.message,
+        status: 503,
+        type: 'server_error',
+      } as const;
+    case 'quota_exceeded':
+      return {
+        code: 'provider_quota_exceeded',
+        message: error.message,
+        status: 429,
+        type: 'rate_limit_error',
+      } as const;
+    case 'unexpected_response':
+      return {
+        code: 'server_error',
+        message: error.message,
+        status: 500,
+        type: 'server_error',
+      } as const;
+    default:
+      return {
+        code: 'server_error',
+        message:
+          error.kind === 'provider_error' && error.provider === 'grok'
+            ? error.message
+            : 'Internal server error',
+        status: 500,
+        type: 'server_error',
+      } as const;
   }
-
-  if (finalGoogleError && isGoogleTransientProviderError(finalGoogleError)) {
-    return {
-      code: 'provider_unavailable',
-      googleCode: finalGoogleError.code,
-      googleStatus: getGoogleApiErrorStatus(finalGoogleError),
-      message: getProviderUnavailableMessage('gemini'),
-      status: 503,
-      type: 'server_error',
-    };
-  }
-
-  return null;
-}
-
-function resolveProviderName({
-  isGeminiVoice,
-  isGrokVoice,
-}: {
-  isGeminiVoice: boolean;
-  isGrokVoice: boolean;
-}): 'google' | 'replicate' | 'xai' {
-  if (isGeminiVoice) {
-    return 'google';
-  }
-
-  if (isGrokVoice) {
-    return 'xai';
-  }
-
-  return 'replicate';
 }
 
 // https://vercel.com/docs/functions/configuring-functions/duration
@@ -210,6 +179,11 @@ export async function POST(request: Request) {
     );
   }
 
+  let textLength = 0;
+  let voice: string | undefined;
+  let modelUsed: string | undefined;
+  let provider: string | undefined;
+
   try {
     const payload = await request.json();
 
@@ -230,6 +204,7 @@ export async function POST(request: Request) {
     const requestedVoice = parsed.data.voice;
     const requestedVoiceId = parsed.data.voiceId;
     const requestedModel = parsed.data.model;
+    textLength = input.length;
 
     const userId = authResult.userId;
 
@@ -277,11 +252,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const voice = voiceObj.name;
+    voice = voiceObj.name;
+    modelUsed = voiceObj.model;
     const ttsModel = TTS_MODELS[model];
-    const ttsProvider = ttsModel.provider;
-    const isGeminiVoice = ttsProvider === 'gemini';
-    const isGrokVoice = ttsProvider === 'grok';
+    provider = PRICING_PROVIDERS[ttsModel.provider];
+    const isGeminiVoice = ttsModel.provider === 'gemini';
+    const isGrokVoice = ttsModel.provider === 'grok';
 
     const userHasPaid = await hasUserPaidAdmin(userId);
     const maxLength = getTextLimit(ttsModel, userHasPaid);
@@ -392,292 +368,49 @@ export async function POST(request: Request) {
     }
 
     const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
-    const extension = chosenFormat;
-    const filename = `${folder}/${voice}-${Date.now()}.${extension}`;
+    const filename = `${folder}/${voice}-${Date.now()}.${chosenFormat}`;
 
-    const provider = resolveProviderName({ isGeminiVoice, isGrokVoice });
-    let modelUsed = voiceObj.model;
-    let uploadUrl: string;
-    let replicateResponse: Prediction | undefined;
-    let geminiResponse: GenerateContentResponse | null = null;
-    let generatedAudioBuffer: Buffer | undefined;
-    let generatedAudioMimeType: string | undefined;
-    const respondWithProviderUnavailable = async (
-      context: string,
-      error: unknown,
-      providerId: 'grok' | 'replicate',
-    ) => {
-      const message = getProviderUnavailableMessage(providerId);
-      await releaseReservation(context);
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error: getProviderErrorMessage(error),
-        errorCode: 'provider_unavailable',
-        isGeminiVoice,
-        isGrokVoice,
-        model: modelUsed,
-        provider,
-        status: 503,
-        textLength: input.length,
-        userId,
-        voice,
-      });
-      return respond(
-        createApiError({
-          code: 'provider_unavailable',
-          message,
-          type: 'server_error',
-        }),
-        { status: 503 },
-      );
-    };
-
-    if (isGeminiVoice) {
-      const ai = new GoogleGenAI({
-        apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      });
-      const config: GenerateContentConfig = {
-        responseModalities: ['AUDIO'],
-        ...(seed === undefined ? {} : { seed }),
-        ...(temperature === undefined ? {} : { temperature }),
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-        ],
-        speechConfig: {
-          voiceConfig: buildGeminiVoiceConfig(voice, model),
+    const speech = await synthesizeSpeech(
+      {
+        codec: normalizeXaiTtsCodec(chosenFormat),
+        dbModel: voiceObj.model,
+        language: voiceObj.language,
+        model: ttsModel,
+        seed,
+        speed,
+        style,
+        temperature,
+        text: input,
+        voiceName: voice,
+      },
+      {
+        extra: {
+          apiKeyId: authResult.apiKeyId,
+          endpoint: ENDPOINT,
+          requestId,
         },
-      };
-
-      const respondToGeminiProviderFailure = async (error: unknown) => {
-        const providerFailure = getGeminiProviderFailure(error);
-        if (!providerFailure) return null;
-
-        await releaseReservation('gemini_provider_failure');
-        await log({
-          apiKeyId: authResult.apiKeyId,
-          error: providerFailure.message,
-          errorCode: providerFailure.code,
-          isGeminiVoice,
-          model: modelUsed,
-          provider,
-          providerCode: providerFailure.googleCode,
-          providerStatus: providerFailure.googleStatus,
-          status: providerFailure.status,
-          textLength: input.length,
-          userId,
-          voice,
-        });
-
-        return respond(
-          createApiError({
-            code: providerFailure.code,
-            message: providerFailure.message,
-            type: providerFailure.type,
-          }),
-          { status: providerFailure.status },
-        );
-      };
-
-      try {
-        modelUsed = resolveGeminiTtsModel({ model });
-        geminiResponse = await ai.models.generateContent({
-          config,
-          contents: buildGeminiTtsContents({
-            model,
-            styleVariant: style,
-            text: input,
-          }),
-          model: modelUsed,
-        });
-      } catch (error) {
-        const failureResponse = await respondToGeminiProviderFailure(error);
-        if (failureResponse) return failureResponse;
-        throw error;
-      }
-
-      const { data, mimeType } = extractInlineAudio(geminiResponse);
-      const finishReason = geminiResponse?.candidates?.[0]?.finishReason;
-      const blockReason = geminiResponse?.promptFeedback?.blockReason;
-      const responseOutcome = classifyGeminiTtsResponse({
-        blockReason,
-        finishReason,
-        hasAudio: Boolean(data && mimeType),
-      });
-      const isProhibitedContent = responseOutcome === 'content_blocked';
-
-      if (responseOutcome !== 'success' || !data || !mimeType) {
-        const code = isProhibitedContent
-          ? 'content_policy_violation'
-          : 'server_error';
-        const errorCode =
-          geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
-        const message = getErrorMessage(errorCode, 'voice-generation');
-        const httpStatus = getErrorStatusCode(errorCode);
-        await releaseReservation(
-          isProhibitedContent ? 'gemini_content_blocked' : 'gemini_no_audio',
-        );
-        await log({
-          apiKeyId: authResult.apiKeyId,
-          error: message,
-          errorCode: code,
-          isGeminiVoice,
-          model: modelUsed,
-          status: httpStatus,
-          textLength: input.length,
-          userId,
-          voice,
-        });
-        return respond(
-          createApiError({
-            code,
-            message,
-            param: isProhibitedContent ? 'input' : null,
-            type: isProhibitedContent
-              ? 'invalid_request_error'
-              : 'server_error',
-          }),
-          { status: httpStatus },
-        );
-      }
-
-      const audioBuffer = convertToWav(data, mimeType);
-      generatedAudioBuffer = audioBuffer;
-      generatedAudioMimeType = 'audio/wav';
-      uploadUrl = await uploadFileToR2(
-        filename,
-        audioBuffer,
-        'audio/wav',
-        speechApiBucket,
-        process.env.R2_SPEECH_API_PUBLIC_URL,
-      );
-    } else if (isGrokVoice) {
-      modelUsed = voiceObj.model;
-      const codec = normalizeXaiTtsCodec(chosenFormat);
-
-      let xaiResult: Awaited<ReturnType<typeof generateXaiTts>>;
-      try {
-        xaiResult = await generateXaiTts({
-          codec,
-          language: voiceObj.language ?? 'en',
-          speed,
-          text: input,
-          voiceId: voice,
-        });
-      } catch (error) {
-        if (isTransientProviderFailure(error)) {
-          return respondWithProviderUnavailable(
-            'xai_provider_unavailable',
-            error,
-            'grok',
-          );
-        }
-
-        captureException(error, {
-          extra: { codec, model: modelUsed, requestId, voice },
-        });
-        const message = getErrorMessage('XAI_TTS_ERROR', 'voice-generation');
-        await releaseReservation('xai_tts_error');
-        await log({
-          apiKeyId: authResult.apiKeyId,
-          error: message,
-          errorCode: 'xai_tts_error',
-          isGrokVoice,
-          model: modelUsed,
-          provider,
-          status: 500,
-          textLength: input.length,
-          userId,
-          voice,
-        });
-        return respond(
-          createApiError({
-            code: 'server_error',
-            message,
-            type: 'server_error',
-          }),
-          { status: 500 },
-        );
-      }
-
-      const { audioBuffer, contentType } = xaiResult;
-      generatedAudioBuffer = audioBuffer;
-      generatedAudioMimeType = contentType;
-      uploadUrl = await uploadFileToR2(
-        filename,
-        audioBuffer,
-        contentType,
-        speechApiBucket,
-        process.env.R2_SPEECH_API_PUBLIC_URL,
-      );
-    } else {
-      const replicate = new Replicate();
-      let output: ReadableStream;
-      try {
-        output = (await replicate.run(
-          voiceObj.model as `${string}/${string}`,
-          { input: { text: input, voice } },
-          (prediction: Prediction) => {
-            replicateResponse = prediction;
-          },
-        )) as ReadableStream;
-      } catch (error) {
-        if (!isTransientProviderFailure(error)) {
-          throw error;
-        }
-
-        return respondWithProviderUnavailable(
-          'replicate_provider_unavailable',
-          error,
-          'replicate',
-        );
-      }
-
-      const chunks: Uint8Array[] = [];
-      const reader = output.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        if (value) {
-          chunks.push(value);
-        }
-      }
-      const audioBuffer = Buffer.concat(chunks);
-      generatedAudioBuffer = audioBuffer;
-      generatedAudioMimeType = 'audio/mpeg';
-      uploadUrl = await uploadFileToR2(
-        filename,
-        audioBuffer,
-        'audio/mpeg',
-        speechApiBucket,
-        process.env.R2_SPEECH_API_PUBLIC_URL,
-      );
-    }
-
-    if (!uploadUrl) {
-      throw new Error('uploadUrl is empty after generation — this is a bug');
-    }
-
-    const durationSeconds =
-      generatedAudioBuffer && generatedAudioMimeType
-        ? await getAudioDuration(generatedAudioBuffer, generatedAudioMimeType)
-        : null;
-
-    let creditsUsed = estimatedCredits;
-    const usageMetadata = extractMetadata(
-      isGeminiVoice,
-      geminiResponse,
-      replicateResponse,
+        user: { id: userId },
+      },
     );
-    if (isGeminiVoice && usageMetadata?.totalTokenCount) {
-      creditsUsed = creditsFromTokens(
-        Number.parseInt(usageMetadata.totalTokenCount, 10),
-      );
-    }
+    modelUsed = speech.runtimeModel;
+
+    const uploadUrl = await uploadFileToR2(
+      filename,
+      speech.audio,
+      speech.mimeType,
+      speechApiBucket,
+      process.env.R2_SPEECH_API_PUBLIC_URL,
+    );
+
+    const durationSeconds = await getAudioDuration(
+      speech.audio,
+      speech.mimeType,
+    );
+
+    const creditsUsed =
+      speech.totalTokens === undefined
+        ? estimatedCredits
+        : creditsFromTokens(speech.totalTokens);
     const settlement = await reservation.settle(creditsUsed, 'speech_success');
     const creditsDebited = settlement.debited;
     if (settlement.outcome === 'partial_debit') {
@@ -705,19 +438,11 @@ export async function POST(request: Request) {
     }
 
     const dollarAmount = calculateGenerateApiDollarAmount({
-      candidatesTokenCount:
-        isGeminiVoice &&
-        usageMetadata &&
-        'candidatesTokenCount' in usageMetadata
-          ? usageMetadata.candidatesTokenCount
-          : null,
+      candidatesTokenCount: speech.usage?.candidatesTokenCount ?? null,
       inputChars: input.length,
       model: modelUsed,
-      promptTokenCount:
-        isGeminiVoice && usageMetadata && 'promptTokenCount' in usageMetadata
-          ? usageMetadata.promptTokenCount
-          : null,
-      provider,
+      promptTokenCount: speech.usage?.promptTokenCount ?? null,
+      provider: PRICING_PROVIDERS[ttsModel.provider],
       sourceType: 'api_tts',
     });
     const [audioFileResult, updatedCredits] = await Promise.all([
@@ -727,11 +452,11 @@ export async function POST(request: Request) {
         filename,
         isPublic: false,
         model: modelUsed,
-        predictionId: replicateResponse?.id,
+        predictionId: speech.predictionId,
         text: input,
         url: uploadUrl,
         usage: {
-          ...usageMetadata,
+          ...speech.usage,
           apiKeyId: authResult.apiKeyId,
           dollarAmount,
           sourceType: 'api_tts',
@@ -751,7 +476,7 @@ export async function POST(request: Request) {
       durationSeconds,
       inputChars: input.length,
       metadata: {
-        ...usageMetadata,
+        ...speech.usage,
         model: modelUsed,
         textLength: input.length,
         textPreview: input.slice(0, 100),
@@ -760,7 +485,7 @@ export async function POST(request: Request) {
         ...(seed === undefined ? {} : { seed }),
         isGeminiVoice,
         isGrokVoice,
-        predictionId: replicateResponse?.id ?? null,
+        predictionId: speech.predictionId ?? null,
         userHasPaid,
       },
       model: modelUsed,
@@ -804,31 +529,34 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    await releaseReservation('speech_failure');
-
-    if (
-      Error.isError(error) &&
-      error.cause &&
-      Object.values(ERROR_CODES).includes(error.cause as never)
-    ) {
-      const isPolicy = error.cause === ERROR_CODES.PROHIBITED_CONTENT;
-      const httpStatus = isPolicy ? 422 : 500;
+    if (error instanceof SpeechError) {
+      await releaseReservation(`speech_${error.kind}`);
+      const failure = speechErrorBody(error);
       await log({
         apiKeyId: authResult.apiKeyId,
-        error: error.message,
-        errorCode: isPolicy ? 'content_policy_violation' : 'server_error',
-        status: httpStatus,
+        error: failure.message,
+        errorCode: failure.code,
+        model: modelUsed,
+        provider,
+        providerCode: error.google?.code,
+        providerStatus: error.google?.status,
+        status: failure.status,
+        textLength,
         userId: authResult.userId,
+        voice,
       });
       return respond(
         createApiError({
-          code: isPolicy ? 'content_policy_violation' : 'server_error',
-          message: error.message,
-          type: isPolicy ? 'invalid_request_error' : 'server_error',
+          code: failure.code,
+          message: failure.message,
+          param: 'param' in failure ? failure.param : null,
+          type: failure.type,
         }),
-        { status: httpStatus },
+        { status: failure.status },
       );
     }
+
+    await releaseReservation('speech_failure');
 
     if (error instanceof SyntaxError) {
       await log({
