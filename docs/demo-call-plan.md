@@ -170,10 +170,30 @@ Static map providing display info for the 4 demo characters:
 
 ```ts
 const demoCharacters = [
-  { id: "ramona", name: "Ramona", image: "ramona.webp", accent: "from-red-500 to-pink-500" },
-  { id: "miyu", name: "Miyu", image: "miyu.webp", accent: "from-blue-400 to-cyan-400" },
-  { id: "luna", name: "Luna", image: "luna.webp", accent: "from-amber-400 to-orange-500" },
-  { id: "rafal", name: "Rafal", image: "rafal.webp", accent: "from-violet-500 to-fuchsia-500" },
+  {
+    id: "ramona",
+    name: "Ramona",
+    image: "ramona.webp",
+    accent: "from-red-500 to-pink-500",
+  },
+  {
+    id: "miyu",
+    name: "Miyu",
+    image: "miyu.webp",
+    accent: "from-blue-400 to-cyan-400",
+  },
+  {
+    id: "luna",
+    name: "Luna",
+    image: "luna.webp",
+    accent: "from-amber-400 to-orange-500",
+  },
+  {
+    id: "rafal",
+    name: "Rafal",
+    image: "rafal.webp",
+    accent: "from-violet-500 to-fuchsia-500",
+  },
 ];
 ```
 

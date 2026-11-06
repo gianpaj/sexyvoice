@@ -55,6 +55,14 @@ or a matching name and model from `GET /api/v1/voices` before retrying. Invalid
 request shapes and unsupported model values still return HTTP `400` validation
 errors.
 
+## Cancelled speech requests
+
+If you disconnect during Gemini or Replicate generation, `POST /api/v1/speech`
+cancels the provider request and refunds reserved credits. The handler returns
+an empty HTTP `499` response without the JSON error envelope, `request-id`, or
+rate-limit response headers.
+A disconnected client may not receive this response.
+
 ## Debugging with request-id
 
-Every response includes `request-id` header. Save it with your logs and include it in bug reports.
+JSON responses include the `request-id` header. Save it with your logs and include it in bug reports.

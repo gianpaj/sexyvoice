@@ -78,6 +78,13 @@ The repository has three main workspaces:
 | Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
 | Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
+Gemini request configuration, non-streaming fallback, audio classification,
+and provider failures live in `apps/web/lib/tts/gemini.ts`. Both generation
+routes use this core. `gemini-prompt.ts` supplies model selection and prompt
+construction for credit estimates and generation; `gemini-response.ts`
+classifies both streamed and non-streamed responses. Replicate generation and
+stream conversion live in `apps/web/lib/tts/replicate.ts`.
+
 ## External REST API
 
 Base path: `/api/v1/`

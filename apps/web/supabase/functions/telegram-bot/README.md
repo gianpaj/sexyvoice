@@ -65,6 +65,7 @@ This sets the webhook URL that Telegram will send updates to when users interact
 ## Statistics
 
 The `/stats` command provides:
+
 - Audio files generated (yesterday vs previous day comparison)
 - New user profiles created
 - Credit transactions and revenue
