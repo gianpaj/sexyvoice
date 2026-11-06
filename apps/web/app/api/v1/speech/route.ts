@@ -1,15 +1,7 @@
-import { captureException } from '@sentry/nextjs';
-
-import { updateApiKeyLastUsed, validateApiKey } from '@/lib/api/auth';
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
-import {
-  externalApiErrorResponse,
-  getExternalApiRequestId,
-} from '@/lib/api/external-errors';
-import { createLogger } from '@/lib/api/logger';
+import { externalApiErrorResponse } from '@/lib/api/external-errors';
+import { withExternalApi } from '@/lib/api/handler';
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import { consumeRateLimit } from '@/lib/api/rate-limit';
-import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { formatDurationSeconds, getAudioDuration } from '@/lib/audio';
 import {
@@ -108,494 +100,430 @@ function speechErrorBody(error: SpeechError) {
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 800; // seconds - fluid compute is enabled
 
-export async function POST(request: Request) {
-  const requestId = getExternalApiRequestId();
-  const log = createLogger({ endpoint: ENDPOINT, requestId });
-
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) {
-    await log({ errorCode: 'missing_authorization_header', status: 401 });
-    return externalApiErrorResponse({
-      key: 'missing_authorization_header',
-      requestId,
-    });
-  }
-
-  const authResult = await validateApiKey(authHeader);
-  if (!authResult) {
-    await log({ errorCode: 'invalid_api_key', status: 401 });
-    return externalApiErrorResponse({
-      key: 'invalid_api_key',
-      requestId,
-    });
-  }
-
-  const rateLimit = await consumeRateLimit(authResult.keyHash);
-  if (!rateLimit.allowed) {
-    await log({
-      apiKeyId: authResult.apiKeyId,
-      errorCode: 'rate_limit_exceeded',
-      status: 429,
-      userId: authResult.userId,
-    });
-    return externalApiErrorResponse({
-      key: 'rate_limit_exceeded',
-      rateLimit,
-      requestId,
-    });
-  }
-
-  const respond = (
-    body: unknown,
-    init: ResponseInit = {},
-    rateLimitState = rateLimit,
-  ) => jsonWithRateLimitHeaders(body, init, rateLimitState, requestId);
-  let reservation: CreditReservation | null = null;
-  const releaseReservation = async (context: string) => {
-    const refund = await reservation?.release(context);
-    if (refund && !refund.ok) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error: refund.error,
-        errorCode: 'credit_refund_failed',
-        status: 500,
-        userId: authResult.userId,
-      });
-    }
-  };
-
-  // Fail fast on misconfiguration before performing any I/O (credit checks,
-  // voice lookups, generation). The internal env-var name is intentionally
-  // omitted from the response body to avoid leaking implementation details.
-  const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
-  if (!speechApiBucket) {
-    await log({ errorCode: 'missing_r2_bucket_config', status: 500 });
-    return respond(
-      createApiError({
-        code: 'server_error',
-        message: 'Storage is not configured. Please contact support.',
-        type: 'server_error',
-      }),
-      { status: 500 },
-    );
-  }
-
-  let textLength = 0;
-  let voice: string | undefined;
-  let modelUsed: string | undefined;
-  let provider: string | undefined;
-
-  try {
-    const payload = await request.json();
-
-    const parsed = VoiceGenerationRequestSchema.safeParse(payload);
-    if (!parsed.success) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error: parsed.error.message,
-        errorCode: 'validation_error',
-        status: 400,
-        userId: authResult.userId,
-      });
-      return respond(zodErrorToApiError(parsed.error), { status: 400 });
-    }
-
-    const { input, response_format, style, seed, temperature, speed } =
-      parsed.data;
-    const requestedVoice = parsed.data.voice;
-    const requestedVoiceId = parsed.data.voiceId;
-    const requestedModel = parsed.data.model;
-    textLength = input.length;
-
-    const userId = authResult.userId;
-
-    let voiceObj: Awaited<ReturnType<typeof getVoiceIdByNameAdmin>> | null =
-      null;
-    if (requestedVoiceId) {
-      try {
-        voiceObj = await getVoiceByIdAdmin(requestedVoiceId);
-      } catch {
-        voiceObj = null;
+export const POST = withExternalApi(
+  ENDPOINT,
+  async (request, { auth, log, rateLimit, requestId, respond }) => {
+    let reservation: CreditReservation | null = null;
+    const releaseReservation = async (context: string) => {
+      const refund = await reservation?.release(context);
+      if (refund && !refund.ok) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          error: refund.error,
+          errorCode: 'credit_refund_failed',
+          status: 500,
+          userId: auth.userId,
+        });
       }
-    } else if (requestedVoice) {
-      try {
+    };
+
+    // Fail fast on misconfiguration before credit checks, voice lookups and
+    // generation. The env-var names stay out of the response body.
+    const speechApiBucket = process.env.R2_SPEECH_API_BUCKET_NAME;
+    const speechApiPublicUrl = process.env.R2_SPEECH_API_PUBLIC_URL;
+    if (!(speechApiBucket && speechApiPublicUrl)) {
+      await log({ errorCode: 'missing_r2_bucket_config', status: 500 });
+      return respond(
+        createApiError({
+          code: 'server_error',
+          message: 'Storage is not configured. Please contact support.',
+          type: 'server_error',
+        }),
+        { status: 500 },
+      );
+    }
+
+    let textLength = 0;
+    let voice: string | undefined;
+    let modelUsed: string | undefined;
+    let provider: string | undefined;
+
+    try {
+      const payload = await request.json();
+
+      const parsed = VoiceGenerationRequestSchema.safeParse(payload);
+      if (!parsed.success) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          error: parsed.error.message,
+          errorCode: 'validation_error',
+          status: 400,
+          userId: auth.userId,
+        });
+        return respond(zodErrorToApiError(parsed.error), { status: 400 });
+      }
+
+      const { input, response_format, style, seed, temperature, speed } =
+        parsed.data;
+      const requestedVoice = parsed.data.voice;
+      const requestedVoiceId = parsed.data.voiceId;
+      const requestedModel = parsed.data.model;
+      textLength = input.length;
+
+      const userId = auth.userId;
+
+      let voiceObj: Awaited<ReturnType<typeof getVoiceIdByNameAdmin>> | null =
+        null;
+      if (requestedVoiceId) {
+        voiceObj = await getVoiceByIdAdmin(requestedVoiceId);
+      } else if (requestedVoice) {
         voiceObj = await getVoiceIdByNameAdmin(
           requestedVoice,
           true,
           requestedModel ? TTS_MODELS[requestedModel].dbModels : undefined,
         );
-      } catch {
-        voiceObj = null;
-      }
-    }
-
-    const model = getTtsModelId(voiceObj?.model);
-    if (!(voiceObj && model)) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'voice_not_found',
-        model: requestedModel,
-        status: 404,
-        userId,
-        voice: requestedVoice,
-        voiceId: requestedVoiceId,
-      });
-      return respond(
-        createApiError({
-          code: 'voice_not_found',
-          message: requestedVoiceId
-            ? `Voice ID "${requestedVoiceId}" was not found`
-            : `Voice "${requestedVoice}" was not found for model "${requestedModel}"`,
-          param: requestedVoiceId ? 'voiceId' : 'voice',
-          type: 'not_found_error',
-        }),
-        { status: 404 },
-      );
-    }
-
-    voice = voiceObj.name;
-    modelUsed = voiceObj.model;
-    const ttsModel = TTS_MODELS[model];
-    provider = PRICING_PROVIDERS[ttsModel.provider];
-    const isGeminiVoice = ttsModel.provider === 'gemini';
-    const isGrokVoice = ttsModel.provider === 'grok';
-
-    const userHasPaid = await hasUserPaidAdmin(userId);
-    const maxLength = getTextLimit(ttsModel, userHasPaid);
-    if (
-      input.length + (ttsModel.styleLimit ? (style?.length ?? 0) : 0) >
-      maxLength
-    ) {
-      const lengthErrorMessage =
-        isGeminiVoice && style
-          ? `The input text exceeds the maximum length of ${maxLength} characters after applying style`
-          : `The input text exceeds the maximum length of ${maxLength} characters`;
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'input_too_long',
-        model,
-        status: 400,
-        textLength: input.length,
-        userId,
-        voice,
-      });
-      return respond(
-        createApiError({
-          code: 'input_too_long',
-          message: lengthErrorMessage,
-          param: 'input',
-          type: 'invalid_request_error',
-        }),
-        { status: 400 },
-      );
-    }
-
-    const chosenFormat = response_format ?? ttsModel.formats[0];
-    if (!(ttsModel.formats as readonly string[]).includes(chosenFormat)) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'unsupported_response_format',
-        model,
-        status: 400,
-        userId,
-        voice,
-      });
-      return respond(
-        createApiError({
-          code: 'unsupported_response_format',
-          message: `Model "${model}" does not support "${chosenFormat}" format`,
-          param: 'response_format',
-          type: 'invalid_request_error',
-        }),
-        { status: 400 },
-      );
-    }
-
-    const currentCredits = await getCreditsAdmin(userId);
-    const estimatedCredits = ttsModel.estimateCredits(input, voice);
-    if (currentCredits < estimatedCredits) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'insufficient_credits',
-        model,
-        status: 402,
-        textLength: input.length,
-        userId,
-        voice,
-      });
-      return respond(
-        createApiError({
-          code: 'insufficient_credits',
-          message: 'Insufficient credits',
-          type: 'permission_error',
-        }),
-        { status: 402 },
-      );
-    }
-
-    try {
-      reservation = await reserveCredits({
-        actor: 'service',
-        amount: estimatedCredits,
-        telemetry: {
-          apiKeyId: authResult.apiKeyId,
-          endpoint: ENDPOINT,
-          requestId,
-        },
-        userId,
-      });
-    } catch (error) {
-      if (!isInsufficientCreditsError(error)) {
-        throw error;
       }
 
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        errorCode: 'insufficient_credits',
-        model,
-        status: 402,
-        textLength: input.length,
-        userId,
-        voice,
-      });
-      return respond(
-        createApiError({
-          code: 'insufficient_credits',
-          message: 'Insufficient credits',
-          type: 'permission_error',
-        }),
-        { status: 402 },
-      );
-    }
+      const model = getTtsModelId(voiceObj?.model);
+      if (!(voiceObj && model)) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          errorCode: 'voice_not_found',
+          model: requestedModel,
+          status: 404,
+          userId,
+          voice: requestedVoice,
+          voiceId: requestedVoiceId,
+        });
+        return respond(
+          createApiError({
+            code: 'voice_not_found',
+            message: requestedVoiceId
+              ? `Voice ID "${requestedVoiceId}" was not found`
+              : `Voice "${requestedVoice}" was not found for model "${requestedModel}"`,
+            param: requestedVoiceId ? 'voiceId' : 'voice',
+            type: 'not_found_error',
+          }),
+          { status: 404 },
+        );
+      }
 
-    const filename = `${audioFolder('speech', userHasPaid)}/${voice}-${Date.now()}.${chosenFormat}`;
+      voice = voiceObj.name;
+      modelUsed = voiceObj.model;
+      const ttsModel = TTS_MODELS[model];
+      provider = PRICING_PROVIDERS[ttsModel.provider];
+      const isGeminiVoice = ttsModel.provider === 'gemini';
+      const isGrokVoice = ttsModel.provider === 'grok';
 
-    const speech = await synthesizeSpeech(
-      {
-        codec: normalizeXaiTtsCodec(chosenFormat),
-        dbModel: voiceObj.model,
-        language: voiceObj.language,
-        model: ttsModel,
-        seed,
-        speed,
-        style,
-        temperature,
-        text: input,
-        voiceName: voice,
-      },
-      {
-        extra: {
-          apiKeyId: authResult.apiKeyId,
-          endpoint: ENDPOINT,
-          requestId,
+      const userHasPaid = await hasUserPaidAdmin(userId);
+      const maxLength = getTextLimit(ttsModel, userHasPaid);
+      if (
+        input.length + (ttsModel.styleLimit ? (style?.length ?? 0) : 0) >
+        maxLength
+      ) {
+        const lengthErrorMessage =
+          isGeminiVoice && style
+            ? `The input text exceeds the maximum length of ${maxLength} characters after applying style`
+            : `The input text exceeds the maximum length of ${maxLength} characters`;
+        await log({
+          apiKeyId: auth.apiKeyId,
+          errorCode: 'input_too_long',
+          model,
+          status: 400,
+          textLength: input.length,
+          userId,
+          voice,
+        });
+        return respond(
+          createApiError({
+            code: 'input_too_long',
+            message: lengthErrorMessage,
+            param: 'input',
+            type: 'invalid_request_error',
+          }),
+          { status: 400 },
+        );
+      }
+
+      const chosenFormat = response_format ?? ttsModel.formats[0];
+      if (!(ttsModel.formats as readonly string[]).includes(chosenFormat)) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          errorCode: 'unsupported_response_format',
+          model,
+          status: 400,
+          userId,
+          voice,
+        });
+        return respond(
+          createApiError({
+            code: 'unsupported_response_format',
+            message: `Model "${model}" does not support "${chosenFormat}" format`,
+            param: 'response_format',
+            type: 'invalid_request_error',
+          }),
+          { status: 400 },
+        );
+      }
+
+      const currentCredits = await getCreditsAdmin(userId);
+      const estimatedCredits = ttsModel.estimateCredits(input, voice);
+      if (currentCredits < estimatedCredits) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          errorCode: 'insufficient_credits',
+          model,
+          status: 402,
+          textLength: input.length,
+          userId,
+          voice,
+        });
+        return respond(
+          createApiError({
+            code: 'insufficient_credits',
+            message: 'Insufficient credits',
+            type: 'permission_error',
+          }),
+          { status: 402 },
+        );
+      }
+
+      try {
+        reservation = await reserveCredits({
+          actor: 'service',
+          amount: estimatedCredits,
+          telemetry: {
+            apiKeyId: auth.apiKeyId,
+            endpoint: ENDPOINT,
+            requestId,
+          },
+          userId,
+        });
+      } catch (error) {
+        if (!isInsufficientCreditsError(error)) {
+          throw error;
+        }
+
+        await log({
+          apiKeyId: auth.apiKeyId,
+          errorCode: 'insufficient_credits',
+          model,
+          status: 402,
+          textLength: input.length,
+          userId,
+          voice,
+        });
+        return respond(
+          createApiError({
+            code: 'insufficient_credits',
+            message: 'Insufficient credits',
+            type: 'permission_error',
+          }),
+          { status: 402 },
+        );
+      }
+
+      const filename = `${audioFolder('speech', userHasPaid)}/${voice}-${Date.now()}.${chosenFormat}`;
+
+      const speech = await synthesizeSpeech(
+        {
+          codec: normalizeXaiTtsCodec(chosenFormat),
+          dbModel: voiceObj.model,
+          language: voiceObj.language,
+          model: ttsModel,
+          seed,
+          speed,
+          style,
+          temperature,
+          text: input,
+          voiceName: voice,
         },
-        user: { id: userId },
-      },
-    );
-    modelUsed = speech.runtimeModel;
+        {
+          extra: {
+            apiKeyId: auth.apiKeyId,
+            endpoint: ENDPOINT,
+            requestId,
+          },
+          user: { id: userId },
+        },
+      );
+      modelUsed = speech.runtimeModel;
 
-    const uploadUrl = await uploadFileToR2(
-      filename,
-      speech.audio,
-      speech.mimeType,
-      speechApiBucket,
-      process.env.R2_SPEECH_API_PUBLIC_URL,
-    );
-
-    const durationSeconds = await getAudioDuration(
-      speech.audio,
-      speech.mimeType,
-    );
-
-    const creditsUsed =
-      speech.totalTokens === undefined
-        ? estimatedCredits
-        : creditsFromTokens(speech.totalTokens);
-    const settlement = await reservation.settle(creditsUsed, 'speech_success');
-    const creditsDebited = settlement.debited;
-    if (settlement.outcome === 'partial_debit') {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        creditsUsed: creditsDebited,
-        errorCode: 'credit_partial_debit',
-        status: 200,
-        userId,
-      });
-    } else if (
-      settlement.outcome === 'debit_failed' ||
-      settlement.outcome === 'refund_failed'
-    ) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error: settlement.error,
-        errorCode:
-          settlement.outcome === 'debit_failed'
-            ? 'credit_debit_failed'
-            : 'credit_refund_failed',
-        status: 500,
-        userId,
-      });
-    }
-
-    const dollarAmount = calculateGenerateApiDollarAmount({
-      candidatesTokenCount: speech.usage?.candidatesTokenCount ?? null,
-      inputChars: input.length,
-      model: modelUsed,
-      promptTokenCount: speech.usage?.promptTokenCount ?? null,
-      provider: PRICING_PROVIDERS[ttsModel.provider],
-      sourceType: 'api_tts',
-    });
-    const [audioFileResult, updatedCredits] = await Promise.all([
-      saveAudioFileAdmin({
-        credits_used: creditsDebited,
-        duration: formatDurationSeconds(durationSeconds),
+      const uploadUrl = await uploadFileToR2(
         filename,
-        isPublic: false,
-        model: modelUsed,
-        predictionId: speech.predictionId,
-        text: input,
-        url: uploadUrl,
-        usage: {
-          ...speech.usage,
-          apiKeyId: authResult.apiKeyId,
-          dollarAmount,
-          sourceType: 'api_tts',
-          userHasPaid,
-          ...(seed === undefined ? {} : { seed }),
-        },
-        userId,
-        voiceId: voiceObj.id,
-      }),
-      getCreditsAdmin(userId),
-    ]);
+        speech.audio,
+        speech.mimeType,
+        speechApiBucket,
+        speechApiPublicUrl,
+      );
 
-    await insertUsageEvent({
-      apiKeyId: authResult.apiKeyId,
-      creditsUsed: creditsDebited,
-      dollarAmount,
-      durationSeconds,
-      inputChars: input.length,
-      metadata: {
-        ...speech.usage,
+      const durationSeconds = await getAudioDuration(
+        speech.audio,
+        speech.mimeType,
+      );
+
+      const creditsUsed =
+        speech.totalTokens === undefined
+          ? estimatedCredits
+          : creditsFromTokens(speech.totalTokens);
+      const settlement = await reservation.settle(
+        creditsUsed,
+        'speech_success',
+      );
+      const creditsDebited = settlement.debited;
+      if (settlement.outcome === 'partial_debit') {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          creditsUsed: creditsDebited,
+          errorCode: 'credit_partial_debit',
+          status: 200,
+          userId,
+        });
+      } else if (
+        settlement.outcome === 'debit_failed' ||
+        settlement.outcome === 'refund_failed'
+      ) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          error: settlement.error,
+          errorCode:
+            settlement.outcome === 'debit_failed'
+              ? 'credit_debit_failed'
+              : 'credit_refund_failed',
+          status: 500,
+          userId,
+        });
+      }
+
+      const dollarAmount = calculateGenerateApiDollarAmount({
+        candidatesTokenCount: speech.usage?.candidatesTokenCount ?? null,
+        inputChars: input.length,
         model: modelUsed,
-        textLength: input.length,
-        textPreview: input.slice(0, 100),
-        voiceId: voiceObj.id,
-        voiceName: voice,
-        ...(seed === undefined ? {} : { seed }),
+        promptTokenCount: speech.usage?.promptTokenCount ?? null,
+        provider: PRICING_PROVIDERS[ttsModel.provider],
+        sourceType: 'api_tts',
+      });
+      const [audioFileResult, updatedCredits] = await Promise.all([
+        saveAudioFileAdmin({
+          credits_used: creditsDebited,
+          duration: formatDurationSeconds(durationSeconds),
+          filename,
+          isPublic: false,
+          model: modelUsed,
+          predictionId: speech.predictionId,
+          text: input,
+          url: uploadUrl,
+          usage: {
+            ...speech.usage,
+            apiKeyId: auth.apiKeyId,
+            dollarAmount,
+            sourceType: 'api_tts',
+            userHasPaid,
+            ...(seed === undefined ? {} : { seed }),
+          },
+          userId,
+          voiceId: voiceObj.id,
+        }),
+        getCreditsAdmin(userId),
+      ]);
+
+      await insertUsageEvent({
+        apiKeyId: auth.apiKeyId,
+        creditsUsed: creditsDebited,
+        dollarAmount,
+        durationSeconds,
+        inputChars: input.length,
+        metadata: {
+          ...speech.usage,
+          model: modelUsed,
+          textLength: input.length,
+          textPreview: input.slice(0, 100),
+          voiceId: voiceObj.id,
+          voiceName: voice,
+          ...(seed === undefined ? {} : { seed }),
+          isGeminiVoice,
+          isGrokVoice,
+          predictionId: speech.predictionId ?? null,
+          userHasPaid,
+        },
+        model: modelUsed,
+        quantity: input.length,
+        requestId,
+        sourceId: audioFileResult.data?.id ?? null,
+        sourceType: 'api_tts',
+        unit: 'chars',
+        userId,
+      });
+
+      // Fire-and-forget: do not await the log call on the success path.
+      // A flush failure must never return a 500 to the client after audio has
+      // been generated and credits have already been deducted.
+      log({
+        apiKeyId: auth.apiKeyId,
+        creditsUsed: creditsDebited,
+        dollarAmount,
         isGeminiVoice,
         isGrokVoice,
-        predictionId: speech.predictionId ?? null,
-        userHasPaid,
-      },
-      model: modelUsed,
-      quantity: input.length,
-      requestId,
-      sourceId: audioFileResult.data?.id ?? null,
-      sourceType: 'api_tts',
-      unit: 'chars',
-      userId,
-    });
-
-    // Fire-and-forget: do not await the log call on the success path.
-    // A flush failure must never return a 500 to the client after audio has
-    // been generated and credits have already been deducted.
-    log({
-      apiKeyId: authResult.apiKeyId,
-      creditsUsed: creditsDebited,
-      dollarAmount,
-      isGeminiVoice,
-      isGrokVoice,
-      model: modelUsed,
-      provider,
-      status: 200,
-      textLength: input.length,
-      userHasPaid,
-      userId,
-      voice,
-    }).catch((err) => {
-      console.error('[speech] success-path log failed:', err);
-    });
-    return respond(
-      {
-        credits_remaining: updatedCredits,
-        credits_used: creditsDebited,
-        url: uploadUrl,
-        usage: {
-          input_characters: input.length,
-          model: modelUsed,
-        },
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    if (error instanceof SpeechError) {
-      await releaseReservation(`speech_${error.kind}`);
-      const failure = speechErrorBody(error);
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error: failure.message,
-        errorCode: failure.code,
         model: modelUsed,
         provider,
-        providerCode: error.google?.code,
-        providerStatus: error.google?.status,
-        status: failure.status,
-        textLength,
-        userId: authResult.userId,
+        status: 200,
+        textLength: input.length,
+        userHasPaid,
+        userId,
         voice,
+      }).catch((err) => {
+        console.error('[speech] success-path log failed:', err);
       });
       return respond(
-        createApiError({
-          code: failure.code,
-          message: failure.message,
-          param: 'param' in failure ? failure.param : null,
-          type: failure.type,
-        }),
-        { status: failure.status },
+        {
+          credits_remaining: updatedCredits,
+          credits_used: creditsDebited,
+          url: uploadUrl,
+          usage: {
+            input_characters: input.length,
+            model: modelUsed,
+          },
+        },
+        { status: 200 },
       );
+    } catch (error) {
+      if (error instanceof SpeechError) {
+        await releaseReservation(`speech_${error.kind}`);
+        const failure = speechErrorBody(error);
+        await log({
+          apiKeyId: auth.apiKeyId,
+          error: failure.message,
+          errorCode: failure.code,
+          model: modelUsed,
+          provider,
+          providerCode: error.google?.code,
+          providerStatus: error.google?.status,
+          status: failure.status,
+          textLength,
+          userId: auth.userId,
+          voice,
+        });
+        return respond(
+          createApiError({
+            code: failure.code,
+            message: failure.message,
+            param: 'param' in failure ? failure.param : null,
+            type: failure.type,
+          }),
+          { status: failure.status },
+        );
+      }
+
+      await releaseReservation('speech_failure');
+
+      if (error instanceof SyntaxError) {
+        await log({
+          apiKeyId: auth.apiKeyId,
+          error: error.message,
+          errorCode: 'invalid_json',
+          status: 400,
+          userId: auth.userId,
+        });
+        return externalApiErrorResponse({
+          key: 'invalid_json',
+          rateLimit,
+          requestId,
+        });
+      }
+
+      throw error;
     }
-
-    await releaseReservation('speech_failure');
-
-    if (error instanceof SyntaxError) {
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error: error.message,
-        errorCode: 'invalid_json',
-        status: 400,
-        userId: authResult.userId,
-      });
-      return externalApiErrorResponse({
-        key: 'invalid_json',
-        rateLimit,
-        requestId,
-      });
-    }
-
-    captureException(error, {
-      extra: {
-        apiKeyId: authResult.apiKeyId,
-        endpoint: ENDPOINT,
-        requestId,
-        userId: authResult.userId,
-      },
-    });
-    await log({
-      apiKeyId: authResult.apiKeyId,
-      error: error instanceof Error ? error.message : String(error),
-      errorCode: 'server_error',
-      status: 500,
-      userId: authResult.userId,
-    });
-    return externalApiErrorResponse({
-      key: 'server_error',
-      rateLimit,
-      requestId,
-    });
-  } finally {
-    await updateApiKeyLastUsed(authResult.keyHash);
-  }
-}
+  },
+);
 
 export const runtime = 'nodejs';

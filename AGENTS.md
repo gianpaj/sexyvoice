@@ -210,15 +210,15 @@ Use package filters when you only want one app, e.g.
 Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 `/api/v1/openapi`.
 
-- Validate keys with `validateApiKey()` from `apps/web/lib/api/auth.ts`; never trust raw
-  keys and always compare hashes.
-- Rate-limit with `consumeRateLimit()` and return headers via
-  `jsonWithRateLimitHeaders()`.
+- Export each route as `withExternalApi(endpoint, handler)` from
+  `apps/web/lib/api/handler.ts`. It validates the key hash, consumes the
+  per-key rate limit, logs auth failures to Axiom, records the key's last use
+  and turns unexpected errors into a logged `server_error`. Reply through the
+  context's `respond()` so rate-limit and `request-id` headers are set.
 - Use `externalApiErrorResponse()` for structured errors.
 - Use `*Admin` query variants from `apps/web/lib/supabase/queries.ts`, because external
   API users are resolved from API keys, not session cookies.
-- Call `updateApiKeyLastUsed()` in a `finally` block.
-- Log outcomes through `createLogger()` from `apps/web/lib/api/logger.ts`.
+- Log other outcomes through the context's `log()`.
 - Keep request and response schemas in `apps/web/lib/api/schemas.ts`; they feed OpenAPI
   generation.
 - When changing external API behavior, request/response schemas, auth, rate

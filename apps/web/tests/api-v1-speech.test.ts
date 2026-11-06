@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST } from '@/app/api/v1/speech/route';
 import {
   getCreditsAdmin,
+  getVoiceByIdAdmin,
   getVoiceIdByNameAdmin,
   INSUFFICIENT_CREDITS_ERROR_CODE,
   insertUsageEvent,
@@ -383,7 +384,7 @@ describe('/api/v1/speech', () => {
       expect.any(Buffer),
       'audio/mpeg',
       'test-speech-bucket',
-      undefined,
+      'https://api-speech-files.example.com',
     );
   });
 
@@ -1173,5 +1174,60 @@ describe('/api/v1/speech', () => {
     // Both requests should trigger a real upload, not a cache hit
     expect(mockUploadFileToR2).toHaveBeenCalledTimes(2);
     expect(vi.mocked(insertUsageEvent)).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('/api/v1/speech configuration and lookup failures', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const speechRequest = (body: object) =>
+    new Request('http://localhost/api/v1/speech', {
+      body: JSON.stringify(body),
+      headers: {
+        authorization: TEST_AUTH_HEADER,
+        'content-type': 'application/json',
+      },
+      method: 'POST',
+    });
+
+  it('refuses to generate when the speech files host is not configured', async () => {
+    const publicUrl = process.env.R2_SPEECH_API_PUBLIC_URL;
+    delete process.env.R2_SPEECH_API_PUBLIC_URL;
+    try {
+      const response = await POST(
+        speechRequest({
+          input: 'Hello world',
+          model: 'orpheus',
+          voice: 'tara',
+        }),
+      );
+      const json = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(json.error.message).toBe(
+        'Storage is not configured. Please contact support.',
+      );
+      expect(reduceCreditsAdmin).not.toHaveBeenCalled();
+    } finally {
+      process.env.R2_SPEECH_API_PUBLIC_URL = publicUrl;
+    }
+  });
+
+  it('reports a failed voice lookup as a server error, not a missing voice', async () => {
+    vi.mocked(getVoiceByIdAdmin).mockRejectedValueOnce(
+      new Error('database unavailable'),
+    );
+
+    const response = await POST(
+      speechRequest({ input: 'Hello', voiceId: 'v1' }),
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(json.error.code).toBe('server_error');
+    expect(captureException).toHaveBeenCalledOnce();
+    expect(reduceCreditsAdmin).not.toHaveBeenCalled();
   });
 });

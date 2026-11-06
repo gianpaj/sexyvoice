@@ -583,7 +583,7 @@ describe('V1 Speech API Route', () => {
         expect.any(Buffer),
         'audio/mpeg',
         'test-speech-bucket',
-        undefined,
+        'https://api-speech-files.example.com',
       );
     });
 
