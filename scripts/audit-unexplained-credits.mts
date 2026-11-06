@@ -9,6 +9,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { toCsv } from './lib/csv.mts';
 import {
   type CreditBalance,
   expectedBalance,
@@ -381,19 +382,6 @@ async function fetchUsageAggregates(
   return aggregates;
 }
 
-export function escapeCsv(value: number | string | null): string {
-  if (value === null) return '';
-
-  // Only text can carry a formula; numbers such as -50 must stay numeric.
-  const rawText = String(value);
-  const text =
-    typeof value === 'string' && /^[=+\-@\t\r]/.test(value)
-      ? `'${value}`
-      : rawText;
-  if (!/[",\n\r]/.test(text)) return text;
-  return `"${text.replaceAll('"', '""')}"`;
-}
-
 function createCsv(rows: AuditRow[]): string {
   const headers: Array<keyof AuditRow> = [
     'userId',
@@ -417,12 +405,10 @@ function createCsv(rows: AuditRow[]): string {
     'lastUsageAt',
   ];
 
-  const lines = [headers.join(',')];
-  for (const row of rows) {
-    lines.push(headers.map((header) => escapeCsv(row[header])).join(','));
-  }
-
-  return `${lines.join('\n')}\n`;
+  return toCsv(
+    headers,
+    rows.map((row) => headers.map((header) => row[header])),
+  );
 }
 
 function createDefaultOutputPath(days: number): string {

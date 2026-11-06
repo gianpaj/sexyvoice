@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { S3Client } from '@aws-sdk/client-s3';
 
+import { replaceJson } from './files.mts';
 import { uploadR2File } from './r2-file-upload.mts';
 import {
   parsePublicOrigin,
@@ -14,7 +15,6 @@ import {
   type GeneratedSample,
   readVerifiedSample,
   type SampleManifest,
-  writeJson,
 } from './speech-samples.mts';
 
 export interface UploadTarget {
@@ -112,7 +112,7 @@ export async function uploadSamples(options: {
         id: target.id,
       });
     }
-    await writeJson(manifestPath, manifest);
+    await replaceJson(manifestPath, manifest, { mode: 0o600 });
   }
   return manifest;
 }

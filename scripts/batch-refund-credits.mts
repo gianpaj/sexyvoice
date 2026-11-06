@@ -8,6 +8,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { parseCsv } from './lib/csv.mts';
 import { adjustCredits } from './lib/ledger.mts';
 import {
   createScriptAdminClient,
@@ -42,63 +43,38 @@ interface RefundResult {
   userId: string;
 }
 
-function parseCsv(filePath: string): DupeRow[] {
-  const content = readFileSync(filePath, 'utf-8');
-  const lines = content.trim().split('\n');
-  const header = lines[0].split(',');
+const REQUIRED_COLUMNS = [
+  'source_id',
+  'user_id',
+  'event_count',
+  'duplicate_credits',
+] as const;
 
-  const idx = (name: string) => header.indexOf(name);
-  const iSourceId = idx('source_id');
-  const iUserId = idx('user_id');
-  const iEventCount = idx('event_count');
-  const iFirstEvent = idx('first_event_at');
-  const iLastEvent = idx('last_event_at');
-  const iDupCredits = idx('duplicate_credits');
-
-  if ([iSourceId, iUserId, iEventCount, iDupCredits].some((i) => i === -1)) {
+function readDupes(filePath: string): DupeRow[] {
+  const { columns, rows: records } = parseCsv(readFileSync(filePath, 'utf8'));
+  if (REQUIRED_COLUMNS.some((column) => !columns.includes(column))) {
     throw new Error(
-      'CSV missing required columns: source_id, user_id, event_count, duplicate_credits',
+      `CSV missing required columns: ${REQUIRED_COLUMNS.join(', ')}`,
     );
   }
 
   const rows: DupeRow[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    // Split on commas but respect quoted fields
-    const fields: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    for (const ch of line) {
-      if (ch === '"') {
-        inQuotes = !inQuotes;
-      } else if (ch === ',' && !inQuotes) {
-        fields.push(current);
-        current = '';
-      } else {
-        current += ch;
-      }
-    }
-    fields.push(current);
-
-    const duplicateCredits = Number.parseInt(fields[iDupCredits], 10);
-
+  for (const [index, record] of records.entries()) {
+    const duplicateCredits = Number.parseInt(record.duplicate_credits, 10);
     if (Number.isNaN(duplicateCredits) || duplicateCredits <= 0) {
       console.warn(
-        `  Row ${i}: skipping — invalid duplicate_credits: ${fields[iDupCredits]}`,
+        `  Row ${index + 1}: skipping — invalid duplicate_credits: ${record.duplicate_credits}`,
       );
       continue;
     }
 
     rows.push({
       duplicateCredits,
-      eventCount: Number.parseInt(fields[iEventCount], 10),
-      firstEventAt: fields[iFirstEvent],
-      lastEventAt: fields[iLastEvent],
-      sourceId: fields[iSourceId],
-      userId: fields[iUserId],
+      eventCount: Number.parseInt(record.event_count, 10),
+      firstEventAt: record.first_event_at ?? '',
+      lastEventAt: record.last_event_at ?? '',
+      sourceId: record.source_id,
+      userId: record.user_id,
     });
   }
 
@@ -143,7 +119,7 @@ async function main() {
   const csvPath = inputPath(csvArgument);
 
   console.log(`Parsing CSV: ${csvPath}`);
-  const rows = parseCsv(csvPath);
+  const rows = readDupes(csvPath);
 
   if (rows.length === 0) {
     console.log('No valid rows to process.');

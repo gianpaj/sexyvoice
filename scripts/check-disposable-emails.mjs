@@ -29,6 +29,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { toCsv } from './lib/csv.mts';
 import { adjustCredits, readBalances, readPaidUserIds } from './lib/ledger.mts';
 import { createScriptAdminClient } from './lib/supabase.mts';
 
@@ -159,11 +160,6 @@ function extractDomain(email) {
 
 function pad(n, width) {
   return String(n).padStart(width);
-}
-
-function csvEscape(value) {
-  const str = String(value ?? '');
-  return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
 function userLabel(flag, domainsOnly) {
@@ -499,18 +495,21 @@ async function main() {
 
   writeFileSync(summaryPath, summary, 'utf8');
 
-  const csvHeader = 'id,email,domain,created_at,by_package,by_amieiro';
-  const csvRows = flagged.map((r) =>
-    [
-      csvEscape(r.id),
-      csvEscape(r.email),
-      csvEscape(r.domain),
-      csvEscape(r.created_at),
-      r.by_package,
-      r.by_amieiro,
-    ].join(','),
+  writeFileSync(
+    csvPath,
+    toCsv(
+      ['id', 'email', 'domain', 'created_at', 'by_package', 'by_amieiro'],
+      flagged.map((r) => [
+        r.id,
+        r.email,
+        r.domain,
+        r.created_at,
+        r.by_package,
+        r.by_amieiro,
+      ]),
+    ),
+    'utf8',
   );
-  writeFileSync(csvPath, [csvHeader, ...csvRows].join('\n'), 'utf8');
 
   // ---------------------------------------------------------------------
   // Console output

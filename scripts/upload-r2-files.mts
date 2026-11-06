@@ -7,12 +7,9 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { sha256 } from './lib/files.mts';
 import { createR2S3Client } from './lib/r2-client.mts';
-import {
-  planR2FileUploads,
-  sha256,
-  uploadR2File,
-} from './lib/r2-file-upload.mts';
+import { planR2FileUploads, uploadR2File } from './lib/r2-file-upload.mts';
 import { assertR2BucketName } from './lib/r2-transfer.mts';
 
 async function main(): Promise<void> {

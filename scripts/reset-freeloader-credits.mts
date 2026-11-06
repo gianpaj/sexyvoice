@@ -8,6 +8,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { parseCsv } from './lib/csv.mts';
 import {
   adjustCredits,
   type CreditBalance,
@@ -48,57 +49,48 @@ interface ProcessingResult {
   username: string;
 }
 
-/**
- * Parse CSV file and extract freeloader records
- */
+const CSV_COLUMNS = [
+  'id',
+  'username',
+  'created_at',
+  'total_credits_received',
+  'total_credits_used',
+  'current_credits',
+  'usage_percentage',
+] as const;
+
+/** Read the freeloader CSV that identify-freeloaders.sql exports. */
 function parseCsvFile(filepath: string): FreeloaderRecord[] {
-  try {
-    const content = readFileSync(filepath, 'utf-8');
-    const lines = content.trim().split('\n');
-
-    if (lines.length < 2) {
-      throw new Error('CSV file is empty or has no data rows');
-    }
-
-    // Skip header line
-    const dataLines = lines.slice(1);
-    const records: FreeloaderRecord[] = [];
-
-    for (const line of dataLines) {
-      // Handle CSV with potential commas in fields
-      const parts = line.split(',');
-
-      if (parts.length < 7) {
-        console.warn(`Skipping malformed line: ${line}`);
-        continue;
-      }
-
-      const record: FreeloaderRecord = {
-        created_at: parts[2].trim(),
-        current_credits: Number.parseFloat(parts[5].trim()),
-        id: parts[0].trim(),
-        total_credits_received: Number.parseFloat(parts[3].trim()),
-        total_credits_used: Number.parseFloat(parts[4].trim()),
-        usage_percentage: Number.parseFloat(parts[6].trim()),
-        username: parts[1].trim(),
-      };
-
-      // Validate UUID format
-      if (!UUID_PATTERN.test(record.id)) {
-        console.warn(`Skipping invalid UUID: ${record.id}`);
-        continue;
-      }
-
-      records.push(record);
-    }
-
-    return records;
-  } catch (error) {
-    throw new Error(
-      `Failed to parse CSV file: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
-    );
+  const { columns, rows } = parseCsv(readFileSync(filepath, 'utf8'));
+  const missing = CSV_COLUMNS.filter((column) => !columns.includes(column));
+  if (missing.length > 0) {
+    throw new Error(`CSV is missing columns: ${missing.join(', ')}`);
   }
+  if (rows.length === 0) {
+    throw new Error('CSV file is empty or has no data rows');
+  }
+
+  const records: FreeloaderRecord[] = [];
+  for (const row of rows) {
+    const record: FreeloaderRecord = {
+      created_at: row.created_at.trim(),
+      current_credits: Number.parseFloat(row.current_credits),
+      id: row.id.trim(),
+      total_credits_received: Number.parseFloat(row.total_credits_received),
+      total_credits_used: Number.parseFloat(row.total_credits_used),
+      usage_percentage: Number.parseFloat(row.usage_percentage),
+      username: row.username.trim(),
+    };
+
+    if (!UUID_PATTERN.test(record.id)) {
+      console.warn(`Skipping invalid UUID: ${record.id}`);
+      continue;
+    }
+
+    records.push(record);
+  }
+
+  return records;
 }
 
 interface Accounts {

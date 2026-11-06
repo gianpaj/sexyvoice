@@ -1,12 +1,5 @@
 #!/usr/bin/env node
-import { createHash, randomUUID } from 'node:crypto';
-import {
-  readFileSync,
-  renameSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { basename, isAbsolute, resolve } from 'node:path';
 
 import {
@@ -15,10 +8,11 @@ import {
   extractAudioWaveform,
 } from './lib/audio-waveform-peaks.mts';
 import { inputPath, parseCliArgs, runScript } from './lib/cli.mts';
+import { replaceJson, sha256 } from './lib/files.mts';
 import { isRecord } from './lib/guards.mts';
 
-function sha256(path: string): string {
-  return createHash('sha256').update(readFileSync(path)).digest('hex');
+function hashFile(path: string): string {
+  return sha256(readFileSync(path));
 }
 
 function isCurrent(
@@ -52,7 +46,7 @@ function isCurrent(
   );
 }
 
-function main() {
+async function main(): Promise<void> {
   const { values, positionals } = parseCliArgs({
     allowPositionals: true,
     options: {
@@ -133,7 +127,7 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
   let updated = 0;
   let skipped = 0;
   for (const file of files) {
-    const hash = sha256(file.path);
+    const hash = hashFile(file.path);
     const entry = assets[file.key];
     const previous = isRecord(entry) ? entry : {};
     if (!values.force && isCurrent(previous, hash, points)) {
@@ -142,7 +136,7 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
       continue;
     }
     const waveform = extractAudioWaveform(file.path, points);
-    if (sha256(file.path) !== hash) {
+    if (hashFile(file.path) !== hash) {
       throw new Error(
         `Audio changed during extraction; rerun for ${file.path}`,
       );
@@ -167,16 +161,9 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
       'Manifest changed during extraction; rerun without overwriting the concurrent edit',
     );
   }
-  const output = `${JSON.stringify(manifest, null, 2)}\n`;
-  const temporary = `${manifestPath}.${randomUUID()}.tmp`;
-  try {
-    writeFileSync(temporary, output, { flag: 'wx' });
-    renameSync(temporary, manifestPath);
-  } finally {
-    rmSync(temporary, { force: true });
-  }
+  const bytes = await replaceJson(manifestPath, manifest);
   console.log(
-    `Updated ${updated} waveform(s) in ${manifestPath} (${Buffer.byteLength(output)} bytes); skipped ${skipped}.`,
+    `Updated ${updated} waveform(s) in ${manifestPath} (${bytes} bytes); skipped ${skipped}.`,
   );
 }
 

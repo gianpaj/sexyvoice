@@ -1,11 +1,9 @@
-import { lstat, readFile, rename, writeFile } from 'node:fs/promises';
+import { lstat, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { GenerateContentResponseUsageMetadata } from '@google/genai';
 
 import voiceNames from '../../apps/web/lib/voice-names.ts';
-import { sha256 } from './r2-file-upload.mts';
-
-export { sha256 } from './r2-file-upload.mts';
+import { sha256 } from './files.mts';
 
 export interface SampleVoice {
   filename: string;
@@ -107,17 +105,6 @@ export async function readVerifiedSample(
     throw new Error(`Sample changed since generation: ${filename}`);
   }
   return bytes;
-}
-
-export async function writeJson(
-  filename: string,
-  value: unknown,
-): Promise<void> {
-  const temporary = `${filename}.tmp`;
-  await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, {
-    mode: 0o600,
-  });
-  await rename(temporary, filename);
 }
 
 function escapeHtml(text: string): string {

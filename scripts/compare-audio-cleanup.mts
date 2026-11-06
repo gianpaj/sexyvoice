@@ -1,5 +1,4 @@
 #!/usr/bin/env -S pnpm exec tsx
-import { spawnSync } from 'node:child_process';
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fal } from '@fal-ai/client';
@@ -10,6 +9,8 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { probeDurationSeconds, runAudioTool } from './lib/ffmpeg.mts';
+import { replaceJson } from './lib/files.mts';
 
 const AUDIO_EXTENSIONS = new Set([
   '.aac',
@@ -76,28 +77,6 @@ interface SampleResult {
   results: CleanResult[];
   slug: string;
   sourceFilename: string;
-}
-
-function run(command: string, args: string[]): string {
-  const result = spawnSync(command, args, { encoding: 'utf8' });
-  if (result.error) throw result.error;
-  if (result.status !== 0)
-    throw new Error(`${command} failed: ${result.stderr}`);
-  return result.stdout;
-}
-
-function probeDuration(file: string): number {
-  return Number(
-    run('ffprobe', [
-      '-v',
-      'error',
-      '-show_entries',
-      'format=duration',
-      '-of',
-      'default=noprint_wrappers=1:nokey=1',
-      file,
-    ]).trim(),
-  );
 }
 
 async function exists(file: string): Promise<boolean> {
@@ -260,7 +239,7 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
   if (files.length === 0) throw new Error('No audio files found');
 
   const estimates = files.map((file) => ({
-    durationSeconds: Math.min(probeDuration(file), maxSeconds),
+    durationSeconds: Math.min(probeDurationSeconds(file), maxSeconds),
     file,
   }));
   for (const { durationSeconds, file } of estimates)
@@ -294,17 +273,21 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
     const sourceFilename = `${slug}.original.wav`;
     const sourcePath = path.join(output, sourceFilename);
     if (!(await exists(sourcePath)))
-      run('ffmpeg', [
-        '-v',
-        'error',
-        '-y',
-        '-i',
-        file,
-        '-vn',
-        '-t',
-        String(maxSeconds),
-        sourcePath,
-      ]);
+      runAudioTool(
+        'ffmpeg',
+        [
+          '-v',
+          'error',
+          '-y',
+          '-i',
+          file,
+          '-vn',
+          '-t',
+          String(maxSeconds),
+          sourcePath,
+        ],
+        { task: `to trim ${file}` },
+      );
 
     console.log(`Cleaning ${slug}`);
     const results = await Promise.all(
@@ -328,10 +311,7 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
       slug,
       sourceFilename,
     });
-    await writeFile(
-      path.join(output, 'results.json'),
-      `${JSON.stringify(samples, null, 2)}\n`,
-    );
+    await replaceJson(path.join(output, 'results.json'), samples);
     await writeListeningPage(output, samples);
   }
 

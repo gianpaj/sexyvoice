@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Redis } from '@upstash/redis';
@@ -9,6 +9,7 @@ import {
   requiredEnv,
   runScript,
 } from './lib/cli.mts';
+import { fileTimestamp, writeNewJson } from './lib/files.mts';
 import { isNodeError } from './lib/guards.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
@@ -232,7 +233,7 @@ export async function runInventory(
     `r2-orphan-candidates-${fileTimestamp(now)}.json`,
   );
 
-  await writeJson(outputPath, manifest);
+  await writeNewJson(outputPath, manifest);
   console.log(`Manifest: ${path.relative(REPOSITORY_ROOT, outputPath)}`);
   printBucketTotals(bucketTotals);
   printInventorySummary(inventory.summary);
@@ -571,7 +572,7 @@ async function writeActionReport(
   const createdAt = dependencies.now?.() ?? new Date();
   const report = createActionReport(manifestPath, options, results, createdAt);
   const reportPath = actionReportPath(manifestPath, createdAt);
-  await (dependencies.writeReport ?? writeJson)(reportPath, report);
+  await (dependencies.writeReport ?? writeNewJson)(reportPath, report);
 
   const log = dependencies.log ?? console.log;
   log(`Report: ${path.relative(REPOSITORY_ROOT, reportPath)}`);
@@ -663,15 +664,6 @@ async function resolveExistingInputPath(input: string): Promise<string> {
   throw new Error(`Manifest not found: ${input}`);
 }
 
-async function writeJson(filePath: string, value: unknown): Promise<void> {
-  const directory = path.dirname(filePath);
-  await mkdir(directory, { recursive: true });
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, {
-    encoding: 'utf8',
-    flag: 'wx',
-  });
-}
-
 function printBucketTotals(totals: BucketSummary[]): void {
   console.log('Bucket totals');
   for (const total of totals) {
@@ -710,10 +702,6 @@ function printActionSummary(
       `${row.bucket}/${row.prefix} ${row.status}: ${row.count} objects, ${formatBytes(row.bytes)}`,
     );
   }
-}
-
-function fileTimestamp(date: Date): string {
-  return date.toISOString().replace(/[:.]/g, '-');
 }
 
 async function main(): Promise<void> {

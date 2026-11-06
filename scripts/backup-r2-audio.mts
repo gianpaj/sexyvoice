@@ -1,4 +1,3 @@
-import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Effect, Result } from 'effect';
@@ -11,6 +10,7 @@ import {
   requiredEnv,
   runScript,
 } from './lib/cli.mts';
+import { fileTimestamp, writeNewJson } from './lib/files.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
   assertR2BucketName,
@@ -270,7 +270,7 @@ export async function runBackup(
       results: [],
       sources,
     });
-    await writeJson(reportPath, report);
+    await writeNewJson(reportPath, report);
     for (const failure of listingFailures) {
       log(`Listing failed for ${displaySource(failure)}: ${failure.reason}`);
     }
@@ -428,7 +428,7 @@ export async function runBackup(
     results: orderedResults,
     sources,
   });
-  await writeJson(reportPath, report);
+  await writeNewJson(reportPath, report);
   printFailures(log, orderedResults);
   printCompletion(
     log,
@@ -706,20 +706,8 @@ function displayReportPath(reportPath: string): string {
   return relative.startsWith('..') ? reportPath : relative;
 }
 
-function fileTimestamp(date: Date): string {
-  return date.toISOString().replace(/[:.]/g, '-');
-}
-
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
-}
-
-async function writeJson(filePath: string, value: unknown): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, {
-    encoding: 'utf8',
-    flag: 'wx',
-  });
 }
 
 function printHelp(): void {

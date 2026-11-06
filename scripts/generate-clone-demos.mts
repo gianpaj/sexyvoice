@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -19,6 +17,8 @@ import {
   runScript,
 } from './lib/cli.mts';
 import { normalizeCloneDemoAudio } from './lib/clone-demo-audio.mts';
+import { probeDurationSeconds, runAudioTool } from './lib/ffmpeg.mts';
+import { replaceJson, sha256 } from './lib/files.mts';
 
 async function main(): Promise<void> {
   const { values } = parseCliArgs({
@@ -67,27 +67,6 @@ async function main(): Promise<void> {
   const directory = inputPath(values['output-dir']);
   await mkdir(directory);
 
-  function duration(path: string): number {
-    const value = Number(
-      execFileSync(
-        'ffprobe',
-        [
-          '-v',
-          'error',
-          '-show_entries',
-          'format=duration',
-          '-of',
-          'default=noprint_wrappers=1:nokey=1',
-          path,
-        ],
-        { encoding: 'utf8' },
-      ).trim(),
-    );
-    if (!(Number.isFinite(value) && value > 0))
-      throw new Error(`Invalid audio duration: ${path}`);
-    return value;
-  }
-
   const assets: Record<string, { durationSeconds: number; sha256: string }> =
     {};
   const requests = [] as {
@@ -101,18 +80,20 @@ async function main(): Promise<void> {
   }[];
   const sourceHashes: Record<string, string> = {};
   async function recordAsset(filename: string) {
-    const bytes = await readFile(join(directory, filename));
+    const path = join(directory, filename);
     assets[filename] = {
-      durationSeconds: duration(join(directory, filename)),
-      sha256: createHash('sha256').update(bytes).digest('hex'),
+      durationSeconds: probeDurationSeconds(path),
+      sha256: sha256(await readFile(path)),
     };
   }
 
   async function writeReport() {
-    await writeFile(
-      join(directory, 'generation.json'),
-      `${JSON.stringify({ model: CLONE_DEMO_MODEL, sourceHashes, requests, assets }, null, 2)}\n`,
-    );
+    await replaceJson(join(directory, 'generation.json'), {
+      model: CLONE_DEMO_MODEL,
+      sourceHashes,
+      requests,
+      assets,
+    });
   }
 
   for (const { voice, takes } of selections) {
@@ -120,22 +101,14 @@ async function main(): Promise<void> {
       inputPath(values['reference-dir']),
       `${voice.id}-reference.mp3`,
     );
-    sourceHashes[voice.id] = createHash('sha256')
-      .update(await readFile(source))
-      .digest('hex');
+    sourceHashes[voice.id] = sha256(await readFile(source));
     const referenceName = `${voice.id}-reference.mp3`;
     const referenceWav = join(directory, `${voice.id}-reference.wav`);
-    execFileSync('ffmpeg', [
-      '-v',
-      'error',
-      '-i',
-      source,
-      '-ac',
-      '1',
-      '-ar',
-      '24000',
-      referenceWav,
-    ]);
+    runAudioTool(
+      'ffmpeg',
+      ['-v', 'error', '-i', source, '-ac', '1', '-ar', '24000', referenceWav],
+      { task: `to convert ${source}` },
+    );
     normalizeCloneDemoAudio(source, join(directory, referenceName));
     await recordAsset(referenceName);
     const reference = (await readFile(referenceWav)).toString('base64');

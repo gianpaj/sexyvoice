@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { lstat, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import {
@@ -7,6 +6,7 @@ import {
   type S3Client,
 } from '@aws-sdk/client-s3';
 
+import { sha256 } from './files.mts';
 import { isPreconditionFailed } from './r2-client.mts';
 import {
   parsePublicOrigin,
@@ -14,10 +14,6 @@ import {
   r2ObjectKey,
   r2PublicUrl,
 } from './r2-keys.mts';
-
-export function sha256(bytes: Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
-}
 
 export interface R2FileUpload {
   key: string;

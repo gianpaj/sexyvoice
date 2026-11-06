@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import {
-  escapeCsv,
-  reconcileCreditAccount,
-} from './audit-unexplained-credits.mts';
+import { reconcileCreditAccount } from './audit-unexplained-credits.mts';
 
 test('reports a balanced account as clean', () => {
   assert.deepEqual(
@@ -106,18 +103,4 @@ test('surfaces negative balances as integrity errors', () => {
       unexplainedRemaining: 0,
     },
   );
-});
-
-test('neutralizes spreadsheet formulas in CSV text', () => {
-  assert.equal(
-    escapeCsv('=HYPERLINK("https://example.com")'),
-    '"\'=HYPERLINK(""https://example.com"")"',
-  );
-  assert.equal(escapeCsv('user@example.com'), 'user@example.com');
-  assert.equal(escapeCsv('last, first'), '"last, first"');
-  assert.equal(escapeCsv('-1+1'), "'-1+1");
-});
-
-test('keeps negative numbers numeric in CSV', () => {
-  assert.equal(escapeCsv(-50), '-50');
 });
