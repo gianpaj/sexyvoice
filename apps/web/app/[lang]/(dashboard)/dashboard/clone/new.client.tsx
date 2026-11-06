@@ -696,24 +696,6 @@ function NewVoiceClientInner({
       (!saveVoiceOnly && textIsOverLimit) ||
       !legalConsentChecked;
 
-  // Cmd/Ctrl+Enter does what the Generate button does, only when it is enabled.
-  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-    if (!((event.metaKey || event.ctrlKey) && event.key === 'Enter')) return;
-    event.preventDefault();
-    if (generateDisabled) return;
-    handleGenerate().catch((error) => {
-      console.error('Keyboard shortcut clone generation failed:', error);
-    });
-  });
-
-  // onKeyDown is a useEffectEvent, so its identity is stable.
-  useEffect(() => {
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, []);
-
   return (
     <Card>
       <CardContent className="space-y-6">

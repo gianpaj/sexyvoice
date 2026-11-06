@@ -644,39 +644,6 @@ export function AudioGenerator({
     ],
   );
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        event.preventDefault();
-
-        if (
-          !isGenerating &&
-          text.trim() &&
-          selectedVoice &&
-          hasEnoughCredits &&
-          !inputIsOverLimit
-        ) {
-          handleGenerate().catch((error) => {
-            console.error('Keyboard shortcut generation failed:', error);
-          });
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [
-    handleGenerate,
-    hasEnoughCredits,
-    isGenerating,
-    selectedVoice,
-    text,
-    inputIsOverLimit,
-  ]);
-
   const resetPlayer = () => {
     if (playerControls) {
       playerControls.reset();
