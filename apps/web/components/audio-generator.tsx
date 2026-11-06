@@ -9,7 +9,6 @@ import {
   type ComponentPropsWithoutRef,
   forwardRef,
   type ReactNode,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -29,16 +28,19 @@ import {
   DEFAULT_GENERATION_SETTINGS,
   type GenerationSettings,
 } from '@/hooks/use-generation-settings';
-import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
-import { APIError } from '@/lib/error-ts';
-import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import {
   randomSeed,
   validateGenerationInput,
 } from '@/lib/tts/generation-input';
 import { getTtsModel } from '@/lib/tts/models';
+import {
+  estimateSpeech,
+  generateSpeech,
+  type SpeechParams,
+  speechErrorMessage,
+} from '@/lib/tts/speech-client';
 import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
@@ -138,68 +140,12 @@ function CreditEstimator({
   );
 }
 
-interface GenerateVoiceResult {
-  cached?: boolean;
-  url: string;
-}
-
 interface AudioGeneratorProps {
   hasEnoughCredits: boolean;
   isPaidUser: boolean;
   selectedStyle?: string;
   selectedVoice?: Tables<'voices'>;
   settings?: GenerationSettings;
-}
-
-type ErrorCodesTranslator = ReturnType<typeof useTranslations<'errorCodes'>>;
-type GenerateTranslator = ReturnType<typeof useTranslations<'generate'>>;
-
-function throwGenerateVoiceError(
-  t: GenerateTranslator,
-  translateErrorCode: ErrorCodesTranslator,
-  data: {
-    details?: unknown;
-    error?: string;
-    errorCode?: string;
-    serverMessage?: string;
-  },
-  response: Response,
-): never {
-  const serverFallback = data.error || data.serverMessage || t('error');
-  if (data.errorCode === 'PROVIDER_UNAVAILABLE') {
-    throw new APIError(
-      resolveErrorMessage(
-        translateErrorCode,
-        data.errorCode,
-        data.details,
-        serverFallback,
-      ),
-      response,
-    );
-  }
-
-  if (data.errorCode) {
-    const messageKey = data.errorCode as Parameters<typeof t>[0];
-    if (t.has(messageKey)) {
-      const errorMessage = t(messageKey);
-      throw new APIError(errorMessage, response);
-    }
-  }
-
-  throw new APIError(serverFallback, response);
-}
-
-function handleGenerateVoiceError(t: GenerateTranslator, error: unknown) {
-  if (error instanceof DOMException && error.name === 'AbortError') {
-    return;
-  }
-
-  if (error instanceof APIError) {
-    toast.error(error.message || t('error'));
-    return;
-  }
-
-  toast.error(t('error'));
 }
 
 export function AudioGenerator({
@@ -313,105 +259,36 @@ export function AudioGenerator({
     textareaRightPadding = 'pr-20';
   }
 
-  const requestGenerateVoiceJson = useCallback(
-    async (
-      segmentText: string,
-      signal: AbortSignal,
-      seed?: number,
-      split = false,
-    ): Promise<GenerateVoiceResult> => {
-      if (!(selectedVoice && ttsModel)) {
-        throw new APIError(t('error'), new Response(null, { status: 400 }));
-      }
-
-      // A retry's fresh seed replaces the pinned one. Settings the voice
-      // ignores are not sent, so they cannot split its cache.
-      const request = validateGenerationInput(ttsModel, {
-        isPaidUser,
-        settings: {
-          ...settings,
+  const speechParams: SpeechParams | null =
+    selectedVoice && ttsModel
+      ? {
+          isPaidUser,
           language: selectedGrokLanguage,
-          seed: seed ?? settings.seed,
-        },
-        style: selectedStyle,
-      });
-
-      const response = await fetch('/api/generate-voice', {
-        body: JSON.stringify({
-          ...request.settings,
-          split,
-          styleVariant: request.style ?? '',
-          text: segmentText,
+          model: ttsModel,
+          settings,
+          style: selectedStyle,
           textImproved,
           voiceId: selectedVoice.id,
-        }),
-        headers: { 'Content-Type': 'application/json' },
-        method: 'POST',
-        signal,
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throwGenerateVoiceError(t, translateErrorCode, data, response);
-      }
-
-      return { cached: data.cached === true, url: data.url as string };
-    },
-    [
-      t,
-      translateErrorCode,
-      textImproved,
-      isPaidUser,
-      selectedGrokLanguage,
-      selectedStyle,
-      selectedVoice,
-      settings,
-      ttsModel,
-    ],
-  );
-
-  const requestGenerateVoice = useCallback(
-    async (
-      segmentText: string,
-      signal: AbortSignal,
-      seed?: number,
-      split = false,
-    ): Promise<string> => {
-      let cached = false;
-      try {
-        const result = await requestGenerateVoiceJson(
-          segmentText,
-          signal,
-          seed,
-          split,
-        );
-        cached = result.cached === true;
-        return result.url;
-      } finally {
-        // An aborted fetch cannot confirm settlement. Refreshing can race a refund;
-        // skipping it can miss a late charge. See ARCHITECTURE.md#credit-balance-sync.
-        if (!(cached || signal.aborted)) {
-          invalidateCredits(queryClient).catch(() => undefined);
         }
-      }
-    },
-    [queryClient, requestGenerateVoiceJson],
-  );
+      : null;
 
-  const generateSingleAudio = useCallback(async () => {
-    if (!selectedVoice) return;
+  const requestSpeech = (
+    params: SpeechParams,
+    request: { seed?: number; split: boolean; text: string },
+    signal: AbortSignal,
+  ) =>
+    generateSpeech(params, request, {
+      fallback: t('error'),
+      queryClient,
+      signal,
+      translateErrorCode,
+    });
 
-    abortController.current = new AbortController();
-    const url = await requestGenerateVoice(
-      text,
-      abortController.current.signal,
-    );
-    setAudioURL(url);
-    toast.success(t('success'));
-  }, [requestGenerateVoice, selectedVoice, text, t]);
-
-  const generateSplitAudios = useCallback(async () => {
-    if (!(selectedVoice && splitSegments.length > 0)) return;
+  const generateSplitAudios = async (
+    params: SpeechParams,
+    signal: AbortSignal,
+  ) => {
+    if (splitSegments.length === 0) return;
 
     const currentSegmentTexts = splitSegments.map((segment) =>
       segment.text.trim(),
@@ -420,9 +297,6 @@ export function AudioGenerator({
       toast.error(t('split.segmentCannotBeEmpty'));
       return;
     }
-
-    abortController.current = new AbortController();
-    setAudioURL('');
 
     let latestSegments = [...splitSegments];
     let encounteredFailure = false;
@@ -461,11 +335,10 @@ export function AudioGenerator({
       }
 
       try {
-        const generatedUrl = await requestGenerateVoice(
-          currentSegmentTexts[index],
-          abortController.current.signal,
-          undefined,
-          true,
+        const { url: generatedUrl } = await requestSpeech(
+          params,
+          { split: true, text: currentSegmentTexts[index] },
+          signal,
         );
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
@@ -482,28 +355,26 @@ export function AudioGenerator({
           );
         }
       } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
+        if (signal.aborted) {
           latestSegments = latestSegments.map((segment, segmentIndex) =>
             segmentIndex === index
               ? { ...segment, audioUrl: '', status: 'idle' }
               : segment,
           );
           markSegmentIdle(index);
-          throw error;
+          return;
         }
 
         latestSegments = latestSegments.map((segment, segmentIndex) =>
           segmentIndex === index ? { ...segment, status: 'failed' } : segment,
         );
         markSegmentFailed(index);
-
-        if (error instanceof APIError) {
-          toast.error(error.message || t('error'));
-        } else {
-          toast.error(
+        toast.error(
+          speechErrorMessage(
+            error,
             t('split.segmentFailed').replace('__INDEX__', String(index + 1)),
-          );
-        }
+          ),
+        );
 
         encounteredFailure = true;
         break;
@@ -513,20 +384,10 @@ export function AudioGenerator({
     if (!encounteredFailure) {
       toast.success(t('success'));
     }
-  }, [
-    markSegmentFailed,
-    markSegmentGenerating,
-    markSegmentIdle,
-    markSegmentSuccess,
-    requestGenerateVoice,
-    selectedVoice,
-    showGenerationProgressToast,
-    splitSegments,
-    t,
-  ]);
+  };
 
-  const handleGenerate = useCallback(async () => {
-    if (!selectedVoice) return;
+  const handleGenerate = async () => {
+    if (!speechParams) return;
 
     if (
       shouldUseSplitMode &&
@@ -541,108 +402,89 @@ export function AudioGenerator({
       return;
     }
 
+    const controller = new AbortController();
+    abortController.current = controller;
     setIsGenerating(true);
     // Clear the previous result before a new generation.
     setAudioURL('');
     try {
       if (shouldUseSplitMode) {
-        await generateSplitAudios();
+        await generateSplitAudios(speechParams, controller.signal);
         return;
       }
 
-      await generateSingleAudio();
+      const { url } = await requestSpeech(
+        speechParams,
+        { split: false, text },
+        controller.signal,
+      );
+      setAudioURL(url);
+      toast.success(t('success'));
     } catch (error) {
-      handleGenerateVoiceError(t, error);
+      if (!controller.signal.aborted) {
+        toast.error(speechErrorMessage(error, t('error')));
+      }
     } finally {
       dismissGenerationProgressToast();
       setIsGenerating(false);
     }
-  }, [
-    dismissGenerationProgressToast,
-    generateSingleAudio,
-    generateSplitAudios,
-    selectedVoice,
-    shouldUseSplitMode,
-    splitSegmentTexts.length,
-    t,
-  ]);
+  };
 
-  const handleCancel = useCallback(() => {
+  const handleCancel = () => {
     setIsGenerating(false);
     abortController.current?.abort();
     retryAbortController.current?.abort();
-  }, []);
+  };
 
-  const handleRetrySegment = useCallback(
-    async (segmentIndex: number) => {
-      const segment = splitSegments[segmentIndex];
-      if (!segment || isGenerating || !selectedVoice) {
+  const handleRetrySegment = async (segmentIndex: number) => {
+    const segment = splitSegments[segmentIndex];
+    if (!segment || isGenerating || !speechParams) {
+      return;
+    }
+
+    const controller = new AbortController();
+    retryAbortController.current = controller;
+
+    setIsGenerating(true);
+    markSegmentGenerating(segmentIndex);
+    showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
+
+    try {
+      const { url: generatedUrl } = await requestSpeech(
+        speechParams,
+        { seed: randomSeed(), split: true, text: segment.text },
+        controller.signal,
+      );
+
+      markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
+      showGenerationProgressToast(segmentIndex + 1, splitSegments.length, true);
+      toast.success(
+        t('split.segmentGenerated').replace(
+          '__INDEX__',
+          String(segmentIndex + 1),
+        ),
+      );
+    } catch (error) {
+      if (controller.signal.aborted) {
+        markSegmentIdle(segmentIndex);
         return;
       }
 
-      const seed = randomSeed();
-      retryAbortController.current = new AbortController();
-
-      setIsGenerating(true);
-      markSegmentGenerating(segmentIndex);
-      showGenerationProgressToast(segmentIndex + 1, splitSegments.length);
-
-      try {
-        const generatedUrl = await requestGenerateVoice(
-          segment.text,
-          retryAbortController.current.signal,
-          seed,
-          true,
-        );
-
-        markSegmentSuccess(segmentIndex, segment.text, generatedUrl);
-        showGenerationProgressToast(
-          segmentIndex + 1,
-          splitSegments.length,
-          true,
-        );
-        toast.success(
-          t('split.segmentGenerated').replace(
+      markSegmentFailed(segmentIndex);
+      toast.error(
+        speechErrorMessage(
+          error,
+          t('split.segmentRetryFailed').replace(
             '__INDEX__',
             String(segmentIndex + 1),
           ),
-        );
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          markSegmentIdle(segmentIndex);
-          return;
-        }
-
-        markSegmentFailed(segmentIndex);
-        if (error instanceof APIError) {
-          toast.error(error.message || t('error'));
-        } else {
-          toast.error(
-            t('split.segmentRetryFailed').replace(
-              '__INDEX__',
-              String(segmentIndex + 1),
-            ),
-          );
-        }
-      } finally {
-        setIsGenerating(false);
-        dismissGenerationProgressToast();
-      }
-    },
-    [
-      dismissGenerationProgressToast,
-      isGenerating,
-      markSegmentFailed,
-      markSegmentGenerating,
-      markSegmentIdle,
-      markSegmentSuccess,
-      requestGenerateVoice,
-      selectedVoice,
-      showGenerationProgressToast,
-      splitSegments,
-      t,
-    ],
-  );
+        ),
+      );
+    } finally {
+      setIsGenerating(false);
+      dismissGenerationProgressToast();
+    }
+  };
 
   const resetPlayer = () => {
     if (playerControls) {
@@ -655,19 +497,9 @@ export function AudioGenerator({
     }
   };
 
-  const downloadSegmentAudio = async (segmentUrl: string) => {
+  const downloadAudio = async (url: string) => {
     try {
-      await downloadUrl(segmentUrl, document.createElement('a'));
-    } catch {
-      toast.error(t('error'));
-    }
-  };
-
-  const downloadAudio = async () => {
-    if (!audioURL) return;
-
-    try {
-      await downloadUrl(audioURL, document.createElement('a'));
+      await downloadUrl(url, document.createElement('a'));
     } catch {
       toast.error(t('error'));
     }
@@ -805,10 +637,6 @@ export function AudioGenerator({
     }
   };
 
-  const handleControlsReady = useCallback((controls: AudioPlayerControls) => {
-    setPlayerControls(controls);
-  }, []);
-
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset estimate when voice or text changes
   useEffect(() => {
     setEstimatedCredits(null);
@@ -821,68 +649,23 @@ export function AudioGenerator({
     }
   }, [text, isFullscreen]);
 
-  const requestEstimateCredits = useCallback(
-    async (textToEstimate: string) => {
-      if (!(selectedVoice && canEstimateCredits)) {
-        throw new APIError(
-          t('errorEstimating'),
-          new Response(null, { status: 400 }),
-        );
-      }
-
-      const response = await fetch('/api/estimate-credits', {
-        body: JSON.stringify({
-          styleVariant: input?.style ?? '',
-          text: textToEstimate,
-          voiceId: selectedVoice.id,
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        method: 'POST',
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new APIError(data.error || t('error'), response);
-      }
-
-      const value = Number(data.estimatedCredits);
-      if (!Number.isFinite(value)) {
-        throw new APIError(t('errorEstimating'), response);
-      }
-
-      return value;
-    },
-    [canEstimateCredits, input?.style, selectedVoice, t],
-  );
-
   const handleEstimateCredits = async () => {
-    if (!(selectedVoice && canEstimateCredits && text.trim())) return;
+    if (!(speechParams && canEstimateCredits && text.trim())) return;
 
     setIsEstimating(true);
+    const options = { fallback: t('errorEstimating'), translateErrorCode };
+    const texts = shouldUseSplitMode
+      ? splitSegments.map((segment) => segment.text)
+      : [text];
     try {
-      if (shouldUseSplitMode) {
-        const creditPromises = splitSegments.map((segment) =>
-          requestEstimateCredits(segment.text),
-        );
-        const creditsPerSegment = await Promise.all(creditPromises);
-        const totalEstimatedCredits = creditsPerSegment.reduce(
-          (total, credits) => total + credits,
-          0,
-        );
-        setEstimatedCredits(totalEstimatedCredits);
-      } else {
-        const nextEstimatedCredits = await requestEstimateCredits(text);
-        setEstimatedCredits(nextEstimatedCredits);
-      }
+      const credits = await Promise.all(
+        texts.map((segmentText) =>
+          estimateSpeech(speechParams, segmentText, options),
+        ),
+      );
+      setEstimatedCredits(credits.reduce((total, value) => total + value, 0));
     } catch (error) {
-      if (error instanceof APIError) {
-        toast.error(error.message || t('error'));
-      } else {
-        toast.error(t('errorEstimating'));
-      }
+      toast.error(speechErrorMessage(error, t('errorEstimating')));
     } finally {
       setIsEstimating(false);
     }
@@ -1025,7 +808,7 @@ export function AudioGenerator({
                 <AudioPlayerWithContext
                   autoPlay
                   className="rounded-md"
-                  onControlsReady={handleControlsReady}
+                  onControlsReady={setPlayerControls}
                   playAudioTitle={t('playAudio')}
                   progressColor="#8b5cf6"
                   showWaveform
@@ -1042,7 +825,7 @@ export function AudioGenerator({
                   <RotateCcw className="size-6" />
                 </Button>
                 <Button
-                  onClick={downloadAudio}
+                  onClick={() => downloadAudio(audioURL)}
                   size="icon"
                   title={t('downloadAudio')}
                   variant="secondary"
@@ -1061,7 +844,7 @@ export function AudioGenerator({
             isJoinerLoading={isJoinerLoading}
             isJoiningSegments={isJoiningSegments}
             onDownloadAllSegments={handleDownloadAllSegments}
-            onDownloadSegment={downloadSegmentAudio}
+            onDownloadSegment={downloadAudio}
             onRetrySegment={handleRetrySegment}
             onSegmentTextChange={updateSegmentText}
             segments={splitSegments}

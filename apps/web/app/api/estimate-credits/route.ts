@@ -15,6 +15,10 @@ import {
   getTtsModel,
   type TtsModel,
 } from '@/lib/tts/models';
+import type {
+  EstimateSpeechRequestBody,
+  EstimateSpeechResponseBody,
+} from '@/lib/tts/speech-client';
 
 type ValidationResult<T> =
   | { ok: true; data: T }
@@ -22,9 +26,7 @@ type ValidationResult<T> =
 
 async function validateRequestBody(
   request: Request,
-): Promise<
-  ValidationResult<{ text: string; voiceId: string; styleVariant: string }>
-> {
+): Promise<ValidationResult<EstimateSpeechRequestBody>> {
   if (request.body === null) {
     return {
       ok: false,
@@ -33,7 +35,7 @@ async function validateRequestBody(
   }
 
   try {
-    const body = await request.json();
+    const body: Partial<EstimateSpeechRequestBody> = await request.json();
     const text: string = body.text || '';
     const voiceId: string = body.voiceId || '';
     const styleVariant: string = body.styleVariant || '';
@@ -155,7 +157,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         estimatedCredits: credits,
-      });
+      } satisfies EstimateSpeechResponseBody);
     }
 
     const apiKeyResult = validateApiKey();
@@ -195,7 +197,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       estimatedCredits: credits,
       tokens: totalEstimatedTokens,
-    });
+    } satisfies EstimateSpeechResponseBody);
   } catch (error) {
     console.error('Estimate credits error:', error);
     return APIErrorResponse('Failed to estimate credits', 500);

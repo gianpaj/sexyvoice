@@ -28,6 +28,11 @@ import { resolveGeminiTtsModel } from '@/lib/tts/gemini-prompt';
 import { validateGenerationInput } from '@/lib/tts/generation-input';
 import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
 import { speechProviderCost } from '@/lib/tts/provider-cost';
+import type {
+  GenerateSpeechRequestBody,
+  GenerateSpeechResponseBody,
+  SpeechErrorResponseBody,
+} from '@/lib/tts/speech-client';
 import {
   isAbortError,
   SpeechError,
@@ -57,7 +62,7 @@ function speechErrorResponse(error: SpeechError): Response {
       return APIErrorResponse(error.message, 503, {
         details: getProviderUnavailableDetails(error.provider),
         errorCode: 'PROVIDER_UNAVAILABLE',
-      });
+      } satisfies Partial<SpeechErrorResponseBody>);
     case 'quota_exceeded':
       return APIErrorResponse(error.message, 429);
     default:
@@ -110,7 +115,7 @@ export async function POST(request: Request) {
       return APIErrorResponse('Request body is empty', 400);
     }
 
-    let body: Awaited<ReturnType<typeof request.json>>;
+    let body: Partial<GenerateSpeechRequestBody>;
     try {
       body = await request.json();
     } catch {
@@ -252,7 +257,11 @@ export async function POST(request: Request) {
       });
 
       return NextResponse.json(
-        { cached: true, creditsUsed: 0, url: result },
+        {
+          cached: true,
+          creditsUsed: 0,
+          url: result,
+        } satisfies GenerateSpeechResponseBody,
         { status: 200 },
       );
     }
@@ -387,7 +396,7 @@ export async function POST(request: Request) {
       {
         creditsUsed: creditsDebited,
         url: uploadUrl,
-      },
+      } satisfies GenerateSpeechResponseBody,
       { status: 200 },
     );
   } catch (error) {

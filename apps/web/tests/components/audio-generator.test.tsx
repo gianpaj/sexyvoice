@@ -2052,7 +2052,7 @@ describe('AudioGenerator', () => {
         message: 'Text exceeds the maximum length of 500 characters (400)',
         status: 400,
       },
-      { body: {}, message: `${baseDict.error} (500)`, status: 500 },
+      { body: {}, message: `${baseDict.errorEstimating} (500)`, status: 500 },
     ])(
       'shows "$message" when the estimate answers $status',
       async ({ body, message, status }) => {

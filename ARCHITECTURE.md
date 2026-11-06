@@ -200,6 +200,12 @@ rest, so only settings the provider receives create distinct cache keys. The
 external API instead counts the style toward the input limit and rejects
 settings out of range.
 
+The generate page calls the dashboard speech routes through
+`apps/web/lib/tts/speech-client.ts`, which also defines the request, response,
+and error bodies the routes return. `PROVIDER_UNAVAILABLE` is the only error
+code: the page shows its localized message with the provider name, the route's
+message for any other failure, and the HTTP status after either.
+
 The dashboard sends `textImproved` to record whether Improve text succeeded in
 the current edit chain, not whether the current text still contains AI-added
 tags. Non-empty edits, including select-all replacement with unrelated text,
@@ -751,10 +757,11 @@ The query's 60-second `staleTime` is not polling.
 balance; support investigations should verify `public.credits.amount`.
 
 `invalidateCredits` in `apps/web/lib/credits-query.ts` refreshes active queries
-after non-cancelled generation requests, including split segments and retries,
-and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
-scopes the refresh to the verified user. Cache hits skip it because they do not
-charge. Streaming errors wait for the refund attempt. Cancellation is best-effort:
+after speech requests, on call-token 402s, call disconnect, or a balance-error
+Retry. Disconnect scopes the refresh to the verified user. For speech,
+`generateSpeech` refreshes after each request, split segments and retries
+included, unless the audio came from the cache, which does not charge, or the
+request was cancelled. Cancellation is best-effort:
 provider work that has finished can retain a charge during upload or reconciliation.
 The aborted fetch cannot confirm settlement, so it skips immediate invalidation
 to avoid caching a temporary reservation before a refund. A late charge can leave

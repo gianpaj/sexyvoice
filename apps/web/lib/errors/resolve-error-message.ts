@@ -2,7 +2,7 @@ import { isProviderUnavailableDetails } from '@/lib/provider-errors';
 
 type TranslationValues = Record<string, string>;
 
-interface ErrorCodesTranslator {
+export interface ErrorCodesTranslator {
   has: (key: 'PROVIDER_UNAVAILABLE') => boolean;
   (key: 'PROVIDER_UNAVAILABLE', values: TranslationValues): string;
 }
