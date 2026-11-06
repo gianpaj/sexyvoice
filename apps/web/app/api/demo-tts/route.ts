@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import {
   FinishReason,
   type GenerateContentConfig,
@@ -10,6 +9,7 @@ import { captureException, logger } from '@sentry/nextjs';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 import { verifySolution } from 'altcha-lib';
+import type { Payload } from 'altcha-lib/types';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -45,10 +45,6 @@ function getAltchaHmacKey(): string | undefined {
   return process.env.ALTCHA_HMAC_KEY;
 }
 
-function getAltchaPayloadFingerprint(payload: string): string {
-  return createHash('sha256').update(payload).digest('hex');
-}
-
 async function verifyAltcha(payload: string): Promise<boolean> {
   const hmacKey = getAltchaHmacKey();
 
@@ -58,13 +54,23 @@ async function verifyAltcha(payload: string): Promise<boolean> {
   }
 
   try {
-    const verified = await verifySolution(payload, hmacKey);
+    const solution: Payload = JSON.parse(atob(payload));
+    if (
+      typeof solution !== 'object' ||
+      solution === null ||
+      typeof solution.signature !== 'string'
+    ) {
+      return false;
+    }
+
+    const verified = await verifySolution(solution, hmacKey);
 
     if (!verified) {
       return false;
     }
 
-    const replayKey = `demo:altcha:${getAltchaPayloadFingerprint(payload)}`;
+    // Equivalent encodings share the verified challenge signature.
+    const replayKey = `demo:altcha:${solution.signature}`;
     const reserved = await redis.set(replayKey, '1', {
       ex: ALTCHA_REPLAY_WINDOW_SECONDS,
       nx: true,
