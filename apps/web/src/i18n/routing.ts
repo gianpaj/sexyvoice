@@ -1,10 +1,9 @@
 import { defineRouting } from 'next-intl/routing';
 
-import { i18n } from '@/lib/i18n/i18n-config';
-
+// The site's locales. `scripts/check-translations.mjs` imports this file with
+// Node's type stripping, so it must not use path aliases.
 export const routing = defineRouting({
   // Used when no locale matches
-  defaultLocale: i18n.defaultLocale,
-  // A list of all locales that are supported
-  locales: i18n.locales,
+  defaultLocale: 'en',
+  locales: ['en', 'es', 'de', 'da', 'it', 'fr'],
 });

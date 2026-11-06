@@ -7,7 +7,7 @@
     "prebuild": "pnpm run check-translations && pnpm run build:content",
     "build": "next build",
     "build:content": "contentlayer2 build",
-    "check-translations": "node scripts/check-translations.mjs",
+    "check-translations": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-translations.mjs",
     "clean": "knip",
     "dev": "PORTLESS_TLD=dev portless sv next dev",
     "dev:content": "contentlayer2 dev",

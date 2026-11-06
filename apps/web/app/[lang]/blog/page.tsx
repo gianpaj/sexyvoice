@@ -14,7 +14,7 @@ import { HeaderStatic } from '@/components/header-static';
 import { JsonLd } from '@/components/json-ld';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
-import { i18n, type Locale } from '@/lib/i18n/i18n-config';
+import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { calculateReadingTime, countWords } from '@/lib/text';
 import { cn } from '@/lib/utils';
@@ -46,7 +46,7 @@ export async function generateMetadata({
         ...Object.fromEntries(
           routing.locales.map((locale) => [locale, `/${locale}/blog`]),
         ),
-        'x-default': `/${i18n.defaultLocale}/blog`,
+        'x-default': `/${routing.defaultLocale}/blog`,
       },
     },
     description,
@@ -108,7 +108,7 @@ export default async function BlogIndexPage(props: {
   const { lang } = await props.params;
 
   if (!routing.locales.includes(lang as Locale)) {
-    redirect(`/${i18n.defaultLocale}`);
+    redirect(`/${routing.defaultLocale}`);
   }
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
