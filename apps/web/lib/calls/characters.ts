@@ -1,6 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { savedVoiceSampleUrl } from '@/lib/call-voices';
+import {
+  type SavedCallVoice,
+  savedVoiceMissing,
+  savedVoiceSampleUrl,
+} from '@/lib/call-voices';
 import { DEFAULT_CALL_LANGUAGE } from './languages';
 import {
   type CallModelId,
@@ -65,6 +69,10 @@ export const PUBLIC_CHARACTER_COLUMNS = CHARACTER_COLUMNS;
 /** A user's own characters, with the prompts they edit. */
 export const OWN_CHARACTER_COLUMNS =
   `${CHARACTER_COLUMNS}, prompts ( prompt, localized_prompts )` as const;
+
+/** A character for call-token, with its owner and prompts. Server only. */
+export const CALL_CHARACTER_COLUMNS =
+  `${OWN_CHARACTER_COLUMNS}, user_id` as const;
 
 export type CharacterRow = Pick<
   Tables<'characters'>,
@@ -174,6 +182,30 @@ export function characterSampleUrl(
     character.voiceSampleUrl ??
     null
   );
+}
+
+/**
+ * What stops a character from calling. The panel's Start call and a card's
+ * Call both use this, so they never disagree. Predefined characters keep
+ * their prompts on the server, so they never miss one.
+ */
+export function callReadiness(
+  character: Pick<
+    Character,
+    'isPublic' | 'localizedPrompts' | 'prompt' | 'sessionConfig'
+  >,
+  language: string,
+  savedVoices: Pick<SavedCallVoice, 'id'>[],
+) {
+  const voiceMissing = savedVoiceMissing(character.sessionConfig, savedVoices);
+  const personalityMissing = !(
+    character.isPublic || characterPrompt(character, language).trim()
+  );
+  return {
+    canCall: !(voiceMissing || personalityMissing),
+    personalityMissing,
+    voiceMissing,
+  };
 }
 
 /** The body of `POST /api/characters`. An `id` updates that character. */

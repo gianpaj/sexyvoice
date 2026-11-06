@@ -45,13 +45,12 @@ vi.mock('@/lib/supabase/client', () => {
 });
 vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
-    dispatch: vi.fn(),
-    helpers: {
-      getFullInstructions: () => 'Character instructions',
-      getSelectedPreset: () => ({ isPublic: true }),
-      getStateWithFullInstructions: () => ({ sessionConfig: { voice: 'Ara' } }),
+    pgState: {
+      language: 'en',
+      sceneInstructions: '',
+      selectedPresetId: 'character-id',
+      selectedSceneId: null,
     },
-    pgState: { selectedPresetId: 'character-id' },
   }),
 }));
 vi.mock('sonner', () => ({

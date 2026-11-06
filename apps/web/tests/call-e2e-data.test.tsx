@@ -13,14 +13,12 @@ import CreditsSection from '@/components/credits-section';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
-  E2E_CALL_INSTRUCTION_CONFIG,
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
   E2E_PUBLIC_CALL_CHARACTERS,
   E2E_SAVED_CALL_VOICES,
   isE2E,
 } from '@/lib/e2e-mocks';
-import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
   getCallVoices,
@@ -69,12 +67,6 @@ vi.mock('@/lib/supabase/queries', () => ({
   getPublicCallCharacters: vi.fn(),
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
-}));
-vi.mock('@/lib/edge-config/call-instructions', async (importOriginal) => ({
-  ...(await importOriginal<
-    typeof import('@/lib/edge-config/call-instructions')
-  >()),
-  getCallInstructionConfig: vi.fn(),
 }));
 vi.mock('@/hooks/use-playground-state', () => ({
   PlaygroundStateProvider: vi.fn(
@@ -144,7 +136,6 @@ function expectNoDataCalls() {
     getPublicCallCharacters,
     getUserCallCharacters,
     hasUserPaid,
-    getCallInstructionConfig,
     getCreditTransactionAmounts,
     getCreditsQuery,
     prefetchQuery,
@@ -191,10 +182,6 @@ beforeEach(() => {
   vi.mocked(getPublicCallCharacters).mockResolvedValue([]);
   vi.mocked(getUserCallCharacters).mockResolvedValue([]);
   vi.mocked(getCallVoices).mockResolvedValue([]);
-  vi.mocked(getCallInstructionConfig).mockResolvedValue({
-    defaultInstructions: 'Live default instructions',
-    presetInstructions: { 'live-public': 'Live preset override' },
-  });
 });
 
 afterEach(() => vi.unstubAllEnvs());
@@ -305,7 +292,6 @@ describe('call E2E data', () => {
       '',
     ]);
     expect(props.initialState).toEqual({
-      instructions: E2E_CALL_INSTRUCTION_CONFIG.defaultInstructions,
       language: 'de',
       selectedPresetId: E2E_PUBLIC_CALL_CHARACTERS[0].id,
     });
@@ -403,36 +389,34 @@ describe.each([
     expect(getCreditsQuery).toHaveBeenCalledExactlyOnceWith(supabase, userId);
     expect(prefetchQuery).toHaveBeenCalledOnce();
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
-    expect(getCallInstructionConfig).toHaveBeenCalledOnce();
     expect(getCallVoices).toHaveBeenCalledOnce();
     expect(getUserCallCharacters).not.toHaveBeenCalled();
     expect(providerProps().initialCustomCharacters).toEqual([]);
     expect(cookieStore.get).not.toHaveBeenCalled();
   });
 
-  it('loads and maps public and paid custom characters with live instructions', async () => {
+  it('loads and maps public and paid custom characters', async () => {
     const publicCharacter = {
       ...E2E_PUBLIC_CALL_CHARACTERS[0],
       id: 'live-public',
       localized_descriptions: { de: 'Beschreibung', invalid: 42 },
       name: 'Live public',
-      prompts: {
-        localized_prompts: { de: 'Lokalisierte Anweisung' },
-        prompt: 'Public prompt',
-        type: 'call' as const,
-      },
       session_config: {
         max_output_tokens: 256,
         temperature: 0.4,
         voice: 'Rex',
       },
-      voices: { name: 'Ara', sample_url: 'https://example.com/ara.mp3' },
+      voices: { sample_url: 'https://example.com/ara.mp3' },
     };
     const customCharacter = {
       ...publicCharacter,
       id: 'live-custom',
       is_public: false,
       name: 'Paid custom',
+      prompts: {
+        localized_prompts: { de: 'Lokalisierte Anweisung' },
+        prompt: 'Custom prompt',
+      },
       session_config: {},
     };
     vi.mocked(getPublicCallCharacters).mockResolvedValue([publicCharacter]);
@@ -443,19 +427,19 @@ describe.each([
     );
 
     expectAuthenticated();
-    expect(getCallInstructionConfig).toHaveBeenCalledOnce();
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
     const props = providerProps();
     expect(props.defaultPresets).toHaveLength(1);
+    // Predefined prompt text never reaches the client props.
     expect(props.defaultPresets?.[0]).toMatchObject({
       id: 'live-public',
       isPublic: publicCharacter.is_public,
       localizedDescriptions: { de: 'Beschreibung' },
-      localizedPrompts: { de: 'Lokalisierte Anweisung' },
+      localizedPrompts: {},
       name: 'Live public',
-      prompt: 'Live preset override',
+      prompt: '',
       sessionConfig: { maxOutputTokens: 256, temperature: 0.4, voice: 'Rex' },
       voiceSampleUrl: 'https://example.com/ara.mp3',
     });
@@ -463,12 +447,12 @@ describe.each([
     expect(props.initialCustomCharacters?.[0]).toMatchObject({
       id: 'live-custom',
       isPublic: false,
-      prompt: 'Public prompt',
+      localizedPrompts: { de: 'Lokalisierte Anweisung' },
+      prompt: 'Custom prompt',
       name: 'Paid custom',
       sessionConfig: { maxOutputTokens: null, temperature: 0.8, voice: 'Ara' },
     });
     expect(props.initialState).toEqual({
-      instructions: 'Live default instructions',
       language: 'de',
       selectedPresetId: 'live-public',
     });

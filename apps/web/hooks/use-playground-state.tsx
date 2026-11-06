@@ -10,34 +10,20 @@ import {
   useReducer,
 } from 'react';
 
-import { callScenes } from '@/data/call-scenes';
+import { callScenes, isSceneTextModified } from '@/data/call-scenes';
 import {
   defaultPlaygroundState,
   type PlaygroundState,
 } from '@/data/playground-state';
-import {
-  type Character,
-  characterPrompt,
-  DEFAULT_SESSION_CONFIG,
-} from '@/lib/calls/characters';
+import type { Character } from '@/lib/calls/characters';
 import type { CallLanguage } from '@/lib/calls/languages';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
-
-function resolveInstructions(
-  characterId: string,
-  language: CallLanguage,
-  allPresets: Character[],
-): string {
-  const character = allPresets.find((p) => p.id === characterId);
-  return character ? characterPrompt(character, language) : '';
-}
 
 // Define action types and payloads
 type Action =
   | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
-  | { type: 'SET_MEMORY'; payload: boolean }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Character }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | {
@@ -57,54 +43,24 @@ function playgroundStateReducer(
         ...state,
         sceneInstructions: action.payload,
       };
-    case 'SET_SELECTED_PRESET_ID': {
-      const newState = {
-        ...state,
-        selectedPresetId: action.payload,
-      };
-
-      const helpers = createPlaygroundStateHelpers(state.defaultPresets);
-      const selectedPreset = helpers.getSelectedPreset(newState);
-
-      if (action.payload) {
-        // Resolve instructions for the selected character in the current language
-        const allPresets = [...state.defaultPresets, ...state.customCharacters];
-        newState.instructions = resolveInstructions(
-          action.payload,
-          state.language,
-          allPresets,
-        );
-      } else {
-        newState.instructions = selectedPreset?.prompt || '';
-      }
-
-      newState.sessionConfig =
-        selectedPreset?.sessionConfig || DEFAULT_SESSION_CONFIG;
-      return newState;
-    }
+    case 'SET_SELECTED_PRESET_ID':
+      return { ...state, selectedPresetId: action.payload };
     case 'SET_SELECTED_SCENE_ID': {
       const selectedScene = callScenes.find(
         (scene) => scene.id === action.payload,
       );
-      const currentScene = callScenes.find(
-        (scene) => scene.id === state.selectedSceneId,
-      );
-      const isTextModified =
-        state.sceneInstructions !== (currentScene?.text ?? '');
-
+      // Text the user wrote carries over to the next scene.
       return {
         ...state,
-        sceneInstructions: isTextModified
+        sceneInstructions: isSceneTextModified(
+          state.selectedSceneId,
+          state.sceneInstructions,
+        )
           ? state.sceneInstructions
           : (selectedScene?.text ?? ''),
         selectedSceneId: action.payload,
       };
     }
-    case 'SET_MEMORY':
-      return {
-        ...state,
-        memory: action.payload,
-      };
     case 'SAVE_CUSTOM_CHARACTER': {
       const updatedPreset = action.payload;
 
@@ -143,27 +99,8 @@ function playgroundStateReducer(
       );
       return { ...state, customCharacters };
     }
-    case 'SET_LANGUAGE': {
-      const newLanguage = action.payload;
-      const allPresets = [...state.defaultPresets, ...state.customCharacters];
-
-      // Resolve instructions for the selected character in the new language
-      let newInstructions = state.instructions;
-
-      if (state.selectedPresetId) {
-        newInstructions = resolveInstructions(
-          state.selectedPresetId,
-          newLanguage,
-          allPresets,
-        );
-      }
-
-      return {
-        ...state,
-        instructions: newInstructions,
-        language: newLanguage,
-      };
-    }
+    case 'SET_LANGUAGE':
+      return { ...state, language: action.payload };
     default:
       return state;
   }
@@ -219,10 +156,6 @@ export const PlaygroundStateProvider = ({
     customCharacters: initialCustomCharacters,
     defaultPresets,
     ...initialState,
-    sessionConfig: {
-      ...defaultPlaygroundState.sessionConfig,
-      ...(initialState?.sessionConfig ?? {}),
-    },
   };
 
   const [state, dispatch] = useReducer(
@@ -230,8 +163,6 @@ export const PlaygroundStateProvider = ({
     mergedInitialState,
   );
 
-  // Re-selecting reloads the prompt and session config from the stored
-  // preset, which picks up a character that was just saved.
   const selectPreset = (presetId: string | null) => {
     dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
     helpers.updateBrowserUrl(presetId);
@@ -239,7 +170,7 @@ export const PlaygroundStateProvider = ({
 
   // Mount only. The URL is read once and rewritten to match; re-running this
   // against a later render's props would drop a character created in this
-  // session and reset unsaved instructions.
+  // session.
   // biome-ignore lint/correctness/useExhaustiveDependencies: reads the URL once on mount
   useEffect(() => {
     if (!window.location.search) return;

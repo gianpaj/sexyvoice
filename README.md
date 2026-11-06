@@ -194,8 +194,6 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `AXIOM_TOKEN` - Your Axiom API token for structured request logging on `/api/v1/speech`
    - API key security
      - `API_KEY_HMAC_SECRET` - Secret used to HMAC-SHA256 hash API keys before storing them in the database. Generate with `openssl rand -hex 32`. Without this, keys fall back to plain SHA-256 (acceptable in development, **never** in production).
-   - Vercel Edge Config (optional)
-     - `EDGE_CONFIG` - Your Vercel Edge Config connection string (automatically set when you link an Edge Config to your project)
    - Additional optional variables for analytics and monitoring (Crisp, Posthog)
    - E2E builds only
      - `NEXT_PUBLIC_E2E_TEST_MODE` - Build-time; set to `true` to disable the browser Sentry client so CI runs don't report into production Sentry

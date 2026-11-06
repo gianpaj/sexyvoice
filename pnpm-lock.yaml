@@ -338,9 +338,6 @@ importers:
       '@vercel/analytics':
         specifier: ^1.6.1
         version: 1.6.1(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.55.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react@19.2.7)
-      '@vercel/global-config':
-        specifier: ^1.5.1
-        version: 1.5.1(@opentelemetry/api@1.9.1)(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.55.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))
       '@vercel/speed-insights':
         specifier: 2.0.0
         version: 2.0.0(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.55.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))(react@19.2.7)
@@ -5531,21 +5528,6 @@ packages:
       vue:
         optional: true
       vue-router:
-        optional: true
-
-  '@vercel/global-config-fs@0.1.0':
-    resolution: {integrity: sha512-xxMUwf96H/qKTA4Az+uh3xlVWkwnN3z400P5gex0uUsU8pe99njopYVyKVoUTfu8gN9xbHqaigWaIBr1+lufMg==}
-
-  '@vercel/global-config@1.5.1':
-    resolution: {integrity: sha512-PUJaoyMGuSLdKnBgYIqeH1i6U3G+5noLvvJLqI8IPP5+P0b2Q5EcBBraFRh6ctNY/yTpb40klyLYyE3X0OPmKQ==}
-    engines: {node: '>=14.6'}
-    peerDependencies:
-      '@opentelemetry/api': 1.9.1
-      next: '>=1'
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-      next:
         optional: true
 
   '@vercel/oidc@3.2.0':
@@ -14518,15 +14500,6 @@ snapshots:
     optionalDependencies:
       next: 16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.55.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3)
       react: 19.2.7
-
-  '@vercel/global-config-fs@0.1.0': {}
-
-  '@vercel/global-config@1.5.1(@opentelemetry/api@1.9.1)(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.55.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3))':
-    dependencies:
-      '@vercel/global-config-fs': 0.1.0
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-      next: 16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.55.1)(@types/node@24.10.4)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(sass@1.86.3)
 
   '@vercel/oidc@3.2.0': {}
 

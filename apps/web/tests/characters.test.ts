@@ -4,6 +4,7 @@ import {
   buildSaveCharacterPayload,
   type Character,
   type CharacterRow,
+  callReadiness,
   characterDescription,
   characterPrompt,
   characterSampleUrl,
@@ -233,5 +234,43 @@ describe('buildSaveCharacterPayload', () => {
       prompt: 'Eres Marco.',
       sessionConfig: base.sessionConfig,
     });
+  });
+});
+
+describe('callReadiness', () => {
+  const voice = { id: 'saved-voice' };
+  const own = (prompt: string, audioReferenceId?: string) => ({
+    ...base,
+    localizedPrompts: {},
+    prompt,
+    sessionConfig: { ...DEFAULT_SESSION_CONFIG, audioReferenceId },
+  });
+
+  it('lets a character with a voice and a personality call', () => {
+    expect(
+      callReadiness(own('You are Marco.', 'saved-voice'), 'en', [voice]),
+    ).toEqual({
+      canCall: true,
+      personalityMissing: false,
+      voiceMissing: false,
+    });
+  });
+
+  it('reports both a deleted voice and a missing personality', () => {
+    expect(callReadiness(own('  ', 'deleted-voice'), 'en', [voice])).toEqual({
+      canCall: false,
+      personalityMissing: true,
+      voiceMissing: true,
+    });
+  });
+
+  it('calls in a language without its own prompt', () => {
+    expect(callReadiness(own('You are Marco.'), 'ja', []).canCall).toBe(true);
+  });
+
+  it('never asks a predefined character for a personality', () => {
+    expect(
+      callReadiness({ ...own(''), isPublic: true }, 'en', [voice]).canCall,
+    ).toBe(true);
   });
 });

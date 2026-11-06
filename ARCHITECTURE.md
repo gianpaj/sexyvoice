@@ -59,8 +59,6 @@ The repository has three main workspaces:
   `R2_BUCKET_NAME`; `/api/v1/speech` uses `R2_SPEECH_API_BUCKET_NAME`.
 - **Upstash Redis** caches dashboard TTS and cloned output and rate-limits
   external API keys.
-- **Vercel Edge Config** supplies default call instructions. Character prompts
-  come from PostgreSQL and are resolved again when the server mints a token.
 - **Stripe** manages subscriptions, top-ups, and credit purchases.
 - **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
   analytics, and external API request logs.
@@ -440,11 +438,11 @@ Endpoint: `POST /api/call-token`
 
 ```mermaid
 flowchart TD
-    A["Choose a character or a custom voice and personality"] --> B["POST /api/call-token"]
+    A["Choose a saved character, language and scene"] --> B["POST /api/call-token"]
     B --> C["Authenticate Supabase session"]
     C --> D["Check minimum credits and free-user lifetime call limit"]
-    D --> E["Validate configuration and normalize the call model"]
-    E --> F["Resolve character prompt from PostgreSQL"]
+    D --> E["Validate the per-call choices"]
+    E --> F["Load the character's prompt and call settings from PostgreSQL"]
     F --> G["Authorize paid custom-character and scene features"]
     G --> H["Resolve voice ID"]
     H --> I["Mint LiveKit token with server-resolved metadata"]
@@ -478,10 +476,13 @@ negotiation failures, and capture aborts without a recognized device error name.
 Microphone permission, missing-device, busy-device, and constraint errors show
 localized microphone guidance and disconnect the room, including after connection.
 
-Predefined character prompt text never reaches the browser. The token route loads
-it with an admin query, chooses the requested localized prompt or English
-fallback, and places the result in LiveKit token metadata. Custom characters
-and custom scenes require a paid account.
+The browser sends only the character ID, the call language and the scene. The
+token route loads the saved character with an admin query and takes everything
+else from it: the prompt in the call language (the default prompt when that
+language has none), the model, voice, temperature and max output tokens.
+`buildAgentMetadata` in `lib/calls/call-token.ts` turns them into the LiveKit
+token metadata the agent reads. Predefined character prompt text never reaches
+the browser. Custom characters and scene text require a paid account.
 
 Long-term memory is on by default for free and paid accounts. The Profile
 page's Voice Call Memory switch saves `call_memory_enabled` in Auth
@@ -490,8 +491,7 @@ absent preference to enabled. The call-token route reads the current preference
 with `getUser()` for each memory-enabled request; JWT metadata is a snapshot
 and cannot override a saved opt-out. The lookup overlaps voice and character
 resolution. A failed lookup logs a warning and starts the call without memory.
-An explicit request flag of `memory: false` also disables memory. This is a
-user preference, not an entitlement or authorization check.
+This is a user preference, not an entitlement or authorization check.
 
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories

@@ -30,12 +30,9 @@ import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
+import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
 import {
-  type CallVoice,
   callReadiness,
-  type SavedCallVoice,
-} from '@/lib/call-voices';
-import {
   characterDescription,
   characterSampleUrl,
   MAX_CUSTOM_CHARACTERS,
@@ -90,7 +87,7 @@ export function CallPanel({
   const { name } = preset;
   const { audioReferenceId } = preset.sessionConfig;
   const { personalityMissing: missingPersonality, voiceMissing } =
-    callReadiness(preset, pgState.instructions, savedVoices);
+    callReadiness(preset, pgState.language, savedVoices);
   const voiceName = voiceMissing ? t('noVoice') : preset.sessionConfig.voice;
   let voiceDescription: string | null | undefined;
   if (!voiceMissing) {

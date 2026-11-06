@@ -83,7 +83,6 @@ Implemented mock/helper files:
 
 - `mocks/google-ai.mock.ts` — used by generate tests
 - `mocks/usage.mock.ts` — used by usage tests
-- `mocks/call.mock.ts` — helper file exists, but current call spec uses inline route handlers
 - `mocks/clone.mock.ts` — helper file exists, but current clone spec is UI-focused and does not currently import it
 
 ---
@@ -462,7 +461,6 @@ apps/web/e2e/
 ├── auth/
 │   └── auth.setup.ts
 ├── mocks/
-│   ├── call.mock.ts
 │   ├── clone.mock.ts
 │   ├── google-ai.mock.ts
 │   └── usage.mock.ts

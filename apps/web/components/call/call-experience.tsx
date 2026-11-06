@@ -28,12 +28,12 @@ import {
 } from '@/hooks/use-sample-player';
 import {
   type CallVoice,
-  callReadiness,
   type SavedCallVoice,
   withCallVoice,
 } from '@/lib/call-voices';
 import {
   type Character,
+  callReadiness,
   DEFAULT_SESSION_CONFIG,
   MAX_CUSTOM_CHARACTERS,
 } from '@/lib/calls/characters';
@@ -225,7 +225,7 @@ function CallExperienceScreens({
     setPendingCallId(null);
     if (!preset) return;
     // The panel explains what is missing and how to fix it.
-    if (!callReadiness(preset, pgState.instructions, savedVoices).canCall) {
+    if (!callReadiness(preset, pgState.language, savedVoices).canCall) {
       setPanelOpen(true);
       return;
     }

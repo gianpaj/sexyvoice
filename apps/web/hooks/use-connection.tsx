@@ -7,6 +7,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
+import type { CallTokenRequest } from '@/lib/calls/call-token';
 import { invalidateCredits } from '@/lib/credits-query';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
@@ -23,7 +24,6 @@ interface TokenGeneratorData {
   pgState: PlaygroundState;
   shouldConnect: boolean;
   token: string;
-  voice: string;
   wsUrl: string;
 }
 
@@ -40,16 +40,21 @@ export const ConnectionProvider = ({
     wsUrl: string;
     token: string;
     shouldConnect: boolean;
-    voice: string;
-  }>({ shouldConnect: false, token: '', voice: 'Ara', wsUrl: '' });
+  }>({ shouldConnect: false, token: '', wsUrl: '' });
 
   const t = useTranslations('call');
   const queryClient = useQueryClient();
   const supabase = useSupabaseBrowser();
-  const { pgState, helpers } = usePlaygroundState();
+  const { pgState } = usePlaygroundState();
 
   const connect: ConnectFn = async () => {
-    const resolvedState = helpers.getStateWithFullInstructions(pgState);
+    if (!pgState.selectedPresetId) throw new Error('No character selected');
+    const body: CallTokenRequest = {
+      characterId: pgState.selectedPresetId,
+      language: pgState.language,
+      sceneId: pgState.selectedSceneId,
+      sceneText: pgState.sceneInstructions,
+    };
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
@@ -57,7 +62,7 @@ export const ConnectionProvider = ({
     );
     try {
       const response = await fetch('/api/call-token', {
-        body: JSON.stringify(resolvedState),
+        body: JSON.stringify(body),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
         signal: controller.signal,
@@ -80,7 +85,6 @@ export const ConnectionProvider = ({
       setConnectionDetails({
         shouldConnect: true,
         token: accessToken,
-        voice: resolvedState.sessionConfig.voice,
         wsUrl: url,
       });
     } catch (error) {
@@ -109,7 +113,6 @@ export const ConnectionProvider = ({
         pgState,
         shouldConnect: connectionDetails.shouldConnect,
         token: connectionDetails.token,
-        voice: connectionDetails.voice,
         wsUrl: connectionDetails.wsUrl,
       }}
     >

@@ -131,3 +131,15 @@ Speak slowly. No urgency. You are not going anywhere. This is the most important
 Avoid: Cheerfulness that feels dismissive, unsolicited advice, or allowing any sense of hurry into your delivery.`,
   },
 ];
+
+/**
+ * Whether scene text differs from the selected scene's default, ignoring
+ * surrounding whitespace. Without a scene, any text counts as the user's own.
+ */
+export function isSceneTextModified(
+  sceneId: string | null | undefined,
+  text: string | null | undefined,
+): boolean {
+  const scene = callScenes.find(({ id }) => id === sceneId);
+  return (text?.trim() ?? '') !== (scene?.text.trim() ?? '');
+}

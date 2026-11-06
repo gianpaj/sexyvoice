@@ -4,38 +4,24 @@ import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { callScenes } from '@/data/call-scenes';
 import { isCallMemoryEnabled } from '@/lib/call-memory';
 import {
-  type CallTokenPlaygroundState,
-  callTokenPlaygroundStateSchema,
-} from '@/lib/call-token-schema';
-import { callVoiceProvider } from '@/lib/call-voices';
-import { getInitialInstruction } from '@/lib/calls/greetings';
+  buildAgentMetadata,
+  callTokenRequestSchema,
+} from '@/lib/calls/call-token';
+import { characterPrompt, toCharacter } from '@/lib/calls/characters';
 import { DEFAULT_CALL_LANGUAGE } from '@/lib/calls/languages';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
 import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
 import {
+  getCallCharacter,
   getCredits,
   hasUserPaid,
   isFreeUserOverCallLimit,
-  resolveCharacterPrompt,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-
-function appendSceneInstructions(
-  instructions: string,
-  sceneInstructions?: string | null,
-): string {
-  const trimmedSceneInstructions = sceneInstructions?.trim();
-  if (!trimmedSceneInstructions) {
-    return instructions;
-  }
-
-  return `${instructions.trim()}\n\nScene instructions:\n${trimmedSceneInstructions}`.trim();
-}
 
 async function resolveMemoryPreference(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -95,11 +81,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let playgroundState: CallTokenPlaygroundState;
+    let callRequest: z.output<typeof callTokenRequestSchema>;
 
     try {
-      const body = await request.json();
-      const validationResult = callTokenPlaygroundStateSchema.safeParse(body);
+      const body: unknown = await request.json();
+      const validationResult = callTokenRequestSchema.safeParse(body);
 
       if (!validationResult.success) {
         const formattedError = z.treeifyError(validationResult.error);
@@ -111,7 +97,7 @@ export async function POST(request: Request) {
         });
       }
 
-      playgroundState = validationResult.data;
+      callRequest = validationResult.data;
     } catch (error) {
       logger.error('Invalid JSON in request body', {
         error: Error.isError(error) ? error.message : String(error),
@@ -130,153 +116,69 @@ export async function POST(request: Request) {
     }
 
     const {
-      instructions: clientInstructions,
-      language: selectedLanguage = DEFAULT_CALL_LANGUAGE,
-      sceneInstructions,
-      selectedPresetId,
-      selectedSceneId,
-      memory,
-      sessionConfig: { model, voice, temperature, maxOutputTokens },
-    } = playgroundState;
+      characterId,
+      language = DEFAULT_CALL_LANGUAGE,
+      sceneId = null,
+      sceneText,
+    } = callRequest;
 
-    const memoryPreference = memory
-      ? resolveMemoryPreference(supabase, user.id)
-      : Promise.resolve(false);
+    const memoryPreference = resolveMemoryPreference(supabase, user.id);
 
-    // Validate voice exists in DB
-    const voiceObj = await resolveCallVoice(
-      playgroundState.sessionConfig,
-      user.id,
-    );
-
-    if (!voiceObj) {
-      captureException('Voice not found', { extra: { voice } });
-      return APIErrorResponse('Voice not found', 404);
+    // Prompt, model, voice and temperature come from the saved character.
+    const row = await getCallCharacter(characterId);
+    if (!row) {
+      return APIErrorResponse('Character not found', 404);
     }
+    const character = toCharacter(row);
 
-    // ─── Resolve instructions ───
-    // Always resolve selected presets from DB (public and custom).
-    // Only non-preset calls (no selectedPresetId) can use client-sent instructions.
-    let resolvedInstructions = clientInstructions;
     let isPaidUser: boolean | undefined;
-
-    if (selectedPresetId) {
-      try {
-        const character = await resolveCharacterPrompt(selectedPresetId);
-
-        if (!character) {
-          return APIErrorResponse('Character not found', 404);
-        }
-
-        if (character.is_public) {
-          // ── Predefined character ──
-          // Resolve localized prompt, falling back to English
-          const prompts = character.prompts as {
-            prompt: string;
-            localized_prompts: Record<string, string> | null;
-          } | null;
-
-          if (!prompts?.prompt) {
-            return APIErrorResponse('Character prompt not found', 404);
-          }
-
-          resolvedInstructions =
-            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
-          // Client-sent instructions are IGNORED for predefined characters
-        } else {
-          // ── Custom character ──
-          // Verify ownership
-          if (character.user_id !== user.id) {
-            return APIErrorResponse('Character not found', 404);
-          }
-
-          // Verify user has paid (custom characters require paid account)
-          isPaidUser = await hasUserPaid(user.id);
-          if (!isPaidUser) {
-            return APIErrorResponse(
-              'Custom characters require a paid account',
-              403,
-            );
-          }
-
-          // Resolve prompt from DB (not from client)
-          const prompts = character.prompts as {
-            prompt: string;
-            localized_prompts: Record<string, string> | null;
-          } | null;
-
-          if (!prompts?.prompt) {
-            return APIErrorResponse('Character prompt not found', 404);
-          }
-
-          resolvedInstructions =
-            prompts.localized_prompts?.[selectedLanguage] || prompts.prompt;
-        }
-      } catch (error) {
-        captureException(error, {
-          extra: {
-            context: 'resolveCharacterPrompt',
-            selectedPresetId,
-            userId: user.id,
-          },
-        });
-        return APIErrorResponse('Failed to resolve character prompt', 500);
+    if (!character.isPublic) {
+      if (row.user_id !== user.id) {
+        return APIErrorResponse('Character not found', 404);
       }
-    }
-
-    if (!selectedPresetId || callVoiceProvider(model)) {
-      isPaidUser ??= await hasUserPaid(user.id);
+      isPaidUser = await hasUserPaid(user.id);
       if (!isPaidUser) {
         return APIErrorResponse(
           'Custom characters require a paid account',
           403,
         );
       }
-      if (!resolvedInstructions.trim()) {
-        return APIErrorResponse('A personality prompt is required', 400);
-      }
     }
 
-    if (sceneInstructions?.trim()) {
-      if (isPaidUser === undefined) {
-        isPaidUser = await hasUserPaid(user.id);
-      }
+    const prompt = characterPrompt(character, language);
+    if (!prompt.trim()) {
+      return APIErrorResponse('Character prompt not found', 404);
+    }
+
+    const { sessionConfig } = character;
+    const voice = await resolveCallVoice(sessionConfig, user.id);
+    if (!voice) {
+      captureException('Voice not found', {
+        extra: { voice: sessionConfig.voice },
+      });
+      return APIErrorResponse('Voice not found', 404);
+    }
+
+    const scene = sceneText?.trim() ?? '';
+    if (scene) {
+      isPaidUser ??= await hasUserPaid(user.id);
       if (!isPaidUser) {
         return APIErrorResponse('Scenes require a paid account', 403);
       }
-
-      resolvedInstructions = appendSceneInstructions(
-        resolvedInstructions,
-        sceneInstructions,
-      );
     }
 
-    const memoryEnabled = await memoryPreference;
-
-    const defaultSceneText = callScenes.find(
-      (s) => s.id === selectedSceneId,
-    )?.text;
-    const sceneModified =
-      selectedSceneId !== null &&
-      selectedSceneId !== undefined &&
-      (sceneInstructions?.trim() ?? '') !== (defaultSceneText?.trim() ?? '');
-
-    // Create metadata for agent to start with
-    const metadata = {
-      character_id: selectedPresetId,
-      initial_instruction: getInitialInstruction(selectedLanguage, model),
-      instructions: resolvedInstructions,
-      language: selectedLanguage,
-      max_output_tokens: maxOutputTokens,
-      // The account preference and an explicit per-call opt-out both apply.
-      memory: memoryEnabled,
-      model,
-      scene_id: selectedSceneId ?? null,
-      scene_modified: sceneModified,
-      temperature,
-      user_id: user.id,
-      voice: voiceObj.id,
-    };
+    const metadata = buildAgentMetadata({
+      characterId,
+      language,
+      // The profile preference, read fresh for every call.
+      memory: await memoryPreference,
+      prompt,
+      sceneId,
+      sceneText: scene,
+      sessionConfig,
+      userId: user.id,
+      voiceId: voice.id,
+    });
 
     // Create access token
     const at = new AccessToken(apiKey, apiSecret, {
@@ -307,12 +209,11 @@ export async function POST(request: Request) {
 
     logger.info('Generated LiveKit token', {
       extra: {
-        characterId: selectedPresetId,
-        model,
+        characterId,
+        model: sessionConfig.model,
         roomName,
-        selectedPresetId,
-        selectedSceneId,
-        voice,
+        sceneId,
+        voice: sessionConfig.voice,
       },
       user: { id: user.id },
     });

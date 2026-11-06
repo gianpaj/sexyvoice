@@ -8,8 +8,11 @@ import {
   PlaygroundStateProvider,
   usePlaygroundState,
 } from '@/hooks/use-playground-state';
-import type { Character } from '@/lib/calls/characters';
-import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import {
+  type Character,
+  characterPrompt,
+  DEFAULT_SESSION_CONFIG,
+} from '@/lib/calls/characters';
 import { makeCharacter } from '../utils/call-test-utils';
 
 const publicCharacter = makeCharacter({
@@ -45,6 +48,12 @@ function makeWrapper(initialCustomCharacters: Character[]) {
   };
 }
 
+/** The prompt a call with the selected character would use. */
+function selectedPrompt(context: ReturnType<typeof usePlaygroundState>) {
+  const character = context.helpers.getSelectedPreset(context.pgState);
+  return character && characterPrompt(character, context.pgState.language);
+}
+
 describe('usePlaygroundState — preset URL', () => {
   it.each(['create', 'edit', 'duplicate'])(
     'preserves saved German prompts on %s',
@@ -69,7 +78,7 @@ describe('usePlaygroundState — preset URL', () => {
       act(() => result.current.selectPreset(response.id));
 
       expect(result.current.pgState.customCharacters).toEqual([response]);
-      expect(result.current.pgState.instructions).toBe('Du bist Luna.');
+      expect(selectedPrompt(result.current)).toBe('Du bist Luna.');
     },
   );
 
@@ -83,7 +92,7 @@ describe('usePlaygroundState — preset URL', () => {
 
     expect(result.current.pgState.customCharacters).toEqual([savedCharacter]);
     expect(result.current.pgState.selectedPresetId).toBe(savedCharacter.id);
-    expect(result.current.pgState.instructions).toBe(savedCharacter.prompt);
+    expect(selectedPrompt(result.current)).toBe(savedCharacter.prompt);
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 
@@ -165,7 +174,7 @@ describe('usePlaygroundState — preset URL', () => {
     act(() => result.current.selectPreset(savedCharacter.id));
 
     expect(result.current.pgState.selectedPresetId).toBe(savedCharacter.id);
-    expect(result.current.pgState.instructions).toBe(savedCharacter.prompt);
+    expect(selectedPrompt(result.current)).toBe(savedCharacter.prompt);
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 
@@ -184,7 +193,7 @@ describe('usePlaygroundState — preset URL', () => {
     );
     act(() => result.current.selectPreset(savedCharacter.id));
 
-    expect(result.current.pgState.instructions).toBe('You are Luna, updated.');
+    expect(selectedPrompt(result.current)).toBe('You are Luna, updated.');
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 });

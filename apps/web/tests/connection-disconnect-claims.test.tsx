@@ -15,15 +15,14 @@ vi.mock('@/lib/supabase/client', () => ({ default: () => ({ auth: mocks }) }));
 vi.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }));
 vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
-    dispatch: vi.fn(),
-    helpers: {
-      getSelectedPreset: () => null,
-      getStateWithFullInstructions: () => ({ sessionConfig: { voice: 'Ara' } }),
+    pgState: {
+      language: 'en',
+      sceneInstructions: '',
+      selectedPresetId: 'character-id',
+      selectedSceneId: null,
     },
-    pgState: {},
   }),
 }));
-vi.mock('@/lib/characters', () => ({}));
 
 afterEach(() => {
   cleanup();

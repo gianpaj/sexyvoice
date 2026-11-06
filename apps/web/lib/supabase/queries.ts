@@ -2,6 +2,7 @@ import { captureException } from '@sentry/nextjs';
 import { cache } from 'react';
 
 import {
+  CALL_CHARACTER_COLUMNS,
   OWN_CHARACTER_COLUMNS,
   PUBLIC_CHARACTER_COLUMNS,
 } from '@/lib/calls/characters';
@@ -72,25 +73,17 @@ export async function countUserCallCharacters(userId: string): Promise<number> {
   return count ?? 0;
 }
 
-// ─── Prompts (admin — for call-token resolution) ───
-
 /**
- * Resolve the prompt for a character by character ID.
- * Uses admin client to bypass RLS (reads predefined prompt text server-side).
+ * A character and its prompts for call-token. The admin client reads
+ * predefined prompt text, which never leaves the server.
  */
-export async function resolveCharacterPrompt(characterId: string) {
+export async function getCallCharacter(characterId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('characters')
-    .select(
-      `
-      id, is_public, user_id, voice_id,
-      voices ( id, name ),
-      prompts ( prompt, localized_prompts )
-    `,
-    )
+    .select(CALL_CHARACTER_COLUMNS)
     .eq('id', characterId)
-    .single();
+    .maybeSingle();
   if (error) throw error;
   return data;
 }

@@ -21,10 +21,12 @@ vi.mock('next-intl', () => ({
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }));
 vi.mock('@/hooks/use-playground-state', () => ({
   usePlaygroundState: () => ({
-    helpers: {
-      getStateWithFullInstructions: () => ({ sessionConfig: { voice: 'Ara' } }),
+    pgState: {
+      language: 'de',
+      sceneInstructions: 'Meet me on the late train.',
+      selectedPresetId: '123e4567-e89b-12d3-a456-426614174000',
+      selectedSceneId: 'bartender-after-closing',
     },
-    pgState: {},
   }),
 }));
 
@@ -47,6 +49,21 @@ beforeEach(() => vi.clearAllMocks());
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe('call-token requests', () => {
+  it('sends only the per-call choices', async () => {
+    respond(500);
+    await startCall();
+    const [url, init] = vi.mocked(fetch).mock.calls[0];
+    expect(url).toBe('/api/call-token');
+    expect(JSON.parse(String(init?.body))).toEqual({
+      characterId: '123e4567-e89b-12d3-a456-426614174000',
+      language: 'de',
+      sceneId: 'bartender-after-closing',
+      sceneText: 'Meet me on the late train.',
+    });
+  });
 });
 
 describe('call-token errors in the browser', () => {

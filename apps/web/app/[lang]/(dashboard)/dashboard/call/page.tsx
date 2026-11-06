@@ -13,16 +13,11 @@ import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
-  E2E_CALL_INSTRUCTION_CONFIG,
   E2E_CALL_VOICES,
   E2E_CREDIT_TRANSACTIONS,
   E2E_PUBLIC_CALL_CHARACTERS,
   E2E_SAVED_CALL_VOICES,
 } from '@/lib/e2e-mocks';
-import {
-  applyPresetInstructionOverrides,
-  getCallInstructionConfig,
-} from '@/lib/edge-config/call-instructions';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getSavedCallVoices } from '@/lib/supabase/call-voices';
@@ -70,7 +65,6 @@ export default async function Call(props: {
     isPaidUser,
     callVoices,
     savedVoices,
-    { defaultInstructions, presetInstructions },
     publicCharacters,
   ] = e2e
     ? [
@@ -78,7 +72,6 @@ export default async function Call(props: {
         e2e.isPaidUser,
         E2E_CALL_VOICES,
         e2e.isPaidUser ? E2E_SAVED_CALL_VOICES : [],
-        E2E_CALL_INSTRUCTION_CONFIG,
         E2E_PUBLIC_CALL_CHARACTERS,
       ]
     : await Promise.all([
@@ -86,16 +79,12 @@ export default async function Call(props: {
         hasUserPaid(userId),
         getCallVoices(),
         getSavedCallVoices(userId),
-        getCallInstructionConfig(),
         getPublicCallCharacters(),
       ]);
   const userCharacters =
     !e2e && isPaidUser ? await getUserCallCharacters(userId) : [];
 
-  const defaultPresets = applyPresetInstructionOverrides(
-    publicCharacters.map(toCharacter),
-    presetInstructions,
-  );
+  const defaultPresets = publicCharacters.map(toCharacter);
   const initialCustomCharacters = userCharacters.map(toCharacter);
 
   return (
@@ -103,7 +92,6 @@ export default async function Call(props: {
       defaultPresets={defaultPresets}
       initialCustomCharacters={initialCustomCharacters}
       initialState={{
-        instructions: defaultInstructions,
         language: toCallLanguage(lang),
         selectedPresetId: defaultPresets[0]?.id ?? null,
       }}

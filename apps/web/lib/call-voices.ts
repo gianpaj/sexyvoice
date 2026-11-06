@@ -1,4 +1,4 @@
-import type { Character, SessionConfig } from '@/lib/calls/characters';
+import type { SessionConfig } from '@/lib/calls/characters';
 import { callModelFor } from '@/lib/calls/models';
 import { savedVoiceProvider } from '@/lib/clone/call-voice-config';
 
@@ -47,25 +47,6 @@ export function savedVoiceMissing(
     Boolean(config.audioReferenceId) &&
     !savedVoices.some(({ id }) => id === config.audioReferenceId)
   );
-}
-
-/**
- * What stops a character from calling. The panel's Start call and a card's
- * Call both use this, so they never disagree.
- */
-export function callReadiness(
-  preset: Pick<Character, 'isPublic' | 'sessionConfig'>,
-  instructions: string,
-  savedVoices: Pick<SavedCallVoice, 'id'>[],
-) {
-  const voiceMissing = savedVoiceMissing(preset.sessionConfig, savedVoices);
-  // Public characters keep their prompts on the server.
-  const personalityMissing = !(preset.isPublic || instructions.trim());
-  return {
-    canCall: !(voiceMissing || personalityMissing),
-    personalityMissing,
-    voiceMissing,
-  };
 }
 
 /** Owner-checked proxy for a saved voice's reference audio. */
