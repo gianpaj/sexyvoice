@@ -44,3 +44,40 @@ describe('post listings', () => {
     ]);
   });
 });
+
+describe('drafts', () => {
+  const draft = 'free-audio-joiner-tool';
+
+  it('builds no page for a draft post', async () => {
+    const { generateStaticParams } = await import(
+      '@/app/[lang]/blog/[slug]/page'
+    );
+    expect(generateStaticParams({ params: { lang: 'en' } })).toEqual([
+      { slug: 'realtime-ai-voice-call' },
+      { slug: 'voice-ai-glossary' },
+      { slug: 'hello-from-sexyvoice' },
+    ]);
+  });
+
+  it('serves a draft post as not found', async () => {
+    const { default: PostPage } = await import('@/app/[lang]/blog/[slug]/page');
+    await expect(
+      PostPage({ params: Promise.resolve({ lang: 'en', slug: draft }) }),
+    ).rejects.toThrow('NEXT_HTTP_ERROR_FALLBACK;404');
+  });
+
+  it('leaves a draft post out of the sitemap', async () => {
+    const { default: sitemap } = await import('@/app/sitemap');
+    const urls = (await sitemap()).map((entry) => entry.url);
+    expect(urls).toContain('https://sexyvoice.ai/en/blog/voice-ai-glossary');
+    expect(urls.filter((url) => url.includes(draft))).toEqual([]);
+  });
+});
+
+describe('policies', () => {
+  it('fall back to the English original when untranslated', async () => {
+    const { getPolicy } = await import('@/lib/content');
+    expect(getPolicy('es', 'terms')?.locale).toBe('es');
+    expect(getPolicy('de', 'terms')?.locale).toBe('en');
+  });
+});

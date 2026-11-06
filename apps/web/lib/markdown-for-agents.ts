@@ -1,7 +1,8 @@
 import type { PolicyPage, Post } from 'contentlayer/generated';
 
+import { postPath } from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { SITE_URL } from '@/lib/site';
+import { localeUrl, SITE_URL } from '@/lib/site';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 
@@ -29,6 +30,11 @@ export function buildMarkdownResponse(
 }
 
 type LandingMessages = IntlMessages['landing'];
+
+/** Dates in agent markdown stay machine-readable: `2025-04-28`. */
+function isoDay(date: string): string {
+  return date.slice(0, 10);
+}
 
 function renderHeroSection(lang: Locale, landing: LandingMessages): string[] {
   const lines: string[] = [];
@@ -145,29 +151,28 @@ export function renderBlogListMarkdown(
     lines.push('', landing.noPostsAvailable ?? 'No posts available yet.');
   } else {
     for (const post of posts) {
-      const url = `${SITE_URL}/${lang}/blog/${post.slugAsParams}`;
-      lines.push('', `## [${post.title}](${url})`);
-      lines.push('', `_${post.date}_`);
+      lines.push('', `## [${post.title}](${localeUrl(lang, postPath(post))})`);
+      lines.push('', `_${isoDay(post.date)}_`);
       if (post.description) {
         lines.push('', post.description);
       }
     }
   }
 
-  lines.push('', '---', '', `Canonical URL: ${SITE_URL}/${lang}/blog`);
+  lines.push('', '---', '', `Canonical URL: ${localeUrl(lang, '/blog')}`);
   return `${lines.join('\n').trim()}\n`;
 }
 
 export function renderBlogPostMarkdown(post: Post): string {
   const lines: string[] = [];
-  const url = `${SITE_URL}/${post.locale}/blog/${post.slugAsParams}`;
+  const url = localeUrl(post.locale as Locale, postPath(post));
 
   lines.push(`# ${post.title}`);
   if (post.description) {
     lines.push('', `> ${post.description}`);
   }
   const meta: string[] = [];
-  if (post.date) meta.push(`Published: ${post.date.slice(0, 10)}`);
+  if (post.date) meta.push(`Published: ${isoDay(post.date)}`);
   if (post.author) meta.push(`Author: ${post.author}`);
   meta.push(`Canonical: ${url}`);
   lines.push('', meta.join(' · '));
@@ -179,7 +184,7 @@ export function renderBlogPostMarkdown(post: Post): string {
 
 export function renderPolicyMarkdown(policy: PolicyPage): string {
   const lines: string[] = [];
-  const url = `${SITE_URL}/${policy.locale}/${policy.slug}`;
+  const url = localeUrl(policy.locale as Locale, `/${policy.slug}`);
 
   lines.push(`# ${policy.title}`);
   if (policy.updated) {

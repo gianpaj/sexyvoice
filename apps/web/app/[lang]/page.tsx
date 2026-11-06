@@ -1,4 +1,3 @@
-import { allPosts } from 'contentlayer/generated';
 import {
   ArrowRightIcon,
   AudioLines,
@@ -12,6 +11,7 @@ import Image from 'next/image';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { preconnect } from 'react-dom';
 
+import { listPostsWithCover, postPath } from '@/lib/content';
 import { faqAnswerText } from '@/lib/faq';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
@@ -38,15 +38,6 @@ import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSampleAudiosByLanguage } from '../sample-audio';
-
-const get3PostsByLang = (lang: Locale) =>
-  allPosts
-    .filter((post) => post.locale === lang && post.image && !post.draft)
-    ?.sort(
-      (postA, postB) =>
-        new Date(postB.date).getTime() - new Date(postA.date).getTime(),
-    )
-    .slice(0, 3);
 
 export async function generateMetadata(props: {
   params: Promise<{ lang: Locale }>;
@@ -305,13 +296,13 @@ export default async function LandingPage(props: {
             <h2 className="mb-4 text-balance font-bold text-2xl">
               {dictLanding.latestPosts}
             </h2>
-            {get3PostsByLang(lang).map((post) => (
+            {listPostsWithCover(lang, 3).map((post) => (
               <Card
                 className="relative max-w-sm pt-0 lg:min-w-[400px] lg:max-w-[400px]"
-                key={post.url}
+                key={post.slug}
               >
                 {post.image && (
-                  <Link href={post.url} prefetch>
+                  <Link href={postPath(post)} prefetch>
                     <Image
                       alt={post.title}
                       className="relative w-full rounded-t-xl outline outline-white/10 -outline-offset-1"
@@ -325,7 +316,7 @@ export default async function LandingPage(props: {
                 )}
                 <CardHeader>
                   <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
-                    <Link href={post.url}>{post.title}</Link>
+                    <Link href={postPath(post)}>{post.title}</Link>
                   </CardTitle>
                 </CardHeader>
               </Card>

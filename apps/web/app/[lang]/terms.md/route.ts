@@ -1,13 +1,10 @@
-import { allPolicyPages } from 'contentlayer/generated';
-
+import { getPolicy } from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   buildMarkdownResponse,
   renderPolicyMarkdown,
 } from '@/lib/markdown-for-agents';
 import { routing } from '@/src/i18n/routing';
-
-const POLICY_SLUG = 'terms';
 
 export const dynamic = 'force-static';
 
@@ -25,11 +22,7 @@ export async function GET(
     return new Response('Not Found', { status: 404 });
   }
 
-  const policy =
-    allPolicyPages.find((p) => p.slug === POLICY_SLUG && p.locale === lang) ??
-    allPolicyPages.find(
-      (p) => p.slug === POLICY_SLUG && p.locale === routing.defaultLocale,
-    );
+  const policy = getPolicy(lang, 'terms');
 
   if (!policy) {
     return new Response('Not Found', { status: 404 });

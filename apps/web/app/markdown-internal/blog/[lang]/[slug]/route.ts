@@ -1,5 +1,4 @@
-import { allPosts } from 'contentlayer/generated';
-
+import { getPost, listPosts } from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import {
   buildMarkdownResponse,
@@ -11,12 +10,9 @@ export const dynamic = 'force-static';
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return allPosts
-    .filter((post) => !post.draft)
-    .map((post) => ({
-      lang: post.locale,
-      slug: post.slugAsParams,
-    }));
+  return routing.locales.flatMap((lang) =>
+    listPosts(lang).map((post) => ({ lang, slug: post.slug })),
+  );
 }
 
 export async function GET(
@@ -29,9 +25,7 @@ export async function GET(
     return new Response('Not Found', { status: 404 });
   }
 
-  const post = allPosts.find(
-    (p) => p.slugAsParams === slug && p.locale === lang && !p.draft,
-  );
+  const post = getPost(lang, slug);
 
   if (!post) {
     return new Response('Not Found', { status: 404 });

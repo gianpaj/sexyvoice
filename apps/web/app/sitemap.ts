@@ -1,11 +1,11 @@
 /** biome-ignore-all lint/complexity/noForEach: sitemap generation is clearer this way */
 import { statSync } from 'node:fs';
 import { join } from 'node:path';
-import { allPosts } from 'contentlayer/generated';
 import { globby } from 'globby';
 import type { MetadataRoute } from 'next';
 
-import { SITE_URL as BASE_URL } from '@/lib/site';
+import { listPosts, postLocales, postPath } from '@/lib/content';
+import { SITE_URL as BASE_URL, localeUrl } from '@/lib/site';
 import { routing } from '@/src/i18n/routing';
 
 /**
@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Discover all public page files under app/[lang], excluding:
   //   - protected auth callback pages
   //   - authenticated dashboard pages
-  //   - dynamic blog [slug] pages (handled separately via allPosts)
+  //   - dynamic blog [slug] pages (listed from the published posts)
   //   - the sitemap/layout files themselves
   const pageFiles = await globby([
     'app/[lang]/**/page{.ts,.tsx}',
@@ -67,10 +67,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]);
 
   const routes: MetadataRoute.Sitemap = [];
-
-  const translatedPostSlugs = new Map(
-    allPosts.map((post) => [`${post.locale}:${post.slugAsParams}`, post]),
-  );
 
   routing.locales.forEach((lang) => {
     // Static pages discovered from the filesystem
@@ -109,39 +105,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     });
 
-    // Blog posts (sourced from Contentlayer, not the filesystem glob)
-    allPosts
-      .filter((post) => post.locale === lang)
-      .forEach((post) => {
-        const postUrl = `${BASE_URL}/${post.locale}/blog/${post.slugAsParams}`;
+    listPosts(lang).forEach((post) => {
+      const postUrl = localeUrl(lang, postPath(post));
 
-        routes.push({
-          lastModified: new Date(post.date).toISOString(),
-          priority: getPriority(postUrl),
-          url: postUrl,
-          // For default-locale posts, link to any available translations
-          ...(lang === routing.defaultLocale
-            ? {
-                alternates: {
-                  languages: Object.fromEntries(
-                    routing.locales
-                      .filter(
-                        (locale) =>
-                          locale !== routing.defaultLocale &&
-                          translatedPostSlugs.has(
-                            `${locale}:${post.slugAsParams}`,
-                          ),
-                      )
-                      .map((locale) => [
-                        locale,
-                        `${BASE_URL}/${locale}/blog/${post.slugAsParams}`,
-                      ]),
-                  ),
-                },
-              }
-            : {}),
-        });
+      routes.push({
+        lastModified: new Date(post.date).toISOString(),
+        priority: getPriority(postUrl),
+        url: postUrl,
+        // Default-locale posts link to their translations
+        ...(lang === routing.defaultLocale
+          ? {
+              alternates: {
+                languages: Object.fromEntries(
+                  postLocales(post.slug)
+                    .filter((locale) => locale !== lang)
+                    .map((locale) => [
+                      locale,
+                      localeUrl(locale, postPath(post)),
+                    ]),
+                ),
+              },
+            }
+          : {}),
       });
+    });
   });
 
   // Deduplicate in case any page appears under multiple route groups

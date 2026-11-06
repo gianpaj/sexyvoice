@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildMarkdownResponse,
@@ -8,6 +8,8 @@ import {
   renderBlogPostMarkdown,
   renderPolicyMarkdown,
 } from '../lib/markdown-for-agents';
+
+vi.mock('contentlayer/generated', () => ({ allPolicyPages: [], allPosts: [] }));
 
 describe('estimateMarkdownTokens', () => {
   it('returns zero for empty text', () => {
@@ -67,12 +69,12 @@ describe('renderBlogListMarkdown', () => {
     },
   } as IntlMessages;
 
-  it('renders blog posts with canonical URLs based on slugAsParams', () => {
+  it('renders blog posts with canonical URLs based on the slug', () => {
     const posts = [
       {
         date: '2025-04-28T00:00:00.000Z',
         description: 'Intro post',
-        slugAsParams: 'hello-from-sexyvoice',
+        slug: 'hello-from-sexyvoice',
         title: 'Hello from SexyVoice.ai',
       },
     ] as const;
@@ -84,7 +86,7 @@ describe('renderBlogListMarkdown', () => {
     expect(markdown).toContain(
       '## [Hello from SexyVoice.ai](https://sexyvoice.ai/en/blog/hello-from-sexyvoice)',
     );
-    expect(markdown).toContain('_2025-04-28T00:00:00.000Z_');
+    expect(markdown).toContain('_2025-04-28_');
     expect(markdown).toContain('Canonical URL: https://sexyvoice.ai/en/blog');
   });
 
@@ -96,7 +98,7 @@ describe('renderBlogListMarkdown', () => {
 });
 
 describe('renderBlogPostMarkdown', () => {
-  it('renders metadata and canonical URL using slugAsParams', () => {
+  it('renders metadata and canonical URL using the slug', () => {
     const post = {
       author: 'SexyVoice.ai',
       body: {
@@ -105,7 +107,7 @@ describe('renderBlogPostMarkdown', () => {
       date: '2025-04-28T00:00:00.000Z',
       description: 'Intro post',
       locale: 'en',
-      slugAsParams: 'hello-from-sexyvoice',
+      slug: 'hello-from-sexyvoice',
       title: 'Hello from SexyVoice.ai',
     };
 

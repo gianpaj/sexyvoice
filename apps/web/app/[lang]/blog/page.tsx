@@ -1,13 +1,15 @@
-import { allPosts } from 'contentlayer/generated';
-import type { Locale as DateFnsLocale } from 'date-fns';
-import { format, parseISO } from 'date-fns';
-import { da, de, es, fr, it } from 'date-fns/locale';
 import Image from 'next/image';
 import type { Metadata } from 'next/types';
 import { getMessages, getTranslations } from 'next-intl/server';
 
 import { MarketingPage } from '@/components/marketing-page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  BLOG_INDEX_LIMIT,
+  formatPostDate,
+  listPostsWithCover,
+  postPath,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
@@ -40,32 +42,6 @@ export async function generateMetadata({
   });
 }
 
-type BlogPostWithImage = (typeof allPosts)[number] & {
-  image: string;
-};
-
-const LATEST_POSTS_LIMIT = 20;
-
-const dateFnsLocales: Partial<Record<Locale, DateFnsLocale>> = {
-  da,
-  de,
-  es,
-  fr,
-  it,
-};
-
-const getLatestPostsByLang = (lang: Locale): BlogPostWithImage[] =>
-  allPosts
-    .filter(
-      (post): post is BlogPostWithImage =>
-        post.locale === lang && typeof post.image === 'string' && !post.draft,
-    )
-    .sort(
-      (postA, postB) =>
-        new Date(postB.date).getTime() - new Date(postA.date).getTime(),
-    )
-    .slice(0, LATEST_POSTS_LIMIT);
-
 export default async function BlogIndexPage(props: {
   params: Promise<{ lang: Locale }>;
 }) {
@@ -75,13 +51,13 @@ export default async function BlogIndexPage(props: {
   const blogName = `${SITE_NAME} ${dictLanding.blogLabel}`;
   const pageTitle = `${dictLanding.latestPosts} | ${blogName}`;
 
-  const posts = getLatestPostsByLang(lang);
+  const posts = listPostsWithCover(lang, BLOG_INDEX_LIMIT);
 
   const jsonLd = graph(
     itemList({
       items: posts.map((post) => ({
         name: post.title,
-        path: `/blog/${post.slug}`,
+        path: postPath(post),
       })),
       lang,
       name: pageTitle,
@@ -133,7 +109,7 @@ export default async function BlogIndexPage(props: {
                           'flex h-full flex-col',
                           isFeatured && 'sm:flex-row',
                         )}
-                        href={post.url}
+                        href={postPath(post)}
                       >
                         <CardHeader
                           className={cn(
@@ -181,9 +157,7 @@ export default async function BlogIndexPage(props: {
                               />
                             </svg>
                             <span className="whitespace-nowrap">
-                              {format(parseISO(post.date), 'MMMM dd, yyyy', {
-                                locale: dateFnsLocales[lang],
-                              })}
+                              {formatPostDate(post.date, lang)}
                             </span>
                             <span aria-hidden="true">·</span>
                             <span className="whitespace-nowrap">

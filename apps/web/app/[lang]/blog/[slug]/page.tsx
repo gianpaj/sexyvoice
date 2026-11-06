@@ -1,5 +1,3 @@
-import { allPosts } from 'contentlayer/generated';
-import { format, parseISO } from 'date-fns';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next/types';
@@ -7,6 +5,13 @@ import { getMessages } from 'next-intl/server';
 
 import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
+import {
+  formatPostDate,
+  getPost,
+  listPosts,
+  postLocales,
+  postPath,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
 import { SITE_LOGO, SITE_NAME, SITE_URL } from '@/lib/site';
@@ -17,7 +22,6 @@ import {
   techArticle,
 } from '@/lib/structured-data';
 import { calculateReadingTime, countWords } from '@/lib/text';
-import { routing } from '@/src/i18n/routing';
 
 export const dynamicParams = false;
 
@@ -25,39 +29,15 @@ export const generateStaticParams = ({
   params: { lang },
 }: {
   params: { lang: Locale };
-}) =>
-  allPosts
-    .filter((post) => post.locale === lang)
-    .map((post) => ({
-      slug: post.slugAsParams,
-    }));
+}) => listPosts(lang).map((post) => ({ slug: post.slug }));
 
-interface PostProps {
-  params: {
-    slug: string;
-    lang: Locale;
-  };
+interface Props {
+  params: Promise<{ lang: Locale; slug: string }>;
 }
 
-async function getPostFromParams({ slug, lang }: PostProps['params']) {
-  const post = allPosts.find(
-    (post) => post.slugAsParams === slug && post.locale === lang,
-  );
-
-  if (!post) {
-    return null;
-  }
-
-  return post;
-}
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<PostProps['params']>;
-}): Promise<Metadata> {
-  const paramsData = await params;
-  const post = await getPostFromParams(paramsData);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang, slug } = await params;
+  const post = getPost(lang, slug);
 
   if (!post) {
     return {};
@@ -81,28 +61,20 @@ export async function generateMetadata({
         'voice synthesis',
         'AI voice call',
       ],
-      lang: post.locale as Locale,
-      // Only advertise hreflang alternates for locales that actually have a
-      // translated post. Otherwise search engines crawl non-existent URLs
-      // (e.g. /de/blog/<slug> with no German translation) and flag them.
-      locales: routing.locales.filter((locale) =>
-        allPosts.some(
-          (p) => p.slugAsParams === post.slug && p.locale === locale,
-        ),
-      ),
-      path: `/blog/${post.slug}`,
+      lang,
+      // Alternates name only translated posts, so crawlers never follow a
+      // locale the post does not exist in.
+      locales: postLocales(slug),
+      path: postPath(post),
       title: post.title,
     }),
     authors: [{ name: SITE_NAME }],
   };
 }
 
-const PostLayout = async (props: {
-  params: Promise<{ slug: string; lang: Locale }>;
-}) => {
-  const params = await props.params;
-  const { lang } = params;
-  const post = await getPostFromParams(params);
+const PostLayout = async (props: Props) => {
+  const { lang, slug } = await props.params;
+  const post = getPost(lang, slug);
 
   if (!post) {
     notFound();
@@ -112,13 +84,13 @@ const PostLayout = async (props: {
 
   const wordCount = countWords(post.body.raw);
   const readingTime = calculateReadingTime(wordCount);
-  const path = `/blog/${post.slug}`;
+  const path = postPath(post);
   const jsonLd = graph(
     organization(),
     techArticle({
       date: post.date,
       description: post.description,
-      lang: post.locale as Locale,
+      lang,
       path,
       readingMinutes: readingTime,
       title: post.title,
@@ -210,7 +182,7 @@ const PostLayout = async (props: {
                 dateTime={post.date}
                 itemProp="datePublished"
               >
-                Published: {format(parseISO(post.date), 'LLLL d, yyyy')}
+                Published: {formatPostDate(post.date, lang)}
               </time>
               <span>•</span>
               <span content={`PT${readingTime}M`} itemProp="timeRequired">

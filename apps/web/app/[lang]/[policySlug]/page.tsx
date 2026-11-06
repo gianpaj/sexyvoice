@@ -1,71 +1,39 @@
-import { allPolicyPages } from 'contentlayer/generated';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
+import { getPolicy, isPolicySlug, POLICY_SLUGS } from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
-
-const POLICY_CONFIG = {
-  'privacy-policy': {
-    fallbackTitle: 'Privacy Policy',
-  },
-  terms: {
-    fallbackTitle: 'Terms and Conditions',
-  },
-} as const;
-
-type PolicySlug = keyof typeof POLICY_CONFIG;
 
 interface Props {
   params: Promise<{ lang: Locale; policySlug: string }>;
 }
 
-const isPolicySlug = (value: string): value is PolicySlug =>
-  value in POLICY_CONFIG;
+async function policyFromParams({ params }: Props) {
+  const { lang, policySlug } = await params;
+  const policy = isPolicySlug(policySlug)
+    ? getPolicy(lang, policySlug)
+    : undefined;
 
-const getPolicyByLocale = (lang: Locale, policySlug: PolicySlug) => {
-  const localized = allPolicyPages.find(
-    (policy) => policy.slug === policySlug && policy.locale === lang,
-  );
+  if (!policy) {
+    notFound();
+  }
 
-  if (localized) return localized;
-
-  return allPolicyPages.find(
-    (policy) =>
-      policy.slug === policySlug && policy.locale === routing.defaultLocale,
-  );
-};
+  return { lang, policy, policySlug };
+}
 
 export const dynamicParams = false;
 
 export const generateStaticParams = () =>
   routing.locales.flatMap((lang) =>
-    (Object.keys(POLICY_CONFIG) as PolicySlug[]).map((policySlug) => ({
-      lang,
-      policySlug,
-    })),
+    POLICY_SLUGS.map((policySlug) => ({ lang, policySlug })),
   );
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { lang, policySlug } = await params;
-
-  if (!isPolicySlug(policySlug)) {
-    return {
-      title: 'Policy',
-    } satisfies Metadata;
-  }
-
-  const policy = getPolicyByLocale(lang, policySlug);
-
-  if (!policy) {
-    return {
-      title: POLICY_CONFIG[policySlug].fallbackTitle,
-    } satisfies Metadata;
-  }
-
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const { lang, policy, policySlug } = await policyFromParams(props);
   return pageMetadata({
     description: policy.description ?? '',
     lang,
@@ -74,15 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function PolicyPage({ params }: Props) {
-  const { lang, policySlug } = await params;
-  const policy = isPolicySlug(policySlug)
-    ? getPolicyByLocale(lang, policySlug)
-    : undefined;
-
-  if (!policy) {
-    notFound();
-  }
+export default async function PolicyPage(props: Props) {
+  const { lang, policy } = await policyFromParams(props);
 
   return (
     <MarketingPage

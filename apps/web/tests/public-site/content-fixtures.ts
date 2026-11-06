@@ -28,17 +28,7 @@ function localeAndSlug(file: string) {
 
 function post(
   file: string,
-  fields: Omit<
-    Post,
-    | '_id'
-    | '_raw'
-    | 'body'
-    | 'locale'
-    | 'slug'
-    | 'slugAsParams'
-    | 'type'
-    | 'url'
-  >,
+  fields: Omit<Post, '_id' | '_raw' | 'body' | 'locale' | 'slug' | 'type'>,
 ): Post {
   const { locale, slug } = localeAndSlug(file);
   return {
@@ -48,9 +38,7 @@ function post(
     body: mdxBody(`Body of ${slug} in ${locale}.`),
     locale,
     slug,
-    slugAsParams: slug,
     type: 'Post',
-    url: `/blog/${slug}`,
   };
 }
 
@@ -67,7 +55,6 @@ function policy(
     locale,
     slug,
     type: 'PolicyPage',
-    url: `/${locale}/${slug}`,
   };
 }
 

@@ -94,7 +94,7 @@ Anleitungen, Tutorials und Neuigkeiten zu KI-Stimmklonen, Text-zu-Sprache-Synthe
 
 ## [KI-Sprachanrufe in Echtzeit](https://sexyvoice.ai/de/blog/realtime-ai-voice-call)
 
-_2026-01-15T00:00:00.000Z_
+_2026-01-15_
 
 Sprich in Echtzeit mit KI-Charakteren.
 
@@ -106,7 +106,7 @@ Canonical URL: https://sexyvoice.ai/de/blog
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "84",
+    "x-markdown-tokens": "80",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -121,19 +121,19 @@ Guides, tutorials, and news about AI voice cloning, text-to-speech synthesis, an
 
 ## [Real-time AI Voice Calls](https://sexyvoice.ai/en/blog/realtime-ai-voice-call)
 
-_2026-01-15T00:00:00.000Z_
+_2026-01-15_
 
 Talk to AI characters in real time.
 
 ## [Voice AI Glossary](https://sexyvoice.ai/en/blog/voice-ai-glossary)
 
-_2025-06-27T00:00:00.000Z_
+_2025-06-27_
 
 The definitive glossary of voice AI terminology.
 
 ## [Hello from SexyVoice.ai](https://sexyvoice.ai/en/blog/hello-from-sexyvoice)
 
-_2025-04-28T00:00:00.000Z_
+_2025-04-28_
 
 Next-gen voice AI for synthesis and dubbing.
 
@@ -145,7 +145,7 @@ Canonical URL: https://sexyvoice.ai/en/blog
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "156",
+    "x-markdown-tokens": "146",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -160,7 +160,7 @@ Guías, tutoriales y noticias sobre clonación de voz con IA, síntesis de texto
 
 ## [Hola desde SexyVoice.ai](https://sexyvoice.ai/es/blog/hello-from-sexyvoice)
 
-_2025-04-28T00:00:00.000Z_
+_2025-04-28_
 
 IA de voz de nueva generación para síntesis y doblaje.
 
@@ -172,7 +172,7 @@ Canonical URL: https://sexyvoice.ai/es/blog
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "85",
+    "x-markdown-tokens": "82",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
