@@ -89,3 +89,55 @@ it('refreshes credits when a call is rejected for insufficient balance', async (
   expect(mocks.refetchQueries).not.toHaveBeenCalled();
   expect(result.current.shouldConnect).toBe(false);
 });
+
+it('sends a fresh browser timestamp and time zone on every connection', async () => {
+  const fetch = vi
+    .fn()
+    .mockImplementation(() =>
+      Promise.resolve(
+        Response.json({ accessToken: 'token', url: 'wss://example.test' }),
+      ),
+    );
+  vi.stubGlobal('fetch', fetch);
+  const { result } = renderHook(useConnection, { wrapper: ConnectionProvider });
+  const before = Date.now();
+  await act(() => result.current.connect());
+  const first = JSON.parse(fetch.mock.calls[0][1].body);
+  expect(first.timeZone).toBe(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  expect(Date.parse(first.clientTime)).toBeGreaterThanOrEqual(before);
+  expect(Date.parse(first.clientTime)).toBeLessThanOrEqual(Date.now());
+  const later = new Date(Date.now() + 60_000);
+  vi.useFakeTimers();
+  vi.setSystemTime(later);
+  try {
+    await act(() => result.current.connect());
+    const second = JSON.parse(fetch.mock.calls[1][1].body);
+    expect(second.clientTime).toBe(later.toISOString());
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it('connects when browser time zone detection fails', async () => {
+  const fetch = vi
+    .fn()
+    .mockImplementation(() =>
+      Promise.resolve(
+        Response.json({ accessToken: 'token', url: 'wss://example.test' }),
+      ),
+    );
+  vi.stubGlobal('fetch', fetch);
+  const clock = vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(() => {
+    throw new Error('Time zone unavailable');
+  });
+  try {
+    const { result } = renderHook(useConnection, {
+      wrapper: ConnectionProvider,
+    });
+    await act(() => result.current.connect());
+    expect(result.current.shouldConnect).toBe(true);
+    expect(JSON.parse(fetch.mock.calls[0][1].body).timeZone).toBeUndefined();
+  } finally {
+    clock.mockRestore();
+  }
+});

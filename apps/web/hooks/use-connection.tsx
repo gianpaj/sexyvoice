@@ -7,6 +7,7 @@ import { createContext, useCallback, useContext, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { PlaygroundState } from '@/data/playground-state';
+import { getCallerTime } from '@/lib/caller-time';
 import { invalidateCredits } from '@/lib/credits-query';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import useSupabaseBrowser from '@/lib/supabase/client';
@@ -57,7 +58,7 @@ export const ConnectionProvider = ({
     );
     try {
       const response = await fetch('/api/call-token', {
-        body: JSON.stringify(resolvedState),
+        body: JSON.stringify({ ...resolvedState, ...getCallerTime() }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
         signal: controller.signal,

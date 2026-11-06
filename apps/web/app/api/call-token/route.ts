@@ -139,6 +139,8 @@ export async function POST(request: Request) {
       selectedPresetId,
       selectedSceneId,
       memory,
+      clientTime,
+      timeZone,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
 
@@ -271,6 +273,8 @@ export async function POST(request: Request) {
     // Create metadata for agent to start with
     const metadata = {
       character_id: selectedPresetId,
+      client_time: clientTime,
+      time_zone: timeZone,
       initial_instruction: getInitialInstruction(selectedLanguage, model),
       instructions: resolvedInstructions,
       language: selectedLanguage,
