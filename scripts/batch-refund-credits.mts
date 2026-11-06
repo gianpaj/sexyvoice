@@ -2,10 +2,26 @@ import { readFileSync } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
 
-loadScriptEnv();
+const HELP = `Add credits back for double-billed voice calls, one CSV row at a time.
+
+Usage: pnpm batch-refund-credits <dupes.csv> [--dry-run]
+
+The CSV needs source_id, user_id, event_count and duplicate_credits columns;
+rows whose duplicate_credits is not a positive integer are skipped.
+
+  --dry-run   List the refunds without changing the database
+  -h, --help  Show this help`;
 
 interface DupeRow {
   duplicateCredits: number;
@@ -88,12 +104,11 @@ function parseCsv(filePath: string): DupeRow[] {
 }
 
 async function applyPlatformBugRefund(
+  supabase: ScriptSupabaseClient,
   userId: string,
   refundCredits: number,
   sourceId: string,
 ): Promise<void> {
-  const supabase = createAdminClient();
-
   const description = `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`;
 
   const { error: txError } = await supabase.from('credit_transactions').insert({
@@ -120,20 +135,31 @@ async function applyPlatformBugRefund(
 }
 
 async function main() {
-  const csvPath = process.argv[2];
-  if (!csvPath) {
-    console.error('Usage: tsx batch-refund-credits.mts <path-to-dupes.csv>');
-    process.exit(1);
+  const { positionals, values } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      'dry-run': { default: false, type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+    },
+  });
+  if (values.help) {
+    console.log(HELP);
+    return;
+  }
+  const [csvArgument, ...extra] = positionals;
+  if (!csvArgument || extra.length > 0) {
+    throw new Error(`Expected one CSV path.\n\n${HELP}`);
   }
 
-  const isDryRun = process.argv.includes('--dry-run');
+  const isDryRun = values['dry-run'];
+  const csvPath = inputPath(csvArgument);
 
   console.log(`Parsing CSV: ${csvPath}`);
   const rows = parseCsv(csvPath);
 
   if (rows.length === 0) {
     console.log('No valid rows to process.');
-    process.exit(0);
+    return;
   }
 
   const totalCredits = rows.reduce((s, r) => s + r.duplicateCredits, 0);
@@ -141,20 +167,23 @@ async function main() {
   console.log('\n=== Batch Refund Summary ===');
   console.log(`Rows to process : ${rows.length}`);
   console.log(`Total credits   : ${totalCredits.toLocaleString()}`);
-  console.log(`Supabase URL    : ${process.env.NEXT_PUBLIC_SUPABASE_URL}`);
   if (isDryRun) console.log('\n[DRY RUN — no changes will be made]');
   console.log('');
 
-  const rl = createInterface({ input, output });
+  let supabase: ScriptSupabaseClient | undefined;
+  if (!isDryRun) {
+    loadScriptEnv();
+    supabase = createScriptAdminClient();
+    const rl = createInterface({ input, output });
+    const confirm = (await rl.question('Proceed? (yes/no): '))
+      .trim()
+      .toLowerCase();
+    rl.close();
 
-  const confirm = (await rl.question('Proceed? (yes/no): '))
-    .trim()
-    .toLowerCase();
-  rl.close();
-
-  if (confirm !== 'yes') {
-    console.log('Cancelled.');
-    process.exit(0);
+    if (confirm !== 'yes') {
+      console.log('Cancelled.');
+      return;
+    }
   }
 
   const results: RefundResult[] = [];
@@ -168,7 +197,7 @@ async function main() {
       `${prefix} user=${row.userId.slice(0, 8)} credits=${row.duplicateCredits} ... `,
     );
 
-    if (isDryRun) {
+    if (!supabase) {
       console.log('(dry run)');
       results.push({
         credits: row.duplicateCredits,
@@ -182,6 +211,7 @@ async function main() {
 
     try {
       await applyPlatformBugRefund(
+        supabase,
         row.userId,
         row.duplicateCredits,
         row.sourceId,
@@ -219,11 +249,8 @@ async function main() {
         `  source=${r.sourceId} user=${r.userId} credits=${r.credits} — ${r.reason}`,
       );
     }
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 
-main().catch((err) => {
-  console.error('\nFatal:', err instanceof Error ? err.message : err);
-  process.exit(1);
-});
+runScript(import.meta.url, main);

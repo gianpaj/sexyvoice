@@ -1,11 +1,16 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { parseArgs } from 'node:util';
+import { fileURLToPath } from 'node:url';
 import { Effect, Result } from 'effect';
 import { all as progressAll } from 'effective-progress';
 
-import { loadScriptEnv } from './lib/env.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  requiredEnv,
+  runScript,
+} from './lib/cli.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
   assertR2BucketName,
@@ -131,22 +136,22 @@ class DownloadOutcomeError extends Error {
 }
 
 export function parseBackupCliArgs(args: string[]): BackupCliOptions {
-  const normalizedArgs = args[0] === '--' ? args.slice(1) : args;
-  const { values } = parseArgs({
-    allowPositionals: false,
-    args: normalizedArgs,
-    options: {
-      'download-dir': { type: 'string' },
-      'dry-run': { default: false, type: 'boolean' },
-      help: { default: false, short: 'h', type: 'boolean' },
-      'max-download-size': { type: 'string' },
-      source: { type: 'string' },
+  const { values } = parseCliArgs(
+    {
+      options: {
+        'download-dir': { type: 'string' },
+        'dry-run': { default: false, type: 'boolean' },
+        help: { default: false, short: 'h', type: 'boolean' },
+        'max-download-size': { type: 'string' },
+        source: { type: 'string' },
+      },
     },
-    strict: true,
-  });
+    args,
+  );
 
+  const downloadDir = values['download-dir'];
   const options: BackupCliOptions = {
-    downloadDir: values['download-dir'],
+    downloadDir: downloadDir?.trim() ? inputPath(downloadDir) : downloadDir,
     dryRun: values['dry-run'],
     help: values.help,
     maxDownloadBytes: values['max-download-size']
@@ -168,8 +173,8 @@ export function resolveBackupSources(
   const rawSources =
     source === undefined
       ? [
-          requiredEnv(environment, 'R2_BUCKET_NAME'),
-          requiredEnv(environment, 'R2_SPEECH_API_BUCKET_NAME'),
+          requiredEnv('R2_BUCKET_NAME', environment),
+          requiredEnv('R2_SPEECH_API_BUCKET_NAME', environment),
         ]
       : source.split(',');
 
@@ -717,14 +722,6 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function requiredEnv(environment: NodeJS.ProcessEnv, name: string): string {
-  const value = environment[name];
-  if (!value) {
-    throw new Error(`Missing env.${name}`);
-  }
-  return value;
-}
-
 async function writeJson(filePath: string, value: unknown): Promise<void> {
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, {
@@ -737,7 +734,7 @@ function printHelp(): void {
   console.log(`Back up R2 audio to a local directory without overwriting files.
 
 Usage:
-  pnpm backup-r2-audio -- --download-dir <path> [options]
+  pnpm backup-r2-audio --download-dir <path> [options]
 
 Options:
   --download-dir <path>       Required local backup directory
@@ -748,13 +745,13 @@ Options:
 }
 
 async function main(): Promise<void> {
-  loadScriptEnv();
   const options = parseBackupCliArgs(process.argv.slice(2));
   if (options.help) {
     printHelp();
     return;
   }
 
+  loadScriptEnv();
   const sources = resolveBackupSources(options.source, process.env);
   const result = await runBackup(options, sources, {
     client: createR2Client(),
@@ -762,12 +759,4 @@ async function main(): Promise<void> {
   process.exitCode = result.exitCode;
 }
 
-const entryPoint = process.argv[1]
-  ? pathToFileURL(path.resolve(process.argv[1])).href
-  : undefined;
-if (entryPoint === import.meta.url) {
-  main().catch((error: unknown) => {
-    console.error(errorMessage(error));
-    process.exitCode = 1;
-  });
-}
+runScript(import.meta.url, main);

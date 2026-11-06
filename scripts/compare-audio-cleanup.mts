@@ -2,22 +2,14 @@
 import { spawnSync } from 'node:child_process';
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseArgs } from 'node:util';
 import { fal } from '@fal-ai/client';
 
-import { loadScriptEnv } from './lib/env.mts';
-
-const { values, positionals } = parseArgs({
-  allowPositionals: true,
-  args: process.argv.slice(2).filter((argument) => argument !== '--'),
-  options: {
-    'dry-run': { type: 'boolean' },
-    'env-file': { multiple: true, type: 'string' },
-    help: { short: 'h', type: 'boolean' },
-    'max-seconds': { default: '60', type: 'string' },
-    out: { default: 'generated-speech/audio-cleanup', type: 'string' },
-  },
-});
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
 
 const AUDIO_EXTENSIONS = new Set([
   '.aac',
@@ -236,6 +228,16 @@ ${entries}</html>\n`,
 }
 
 async function main(): Promise<void> {
+  const { values, positionals } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      'dry-run': { type: 'boolean' },
+      'env-file': { multiple: true, type: 'string' },
+      help: { short: 'h', type: 'boolean' },
+      'max-seconds': { default: '60', type: 'string' },
+      out: { type: 'string' },
+    },
+  });
   if (values.help || positionals.length === 0) {
     console.log(`Compare fal audio cleanup models on local files. Writes a listen.html page.
 
@@ -254,7 +256,7 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
 
   const maxSeconds = Number(values['max-seconds']);
   if (!(maxSeconds > 0)) throw new Error('--max-seconds must be positive');
-  const files = await collectAudioFiles(positionals);
+  const files = await collectAudioFiles(positionals.map(inputPath));
   if (files.length === 0) throw new Error('No audio files found');
 
   const estimates = files.map((file) => ({
@@ -276,7 +278,9 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
   if (!process.env.FAL_KEY) throw new Error('Missing FAL_KEY');
   fal.config({ credentials: process.env.FAL_KEY });
 
-  const output = path.resolve(values.out);
+  const output = values.out
+    ? inputPath(values.out)
+    : path.resolve('generated-speech/audio-cleanup');
   await mkdir(output, { recursive: true });
 
   const slugs = new Set<string>();
@@ -334,4 +338,4 @@ Requires FAL_KEY, ffmpeg, and ffprobe.`);
   console.log(`Open ${path.join(output, 'listen.html')}`);
 }
 
-await main();
+runScript(import.meta.url, main);

@@ -1,15 +1,18 @@
 /// <reference path="../apps/web/lib/supabase/types.d.ts" />
 
 import { rm, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { parseArgs } from 'node:util';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { resolve } from 'node:path';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient } from './lib/supabase.mts';
-
-const scriptDirectory = dirname(fileURLToPath(import.meta.url));
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
 
 const PAGE_SIZE = 1000;
 const USER_BATCH_SIZE = 50;
@@ -141,23 +144,6 @@ export function reconcileCreditAccount(
   };
 }
 
-type FetchLike = typeof fetch;
-
-export function createReadOnlyFetch(delegate: FetchLike = fetch): FetchLike {
-  return (input, init) => {
-    const requestMethod = input instanceof Request ? input.method : undefined;
-    const method = (init?.method ?? requestMethod ?? 'GET').toUpperCase();
-
-    if (method !== 'GET' && method !== 'HEAD') {
-      return Promise.reject(
-        new Error(`Read-only audit blocked HTTP ${method}`),
-      );
-    }
-
-    return delegate(input, init);
-  };
-}
-
 function parsePositiveNumber(
   optionName: string,
   rawValue: string | undefined,
@@ -181,12 +167,8 @@ function parsePositiveNumber(
   return value;
 }
 
-function parseCliArgs(): CliOptions {
-  const rawArgs = process.argv.slice(2);
-  const args = rawArgs[0] === '--' ? rawArgs.slice(1) : rawArgs;
-  const { values } = parseArgs({
-    allowPositionals: false,
-    args,
+function readOptions(): CliOptions {
+  const { values } = parseCliArgs({
     options: {
       days: {
         type: 'string',
@@ -233,7 +215,7 @@ function parseCliArgs(): CliOptions {
 function displayHelp(): void {
   console.log(`
 Usage:
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days <number> [options]
+  pnpm audit-unexplained-credits --days <number> [options]
 
 Find recently changed credit balances that cannot be explained by recorded
 credit transactions and usage events. This script is strictly read-only.
@@ -246,14 +228,14 @@ Options:
   -h, --help              Show this help message
 
 Examples:
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 3
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 7 --min-credits 100
-  pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 1 --limit 25
+  pnpm audit-unexplained-credits --days 3
+  pnpm audit-unexplained-credits --days 7 --min-credits 100
+  pnpm audit-unexplained-credits --days 1 --limit 25
 `);
 }
 
 async function fetchRecentBalances(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   windowStart: string,
   auditAsOf: string,
   limit?: number,
@@ -303,7 +285,7 @@ function chunk<T>(values: T[], size: number): T[][] {
 }
 
 async function fetchProfiles(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
 ): Promise<Map<string, ProfileRow>> {
   const profiles = new Map<string, ProfileRow>();
@@ -327,7 +309,7 @@ async function fetchProfiles(
 }
 
 async function fetchBalancesByUserIds(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
 ): Promise<Map<string, CreditBalanceRow>> {
   const balances = new Map<string, CreditBalanceRow>();
@@ -351,7 +333,7 @@ async function fetchBalancesByUserIds(
 }
 
 async function fetchLedgerAggregates(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
   auditAsOf: string,
 ): Promise<Map<string, LedgerAggregate>> {
@@ -418,7 +400,7 @@ async function fetchLedgerAggregates(
 }
 
 async function fetchUsageAggregates(
-  supabase: SupabaseClient,
+  supabase: ScriptSupabaseClient,
   userIds: string[],
   auditAsOf: string,
 ): Promise<Map<string, UsageAggregate>> {
@@ -527,15 +509,6 @@ function createCsv(rows: AuditRow[]): string {
 function createDefaultOutputPath(days: number): string {
   const timestamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
   return resolve(`unexplained-credits-${days}d-${timestamp}.csv`);
-}
-
-function displayEnvironment(): void {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return;
-
-  const environment = url.includes('127.0.0.1') ? 'LOCAL' : 'PRODUCTION';
-  console.log(`Database: ${new URL(url).host} (${environment})`);
-  console.log('Mode: READ ONLY (SELECT requests only)\n');
 }
 
 function buildAuditRows(
@@ -653,7 +626,7 @@ function displaySummary(
 }
 
 async function main(): Promise<void> {
-  const options = parseCliArgs();
+  const options = readOptions();
   if (options.help) {
     displayHelp();
     return;
@@ -664,19 +637,13 @@ async function main(): Promise<void> {
     throw new Error('--days is required');
   }
 
-  loadScriptEnv([
-    resolve(scriptDirectory, '.env.local'),
-    resolve(scriptDirectory, '../apps/web/.env.local'),
-    resolve(scriptDirectory, '.env'),
-    resolve(scriptDirectory, '../apps/web/.env'),
-  ]);
-  const supabase = createScriptAdminClient({ fetch: createReadOnlyFetch() });
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: true });
   const auditAsOf = new Date(Date.now() - AUDIT_SAFETY_LAG_MS).toISOString();
   const windowStart = new Date(
     new Date(auditAsOf).getTime() - days * MILLISECONDS_PER_DAY,
   ).toISOString();
 
-  displayEnvironment();
   console.log(`Window start: ${windowStart}`);
   console.log(`Audit cutoff: ${auditAsOf} (5-minute safety lag)`);
   console.log(`Minimum unexplained credits: ${options.minCredits}`);
@@ -735,7 +702,7 @@ async function main(): Promise<void> {
   }
 
   const outputPath = options.output
-    ? resolve(options.output)
+    ? inputPath(options.output)
     : createDefaultOutputPath(days);
   // Create the report owner-only from the first byte: `mode` only applies to a
   // new file, so replace any existing one instead of writing through it.
@@ -754,15 +721,4 @@ async function main(): Promise<void> {
   );
 }
 
-const isMainModule =
-  process.argv[1] !== undefined &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-
-if (isMainModule) {
-  main().catch((error: unknown) => {
-    console.error(
-      `Audit failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
-    process.exitCode = 1;
-  });
-}
+runScript(import.meta.url, main);

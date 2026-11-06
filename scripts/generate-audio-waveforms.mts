@@ -8,13 +8,13 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, isAbsolute, resolve } from 'node:path';
-import { parseArgs } from 'node:util';
 
 import {
   assertWaveformPoints,
   DEFAULT_WAVEFORM_POINTS,
   extractAudioWaveform,
 } from './lib/audio-waveform-peaks.mts';
+import { inputPath, parseCliArgs, runScript } from './lib/cli.mts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -56,7 +56,7 @@ function isCurrent(
 }
 
 function main() {
-  const { values, positionals } = parseArgs({
+  const { values, positionals } = parseCliArgs({
     allowPositionals: true,
     options: {
       'audio-dir': { type: 'string' },
@@ -90,13 +90,12 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
       : Number(values.points);
   assertWaveformPoints(points);
   const root = resolve(import.meta.dirname, '..');
-  const audioDirectory = resolve(
-    values['audio-dir'] ??
-      resolve(root, 'apps/web/public/demo-clones/voxtral-3'),
-  );
-  const manifestPath = resolve(
-    values.manifest ?? resolve(root, 'apps/web/data/clone-demo-assets.json'),
-  );
+  const audioDirectory = values['audio-dir']
+    ? inputPath(values['audio-dir'])
+    : resolve(root, 'apps/web/public/demo-clones/voxtral-3');
+  const manifestPath = values.manifest
+    ? inputPath(values.manifest)
+    : resolve(root, 'apps/web/data/clone-demo-assets.json');
   const original = readFileSync(manifestPath, 'utf8');
   const manifest: unknown = JSON.parse(original);
   if (!(isRecord(manifest) && isRecord(manifest.assets))) {
@@ -104,7 +103,10 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
   }
   const assets = manifest.assets;
   const files = positionals.length
-    ? positionals.map((path) => ({ path: resolve(path), key: basename(path) }))
+    ? positionals.map((path) => ({
+        path: inputPath(path),
+        key: basename(path),
+      }))
     : Object.keys(assets).map((key) => {
         if (
           isAbsolute(key) ||
@@ -181,9 +183,4 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
   );
 }
 
-try {
-  main();
-} catch (error) {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-}
+runScript(import.meta.url, main);

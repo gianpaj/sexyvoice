@@ -1,37 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Fetch the most recently created profiles and check how many of their
- * `username` values (which are actually the user's email) belong to a
- * disposable / temporary email provider.
+ * Check how many recent signups use a disposable email domain, and optionally
+ * reset those users' credits. See HELP for the options.
  *
  * Two independent sources are used so the results can be cross-checked:
  *   1. The `disposable-email-domains-js` npm package (the same one used by
  *      the web app's signup route — apps/web/app/auth/signup/route.ts).
  *   2. The `denyDomains.txt` list from amieiro/disposable-email-domains,
  *      which is cloned (shallow) into scripts/.cache on first run.
- *
- * Usage:
- *   pnpm --filter @sexyvoice/scripts check-disposable-emails [-- --limit 2000]
- *   node check-disposable-emails.mjs --limit 2000
- *   node check-disposable-emails.mjs --days 30
- *
- * Options:
- *   --limit <n>      Number of most-recent profiles to fetch (default: 10000).
- *   --days <n>       Only consider profiles created in the last <n> days
- *                    (applied in addition to --limit).
- *   --out <dir>      Output directory for the summary / CSV (default: cwd).
- *   --no-clone       Skip cloning/updating the amieiro repo (use cached copy).
- *   --reset-credits  Reset the flagged users' credits to 0: zeroes the
- *                    `credits` row and inserts an audit `credit_transactions`
- *                    row for each user that has credits remaining.
- *   --dry-run        With --reset-credits, only report what would change.
- *   --domains-only   In credit-reset logs, print the email domain instead of
- *                    the full address (useful for CI / shared reports).
- *   --yes            Skip the interactive confirmation for a live reset.
- *
- * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY. These are
- * read from apps/web/.env.local (then scripts/.env) automatically.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -40,75 +17,75 @@ import { dirname, join } from 'node:path';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
-import { createClient } from '@supabase/supabase-js';
 import {
   isDisposableEmail,
   isDisposableEmailDomain,
 } from 'disposable-email-domains-js';
-import { config as loadEnv } from 'dotenv';
+
+import {
+  inputPath,
+  isLocalUrl,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import { createScriptAdminClient } from './lib/supabase.mts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Load env from the web app first, then fall back to scripts/.env.
-loadEnv({ path: join(__dirname, '../apps/web/.env.local') });
-loadEnv({ path: join(__dirname, '.env') });
+const HELP = `Count recent signups whose email domain is disposable, and optionally
+reset their credits to 0. Paid users are never reset.
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
+Usage: pnpm check-disposable-emails [options]
 
-if (!(SUPABASE_URL && SUPABASE_SECRET_KEY)) {
-  console.error('Missing required environment variables:');
-  console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-  console.error('  - SUPABASE_SECRET_KEY');
-  console.error(
-    '\nThey are read from apps/web/.env.local or scripts/.env. Add them and retry.',
-  );
-  process.exit(1);
-}
+  --limit <n>      Most recent profiles to check (default: 10000)
+  --days <n>       Only profiles created in the last <n> days, within --limit
+  --out <dir>      Directory for the summary and CSV (default: working directory)
+  --no-clone       Use the cached amieiro list without cloning or updating it
+  --reset-credits  Reset the flagged users' credits to 0, with a ledger row each
+  --dry-run        With --reset-credits, report what would change
+  --domains-only   Print email domains instead of addresses in reset logs
+  --yes            Skip the typed confirmation for a live reset
+  -h, --help       Show this help`;
 
-// ---------------------------------------------------------------------------
-// CLI args
-// ---------------------------------------------------------------------------
-function parseArgs(argv) {
-  const args = {
-    clone: true,
-    days: null,
-    domainsOnly: false,
-    dryRun: false,
-    limit: 10_000,
-    out: process.cwd(),
-    resetCredits: false,
-    yes: false,
+function readOptions() {
+  const { values } = parseCliArgs({
+    options: {
+      days: { type: 'string' },
+      'domains-only': { default: false, type: 'boolean' },
+      'dry-run': { default: false, type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      limit: { default: '10000', type: 'string' },
+      'no-clone': { default: false, type: 'boolean' },
+      out: { type: 'string' },
+      'reset-credits': { default: false, type: 'boolean' },
+      yes: { default: false, type: 'boolean' },
+    },
+  });
+  const options = {
+    clone: !values['no-clone'],
+    days: values.days === undefined ? null : Number(values.days),
+    domainsOnly: values['domains-only'],
+    dryRun: values['dry-run'],
+    help: values.help,
+    limit: Number(values.limit),
+    out: values.out ? inputPath(values.out) : process.cwd(),
+    resetCredits: values['reset-credits'],
+    yes: values.yes,
   };
-  const rest = [...argv];
-  while (rest.length > 0) {
-    const arg = rest.shift();
-    if (arg === '--limit') {
-      args.limit = Number.parseInt(rest.shift(), 10);
-    } else if (arg === '--days') {
-      args.days = Number.parseInt(rest.shift(), 10);
-    } else if (arg === '--out') {
-      args.out = rest.shift();
-    } else if (arg === '--no-clone') {
-      args.clone = false;
-    } else if (arg === '--reset-credits') {
-      args.resetCredits = true;
-    } else if (arg === '--dry-run') {
-      args.dryRun = true;
-    } else if (arg === '--domains-only') {
-      args.domainsOnly = true;
-    } else if (arg === '--yes') {
-      args.yes = true;
-    }
+  if (!(Number.isSafeInteger(options.limit) && options.limit > 0)) {
+    throw new Error('--limit must be a positive integer');
   }
-  if (!(Number.isFinite(args.limit) && args.limit > 0)) {
-    console.error('--limit must be a positive integer');
-    process.exit(1);
+  if (
+    options.days !== null &&
+    !(Number.isSafeInteger(options.days) && options.days > 0)
+  ) {
+    throw new Error('--days must be a positive integer');
   }
-  return args;
+  return options;
 }
 
-const args = parseArgs(process.argv.slice(2));
+let args;
 
 // ---------------------------------------------------------------------------
 // amieiro/disposable-email-domains -> denyDomains.txt
@@ -142,15 +119,13 @@ function ensureAmieiroList() {
       { stdio: 'inherit' },
     );
   } else {
-    console.error(
+    throw new Error(
       `--no-clone given but no cached repo at ${REPO_DIR}. Remove --no-clone to clone it.`,
     );
-    process.exit(1);
   }
 
   if (!existsSync(DENY_FILE)) {
-    console.error(`denyDomains.txt not found at ${DENY_FILE}`);
-    process.exit(1);
+    throw new Error(`denyDomains.txt not found at ${DENY_FILE}`);
   }
 
   const lines = readFileSync(DENY_FILE, 'utf8').split('\n');
@@ -354,8 +329,7 @@ async function zeroUserCredits(supabase, flag, current, ts) {
 }
 
 async function confirmLiveReset(count) {
-  const isLocal =
-    SUPABASE_URL.includes('127.0.0.1') || SUPABASE_URL.includes('localhost');
+  const isLocal = isLocalUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
   console.log(
     `\n⚠️  About to reset credits to 0 for up to ${count} flagged users on the ${isLocal ? 'LOCAL' : 'PRODUCTION'} database.`,
   );
@@ -452,8 +426,7 @@ async function fetchRecentProfiles(supabase) {
 
     const { data, error } = await query;
     if (error) {
-      console.error('Error fetching profiles:', error);
-      process.exit(1);
+      throw new Error(`Failed to fetch profiles: ${error.message}`);
     }
     profiles.push(...data);
     if (data.length < end - offset + 1) {
@@ -508,11 +481,19 @@ function classifyProfiles(profiles, denySet) {
 }
 
 async function main() {
+  args = readOptions();
+  if (args.help) {
+    console.log(HELP);
+    return;
+  }
+
   const denySet = ensureAmieiroList();
   console.log(`amieiro denyDomains.txt: ${denySet.size} domains loaded\n`);
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
+  loadScriptEnv();
+  // A dry run or a plain check only reads; a live reset also writes.
+  const supabase = createScriptAdminClient({
+    readOnly: !args.resetCredits || args.dryRun,
   });
 
   const profiles = await fetchRecentProfiles(supabase);
@@ -610,7 +591,4 @@ async function main() {
   await handleCreditReset(supabase, flagged);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+runScript(import.meta.url, main);

@@ -12,13 +12,15 @@
  * minified. TypeScript widens a homogeneous JSON array to `string[]`, so the
  * import stays cheap to type-check.
  *
- * Run: pnpm --filter @sexyvoice/scripts sync-deny-domains
+ * Run: pnpm sync-deny-domains
  */
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { parseCliArgs, runScript } from './lib/cli.mts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -49,8 +51,7 @@ function ensureRepo() {
     );
   }
   if (!existsSync(DENY_FILE)) {
-    console.error(`denyDomains.txt not found at ${DENY_FILE}`);
-    process.exit(1);
+    throw new Error(`denyDomains.txt not found at ${DENY_FILE}`);
   }
 }
 
@@ -66,6 +67,15 @@ function loadDomains() {
 }
 
 function main() {
+  const { values } = parseCliArgs({
+    options: { help: { default: false, short: 'h', type: 'boolean' } },
+  });
+  if (values.help) {
+    console.log(
+      'Regenerate apps/web/lib/disposable-email/deny-domains.json from amieiro/disposable-email-domains.\n\nUsage: pnpm sync-deny-domains',
+    );
+    return;
+  }
   ensureRepo();
   const domains = loadDomains();
   console.log(`Loaded ${domains.length} unique domains`);
@@ -75,4 +85,4 @@ function main() {
   console.log(`Wrote ${domains.length} domains to ${OUT_FILE}`);
 }
 
-main();
+runScript(import.meta.url, main);

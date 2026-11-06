@@ -295,10 +295,10 @@ cache entry.
 
 ## TypeScript maintenance scripts
 
-New TypeScript maintenance scripts must call `loadScriptEnv()` from
-`lib/env.mts` and create privileged Supabase clients with
-`createScriptAdminClient()` from `lib/supabase.mts`. Keep command-specific
-warnings and confirmation policy in the command.
+Every command uses `lib/cli.mts` for arguments, env files and its entry point,
+and creates privileged Supabase clients with `createScriptAdminClient()` from
+`lib/supabase.mts`. Keep command-specific warnings and confirmation policy in
+the command.
 
 ## Gemini 3.8 voice samples
 

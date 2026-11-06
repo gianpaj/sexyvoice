@@ -1,10 +1,18 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
+import { UUID_PATTERN } from './lib/uuid.mts';
 
-loadScriptEnv();
+const HELP = `Refund one user's credits interactively: a cash refund against a
+purchase, or a credits-only platform-bug refund. Prompts for every amount and
+asks for confirmation before writing.
+
+Usage: pnpm refund-credits [user-id]`;
 
 interface CreditTransaction {
   amount: number;
@@ -41,16 +49,9 @@ interface RefundCalculation {
  * Get all credit transactions for a user
  */
 async function getCreditTransactions(
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<CreditTransaction[]> {
-  const supabase = createAdminClient();
-
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
-    console.warn('Using local Supabase URL');
-  } else {
-    console.warn('Using production Supabase URL');
-  }
-
   const { data, error } = await supabase
     .from('credit_transactions')
     .select('*')
@@ -67,9 +68,10 @@ async function getCreditTransactions(
 /**
  * Get user's credit balance from credits table
  */
-async function getUserCreditBalance(userId: string): Promise<number> {
-  const supabase = createAdminClient();
-
+async function getUserCreditBalance(
+  supabase: ScriptSupabaseClient,
+  userId: string,
+): Promise<number> {
   const { data, error } = await supabase
     .from('credits')
     .select('amount')
@@ -83,8 +85,10 @@ async function getUserCreditBalance(userId: string): Promise<number> {
   return data?.amount || 0;
 }
 
-async function getTotalCreditsUsedFromEvents(userId: string): Promise<number> {
-  const supabase = createAdminClient();
+async function getTotalCreditsUsedFromEvents(
+  supabase: ScriptSupabaseClient,
+  userId: string,
+): Promise<number> {
   const { data, error } = await supabase
     .from('usage_events')
     .select('credits_used')
@@ -188,14 +192,17 @@ function calculateRefund(
 /**
  * Insert refund transaction and update credits table
  */
-async function insertRefundTransaction(options: {
-  userId: string;
-  refundCredits: number;
-  refundUSD: number;
-  originalTransaction: CreditTransaction | null;
-  chargeId?: string;
-  platformBugReason?: string;
-}): Promise<void> {
+async function insertRefundTransaction(
+  supabase: ScriptSupabaseClient,
+  options: {
+    userId: string;
+    refundCredits: number;
+    refundUSD: number;
+    originalTransaction: CreditTransaction | null;
+    chargeId?: string;
+    platformBugReason?: string;
+  },
+): Promise<void> {
   const {
     userId,
     refundCredits,
@@ -204,7 +211,6 @@ async function insertRefundTransaction(options: {
     chargeId,
     platformBugReason,
   } = options;
-  const supabase = createAdminClient();
 
   // For platform bug refunds, we're adding credits back (no USD involved)
   // For regular refunds, we're taking credits back (negative USD)
@@ -348,17 +354,12 @@ async function promptUser(
  */
 async function getUserId(
   rl: ReturnType<typeof createInterface>,
+  argument: string | undefined,
 ): Promise<string> {
-  let userId = process.argv[2];
-
-  if (!userId) {
-    userId = await promptUser(rl, 'Enter user ID: ');
+  const userId = argument || (await promptUser(rl, 'Enter user ID: '));
+  if (!UUID_PATTERN.test(userId)) {
+    throw new Error('Provide the user ID as a UUID');
   }
-
-  if (!userId) {
-    throw new Error('User ID is required');
-  }
-
   return userId;
 }
 
@@ -484,20 +485,34 @@ async function getRefundDollarAmount(
  * Main function
  */
 async function main() {
+  const { positionals, values } = parseCliArgs({
+    allowPositionals: true,
+    options: { help: { default: false, short: 'h', type: 'boolean' } },
+  });
+  if (values.help) {
+    console.log(HELP);
+    return;
+  }
+  if (positionals.length > 1) {
+    throw new Error(`Expected at most one user ID.\n\n${HELP}`);
+  }
+
   const rl = createInterface({ input, output });
 
   try {
-    const userId = await getUserId(rl);
+    const userId = await getUserId(rl, positionals[0]);
+    loadScriptEnv();
+    const supabase = createScriptAdminClient();
     console.log(`\nProcessing refund for user: ${userId}\n`);
 
     // Fetch data
     console.log('Fetching credit transactions...');
-    const transactions = await getCreditTransactions(userId);
+    const transactions = await getCreditTransactions(supabase, userId);
 
     console.log('Fetching user credit balance...');
     const [userCreditBalance, totalUsedFromEvents] = await Promise.all([
-      getUserCreditBalance(userId),
-      getTotalCreditsUsedFromEvents(userId),
+      getUserCreditBalance(supabase, userId),
+      getTotalCreditsUsedFromEvents(supabase, userId),
     ]);
 
     // Check if user has only freemium transactions
@@ -612,7 +627,7 @@ async function main() {
 
     // Insert refund transaction
     console.log('\nProcessing refund...');
-    await insertRefundTransaction({
+    await insertRefundTransaction(supabase, {
       chargeId: chargeId || undefined,
       originalTransaction: selectedTransaction,
       platformBugReason,
@@ -622,17 +637,9 @@ async function main() {
     });
 
     console.log('✅ Refund transaction created successfully!\n');
-  } catch (error) {
-    console.error(
-      '\n❌ Error:',
-      Error.isError(error) ? error.message : error,
-      '\n',
-    );
-    process.exit(1);
   } finally {
     rl.close();
   }
 }
 
-// Run the script
-await main();
+runScript(import.meta.url, main);

@@ -1,6 +1,5 @@
-import { parseArgs } from 'node:util';
-
 import storageLayout from '../../apps/web/lib/storage/layout.ts';
+import { parseCliArgs } from './cli.mts';
 import {
   compareR2ObjectsOldestFirst as compareOldestFirst,
   normalizeEtag,
@@ -133,22 +132,21 @@ export function buildAllowedLocations({
 }
 
 export function parseCleanupCliArgs(args: string[]): CleanupCliOptions {
-  const normalizedArgs = args[0] === '--' ? args.slice(1) : args;
-  const { values } = parseArgs({
-    allowPositionals: false,
-    args: normalizedArgs,
-    options: {
-      delete: { default: false, type: 'boolean' },
-      download: { default: false, type: 'boolean' },
-      'download-dir': { type: 'string' },
-      force: { default: false, type: 'boolean' },
-      help: { default: false, short: 'h', type: 'boolean' },
-      manifest: { type: 'string' },
-      'max-download-size': { type: 'string' },
-      yes: { default: false, type: 'boolean' },
+  const { values } = parseCliArgs(
+    {
+      options: {
+        delete: { default: false, type: 'boolean' },
+        download: { default: false, type: 'boolean' },
+        'download-dir': { type: 'string' },
+        force: { default: false, type: 'boolean' },
+        help: { default: false, short: 'h', type: 'boolean' },
+        manifest: { type: 'string' },
+        'max-download-size': { type: 'string' },
+        yes: { default: false, type: 'boolean' },
+      },
     },
-    strict: true,
-  });
+    args,
+  );
 
   const options: CleanupCliOptions = {
     delete: values.delete,

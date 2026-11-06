@@ -1,11 +1,11 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { parseArgs } from 'node:util';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
-
-loadScriptEnv();
+import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,8 +48,10 @@ interface UpdateResult {
  * Fetch all call sessions ordered by started_at ascending.
  * Optionally limited to a max number of rows.
  */
-async function fetchCallSessions(limit?: number): Promise<CallSession[]> {
-  const supabase = createAdminClient();
+async function fetchCallSessions(
+  supabase: ScriptSupabaseClient,
+  limit?: number,
+): Promise<CallSession[]> {
   const results: CallSession[] = [];
   const BATCH_SIZE = 1000;
 
@@ -87,9 +89,9 @@ async function fetchCallSessions(limit?: number): Promise<CallSession[]> {
  * Returns them grouped by user_id, each group sorted by created_at ascending.
  */
 async function fetchPaidTransactions(
+  supabase: ScriptSupabaseClient,
   userIds: string[],
 ): Promise<Map<string, CreditTransaction[]>> {
-  const supabase = createAdminClient();
   const map = new Map<string, CreditTransaction[]>();
 
   if (userIds.length === 0) return map;
@@ -173,8 +175,10 @@ function computeUpdates(
 /**
  * Apply the updates to the database.
  */
-async function applyUpdates(results: UpdateResult[]): Promise<UpdateResult[]> {
-  const supabase = createAdminClient();
+async function applyUpdates(
+  supabase: ScriptSupabaseClient,
+  results: UpdateResult[],
+): Promise<UpdateResult[]> {
   const toUpdate = results.filter((r) => r.changed);
   const BATCH_SIZE = 100;
 
@@ -231,14 +235,6 @@ function formatTimestamp(timestamp: string): string {
     return timestamp;
   }
   return date.toISOString().replace(/\.\d{3}Z$/, 'Z');
-}
-
-function displayEnvironmentWarning(): void {
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
-    console.log('⚠️  WARNING: Using LOCAL Supabase URL\n');
-  } else {
-    console.log('⚠️  WARNING: Using PRODUCTION Supabase URL\n');
-  }
 }
 
 function displaySummary(results: UpdateResult[], dryRun: boolean): void {
@@ -318,7 +314,7 @@ function displayChanges(
 
 function displayHelp(): void {
   console.log(`
-Usage: pnpm tsx scripts/backfill-free-call.mts [options]
+Usage: pnpm backfill-free-call [options]
 
 Retroactively sets the free_call column on call_sessions based on whether the
 user had a paid transaction (purchase or topup) before the call was created.
@@ -333,13 +329,13 @@ Options:
 
 Examples:
   # Dry-run to see what would change
-  pnpm tsx scripts/backfill-free-call.mts --dryrun
+  pnpm backfill-free-call --dryrun
 
   # Dry-run first 10 records
-  pnpm tsx scripts/backfill-free-call.mts --dryrun --limit 10
+  pnpm backfill-free-call --dryrun --limit 10
 
   # Apply changes (will prompt for confirmation)
-  pnpm tsx scripts/backfill-free-call.mts
+  pnpm backfill-free-call
 `);
 }
 
@@ -347,43 +343,20 @@ Examples:
 // CLI parsing & prompts
 // ---------------------------------------------------------------------------
 
-function parseCliArgs(): CliOptions {
-  try {
-    const { values } = parseArgs({
-      allowPositionals: false,
-      args: process.argv.slice(2),
-      options: {
-        dryrun: {
-          default: false,
-          short: 'd',
-          type: 'boolean',
-        },
-        help: {
-          default: false,
-          short: 'h',
-          type: 'boolean',
-        },
-        limit: {
-          short: 'l',
-          type: 'string',
-        },
-      },
-    });
+function readOptions(): CliOptions {
+  const { values } = parseCliArgs({
+    options: {
+      dryrun: { default: false, short: 'd', type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      limit: { short: 'l', type: 'string' },
+    },
+  });
 
-    return {
-      dryrun: values.dryrun as boolean,
-      help: values.help as boolean,
-      limit: values.limit
-        ? Number.parseInt(values.limit as string, 10)
-        : undefined,
-    };
-  } catch (error: unknown) {
-    console.error(
-      'Error parsing arguments:',
-      error instanceof Error ? error.message : error,
-    );
-    process.exit(1);
-  }
+  return {
+    dryrun: values.dryrun,
+    help: values.help,
+    limit: values.limit ? Number.parseInt(values.limit, 10) : undefined,
+  };
 }
 
 async function promptUser(
@@ -399,24 +372,25 @@ async function promptUser(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const options = parseCliArgs();
+  const options = readOptions();
 
   if (options.help) {
     displayHelp();
-    process.exit(0);
+    return;
   }
 
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: options.dryrun });
   const rl = createInterface({ input, output });
 
   try {
     console.log('\n=== Backfill free_call on call_sessions ===\n');
-    displayEnvironmentWarning();
 
     // 1. Fetch call sessions
     console.log(
       `Fetching call sessions${options.limit ? ` (limit: ${options.limit})` : ''}...`,
     );
-    const sessions = await fetchCallSessions(options.limit);
+    const sessions = await fetchCallSessions(supabase, options.limit);
 
     if (sessions.length === 0) {
       console.log('No call sessions found. Nothing to do.\n');
@@ -431,7 +405,7 @@ async function main() {
     console.log(
       `Fetching paid transactions for ${userIds.length} unique user(s)...`,
     );
-    const paidTxMap = await fetchPaidTransactions(userIds);
+    const paidTxMap = await fetchPaidTransactions(supabase, userIds);
     const usersWithPayments = [...paidTxMap.keys()].length;
     console.log(
       `Found ${usersWithPayments} user(s) with purchase/topup transactions.\n`,
@@ -472,7 +446,7 @@ async function main() {
 
     // 6. Apply updates
     console.log(`\nApplying updates to ${changedCount} call session(s)...\n`);
-    await applyUpdates(results);
+    await applyUpdates(supabase, results);
 
     displayChanges(results, false);
     displaySummary(results, false);
@@ -482,19 +456,13 @@ async function main() {
       console.log(
         `\n⚠️  ${errors.length} update(s) failed. See errors above.\n`,
       );
+      process.exitCode = 1;
     } else {
       console.log('\n✅ All updates applied successfully!\n');
     }
-  } catch (error: unknown) {
-    console.error(
-      '\n❌ Error:',
-      error instanceof Error ? error.message : error,
-      '\n',
-    );
-    process.exit(1);
   } finally {
     rl.close();
   }
 }
 
-await main();
+runScript(import.meta.url, main);

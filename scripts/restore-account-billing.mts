@@ -1,13 +1,10 @@
 import { createRequire } from 'node:module';
-import { parseArgs } from 'node:util';
 
-import { loadScriptEnv } from './lib/env.mts';
+import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import { UUID_PATTERN } from './lib/uuid.mts';
 
 async function main() {
-  const args = process.argv.slice(2);
-  if (args[0] === '--') args.shift();
-  const { values } = parseArgs({
-    args,
+  const { values } = parseCliArgs({
     options: {
       'cleanup-stopped': { type: 'boolean' },
       'env-file': { multiple: true, type: 'string' },
@@ -19,7 +16,7 @@ async function main() {
   if (values.help) {
     console.log(`Restore billing after an interrupted account deletion.
 
-Usage: pnpm --filter @sexyvoice/scripts restore-account-billing --user-id <uuid> --cleanup-stopped [--env-file <path>]
+Usage: pnpm restore-account-billing --user-id <uuid> --cleanup-stopped [--env-file <path>]
 
 Confirm from request logs that every deletion request has stopped before using
 --cleanup-stopped. An expired Redis reservation is not enough.
@@ -28,14 +25,7 @@ The script refuses recovery while a billing reservation exists.`);
   }
 
   const userId = values['user-id'];
-  if (
-    !(
-      userId &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-        userId,
-      )
-    )
-  ) {
+  if (!(userId && UUID_PATTERN.test(userId))) {
     throw new Error('Provide the verified Supabase Auth UUID with --user-id.');
   }
   if (!values['cleanup-stopped']) {
@@ -60,7 +50,4 @@ The script refuses recovery while a billing reservation exists.`);
   );
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+runScript(import.meta.url, main);

@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 import { readFile } from 'node:fs/promises';
-import { parseArgs } from 'node:util';
 
-import { loadScriptEnv } from './lib/env.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
 import { createR2S3Client } from './lib/r2-client.mts';
 import {
   planR2FileUploads,
@@ -11,20 +15,19 @@ import {
 } from './lib/r2-file-upload.mts';
 import { assertR2BucketName } from './lib/r2-transfer.mts';
 
-const { values, positionals } = parseArgs({
-  allowPositionals: true,
-  options: {
-    bucket: { type: 'string' },
-    'content-type': { type: 'string', default: 'application/octet-stream' },
-    'dry-run': { type: 'boolean' },
-    'env-file': { multiple: true, type: 'string' },
-    help: { short: 'h', type: 'boolean' },
-    prefix: { type: 'string', default: '' },
-    'public-url': { type: 'string' },
-  },
-});
-
 async function main(): Promise<void> {
+  const { values, positionals } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      bucket: { type: 'string' },
+      'content-type': { type: 'string', default: 'application/octet-stream' },
+      'dry-run': { type: 'boolean' },
+      'env-file': { multiple: true, type: 'string' },
+      help: { short: 'h', type: 'boolean' },
+      prefix: { type: 'string', default: '' },
+      'public-url': { type: 'string' },
+    },
+  });
   if (values.help) {
     console.log(`Upload one or more files to an R2 bucket. Uploads by default.
 
@@ -37,7 +40,7 @@ pnpm upload-r2-files --bucket sv-audio-files --prefix demo-clones/voxtral-3 --co
 --env-file <file>     Load R2 credentials; repeatable
 --dry-run             Validate files and print destinations without network requests
 
-Paths are relative to the working directory. Shell globs expand into multiple files.
+Paths are relative to the directory you run the command in. Shell globs expand into multiple files.
 Preserves basenames; rejects duplicate destinations, directories, and symlinks.
 Never overwrites different objects. Requires R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
 and R2_ENDPOINT. Does not change runtime URLs or delete local files.`);
@@ -46,7 +49,7 @@ and R2_ENDPOINT. Does not change runtime URLs or delete local files.`);
   if (!values.bucket) throw new Error('--bucket is required');
   assertR2BucketName(values.bucket);
   const targets = await planR2FileUploads(
-    positionals,
+    positionals.map(inputPath),
     values.prefix,
     values['public-url'],
   );
@@ -93,7 +96,4 @@ and R2_ENDPOINT. Does not change runtime URLs or delete local files.`);
   }
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+runScript(import.meta.url, main);

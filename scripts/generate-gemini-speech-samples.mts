@@ -2,14 +2,18 @@
 import { spawnSync } from 'node:child_process';
 import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { parseArgs } from 'node:util';
 import { GoogleGenAI } from '@google/genai';
 
 import audioHelpers from '../apps/web/lib/audio.ts';
 import geminiPrompt from '../apps/web/lib/tts/gemini-prompt.ts';
 import geminiResponse from '../apps/web/lib/tts/gemini-response.ts';
 import providerCost from '../apps/web/lib/tts/provider-cost.ts';
-import { loadScriptEnv } from './lib/env.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
 import {
   readSampleCatalog,
   readVerifiedSample,
@@ -25,18 +29,6 @@ const { buildGeminiTtsContents, buildGeminiVoiceConfig, GEMINI_TTS_38 } =
   geminiPrompt;
 const { classifyGeminiTtsResponse } = geminiResponse;
 
-const { values } = parseArgs({
-  args: process.argv.slice(2).filter((argument) => argument !== '--'),
-  options: {
-    catalog: { type: 'string' },
-    'dry-run': { type: 'boolean' },
-    'env-file': { multiple: true, type: 'string' },
-    help: { short: 'h', type: 'boolean' },
-    'keep-wav': { type: 'boolean' },
-    out: { type: 'string' },
-  },
-});
-
 function ffmpeg(args: string[]): void {
   const result = spawnSync('ffmpeg', args, { encoding: 'utf8' });
   if (result.error) throw result.error;
@@ -44,10 +36,20 @@ function ffmpeg(args: string[]): void {
 }
 
 async function main(): Promise<void> {
+  const { values } = parseCliArgs({
+    options: {
+      catalog: { type: 'string' },
+      'dry-run': { type: 'boolean' },
+      'env-file': { multiple: true, type: 'string' },
+      help: { short: 'h', type: 'boolean' },
+      'keep-wav': { type: 'boolean' },
+      out: { type: 'string' },
+    },
+  });
   if (values.help) {
     console.log(`Generate local Gemini 3.8 MP3 samples. Never uploads or writes to the database.
 
-pnpm generate-gemini-speech-samples --catalog catalog.json --out generated-speech/gemini-38
+pnpm generate-gemini-speech-samples --catalog scripts/gemini-38-catalog.json --out scripts/generated-speech/gemini-38
 
 --catalog <file>    Version 1 gpro38 catalog with voices (id, name, language, text, style, filename)
 --out <directory>   Dedicated output directory; completed samples resume after hash verification
@@ -60,8 +62,8 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
   }
   if (!(values.catalog && values.out))
     throw new Error('--catalog and --out are required');
-  const catalog = await readSampleCatalog(values.catalog);
-  const output = path.resolve(values.out);
+  const catalog = await readSampleCatalog(inputPath(values.catalog));
+  const output = inputPath(values.out);
   for (const voice of catalog.voices)
     console.log(
       `${voice.name} (${voice.language}) -> ${path.join(output, voice.filename)}`,
@@ -226,7 +228,4 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
   if (manifest.failures.length) process.exitCode = 1;
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exitCode = 1;
-});
+runScript(import.meta.url, main);

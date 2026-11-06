@@ -3,22 +3,16 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { config } from 'dotenv';
+
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, '..');
 const scriptStartedAt = new Date().toISOString().replace(/[:.]/g, '-');
-
-config({
-  path: [
-    path.join(repoRoot, '.env.local'),
-    path.join(repoRoot, '.env'),
-    path.join(repoRoot, 'apps/web/.env.local'),
-    path.join(repoRoot, 'apps/web/.env'),
-    path.join(scriptDir, '.env.local'),
-    path.join(scriptDir, '.env'),
-  ],
-});
 
 // Voice IDs from https://docs.x.ai/docs/api-reference#tts
 const VOICES = [
@@ -180,7 +174,7 @@ function printHelp() {
   console.log(`Generate xAI TTS speech samples via the xAI TTS API.
 
 Usage:
-  node generate-xai-speech-samples.mjs -- --voices yis75yfp,abc123 --text "Hello" --language es-MX
+  pnpm generate-xai-speech-samples --voices yis75yfp,abc123 --text "Hello" --language es-MX
 
 Environment:
   XAI_API_KEY   Required Bearer API key
@@ -196,24 +190,24 @@ Options:
   -h, --help              Show this help`);
 }
 
-function readFlag(args, name) {
-  const equalsPrefix = `${name}=`;
-  const equalsValue = args.find((arg) => arg.startsWith(equalsPrefix));
-  if (equalsValue) {
-    return equalsValue.slice(equalsPrefix.length);
+function readOptions() {
+  const { values } = parseCliArgs({
+    options: {
+      'api-key': { type: 'string' },
+      'bit-rate': { type: 'string' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      language: { type: 'string' },
+      out: { type: 'string' },
+      'sample-rate': { type: 'string' },
+      text: { type: 'string' },
+      voices: { type: 'string' },
+    },
+  });
+  if (values.help) {
+    return { help: true };
   }
-  const index = args.indexOf(name);
-  if (index === -1) return;
-  return args[index + 1];
-}
 
-function parseArgs(args) {
-  if (args.includes('--help') || args.includes('-h')) {
-    printHelp();
-    process.exit(0);
-  }
-
-  const voicesFlag = readFlag(args, '--voices');
+  const voicesFlag = values.voices;
   const useNativeText = !voicesFlag;
   const voices = voicesFlag
     ? voicesFlag
@@ -226,28 +220,29 @@ function parseArgs(args) {
     throw new Error('--voices must contain at least one voice ID');
   }
 
-  const sampleRateFlag = readFlag(args, '--sample-rate');
+  const sampleRateFlag = values['sample-rate'];
   const sampleRate =
     sampleRateFlag === undefined ? 44_100 : Number(sampleRateFlag);
   if (!Number.isInteger(sampleRate) || sampleRate <= 0) {
     throw new Error('--sample-rate must be a positive integer');
   }
 
-  const bitRateFlag = readFlag(args, '--bit-rate');
+  const bitRateFlag = values['bit-rate'];
   const bitRate = bitRateFlag === undefined ? 128_000 : Number(bitRateFlag);
   if (!Number.isInteger(bitRate) || bitRate <= 0) {
     throw new Error('--bit-rate must be a positive integer');
   }
 
   return {
-    apiKey: readFlag(args, '--api-key') ?? process.env.XAI_API_KEY,
+    apiKey: values['api-key'],
     bitRate,
-    language: readFlag(args, '--language') ?? DEFAULT_LANGUAGE,
-    outDir: path.resolve(
-      readFlag(args, '--out') ?? path.join(scriptDir, 'generated-speech'),
-    ),
+    help: false,
+    language: values.language ?? DEFAULT_LANGUAGE,
+    outDir: values.out
+      ? inputPath(values.out)
+      : path.join(scriptDir, 'generated-speech'),
     sampleRate,
-    text: readFlag(args, '--text') ?? DEFAULT_TEXT,
+    text: values.text ?? DEFAULT_TEXT,
     useNativeText,
     voices,
   };
@@ -309,7 +304,13 @@ async function generateForVoice(options, voiceId) {
 }
 
 async function main() {
-  const options = parseArgs(process.argv.slice(2));
+  const options = readOptions();
+  if (options.help) {
+    printHelp();
+    return;
+  }
+  loadScriptEnv();
+  options.apiKey ??= process.env.XAI_API_KEY;
   if (!options.apiKey) {
     throw new Error(
       'Missing XAI_API_KEY. Set it in your env or pass --api-key.',
@@ -333,7 +334,4 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+runScript(import.meta.url, main);

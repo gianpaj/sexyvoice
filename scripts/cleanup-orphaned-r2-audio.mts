@@ -1,9 +1,14 @@
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { Redis } from '@upstash/redis';
 
-import { loadScriptEnv } from './lib/env.mts';
+import {
+  inputPath,
+  loadScriptEnv,
+  requiredEnv,
+  runScript,
+} from './lib/cli.mts';
 import { createR2Client } from './lib/r2-client.mts';
 import {
   type AudioUrlCache,
@@ -111,7 +116,7 @@ Inventory:
   pnpm cleanup-orphaned-r2-audio
 
 Download from a reviewed manifest:
-  pnpm cleanup-orphaned-r2-audio -- \\
+  pnpm cleanup-orphaned-r2-audio \\
     --manifest scripts/backups/r2-orphan-candidates-<timestamp>.json \\
     --download \\
     --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \\
@@ -121,7 +126,7 @@ Delete verified downloads:
   Add --delete --yes to the download command.
 
 Delete without a backup:
-  pnpm cleanup-orphaned-r2-audio -- \\
+  pnpm cleanup-orphaned-r2-audio \\
     --manifest scripts/backups/r2-orphan-candidates-<timestamp>.json \\
     --delete --force --yes
 
@@ -641,10 +646,8 @@ async function resolveExistingInputPath(input: string): Promise<string> {
     return input;
   }
 
-  const candidates = [
-    path.resolve(process.cwd(), input),
-    path.resolve(REPOSITORY_ROOT, input),
-  ];
+  // Manifest paths print relative to the repository root.
+  const candidates = [inputPath(input), path.resolve(REPOSITORY_ROOT, input)];
   for (const candidate of new Set(candidates)) {
     try {
       await access(candidate);
@@ -712,14 +715,6 @@ function fileTimestamp(date: Date): string {
   return date.toISOString().replace(/[:.]/g, '-');
 }
 
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing env.${name}`);
-  }
-  return value;
-}
-
 function isNodeError(
   error: unknown,
   code: string,
@@ -728,13 +723,17 @@ function isNodeError(
 }
 
 async function main(): Promise<void> {
-  loadScriptEnv();
-  const options = parseCleanupCliArgs(process.argv.slice(2));
-  if (options.help) {
+  const parsed = parseCleanupCliArgs(process.argv.slice(2));
+  if (parsed.help) {
     printHelp();
     return;
   }
+  const options = {
+    ...parsed,
+    downloadDir: parsed.downloadDir && inputPath(parsed.downloadDir),
+  };
 
+  loadScriptEnv();
   const config = readConfig();
   const r2 = createR2Client();
 
@@ -754,12 +753,4 @@ async function main(): Promise<void> {
   await runInventory(config, r2);
 }
 
-const entryPoint = process.argv[1]
-  ? pathToFileURL(path.resolve(process.argv[1])).href
-  : undefined;
-if (entryPoint === import.meta.url) {
-  main().catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  });
-}
+runScript(import.meta.url, main);

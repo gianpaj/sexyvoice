@@ -2,10 +2,20 @@ import { writeFile } from 'node:fs/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient as createAdminClient } from './lib/supabase.mts';
+import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
+import { UUID_PATTERN } from './lib/uuid.mts';
 
-loadScriptEnv();
+const HELP = `Compile one user's account, payments, usage and ledger reconciliation
+for a Stripe dispute. Reads only; writes dispute-<user-id>-<date>.md to the
+working directory.
+
+Usage: pnpm compile-dispute-evidence [user-id]
+
+Prompts for the user ID when it is not given.`;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,15 +101,11 @@ interface DisputeReport {
 }
 
 // ---------------------------------------------------------------------------
-// Supabase
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Data gathering (read-only, no side effects)
 // ---------------------------------------------------------------------------
 
 async function getAccount(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<Account> {
   const { data, error } = await supabase
@@ -119,7 +125,7 @@ async function getAccount(
 }
 
 async function getCreditTransactions(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<CreditTransaction[]> {
   const { data, error } = await supabase
@@ -136,7 +142,7 @@ async function getCreditTransactions(
 }
 
 async function getCurrentBalance(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<number> {
   const { data, error } = await supabase
@@ -153,7 +159,7 @@ async function getCurrentBalance(
 }
 
 async function getUsageSummary(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<UsageSummaryRow[]> {
   const { data, error } = await supabase
@@ -199,7 +205,7 @@ async function getUsageSummary(
 }
 
 async function getAudioFilesSummary(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<AudioFilesSummary> {
   const { data, error } = await supabase
@@ -266,7 +272,7 @@ async function getAudioFilesSummary(
 }
 
 async function getVoiceCloneCount(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<number> {
   const { count, error } = await supabase
@@ -282,7 +288,7 @@ async function getVoiceCloneCount(
 }
 
 async function getCallSessionsSummary(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: ScriptSupabaseClient,
   userId: string,
 ): Promise<CallSessionsSummary> {
   const { data, error } = await supabase
@@ -314,15 +320,10 @@ async function getCallSessionsSummary(
 /**
  * Fetch all data once into a single typed report object.
  */
-async function gatherReport(userId: string): Promise<DisputeReport> {
-  const supabase = createAdminClient();
-
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
-    console.warn('Using local Supabase URL');
-  } else {
-    console.warn('Using production Supabase URL');
-  }
-
+async function gatherReport(
+  supabase: ScriptSupabaseClient,
+  userId: string,
+): Promise<DisputeReport> {
   const account = await getAccount(supabase, userId);
 
   const [
@@ -619,20 +620,21 @@ function renderMarkdown(report: DisputeReport): string {
 // Input
 // ---------------------------------------------------------------------------
 
-async function getUserId(
-  rl: ReturnType<typeof createInterface>,
-): Promise<string> {
-  let userId = process.argv[2];
-
+async function getUserId(argument: string | undefined): Promise<string> {
+  let userId = argument;
   if (!userId) {
-    userId = (await rl.question('Enter user ID: ')).trim();
+    const rl = createInterface({ input, output });
+    try {
+      userId = (await rl.question('Enter user ID: ')).trim();
+    } finally {
+      rl.close();
+    }
   }
 
-  if (!userId) {
-    throw new Error('User ID is required');
+  if (!(userId && UUID_PATTERN.test(userId))) {
+    throw new Error('Provide the user ID as a UUID');
   }
-
-  return userId.replace(/[^a-zA-Z0-9-_]/g, '_');
+  return userId;
 }
 
 // ---------------------------------------------------------------------------
@@ -640,32 +642,31 @@ async function getUserId(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const rl = createInterface({ input, output });
-
-  try {
-    const userId = await getUserId(rl);
-    rl.close();
-
-    console.log(`\nCompiling dispute evidence for user: ${userId}\n`);
-
-    const report = await gatherReport(userId);
-
-    renderConsole(report);
-
-    const fileName = `dispute-${userId}-${report.generatedAt.slice(0, 10)}.md`;
-    await writeFile(fileName, renderMarkdown(report), 'utf8');
-    console.log(`📄 Markdown evidence written to: ${fileName}\n`);
-  } catch (error) {
-    console.error(
-      '\n❌ Error:',
-      Error.isError(error) ? error.message : error,
-      '\n',
-    );
-    process.exit(1);
-  } finally {
-    rl.close();
+  const { positionals, values } = parseCliArgs({
+    allowPositionals: true,
+    options: { help: { default: false, short: 'h', type: 'boolean' } },
+  });
+  if (values.help) {
+    console.log(HELP);
+    return;
   }
+  if (positionals.length > 1) {
+    throw new Error(`Expected at most one user ID.\n\n${HELP}`);
+  }
+
+  const userId = await getUserId(positionals[0]);
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: true });
+
+  console.log(`\nCompiling dispute evidence for user: ${userId}\n`);
+
+  const report = await gatherReport(supabase, userId);
+
+  renderConsole(report);
+
+  const fileName = `dispute-${userId}-${report.generatedAt.slice(0, 10)}.md`;
+  await writeFile(fileName, renderMarkdown(report), 'utf8');
+  console.log(`📄 Markdown evidence written to: ${fileName}\n`);
 }
 
-// Run the script
-await main();
+runScript(import.meta.url, main);

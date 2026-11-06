@@ -1,16 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
-import { parseArgs } from 'node:util';
 
-import { loadScriptEnv } from './lib/env.mts';
-import { createScriptAdminClient } from './lib/supabase.mts';
-
-loadScriptEnv();
-
-// UUID validation regex at top level for performance
-const UUID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import {
+  inputPath,
+  loadScriptEnv,
+  parseCliArgs,
+  runScript,
+} from './lib/cli.mts';
+import {
+  createScriptAdminClient,
+  type ScriptSupabaseClient,
+} from './lib/supabase.mts';
+import { UUID_PATTERN } from './lib/uuid.mts';
 
 // Batch size for fetching credit balances
 const BATCH_SIZE = 10;
@@ -39,9 +41,6 @@ interface ProcessingResult {
   userId: string;
   username: string;
 }
-
-const createAdminClient = () =>
-  createScriptAdminClient({ persistSession: true });
 
 /**
  * Parse CSV file and extract freeloader records
@@ -79,7 +78,7 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
       };
 
       // Validate UUID format
-      if (!UUID_REGEX.test(record.id)) {
+      if (!UUID_PATTERN.test(record.id)) {
         console.warn(`Skipping invalid UUID: ${record.id}`);
         continue;
       }
@@ -100,9 +99,9 @@ function parseCsvFile(filepath: string): FreeloaderRecord[] {
  * Get credit balances for multiple users in a single query
  */
 async function getUserCreditBalancesBatch(
+  supabase: ScriptSupabaseClient,
   userIds: string[],
 ): Promise<Map<string, number | null>> {
-  const supabase = createAdminClient();
   const balanceMap = new Map<string, number | null>();
 
   // Initialize all users as not found
@@ -137,6 +136,7 @@ async function getUserCreditBalancesBatch(
  * Get credit balances for all records in batches
  */
 async function getAllCreditBalances(
+  supabase: ScriptSupabaseClient,
   records: FreeloaderRecord[],
 ): Promise<Map<string, number | null>> {
   const allBalances = new Map<string, number | null>();
@@ -153,7 +153,7 @@ async function getAllCreditBalances(
       `  Fetching batch ${batchNumber}/${totalBatches} (${batch.length} users)...`,
     );
 
-    const balances = await getUserCreditBalancesBatch(batch);
+    const balances = await getUserCreditBalancesBatch(supabase, batch);
 
     // Merge batch results into all balances
     balances.forEach((balance, userId) => {
@@ -169,11 +169,10 @@ async function getAllCreditBalances(
  * Reset user credits to zero
  */
 async function resetUserCredits(
+  supabase: ScriptSupabaseClient,
   userId: string,
   currentCredits: number,
 ): Promise<void> {
-  const supabase = createAdminClient();
-
   if (currentCredits < 50) {
     console.log('  → User already less than 50 credits, skipping');
     return;
@@ -194,12 +193,11 @@ async function resetUserCredits(
  * Insert adjustment transaction for audit trail
  */
 async function insertAdjustmentTransaction(
+  supabase: ScriptSupabaseClient,
   userId: string,
   creditAmount: number,
   reason: string,
 ): Promise<void> {
-  const supabase = createAdminClient();
-
   const { error } = await supabase.from('credit_transactions').insert({
     amount: -Math.abs(creditAmount),
     description: reason,
@@ -221,6 +219,7 @@ async function insertAdjustmentTransaction(
  * Process a single user with pre-fetched balance
  */
 async function processUser(
+  supabase: ScriptSupabaseClient,
   record: FreeloaderRecord,
   currentBalance: number | null,
   dryRun: boolean,
@@ -257,11 +256,12 @@ async function processUser(
       };
     }
 
-    await resetUserCredits(record.id, currentBalance);
+    await resetUserCredits(supabase, record.id, currentBalance);
 
     // Optionally insert transaction record for audit trail
     if (insertTransaction && currentBalance > 0) {
       await insertAdjustmentTransaction(
+        supabase,
         record.id,
         currentBalance,
         `Credit adjustment - Freeloader bug exploitation (${record.usage_percentage}% over limit)`,
@@ -338,40 +338,22 @@ async function promptUser(
 /**
  * Parse CLI arguments
  */
-function parseCliArgs(): CliOptions {
-  try {
-    const { values, positionals } = parseArgs({
-      allowPositionals: true,
-      args: process.argv.slice(2),
-      options: {
-        dryrun: {
-          default: false,
-          type: 'boolean',
-        },
-        help: {
-          default: false,
-          short: 'h',
-          type: 'boolean',
-        },
-        limit: {
-          short: 'l',
-          type: 'string',
-        },
-      },
-    });
+function readOptions(): CliOptions {
+  const { values, positionals } = parseCliArgs({
+    allowPositionals: true,
+    options: {
+      dryrun: { default: false, short: 'd', type: 'boolean' },
+      help: { default: false, short: 'h', type: 'boolean' },
+      limit: { short: 'l', type: 'string' },
+    },
+  });
 
-    return {
-      csvPath: positionals[0],
-      dryrun: values.dryrun as boolean,
-      help: values.help as boolean,
-      limit: values.limit
-        ? Number.parseInt(values.limit as string, 10)
-        : undefined,
-    };
-  } catch (error) {
-    console.error('Error parsing arguments:', error);
-    process.exit(1);
-  }
+  return {
+    csvPath: positionals[0],
+    dryrun: values.dryrun,
+    help: values.help,
+    limit: values.limit ? Number.parseInt(values.limit, 10) : undefined,
+  };
 }
 
 /**
@@ -379,7 +361,7 @@ function parseCliArgs(): CliOptions {
  */
 function displayHelp(): void {
   console.log(`
-Usage: pnpm tsx scripts/reset-freeloader-credits.ts [options] <csv-file>
+Usage: pnpm reset-freeloader-credits [options] <csv-file>
 
 Reset credits to 0 for users who exploited a bug where credits weren't deducted.
 
@@ -393,16 +375,16 @@ Options:
 
 Examples:
   # Interactive mode (prompts for confirmation)
-  pnpm tsx scripts/reset-freeloader-credits.ts freeloaders.csv
+  pnpm reset-freeloader-credits freeloaders.csv
 
   # Dry-run mode
-  pnpm tsx scripts/reset-freeloader-credits.ts --dryrun freeloaders.csv
+  pnpm reset-freeloader-credits --dryrun freeloaders.csv
 
   # Process only first 10 records
-  pnpm tsx scripts/reset-freeloader-credits.ts --limit 10 freeloaders.csv
+  pnpm reset-freeloader-credits --limit 10 freeloaders.csv
 
   # Dry-run with limit
-  pnpm tsx scripts/reset-freeloader-credits.ts -d -l 5 freeloaders.csv
+  pnpm reset-freeloader-credits -d -l 5 freeloaders.csv
 
 CSV Format:
   id,username,created_at,total_credits_received,total_credits_used,current_credits,usage_percentage
@@ -464,17 +446,6 @@ function displayRecords(records: FreeloaderRecord[], limit?: number): void {
 }
 
 /**
- * Display environment warning
- */
-function displayEnvironmentWarning(): void {
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL?.includes('127.0.0.1')) {
-    console.log('⚠️  WARNING: Using LOCAL Supabase URL\n');
-  } else {
-    console.log('⚠️  WARNING: Using PRODUCTION Supabase URL\n');
-  }
-}
-
-/**
  * Get dry run confirmation
  */
 async function getDryRunMode(
@@ -522,6 +493,7 @@ async function getFinalConfirmation(
  * Process all records with pre-fetched balances
  */
 async function processRecords(
+  supabase: ScriptSupabaseClient,
   records: FreeloaderRecord[],
   balances: Map<string, number | null>,
   dryRun: boolean,
@@ -538,6 +510,7 @@ async function processRecords(
     );
 
     const result = await processUser(
+      supabase,
       record,
       currentBalance,
       dryRun,
@@ -563,22 +536,21 @@ async function processRecords(
  * Main function
  */
 async function main() {
-  // Parse CLI arguments
-  const options = parseCliArgs();
+  const options = readOptions();
 
-  // Show help if requested
   if (options.help) {
     displayHelp();
-    process.exit(0);
+    return;
   }
 
+  loadScriptEnv();
+  const supabase = createScriptAdminClient({ readOnly: options.dryrun });
   const rl = createInterface({ input, output });
 
   try {
     console.log('\n=== Reset Freeloader Credits ===\n');
 
-    // Get CSV file path
-    const csvPath = await getCsvPath(rl, options.csvPath);
+    const csvPath = inputPath(await getCsvPath(rl, options.csvPath));
     console.log(`\nReading CSV file: ${csvPath}\n`);
 
     // Read and parse CSV
@@ -597,10 +569,9 @@ async function main() {
 
     // Display summary
     displayRecords(records, options.limit);
-    displayEnvironmentWarning();
 
     // Batch fetch all credit balances upfront
-    const balances = await getAllCreditBalances(records);
+    const balances = await getAllCreditBalances(supabase, records);
 
     // Get user preferences
     const dryRun = await getDryRunMode(rl, options.dryrun);
@@ -622,6 +593,7 @@ async function main() {
     // Process records
     console.log(`\n${dryRun ? '[DRY RUN] ' : ''}Processing records...\n`);
     const results = await processRecords(
+      supabase,
       records,
       balances,
       dryRun,
@@ -638,17 +610,9 @@ async function main() {
     } else {
       console.log('✅ All records processed successfully!\n');
     }
-  } catch (error) {
-    console.error(
-      '\n❌ Error:',
-      error instanceof Error ? error.message : error,
-      '\n',
-    );
-    process.exit(1);
   } finally {
     rl.close();
   }
 }
 
-// Run the script
-await main();
+runScript(import.meta.url, main);
