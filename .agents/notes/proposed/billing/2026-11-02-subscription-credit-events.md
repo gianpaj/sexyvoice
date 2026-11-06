@@ -19,9 +19,12 @@ checkout customers, initial invoice payments, discounts, renewals, and the
 checkout, invoice, and subscription lifecycle sequence. Database queries and
 migrations are outside this change.
 
-Install, lint, fixall, type checks, all 36 Stripe tests, all 112 web test files,
-and all 72 script tests pass. The serialized production build compiles, then
-stops during page-data collection because `STRIPE_SECRET_KEY` is absent.
+Validation against main at 7e29974b passes install, lint, fixall, type checks,
+all 138 web test files with 2,030 passing tests and 18 skips, and all 132 script
+tests. Tests use two workers and a private Redis 7.2.4 server. The serialized
+production build compiles, then stops during page-data collection because R2
+environment variables are missing. Main's migrations require user application
+before database tests can run.
 
 The commit checks run on the PR diff against main with `lint-staged --diff`.
 Its default stash backup fails on main's tracked-directory-to-symlink change

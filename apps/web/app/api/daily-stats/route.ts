@@ -6,6 +6,11 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { callVoiceProvider } from '@/lib/call-voices';
+import {
+  countInworldWorkspaceVoices,
+  INWORLD_WORKSPACE_VOICE_LIMIT,
+} from '@/lib/clone/inworld';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { formatContribution, summarizeContribution } from './contribution';
 import { getContributionData } from './contribution-queries';
@@ -177,7 +182,7 @@ export async function GET(request: NextRequest) {
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (cached.version !== 4 || typeof cached.reportDate !== 'string') {
+    if (cached.version !== 5 || typeof cached.reportDate !== 'string') {
       console.log(
         '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
@@ -449,7 +454,7 @@ export async function GET(request: NextRequest) {
       reportDate: cacheReportDate,
       subscriptionsMrr,
       usageEvents14dResult,
-      version: 4,
+      version: 5,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -526,6 +531,12 @@ export async function GET(request: NextRequest) {
     callSessionsYesterdayData.filter(isCompletedUserCall).length;
   const completedCalls14d =
     callSessions14dData.filter(isCompletedUserCall).length;
+  const isClonedVoiceCall = (call: Pick<Tables<'call_sessions'>, 'model'>) =>
+    callVoiceProvider(call.model) !== null;
+  const clonedVoiceCallsYesterday =
+    callSessionsYesterdayData.filter(isClonedVoiceCall).length;
+  const clonedVoiceCalls14d =
+    callSessions14dData.filter(isClonedVoiceCall).length;
 
   // Calculate total duration for yesterday and the rolling 14-day window
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
@@ -637,7 +648,11 @@ export async function GET(request: NextRequest) {
       )
     : undefined;
 
-  const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
+  const cloneModelLabels = new Set([
+    'Chatterbox',
+    'Inworld Clone',
+    'Voxtral Clone',
+  ]);
   const modelCounts = new Map<string, number>();
   for (const audio of audioYesterdayData) {
     const modelName = normalizeModelName(audio.model);
@@ -1307,6 +1322,19 @@ export async function GET(request: NextRequest) {
     mrrUnknownCount > 0 ? `, ${mrrUnknownCount} unpriced` : ''
   }`;
 
+  // A live count, so it stays out of the activity cache.
+  const inworldVoiceCount = await countInworldWorkspaceVoices().catch(
+    (error) => {
+      console.error('Failed to count Inworld voices:', error);
+      Sentry.captureException(error);
+      return null;
+    },
+  );
+  const inworldVoicesDisplay =
+    inworldVoiceCount === null
+      ? 'unavailable'
+      : `${inworldVoiceCount.toLocaleString()} / ${INWORLD_WORKSPACE_VOICE_LIMIT.toLocaleString()} workspace limit`;
+
   const revenueSummaryLines = [
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg14dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg14dRevenue).toFixed(2)} vs ${ROLLING_WINDOW_LABEL} avg)`,
     `  - ${ROLLING_WINDOW_LABEL}: $${total14dRevenue.toFixed(2)} (avg $${avg14dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
@@ -1352,10 +1380,12 @@ export async function GET(request: NextRequest) {
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
+    `  - Cloned voices: ${clonedVoiceCallsYesterday} yesterday | ${clonedVoiceCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
     `  - AI usage (est.): $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
+    `  - Inworld voices: ${inworldVoicesDisplay}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${profiles14dCount} (avg ${(profiles14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,

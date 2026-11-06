@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <strong>Create stunning AI-generated voices and clone your own voice with advanced machine learning technology</strong>
+  <strong>Generate expressive AI voices, clone your own, and talk to AI characters</strong>
 </p>
 
 <p align="center">
@@ -24,16 +24,17 @@
 ## 🌟 About
 
 - Generate AI voices in 24+ supported languages and locales
-- 63 public voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`)
-- Voice cloning support across 20+ supported languages
-
-<!-- - Public library of generated voices ranked by usage and votes -->
-
+- 57 public speech voices from Google Gemini (`gpro`, `gpro31`, `gpro38`) and xAI Grok (`xai`), plus 6 built-in voices for calls
+- Voice cloning across 28 languages
 - Credit-based usage system
 - User authentication and profile management (Google)
 - [Architecture Overview](./ARCHITECTURE.md)
 
-SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users to create high-quality, realistic voices and clone their own voice using advanced machine learning technology. Whether you're a content creator, developer, or business professional, this platform provides the tools you need to generate professional-grade audio content with featured Gemini and Grok voices, plus custom voice cloning capabilities.
+SexyVoice.ai brings voice generation, voice cloning, and live AI calls into one app.
+Generate expressive speech with Gemini and Grok voices, clone your own voice,
+or create a character with a personality and a voice you choose. Developers can
+use the external API for speech generation with the same credit balance as the
+dashboard. See [GLOSSARY.md](./GLOSSARY.md) for domain names and definitions.
 
 ## ✨ Features
 
@@ -41,7 +42,8 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 
 - **AI Voice Generation**: Create realistic voices powered by Google Gemini, xAI Grok, and additional TTS models
 - **Voice Cloning**: Clone your own voice with as little as 10 seconds of audio
-- **Voice Selection System**: Choose from 63 public voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
+- **Live AI Voice Calls**: Talk to AI characters in real time; paid users can create characters and choose a cloned voice
+- **Voice Selection System**: Choose from 57 public speech voices: Gemini voices such as `achernar`, `kore`, `puck`, and `zephyr` on Gemini 2.5, 3.1, and 3.8, Spanish role voices for Spain and Mexico, and Grok voices such as `ara`, `carina`, `eve`, `leo`, `rex`, `sal`, and `zagan`
 - **Multi-language Support**: Generate speech in 24+ supported languages and locales, with broad multilingual coverage for generation, cloning, and real-time voice experiences
 - **Audio Transcription**: Transcribe audio files to text offline in 99+ languages with optional translation to English using Whisper AI
 
@@ -70,7 +72,7 @@ SexyVoice.ai is a cutting-edge AI voice generation platform that empowers users 
 - **[Next.js 16](https://nextjs.org)** - React framework with App Router and TypeScript
 - **[next-intl](https://next-intl.dev)** - Internationalization for Next.js App Router; messages in `apps/web/messages/*.json`; `getMessages()` for server components, `useTranslations()` for client components
 - **[React 19](https://react.dev)** - Server Components (RSCs), Suspense, and Server Actions
-- **[Tailwind 3 CSS](https://tailwindcss.com)** - Utility-first CSS framework
+- **[Tailwind CSS 4](https://tailwindcss.com)** - Utility-first CSS framework
 - **[shadcn/ui](https://ui.shadcn.com)** - Modern component library
 - **[Radix UI](https://radix-ui.com)** - Headless component primitives
 
@@ -152,16 +154,17 @@ only want one app, for example `pnpm --filter @sexyvoice/web dev`.
      - `R2_SPEECH_API_BUCKET_NAME` - Dedicated bucket for `/api/v1/speech` generated audio
      - `R2_ENDPOINT` - Your Cloudflare R2 endpoint URL (`https://xxx.r2.cloudflarestorage.com`)
    - AI 3rd party services
-     - `REPLICATE_API_TOKEN` - Your Replicate API token for AI voice generation
-     - `FAL_KEY` - Your fal.ai API key for voice cloning
+     - `REPLICATE_API_TOKEN` - Your Replicate API token for speech generation and one-off voice cloning
+     - `FAL_KEY` - Your fal.ai API key for reference audio enhancement
      - `GOOGLE_GENERATIVE_AI_API_KEY` - Your Google Generative AI API key for text-to-speech and enhance text (automatically add emotion tags)
-     - `XAI_API_KEY` - Your xAI API key for Grok TTS voice generation and call transcript analysis
+     - `XAI_API_KEY` - Your xAI API key for Grok speech generation and call transcript analysis
      - `XAI_API_BASE_URL` - Optional xAI REST host override for the Batch API client (default `https://api.x.ai`)
      - `CALL_ANALYSIS_REALTIME` - Optional; set to `true` to analyse call transcripts inline in the webhook instead of via the xAI Batch API queue (emergency bypass)
    - Real-time Calls (LiveKit)
      - `LIVEKIT_URL`
      - `LIVEKIT_API_KEY`
      - `LIVEKIT_API_SECRET`
+     - `LIVEKIT_AGENT_NAME` - Optional; defaults to `sexycall`, and must match the deployed agent's registered name
    - Stripe
      - `STRIPE_SECRET_KEY`
      - `STRIPE_WEBHOOK_SECRET`
@@ -437,19 +440,19 @@ The same eleven Gemini voice identities exist under each Gemini model alias, so
 one name maps to three catalog rows. Select by `voiceId`, or pass the `model`
 alias together with the `voice` name.
 
-| Voice        | Character  |
-| ------------ | ---------- |
-| `achernar`   | Soft       |
-| `aoede`      | Breezy     |
-| `autonoe`    | Bright     |
-| `callirrhoe` | Easy-going |
-| `despina`    | Smooth     |
-| `erinome`    | Clear      |
-| `gacrux`     | Mature     |
-| `kore`       | Firm       |
-| `puck`       | Upbeat     |
-| `sulafat`    | Warm       |
-| `zephyr`     | Bright     |
+| Voice        | Description |
+| ------------ | ----------- |
+| `achernar`   | Soft        |
+| `aoede`      | Breezy      |
+| `autonoe`    | Bright      |
+| `callirrhoe` | Easy-going  |
+| `despina`    | Smooth      |
+| `erinome`    | Clear       |
+| `gacrux`     | Mature      |
+| `kore`       | Firm        |
+| `puck`       | Upbeat      |
+| `sulafat`    | Warm        |
+| `zephyr`     | Bright      |
 
 Gemini 2.5 Pro (`gpro`) voices support style prompting and the following
 language/locale set:
@@ -530,7 +533,7 @@ Mexican Spanish (`es-MX`, provider locale `es-419`):
 
 Grok text-to-speech voices:
 
-| Voice    | Character                            |
+| Voice    | Description                          |
 | -------- | ------------------------------------ |
 | `ara`    | Warm and friendly                    |
 | `carina` | Breathy and enthusiastic             |
@@ -542,6 +545,21 @@ Grok text-to-speech voices:
 
 AI voice calls use the Grok call voices `Ara`, `Carina`, `Eve`, `Leo`, `Rex`,
 and `Sal`.
+
+Custom characters can use owned saved Inworld or Mistral voices.
+`CALL_CLONE_PROVIDER=inworld` selects the provider for new call clones; set it
+to `mistral` to create Mistral profiles. Existing profiles retain their provider.
+Set `INWORLD_API_KEY` to the Basic credential exactly as Inworld shows it
+(already Base64; do not encode it again), with clone/write access
+and give the SexyCall agent access to the same Inworld workspace. Mistral
+profiles require `MISTRAL_API_KEY` in the web app and agent. An unset
+`CALL_CLONE_PROVIDER` selects Inworld as soon as this web deployment is released.
+Deploy the agent's `inworld-tts` support and configure `INWORLD_API_KEY` in both
+deployments first. To defer the switch, explicitly set `CALL_CLONE_PROVIDER=mistral`
+in Vercel before releasing the web app; set it to `inworld` and redeploy once
+the agent and credentials are ready.
+See [saved call voices](ARCHITECTURE.md#saved-voices-for-calls) and
+[deployment setup](docs/devops.md#ai-providers).
 
 These voices support expressive inline tags like `[laugh]` and wrapping tags like `<fast>...</fast>`, plus automatic language detection and the following language/locale options:
 

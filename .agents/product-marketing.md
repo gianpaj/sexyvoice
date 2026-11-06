@@ -54,7 +54,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 | ----------------------------------- | --------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------- |
 | Content Creator                     | Consistent, professional-grade audio at scale | Recording and re-recording eats the production schedule | Emotion-rich generation in minutes, reusable cloned voices             |
 | Storyteller / Character Creator     | Voices that act, not just read                | Standard TTS is flat and kills immersion                | Emotion tags, style prompting, per-character voices, live calling      |
-| Localization / Multilingual Creator | Reaching audiences in their own language      | Voice talent per language is expensive and slow         | One cloned voice across 23 cloning languages; 70+ generation languages |
+| Localization / Multilingual Creator | Reaching audiences in their own language      | Voice talent per language is expensive and slow         | One cloned voice across 28 cloning languages; 70+ generation languages |
 | Developer / Indie Studio            | API quality, docs, predictable cost           | Building or stitching speech infra is a distraction     | Live REST API, CLI, OpenAPI docs, per-request credit billing           |
 | Hobbyist                            | Trying AI voice cheaply                       | Upfront cost and complexity of other tools              | 10,000 free credits, no credit card, free browser-based audio tools    |
 
@@ -88,7 +88,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 
 - Expressive by default — models interpret emotional and logical context; emotion tags for laughter, sighs, coughs; style prompting ("British accent," "seductive tone")
 - Three modes in one platform and one credit balance: generation, cloning, and live real-time calling
-- Language breadth — coverage depends on the feature, and speech generation goes widest: 70+ languages on Gemini 3.1, 24 on Gemini 2.5, fewer on other voice models. Cloning covers 23 languages. See the coverage table under Proof Points before quoting a number.
+- Language breadth — coverage depends on the feature, and speech generation goes widest: 70+ languages on Gemini 3.1, 24 on Gemini 2.5, fewer on other voice models. Cloning covers 28 languages. See the coverage table under Proof Points before quoting a number.
 - Model choice under one API — Google Gemini (2.5 and 3.1 Flash), xAI Grok, and Replicate/Orpheus
 - Real developer surface — REST API v1, API keys, CLI login, usage/billing dashboards, OpenAPI-generated docs at docs.sexyvoice.ai
 - Transparent credit pricing published on the site; free tier with no card
@@ -104,21 +104,15 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 | Objection                                                          | Response                                                                                                                                                                                                                                                                                                                   |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "Will it actually sound natural, or robotic like everything else?" | The models interpret context, not just characters — tone, pacing, and expression. Emotion tags and style prompting are built in. Try it free before paying.                                                                                                                                                                |
-| "Is my voice data safe?"                                           | Recordings and generated files are encrypted. Cloning samples are deleted after the voice is built. You can delete generated audio any time. We never share voice data without consent.                                                                                                                                    |
+| "Is my voice data safe?"                                           | Saved call voices retain a reference at the voice provider for reuse. Generated audio can be deleted in the dashboard. Account deletion requests removal of saved voices and previews.                                                                                                                                     |
 | "I don't know if I'll use enough to justify paying."               | 10,000 free credits, no credit card. ~1,000 credits ≈ 1 minute of generation as a rule of thumb, and live calling is 1,000 credits/minute — so you can do the math before you spend. (Check the burn-rate table under Proof Points before quoting this to a cloning-led audience; cloned voices cost far more per minute.) |
 | "Do I have to rebuild if I need an API later?"                     | The speech-generation API is live today — keys, CLI, OpenAPI docs — and runs on the same credits as the dashboard. Cloning and live calling are web-app only for now, so don't promise those programmatically.                                                                                                             |
 | "Can I use this commercially?"                                     | Yes — you own the audio you generate, including via the API, and may distribute and commercially exploit it (`policies/terms.mdx`, "Ownership and Use of Generated Content"). That grant does not extend to any voice, likeness, or content you aren't authorised to use.                                                  |
 
-> **[unverified] — acceptable-use claims.** Don't state that "our terms prohibit
-> deception or impersonation." The published terms don't. Their `Restrictions`
-> section covers only reselling, reverse engineering, and proprietary notices,
-> and the generated-content clause merely withholds the ownership grant for a
-> voice or likeness you aren't authorised to use — which is not a prohibition on
-> the conduct. Note that the live site FAQ already makes this claim
-> (`messages/*.json`, "What can I use the generated voices for?"), so the gap is
-> in customer-facing copy today, not just in this document. Either add an
-> acceptable-use clause to the terms or soften the FAQ; until then, don't build
-> new copy on it.
+> Do not claim the terms prohibit deception or impersonation. Their
+> generated-content clause excludes voices and likenesses used without
+> authorization from the ownership grant. Ask users to clone only their own
+> voice or a voice they have permission to use.
 
 ## Switching Dynamics
 
@@ -147,17 +141,10 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 
 **Words to use:** expressive, emotion-rich, natural, human-like, lifelike, clone, live, real-time, multilingual, instant, free credits, fair pricing, no contracts
 **Words to avoid:** synthetic, fake, robotic (except when describing competitors), text-to-speech engine, monitored, contract, enterprise-grade (unless backed)
-**Glossary:**
-
-| Term                   | Meaning                                                                    |
-| ---------------------- | -------------------------------------------------------------------------- |
-| Credits                | Usage unit for all paid features (~1,000 ≈ 1 minute of generation)         |
-| Voice cloning          | Building a reusable voice model from a sample as short as 10 seconds       |
-| Live calling           | Real-time two-way AI voice conversation, billed at 1,000 credits/minute    |
-| Emotion tags           | Inline markup that triggers laughter, sighs, coughs, and similar in output |
-| Cross-language cloning | One cloned voice generating speech across 23 supported languages           |
-| `gpro` / `gpro31`      | Gemini 2.5 and Gemini 3.1 Flash voice models                               |
-| Top-up vs subscription | One-time credit purchase vs recurring purchase with a 15% credit bonus     |
+**Domain language:** Use [GLOSSARY.md](../GLOSSARY.md) for definitions and the
+distinction between a voice, saved voice, character, and generated audio.
+Marketing copy can use "voice generation" and "Create a custom AI voice".
+Explain saving and reuse where a customer needs to choose between the flows.
 
 ## Brand Voice
 
@@ -171,7 +158,7 @@ Mostly a self-serve consumer/prosumer product, so these are buyer _types_, not a
 
 - 10,000 free credits ≈ 10 minutes of speech at the published ~1,000 credits/minute rule of thumb, no card required. Actual burn rate varies a lot by voice and model — see the table below before quoting a duration.
 - Live calls cost 1,000 credits/minute
-- Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first purchase or top-up (`isFreeUserOverCallLimit` → `hasUserPaid`). The in-product string says it correctly: "Free users are limited to 5 minutes of calls."
+- Live calling on the free tier stops after **5 minutes total across all calls ever made** (`FREE_USER_CALL_LIMIT_SECONDS`) — a cumulative allowance, not a per-call cap. It lifts permanently on the user's first purchase or top-up (`isFreeUserOverCallLimit` → `hasUserPaid`).
 - Pro is 37.5% cheaper per credit than Standard; subscriptions add 15% more credits
 - Voice cloning from as little as 10 seconds of audio
 - Site available in 6 languages: EN, ES, DE, DA, IT, FR
@@ -192,11 +179,6 @@ audience without qualifying it.
 | Named IT/ES voices — pietro, giulia, carlo, javi, sergio, maria (×8) | ~4,800             | ~2 min                |
 | Cloned voice (×11)                                                   | ~6,600             | ~1.5 min              |
 
-> **Site copy bug.** The public FAQ says both "About 1,000 credits make 1 minute"
-> and "10,000 free credits (about 5 minutes of speech)" in the same answer —
-> those two can't both hold. Per product decision the correct headline figure is
-> **10 minutes**; the FAQ needs fixing to match.
-
 **Language coverage by feature.** There is no single platform-wide language
 number — always scope the claim to the feature, and to the voice/model where it
 varies. Speech generation is the widest, and Gemini goes furthest.
@@ -206,21 +188,21 @@ varies. Speech generation is the widest, and Gemini goes furthest.
 | Speech generation — Gemini 3.1 (`gpro31`)        | 70+              | Our widest coverage; the number to use when leading on language breadth                                                                               |
 | Speech generation — Gemini 2.5 (`gpro`)          | 24               | Default model                                                                                                                                         |
 | Speech generation — other voices (Grok, Orpheus) | Varies, narrower | Several are single-language; check the voice before quoting                                                                                           |
-| Voice cloning                                    | 23               | One cloned voice reused across all of them                                                                                                            |
+| Voice cloning                                    | 28               | Coverage depends on the cloning flow and saved voice provider                                                                                         |
 | Transcription (Whisper)                          | **[unverified]** | Page meta says "99+ languages"; the on-page FAQ says the multilingual Whisper models support 32. Pick one and fix the site copy before citing either. |
 
 **Customers:** "Join thousands of creators who trust our platform" — **[unverified]** no supporting figure found in the repo; substantiate or stop using.
 **Testimonials:** None captured yet. Highest-value gap in this document — collect 3–5 with names and use cases.
 **Value themes:**
 
-| Theme              | Proof                                                                                                                |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Expressive quality | Context-aware models; emotion tags; style prompting; Gemini + Grok voice families                                    |
-| Breadth            | Up to 70+ speech generation languages (Gemini 3.1); 23 cloning languages                                             |
-| All-in-one         | Generation, cloning, and live calling in one web app on one credit balance                                           |
-| Developer-ready    | Live speech-generation API v1, API keys, CLI, OpenAPI docs, usage and billing dashboards                             |
-| Privacy            | Encrypted storage, cloning samples deleted after use, user-controlled deletion, offline browser tools with no upload |
-| Fair pricing       | Published credit math, free tier without a card, no contracts                                                        |
+| Theme              | Proof                                                                                                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------- |
+| Expressive quality | Context-aware models; emotion tags; style prompting; Gemini + Grok voice families                         |
+| Breadth            | Up to 70+ speech generation languages (Gemini 3.1); 28 cloning languages                                  |
+| All-in-one         | Generation, cloning, and live calling in one web app on one credit balance                                |
+| Developer-ready    | Live speech-generation API v1, API keys, CLI, OpenAPI docs, usage and billing dashboards                  |
+| Privacy            | Owned saved call voices, account deletion requests provider cleanup, offline browser tools with no upload |
+| Fair pricing       | Published credit math, free tier without a card, no contracts                                             |
 
 ## Goals
 

@@ -1,11 +1,11 @@
 import { Decoration, type Editor, Extension } from '@tiptap/core';
 
-import { isKnownGrokTag } from '@/lib/tts-editor';
+import { isKnownTtsTag, type TtsEditorProvider } from '@/lib/tts-editor';
 
 const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASS =
   'rounded bg-red-950 px-0.5 text-red-100';
 
-const BRACKET_TAG_REGEX = /\[[a-z-]+\]/gi;
+const BRACKET_TAG_REGEX = /\[[a-z][a-z -]*(?:=[a-z-]+)?\]/gi;
 const ANGLE_TAG_REGEX = /<\/?[a-z-]+>/gi;
 
 export interface UnsupportedGrokTagMatch {
@@ -18,6 +18,7 @@ function collectMatches(
   text: string,
   regex: RegExp,
   matches: UnsupportedGrokTagMatch[],
+  provider: TtsEditorProvider,
 ) {
   regex.lastIndex = 0;
 
@@ -29,7 +30,7 @@ function collectMatches(
       continue;
     }
 
-    if (isKnownGrokTag(value)) {
+    if (isKnownTtsTag(value, provider)) {
       continue;
     }
 
@@ -43,11 +44,12 @@ function collectMatches(
 
 export function findUnsupportedGrokTagMatches(
   text: string,
+  provider: TtsEditorProvider = 'grok',
 ): UnsupportedGrokTagMatch[] {
   const matches: UnsupportedGrokTagMatch[] = [];
 
-  collectMatches(text, BRACKET_TAG_REGEX, matches);
-  collectMatches(text, ANGLE_TAG_REGEX, matches);
+  collectMatches(text, BRACKET_TAG_REGEX, matches, provider);
+  collectMatches(text, ANGLE_TAG_REGEX, matches, provider);
 
   return matches.sort((a, b) => a.start - b.start);
 }
@@ -56,6 +58,7 @@ function createUnsupportedGrokTagDecorations(
   state: Editor['state'],
   from: number,
   to: number,
+  provider: TtsEditorProvider,
 ) {
   const decorations: Decoration[] = [];
 
@@ -64,7 +67,7 @@ function createUnsupportedGrokTagDecorations(
       return;
     }
 
-    const matches = findUnsupportedGrokTagMatches(node.text);
+    const matches = findUnsupportedGrokTagMatches(node.text, provider);
 
     for (const match of matches) {
       const matchFrom = pos + match.start;
@@ -80,13 +83,24 @@ function createUnsupportedGrokTagDecorations(
   return decorations;
 }
 
-export const UnsupportedGrokTagHighlight = Extension.create({
+export const UnsupportedGrokTagHighlight = Extension.create<{
+  provider: TtsEditorProvider;
+}>({
+  addOptions() {
+    return { provider: 'grok' };
+  },
   addDecorations() {
+    const provider = this.options.provider;
     return {
       create: ({ state }) =>
-        createUnsupportedGrokTagDecorations(state, 0, state.doc.content.size),
+        createUnsupportedGrokTagDecorations(
+          state,
+          0,
+          state.doc.content.size,
+          provider,
+        ),
       createInRange: ({ state, from, to }) =>
-        createUnsupportedGrokTagDecorations(state, from, to),
+        createUnsupportedGrokTagDecorations(state, from, to, provider),
       update: 'changedRanges',
     };
   },

@@ -7,11 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { isCallMemoryEnabled } from '@/lib/call-memory';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { createClient } from '@/lib/supabase/server';
 import { DeleteAccountForm } from './delete-account-form';
 import { DeleteMemoryForm } from './delete-memory-form';
+import { MemorySettingForm } from './memory-setting-form';
 import { SecurityForm } from './security-form';
 
 export const generateMetadata = createDashboardMetadata('/dashboard/profile');
@@ -22,7 +24,7 @@ export default async function ProfilePage(props: {
   const { lang } = await props.params;
   const t = await getTranslations({ locale: lang, namespace: 'profile' });
   const supabase = await createClient();
-  // biome-ignore lint/plugin/use-verified-claims: Password verification needs the current Auth email.
+  // biome-ignore lint/plugin/use-verified-claims: Password verification and the memory setting need current Auth data.
   const { data } = await supabase.auth.getUser();
   const user = data?.user;
 
@@ -46,7 +48,10 @@ export default async function ProfilePage(props: {
           <CardTitle>{t('memory.title')}</CardTitle>
           <CardDescription>{t('memory.description')}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          <MemorySettingForm
+            initialEnabled={isCallMemoryEnabled(user.user_metadata)}
+          />
           <DeleteMemoryForm />
         </CardContent>
       </Card>

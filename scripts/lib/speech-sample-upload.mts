@@ -1,17 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import {
-  HeadObjectCommand,
-  PutObjectCommand,
-  type S3Client,
-} from '@aws-sdk/client-s3';
+import type { S3Client } from '@aws-sdk/client-s3';
 
+import { uploadR2File } from './r2-file-upload.mts';
 import {
   assertUniqueSamples,
   type GeneratedSample,
   readVerifiedSample,
   type SampleManifest,
-  sha256,
   writeJson,
 } from './speech-samples.mts';
 
@@ -99,14 +95,7 @@ export async function uploadSamples(options: {
   client: Pick<S3Client, 'send'>;
   fetchPublic?: typeof fetch;
 }): Promise<UploadManifest> {
-  const {
-    directory,
-    bucket,
-    samples,
-    targets,
-    client,
-    fetchPublic = fetch,
-  } = options;
+  const { directory, bucket, samples, targets, client, fetchPublic } = options;
   const manifest: UploadManifest = {
     bucket,
     failures: [],
@@ -119,47 +108,15 @@ export async function uploadSamples(options: {
       const sample = samples.find((item) => item.id === target.id);
       if (!sample) throw new Error(`Missing sample ${target.id}`);
       const bytes = await readVerifiedSample(directory, sample);
-      try {
-        await client.send(
-          new PutObjectCommand({
-            Body: bytes,
-            Bucket: bucket,
-            ContentType: 'audio/mpeg',
-            IfNoneMatch: '*',
-            Key: target.key,
-            Metadata: { sha256: sample.sha256 },
-          }),
-        );
-      } catch (error) {
-        // An identical object can be verified on a retry; no existing object is overwritten.
-        if (
-          (error as { $metadata?: { httpStatusCode?: number } }).$metadata
-            ?.httpStatusCode !== 412
-        )
-          throw error;
-      }
-      const head = await client.send(
-        new HeadObjectCommand({ Bucket: bucket, Key: target.key }),
-      );
-      if (
-        head.ContentLength !== bytes.length ||
-        head.ContentType !== 'audio/mpeg' ||
-        head.Metadata?.sha256 !== sample.sha256
-      ) {
-        throw new Error(`R2 object does not match the sample: ${target.key}`);
-      }
-      const response = await fetchPublic(target.url, {
-        redirect: 'error',
-        signal: AbortSignal.timeout(30_000),
+      await uploadR2File({
+        bucket,
+        key: target.key,
+        bytes,
+        contentType: 'audio/mpeg',
+        client,
+        publicUrl: target.url,
+        fetchPublic,
       });
-      if (
-        !response.ok ||
-        response.headers.get('content-type')?.split(';')[0] !== 'audio/mpeg'
-      )
-        throw new Error(`Public sample unavailable: HTTP ${response.status}`);
-      const publicBytes = new Uint8Array(await response.arrayBuffer());
-      if (sha256(publicBytes) !== sample.sha256)
-        throw new Error('Public sample hash differs from the local MP3');
       manifest.verified.push(target);
     } catch (error) {
       manifest.failures.push({

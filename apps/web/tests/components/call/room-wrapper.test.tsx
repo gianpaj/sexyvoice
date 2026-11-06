@@ -9,11 +9,10 @@ import {
   screen,
 } from '@testing-library/react';
 import { DisconnectReason, PublishTrackError } from 'livekit-client';
-import { NextIntlClientProvider } from 'next-intl';
-import type { PropsWithChildren } from 'react';
+import { NextIntlClientProvider, useTranslations } from 'next-intl';
+import { type PropsWithChildren, useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectButton } from '@/components/call/connect-button';
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import { ConnectionProvider, useConnection } from '@/hooks/use-connection';
 import messages from '@/messages/en.json';
@@ -55,10 +54,35 @@ vi.mock('@/hooks/use-playground-state', () => ({
     pgState: { selectedPresetId: 'character-id' },
   }),
 }));
-vi.mock('@/lib/characters', () => ({}));
 vi.mock('sonner', () => ({
   toast: { error: mocks.toastError, info: mocks.toastInfo },
 }));
+
+// Mirrors the call panel's start button: busy from the click until the room
+// is released.
+function StartCallButton() {
+  const { connect, shouldConnect } = useConnection();
+  const t = useTranslations('call');
+  const [connecting, setConnecting] = useState(false);
+  const busy = connecting || shouldConnect;
+
+  const startCall = async () => {
+    setConnecting(true);
+    try {
+      await connect();
+    } catch (error) {
+      console.error('Connection failed:', error);
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  return (
+    <button disabled={busy} onClick={startCall} type="button">
+      {busy ? t('connecting') : t('startCall')}
+    </button>
+  );
+}
 
 function EndCallButton() {
   const { disconnect } = useConnection();
@@ -74,7 +98,7 @@ function TestCall() {
     <NextIntlClientProvider locale="en" messages={messages}>
       <ConnectionProvider>
         <RoomWrapper>
-          <ConnectButton />
+          <StartCallButton />
           <EndCallButton />
         </RoomWrapper>
       </ConnectionProvider>

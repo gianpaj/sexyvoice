@@ -1,4 +1,5 @@
-import { ChevronDown, Mic, MicOff, XIcon } from 'lucide-react';
+import { ChevronDown, Mic, Square, XIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 import {
@@ -9,16 +10,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useMultibandTrackVolume } from '@/hooks/use-multiband-track-volume';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import { cn } from '@/lib/utils';
 import { Button } from '../ui/button';
-import { MultibandAudioVisualizer } from './multiband-bar-visualizer';
+import { MicrophoneVisualizer } from './microphone-visualizer';
 
 interface Props {
   mediaBlob: Blob | null;
   mediaStream: MediaStream | null;
   onClearMediaStream: () => void;
+  /** Reports the input picked or restored in the menu, for recording. */
+  onDeviceChange?: (deviceId: string) => void;
   onToggleMicrophone: () => void;
   status:
     | 'idle'
@@ -70,17 +72,32 @@ function AudioPlayer({ blob }: { blob: Blob }) {
   );
 }
 
-function DeviceSelectDropdown() {
-  const deviceSelect = usePersistentMediaDevice();
+function DeviceSelectDropdown({
+  onDeviceChange,
+}: {
+  onDeviceChange?: (deviceId: string) => void;
+}) {
+  const [listRequested, setListRequested] = useState(false);
+  const deviceSelect = usePersistentMediaDevice({
+    requestPermissions: listRequested,
+  });
+  // The menu only switches LiveKit's device; the recorder needs it too.
+  const { activeDeviceId } = deviceSelect;
+  useEffect(() => {
+    if (activeDeviceId) onDeviceChange?.(activeDeviceId);
+  }, [activeDeviceId, onDeviceChange]);
+  // Firefox lists one placeholder without an ID until the microphone is used.
+  const devices = deviceSelect.devices.filter((device) => device.deviceId);
 
   const handleDeviceChange = (deviceId: string) => {
     deviceSelect.setActiveMediaDevice(deviceId);
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={(open) => open && setListRequested(true)}>
       <DropdownMenuTrigger asChild>
         <Button
+          aria-label="Choose microphone"
           className="rounded-l-none border-gray-700 border-l px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
           variant="secondary"
         >
@@ -97,7 +114,7 @@ function DeviceSelectDropdown() {
           Available inputs
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {deviceSelect.devices.map((device) => (
+        {devices.map((device) => (
           <DropdownMenuCheckboxItem
             checked={device.deviceId === deviceSelect.activeDeviceId}
             className="text-xs"
@@ -107,20 +124,6 @@ function DeviceSelectDropdown() {
             {device.label}
           </DropdownMenuCheckboxItem>
         ))}
-        <DropdownMenuSeparator />
-        {/*<DropdownMenuLabel className="text-xs uppercase tracking-widest">
-          Audio Settings
-        </DropdownMenuLabel>*/}
-        {/*<DropdownMenuCheckboxItem
-          className="text-xs"
-          checked={isNoiseFilterEnabled}
-          onCheckedChange={async (checked) => {
-            setNoiseFilterEnabled(checked);
-          }}
-          disabled={isNoiseFilterPending}
-        >
-          Enhanced Noise Filter
-        </DropdownMenuCheckboxItem>*/}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -133,10 +136,11 @@ export function MicrophoneMain(props: Props) {
     mediaStream,
     onToggleMicrophone,
     onClearMediaStream,
+    onDeviceChange,
   } = props;
+  const t = useTranslations('clone');
+  const recording = status === 'recording';
   const [hasPermission, setHasPermission] = useState(false);
-
-  const micMultibandVolume = useMultibandTrackVolume(mediaStream, 9);
 
   useEffect(() => {
     const checkPermission = async () => {
@@ -164,39 +168,25 @@ export function MicrophoneMain(props: Props) {
           )}
         >
           <Button
-            aria-label="Toggle Microphone"
-            className="rounded-r-none rounded-l-md px-3 py-2"
+            className="gap-1.5 rounded-r-none rounded-l-md px-3 py-2"
             disabled={status === 'acquiring_media'}
             onClick={onToggleMicrophone}
-            variant="secondary"
+            variant={recording ? 'destructive' : 'secondary'}
           >
-            {[
-              'paused',
-              'failed',
-              'idle',
-              'acquiring_media',
-              'stopped',
-              'stopping',
-            ].includes(status) ? (
-              <MicOff className="h-4 w-4" />
+            {recording ? (
+              <Square className="size-3.5 fill-current" />
             ) : (
               <Mic className="h-4 w-4" />
             )}
+            {t(recording ? 'micStop' : 'micRecord')}
           </Button>
           <div className="flex w-full justify-center">
-            <MultibandAudioVisualizer
-              barColor="#fff"
-              barWidth={4}
-              borderRadius={5}
-              frequencies={micMultibandVolume}
-              gap={2}
-              maxBarHeight={16}
-              minBarHeight={2}
-              state="speaking"
-            />
+            <MicrophoneVisualizer mediaStream={mediaStream} />
           </div>
         </div>
-        {hasPermission && <DeviceSelectDropdown />}
+        {hasPermission && (
+          <DeviceSelectDropdown onDeviceChange={onDeviceChange} />
+        )}
       </div>
       {status === 'stopped' && mediaBlob && (
         <div className="mt-6 flex w-full justify-center self-center">

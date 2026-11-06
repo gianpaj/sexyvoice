@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
+import { deleteSavedVoice } from '@/lib/clone/delete-saved-voice';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
 import {
@@ -18,6 +19,7 @@ import {
   hasOngoingSubscription,
 } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { deleteUserMemories } from '@/lib/supabase/memories';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';
@@ -167,6 +169,8 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       { data: customCharacters, error: customCharactersError },
       { data: apiKeys, error: apiKeysError },
       { count: retainedUsageEventsCount, error: usageEventsError },
+      { data: voiceReferences, error: voiceReferencesError },
+      { data: deletedMemories, error: memoriesDeleteError },
     ] = await Promise.all([
       supabase.from('audio_files').select().eq('user_id', user.id),
       supabase
@@ -178,9 +182,27 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         .from('usage_events')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id),
+      supabase
+        .from('audio_references')
+        .select('id, sample_url, provider, voice_id')
+        .eq('user_id', user.id),
+      deleteUserMemories(supabase, user.id),
     ]);
 
-    if (audioFilesError || customCharactersError || apiKeysError) {
+    if (memoriesDeleteError) {
+      captureException(memoriesDeleteError, {
+        extra: { context: 'call_memory_account_cleanup' },
+        user: { id: user.id },
+      });
+      throw new Error('User deletion failed');
+    }
+
+    if (
+      audioFilesError ||
+      customCharactersError ||
+      apiKeysError ||
+      voiceReferencesError
+    ) {
       throw new Error('User deletion failed');
     }
 
@@ -220,6 +242,24 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
         }
       });
     }
+
+    const sampleReferences = voiceReferences ?? [];
+    const sampleDeletionResults = await Promise.allSettled(
+      sampleReferences.map((reference) =>
+        deleteSavedVoice(supabase, user.id, reference),
+      ),
+    );
+    sampleDeletionResults.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        captureException(result.reason, {
+          extra: {
+            context: 'call_voice_sample_account_cleanup',
+            referenceId: sampleReferences[index].id,
+          },
+          user: { id: user.id },
+        });
+      }
+    });
 
     const admin = createAdminClient();
     const { error: deleteError, data: deleteData } = await admin
@@ -274,6 +314,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysDeleted: apiKeys ? apiKeys.length : 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: customCharacters?.length ?? 0,
+      deletedMemories: deletedMemories?.length ?? 0,
       // usage_events is an immutable audit log protected from deletion by the
       // database. Report retained rows instead of claiming they were removed.
       usageEventsRetained: retainedUsageEventsCount,
@@ -284,6 +325,7 @@ export const handleDeleteAccountAction = async ({ lang }: { lang: Locale }) => {
       apiKeysDeleted: apiKeys?.length ?? 0,
       deleted: deleteData?.length,
       deletedCustomCharacters: customCharacters?.length ?? 0,
+      deletedMemories: deletedMemories?.length ?? 0,
       usageEventsRetained: retainedUsageEventsCount,
       userId: user.id,
     });

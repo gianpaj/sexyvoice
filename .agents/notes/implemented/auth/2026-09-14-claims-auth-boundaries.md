@@ -7,8 +7,9 @@ actions, session-authenticated APIs, browser analytics, and call cache refreshes
 Callers require `claims.sub`; database ownership, credits, and entitlements remain
 separate authorization checks. Do not fabricate a Supabase `User` from a JWT.
 
-Retain six `getUser()` calls for current email, Auth creation time, account
-cleanup, and durable credential issuance. The canonical method policy and exact
+Retain `getUser()` calls for current email, Auth creation time, account
+cleanup, durable credential issuance, and the saved call memory preference.
+The canonical method policy and exact
 exceptions live in [Architecture](../../../../ARCHITECTURE.md#identity-and-session-handling).
 
 ## Alternatives and consequences
@@ -32,6 +33,5 @@ Validation passed: `pnpm fixall`, `pnpm type-check`, and the full web suite via
 19 skipped. Script tests passed in the root test run. The local web run uses the
 test-owned in-memory Redis server; `CI=true` requires a localhost Redis service.
 
-Independent review found no issues. The final source audit confirms exactly six
-remaining Auth user lookups and one direct `getClaims()` call inside the wrapper.
-No database schema, environment variables, or external API v1 contracts change.
+Auth lookup exceptions are listed in Architecture. No database schema,
+environment variables, or external API v1 contracts change.

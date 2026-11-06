@@ -37,7 +37,7 @@ The current suite covers the main dashboard surfaces with a mix of:
 | -------- | ------------------------ | ---------------------------- | ------------------------ | ---------------------------------------------------- | ---------------: |
 | Generate | `/en/dashboard/generate` | `generate-dashboard.spec.ts` | `pages/generate.page.ts` | `mocks/google-ai.mock.ts`                            | 14 _(1 skipped)_ |
 | Call     | `/en/dashboard/call`     | `call-dashboard.spec.ts`     | `pages/call.page.ts`     | server fixtures and inline `page.route()` mocks      |               13 |
-| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               17 |
+| Clone    | `/en/dashboard/clone`    | `clone-dashboard.spec.ts`    | `pages/clone.page.ts`    | none currently required                              |               15 |
 | Credits  | `/en/dashboard/credits`  | `credits-dashboard.spec.ts`  | `pages/credits.page.ts`  | no route mock; safe env-driven checkout failure path |               16 |
 | History  | `/en/dashboard/history`  | `history-dashboard.spec.ts`  | `pages/history.page.ts`  | none currently required                              |               12 |
 | Usage    | `/en/dashboard/usage`    | `usage-dashboard.spec.ts`    | `pages/usage.page.ts`    | `mocks/usage.mock.ts`                                |               14 |
@@ -157,20 +157,23 @@ Reason:
 
 #### Authenticated
 
-- page renders correctly
-- language selector is visible
-- language selector exposes multiple options
-- connect button is visible
-- notice text is visible
-- configuration form is present
-- character/preset content area is present
-- connect button is enabled
-- paid users can create a character, save a separate copy, and update that copy
-  on the English and German sites without changing the original story
+- the picker shows the fixture featured characters with descriptions
+- free users see the Create card as a link to the plans, and the panel's
+  Make your own version disabled next to an upgrade crown
+- the call panel opens from a card, with an enabled Start call, language
+  options and scene options gated by plan
+- notice text and FAQ are visible
+- paid users see the Create card; the creator reports missing fields, fills
+  an example personality and selects a saved voice
+- the Clone a voice dialog opens and asks for a recording before Next
+- paid users create, duplicate and edit characters on the English and German
+  sites; the duplicate keeps the prompt and the edit leaves the original alone
+- deleting a character waits for the Undo toast, and Undo sends no request
+- the picker and creator fit desktop and mobile widths
 
 #### Mobile
 
-- credits section is visible on a mobile viewport
+- credits section, picker and bottom-sheet panel on a mobile viewport
 
 #### Unauthenticated
 
@@ -180,13 +183,15 @@ Reason:
 
 The call page and layout use server-side fixtures from `lib/e2e-mocks.ts`
 when `isE2E()` is true. These fix public character order and descriptions,
-call voices, credit transactions, and instruction config.
+call voices, saved Mistral profiles for paid users, credit transactions, and
+instruction config.
 Custom characters start empty. Authentication still runs.
 
-The English and German save-copy scenarios intercept `/api/characters` with
-a per-test in-memory store. Creates must omit the ID; updates must identify
-an existing mocked character. Tests assert selection, localized instructions,
-and independent original/copy edits. No character writes reach Supabase.
+The character scenarios intercept `/api/characters` with a per-test in-memory
+store. Creates must omit the ID; updates must identify an existing mocked
+character; deletes are recorded. Tests assert the request bodies, localized
+instructions and independent original/copy edits. No character writes reach
+Supabase, and the clone dialog test stops before `/api/clone-voice`.
 The API tests separately exercise the real route and its UUID validation.
 
 Playwright sets `e2e-call-user=free|paid` before navigation in each test's
