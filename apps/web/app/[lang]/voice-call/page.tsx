@@ -23,6 +23,7 @@ import { demoCallData } from '@/data/demo-transcripts';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { pageMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
 
 interface Props {
@@ -31,45 +32,13 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
-  const tHero = await getTranslations({
-    locale: lang,
-    namespace: 'landing.voiceCall.hero',
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  return pageMetadata({
+    description: t('descriptionVoiceCall'),
+    lang,
+    path: '/voice-call',
+    title: t('titleVoiceCall'),
   });
-
-  const title = tPages('titleVoiceCall') || tHero('title');
-  const description = tPages('descriptionVoiceCall') || tHero('subtitle');
-  const url = `https://sexyvoice.ai/${lang}/voice-call`;
-
-  return {
-    alternates: {
-      canonical: url,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [
-          locale,
-          `https://sexyvoice.ai/${locale}/voice-call`,
-        ]),
-      ),
-    },
-    description,
-    openGraph: {
-      description,
-      locale: lang,
-      siteName: 'SexyVoice.ai',
-      title,
-      type: 'website',
-      url,
-    },
-    other: {
-      preconnect: 'https://files.sexyvoice.ai',
-    },
-    title,
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      title,
-    },
-  };
 }
 
 export default async function LandingPage(props: Props) {

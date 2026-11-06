@@ -1,11 +1,26 @@
 import { Sparkles } from 'lucide-react';
-import { getMessages } from 'next-intl/server';
+import type { Metadata } from 'next';
+import { getMessages, getTranslations } from 'next-intl/server';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { pageMetadata } from '@/lib/page-metadata';
 import { SignUpForm } from './signup-form';
+
+export async function generateMetadata(props: {
+  params: Promise<{ lang: Locale }>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  return pageMetadata({
+    description: t('descriptionSignup'),
+    lang,
+    path: '/signup',
+    title: t('titleSignup'),
+  });
+}
 
 export default async function SignUpPage(props: {
   params: Promise<{ lang: Locale }>;

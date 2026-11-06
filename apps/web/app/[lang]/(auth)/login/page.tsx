@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
 
@@ -5,7 +6,21 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { pageMetadata } from '@/lib/page-metadata';
 import { LoginForm } from './login-form';
+
+export async function generateMetadata(props: {
+  params: Promise<{ lang: Locale }>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  return pageMetadata({
+    description: t('descriptionLogin'),
+    lang,
+    path: '/login',
+    title: t('titleLogin'),
+  });
+}
 
 export default async function LoginPage(props: {
   params: Promise<{ lang: Locale }>;

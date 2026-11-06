@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { pageMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
 
 interface Props {
@@ -27,45 +28,13 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
-  const tHero = await getTranslations({
-    locale: lang,
-    namespace: 'landing.voiceCloning.hero',
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  return pageMetadata({
+    description: t('descriptionVoiceCloning'),
+    lang,
+    path: '/voice-cloning',
+    title: t('titleVoiceCloning'),
   });
-
-  const title = tPages('titleVoiceCloning') || tHero('title');
-  const description = tPages('descriptionVoiceCloning') || tHero('subtitle');
-  const url = `https://sexyvoice.ai/${lang}/voice-cloning`;
-
-  return {
-    alternates: {
-      canonical: url,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [
-          locale,
-          `https://sexyvoice.ai/${locale}/voice-cloning`,
-        ]),
-      ),
-    },
-    description,
-    openGraph: {
-      description,
-      locale: lang,
-      siteName: 'SexyVoice.ai',
-      title: `${title} | SexyVoice.ai`,
-      type: 'website',
-      url,
-    },
-    other: {
-      preconnect: 'https://files.sexyvoice.ai',
-    },
-    title,
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      title: `${title} | SexyVoice.ai`,
-    },
-  };
 }
 
 export default async function VoiceCloningPage(props: Props) {

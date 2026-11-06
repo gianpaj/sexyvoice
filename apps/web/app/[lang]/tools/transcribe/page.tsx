@@ -6,7 +6,8 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { JsonLd } from '@/components/json-ld';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { routing } from '@/src/i18n/routing';
+import { pageMetadata } from '@/lib/page-metadata';
+import { SITE_NAME } from '@/lib/site';
 import TranscribeClient from './transcribe.client';
 
 interface Props {
@@ -15,65 +16,23 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
-  const t = await getTranslations({ locale: lang, namespace: 'transcribe' });
-
-  const title = tPages('titleTranscribe') || t('title');
-  const description = tPages('descriptionTranscribe') || t('subtitle');
-  const keywords = tPages('keywordsTranscribe') || '';
-  const keywordsArray = keywords
-    ? keywords.split(',').map((k: string) => k.trim())
-    : [
-        'free audio transcription',
-        'transcribe audio',
-        'speech to text',
-        'audio to text',
-        'whisper transcription',
-        'openai whisper',
-        'offline transcription',
-        'browser transcription',
-        'voice to text',
-        'free speech recognition',
-      ];
-
-  const url = `https://sexyvoice.ai/${lang}/tools/transcribe`;
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
 
   return {
-    alternates: {
-      canonical: url,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [
-          locale,
-          `https://sexyvoice.ai/${locale}/tools/transcribe`,
-        ]),
-      ),
-    },
-    authors: [{ name: 'SexyVoice.ai' }],
-    description,
-    keywords: keywordsArray,
-    openGraph: {
-      description,
-      images: [
-        {
-          alt: title,
-          height: 630,
-          url: 'https://sexyvoice.ai/posts/free-audio-transcription-tool.webp',
-          width: 1200,
-        },
-      ],
-      locale: lang,
-      siteName: 'SexyVoice.ai',
-      title: `${title} | SexyVoice.ai`,
-      type: 'website',
-      url,
-    },
-    title,
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      images: ['https://sexyvoice.ai/posts/free-audio-transcription-tool.webp'],
-      title: `${title} | SexyVoice.ai`,
-    },
+    ...pageMetadata({
+      description: t('descriptionTranscribe'),
+      image: {
+        alt: t('titleTranscribe'),
+        height: 630,
+        url: '/posts/free-audio-transcription-tool.webp',
+        width: 1200,
+      },
+      keywords: t('keywordsTranscribe'),
+      lang,
+      path: '/tools/transcribe',
+      title: t('titleTranscribe'),
+    }),
+    authors: [{ name: SITE_NAME }],
   };
 }
 

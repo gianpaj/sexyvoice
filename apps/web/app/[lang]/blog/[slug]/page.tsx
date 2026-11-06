@@ -13,6 +13,8 @@ import { JsonLd } from '@/components/json-ld';
 import { Mdx } from '@/components/mdx-components';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
+import { SITE_NAME } from '@/lib/site';
 import {
   createArticleSchema,
   createBreadcrumbSchema,
@@ -64,59 +66,37 @@ export async function generateMetadata({
     return {};
   }
 
-  const postUrl = `https://sexyvoice.ai/${post.locale}/blog/${post.slug}`;
-
   return {
-    alternates: {
-      canonical: postUrl,
+    ...pageMetadata({
+      article: {
+        publishedTime: post.date,
+        section: 'Technology',
+        tags: ['Voice AI', 'Voice Cloning', 'Speech Synthesis'],
+      },
+      description: post.description,
+      image: post.image
+        ? { alt: post.title, height: 630, url: post.image, width: 1200 }
+        : { ...DEFAULT_OG_IMAGE, alt: post.title },
+      keywords: post.keywords || [
+        'AI voice generation',
+        'voice cloning',
+        'text-to-speech',
+        'voice synthesis',
+        'AI voice call',
+      ],
+      lang: post.locale as Locale,
       // Only advertise hreflang alternates for locales that actually have a
       // translated post. Otherwise search engines crawl non-existent URLs
       // (e.g. /de/blog/<slug> with no German translation) and flag them.
-      languages: Object.fromEntries(
-        routing.locales
-          .filter((locale) =>
-            allPosts.some(
-              (p) => p.slugAsParams === post.slug && p.locale === locale,
-            ),
-          )
-          .map((locale) => [locale, `/${locale}/blog/${post.slug}`]),
+      locales: routing.locales.filter((locale) =>
+        allPosts.some(
+          (p) => p.slugAsParams === post.slug && p.locale === locale,
+        ),
       ),
-    },
-    authors: [{ name: 'SexyVoice.ai' }],
-    description: post.description,
-    keywords: post.keywords || [
-      'AI voice generation',
-      'voice cloning',
-      'text-to-speech',
-      'voice synthesis',
-      'AI voice call',
-    ],
-    openGraph: {
-      description: post.description,
-      images: [
-        {
-          alt: post.title,
-          height: post.image ? 630 : 670,
-          url: post.image || '/sexyvoice.ai-og-image.jpg',
-          width: 1200,
-        },
-      ],
-      locale: post.locale,
-      publishedTime: post.date,
-      section: 'Technology',
-      siteName: 'SexyVoice.ai',
-      tags: ['Voice AI', 'Voice Cloning', 'Speech Synthesis'],
+      path: `/blog/${post.slug}`,
       title: post.title,
-      type: 'article',
-      url: postUrl,
-    },
-    title: `${post.title} - SexyVoice.ai`,
-    twitter: {
-      card: 'summary_large_image',
-      description: post.description,
-      images: [post.image || '/sexyvoice.ai-og-image.jpg'],
-      title: post.title,
-    },
+    }),
+    authors: [{ name: SITE_NAME }],
   };
 }
 

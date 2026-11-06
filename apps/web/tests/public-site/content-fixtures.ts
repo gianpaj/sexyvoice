@@ -129,12 +129,12 @@ export const allPolicyPages: PolicyPage[] = [
   }),
   policy('terms.mdx', {
     description: 'Terms governing the use of SexyVoice.ai.',
-    title: 'Terms & Conditions | SexyVoice.ai',
+    title: 'Terms & Conditions',
     updated: '2026-07-15',
   }),
   policy('terms.es.mdx', {
     description: 'Términos que rigen el uso de SexyVoice.ai.',
-    title: 'Términos y Condiciones | SexyVoice.ai',
+    title: 'Términos y Condiciones',
     updated: '2026-07-15',
   }),
 ];

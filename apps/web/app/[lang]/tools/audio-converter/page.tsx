@@ -6,7 +6,8 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { JsonLd } from '@/components/json-ld';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { routing } from '@/src/i18n/routing';
+import { pageMetadata } from '@/lib/page-metadata';
+import { SITE_NAME } from '@/lib/site';
 import AudioConverterClient from './audio-converter.client';
 
 interface Props {
@@ -15,59 +16,17 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
-  const t = await getTranslations({
-    locale: lang,
-    namespace: 'audioConverter',
-  });
-
-  const title = tPages('titleAudioConverter') || t('title');
-  const description = tPages('descriptionAudioConverter') || t('subtitle');
-  const keywords = tPages('keywordsAudioConverter') || '';
-  const keywordsArray = keywords
-    ? keywords.split(',').map((k: string) => k.trim())
-    : [
-        'free audio converter',
-        'convert mp3',
-        'convert wav',
-        'convert flac',
-        'online audio converter',
-        'browser audio converter',
-        'offline audio converter',
-        'ffmpeg online',
-        'no upload audio converter',
-        'private audio converter',
-      ];
-
-  const url = `https://sexyvoice.ai/${lang}/tools/audio-converter`;
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
 
   return {
-    alternates: {
-      canonical: url,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [
-          locale,
-          `https://sexyvoice.ai/${locale}/tools/audio-converter`,
-        ]),
-      ),
-    },
-    authors: [{ name: 'SexyVoice.ai' }],
-    description,
-    keywords: keywordsArray,
-    openGraph: {
-      description,
-      locale: lang,
-      siteName: 'SexyVoice.ai',
-      title: `${title} | SexyVoice.ai`,
-      type: 'website',
-      url,
-    },
-    title,
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      title: `${title} | SexyVoice.ai`,
-    },
+    ...pageMetadata({
+      description: t('descriptionAudioConverter'),
+      keywords: t('keywordsAudioConverter'),
+      lang,
+      path: '/tools/audio-converter',
+      title: t('titleAudioConverter'),
+    }),
+    authors: [{ name: SITE_NAME }],
   };
 }
 

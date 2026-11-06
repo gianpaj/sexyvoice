@@ -6,7 +6,8 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { JsonLd } from '@/components/json-ld';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { routing } from '@/src/i18n/routing';
+import { pageMetadata } from '@/lib/page-metadata';
+import { SITE_NAME } from '@/lib/site';
 import AudioJoinerClient from './audio-joiner.client';
 
 interface Props {
@@ -15,52 +16,17 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
-  const tPages = await getTranslations({ locale: lang, namespace: 'pages' });
-  const t = await getTranslations({ locale: lang, namespace: 'audioJoiner' });
-
-  const title = tPages('titleAudioJoiner') || t('title');
-  const description = tPages('descriptionAudioJoiner') || t('subtitle');
-  const keywords = tPages('keywordsAudioJoiner') || '';
-
-  const keywordsArray = keywords
-    ? keywords.split(',').map((keyword: string) => keyword.trim())
-    : [
-        'free audio joiner',
-        'merge audio files',
-        'combine mp3 files',
-        'audio trimmer',
-        'browser audio editor',
-      ];
-
-  const url = `https://sexyvoice.ai/${lang}/tools/audio-joiner`;
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
 
   return {
-    alternates: {
-      canonical: url,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [
-          locale,
-          `https://sexyvoice.ai/${locale}/tools/audio-joiner`,
-        ]),
-      ),
-    },
-    authors: [{ name: 'SexyVoice.ai' }],
-    description,
-    keywords: keywordsArray,
-    openGraph: {
-      description,
-      locale: lang,
-      siteName: 'SexyVoice.ai',
-      title: `${title} | SexyVoice.ai`,
-      type: 'website',
-      url,
-    },
-    title,
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      title: `${title} | SexyVoice.ai`,
-    },
+    ...pageMetadata({
+      description: t('descriptionAudioJoiner'),
+      keywords: t('keywordsAudioJoiner'),
+      lang,
+      path: '/tools/audio-joiner',
+      title: t('titleAudioJoiner'),
+    }),
+    authors: [{ name: SITE_NAME }],
   };
 }
 

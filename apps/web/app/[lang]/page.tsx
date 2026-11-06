@@ -11,12 +11,19 @@ import {
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from 'next-intl/server';
+import { preconnect } from 'react-dom';
 import type { Graph } from 'schema-dts';
 
 import { faqAnswerText } from '@/lib/faq';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { pageMetadata } from '@/lib/page-metadata';
+import { FILES_URL } from '@/lib/site';
 
 // import { VoiceGenerator } from "@/components/voice-generator";
 // import { PopularAudios } from '@/components/popular-audios';
@@ -45,11 +52,19 @@ const get3PostsByLang = (lang: Locale) =>
     )
     .slice(0, 3);
 
-export const metadata: Metadata = {
-  other: {
-    preconnect: 'https://files.sexyvoice.ai',
-  },
-};
+export async function generateMetadata(props: {
+  params: Promise<{ lang: Locale }>;
+}): Promise<Metadata> {
+  const { lang } = await props.params;
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
+  return pageMetadata({
+    description: t('description'),
+    keywords: t('keywordsLanding'),
+    lang,
+    path: '/',
+    title: t('defaultTitle'),
+  });
+}
 
 export default async function LandingPage(props: {
   params: Promise<{ lang: Locale }>;
@@ -63,6 +78,8 @@ export default async function LandingPage(props: {
 
   // Enable static rendering
   setRequestLocale(lang);
+  // The sample previews stream from the files host.
+  preconnect(FILES_URL);
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;

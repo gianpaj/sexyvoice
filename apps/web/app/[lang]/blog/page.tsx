@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next/types';
-import { getMessages } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 
 import { Banner } from '@/components/banner';
 import Footer from '@/components/footer';
@@ -16,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
+import { SITE_NAME } from '@/lib/site';
 import { calculateReadingTime, countWords } from '@/lib/text';
 import { cn } from '@/lib/utils';
 import { routing } from '@/src/i18n/routing';
@@ -31,49 +33,16 @@ export async function generateMetadata({
   params: Promise<{ lang: Locale }>;
 }): Promise<Metadata> {
   const { lang } = await params;
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const dictLanding = messages.landing;
+  const t = await getTranslations({ locale: lang, namespace: 'landing' });
+  const blogName = `${SITE_NAME} ${t('blogLabel')}`;
 
-  const blogName = `SexyVoice.ai ${dictLanding.blogLabel}`;
-  const titleStr = `${dictLanding.latestPosts} | ${blogName}`;
-  const description = dictLanding.blogDescription;
-  const pageUrl = `https://sexyvoice.ai/${lang}/blog`;
-
-  return {
-    alternates: {
-      canonical: pageUrl,
-      languages: {
-        ...Object.fromEntries(
-          routing.locales.map((locale) => [locale, `/${locale}/blog`]),
-        ),
-        'x-default': `/${routing.defaultLocale}/blog`,
-      },
-    },
-    description,
-    openGraph: {
-      description,
-      images: [
-        {
-          alt: 'SexyVoice.ai Blog',
-          height: 670,
-          url: '/sexyvoice.ai-og-image.jpg',
-          width: 1200,
-        },
-      ],
-      locale: lang,
-      siteName: 'SexyVoice.ai',
-      title: titleStr,
-      type: 'website',
-      url: pageUrl,
-    },
-    title: { absolute: titleStr },
-    twitter: {
-      card: 'summary_large_image',
-      description,
-      images: ['/sexyvoice.ai-og-image.jpg'],
-      title: titleStr,
-    },
-  };
+  return pageMetadata({
+    description: t('blogDescription'),
+    image: { ...DEFAULT_OG_IMAGE, alt: blogName },
+    lang,
+    path: '/blog',
+    title: { absolute: `${t('latestPosts')} | ${blogName}` },
+  });
 }
 
 type BlogPostWithImage = (typeof allPosts)[number] & {

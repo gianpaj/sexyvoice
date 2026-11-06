@@ -1439,13 +1439,13 @@ Canonical URL: https://sexyvoice.ai/en/privacy-policy
 
 exports[`terms.md > serves markdown in da 1`] = `
 {
-  "body": "# Terms & Conditions | SexyVoice.ai
+  "body": "# Terms & Conditions
 
 _Updated: 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
-Terms & Conditions | SexyVoice.ai body.
+Terms & Conditions body.
 
 ---
 
@@ -1455,7 +1455,7 @@ Canonical URL: https://sexyvoice.ai/en/terms
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "49",
+    "x-markdown-tokens": "41",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1464,13 +1464,13 @@ Canonical URL: https://sexyvoice.ai/en/terms
 
 exports[`terms.md > serves markdown in de 1`] = `
 {
-  "body": "# Terms & Conditions | SexyVoice.ai
+  "body": "# Terms & Conditions
 
 _Updated: 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
-Terms & Conditions | SexyVoice.ai body.
+Terms & Conditions body.
 
 ---
 
@@ -1480,7 +1480,7 @@ Canonical URL: https://sexyvoice.ai/en/terms
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "49",
+    "x-markdown-tokens": "41",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1489,13 +1489,13 @@ Canonical URL: https://sexyvoice.ai/en/terms
 
 exports[`terms.md > serves markdown in en 1`] = `
 {
-  "body": "# Terms & Conditions | SexyVoice.ai
+  "body": "# Terms & Conditions
 
 _Updated: 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
-Terms & Conditions | SexyVoice.ai body.
+Terms & Conditions body.
 
 ---
 
@@ -1505,7 +1505,7 @@ Canonical URL: https://sexyvoice.ai/en/terms
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "49",
+    "x-markdown-tokens": "41",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1514,13 +1514,13 @@ Canonical URL: https://sexyvoice.ai/en/terms
 
 exports[`terms.md > serves markdown in es 1`] = `
 {
-  "body": "# Términos y Condiciones | SexyVoice.ai
+  "body": "# Términos y Condiciones
 
 _Updated: 2026-07-15_
 
 Términos que rigen el uso de SexyVoice.ai.
 
-Términos y Condiciones | SexyVoice.ai body.
+Términos y Condiciones body.
 
 ---
 
@@ -1530,7 +1530,7 @@ Canonical URL: https://sexyvoice.ai/es/terms
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "51",
+    "x-markdown-tokens": "44",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1539,13 +1539,13 @@ Canonical URL: https://sexyvoice.ai/es/terms
 
 exports[`terms.md > serves markdown in fr 1`] = `
 {
-  "body": "# Terms & Conditions | SexyVoice.ai
+  "body": "# Terms & Conditions
 
 _Updated: 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
-Terms & Conditions | SexyVoice.ai body.
+Terms & Conditions body.
 
 ---
 
@@ -1555,7 +1555,7 @@ Canonical URL: https://sexyvoice.ai/en/terms
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "49",
+    "x-markdown-tokens": "41",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1564,13 +1564,13 @@ Canonical URL: https://sexyvoice.ai/en/terms
 
 exports[`terms.md > serves markdown in it 1`] = `
 {
-  "body": "# Terms & Conditions | SexyVoice.ai
+  "body": "# Terms & Conditions
 
 _Updated: 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
-Terms & Conditions | SexyVoice.ai body.
+Terms & Conditions body.
 
 ---
 
@@ -1580,7 +1580,7 @@ Canonical URL: https://sexyvoice.ai/en/terms
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "49",
+    "x-markdown-tokens": "41",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,

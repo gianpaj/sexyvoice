@@ -7,6 +7,7 @@ import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
 import { Mdx } from '@/components/mdx-components';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { pageMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
 
 const POLICY_CONFIG = {
@@ -67,16 +68,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } satisfies Metadata;
   }
 
-  return {
-    alternates: {
-      canonical: `https://sexyvoice.ai/${lang}/${policySlug}`,
-      languages: Object.fromEntries(
-        routing.locales.map((locale) => [locale, `/${locale}/${policySlug}`]),
-      ),
-    },
-    description: policy.description,
+  return pageMetadata({
+    description: policy.description ?? '',
+    lang,
+    path: `/${policySlug}`,
     title: policy.title,
-  } satisfies Metadata;
+  });
 }
 
 export default async function PolicyPage({ params }: Props) {
