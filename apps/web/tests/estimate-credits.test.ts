@@ -196,6 +196,24 @@ describe('Estimate Credits API Route', () => {
     expect(json.error).toContain('500 characters');
   });
 
+  it('estimates a Gemini style over the generation limit', async () => {
+    mockCountTokens.mockResolvedValueOnce({ totalTokens: 360 });
+
+    const response = await POST(
+      new Request('http://localhost/api/estimate-credits', {
+        body: JSON.stringify({
+          styleVariant: 's'.repeat(1001),
+          text: 'Hello world',
+          voiceId: 'voice-kore-id',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+  });
+
   it('returns 400 when request body has malformed JSON', async () => {
     const request = new Request('http://localhost/api/estimate-credits', {
       body: 'not valid json {]',

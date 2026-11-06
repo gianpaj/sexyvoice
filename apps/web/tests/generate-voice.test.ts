@@ -5,6 +5,7 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
+import { dashboardSpeechKey } from '@/lib/tts/cache-key';
 import type { GoogleApiErrorWithStatus } from '@/lib/tts/google-errors';
 import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
 import { SPEECH_ERROR_MESSAGES } from '@/lib/tts/synthesize';
@@ -2167,6 +2168,152 @@ describe('Generate Voice API Route', () => {
 
       expect(response1.status).toBe(200);
       expect(response2.status).toBe(200);
+    });
+  });
+
+  describe('Advanced settings', () => {
+    const geminiAudio = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                inlineData: {
+                  data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                  mimeType: 'audio/wav',
+                },
+              },
+            ],
+          },
+          finishReason: 'STOP',
+        },
+      ],
+      usageMetadata: {
+        candidatesTokenCount: 12,
+        promptTokenCount: 11,
+        totalTokenCount: 23,
+      },
+    } as GenerateContentResponse;
+
+    function generate(body: Record<string, unknown>) {
+      return POST(
+        new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({ text: 'Hello world', ...body }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+      );
+    }
+
+    async function payAs(paid: boolean) {
+      const { hasUserPaid } = await import('@/lib/supabase/queries');
+      vi.mocked(hasUserPaid).mockResolvedValueOnce(paid);
+    }
+
+    it.each([
+      { expected: 2, requested: 3 },
+      { expected: 0, requested: -1 },
+      { expected: 1.2, requested: 1.2 },
+    ])(
+      'clamps a paid Gemini temperature of $requested to $expected',
+      async ({ expected, requested }) => {
+        await payAs(true);
+        const generateContent = vi.fn().mockResolvedValue(geminiAudio);
+        setMockGoogleGenAIFactory(() => ({ models: { generateContent } }));
+
+        const response = await generate({
+          temperature: requested,
+          voiceId: 'voice-kore-id',
+        });
+
+        expect(response.status).toBe(200);
+        expect(generateContent.mock.calls[0][0].config.temperature).toBe(
+          expected,
+        );
+      },
+    );
+
+    it('ignores the temperature for free users', async () => {
+      const generateContent = vi.fn().mockResolvedValue(geminiAudio);
+      setMockGoogleGenAIFactory(() => ({ models: { generateContent } }));
+
+      const response = await generate({
+        temperature: 1.5,
+        voiceId: 'voice-kore-id',
+      });
+
+      expect(response.status).toBe(200);
+      expect(
+        generateContent.mock.calls[0][0].config.temperature,
+      ).toBeUndefined();
+    });
+
+    it.each([
+      { expected: 1.5, requested: 3 },
+      { expected: 0.7, requested: 0.1 },
+    ])(
+      'clamps a free Grok speed of $requested to $expected',
+      async ({ expected, requested }) => {
+        const xaiBodies: { speed?: number }[] = [];
+        server.use(
+          http.post('https://api.x.ai/v1/tts', async ({ request }) => {
+            xaiBodies.push((await request.json()) as { speed?: number });
+            return HttpResponse.arrayBuffer(new Uint8Array([1, 2]).buffer, {
+              headers: { 'Content-Type': 'audio/mpeg' },
+            });
+          }),
+        );
+
+        const response = await generate({
+          speed: requested,
+          voiceId: 'voice-eve-id',
+        });
+
+        expect(response.status).toBe(200);
+        expect(xaiBodies).toEqual([
+          expect.objectContaining({ speed: expected }),
+        ]);
+        expect(mockRedisGet).toHaveBeenCalledWith(
+          await dashboardSpeechKey({
+            isPaidUser: false,
+            provider: 'grok',
+            runtimeModel: 'xai',
+            speed: expected,
+            text: 'Hello world',
+            voiceName: 'eve',
+          }),
+        );
+      },
+    );
+
+    it('keys Grok audio by a seed and temperature it does not use', async () => {
+      await payAs(true);
+      server.use(
+        http.post('https://api.x.ai/v1/tts', () =>
+          HttpResponse.arrayBuffer(new Uint8Array([1, 2]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          }),
+        ),
+      );
+
+      const response = await generate({
+        seed: 7,
+        temperature: 1,
+        voiceId: 'voice-eve-id',
+      });
+
+      expect(response.status).toBe(200);
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        await dashboardSpeechKey({
+          isPaidUser: true,
+          provider: 'grok',
+          runtimeModel: 'xai',
+          seed: 7,
+          temperature: 1,
+          text: 'Hello world',
+          voiceName: 'eve',
+        }),
+      );
     });
   });
 

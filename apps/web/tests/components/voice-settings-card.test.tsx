@@ -22,7 +22,10 @@ vi.mock('@/lib/react-textarea-autosize', () => ({
 }));
 
 const baseDict = {
+  fullscreenTitle: 'Fullscreen',
+  paidStyleLimitTooltip: 'You have a 2.5× style limit',
   playAudio: 'Play audio',
+  upgradeStyleLimitTooltip: 'Buy credits for a 2.5× style limit',
   voiceSelector: {
     clearFilters: 'Clear',
     description: 'Pick a voice for generation',
@@ -345,5 +348,56 @@ describe('Gemini 3.8 display names', () => {
       'es-es-advisor-8',
     );
     expect(screen.getByRole('option', { name: /Clara/ })).toBeInTheDocument();
+  });
+
+  it.each([
+    { isPaidUser: false, limit: 1000 },
+    { isPaidUser: true, limit: 2500 },
+  ])(
+    'counts the Gemini style against $limit characters when paid=$isPaidUser',
+    ({ isPaidUser, limit }) => {
+      const gemini = createVoice({ model: 'gpro38', name: 'kore' });
+      const view = renderVoiceSettingsCard({
+        isPaidUser,
+        selectedStyle: 'calm',
+        selectedVoice: gemini,
+      });
+      const count = screen.getByTestId('generate-style-character-count');
+
+      expect(count).toHaveTextContent(`4/${limit}`);
+      expect(screen.getByTestId('generate-style-textarea')).toHaveAttribute(
+        'maxlength',
+        String(limit + 30),
+      );
+      expect(count.parentElement).not.toHaveClass('text-red-500');
+
+      view.rerender(
+        <NextIntlClientProvider locale="en" messages={{ generate: baseDict }}>
+          <VoiceSettingsCard
+            isPaidUser={isPaidUser}
+            publicVoices={[gemini]}
+            selectedStyle={'s'.repeat(limit + 1)}
+            selectedVoice={gemini}
+            setSelectedStyle={vi.fn()}
+            setSelectedVoice={vi.fn()}
+          />
+        </NextIntlClientProvider>,
+      );
+      expect(
+        screen.getByTestId('generate-style-character-count').parentElement,
+      ).toHaveClass('text-red-500');
+    },
+  );
+
+  it('toggles the style field between compact and fullscreen', async () => {
+    const user = userEvent.setup();
+    renderVoiceSettingsCard({
+      selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+    });
+    const style = screen.getByTestId('generate-style-textarea');
+
+    expect(style.style.getPropertyValue('--ta1-height')).toBe('4rem');
+    await user.click(screen.getByTitle('Fullscreen'));
+    expect(style.style.getPropertyValue('--ta1-height')).toBe('30vh');
   });
 });

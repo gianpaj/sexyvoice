@@ -15,6 +15,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudioGenerator } from '@/components/audio-generator';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 
+const ORPHEUS_MODEL =
+  'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f';
+
 const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries }),
@@ -1807,4 +1810,483 @@ describe('AudioGenerator', () => {
       expect(mockToastFn.success).not.toHaveBeenCalled();
     },
   );
+
+  describe('Keyboard shortcut', () => {
+    it('generates with Cmd/Ctrl+Enter only when Generate is enabled', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn().mockResolvedValue({
+        json: async () => ({ url: 'https://example.com/audio.wav' }),
+        ok: true,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        isPaidUser: false,
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      const input = await screen.findByTestId('generate-textarea');
+
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      fireEvent.change(input, { target: { value: 'a'.repeat(501) } });
+      await user.keyboard('{Meta>}{Enter}{/Meta}');
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      fireEvent.change(input, { target: { value: 'Hello' } });
+      await user.keyboard('{Meta>}{Enter}{/Meta}');
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      expect(getFetchRequestBody(fetchMock, 0)).toMatchObject({
+        text: 'Hello',
+      });
+    });
+
+    it('ignores Cmd/Ctrl+Enter without credits or while generating', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn(() => new Promise(() => undefined));
+      vi.stubGlobal('fetch', fetchMock);
+      const view = renderAudioGenerator({
+        hasEnoughCredits: false,
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: 'Hello' },
+      });
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      expect(fetchMock).not.toHaveBeenCalled();
+
+      view.rerender(
+        <NextIntlClientProvider
+          locale="es"
+          messages={{ errorCodes: errorCodesDict, generate: baseDict }}
+        >
+          <AudioGenerator
+            hasEnoughCredits
+            isPaidUser
+            selectedVoice={createVoice({ model: 'gpro38', name: 'kore' })}
+          />
+        </NextIntlClientProvider>,
+      );
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      await user.keyboard('{Control>}{Enter}{/Control}');
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('Text limits', () => {
+    it.each([
+      { isPaidUser: false, limit: 500, model: 'gpro38' },
+      { isPaidUser: true, limit: 1000, model: 'gpro38' },
+      { isPaidUser: false, limit: 500, model: ORPHEUS_MODEL },
+      { isPaidUser: true, limit: 500, model: ORPHEUS_MODEL },
+    ])(
+      'counts $model text against $limit characters when paid=$isPaidUser',
+      async ({ isPaidUser, limit, model }) => {
+        renderAudioGenerator({
+          isPaidUser,
+          selectedVoice: createVoice({ model, name: 'kore' }),
+        });
+        const input = await screen.findByTestId('generate-textarea');
+
+        expect(
+          screen.getByTestId('generate-character-count'),
+        ).toHaveTextContent(`0 / ${limit}`);
+        expect(input).toHaveAttribute(
+          'maxlength',
+          String(limit + CHARACTERS_LIMIT_GRACE),
+        );
+      },
+    );
+
+    it.each([
+      { isPaidUser: false, limit: 500 },
+      { isPaidUser: true, limit: 1000 },
+    ])(
+      'limits Grok text to $limit characters when paid=$isPaidUser',
+      ({ isPaidUser, limit }) => {
+        renderAudioGenerator({
+          isPaidUser,
+          selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+        });
+
+        expect(
+          screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+        ).toHaveAttribute('maxlength', String(limit));
+      },
+    );
+
+    it('blocks generation and estimates while the style is over its limit', async () => {
+      renderAudioGenerator({
+        isPaidUser: false,
+        selectedStyle: 's'.repeat(1001),
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: 'Hello' },
+      });
+
+      expect(screen.getByTestId('generate-button')).toBeDisabled();
+      expect(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      ).toBeDisabled();
+    });
+  });
+
+  describe('Advanced settings', () => {
+    const settings = { seed: 42, speed: 1.2, temperature: 0.8 };
+
+    it.each([
+      {
+        expected: { seed: 42, styleVariant: 'calm', temperature: 0.8 },
+        model: 'gpro38',
+      },
+      {
+        expected: { language: 'auto', speed: 1.2, styleVariant: '' },
+        model: 'xai',
+      },
+      { expected: { styleVariant: '' }, model: ORPHEUS_MODEL },
+    ])(
+      'sends only the settings a $model voice honours',
+      async ({ expected, model }) => {
+        const user = userEvent.setup();
+        const fetchMock = vi.fn().mockResolvedValue({
+          json: async () => ({ url: 'https://example.com/audio.wav' }),
+          ok: true,
+        });
+        vi.stubGlobal('fetch', fetchMock);
+        renderAudioGenerator({
+          selectedStyle: 'calm',
+          selectedVoice: createVoice({ model, name: 'kore' }),
+          settings,
+        });
+
+        const input =
+          model === 'xai'
+            ? screen.getByRole('textbox', {
+                name: baseDict.textAreaPlaceholder,
+              })
+            : await screen.findByTestId('generate-textarea');
+        fireEvent.change(input, { target: { value: 'Hello' } });
+        await user.click(screen.getByTestId('generate-button'));
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+        expect(getFetchRequestBody(fetchMock, 0)).toEqual({
+          split: false,
+          text: 'Hello',
+          textImproved: false,
+          voiceId: 'voice-id',
+          ...expected,
+        });
+      },
+    );
+
+    it.each(['gpro38', 'xai', ORPHEUS_MODEL])(
+      're-rolls a failed %s segment with a fresh retry seed',
+      async (model) => {
+        const user = userEvent.setup();
+        const firstSegment = `${'A'.repeat(300)}.`;
+        const secondSegment = `${'B'.repeat(300)}.`;
+        const fetchMock = vi
+          .fn()
+          .mockResolvedValueOnce({
+            json: async () => ({ error: 'Server error' }),
+            ok: false,
+            status: 500,
+          })
+          .mockResolvedValue({
+            json: async () => ({ url: 'https://example.com/retry.wav' }),
+            ok: true,
+          });
+        vi.stubGlobal('fetch', fetchMock);
+        renderAudioGenerator({
+          selectedVoice: createVoice({ model, name: 'kore' }),
+          settings: { seed: 42, speed: null, temperature: null },
+        });
+
+        const input =
+          model === 'xai'
+            ? screen.getByRole('textbox', {
+                name: baseDict.textAreaPlaceholder,
+              })
+            : await screen.findByTestId('generate-textarea');
+        fireEvent.change(input, {
+          target: { value: `${firstSegment} ${secondSegment}` },
+        });
+        await user.click(
+          screen.getByRole('checkbox', {
+            name: baseDict.split.splitToggleLabel,
+          }),
+        );
+        await waitFor(() => {
+          expect(
+            screen.getByText(baseDict.split.segmentPreviews),
+          ).toBeVisible();
+        });
+        await user.click(screen.getByTestId('generate-button'));
+        await user.click(
+          await screen.findByRole('button', { name: baseDict.split.retry }),
+        );
+
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+        const retrySeed = getFetchRequestBody(fetchMock, 1).seed;
+        expect(getFetchRequestBody(fetchMock, 0).seed).toBe(
+          model === 'gpro38' ? 42 : undefined,
+        );
+        expect(Number.isInteger(retrySeed)).toBe(true);
+        expect(retrySeed).toBeGreaterThanOrEqual(1_000_000);
+        expect(retrySeed).toBeLessThan(10_000_000);
+        expect(getFetchRequestBody(fetchMock, 1).text).toBe(firstSegment);
+      },
+    );
+  });
+
+  describe('Estimate errors', () => {
+    it.each([
+      {
+        body: { error: 'Text exceeds the maximum length of 500 characters' },
+        message: 'Text exceeds the maximum length of 500 characters (400)',
+        status: 400,
+      },
+      { body: {}, message: `${baseDict.error} (500)`, status: 500 },
+    ])(
+      'shows "$message" when the estimate answers $status',
+      async ({ body, message, status }) => {
+        const user = userEvent.setup();
+        vi.stubGlobal(
+          'fetch',
+          vi.fn().mockResolvedValue({
+            json: async () => body,
+            ok: false,
+            status,
+          }),
+        );
+        renderAudioGenerator({
+          selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+        });
+        fireEvent.change(
+          screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+          { target: { value: 'Hello' } },
+        );
+
+        await user.click(
+          screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+        );
+
+        await waitFor(() =>
+          expect(mockToastFn.error).toHaveBeenCalledWith(message),
+        );
+      },
+    );
+
+    it('shows the estimate error when the request fails', async () => {
+      const user = userEvent.setup();
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('fail')));
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+      });
+      fireEvent.change(
+        screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+        { target: { value: 'Hello' } },
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      );
+
+      await waitFor(() =>
+        expect(mockToastFn.error).toHaveBeenCalledWith(
+          baseDict.errorEstimating,
+        ),
+      );
+    });
+
+    it('sums the segment estimates in split mode', async () => {
+      const user = userEvent.setup();
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({
+          json: async () => ({ estimatedCredits: 300 }),
+          ok: true,
+        })
+        .mockResolvedValueOnce({
+          json: async () => ({ estimatedCredits: 400 }),
+          ok: true,
+        });
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        selectedVoice: createVoice({ model: 'xai', name: 'eve' }),
+      });
+      fireEvent.change(
+        screen.getByRole('textbox', { name: baseDict.textAreaPlaceholder }),
+        { target: { value: `${'A'.repeat(300)}. ${'B'.repeat(300)}.` } },
+      );
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await waitFor(() => {
+        expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+      });
+
+      await user.click(
+        screen.getByRole('button', { name: baseDict.estimateCreditsButton }),
+      );
+
+      expect(await screen.findByText('~700')).toBeInTheDocument();
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+        '/api/estimate-credits',
+        '/api/estimate-credits',
+      ]);
+      expect(getFetchRequestBody(fetchMock, 0)).toEqual({
+        styleVariant: '',
+        text: `${'A'.repeat(300)}.`,
+        voiceId: 'voice-id',
+      });
+    });
+  });
+
+  describe('Split sessions', () => {
+    const firstSegment = `${'A'.repeat(300)}.`;
+    const secondSegment = `${'B'.repeat(300)}.`;
+
+    async function generateTwoSegments(
+      props: Partial<React.ComponentProps<typeof AudioGenerator>>,
+    ) {
+      const user = userEvent.setup();
+      const fetchMock = vi.fn(async () => ({
+        json: async () => ({
+          url: `https://example.com/segment-${fetchMock.mock.calls.length}.wav`,
+        }),
+        ok: true,
+      }));
+      vi.stubGlobal('fetch', fetchMock);
+      const view = renderAudioGenerator({ selectedStyle: 'calm', ...props });
+      fireEvent.change(await screen.findByTestId('generate-textarea'), {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await waitFor(() => {
+        expect(screen.getByText(baseDict.split.segmentPreviews)).toBeVisible();
+      });
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(baseDict.split.statusGenerated),
+        ).toHaveLength(2);
+      });
+      return { fetchMock, user, view };
+    }
+
+    function rerenderGenerator(
+      view: ReturnType<typeof render>,
+      props: Partial<React.ComponentProps<typeof AudioGenerator>>,
+    ) {
+      view.rerender(
+        <NextIntlClientProvider
+          locale="es"
+          messages={{ errorCodes: errorCodesDict, generate: baseDict }}
+        >
+          <AudioGenerator
+            hasEnoughCredits
+            isPaidUser
+            selectedStyle="calm"
+            {...props}
+          />
+        </NextIntlClientProvider>,
+      );
+    }
+
+    it('starts over when the voice changes', async () => {
+      const { view } = await generateTwoSegments({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+
+      rerenderGenerator(view, {
+        selectedVoice: createVoice({
+          id: 'voice-zephyr',
+          model: 'gpro38',
+          name: 'zephyr',
+        }),
+      });
+
+      await waitFor(() => {
+        expect(screen.getAllByText(baseDict.split.statusPending)).toHaveLength(
+          2,
+        );
+      });
+    });
+
+    it('keeps generated segments after an advanced setting changes', async () => {
+      const selectedVoice = createVoice({ model: 'gpro38', name: 'kore' });
+      const { view } = await generateTwoSegments({ selectedVoice });
+
+      rerenderGenerator(view, {
+        selectedVoice,
+        settings: { seed: 7, speed: null, temperature: null },
+      });
+
+      await act(async () => undefined);
+      expect(screen.getAllByText(baseDict.split.statusGenerated)).toHaveLength(
+        2,
+      );
+    });
+
+    it('restores generated segments when split mode is toggled back on', async () => {
+      const { user } = await generateTwoSegments({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      const toggle = screen.getByRole('checkbox', {
+        name: baseDict.split.splitToggleLabel,
+      });
+
+      await user.click(toggle);
+      expect(
+        screen.queryByText(baseDict.split.segmentPreviews),
+      ).not.toBeInTheDocument();
+      await user.click(toggle);
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText(baseDict.split.statusGenerated),
+        ).toHaveLength(2);
+      });
+    });
+
+    it('downloads all generated Gemini segments as one wav', async () => {
+      const { fetchMock, user } = await generateTwoSegments({
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      fetchMock.mockResolvedValue({
+        blob: async () => new Blob(['segment'], { type: 'audio/wav' }),
+        ok: true,
+      } as never);
+      stubAudioMetadata(2);
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        value: vi.fn(() => 'blob:joined-audio'),
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        value: vi.fn(),
+      });
+      const downloads: string[] = [];
+      vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(
+        function (this: HTMLAnchorElement) {
+          downloads.push(this.download);
+        },
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: baseDict.split.downloadAll }),
+      );
+
+      await waitFor(() => expect(downloads).toEqual(['generated-audio.wav']));
+      expect(mockJoinSegments).toHaveBeenCalledWith(
+        [
+          { endSec: 2, file: expect.any(File), startSec: 0 },
+          { endSec: 2, file: expect.any(File), startSec: 0 },
+        ],
+        'wav',
+      );
+    });
+  });
 });
