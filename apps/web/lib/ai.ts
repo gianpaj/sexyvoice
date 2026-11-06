@@ -1,5 +1,6 @@
 import type { GenerateContentResponse } from '@google/genai';
 
+import { isActiveTtsModel } from '@/lib/tts/models';
 import { getTtsProvider } from '@/lib/utils';
 
 /**
@@ -24,10 +25,6 @@ export function extractInlineAudio(response: GenerateContentResponse | null): {
   return { data: undefined, mimeType: undefined };
 }
 
-// Gemini 3.1 audio tags for inline expressive control
-export const GEMINI_AUDIO_TAGS =
-  '[cheerfully], [whispering], [laughing], [pause], [excited], [sadly], [nervously], [slowly], [fast], [breathily], [sighing], [giggling]';
-
 // Gemini 3.8 inline vocal tags. English tags apply to every transcript language.
 // https://ai.google.dev/gemini-api/docs/speech-generation
 export const GEMINI_38_AUDIO_TAGS =
@@ -35,7 +32,7 @@ export const GEMINI_38_AUDIO_TAGS =
 
 /**
  * Inline emotion tags a voice understands, or undefined when the model has no
- * inline tag set (Gemini 2.5, Gemini 3.1, Grok). Orpheus tags vary by language.
+ * inline tag set (Grok). Orpheus tags vary by language.
  */
 export const getEmotionTags = ({
   language,
@@ -44,6 +41,7 @@ export const getEmotionTags = ({
   language: string;
   model: string;
 }) => {
+  if (!isActiveTtsModel(model)) return;
   if (model === 'gpro38') return GEMINI_38_AUDIO_TAGS;
   if (getTtsProvider(model) !== 'replicate') return;
   if (language.startsWith('it-')) {
@@ -64,54 +62,16 @@ export const getCharactersLimit = (model: string, isPaidUser = false) => {
   if (!isPaidUser) {
     return DEFAULT_LIMIT;
   }
-  if (
-    model === 'gpro' ||
-    model === 'gpro31' ||
-    model === 'gpro38' ||
-    model === 'xai'
-  ) {
+  if (model === 'gpro38' || model === 'xai') {
     return PAID_LIMIT;
   }
   return DEFAULT_LIMIT;
 };
 
-// Gemini voices accept a separate style / "director's notes" prompt in addition
-// to the transcript. It must be capped per tier so it can't be used to bypass
-// the transcript character limit (getCharactersLimit) and inflate provider cost.
-//
-// Gemini 2.5 voices: the style is a short character-bounded prompt.
-const GEMINI_25_STYLE_LIMIT_FREE = 1000;
-const GEMINI_25_STYLE_LIMIT_PAID = 2500;
+// Bound delivery direction separately from the transcript.
+const GEMINI_STYLE_LIMIT_FREE = 1000;
+const GEMINI_STYLE_LIMIT_PAID = 2500;
 
-// Gemini 3.1 (gpro31) streams audio, so the transcript and style share one
-// combined *token* budget instead of separate character caps. The Gemini TTS
-// models cap input at 8192 tokens (gemini-3.1-flash-tts-preview and the
-// gemini-2.5-*-tts fallback both reject larger inputs), so the paid budget is
-// the model ceiling; longer text must go through Split mode.
-const GEMINI_31_TOKEN_LIMIT_FREE = 400;
-const GEMINI_31_TOKEN_LIMIT_PAID = 8192;
-
-// No tokenizer is bundled, so approximate tokens from characters. ~4 chars per
-// token is the conventional rough heuristic for English-like text.
-export const GEMINI_CHARS_PER_TOKEN = 4;
-
-// HOTFIX: Gemini 3.1 (gpro31) progressive streaming was corrupting some
-// generations, so streaming — and the larger combined input *token* budget that
-// shipped with it — are temporarily disabled. While this is `false`, gpro31 uses
-// the non-streaming JSON path and the standard per-tier *character* limits
-// (getCharactersLimit) with a separate style-prompt cap, exactly like the Gemini
-// 2.5 voices. Flip back to `true` to restore streaming + the combined token
-// budget once the streaming corruption is fixed.
-export const GEMINI_STREAMING_ENABLED = false;
-
-/** Character limit for the Gemini 2.5 style prompt, per tier. */
+/** Character limit for the Gemini style prompt, per tier. */
 export const getGeminiStyleCharacterLimit = (isPaidUser = false) =>
-  isPaidUser ? GEMINI_25_STYLE_LIMIT_PAID : GEMINI_25_STYLE_LIMIT_FREE;
-
-/** Combined (style + transcript) token budget for Gemini 3.1 (gpro31), per tier. */
-export const getGeminiCombinedTokenLimit = (isPaidUser = false) =>
-  isPaidUser ? GEMINI_31_TOKEN_LIMIT_PAID : GEMINI_31_TOKEN_LIMIT_FREE;
-
-/** Rough token-count estimate from character length (no tokenizer available). */
-export const estimateTokenCount = (text: string) =>
-  Math.ceil(text.length / GEMINI_CHARS_PER_TOKEN);
+  isPaidUser ? GEMINI_STYLE_LIMIT_PAID : GEMINI_STYLE_LIMIT_FREE;

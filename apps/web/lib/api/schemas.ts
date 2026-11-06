@@ -22,13 +22,7 @@ export const ErrorResponseSchema = z.object({
   }),
 });
 
-const ExternalApiModelSchema = z.enum([
-  'gpro',
-  'gpro31',
-  'gpro38',
-  'orpheus',
-  'xai',
-]);
+const ExternalApiModelSchema = z.enum(['gpro38', 'orpheus', 'xai']);
 
 export const VoiceGenerationRequestSchema = z
   .strictObject({
@@ -37,7 +31,7 @@ export const VoiceGenerationRequestSchema = z
       .min(1)
       .max(1000)
       .describe(
-        'The text to synthesize (max 1000 chars for gpro/gpro31/gpro38/xai, 500 for orpheus)',
+        'The text to synthesize (max 1000 chars for gpro38/xai, 500 for orpheus)',
       ),
     model: ExternalApiModelSchema.optional().describe(
       'The voice model to use when selecting a voice by name. Omit when using voiceId.',
@@ -71,7 +65,7 @@ export const VoiceGenerationRequestSchema = z
       .max(2)
       .optional()
       .describe(
-        'Sampling temperature for Gemini voices (gpro/gpro31/gpro38). Range 0-2; higher is more expressive. Ignored by other models.',
+        'Sampling temperature for Gemini voices (gpro38). Range 0-2; higher is more expressive. Ignored by other models.',
       ),
     voice: z
       .string()
@@ -143,7 +137,7 @@ export const VoiceInfoSchema = z.object({
   formats: z.array(z.enum(['wav', 'mp3'])),
   id: z.string(),
   language: z.string(),
-  model: z.enum(['gpro', 'gpro31', 'gpro38', 'orpheus', 'xai']),
+  model: z.enum(['gpro38', 'orpheus', 'xai']),
   name: z.string(),
   supports_style: z
     .boolean()
@@ -155,7 +149,7 @@ export const VoicesResponseSchema = z.object({
 });
 
 export const ModelInfoSchema = z.object({
-  id: z.enum(['gpro', 'gpro31', 'gpro38', 'orpheus', 'xai']),
+  id: z.enum(['gpro38', 'orpheus', 'xai']),
   max_input_length: z.number().int().positive(),
   name: z.string(),
   supported_formats: z.array(z.enum(['wav', 'mp3'])),

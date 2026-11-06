@@ -258,7 +258,6 @@ describe('Generation route claims authentication', () => {
         queries.getVoiceById,
         queries.getVoiceIdByName,
         queries.isFreeUserOverCallLimit,
-        queries.isFreemiumUserOverLimit,
         queries.resolveCharacterPrompt,
         queries.reduceCredits,
         queries.reduceCreditsUpTo,

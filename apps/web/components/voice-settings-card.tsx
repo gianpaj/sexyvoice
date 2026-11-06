@@ -55,14 +55,9 @@ export function VoiceSettingsCard({
   const isGeminiVoice = provider === 'gemini';
   const isGrokVoice = provider === 'grok';
   const emotionTags = selectedVoice ? getEmotionTags(selectedVoice) : undefined;
-  // Gemini 3.1 (gpro31) shares one combined token budget between the transcript
-  // and the style, enforced in the generator; the standalone character counter
-  // below only applies to the character-bounded Gemini 2.5 style prompt.
-  const isGemini31 = selectedVoice?.model === 'gpro31';
   const styleCharacterLimit = getGeminiStyleCharacterLimit(isPaidUser);
   const styleLength = selectedStyle?.length ?? 0;
-  const isStyleOverLimit =
-    isGeminiVoice && !isGemini31 && styleLength > styleCharacterLimit;
+  const isStyleOverLimit = isGeminiVoice && styleLength > styleCharacterLimit;
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -190,29 +185,27 @@ export function VoiceSettingsCard({
                 <Maximize2 className="h-4 w-4" />
               )}
             </Button>
-            {!isGemini31 && (
-              <div
-                className={cn(
-                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
-                  isStyleOverLimit && 'text-red-500',
-                )}
+            <div
+              className={cn(
+                'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',
+                isStyleOverLimit && 'text-red-500',
+              )}
+            >
+              <p
+                className="mt-1 text-right"
+                data-testid="generate-style-character-count"
               >
-                <p
-                  className="mt-1 text-right"
-                  data-testid="generate-style-character-count"
-                >
-                  {styleLength}/{styleCharacterLimit}
-                </p>
-                <UpgradeCrown
-                  paid={isPaidUser}
-                  tooltip={
-                    isPaidUser
-                      ? t('paidStyleLimitTooltip')
-                      : t('upgradeStyleLimitTooltip')
-                  }
-                />
-              </div>
-            )}
+                {styleLength}/{styleCharacterLimit}
+              </p>
+              <UpgradeCrown
+                paid={isPaidUser}
+                tooltip={
+                  isPaidUser
+                    ? t('paidStyleLimitTooltip')
+                    : t('upgradeStyleLimitTooltip')
+                }
+              />
+            </div>
           </div>
         )}
       </CardContent>

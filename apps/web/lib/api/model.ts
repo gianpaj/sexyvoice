@@ -21,9 +21,7 @@ export function resolveDbModelIds(externalModel: ExternalApiModelId): string[] {
 }
 
 export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
-  return model === 'gpro' || model === 'gpro31' || model === 'gpro38'
-    ? 'wav'
-    : 'mp3';
+  return model === 'gpro38' ? 'wav' : 'mp3';
 }
 
 export function isFormatSupported(
