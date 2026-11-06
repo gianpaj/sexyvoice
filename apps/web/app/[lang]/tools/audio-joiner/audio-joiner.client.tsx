@@ -473,7 +473,7 @@ export default function AudioJoinerClient() {
         </p>
       </header>
 
-      <main className="glass-card animate-fade-in rounded-3xl p-4 md:p-8">
+      <div className="glass-card animate-fade-in rounded-3xl p-4 md:p-8">
         <div className="space-y-6">
           <TrackList
             currentTimeSec={currentTimeSec}
@@ -526,7 +526,7 @@ export default function AudioJoinerClient() {
             outputFormat={outputFormat}
           />
         </div>
-      </main>
+      </div>
     </>
   );
 }

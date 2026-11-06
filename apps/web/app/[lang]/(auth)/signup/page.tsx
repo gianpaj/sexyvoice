@@ -2,8 +2,7 @@ import { Sparkles } from 'lucide-react';
 import type { Metadata } from 'next';
 import { getMessages, getTranslations } from 'next-intl/server';
 
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
+import { MarketingPage } from '@/components/marketing-page';
 import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
@@ -34,29 +33,26 @@ export default async function SignUpPage(props: {
   const dict = (await getMessages({ locale: lang })) as IntlMessages;
 
   return (
-    <>
-      <HeaderStatic authRedirectTo={redirectTo} />
-      <main
-        className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
-        id="main-content"
-      >
-        <div className="mx-auto my-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
-          <Sparkles aria-hidden className="mr-2 size-4" />
-          <span>{dict.landing.cta.freeCredits}</span>
+    <MarketingPage
+      authRedirectTo={redirectTo}
+      className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
+      lang={lang}
+    >
+      <div className="mx-auto my-4 inline-flex items-center rounded-full bg-blue-600/20 px-4 py-2 text-blue-400">
+        <Sparkles aria-hidden className="mr-2 size-4" />
+        <span>{dict.landing.cta.freeCredits}</span>
+      </div>
+      <div className="w-full max-w-md">
+        <div className="rounded-2xl bg-background p-8 shadow-xl">
+          <h1 className="mb-2 text-center font-bold text-3xl">
+            {dict.auth.signup.title}
+          </h1>
+          <p className="mb-8 text-center text-muted-foreground">
+            {dict.auth.signup.subtitle}
+          </p>
+          <SignUpForm lang={lang} redirectTo={redirectTo} />
         </div>
-        <div className="w-full max-w-md">
-          <div className="rounded-2xl bg-background p-8 shadow-xl">
-            <h1 className="mb-2 text-center font-bold text-3xl">
-              {dict.auth.signup.title}
-            </h1>
-            <p className="mb-8 text-center text-muted-foreground">
-              {dict.auth.signup.subtitle}
-            </p>
-            <SignUpForm lang={lang} redirectTo={redirectTo} />
-          </div>
-        </div>
-      </main>
-      <Footer lang={lang} />
-    </>
+      </div>
+    </MarketingPage>
   );
 }

@@ -1,10 +1,8 @@
 import { allPolicyPages } from 'contentlayer/generated';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { getMessages } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
+import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
@@ -78,21 +76,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PolicyPage({ params }: Props) {
   const { lang, policySlug } = await params;
-  await getMessages({ locale: lang });
-
-  if (!(routing.locales.includes(lang) && isPolicySlug(policySlug))) {
-    redirect(`/${routing.defaultLocale}/privacy-policy`);
-  }
-
-  const policy = getPolicyByLocale(lang, policySlug);
+  const policy = isPolicySlug(policySlug)
+    ? getPolicyByLocale(lang, policySlug)
+    : undefined;
 
   if (!policy) {
-    redirect(`/${routing.defaultLocale}/${policySlug}`);
+    notFound();
   }
 
   return (
-    <main className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800">
-      <HeaderStatic />
+    <MarketingPage
+      className="min-h-screen bg-linear-to-br from-gray-900 to-gray-800"
+      lang={lang}
+    >
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1>{policy.title}</h1>
         <p className="mt-2 text-muted-foreground text-sm">
@@ -102,7 +98,6 @@ export default async function PolicyPage({ params }: Props) {
           <Mdx code={policy.body.code} />
         </div>
       </div>
-      <Footer lang={lang} />
-    </main>
+    </MarketingPage>
   );
 }

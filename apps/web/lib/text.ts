@@ -22,3 +22,14 @@ export function calculateReadingTime(
 
   return Math.ceil(wordCount / wordsPerMinute);
 }
+
+/**
+ * Splits a marketing headline at its first comma. Pages render the second
+ * part on its own line in the brand gradient.
+ */
+export function splitHeroTitle(title: string): [string, string] {
+  const commaIndex = title.indexOf(',');
+  return commaIndex === -1
+    ? [title, '']
+    : [title.slice(0, commaIndex), title.slice(commaIndex + 1)];
+}

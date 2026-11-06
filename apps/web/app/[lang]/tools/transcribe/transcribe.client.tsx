@@ -158,7 +158,7 @@ export default function TranscribeClient({ lang }: Props) {
         </p>
       </header>
 
-      <main className="glass-card animate-fade-in rounded-3xl p-4 md:p-10">
+      <div className="glass-card animate-fade-in rounded-3xl p-4 md:p-10">
         <div className="space-y-6">
           <AudioInput
             disabled={isProcessing}
@@ -235,7 +235,7 @@ export default function TranscribeClient({ lang }: Props) {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </>
   );
 }

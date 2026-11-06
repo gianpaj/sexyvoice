@@ -49,9 +49,9 @@ exports[`audioConverter page > renders one header and footer around the main con
   "footerInMain": false,
   "footers": 1,
   "headerInMain": false,
-  "headers": 2,
+  "headers": 1,
   "mainIds": [
-    "",
+    "main-content",
   ],
 }
 `;
@@ -221,9 +221,9 @@ exports[`audioJoiner page > renders one header and footer around the main conten
   "footerInMain": false,
   "footers": 1,
   "headerInMain": false,
-  "headers": 2,
+  "headers": 1,
   "mainIds": [
-    "",
+    "main-content",
   ],
 }
 `;
@@ -496,10 +496,10 @@ exports[`de blog post realtime-ai-voice-call > renders 1`] = `
   "chrome": {
     "footerInMain": false,
     "footers": 1,
-    "headerInMain": true,
-    "headers": 2,
+    "headerInMain": false,
+    "headers": 1,
     "mainIds": [
-      "",
+      "main-content",
     ],
   },
   "jsonLd": [
@@ -615,10 +615,10 @@ exports[`en blog post hello-from-sexyvoice > renders 1`] = `
   "chrome": {
     "footerInMain": false,
     "footers": 1,
-    "headerInMain": true,
-    "headers": 2,
+    "headerInMain": false,
+    "headers": 1,
     "mainIds": [
-      "",
+      "main-content",
     ],
   },
   "jsonLd": [
@@ -1370,12 +1370,12 @@ exports[`privacyPolicy page > links in en 1`] = `
 
 exports[`privacyPolicy page > renders one header and footer around the main content 1`] = `
 {
-  "footerInMain": true,
+  "footerInMain": false,
   "footers": 1,
-  "headerInMain": true,
+  "headerInMain": false,
   "headers": 1,
   "mainIds": [
-    "",
+    "main-content",
   ],
 }
 `;
@@ -1412,7 +1412,9 @@ exports[`resetPassword page > renders one header and footer around the main cont
   "footers": 0,
   "headerInMain": false,
   "headers": 1,
-  "mainIds": [],
+  "mainIds": [
+    "main-content",
+  ],
 }
 `;
 
@@ -1524,12 +1526,12 @@ exports[`terms page > links in en 1`] = `
 
 exports[`terms page > renders one header and footer around the main content 1`] = `
 {
-  "footerInMain": true,
+  "footerInMain": false,
   "footers": 1,
-  "headerInMain": true,
+  "headerInMain": false,
   "headers": 1,
   "mainIds": [
-    "",
+    "main-content",
   ],
 }
 `;
@@ -1589,9 +1591,9 @@ exports[`transcribe page > renders one header and footer around the main content
   "footerInMain": false,
   "footers": 1,
   "headerInMain": false,
-  "headers": 2,
+  "headers": 1,
   "mainIds": [
-    "",
+    "main-content",
   ],
 }
 `;

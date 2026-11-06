@@ -1,17 +1,12 @@
 import { allPosts } from 'contentlayer/generated';
 import { format, parseISO } from 'date-fns';
-import { cookies } from 'next/headers';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next/types';
 import { getMessages } from 'next-intl/server';
 
-import { Banner } from '@/components/banner';
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
-import { JsonLd } from '@/components/json-ld';
+import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
-import { resolveActiveBanner } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { DEFAULT_OG_IMAGE, pageMetadata } from '@/lib/page-metadata';
 import { SITE_LOGO, SITE_NAME, SITE_URL } from '@/lib/site';
@@ -103,28 +98,17 @@ export async function generateMetadata({
 }
 
 const PostLayout = async (props: {
-  params: Promise<{ slug: string; tag: string; lang: Locale }>;
+  params: Promise<{ slug: string; lang: Locale }>;
 }) => {
   const params = await props.params;
   const { lang } = params;
   const post = await getPostFromParams(params);
-  const messages = (await getMessages({ locale: lang })) as IntlMessages;
-  const cookieStore = await cookies();
-  const dismissedCookieKeys = cookieStore
-    .getAll()
-    .filter((cookie) => cookie.value)
-    .map((cookie) => cookie.name);
-  const activeBanner = resolveActiveBanner({
-    audience: 'loggedOut',
-    dismissedCookieKeys,
-    lang,
-    messages,
-    placement: 'blog',
-  });
 
   if (!post) {
     notFound();
   }
+
+  const messages = (await getMessages({ locale: lang })) as IntlMessages;
 
   const wordCount = countWords(post.body.raw);
   const readingTime = calculateReadingTime(wordCount);
@@ -147,13 +131,7 @@ const PostLayout = async (props: {
   );
 
   return (
-    <>
-      <JsonLd data={jsonLd} />
-
-      {activeBanner && <Banner banner={activeBanner} />}
-
-      <HeaderStatic />
-
+    <MarketingPage banner jsonLd={jsonLd} lang={lang}>
       {/* Semantic content structure for AI extraction */}
       <div
         className="sr-only"
@@ -186,7 +164,7 @@ const PostLayout = async (props: {
         </p>
       </div>
 
-      <main itemScope itemType="https://schema.org/WebPage">
+      <div itemScope itemType="https://schema.org/WebPage">
         <article
           className="prose prose-invert max-w-2xl px-4 py-8 md:mx-auto md:px-0"
           itemProp="mainEntity"
@@ -352,9 +330,8 @@ const PostLayout = async (props: {
             </div>
           </div>
         </article>
-      </main>
-      <Footer lang={lang} />
-    </>
+      </div>
+    </MarketingPage>
   );
 };
 

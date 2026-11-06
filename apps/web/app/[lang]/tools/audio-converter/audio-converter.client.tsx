@@ -116,7 +116,7 @@ export default function AudioConverterClient() {
         </p>
       </header>
 
-      <main className="glass-card animate-fade-in rounded-3xl p-6 md:p-10">
+      <div className="glass-card animate-fade-in rounded-3xl p-6 md:p-10">
         {conversionState === 'complete' ? (
           <DownloadSection
             fileName={selectedFile?.name || 'audio'}
@@ -164,7 +164,7 @@ export default function AudioConverterClient() {
             )}
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 }

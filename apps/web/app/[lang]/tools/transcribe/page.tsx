@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
-import { JsonLd } from '@/components/json-ld';
+import { ToolPage } from '@/components/marketing-page';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
@@ -116,66 +114,50 @@ export default async function TranscribePage({ params }: Props) {
   );
 
   return (
-    <>
-      <JsonLd data={jsonLd} />
-      <div className="bg-background">
-        <HeaderStatic />
-        <div className="container mx-auto max-w-3xl px-4 py-12 md:py-20">
-          <TranscribeClient lang={lang} />
+    <ToolPage
+      credits={[
+        {
+          href: 'https://huggingface.co/docs/transformers.js',
+          label: t('footer.transformersJs'),
+        },
+        {
+          href: 'https://openai.com/index/whisper/',
+          label: t('footer.whisper'),
+        },
+      ]}
+      jsonLd={jsonLd}
+      lang={lang}
+      noUploads={t('footer.noUploads')}
+      poweredBy={t('footer.poweredBy')}
+      width="max-w-3xl"
+    >
+      <TranscribeClient lang={lang} />
 
-          {/* Server-rendered FAQ — crawlable without JavaScript */}
-          <section
-            aria-labelledby="faq-heading"
-            className="mt-16 border-border/50 border-t pt-12"
-            id="faq"
-          >
-            <h2
-              className="mb-8 font-semibold text-foreground text-xl"
-              id="faq-heading"
-            >
-              {t('faq.title')}
-            </h2>
-            <dl className="space-y-6">
-              {faqItems.map((item) => (
-                <div key={item.question}>
-                  <dt className="mb-1.5 font-medium text-foreground text-sm">
-                    {item.question}
-                  </dt>
-                  <dd className="text-muted-foreground text-sm leading-relaxed">
-                    {item.answer}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        </div>
-      </div>
-
-      {/* Attribution bar — preserves Whisper/Transformers.js credit and privacy note */}
-      <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
-        <p>
-          {t('footer.poweredBy')}{' '}
-          <a
-            className="font-semibold text-foreground transition-colors hover:text-primary"
-            href="https://huggingface.co/docs/transformers.js"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {t('footer.transformersJs')}
-          </a>{' '}
-          &bull;{' '}
-          <a
-            className="font-semibold text-foreground transition-colors hover:text-primary"
-            href="https://openai.com/index/whisper/"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {t('footer.whisper')}
-          </a>{' '}
-          &bull; {t('footer.noUploads')}
-        </p>
-      </div>
-      <Footer lang={lang} />
-    </>
+      {/* Server-rendered FAQ — crawlable without JavaScript */}
+      <section
+        aria-labelledby="faq-heading"
+        className="mt-16 border-border/50 border-t pt-12"
+        id="faq"
+      >
+        <h2
+          className="mb-8 font-semibold text-foreground text-xl"
+          id="faq-heading"
+        >
+          {t('faq.title')}
+        </h2>
+        <dl className="space-y-6">
+          {faqItems.map((item) => (
+            <div key={item.question}>
+              <dt className="mb-1.5 font-medium text-foreground text-sm">
+                {item.question}
+              </dt>
+              <dd className="text-muted-foreground text-sm leading-relaxed">
+                {item.answer}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </ToolPage>
   );
 }

@@ -5,9 +5,6 @@ import { publicRoutes } from './routes';
 
 vi.mock('contentlayer/generated', () => import('./content-fixtures'));
 vi.mock('next-intl/server', () => import('./intl-server'));
-vi.mock('next/headers', () => ({
-  cookies: async () => ({ getAll: () => [] }),
-}));
 
 function postLinks(document: Document) {
   const hrefs = [...document.querySelectorAll('a[href*="/blog/"]')].map(

@@ -11,12 +11,17 @@ import { Link } from '@/lib/i18n/navigation';
 
 export function HeaderStatic({
   authRedirectTo,
+  signedIn = false,
 }: {
   authRedirectTo?: string | null;
+  /** Replaces the login and signup links with a link to the dashboard. */
+  signedIn?: boolean;
 } = {}) {
   const locale = useLocale() as Locale;
   const t = useTranslations('header');
   const { isMobile375 } = useIsMobileSizes();
+  const authQuery = authRedirectTo ? { redirect_to: authRedirectTo } : {};
+  const mobileSize = isMobile375 && locale !== 'en' ? 'xs' : 'sm';
 
   return (
     <header className="border-gray-800/20 border-b bg-gray-900">
@@ -32,65 +37,69 @@ export function HeaderStatic({
 
         <div className="hidden items-center justify-center gap-4 md:flex">
           <div className="space-x-4">
-            <Button asChild variant="secondary">
-              <Link
-                href={{
-                  pathname: '/login',
-                  query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
-                }}
-                prefetch
-              >
-                {t('login')}
-              </Link>
-            </Button>
-            <Button asChild effect="ringHover" variant="default">
-              <Link
-                href={{
-                  pathname: '/signup',
-                  query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
-                }}
-                prefetch
-              >
-                {t('signup')}
-              </Link>
-            </Button>
+            {signedIn ? (
+              <Button asChild variant="default">
+                <Link href="/dashboard/generate" prefetch>
+                  {t('generate')}
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="secondary">
+                  <Link
+                    href={{ pathname: '/login', query: authQuery }}
+                    prefetch
+                  >
+                    {t('login')}
+                  </Link>
+                </Button>
+                <Button asChild effect="ringHover" variant="default">
+                  <Link
+                    href={{ pathname: '/signup', query: authQuery }}
+                    prefetch
+                  >
+                    {t('signup')}
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
         <div className="z-10 flex gap-2 md:hidden">
-          <Button
-            asChild
-            className="hit-area-2"
-            size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
-            variant="secondary"
-          >
-            <Link
-              className="w-full"
-              href={{
-                pathname: '/login',
-                query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
-              }}
-              prefetch
-            >
-              {t('login')}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            className="hit-area-2"
-            size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
-          >
-            <Link
-              className="w-full"
-              href={{
-                pathname: '/signup',
-                query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
-              }}
-              prefetch
-            >
-              {t('signup')}
-            </Link>
-          </Button>
+          {signedIn ? (
+            <Button asChild className="hit-area-2" size={mobileSize}>
+              <Link className="w-full" href="/dashboard/generate" prefetch>
+                {t('generate')}
+              </Link>
+            </Button>
+          ) : (
+            <>
+              <Button
+                asChild
+                className="hit-area-2"
+                size={mobileSize}
+                variant="secondary"
+              >
+                <Link
+                  className="w-full"
+                  href={{ pathname: '/login', query: authQuery }}
+                  prefetch
+                >
+                  {t('login')}
+                </Link>
+              </Button>
+              <Button asChild className="hit-area-2" size={mobileSize}>
+                <Link
+                  className="w-full"
+                  href={{ pathname: '/signup', query: authQuery }}
+                  prefetch
+                >
+                  {t('signup')}
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </nav>
     </header>

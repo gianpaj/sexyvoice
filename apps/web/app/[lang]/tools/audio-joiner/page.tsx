@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 
-import Footer from '@/components/footer';
-import { HeaderStatic } from '@/components/header-static';
-import { JsonLd } from '@/components/json-ld';
+import { ToolPage } from '@/components/marketing-page';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
 import { SITE_NAME } from '@/lib/site';
@@ -61,31 +59,15 @@ export default async function AudioJoinerPage({ params }: Props) {
   );
 
   return (
-    <>
-      <JsonLd data={jsonLd} />
-      <div className="bg-background">
-        <HeaderStatic />
-        <div className="container mx-auto max-w-5xl px-4 py-12 md:py-20">
-          <AudioJoinerClient />
-        </div>
-      </div>
-
-      {/* Attribution bar — preserves FFmpeg credit and privacy note */}
-      <div className="border-white/5 border-t bg-[hsl(222,84%,3.5%)] py-5 text-center text-muted-foreground text-sm">
-        <p>
-          {t('footer.poweredBy')}{' '}
-          <a
-            className="font-semibold text-foreground transition-colors hover:text-primary"
-            href="https://ffmpeg.org"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {t('footer.ffmpeg')}
-          </a>{' '}
-          &bull; {t('footer.noUploads')}
-        </p>
-      </div>
-      <Footer lang={lang} />
-    </>
+    <ToolPage
+      credits={[{ href: 'https://ffmpeg.org', label: t('footer.ffmpeg') }]}
+      jsonLd={jsonLd}
+      lang={lang}
+      noUploads={t('footer.noUploads')}
+      poweredBy={t('footer.poweredBy')}
+      width="max-w-5xl"
+    >
+      <AudioJoinerClient />
+    </ToolPage>
   );
 }

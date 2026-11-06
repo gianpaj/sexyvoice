@@ -5,9 +5,10 @@ import { blogPostRoute, publicRoutes } from './routes';
 
 vi.mock('contentlayer/generated', () => import('./content-fixtures'));
 vi.mock('next-intl/server', () => import('./intl-server'));
-vi.mock('next/headers', () => ({
-  cookies: async () => ({ getAll: () => [] }),
-}));
+// Reading cookies makes a page dynamic, which keeps it out of the CDN and
+// the back/forward cache.
+const { cookies } = vi.hoisted(() => ({ cookies: vi.fn() }));
+vi.mock('next/headers', () => ({ cookies }));
 // The auth forms read the router, which only exists inside Next's app router.
 vi.mock('next/navigation', async (importOriginal) => ({
   ...(await importOriginal<typeof import('next/navigation')>()),
@@ -31,13 +32,18 @@ const pages: Record<string, PublicRoute> = {
 };
 
 function chrome(document: Document) {
-  const mains = [...document.querySelectorAll('main')];
+  // The site header holds the navigation; tools and articles have their own
+  // section headers.
+  const siteHeaders = [...document.querySelectorAll('header')].filter(
+    (header) => header.querySelector(':scope > nav'),
+  );
+  const footers = [...document.querySelectorAll('footer')];
   return {
-    footerInMain: mains.some((main) => main.querySelector('footer')),
-    footers: document.querySelectorAll('footer').length,
-    headerInMain: mains.some((main) => main.querySelector('header')),
-    headers: document.querySelectorAll('header').length,
-    mainIds: mains.map((main) => main.id),
+    footerInMain: footers.some((footer) => footer.closest('main')),
+    footers: footers.length,
+    headerInMain: siteHeaders.some((header) => header.closest('main')),
+    headers: siteHeaders.length,
+    mainIds: [...document.querySelectorAll('main')].map((main) => main.id),
   };
 }
 
@@ -50,6 +56,13 @@ function links(document: Document) {
 describe.each(Object.entries(pages))('%s page', (_name, route) => {
   it('renders one header and footer around the main content', async () => {
     expect(chrome(await renderPage(route, 'en'))).toMatchSnapshot();
+  });
+
+  it('targets the skip link and reads no cookies', async () => {
+    const page = chrome(await renderPage(route, 'en'));
+    expect(page.mainIds).toEqual(['main-content']);
+    expect(page).toMatchObject({ footerInMain: false, headerInMain: false });
+    expect(cookies).not.toHaveBeenCalled();
   });
 
   it.each(['en', 'de'] as const)('links in %s', async (lang) => {
