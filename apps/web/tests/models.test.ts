@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { toCharacter } from '@/lib/calls/characters';
 import {
   CALL_MODEL_IDS,
   callModelFor,
@@ -7,7 +8,6 @@ import {
   DEFAULT_CALL_MODEL,
   normalizeCallModel,
 } from '@/lib/calls/models';
-import { mapApiCharacterToPreset } from '@/lib/characters';
 
 describe('normalizeCallModel', () => {
   it.each(CALL_MODEL_IDS)('keeps the supported model %s', (model) => {
@@ -43,10 +43,14 @@ describe('saved voice models', () => {
   });
 });
 
-describe('mapApiCharacterToPreset', () => {
-  it('keeps the model id a character was saved with', () => {
-    const preset = mapApiCharacterToPreset({
+describe('saved characters', () => {
+  it('keep the model id they were saved with', () => {
+    const character = toCharacter({
       id: '00000000-0000-4000-a000-000000000201',
+      image: null,
+      is_public: true,
+      localized_descriptions: null,
+      localized_sample_urls: null,
       name: 'Legacy character',
       session_config: {
         maxOutputTokens: null,
@@ -54,8 +58,9 @@ describe('mapApiCharacterToPreset', () => {
         temperature: 0.8,
         voice: 'Eve',
       },
+      voices: null,
     });
 
-    expect(preset.sessionConfig.model).toBe('grok-voice-think-fast-1.0');
+    expect(character.sessionConfig.model).toBe('grok-voice-think-fast-1.0');
   });
 });

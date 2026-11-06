@@ -1,10 +1,13 @@
 import {
+  type Character,
+  DEFAULT_SESSION_CONFIG,
+  type SessionConfig,
+} from '@/lib/calls/characters';
+import {
   type CallLanguage,
   DEFAULT_CALL_LANGUAGE,
 } from '@/lib/calls/languages';
-import { defaultSessionConfig, instructions } from './default-config';
-import type { Preset } from './presets';
-import type { SessionConfig } from './session-config';
+import { instructions } from './default-config';
 
 /** Unsaved character fields in the creator. */
 export interface CustomCallDraft {
@@ -14,10 +17,19 @@ export interface CustomCallDraft {
   sessionConfig: SessionConfig;
 }
 
+export const newCharacterDraft = (
+  sessionConfig: SessionConfig = DEFAULT_SESSION_CONFIG,
+): CustomCallDraft => ({
+  description: '',
+  instructions: '',
+  name: '',
+  sessionConfig: { ...sessionConfig },
+});
+
 export interface PlaygroundState {
   /** User-created custom characters */
-  customCharacters: Preset[];
-  defaultPresets: Preset[];
+  customCharacters: Character[];
+  defaultPresets: Character[];
   instructions: string;
   language: CallLanguage;
   /** Per-call memory flag. The server also applies the profile preference. */
@@ -38,5 +50,5 @@ export const defaultPlaygroundState: PlaygroundState = {
   sceneInstructions: '',
   selectedPresetId: null,
   selectedSceneId: null,
-  sessionConfig: { ...defaultSessionConfig },
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG },
 };

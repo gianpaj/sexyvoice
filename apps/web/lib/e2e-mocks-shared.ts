@@ -63,20 +63,13 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
     },
     localized_sample_urls: null,
     name: 'Lily',
-    prompt_id: '00000000-0000-4000-a000-000000000102',
-    prompts: {
-      type: 'call',
-    },
     session_config: {
       maxOutputTokens: null,
       model: 'grok-voice-think-fast-1.0',
       temperature: 0.8,
       voice: 'Ara',
     },
-    sort_order: 0,
-    voice_id: '76071f55-b9d5-4852-a96e-dbadb7b93e9e',
     voices: {
-      name: 'Ara',
       sample_url: 'https://files.sexyvoice.ai/ara.mp3',
     },
   },
@@ -108,20 +101,13 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
     },
     localized_sample_urls: null,
     name: 'Ramona',
-    prompt_id: '00000000-0000-4000-a000-000000000101',
-    prompts: {
-      type: 'call',
-    },
     session_config: {
       maxOutputTokens: null,
       model: 'grok-voice-think-fast-1.0',
       temperature: 0.8,
       voice: 'Eve',
     },
-    sort_order: 1,
-    voice_id: 'f832da16-5fe7-4823-9c99-b0f738e39b68',
     voices: {
-      name: 'Eve',
       sample_url: 'https://files.sexyvoice.ai/eve.mp3',
     },
   },
@@ -153,20 +139,13 @@ export const E2E_PUBLIC_CALL_CHARACTERS = [
     },
     localized_sample_urls: null,
     name: 'Rafal',
-    prompt_id: '00000000-0000-4000-a000-000000000104',
-    prompts: {
-      type: 'call',
-    },
     session_config: {
       maxOutputTokens: null,
       model: 'grok-voice-think-fast-1.0',
       temperature: 0.8,
       voice: 'Rex',
     },
-    sort_order: 2,
-    voice_id: 'e580b7f2-1d13-4442-af3e-b1515425de47',
     voices: {
-      name: 'Rex',
       sample_url: 'https://files.sexyvoice.ai/rex.mp3',
     },
   },

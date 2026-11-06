@@ -11,25 +11,25 @@ import {
 } from 'react';
 
 import { callScenes } from '@/data/call-scenes';
-import { defaultSessionConfig } from '@/data/default-config';
 import {
   defaultPlaygroundState,
   type PlaygroundState,
 } from '@/data/playground-state';
-import type { Preset } from '@/data/presets';
+import {
+  type Character,
+  characterPrompt,
+  DEFAULT_SESSION_CONFIG,
+} from '@/lib/calls/characters';
 import type { CallLanguage } from '@/lib/calls/languages';
-import { getPresetInstructions } from '@/lib/characters';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
 function resolveInstructions(
   characterId: string,
   language: CallLanguage,
-  allPresets: Preset[],
+  allPresets: Character[],
 ): string {
-  return getPresetInstructions(
-    allPresets.find((p) => p.id === characterId),
-    language,
-  );
+  const character = allPresets.find((p) => p.id === characterId);
+  return character ? characterPrompt(character, language) : '';
 }
 
 // Define action types and payloads
@@ -38,11 +38,11 @@ type Action =
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
   | { type: 'SET_MEMORY'; payload: boolean }
-  | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
+  | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Character }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
   | {
       type: 'RESTORE_CUSTOM_CHARACTER';
-      payload: { index: number; preset: Preset };
+      payload: { index: number; preset: Character };
     }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
@@ -75,11 +75,11 @@ function playgroundStateReducer(
           allPresets,
         );
       } else {
-        newState.instructions = selectedPreset?.instructions || '';
+        newState.instructions = selectedPreset?.prompt || '';
       }
 
       newState.sessionConfig =
-        selectedPreset?.sessionConfig || defaultSessionConfig;
+        selectedPreset?.sessionConfig || DEFAULT_SESSION_CONFIG;
       return newState;
     }
     case 'SET_SELECTED_SCENE_ID': {
@@ -125,7 +125,7 @@ function playgroundStateReducer(
     }
     case 'DELETE_CUSTOM_CHARACTER': {
       const updatedCharacters = state.customCharacters.filter(
-        (character: Preset) => character.id !== action.payload,
+        (character: Character) => character.id !== action.payload,
       );
       return {
         ...state,
@@ -197,12 +197,12 @@ export const usePlaygroundState = (): PlaygroundStateContextProps => {
 // Create the provider component
 interface PlaygroundStateProviderProps {
   children: ReactNode;
-  defaultPresets?: Preset[];
-  initialCustomCharacters?: Preset[];
+  defaultPresets?: Character[];
+  initialCustomCharacters?: Character[];
   initialState?: Partial<PlaygroundState>;
 }
 
-const EMPTY_PRESETS: Preset[] = [];
+const EMPTY_PRESETS: Character[] = [];
 
 export const PlaygroundStateProvider = ({
   children,

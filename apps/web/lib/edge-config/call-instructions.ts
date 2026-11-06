@@ -2,7 +2,7 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { get } from '@vercel/global-config';
 
 import { instructions as fallbackInstructions } from '@/data/default-config';
-import type { Preset } from '@/data/presets';
+import type { Character } from '@/lib/calls/characters';
 
 interface CallInstructionConfig {
   defaultInstructions: string;
@@ -60,15 +60,15 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
 }
 
 export function applyPresetInstructionOverrides(
-  presets: Preset[],
+  presets: Character[],
   presetInstructions?: Record<string, string>,
-): Preset[] {
+): Character[] {
   if (!presetInstructions) {
     return presets;
   }
 
   return presets.map((preset) => ({
     ...preset,
-    instructions: presetInstructions[preset.id] ?? preset.instructions,
+    prompt: presetInstructions[preset.id] ?? preset.prompt,
   }));
 }

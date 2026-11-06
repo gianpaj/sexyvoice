@@ -20,10 +20,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Preset } from '@/data/presets';
 import { useAgent } from '@/hooks/use-agent';
 import { useConnection } from '@/hooks/use-connection';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
+import type { Character } from '@/lib/calls/characters';
 import { CharacterAvatar } from './character-avatar';
 import {
   enableKrispNoiseFilterIfReady,
@@ -147,7 +147,7 @@ export function InCallView({
 }: {
   /** Formatted call duration. */
   elapsed: string;
-  preset: Preset;
+  preset: Character;
 }) {
   const t = useTranslations('call.inCall');
   const connectionState = useConnectionState();

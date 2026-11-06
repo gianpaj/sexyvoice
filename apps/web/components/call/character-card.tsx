@@ -17,8 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { Preset } from '@/data/presets';
-import { getPresetSampleUrl } from '@/lib/characters';
+import { type Character, characterSampleUrl } from '@/lib/calls/characters';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from './character-avatar';
 import { ListenButton } from './listen-button';
@@ -42,7 +41,7 @@ interface CharacterCardProps {
   /** Opens the call panel. */
   onOpen: () => void;
   playing: boolean;
-  preset: Preset;
+  preset: Character;
 }
 
 export function CharacterCard({
@@ -92,7 +91,7 @@ export function CharacterCard({
       <div className="flex items-center justify-between gap-2">
         <ListenButton
           ariaLabel={t(playing ? 'stopName' : 'listenTo', { name })}
-          disabled={!getPresetSampleUrl(preset)}
+          disabled={!characterSampleUrl(preset)}
           label={t(playing ? 'stop' : 'listen')}
           onClick={onListen}
           playing={playing}

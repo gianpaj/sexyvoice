@@ -287,19 +287,19 @@ describe('call E2E data', () => {
     expect(props.defaultPresets?.map((preset) => preset.id)).toEqual(
       E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.id),
     );
-    expect(props.defaultPresets?.map((preset) => preset.voiceName)).toEqual([
-      'Ara',
-      'Eve',
-      'Rex',
-    ]);
+    expect(
+      props.defaultPresets?.map((preset) => preset.sessionConfig.voice),
+    ).toEqual(['Ara', 'Eve', 'Rex']);
     for (const character of E2E_PUBLIC_CALL_CHARACTERS) {
-      expect(character.prompts).toEqual({ type: 'call' });
+      expect(character).not.toHaveProperty('prompts');
       expect(character).not.toHaveProperty('user_id');
       expect(
-        E2E_CALL_VOICES.find((voice) => voice.id === character.voice_id),
+        E2E_CALL_VOICES.find(
+          (voice) => voice.name === character.session_config.voice,
+        ),
       ).toMatchObject(character.voices);
     }
-    expect(props.defaultPresets?.map((preset) => preset.instructions)).toEqual([
+    expect(props.defaultPresets?.map((preset) => preset.prompt)).toEqual([
       '',
       '',
       '',
@@ -451,21 +451,19 @@ describe.each([
     expect(props.defaultPresets).toHaveLength(1);
     expect(props.defaultPresets?.[0]).toMatchObject({
       id: 'live-public',
-      instructions: 'Live preset override',
       isPublic: publicCharacter.is_public,
       localizedDescriptions: { de: 'Beschreibung' },
-      localizedInstructions: { de: 'Lokalisierte Anweisung' },
+      localizedPrompts: { de: 'Lokalisierte Anweisung' },
       name: 'Live public',
-      promptType: 'call',
+      prompt: 'Live preset override',
       sessionConfig: { maxOutputTokens: 256, temperature: 0.4, voice: 'Rex' },
-      voiceName: 'Ara',
       voiceSampleUrl: 'https://example.com/ara.mp3',
     });
     expect(props.initialCustomCharacters).toHaveLength(1);
     expect(props.initialCustomCharacters?.[0]).toMatchObject({
       id: 'live-custom',
-      instructions: 'Public prompt',
       isPublic: false,
+      prompt: 'Public prompt',
       name: 'Paid custom',
       sessionConfig: { maxOutputTokens: null, temperature: 0.8, voice: 'Ara' },
     });

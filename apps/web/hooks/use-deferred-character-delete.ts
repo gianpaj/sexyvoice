@@ -4,25 +4,16 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
-import type { Preset } from '@/data/presets';
+import { type Character, deleteCharacter } from '@/lib/calls/characters';
 import { usePlaygroundState } from './use-playground-state';
 
 export const DELETE_UNDO_MS = 6000;
 
 interface PendingDelete {
   index: number;
-  preset: Preset;
+  preset: Character;
   toastId: number | string;
 }
-
-const sendDelete = (id: string) =>
-  fetch('/api/characters', {
-    body: JSON.stringify({ id }),
-    headers: { 'Content-Type': 'application/json' },
-    // Lets a delete sent from `pagehide` finish after the page is gone.
-    keepalive: true,
-    method: 'DELETE',
-  });
 
 /**
  * Removes a custom character from the list at once and sends the DELETE when
@@ -51,7 +42,7 @@ export function useDeferredCharacterDelete() {
   const commit = async (id: string) => {
     const entry = take(id);
     if (!entry) return;
-    const ok = await sendDelete(id)
+    const ok = await deleteCharacter(id)
       .then((response) => response.ok)
       .catch(() => false);
     if (!ok) {
@@ -67,7 +58,7 @@ export function useDeferredCharacterDelete() {
     toast.success(t('restored', { name: entry.preset.name }));
   };
 
-  const remove = (preset: Preset) => {
+  const remove = (preset: Character) => {
     const index = pgState.customCharacters.findIndex((c) => c.id === preset.id);
     if (index < 0) return;
     dispatch({ payload: preset.id, type: 'DELETE_CUSTOM_CHARACTER' });
@@ -96,7 +87,7 @@ export function useDeferredCharacterDelete() {
   useEffect(() => {
     const flush = () => {
       for (const id of pending.current.keys()) {
-        sendDelete(id).catch(() => undefined);
+        deleteCharacter(id).catch(() => undefined);
       }
       pending.current.clear();
     };

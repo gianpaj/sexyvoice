@@ -4,14 +4,14 @@ import { Mic, PenLine, Plus, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
-import type { Preset } from '@/data/presets';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import {
-  getPresetDescription,
-  getPresetSampleUrl,
+  type Character,
+  characterDescription,
+  characterSampleUrl,
   MAX_CUSTOM_CHARACTERS,
-} from '@/lib/characters';
+} from '@/lib/calls/characters';
 import { Link } from '@/lib/i18n/navigation';
 import { CharacterCard } from './character-card';
 
@@ -23,7 +23,7 @@ interface CharacterPickerProps {
   /** Starts a call with the character. */
   onCall: (presetId: string) => void;
   onCreate: () => void;
-  onDelete: (preset: Preset) => void;
+  onDelete: (preset: Character) => void;
   onDuplicate: (presetId: string) => void;
   onEdit: (presetId: string) => void;
   onOpen: (presetId: string) => void;
@@ -66,12 +66,12 @@ export function CharacterPicker({
   const featured = helpers.getDefaultPresets().filter((preset) => preset.image);
   const canAddMore = own.length < MAX_CUSTOM_CHARACTERS;
 
-  const renderCard = (preset: Preset, isOwn: boolean) => {
+  const renderCard = (preset: Character, isOwn: boolean) => {
     const key = `character:${preset.id}`;
     return (
       <CharacterCard
         connecting={connectingId === preset.id}
-        description={getPresetDescription(preset, pgState.language)}
+        description={characterDescription(preset, pgState.language)}
         disabled={connectingId !== null}
         highlighted={highlightId === preset.id}
         key={preset.id}
@@ -88,7 +88,7 @@ export function CharacterPicker({
         }
         onCall={() => onCall(preset.id)}
         onListen={() =>
-          player.toggle(key, getPresetSampleUrl(preset, pgState.language))
+          player.toggle(key, characterSampleUrl(preset, pgState.language))
         }
         onOpen={() => onOpen(preset.id)}
         playing={player.playingKey === key}

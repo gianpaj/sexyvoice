@@ -17,33 +17,34 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { CALL_PERSONALITY_EXAMPLES } from '@/data/call-personality-examples';
-import { defaultSessionConfig } from '@/data/default-config';
-import type { CustomCallDraft } from '@/data/playground-state';
-import type { Preset } from '@/data/presets';
-import type { DBVoice } from '@/data/voices';
+import {
+  type CustomCallDraft,
+  newCharacterDraft,
+} from '@/data/playground-state';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import {
+  type CallVoice,
   type SavedCallVoice,
   savedVoiceSampleUrl,
   withCallVoice,
 } from '@/lib/call-voices';
 import {
   buildSaveCharacterPayload,
-  getPresetDescription,
-  getPresetInstructions,
+  type Character,
+  characterDescription,
+  characterPrompt,
+  MAX_CHARACTER_DESCRIPTION_LENGTH,
+  MAX_CHARACTER_NAME_LENGTH,
+  MAX_CHARACTER_PROMPT_LENGTH,
   saveCharacter,
-} from '@/lib/characters';
+} from '@/lib/calls/characters';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { cn } from '@/lib/utils';
 import { CharacterAvatar } from './character-avatar';
 import { CloneVoiceDialog } from './clone-voice-dialog';
 import { ListenButton } from './listen-button';
 import { VoicePicker } from './voice-picker';
-
-const MAX_NAME_LENGTH = 50;
-const MAX_DESCRIPTION_LENGTH = 200;
-const MAX_PERSONALITY_LENGTH = 5000;
 
 /** What the creator opens with. Edit, duplicate and remix name a character. */
 export type CreatorIntent =
@@ -52,13 +53,13 @@ export type CreatorIntent =
 
 interface CharacterCreatorProps {
   callCloneProvider: CallCloneProvider;
-  callVoices: DBVoice[];
+  callVoices: CallVoice[];
   intent: CreatorIntent;
   /** Starts a call with a saved character, like its card's Call. */
   onCall: (presetId: string) => void;
   onCancel: () => void;
-  onDelete: (preset: Preset) => void;
-  onSaved: (preset: Preset, updated: boolean) => void;
+  onDelete: (preset: Character) => void;
+  onSaved: (preset: Character, updated: boolean) => void;
   /** Adds a voice cloned from the creator to the saved list. */
   onVoiceCreated: (voice: SavedCallVoice) => void;
   savedVoices: SavedCallVoice[];
@@ -119,35 +120,19 @@ export function CharacterCreator({
   const editing = intent.kind === 'edit' ? source : undefined;
 
   const [form, setForm] = useState<CustomCallDraft>(() => {
-    if (intent.kind === 'create') {
-      return (
-        intent.draft ?? {
-          description: '',
-          instructions: '',
-          name: '',
-          sessionConfig: { ...defaultSessionConfig },
-        }
-      );
-    }
-    if (!source) {
-      return {
-        description: '',
-        instructions: '',
-        name: '',
-        sessionConfig: { ...defaultSessionConfig },
-      };
-    }
+    if (intent.kind === 'create') return intent.draft ?? newCharacterDraft();
+    if (!source) return newCharacterDraft();
     const names = {
       duplicate: t('copyName', { name: source.name }),
       edit: source.name,
       remix: t('remixName', { name: source.name }),
     };
     return {
-      description: getPresetDescription(source, language),
+      description: characterDescription(source, language),
       // Public prompts stay on the server, so a remix starts without one.
       instructions:
-        intent.kind === 'remix' ? '' : getPresetInstructions(source, language),
-      name: names[intent.kind].slice(0, MAX_NAME_LENGTH),
+        intent.kind === 'remix' ? '' : characterPrompt(source, language),
+      name: names[intent.kind].slice(0, MAX_CHARACTER_NAME_LENGTH),
       sessionConfig: { ...source.sessionConfig },
     };
   });
@@ -237,9 +222,9 @@ export function CharacterCreator({
       buildSaveCharacterPayload({
         base,
         description: form.description.trim(),
-        instructions: form.instructions,
         language,
         name,
+        prompt: form.instructions,
         sessionConfig,
         update: Boolean(editing),
       }),
@@ -250,7 +235,7 @@ export function CharacterCreator({
       return;
     }
     player.stop();
-    onSaved(result.preset, Boolean(editing));
+    onSaved(result.character, Boolean(editing));
   };
 
   const fieldError = 'text-[13px] text-red-300';
@@ -375,7 +360,7 @@ export function CharacterCreator({
                         : 'border-slate-700/70',
                     )}
                     id="creator-name"
-                    maxLength={MAX_NAME_LENGTH}
+                    maxLength={MAX_CHARACTER_NAME_LENGTH}
                     onChange={(e) => update({ name: e.target.value })}
                     placeholder={t('namePlaceholder')}
                     type="text"
@@ -403,7 +388,7 @@ export function CharacterCreator({
                     aria-describedby="creator-description-help"
                     className={cn(inputClass, 'border-slate-700/70')}
                     id="creator-description"
-                    maxLength={MAX_DESCRIPTION_LENGTH}
+                    maxLength={MAX_CHARACTER_DESCRIPTION_LENGTH}
                     onChange={(e) => update({ description: e.target.value })}
                     placeholder={t('descriptionPlaceholder')}
                     type="text"
@@ -471,7 +456,7 @@ export function CharacterCreator({
                       : 'border-slate-700/70',
                   )}
                   id="creator-personality"
-                  maxLength={MAX_PERSONALITY_LENGTH}
+                  maxLength={MAX_CHARACTER_PROMPT_LENGTH}
                   onChange={(e) => update({ instructions: e.target.value })}
                   placeholder={t('personalityPlaceholder')}
                   rows={9}
@@ -486,7 +471,7 @@ export function CharacterCreator({
                   <span className="ml-auto text-[13px] text-slate-500 tabular-nums">
                     {t('characterCount', {
                       count: form.instructions.length,
-                      max: MAX_PERSONALITY_LENGTH,
+                      max: MAX_CHARACTER_PROMPT_LENGTH,
                     })}
                   </span>
                 </div>

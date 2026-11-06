@@ -1,6 +1,5 @@
 import type { PlaygroundState } from '@/data/playground-state';
-import type { Preset } from '@/data/presets';
-import type { SessionConfig } from '@/data/session-config';
+import type { Character, SessionConfig } from '@/lib/calls/characters';
 
 const PRESET_PARAM = 'preset';
 
@@ -32,7 +31,9 @@ export interface CallTokenPlaygroundState {
   >;
 }
 
-export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
+export const createPlaygroundStateHelpers = (
+  defaultPresets: Character[] = [],
+) => {
   const helpers = {
     getAllPresets: (state: PlaygroundState) => [
       ...defaultPresets,
@@ -63,8 +64,8 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
      * resolving language-specific translations if available.
      *
      * Priority for instruction resolution:
-     * 1. Character localizedInstructions for the language
-     * 2. Preset's default instructions field (fallback)
+     * 1. Character localizedPrompts for the language
+     * 2. Character's default instructions field (fallback)
      */
     getStateWithFullInstructions: (
       state: PlaygroundState,
@@ -73,12 +74,12 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
       const preset = allPresets.find((p) => p.id === state.selectedPresetId);
       let instructions = state.instructions;
 
-      // 1. Character localizedInstructions
-      if (preset?.localizedInstructions?.[state.language] !== undefined) {
-        instructions = preset.localizedInstructions[state.language] as string;
+      // 1. Character localizedPrompts
+      if (preset?.localizedPrompts?.[state.language] !== undefined) {
+        instructions = preset.localizedPrompts[state.language] as string;
       } else if (preset) {
         // 2. Fallback to preset's default instructions
-        instructions = preset.instructions;
+        instructions = preset.prompt;
       }
 
       return {

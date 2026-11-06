@@ -527,6 +527,16 @@ character can call, for both the panel and a card's Call. Deleting a
 character removes it from the list at once; the DELETE request waits until
 the Undo toast closes or the page is hidden.
 
+`lib/calls/characters.ts` owns the character row: the select lists, the
+`session_config` parser and defaults, the localized fallbacks and the mapping
+to `Character`, plus the browser client for `/api/characters`. Predefined
+characters are selected without prompt text. A custom character is deleted by
+deleting its prompt: `characters.prompt_id` cascades, so `DELETE
+/api/characters` and account deletion remove both in one statement. Creating
+a character inserts the prompt, then the character, and removes the prompt if
+the second insert fails; an update writes the prompt and then the character in
+two statements.
+
 The creator's Clone a voice dialog records or uploads a sample and saves a
 profile through the save-only `/api/clone-voice` path, using the call
 language when the configured provider supports it and English otherwise. The Clone page links

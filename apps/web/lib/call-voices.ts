@@ -1,9 +1,14 @@
-import type { Preset } from '@/data/presets';
-import type { SessionConfig } from '@/data/session-config';
+import type { Character, SessionConfig } from '@/lib/calls/characters';
 import { callModelFor } from '@/lib/calls/models';
 import { savedVoiceProvider } from '@/lib/clone/call-voice-config';
 
 export { callVoiceProvider } from '@/lib/calls/models';
+
+/** A built-in call voice from the catalog. */
+export type CallVoice = Pick<
+  Tables<'voices'>,
+  'description' | 'id' | 'name' | 'sample_url' | 'type'
+>;
 
 export type SavedCallVoice = Pick<
   Tables<'audio_references'>,
@@ -49,7 +54,7 @@ export function savedVoiceMissing(
  * Call both use this, so they never disagree.
  */
 export function callReadiness(
-  preset: Pick<Preset, 'isPublic' | 'sessionConfig'>,
+  preset: Pick<Character, 'isPublic' | 'sessionConfig'>,
   instructions: string,
   savedVoices: Pick<SavedCallVoice, 'id'>[],
 ) {

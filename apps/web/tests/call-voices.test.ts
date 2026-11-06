@@ -13,12 +13,12 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('@/lib/supabase/queries', () => ({ getVoiceIdByName }));
 
-import { defaultSessionConfig } from '@/data/default-config';
 import {
   callReadiness,
   savedVoiceUsers,
   withCallVoice,
 } from '@/lib/call-voices';
+import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
 
 beforeEach(() => {
@@ -101,7 +101,7 @@ describe('call voice resolution', () => {
     'selects the saved %s profile independently of the new-clone default',
     (provider) => {
       expect(
-        withCallVoice(defaultSessionConfig, {
+        withCallVoice(DEFAULT_SESSION_CONFIG, {
           name: 'My voice',
           savedId: 'reference',
           provider,
@@ -154,7 +154,7 @@ describe('callReadiness', () => {
   const voice = { id: 'saved-voice' };
   const own = (audioReferenceId?: string) => ({
     isPublic: false,
-    sessionConfig: { ...defaultSessionConfig, audioReferenceId },
+    sessionConfig: { ...DEFAULT_SESSION_CONFIG, audioReferenceId },
   });
 
   it('lets a character with a voice and a personality call', () => {

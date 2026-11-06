@@ -1,6 +1,10 @@
 import { captureException } from '@sentry/nextjs';
 import { cache } from 'react';
 
+import {
+  OWN_CHARACTER_COLUMNS,
+  PUBLIC_CHARACTER_COLUMNS,
+} from '@/lib/calls/characters';
 import { RETIRED_TTS_MODELS_FILTER } from '@/lib/tts/models';
 import { SUBSCRIPTION_BONUS_MULTIPLIER } from '../stripe/pricing';
 import { createAdminClient } from './admin';
@@ -31,50 +35,24 @@ export async function getCallVoices() {
 
 // ─── Characters ───
 
-/**
- * Get public (predefined) call characters for SSR.
- * Joins with voices to get voice name + sample_url.
- * Does NOT include prompt text — predefined prompts never reach the client.
- */
+/** Predefined call characters for SSR. Their prompt text stays on the server. */
 export async function getPublicCallCharacters() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('characters')
-    .select(
-      `
-      id, name, localized_descriptions, image, session_config, sort_order, is_public,
-      localized_sample_urls,
-      voice_id,
-      voices ( name, sample_url ),
-      prompt_id,
-      prompts ( type )
-    `,
-    )
-    // NOTE: prompt TEXT intentionally not selected — predefined prompt content never sent to client.
-    // Only prompt metadata (type) is joined.
+    .select(PUBLIC_CHARACTER_COLUMNS)
     .eq('is_public', true)
     .order('sort_order');
   if (error) throw error;
   return data;
 }
 
-/**
- * Get user's custom call characters for SSR.
- * Joins with prompts (to get editable prompt text) and voices.
- */
+/** A user's custom call characters for SSR, with their editable prompts. */
 export async function getUserCallCharacters(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from('characters')
-    .select(
-      `
-      id, name, localized_descriptions, image, session_config, sort_order, is_public,
-      voice_id,
-      voices ( name, sample_url ),
-      prompt_id,
-      prompts ( prompt, localized_prompts )
-    `,
-    )
+    .select(OWN_CHARACTER_COLUMNS)
     .eq('is_public', false)
     .eq('user_id', userId)
     .order('sort_order');

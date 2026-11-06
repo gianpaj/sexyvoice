@@ -7,7 +7,7 @@ import CreditsSection from '@/components/credits-section';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
-import { type CharacterRow, mapCharacterToPreset } from '@/lib/call-presets';
+import { toCharacter } from '@/lib/calls/characters';
 import { toCallLanguage } from '@/lib/calls/languages';
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
@@ -93,14 +93,10 @@ export default async function Call(props: {
     !e2e && isPaidUser ? await getUserCallCharacters(userId) : [];
 
   const defaultPresets = applyPresetInstructionOverrides(
-    (publicCharacters ?? []).map((character) =>
-      mapCharacterToPreset(character as CharacterRow),
-    ),
+    publicCharacters.map(toCharacter),
     presetInstructions,
   );
-  const initialCustomCharacters = (userCharacters ?? []).map((character) =>
-    mapCharacterToPreset(character as CharacterRow),
-  );
+  const initialCustomCharacters = userCharacters.map(toCharacter);
 
   return (
     <PlaygroundStateProvider

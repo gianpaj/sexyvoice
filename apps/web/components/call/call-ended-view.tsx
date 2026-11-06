@@ -3,7 +3,7 @@
 import { Loader2, Pencil, PhoneCall } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import type { Preset } from '@/data/presets';
+import type { Character } from '@/lib/calls/characters';
 import { CharacterAvatar } from './character-avatar';
 
 interface CallEndedViewProps {
@@ -14,7 +14,7 @@ interface CallEndedViewProps {
   onEdit: () => void;
   /** Omitted when the user cannot make another character. */
   onRemix?: () => void;
-  preset: Preset;
+  preset: Character;
 }
 
 const secondaryButton =

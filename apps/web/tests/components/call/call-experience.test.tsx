@@ -7,12 +7,12 @@ import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CallExperience } from '@/components/call/call-experience';
-import { defaultSessionConfig } from '@/data/default-config';
-import type { Preset } from '@/data/presets';
-import type { DBVoice } from '@/data/voices';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
+import type { Character } from '@/lib/calls/characters';
+import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
 import messages from '@/messages/en.json';
+import { makeCharacter } from '../../utils/call-test-utils';
 
 const connection = vi.hoisted(() => ({
   connect: vi.fn(),
@@ -59,7 +59,7 @@ vi.mock('@/hooks/use-microphone-permission', () => ({
 vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('next/dynamic', () => ({
   default: () =>
-    function InCallView({ preset }: { preset: Preset }) {
+    function InCallView({ preset }: { preset: Character }) {
       return <div data-testid="in-call-view">{preset.name}</div>;
     },
 }));
@@ -89,39 +89,31 @@ vi.mock('@/lib/i18n/navigation', () => ({
   useRouter: () => ({ push: routerPush }),
 }));
 
-const featured: Preset = {
+const featured = makeCharacter({
   id: '6f1d9c2a-0000-4000-8000-000000000001',
   image: 'lily.webp',
-  instructions: '',
   isPublic: true,
   localizedDescriptions: { en: 'Shy, warm, and playful.' },
   name: 'Lily',
-  sessionConfig: { ...defaultSessionConfig, voice: 'Ara' },
-  voiceName: 'Ara',
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Ara' },
   voiceSampleUrl: 'https://cdn.example.com/ara.mp3',
-};
+});
 
-const own: Preset = {
+const own = makeCharacter({
   id: '6f1d9c2a-0000-4000-8000-000000000002',
-  instructions: 'You are Marco, a patient Italian tutor.',
-  isPublic: false,
   localizedDescriptions: { en: 'Patient Italian tutor' },
-  localizedInstructions: { en: 'You are Marco, a patient Italian tutor.' },
+  localizedPrompts: { en: 'You are Marco, a patient Italian tutor.' },
   name: 'Marco',
-  sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
-  voiceName: 'Rex',
-};
+  prompt: 'You are Marco, a patient Italian tutor.',
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Rex' },
+});
 
 const callVoices = ['Ara', 'Rex'].map(
-  (name, index): DBVoice => ({
+  (name): CallVoice => ({
     description: `${name} description`,
-    feature: 'call',
     id: `voice-${name}`,
-    language: 'en',
-    model: 'grok',
     name,
     sample_url: `https://cdn.example.com/${name}.mp3`,
-    sort_order: index,
     type: null,
   }),
 );
@@ -141,7 +133,7 @@ function renderExperience({
   isPaidUser = true,
   returnFromClone = null,
 }: {
-  customCharacters?: Preset[];
+  customCharacters?: Character[];
   isPaidUser?: boolean;
   returnFromClone?: { voiceId: string | null } | null;
 } = {}) {
@@ -167,12 +159,14 @@ function renderExperience({
 
 const savedResponse = (body: Record<string, unknown>, id: string) => ({
   id,
+  image: null,
   is_public: false,
   localized_descriptions: body.localizedDescriptions,
+  localized_sample_urls: null,
   name: body.name,
   prompts: { localized_prompts: body.localizedPrompts, prompt: body.prompt },
   session_config: body.sessionConfig,
-  voices: { name: body.voiceName },
+  voices: null,
 });
 
 beforeEach(() => {
@@ -284,12 +278,11 @@ describe('CallExperience panel', () => {
         {
           ...own,
           sessionConfig: {
-            ...defaultSessionConfig,
+            ...DEFAULT_SESSION_CONFIG,
             audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
             model: 'inworld-tts',
             voice: 'Deleted voice',
           },
-          voiceName: 'Deleted voice',
         },
       ],
     });
@@ -365,7 +358,7 @@ describe('CallExperience panel', () => {
         {
           ...own,
           sessionConfig: {
-            ...defaultSessionConfig,
+            ...DEFAULT_SESSION_CONFIG,
             audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
             model: 'inworld-tts',
             voice: 'Deleted voice',
@@ -465,7 +458,6 @@ describe('CallExperience creator', () => {
         model: 'mistral-tts',
         voice: 'My voice',
       },
-      voiceName: 'My voice',
     });
     expect(body.prompt).toContain('job-interview coach');
 
@@ -535,7 +527,7 @@ describe('CallExperience creator', () => {
     const personality = within(creator).getByRole('textbox', {
       name: 'Personality',
     });
-    expect(personality).toHaveValue(own.instructions);
+    expect(personality).toHaveValue(own.prompt);
 
     await user.clear(personality);
     await user.type(personality, 'You are Marco, now stricter.');

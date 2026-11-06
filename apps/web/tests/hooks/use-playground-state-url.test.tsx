@@ -4,33 +4,34 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { defaultSessionConfig } from '@/data/default-config';
-import type { Preset } from '@/data/presets';
 import {
   PlaygroundStateProvider,
   usePlaygroundState,
 } from '@/hooks/use-playground-state';
+import type { Character } from '@/lib/calls/characters';
+import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import { makeCharacter } from '../utils/call-test-utils';
 
-const publicCharacter: Preset = {
+const publicCharacter = makeCharacter({
   id: 'ea5b2c17-0000-4000-8000-0000000000a1',
-  instructions: 'You are Ramona.',
   isPublic: true,
   name: 'Ramona',
-  sessionConfig: { ...defaultSessionConfig, voice: 'Eve' },
-};
+  prompt: 'You are Ramona.',
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Eve' },
+});
 
 const defaultPresets = [publicCharacter];
 
-const savedCharacter: Preset = {
+const savedCharacter = makeCharacter({
   id: '9f521791-9ee4-43d9-8345-a9f9e5ad7632',
-  instructions: 'You are Luna.',
   name: 'luna2',
-  sessionConfig: { ...defaultSessionConfig, voice: 'Rex' },
-};
+  prompt: 'You are Luna.',
+  sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Rex' },
+});
 
 // Mirrors the wiring in app/[lang]/(dashboard)/dashboard/call/page.tsx, which
 // seeds the first public character as the initial selection.
-function makeWrapper(initialCustomCharacters: Preset[]) {
+function makeWrapper(initialCustomCharacters: Character[]) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <PlaygroundStateProvider
@@ -57,7 +58,7 @@ describe('usePlaygroundState — preset URL', () => {
       );
       const response = {
         ...savedCharacter,
-        localizedInstructions: { en: 'You are Luna.', de: 'Du bist Luna.' },
+        localizedPrompts: { en: 'You are Luna.', de: 'Du bist Luna.' },
       };
       act(() =>
         result.current.dispatch({
@@ -82,9 +83,7 @@ describe('usePlaygroundState — preset URL', () => {
 
     expect(result.current.pgState.customCharacters).toEqual([savedCharacter]);
     expect(result.current.pgState.selectedPresetId).toBe(savedCharacter.id);
-    expect(result.current.pgState.instructions).toBe(
-      savedCharacter.instructions,
-    );
+    expect(result.current.pgState.instructions).toBe(savedCharacter.prompt);
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 
@@ -166,9 +165,7 @@ describe('usePlaygroundState — preset URL', () => {
     act(() => result.current.selectPreset(savedCharacter.id));
 
     expect(result.current.pgState.selectedPresetId).toBe(savedCharacter.id);
-    expect(result.current.pgState.instructions).toBe(
-      savedCharacter.instructions,
-    );
+    expect(result.current.pgState.instructions).toBe(savedCharacter.prompt);
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
 
@@ -181,7 +178,7 @@ describe('usePlaygroundState — preset URL', () => {
     act(() => result.current.selectPreset(savedCharacter.id));
     act(() =>
       result.current.dispatch({
-        payload: { ...savedCharacter, instructions: 'You are Luna, updated.' },
+        payload: { ...savedCharacter, prompt: 'You are Luna, updated.' },
         type: 'SAVE_CUSTOM_CHARACTER',
       }),
     );

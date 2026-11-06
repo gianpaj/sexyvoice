@@ -13,10 +13,10 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
-import { defaultSessionConfig } from '@/data/default-config';
-import type { CustomCallDraft } from '@/data/playground-state';
-import type { Preset } from '@/data/presets';
-import type { DBVoice } from '@/data/voices';
+import {
+  type CustomCallDraft,
+  newCharacterDraft,
+} from '@/data/playground-state';
 import { useCallTimer } from '@/hooks/use-call-timer';
 import { useConnection } from '@/hooks/use-connection';
 import { useDeferredCharacterDelete } from '@/hooks/use-deferred-character-delete';
@@ -27,11 +27,16 @@ import {
   useSamplePlayer,
 } from '@/hooks/use-sample-player';
 import {
+  type CallVoice,
   callReadiness,
   type SavedCallVoice,
   withCallVoice,
 } from '@/lib/call-voices';
-import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
+import {
+  type Character,
+  DEFAULT_SESSION_CONFIG,
+  MAX_CUSTOM_CHARACTERS,
+} from '@/lib/calls/characters';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
@@ -46,7 +51,7 @@ const InCallView = dynamic(
 
 interface CallExperienceProps {
   callCloneProvider?: CallCloneProvider;
-  callVoices: DBVoice[];
+  callVoices: CallVoice[];
   /** Notices and FAQ shown under the character picker. */
   children?: ReactNode;
   /** Marks the page as rendering E2E fixtures for Playwright. */
@@ -78,19 +83,15 @@ type View = { name: 'picker' } | { name: 'creator'; intent: CreatorIntent };
 function returnedCloneDraft(
   voice: SavedCallVoice | undefined,
 ): CustomCallDraft {
-  const sessionConfig = { ...defaultSessionConfig };
-  return {
-    description: '',
-    instructions: '',
-    name: '',
-    sessionConfig: voice
-      ? withCallVoice(sessionConfig, {
+  return newCharacterDraft(
+    voice
+      ? withCallVoice(DEFAULT_SESSION_CONFIG, {
           name: voice.name,
           savedId: voice.id,
           provider: voice.provider,
         })
-      : sessionConfig,
-  };
+      : DEFAULT_SESSION_CONFIG,
+  );
 }
 
 function CallExperienceScreens({
@@ -236,7 +237,7 @@ function CallExperienceScreens({
     }
   }, [pendingCallId, pgState.selectedPresetId]);
 
-  const handleSaved = (preset: Preset, updated: boolean) => {
+  const handleSaved = (preset: Character, updated: boolean) => {
     dispatch({ payload: preset, type: 'SAVE_CUSTOM_CHARACTER' });
     selectPreset(preset.id);
     showView({ name: 'picker' });
@@ -247,7 +248,7 @@ function CallExperienceScreens({
     );
   };
 
-  const handleDelete = (preset: Preset) => {
+  const handleDelete = (preset: Character) => {
     remove(preset);
     if (view.name !== 'picker') showView({ name: 'picker' });
     setPanelOpen(false);

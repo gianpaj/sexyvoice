@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { InCallView } from '@/components/call/in-call-view';
 import messages from '@/messages/en.json';
+import { makeCharacter } from '../../utils/call-test-utils';
 
 // The agent watchdog ends a call whose agent never joins, or leaves and does
 // not come back, within ten seconds.
@@ -55,17 +56,11 @@ vi.mock('sonner', () => ({
   toast: { error: mocks.toastError, info: mocks.toastInfo },
 }));
 
-const character = {
+const character = makeCharacter({
   id: '6f1d9c2a-0000-4000-8000-000000000001',
-  instructions: '',
+  isPublic: true,
   name: 'Lily',
-  sessionConfig: {
-    maxOutputTokens: null,
-    model: 'grok-voice-think-fast-2.0',
-    temperature: 0.8,
-    voice: 'Ara',
-  },
-} as const;
+});
 
 function renderView() {
   return render(

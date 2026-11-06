@@ -26,18 +26,21 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { DBVoice } from '@/data/voices';
 import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import { callReadiness, type SavedCallVoice } from '@/lib/call-voices';
-import { CALL_LANGUAGES, isCallLanguage } from '@/lib/calls/languages';
 import {
-  getPresetDescription,
-  getPresetSampleUrl,
+  type CallVoice,
+  callReadiness,
+  type SavedCallVoice,
+} from '@/lib/call-voices';
+import {
+  characterDescription,
+  characterSampleUrl,
   MAX_CUSTOM_CHARACTERS,
-} from '@/lib/characters';
+} from '@/lib/calls/characters';
+import { CALL_LANGUAGES, isCallLanguage } from '@/lib/calls/languages';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import { cn } from '@/lib/utils';
 import { UpgradeCrown } from '../upgrade-crown';
@@ -46,7 +49,7 @@ import { ListenButton } from './listen-button';
 import { SceneSelector } from './scene-selector';
 
 interface CallPanelProps {
-  callVoices: DBVoice[];
+  callVoices: CallVoice[];
   connecting: boolean;
   isPaidUser: boolean;
   microphone: MicrophoneStatus;
@@ -88,16 +91,14 @@ export function CallPanel({
   const { audioReferenceId } = preset.sessionConfig;
   const { personalityMissing: missingPersonality, voiceMissing } =
     callReadiness(preset, pgState.instructions, savedVoices);
-  const voiceName = voiceMissing
-    ? t('noVoice')
-    : (preset.voiceName ?? preset.sessionConfig.voice);
+  const voiceName = voiceMissing ? t('noVoice') : preset.sessionConfig.voice;
   let voiceDescription: string | null | undefined;
   if (!voiceMissing) {
     voiceDescription = audioReferenceId
       ? t('clonedVoice')
       : callVoices.find((voice) => voice.name === voiceName)?.description;
   }
-  const sampleUrl = getPresetSampleUrl(preset, pgState.language);
+  const sampleUrl = characterSampleUrl(preset, pgState.language);
   const listenKey = `panel:${preset.id}`;
   const playing = player.playingKey === listenKey;
   const canRemix =
@@ -147,7 +148,7 @@ export function CallPanel({
                 {name}
               </SheetTitle>
               <SheetDescription className="text-[15px] text-slate-400">
-                {getPresetDescription(preset, pgState.language)}
+                {characterDescription(preset, pgState.language)}
               </SheetDescription>
             </div>
           </div>
