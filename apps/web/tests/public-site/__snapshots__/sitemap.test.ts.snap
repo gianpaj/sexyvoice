@@ -12,39 +12,73 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 1,
     "url": "https://sexyvoice.ai/da",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/da/[policySlug]",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/blog",
+        "en": "https://sexyvoice.ai/en/blog",
+        "es": "https://sexyvoice.ai/es/blog",
+        "fr": "https://sexyvoice.ai/fr/blog",
+        "it": "https://sexyvoice.ai/it/blog",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/da/blog",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.4,
-    "url": "https://sexyvoice.ai/da/cli/login",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/login",
+        "en": "https://sexyvoice.ai/en/login",
+        "es": "https://sexyvoice.ai/es/login",
+        "fr": "https://sexyvoice.ai/fr/login",
+        "it": "https://sexyvoice.ai/it/login",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/da/login",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/da/reset-password",
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/privacy-policy",
+        "en": "https://sexyvoice.ai/en/privacy-policy",
+        "es": "https://sexyvoice.ai/es/privacy-policy",
+        "fr": "https://sexyvoice.ai/fr/privacy-policy",
+        "it": "https://sexyvoice.ai/it/privacy-policy",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/da/privacy-policy",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/signup",
+        "en": "https://sexyvoice.ai/en/signup",
+        "es": "https://sexyvoice.ai/es/signup",
+        "fr": "https://sexyvoice.ai/fr/signup",
+        "it": "https://sexyvoice.ai/it/signup",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/da/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/terms",
+        "en": "https://sexyvoice.ai/en/terms",
+        "es": "https://sexyvoice.ai/es/terms",
+        "fr": "https://sexyvoice.ai/fr/terms",
+        "it": "https://sexyvoice.ai/it/terms",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/da/terms",
   },
   {
     "alternates": {
@@ -56,7 +90,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-converter",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/da/tools/audio-converter",
   },
@@ -70,7 +103,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-joiner",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/da/tools/audio-joiner",
   },
@@ -84,24 +116,34 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/transcribe",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/da/tools/transcribe",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/voice-call",
+        "en": "https://sexyvoice.ai/en/voice-call",
+        "es": "https://sexyvoice.ai/es/voice-call",
+        "fr": "https://sexyvoice.ai/fr/voice-call",
+        "it": "https://sexyvoice.ai/it/voice-call",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/da/voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/voice-cloning",
+        "en": "https://sexyvoice.ai/en/voice-cloning",
+        "es": "https://sexyvoice.ai/es/voice-cloning",
+        "fr": "https://sexyvoice.ai/fr/voice-cloning",
+        "it": "https://sexyvoice.ai/it/voice-cloning",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/da/voice-cloning",
-  },
-  {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/da/wrapped",
   },
   {
     "alternates": {
@@ -113,17 +155,19 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 1,
     "url": "https://sexyvoice.ai/de",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/de/[policySlug]",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/blog",
+        "en": "https://sexyvoice.ai/en/blog",
+        "es": "https://sexyvoice.ai/es/blog",
+        "fr": "https://sexyvoice.ai/fr/blog",
+        "it": "https://sexyvoice.ai/it/blog",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/de/blog",
   },
@@ -133,24 +177,56 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.4,
-    "url": "https://sexyvoice.ai/de/cli/login",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/login",
+        "en": "https://sexyvoice.ai/en/login",
+        "es": "https://sexyvoice.ai/es/login",
+        "fr": "https://sexyvoice.ai/fr/login",
+        "it": "https://sexyvoice.ai/it/login",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/de/login",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/de/reset-password",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/privacy-policy",
+        "en": "https://sexyvoice.ai/en/privacy-policy",
+        "es": "https://sexyvoice.ai/es/privacy-policy",
+        "fr": "https://sexyvoice.ai/fr/privacy-policy",
+        "it": "https://sexyvoice.ai/it/privacy-policy",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/de/privacy-policy",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/signup",
+        "en": "https://sexyvoice.ai/en/signup",
+        "es": "https://sexyvoice.ai/es/signup",
+        "fr": "https://sexyvoice.ai/fr/signup",
+        "it": "https://sexyvoice.ai/it/signup",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/de/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/terms",
+        "en": "https://sexyvoice.ai/en/terms",
+        "es": "https://sexyvoice.ai/es/terms",
+        "fr": "https://sexyvoice.ai/fr/terms",
+        "it": "https://sexyvoice.ai/it/terms",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/de/terms",
   },
   {
     "alternates": {
@@ -162,7 +238,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-converter",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/de/tools/audio-converter",
   },
@@ -176,7 +251,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-joiner",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/de/tools/audio-joiner",
   },
@@ -190,24 +264,34 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/transcribe",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/de/tools/transcribe",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-call",
+        "en": "https://sexyvoice.ai/en/voice-call",
+        "es": "https://sexyvoice.ai/es/voice-call",
+        "fr": "https://sexyvoice.ai/fr/voice-call",
+        "it": "https://sexyvoice.ai/it/voice-call",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/de/voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-cloning",
+        "en": "https://sexyvoice.ai/en/voice-cloning",
+        "es": "https://sexyvoice.ai/es/voice-cloning",
+        "fr": "https://sexyvoice.ai/fr/voice-cloning",
+        "it": "https://sexyvoice.ai/it/voice-cloning",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/de/voice-cloning",
-  },
-  {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/de/wrapped",
   },
   {
     "alternates": {
@@ -219,17 +303,19 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 1,
     "url": "https://sexyvoice.ai/en",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/en/[policySlug]",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/blog",
+        "de": "https://sexyvoice.ai/de/blog",
+        "es": "https://sexyvoice.ai/es/blog",
+        "fr": "https://sexyvoice.ai/fr/blog",
+        "it": "https://sexyvoice.ai/it/blog",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/en/blog",
   },
@@ -262,24 +348,56 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     "url": "https://sexyvoice.ai/en/blog/voice-ai-glossary",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.4,
-    "url": "https://sexyvoice.ai/en/cli/login",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/login",
+        "de": "https://sexyvoice.ai/de/login",
+        "es": "https://sexyvoice.ai/es/login",
+        "fr": "https://sexyvoice.ai/fr/login",
+        "it": "https://sexyvoice.ai/it/login",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/en/login",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/en/reset-password",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/privacy-policy",
+        "de": "https://sexyvoice.ai/de/privacy-policy",
+        "es": "https://sexyvoice.ai/es/privacy-policy",
+        "fr": "https://sexyvoice.ai/fr/privacy-policy",
+        "it": "https://sexyvoice.ai/it/privacy-policy",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/en/privacy-policy",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/signup",
+        "de": "https://sexyvoice.ai/de/signup",
+        "es": "https://sexyvoice.ai/es/signup",
+        "fr": "https://sexyvoice.ai/fr/signup",
+        "it": "https://sexyvoice.ai/it/signup",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/en/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/terms",
+        "de": "https://sexyvoice.ai/de/terms",
+        "es": "https://sexyvoice.ai/es/terms",
+        "fr": "https://sexyvoice.ai/fr/terms",
+        "it": "https://sexyvoice.ai/it/terms",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/en/terms",
   },
   {
     "alternates": {
@@ -291,7 +409,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-converter",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/en/tools/audio-converter",
   },
@@ -305,7 +422,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-joiner",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/en/tools/audio-joiner",
   },
@@ -319,24 +435,34 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/transcribe",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/en/tools/transcribe",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-call",
+        "de": "https://sexyvoice.ai/de/voice-call",
+        "es": "https://sexyvoice.ai/es/voice-call",
+        "fr": "https://sexyvoice.ai/fr/voice-call",
+        "it": "https://sexyvoice.ai/it/voice-call",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/en/voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-cloning",
+        "de": "https://sexyvoice.ai/de/voice-cloning",
+        "es": "https://sexyvoice.ai/es/voice-cloning",
+        "fr": "https://sexyvoice.ai/fr/voice-cloning",
+        "it": "https://sexyvoice.ai/it/voice-cloning",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/en/voice-cloning",
-  },
-  {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/en/wrapped",
   },
   {
     "alternates": {
@@ -348,17 +474,19 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 1,
     "url": "https://sexyvoice.ai/es",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/es/[policySlug]",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/blog",
+        "de": "https://sexyvoice.ai/de/blog",
+        "en": "https://sexyvoice.ai/en/blog",
+        "fr": "https://sexyvoice.ai/fr/blog",
+        "it": "https://sexyvoice.ai/it/blog",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/es/blog",
   },
@@ -368,24 +496,56 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     "url": "https://sexyvoice.ai/es/blog/hello-from-sexyvoice",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.4,
-    "url": "https://sexyvoice.ai/es/cli/login",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/login",
+        "de": "https://sexyvoice.ai/de/login",
+        "en": "https://sexyvoice.ai/en/login",
+        "fr": "https://sexyvoice.ai/fr/login",
+        "it": "https://sexyvoice.ai/it/login",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/es/login",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/es/reset-password",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/privacy-policy",
+        "de": "https://sexyvoice.ai/de/privacy-policy",
+        "en": "https://sexyvoice.ai/en/privacy-policy",
+        "fr": "https://sexyvoice.ai/fr/privacy-policy",
+        "it": "https://sexyvoice.ai/it/privacy-policy",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/es/privacy-policy",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/signup",
+        "de": "https://sexyvoice.ai/de/signup",
+        "en": "https://sexyvoice.ai/en/signup",
+        "fr": "https://sexyvoice.ai/fr/signup",
+        "it": "https://sexyvoice.ai/it/signup",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/es/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/terms",
+        "de": "https://sexyvoice.ai/de/terms",
+        "en": "https://sexyvoice.ai/en/terms",
+        "fr": "https://sexyvoice.ai/fr/terms",
+        "it": "https://sexyvoice.ai/it/terms",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/es/terms",
   },
   {
     "alternates": {
@@ -397,7 +557,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-converter",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/es/tools/audio-converter",
   },
@@ -411,7 +570,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-joiner",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/es/tools/audio-joiner",
   },
@@ -425,24 +583,34 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/transcribe",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/es/tools/transcribe",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-call",
+        "de": "https://sexyvoice.ai/de/voice-call",
+        "en": "https://sexyvoice.ai/en/voice-call",
+        "fr": "https://sexyvoice.ai/fr/voice-call",
+        "it": "https://sexyvoice.ai/it/voice-call",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/es/voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-cloning",
+        "de": "https://sexyvoice.ai/de/voice-cloning",
+        "en": "https://sexyvoice.ai/en/voice-cloning",
+        "fr": "https://sexyvoice.ai/fr/voice-cloning",
+        "it": "https://sexyvoice.ai/it/voice-cloning",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/es/voice-cloning",
-  },
-  {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/es/wrapped",
   },
   {
     "alternates": {
@@ -454,39 +622,73 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 1,
     "url": "https://sexyvoice.ai/fr",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/fr/[policySlug]",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/blog",
+        "de": "https://sexyvoice.ai/de/blog",
+        "en": "https://sexyvoice.ai/en/blog",
+        "es": "https://sexyvoice.ai/es/blog",
+        "it": "https://sexyvoice.ai/it/blog",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/fr/blog",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.4,
-    "url": "https://sexyvoice.ai/fr/cli/login",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/login",
+        "de": "https://sexyvoice.ai/de/login",
+        "en": "https://sexyvoice.ai/en/login",
+        "es": "https://sexyvoice.ai/es/login",
+        "it": "https://sexyvoice.ai/it/login",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/fr/login",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/fr/reset-password",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/privacy-policy",
+        "de": "https://sexyvoice.ai/de/privacy-policy",
+        "en": "https://sexyvoice.ai/en/privacy-policy",
+        "es": "https://sexyvoice.ai/es/privacy-policy",
+        "it": "https://sexyvoice.ai/it/privacy-policy",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/fr/privacy-policy",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/signup",
+        "de": "https://sexyvoice.ai/de/signup",
+        "en": "https://sexyvoice.ai/en/signup",
+        "es": "https://sexyvoice.ai/es/signup",
+        "it": "https://sexyvoice.ai/it/signup",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/fr/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/terms",
+        "de": "https://sexyvoice.ai/de/terms",
+        "en": "https://sexyvoice.ai/en/terms",
+        "es": "https://sexyvoice.ai/es/terms",
+        "it": "https://sexyvoice.ai/it/terms",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/fr/terms",
   },
   {
     "alternates": {
@@ -498,7 +700,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-converter",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/fr/tools/audio-converter",
   },
@@ -512,7 +713,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/audio-joiner",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/fr/tools/audio-joiner",
   },
@@ -526,24 +726,34 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "it": "https://sexyvoice.ai/it/tools/transcribe",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/fr/tools/transcribe",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-call",
+        "de": "https://sexyvoice.ai/de/voice-call",
+        "en": "https://sexyvoice.ai/en/voice-call",
+        "es": "https://sexyvoice.ai/es/voice-call",
+        "it": "https://sexyvoice.ai/it/voice-call",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/fr/voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-cloning",
+        "de": "https://sexyvoice.ai/de/voice-cloning",
+        "en": "https://sexyvoice.ai/en/voice-cloning",
+        "es": "https://sexyvoice.ai/es/voice-cloning",
+        "it": "https://sexyvoice.ai/it/voice-cloning",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/fr/voice-cloning",
-  },
-  {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/fr/wrapped",
   },
   {
     "alternates": {
@@ -555,39 +765,73 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "fr": "https://sexyvoice.ai/fr",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 1,
     "url": "https://sexyvoice.ai/it",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/it/[policySlug]",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/blog",
+        "de": "https://sexyvoice.ai/de/blog",
+        "en": "https://sexyvoice.ai/en/blog",
+        "es": "https://sexyvoice.ai/es/blog",
+        "fr": "https://sexyvoice.ai/fr/blog",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/it/blog",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.4,
-    "url": "https://sexyvoice.ai/it/cli/login",
-  },
-  {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/login",
+        "de": "https://sexyvoice.ai/de/login",
+        "en": "https://sexyvoice.ai/en/login",
+        "es": "https://sexyvoice.ai/es/login",
+        "fr": "https://sexyvoice.ai/fr/login",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/it/login",
   },
   {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/it/reset-password",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/privacy-policy",
+        "de": "https://sexyvoice.ai/de/privacy-policy",
+        "en": "https://sexyvoice.ai/en/privacy-policy",
+        "es": "https://sexyvoice.ai/es/privacy-policy",
+        "fr": "https://sexyvoice.ai/fr/privacy-policy",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/it/privacy-policy",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/signup",
+        "de": "https://sexyvoice.ai/de/signup",
+        "en": "https://sexyvoice.ai/en/signup",
+        "es": "https://sexyvoice.ai/es/signup",
+        "fr": "https://sexyvoice.ai/fr/signup",
+      },
+    },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/it/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/terms",
+        "de": "https://sexyvoice.ai/de/terms",
+        "en": "https://sexyvoice.ai/en/terms",
+        "es": "https://sexyvoice.ai/es/terms",
+        "fr": "https://sexyvoice.ai/fr/terms",
+      },
+    },
+    "priority": 0.3,
+    "url": "https://sexyvoice.ai/it/terms",
   },
   {
     "alternates": {
@@ -599,7 +843,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "fr": "https://sexyvoice.ai/fr/tools/audio-converter",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/it/tools/audio-converter",
   },
@@ -613,7 +856,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "fr": "https://sexyvoice.ai/fr/tools/audio-joiner",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/it/tools/audio-joiner",
   },
@@ -627,24 +869,34 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
         "fr": "https://sexyvoice.ai/fr/tools/transcribe",
       },
     },
-    "lastModified": "<page file mtime>",
     "priority": 0.8,
     "url": "https://sexyvoice.ai/it/tools/transcribe",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-call",
+        "de": "https://sexyvoice.ai/de/voice-call",
+        "en": "https://sexyvoice.ai/en/voice-call",
+        "es": "https://sexyvoice.ai/es/voice-call",
+        "fr": "https://sexyvoice.ai/fr/voice-call",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/it/voice-call",
   },
   {
-    "lastModified": "<page file mtime>",
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/voice-cloning",
+        "de": "https://sexyvoice.ai/de/voice-cloning",
+        "en": "https://sexyvoice.ai/en/voice-cloning",
+        "es": "https://sexyvoice.ai/es/voice-cloning",
+        "fr": "https://sexyvoice.ai/fr/voice-cloning",
+      },
+    },
     "priority": 0.5,
     "url": "https://sexyvoice.ai/it/voice-cloning",
-  },
-  {
-    "lastModified": "<page file mtime>",
-    "priority": 0.5,
-    "url": "https://sexyvoice.ai/it/wrapped",
   },
 ]
 `;

@@ -1,139 +1,37 @@
-/** biome-ignore-all lint/complexity/noForEach: sitemap generation is clearer this way */
-import { statSync } from 'node:fs';
-import { join } from 'node:path';
-import { globby } from 'globby';
 import type { MetadataRoute } from 'next';
 
 import { listPosts, postLocales, postPath } from '@/lib/content';
-import { SITE_URL as BASE_URL, localeUrl } from '@/lib/site';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { POST_PRIORITY, PUBLIC_PAGES } from '@/lib/public-routes';
+import { localeUrl } from '@/lib/site';
 import { routing } from '@/src/i18n/routing';
 
-/**
- * Derive the URL path from a page file path.
- * e.g. "app/[lang]/(auth)/login/page.tsx" → "/login"
- */
-function pageFileToPath(file: string): string {
-  return file
-    .replace('app/[lang]', '')
-    .replace(/\/\([^)]+\)/g, '') // strip route groups like (auth), (dashboard)
-    .replace('/page.tsx', '')
-    .replace('/page.ts', '')
-    .replace(/^$/, '/'); // root page becomes "/"
+/** The page in each of `locales` other than `lang`. */
+function alternates(lang: Locale, path: string, locales: readonly Locale[]) {
+  return {
+    languages: Object.fromEntries(
+      locales
+        .filter((locale) => locale !== lang)
+        .map((locale) => [locale, localeUrl(locale, path)]),
+    ),
+  };
 }
 
-/**
- * Get the file's last-modified time from the filesystem.
- * Falls back to a fixed date if the file cannot be read.
- */
-function getFileLastModified(filePath: string): string {
-  try {
-    const fullPath = join(process.cwd(), 'app', filePath.replace(/^app\//, ''));
-    return statSync(fullPath).mtime.toISOString();
-  } catch {
-    return '2025-01-01T00:00:00.000Z';
-  }
-}
-
-/**
- * Assign a sitemap priority based on URL path pattern.
- *
- * - Homepage: 1.0
- * - Tools pages: 0.8  (free tools that drive organic traffic)
- * - Blog posts: 0.7   (content marketing)
- * - Auth pages: 0.4
- * - Policy pages: 0.3
- * - Everything else: 0.5
- */
-function getPriority(url: string): number {
-  if (/\/[a-z]{2}\/?$/.test(url)) return 1.0;
-  if (url.includes('/tools/')) return 0.8;
-  if (url.includes('/blog/')) return 0.7;
-  if (url.includes('/login') || url.includes('/signup')) return 0.4;
-  if (url.includes('/privacy') || url.includes('/terms')) return 0.3;
-  return 0.5;
-}
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Discover all public page files under app/[lang], excluding:
-  //   - protected auth callback pages
-  //   - authenticated dashboard pages
-  //   - dynamic blog [slug] pages (listed from the published posts)
-  //   - the sitemap/layout files themselves
-  const pageFiles = await globby([
-    'app/[lang]/**/page{.ts,.tsx}',
-    '!app/[lang]/**/protected/**',
-    '!app/[lang]/**/dashboard/**',
-    '!app/[lang]/blog/[slug]/**',
+export default function sitemap(): MetadataRoute.Sitemap {
+  return routing.locales.flatMap((lang) => [
+    ...PUBLIC_PAGES.map((page) => ({
+      alternates: alternates(lang, page.path, routing.locales),
+      priority: page.priority,
+      url: localeUrl(lang, page.path),
+    })),
+    ...listPosts(lang).map((post) => ({
+      // Posts in the default locale link to their translations.
+      ...(lang === routing.defaultLocale && {
+        alternates: alternates(lang, postPath(post), postLocales(post.slug)),
+      }),
+      lastModified: new Date(post.date).toISOString(),
+      priority: POST_PRIORITY,
+      url: localeUrl(lang, postPath(post)),
+    })),
   ]);
-
-  const routes: MetadataRoute.Sitemap = [];
-
-  routing.locales.forEach((lang) => {
-    // Static pages discovered from the filesystem
-    pageFiles.forEach((file) => {
-      const path = pageFileToPath(file);
-      const fullPath = path === '/' ? `/${lang}` : `/${lang}${path}`;
-      const url = `${BASE_URL}${fullPath}`;
-      const lastModified = getFileLastModified(file);
-      const priority = getPriority(url);
-
-      // Emit hreflang alternates for static pages that exist in every locale:
-      // the homepage and the tools pages. (Dynamic routes like [policySlug]
-      // are not guaranteed to be translated, so they are left out to avoid
-      // advertising non-existent localized URLs.)
-      const hasLocalizedAlternates = path === '/' || path.startsWith('/tools/');
-      const alternatePath = path === '/' ? '' : path;
-
-      routes.push({
-        lastModified,
-        priority,
-        url,
-        ...(hasLocalizedAlternates
-          ? {
-              alternates: {
-                languages: Object.fromEntries(
-                  routing.locales
-                    .filter((locale) => locale !== lang)
-                    .map((locale) => [
-                      locale,
-                      `${BASE_URL}/${locale}${alternatePath}`,
-                    ]),
-                ),
-              },
-            }
-          : {}),
-      });
-    });
-
-    listPosts(lang).forEach((post) => {
-      const postUrl = localeUrl(lang, postPath(post));
-
-      routes.push({
-        lastModified: new Date(post.date).toISOString(),
-        priority: getPriority(postUrl),
-        url: postUrl,
-        // Default-locale posts link to their translations
-        ...(lang === routing.defaultLocale
-          ? {
-              alternates: {
-                languages: Object.fromEntries(
-                  postLocales(post.slug)
-                    .filter((locale) => locale !== lang)
-                    .map((locale) => [
-                      locale,
-                      localeUrl(locale, postPath(post)),
-                    ]),
-                ),
-              },
-            }
-          : {}),
-      });
-    });
-  });
-
-  // Deduplicate in case any page appears under multiple route groups
-  return routes.filter(
-    (route, index, self) =>
-      index === self.findIndex((candidate) => candidate.url === route.url),
-  );
 }

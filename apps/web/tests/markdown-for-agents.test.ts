@@ -41,23 +41,6 @@ describe('buildMarkdownResponse', () => {
     );
     expect(await response.text()).toBe('# Hello');
   });
-
-  it('preserves existing headers and appends Accept to Vary', () => {
-    const response = buildMarkdownResponse('body', {
-      headers: {
-        'Cache-Control': 'private, max-age=60',
-        Vary: 'Origin',
-        'x-test-header': 'present',
-      },
-      status: 201,
-    });
-
-    expect(response.status).toBe(201);
-    expect(response.headers.get('Vary')).toBe('Origin, Accept');
-    expect(response.headers.get('Cache-Control')).toBe('private, max-age=60');
-    expect(response.headers.get('x-test-header')).toBe('present');
-    expect(response.headers.get('Content-Type')).toBe(MARKDOWN_CONTENT_TYPE);
-  });
 });
 
 describe('renderBlogListMarkdown', () => {

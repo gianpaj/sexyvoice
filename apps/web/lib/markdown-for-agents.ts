@@ -1,8 +1,19 @@
 import type { PolicyPage, Post } from 'contentlayer/generated';
+import { hasLocale } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 
-import { postPath } from '@/lib/content';
+import {
+  BLOG_INDEX_LIMIT,
+  getPolicy,
+  getPost,
+  isPolicySlug,
+  listPosts,
+  postPath,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import type { MarkdownPage } from '@/lib/public-routes';
 import { localeUrl, SITE_URL } from '@/lib/site';
+import { routing } from '@/src/i18n/routing';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
 
@@ -12,21 +23,69 @@ export function estimateMarkdownTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / 4));
 }
 
-export function buildMarkdownResponse(
-  body: string,
-  init: ResponseInit = {},
-): Response {
-  const tokens = estimateMarkdownTokens(body);
-  const headers = new Headers(init.headers);
-  headers.set('Content-Type', MARKDOWN_CONTENT_TYPE);
-  headers.set('x-markdown-tokens', String(tokens));
-  headers.set('X-Robots-Tag', 'noindex, nofollow');
-  const existingVary = headers.get('Vary');
-  headers.set('Vary', existingVary ? `${existingVary}, Accept` : 'Accept');
-  if (!headers.has('Cache-Control')) {
-    headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+export function buildMarkdownResponse(body: string): Response {
+  return new Response(body, {
+    headers: {
+      'Cache-Control': 'public, max-age=0, must-revalidate',
+      'Content-Type': MARKDOWN_CONTENT_TYPE,
+      Vary: 'Accept',
+      'X-Robots-Tag': 'noindex, nofollow',
+      'x-markdown-tokens': String(estimateMarkdownTokens(body)),
+    },
+  });
+}
+
+/** A markdown page, or a blog post at `/blog/{slug}`. */
+type MarkdownPath = MarkdownPage | `/blog/${string}`;
+
+async function renderPageMarkdown(
+  lang: Locale,
+  path: MarkdownPath,
+): Promise<string | null> {
+  if (path === '/') {
+    return renderLandingMarkdown(lang, await getMessages({ locale: lang }));
   }
-  return new Response(body, { ...init, headers });
+  if (path === '/blog') {
+    return renderBlogListMarkdown(
+      lang,
+      await getMessages({ locale: lang }),
+      listPosts(lang, BLOG_INDEX_LIMIT),
+    );
+  }
+  const policySlug = path.slice(1);
+  if (isPolicySlug(policySlug)) {
+    const policy = getPolicy(lang, policySlug);
+    return policy ? renderPolicyMarkdown(policy) : null;
+  }
+  const post = getPost(lang, path.slice('/blog/'.length));
+  return post ? renderBlogPostMarkdown(post) : null;
+}
+
+/** The markdown of a page for agents, or 404 for an unknown locale or post. */
+export async function markdownResponse(
+  lang: string,
+  path: MarkdownPath,
+): Promise<Response> {
+  const body = hasLocale(routing.locales, lang)
+    ? await renderPageMarkdown(lang, path)
+    : null;
+  return body === null
+    ? new Response('Not Found', { status: 404 })
+    : buildMarkdownResponse(body);
+}
+
+export const markdownStaticParams = () =>
+  routing.locales.map((lang) => ({ lang }));
+
+/**
+ * The GET handler of a page's `.md` route. The proxy also rewrites requests
+ * that ask for `Accept: text/markdown` to these routes.
+ */
+export function markdownRoute(path: MarkdownPage) {
+  return async (
+    _request: Request,
+    { params }: { params: Promise<{ lang: string }> },
+  ) => markdownResponse((await params).lang, path);
 }
 
 type LandingMessages = IntlMessages['landing'];
