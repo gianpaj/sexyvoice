@@ -3,7 +3,6 @@ import * as Sentry from '@sentry/nextjs';
 import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 
-import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { resolveDurationString } from '@/lib/audio';
 import {
   type CreditReservation,
@@ -32,6 +31,7 @@ import {
   getTextLimit,
   getTtsModel,
 } from '@/lib/tts/models';
+import { speechProviderCost } from '@/lib/tts/provider-cost';
 import {
   isAbortError,
   SpeechError,
@@ -333,24 +333,12 @@ export async function POST(request: Request) {
       'generate_voice_success',
     ));
 
-    let dollarAmount: number | undefined;
-    if (ttsModel.provider === 'grok') {
-      dollarAmount = calculateGenerateApiDollarAmount({
-        inputChars: text.length,
-        model: modelUsed,
-        provider: 'xai',
-        sourceType: 'tts',
-      });
-    } else if (ttsModel.provider === 'gemini' && speech.usage) {
-      dollarAmount = calculateGenerateApiDollarAmount({
-        candidatesTokenCount: speech.usage.candidatesTokenCount,
-        inputChars: text.length,
-        model: modelUsed,
-        promptTokenCount: speech.usage.promptTokenCount,
-        provider: 'google',
-        sourceType: 'tts',
-      });
-    }
+    const dollarAmount = speechProviderCost({
+      candidatesTokenCount: speech.usage?.candidatesTokenCount,
+      inputChars: text.length,
+      model: modelUsed,
+      promptTokenCount: speech.usage?.promptTokenCount,
+    });
 
     const generatedBy = user;
     after(async () => {
@@ -402,7 +390,7 @@ export async function POST(request: Request) {
         sourceType: 'tts',
         unit: 'chars',
         userId: generatedBy.id,
-        ...(dollarAmount === undefined ? {} : { dollarAmount }),
+        ...(dollarAmount > 0 ? { dollarAmount } : {}),
         metadata: {
           ...speech.usage,
           duration,

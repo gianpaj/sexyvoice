@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { POST as estimate } from '@/app/api/estimate-credits/route';
 import { POST as dashboard } from '@/app/api/generate-voice/route';
 import { POST as speech } from '@/app/api/v1/speech/route';
-import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav } from '@/lib/audio';
 import {
   getVoiceById,
@@ -19,6 +18,7 @@ import {
   resolveGeminiTtsModel,
 } from '@/lib/tts/gemini-prompt';
 import { getTtsModel, TTS_MODELS } from '@/lib/tts/models';
+import { speechProviderCost } from '@/lib/tts/provider-cost';
 import { resolveUsageCost } from '@/lib/usage-costs';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import {
@@ -111,30 +111,19 @@ describe('Gemini 3.8 integration', () => {
     expect(TTS_MODELS.gpro38.estimateCredits(text, voice.name)).toBe(27);
   });
 
-  it.each(['tts', 'api_tts'] as const)(
-    'prices %s across the promotional boundary',
-    (sourceType) => {
-      const input = {
-        candidatesTokenCount: 1_000_000,
-        model: 'gemini-3.8-flash-tts',
-        promptTokenCount: 1_000_000,
-        provider: 'google' as const,
-        sourceType,
-      };
-      expect(
-        calculateGenerateApiDollarAmount({
-          ...input,
-          occurredAt: '2026-12-31T23:59:59Z',
-        }),
-      ).toBe(9.5);
-      expect(
-        calculateGenerateApiDollarAmount({
-          ...input,
-          occurredAt: '2027-01-01T00:00:00Z',
-        }),
-      ).toBe(19);
-    },
-  );
+  it('prices Gemini 3.8 across the promotional boundary', () => {
+    const input = {
+      candidatesTokenCount: 1_000_000,
+      model: 'gemini-3.8-flash-tts',
+      promptTokenCount: 1_000_000,
+    };
+    expect(
+      speechProviderCost({ ...input, occurredAt: '2026-12-31T23:59:59Z' }),
+    ).toBe(9.5);
+    expect(
+      speechProviderCost({ ...input, occurredAt: '2027-01-01T00:00:00Z' }),
+    ).toBe(19);
+  });
 
   it('uses the event date when recovering historical provider costs', () => {
     vi.setSystemTime(new Date('2027-02-01'));

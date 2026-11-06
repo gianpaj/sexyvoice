@@ -1,7 +1,6 @@
 import { createApiError, zodErrorToApiError } from '@/lib/api/errors';
 import { externalApiErrorResponse } from '@/lib/api/external-errors';
 import { withExternalApi } from '@/lib/api/handler';
-import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { VoiceGenerationRequestSchema } from '@/lib/api/schemas';
 import { formatDurationSeconds, getAudioDuration } from '@/lib/audio';
 import {
@@ -26,12 +25,14 @@ import {
   TTS_MODELS,
   type TtsProvider,
 } from '@/lib/tts/models';
+import { speechProviderCost } from '@/lib/tts/provider-cost';
 import { SpeechError, synthesizeSpeech } from '@/lib/tts/synthesize';
 import { normalizeXaiTtsCodec } from '@/lib/tts/xai';
 
 const ENDPOINT = '/api/v1/speech';
 
-const PRICING_PROVIDERS = {
+/** Provider names in Axiom logs. */
+const LOG_PROVIDER_NAMES = {
   gemini: 'google',
   grok: 'xai',
   replicate: 'replicate',
@@ -201,7 +202,7 @@ export const POST = withExternalApi(
       voice = voiceObj.name;
       modelUsed = voiceObj.model;
       const ttsModel = TTS_MODELS[model];
-      provider = PRICING_PROVIDERS[ttsModel.provider];
+      provider = LOG_PROVIDER_NAMES[ttsModel.provider];
       const isGeminiVoice = ttsModel.provider === 'gemini';
       const isGrokVoice = ttsModel.provider === 'grok';
 
@@ -385,13 +386,11 @@ export const POST = withExternalApi(
         });
       }
 
-      const dollarAmount = calculateGenerateApiDollarAmount({
-        candidatesTokenCount: speech.usage?.candidatesTokenCount ?? null,
+      const dollarAmount = speechProviderCost({
+        candidatesTokenCount: speech.usage?.candidatesTokenCount,
         inputChars: input.length,
         model: modelUsed,
-        promptTokenCount: speech.usage?.promptTokenCount ?? null,
-        provider: PRICING_PROVIDERS[ttsModel.provider],
-        sourceType: 'api_tts',
+        promptTokenCount: speech.usage?.promptTokenCount,
       });
       const [audioFileResult, updatedCredits] = await Promise.all([
         saveAudioFileAdmin({

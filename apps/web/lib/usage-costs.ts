@@ -1,4 +1,4 @@
-import { calculateGenerateApiDollarAmount } from './api/pricing';
+import { speechProviderCost } from './tts/provider-cost';
 
 export type UsageEventCostInput = Pick<
   Tables<'usage_events'>,
@@ -105,13 +105,11 @@ export function resolveUsageCost(
     output !== null &&
     output > 0
   ) {
-    const amount = calculateGenerateApiDollarAmount({
+    const amount = speechProviderCost({
       candidatesTokenCount: output,
       model,
       occurredAt: event.occurred_at,
       promptTokenCount: input,
-      provider: 'google',
-      sourceType: event.source_type === 'api_tts' ? 'api_tts' : 'tts',
     });
     if (Number.isFinite(amount) && amount > 0) {
       return { amount, basis: 'estimated' };

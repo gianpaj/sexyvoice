@@ -602,6 +602,7 @@ describe('Generate Voice API Route', () => {
       // Verify usage event was logged
       expect(insertUsageEvent).toHaveBeenCalledWith({
         creditsUsed: 48,
+        dollarAmount: 0.000_165,
         inputChars: 11,
         metadata: {
           duration: '12',

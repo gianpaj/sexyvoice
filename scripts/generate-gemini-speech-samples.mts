@@ -5,10 +5,10 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { GoogleGenAI } from '@google/genai';
 
-import pricing from '../apps/web/lib/api/pricing.ts';
 import audioHelpers from '../apps/web/lib/audio.ts';
 import geminiPrompt from '../apps/web/lib/tts/gemini-prompt.ts';
 import geminiResponse from '../apps/web/lib/tts/gemini-response.ts';
+import providerCost from '../apps/web/lib/tts/provider-cost.ts';
 import { loadScriptEnv } from './lib/env.mts';
 import {
   readSampleCatalog,
@@ -19,7 +19,7 @@ import {
   writeListeningPage,
 } from './lib/speech-samples.mts';
 
-const { calculateGenerateApiDollarAmount } = pricing;
+const { speechProviderCost } = providerCost;
 const { convertToWav } = audioHelpers;
 const { buildGeminiTtsContents, buildGeminiVoiceConfig, GEMINI_TTS_38 } =
   geminiPrompt;
@@ -195,11 +195,9 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
         mp3Path,
       ]);
       const bytes = await readFile(mp3Path);
-      const dollarAmount = calculateGenerateApiDollarAmount({
+      const dollarAmount = speechProviderCost({
         model: GEMINI_TTS_38,
         occurredAt: generatedAt,
-        provider: 'google',
-        sourceType: 'tts',
         ...usage,
       });
       manifest.samples.push({
