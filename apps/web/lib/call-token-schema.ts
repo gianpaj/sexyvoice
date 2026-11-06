@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 import { callScenes } from '@/data/call-scenes';
-import { normalizeModelId } from '@/data/models';
+import { CALL_LANGUAGES } from '@/lib/calls/languages';
+import { normalizeCallModel } from '@/lib/calls/models';
 
 const sessionConfigSchema = z.object({
   audioReferenceId: z.uuid().optional(),
@@ -10,37 +11,14 @@ const sessionConfigSchema = z.object({
   // LiveKit token metadata and is what the agent runs on, while credits are
   // charged at the current rate. A stale tab or a shared URL carrying a retired
   // id must not be able to run an old model at the new price.
-  model: z.string().transform(normalizeModelId),
+  model: z.string().transform(normalizeCallModel),
   temperature: z.number().min(0).max(1.2),
   voice: z.string(),
 });
 
 export const callTokenPlaygroundStateSchema = z.object({
   instructions: z.string(),
-  language: z
-    .enum([
-      'ar',
-      'cs',
-      'da',
-      'de',
-      'en',
-      'es',
-      'fi',
-      'fr',
-      'hi',
-      'it',
-      'ja',
-      'ko',
-      'nl',
-      'no',
-      'pl',
-      'pt',
-      'ru',
-      'sv',
-      'tr',
-      'zh',
-    ] as const)
-    .optional(),
+  language: z.enum(CALL_LANGUAGES).optional(),
   // The saved profile preference applies even when the client requests memory.
   memory: z.boolean().default(true),
   sceneInstructions: z.string().nullable().optional(),

@@ -5,10 +5,10 @@ import { CallFaq } from '@/components/call/call-faq';
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import CreditsSection from '@/components/credits-section';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import type { CallLanguage } from '@/data/playground-state';
 import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { type CharacterRow, mapCharacterToPreset } from '@/lib/call-presets';
+import { toCallLanguage } from '@/lib/calls/languages';
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
@@ -70,7 +70,7 @@ export default async function Call(props: {
     isPaidUser,
     callVoices,
     savedVoices,
-    { defaultInstructions, initialInstruction, presetInstructions },
+    { defaultInstructions, presetInstructions },
     publicCharacters,
   ] = e2e
     ? [
@@ -107,9 +107,8 @@ export default async function Call(props: {
       defaultPresets={defaultPresets}
       initialCustomCharacters={initialCustomCharacters}
       initialState={{
-        initialInstruction,
         instructions: defaultInstructions,
-        language: lang as CallLanguage,
+        language: toCallLanguage(lang),
         selectedPresetId: defaultPresets[0]?.id ?? null,
       }}
     >

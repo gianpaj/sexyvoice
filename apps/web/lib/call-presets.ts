@@ -1,5 +1,5 @@
-import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
+import { normalizeCallModel } from '@/lib/calls/models';
 import type {
   getPublicCallCharacters,
   getUserCallCharacters,
@@ -81,7 +81,7 @@ export function mapCharacterToPreset(character: CharacterRow): Preset {
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
         null,
-      model: normalizeModelId(sessionConfig.model),
+      model: normalizeCallModel(sessionConfig.model),
       temperature: sessionConfig.temperature ?? 0.8,
       voice: sessionConfig.voice ?? voice?.name ?? 'Ara',
     },

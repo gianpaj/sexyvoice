@@ -1,9 +1,9 @@
-import { ModelId } from './models';
+import { DEFAULT_CALL_MODEL } from '@/lib/calls/models';
 import type { SessionConfig } from './session-config';
 
 export const defaultSessionConfig: SessionConfig = {
   maxOutputTokens: null,
-  model: ModelId.GROK_VOICE_THINK_FAST_2_0,
+  model: DEFAULT_CALL_MODEL,
   temperature: 0.8,
   voice: 'Ara',
 };

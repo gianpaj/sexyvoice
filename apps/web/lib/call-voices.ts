@@ -1,19 +1,14 @@
-import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
-import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
+import { callModelFor } from '@/lib/calls/models';
+import { savedVoiceProvider } from '@/lib/clone/call-voice-config';
+
+export { callVoiceProvider } from '@/lib/calls/models';
 
 export type SavedCallVoice = Pick<
   Tables<'audio_references'>,
   'id' | 'name' | 'locale' | 'provider'
 >;
-
-export function callVoiceProvider(model: string): CallCloneProvider | null {
-  if (model === ModelId.MISTRAL_TTS) return 'mistral';
-  if (model === ModelId.INWORLD_TTS) return 'inworld';
-  return null;
-}
 
 /** Names of the characters that use each saved voice, by voice ID. */
 export function savedVoiceUsers(
@@ -80,15 +75,12 @@ export function withCallVoice(
   config: SessionConfig,
   voice: { name: string; savedId?: string; provider?: string },
 ): SessionConfig {
-  let model = defaultSessionConfig.model;
-  if (voice.savedId) {
-    model =
-      voice.provider === 'inworld' ? ModelId.INWORLD_TTS : ModelId.MISTRAL_TTS;
-  }
   return {
     ...config,
     audioReferenceId: voice.savedId,
-    model,
+    model: callModelFor(
+      voice.savedId ? savedVoiceProvider(voice.provider ?? '') : undefined,
+    ),
     voice: voice.name,
   };
 }

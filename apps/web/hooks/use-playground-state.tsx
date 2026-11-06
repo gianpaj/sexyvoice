@@ -13,12 +13,11 @@ import {
 import { callScenes } from '@/data/call-scenes';
 import { defaultSessionConfig } from '@/data/default-config';
 import {
-  type CallLanguage,
   defaultPlaygroundState,
-  languageInitialInstructions,
   type PlaygroundState,
 } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
+import type { CallLanguage } from '@/lib/calls/languages';
 import { getPresetInstructions } from '@/lib/characters';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
@@ -161,9 +160,6 @@ function playgroundStateReducer(
 
       return {
         ...state,
-        initialInstruction:
-          languageInitialInstructions[newLanguage] ||
-          languageInitialInstructions.en,
         instructions: newInstructions,
         language: newLanguage,
       };

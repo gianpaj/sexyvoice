@@ -26,14 +26,13 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { CallLanguage } from '@/data/playground-state';
-import { callLanguages } from '@/data/playground-state';
 import type { DBVoice } from '@/data/voices';
 import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import { callReadiness, type SavedCallVoice } from '@/lib/call-voices';
+import { CALL_LANGUAGES, isCallLanguage } from '@/lib/calls/languages';
 import {
   getPresetDescription,
   getPresetSampleUrl,
@@ -60,8 +59,6 @@ interface CallPanelProps {
   open: boolean;
   savedVoices: SavedCallVoice[];
 }
-
-const LANGUAGE_CODES = callLanguages.map(({ value }) => value);
 
 export function CallPanel({
   callVoices,
@@ -190,12 +187,11 @@ export function CallPanel({
               {tCall('languageLabel')}
             </label>
             <Select
-              onValueChange={(value) =>
-                dispatch({
-                  payload: value as CallLanguage,
-                  type: 'SET_LANGUAGE',
-                })
-              }
+              onValueChange={(value) => {
+                if (isCallLanguage(value)) {
+                  dispatch({ payload: value, type: 'SET_LANGUAGE' });
+                }
+              }}
               value={pgState.language}
             >
               <SelectTrigger
@@ -205,7 +201,7 @@ export function CallPanel({
                 <SelectValue placeholder={tCall('languagePlaceholder')} />
               </SelectTrigger>
               <SelectContent className="max-h-72 overflow-y-auto">
-                {getTranslatedLanguages(locale, LANGUAGE_CODES).map(
+                {getTranslatedLanguages(locale, CALL_LANGUAGES).map(
                   ({ value, label }) => (
                     <SelectItem key={value} value={value}>
                       {label}

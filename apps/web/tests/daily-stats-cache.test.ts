@@ -4,7 +4,6 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET } from '@/app/api/daily-stats/route';
-import { ModelId } from '@/data/models';
 
 const mocks = vi.hoisted(() => ({
   captureCheckIn: vi.fn(() => 'test-check-in'),
@@ -277,22 +276,22 @@ describe('GET /api/daily-stats cache', () => {
       });
       const calls = [
         {
-          model: ModelId.INWORLD_TTS,
+          model: 'inworld-tts',
           started_at: '2026-09-10T23:59:59.999Z',
           status: 'completed',
         },
         {
-          model: ModelId.MISTRAL_TTS,
+          model: 'mistral-tts',
           started_at: '2026-09-11T00:00:00Z',
           status: 'completed',
         },
         {
-          model: ModelId.INWORLD_TTS,
+          model: 'inworld-tts',
           started_at: '2026-09-11T12:00:00Z',
           status: 'failed',
         },
         {
-          model: ModelId.GROK_VOICE_THINK_FAST_1_0,
+          model: 'grok-voice-think-fast-1.0',
           started_at: '2026-09-11T13:00:00Z',
           status: 'completed',
         },

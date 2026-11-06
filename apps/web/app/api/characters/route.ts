@@ -2,8 +2,8 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { normalizeModelId } from '@/data/models';
 import { CLONED_VOICE_ID, callVoiceProvider } from '@/lib/call-voices';
+import { normalizeCallModel } from '@/lib/calls/models';
 import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
@@ -22,7 +22,7 @@ const sessionConfigSchema = z.object({
   // Normalized before it is spread into the session_config JSONB, so a stale
   // client cannot write a retired model id back into a row that was just
   // cleaned up.
-  model: z.string().min(1, 'Model is required').transform(normalizeModelId),
+  model: z.string().min(1, 'Model is required').transform(normalizeCallModel),
   temperature: z.number().min(0).max(1.2),
   voice: z.string().min(1, 'Voice is required'),
 });

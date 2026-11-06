@@ -8,7 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CallExperience } from '@/components/call/call-experience';
 import { defaultSessionConfig } from '@/data/default-config';
-import { ModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 import type { DBVoice } from '@/data/voices';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
@@ -287,7 +286,7 @@ describe('CallExperience panel', () => {
           sessionConfig: {
             ...defaultSessionConfig,
             audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
-            model: ModelId.INWORLD_TTS,
+            model: 'inworld-tts',
             voice: 'Deleted voice',
           },
           voiceName: 'Deleted voice',
@@ -368,7 +367,7 @@ describe('CallExperience panel', () => {
           sessionConfig: {
             ...defaultSessionConfig,
             audioReferenceId: '6f1d9c2a-0000-4000-8000-0000000000cc',
-            model: ModelId.INWORLD_TTS,
+            model: 'inworld-tts',
             voice: 'Deleted voice',
           },
         },
@@ -463,7 +462,7 @@ describe('CallExperience creator', () => {
       name: 'Max',
       sessionConfig: {
         audioReferenceId: savedVoice.id,
-        model: ModelId.MISTRAL_TTS,
+        model: 'mistral-tts',
         voice: 'My voice',
       },
       voiceName: 'My voice',
@@ -669,7 +668,7 @@ describe('CallExperience creator', () => {
     );
     expect(lastPostBody()).toMatchObject({
       sessionConfig: {
-        model: ModelId.INWORLD_TTS,
+        model: 'inworld-tts',
         audioReferenceId: clonedVoiceId,
         voice: 'Radio voice',
       },

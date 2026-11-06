@@ -548,15 +548,21 @@ call-session metadata. Selecting a built-in voice clears the saved reference.
 
 ### Call Configuration
 
-| Setting           | Current behavior                                                                    |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| Model             | `grok-voice-think-fast-1.0`, `inworld-tts`, or `mistral-tts`                        |
-| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
-| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
-| Max output tokens | Nullable; defaults to the agent's model behavior                                    |
-| Instructions      | Server-resolved database prompt for the selected character                          |
-| Language          | 20 supported call languages; English fallback                                       |
-| Memory            | On by default for all accounts; saved Profile opt-out                               |
+| Setting           | Current behavior                                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-2.0` (default) or `grok-voice-think-fast-1.0` for built-in voices; `inworld-tts` or `mistral-tts` for saved voices |
+| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters                                                       |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                                                                            |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                                                                          |
+| Instructions      | Server-resolved database prompt for the selected character                                                                                |
+| Language          | 20 supported call languages; English fallback                                                                                             |
+| Memory            | On by default for all accounts; saved Profile opt-out                                                                                     |
+
+`lib/calls/models.ts` lists the call models: each model's pipeline (Grok
+realtime or STT + LLM + TTS), saved-voice provider and provider cost per
+minute. `lib/calls/languages.ts` lists the call languages, and the
+server-only `lib/calls/greetings.ts` holds each language's opening
+instruction for the agent.
 
 ### Call transcript analysis
 

@@ -1,6 +1,7 @@
-import { normalizeModelId } from '@/data/models';
 import type { Preset } from '@/data/presets';
 import { savedVoiceSampleUrl } from '@/lib/call-voices';
+import { DEFAULT_CALL_LANGUAGE } from '@/lib/calls/languages';
+import { normalizeCallModel } from '@/lib/calls/models';
 
 export const MAX_CUSTOM_CHARACTERS = 10;
 
@@ -64,7 +65,7 @@ export function mapApiCharacterToPreset(
         sessionConfig.maxOutputTokens ??
         sessionConfig.max_output_tokens ??
         null,
-      model: normalizeModelId(sessionConfig.model),
+      model: normalizeCallModel(sessionConfig.model),
       temperature: sessionConfig.temperature ?? 0.8,
       voice: sessionConfig.voice ?? character.voices?.name ?? 'Ara',
     },
@@ -120,7 +121,7 @@ export function buildSaveCharacterPayload({
     },
     name,
     prompt:
-      language === 'en' || !base?.instructions
+      language === DEFAULT_CALL_LANGUAGE || !base?.instructions
         ? instructions
         : base.instructions,
     sessionConfig,
@@ -167,7 +168,7 @@ export async function saveCharacter(
 export function getPresetDescription(preset: Preset, language: string): string {
   return (
     preset.localizedDescriptions?.[language] ??
-    preset.localizedDescriptions?.en ??
+    preset.localizedDescriptions?.[DEFAULT_CALL_LANGUAGE] ??
     ''
   );
 }
@@ -188,13 +189,13 @@ export function getPresetInstructions(
  */
 export function getPresetSampleUrl(
   preset: Preset,
-  language = 'en',
+  language: string = DEFAULT_CALL_LANGUAGE,
 ): string | null {
   const { audioReferenceId } = preset.sessionConfig;
   if (audioReferenceId) return savedVoiceSampleUrl(audioReferenceId);
   return (
     preset.localizedSampleUrls?.[language] ??
-    preset.localizedSampleUrls?.en ??
+    preset.localizedSampleUrls?.[DEFAULT_CALL_LANGUAGE] ??
     preset.voiceSampleUrl ??
     null
   );

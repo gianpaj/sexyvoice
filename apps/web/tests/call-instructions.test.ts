@@ -37,7 +37,6 @@ describe('getCallInstructionConfig()', () => {
     const config = await getCallInstructionConfig();
 
     expect(config.defaultInstructions).toBeTruthy();
-    expect(config.initialInstruction).toBeTruthy();
     expect(get).not.toHaveBeenCalled();
     expect(captureMessage).not.toHaveBeenCalled();
     expect(captureException).not.toHaveBeenCalled();
@@ -73,7 +72,6 @@ describe('getCallInstructionConfig()', () => {
     const config = await getCallInstructionConfig();
 
     expect(config.defaultInstructions).toBeTruthy();
-    expect(config.initialInstruction).toBeTruthy();
     expect(get).toHaveBeenCalledWith('call-instructions');
     expect(captureException).not.toHaveBeenCalled();
   });

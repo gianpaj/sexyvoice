@@ -193,7 +193,6 @@ beforeEach(() => {
   vi.mocked(getCallVoices).mockResolvedValue([]);
   vi.mocked(getCallInstructionConfig).mockResolvedValue({
     defaultInstructions: 'Live default instructions',
-    initialInstruction: 'Live initial instruction',
     presetInstructions: { 'live-public': 'Live preset override' },
   });
 });
@@ -306,7 +305,6 @@ describe('call E2E data', () => {
       '',
     ]);
     expect(props.initialState).toEqual({
-      initialInstruction: E2E_CALL_INSTRUCTION_CONFIG.initialInstruction,
       instructions: E2E_CALL_INSTRUCTION_CONFIG.defaultInstructions,
       language: 'de',
       selectedPresetId: E2E_PUBLIC_CALL_CHARACTERS[0].id,
@@ -472,7 +470,6 @@ describe.each([
       sessionConfig: { maxOutputTokens: null, temperature: 0.8, voice: 'Ara' },
     });
     expect(props.initialState).toEqual({
-      initialInstruction: 'Live initial instruction',
       instructions: 'Live default instructions',
       language: 'de',
       selectedPresetId: 'live-public',

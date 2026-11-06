@@ -2,18 +2,15 @@ import { captureException, captureMessage } from '@sentry/nextjs';
 import { get } from '@vercel/global-config';
 
 import { instructions as fallbackInstructions } from '@/data/default-config';
-import { initialInstruction as fallbackInitialInstruction } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 
 interface CallInstructionConfig {
   defaultInstructions: string;
-  initialInstruction: string;
   presetInstructions?: Record<string, string>;
 }
 
 const FALLBACK_CONFIG: CallInstructionConfig = {
   defaultInstructions: fallbackInstructions,
-  initialInstruction: fallbackInitialInstruction,
 };
 
 const shouldReportEdgeConfigError = () =>
@@ -45,8 +42,6 @@ export async function getCallInstructionConfig(): Promise<CallInstructionConfig>
 
     return {
       defaultInstructions: config?.defaultInstructions ?? fallbackInstructions,
-      initialInstruction:
-        config?.initialInstruction ?? fallbackInitialInstruction,
       presetInstructions: config?.presetInstructions,
     };
   } catch (error) {

@@ -104,7 +104,6 @@ export const E2E_SAVED_CALL_VOICES = [
 
 export const E2E_CALL_INSTRUCTION_CONFIG = {
   defaultInstructions: 'Keep the conversation friendly and concise.',
-  initialInstruction: 'Say hello.',
   presetInstructions: undefined,
 } satisfies Awaited<ReturnType<typeof getCallInstructionConfig>>;
 

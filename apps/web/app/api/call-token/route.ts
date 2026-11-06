@@ -5,17 +5,14 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { callScenes } from '@/data/call-scenes';
-import {
-  defaultLanguage,
-  getInitialInstruction,
-  languageInitialInstructions,
-} from '@/data/playground-state';
 import { isCallMemoryEnabled } from '@/lib/call-memory';
 import {
   type CallTokenPlaygroundState,
   callTokenPlaygroundStateSchema,
 } from '@/lib/call-token-schema';
 import { callVoiceProvider } from '@/lib/call-voices';
+import { getInitialInstruction } from '@/lib/calls/greetings';
+import { DEFAULT_CALL_LANGUAGE } from '@/lib/calls/languages';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
@@ -134,17 +131,13 @@ export async function POST(request: Request) {
 
     const {
       instructions: clientInstructions,
-      language = defaultLanguage,
+      language: selectedLanguage = DEFAULT_CALL_LANGUAGE,
       sceneInstructions,
       selectedPresetId,
       selectedSceneId,
       memory,
       sessionConfig: { model, voice, temperature, maxOutputTokens },
     } = playgroundState;
-
-    const selectedLanguage = languageInitialInstructions[language]
-      ? language
-      : defaultLanguage;
 
     const memoryPreference = memory
       ? resolveMemoryPreference(supabase, user.id)

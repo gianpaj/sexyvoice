@@ -1,31 +1,50 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_MODEL_ID, ModelId, normalizeModelId } from '@/data/models';
+import {
+  CALL_MODEL_IDS,
+  callModelFor,
+  callVoiceProvider,
+  DEFAULT_CALL_MODEL,
+  normalizeCallModel,
+} from '@/lib/calls/models';
 import { mapApiCharacterToPreset } from '@/lib/characters';
 
-describe('normalizeModelId', () => {
-  it('keeps a supported model id', () => {
-    expect(normalizeModelId(ModelId.GROK_VOICE_THINK_FAST_1_0)).toBe(
-      'grok-voice-think-fast-1.0',
-    );
+describe('normalizeCallModel', () => {
+  it.each(CALL_MODEL_IDS)('keeps the supported model %s', (model) => {
+    expect(normalizeCallModel(model)).toBe(model);
   });
 
-  // it('upgrades the retired grok-voice-think-fast-1.0 id', () => {
-  //   expect(normalizeModelId('grok-voice-think-fast-1.0')).toBe(
-  //     'grok-voice-think-fast-2.0',
-  //   );
-  // });
+  it('defaults to grok-voice-think-fast-2.0', () => {
+    expect(DEFAULT_CALL_MODEL).toBe('grok-voice-think-fast-2.0');
+  });
 
   it('falls back to the default for missing or unknown ids', () => {
-    expect(normalizeModelId(undefined)).toBe(DEFAULT_MODEL_ID);
-    expect(normalizeModelId(null)).toBe(DEFAULT_MODEL_ID);
-    expect(normalizeModelId('')).toBe(DEFAULT_MODEL_ID);
-    expect(normalizeModelId('not-a-real-model')).toBe(DEFAULT_MODEL_ID);
+    expect(normalizeCallModel(undefined)).toBe(DEFAULT_CALL_MODEL);
+    expect(normalizeCallModel(null)).toBe(DEFAULT_CALL_MODEL);
+    expect(normalizeCallModel('')).toBe(DEFAULT_CALL_MODEL);
+    expect(normalizeCallModel('not-a-real-model')).toBe(DEFAULT_CALL_MODEL);
+    expect(normalizeCallModel('toString')).toBe(DEFAULT_CALL_MODEL);
+  });
+});
+
+describe('saved voice models', () => {
+  it.each([
+    ['inworld', 'inworld-tts'],
+    ['mistral', 'mistral-tts'],
+  ] as const)('speaks a saved %s voice through %s', (provider, model) => {
+    expect(callModelFor(provider)).toBe(model);
+    expect(callVoiceProvider(model)).toBe(provider);
+  });
+
+  it('speaks built-in voices through the default model', () => {
+    expect(callModelFor()).toBe(DEFAULT_CALL_MODEL);
+    expect(callVoiceProvider('grok-voice-think-fast-1.0')).toBeNull();
+    expect(callVoiceProvider(DEFAULT_CALL_MODEL)).toBeNull();
   });
 });
 
 describe('mapApiCharacterToPreset', () => {
-  it('upgrades a legacy model id stored in session_config', () => {
+  it('keeps the model id a character was saved with', () => {
     const preset = mapApiCharacterToPreset({
       id: '00000000-0000-4000-a000-000000000201',
       name: 'Legacy character',

@@ -40,9 +40,7 @@ describe('call-token API validation', () => {
       expect(result.success).toBe(true);
     });
 
-    it('upgrades a retired model id instead of forwarding it to the agent', () => {
-      // A stale tab or a shared URL can still post 1.0. Forwarding it verbatim
-      // would run the old model while charging the current rate.
+    it('keeps a supported model id', () => {
       const payload = {
         instructions: 'Test instructions',
         selectedPresetId: null,
@@ -76,7 +74,7 @@ describe('call-token API validation', () => {
       const result = playgroundStateSchema.safeParse(payload);
       expect(result.success).toBe(true);
       expect(result.data?.sessionConfig.model).toBe(
-        'grok-voice-think-fast-1.0',
+        'grok-voice-think-fast-2.0',
       );
     });
 
@@ -393,14 +391,14 @@ describe('call-token API validation', () => {
   });
 
   describe('edge cases', () => {
-    it('should accept temperature at minimum boundary (0.6)', () => {
+    it('should accept temperature at minimum boundary (0)', () => {
       const payload = {
         instructions: 'Test instructions',
         selectedPresetId: null,
         sessionConfig: {
           maxOutputTokens: null,
           model: 'test',
-          temperature: 0.6,
+          temperature: 0,
           voice: 'Ara',
         },
       };
