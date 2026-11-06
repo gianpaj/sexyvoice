@@ -1,5 +1,6 @@
 import { parseArgs } from 'node:util';
 
+import storageLayout from '../../apps/web/lib/storage/layout.ts';
 import {
   compareR2ObjectsOldestFirst as compareOldestFirst,
   normalizeEtag,
@@ -10,6 +11,8 @@ import {
   type R2Location,
   type R2ObjectMetadata,
 } from './r2-transfer.mts';
+
+const { AUDIO_FOLDERS } = storageLayout;
 
 export type CleanupR2Client = R2Client;
 export type AllowedLocation = R2Location;
@@ -115,9 +118,9 @@ export function buildAllowedLocations({
   mainBucket,
 }: CleanupConfig): AllowedLocation[] {
   const locations = [
-    { bucket: mainBucket, prefix: 'generated-audio-free/' },
-    { bucket: mainBucket, prefix: 'cloned-audio-free/' },
-    { bucket: apiBucket, prefix: 'generated-audio-free/' },
+    { bucket: mainBucket, prefix: `${AUDIO_FOLDERS.speech.free}/` },
+    { bucket: mainBucket, prefix: `${AUDIO_FOLDERS.clone.free}/` },
+    { bucket: apiBucket, prefix: `${AUDIO_FOLDERS.speech.free}/` },
   ];
 
   const unique = new Map<string, AllowedLocation>();

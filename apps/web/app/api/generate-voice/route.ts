@@ -4,7 +4,7 @@ import { Redis } from '@upstash/redis';
 import { after, NextResponse } from 'next/server';
 
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
-import { generateHash, resolveDurationString } from '@/lib/audio';
+import { resolveDurationString } from '@/lib/audio';
 import {
   type CreditReservation,
   reserveCredits,
@@ -24,6 +24,7 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+import { dashboardSpeechKey } from '@/lib/tts/cache-key';
 import { resolveGeminiTtsModel } from '@/lib/tts/gemini-prompt';
 import {
   creditsFromTokens,
@@ -236,37 +237,28 @@ export async function POST(request: Request) {
         ? resolveGeminiTtsModel({ model: voiceObj.model })
         : voiceObj.model;
 
-    // Keep the base key stable so requests without advanced settings keep
-    // hitting the existing cache; only seeded/temperature/speed variants get a
-    // distinct entry so they never collide with the default output.
-    let hashInput =
-      seed === undefined
-        ? `${text}-${voiceObj.name}-${effectiveModel}`
-        : `${text}-${voiceObj.name}-${effectiveModel}-${seed}`;
-    if (temperature !== undefined) {
-      hashInput += `-temp:${temperature}`;
-    }
-    if (speed !== undefined) {
-      hashInput += `-speed:${speed}`;
-    }
-    if (styleLimit !== null) {
-      hashInput += `-style:${JSON.stringify(styleVariant ?? '')}`;
-    }
-    const hash = await generateHash(hashInput);
+    const filename = await dashboardSpeechKey({
+      isPaidUser: userHasPaid,
+      language:
+        ttsModel.settings.language && selectedLanguage !== 'auto'
+          ? selectedLanguage || undefined
+          : undefined,
+      provider: ttsModel.provider,
+      runtimeModel: effectiveModel,
+      seed,
+      speed,
+      style: styleLimit === null ? undefined : styleVariant,
+      temperature,
+      text,
+      voiceName: voiceObj.name,
+    });
 
     const abortController = new AbortController();
-
-    let folder = 'generated-audio-free';
-
-    if (userHasPaid) {
-      folder = 'generated-audio';
-    }
-    const path = `${folder}/${voiceObj.name}-${hash}`;
 
     request.signal.addEventListener('abort', () => {
       logger.info('Request aborted by client', {
         extra: {
-          hash,
+          filename,
           text,
           voiceName: voiceObj.name,
         },
@@ -277,8 +269,6 @@ export async function POST(request: Request) {
       abortController.abort();
     });
 
-    const fileExtension = ttsModel.provider === 'grok' ? 'mp3' : 'wav';
-    const filename = `${path}.${fileExtension}`;
     const result = await redis.get<string>(filename);
 
     if (result) {

@@ -16,6 +16,7 @@ import {
   type CreditReservation,
   reserveCredits,
 } from '@/lib/credits/reservation';
+import { audioFolder } from '@/lib/storage/layout';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import {
   getCreditsAdmin,
@@ -367,8 +368,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const folder = userHasPaid ? 'generated-audio' : 'generated-audio-free';
-    const filename = `${folder}/${voice}-${Date.now()}.${chosenFormat}`;
+    const filename = `${audioFolder('speech', userHasPaid)}/${voice}-${Date.now()}.${chosenFormat}`;
 
     const speech = await synthesizeSpeech(
       {

@@ -63,6 +63,7 @@ import {
   getProviderUnavailableDetails,
   isTransientProviderFailure,
 } from '@/lib/provider-errors';
+import { audioFolder } from '@/lib/storage/layout';
 import { uploadFileToR2 } from '@/lib/storage/upload';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import {
@@ -1317,7 +1318,7 @@ export async function POST(request: Request) {
       // never serves audio from the previous model.
       const voiceModel =
         provider === 'inworld' ? INWORLD_TTS_MODEL : VOXTRAL_MODEL;
-      const filename = `cloned-audio/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
+      const filename = `${audioFolder('clone', true)}/${locale}-${provider}-${voiceModel}-${await generateHash(`${voice.voice_id}-${text}`)}.wav`;
       const cachedOutputUrl = await redis.get<string>(filename);
       if (cachedOutputUrl) {
         return NextResponse.json(
@@ -1471,7 +1472,7 @@ export async function POST(request: Request) {
     let referenceAudioEnhancementDollarAmount = 0;
     let referenceAudioEnhancementDurationSeconds: number | null = null;
 
-    const basePath = userHasPaid ? 'cloned-audio' : 'cloned-audio-free';
+    const basePath = audioFolder('clone', userHasPaid);
     let filename = await createCloneOutputFilename({
       audioHash: processedAudio.audioHash,
       basePath,
