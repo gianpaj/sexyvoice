@@ -281,17 +281,22 @@ export function VoicePicker({
           variant="outline"
         >
           {selected ? (
-            <span className="flex min-w-0 items-center gap-2.5">
+            <span className="flex min-w-0 flex-1 items-center gap-2.5">
               <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted">
                 <AudioLines className="size-4 text-muted-foreground" />
               </span>
               <span className="flex min-w-0 flex-col items-start">
-                <span className="truncate font-medium text-sm leading-tight">
+                <span className="max-w-full truncate font-medium text-sm leading-tight">
                   {getVoiceDisplayName(selected)}
                 </span>
-                <span className="flex items-center gap-1.5 text-muted-foreground text-xs">
+                <span className="flex max-w-full items-center gap-1.5 text-muted-foreground text-xs">
                   {selectedModel && <ModelDot model={selectedModel} />}
-                  {selectedModel} &middot; {selected.description ?? ''}
+                  <span
+                    className="truncate"
+                    title={selected.description ?? undefined}
+                  >
+                    {selectedModel} &middot; {selected.description ?? ''}
+                  </span>
                 </span>
               </span>
             </span>
@@ -497,11 +502,14 @@ export function VoicePicker({
                     >
                       <span className="flex min-w-0 flex-1 flex-col">
                         <span className="flex items-center gap-2">
-                          <span className="truncate font-medium text-sm">
+                          <span className="shrink-0 truncate font-medium text-sm">
                             {getVoiceDisplayName(voice)}
                           </span>
                           {voice.description && (
-                            <span className="text-muted-foreground text-xs">
+                            <span
+                              className="truncate text-muted-foreground text-xs"
+                              title={voice.description}
+                            >
                               {voice.description}
                             </span>
                           )}
