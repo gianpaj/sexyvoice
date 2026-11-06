@@ -24,6 +24,10 @@ import {
   formatDurationSeconds,
   getAudioDuration,
 } from '@/lib/audio';
+import {
+  type CreditReservation,
+  reserveCredits,
+} from '@/lib/credits/reservation';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import {
   getProviderErrorMessage,
@@ -37,9 +41,6 @@ import {
   hasUserPaidAdmin,
   insertUsageEvent,
   isInsufficientCreditsError,
-  reduceCreditsAdmin,
-  reduceCreditsUpToAdmin,
-  restoreCredits,
   saveAudioFileAdmin,
 } from '@/lib/supabase/queries';
 import {
@@ -179,130 +180,17 @@ export async function POST(request: Request) {
     init: ResponseInit = {},
     rateLimitState = rateLimit,
   ) => jsonWithRateLimitHeaders(body, init, rateLimitState, requestId);
-  let reservedCredits = 0;
-  const refundReservedCredits = async (context: string) => {
-    if (reservedCredits <= 0) {
-      return;
-    }
-
-    const creditsToRestore = reservedCredits;
-    reservedCredits = 0;
-
-    try {
-      await restoreCredits({
-        amount: creditsToRestore,
-        userId: authResult.userId,
-      });
-    } catch (refundError) {
-      captureException(refundError, {
-        extra: {
-          amount: creditsToRestore,
-          apiKeyId: authResult.apiKeyId,
-          context,
-          endpoint: ENDPOINT,
-          requestId,
-          userId: authResult.userId,
-        },
-      });
+  let reservation: CreditReservation | null = null;
+  const releaseReservation = async (context: string) => {
+    const refund = await reservation?.release(context);
+    if (refund && !refund.ok) {
       await log({
         apiKeyId: authResult.apiKeyId,
-        error:
-          refundError instanceof Error
-            ? refundError.message
-            : String(refundError),
+        error: refund.error,
         errorCode: 'credit_refund_failed',
         status: 500,
         userId: authResult.userId,
       });
-    }
-  };
-  const reconcileReservedCredits = async ({
-    actualCredits,
-    context,
-  }: {
-    actualCredits: number;
-    context: string;
-  }): Promise<number> => {
-    if (actualCredits === reservedCredits) {
-      return reservedCredits;
-    }
-
-    if (actualCredits < reservedCredits) {
-      const refundAmount = reservedCredits - actualCredits;
-      try {
-        await restoreCredits({
-          amount: refundAmount,
-          userId: authResult.userId,
-        });
-        return actualCredits;
-      } catch (refundError) {
-        captureException(refundError, {
-          extra: {
-            actualCredits,
-            amount: refundAmount,
-            apiKeyId: authResult.apiKeyId,
-            context,
-            endpoint: ENDPOINT,
-            requestId,
-            reservedCredits,
-            userId: authResult.userId,
-          },
-        });
-        await log({
-          apiKeyId: authResult.apiKeyId,
-          error:
-            refundError instanceof Error
-              ? refundError.message
-              : String(refundError),
-          errorCode: 'credit_refund_failed',
-          status: 500,
-          userId: authResult.userId,
-        });
-        return reservedCredits;
-      }
-    }
-
-    const additionalCredits = actualCredits - reservedCredits;
-    try {
-      const additionalCreditsDebited = await reduceCreditsUpToAdmin({
-        amount: additionalCredits,
-        userId: authResult.userId,
-      });
-      const totalCreditsDebited = reservedCredits + additionalCreditsDebited;
-
-      if (additionalCreditsDebited < additionalCredits) {
-        await log({
-          apiKeyId: authResult.apiKeyId,
-          creditsUsed: totalCreditsDebited,
-          errorCode: 'credit_partial_debit',
-          status: 200,
-          userId: authResult.userId,
-        });
-      }
-
-      return totalCreditsDebited;
-    } catch (debitError) {
-      captureException(debitError, {
-        extra: {
-          actualCredits,
-          amount: additionalCredits,
-          apiKeyId: authResult.apiKeyId,
-          context,
-          endpoint: ENDPOINT,
-          requestId,
-          reservedCredits,
-          userId: authResult.userId,
-        },
-      });
-      await log({
-        apiKeyId: authResult.apiKeyId,
-        error:
-          debitError instanceof Error ? debitError.message : String(debitError),
-        errorCode: 'credit_debit_failed',
-        status: 500,
-        userId: authResult.userId,
-      });
-      return reservedCredits;
     }
   };
 
@@ -469,8 +357,16 @@ export async function POST(request: Request) {
     }
 
     try {
-      await reduceCreditsAdmin({ amount: estimatedCredits, userId });
-      reservedCredits = estimatedCredits;
+      reservation = await reserveCredits({
+        actor: 'service',
+        amount: estimatedCredits,
+        telemetry: {
+          apiKeyId: authResult.apiKeyId,
+          endpoint: ENDPOINT,
+          requestId,
+        },
+        userId,
+      });
     } catch (error) {
       if (!isInsufficientCreditsError(error)) {
         throw error;
@@ -512,7 +408,7 @@ export async function POST(request: Request) {
       providerId: 'grok' | 'replicate',
     ) => {
       const message = getProviderUnavailableMessage(providerId);
-      await refundReservedCredits(context);
+      await releaseReservation(context);
       await log({
         apiKeyId: authResult.apiKeyId,
         error: getProviderErrorMessage(error),
@@ -559,7 +455,7 @@ export async function POST(request: Request) {
         const providerFailure = getGeminiProviderFailure(error);
         if (!providerFailure) return null;
 
-        await refundReservedCredits('gemini_provider_failure');
+        await releaseReservation('gemini_provider_failure');
         await log({
           apiKeyId: authResult.apiKeyId,
           error: providerFailure.message,
@@ -620,7 +516,7 @@ export async function POST(request: Request) {
           geminiOutcomeToErrorCode(responseOutcome) ?? 'OTHER_GEMINI_BLOCK';
         const message = getErrorMessage(errorCode, 'voice-generation');
         const httpStatus = getErrorStatusCode(errorCode);
-        await refundReservedCredits(
+        await releaseReservation(
           isProhibitedContent ? 'gemini_content_blocked' : 'gemini_no_audio',
         );
         await log({
@@ -683,7 +579,7 @@ export async function POST(request: Request) {
           extra: { codec, model: modelUsed, requestId, voice },
         });
         const message = getErrorMessage('XAI_TTS_ERROR', 'voice-generation');
-        await refundReservedCredits('xai_tts_error');
+        await releaseReservation('xai_tts_error');
         await log({
           apiKeyId: authResult.apiKeyId,
           error: message,
@@ -782,11 +678,31 @@ export async function POST(request: Request) {
         Number.parseInt(usageMetadata.totalTokenCount, 10),
       );
     }
-    const creditsDebited = await reconcileReservedCredits({
-      actualCredits: creditsUsed,
-      context: 'speech_success',
-    });
-    reservedCredits = 0;
+    const settlement = await reservation.settle(creditsUsed, 'speech_success');
+    const creditsDebited = settlement.debited;
+    if (settlement.outcome === 'partial_debit') {
+      await log({
+        apiKeyId: authResult.apiKeyId,
+        creditsUsed: creditsDebited,
+        errorCode: 'credit_partial_debit',
+        status: 200,
+        userId,
+      });
+    } else if (
+      settlement.outcome === 'debit_failed' ||
+      settlement.outcome === 'refund_failed'
+    ) {
+      await log({
+        apiKeyId: authResult.apiKeyId,
+        error: settlement.error,
+        errorCode:
+          settlement.outcome === 'debit_failed'
+            ? 'credit_debit_failed'
+            : 'credit_refund_failed',
+        status: 500,
+        userId,
+      });
+    }
 
     const dollarAmount = calculateGenerateApiDollarAmount({
       candidatesTokenCount:
@@ -888,7 +804,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    await refundReservedCredits('speech_failure');
+    await releaseReservation('speech_failure');
 
     if (
       Error.isError(error) &&

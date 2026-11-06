@@ -49,6 +49,10 @@ import {
   isCloneTextOverLimit,
 } from '@/lib/clone/text-limits';
 import type { VoxtralModel } from '@/lib/clone/voxtral';
+import {
+  type CreditReservation,
+  reserveCredits,
+} from '@/lib/credits/reservation';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import { getFalBillingEventCost } from '@/lib/fal-billing';
 import PostHogClient from '@/lib/posthog';
@@ -71,8 +75,6 @@ import {
   hasUserPaid,
   insertUsageEvent,
   isInsufficientCreditsError,
-  reduceCredits,
-  restoreCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -505,9 +507,13 @@ async function reserveCloneCredits({
   text: string;
   userEmail?: string;
   userId: string;
-}): Promise<void> {
+}): Promise<CreditReservation> {
   try {
-    await reduceCredits({ amount: requiredCredits, userId });
+    return await reserveCredits({
+      actor: 'session',
+      amount: requiredCredits,
+      userId,
+    });
   } catch (error) {
     if (!isInsufficientCreditsError(error)) {
       throw error;
@@ -527,40 +533,6 @@ async function reserveCloneCredits({
       'errors.insufficientCredits',
       { CREDITS: requiredCredits, currentCredits: currentAmount },
     );
-  }
-}
-
-async function refundReservedCloneCredits({
-  amount,
-  context,
-  userId,
-}: {
-  amount: number;
-  context: string;
-  userId: string;
-}): Promise<void> {
-  if (amount <= 0) {
-    return;
-  }
-
-  try {
-    await restoreCredits({ amount, userId });
-  } catch (refundError) {
-    logger.error('Failed to restore reserved clone credits', {
-      extra: {
-        amount,
-        context,
-        errorMessage:
-          refundError instanceof Error
-            ? refundError.message
-            : String(refundError),
-      },
-      user: { id: userId },
-    });
-    captureException(refundError, {
-      extra: { amount, context },
-      user: { id: userId },
-    });
   }
 }
 
@@ -1289,8 +1261,7 @@ export async function POST(request: Request) {
   let duration: number | null = null;
   let modelUsed = '';
   let referenceAudioFile: File | null = null;
-  let reservedCredits = 0;
-  let userId = '';
+  let reservation: CreditReservation | null = null;
 
   try {
     // Authentication
@@ -1301,7 +1272,6 @@ export async function POST(request: Request) {
       return routeErrorResponse('User not found', 401, 'errors.userNotFound');
     }
     const user = { email: claims.email, id: claims.sub };
-    userId = user.id;
 
     setUser({
       email: user.email,
@@ -1359,14 +1329,13 @@ export async function POST(request: Request) {
           { status: 200 },
         );
       }
-      await reserveCloneCredits({
+      reservation = await reserveCloneCredits({
         currentAmount,
         requiredCredits: estimate,
         text,
         userEmail: user.email,
         userId: user.id,
       });
-      reservedCredits = estimate;
 
       let buffer: Buffer;
       let requestId: string;
@@ -1386,7 +1355,7 @@ export async function POST(request: Request) {
         'audio/wav',
       );
       const audioDuration = (await getAudioDuration(buffer, 'audio/wav')) ?? 0;
-      reservedCredits = 0;
+      await reservation.settle(estimate, 'clone_voice_success');
       const savedVoiceLocale = locale;
       const savedVoiceModel = modelUsed;
       after(async () => {
@@ -1542,14 +1511,13 @@ export async function POST(request: Request) {
         userEmail: user.email,
         userId: user.id,
       });
-      await reserveCloneCredits({
+      reservation = await reserveCloneCredits({
         currentAmount,
         requiredCredits: estimate + referenceAudioEnhancementCredits,
         text,
         userEmail: user.email,
         userId: user.id,
       });
-      reservedCredits = estimate + referenceAudioEnhancementCredits;
 
       try {
         const enhancedAudio = await enhanceReferenceAudio({
@@ -1620,12 +1588,9 @@ export async function POST(request: Request) {
 
         const fallbackCachedOutputUrl = await redis.get<string>(filename);
         if (fallbackCachedOutputUrl) {
-          await refundReservedCloneCredits({
-            amount: reservedCredits,
-            context: 'clone_voice_enhancement_fallback_cache_hit',
-            userId: user.id,
-          });
-          reservedCredits = 0;
+          await reservation.release(
+            'clone_voice_enhancement_fallback_cache_hit',
+          );
           return NextResponse.json(
             {
               creditsRemaining: currentAmount || 0,
@@ -1636,13 +1601,11 @@ export async function POST(request: Request) {
           );
         }
 
-        if (reservedCredits > estimate) {
-          await refundReservedCloneCredits({
-            amount: reservedCredits - estimate,
-            context: 'clone_voice_enhancement_fallback',
-            userId: user.id,
-          });
-          reservedCredits = estimate;
+        if (reservation.held > estimate) {
+          await reservation.release(
+            'clone_voice_enhancement_fallback',
+            reservation.held - estimate,
+          );
         }
       }
     }
@@ -1650,16 +1613,13 @@ export async function POST(request: Request) {
     validateAudioDuration(cloneInputAudio.duration, provider);
     duration = cloneInputAudio.duration;
 
-    if (reservedCredits === 0) {
-      await reserveCloneCredits({
-        currentAmount,
-        requiredCredits: creditsUsed,
-        text,
-        userEmail: user.email,
-        userId: user.id,
-      });
-      reservedCredits = creditsUsed;
-    }
+    reservation ??= await reserveCloneCredits({
+      currentAmount,
+      requiredCredits: creditsUsed,
+      text,
+      userEmail: user.email,
+      userId: user.id,
+    });
 
     // Generate voice
     let outputUrl: string;
@@ -1710,8 +1670,7 @@ export async function POST(request: Request) {
       requestId = result.requestId;
     }
 
-    // Background tasks
-    reservedCredits = 0;
+    await reservation.settle(creditsUsed, 'clone_voice_success');
     after(async () => {
       await runBackgroundTasks(user.id, creditsUsed, provider, {
         baseCloneCredits: estimate,
@@ -1744,14 +1703,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (reservedCredits > 0 && userId) {
-      await refundReservedCloneCredits({
-        amount: reservedCredits,
-        context: 'clone_voice_failure',
-        userId,
-      });
-      reservedCredits = 0;
-    }
+    await reservation?.release('clone_voice_failure');
 
     if (error instanceof RouteError) {
       return routeErrorResponse(

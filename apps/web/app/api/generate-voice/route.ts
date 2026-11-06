@@ -7,6 +7,10 @@ import Replicate, { type Prediction } from 'replicate';
 
 import { calculateGenerateApiDollarAmount } from '@/lib/api/pricing';
 import { convertToWav, generateHash, resolveDurationString } from '@/lib/audio';
+import {
+  type CreditReservation,
+  reserveCredits,
+} from '@/lib/credits/reservation';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getProviderUnavailableMessage } from '@/lib/errors/provider-unavailable-message';
 import PostHogClient from '@/lib/posthog';
@@ -27,9 +31,6 @@ import {
   hasUserPaid,
   insertUsageEvent,
   isInsufficientCreditsError,
-  reduceCredits,
-  reduceCreditsUpTo,
-  restoreCredits,
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
@@ -130,125 +131,6 @@ function isGeminiInputTooLongError(error: unknown): boolean {
   return status === undefined || status === 'INVALID_ARGUMENT';
 }
 
-async function refundReservedCredits({
-  amount,
-  context,
-  userId,
-}: {
-  amount: number;
-  context: string;
-  userId: string;
-}) {
-  if (amount <= 0) {
-    return;
-  }
-
-  try {
-    await restoreCredits({ amount, userId });
-  } catch (refundError) {
-    logger.error('Failed to restore reserved credits', {
-      extra: {
-        amount,
-        context,
-        errorMessage:
-          refundError instanceof Error
-            ? refundError.message
-            : String(refundError),
-      },
-      user: { id: userId },
-    });
-    captureException(refundError, {
-      extra: { amount, context },
-      user: { id: userId },
-    });
-  }
-}
-
-async function reconcileReservedCredits({
-  actualCredits,
-  context,
-  reservedCredits,
-  userId,
-}: {
-  actualCredits: number;
-  context: string;
-  reservedCredits: number;
-  userId: string;
-}): Promise<number> {
-  if (actualCredits === reservedCredits) {
-    return reservedCredits;
-  }
-
-  if (actualCredits < reservedCredits) {
-    const refundAmount = reservedCredits - actualCredits;
-    try {
-      await restoreCredits({ amount: refundAmount, userId });
-      return actualCredits;
-    } catch (refundError) {
-      logger.error('Failed to refund unused reserved credits', {
-        extra: {
-          actualCredits,
-          context,
-          errorMessage:
-            refundError instanceof Error
-              ? refundError.message
-              : String(refundError),
-          refundAmount,
-          reservedCredits,
-        },
-        user: { id: userId },
-      });
-      captureException(refundError, {
-        extra: { actualCredits, context, refundAmount, reservedCredits },
-        user: { id: userId },
-      });
-      return reservedCredits;
-    }
-  }
-
-  const additionalCredits = actualCredits - reservedCredits;
-  try {
-    const additionalCreditsDebited = await reduceCreditsUpTo({
-      amount: additionalCredits,
-      userId,
-    });
-    const totalCreditsDebited = reservedCredits + additionalCreditsDebited;
-
-    if (additionalCreditsDebited < additionalCredits) {
-      logger.warn('Partially debited additional reserved credits', {
-        extra: {
-          actualCredits,
-          additionalCredits,
-          additionalCreditsDebited,
-          context,
-          reservedCredits,
-          totalCreditsDebited,
-        },
-        user: { id: userId },
-      });
-    }
-
-    return totalCreditsDebited;
-  } catch (debitError) {
-    logger.error('Failed to debit additional reserved credits', {
-      extra: {
-        actualCredits,
-        additionalCredits,
-        context,
-        errorMessage:
-          debitError instanceof Error ? debitError.message : String(debitError),
-        reservedCredits,
-      },
-      user: { id: userId },
-    });
-    captureException(debitError, {
-      extra: { actualCredits, additionalCredits, context, reservedCredits },
-      user: { id: userId },
-    });
-    return reservedCredits;
-  }
-}
-
 function reportCancelledCharge({
   creditsDebited,
   model,
@@ -291,7 +173,7 @@ export async function POST(request: Request) {
   let user: GenerationIdentity | null = null;
   let userHasPaid = false;
   let modelUsed = '';
-  let reservedCredits = 0;
+  let reservation: CreditReservation | null = null;
   let creditsDebited = 0;
   try {
     if (request.body === null) {
@@ -500,8 +382,11 @@ export async function POST(request: Request) {
     let generatedAudioBuffer: Buffer | undefined;
     let generatedAudioMimeType: string | undefined;
 
-    await reduceCredits({ amount: estimate, userId: user.id });
-    reservedCredits = estimate;
+    reservation = await reserveCredits({
+      actor: 'session',
+      amount: estimate,
+      userId: user.id,
+    });
 
     if (isGeminiVoice) {
       const ai = new GoogleGenAI({
@@ -769,13 +654,10 @@ export async function POST(request: Request) {
       );
     }
 
-    creditsDebited = await reconcileReservedCredits({
-      actualCredits: creditsUsed,
-      context: 'generate_voice_success',
-      reservedCredits,
-      userId: user.id,
-    });
-    reservedCredits = 0;
+    ({ debited: creditsDebited } = await reservation.settle(
+      creditsUsed,
+      'generate_voice_success',
+    ));
 
     let dollarAmount: number | undefined;
     if (isGrokVoice) {
@@ -886,14 +768,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    if (reservedCredits > 0 && user) {
-      await refundReservedCredits({
-        amount: reservedCredits,
-        context: 'generate_voice_failure',
-        userId: user.id,
-      });
-      reservedCredits = 0;
-    }
+    await reservation?.release('generate_voice_failure');
 
     if (isInsufficientCreditsError(error)) {
       logger.info('Insufficient credits during reservation', {
