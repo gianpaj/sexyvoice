@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "analyze-call-sessions": "pnpm --filter @sexyvoice/scripts analyze-call-sessions",
-    "analyze-free-users": "pnpm --filter @sexyvoice/scripts analyze-free-users",
     "backfill-call-analysis": "pnpm --filter @sexyvoice/scripts backfill-call-analysis",
     "backfill-free-call": "pnpm --filter @sexyvoice/scripts backfill-free-call",
     "backup-r2-audio": "pnpm --filter @sexyvoice/scripts backup-r2-audio",

@@ -481,8 +481,6 @@ id,username,created_at,total_credits_received,total_credits_used,current_credits
 
 ### Documentation
 
-- [RESET_CREDITS_GUIDE.md](./RESET_CREDITS_GUIDE.md) - Complete guide with examples
-- [QUICKREF.md](./QUICKREF.md) - Quick reference card
 - [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
 
 ---
@@ -1496,29 +1494,7 @@ export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgr
 psql $SUPABASE_DB_URL -c "COPY (select * from public.credit_transactions order by credit_transactions.id asc nulls last) TO STDOUT WITH CSV HEADER DELIMITER ',';" > credit_transactions_rows.csv
 ```
 
-### 2. Clean
-
-```bash
-python scripts/clean-transactions.py backups/credit_transactions_rows_2025-10-25T15-38.csv
-Loading CSV file: backups/credit_transactions_rows_2025-10-25T15-38.csv
-Successfully loaded 154 rows
-
-First few rows:
-                                     id  ...                                    metadata
-0  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...                                         NaN
-1  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...{"packageId": "standard", "dollarAmount": 5}
-2  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...                         {"dollarAmount": 5}
-3  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...{"packageId": "starter", "dollarAmount": 10}
-4  xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  ...{"packageId": "starter", "dollarAmount": 10}
-
-[5 rows x 10 columns]
-
-Filtered from y to x transactions (only 'purchase' and 'topup' types)
-
-Cleaned data saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned.csv
-```
-
-### 3. Visualize
+### 2. Visualize
 
 ```bash
 python scripts/visualize-transactions.py backups/credit_transactions_rows_2025-10-25T15-38_cleaned.csv
@@ -1565,24 +1541,6 @@ python scripts/generate_waveform_video.py song.mp3 preview.mp4 --style minimal -
 - `--title`: Optional text rendered above the waveform
 - `--preset`: ffmpeg x264 preset passed through MoviePy
 
-## Stripe Payments Comparison and Analysis Scripts
-
-```bash
-# Set your database URL
-export SUPABASE_DB_URL="postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres"
-
-# Run complete comparison
-./compare-all-payments.sh
-```
-
-This will:
-
-1. Fetch 500 Stripe payment intents (with pagination)
-2. Export Supabase credit transactions
-3. Clean both datasets
-4. Detect duplicates in both systems
-5. Compare and generate reports including CSV exports
-
 ## Credit Transaction Analysis Scripts
 
 Python scripts for analyzing credit transaction data from SexyVoice.ai to extract insights about user purchasing behavior and patterns.
@@ -1597,11 +1555,4 @@ python analyze-credit-transactions.py path/to/credit_transactions.csv
 
 ```bash
 python visualize-transactions.py path/to/credit_transactions.csv
-```
-
-### Clean Data First (Optional)
-
-```bash
-python clean-transactions.py path/to/raw_transactions.csv
-python analyze-credit-transactions.py path/to/raw_transactions_cleaned.csv
 ```
