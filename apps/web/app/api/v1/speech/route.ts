@@ -59,6 +59,7 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
+import { trackGeminiGeneration } from '@/lib/tts/gemini-usage';
 import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -603,6 +604,29 @@ export async function POST(request: Request) {
         },
       };
 
+      const generate = (modelId: string) =>
+        trackGeminiGeneration(
+          {
+            apiKeyId: authResult.apiKeyId,
+            inputChars: finalText.length,
+            model: modelId,
+            requestId,
+            signal: request.signal,
+            sourceType: 'api_tts',
+            userId,
+          },
+          () =>
+            ai.models.generateContent({
+              config,
+              contents: buildGeminiTtsContents({
+                model,
+                styleVariant: style,
+                text: finalText,
+              }),
+              model: modelId,
+            }),
+        );
+
       const respondToGeminiProviderFailure = async (
         attemptErrors: unknown[],
       ) => {
@@ -637,15 +661,7 @@ export async function POST(request: Request) {
 
       try {
         modelUsed = resolveGeminiTtsModel({ model, userHasPaid: true });
-        geminiResponse = await ai.models.generateContent({
-          config,
-          contents: buildGeminiTtsContents({
-            model,
-            styleVariant: style,
-            text: finalText,
-          }),
-          model: modelUsed,
-        });
+        geminiResponse = await generate(modelUsed);
       } catch (proError) {
         if (model === 'gpro38') {
           // No 2.5 fallback: it cannot serve the extended 3.8 voice ids.
@@ -657,15 +673,7 @@ export async function POST(request: Request) {
         }
         modelUsed = 'gemini-2.5-flash-preview-tts';
         try {
-          geminiResponse = await ai.models.generateContent({
-            config,
-            contents: buildGeminiTtsContents({
-              model,
-              styleVariant: style,
-              text: finalText,
-            }),
-            model: modelUsed,
-          });
+          geminiResponse = await generate(modelUsed);
         } catch (flashError) {
           const failureResponse = await respondToGeminiProviderFailure([
             proError,
@@ -855,9 +863,9 @@ export async function POST(request: Request) {
       geminiResponse,
       replicateResponse,
     );
-    if (isGeminiVoice && usageMetadata?.totalTokenCount) {
+    if (isGeminiVoice && Number(usageMetadata?.totalTokenCount) > 0) {
       creditsUsed = calculateCreditsFromTokens(
-        Number.parseInt(usageMetadata.totalTokenCount, 10),
+        Number(usageMetadata?.totalTokenCount),
       );
     }
     const creditsDebited = await reconcileReservedCredits({
@@ -909,7 +917,7 @@ export async function POST(request: Request) {
     await insertUsageEvent({
       apiKeyId: authResult.apiKeyId,
       creditsUsed: creditsDebited,
-      dollarAmount,
+      dollarAmount: isGeminiVoice ? null : dollarAmount,
       durationSeconds,
       inputChars: finalText.length,
       metadata: {

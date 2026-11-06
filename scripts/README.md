@@ -518,7 +518,8 @@ pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 1 --limit 2
 1. Sets a fixed audit cutoff with a five-minute safety lag.
 2. Finds balances updated during the requested window using stable keyset
    pagination.
-3. Fetches those users' recorded transaction and usage history up to the cutoff.
+3. Fetches those users' recorded transaction and customer usage history up to the
+   cutoff. Provider attempts do not count toward usage events or last usage time.
 4. Rechecks balances and skips any account that changed during the audit.
 5. Compares stable balances with the balance explained by the recorded ledger.
 6. Prints a summary and, when it flags users, writes a permission-restricted CSV
@@ -806,6 +807,16 @@ the user or production records. State any assumed window in the final report.
 Use a temporary directory outside the repository for logs, downloaded audio,
 environment files, and generated reports. These artifacts may contain user text,
 email addresses, signed URLs, or other production data.
+
+### Provider attempt evidence
+
+Within the user's UTC window, read `usage_events` for both `customer_usage` and
+`provider_attempt` events. Correlate attempts and customer charges by `request_id`;
+fallback attempts retain their actual model. Provider rows hold numeric token
+counts, estimated `dollar_amount`, and outcome metadata even when no audio file
+exists. They consume zero customer credits. NULL tokens or cost mean unknown,
+and an estimate does not prove an invoice charge. See
+[Gemini provider usage](../ARCHITECTURE.md#gemini-provider-usage) for recording rules.
 
 ### 1. Establish the ledger baseline
 

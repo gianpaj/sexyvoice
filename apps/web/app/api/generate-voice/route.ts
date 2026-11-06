@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   FinishReason,
   type GenerateContentConfig,
@@ -56,6 +57,11 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
+import {
+  mergeGeminiUsage,
+  trackGeminiGeneration,
+  trackGeminiStream,
+} from '@/lib/tts/gemini-usage';
 import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
@@ -297,6 +303,7 @@ export const maxDuration = 600; // seconds - fluid compute is enabled
 const redis = Redis.fromEnv();
 
 export async function POST(request: Request) {
+  const requestId = randomUUID();
   let text = '';
   let voiceId = '';
   let voiceName = '';
@@ -646,6 +653,7 @@ export async function POST(request: Request) {
           estimate,
           filename,
           provider,
+          requestId,
           requestSignal: request.signal,
           reservedCredits: estimate,
           textImproved,
@@ -657,6 +665,29 @@ export async function POST(request: Request) {
         });
       }
 
+      const generationUserId = user.id;
+      const generate = (model: string) =>
+        trackGeminiGeneration(
+          {
+            inputChars: text.length,
+            model,
+            requestId,
+            signal: request.signal,
+            sourceType: 'tts',
+            userId: generationUserId,
+          },
+          () =>
+            ai.models.generateContent({
+              config: geminiTTSConfig,
+              contents: buildGeminiTtsContents({
+                model: voiceObj.model,
+                styleVariant,
+                text,
+              }),
+              model,
+            }),
+        );
+
       if (userHasPaid) {
         try {
           modelUsed = resolveGeminiTtsModel({
@@ -664,15 +695,7 @@ export async function POST(request: Request) {
             userHasPaid,
           });
 
-          genAIResponse = await ai.models.generateContent({
-            config: geminiTTSConfig,
-            contents: buildGeminiTtsContents({
-              model: voiceObj.model,
-              styleVariant,
-              text,
-            }),
-            model: modelUsed,
-          });
+          genAIResponse = await generate(modelUsed);
         } catch (error) {
           console.warn(error);
           if (error instanceof Error && error.name === 'AbortError') {
@@ -718,15 +741,7 @@ export async function POST(request: Request) {
           );
           modelUsed = 'gemini-2.5-flash-preview-tts'; // inputTokenLimit = 8192, outputTokenLimit = 16384
           try {
-            genAIResponse = await ai.models.generateContent({
-              config: geminiTTSConfig,
-              contents: buildGeminiTtsContents({
-                model: voiceObj.model,
-                styleVariant,
-                text,
-              }),
-              model: modelUsed,
-            });
+            genAIResponse = await generate(modelUsed);
 
             logger.info('Gemini flash fallback succeeded after pro failure', {
               extra: {
@@ -773,15 +788,7 @@ export async function POST(request: Request) {
           model: voiceObj.model,
           userHasPaid,
         });
-        genAIResponse = await ai.models.generateContent({
-          config: geminiTTSConfig,
-          contents: buildGeminiTtsContents({
-            model: voiceObj.model,
-            styleVariant,
-            text,
-          }),
-          model: modelUsed,
-        });
+        genAIResponse = await generate(modelUsed);
       }
       const { data, mimeType } = extractInlineAudio(genAIResponse);
       const finishReason = genAIResponse?.candidates?.[0]?.finishReason;
@@ -1020,14 +1027,14 @@ export async function POST(request: Request) {
       replicateResponse,
     );
 
-    if (isGeminiVoice && usage) {
+    if (isGeminiVoice && Number(usage?.totalTokenCount) > 0) {
       // Bill against the model that actually ran (`modelUsed`), not the stored
       // voice model: a 3.1 request that fell back to 2.5 Flash must not incur
       // the 3.1 free-user surcharge.
-      creditsUsed = calculateCreditsFromTokens(
-        Number.parseInt(usage.totalTokenCount, 10),
-        { model: modelUsed, userHasPaid },
-      );
+      creditsUsed = calculateCreditsFromTokens(Number(usage?.totalTokenCount), {
+        model: modelUsed,
+        userHasPaid,
+      });
     }
 
     creditsDebited = await reconcileReservedCredits({
@@ -1044,15 +1051,6 @@ export async function POST(request: Request) {
         inputChars: text.length,
         model: modelUsed,
         provider: 'xai',
-        sourceType: 'tts',
-      });
-    } else if (isGeminiVoice && usage && 'promptTokenCount' in usage) {
-      dollarAmount = calculateGenerateApiDollarAmount({
-        candidatesTokenCount: usage.candidatesTokenCount,
-        inputChars: text.length,
-        model: modelUsed,
-        promptTokenCount: usage.promptTokenCount,
-        provider: 'google',
         sourceType: 'tts',
       });
     }
@@ -1107,6 +1105,7 @@ export async function POST(request: Request) {
         inputChars: text.length,
         model: modelUsed,
         quantity: text.length,
+        requestId,
         sourceId: audioFileDBResult.data?.id,
         sourceType: 'tts',
         unit: 'chars',
@@ -1325,6 +1324,7 @@ function streamGeminiTtsResponse({
   styleVariant,
   provider,
   requestSignal,
+  requestId,
   reservedCredits,
   textImproved,
 }: {
@@ -1339,6 +1339,7 @@ function streamGeminiTtsResponse({
   styleVariant: string;
   provider: ProviderId;
   requestSignal: AbortSignal;
+  requestId: string;
   reservedCredits: number;
   textImproved: boolean;
 }): Response {
@@ -1395,11 +1396,22 @@ function streamGeminiTtsResponse({
     };
 
     const tryStream = async (model: string) => {
-      const stream = await ai.models.generateContentStream({
-        config,
-        contents: [{ parts: [{ text }] }],
-        model,
-      });
+      const stream = trackGeminiStream(
+        {
+          inputChars: text.length,
+          model,
+          requestId,
+          signal: requestSignal,
+          sourceType: 'tts',
+          userId: user.id,
+        },
+        () =>
+          ai.models.generateContentStream({
+            config,
+            contents: [{ parts: [{ text }] }],
+            model,
+          }),
+      );
 
       for await (const chunk of stream) {
         if (requestSignal.aborted) return;
@@ -1415,7 +1427,10 @@ function streamGeminiTtsResponse({
           });
         }
         if (chunk.usageMetadata) {
-          streamUsageMetadata = chunk.usageMetadata;
+          streamUsageMetadata = mergeGeminiUsage(
+            streamUsageMetadata,
+            chunk.usageMetadata,
+          );
         }
         const finishReason = chunk.candidates?.[0]?.finishReason;
         if (finishReason) {
@@ -1528,7 +1543,10 @@ function streamGeminiTtsResponse({
 
       // Billing — calculate credits from stream tokens when available.
       let creditsUsed = estimate;
-      if (streamUsageMetadata?.totalTokenCount) {
+      if (
+        streamUsageMetadata?.totalTokenCount &&
+        streamUsageMetadata.totalTokenCount > 0
+      ) {
         // Bill against the model that actually ran (`modelUsed`), which the
         // stream sets to 2.5 Flash on fallback — so a downgraded 3.1 request
         // is not charged the 3.1 free-user surcharge.
@@ -1548,22 +1566,13 @@ function streamGeminiTtsResponse({
       // `finally` block. Mirrors the non-stream path (reservedCredits = 0).
       reservedCredits = 0;
 
-      const streamUsage: Record<string, string | number | boolean> =
-        streamUsageMetadata
-          ? {
-              candidatesTokenCount: String(
-                streamUsageMetadata.candidatesTokenCount ?? '',
-              ),
-              promptTokenCount: String(
-                streamUsageMetadata.promptTokenCount ?? '',
-              ),
-              stream: true,
-              totalTokenCount: String(
-                streamUsageMetadata.totalTokenCount ?? '',
-              ),
-              userHasPaid,
-            }
-          : { stream: true, userHasPaid };
+      const streamUsage = {
+        ...extractMetadata(true, {
+          usageMetadata: streamUsageMetadata,
+        }),
+        stream: true,
+        userHasPaid,
+      };
 
       const audioFileDBResult = await saveAudioFile({
         credits_used: creditsDebited,
@@ -1603,6 +1612,7 @@ function streamGeminiTtsResponse({
           voiceName: voiceObj.name,
         },
         quantity: text.length,
+        requestId,
         sourceId: audioFileDBResult.data?.id,
         sourceType: 'tts',
         unit: 'chars',
