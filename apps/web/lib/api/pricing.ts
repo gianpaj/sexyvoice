@@ -7,6 +7,7 @@ interface PricingInput {
   durationSeconds?: number | null;
   inputChars?: number | null;
   model?: ExternalModel | null;
+  occurredAt?: string | Date;
   outputChars?: number | null;
   promptTokenCount?: number | string | null;
   provider: ExternalProvider;
@@ -25,9 +26,9 @@ interface PriceConfig {
 const ZERO_PRICE: PriceConfig = {};
 
 const PRICING_TABLE: Record<string, PriceConfig> = {
-  // Dashboard text-to-speech
-  'tts:xai:xai': {
-    perInputChar: 0.000_004_2,
+  'api_tts:google:gemini-2.5-flash-preview-tts': {
+    perInputToken: 0.000_000_5,
+    perOutputToken: 0.000_01,
   },
 
   // Text-to-speech API
@@ -39,15 +40,11 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perInputToken: 0.000_001,
     perOutputToken: 0.000_02,
   },
-  'api_tts:google:gemini-2.5-flash-preview-tts': {
-    perInputToken: 0.000_000_5,
-    perOutputToken: 0.000_01,
-  },
-  'api_tts:replicate:lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f':
+  'api_tts:replicate:gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650':
     {
       perInputChar: 0.000_015,
     },
-  'api_tts:replicate:gianpaj/cog-orpheus-3b-0.1-ft:666dc0c400952f2c18f0a46233dca2053ebef622754769878cd5497e20714650':
+  'api_tts:replicate:lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f':
     {
       perInputChar: 0.000_015,
     },
@@ -55,13 +52,37 @@ const PRICING_TABLE: Record<string, PriceConfig> = {
     perInputChar: 0.000_015,
   },
   'api_voice_cloning:replicate:*': {},
+  // Dashboard text-to-speech
+  'tts:xai:xai': {
+    perInputChar: 0.000_004_2,
+  },
 };
 
 function getPriceConfig({
   sourceType,
   provider,
   model,
-}: Pick<PricingInput, 'sourceType' | 'provider' | 'model'>): PriceConfig {
+  occurredAt,
+}: Pick<
+  PricingInput,
+  'sourceType' | 'provider' | 'model' | 'occurredAt'
+>): PriceConfig {
+  // Standard tier: https://ai.google.dev/gemini-api/docs/pricing#gemini-3.8-flash-tts
+  if (
+    provider === 'google' &&
+    model === 'gemini-3.8-flash-tts' &&
+    (sourceType === 'tts' || sourceType === 'api_tts')
+  ) {
+    const timestamp =
+      occurredAt === undefined ? Date.now() : new Date(occurredAt).getTime();
+    if (!Number.isFinite(timestamp))
+      throw new Error('Invalid provider pricing date');
+    const promotional = timestamp < Date.parse('2027-01-01T00:00:00Z');
+    return {
+      perInputToken: promotional ? 0.000_000_5 : 0.000_001,
+      perOutputToken: promotional ? 0.000_009 : 0.000_018,
+    };
+  }
   const modelKey = model ?? '*';
   const sourceKey = `${sourceType}:${provider}:${modelKey}`;
   const wildcardKey = `${sourceType}:${provider}:*`;

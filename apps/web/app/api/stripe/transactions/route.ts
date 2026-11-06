@@ -3,6 +3,7 @@ import type Stripe from 'stripe';
 
 import { APIErrorResponse } from '@/lib/error-ts';
 import { stripe } from '@/lib/stripe/stripe-admin';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { getUserById } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
@@ -18,15 +19,12 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
 
     // Check if user is authenticated
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser();
-    if (!user || error) {
+    const claims = await getVerifiedClaims(supabase);
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
-    const userData = await getUserById(user.id);
+    const userData = await getUserById(claims.sub);
     if (!userData?.stripe_id) {
       return APIErrorResponse('Stripe customer not found', 404);
     }
@@ -64,15 +62,15 @@ export async function GET(request: NextRequest) {
     const subscriptionTransactions = subscriptions.data.map((subscription) => {
       const invoice = subscription.latest_invoice as Stripe.Invoice;
       return {
-        id: subscription.id,
         amount: subscription.items.data[0]?.price?.unit_amount || 0,
-        type: 'subscription',
-        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
         created: subscription.created,
-        status: subscription.status,
         current_period_end: subscription.current_period_end,
         current_period_start: subscription.current_period_start,
+        description: `Subscription: ${subscription.items.data[0]?.price?.nickname || 'Plan'} (${subscription.status})`,
+        id: subscription.id,
         invoice_id: typeof invoice === 'object' ? invoice.id : invoice,
+        status: subscription.status,
+        type: 'subscription',
       };
     });
 

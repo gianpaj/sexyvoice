@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LogosGoogleIcon } from '@/lib/icons';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -59,10 +60,10 @@ export function LoginForm({ lang }: { lang: Locale }) {
 
     const callbackUrl = `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(nextPath)}`;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
       options: {
         redirectTo: callbackUrl,
       },
+      provider: 'google',
     });
 
     if (error) {
@@ -111,7 +112,7 @@ export function LoginForm({ lang }: { lang: Locale }) {
       <div className="relative">
         {lastUsedAuthFixed === 'email' && <LastUsedBanner />}
         <Button className="w-full" disabled={isLoading} type="submit">
-          {isLoading ? 'Loading...' : t('submit')}
+          {isLoading ? t('loading') : t('submit')}
         </Button>
       </div>
 
@@ -132,7 +133,12 @@ export function LoginForm({ lang }: { lang: Locale }) {
         {t('noAccount')}{' '}
         <Link
           className="text-blue-600 hover:text-blue-500"
-          href={`/${lang}/signup`}
+          href={{
+            pathname: `/${lang}/signup`,
+            query: getCloneDemoRedirect(nextPath)
+              ? { redirect_to: getCloneDemoRedirect(nextPath) }
+              : {},
+          }}
         >
           {t('signUp')}
         </Link>

@@ -31,19 +31,19 @@ describe('/api/cli-login-sessions routes', () => {
     const adminFrom = vi
       .fn()
       .mockImplementationOnce(() => ({
-        select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({
           data: {
-            id: 'existing-key-id',
-            name: 'Production',
             expires_at: null,
+            id: 'existing-key-id',
             is_active: true,
-            permissions: { scopes: ['voice:generate'] },
             metadata: { env: 'prod' },
+            name: 'Production',
+            permissions: { scopes: ['voice:generate'] },
           },
           error: null,
         }),
+        select: vi.fn().mockReturnThis(),
       }))
       .mockImplementationOnce(() => ({
         insert: vi.fn().mockReturnThis(),
@@ -62,13 +62,13 @@ describe('/api/cli-login-sessions routes', () => {
     } as never);
 
     const request = new Request('http://localhost/api/cli-login-sessions', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         api_key_id: '550e8400-e29b-41d4-a716-446655440000',
         callback_url: 'http://127.0.0.1:48123/callback',
         state: 'test-state',
       }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
     });
 
     const response = await createSession(request);
@@ -95,8 +95,8 @@ describe('/api/cli-login-sessions routes', () => {
     const adminFrom = vi
       .fn()
       .mockImplementationOnce(() => ({
-        select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
         then: vi.fn((resolve) => resolve({ count: 5, error: null })),
       }))
       .mockImplementationOnce(() => ({
@@ -116,13 +116,13 @@ describe('/api/cli-login-sessions routes', () => {
     } as never);
 
     const request = new Request('http://localhost/api/cli-login-sessions', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         callback_url: 'http://localhost:48123/callback',
         name: 'CLI',
         state: 'test-state',
       }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
     });
 
     const response = await createSession(request);
@@ -143,13 +143,13 @@ describe('/api/cli-login-sessions routes', () => {
     } as never);
 
     const request = new Request('http://localhost/api/cli-login-sessions', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         callback_url: 'https://evil.example/callback',
         name: 'CLI',
         state: 'test-state',
       }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
     });
 
     const response = await createSession(request);
@@ -167,35 +167,35 @@ describe('/api/cli-login-sessions routes', () => {
     const adminFrom = vi
       .fn()
       .mockImplementationOnce(() => ({
-        select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({
           data: {
-            id: 'session-id',
             encrypted_api_key: encrypted,
             expires_at: new Date(Date.now() + 60_000).toISOString(),
-            redeemed_at: null,
+            id: 'session-id',
             new_api_key_id: 'new-key-id',
             old_api_key_id: 'old-key-id',
+            redeemed_at: null,
             user_id: 'test-user-id',
           },
           error: null,
         }),
+        select: vi.fn().mockReturnThis(),
       }))
       .mockImplementationOnce(() => ({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         is: vi.fn().mockReturnThis(),
-        select: vi.fn().mockReturnThis(),
         maybeSingle: vi.fn().mockResolvedValue({
           data: { id: 'session-id' },
           error: null,
         }),
+        select: vi.fn().mockReturnThis(),
+        update: vi.fn().mockReturnThis(),
       }))
       .mockImplementationOnce(() => ({
-        update: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         then: vi.fn((resolve) => resolve({ error: null })),
+        update: vi.fn().mockReturnThis(),
       }));
 
     vi.mocked(createAdminClient).mockReturnValueOnce({
@@ -205,9 +205,9 @@ describe('/api/cli-login-sessions routes', () => {
     const request = new Request(
       'http://localhost/api/cli-login-sessions/redeem',
       {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ exchange_token: 'token-for-tests' }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       },
     );
 

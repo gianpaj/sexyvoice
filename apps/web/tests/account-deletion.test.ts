@@ -1,0 +1,556 @@
+import { captureException, logger } from '@sentry/nextjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { handleDeleteAccountAction } from '@/app/actions';
+import { deleteInworldVoice } from '@/lib/clone/inworld';
+import { deleteMistralVoice } from '@/lib/clone/mistral';
+import { deleteFileFromR2 } from '@/lib/storage/upload';
+import {
+  AccountBillingError,
+  acquireAccountBillingOperation,
+  commitAccountDeletion,
+  releaseAccountBillingOperation,
+} from '@/lib/stripe/account-billing';
+import {
+  expireOpenCheckoutSessions,
+  hasOngoingSubscription,
+} from '@/lib/stripe/stripe-admin';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getUserByIdWithError } from '@/lib/supabase/queries';
+import { createClient } from '@/lib/supabase/server';
+import { encodedRedirect } from '@/lib/utils';
+
+vi.mock('@/lib/storage/upload', () => ({
+  deleteFileFromR2: vi.fn(),
+}));
+vi.mock('@/lib/clone/inworld', () => ({ deleteInworldVoice: vi.fn() }));
+vi.mock('@/lib/clone/mistral', () => ({ deleteMistralVoice: vi.fn() }));
+
+vi.mock('@/lib/stripe/stripe-admin', () => ({
+  expireOpenCheckoutSessions: vi.fn(),
+  hasOngoingSubscription: vi.fn(),
+}));
+
+vi.mock('@/lib/stripe/account-billing', async (importOriginal) => {
+  const { AccountBillingError } =
+    await importOriginal<typeof import('@/lib/stripe/account-billing')>();
+  return {
+    AccountBillingError,
+    acquireAccountBillingOperation: vi.fn(),
+    commitAccountDeletion: vi.fn(),
+    releaseAccountBillingOperation: vi.fn(),
+  };
+});
+
+vi.mock('@/lib/supabase/queries', () => ({
+  getUserByIdWithError: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/admin', () => ({
+  createAdminClient: vi.fn(),
+}));
+
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}));
+
+vi.mock('@/lib/utils', () => ({
+  encodedRedirect: vi.fn(),
+}));
+
+function createReadQuery(result: object) {
+  const query = {
+    eq: vi.fn(),
+    select: vi.fn(),
+  };
+  query.select.mockReturnValue(query);
+  query.eq.mockResolvedValue(result);
+  return query;
+}
+
+function setupAccountDeletion({
+  usageResult = { count: 3, error: null },
+  memoryResult = { data: [{ id: 1 }, { id: 2 }], error: null },
+  references = [],
+}: {
+  usageResult?: { count: number | null; error: Error | null };
+  memoryResult?: { data: { id: number }[] | null; error: Error | null };
+  references?: {
+    id: string;
+    sample_url: string | null;
+    provider?: string;
+    voice_id?: string;
+  }[];
+} = {}) {
+  const audioRead = createReadQuery({
+    data: [{ id: 'audio-1', storage_key: 'audio/one.mp3' }],
+    error: null,
+  });
+  const charactersRead = createReadQuery({ data: [], error: null });
+  const apiKeysRead = createReadQuery({ data: [], error: null });
+  const usageRead = createReadQuery(usageResult);
+  const memoryDelete = {
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    select: vi.fn().mockResolvedValue(memoryResult),
+  };
+  const referenceUpdate = {
+    eq: vi.fn().mockReturnThis(),
+    then: (resolve: (value: object) => unknown) => resolve({ error: null }),
+  };
+  const referenceRead = {
+    ...createReadQuery({ data: references, error: null }),
+    delete: vi.fn(() => referenceUpdate),
+  };
+  const sessionSupabase = {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { email: 'user@example.com', id: 'user-1' } },
+      }),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+      updateUser: vi.fn().mockResolvedValue({ error: null }),
+    },
+    from: vi.fn((table: string) => {
+      if (table === 'audio_files') return audioRead;
+      if (table === 'characters') return charactersRead;
+      if (table === 'api_keys') return apiKeysRead;
+      if (table === 'usage_events') return usageRead;
+      if (table === 'audio_references') return referenceRead;
+      if (table === 'agent_memories') return memoryDelete;
+      throw new Error(`Unexpected table: ${table}`);
+    }),
+  };
+
+  const audioUpdate = {
+    eq: vi.fn(),
+    select: vi.fn().mockResolvedValue({
+      data: [{ id: 'audio-1' }],
+      error: null,
+    }),
+    update: vi.fn(),
+  };
+  audioUpdate.eq.mockReturnValue(audioUpdate);
+  audioUpdate.update.mockReturnValue(audioUpdate);
+  const adminSupabase = {
+    from: vi.fn().mockReturnValue(audioUpdate),
+  };
+
+  vi.mocked(createClient).mockResolvedValue(sessionSupabase as never);
+  vi.mocked(createAdminClient).mockReturnValue(adminSupabase as never);
+
+  return {
+    adminSupabase,
+    audioUpdate,
+    memoryDelete,
+    sessionSupabase,
+    referenceRead,
+    referenceUpdate,
+  };
+}
+
+describe('account deletion', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(acquireAccountBillingOperation).mockResolvedValue({
+      checkoutExpiresAt: 0,
+      token: 'deletion-token',
+      userId: 'user-1',
+    });
+    vi.mocked(commitAccountDeletion).mockResolvedValue(undefined);
+    vi.mocked(expireOpenCheckoutSessions).mockResolvedValue(undefined);
+    vi.mocked(deleteFileFromR2).mockResolvedValue(undefined);
+    vi.mocked(deleteInworldVoice).mockResolvedValue(undefined);
+    vi.mocked(deleteMistralVoice).mockResolvedValue(undefined);
+    vi.mocked(getUserByIdWithError).mockResolvedValue({
+      data: { stripe_id: 'cus_123' },
+      error: null,
+    } as never);
+    vi.mocked(hasOngoingSubscription).mockResolvedValue(false);
+  });
+
+  it('blocks subscribers before any account or file changes', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    vi.mocked(hasOngoingSubscription).mockResolvedValue(true);
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+      error: 'subscriptionExists',
+    });
+
+    expect(getUserByIdWithError).toHaveBeenCalledWith('user-1');
+    expect(hasOngoingSubscription).toHaveBeenCalledWith('cus_123');
+    expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+    expect(sessionSupabase.from).not.toHaveBeenCalled();
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+    expect(createAdminClient).not.toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
+    expect(expireOpenCheckoutSessions).not.toHaveBeenCalled();
+    expect(commitAccountDeletion).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('blocks a subscription that appears while open sessions are closed', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    vi.mocked(hasOngoingSubscription)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+      error: 'subscriptionExists',
+    });
+
+    expect(expireOpenCheckoutSessions).toHaveBeenCalledWith('cus_123');
+    expect(commitAccountDeletion).not.toHaveBeenCalled();
+    expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+  });
+
+  it.each(['reservation', 'expiration', 'commit'] as const)(
+    'makes no account changes when %s fails',
+    async (failure) => {
+      const { sessionSupabase } = setupAccountDeletion();
+      const error = new Error('Billing coordination failed');
+      const operation = {
+        commit: commitAccountDeletion,
+        expiration: expireOpenCheckoutSessions,
+        reservation: acquireAccountBillingOperation,
+      }[failure];
+      vi.mocked(operation).mockRejectedValueOnce(error);
+
+      await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+        error: 'subscriptionCheckFailed',
+      });
+
+      expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+      expect(deleteFileFromR2).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
+      expect(captureException).toHaveBeenCalledWith(error, expect.any(Object));
+    },
+  );
+
+  it.each(['accountBillingBlocked', 'accountBillingBusy'] as const)(
+    'returns %s without reporting an exception or changing account data',
+    async (code) => {
+      const { sessionSupabase } = setupAccountDeletion();
+      vi.mocked(acquireAccountBillingOperation).mockRejectedValueOnce(
+        new AccountBillingError(code),
+      );
+
+      await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+        error: code,
+      });
+
+      expect(captureException).not.toHaveBeenCalled();
+      expect(getUserByIdWithError).not.toHaveBeenCalled();
+      expect(hasOngoingSubscription).not.toHaveBeenCalled();
+      expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+      expect(deleteFileFromR2).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
+      expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['profile error', 'missing profile', 'Stripe error'])(
+    'blocks deletion when the subscription check fails with %s',
+    async (failure) => {
+      const { sessionSupabase } = setupAccountDeletion();
+      const error = new Error('Lookup failed');
+      if (failure === 'Stripe error') {
+        vi.mocked(hasOngoingSubscription).mockRejectedValueOnce(error);
+      } else {
+        vi.mocked(getUserByIdWithError).mockResolvedValueOnce({
+          data: null,
+          error: failure === 'profile error' ? error : null,
+        } as never);
+      }
+
+      await expect(handleDeleteAccountAction({ lang: 'en' })).resolves.toEqual({
+        error: 'subscriptionCheckFailed',
+      });
+
+      expect(captureException).toHaveBeenCalled();
+      expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+      expect(sessionSupabase.from).not.toHaveBeenCalled();
+      expect(deleteFileFromR2).not.toHaveBeenCalled();
+      expect(createAdminClient).not.toHaveBeenCalled();
+      expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+      expect(encodedRedirect).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects unauthenticated requests before checking subscriptions', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    sessionSupabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: null },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User not found',
+    );
+
+    expect(getUserByIdWithError).not.toHaveBeenCalled();
+    expect(hasOngoingSubscription).not.toHaveBeenCalled();
+    expect(sessionSupabase.auth.updateUser).not.toHaveBeenCalled();
+  });
+
+  it('allows deletion when the profile has no Stripe customer', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    vi.mocked(getUserByIdWithError).mockResolvedValueOnce({
+      data: { stripe_id: null },
+      error: null,
+    } as never);
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(hasOngoingSubscription).toHaveBeenCalledWith(null);
+    expect(expireOpenCheckoutSessions).not.toHaveBeenCalled();
+    expect(commitAccountDeletion).toHaveBeenCalled();
+    expect(sessionSupabase.auth.updateUser).toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+    expect(encodedRedirect).toHaveBeenCalledWith('success', '/en/', '');
+  });
+
+  it('holds the reservation through cleanup and releases it after failure', async () => {
+    const { sessionSupabase } = setupAccountDeletion();
+    sessionSupabase.auth.updateUser.mockImplementationOnce(async () => {
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+      throw new Error('Auth update failed');
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'Auth update failed',
+    );
+
+    expect(commitAccountDeletion).toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+    expect(deleteFileFromR2).not.toHaveBeenCalled();
+  });
+
+  it('uses the admin client for the user-scoped audio soft delete', async () => {
+    const { adminSupabase, audioUpdate, sessionSupabase } =
+      setupAccountDeletion();
+    sessionSupabase.auth.signOut.mockImplementationOnce(async () => {
+      expect(releaseAccountBillingOperation).not.toHaveBeenCalled();
+      return { error: null };
+    });
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(acquireAccountBillingOperation).toHaveBeenCalledWith(
+      'user-1',
+      'deletion',
+    );
+    expect(
+      vi.mocked(expireOpenCheckoutSessions).mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    );
+    expect(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    ).toBeLessThan(audioUpdate.update.mock.invocationCallOrder[0]);
+    expect(adminSupabase.from).toHaveBeenCalledWith('audio_files');
+    expect(audioUpdate.update).toHaveBeenCalledWith({
+      deleted_at: expect.any(String),
+      status: 'deleted',
+    });
+    expect(audioUpdate.eq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(audioUpdate.select).toHaveBeenCalledWith('id');
+    expect(deleteFileFromR2).toHaveBeenCalledWith('audio/one.mp3');
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ usageEventsRetained: 3 }),
+    );
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('erases all memory scopes for only the authenticated user', async () => {
+    const { sessionSupabase, memoryDelete } = setupAccountDeletion();
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(sessionSupabase.from).toHaveBeenCalledWith('agent_memories');
+    expect(memoryDelete.delete).toHaveBeenCalledOnce();
+    expect(memoryDelete.eq.mock.calls).toEqual([['user_id', 'user-1']]);
+    expect(memoryDelete.select).toHaveBeenCalledWith('id');
+    expect(
+      vi.mocked(commitAccountDeletion).mock.invocationCallOrder[0],
+    ).toBeLessThan(memoryDelete.delete.mock.invocationCallOrder[0]);
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ deletedMemories: 2 }),
+    );
+  });
+
+  it('allows deletion when the user has no memories', async () => {
+    const { sessionSupabase } = setupAccountDeletion({
+      memoryResult: { data: [], error: null },
+    });
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ deletedMemories: 0 }),
+    );
+    expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  it('fails deletion when memory erasure fails and releases billing', async () => {
+    const memoryError = new Error('Memory deletion unavailable');
+    const { sessionSupabase } = setupAccountDeletion({
+      memoryResult: { data: null, error: memoryError },
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(captureException).toHaveBeenCalledWith(memoryError, {
+      extra: { context: 'call_memory_account_cleanup' },
+      user: { id: 'user-1' },
+    });
+    expect(logger.info).not.toHaveBeenCalledWith(
+      'User deleted',
+      expect.anything(),
+    );
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(encodedRedirect).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('removes both provider voices, stored samples and owned rows on account deletion', async () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+    const { referenceRead, referenceUpdate } = setupAccountDeletion({
+      references: [
+        {
+          id,
+          sample_url: `https://files.sexyvoice.ai/${key}`,
+          provider: 'inworld',
+          voice_id: 'iw-voice',
+        },
+        {
+          id: 'legacy',
+          sample_url: null,
+          provider: 'mistral',
+          voice_id: 'mi-voice',
+        },
+      ],
+    });
+    await handleDeleteAccountAction({ lang: 'en' });
+    expect(referenceRead.eq).toHaveBeenCalledWith('user_id', 'user-1');
+    expect(deleteFileFromR2).toHaveBeenCalledWith(key);
+    expect(deleteInworldVoice).toHaveBeenCalledWith('iw-voice');
+    expect(deleteMistralVoice).toHaveBeenCalledWith('mi-voice');
+    expect(referenceRead.delete).toHaveBeenCalledTimes(2);
+    expect(referenceUpdate.eq.mock.calls).toEqual([
+      ['id', id],
+      ['user_id', 'user-1'],
+      ['id', 'legacy'],
+      ['user_id', 'user-1'],
+    ]);
+  });
+
+  it('retains the sample URL for cleanup retry if R2 deletion fails', async () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+    const { referenceRead, sessionSupabase } = setupAccountDeletion({
+      references: [
+        {
+          id,
+          sample_url: `https://files.sexyvoice.ai/${key}`,
+          provider: 'inworld',
+          voice_id: 'iw-voice',
+        },
+      ],
+    });
+    vi.mocked(deleteFileFromR2).mockImplementation(async (candidate) => {
+      if (candidate === key) throw new Error('Sample deletion failed');
+    });
+    await handleDeleteAccountAction({ lang: 'en' });
+    expect(referenceRead.delete).not.toHaveBeenCalled();
+    expect(deleteInworldVoice).toHaveBeenCalledWith('iw-voice');
+    expect(captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: {
+          context: 'call_voice_sample_account_cleanup',
+          referenceId: id,
+        },
+      }),
+    );
+    expect(sessionSupabase.auth.signOut).toHaveBeenCalled();
+  });
+
+  it('retains the profile when provider cleanup fails and still removes its R2 sample', async () => {
+    const id = '11111111-1111-4111-8111-111111111111';
+    const key = `call-voice-samples/${id}/22222222-2222-4222-8222-222222222222.wav`;
+    const { referenceRead } = setupAccountDeletion({
+      references: [
+        {
+          id,
+          sample_url: `https://files.sexyvoice.ai/${key}`,
+          provider: 'mistral',
+          voice_id: 'mi-voice',
+        },
+      ],
+    });
+    vi.mocked(deleteMistralVoice).mockRejectedValueOnce(
+      new Error('Provider unavailable'),
+    );
+    await handleDeleteAccountAction({ lang: 'en' });
+    expect(deleteFileFromR2).toHaveBeenCalledWith(key);
+    expect(referenceRead.delete).not.toHaveBeenCalled();
+    expect(captureException).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        extra: {
+          context: 'call_voice_sample_account_cleanup',
+          referenceId: id,
+        },
+      }),
+    );
+  });
+
+  it('releases billing when database cleanup fails after the Auth update', async () => {
+    const { audioUpdate, sessionSupabase } = setupAccountDeletion();
+    audioUpdate.select.mockResolvedValueOnce({
+      data: null,
+      error: new Error('Database unavailable'),
+    });
+
+    await expect(handleDeleteAccountAction({ lang: 'en' })).rejects.toThrow(
+      'User deletion failed',
+    );
+
+    expect(sessionSupabase.auth.updateUser).toHaveBeenCalled();
+    expect(deleteFileFromR2).toHaveBeenCalled();
+    expect(sessionSupabase.auth.signOut).not.toHaveBeenCalled();
+    expect(releaseAccountBillingOperation).toHaveBeenCalled();
+  });
+
+  it('continues when the retained usage-event count is unavailable', async () => {
+    const usageCountError = new Error('Count unavailable');
+    const { sessionSupabase } = setupAccountDeletion({
+      usageResult: { count: null, error: usageCountError },
+    });
+
+    await handleDeleteAccountAction({ lang: 'en' });
+
+    expect(
+      sessionSupabase.from.mock.calls.filter(
+        ([table]) => table === 'usage_events',
+      ),
+    ).toHaveLength(1);
+    expect(captureException).toHaveBeenCalledWith(usageCountError, {
+      extra: { context: 'retained usage event count during account deletion' },
+      level: 'warning',
+      user: { email: 'user@example.com', id: 'user-1' },
+    });
+    expect(logger.info).toHaveBeenCalledWith(
+      'User deleted',
+      expect.objectContaining({ usageEventsRetained: null }),
+    );
+  });
+});

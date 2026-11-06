@@ -1,11 +1,19 @@
-/** biome-ignore-all lint/performance/noNamespaceImport: it's fine */
+// biome-ignore lint/performance/noNamespaceImport: cache operations use the grouped file-system API
 import * as fs from 'node:fs';
 import { join } from 'node:path';
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
+import { callVoiceProvider } from '@/lib/call-voices';
+import {
+  countInworldWorkspaceVoices,
+  INWORLD_WORKSPACE_VOICE_LIMIT,
+} from '@/lib/clone/inworld';
 import { APIErrorResponse } from '@/lib/error-ts';
+import { formatContribution, summarizeContribution } from './contribution';
+import { getContributionData } from './contribution-queries';
 
 // Debug cache file path (temporary for debugging)
 const CACHE_FILE = join(process.cwd(), '.daily-stats-cache.json');
@@ -21,13 +29,15 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserIdByStripeCustomerId } from '@/lib/supabase/queries';
 import type { UsageSourceType } from '@/lib/supabase/usage-queries';
 import {
-  formatIdList,
+  getAllCreditTransactions,
   getAudioFilesInRange,
   getCallSessionDurationsBefore,
+  getCallSessionsInRange,
   getClonedAudioFilesInRange,
   getCreditTransactionsInRange,
   getInternalUserIds,
   getProfilesInRange,
+  getProfileUsernamesByIds,
   getUsageEventsInRange,
 } from './queries';
 import {
@@ -40,10 +50,14 @@ import {
   formatCompactNumber,
   formatCurrencyChange,
   formatDuration,
+  formatIdList,
+  formatPurchaseSummary,
   getFeatureHealthStatus,
   getProfileUsername,
+  isCompletedUserCall,
   maskUsername,
   normalizeModelName,
+  type PurchaseSummaryTransaction,
   reduceAmountUsd,
   startOfDay,
   startOfMonth,
@@ -57,7 +71,6 @@ import {
 // (query_canceled) error rather than a Vercel timeout.
 export const maxDuration = 300;
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: it's fine
 export async function GET(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production';
 
@@ -88,9 +101,13 @@ export async function GET(request: NextRequest) {
   const untilNow = dateParam ? new Date(dateParam) : new Date();
   const today = startOfDay(untilNow);
   const cacheReportDate = today.toISOString().slice(0, 10);
-  const useCache = !isProd && fs.existsSync(CACHE_FILE);
+  const bypassCache =
+    !isProd && request.nextUrl.searchParams.get('cache') === 'off';
+  const useCache = !(isProd || bypassCache) && fs.existsSync(CACHE_FILE);
+  const debugHeaders = bypassCache
+    ? { 'Cache-Control': 'no-store', 'X-Daily-Stats-Cache': 'bypass' }
+    : undefined;
   const previousDay = subtractDays(today, 1);
-  const twoDaysAgo = subtractDays(today, 2);
   const fourteenDaysAgo = subtractDays(today, ROLLING_WINDOW_DAYS);
   const thirtyDaysAgo = subtractDays(today, 30);
   // Use previousDay for MTD calculations since we're reporting on that day's month
@@ -138,10 +155,10 @@ export async function GET(request: NextRequest) {
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let apiKeysYesterdayResult: any;
   let allCreditTransactions: Awaited<
-    ReturnType<typeof getCreditTransactionsInRange>
+    ReturnType<typeof getAllCreditTransactions>
   > = [];
   let allTimePurchaseTransactions: Awaited<
-    ReturnType<typeof getCreditTransactionsInRange>
+    ReturnType<typeof getAllCreditTransactions>
   > = [];
   // biome-ignore lint/suspicious/noExplicitAny: Cache data is dynamically typed
   let activeSubscribersCount: any;
@@ -165,9 +182,9 @@ export async function GET(request: NextRequest) {
 
   if (useCache) {
     const cached = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
-    if (typeof cached.reportDate !== 'string') {
+    if (cached.version !== 5 || typeof cached.reportDate !== 'string') {
       console.log(
-        '♻️ Ignoring legacy cache without reportDate:',
+        '♻️ Ignoring incompatible activity cache:',
         CACHE_FILE,
         '(forcing refresh)',
       );
@@ -309,20 +326,15 @@ export async function GET(request: NextRequest) {
       findNextSubscriptionDueForPayment(),
       getActiveSubscriptionsMrr(),
 
-      // (callSessions14dResult) Call sessions last 14 days with duration info
-      (() => {
-        let q = supabase
-          .from('call_sessions')
-          .select(
-            'id, started_at, duration_seconds, credits_used, status, free_call',
-          )
-          .gte('started_at', fourteenDaysAgo.toISOString())
-          .lt('started_at', today.toISOString());
-        if (hasInternalUserIds) {
-          q = q.notIn('user_id', internalUserIds);
-        }
-        return q;
-      })(),
+      _timed(
+        `call_sessions:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCallSessionsInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({ data, error: null })),
+      ),
 
       // (callSessionsTotalCountResult) Total call sessions count
       (() => {
@@ -343,15 +355,18 @@ export async function GET(request: NextRequest) {
       callSessionsAllTimeDurationResult,
       profilesRecentResult,
     ] = await Promise.all([
-      getUsageEventsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({
-        data,
-        error: null,
-      })),
+      _timed(
+        `usage_events:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getUsageEventsInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({
+          data,
+          error: null,
+        })),
+      ),
       _timed(
         `audio_files:yesterday paginated ${previousDay.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
         getAudioFilesInRange(
@@ -373,101 +388,29 @@ export async function GET(request: NextRequest) {
           }),
         ),
       ),
-      getProfilesInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ).then((data) => ({
-        data,
-        error: null,
-      })),
-    ]);
-
-    const [
-      yesterdayCreditTransactions,
-      fourteenDayCreditTransactions,
-      thirtyDayCreditTransactions,
-      monthToDateCreditTransactions,
-      previousMonthToDateCreditTransactions,
-      twoMonthsAgoToDateCreditTransactions,
-      threeMonthsAgoToDateCreditTransactions,
-      allTimeCreditTransactions,
-    ] = await Promise.all([
-      getCreditTransactionsInRange(
-        supabase,
-        previousDay,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        fourteenDaysAgo,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        thirtyDaysAgo,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        monthStart,
-        today,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        previousMonthStart,
-        previousMonthPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        twoMonthsAgoStart,
-        twoMonthsAgoPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        threeMonthsAgoStart,
-        threeMonthsAgoPeriodEnd,
-        internalUserIds,
-      ),
-      getCreditTransactionsInRange(
-        supabase,
-        new Date('1970-01-01T00:00:00.000Z'),
-        today,
-        internalUserIds,
+      _timed(
+        `profiles:${ROLLING_WINDOW_LABEL} paginated ${fourteenDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getProfilesInRange(
+          supabase,
+          fourteenDaysAgo,
+          today,
+          internalUserIds,
+        ).then((data) => ({
+          data,
+          error: null,
+        })),
       ),
     ]);
 
-    allCreditTransactions = [
-      ...new Map(
-        [
-          ...allTimeCreditTransactions,
-          ...yesterdayCreditTransactions,
-          ...fourteenDayCreditTransactions,
-          ...thirtyDayCreditTransactions,
-          ...monthToDateCreditTransactions,
-          ...previousMonthToDateCreditTransactions,
-          ...twoMonthsAgoToDateCreditTransactions,
-          ...threeMonthsAgoToDateCreditTransactions,
-        ].map((transaction) => [transaction.id, transaction]),
-      ).values(),
-    ].sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    // One all-time read feeds every reporting window below.
+    allCreditTransactions = await _timed(
+      `credit_transactions:all_time paginated < ${today.toISOString().slice(0, 10)}`,
+      getAllCreditTransactions(supabase, today, internalUserIds),
     );
 
-    allTimePurchaseTransactions = allTimeCreditTransactions
-      .filter((transaction) => transaction.type !== 'refund')
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      );
+    allTimePurchaseTransactions = allCreditTransactions.filter(
+      (transaction) => transaction.type !== 'refund',
+    );
   } // end of else (not using cache)
 
   if (audioYesterdayResult?.error) throw audioYesterdayResult.error;
@@ -492,25 +435,26 @@ export async function GET(request: NextRequest) {
 
   // Cache results for faster debugging (non-prod only) — written after error
   // checks so we never persist a partial/failed response to disk
-  if (!(isProd || loadedFromValidCache)) {
+  if (!(isProd || bypassCache || loadedFromValidCache)) {
     const cacheData = {
-      reportDate: cacheReportDate,
-      audioYesterdayResult,
-      audio14dResult,
-      audioTotalCountResult,
-      clonesResult,
-      profilesRecentResult,
-      profilesTotalCountResult,
-      apiKeysYesterdayResult,
+      activeSubscribersCount,
       allCreditTransactions,
       allTimePurchaseTransactions,
-      activeSubscribersCount,
-      subscriptionsMrr,
-      nextSubscriptionDueForPayment,
+      apiKeysYesterdayResult,
+      audio14dResult,
+      audioTotalCountResult,
+      audioYesterdayResult,
       callSessions14dResult,
-      callSessionsTotalCountResult,
       callSessionsAllTimeDurationResult,
+      callSessionsTotalCountResult,
+      clonesResult,
+      nextSubscriptionDueForPayment,
+      profilesRecentResult,
+      profilesTotalCountResult,
+      reportDate: cacheReportDate,
+      subscriptionsMrr,
       usageEvents14dResult,
+      version: 5,
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(cacheData, null, 2));
     console.log(
@@ -583,6 +527,16 @@ export async function GET(request: NextRequest) {
   >(callSessions14dData, previousDay, today, 'started_at');
   const callsYesterdayCount = callSessionsYesterdayData.length;
   const calls14dCount = callSessions14dData.length;
+  const completedCallsYesterday =
+    callSessionsYesterdayData.filter(isCompletedUserCall).length;
+  const completedCalls14d =
+    callSessions14dData.filter(isCompletedUserCall).length;
+  const isClonedVoiceCall = (call: Pick<Tables<'call_sessions'>, 'model'>) =>
+    callVoiceProvider(call.model) !== null;
+  const clonedVoiceCallsYesterday =
+    callSessionsYesterdayData.filter(isClonedVoiceCall).length;
+  const clonedVoiceCalls14d =
+    callSessions14dData.filter(isClonedVoiceCall).length;
 
   // Calculate total duration for yesterday and the rolling 14-day window
   const callsDurationYesterday = callSessionsYesterdayData.reduce(
@@ -634,12 +588,6 @@ export async function GET(request: NextRequest) {
   const paidCallsAvgDuration14d =
     Math.round(paidCallsDuration14d / paidCalls14dCount) || 0;
 
-  // Platform infra cost at $0.05 per minute — covers all calls (free included),
-  // not billable revenue, so free-call duration is intentionally part of this.
-  const CALL_COST_PER_MINUTE = 0.05;
-  const callCostYesterday =
-    (callsDurationYesterday / 60) * CALL_COST_PER_MINUTE;
-  const callCost14d = (callsDuration14d / 60) * CALL_COST_PER_MINUTE;
   // Separate refunds from purchases/top-ups. Chargeback hold/release rows are
   // also `type='refund'` but are internal credit-ledger moves (dispute
   // handling), not customer refunds — keep them out of the refund metrics and
@@ -671,12 +619,12 @@ export async function GET(request: NextRequest) {
     const message = `WARNING: No audio files generated yesterday! ${previousDay}-${today}`;
     console.warn({ message });
     if (!isProd) {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true }, { headers: debugHeaders });
     }
     await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: '202637584', text: message }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
 
     Sentry.captureCheckIn({
@@ -700,7 +648,11 @@ export async function GET(request: NextRequest) {
       )
     : undefined;
 
-  const cloneModelLabels = new Set(['Chatterbox', 'Voxtral Clone']);
+  const cloneModelLabels = new Set([
+    'Chatterbox',
+    'Inworld Clone',
+    'Voxtral Clone',
+  ]);
   const modelCounts = new Map<string, number>();
   for (const audio of audioYesterdayData) {
     const modelName = normalizeModelName(audio.model);
@@ -782,12 +734,6 @@ export async function GET(request: NextRequest) {
       transaction.created_at >= previousDay.toISOString() &&
       transaction.created_at < today.toISOString(),
   );
-  const refundsPrevCount = refundTransactions.filter(
-    (transaction) =>
-      transaction.created_at >= twoDaysAgo.toISOString() &&
-      transaction.created_at < previousDay.toISOString(),
-  ).length;
-  const refundsTotalCount = refundTransactions.length;
 
   // Chargeback dispute activity (holds vs releases). Hold rows carry a negative
   // `amount` (credits frozen), release rows a positive `amount` (credits
@@ -816,7 +762,7 @@ export async function GET(request: NextRequest) {
   // Track individual transactions per customer for detailed display
   const customerTransactions = new Map<
     string,
-    Array<{ amount: number; type: string; username: string }>
+    Array<PurchaseSummaryTransaction & { username: string }>
   >();
 
   for (const transaction of purchasePrevDayData) {
@@ -837,19 +783,15 @@ export async function GET(request: NextRequest) {
         isFirstSubscription?: boolean;
       };
 
-    // Determine purchase type label
-    let purchaseTypeLabel = '';
-    if (transaction.type === 'topup') {
-      purchaseTypeLabel = isFirstTopup ? 'new topup' : 'existing topup';
-    } else if (transaction.type === 'purchase') {
-      purchaseTypeLabel = isFirstSubscription ? 'new sub' : 'existing sub';
-    }
-
     // Store each transaction individually with username
     const existing = customerTransactions.get(transaction.user_id) ?? [];
     existing.push({
       amount: dollarAmount,
-      type: purchaseTypeLabel,
+      isNew:
+        transaction.type === 'topup'
+          ? isFirstTopup === true
+          : isFirstSubscription === true,
+      type: transaction.type === 'topup' ? 'topup' : 'subscription',
       username: getProfileUsername(transaction.profiles) || 'Unknown',
     });
     customerTransactions.set(transaction.user_id, existing);
@@ -858,9 +800,9 @@ export async function GET(request: NextRequest) {
   // Calculate total spending per customer for sorting
   const customerTotals = [...customerTransactions.entries()].map(
     ([userId, transactions]) => ({
-      userId,
       total: transactions.reduce((sum, t) => sum + t.amount, 0),
       transactions,
+      userId,
       username: transactions[0].username,
     }),
   );
@@ -876,32 +818,8 @@ export async function GET(request: NextRequest) {
       ? 'N/A'
       : topCustomers
           .map(({ username, transactions }) => {
-            // Use username from customer totals - no need for inefficient find()
             const maskedUsername = maskUsername(username);
-
-            // Format amounts: show individual amounts if multiple transactions
-            // e.g., "$5+$5 topup" or "$5 topup + $10 sub" for mixed types
-            const allSameType =
-              transactions.length > 1 &&
-              transactions.every((t) => t.type === transactions[0].type);
-
-            let amountDisplay: string;
-            if (transactions.length === 1) {
-              // Single transaction: "$10.00 - existing topup"
-              const t = transactions[0];
-              amountDisplay = `$${t.amount} - ${t.type}`;
-            } else if (allSameType) {
-              // Multiple same-type: "$5+$5 topup"
-              const amounts = transactions.map((t) => `$${t.amount}`).join('+');
-              amountDisplay = `${amounts} ${transactions[0].type}`;
-            } else {
-              // Mixed types: "$5 topup + $10 sub"
-              amountDisplay = transactions
-                .map((t) => `$${t.amount} ${t.type}`)
-                .join(' + ');
-            }
-
-            return `${maskedUsername} (${amountDisplay})`;
+            return `${maskedUsername} (${formatPurchaseSummary(transactions)})`;
           })
           .join(', ');
 
@@ -972,7 +890,41 @@ export async function GET(request: NextRequest) {
     (prevMtdRevenue + twoMonthsAgoMtdRevenue + threeMonthsAgoMtdRevenue) / 3;
 
   const creditsTodayCount = purchasePrevDayData.length;
-  const refundsTodayCount = refundsPrevDayData.length;
+
+  // Contribution uses fresh usage and collections; cached activity can omit payments.
+  const contributionData = await _timed(
+    `contribution:30d paginated ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+    getContributionData(supabase, thirtyDaysAgo, today, internalUserIds),
+  );
+  const contributionTransactions = loadedFromValidCache
+    ? await _timed(
+        `credit_transactions:30d paginated (cached path) ${thirtyDaysAgo.toISOString().slice(0, 10)}..${today.toISOString().slice(0, 10)}`,
+        getCreditTransactionsInRange(
+          supabase,
+          thirtyDaysAgo,
+          today,
+          internalUserIds,
+        ),
+      )
+    : allCreditTransactions;
+  const contributionYesterday = summarizeContribution(
+    contributionData,
+    contributionTransactions,
+    previousDay,
+    today,
+  );
+  const contribution30d = summarizeContribution(
+    contributionData,
+    contributionTransactions,
+    thirtyDaysAgo,
+    today,
+  );
+  const contribution14d = summarizeContribution(
+    contributionData,
+    contributionTransactions,
+    fourteenDaysAgo,
+    today,
+  );
 
   // Paid user usage analysis
   // LRCV = Lowest Retail Credit Value
@@ -1069,12 +1021,12 @@ export async function GET(request: NextRequest) {
 
   // Calculate usage breakdown by source_type
   const sourceTypeLabels: Partial<Record<UsageSourceType, string>> = {
-    tts: 'TTS',
-    voice_cloning: 'Cloning',
-    live_call: 'Calls',
-    audio_processing: 'Processing',
     api_tts: 'API TTS',
     api_voice_cloning: 'API Cloning',
+    audio_processing: 'Processing',
+    live_call: 'Calls',
+    tts: 'TTS',
+    voice_cloning: 'Cloning',
   };
 
   const getSourceTypeLabel = (sourceType: string): string =>
@@ -1137,31 +1089,6 @@ export async function GET(request: NextRequest) {
         )
       : '0';
 
-  // Comparison: Paid user usage (dollars) vs. Revenue purchased yesterday
-  // If users are burning more value than they are buying, that's a signal (burn rate > 100%)
-  const revenuePurchasedYesterday = purchasePrevDayData.reduce(
-    (sum, t) =>
-      sum +
-      ((t.metadata as { dollarAmount?: number } | null)?.dollarAmount || 0),
-    0,
-  );
-
-  // Both sides are in dollars: usageValueYesterday vs revenuePurchasedYesterday
-  // If purchase is 0, ratio is infinite if usage > 0.
-  let burnRateRatio = 0;
-  if (revenuePurchasedYesterday > 0) {
-    burnRateRatio = usageValueYesterday / revenuePurchasedYesterday;
-  } else if (usageValueYesterday > 0) {
-    burnRateRatio = Number.POSITIVE_INFINITY;
-  }
-
-  let burnRateFlag = '';
-  if (burnRateRatio > 1.2) {
-    const burnRateDisplay =
-      revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞';
-    burnRateFlag = ` ⚠️ Burn rate: ${burnRateDisplay} vs purchased`;
-  }
-
   // DEBUG: Credit calculation verification
   if (!isProd && process.env.DEBUG) {
     console.log('\n💰 DEBUG: Credit Calculation Verification');
@@ -1177,13 +1104,7 @@ export async function GET(request: NextRequest) {
       `  - Usage value ${ROLLING_WINDOW_LABEL}: $`,
       usageValue14d.toFixed(2),
     );
-    // console.log('  - Anomaly ratio:', usageAnomalyRatio.toFixed(2));
-    console.log(
-      '  - Burn rate ratio:',
-      burnRateRatio === Number.POSITIVE_INFINITY
-        ? 'Infinite'
-        : burnRateRatio.toFixed(2),
-    );
+
     console.log(
       '  - Breakdown yesterday:',
       Object.fromEntries(usageYesterdayBreakdown),
@@ -1219,14 +1140,13 @@ export async function GET(request: NextRequest) {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 3);
 
-  // Get usernames for top usage users from usage events
-  const userIdToUsername = new Map<string, string>();
-  for (const event of usageEvents14dData) {
-    const username = getProfileUsername(event.profiles);
-    if (username && !userIdToUsername.has(event.user_id)) {
-      userIdToUsername.set(event.user_id, username);
-    }
-  }
+  // Resolve just these three usernames. Embedding `profiles(username)` on the
+  // usage-events query instead made PostgREST join per row across the whole
+  // 14-day window to label the same three.
+  const userIdToUsername = await getProfileUsernamesByIds(
+    supabase,
+    topUsageUsers.map(([userId]) => userId),
+  );
 
   // DEBUG: Top users verification
   if (!isProd && process.env.DEBUG) {
@@ -1306,8 +1226,11 @@ export async function GET(request: NextRequest) {
     clonePrevCount === 0 ? 'Voice cloning had no usage yesterday' : null,
     apiTtsCreditsYesterday === 0 ? 'API TTS had no usage yesterday' : null,
     creditsTodayCount === 0 ? 'No purchases yesterday' : null,
-    burnRateRatio > 1.2
-      ? `Paid-user credit burn outpaced purchases (${revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(1)}x` : '∞'})`
+    contributionYesterday.coverageAlert
+      ? 'Usage cost coverage is incomplete'
+      : null,
+    contributionYesterday.contributionAlert
+      ? 'Estimated usage and overhead costs exceeded net collections yesterday'
       : null,
     totalCreditsYesterday > 0 && Number.parseFloat(top3UsageSharePct) >= 60
       ? `Paid usage is concentrated: top 3 users drove ${top3UsageSharePct}%`
@@ -1334,36 +1257,36 @@ export async function GET(request: NextRequest) {
 
   const featureHealthItems = [
     {
+      detail: `${formatCompactNumber(usageYesterdayBreakdown.get('tts') ?? 0)} credits`,
       label: 'TTS',
       status: getFeatureHealthStatus(
         usageYesterdayBreakdown.get('tts') ?? 0,
         (usage14dBreakdown.get('tts') ?? 0) / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${formatCompactNumber(usageYesterdayBreakdown.get('tts') ?? 0)} credits`,
     },
     {
+      detail: `${formatCompactNumber(apiTtsCreditsYesterday)} credits`,
       label: 'API TTS',
       status: getFeatureHealthStatus(
         apiTtsCreditsYesterday,
         (usage14dBreakdown.get('api_tts') ?? 0) / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${formatCompactNumber(apiTtsCreditsYesterday)} credits`,
     },
     {
+      detail: `${callsYesterdayCount} calls, ${formatDuration(callsDurationYesterday)}`,
       label: 'Calls',
       status: getFeatureHealthStatus(
         callsYesterdayCount,
         calls14dCount / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${callsYesterdayCount} calls, ${formatDuration(callsDurationYesterday)}`,
     },
     {
+      detail: `${clonePrevCount} clones`,
       label: 'Cloning',
       status: getFeatureHealthStatus(
         clonePrevCount,
         clone14dCount / ROLLING_WINDOW_DAYS,
       ),
-      detail: `${clonePrevCount} clones`,
     },
   ];
 
@@ -1382,9 +1305,6 @@ export async function GET(request: NextRequest) {
           ),
         ];
 
-  const burnRateDisplay =
-    revenuePurchasedYesterday > 0 ? `${burnRateRatio.toFixed(2)}x` : '∞';
-
   const concentrationRiskLines =
     totalCreditsYesterday === 0
       ? ['- No paid-user usage yesterday']
@@ -1402,6 +1322,19 @@ export async function GET(request: NextRequest) {
     mrrUnknownCount > 0 ? `, ${mrrUnknownCount} unpriced` : ''
   }`;
 
+  // A live count, so it stays out of the activity cache.
+  const inworldVoiceCount = await countInworldWorkspaceVoices().catch(
+    (error) => {
+      console.error('Failed to count Inworld voices:', error);
+      Sentry.captureException(error);
+      return null;
+    },
+  );
+  const inworldVoicesDisplay =
+    inworldVoiceCount === null
+      ? 'unavailable'
+      : `${inworldVoiceCount.toLocaleString()} / ${INWORLD_WORKSPACE_VOICE_LIMIT.toLocaleString()} workspace limit`;
+
   const revenueSummaryLines = [
     `💰 Revenue: $${totalAmountUsdToday.toFixed(2)} yesterday (${totalAmountUsdToday >= avg14dRevenue ? '↑' : '↓'}$${Math.abs(totalAmountUsdToday - avg14dRevenue).toFixed(2)} vs ${ROLLING_WINDOW_LABEL} avg)`,
     `  - ${ROLLING_WINDOW_LABEL}: $${total14dRevenue.toFixed(2)} (avg $${avg14dRevenue.toFixed(2)}/day) | All-time: $${totalAmountUsd.toFixed(0)}`,
@@ -1418,10 +1351,9 @@ export async function GET(request: NextRequest) {
       ? ['', '🚨 Alerts', ...alerts.map((alert) => `- ${alert}`)]
       : []),
     '',
-    '💸 Money Flow',
-    `- Revenue collected yesterday: $${revenuePurchasedYesterday.toFixed(2)}`,
-    `- Paid-user usage value: ≈ $${usageValueYesterday.toFixed(2)}`,
-    `- Burn/revenue ratio: ${burnRateDisplay}`,
+    '💸 Usage economics (est., before fees)',
+    ...formatContribution('Yesterday', contributionYesterday),
+    ...formatContribution('30d', contribution30d),
     '',
     '🔻 Funnel',
     `- New profiles: ${profilesTodayCount}`,
@@ -1433,7 +1365,7 @@ export async function GET(request: NextRequest) {
       ? ['', '⚠️ Concentration Risk', ...concentrationRiskLines]
       : []),
     '',
-    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)}${burnRateFlag}`,
+    `📈 Paid User Usage: ${formatCompactNumber(totalCreditsYesterday)} credits ≈ $${usageValueYesterday.toFixed(2)} retail value`,
     `  - Mix: ${formatUsageBreakdown(usageYesterdayBreakdown)}`,
     `  - Top 3: ${topUsageUsersList}`,
     `  - ${ROLLING_WINDOW_LABEL}: ${formatCompactNumber(totalCredits14d)} credits ≈ $${usageValue14d.toFixed(2)} (${uniquePaidUsers14d} users, avg ${formatCompactNumber(totalCredits14d / ROLLING_WINDOW_DAYS)}/day ≈ $${(usageValue14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
@@ -1447,10 +1379,13 @@ export async function GET(request: NextRequest) {
     `  - Top models: ${topVoiceList}`,
     '',
     `📞 Calls: ${callsYesterdayCount} (${formatChange(callsYesterdayCount, calls14dCount / ROLLING_WINDOW_DAYS)})`,
+    `  - Completed (>10s): ${completedCallsYesterday} yesterday | ${completedCalls14d} in ${ROLLING_WINDOW_LABEL}`,
+    `  - Cloned voices: ${clonedVoiceCallsYesterday} yesterday | ${clonedVoiceCalls14d} in ${ROLLING_WINDOW_LABEL}`,
     `  - Free: ${freeCallsYesterdayCount} (${formatDuration(freeCallsDurationYesterday)}, avg ${formatDuration(freeCallsAvgDurationYesterday)}) | Paid: ${paidCallsYesterdayCount} (${formatDuration(paidCallsDurationYesterday)}, avg ${formatDuration(paidCallsAvgDurationYesterday)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${freeCalls14dCount} free (${formatDuration(freeCallsDuration14d)}, avg ${formatDuration(freeCallsAvgDuration14d)}), ${paidCalls14dCount} paid (${formatDuration(paidCallsDuration14d)}, avg ${formatDuration(paidCallsAvgDuration14d)})`,
-    `  - Cost: $${callCostYesterday.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${callCost14d.toFixed(2)} (avg $${(callCost14d / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
+    `  - AI usage (est.): $${contributionYesterday.callCost.toFixed(2)} yesterday | ${ROLLING_WINDOW_LABEL}: $${contribution14d.callCost.toFixed(2)} (avg $${(contribution14d.callCost / ROLLING_WINDOW_DAYS).toFixed(2)}/day)`,
     `  - All-time: ${callSessionsTotalCount.toLocaleString()} (avg ${formatDuration(callsAvgDurationAllTime)})`,
+    `  - Inworld voices: ${inworldVoicesDisplay}`,
     '',
     `👤 New Profiles: ${profilesTodayCount} (${formatChange(profilesTodayCount, profiles14dCount / ROLLING_WINDOW_DAYS)})`,
     `  - ${ROLLING_WINDOW_LABEL}: ${profiles14dCount} (avg ${(profiles14dCount / ROLLING_WINDOW_DAYS).toFixed(1)})`,
@@ -1463,14 +1398,7 @@ export async function GET(request: NextRequest) {
     `  - All-time: ${creditsTotalCount} | Unique Paid Users: ${totalUniquePaidUsers}`,
     `  - Top ${topCustomerProfilesCount}: ${topCustomersList}`,
     '',
-    ...(refundsTodayCount > 0
-      ? [
-          `🔄 Refunds: ${refundsTodayCount} (${formatChange(refundsTodayCount, refundsPrevCount)}) 😢`,
-          `  - Total: ${refundsTotalCount} | Amount: $${Math.abs(totalRefundAmountUsd).toFixed(2)} (Yesterday: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)})`,
-        ]
-      : [
-          `🔄 Refunds: 0 (Total: ${refundsTotalCount} | $${Math.abs(totalRefundAmountUsd).toFixed(2)})`,
-        ]),
+    `🔄 Refunds: $${Math.abs(totalRefundAmountUsdToday).toFixed(2)} yesterday | All-time: $${Math.abs(totalRefundAmountUsd).toFixed(2)}`,
     ...(chargebackTransactions.length > 0
       ? [
           `⚖️ Chargebacks: ${chargebackHoldsTodayCount} held / ${chargebackReleasesTodayCount} released today`,
@@ -1484,15 +1412,15 @@ export async function GET(request: NextRequest) {
 
   try {
     if (!isProd) {
-      return new NextResponse(message);
+      return new NextResponse(message, { headers: debugHeaders });
     }
     await fetch(webhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: '202637584',
         text: message,
       }),
+      headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
     });
     Sentry.captureCheckIn({
       // Make sure this variable is named `checkInId`

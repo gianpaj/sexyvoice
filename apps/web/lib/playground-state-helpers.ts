@@ -1,7 +1,23 @@
-import { defaultSessionConfig } from '@/data/default-config';
 import type { PlaygroundState } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
 import type { SessionConfig } from '@/data/session-config';
+
+const PRESET_PARAM = 'preset';
+
+/**
+ * Query params the call page owns. `preset` is the one it still writes;
+ * `custom` and `voice` come back from the Clone page; the rest are from links
+ * that used to carry the prompt and session settings. Everything else in the
+ * URL belongs to someone else and is left alone.
+ */
+const isOwnedUrlParam = (key: string) =>
+  key === PRESET_PARAM ||
+  key === 'custom' ||
+  key === 'voice' ||
+  key === 'instructions' ||
+  key === 'presetName' ||
+  key === 'presetDescription' ||
+  key.startsWith('sessionConfig.');
 
 export interface CallTokenPlaygroundState {
   instructions: string;
@@ -12,134 +28,17 @@ export interface CallTokenPlaygroundState {
   selectedSceneId: PlaygroundState['selectedSceneId'];
   sessionConfig: Pick<
     SessionConfig,
-    'maxOutputTokens' | 'model' | 'temperature' | 'voice'
+    'audioReferenceId' | 'maxOutputTokens' | 'model' | 'temperature' | 'voice'
   >;
 }
 
 export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
   const helpers = {
-    getSelectedPreset: (state: PlaygroundState) =>
-      [...defaultPresets, ...state.customCharacters].find(
-        (preset) => preset.id === state.selectedPresetId,
-      ),
-    getDefaultPresets: () => defaultPresets,
     getAllPresets: (state: PlaygroundState) => [
       ...defaultPresets,
       ...state.customCharacters,
     ],
-
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: fine
-    encodeToUrlParams: (state: PlaygroundState): string => {
-      // Preserve existing search params from the current URL
-      const existingParams =
-        typeof window === 'undefined'
-          ? new URLSearchParams()
-          : new URLSearchParams(window.location.search);
-      const params = new URLSearchParams(existingParams);
-
-      let isDefaultPreset = false;
-      const selectedPreset = helpers.getSelectedPreset(state);
-      if (selectedPreset) {
-        params.set('preset', selectedPreset.id);
-        isDefaultPreset = defaultPresets.some(
-          (p) => p.id === selectedPreset.id,
-        );
-      }
-
-      if (!isDefaultPreset) {
-        if (state.instructions) {
-          params.set('instructions', state.instructions);
-        }
-
-        if (selectedPreset) {
-          params.set('presetName', selectedPreset.name);
-          const presetDescription =
-            selectedPreset.localizedDescriptions?.[state.language] ??
-            selectedPreset.localizedDescriptions?.en;
-          if (presetDescription) {
-            params.set('presetDescription', presetDescription);
-          }
-        }
-
-        if (state.sessionConfig) {
-          for (const [key, value] of Object.entries(state.sessionConfig)) {
-            if (value !== defaultSessionConfig[key as keyof SessionConfig]) {
-              params.set(`sessionConfig.${key}`, String(value));
-            }
-          }
-        }
-      }
-
-      return params.toString();
-    },
-
-    decodeFromURLParams: (
-      urlParams: string,
-    ): { state: Partial<PlaygroundState>; preset?: Partial<Preset> } => {
-      const params = new URLSearchParams(urlParams);
-      const returnValue: {
-        state: Partial<PlaygroundState>;
-        preset?: Partial<Preset>;
-      } = { state: {} };
-
-      const instructions = params.get('instructions');
-      if (instructions) {
-        returnValue.state.instructions = instructions;
-      }
-
-      const sessionConfig: Partial<PlaygroundState['sessionConfig']> = {};
-      params.forEach((value, key) => {
-        if (key.startsWith('sessionConfig.')) {
-          const configKey = key.split(
-            '.',
-          )[1] as keyof PlaygroundState['sessionConfig'];
-          switch (configKey) {
-            case 'maxOutputTokens':
-              sessionConfig.maxOutputTokens =
-                value === 'null' ? null : Number(value);
-              break;
-            case 'model':
-              sessionConfig.model = value as SessionConfig['model'];
-              break;
-            case 'temperature':
-              sessionConfig.temperature = Number(value);
-              break;
-            case 'voice':
-              sessionConfig.voice = value;
-              break;
-            default:
-              break;
-          }
-        }
-      });
-
-      if (Object.keys(sessionConfig).length > 0) {
-        returnValue.state.sessionConfig = sessionConfig as SessionConfig;
-      }
-
-      const presetId = params.get('preset');
-      if (presetId) {
-        const presetDescription = params.get('presetDescription') || undefined;
-        returnValue.preset = {
-          id: presetId,
-          name: params.get('presetName') || undefined,
-          localizedDescriptions: presetDescription
-            ? { en: presetDescription }
-            : undefined,
-        };
-        returnValue.state.selectedPresetId = presetId;
-      }
-
-      return returnValue;
-    },
-
-    updateBrowserUrl: (state: PlaygroundState) => {
-      if (typeof window !== 'undefined') {
-        const params = helpers.encodeToUrlParams(state);
-        const newUrl = `${window.location.origin}${window.location.pathname}${params ? `?${params}` : ''}`;
-        window.history.replaceState({}, '', newUrl);
-      }
-    },
+    getDefaultPresets: () => defaultPresets,
 
     /**
      * Gets the full instructions for the current state.
@@ -152,6 +51,12 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
 
       return `${state.instructions.trim()}\n\nScene instructions:\n${sceneInstructions}`.trim();
     },
+    getPresetIdFromUrlParams: (urlParams: string): string | null =>
+      new URLSearchParams(urlParams).get(PRESET_PARAM),
+    getSelectedPreset: (state: PlaygroundState) =>
+      [...defaultPresets, ...state.customCharacters].find(
+        (preset) => preset.id === state.selectedPresetId,
+      ),
 
     /**
      * Returns a new state object with full instructions,
@@ -184,12 +89,42 @@ export const createPlaygroundStateHelpers = (defaultPresets: Preset[] = []) => {
         selectedPresetId: state.selectedPresetId,
         selectedSceneId: state.selectedSceneId,
         sessionConfig: {
+          audioReferenceId: state.sessionConfig.audioReferenceId,
           maxOutputTokens: state.sessionConfig.maxOutputTokens,
           model: state.sessionConfig.model,
           temperature: state.sessionConfig.temperature,
           voice: state.sessionConfig.voice,
         },
       };
+    },
+
+    // The URL carries only the preset ID. Prompts and session settings load
+    // from the database and stay out of browser history and analytics, so old
+    // links that still carry them are stripped on every write.
+    //
+    // `state` defaults to `null`, Next's documented shallow-update pattern: its
+    // patched `replaceState` copies the router tree into the new entry and
+    // syncs the router's URL. A state carrying Next's `__NA` flag skips that
+    // sync, so a later router refresh would restore the old URL. Callers that
+    // run before Next installs its patch pass `window.history.state` instead,
+    // so the tree survives and Back doesn't reload the page.
+    updateBrowserUrl: (presetId: string | null, state: unknown = null) => {
+      const params = new URLSearchParams(window.location.search);
+      for (const key of [...params.keys()]) {
+        if (isOwnedUrlParam(key)) {
+          params.delete(key);
+        }
+      }
+      if (presetId) {
+        params.set(PRESET_PARAM, presetId);
+      }
+      const search = params.toString();
+
+      window.history.replaceState(
+        state,
+        '',
+        `${window.location.pathname}${search ? `?${search}` : ''}${window.location.hash}`,
+      );
     },
   };
 

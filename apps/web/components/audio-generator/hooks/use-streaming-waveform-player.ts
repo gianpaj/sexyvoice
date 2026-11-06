@@ -212,17 +212,17 @@ export function useStreamingWaveformPlayer(): StreamingWaveformPlayer {
   }, [getDuration]);
 
   return {
-    phase,
-    isLivePlaying,
-    hadAudio,
-    wavBlob,
-    pushChunk,
     finalize,
-    togglePlayPause,
-    reset,
-    getPeaks,
-    getDuration,
     getCurrentTime,
+    getDuration,
     getHandoff,
+    getPeaks,
+    hadAudio,
+    isLivePlaying,
+    phase,
+    pushChunk,
+    reset,
+    togglePlayPause,
+    wavBlob,
   };
 }

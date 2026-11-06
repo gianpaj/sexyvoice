@@ -1,48 +1,68 @@
 import { Mic2 } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
+import { CreditBalanceError } from '@/components/credit-balance-error';
 import CreditsSection from '@/components/credits-section';
+import { getDemoCloneSelection } from '@/data/demo-clone';
+import { savedVoiceUsers } from '@/lib/call-voices';
+import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { hasUserPaid } from '@/lib/supabase/queries';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getSavedCallVoices } from '@/lib/supabase/call-voices';
+import { getDashboardCreditBalance } from '@/lib/supabase/dashboard-credit-balance';
+import {
+  getCreditTransactionAmounts,
+  getUserCallCharacters,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import NewVoiceClient from './new.client';
 
+export const generateMetadata = createDashboardMetadata('/dashboard/clone');
+
 export default async function NewVoicePage(props: {
   params: Promise<{ lang: Locale }>;
+  searchParams?: Promise<{
+    for?: string | string[];
+    demo?: string | string[];
+    take?: string | string[];
+  }>;
 }) {
-  const [{ lang }, supabase] = await Promise.all([
+  const [{ lang }, searchParams] = await Promise.all([
     props.params,
-    createClient(),
+    props.searchParams ??
+      Promise.resolve({ for: undefined, demo: undefined, take: undefined }),
   ]);
-  const [
-    {
-      data: { user },
-      error,
-    },
-    t,
-  ] = await Promise.all([supabase.auth.getUser(), getTranslations('clone')]);
+  const selection = getDemoCloneSelection(
+    typeof searchParams.demo === 'string' ? searchParams.demo : null,
+    typeof searchParams.take === 'string' ? searchParams.take : null,
+  );
+  const supabase = await createClient();
+  const [t, tProfile] = await Promise.all([
+    getTranslations('clone'),
+    getTranslations('profile'),
+  ]);
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
 
-  if (!user || error) {
-    return <div>Not logged in</div>;
+  if (!userId) {
+    return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const [{ data: creditsData }, { data: creditTransactions }, userHasPaid] =
-    await Promise.all([
-      supabase
-        .from('credits')
-        .select('amount')
-        .eq('user_id', user.id)
-        .single()
-        .then((res) => res ?? { data: { amount: 0 } }),
-      supabase
-        .from('credit_transactions')
-        .select('amount')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
-      hasUserPaid(user.id),
-    ]);
-
-  const credits = creditsData || { amount: 0 };
+  const [
+    creditBalance,
+    creditTransactions,
+    userHasPaid,
+    savedVoices,
+    characters,
+  ] = await Promise.all([
+    getDashboardCreditBalance(supabase, userId, 'dashboard/clone'),
+    getCreditTransactionAmounts(userId),
+    hasUserPaid(userId),
+    getSavedCallVoices(userId),
+    getUserCallCharacters(userId),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
@@ -56,15 +76,27 @@ export default async function NewVoicePage(props: {
         <CreditsSection
           creditTransactions={creditTransactions}
           doNotToggleSidebar
-          lang={lang}
-          userId={user.id}
+          userId={userId}
         />
       </div>
-      <NewVoiceClient
-        hasEnoughCredits={credits.amount >= 10}
-        lang={lang}
-        userHasPaid={userHasPaid}
-      />
+      {creditBalance === null ? (
+        <CreditBalanceError />
+      ) : (
+        <NewVoiceClient
+          callCloneProvider={getCallCloneProvider()}
+          hasEnoughCredits={creditBalance >= 10}
+          initialDemo={
+            selection
+              ? { speakerId: selection.speaker.id, takeId: selection.take.id }
+              : undefined
+          }
+          initialSaveForCalls={searchParams.for === 'call'}
+          lang={lang}
+          savedVoices={savedVoices ?? []}
+          userHasPaid={userHasPaid}
+          voiceUsers={savedVoiceUsers(characters ?? [])}
+        />
+      )}
     </div>
   );
 }

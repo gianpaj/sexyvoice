@@ -40,8 +40,8 @@ setup('authenticate', async ({ page }) => {
 
   // Submit form - use exact match to avoid matching "Sign in with Google" button
   const loginButton = page.getByRole('button', {
-    name: 'Sign in',
     exact: true,
+    name: 'Sign in',
   });
   await loginButton.click();
 

@@ -14,14 +14,6 @@
     "treeify",
     "treeified"
   ],
-  "dictionaries": [
-    "de-de",
-    "es-es"
-  ],
-  "ignorePaths": [
-    "TODO.md",
-    "node_modules",
-    ".git",
-    "dist"
-  ]
+  "dictionaries": ["de-de", "es-es"],
+  "ignorePaths": ["TODO.md", "node_modules", ".git", "dist"]
 }

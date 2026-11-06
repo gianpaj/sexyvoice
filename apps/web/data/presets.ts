@@ -11,6 +11,7 @@ export interface Preset {
   isPublic?: boolean; // true for predefined characters
   localizedDescriptions?: Partial<Record<string, string>>;
   localizedInstructions?: Partial<Record<string, string>>; // maps to prompts.localized_prompts
+  localizedSampleUrls?: Partial<Record<string, string>>; // character intro per language
   name: string;
   promptId?: string; // FK to prompts table
   promptType?: FeatureType; // mirrors prompts.type (shared feature_type enum)

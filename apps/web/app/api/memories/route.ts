@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { APIErrorResponse } from '@/lib/error-ts';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { deleteUserMemories } from '@/lib/supabase/memories';
 import { createClient } from '@/lib/supabase/server';
 
 /**
@@ -15,27 +17,20 @@ import { createClient } from '@/lib/supabase/server';
  */
 export async function DELETE() {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+  const claims = await getVerifiedClaims(supabase);
 
-  if (authError || !user) {
+  if (!claims?.sub) {
     return APIErrorResponse('Unauthorized', 401);
   }
 
-  const { data, error } = await supabase
-    .from('agent_memories')
-    .delete()
-    .eq('user_id', user.id)
-    .select('id');
+  const { data, error } = await deleteUserMemories(supabase, claims.sub);
 
   if (error) {
     return APIErrorResponse('Failed to delete memories', 500);
   }
 
   return NextResponse.json(
-    { success: true, deleted: data?.length ?? 0 },
+    { deleted: data?.length ?? 0, success: true },
     { status: 200 },
   );
 }

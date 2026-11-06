@@ -35,23 +35,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = `https://sexyvoice.ai/${lang}/tools/audio-joiner`;
 
   return {
-    title,
-    description,
-    keywords: keywordsArray,
-    authors: [{ name: 'SexyVoice.ai' }],
-    openGraph: {
-      title: `${title} | SexyVoice.ai`,
-      description,
-      url,
-      siteName: 'SexyVoice.ai',
-      type: 'website',
-      locale: lang,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: `${title} | SexyVoice.ai`,
-      description,
-    },
     alternates: {
       canonical: url,
       languages: Object.fromEntries(
@@ -60,6 +43,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           `https://sexyvoice.ai/${locale}/tools/audio-joiner`,
         ]),
       ),
+    },
+    authors: [{ name: 'SexyVoice.ai' }],
+    description,
+    keywords: keywordsArray,
+    openGraph: {
+      description,
+      locale: lang,
+      siteName: 'SexyVoice.ai',
+      title: `${title} | SexyVoice.ai`,
+      type: 'website',
+      url,
+    },
+    title,
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      title: `${title} | SexyVoice.ai`,
     },
   };
 }
@@ -77,41 +77,41 @@ export default async function AudioJoinerPage({ params }: Props) {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'WebApplication',
         '@id': `${url}/#webapp`,
-        name: title,
-        description,
-        url,
+        '@type': 'WebApplication',
         applicationCategory: 'MultimediaApplication',
         applicationSubCategory: 'Audio Editing',
-        operatingSystem: 'Any',
         browserRequirements:
           'Requires a modern browser with WebAssembly support',
+        description,
+        inLanguage: lang,
+        isAccessibleForFree: true,
+        name: title,
         offers: {
           '@type': 'Offer',
           price: '0',
           priceCurrency: 'USD',
         },
-        isAccessibleForFree: true,
-        inLanguage: lang,
+        operatingSystem: 'Any',
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+        url,
       },
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
           {
             '@type': 'ListItem',
-            position: 1,
-            name: 'Home',
             item: `https://sexyvoice.ai/${lang}`,
+            name: 'Home',
+            position: 1,
           },
           {
             '@type': 'ListItem',
-            position: 2,
-            name: tPages('/tools/audio-joiner') || 'Audio Joiner',
             item: url,
+            name: tPages('/tools/audio-joiner') || 'Audio Joiner',
+            position: 2,
           },
         ],
       },

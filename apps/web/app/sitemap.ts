@@ -90,9 +90,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const alternatePath = path === '/' ? '' : path;
 
       routes.push({
-        url,
         lastModified,
         priority,
+        url,
         ...(hasLocalizedAlternates
           ? {
               alternates: {
@@ -117,9 +117,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         const postUrl = `${BASE_URL}/${post.locale}/blog/${post.slugAsParams}`;
 
         routes.push({
-          url: postUrl,
           lastModified: new Date(post.date).toISOString(),
           priority: getPriority(postUrl),
+          url: postUrl,
           // For default-locale posts, link to any available translations
           ...(lang === routing.defaultLocale
             ? {

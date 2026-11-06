@@ -1,11 +1,11 @@
 'use client';
 
-import WavesurferPlayer from '@wavesurfer/react';
 import { Pause, Play } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type WaveSurfer from 'wavesurfer.js';
 
-import { useAudio } from '@/app/[lang]/(dashboard)/dashboard/clone/audio-provider';
+import { useAudio } from '@/components/audio-provider';
+import { AudioWaveform } from '@/components/audio-waveform';
 import { Button } from '@/components/ui/button';
 import { attemptPlayback } from '@/lib/media-playback';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,16 @@ interface AudioPlayerWithContextProps {
   buttonClassName?: string;
   className?: string;
   onControlsReady?: (controls: AudioPlayerControls) => void;
+  /**
+   * Called when the audio fails to load or decode. Only fires in waveform mode.
+   */
+  onError?: () => void;
+  /**
+   * Called when playback starts. Only fires in waveform mode, where playback is
+   * driven by wavesurfer rather than the shared `AudioProvider` context — so a
+   * parent rendering two waveform players needs this to pause the other one.
+   */
+  onPlaybackStart?: () => void;
   playAudioTitle: string;
   progressColor?: string;
   showWaveform?: boolean;
@@ -37,10 +47,12 @@ export function AudioPlayerWithContext({
   playAudioTitle,
   showWaveform = false,
   waveformHeight = 48,
-  waveColor = '#a1a1aa',
-  progressColor = '#7c3aed',
+  waveColor,
+  progressColor,
   autoPlay = false,
   onControlsReady,
+  onError,
+  onPlaybackStart,
 }: AudioPlayerWithContextProps) {
   const audio = useAudio();
 
@@ -74,12 +86,12 @@ export function AudioPlayerWithContext({
       setWavesurfer(ws);
       setIsWaveformPlaying(false);
       if (autoPlay) {
-        void attemptPlayback(
+        attemptPlayback(
           () => ws.play(),
           () => {
             setIsWaveformPlaying(false);
           },
-        );
+        ).catch(() => undefined);
       }
     },
     [autoPlay],
@@ -87,11 +99,17 @@ export function AudioPlayerWithContext({
 
   const onPlay = useCallback(() => {
     setIsWaveformPlaying(true);
-  }, []);
+    onPlaybackStart?.();
+  }, [onPlaybackStart]);
 
   const onPause = useCallback(() => {
     setIsWaveformPlaying(false);
   }, []);
+
+  const onWavesurferError = useCallback(() => {
+    setIsWaveformPlaying(false);
+    onError?.();
+  }, [onError]);
 
   const handlePlayWithWaveform = useCallback(async () => {
     if (!wavesurfer) return;
@@ -166,12 +184,9 @@ export function AudioPlayerWithContext({
         )}
       </Button>
       <div className={cn('w-32 flex-1', waveformClassName)}>
-        <WavesurferPlayer
-          barGap={2}
-          barRadius={2}
-          barWidth={2}
-          cursorColor="transparent"
+        <AudioWaveform
           height={waveformHeight}
+          onError={onWavesurferError}
           onPause={onPause}
           onPlay={onPlay}
           onReady={onReady}

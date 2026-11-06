@@ -11,18 +11,19 @@ export function resolveExternalModelId(
   if (mapped && Object.hasOwn(EXTERNAL_API_MODELS, mapped)) {
     return mapped as ExternalApiModelId;
   }
-  return;
 }
 
-export function isModelCompatibleWithVoice(
-  requestedModel: ExternalApiModelId,
-  voiceDbModel: string,
-): boolean {
-  return resolveExternalModelId(voiceDbModel) === requestedModel;
+/** Database `voices.model` values that an external model id covers. */
+export function resolveDbModelIds(externalModel: ExternalApiModelId): string[] {
+  return Object.keys(DB_MODEL_TO_EXTERNAL_ID).filter(
+    (dbModel) => DB_MODEL_TO_EXTERNAL_ID[dbModel] === externalModel,
+  );
 }
 
 export function getDefaultFormat(model: ExternalApiModelId): 'wav' | 'mp3' {
-  return model === 'gpro' || model === 'gpro31' ? 'wav' : 'mp3';
+  return model === 'gpro' || model === 'gpro31' || model === 'gpro38'
+    ? 'wav'
+    : 'mp3';
 }
 
 export function isFormatSupported(
@@ -37,8 +38,8 @@ export function isFormatSupported(
 export function getModelCatalogResponse() {
   return Object.values(EXTERNAL_API_MODELS).map((model) => ({
     id: model.id,
-    name: model.name,
     max_input_length: model.maxInputLength,
+    name: model.name,
     supported_formats: [...model.supportedFormats],
   }));
 }

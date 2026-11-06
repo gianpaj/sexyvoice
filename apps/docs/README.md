@@ -1,6 +1,9 @@
 # SexyVoice.ai Documentation
 
-Documentation for [SexyVoice.ai](https://sexyvoice.ai) - AI-powered voice generation platform.
+Documentation for [SexyVoice.ai](https://sexyvoice.ai), an AI voice platform.
+
+Use [GLOSSARY.md](../../GLOSSARY.md) for domain names and definitions.
+
 This is a Next.js application generated with
 [Create Fumadocs](https://github.com/fuma-nama/fumadocs).
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -68,11 +69,6 @@ interface Profile {
   created_at: string | null;
   id: string;
 }
-
-const CLONE_MODELS = [
-  'resemble-ai/chatterbox',
-  'resemble-ai/chatterbox-multilingual',
-];
 
 // Platform launch date (you can adjust this)
 const PLATFORM_LAUNCH_DATE = '2025-04-25';
@@ -151,7 +147,7 @@ function calculateTopVoices(audioFiles: AudioFile[], limit = 5) {
       if (existing) {
         existing.count += 1;
       } else {
-        voiceCounts.set(voiceName, { name: voiceName, count: 1 });
+        voiceCounts.set(voiceName, { count: 1, name: voiceName });
       }
     }
   }
@@ -217,10 +213,10 @@ function calculateMonthlyStats(
       year: 'numeric',
     });
     return {
-      month: monthName,
       audioCount: monthlyAudio.get(monthKey) ?? 0,
-      userCount: monthlyUsers.get(monthKey) ?? 0,
+      month: monthName,
       revenue: monthlyRevenue.get(monthKey) ?? 0,
+      userCount: monthlyUsers.get(monthKey) ?? 0,
     };
   });
 }
@@ -246,11 +242,11 @@ function calculateCoreStats(audioFiles: AudioFile[]) {
   const totalUniqueVoicesUsed = new Set(audioFiles.map((f) => f.voice_id)).size;
 
   return {
-    totalAudioFiles,
-    totalDurationSeconds,
-    totalCharactersGenerated,
-    longestTextCharacters,
     averageTextLength,
+    longestTextCharacters,
+    totalAudioFiles,
+    totalCharactersGenerated,
+    totalDurationSeconds,
     totalUniqueVoicesUsed,
   };
 }
@@ -273,9 +269,9 @@ function calculateRevenueStats(creditTransactions: CreditTransaction[]) {
   }
 
   return {
-    totalRevenue,
-    totalRefunds,
     netRevenue: totalRevenue - totalRefunds,
+    totalRefunds,
+    totalRevenue,
   };
 }
 
@@ -336,7 +332,7 @@ export async function GET() {
 
     // Voice cloning stats
     const clonedAudioFiles = audioFiles.filter((file) =>
-      CLONE_MODELS.includes(file.model),
+      VOICE_CLONING_MODELS.includes(file.model),
     );
 
     // Unique paid users
@@ -351,15 +347,15 @@ export async function GET() {
 
     const stats: PlatformWrappedStats = {
       ...coreStats,
-      totalUsers: profiles.length,
-      totalPaidUsers: uniquePaidUsers,
-      totalVoiceClones: userVoices.length,
       totalClonedAudioFiles: clonedAudioFiles.length,
+      totalPaidUsers: uniquePaidUsers,
+      totalUsers: profiles.length,
+      totalVoiceClones: userVoices.length,
       ...revenueStats,
-      topVoices,
+      daysSinceLaunch,
       monthlyStats,
       platformLaunchDate: PLATFORM_LAUNCH_DATE,
-      daysSinceLaunch,
+      topVoices,
     };
 
     // Cache for 5 minutes

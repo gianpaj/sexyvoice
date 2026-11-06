@@ -1,24 +1,28 @@
 import Image from 'next/image';
 import { getMessages } from 'next-intl/server';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 // import { LanguageSelector } from './language-selector';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { createClient } from '@/lib/supabase/server';
 
 export async function Header({ lang: _lang }: { lang: Locale }) {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  const user = data?.user;
+  const claims = await getVerifiedClaims(supabase);
 
   const dict = (await getMessages({ locale: _lang })) as IntlMessages;
 
   return (
     <header className="border-gray-700 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link className="z-10 flex items-end gap-0" href="/">
+        <Link
+          className="z-10 flex items-end gap-0"
+          data-visual-test="transparent"
+          href="/"
+        >
           <div className="aspect-square">
             <Image
               alt="Logo"
@@ -35,7 +39,7 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
         <div className="z-10 hidden items-center justify-center gap-4 md:flex">
           {/* <LanguageSelector currentLang={lang} isMobile={false} /> */}
 
-          {user ? (
+          {claims?.sub ? (
             <Button asChild variant="default">
               <Link href="/dashboard/generate" prefetch>
                 {dict.header.generate}
@@ -60,7 +64,7 @@ export async function Header({ lang: _lang }: { lang: Locale }) {
         {/* Mobile Navigation */}
         <div className="z-10 flex gap-2 md:hidden">
           {/* <LanguageSelector isMobile currentLang={lang} /> */}
-          {user ? (
+          {claims?.sub ? (
             <Button asChild variant="default">
               <Link className="w-full" href="/dashboard/generate" prefetch>
                 {dict.header.generate}

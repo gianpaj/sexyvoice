@@ -3,21 +3,29 @@
 import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Button } from '@/components/ui/button';
 import { useIsMobileSizes } from '@/hooks/use-mobile';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 
-export function HeaderStatic() {
+export function HeaderStatic({
+  authRedirectTo,
+}: {
+  authRedirectTo?: string | null;
+} = {}) {
   const locale = useLocale() as Locale;
   const t = useTranslations('header');
   const { isMobile375 } = useIsMobileSizes();
 
   return (
-    <header className="border-gray-700 border-b bg-gray-900">
+    <header className="border-gray-800/20 border-b bg-gray-900">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link className="hit-area-2 flex items-end gap-0" href={'/'}>
+        <Link
+          className="hit-area-2 flex items-end gap-0"
+          data-visual-test="transparent"
+          href={'/'}
+        >
           <Image alt="Logo" height={292 / 8} src={logoSmall} width={221 / 8} />
           <span className="font-semibold text-white text-xl">exyVoice.ai</span>
         </Link>
@@ -25,12 +33,24 @@ export function HeaderStatic() {
         <div className="hidden items-center justify-center gap-4 md:flex">
           <div className="space-x-4">
             <Button asChild variant="secondary">
-              <Link href="/login" prefetch>
+              <Link
+                href={{
+                  pathname: '/login',
+                  query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+                }}
+                prefetch
+              >
                 {t('login')}
               </Link>
             </Button>
             <Button asChild effect="ringHover" variant="default">
-              <Link href="/signup" prefetch>
+              <Link
+                href={{
+                  pathname: '/signup',
+                  query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+                }}
+                prefetch
+              >
                 {t('signup')}
               </Link>
             </Button>
@@ -44,7 +64,14 @@ export function HeaderStatic() {
             size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
             variant="secondary"
           >
-            <Link className="w-full" href="/login" prefetch>
+            <Link
+              className="w-full"
+              href={{
+                pathname: '/login',
+                query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+              }}
+              prefetch
+            >
               {t('login')}
             </Link>
           </Button>
@@ -53,7 +80,14 @@ export function HeaderStatic() {
             className="hit-area-2"
             size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
           >
-            <Link className="w-full" href="/signup" prefetch>
+            <Link
+              className="w-full"
+              href={{
+                pathname: '/signup',
+                query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+              }}
+              prefetch
+            >
               {t('signup')}
             </Link>
           </Button>

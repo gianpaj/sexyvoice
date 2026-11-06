@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noNamespaceImport: tests assert across the mocked Sentry module
 import * as Sentry from '@sentry/nextjs';
 import { headers } from 'next/headers';
 import {
@@ -42,12 +43,12 @@ vi.mock('next/headers', () => ({
 // Mock Stripe admin
 vi.mock('@/lib/stripe/stripe-admin', () => ({
   stripe: {
-    webhooks: {
-      constructEvent: vi.fn(),
-    },
     subscriptions: {
       list: vi.fn(),
       retrieve: vi.fn(),
+    },
+    webhooks: {
+      constructEvent: vi.fn(),
     },
   },
 }));
@@ -87,7 +88,6 @@ describe('Stripe Webhook Route', () => {
       // Mock headers to return null for Stripe-Signature
       vi.mocked(headers).mockResolvedValue({
         get: () => null,
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       const request = {
@@ -111,7 +111,6 @@ describe('Stripe Webhook Route', () => {
           if (name === 'Stripe-Signature') return 'invalid_signature';
           return null;
         },
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       // Mock constructEvent to throw error
@@ -132,11 +131,11 @@ describe('Stripe Webhook Route', () => {
 
     it('should process webhook with valid signature', async () => {
       const session = createMockCheckoutSession('payment', {
-        type: 'topup',
-        userId: 'user_123',
         credits: '5000',
         dollarAmount: '5.00',
         packageId: 'starter',
+        type: 'topup',
+        userId: 'user_123',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -163,11 +162,11 @@ describe('Stripe Webhook Route', () => {
     // later, the webhook uses that number to insert into the Database
     it('should process topup checkout and add credits', async () => {
       const session = createMockCheckoutSession('payment', {
-        type: 'topup',
-        userId: 'user_123',
         credits: '5000',
         dollarAmount: '5.00',
         packageId: 'starter',
+        type: 'topup',
+        userId: 'user_123',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -189,12 +188,12 @@ describe('Stripe Webhook Route', () => {
       const PROMO_ID = 'halloween_2025';
 
       const session = createMockCheckoutSession('payment', {
-        type: 'topup',
-        userId: 'user_456',
         credits: '15000',
         dollarAmount: '12.00',
         packageId: 'standard',
         promo: PROMO_ID,
+        type: 'topup',
+        userId: 'user_456',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -253,17 +252,17 @@ describe('Stripe Webhook Route', () => {
       // Verify Redis sync was called
       expect(stripe.subscriptions.list).toHaveBeenCalledWith({
         customer: customerId,
+        expand: ['data.default_payment_method'],
         limit: 1,
         status: 'all',
-        expand: ['data.default_payment_method'],
       });
 
       // Verify Redis has the correct data
       const customerData = await getCustomerData(customerId);
       expect(customerData).toMatchObject({
-        subscriptionId: 'sub_test123',
-        status: 'active',
         priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
+        status: 'active',
+        subscriptionId: 'sub_test123',
       });
 
       // Verify credits were inserted with payment_intent as reference_id
@@ -283,7 +282,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
@@ -309,7 +307,6 @@ describe('Stripe Webhook Route', () => {
       );
       // Stripe leaves payment_intent null on subscription-mode sessions; the
       // initial payment lives on the subscription's first invoice
-      // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       (subscription as any).latest_invoice = {
         id: 'in_initial_test',
         object: 'invoice',
@@ -318,7 +315,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
@@ -351,7 +347,6 @@ describe('Stripe Webhook Route', () => {
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
         'user_recurring',
@@ -469,7 +464,6 @@ describe('Stripe Webhook Route', () => {
         );
         vi.mocked(stripe.subscriptions.list).mockResolvedValue({
           data: [subscription],
-          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
         } as any);
         vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_789');
 
@@ -480,10 +474,9 @@ describe('Stripe Webhook Route', () => {
           priceId,
           'subscription_create', // initial subscription invoice
         );
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
         (invoice as any).discount = {
-          id: 'di_test',
           coupon: { id: 'coupon_25_off' },
+          id: 'di_test',
         };
 
         const request = createMockRequest('invoice.payment_succeeded', invoice);
@@ -525,7 +518,6 @@ describe('Stripe Webhook Route', () => {
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_real');
 
@@ -587,7 +579,6 @@ describe('Stripe Webhook Route', () => {
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
         'user_recurring',
@@ -645,7 +636,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user-id-123');
@@ -677,7 +667,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
@@ -709,7 +698,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
@@ -731,9 +719,9 @@ describe('Stripe Webhook Route', () => {
       expect(customerData).toBeDefined();
       expect(customerData?.status).toBe('canceled');
       expect(customerData).toMatchObject({
-        subscriptionId: 'sub_test123',
-        status: 'canceled',
         priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
+        status: 'canceled',
+        subscriptionId: 'sub_test123',
       });
     });
 
@@ -746,7 +734,6 @@ describe('Stripe Webhook Route', () => {
 
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue('user_paused');
@@ -772,22 +759,22 @@ describe('Stripe Webhook Route', () => {
     // Subscription credits include 15% bonus (SUBSCRIPTION_BONUS_MULTIPLIER = 1.15)
     const testPlans = [
       {
+        expectedAmount: 5,
+        expectedCredits: 11_500, // 10,000 * 1.15
         name: 'Starter',
         priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
-        expectedCredits: 11_500, // 10,000 * 1.15
-        expectedAmount: 5,
       },
       {
+        expectedAmount: 10,
+        expectedCredits: 28_750, // 25,000 * 1.15
         name: 'Standard',
         priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
-        expectedCredits: 28_750, // 25,000 * 1.15
-        expectedAmount: 10,
       },
       {
+        expectedAmount: 75,
+        expectedCredits: 345_000, // 300,000 * 1.15
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
-        expectedCredits: 345_000, // 300,000 * 1.15
-        expectedAmount: 75,
       },
     ];
 
@@ -803,7 +790,6 @@ describe('Stripe Webhook Route', () => {
         );
         vi.mocked(stripe.subscriptions.list).mockResolvedValue({
           data: [subscription],
-          // biome-ignore lint/suspicious/noExplicitAny: Test mock data
         } as any);
 
         vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(
@@ -858,33 +844,33 @@ describe('Stripe Webhook Route', () => {
     const userId = 'user_sub_promo_test';
     const testTopupPlans = [
       {
-        name: 'Starter',
-        packageId: 'starter',
         credits: 12_000,
         dollarAmount: 5.0,
+        name: 'Starter',
+        packageId: 'starter',
       },
       {
-        name: 'Standard',
-        packageId: 'standard',
         credits: 32_500,
         dollarAmount: 10.0,
+        name: 'Standard',
+        packageId: 'standard',
       },
       {
-        name: 'Pro',
-        packageId: 'pro',
         credits: 405_000,
         dollarAmount: 75.0,
+        name: 'Pro',
+        packageId: 'pro',
       },
     ];
 
     testTopupPlans.forEach(({ name, packageId, credits, dollarAmount }) => {
       it(`should process ${name.toLowerCase()} topup with promo bonus (${credits.toLocaleString()} credits)`, async () => {
         const session = createMockCheckoutSession('payment', {
-          type: 'topup',
-          userId,
           credits: credits.toString(),
           dollarAmount: dollarAmount.toFixed(2),
           packageId: packageId as 'starter' | 'standard' | 'pro',
+          type: 'topup',
+          userId,
         });
 
         const request = createMockRequest(
@@ -908,12 +894,12 @@ describe('Stripe Webhook Route', () => {
 
     it('should handle topup with promo code in metadata', async () => {
       const session = createMockCheckoutSession('payment', {
-        type: 'topup',
-        userId: 'user_promo_with_code',
         credits: '32500',
         dollarAmount: '10.00',
         packageId: 'standard',
         promo: 'LAUNCH2024',
+        type: 'topup',
+        userId: 'user_promo_with_code',
       });
 
       const request = createMockRequest('checkout.session.completed', session);
@@ -959,22 +945,22 @@ describe('Stripe Webhook Route', () => {
     // e.g. Starter: (10,000 + 2,000) * 1.15 = 13,800
     const testSubscriptionPlans = [
       {
+        expectedAmount: 5,
+        expectedCredits: 13_800, // (10,000 + 2,000) * 1.15
         name: 'Starter',
         priceId: process.env.STRIPE_SUBSCRIPTION_STARTER_PRICE_ID,
-        expectedCredits: 13_800, // (10,000 + 2,000) * 1.15
-        expectedAmount: 5,
       },
       {
+        expectedAmount: 10,
+        expectedCredits: 37_375, // (25,000 + 7,500) * 1.15
         name: 'Standard',
         priceId: process.env.STRIPE_SUBSCRIPTION_STANDARD_PRICE_ID,
-        expectedCredits: 37_375, // (25,000 + 7,500) * 1.15
-        expectedAmount: 10,
       },
       {
+        expectedAmount: 75,
+        expectedCredits: 465_750, // (300,000 + 105,000) * 1.15
         name: 'Pro',
         priceId: process.env.STRIPE_SUBSCRIPTION_PRO_PRICE_ID,
-        expectedCredits: 465_750, // (300,000 + 105,000) * 1.15
-        expectedAmount: 75,
       },
     ];
 
@@ -991,7 +977,6 @@ describe('Stripe Webhook Route', () => {
           );
           vi.mocked(stripe.subscriptions.list).mockResolvedValue({
             data: [subscription],
-            // biome-ignore lint/suspicious/noExplicitAny: Test mock data
           } as any);
 
           vi.mocked(getUserIdByStripeCustomerId).mockResolvedValue(userId);
@@ -1029,7 +1014,6 @@ describe('Stripe Webhook Route', () => {
       const customerId = 'cus_no_subs';
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       const request = createMockRequest('customer.subscription.updated', {
@@ -1057,7 +1041,6 @@ describe('Stripe Webhook Route', () => {
       vi.mocked(stripe.subscriptions.retrieve).mockResolvedValue(subscription);
       vi.mocked(stripe.subscriptions.list).mockResolvedValue({
         data: [subscription],
-        // biome-ignore lint/suspicious/noExplicitAny: Test mock data
       } as any);
 
       // User not found in database
@@ -1083,11 +1066,11 @@ describe('Stripe Webhook Route', () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({
-          tags: expect.objectContaining({
-            event_type: 'invoice_payment_succeeded',
-          }),
           extra: expect.objectContaining({
             customer_id: customerId,
+          }),
+          tags: expect.objectContaining({
+            event_type: 'invoice_payment_succeeded',
           }),
         }),
       );
@@ -1095,7 +1078,6 @@ describe('Stripe Webhook Route', () => {
     });
 
     it('should handle unrecognized event types gracefully', async () => {
-      // biome-ignore lint/suspicious/noExplicitAny: Testing unrecognized event type
       const request = createMockRequest('customer.created' as any, {
         id: 'cus_new',
       });
@@ -1116,11 +1098,11 @@ describe('Stripe Webhook Route', () => {
       );
 
       const session = createMockCheckoutSession('payment', {
-        type: 'topup',
-        userId: 'user_123',
         credits: '1000',
         dollarAmount: '10',
         packageId: 'starter',
+        type: 'topup',
+        userId: 'user_123',
       });
 
       const request = createMockRequest('checkout.session.completed', session);

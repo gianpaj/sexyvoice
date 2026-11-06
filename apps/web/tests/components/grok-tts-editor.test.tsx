@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest';
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -9,9 +10,14 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NextIntlClientProvider } from 'next-intl';
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { GrokTTSEditor } from '@/components/grok-tts-editor';
+import { TTSEditor } from '@/components/tts-editor';
+import type { TtsEditorProvider } from '@/lib/tts-editor';
+import { GROK_EMPTY_WRAPPING_TEXT } from '@/lib/tts-editor';
+import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import messages from '@/messages/en.json';
 
 const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
@@ -22,6 +28,12 @@ const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
 ] as const;
 const SUPPORTED_GROK_TAG_CHIP_SELECTOR =
   '[data-grok-instant-tag], [data-grok-wrapper-boundary-node]';
+
+const TEST_LIMIT = 5;
+// Where `onUpdate` cuts user input, and the threshold over-limit text must
+// clear for the no-clamping assertions to mean anything.
+const CLAMP_THRESHOLD = TEST_LIMIT + CHARACTERS_LIMIT_GRACE;
+const OVER_LIMIT_TEXT = 'A'.repeat(CLAMP_THRESHOLD + 5);
 
 function findEditor() {
   return screen.findByText(
@@ -42,7 +54,51 @@ function getSuggestionDecoration(editor: HTMLElement) {
   return editor.querySelector('[data-decoration-content="Filter..."]');
 }
 
+interface EditorProps {
+  charactersLimit?: number;
+  disabled?: boolean;
+  enforceCharactersLimit?: boolean;
+  onChange?: (text: string) => void;
+  placeholder?: string;
+  provider?: TtsEditorProvider;
+  selectedGrokLanguage?: string;
+  setSelectedGrokLanguage?: (text: string) => void;
+  value?: string;
+}
+
+type ResolvedEditorProps = Required<EditorProps>;
+
+function editorTree(props: ResolvedEditorProps) {
+  return (
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {props.provider === 'voxtral' ? (
+        <TTSEditor
+          charactersLimit={props.charactersLimit}
+          disabled={props.disabled}
+          enforceCharactersLimit={props.enforceCharactersLimit}
+          onChange={props.onChange}
+          placeholder={props.placeholder}
+          provider="voxtral"
+          value={props.value}
+        />
+      ) : (
+        <GrokTTSEditor
+          charactersLimit={props.charactersLimit}
+          enforceCharactersLimit={props.enforceCharactersLimit}
+          onChange={props.onChange}
+          placeholder={props.placeholder}
+          selectedGrokLanguage={props.selectedGrokLanguage}
+          setSelectedGrokLanguage={props.setSelectedGrokLanguage}
+          value={props.value}
+        />
+      )}
+    </NextIntlClientProvider>
+  );
+}
+
 function renderEditor({
+  provider = 'grok',
+  disabled = false,
   charactersLimit = 500,
   enforceCharactersLimit = true,
   onChange = vi.fn(),
@@ -50,27 +106,72 @@ function renderEditor({
   selectedGrokLanguage = 'auto',
   setSelectedGrokLanguage = vi.fn(),
   value = '',
+}: EditorProps = {}) {
+  const props: ResolvedEditorProps = {
+    provider,
+    disabled,
+    charactersLimit,
+    enforceCharactersLimit,
+    onChange,
+    placeholder,
+    selectedGrokLanguage,
+    setSelectedGrokLanguage,
+    value,
+  };
+  const rendered = render(editorTree(props));
+
+  return {
+    ...rendered,
+    // Re-renders against the same resolved props as the initial render, so a
+    // test can change one prop without silently dropping the others.
+    rerenderWith: (nextProps: EditorProps) =>
+      rendered.rerender(editorTree({ ...props, ...nextProps })),
+  };
+}
+
+// `waitFor` resolves on the first matching call, so it cannot prove a value was
+// emitted only once. Settling pending effects first makes the follow-up
+// `toHaveBeenCalledTimes` assertion catch a duplicate arriving a tick later.
+async function settleEffects() {
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
+/**
+ * A controlled parent that stores whatever the editor emits, the way
+ * `audio-generator.tsx` does. The other tests pass a bare mock that never
+ * feeds the value back, so only this harness can show that the editor's
+ * reconciliation reaches a fixed point instead of driving the parent in a
+ * loop — the failure mode this component's `emitUpdate: false` exists to stop.
+ */
+function ControlledEditorHarness({
+  externalValue,
+  onChange,
 }: {
-  charactersLimit?: number;
-  enforceCharactersLimit?: boolean;
-  onChange?: (text: string) => void;
-  placeholder?: string;
-  selectedGrokLanguage?: string;
-  setSelectedGrokLanguage?: (text: string) => void;
-  value?: string;
-} = {}) {
-  return render(
+  externalValue: string;
+  onChange: (text: string) => void;
+}) {
+  const [value, setValue] = useState('');
+
+  return (
     <NextIntlClientProvider locale="en" messages={messages}>
       <GrokTTSEditor
-        charactersLimit={charactersLimit}
-        enforceCharactersLimit={enforceCharactersLimit}
-        onChange={onChange}
-        placeholder={placeholder}
-        selectedGrokLanguage={selectedGrokLanguage}
-        setSelectedGrokLanguage={setSelectedGrokLanguage}
+        charactersLimit={500}
+        onChange={(text) => {
+          onChange(text);
+          setValue(text);
+        }}
+        placeholder={messages.generate.textAreaPlaceholder}
+        selectedGrokLanguage="auto"
+        setSelectedGrokLanguage={vi.fn()}
         value={value}
       />
-    </NextIntlClientProvider>,
+      <button onClick={() => setValue(externalValue)} type="button">
+        set external value
+      </button>
+      <output data-testid="parent-value">{value}</output>
+    </NextIntlClientProvider>
   );
 }
 
@@ -168,6 +269,29 @@ describe('GrokTTSEditor', () => {
     expect(screen.getByText('0 / 500')).toBeInTheDocument();
   });
 
+  it('shows Automatic first and English second in the language selector', async () => {
+    const user = userEvent.setup();
+    renderEditor();
+
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).toHaveTextContent(messages.generate.grok.langAutomatic);
+
+    await user.click(trigger);
+
+    const options = await screen.findAllByRole('option');
+    const optionLabels = options.map((option) => option.textContent);
+    expect(optionLabels.slice(0, 2)).toEqual([
+      messages.generate.grok.langAutomatic,
+      messages.generate.grok.langEnglish,
+    ]);
+    expect(optionLabels).toEqual(
+      expect.arrayContaining([
+        messages.generate.grok.langArabicEgypt,
+        messages.generate.grok.langArabicSaudiArabia,
+      ]),
+    );
+  });
+
   it('renders multiline paragraphs in the ProseMirror editor', async () => {
     const onChange = vi.fn();
 
@@ -190,6 +314,193 @@ describe('GrokTTSEditor', () => {
     expect(editor).toHaveTextContent('Line two');
     expect(screen.getByText('17 / 500')).toBeInTheDocument();
   });
+
+  it('synchronizes an external value without emitting onChange', async () => {
+    const onChange = vi.fn();
+    const rendered = renderEditor({ onChange, value: 'Initial value' });
+    const editor = await findEditor();
+
+    onChange.mockClear();
+    rendered.rerenderWith({ value: 'External value' });
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent('External value');
+      expect(screen.getByText('14 / 500')).toBeInTheDocument();
+    });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('reports the normalized text when an external value does not survive the editor round trip', async () => {
+    const onChange = vi.fn();
+    // Serialization strips GROK_EMPTY_WRAPPING_TEXT wherever it appears, so
+    // this 11-character value renders as a 10-character document.
+    const externalValue = `Hello${GROK_EMPTY_WRAPPING_TEXT}world`;
+    const rendered = renderEditor({ onChange, value: 'Initial value' });
+
+    await findEditor();
+    onChange.mockClear();
+    rendered.rerenderWith({ value: externalValue });
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('Helloworld');
+    });
+    await settleEffects();
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      '10 / 500',
+    );
+  });
+
+  it('settles after one emission when a controlled parent stores the result', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <ControlledEditorHarness
+        externalValue={`Hello${GROK_EMPTY_WRAPPING_TEXT}world`}
+        onChange={onChange}
+      />,
+    );
+
+    await findEditor();
+    await user.click(
+      screen.getByRole('button', { name: 'set external value' }),
+    );
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith('Helloworld');
+    });
+    await settleEffects();
+
+    // The parent now holds exactly what the editor contains, so the next pass
+    // takes the `current === value` early return rather than emitting again.
+    // A second emission here would mean the reconciliation never converges.
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('parent-value')).toHaveTextContent('Helloworld');
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      '10 / 500',
+    );
+  });
+
+  // External over-limit text stays visible until the user edits it.
+  it('applies an over-limit external value without clamping it', async () => {
+    const onChange = vi.fn();
+    const rendered = renderEditor({
+      charactersLimit: TEST_LIMIT,
+      onChange,
+      value: '',
+    });
+    const editor = await findEditor();
+
+    onChange.mockClear();
+    rendered.rerenderWith({ value: OVER_LIMIT_TEXT });
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent(OVER_LIMIT_TEXT);
+    });
+    await settleEffects();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      `${OVER_LIMIT_TEXT.length} / ${TEST_LIMIT}`,
+    );
+  });
+
+  it('clamps typed text after the character limit grace range', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const allowedText = 'A'.repeat(CLAMP_THRESHOLD);
+
+    renderEditor({ charactersLimit: TEST_LIMIT, onChange });
+
+    const editor = await findEditor();
+    await user.type(editor, `${allowedText}BBBBB`);
+
+    expect(editor).toHaveTextContent(allowedText);
+    expect(onChange).toHaveBeenCalledWith(allowedText);
+    expect(
+      onChange.mock.calls.every(([text]) => text.length <= CLAMP_THRESHOLD),
+    ).toBe(true);
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      `${CLAMP_THRESHOLD} / ${TEST_LIMIT}`,
+    );
+    expect(screen.getByTestId('generate-character-count')).toHaveClass(
+      'text-red-500',
+    );
+  });
+
+  it('clamps over-limit text on the first edit after enforcement resumes', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const longText = `${'A'.repeat(CLAMP_THRESHOLD + 4)}Z`;
+    const rendered = renderEditor({
+      charactersLimit: TEST_LIMIT,
+      enforceCharactersLimit: false,
+      onChange,
+      value: longText,
+    });
+    const editor = await findEditor();
+
+    rendered.rerenderWith({ enforceCharactersLimit: true });
+
+    expect(editor).toHaveTextContent(longText);
+    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
+      `${longText.length} / ${TEST_LIMIT}`,
+    );
+
+    editor.focus();
+    selectEditorText(editor, 'Z');
+    await user.keyboard('{Backspace}');
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenLastCalledWith('A'.repeat(CLAMP_THRESHOLD));
+    });
+    expect(editor).toHaveTextContent('A'.repeat(CLAMP_THRESHOLD));
+  });
+
+  it('emits one clamped value when pasted text exceeds the character limit', async () => {
+    const onChange = vi.fn();
+    const pastedText = OVER_LIMIT_TEXT;
+    const clampedText = 'A'.repeat(CLAMP_THRESHOLD);
+
+    renderEditor({ charactersLimit: TEST_LIMIT, onChange });
+
+    const editor = await findEditor();
+    onChange.mockClear();
+    pasteIntoEditor(editor, pastedText);
+
+    await waitFor(() => {
+      expect(editor).toHaveTextContent(clampedText);
+      expect(onChange).toHaveBeenCalledWith(clampedText);
+    });
+    await settleEffects();
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['\n', '\r\n', '\r'])(
+    'normalizes %j line endings while pasting Grok tags',
+    async (lineEnding) => {
+      const onChange = vi.fn();
+      const pastedText = 'First line\n[pause]\n<soft>Third line</soft>';
+
+      renderEditor({ onChange });
+
+      const editor = await findEditor();
+
+      pasteIntoEditor(editor, pastedText.replaceAll('\n', lineEnding));
+
+      await waitFor(() => {
+        expect(onChange).toHaveBeenLastCalledWith(pastedText);
+      });
+      expect(
+        Array.from(editor.querySelectorAll('p')).map(
+          (paragraph) => paragraph.textContent,
+        ),
+      ).toEqual(['First line', '[pause]', '<soft>Third line</soft>']);
+      expect(
+        editor.querySelectorAll(SUPPORTED_GROK_TAG_CHIP_SELECTOR),
+      ).toHaveLength(3);
+    },
+  );
 
   it('opens the effects popover and shows available effect actions', async () => {
     const user = userEvent.setup();
@@ -322,18 +633,7 @@ describe('GrokTTSEditor', () => {
     const editor = await findEditor();
     selectEditorText(editor, 'world');
 
-    rendered.rerender(
-      <NextIntlClientProvider locale="en" messages={messages}>
-        <GrokTTSEditor
-          charactersLimit={500}
-          onChange={onChange}
-          placeholder={messages.generate.textAreaPlaceholder}
-          selectedGrokLanguage="auto"
-          setSelectedGrokLanguage={vi.fn()}
-          value="Hi"
-        />
-      </NextIntlClientProvider>,
-    );
+    rendered.rerenderWith({ value: 'Hi' });
 
     await waitFor(() => {
       expect(editor).toHaveTextContent('Hi');
@@ -543,7 +843,34 @@ describe('GrokTTSEditor', () => {
       expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
     expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
-    expect(onChange).toHaveBeenLastCalledWith('');
+    expect(editor).toHaveTextContent('[');
+    expect(onChange).toHaveBeenLastCalledWith('[');
+  });
+
+  it('dismisses the < suggestion menu and Filter decoration on Escape', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    renderEditor({ onChange });
+
+    const editor = await findEditor();
+
+    await openSuggestionMenu(user, editor, '<');
+
+    const listbox = await screen.findByRole('listbox');
+    expect(
+      within(listbox).getByRole('button', { name: 'soft' }),
+    ).toBeInTheDocument();
+    expect(getSuggestionDecoration(editor)).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+    expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
+    expect(editor).toHaveTextContent('<');
+    expect(onChange).toHaveBeenLastCalledWith('<');
   });
 
   it('keeps page focus in the suggestion menu when navigating with ArrowDown', async () => {
@@ -729,6 +1056,57 @@ describe('GrokTTSEditor', () => {
     expect(onChange).toHaveBeenLastCalledWith('Hello <emphasis>');
   });
 
+  it.each([
+    {
+      closingKey: '{]}',
+      completeText: 'Hello [breath]',
+      name: 'instant tag',
+      partialText: 'Hello [breath',
+      selector: '[data-grok-instant-tag][tag="[breath]"]',
+    },
+    {
+      closingKey: '>',
+      completeText: 'Hello <emphasis>',
+      name: 'wrapper tag',
+      partialText: 'Hello <emphasis',
+      selector:
+        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<emphasis>"]',
+    },
+  ])(
+    'undoes and redoes $name conversion',
+    async ({ closingKey, completeText, partialText, selector }) => {
+      const user = userEvent.setup({ pointerEventsCheck: 0 });
+      const onChange = vi.fn();
+
+      renderEditor({ onChange, value: partialText });
+
+      const editor = await findEditor();
+
+      await user.click(editor);
+      placeCaretAtEnd(editor);
+      await user.keyboard(closingKey);
+
+      await waitFor(() => {
+        expect(editor.querySelector(selector)).toBeInTheDocument();
+        expect(onChange).toHaveBeenLastCalledWith(completeText);
+      });
+
+      await user.keyboard('{Control>}z{/Control}');
+
+      await waitFor(() => {
+        expect(editor.querySelector(selector)).not.toBeInTheDocument();
+        expect(onChange).toHaveBeenLastCalledWith(partialText);
+      });
+
+      await user.keyboard('{Control>}y{/Control}');
+
+      await waitFor(() => {
+        expect(editor.querySelector(selector)).toBeInTheDocument();
+        expect(onChange).toHaveBeenLastCalledWith(completeText);
+      });
+    },
+  );
+
   it('does not open the < suggestion flow when typing < before existing partial wrapper text', async () => {
     const user = userEvent.setup({ pointerEventsCheck: 0 });
     const onChange = vi.fn();
@@ -792,6 +1170,146 @@ describe('GrokTTSEditor', () => {
     ).toBeInTheDocument();
     expect(editor).toHaveTextContent(
       '<soft>Oh baby... </soft> [inhale] [sigh] <build-intensity>yes</build-intensity>',
+    );
+  });
+});
+
+describe('Voxtral TTSEditor', () => {
+  it('preserves unsupported tags when pasting HTML chips from Grok', async () => {
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange });
+    const editor = await findEditor();
+    fireEvent.focus(editor);
+    fireEvent.paste(editor, {
+      clipboardData: {
+        getData: (type: string) =>
+          type === 'text/html'
+            ? '<p><span data-grok-instant-tag="" tag="[pause]">[pause]</span> Hello</p>'
+            : '[pause] Hello',
+        types: ['text/plain', 'text/html'],
+      },
+    });
+    await waitFor(() =>
+      expect(onChange).toHaveBeenLastCalledWith('[pause] Hello'),
+    );
+    expect(
+      editor.querySelector('[data-grok-instant-tag]'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows Voxtral groups without Grok language or wrapper controls', async () => {
+    const user = userEvent.setup();
+    renderEditor({ provider: 'voxtral' });
+    await findEditor();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    );
+    for (const name of [
+      messages.ttsEditor.emotions,
+      messages.ttsEditor.pace,
+      messages.ttsEditor.vocalSounds,
+    ]) {
+      expect(screen.getByRole('heading', { name })).toBeInTheDocument();
+    }
+    expect(
+      screen.getByRole('button', { name: '[emotion=sarcastic]' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '[pace=very-slow]' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: '[throat clearing]' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: '[pause]' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', {
+        name: messages.generate.grok.wrappingEffectPlaceholder,
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each(['\n', '\r\n', '\r'])(
+    'normalizes %j line endings while pasting Voxtral tags',
+    async (lineEnding) => {
+      const onChange = vi.fn();
+      const text =
+        "[emotion=sarcastic] I don't need diamonds, darling.\n[pace=slow][sigh] I need stable Wi-Fi and a nap";
+      renderEditor({ provider: 'voxtral', onChange });
+      const editor = await findEditor();
+      pasteIntoEditor(editor, text.replaceAll('\n', lineEnding));
+      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(text));
+      expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(
+        3,
+      );
+    },
+  );
+
+  it('inserts an emotion at the caret without a closing tag', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange, value: 'Hello ' });
+    const editor = await findEditor();
+    placeCaretAtEnd(editor);
+    await user.click(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: '[emotion=sarcastic]' }),
+    );
+    expect(onChange).toHaveBeenLastCalledWith('Hello [emotion=sarcastic]');
+  });
+
+  it('filters autocomplete by the full emotion syntax', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange });
+    const editor = await findEditor();
+    await openSuggestionMenu(user, editor, '[');
+    await user.keyboard('emotion=sarc');
+    await user.click(
+      await screen.findByRole('button', { name: 'emotion=sarcastic' }),
+    );
+    expect(onChange).toHaveBeenLastCalledWith('[emotion=sarcastic]');
+  });
+
+  it('does not insert a tag that exceeds the character limit', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderEditor({ provider: 'voxtral', onChange, charactersLimit: 10 });
+    await findEditor();
+    await user.click(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: '[emotion=sarcastic]' }),
+    );
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('disables editing and tag insertion while generation is pending', async () => {
+    renderEditor({ provider: 'voxtral', disabled: true });
+    const editor = await findEditor();
+    await waitFor(() =>
+      expect(editor).toHaveAttribute('contenteditable', 'false'),
+    );
+    expect(
+      screen.getByRole('button', { name: messages.ttsEditor.effects }),
+    ).toBeDisabled();
+  });
+
+  it('reconfigures tags when switching providers without losing input', async () => {
+    const text = '[emotion=sarcastic] Hi [pause]';
+    const { rerenderWith } = renderEditor({ provider: 'voxtral', value: text });
+    let editor = await findEditor();
+    expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(1);
+    rerenderWith({ provider: 'grok', value: text });
+    editor = await findEditor();
+    expect(editor).toHaveTextContent(text);
+    expect(editor.querySelector('[data-grok-instant-tag]')).toHaveTextContent(
+      '[pause]',
     );
   });
 });

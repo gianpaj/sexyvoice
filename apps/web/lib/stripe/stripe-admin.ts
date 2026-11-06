@@ -1,3 +1,4 @@
+// biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 import Stripe from 'stripe';
 
@@ -44,11 +45,11 @@ export async function createOrRetrieveCustomer(
       );
       console.error(`[STRIPE ADMIN] ${error.message}`);
       captureException(error, {
-        user: { id: userId, email },
         extra: {
           customerId: customer.id,
           metadataUuid,
         },
+        user: { email, id: userId },
       });
       throw error;
     }
@@ -61,11 +62,11 @@ export async function createOrRetrieveCustomer(
         Sentry.captureMessage(
           `Updated metadata for Stripe customer ${customer.id} to link to Supabase user ${userId}.`,
           {
-            level: 'info',
-            user: { id: userId, email },
             extra: {
               customerId: customer.id,
             },
+            level: 'info',
+            user: { email, id: userId },
           },
         );
       } catch (error) {
@@ -74,16 +75,18 @@ export async function createOrRetrieveCustomer(
           error,
         );
         captureException(error, {
-          user: { id: userId, email },
           extra: {
             customerId: customer.id,
           },
+          user: { email, id: userId },
         });
         throw error;
       }
     }
 
-    await updateStripeId(userId, customer.id);
+    if (customer.id !== existingStripeId) {
+      await updateStripeId(userId, customer.id);
+    }
     return customer.id;
   };
 
@@ -96,9 +99,9 @@ export async function createOrRetrieveCustomer(
         const error = new Error(`Stripe customer ${customerId} is deleted.`);
         console.error(`[STRIPE ADMIN] ${error.message}`);
         Sentry.captureMessage(error.message, {
-          level: 'warning',
-          user: { id: userId, email },
           extra: { customerId },
+          level: 'warning',
+          user: { email, id: userId },
         });
         return null;
       }
@@ -109,8 +112,8 @@ export async function createOrRetrieveCustomer(
         error,
       );
       captureException(error, {
-        user: { id: userId, email },
         extra: { customerId },
+        user: { email, id: userId },
       });
       return null;
     }
@@ -134,9 +137,9 @@ export async function createOrRetrieveCustomer(
     );
     console.warn(`[STRIPE ADMIN] ${error.message}`);
     logger.warn('Multiple Stripe customers found for Supabase user', {
-      user: { id: userId, email },
       customerCount: customersResults.data.length,
       customerIds: customersResults.data.map((customer) => customer.id),
+      user: { email, id: userId },
     });
   }
 
@@ -155,9 +158,9 @@ export async function createOrRetrieveCustomer(
     );
     console.warn(error.message);
     logger.warn('Multiple Stripe customers found for email', {
-      user: { id: userId, email },
       customerCount: customers.data.length,
       customerIds: customers.data.map((customer) => customer.id),
+      user: { email, id: userId },
     });
   }
 
@@ -191,10 +194,18 @@ export async function createOrRetrieveCustomer(
 // Helper function to update stripe_id in database
 const updateStripeId = async (userId: string, stripeId: string) => {
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from('profiles')
     .update({ stripe_id: stripeId })
     .eq('id', userId);
+
+  if (error) {
+    captureException(error, {
+      extra: { customerId: stripeId },
+      user: { id: userId },
+    });
+    throw error;
+  }
 };
 
 async function hasMatchingSubscriptionHistory(
@@ -244,6 +255,38 @@ export function hasAnySubscriptionHistory(
   return hasMatchingSubscriptionHistory(customerId, () => true);
 }
 
+export function hasOngoingSubscription(
+  customerId: string | null | undefined,
+): Promise<boolean> {
+  return hasMatchingSubscriptionHistory(
+    customerId,
+    (subscription) =>
+      subscription.status !== 'canceled' &&
+      subscription.status !== 'incomplete_expired',
+  );
+}
+
+export async function expireOpenCheckoutSessions(customerId: string) {
+  let startingAfter: string | undefined;
+  while (true) {
+    const sessions = await stripe.checkout.sessions.list({
+      customer: customerId,
+      limit: 100,
+      status: 'open',
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+
+    for (const session of sessions.data) {
+      // If checkout completes concurrently, expiration fails and deletion stops.
+      await stripe.checkout.sessions.expire(session.id);
+    }
+
+    if (!sessions.has_more) return;
+    startingAfter = sessions.data.at(-1)?.id;
+    if (!startingAfter) throw new Error('Checkout session pagination failed');
+  }
+}
+
 export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
   try {
     const coupon = await stripe.coupons.retrieve(couponId);
@@ -255,12 +298,12 @@ export async function isStripeCouponUsable(couponId: string): Promise<boolean> {
     return coupon.valid;
   } catch (error) {
     captureException(error, {
-      tags: {
-        section: 'stripe_admin',
-        event_type: 'coupon_validation_error',
-      },
       extra: {
         coupon_id: couponId,
+      },
+      tags: {
+        event_type: 'coupon_validation_error',
+        section: 'stripe_admin',
       },
     });
     return false;
@@ -273,9 +316,9 @@ export async function refreshCustomerSubscriptionData(
   try {
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
+      expand: ['data.default_payment_method'],
       limit: 1,
       status: 'all',
-      expand: ['data.default_payment_method'],
     });
 
     if (subscriptions.data.length === 0) {
@@ -286,12 +329,9 @@ export async function refreshCustomerSubscriptionData(
 
     const subscription = subscriptions.data[0];
     const subData: CustomerData = {
-      subscriptionId: subscription.id,
-      status: subscription.status,
-      priceId: subscription.items.data[0].price.id,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       currentPeriodEnd: subscription.current_period_end,
       currentPeriodStart: subscription.current_period_start,
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
       paymentMethod:
         subscription.default_payment_method &&
         typeof subscription.default_payment_method !== 'string'
@@ -300,6 +340,9 @@ export async function refreshCustomerSubscriptionData(
               last4: subscription.default_payment_method.card?.last4 ?? null,
             }
           : null,
+      priceId: subscription.items.data[0].price.id,
+      status: subscription.status,
+      subscriptionId: subscription.id,
     };
 
     await setCustomerData(customerId, subData);
@@ -312,8 +355,8 @@ export async function refreshCustomerSubscriptionData(
     );
     const userId = await getUserIdByStripeCustomerId(customerId);
     captureException(error, {
-      user: userId ? { id: userId } : undefined,
       extra: { customerId },
+      user: userId ? { id: userId } : undefined,
     });
     throw error;
   }

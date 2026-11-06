@@ -23,12 +23,12 @@ export class AudioDecodeError extends Error {
   constructor(format: SupportedAudioFormat, cause: unknown) {
     super(
       `Failed to decode ${format} audio. Please upload a valid audio file.`,
+      { cause },
     );
     this.name = 'AudioDecodeError';
     this.decoderMessage =
       cause instanceof Error ? cause.message : 'Unknown decoder error';
     this.format = format;
-    this.cause = cause;
   }
 }
 
@@ -396,7 +396,7 @@ export async function convertToWav(
         let opusResult: DecodedAudio | null = null;
         try {
           opusResult = await decodeOggOpus(audioData);
-        } catch (_opusError) {
+        } catch {
           // fall through to Vorbis below
         }
         if (
@@ -421,7 +421,8 @@ export async function convertToWav(
 
     validateDecodedAudio(decoded, format);
   } catch (error) {
-    throw new AudioDecodeError(format, error);
+    const decodeError = new AudioDecodeError(format, error);
+    throw decodeError;
   }
 
   // Interleave channels if stereo/multi-channel

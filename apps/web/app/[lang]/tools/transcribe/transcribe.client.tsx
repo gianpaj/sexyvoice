@@ -100,10 +100,10 @@ export default function TranscribeClient({ lang }: Props) {
     transcriber.state === 'loading' || transcriber.state === 'transcribing';
 
   const buttonLabel: Record<string, string> = {
-    loading: t('loadingModel'),
-    transcribing: t('transcribing'),
-    ready: t('transcribeButton'),
     idle: t('loadAndTranscribe'),
+    loading: t('loadingModel'),
+    ready: t('transcribeButton'),
+    transcribing: t('transcribing'),
   };
 
   const handleTimeUpdate = (time: number) => {
@@ -119,25 +119,25 @@ export default function TranscribeClient({ lang }: Props) {
           style={{ height: '28px' }}
         >
           {[
-            { key: 'hero-wave-1', height: 10, delay: '0s' },
-            { key: 'hero-wave-2', height: 18, delay: '0.09s' },
-            { key: 'hero-wave-3', height: 26, delay: '0.18s' },
-            { key: 'hero-wave-4', height: 14, delay: '0.27s' },
-            { key: 'hero-wave-5', height: 28, delay: '0.36s' },
-            { key: 'hero-wave-6', height: 20, delay: '0.45s' },
-            { key: 'hero-wave-7', height: 24, delay: '0.54s' },
-            { key: 'hero-wave-8', height: 12, delay: '0.63s' },
-            { key: 'hero-wave-9', height: 22, delay: '0.72s' },
-            { key: 'hero-wave-10', height: 16, delay: '0.81s' },
-            { key: 'hero-wave-11', height: 28, delay: '0.9s' },
-            { key: 'hero-wave-12', height: 18, delay: '0.99s' },
+            { delay: '0s', height: 10, key: 'hero-wave-1' },
+            { delay: '0.09s', height: 18, key: 'hero-wave-2' },
+            { delay: '0.18s', height: 26, key: 'hero-wave-3' },
+            { delay: '0.27s', height: 14, key: 'hero-wave-4' },
+            { delay: '0.36s', height: 28, key: 'hero-wave-5' },
+            { delay: '0.45s', height: 20, key: 'hero-wave-6' },
+            { delay: '0.54s', height: 24, key: 'hero-wave-7' },
+            { delay: '0.63s', height: 12, key: 'hero-wave-8' },
+            { delay: '0.72s', height: 22, key: 'hero-wave-9' },
+            { delay: '0.81s', height: 16, key: 'hero-wave-10' },
+            { delay: '0.9s', height: 28, key: 'hero-wave-11' },
+            { delay: '0.99s', height: 18, key: 'hero-wave-12' },
           ].map((wave) => (
             <div
               className="wave-bar"
               key={wave.key}
               style={{
-                height: `${wave.height}px`,
                 animationDelay: wave.delay,
+                height: `${wave.height}px`,
               }}
             />
           ))}

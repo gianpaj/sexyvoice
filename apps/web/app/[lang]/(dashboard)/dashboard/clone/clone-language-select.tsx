@@ -16,17 +16,16 @@ import type { CloneStateAction } from './clone-state';
 export interface SupportedLocale {
   code: string;
   name: string;
-  value: string;
 }
 
 export function CloneLanguageSelect({
   disabled,
-  selectedLocale,
+  selectedLocaleCode,
   supportedLocales,
   dispatch,
 }: {
   disabled: boolean;
-  selectedLocale: { code: string; value: string };
+  selectedLocaleCode: string;
   supportedLocales: SupportedLocale[];
   dispatch: Dispatch<CloneStateAction>;
 }) {
@@ -39,17 +38,13 @@ export function CloneLanguageSelect({
         disabled={disabled}
         onValueChange={(code) =>
           dispatch({
-            type: 'patch',
             patch: {
-              selectedLocale: {
-                code,
-                value:
-                  supportedLocales.find((c) => c.code === code)?.value || '',
-              },
+              selectedLocaleCode: code,
             },
+            type: 'patch',
           })
         }
-        value={selectedLocale.code}
+        value={selectedLocaleCode}
       >
         <SelectTrigger
           className="w-32"

@@ -27,9 +27,9 @@ export interface GenerationSettings {
 
 export const DEFAULT_GENERATION_SETTINGS: GenerationSettings = {
   seed: null,
+  speed: null,
   streamMode: 'auto',
   temperature: null,
-  speed: null,
 };
 
 const STORAGE_KEY = 'generation-settings';
@@ -66,5 +66,5 @@ export function useGenerationSettings(): UseGenerationSettingsResult {
 
   const resetSettings = () => setStored(DEFAULT_GENERATION_SETTINGS);
 
-  return { settings, updateSettings, resetSettings };
+  return { resetSettings, settings, updateSettings };
 }

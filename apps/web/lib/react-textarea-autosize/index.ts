@@ -1,5 +1,5 @@
-import calculateNodeHeight from './calculateNodeHeight';
-import getSizingData from './getSizingData';
+import calculateNodeHeight from './calculate-node-height';
+import getSizingData from './get-sizing-data';
 
 export function resizeTextarea(
   textarea: HTMLTextAreaElement | null,

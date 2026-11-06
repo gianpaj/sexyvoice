@@ -27,12 +27,12 @@ export function GET() {
   };
 
   return new Response(JSON.stringify(catalog), {
-    status: 200,
     headers: {
-      'Content-Type': 'application/linkset+json',
       'Cache-Control': 'public, max-age=0, s-maxage=86400',
       'CDN-Cache-Control': 'public, s-maxage=86400',
+      'Content-Type': 'application/linkset+json',
       'Vercel-CDN-Cache-Control': 'public, s-maxage=86400',
     },
+    status: 200,
   });
 }

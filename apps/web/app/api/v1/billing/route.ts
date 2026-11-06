@@ -83,9 +83,9 @@ export async function GET(request: Request) {
     return jsonWithRateLimitHeaders(
       {
         creditsLeft: creditsData?.amount ?? 0,
+        lastBillingTransaction: lastTransaction,
         lastUpdated: creditsData?.updated_at ?? null,
         userId: authResult.userId,
-        lastBillingTransaction: lastTransaction,
       },
       { status: 200 },
       rateLimit,
@@ -94,8 +94,8 @@ export async function GET(request: Request) {
   } catch (error) {
     captureException(error, {
       extra: {
-        requestId,
         endpoint: '/api/v1/billing',
+        requestId,
         userId: authResult.userId,
       },
     });

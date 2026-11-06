@@ -1,56 +1,118 @@
 # Architecture Overview
 
-This document outlines the high-level architecture of **SexyVoice.ai** and how data flows through the system.
+SexyVoice.ai is a pnpm/Turborepo monorepo for AI speech generation, voice
+cloning, and real-time AI voice calls. The product uses a credit ledger across
+the dashboard, external API, and LiveKit call agent.
 
-> For detailed development guidelines, see [AGENTS.md](./AGENTS.md).
-> For setup instructions and features, see [README.md](./README.md).
+> See [AGENTS.md](./AGENTS.md) for development rules,
+> [README.md](./README.md) for local setup, and
+> [docs/devops.md](./docs/devops.md) for deployment and environment details.
 
-## Overview
+## System Shape
 
-SexyVoice.ai is a modern AI voice generation platform built with Next.js, TypeScript, and Supabase. The platform enables users to generate AI voices, clone voices, and manage a library of generated audio content using a credit-based system with support for 20+ languages.
+```mermaid
+flowchart LR
+    Browser["Browser dashboard"] --> Web["Next.js web app"]
+    Client["External API client"] --> V1["/api/v1 routes"]
+    Web --> SessionRoutes["Session-authenticated API routes"]
+    Web --> Token["/api/call-token"]
+    SessionRoutes --> Providers["Google, xAI, Replicate, Mistral, fal.ai"]
+    V1 --> Providers
+    SessionRoutes --> Redis["Upstash Redis"]
+    Providers --> R2["Cloudflare R2"]
+    SessionRoutes --> Supabase["Supabase Auth + PostgreSQL"]
+    V1 --> Supabase
+    Token --> LiveKit["LiveKit room"]
+    LiveKit --> Agent["sexycall agent<br/>Grok realtime or Inworld/Mistral TTS"]
+    Agent --> Supabase
+    Supabase --> Analysis["Call-analysis webhook"]
+    Analysis --> XAI["xAI structured analysis"]
+    Stripe["Stripe"] --> Webhooks["Stripe webhooks"]
+    Webhooks --> Supabase
+```
 
-## Key Components
+The repository has three main workspaces:
 
-- **Next.js App Router** – React framework with Server Components (RSCs), Suspense, and Server Actions
-- **Supabase** – Authentication (OAuth with Google) and PostgreSQL database with SSR support
-- **Replicate** – AI voice generation from text (pre-made voices and voice cloning)
-- **fal.ai** – Alternative voice cloning service _(optional)_
-- **Google Generative AI** – Text-to-speech via Gemini 2.5 Pro/Flash TTS and Gemini 3.1 Flash TTS, text enhancement, and automatic emotion tagging
-- **xAI Grok** – Text-to-speech via Grok TTS API with multi-language support (mp3/wav output); also analyzes completed call transcripts into structured summaries
-- **LiveKit** – Real-time voice communication with WebRTC for AI voice calls
-- **Cloudflare R2** – Scalable storage for generated audio files; two buckets: `R2_BUCKET_NAME` (dashboard) and `R2_SPEECH_API_BUCKET_NAME` (external API)
-- **Upstash Redis** – High-performance caching for audio URLs (dashboard/clone flows); rate limiting for external API keys
-- **Vercel Edge Config** – Dynamic configuration for call instructions and presets
-- **Stripe** – Payment processing, credit top-ups, subscription management
-- **Sentry** – Error tracking and performance monitoring
-- **PostHog** – Product analytics and feature flags
-- **Axiom** – Structured request logging for external API routes
-- **Inngest** – Background job processing and scheduled tasks
-- **External REST API** – `/api/v1/*` with HMAC-keyed API keys, rate limiting, and OpenAPI 3.1 spec
+- `apps/web` contains the Next.js 16 and React 19 product, route handlers,
+  Supabase migrations, Vitest tests, and Playwright tests.
+- `apps/docs` contains the Fumadocs site deployed at `docs.sexyvoice.ai`.
+- `scripts` contains operational analysis, backfill, refund, and maintenance
+  tools.
+
+## Runtime Components
+
+- **Next.js App Router** renders the localized product and runs server
+  components, server actions, and route handlers.
+- **Supabase** provides Google OAuth, PostgreSQL, RLS-protected user data, and
+  privileged server access through `SUPABASE_SECRET_KEY`.
+- **Google Generative AI** provides Gemini 2.5 and Gemini 3.1 TTS, text
+  enhancement, and emotion tagging.
+- **xAI** provides Grok TTS, the real-time call model, and structured call
+  transcript analysis.
+- **Replicate** runs Orpheus TTS and Chatterbox Multilingual voice cloning.
+- **Mistral** runs Voxtral voice cloning for its supported locales.
+- **fal.ai** optionally cleans voice-cloning reference audio with
+  `fal-ai/deepfilternet3` before cloning.
+- **LiveKit** carries WebRTC audio and dispatches the external `sexycall`
+  agent.
+- **Cloudflare R2** stores generated audio. Dashboard output uses
+  `R2_BUCKET_NAME`; `/api/v1/speech` uses `R2_SPEECH_API_BUCKET_NAME`.
+- **Upstash Redis** caches dashboard TTS and cloned output and rate-limits
+  external API keys.
+- **Vercel Edge Config** supplies default call instructions. Character prompts
+  come from PostgreSQL and are resolved again when the server mints a token.
+- **Stripe** manages subscriptions, top-ups, and credit purchases.
+- **Sentry**, **PostHog**, and **Axiom** provide error tracking, product
+  analytics, and external API request logs.
+
+## Provider and Model Map
+
+| Feature                  | Public or stored ID                                       | Runtime provider/model                                                   | Notes                                                                     |
+| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dashboard TTS            | `gpro`                                                    | Paid: `gemini-2.5-pro-preview-tts`; free: `gemini-2.5-flash-preview-tts` | Paid Pro failures fall back to Gemini 2.5 Flash                           |
+| External API TTS         | `gpro`                                                    | `gemini-2.5-pro-preview-tts`                                             | Always generates fresh audio; falls back to Gemini 2.5 Flash              |
+| Dashboard and API TTS    | `gpro31`                                                  | `gemini-3.1-flash-tts-preview`                                           | Falls back to Gemini 2.5 Flash; dashboard streaming is currently disabled |
+| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                              | Supports MP3/WAV and a `0.7`–`1.5` speed setting                          |
+| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                        | External API aliases supported Orpheus model paths to `orpheus`           |
+| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual      | See the cloning locale table below                                        |
+| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                        | Built-in voices use Grok; saved voices select their provider              |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                       | Async; queued by the webhook, drained by a cron                           |
 
 ## External REST API
 
 Base path: `/api/v1/`
 
-The external API allows third-party integrations to generate speech programmatically using API keys.
+The external API lets third-party clients generate speech with API keys. It
+does not share the dashboard's Redis audio cache; every speech request creates
+fresh audio in the external API R2 bucket.
 
 ### Authentication
 
-All endpoints except `GET /api/v1/openapi` require an `Authorization: Bearer sk_live_…` header. Keys are stored as HMAC-SHA256 hashes (`API_KEY_HMAC_SECRET`) — the raw key is shown only once at creation. Keys are managed via `/api/api-keys` (requires paid account, max 10 active keys).
+All endpoints except `GET /api/v1/openapi` require
+`Authorization: Bearer sk_live_…`. The application stores HMAC-SHA256 hashes,
+never raw keys, and displays a raw key only when it is created. API key
+creation requires a paid account and allows at most 10 active keys per user.
+
+`GET /auth.md` serves the public agent credential provisioning guide from
+`apps/web/public/auth.md` with a `text/markdown` content type. The proxy excludes
+this root path from locale routing and session checks. It documents dashboard
+API-key provisioning; the external API does not issue OAuth tokens.
 
 ### Endpoints
 
-| Method | Path              | Description                                    |
-| ------ | ----------------- | ---------------------------------------------- |
-| `POST` | `/api/v1/speech`  | Generate speech audio (always fresh, no cache) |
-| `GET`  | `/api/v1/voices`  | List available public TTS voices               |
-| `GET`  | `/api/v1/models`  | List available model catalog                   |
-| `GET`  | `/api/v1/billing` | Get credit balance and last transaction        |
-| `GET`  | `/api/v1/openapi` | OpenAPI 3.1 spec (public, no auth required)    |
+| Method | Path              | Description                                             |
+| ------ | ----------------- | ------------------------------------------------------- |
+| `POST` | `/api/v1/speech`  | Generate fresh speech audio                             |
+| `GET`  | `/api/v1/voices`  | List public TTS voices and their model IDs              |
+| `GET`  | `/api/v1/models`  | List the `gpro`, `gpro31`, `xai`, and `orpheus` catalog |
+| `GET`  | `/api/v1/billing` | Return the credit balance and latest transaction        |
+| `GET`  | `/api/v1/openapi` | Return the public OpenAPI 3.1 document                  |
+
+Clients may select speech voices by `voiceId`, or by the `voice` and `model`
+pair. Request and response schemas live in `apps/web/lib/api/schemas.ts` and
+feed the OpenAPI generator.
 
 ### Error Shape
-
-All errors follow a consistent nested structure:
 
 ```json
 {
@@ -63,364 +125,704 @@ All errors follow a consistent nested structure:
 }
 ```
 
-### Rate Limiting
+Authenticated endpoints use a 60-request-per-minute token bucket keyed by API
+key hash. Responses include `X-RateLimit-Limit-Requests`,
+`X-RateLimit-Remaining-Requests`, `X-RateLimit-Reset-Requests`, and a
+`req_sv_`-prefixed `request-id`.
 
-60 requests/minute per API key. Every response includes:
-
-- `X-RateLimit-Limit-Requests`
-- `X-RateLimit-Remaining-Requests`
-- `X-RateLimit-Reset-Requests`
-- `request-id` — prefixed `req_sv_` UUID for tracing
-
-### External API Speech Generation Flow
+### Speech Flow
 
 ```mermaid
 flowchart TD
-    A[POST /api/v1/speech] --> B[Validate Bearer token]
-    B -->|Invalid| Z1[401 invalid_api_key]
-    B -->|Valid| C[Check rate limit]
-    C -->|Exceeded| Z2[429 rate_limit_exceeded]
-    C -->|OK| D[Validate request body with Zod]
-    D -->|Invalid| Z3[400 validation_error]
-    D -->|Valid| E[Lookup voice by name — admin client]
-    E -->|Not found| Z4[404 voice_not_found]
-    E -->|Found| F[Check model compatibility + text length]
-    F -->|Invalid| Z5[400 Bad request]
-    F -->|OK| G[Fetch credit balance — admin client]
-    G -->|Insufficient| Z6[402 insufficient_credits]
-    G -->|Sufficient| H{Model?}
-    H -->|gpro| I[Gemini 2.5 Pro TTS → fallback Flash]
-    H -->|gpro31| I2[Gemini 3.1 Flash TTS → fallback Flash]
-    H -->|grok| J2[xAI Grok TTS — mp3 or wav]
-    H -->|orpheus| J[Replicate Orpheus model]
-    I --> K[Upload to R2_SPEECH_API_BUCKET]
-    J2 --> K
-    J --> K
-    K --> L[Deduct credits — admin client]
-    L --> M[Save audio_file + insert usage_event]
-    M --> N[200 url + credits_used + usage]
+    A["POST /api/v1/speech"] --> B["Validate bearer API key"]
+    B --> C["Consume per-key rate limit"]
+    C --> D["Validate request with Zod"]
+    D --> E["Resolve public voice by ID or name/model"]
+    E --> F["Validate model, format, style, and input length"]
+    F --> G["Check and reserve estimated credits"]
+    G --> H{"Provider"}
+    H -->|"gpro / gpro31"| I["Generate with Gemini"]
+    H -->|"xai"| J["Generate with xAI TTS"]
+    H -->|"orpheus"| K["Generate with Replicate"]
+    I --> L["Upload to external API R2 bucket"]
+    J --> L
+    K --> L
+    L --> M["Reconcile reserved and actual credits"]
+    M --> N["Save audio metadata and usage event"]
+    N --> O["Return URL, usage, and remaining credits"]
+    H -->|"Failure"| P["Refund reserved credits and return structured error"]
 ```
 
-### Shared API Layer (`lib/api/`)
+Routes whose user identity comes from an API key use the server-only admin
+query variants for user-scoped data. Public voice listing uses the regular
+Supabase client and public RLS policy. Never expose `SUPABASE_SECRET_KEY` to a
+browser or use it in a `NEXT_PUBLIC_` variable.
 
-| File                 | Purpose                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `auth.ts`            | `generateApiKey()`, `hashApiKey()`, `validateApiKey()`, `updateApiKeyLastUsed()`                                                     |
-| `constants.ts`       | `EXTERNAL_API_MODELS` catalog, `RATE_LIMIT_DEFAULT`                                                                                  |
-| `errors.ts`          | `createApiError()`, `zodErrorToApiError()`                                                                                           |
-| `external-errors.ts` | Structured error key map + `externalApiErrorResponse()`                                                                              |
-| `logger.ts`          | Axiom-backed per-request structured logger via `createLogger()`                                                                      |
-| `model.ts`           | `resolveExternalModelId()`, `isModelCompatibleWithVoice()`, `getDefaultFormat()`, `isFormatSupported()`, `getModelCatalogResponse()` |
-| `openapi.ts`         | `createExternalApiOpenApiDocument()` using `zod-openapi`                                                                             |
-| `pricing.ts`         | `calculateExternalApiDollarAmount()`                                                                                                 |
-| `rate-limit.ts`      | `consumeRateLimit()` via Upstash Ratelimit (token bucket)                                                                            |
-| `responses.ts`       | `jsonWithRateLimitHeaders()`                                                                                                         |
-| `schemas.ts`         | Zod schemas for all v1 request/response types (shared with OpenAPI generator)                                                        |
+## Dashboard Speech Generation
 
-### Admin Query Pattern
-
-External API routes resolve `userId` from the API key, not a session cookie. `createClient()` (anon key + RLS) cannot see other users' data. All DB access in `/api/v1/*` uses `*Admin` variants from `lib/supabase/queries.ts`:
-
-- `getCreditsAdmin(userId)`
-- `getVoiceIdByNameAdmin(voiceName)`
-- `reduceCreditsAdmin({ userId, amount })`
-- `saveAudioFileAdmin(params)`
-- `hasUserPaidAdmin(userId)`
-
-## Voice Generation Flow (Dashboard)
-
-API endpoint: `POST /api/generate-voice`
+Endpoint: `POST /api/generate-voice`
 
 ```mermaid
 flowchart TD
-    A[User Input: Text + Voice] --> B[Authenticate User - Session Cookie]
-    B --> C[Check Credits]
-    C --> D[Generate Cache Hash]
-    D --> E{Check Redis Cache}
-    E -->|Cache Hit| F[Return Cached Audio - 0 credits]
-    E -->|Cache Miss| G[Generate Audio via AI Service]
-    G --> H[Upload to Cloudflare R2 - R2_BUCKET_NAME]
-    H --> I[Cache URL in Redis]
-    I --> J[Background: Deduct Credits]
-    J --> K[Background: Save to Database]
-    K --> L[Background: Send Analytics]
-    L --> M[Return Audio URL]
+    A["Text, voice, style, and advanced settings"] --> B["Authenticate Supabase session"]
+    B --> C["Resolve voice, provider, tier limits, and estimated cost"]
+    C --> D["Build cache key"]
+    D --> E{"Redis cache"}
+    E -->|"Hit"| F["Return cached URL at zero credits"]
+    E -->|"Miss"| G["Reserve estimated credits"]
+    G --> H{"Provider"}
+    H -->|"Gemini"| I["Google TTS"]
+    H -->|"Grok"| J["xAI TTS"]
+    H -->|"Other voice"| K["Replicate"]
+    I --> L["Upload to dashboard R2 bucket"]
+    J --> L
+    K --> L
+    L --> M["Cache URL in Redis"]
+    M --> N["Reconcile credits from actual usage"]
+    N --> O["Return generated audio"]
+    O --> P["Next.js after(): save metadata, duration, usage, and analytics"]
+    H -->|"Failure"| Q["Refund reserved credits"]
 ```
 
-### Steps
+The route enforces model- and tier-specific text limits: 500 characters by
+default and 1,000 for paid Gemini and Grok requests. Gemini accepts style,
+seed, and temperature; seed and temperature require a paid account. Grok
+accepts a speech-speed multiplier. Provider-affecting advanced settings create
+distinct cache keys.
 
-1. **Frontend Validation**: User enters text (max 500 chars) and selects a voice
-2. **API Authentication**: Verify user session via Supabase Auth
-3. **Credit Check**: Query user's credit balance in Supabase (via session-scoped `createClient()`)
-4. **Credit Estimation**: Calculate required credits based on text length
-5. **Cache Lookup**: Generate hash from (text + voice + parameters) and check Redis
-6. **Cache Hit**: Return cached audio URL immediately (0 credits used)
-7. **Cache Miss**:
-   - Call appropriate AI service (Replicate or Google Gemini TTS)
-   - Generate audio from text
-8. **Storage**: Upload generated audio to Cloudflare R2 (`R2_BUCKET_NAME`, served from `files.sexyvoice.ai`)
-9. **Cache Update**: Store R2 URL in Redis for future requests
-10. **Background Tasks** (using Next.js `after()`):
-    - Deduct credits from user balance
-    - Save audio metadata to database
-    - Send analytics event to PostHog
-11. **Response**: Return audio URL, credits used, and remaining balance
+The dashboard sends `textImproved` to record whether Improve text succeeded in
+the current edit chain, not whether the current text still contains AI-added
+tags. Non-empty edits, including select-all replacement with unrelated text,
+preserve the flag. Clearing the text resets it, and Undo restores its prior
+value. Pending improvements are discarded if the text changes before they
+complete. The route stores the boolean in
+`audio_files.usage.textImproved` for JSON and streaming generations. Omitted or
+non-boolean values resolve to `false`. Cache hits reuse the existing audio row
+and its original metadata; the flag does not affect cache keys.
 
-## Voice Cloning Flow
+The route reserves credits atomically before generation. On success it
+reconciles the estimate with Gemini's token usage when available; on failure
+it restores the reservation. Database and analytics writes run after the
+response, but billing does not.
 
-API endpoint: `POST /api/clone-voice`
+## Voice Cloning
+
+Endpoint: `POST /api/clone-voice`
 
 ```mermaid
 flowchart TD
-    A[User Input: Text + Audio File + Locale] --> B[Authenticate User]
-    B --> C[Validate Audio File]
-    C --> D[Check Credits]
-    D --> E{Check if Audio Uploaded}
-    E -->|Exists| F[Use Existing Blob URL]
-    E -->|New| G[Upload Audio to Blob]
-    F --> H[Generate Cache Hash]
-    G --> H
-    H --> I{Check Redis Cache}
-    I -->|Cache Hit| J[Return Cached Audio]
-    I -->|Cache Miss| K[Select Model by Locale]
-    K --> L[Generate Cloned Voice via Replicate]
-    L --> M[Upload to Cloudflare R2]
-    M --> N[Cache URL in Redis]
-    N --> O[Background: Deduct Credits]
-    O --> P[Background: Save to Database]
-    P --> Q[Background: Send Analytics]
-    Q --> R[Background: Schedule Input Audio Cleanup]
-    R --> S[Return Audio URL]
+    A["Multipart text, locale, and reference audio"] --> B["Authenticate Supabase session"]
+    B --> C["Validate locale, tier text limit, file type, and 4.5 MB size limit"]
+    C --> D["Normalize to WAV when supported and trim to provider limit"]
+    D --> S{"Save voice for calls?"}
+    S -->|"Yes: paid and consented"| T["Create provider voice, generate R2 preview, and save owned profile"]
+    T --> U["Return audioReferenceId and provider"]
+    S -->|"No"| E["Hash processed audio and check Redis output cache"]
+    E -->|"Hit"| F["Return cached URL at zero credits"]
+    E -->|"Miss"| G{"Enhancement requested?"}
+    G -->|"Yes"| H["Reserve clone + enhancement credits"]
+    H --> I["Clean reference audio with fal.ai"]
+    I --> J["Fall back to original audio and refund enhancement credits on failure"]
+    G -->|"No"| K["Reserve clone credits"]
+    I --> L{"Locale provider"}
+    J --> L
+    K --> L
+    L -->|"Voxtral locale"| M["Mistral Voxtral"]
+    L -->|"Other supported locale"| N["Upload reference to R2 and run Replicate Chatterbox"]
+    M --> O["Upload cloned WAV and cache URL"]
+    N --> O
+    O --> P["Return URL and credit totals"]
+    P --> Q["Next.js after(): save metadata, usage events, and analytics"]
 ```
 
-### Steps
+### Saved Voices for Calls
 
-1. **Frontend Validation**: User provides text (max 500 chars), uploads audio file, selects locale
-2. **API Authentication**: Verify user session via Supabase Auth
-3. **File Validation**:
-   - Check MIME type (allowed: MP3, OGG, M4A, WAV)
-   - Check file size (max 4.5MB)
-   - Extract and validate audio duration (10 seconds to 5 minutes)
-4. **Credit Check**: Query user's credit balance in Supabase
-5. **Credit Estimation**: Calculate required credits (higher cost than regular generation)
-6. **Audio Upload**:
-   - Check if user's audio file already exists in R2 Storage
-   - If not, upload to `clone-voice-input/{userId}-{sanitizedFilename}`
-   - Use existing URL if already uploaded (based on filename)
-7. **Cache Lookup**: Generate hash from (locale + text + audio blob URL) and check Redis
-8. **Cache Hit**: Return cached cloned audio URL immediately (0 credits used)
-9. **Cache Miss**:
-   - Resolve provider based on locale:
-     - Mistral Voxtral (`voxtral-mini-tts-2603`) for `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, and `pt`
-     - Replicate Chatterbox Multilingual (`resemble-ai/chatterbox-multilingual`) for all other supported clone locales: `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, and `zh`
-   - Generate cloned voice audio using the selected provider:
-     - Mistral returns WAV audio directly from `audio.speech.complete()`
-     - Replicate runs the multilingual Chatterbox model with the locale mapped to the provider language code (`en-multi` is sent as `en`)
-10. **Fetch & Storage**: Upload generated audio to Cloudflare R2 as `clone-voice/{hash}.wav`
-11. **Cache Update**: Store blob URL in Redis for future identical requests
-12. **Background Tasks** (using Next.js `after()`):
-    - Deduct credits from user balance
-    - Save audio metadata to database (with voice_id for cloned voice)
-    - Send analytics event to PostHog
-    - Schedule cleanup of input audio file via Inngest (`clone-audio/cleanup.scheduled`)
-13. **Response**: Return cloned audio URL, credits used, remaining balance, and input audio URL
+The Clone page offers **Save a voice for calls** to paid users. Entering from
+`/dashboard/call` selects this mode. It requires a name, permission to save the
+reference, and a locale supported by the selected provider. The same upload validation, WAV
+normalization, trimming, and minimum duration checks apply. Inworld references
+are trimmed to 30 seconds and Mistral references to 25 seconds. The paid
+fal.ai cleanup (DeepFilterNet 3) applies only to speech generation. When saving an Inworld
+voice, the same checkbox (`enhanceReferenceAudio`) sets Inworld's free
+`audioProcessingConfig.removeBackgroundNoise` instead. It is off by default
+because Inworld warns it can degrade clean samples. Mistral saves hide it.
 
-### Voice Cloning Models
+`POST /api/clone-voice` accepts `saveVoiceName` and `voiceConsent=true` for this
+mode; text is optional. `CALL_CLONE_PROVIDER` chooses `inworld` (default) or
+`mistral` for new profiles. `saveInworldVoice` and `saveMistralVoice` create the
+provider voice and synthesize the exact English text in `CALL_VOICE_SAMPLE_TEXT`
+using `inworld-tts-2` or `voxtral-mini-tts-3-0`. No language parameter is passed
+to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
+the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
+then inserts the provider ID, provider, owner, name, locale, and `sample_url`
+into `audio_references`. If sample generation, upload, or insertion fails, it
+attempts to clean up the provider voice and any attempted R2 upload. The response contains
+`audioReferenceId` and `provider`. This action charges no speech
+credits; sample synthesis incurs provider costs. The reference is retained by
+the selected provider. The preview is stored on the profile, separately from
+speech generations in `audio_files`.
 
-| Locale group                    | Locales                                                                                        | Model                                 | Provider  |
-| ------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
-| Voxtral-supported locales       | `ar`, `de`, `en`, `es`, `fr`, `hi`, `it`, `nl`, `pt`                                           | `voxtral-mini-tts-2603`               | Mistral   |
-| Chatterbox multilingual locales | `da`, `el`, `en-multi`, `fi`, `he`, `ja`, `ko`, `ms`, `no`, `pl`, `ru`, `sv`, `sw`, `tr`, `zh` | `resemble-ai/chatterbox-multilingual` | Replicate |
+The Clone page lists the signed-in user's saved Inworld and Mistral profiles
+above the upload and recording form. Previews use the private sample endpoint.
+Selecting a voice replaces the reference audio: the form posts `text`, `locale`,
+and `savedVoiceId`, the route checks ownership, and generation charges credits
+and records an `audio_files` row like a one-off clone. Clicking the selected
+voice again returns to the recording form. An Inworld voice speaks the chosen
+language, defaulting to its own, which the route checks with
+`supportsCallCloneLocale()` and sends as Inworld's `language` field. A Mistral
+voice always speaks its saved locale. Newly saved voices join the list
+immediately. The dashboard form has no demo
+comparison card; the public voice-cloning page retains its examples.
 
-### File Constraints
+Saved voice samples are served through
+`GET /api/audio-references/[id]/sample`. The route authenticates the user,
+checks ownership and a supported call provider, and returns audio with private,
+non-cacheable headers. Provider IDs and sample URLs stay on the server.
+Profiles with `sample_url` return the saved R2 WAV without provider calls.
+Reads accept only sample object keys under the owned profile's prefix, never
+arbitrary URLs. Profiles with a null URL use the provider fallback: Mistral
+reference WAV audio or Inworld's MP3 preview. Preview playback does not create
+or backfill R2 samples.
+Account deletion removes saved voices at their provider and their R2 samples,
+then deletes each owned `audio_references` row. Cleanup failures retain the row
+for support to retry and are reported with the profile ID.
+Inworld requires `INWORLD_API_KEY` in the web app and agent, with access to
+the same workspace. Mistral profiles require `MISTRAL_API_KEY` in both.
+Changing the default does not convert existing profiles or voice IDs.
 
-- **Allowed formats**: MP3, OGG, M4A, WAV
-- **Max file size**: 4.5MB
-- **Duration**: 10 seconds minimum, 5 minutes maximum
-- **Storage**: Input audio temporarily stored, then cleaned up via background job
+### Locale Routing
 
-## Real-time AI Voice Call Flow
+| Locale group            | Locales                                                                                                                            | Model                                 | Provider  |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | --------- |
+| Voxtral                 | `ar`, `ca`, `de`, `el`, `en`, `es`, `fr`, `hi`, `hu`, `it`, `ja`, `ko`, `nl`, `no`, `pl`, `pt`, `ro`, `ru`, `tr`, `uk`, `vi`, `zh` | `voxtral-mini-tts-3-0`                | Mistral   |
+| Chatterbox Multilingual | `da`, `en-multi`, `fi`, `he`, `ms`, `sv`, `sw`                                                                                     | `resemble-ai/chatterbox-multilingual` | Replicate |
 
-API endpoint: `POST /api/call-token`
+The dashboard language dropdown and `POST /api/clone-voice` use
+`apps/web/lib/clone/constants.ts` for the same locale list and provider routing.
+The list contains 28 languages plus the explicit English Chatterbox option.
+Mistral confirms 21 languages in its
+[TTS preset table](https://docs.mistral.ai/studio/audio/specs-and-limits/languages)
+and Greek in its [launch article](https://mistral.ai/news/voxtral-3/).
+Its claimed 35-language coverage is not fully enumerated. Danish, Finnish,
+Hebrew, Malay, Swedish, and Swahili stay on Chatterbox pending confirmation;
+this routing does not establish that Mistral cannot speak them.
+
+Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
+Chatterbox accepts 300. Reference audio must be at least 10 seconds for every
+provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
+separately. Longer references are trimmed to 25 seconds for
+Voxtral or 10 seconds for Chatterbox when conversion permits.
+
+Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is
+converted to WAV in the client; the route rejects unconverted WebM. The route
+normalizes other supported files to WAV. Only the Replicate path uploads a
+reference file to R2 because Chatterbox requires a fetchable URL; Mistral
+receives reference audio directly.
+
+Optional fal.ai enhancement has separate duration and size safeguards and adds
+an `audio_processing` usage event. Clone credits are reserved before provider
+work and restored if generation fails. Background work saves metadata and
+analytics; it does not perform billing or schedule an Inngest cleanup job.
+
+`apps/web/lib/fal-billing.ts` looks up the enhancement's provider cost with
+bounded retries through `fetchWithRetry`. If the lookup fails, it emits one
+Sentry warning and the route records an estimated cost instead. Retry limits
+live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline.
+
+### Tagged speech editing
+
+`apps/web/components/tts-editor.tsx` shares the Tiptap editor between Grok speech
+and Voxtral cloning. The provider selects its tag catalog, autocomplete, and
+unsupported-tag highlighting. Grok supports instant tags and paired wrappers;
+Voxtral supports 34 emotion tags, pace tags, and the documented vocal sounds in
+`apps/web/lib/voxtral-tags.ts`. Voxtral tags apply to the following text without
+a closing tag. The clone form uses a textarea for Chatterbox locales.
+
+`apps/web/lib/tts-editor.ts` parses and serializes provider tags as plain text.
+Copying preserves tag syntax and line breaks; unknown tags remain literal text.
+The API receives the text unchanged. Tag characters count toward the existing
+text limits. Mistral documents tag behavior as tested in English; its other
+listed languages are untested.
+
+### Prepared cloning demos
+
+The public cloning page uses `DemoClonePlayer`: Kat in
+English and Heike in German, each with Natural, Sarcastic, and Calm & slow takes
+of one sentence. Kat also has a first-listed “Same as original” example using
+her reference recording's full passage. Natural remains the default.
+`apps/web/data/clone-demo-config.ts` defines prompts and supported voice/take
+pairs through `getCloneDemoTakes()`.
+
+`apps/web/data/clone-demo-languages.ts` defines nine language slots and staged
+anxious prompts. `getDemoCloneLanguages()` joins these slots to actual published
+speakers. The website locale is selected and listed first; unsupported locales
+fall back to English. Browser language does not override that choice. Kat and
+Heike are playable; other languages show planned text and a coming-soon notice
+without audio, delivery controls, or a demo CTA. Each added voice requires its
+own reference and matching generated assets; staged prompts are not transcripts
+for existing recordings.
+
+All prepared takes use `voxtral-mini-tts-3-0`. References and results are bundled
+under `apps/web/public/demo-clones/voxtral-3/`; playback makes no generation
+request. `clone-demo-assets.json` records durations, source and asset hashes,
+latency when captured, estimated cost, and precomputed waveform peaks. Each
+asset's `waveform.sourceSha256` binds its per-channel peaks to the final MP3.
+The local extraction workflow lives in
+[waveform generation](scripts/README.md#generate-waveform-peaks). Each
+`DemoCloneClip` exposes its cached peak arrays directly from the manifest;
+missing or stale waveform hashes reject the asset with regeneration guidance.
+The renderer uses these peaks without a waveform MP3 fetch or audio decode.
+
+Kat's full reference and same-text
+result target -14 LUFS; the remaining prepared recordings are unchanged.
+See [demo generation](scripts/README.md#generate-prepared-cloning-demos) for the
+asset workflow.
+
+The player uses one native audio element for the selected take or original
+recording. `NativeAudioWaveform` retains one WaveSurfer instance per native media
+element and interaction mode. It keeps the current waveform visible during a
+source switch, then calls `load(url, peaks, duration)` after matching metadata.
+Take, reference, and retry changes update the existing renderer rather than
+remounting it. Cleanup aborts the instance's signal before destruction. Visual
+defaults are shared with the other audio players. Changing language or delivery stops playback. Unsupported voice/take combinations
+fall back to Natural. The prompt appears above the player with highlighted
+tags; selecting the prompt excludes its decorative quotation marks.
+Applying a demo loads its reference, prompt, and
+language into the cloning form. Consent and generation require explicit user
+actions. Reference downloads do not replace a file or recording the user has
+selected while the download was pending.
+
+The landing CTA carries `demo` and `take` into `/[lang]/dashboard/clone`.
+`apps/web/lib/clone/demo-redirect.ts` allows only supported voice/take pairs through
+login, signup, OAuth, and email confirmation. Other signup redirects use the
+default callback. The public cloning page ends with a section that links to
+`/[lang]/voice-call`, and the voice call page links back to it.
+
+## Real-time AI Voice Calls
+
+Endpoint: `POST /api/call-token`
 
 ```mermaid
 flowchart TD
-    A[User: Configure Call Settings] --> B[Click Connect]
-    B --> C[Request Token from /api/call-token]
-    C --> D[Authenticate User]
-    D --> E{Check Minimum Credits}
-    E -->|Insufficient| F[Return 402 Error]
-    E -->|Sufficient| G[Load Call Instructions from Edge Config]
-    G --> H[Resolve Voice by Name]
-    H --> I[Generate LiveKit Access Token]
-    I --> J[Configure Room with AI Agent Dispatch]
-    J --> K[Return Token + WebSocket URL]
-    K --> L[Client Connects to LiveKit Room]
-    L --> M[AI Agent Joins Room]
-    M --> N[Real-time Voice Conversation]
-    N --> O[Track Usage in call_sessions + usage_events]
-    O --> P[Deduct Credits Based on Duration]
-    P --> Q[User Disconnects]
-    Q --> R[Refetch Credits and Update UI]
+    A["Choose a character or a custom voice and personality"] --> B["POST /api/call-token"]
+    B --> C["Authenticate Supabase session"]
+    C --> D["Check minimum credits and free-user lifetime call limit"]
+    D --> E["Validate configuration and normalize the call model"]
+    E --> F["Resolve character prompt from PostgreSQL"]
+    F --> G["Authorize paid custom-character and scene features"]
+    G --> H["Resolve voice ID"]
+    H --> I["Mint LiveKit token with server-resolved metadata"]
+    I --> J["Dispatch the sexycall agent"]
+    J --> K["Browser and agent join the WebRTC room"]
+    K --> L["Agent runs Grok realtime or STT + LLM + Inworld/Mistral TTS"]
+    L --> M["Agent meters credits and writes call session, transcript, and usage"]
+    M --> N["Client disconnects and refreshes credit balance"]
+    M --> O["Supabase webhook requests analysis for eligible completed calls"]
+    O --> P["Store structured Grok analysis"]
 ```
 
-### Steps
+The token route accepts 20 call languages. It requires at least 1,000 credits;
+free users also have a five-minute lifetime call allowance. The current billed
+rate is 1,000 credits per minute.
 
-1. **Configure Session**: User selects voice, model, temperature, and custom instructions in `/dashboard/call`
-2. **Request Token**: Frontend calls `/api/call-token` with session configuration
-3. **Authentication**: Verify user session via Supabase Auth
-4. **Credit Check**: Ensure user has minimum credits required for calls
-5. **Load Instructions**: Fetch dynamic call instructions from Vercel Edge Config (with fallback defaults)
-6. **Voice Resolution**: Look up voice ID by name from database
-7. **Token Generation**: Create LiveKit access token with:
-   - Room grants (join, publish, subscribe)
-   - Room configuration with AI agent dispatch (`sexycall` agent)
-   - Metadata containing instructions, model, voice, and user context
-8. **Client Connection**: Return access token and WebSocket URL to client
-9. **Room Join**: Client connects to LiveKit room using WebRTC
-10. **AI Agent**: Agent joins room and handles real-time voice conversation
-11. **Usage Tracking**: Record session in `call_sessions` table, events in `usage_events`
-12. **Billing**: Deduct credits based on call duration
-13. **Disconnect**: On call end, refresh credits and update UI
+The call-token request has a 30-second deadline covering the response body;
+expiry aborts the request, shows a localized error, and releases the call button.
+The browser allows another 30 seconds for the initial LiveKit connection, including
+regional retries, after the call token is available. Connecting to the room
+clears the deadline. A deadline expiry or terminal connection error disconnects
+the room, shows a localized message, and resets the call controls so the user can
+try again with a fresh token. An unexpected disconnect after connection also
+resets the controls and refreshes credits; an intentional hangup does not show a
+connection error.
 
-### Call Configuration Options
+In this audio-only wrapper, `LiveKitRoom.onError` after connection reports
+microphone acquisition or publishing failures. Every such error shows localized
+microphone guidance and disconnects the room, including publish timeouts,
+negotiation failures, and capture aborts without a recognized device error name.
+Microphone permission, missing-device, busy-device, and constraint errors show
+localized microphone guidance and disconnect the room, including after connection.
 
-| Setting           | Description                   | Default          |
-| ----------------- | ----------------------------- | ---------------- |
-| Voice             | AI voice for the call         | Configurable     |
-| Model             | LLM model for conversation    | gpt-4o-realtime  |
-| Temperature       | Response creativity (0-1)     | 0.8              |
-| Max Output Tokens | Token limit for responses     | 4096             |
-| Instructions      | System prompt for AI behavior | From Edge Config |
-| Language          | Conversation language         | English          |
+Predefined character prompt text never reaches the browser. The token route loads
+it with an admin query, chooses the requested localized prompt or English
+fallback, and places the result in LiveKit token metadata. Custom characters
+and custom scenes require a paid account.
 
-## Database Schema
+Long-term memory is on by default for free and paid accounts. The Profile
+page's Voice Call Memory switch saves `call_memory_enabled` in Auth
+`user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
+absent preference to enabled. The call-token route reads the current preference
+with `getUser()` for each memory-enabled request; JWT metadata is a snapshot
+and cannot override a saved opt-out. The lookup overlaps voice and character
+resolution. A failed lookup logs a warning and starts the call without memory.
+An explicit request flag of `memory: false` also disables memory. This is a
+user preference, not an entitlement or authorization check.
 
-### Core Tables
+The setting applies when a call starts, across characters and devices. When
+off, the agent neither loads nor saves memories for that call. Stored memories
+remain until erased with the Profile page's delete action, which calls
+`DELETE /api/memories`. Memory controls live only on the Profile page.
+Account deletion also erases every memory row and its embedding across all
+character scopes. Both deletion paths use `lib/supabase/memories.ts` to filter
+by the authenticated user. A failed memory erasure blocks the account-deletion
+success response and is reported to Sentry.
 
-- `profiles` – User profiles linked to Supabase Auth users
-- `voices` – Voice models (system voices and user-created cloned voices)
-- `audio_files` – Generated audio files with metadata (text, URL, duration, credits used)
-- `credits` – User credit balances
-- `credit_transactions` – Credit usage and purchase history
-- `call_sessions` – Real-time voice call sessions with duration, room ID, and billing info
-- `call_session_analysis` – One rich per-call analysis row (language, topic, sentiment, engagement, key requests, AI issues, notable patterns) generated from the transcript by Grok
-- `call_session_analytics` – Aggregate analysis stats per run
-- `agent_memories` – pgvector-backed voice-agent memory with hybrid (semantic + keyword) retrieval via the `match_agent_memories_hybrid` RPC
-- `usage_events` – Granular usage tracking for analytics, billing, and reporting
-- `api_keys` – External API keys; stores `key_hash` (HMAC-SHA256), `key_prefix` (first 12 chars for display), `is_active`, `expires_at`, `permissions` (JSONB scopes), `last_used_at`
+### Call Setup
 
-See `apps/web/supabase/migrations/` and `apps/web/lib/supabase/types.d.ts` for
-the full schema definitions.
+Characters are voice-and-prompt bundles. The call page
+(`components/call/call-experience.tsx`) has a picker with "Your characters"
+and "Featured" grids. A card opens the call panel, a side sheet (bottom sheet
+on phones) with the voice sample, language, scene, microphone status and
+Start call. A card's Call, and Call in the creator preview of an unchanged
+saved character, start the call directly. They open the panel instead when
+the character has no voice or personality, or the microphone is blocked.
+During a call the page shows the in-call view; when it ends it
+offers Call again and editing. The in-call timer starts when the agent first
+reports `listening`, `thinking` or `speaking`, which is when the SexyCall agent
+starts billing.
 
-## Caching Strategy
+Paid users create, duplicate and edit characters in the creator: name, short
+description, personality (with starter examples) and voice. A name, a
+personality and an available voice are required to save, and characters are
+saved before they are called. "Make your own version" of a featured character
+copies its name, description and voice, never its prompt. Free users see the
+Create card as a link to the plans, and "Make your own version" disabled next
+to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
+character can call, for both the panel and a card's Call. Deleting a
+character removes it from the list at once; the DELETE request waits until
+the Undo toast closes or the page is hidden.
 
-### Redis Cache Layer (Upstash)
+The creator's Clone a voice dialog records or uploads a sample and saves a
+profile through the save-only `/api/clone-voice` path, using the call
+language when the configured provider supports it and English otherwise. The Clone page links
+back with `?custom=1&voice=<id>` to start a character with that voice. The
+call page reads that query on the server and passes it to `CallExperience`
+as `returnFromClone`. `PlaygroundStateProvider` rewrites the URL on mount,
+before `LiveKitRoom` renders its children. Prompt text never enters the URL;
+only `?preset=<id>` is written.
 
-Used by the **dashboard** voice generation and voice cloning flows only. The external API (`/api/v1/speech`) always generates fresh audio and does not use the cache.
+Built-in voices use the Grok model. Saved voices set
+`sessionConfig.model=inworld-tts|mistral-tts` according to their saved provider,
+and `sessionConfig.audioReferenceId` to an
+owned `audio_references` row. The token route rechecks ownership and provider,
+then sends the reference row ID as the LiveKit `voice` metadata value. The
+agent resolves the provider voice and runs STT, an LLM, and the matching TTS plugin.
+The shared cloned-audio `voices` row satisfies the legacy foreign keys on
+characters and call sessions; the saved reference stays in session config and
+call-session metadata. Selecting a built-in voice clears the saved reference.
 
-- **Cache Key**: SHA-256 hash of request parameters (first 8 chars)
-  - Voice Generation: `locale + text + voice + parameters`
-  - Voice Cloning: `locale + text + audio_blob_url`
-- **TTL**: Persistent (no expiration)
-- **Cache Hit**: Returns audio URL immediately with 0 credit cost
-- **Cache Miss**: Generates new audio, uploads to R2, stores URL in cache
-- **Benefits**:
-  - Reduces AI API costs for repeated requests
-  - Improves response time for common queries
-  - Enables identical request deduplication across users
+### Call Configuration
 
-### Rate Limiting (Upstash Ratelimit)
+| Setting           | Current behavior                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| Model             | `grok-voice-think-fast-1.0`, `inworld-tts`, or `mistral-tts`                        |
+| Voice             | Public call voice or an owned Inworld/Mistral profile; retained in saved characters |
+| Temperature       | Defaults to `0.8`; accepted range is `0`–`1.2`                                      |
+| Max output tokens | Nullable; defaults to the agent's model behavior                                    |
+| Instructions      | Server-resolved database prompt for the selected character                          |
+| Language          | 20 supported call languages; English fallback                                       |
+| Memory            | On by default for all accounts; saved Profile opt-out                               |
 
-Used by the **external API** (`/api/v1/*`) only. Token bucket algorithm, keyed by API key hash.
+### Call transcript analysis
 
-- **Limit**: 60 requests/minute per API key (configurable via `RATE_LIMIT_DEFAULT`)
-- **Headers**: `X-RateLimit-Limit-Requests`, `X-RateLimit-Remaining-Requests`, `X-RateLimit-Reset-Requests` on every response
+Completed calls of at least 120 seconds with a transcript are analysed by Grok
+and stored as one `call_session_analysis` row per session. Analysis is
+**asynchronous and best-effort**: nothing in the call UX waits on it, and
+results typically land minutes after the call, bounded by xAI batch processing
+time plus the cron interval.
 
-## Application Structure
+Flow:
 
+1. A Supabase Database Webhook (`pg_net`, see
+   `apps/web/supabase/migrations/20260703000000_add_call_session_analysis.sql`)
+   posts the session id to `POST /api/call-sessions/analyze` with
+   `CALL_SUMMARY_SECRET`.
+2. The webhook only checks eligibility (completed, long enough, non-empty
+   transcript, no existing analysis row) and inserts a `pending` row into
+   `call_analysis_queue`, returning `202 { queued: true }`. Duplicate
+   deliveries are no-ops thanks to the primary key on `session_id`.
+3. The Vercel cron `GET /api/call-sessions/analyze/batch` (every 15 minutes,
+   `CRON_SECRET`) first reconciles in-flight xAI batches, writing
+   `call_session_analysis` rows for settled ones, then coalesces pending rows
+   (up to 200) into a single new [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api)
+   request and waits up to a few minutes for it before handing off to the next
+   run. Rows are claimed (`submitted`, no batch id yet) with a
+   compare-and-set on `status = 'pending'` _before_ the paid xAI call, so
+   overlapping runs cannot submit the same session twice. The write that
+   attaches the batch id after the paid xAI call is retried; if a run still
+   dies or fails between the claim and that write, the claim is left alone and
+   parked as `failed` after 15 minutes (never resubmitted, since the batch may
+   already be billed), with the batch id in the Sentry error when it is known.
+4. Failed requests never persist an analysis row. Retryable failures return to
+   `pending` for up to 3 submissions, then park as `failed` with `last_error`.
+   The analysis scripts count their failures in the same `attempts` column and
+   skip parked sessions; `backfill-call-analysis --retry-failed` reprocesses
+   them. Each in-flight batch is reconciled in isolation
+   (one unreadable batch id is reported to Sentry and skipped, not fatal), and
+   a batch that has not settled after 48 hours is abandoned: its rows return
+   to `pending` under the same attempt limit.
+
+Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
+`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
+scripts import the same modules, so every path writes identical rows.
+
+## Data and Storage
+
+### Core PostgreSQL Tables
+
+- `profiles` stores application users linked to Supabase Auth.
+- `voices` stores catalog voices for speech generation and calls, including the
+  shared cloned-audio row used by legacy foreign keys.
+- `audio_references` stores owned saved voices, provider IDs, locales, and preview
+  metadata. These profiles are separate from generated audio.
+- `prompts` and `characters` store localized call personalities and session
+  configuration.
+- `audio_files` stores generated-audio metadata, R2 URLs, duration, model, and
+  billed credits.
+- `credits` stores the credit balance; `credit_transactions` records credits added
+  or deducted outside activity spending, including grants, purchases, refunds, and
+  chargeback holds or releases. Activity spending is recorded in `usage_events`.
+- `usage_events` stores normalized metering for dashboard TTS, API TTS, voice
+  cloning, audio processing, and live calls.
+- `api_keys` stores HMAC hashes, display prefixes, scopes, expiry, and last-use
+  timestamps.
+- `call_sessions` stores call duration, billing, transcript, model, and status.
+- `call_session_analysis` stores one structured transcript analysis per call;
+  `call_session_analytics` stores aggregate analysis runs;
+  `call_analysis_queue` tracks pending and in-flight xAI batch analyses.
+- `agent_memories` stores pgvector-backed, per-user call memories with hybrid
+  semantic and keyword retrieval.
+
+See `apps/web/supabase/migrations/` and
+`apps/web/lib/supabase/types.d.ts` for the complete schema.
+
+### Supabase Access Boundaries
+
+- Browser and session-authenticated server code use
+  `apps/web/lib/supabase/server.ts` or the browser client and rely on RLS.
+- Trusted server routes use `createAdminClient()` only when a service identity
+  must access another user's rows, such as resolving an API key owner or a
+  protected character prompt.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` is safe for the browser.
+  `SUPABASE_SECRET_KEY` bypasses RLS and must remain server-only.
+
+#### Identity and session handling
+
+`getVerifiedClaims()` in `apps/web/lib/supabase/auth.ts` supplies verified
+identity for pages, actions, dashboard APIs, browser analytics, and the proxy.
+It returns `null` on SDK auth errors or absent claims. Callers require
+`claims.sub`; ownership, credit, and entitlement checks remain separate.
+
+The proxy matcher skips link prefetches (`next-router-prefetch` or
+`purpose: prefetch` headers). Any client can send those headers, so the proxy
+redirect is not an auth boundary: every page and layout verifies claims before
+it reads user data.
+
+Asymmetric JWTs normally verify locally with cached JWKS; symmetric keys require
+an Auth-server request. Claims do not enforce immediate session revocation or
+current account status. Email and metadata are token snapshots; user-editable
+`user_metadata` must not authorize access.
+
+Fresh `getUser()` lookups are reserved for:
+
+- Current email on the credits page for Stripe customer linking and on the
+  profile page for password verification, plus the current memory preference
+  on the profile page and in `POST /api/call-token`.
+- Auth `created_at` during proxy restoration when the profile is missing and
+  an email is present.
+- Account deletion and durable credential issuance in `POST /api/api-keys`
+  and `POST /api/cli-login-sessions`.
+
+A fresh lookup is not recent reauthentication or a complete revocation check.
+`biome-plugins/use-verified-claims.grit` rejects direct `getUser()` calls in
+application code unless a suppression explains the exception. External API v1
+uses API-key authentication, not browser claims.
+
+Account deletion checks the profile's Stripe customer subscriptions directly
+before changing account data or deleting files. Only `canceled` and
+`incomplete_expired` subscriptions allow deletion; a scheduled cancellation
+still blocks it until the subscription ends. A failed profile or Stripe lookup
+also blocks deletion. The subscription error stays visible until dismissed and
+includes a direct link to the Stripe billing portal to cancel first. The portal
+URL is shared with the credits page through `lib/stripe/billing-portal.ts`.
+
+`lib/stripe/account-billing.ts` coordinates Checkout Session creation and account
+deletion through atomic Redis reservations per user. Deletion expires open
+Checkout Sessions, checks subscriptions again, and commits a billing block
+before changing account data. The commit requires ownership of the reservation,
+so an expired deletion request cannot proceed. The block prevents both checkout
+and another deletion, even if cleanup outlasts the five-minute reservation.
+The action's `finally` releases its reservation and block after cleanup succeeds
+or fails; token checks prevent stale requests from releasing another request's
+block.
+
+Auth users remain able to sign in and check out after deletion finishes.
+Inactive profiles removed by the retention script are restored on dashboard
+return through `ensureUserApplicationState`. Billing recovery does not restore
+deleted files or characters.
+
+Checkout Sessions have a fixed one-hour expiration. If session creation fails
+with an unknown outcome, its reservation lasts until one minute after that
+expiration. Successful requests release their reservations. A rejection releases
+the reservation only after exactly one SDK request attempt, with no retry hint,
+and one of these Stripe error classifications:
+
+- HTTP 400 `StripeInvalidRequestError` with an explicit parameter-validation code
+  in `CHECKOUT_VALIDATION_ERRORS` in `app/[lang]/actions/stripe.ts`.
+- HTTP 401 `StripeAuthenticationError` or HTTP 403 `StripePermissionError`.
+
+The allowlist follows Stripe's [validation error codes](https://docs.stripe.com/error-codes),
+[idempotency rules](https://docs.stripe.com/api/idempotent_requests), and
+[authentication and permission errors](https://docs.stripe.com/api/errors).
+Other errors, including generic 400s, 402, 404, 409, 422, 424, 429, network
+failures, and 5xx responses, retain the reservation. This is a conservative
+policy, not a claim that every retained error created a session.
+
+Each creation uses its reservation token as the Stripe idempotency key. A single
+SDK request listener counts attempts by that key, and the action removes its
+counter in `finally`. A final rejection after a retry cannot settle an earlier
+unknown outcome, so the reservation remains held. See Stripe's
+[network-error guidance](https://docs.stripe.com/error-low-level#network-errors)
+and the installed [SDK request and retry implementation](https://github.com/stripe/stripe-node/blob/v17.7.0/src/RequestSender.ts).
+
+The `stripe:account:{userId}:deleted` block has no TTL: a terminated request or a
+failed Redis release requires support to confirm cleanup has stopped before
+clearing it. These keys are coordination state; retain them when clearing the
+subscription display cache. Stripe remains the source of subscription state,
+and webhooks maintain the display cache.
+
+Checkout returns `accountBillingBlocked` with support guidance, or
+`accountBillingBusy` for a competing reservation. Sentry records these as
+`checkout_billing_blocked` and `checkout_billing_busy`, separate from Stripe
+failures. For interrupted requests, follow
+[Restore account billing](scripts/README.md#restore-account-billing).
+
+Account deletion returns the same billing error codes without reporting Sentry
+exceptions. A blocked deletion directs the user to support; a busy reservation
+asks them to wait for the other request to finish. Other verification failures
+return `subscriptionCheckFailed` and are reported as exceptions.
+The blocked-deletion toast wraps its text and stays open until dismissed.
+Checkout errors appear inline in the pricing card. Both blocked messages give
+the dashboard chat and `info@sexyvoice.ai` as support options.
+
+`middleware-client.ts` forwards refreshed cookies to both the request and
+response, preserving locale rewrites and request-header overrides. Auth and
+OAuth callback redirects retain cookies and SSR cache headers on success and
+failure. Server components use the cookie-store adapter; middleware owns
+session refresh before rendering.
+
+#### Database retries
+
+Server and script clients use SDK retries for GET, HEAD, and OPTIONS requests
+on network failures and HTTP 503/520: up to three retries with 1s/2s/4s backoff
+unless `Retry-After` overrides it. HTTP 504 and default POST RPCs, including
+credit mutations, are not retried. This is not an overall request deadline;
+do not add a global retry wrapper around Supabase requests.
+
+The browser client disables SDK database retries; TanStack Query owns dashboard
+query retries. Direct browser reads remain single-attempt. The proxy's
+`ensureUserApplicationState` profile read also disables retries because repair
+is best-effort. Read, Auth lookup, and restoration failures are reported to
+Sentry without blocking a claims-authenticated dashboard request.
+
+### Credit balance sync
+
+`CreditsSection` displays the stored balance through `useCreditsQuery` and its
+`['credits', userId]` key. `DashboardAnalytics` shares that query and sends
+`creditsLeft` to Crisp and PostHog, including while the mobile sidebar is closed.
+The query's 60-second `staleTime` is not polling.
+`/api/generate-voice` returns credits used, not a remaining
+balance; support investigations should verify `public.credits.amount`.
+
+`invalidateCredits` in `apps/web/lib/credits-query.ts` refreshes active queries
+after non-cancelled generation requests, including split segments and retries,
+and on call-token 402s, call disconnect, or a balance-error Retry. Disconnect
+scopes the refresh to the verified user. Cache hits skip it because they do not
+charge. Streaming errors wait for the refund attempt. Cancellation is best-effort:
+provider work that has finished can retain a charge during upload or reconciliation.
+The aborted fetch cannot confirm settlement, so it skips immediate invalidation
+to avoid caching a temporary reservation before a refund. A late charge can leave
+the sidebar and Crisp balance higher than the database until another refresh;
+`staleTime` does not bound that delay.
+
+At JSON and SSE finalization, the route reports a Sentry warning when it observes
+an aborted request with positive reconciled `creditsDebited`. The event uses
+`flow:generation-charge-retained-after-cancellation` and includes the transport,
+model, charged credits, and user ID. The server's `beforeSend` filter strips
+request data, breadcrumbs, and unrelated context from these events. Filter by
+the production environment to count confirmed cases. Cancellations observed only
+after finalization are not captured, so this is a lower bound on impact, not a
+complete count of disconnects. Failed refunds have separate Sentry reporting.
+
+Cloning invalidates credits once `/api/clone-voice` responds, whether it
+succeeded or failed. The route awaits its reservation refund before responding,
+so the refreshed balance is settled, including a charge kept after a failed
+refund. A cancelled or failed fetch cannot confirm settlement, so it skips the
+refresh. Unlike generation, a cancelled clone is usually still charged: the
+route passes the abort signal only to reference-audio enhancement, so provider
+generation and upload finish and keep the reservation. The sidebar and Crisp
+then show the pre-clone balance until the next refetch.
+
+Crisp holds a session snapshot, not a live balance. If a refreshed query does
+not reach Crisp, check the claims and paid-status lookups before
+`Crisp.session.setData`.
+
+### R2 Buckets
+
+- Dashboard TTS, cloning output, and Replicate reference uploads use
+  `R2_BUCKET_NAME`.
+- External API speech uses `R2_SPEECH_API_BUCKET_NAME` and its dedicated public
+  base URL.
+- PostgreSQL stores metadata and URLs; binary audio lives in R2.
+
+## Caching and Rate Limiting
+
+Dashboard TTS and voice cloning use persistent Redis entries with no explicit
+TTL. Cache hits return the existing URL and consume zero credits.
+
+- TTS keys use a SHA-256 digest of the rendered text, voice, effective model,
+  seed, temperature, and speed. The stored digest is truncated to eight hex
+  characters.
+- Clone keys use locale, provider, text, processed reference-audio hash, and
+  enhancement mode.
+- Paid and free dashboard TTS outputs use separate R2 path prefixes.
+- `/api/v1/speech` bypasses this cache and always generates fresh audio.
+
+External API rate limiting uses an Upstash token bucket with a capacity and
+refill rate of 60 requests per minute per API key hash.
+
+## Repository Map
+
+```text
+apps/
+├── web/
+│   ├── app/[lang]/                    # Localized product routes
+│   │   ├── (auth)/                    # Login and signup
+│   │   ├── (dashboard)/dashboard/     # Generate, clone, call, usage, billing
+│   │   ├── blog/                      # Contentlayer-backed blog
+│   │   └── tools/                     # Browser audio utilities
+│   ├── app/api/
+│   │   ├── generate-voice/            # Dashboard TTS
+│   │   ├── clone-voice/               # Dashboard voice cloning
+│   │   ├── call-token/                # LiveKit token and agent dispatch
+│   │   ├── call-sessions/analyze/     # Webhook enqueue + batch drain cron
+│   │   ├── characters/                # Custom character CRUD
+│   │   ├── memories/                  # User memory erasure
+│   │   ├── api-keys/                  # External API key management
+│   │   ├── billing/                   # Dashboard API usage billing
+│   │   ├── stripe/                    # Checkout and webhooks
+│   │   └── v1/                        # External REST API
+│   ├── components/                    # Shared and feature UI
+│   ├── data/                          # Call models, voices, scenes, defaults
+│   ├── hooks/                         # Call, audio, and client state
+│   ├── lib/                           # API, Supabase, storage, AI, and billing
+│   ├── messages/                      # next-intl locale files
+│   ├── supabase/migrations/           # PostgreSQL schema and RLS
+│   ├── tests/                         # Vitest tests
+│   └── e2e/                           # Playwright tests
+├── docs/
+│   ├── content/                       # Fumadocs MDX content
+│   └── src/                           # Docs app and OpenAPI generation
+scripts/                               # Analysis, backfill, refund, and maintenance tools
 ```
-app/[lang]/                    # Internationalized routes (en, es, de, da, it, fr)
-├── (auth)/                    # Public authentication pages
-├── (dashboard)/               # Protected dashboard routes
-│   └── dashboard/
-│       ├── call/              # Real-time AI voice call interface
-│       ├── usage/             # Usage statistics dashboard
-│       ├── generate/          # Voice generation
-│       ├── clone/             # Voice cloning
-│       └── history/           # Generated audio history
-├── actions/                   # Server actions (promos, stripe)
-├── blog/[slug]/               # MDX blog posts
-└── page.tsx                   # Landing page
-
-app/api/
-├── api-keys/                  # API key management (list, create) — requires paid account
-│   └── [id]/                  # Deactivate a specific key (DELETE)
-├── call-token/                # LiveKit token generation for real-time calls
-├── usage-events/              # Usage tracking API
-├── daily-stats/               # Daily statistics endpoint
-├── generate-voice/            # Voice generation endpoint (dashboard, session-auth)
-├── clone-voice/               # Voice cloning endpoint
-├── stripe/webhook/            # Stripe payment webhooks
-├── v1/                        # External REST API (API-key auth, rate-limited)
-│   ├── billing/               # GET  – credit balance + last transaction
-│   ├── models/                # GET  – model catalog
-│   ├── openapi/               # GET  – OpenAPI 3.1 spec (public, no auth)
-│   ├── speech/                # POST – text-to-speech generation
-│   └── voices/                # GET  – list public TTS voices
-└── cron/telegram/             # Daily stats notifications
-
-lib/
-├── api/                       # External API shared layer
-│   ├── auth.ts                # API key generation, HMAC hashing, validateApiKey()
-│   ├── constants.ts           # EXTERNAL_API_MODELS catalog, RATE_LIMIT_DEFAULT
-│   ├── errors.ts              # createApiError(), zodErrorToApiError()
-│   ├── external-errors.ts     # Structured error definitions + externalApiErrorResponse()
-│   ├── logger.ts              # Axiom-backed per-request structured logger
-│   ├── model.ts               # resolveExternalModelId(), getDefaultFormat(), isFormatSupported()
-│   ├── openapi.ts             # createExternalApiOpenApiDocument() via zod-openapi
-│   ├── pricing.ts             # calculateExternalApiDollarAmount()
-│   ├── rate-limit.ts          # consumeRateLimit() — Upstash token bucket
-│   ├── responses.ts           # jsonWithRateLimitHeaders()
-│   └── schemas.ts             # Zod schemas (shared with OpenAPI generator)
-├── supabase/
-│   ├── admin.ts               # createAdminClient() — service role, bypasses RLS
-│   ├── queries.ts             # DB queries; *Admin variants for external API routes
-│   └── server.ts              # createClient() — anon key, session-scoped
-├── storage/
-│   └── upload.ts              # uploadFileToR2(filename, buffer, contentType, bucketName, publicBaseUrl)
-├── i18n/                      # Internationalization (en, es, de, da, it, fr)
-├── stripe/                    # Payment processing
-├── edge-config/               # Vercel Edge Config for dynamic settings
-├── inngest/                   # Background jobs
-└── utils/                     # Utility functions
-
-data/
-├── playground-state.ts        # Call session state management
-├── presets.ts                 # Preset configurations for calls
-├── voices.ts                  # Voice definitions for calls
-├── session-config.ts          # Session configuration
-└── default-config.ts          # Default call instructions
-
-hooks/
-├── use-connection.tsx         # LiveKit connection management
-├── use-agent.tsx              # AI agent interaction hook
-├── use-call-timer.ts          # Call duration tracking
-├── use-playground-state.tsx   # Call state management
-└── use-persistent-media-device.ts  # Microphone persistence
-
-components/
-├── ui/                        # shadcn/ui components
-├── call/                      # Real-time call components (voice selector, chat, controls)
-└── [features]/                # Feature-specific components
-```
-
-tests/
-├── setup.ts # Global Vitest setup — env vars, vi.mock() for all external deps
-├── v1-speech.test.ts # External speech API — auth, validation, Grok/Gemini/Replicate generation, credits
-├── api-v1-meta.test.ts # External models/voices/openapi endpoints
-├── api-v1-billing.test.ts # External billing endpoint
-├── api-keys-routes.test.ts # API key CRUD routes
-└── \*.test.ts # Other feature test suites
-
-See [AGENTS.md](./AGENTS.md) for development guidelines.

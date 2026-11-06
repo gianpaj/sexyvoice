@@ -17,3 +17,6 @@ scripts/.env
 
 # Vercel project link (so `vercel` / env pulls resolve to the right project)
 .vercel/project.json
+
+# supabase --workdir apps/web link
+apps/web/supabase/.temp

@@ -29,49 +29,49 @@ const EXTERNAL_API_ERROR_DEFINITIONS: Record<
   ExternalApiErrorKey,
   ExternalApiErrorDefinition
 > = {
-  missing_authorization_header: {
-    status: 401,
-    type: 'authentication_error',
-    code: 'invalid_api_key',
-    message: 'Missing Authorization header',
-    param: 'authorization',
-  },
   invalid_api_key: {
-    status: 401,
-    type: 'authentication_error',
     code: 'invalid_api_key',
     message: 'Invalid API key',
     param: 'authorization',
-  },
-  rate_limit_exceeded: {
-    status: 429,
-    type: 'rate_limit_error',
-    code: 'rate_limit_exceeded',
-    message: 'Rate limit exceeded',
+    status: 401,
+    type: 'authentication_error',
   },
   invalid_json: {
-    status: 400,
-    type: 'invalid_request_error',
     code: 'invalid_request',
     message: 'Invalid JSON payload',
+    status: 400,
+    type: 'invalid_request_error',
   },
   invalid_request: {
-    status: 400,
-    type: 'invalid_request_error',
     code: 'invalid_request',
     message: 'Invalid request body',
-  },
-  unsupported_parameter: {
     status: 400,
     type: 'invalid_request_error',
-    code: 'unsupported_parameter',
-    message: 'Unsupported parameter',
+  },
+  missing_authorization_header: {
+    code: 'invalid_api_key',
+    message: 'Missing Authorization header',
+    param: 'authorization',
+    status: 401,
+    type: 'authentication_error',
+  },
+  rate_limit_exceeded: {
+    code: 'rate_limit_exceeded',
+    message: 'Rate limit exceeded',
+    status: 429,
+    type: 'rate_limit_error',
   },
   server_error: {
-    status: 500,
-    type: 'server_error',
     code: 'server_error',
     message: 'Internal server error',
+    status: 500,
+    type: 'server_error',
+  },
+  unsupported_parameter: {
+    code: 'unsupported_parameter',
+    message: 'Unsupported parameter',
+    status: 400,
+    type: 'invalid_request_error',
   },
 };
 
@@ -97,10 +97,10 @@ export function externalApiErrorResponse(params: {
 
   return jsonWithRateLimitHeaders(
     createApiError({
-      message: params.message ?? definition?.message ?? 'Internal server error',
-      type: params.type ?? definition?.type ?? 'server_error',
       code: params.code ?? definition?.code ?? 'server_error',
+      message: params.message ?? definition?.message ?? 'Internal server error',
       param: params.param ?? definition?.param ?? null,
+      type: params.type ?? definition?.type ?? 'server_error',
     }),
     {
       status: params.status ?? definition?.status ?? 500,

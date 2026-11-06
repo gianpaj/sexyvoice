@@ -1,12 +1,20 @@
 import { allPosts } from 'contentlayer/generated';
-import { ArrowRightIcon, Globe2, Mic2, Shield, Sparkles } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  AudioLines,
+  Globe2,
+  Mic2,
+  PhoneCall,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import type { ReactNode } from 'react';
 import type { Graph } from 'schema-dts';
 
+import { faqAnswerText } from '@/lib/faq';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 
@@ -14,6 +22,7 @@ import { Link } from '@/lib/i18n/navigation';
 // import { PopularAudios } from '@/components/popular-audios';
 
 import { Banner } from '@/components/banner';
+import { CardDecorator } from '@/components/card-decorator';
 import { FAQComponent } from '@/components/faq';
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
@@ -96,54 +105,57 @@ export default async function LandingPage(props: {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'Organization',
         '@id': 'https://sexyvoice.ai/#organization',
+        '@type': 'Organization',
+        logo: 'https://sexyvoice.ai/web-app-manifest-192x192.png',
         name: 'SexyVoice.ai',
-        url: 'https://sexyvoice.ai',
-        logo: 'https://sexyvoice.ai/icon-192x192.png',
         sameAs: [
           'https://x.com/sexyvoiceai',
           'https://instagram.com/sexyvoice_ai',
         ],
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebSite',
         '@id': 'https://sexyvoice.ai/#website',
-        url: 'https://sexyvoice.ai',
-        name: 'SexyVoice.ai',
+        '@type': 'WebSite',
         description: messages.pages.description,
+        inLanguage: lang,
+        name: 'SexyVoice.ai',
         publisher: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
-        inLanguage: lang,
+        url: 'https://sexyvoice.ai',
       },
       {
-        '@type': 'WebPage',
         '@id': `${siteUrl}/#webpage`,
-        url: siteUrl,
-        name: messages.pages.defaultTitle,
-        description: messages.pages.description,
-        isPartOf: {
-          '@id': 'https://sexyvoice.ai/#website',
-        },
+        '@type': 'WebPage',
         about: {
           '@id': 'https://sexyvoice.ai/#organization',
         },
+        description: messages.pages.description,
         inLanguage: lang,
+        isPartOf: {
+          '@id': 'https://sexyvoice.ai/#website',
+        },
+        name: messages.pages.defaultTitle,
+        url: siteUrl,
       },
       {
-        '@type': 'FAQPage',
         '@id': `${siteUrl}/#faq`,
+        '@type': 'FAQPage',
         isPartOf: {
           '@id': `${siteUrl}/#webpage`,
         },
         mainEntity: faqQuestions.map((q) => ({
           '@type': 'Question' as const,
-          name: q.question,
           acceptedAnswer: {
             '@type': 'Answer' as const,
-            text: q.answer,
+            text: faqAnswerText(
+              q.answer,
+              (q as { link?: { text: string } }).link,
+            ),
           },
+          name: q.question,
         })),
       },
     ],
@@ -156,12 +168,25 @@ export default async function LandingPage(props: {
       {activeBanner && <Banner banner={activeBanner} />}
       <HeaderStatic />
       <main id="main-content">
-        <div className="min-h-screen bg-linear-to-br from-background to-zinc-800">
+        <div className="relative isolate min-h-screen overflow-x-clip bg-linear-to-br from-[#090711] to-zinc-800 selection:bg-[#d8b4ff]/30">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-0 left-[-12rem] -z-10 h-[36rem] w-[36rem] scale-75 rounded-full bg-[radial-gradient(circle_at_center,rgba(167,139,250,0.34),rgba(91,33,182,0.12)_42%,transparent_70%)] opacity-50 blur-3xl md:scale-100 md:opacity-100"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[17rem] right-[-14rem] -z-10 h-[42rem] w-[42rem] scale-75 rounded-full bg-[radial-gradient(circle_at_center,rgba(244,114,182,0.28),rgba(59,130,246,0.08)_48%,transparent_72%)] opacity-50 blur-3xl md:scale-100 md:opacity-100"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-[100svh] left-1/2 -z-10 h-[34rem] w-[56rem] -translate-x-1/2 scale-75 rounded-full bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.16),transparent_68%)] opacity-50 blur-3xl md:scale-100 md:opacity-100"
+          />
+
           <div className="container mx-auto px-4">
             {/* Hero Section */}
-            <div className="z-10 space-y-6 py-20 text-center md:pb-32">
+            <div className="z-10 flex min-h-[calc(100svh-4rem)] flex-col justify-evenly py-8 text-center">
               <HeroWaveform />
-              <h1 className="text-balance font-bold text-5xl leading-14 md:text-6xl">
+              <h1 className="text-balance font-bold text-5xl leading-14 sm:leading-17 md:text-6xl max-sm:[&:lang(de)]:text-4xl max-sm:[&:lang(de)]:leading-12">
                 <span className="text-white/90">{firstPart}</span>
                 <br />
                 {titleRestParts && (
@@ -176,8 +201,12 @@ export default async function LandingPage(props: {
                   </span>
                 )}
               </h1>
-              <p className="mx-auto max-w-2xl whitespace-break-spaces text-pretty py-12 text-gray-300 text-xl leading-8 sm:leading-10">
-                {dictLanding.hero.subtitle}
+              <p className="mx-auto max-w-2xl text-balance text-gray-300 text-xl leading-8 sm:leading-10">
+                {dictLanding.hero.subtitle.split('\n').map((line) => (
+                  <span className="block" key={line}>
+                    {line}
+                  </span>
+                ))}
               </p>
 
               <div className="mx-auto flex w-fit flex-col gap-2">
@@ -238,9 +267,61 @@ export default async function LandingPage(props: {
           </div> */}
 
             {/* Features Grid */}
-            <div className="grid gap-6 py-16 md:grid-cols-2 lg:grid-cols-3 xl:px-28">
-              <Card className="group shadow-zinc-950/5">
-                <CardHeader className="pb-3">
+            <div className="mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 lg:grid-cols-6 lg:*:col-span-2 lg:*:first:col-start-2">
+              <Link
+                className="group max-w-sm rounded-xl"
+                href="/voice-call"
+                prefetch
+              >
+                <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
+                  <CardHeader>
+                    <CardDecorator>
+                      <PhoneCall
+                        aria-hidden
+                        className="size-6 text-gray-200 transition-colors group-hover:text-white"
+                      />
+                    </CardDecorator>
+
+                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
+                      {dictLanding.features.voiceCalling.title}
+                    </h3>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-pretty text-center text-sm text-zinc-300">
+                      {dictLanding.features.voiceCalling.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Link
+                className="group max-w-sm rounded-xl"
+                href="/voice-cloning"
+                prefetch
+              >
+                <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
+                  <CardHeader>
+                    <CardDecorator>
+                      <AudioLines
+                        aria-hidden
+                        className="size-6 text-gray-200 transition-colors group-hover:text-white"
+                      />
+                    </CardDecorator>
+
+                    <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
+                      {dictLanding.features.voiceCloneDemo.title}
+                    </h3>
+                  </CardHeader>
+
+                  <CardContent>
+                    <p className="text-pretty text-center text-sm text-zinc-300">
+                      {dictLanding.features.voiceCloneDemo.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
+              <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
+                <CardHeader>
                   <CardDecorator>
                     <Shield aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
@@ -250,13 +331,13 @@ export default async function LandingPage(props: {
                   </h3>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-justify text-sm">
+                  <p className="text-pretty text-center text-sm text-zinc-300">
                     {dictLanding.features.security.description}
                   </p>
                 </CardContent>
               </Card>
-              <Card className="group shadow-zinc-950/5">
-                <CardHeader className="pb-3">
+              <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
+                <CardHeader>
                   <CardDecorator>
                     <Mic2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
@@ -267,14 +348,14 @@ export default async function LandingPage(props: {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-justify text-sm">
+                  <p className="text-pretty text-center text-sm text-zinc-300">
                     {dictLanding.features.voiceCloning.description}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="group shadow-zinc-950/5">
-                <CardHeader className="pb-3">
+              <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
+                <CardHeader>
                   <CardDecorator>
                     <Globe2 aria-hidden className="size-6 text-gray-200" />
                   </CardDecorator>
@@ -285,7 +366,7 @@ export default async function LandingPage(props: {
                 </CardHeader>
 
                 <CardContent>
-                  <p className="text-justify text-sm">
+                  <p className="text-pretty text-center text-sm text-zinc-300">
                     {dictLanding.features.multiLanguage.description}
                   </p>
                 </CardContent>
@@ -296,7 +377,7 @@ export default async function LandingPage(props: {
               <h2 className="mx-auto mb-4 text-pretty font-semibold text-2xl">
                 {messages.credits.pricingPlan}
               </h2>
-              <PricingTable className="py-4 pb-16" lang={lang} />
+              <PricingTable className="py-4 pb-16 xl:px-10" lang={lang} />
             </div>
 
             {/* FAQ Section */}
@@ -311,31 +392,33 @@ export default async function LandingPage(props: {
               </h2>
               {get3PostsByLang(lang).map((post) => (
                 <Card
-                  className="mx-auto lg:min-w-[400px] lg:max-w-[400px]"
+                  className="relative max-w-sm pt-0 lg:min-w-[400px] lg:max-w-[400px]"
                   key={post.url}
                 >
-                  <Link href={post.url} prefetch>
-                    <CardHeader>
-                      {post.image && (
-                        <Image
-                          alt={post.title}
-                          className="mx-auto rounded-lg outline outline-white/10 -outline-offset-1"
-                          height={200}
-                          loading="lazy"
-                          priority={false}
-                          src={post.image}
-                          style={{ width: '100%', height: 'auto' }}
-                          width={300}
-                        />
-                      )}
-                      <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
-                        {post.title}
-                      </CardTitle>
-                    </CardHeader>
-                  </Link>
+                  {post.image && (
+                    <Link href={post.url} prefetch>
+                      <Image
+                        alt={post.title}
+                        className="relative w-full rounded-t-xl outline outline-white/10 -outline-offset-1"
+                        height={200}
+                        loading="lazy"
+                        priority={false}
+                        src={post.image}
+                        width={300}
+                      />
+                    </Link>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-balance text-center text-gray-200 text-lg leading-8">
+                      <Link href={post.url}>{post.title}</Link>
+                    </CardTitle>
+                  </CardHeader>
                 </Card>
               ))}
-              <Link className="text-center hover:underline" href="/blog">
+              <Link
+                className="text-center text-gray-400 text-sm transition-colors hover:text-foreground"
+                href="/blog"
+              >
                 {dictLanding.more}
               </Link>
             </div>
@@ -368,11 +451,3 @@ export default async function LandingPage(props: {
     </>
   );
 }
-
-const CardDecorator = ({ children }: { children: ReactNode }) => (
-  <div className="mx-auto grid size-36 place-items-center">
-    <div className="flex size-12 items-center justify-center rounded-sm border-t border-l bg-brand-red/65">
-      {children}
-    </div>
-  </div>
-);

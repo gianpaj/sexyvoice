@@ -41,8 +41,7 @@ This follows OpenAI's pattern (nested `error` object with `message`, `type`, `pa
 | `insufficient_credits`     | 402         | Not enough credits             |
 | `invalid_request_error`    | 400         | General validation failure     |
 | `input_too_long`           | 400         | Text exceeds character limit   |
-| `voice_not_found`          | 404         | Voice ID/name doesn't exist    |
-| `model_not_found`          | 400         | Invalid model name             |
+| `voice_not_found`          | 404         | Voice ID/name+model not found  |
 | `content_policy_violation` | 422         | Text flagged by content filter |
 | `rate_limit_exceeded`      | 429         | Too many requests              |
 | `server_error`             | 500         | Internal failure               |
@@ -195,15 +194,21 @@ export const VoiceGenerationRequestSchema = z.object({
     .string()
     .min(1)
     .max(1000)
-    .describe("The text to synthesize (max 1000 chars for gpro, 500 for kokoro)"),
+    .describe(
+      "The text to synthesize (max 1000 chars for gpro, 500 for kokoro)",
+    ),
   voice: z
     .string()
     .min(1)
-    .describe("The voice name to use (see GET /api/v1/voices for available voices)"),
+    .describe(
+      "The voice name to use (see GET /api/v1/voices for available voices)",
+    ),
   response_format: z
     .enum(["wav", "mp3"])
     .optional()
-    .describe("Audio format. Default depends on model: wav for gpro, mp3 for kokoro"),
+    .describe(
+      "Audio format. Default depends on model: wav for gpro, mp3 for kokoro",
+    ),
   speed: z
     .number()
     .min(0.5)
@@ -225,12 +230,23 @@ export const VoiceGenerationRequestSchema = z.object({
 ```ts
 export const VoiceGenerationResponseSchema = z.object({
   url: z.string().url().describe("URL to the generated audio file"),
-  credits_used: z.number().int().nonnegative().describe("Credits consumed for this generation"),
-  credits_remaining: z.number().int().nonnegative().describe("Remaining credits in account"),
+  credits_used: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Credits consumed for this generation"),
+  credits_remaining: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe("Remaining credits in account"),
   cached: z.boolean().describe("Whether result was served from cache"),
   usage: z
     .object({
-      input_characters: z.number().int().describe("Number of input characters processed"),
+      input_characters: z
+        .number()
+        .int()
+        .describe("Number of input characters processed"),
       model: z.string().describe("Model used for generation"),
     })
     .describe("Usage details for billing tracking"),

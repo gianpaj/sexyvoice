@@ -18,10 +18,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { type MouseEvent, useEffect, useState } from 'react';
 
-import logoSmall from '@/app/assets/S-logo-transparent-small.png';
+import logoSmall from '@/app/assets/s-logo-small.svg';
 import { Banner } from '@/components/banner';
 import CreditsSection from '@/components/credits-section';
+import { DashboardAnalytics } from '@/components/dashboard-analytics';
+import { NavigationPending } from '@/components/navigation-pending';
 import { SidebarFooterMenu } from '@/components/sidebar-footer-menu';
 import {
   Sidebar,
@@ -60,57 +63,75 @@ export default function DashboardUI({
   const pathname = usePathname();
   const t = useTranslations('pages');
   const tSidebar = useTranslations('sidebar');
+  // The page a sidebar click navigates away from. A click on the current page
+  // clears it: Next.js still navigates, which cancels any pending one.
+  const [navigationFrom, setNavigationFrom] = useState<string | null>(null);
+  // Reset only after a pathname change commits, including browser back and
+  // forward. A reset during render would also run in the pending navigation's
+  // unfinished render, and React would then skip the next clear as a no-op.
+  useEffect(() => {
+    setNavigationFrom((from) => (from === pathname ? from : null));
+  }, [pathname]);
+  const isNavigating = navigationFrom === pathname;
+
+  const handleNavigationClick = (event: MouseEvent, href: string) => {
+    const opensElsewhere =
+      event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    if (!opensElsewhere) {
+      setNavigationFrom(href === pathname ? null : pathname);
+    }
+  };
 
   const navigation = [
     {
-      name: t('/dashboard/generate'),
+      current: pathname === `/${lang}/dashboard/generate`,
       href: `/${lang}/dashboard/generate`,
       icon: Wand2,
-      current: pathname === `/${lang}/dashboard/generate`,
+      name: t('/dashboard/generate'),
     },
     {
-      name: t('/dashboard/clone'),
+      current: pathname === `/${lang}/dashboard/clone`,
       href: `/${lang}/dashboard/clone`,
       icon: Mic2,
-      current: pathname === `/${lang}/dashboard/clone`,
+      name: t('/dashboard/clone'),
     },
     {
-      name: t('/dashboard/call'),
+      current: pathname === `/${lang}/dashboard/call`,
       href: `/${lang}/dashboard/call`,
       icon: PhoneIcon,
-      current: pathname === `/${lang}/dashboard/call`,
+      name: t('/dashboard/call'),
     },
     {
-      name: t('/dashboard/credits'),
+      current: pathname === `/${lang}/dashboard/credits`,
       href: `/${lang}/dashboard/credits`,
       icon: CreditCard,
-      current: pathname === `/${lang}/dashboard/credits`,
+      name: t('/dashboard/credits'),
     },
     {
-      name: t('/dashboard/history'),
+      current: pathname === `/${lang}/dashboard/history`,
       href: `/${lang}/dashboard/history`,
       icon: FileClock,
-      current: pathname === `/${lang}/dashboard/history`,
+      name: t('/dashboard/history'),
     },
     {
-      name: t('/dashboard/usage'),
+      current: pathname === `/${lang}/dashboard/usage`,
       href: `/${lang}/dashboard/usage`,
       icon: BarChart3,
-      current: pathname === `/${lang}/dashboard/usage`,
+      name: t('/dashboard/usage'),
     },
     {
-      name: t('/dashboard/api-keys'),
+      current: pathname === `/${lang}/dashboard/api-keys`,
       href: `/${lang}/dashboard/api-keys`,
       icon: KeyRound,
-      current: pathname === `/${lang}/dashboard/api-keys`,
+      name: t('/dashboard/api-keys'),
     },
     ...(isPaidUser
       ? [
           {
-            name: t('/dashboard/api-billing'),
+            current: pathname === `/${lang}/dashboard/api-billing`,
             href: `/${lang}/dashboard/api-billing`,
             icon: ReceiptText,
-            current: pathname === `/${lang}/dashboard/api-billing`,
+            name: t('/dashboard/api-billing'),
           },
         ]
       : []),
@@ -118,31 +139,34 @@ export default function DashboardUI({
 
   const freeTools = [
     {
-      name: t('/tools/audio-converter'),
       href: `/${lang}/tools/audio-converter`,
       icon: FileAudio,
+      name: t('/tools/audio-converter'),
     },
     {
-      name: t('/tools/transcribe'),
       href: `/${lang}/tools/transcribe`,
       icon: FileText,
+      name: t('/tools/transcribe'),
     },
     {
-      name: t('/tools/audio-joiner'),
       href: `/${lang}/tools/audio-joiner`,
       icon: Scissors,
+      name: t('/tools/audio-joiner'),
     },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <SidebarProvider defaultOpen>
+        <DashboardAnalytics lang={lang} userId={userId} />
+        <NavigationPending pending={isNavigating} />
         <Sidebar collapsible="icon">
           <SidebarHeader>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   className="items-end data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[state=expanded]:gap-0"
+                  data-visual-test="transparent"
                   size="lg"
                 >
                   <div className="aspect-square group-data-[collapsible=icon]:size-9">
@@ -166,7 +190,12 @@ export default function DashboardUI({
                   {navigation.map((item) => (
                     <SidebarMenuItem key={item.name}>
                       <SidebarMenuButton asChild isActive={item.current}>
-                        <Link href={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={(event) =>
+                            handleNavigationClick(event, item.href)
+                          }
+                        >
                           <item.icon className="mr-3 size-5" />
                           <span>{item.name}</span>
                         </Link>
@@ -199,7 +228,6 @@ export default function DashboardUI({
           <SidebarFooter>
             <CreditsSection
               creditTransactions={creditTransactions}
-              lang={lang}
               showMinutes={pathname === `/${lang}/dashboard/call`}
               userId={userId}
             />
@@ -207,11 +235,12 @@ export default function DashboardUI({
           </SidebarFooter>
         </Sidebar>
 
-        {activeBanner && <Banner banner={activeBanner} inDashboard />}
-        <div className="flex w-full flex-1 flex-col">
-          <div className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 shadow-sm sm:px-6 lg:hidden">
-            <SidebarTrigger className="lg:hidden" />
+        <div className="group/dashboard relative flex min-w-0 flex-1 flex-col">
+          <div className="sticky top-0 z-30 flex h-12 items-center border-b bg-background px-4 shadow-sm group-has-data-dashboard-banner/dashboard:absolute group-has-[[data-dashboard-banner]]/dashboard:left-0 group-has-[[data-dashboard-banner]]/dashboard:size-11 group-has-[[data-dashboard-banner]]/dashboard:border-0 group-has-[[data-dashboard-banner]]/dashboard:bg-transparent group-has-[[data-dashboard-banner]]/dashboard:px-0 group-has-[[data-dashboard-banner]]/dashboard:shadow-none sm:px-6 lg:hidden">
+            <SidebarTrigger className="size-11 lg:hidden" />
           </div>
+
+          {activeBanner && <Banner banner={activeBanner} inDashboard />}
 
           <main className="flex-1 px-4 py-8 sm:px-6 lg:px-8" id="main-content">
             {children}

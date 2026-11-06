@@ -1,79 +1,154 @@
-import { getMessages } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 
+import { CallExperience } from '@/components/call/call-experience';
 import { CallFaq } from '@/components/call/call-faq';
-import { Chat } from '@/components/call/chat';
-import { ConfigurationForm } from '@/components/call/configuration-form';
+import { RoomWrapper } from '@/components/call/room-wrapper';
 import CreditsSection from '@/components/credits-section';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import type { CallLanguage } from '@/data/playground-state';
+import { ConnectionProvider } from '@/hooks/use-connection';
+import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
+import { type CharacterRow, mapCharacterToPreset } from '@/lib/call-presets';
+import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
+import { createDashboardMetadata } from '@/lib/dashboard-metadata';
+import { getE2ECallUser } from '@/lib/e2e-call-user';
+import {
+  E2E_CALL_INSTRUCTION_CONFIG,
+  E2E_CALL_VOICES,
+  E2E_CREDIT_TRANSACTIONS,
+  E2E_PUBLIC_CALL_CHARACTERS,
+  E2E_SAVED_CALL_VOICES,
+} from '@/lib/e2e-mocks';
+import {
+  applyPresetInstructionOverrides,
+  getCallInstructionConfig,
+} from '@/lib/edge-config/call-instructions';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { getCallVoices, hasUserPaid } from '@/lib/supabase/queries';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { getSavedCallVoices } from '@/lib/supabase/call-voices';
+import {
+  getCallVoices,
+  getCreditTransactionAmounts,
+  getPublicCallCharacters,
+  getUserCallCharacters,
+  hasUserPaid,
+} from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-// import { PresetShare } from "@/components/preset-share";
+
+export const generateMetadata = createDashboardMetadata('/dashboard/call');
 
 export default async function Call(props: {
   params: Promise<{ lang: Locale }>;
+  searchParams: Promise<{
+    custom?: string | string[];
+    voice?: string | string[];
+  }>;
 }) {
   const { lang } = await props.params;
-  const dict = (await getMessages({ locale: lang })) as IntlMessages;
+  const { custom, voice } = await props.searchParams;
+  const returnFromClone =
+    custom === '1'
+      ? { voiceId: typeof voice === 'string' ? voice : null }
+      : null;
 
-  const callFaq = dict.landing?.faq?.groups?.find(
-    (group) => group.id === 'liveCalling',
-  );
+  const [t, tProfile] = await Promise.all([
+    getTranslations({ locale: lang, namespace: 'call' }),
+    getTranslations({ locale: lang, namespace: 'profile' }),
+  ]);
 
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (!user || error) {
-    return <div>{dict.profile.notLoggedIn}</div>;
+  const claims = await getVerifiedClaims(supabase);
+  const userId = claims?.sub;
+  if (!userId) {
+    return <div>{tProfile('notLoggedIn')}</div>;
   }
 
-  const [{ data: creditTransactions }, isPaidUser, callVoices] =
-    await Promise.all([
-      supabase
-        .from('credit_transactions')
-        .select('amount')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false }),
-      hasUserPaid(user.id),
-      getCallVoices(),
-    ]);
+  const e2e = await getE2ECallUser();
+  const [
+    creditTransactions,
+    isPaidUser,
+    callVoices,
+    savedVoices,
+    { defaultInstructions, initialInstruction, presetInstructions },
+    publicCharacters,
+  ] = e2e
+    ? [
+        E2E_CREDIT_TRANSACTIONS,
+        e2e.isPaidUser,
+        E2E_CALL_VOICES,
+        e2e.isPaidUser ? E2E_SAVED_CALL_VOICES : [],
+        E2E_CALL_INSTRUCTION_CONFIG,
+        E2E_PUBLIC_CALL_CHARACTERS,
+      ]
+    : await Promise.all([
+        getCreditTransactionAmounts(userId),
+        hasUserPaid(userId),
+        getCallVoices(),
+        getSavedCallVoices(userId),
+        getCallInstructionConfig(),
+        getPublicCallCharacters(),
+      ]);
+  const userCharacters =
+    !e2e && isPaidUser ? await getUserCallCharacters(userId) : [];
+
+  const defaultPresets = applyPresetInstructionOverrides(
+    (publicCharacters ?? []).map((character) =>
+      mapCharacterToPreset(character as CharacterRow),
+    ),
+    presetInstructions,
+  );
+  const initialCustomCharacters = (userCharacters ?? []).map((character) =>
+    mapCharacterToPreset(character as CharacterRow),
+  );
 
   return (
-    <div className="mx-auto flex w-full flex-col md:max-w-3xl">
-      <div className="lg:hidden">
-        <CreditsSection
-          creditTransactions={creditTransactions}
-          doNotToggleSidebar
-          lang={lang}
-          showMinutes
-          userId={user.id}
-        />
-      </div>
-      <div className="my-6 flex w-full px-0 md:px-4">
-        <ConfigurationForm
-          callVoices={callVoices}
-          isPaidUser={isPaidUser}
-          lang={lang}
-        />
-      </div>
-      <main className="flex w-full flex-1 flex-col md:p-4 lg:mt-16">
-        <div className="mx-auto flex h-full w-full flex-col justify-center gap-5 bg-bg1">
-          <Chat />
-          <p
-            className="text-center text-foreground text-xs leading-7"
-            data-testid="call-notice-text"
-          >
-            {dict.call.notice1}
-            <br />
-            {dict.call.notice2}
-          </p>
-          {callFaq && (
-            <CallFaq questions={callFaq.questions} title={callFaq.category} />
-          )}
-        </div>
-      </main>
-    </div>
+    <PlaygroundStateProvider
+      defaultPresets={defaultPresets}
+      initialCustomCharacters={initialCustomCharacters}
+      initialState={{
+        initialInstruction,
+        instructions: defaultInstructions,
+        language: lang as CallLanguage,
+        selectedPresetId: defaultPresets[0]?.id ?? null,
+      }}
+    >
+      <ConnectionProvider>
+        <TooltipProvider>
+          <RoomWrapper>
+            <CallExperience
+              callCloneProvider={getCallCloneProvider()}
+              callVoices={callVoices}
+              e2eFixtures={Boolean(e2e)}
+              isPaidUser={isPaidUser}
+              mobileCredits={
+                <div className="lg:hidden" data-testid="call-mobile-credits">
+                  <CreditsSection
+                    creditTransactions={creditTransactions}
+                    doNotToggleSidebar
+                    showMinutes
+                    userId={userId}
+                  />
+                </div>
+              }
+              returnFromClone={returnFromClone}
+              savedVoices={savedVoices}
+            >
+              <div className="flex flex-col gap-5">
+                <p
+                  className="text-center text-foreground text-xs leading-7"
+                  data-testid="call-notice-text"
+                >
+                  {t('notice1')}
+                  <br />
+                  {t('notice2')}
+                </p>
+                <CallFaq />
+              </div>
+            </CallExperience>
+          </RoomWrapper>
+        </TooltipProvider>
+      </ConnectionProvider>
+    </PlaygroundStateProvider>
   );
 }

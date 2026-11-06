@@ -6,16 +6,12 @@
  * to document.cookie for broader browser compatibility.
  */
 
-interface CookieOptions extends Omit<CookieInit, 'expires'> {
-  expires?: number | Date;
-  maxAge?: number;
-  name: string;
-  path?: string;
-  sameSite?: 'strict' | 'lax' | 'none';
-  value: string;
-}
-
 type WindowWithCookieStore = Window & { cookieStore: CookieStore };
+
+interface SetCookieOptions {
+  expires?: Date;
+  path?: string;
+}
 
 /**
  * Check if the Cookie Store API is available
@@ -32,46 +28,6 @@ function getCookieStore(): CookieStore | null {
     return (window as WindowWithCookieStore).cookieStore;
   }
   return null;
-}
-
-/**
- * Build a cookie string for document.cookie
- */
-function buildCookieString(options: CookieOptions): string {
-  const {
-    name,
-    value,
-    expires,
-    maxAge,
-    path = '/',
-    sameSite = 'lax',
-  } = options;
-
-  const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value)}`];
-
-  if (expires) {
-    const expiresDate = expires instanceof Date ? expires : new Date(expires);
-    parts.push(`expires=${expiresDate.toUTCString()}`);
-  }
-
-  if (maxAge !== undefined) {
-    parts.push(`max-age=${maxAge}`);
-  }
-
-  parts.push(`path=${path}`);
-  parts.push(`samesite=${sameSite}`);
-
-  return parts.join('; ');
-}
-
-/**
- * Set cookie using document.cookie (fallback)
- */
-function setDocumentCookie(cookieString: string): void {
-  if (typeof document !== 'undefined') {
-    // biome-ignore lint/suspicious/noDocumentCookie: Fallback for browsers without Cookie Store API
-    document.cookie = cookieString;
-  }
 }
 
 /**
@@ -116,4 +72,47 @@ export async function getCookie(name: string): Promise<string | null> {
 
   const cookies = parseDocumentCookies();
   return cookies.get(name) ?? null;
+}
+
+/**
+ * Sets a client-side cookie with fallback for browsers without Cookie Store.
+ */
+export async function setCookie(
+  name: string,
+  value: string,
+  { expires, path = '/' }: SetCookieOptions = {},
+): Promise<void> {
+  const cookieStore = getCookieStore();
+
+  if (cookieStore) {
+    try {
+      await cookieStore.set({
+        ...(expires ? { expires: expires.getTime() } : {}),
+        name,
+        path,
+        sameSite: 'lax',
+        value,
+      });
+      return;
+    } catch {
+      // Fall through to document.cookie fallback
+    }
+  }
+
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const cookieParts = [
+    `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
+    `path=${path}`,
+    'SameSite=Lax',
+  ];
+
+  if (expires) {
+    cookieParts.push(`expires=${expires.toUTCString()}`);
+  }
+
+  // biome-ignore lint/suspicious/noDocumentCookie: Required fallback for browsers without Cookie Store API.
+  document.cookie = cookieParts.join('; ');
 }

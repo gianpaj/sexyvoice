@@ -2,29 +2,35 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { normalizeModelId } from '@/data/models';
+import { CLONED_VOICE_ID, callVoiceProvider } from '@/lib/call-voices';
+import { MAX_CUSTOM_CHARACTERS } from '@/lib/characters';
 import { APIErrorResponse } from '@/lib/error-ts';
-import {
-  countUserCallCharacters,
-  getVoiceIdByName,
-  hasUserPaid,
-} from '@/lib/supabase/queries';
+import { getVerifiedClaims } from '@/lib/supabase/auth';
+import { resolveCallVoice } from '@/lib/supabase/call-voices';
+import { countUserCallCharacters, hasUserPaid } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 
-const MAX_CUSTOM_CHARACTERS = 10;
 const MAX_NAME_LENGTH = 50;
 const MAX_PROMPT_LENGTH = 5000;
 
 // ── Zod Schemas ──
 
 const sessionConfigSchema = z.object({
-  model: z.string().min(1, 'Model is required'),
-  voice: z.string().min(1, 'Voice is required'),
-  temperature: z.number().min(0).max(1.2),
+  audioReferenceId: z.uuid().optional(),
   maxOutputTokens: z.number().nullable(),
+  // Normalized before it is spread into the session_config JSONB, so a stale
+  // client cannot write a retired model id back into a row that was just
+  // cleaned up.
+  model: z.string().min(1, 'Model is required').transform(normalizeModelId),
+  temperature: z.number().min(0).max(1.2),
+  voice: z.string().min(1, 'Voice is required'),
 });
 
 const createOrUpdateSchema = z.object({
   id: z.uuid().optional(),
+  localizedDescriptions: z.record(z.string(), z.string()).optional(),
+  localizedPrompts: z.record(z.string(), z.string()).optional(),
   name: z
     .string()
     .trim()
@@ -33,14 +39,12 @@ const createOrUpdateSchema = z.object({
       MAX_NAME_LENGTH,
       `Name must be ${MAX_NAME_LENGTH} characters or fewer`,
     ),
-  localizedDescriptions: z.record(z.string(), z.string()).optional(),
   prompt: z
     .string({ message: 'Prompt is required' })
     .max(
       MAX_PROMPT_LENGTH,
       `Prompt must be ${MAX_PROMPT_LENGTH} characters or fewer`,
     ),
-  localizedPrompts: z.record(z.string(), z.string()).optional(),
   sessionConfig: sessionConfigSchema,
   voiceName: z.string().min(1, 'Voice name is required'),
 });
@@ -53,8 +57,8 @@ type CreateOrUpdateBody = z.infer<typeof createOrUpdateSchema>;
 
 /** Human-readable labels for top-level body fields. */
 const fieldLabels: Record<string, string> = {
-  sessionConfig: 'Session config',
   id: 'Character ID',
+  sessionConfig: 'Session config',
 };
 
 function formatZodError(error: z.ZodError): string {
@@ -75,20 +79,17 @@ function formatZodError(error: z.ZodError): string {
   return issue.message;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: POST handles both create and update flows
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
     // Check if user has paid
-    const isPaid = await hasUserPaid(user.id);
+    const isPaid = await hasUserPaid(claims.sub);
     if (!isPaid) {
       return APIErrorResponse('Custom characters require a paid account', 403);
     }
@@ -107,13 +108,17 @@ export async function POST(request: Request) {
 
     const body: CreateOrUpdateBody = parsed.data;
 
-    // Validate voice exists in DB
-    let voiceObj: { id: string; name: string; language: string; model: string };
-    try {
-      voiceObj = await getVoiceIdByName(body.voiceName);
-    } catch {
+    const resolvedVoice = await resolveCallVoice(
+      { ...body.sessionConfig, voice: body.voiceName },
+      claims.sub,
+    );
+    if (!resolvedVoice)
       return APIErrorResponse('Voice no longer available', 400);
-    }
+    const voiceObj = {
+      id: callVoiceProvider(body.sessionConfig.model)
+        ? CLONED_VOICE_ID
+        : resolvedVoice.id,
+    };
 
     const isUpdate = !!body.id;
 
@@ -133,7 +138,7 @@ export async function POST(request: Request) {
       if (existingCharacter.is_public) {
         return APIErrorResponse('Cannot modify predefined characters', 403);
       }
-      if (existingCharacter.user_id !== user.id) {
+      if (existingCharacter.user_id !== claims.sub) {
         return APIErrorResponse('Character not found', 404);
       }
 
@@ -141,14 +146,14 @@ export async function POST(request: Request) {
       const { error: promptUpdateError } = await supabase
         .from('prompts')
         .update({
-          prompt: body.prompt,
           localized_prompts: body.localizedPrompts ?? {},
+          prompt: body.prompt,
         })
         .eq('id', existingCharacter.prompt_id);
 
       if (promptUpdateError) {
         captureException(promptUpdateError, {
-          extra: { userId: user.id, characterId: body.id },
+          extra: { characterId: body.id, userId: claims.sub },
         });
         return APIErrorResponse('Failed to update prompt', 500);
       }
@@ -157,13 +162,13 @@ export async function POST(request: Request) {
       const { data: updatedCharacter, error: charUpdateError } = await supabase
         .from('characters')
         .update({
-          name: body.name,
           localized_descriptions: body.localizedDescriptions ?? {},
-          voice_id: voiceObj.id,
+          name: body.name,
           session_config: {
             ...body.sessionConfig,
             voice: body.voiceName,
           },
+          voice_id: voiceObj.id,
         })
         .eq('id', body.id!)
         .select(
@@ -179,7 +184,7 @@ export async function POST(request: Request) {
 
       if (charUpdateError) {
         captureException(charUpdateError, {
-          extra: { userId: user.id, characterId: body.id },
+          extra: { characterId: body.id, userId: claims.sub },
         });
         return APIErrorResponse('Failed to update character', 500);
       }
@@ -190,7 +195,7 @@ export async function POST(request: Request) {
     // ── CREATE new character ──
 
     // Check limit
-    const currentCount = await countUserCallCharacters(user.id);
+    const currentCount = await countUserCallCharacters(claims.sub);
     if (currentCount >= MAX_CUSTOM_CHARACTERS) {
       return APIErrorResponse(
         `Maximum of ${MAX_CUSTOM_CHARACTERS} custom characters reached`,
@@ -202,18 +207,18 @@ export async function POST(request: Request) {
     const { data: newPrompt, error: promptInsertError } = await supabase
       .from('prompts')
       .insert({
-        user_id: user.id,
-        type: 'call' as const,
         is_public: false,
-        prompt: body.prompt,
         localized_prompts: body.localizedPrompts ?? {},
+        prompt: body.prompt,
+        type: 'call' as const,
+        user_id: claims.sub,
       })
       .select('id')
       .single();
 
     if (promptInsertError || !newPrompt) {
       captureException(promptInsertError, {
-        extra: { userId: user.id },
+        extra: { userId: claims.sub },
       });
       return APIErrorResponse('Failed to create prompt', 500);
     }
@@ -222,17 +227,17 @@ export async function POST(request: Request) {
     const { data: newCharacter, error: charInsertError } = await supabase
       .from('characters')
       .insert({
-        user_id: user.id,
-        prompt_id: newPrompt.id,
-        voice_id: voiceObj.id,
         is_public: false,
-        name: body.name,
         localized_descriptions: body.localizedDescriptions ?? {},
+        name: body.name,
+        prompt_id: newPrompt.id,
         session_config: {
           ...body.sessionConfig,
           voice: body.voiceName,
         },
         sort_order: currentCount,
+        user_id: claims.sub,
+        voice_id: voiceObj.id,
       })
       .select(
         `
@@ -247,7 +252,7 @@ export async function POST(request: Request) {
 
     if (charInsertError || !newCharacter) {
       captureException(charInsertError, {
-        extra: { userId: user.id, promptId: newPrompt.id },
+        extra: { promptId: newPrompt.id, userId: claims.sub },
       });
       // Clean up orphaned prompt
       await supabase.from('prompts').delete().eq('id', newPrompt.id);
@@ -264,11 +269,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const claims = await getVerifiedClaims(supabase);
 
-    if (!user) {
+    if (!claims?.sub) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
@@ -299,7 +302,7 @@ export async function DELETE(request: Request) {
     if (character.is_public) {
       return APIErrorResponse('Cannot delete predefined characters', 403);
     }
-    if (character.user_id !== user.id) {
+    if (character.user_id !== claims.sub) {
       return APIErrorResponse('Character not found', 404);
     }
 
@@ -308,12 +311,12 @@ export async function DELETE(request: Request) {
       .from('characters')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', claims.sub)
       .eq('is_public', false);
 
     if (charDeleteError) {
       captureException(charDeleteError, {
-        extra: { userId: user.id, characterId: id },
+        extra: { characterId: id, userId: claims.sub },
       });
       return APIErrorResponse('Failed to delete character', 500);
     }
@@ -323,16 +326,16 @@ export async function DELETE(request: Request) {
       .from('prompts')
       .delete()
       .eq('id', character.prompt_id)
-      .eq('user_id', user.id);
+      .eq('user_id', claims.sub);
 
     if (promptDeleteError) {
       // Non-critical: log but don't fail the request
       captureException(promptDeleteError, {
         extra: {
-          userId: user.id,
           characterId: id,
-          promptId: character.prompt_id,
           context: 'orphaned prompt cleanup',
+          promptId: character.prompt_id,
+          userId: claims.sub,
         },
       });
     }

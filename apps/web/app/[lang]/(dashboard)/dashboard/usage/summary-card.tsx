@@ -12,12 +12,12 @@ import type {
 
 // Color mapping for source types (matching columns.tsx)
 const SOURCE_TYPE_COLORS: Record<UsageSourceType, string> = {
-  tts: 'bg-purple-500',
-  voice_cloning: 'bg-blue-500',
-  live_call: 'bg-green-500',
-  audio_processing: 'bg-orange-500',
   api_tts: 'bg-indigo-500',
   api_voice_cloning: 'bg-rose-500',
+  audio_processing: 'bg-orange-500',
+  live_call: 'bg-green-500',
+  tts: 'bg-purple-500',
+  voice_cloning: 'bg-blue-500',
 };
 
 interface SummaryCardProps {
@@ -43,13 +43,19 @@ export function SummaryCard({
   sourceTypeLabels,
   noDataLabel,
 }: SummaryCardProps) {
-  // Filter out source types with no usage
   const activeSourceTypes = (
     Object.entries(bySourceType) as [
       UsageSourceType,
       { credits: number; count: number },
     ][]
-  ).filter(([, data]) => data.count > 0);
+  )
+    .filter(([, data]) => data.count > 0)
+    .sort(
+      ([sourceTypeA, dataA], [sourceTypeB, dataB]) =>
+        dataB.credits - dataA.credits ||
+        dataB.count - dataA.count ||
+        sourceTypeA.localeCompare(sourceTypeB),
+    );
 
   return (
     <Card>

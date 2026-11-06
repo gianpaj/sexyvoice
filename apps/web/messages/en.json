@@ -6,6 +6,7 @@
       "email": "Email address",
       "password": "Password",
       "submit": "Sign in",
+      "loading": "Loading...",
       "forgotPassword": "Forgot your password?",
       "signInWithGoogle": "Sign in with Google",
       "noAccount": "Don't have an account?",
@@ -20,6 +21,7 @@
       "username": "Username",
       "fullName": "Full name",
       "submit": "Sign up",
+      "loading": "Loading...",
       "hasAccount": "Already have an account?",
       "signIn": "Sign in",
       "error": "Error creating account",
@@ -97,6 +99,37 @@
       "noCreditCard": "No credit card required",
       "signIn": "Sign In"
     },
+    "demoCall": {
+      "playButton": "Call demo",
+      "stopButton": "Stop",
+      "pickCharacter": "Pick a character"
+    },
+    "demoClone": {
+      "title": "Hear the difference",
+      "subtitle": "Compare original recordings, cloned voices, and expressive deliveries.",
+      "pickSpeaker": "Pick a voice",
+      "pickLanguage": "Choose a language",
+      "comingSoon": "Coming soon",
+      "samplePending": "Audio for this language isn’t available yet. Preview the planned sample text below.",
+      "deliveryLabel": "Choose a delivery",
+      "sameOriginal": "Same as original",
+      "natural": "Natural",
+      "sarcastic": "Sarcastic",
+      "calmSlow": "Calm & slow",
+      "playAudio": "Play audio",
+      "pauseAudio": "Pause audio",
+      "loading": "Loading audio",
+      "clonedVoice": "Cloned voice",
+      "originalVoice": "Original recording",
+      "hearOriginal": "Hear the original",
+      "backToClone": "Back to the clone",
+      "tryVoice": "Use this delivery",
+      "signUpAndClone": "Sign up and Clone",
+      "seek": "Audio position",
+      "preparedExamplesCaption": "Prepared examples. Listening is free; generation uses credits.",
+      "audioError": "This audio could not be loaded.",
+      "retry": "Try again"
+    },
     "features": {
       "voiceCloning": {
         "title": "Natural Voices",
@@ -109,6 +142,14 @@
       "security": {
         "title": "Secure & Private",
         "description": "Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history."
+      },
+      "voiceCalling": {
+        "title": "Live Voice Calls",
+        "description": "Have real-time conversations with AI characters, in our voices or one you clone."
+      },
+      "voiceCloneDemo": {
+        "title": "Clone Your Voice",
+        "description": "Try the live cloning demo: hear a voice recreated from 10 seconds of audio, speaking naturally in multiple languages."
       }
     },
     "cta": {
@@ -116,6 +157,59 @@
       "title": "Ready to find your voice?",
       "subtitle": "Join thousands of creators who trust our platform for creating realistic emotion-rich speech.",
       "action": "Create your first voice"
+    },
+    "voiceCall": {
+      "hero": {
+        "title": "Talk to AI Characters, Live in Real Time",
+        "subtitle": "Live AI phone calls with natural, expressive voices.\nPick a character and start talking instantly."
+      },
+      "privacy": {
+        "title": "Unrestricted, encrypted.",
+        "subtitle": "Explore your deepest desires in total privacy. No filters, no judgment, no one listening in.",
+        "unrestricted": {
+          "title": "No topic off limits",
+          "description": "Say what you want, how you want. Your character never flinches and never lectures you."
+        },
+        "encrypted": {
+          "title": "End-to-end encrypted",
+          "description": "Every call is encrypted in transit. No human ever listens to your conversations."
+        },
+        "forgotten": {
+          "title": "Memory you control",
+          "description": "Characters remember you between calls by default. Turn memory off or delete stored memories from your profile."
+        }
+      },
+      "customCharacter": {
+        "title": "Call a character in your own voice",
+        "subtitle": "Give them a personality, then pick one of our voices or clone one from 10 seconds of audio: yours, or one you have the rights to. Call them whenever you like, and they pick up in character every time.",
+        "note": "Unlock custom characters with a top-up or subscription.",
+        "action": "Create your character",
+        "cloningLink": "See how voice cloning works"
+      },
+      "cta": {
+        "freeCredits": "Start with 10,000 free credits",
+        "title": "Ready to hear a voice come alive?",
+        "subtitle": "Start a live call with any character and experience natural, real-time AI conversation.",
+        "action": "Start a voice call"
+      }
+    },
+    "voiceCloning": {
+      "hero": {
+        "title": "Your voice, in every language",
+        "subtitle": "Clone a voice from 10 seconds of audio.\nHear it speak naturally in 28 languages."
+      },
+      "callSection": {
+        "title": "Then call it",
+        "subtitle": "Give your cloned voice to a character and talk to it live, in real time.",
+        "note": "Unlock cloned-voice calls with a top-up or subscription.",
+        "action": "Try a voice call"
+      },
+      "cta": {
+        "freeCredits": "Start with 10,000 free credits",
+        "title": "Ready to clone your own voice?",
+        "subtitle": "Upload a short sample and hear yourself speak in any supported language.",
+        "action": "Clone your voice"
+      }
     },
     "generator": {
       "title": "Try it now",
@@ -170,11 +264,11 @@
       "groups": [
         {
           "id": "voiceCreation",
-          "category": "Voice creation & styles",
+          "category": "Voice generation & styles",
           "questions": [
             {
-              "question": "Which languages are supported for Speech Generation?",
-              "answer": "Language support depends on the selected voice and model.\n\n**Gemini 2.5 voices (default)** support 24 languages:\n🇪🇬 Arabic (Egyptian),\n🇧🇩 Bengali (Bangladesh),\n🇳🇱 Dutch (Netherlands),\n🇺🇸 English (US),\n🇮🇳 English/Hindi (India),\n🇫🇷 French (France),\n🇩🇪 German (Germany),\n🇮🇳 Hindi (India),\n🇮🇩 Indonesian (Indonesia),\n🇮🇹 Italian (Italy),\n🇯🇵 Japanese (Japan),\n🇰🇷 Korean (Korea),\n🇮🇳 Marathi (India),\n🇵🇱 Polish (Poland),\n🇧🇷 Portuguese (Brazil),\n🇷🇴 Romanian (Romania),\n🇷🇺 Russian (Russia),\n🇺🇸 Spanish (US),\n🇮🇳 Tamil (India),\n🇮🇳 Telugu (India),\n🇹🇭 Thai (Thailand),\n🇹🇷 Turkish (Turkey),\n🇺🇦 Ukrainian (Ukraine),\nand 🇻🇳 Vietnamese (Vietnam).\n\n**Gemini 3.1 voices (when \"Use new AI model\" is enabled)** support 70+ languages across 80+ regional locales, including everything above plus:\nAfrikaans, Albanian, Amharic, Armenian, Azerbaijani, Basque, Bulgarian, Catalan, Chinese Simplified, Chinese Traditional, Croatian, Czech, Danish, Estonian, Filipino/Tagalog, Finnish, Galician, Georgian, Greek, Gujarati, Hebrew, Hungarian, Icelandic, Irish, Javanese, Kannada, Kazakh, Latvian, Lithuanian, Macedonian, Malay, Maltese, Norwegian, Persian, Punjabi, Serbian, Slovak, Slovenian, Swahili, Swedish, Urdu, Uzbek, Welsh, Zulu, and more regional variants of English, Spanish, French, Portuguese, and Arabic.\n\nOther voices are language-specific:\n🇬🇧 Dan (English UK),\n🇮🇹 Pietro (Italian),\n🇺🇸 Emma (English US),\n🇪🇸 Javi (Spanish),\n🇺🇸 Josh (English US),\n🇺🇸 and Tara (English US).\n\nChoose your voice based on your target language for the most natural results."
+              "question": "Which languages can I generate speech in?",
+              "answer": "Language support depends on your voice and model. Gemini 3.1 voices support 70+ languages, while Gemini 2.5 voices support 24. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below."
             },
             {
               "question": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
@@ -188,19 +282,23 @@
           "questions": [
             {
               "question": "How does voice cloning work?",
-              "answer": "Our AI analyzes your voice sample (min 10 seconds) to learn its unique patterns and characteristics. With just a few seconds of clean audio, you can build a digital version of your voice that sounds natural and realistic."
+              "answer": "Record or upload at least 10 seconds of your voice, or a voice you have permission to use. Our AI uses the sample to recreate how it sounds. Generate speech right away, or save the voice to use again."
             },
             {
               "question": "Can I clone my own voice?",
-              "answer": "Yes! With just a few seconds of clean audio, it can build a digital version of your voice that sounds natural and realistic."
+              "answer": "Yes! Record or upload at least 10 seconds of clean audio. You can generate speech from the recording, or save your voice for later if you have bought credits."
             },
             {
               "question": "How is voice cloning priced?",
-              "answer": "Voice cloning is priced based on the amount of speech you generate, so longer scripts use more credits. It costs more than regular voice generation because cloned voices rely on a more expensive model to reproduce a specific voice accurately."
+              "answer": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance."
             },
             {
               "question": "Which languages are supported for Voice Cloning?",
-              "answer": "Voice cloning supports the following 23 languages:\n\n🇸🇦 Arabic,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\nand 🇹🇷 Turkish."
+              "answer": "Voice cloning supports the following 28 languages:\n\n🇸🇦 Arabic,\n🇪🇸 Catalan,\n🇩🇰 Danish,\n🇳🇱 Dutch,\n🇬🇧 English,\n🇫🇮 Finnish,\n🇫🇷 French,\n🇩🇪 German,\n🇬🇷 Greek,\n🇮🇱 Hebrew,\n🇮🇳 Hindi,\n🇭🇺 Hungarian,\n🇮🇹 Italian,\n🇯🇵 Japanese,\n🇰🇷 Korean,\n🇲🇾 Malay,\n🇨🇳 Mandarin Chinese,\n🇳🇴 Norwegian,\n🇵🇱 Polish,\n🇵🇹 Portuguese,\n🇷🇴 Romanian,\n🇷🇺 Russian,\n🇪🇸 Spanish,\n🇰🇪 Swahili,\n🇸🇪 Swedish,\n🇹🇷 Turkish,\n🇺🇦 Ukrainian,\nand 🇻🇳 Vietnamese."
+            },
+            {
+              "question": "Can I save my cloned voice and use it again?",
+              "answer": "Yes. Paid users can save up to 10 voices and reuse them for voice generation or live calls. Select a saved voice on the Clone page to generate speech, or choose it as the voice when creating a character."
             }
           ]
         },
@@ -213,8 +311,24 @@
               "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
+              "question": "Can I call a character in my own voice?",
+              "answer": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose \"Clone a voice\", or use \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice."
+            },
+            {
               "question": "How much does it cost?",
               "answer": "Live calling costs {count} credits per minute while you're connected."
+            },
+            {
+              "question": "Does calling with a cloned voice cost more?",
+              "answer": "No. Calls cost {count} credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting."
+            },
+            {
+              "question": "How do I get the best clone?",
+              "answer": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick \"Clean up the reference audio\". Leave it off for clean recordings, as it can make them sound worse."
+            },
+            {
+              "question": "Can I clone someone else's voice?",
+              "answer": "Only with their permission. Before cloning, you must confirm that you have the rights to use the voice."
             }
           ]
         },
@@ -224,11 +338,11 @@
           "questions": [
             {
               "question": "Is my voice data secure?",
-              "answer": "Absolutely. All voice recordings and generated files are encrypted and stored safely. When you clone a voice, we delete the uploaded voice sample and no one else can use it. You have full control over the generated audio files, and can delete them whenever you want. We never share voice data without your consent."
+              "answer": "Saved call voices are private to your account. The voice provider retains the reference so you can reuse the voice. You can delete generated audio files in your dashboard. Account deletion also requests removal of saved voices and their previews."
             },
             {
-              "question": "What can I use the generated voices for?",
-              "answer": "Creators use our voices for videos, podcasts, audiobooks, social content, games, e-learning, and more. It’s an easy way to keep consistent audio quality. Just remember our terms prohibit deception or impersonation."
+              "question": "What can I use voice generation for?",
+              "answer": "Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use."
             }
           ]
         },
@@ -238,7 +352,7 @@
           "questions": [
             {
               "question": "How many credits do I need?",
-              "answer": "About 1,000 credits make 1 minute of audio generation. New users get 10,000 free credits (about 5 minutes of speech). Our Starter plan includes 25,000 monthly credits, while Pro offers 300,000 credits for bigger projects. Choose what works for your needs."
+              "answer": "New users get 10,000 free credits. How much speech you can generate depends on the voice, model, and text. Buy credits once with a top-up, or get monthly credits with a subscription. Voice generation and calls use the same balance."
             },
             {
               "question": "Why choose SexyVoice.ai?",
@@ -252,7 +366,7 @@
           "questions": [
             {
               "question": "Do you have an API for developers?",
-              "answer": "Yes! Our API lets developers add voice generation to apps, websites, and games. You'll be able to create speech on demand and programmatically. See the {link}.",
+              "answer": "Yes. Our API lets you add voice generation to apps, websites, and games using the same credits as your dashboard. Voice cloning and live calls are available in the web app. See the {link}.",
               "link": {
                 "url": "https://docs.sexyvoice.ai",
                 "text": "documentation"
@@ -368,13 +482,17 @@
         "description": "There was an issue processing your payment. Please try again or contact support if the problem persists.",
         "dismiss": "Dismiss"
       },
-      "checkoutError": "Failed to create checkout session"
+      "checkoutError": "Failed to create checkout session",
+      "accountBillingBlocked": "Billing is paused for account deletion. Contact support via the dashboard chat or info@sexyvoice.ai.",
+      "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
     },
     "history": {
       "title": "Credit History"
     }
   },
   "creditsSection": {
+    "balanceError": "We couldn't load your credit balance. Please try again.",
+    "retryBalance": "Retry",
     "title": "Credits",
     "topupButton": "Top-up",
     "totalCredits": "Total",
@@ -393,7 +511,7 @@
     "estimateCreditsButton": "Estimate credits",
     "fullscreenTitle": "Fullscreen",
     "generating": "Generating",
-    "gproLimitExceeded": "You have exceeded the limit of __COUNT__ multilingual voice generations as a free user. Please try a different voice or upgrade your plan for unlimited access.",
+    "gproLimitExceeded": "You have reached the free limit of __COUNT__ generations with this model. Buy credits to keep using it.",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "playAudio": "Play Audio",
     "resetPlayer": "Reset Player",
@@ -401,9 +519,9 @@
     "success": "Audio generated successfully!",
     "textAreaPlaceholder": "Enter the text you want to convert to speech...",
     "paidStyleLimitTooltip": "You have a 2.5× style limit",
-    "upgradeStyleLimitTooltip": "Upgrade to a paid plan for 2.5× style limit",
-    "paidCharacterLimitTooltip": "You have a 2× character limit",
-    "upgradeCharacterLimitTooltip": "Upgrade to a paid plan for 2× character limit",
+    "upgradeStyleLimitTooltip": "Buy credits for a 2.5× style limit",
+    "paidCharacterLimitTooltip": "You have a 2× text limit",
+    "upgradeCharacterLimitTooltip": "Buy credits for a 2× text limit",
     "title": "Generate Audio",
     "grok": {
       "inlineEffectPlaceholder": "Insert tags",
@@ -527,14 +645,11 @@
     }
   },
   "call": {
+    "title": "Voice calls",
     "notice1": "Explore your deepest desires in total privacy.",
     "notice2": "End-to-end encrypted, judgment-free conversations.",
     "notEnoughCredits": "You don't have enough credits. The minimum required is {count}",
-    "freeUserCallLimitExceeded": "Free users are limited to 5 minutes of calls. Please upgrade to continue.",
-    "configurationTitle": "Configuration",
-    "memoryLabel": "Memory",
-    "memoryDescription": "Let the characters remember you between calls. Nothing is stored unless it's on.",
-    "memoryUpgradeTooltip": "Upgrade to a paid plan to let the characters remember you between calls.",
+    "freeUserCallLimitExceeded": "Your free allowance is 5 minutes across all calls. Buy credits to keep calling.",
     "languageLabel": "Language",
     "languagePlaceholder": "Choose language",
     "sceneLabel": "Scene",
@@ -544,88 +659,224 @@
     "sceneTextLabel": "Scene text",
     "startCall": "Start call",
     "connecting": "Connecting",
-    "reconnected": "Reconnected",
-    "reconnectionFailed": "Reconnection failed",
-    "configurationUpdated": "Configuration updated",
-    "configurationUpdateError": "Error updating configuration",
+    "connectionFailed": "Couldn't connect to the call. Please try again.",
     "agentUnavailable": "Agent unavailable",
     "activeCallError": "You already have an active call in progress",
+    "instructionsRejected": "This call couldn't start because the character or scene didn't pass the AI provider's safety checks. Edit the character or scene and try again.",
     "microphonePermissionDenied": "Microphone access denied. Please allow microphone access and try again.",
+    "microphoneUnavailable": "Couldn't access your microphone. Check that it is connected, close other apps using it, and try again.",
     "disconnected": "Disconnected",
-    "chooseCharacter": "Who do you want to talk to?",
-    "presetRemoved": "Preset removed",
-    "deletePreset": "Delete",
-    "deletePresetConfirm": "This cannot be undone.",
-    "cancel": "Cancel",
     "availableInputs": "Available inputs",
     "audioSettings": "Audio Settings",
     "enhancedNoiseFilter": "Enhanced Noise Filter",
-    "disconnect": "Disconnect",
-    "instructions": "Instructions",
-    "instructionsHelp": "Instructions are a system message that is prepended to the conversation whenever the model responds. Updates will be reflected on the next conversation turn.",
-    "grokImagineNote": "Note: Grok Imagine adds additional instructions for image generation.",
-    "grokImagineIncluded": "Grok Imagine Instructions Included",
-    "addCustomCharacter": "Add custom character",
-    "addCharacterLabel": "Add",
-    "upgradePremiumTooltip": "Upgrade feature",
-    "addDescriptionPlaceholder": "Add a description...",
-    "clickToAddDescription": "Click to add a description...",
-    "characterInstructions": "__NAME__ Instructions",
-    "characterFallbackName": "Character",
-    "instructionsPlaceholder": "Enter system instructions",
-    "voiceLabel": "Voice",
-    "voicePlaceholder": "Choose a voice",
-    "voiceSelectorLabel": "Voice",
-    "voiceSelectorPlaceholder": "Choose voice",
-    "deleteCharacterAriaLabel": "Delete __NAME__",
-    "savePreset": {
-      "save": "Save",
-      "saveAsNew": "Save as new",
-      "saveAsNewTitle": "Save as new character",
-      "saveAsNewDescription": "This will create a new custom character with the current settings.",
-      "nameLabel": "Name",
-      "descriptionLabel": "Description",
-      "characterCreated": "Character created",
-      "characterSaved": "Character saved",
-      "failedToCreate": "Failed to create character",
-      "failedToUpdate": "Failed to update character"
+    "picker": {
+      "subtitle": "Pick someone to talk to, or create your own.",
+      "yourCharacters": "Your characters",
+      "featured": "Featured",
+      "createTitle": "Create a character",
+      "createBody": "Write who they are. Pick a voice, or clone your own.",
+      "createUpgradePersonality": "Write who they are and how they talk.",
+      "createUpgradeVoice": "Call them in a voice you clone: yours, or one you have the rights to.",
+      "upgrade": "Upgrade",
+      "createLimit": "You can save up to {count} characters. Delete one to add another.",
+      "listen": "Listen",
+      "stop": "Stop",
+      "call": "Call",
+      "listenTo": "Listen to {name}",
+      "stopName": "Stop {name}",
+      "open": "Open {name}",
+      "callName": "Call {name}",
+      "moreOptions": "More options for {name}",
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "deleted": "{name} deleted",
+      "restored": "{name} is back",
+      "undo": "Undo",
+      "deleteFailed": "Couldn't delete {name}. It's back in your list."
     },
-    "presetSelector": {
-      "characterCreated": "Character created",
-      "characterUpdated": "Character updated",
-      "characterRemoved": "Character removed",
-      "voiceUpdated": "Voice updated",
-      "failedToCreate": "Failed to create character",
-      "failedToUpdate": "Failed to update character",
-      "failedToDelete": "Failed to delete character",
-      "failedToSaveVoice": "Failed to save voice"
+    "panel": {
+      "featuredCharacter": "Featured character",
+      "yourCharacter": "Your character",
+      "close": "Close",
+      "voice": "Voice",
+      "clonedVoice": "Your cloned voice",
+      "microphone": "Microphone",
+      "micReady": "Ready",
+      "micUnknown": "Your browser will ask",
+      "micBlocked": "Blocked by your browser",
+      "micBlockedHelp": "{name} can't hear you yet. Click the lock icon next to the web address, set Microphone to Allow, then try again.",
+      "tryAgain": "Try again",
+      "makeYourOwn": "Make your own version",
+      "makeYourOwnUpgrade": "Upgrade to make your own version, in a voice you clone.",
+      "missingPersonality": "Add a personality before you call {name}.",
+      "noVoice": "No voice",
+      "noVoiceHelp": "{name}'s voice was deleted. Choose a new one to call.",
+      "chooseVoice": "Choose a voice"
     },
-    "createCharacter": {
-      "dialogTitle": "Create New Character",
-      "dialogDescription": "Create a custom AI character with your own personality and voice.",
-      "nameLabel": "Name",
-      "nameRequired": "*",
-      "namePlaceholder": "e.g., Luna, Marcus, Zara...",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "A brief description of your character...",
-      "voiceLabel": "Voice",
-      "voicePlaceholder": "Choose a voice",
-      "instructionsLabel": "Instructions",
-      "instructionsPlaceholder": "Describe your character's personality, speech patterns, backstory...",
-      "characterCount": "__COUNT__/5000 characters",
-      "cancelButton": "Cancel",
-      "createButton": "Create Character",
-      "creatingButton": "Creating...",
-      "paidUserOnly": "Paid users only",
-      "errorNameRequired": "Name is required",
-      "errorVoiceRequired": "Please select a voice",
-      "playVoiceSample": "Play voice sample",
-      "stopVoiceSample": "Stop voice sample",
-      "previewVoice": "Preview __VOICE__'s voice"
+    "creator": {
+      "back": "Voice calls",
+      "createTitle": "Create a character",
+      "editTitle": "Edit {name}",
+      "whoIsIt": "Who is it?",
+      "name": "Name",
+      "namePlaceholder": "e.g. Max",
+      "nameError": "Give your character a name.",
+      "description": "Short description",
+      "descriptionPlaceholder": "e.g. Tough but fair interview coach",
+      "optional": "Optional",
+      "descriptionHelp": "Shown under the name in your list.",
+      "personality": "Personality",
+      "personalityHelp": "Who are they, how do they talk, and what do you want to talk about?",
+      "startFromExample": "Start from an example",
+      "personalityPlaceholder": "Describe your character, or start from an example above.",
+      "personalityError": "Describe your character, or start from an example.",
+      "characterCount": "{count, number} / {max, number}",
+      "exampleReplaced": "Replaced your text with the “{label}” example",
+      "undo": "Undo",
+      "voice": "Voice",
+      "missingVoice": "Pick a voice to save.",
+      "clonedVoice": "Your cloned voice",
+      "preview": "Preview",
+      "previewName": "Name",
+      "previewDescription": "Short description",
+      "previewVoice": "Voice: {voice}",
+      "previewVoiceWithDescription": "Voice: {voice} · {description}",
+      "hearVoice": "Hear this voice",
+      "stopVoice": "Stop the voice sample",
+      "listen": "Listen",
+      "stop": "Stop",
+      "call": "Call",
+      "ready": "Ready. You can call {name} right after saving.",
+      "missingNameAndPersonality": "Add a name and a personality to save.",
+      "missingName": "Add a name to save.",
+      "missingPersonality": "Add a personality to save.",
+      "save": "Save character",
+      "saveChanges": "Save changes",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "saved": "{name} saved",
+      "updated": "{name} updated",
+      "saveFailed": "Couldn't save {name}. Try again.",
+      "copyName": "{name} copy",
+      "remixName": "My {name}",
+      "discardNewTitle": "Discard this character?",
+      "discardNewBody": "You'll lose what you've written so far.",
+      "discardEditTitle": "Discard your changes?",
+      "discardEditBody": "Your changes won't be saved.",
+      "keepEditing": "Keep editing",
+      "discard": "Discard",
+      "examples": {
+        "tutor": {
+          "label": "Language tutor",
+          "tagline": "Patient Italian tutor",
+          "text": "You are a patient Italian tutor from Bologna.\nHow you talk: warm and encouraging. Speak simple Italian and switch to English only when I'm stuck.\nWhat we do: practice everyday conversations, like ordering food, asking for directions and small talk.\nRules: correct one mistake at a time, and keep your replies short so I do most of the talking."
+        },
+        "coach": {
+          "label": "Interview coach",
+          "tagline": "Tough but fair interview coach",
+          "text": "You are a sharp but fair job-interview coach.\nHow you talk: professional, direct and a little demanding.\nWhat we do: run a realistic interview for the role I name. Ask one question at a time and follow up on vague answers.\nRules: after each answer, give me one specific tip. At the end, score me out of 10."
+        },
+        "friend": {
+          "label": "Supportive friend",
+          "tagline": "Easygoing friend who listens",
+          "text": "You are a warm, easygoing friend who is always happy to hear from me.\nHow you talk: casual and kind, with gentle humor.\nWhat we do: catch up. Ask about my day and remember what I tell you during the call.\nRules: listen more than you talk, and don't give advice unless I ask for it."
+        },
+        "debate": {
+          "label": "Debate partner",
+          "tagline": "Argues the other side",
+          "text": "You are a quick-witted debate partner.\nHow you talk: confident and playful, never rude.\nWhat we do: I pick a topic and a side, and you argue the other side with your best points.\nRules: keep each turn under 30 seconds, and point out the weakest part of my argument."
+        },
+        "story": {
+          "label": "Storyteller",
+          "tagline": "Makes up stories with you",
+          "text": "You are a cozy storyteller with a knack for suspense.\nHow you talk: slow and vivid, like telling a story by a campfire.\nWhat we do: make up a story together. Pause at the exciting moments and ask me what happens next.\nRules: keep it light and surprising."
+        }
+      }
+    },
+    "voices": {
+      "yourVoices": "Your voices",
+      "builtIn": "Built-in",
+      "new": "New",
+      "clonedVoice": "Cloned voice",
+      "cloneTitle": "Clone a voice",
+      "cloneBody": "Record 30 seconds or upload a clip",
+      "play": "Play {name} sample",
+      "stop": "Stop {name} sample",
+      "showAll": "Show all ({count})",
+      "showFewer": "Show fewer",
+      "cloneLimit": "You have {max} voices. Delete one on the Clone page to save another."
+    },
+    "inCall": {
+      "connecting": "Connecting…",
+      "listening": "Listening",
+      "thinking": "Thinking…",
+      "speaking": "Talking",
+      "muted": "You're muted",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "end": "End call",
+      "audioSettings": "Audio settings"
+    },
+    "ended": {
+      "title": "Call with {name} ended · {duration}",
+      "editHint": "Not quite right? Change the personality or the voice, then call again.",
+      "callAgain": "Call again",
+      "edit": "Edit {name}",
+      "makeYourOwn": "Make your own version",
+      "back": "Back to characters"
+    },
+    "clone": {
+      "title": "Clone a voice",
+      "close": "Close",
+      "description": "Record or upload a voice sample, name it, and save it for your characters.",
+      "steps": "Steps",
+      "stepRecord": "Record",
+      "stepConfirm": "Name & confirm",
+      "stepReady": "Ready",
+      "recordNow": "Record now",
+      "uploadFile": "Upload a file",
+      "readAloud": "Read this aloud in a quiet room (about 30 seconds):",
+      "script": "The morning ferry leaves at seven, so I usually grab a coffee and watch the harbor wake up. Fishermen shout across the water, gulls argue over breakfast, and the whole town smells of salt and fresh bread. On weekends I take the long way home, past the old lighthouse and the market where everyone seems to know my name.",
+      "startRecording": "Start recording",
+      "stopRecording": "Stop recording",
+      "playRecording": "Play back your recording",
+      "stopPlayback": "Stop playback",
+      "recordIdle": "Press record, then read the text above",
+      "recording": "Recording…",
+      "recorded": "Recorded",
+      "recordAgain": "Record again",
+      "dropFile": "Drop an audio file here, or <browse>browse</browse>",
+      "fileHint": "MP3, WAV or M4A · up to {size} · one person talking, no music",
+      "removeFile": "Remove file",
+      "fileTooLarge": "This file is larger than {size}.",
+      "needRecording": "Record at least {seconds} seconds first.",
+      "stopFirst": "Stop the recording first.",
+      "tooShort": "That was a bit short. Record at least {seconds} seconds.",
+      "needFile": "Choose an audio file first.",
+      "micError": "We couldn't use your microphone. Allow it in your browser, then try again.",
+      "cancel": "Cancel",
+      "next": "Next",
+      "back": "Back",
+      "createVoice": "Create voice",
+      "nameLabel": "Name this voice",
+      "nameHelp": "Only you can see your cloned voices. The voice provider keeps the sample.",
+      "nameError": "Give this voice a name.",
+      "defaultName": "My voice",
+      "defaultNameNumbered": "My voice {count}",
+      "consentError": "Please confirm you have permission to clone this voice.",
+      "creating": "Creating “{name}”…",
+      "creatingHelp": "This usually takes less than a minute.",
+      "creatingClose": "You can close this. The voice will still be saved to Your voices.",
+      "ready": "“{name}” is ready",
+      "readyHelp": "Listen to check it sounds right.",
+      "hearIt": "Hear it",
+      "stop": "Stop",
+      "useVoice": "Use this voice"
     }
   },
   "clone": {
-    "audioFileLabel": "Audio File",
+    "audioFileLabel": "Voice sample",
     "cancelButton": "Cancel",
     "ctaButton": "Generate Audio",
     "downloadAudio": "Download Audio",
@@ -637,9 +888,10 @@
     "generating": "Generating",
     "languageLabel": "Language",
     "languageSelectPlaceholder": "Select a language",
+    "englishChatterbox": "English (Chatterbox)",
     "notEnoughCredits": "You don't have enough credits to generate audio.",
     "playAudio": "Play Audio",
-    "previewTitle": "Generated Voice Preview",
+    "previewTitle": "Audio preview",
     "subtitle": "Upload an audio sample, enter your text, and generate speech in the cloned voice instantly",
     "success": "Audio generated successfully!",
     "tabPreview": "Preview",
@@ -650,6 +902,8 @@
     "tryDemo": "Or try with a demo:",
     "uploadAudioFile": "Upload reference audio",
     "orUseMicrophone": "or use your microphone",
+    "micRecord": "Record",
+    "micStop": "Stop",
     "errors": {
       "noAudioFile": "Please select an audio file.",
       "noText": "Please enter some text to convert to speech.",
@@ -663,7 +917,6 @@
       "guardrailViolation": "This request was blocked by a third-party voice cloning safety policy. Please try different text or a different reference audio.",
       "insufficientCredits": "You need __CREDITS__ credits to clone this audio.",
       "internalError": "Failed to clone voice. Please try again.",
-      "providerUnavailable": "Voice cloning provider is temporarily unavailable. Please try again.",
       "invalidContentType": "The upload request is invalid. Please try again.",
       "invalidFileType": "Invalid file type. Please upload MP3, OGG, Opus, M4A, WAV, or WebM.",
       "missingLocale": "Please select a language.",
@@ -673,7 +926,12 @@
       "textTooLong": "Text exceeds the maximum length of __MAX__ characters.",
       "unsupportedAudioFormat": "Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.",
       "unsupportedLocale": "This language is not supported for voice cloning.",
-      "userNotFound": "Please sign in to clone a voice."
+      "userNotFound": "Please sign in to clone a voice.",
+      "voiceNameAndConsentRequired": "Enter a voice name (up to 50 characters) and confirm you have permission to save it.",
+      "savedVoiceRequiresPaid": "Saving voices requires a paid account.",
+      "savedVoiceLocaleUnsupported": "This language option does not support saved voices for calls. Choose another language.",
+      "savedVoiceNotFound": "This saved voice no longer exists.",
+      "savedVoiceLimitReached": "You can save up to __MAX__ voices. Delete one to save another."
     },
     "sampleCard": {
       "sourceAudio": "Source audio",
@@ -682,7 +940,7 @@
     },
     "crossLanguageInfo": {
       "title": "Cross-Language Voice Transfer",
-      "description": "Clone a voice in one language and have it speak fluently in any of the other 23 supported languages while preserving the speaker's unique characteristics.",
+      "description": "Clone a voice in one language and have it speak in any of the 28 supported languages while preserving the speaker's unique characteristics.",
       "example": "Example: Upload an English speaker's voice sample → Generate French speech in their voice"
     },
     "legalConsentCheckbox": "By using voice cloning, you certify that you have all legal consents/rights to clone these voice samples and that you will not use anything generated for illegal or harmful purposes.",
@@ -694,8 +952,8 @@
     "microphoneError": "Microphone error",
     "referenceAudioGuidanceShort": "For best results: use a clean, single-speaker clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
     "referenceAudioGuidanceLong": "Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.",
-    "paidTextLimitTooltip": "Paid users can clone longer speech with up to __MAX__ characters.",
-    "upgradeTextLimitTooltip": "Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.",
+    "paidTextLimitTooltip": "You can generate longer speech, up to __MAX__ characters.",
+    "upgradeTextLimitTooltip": "Buy credits to generate longer speech, up to __MAX__ characters.",
     "audioDurationUnknown": "Could not determine audio duration.",
     "audioDurationInvalidVoxtral": "Reference audio must be at least __MIN__ seconds for voice cloning.",
     "audioDurationInvalidFallback": "Audio must be at least __MIN__ seconds.",
@@ -706,7 +964,28 @@
     "audioProcessorError": "Audio Processor Error",
     "preparingAudioProcessor": "Preparing audio processor for __LANGUAGE__...",
     "removeFile": "Remove file",
-    "convertingAudio": "Converting audio"
+    "convertingAudio": "Converting audio",
+    "savedVoice": {
+      "modeLabel": "Save a voice for calls",
+      "upgradeTooltip": "Buy credits to save voices for calls.",
+      "name": "Voice name",
+      "help": "Save this voice to use it when creating a character. The voice provider retains the reference sample.",
+      "noiseRemovalHelp": "Removes background noise. Use it only for noisy recordings: it can make clean audio sound worse. Free.",
+      "save": "Save voice",
+      "saving": "Saving voice",
+      "success": "Voice saved",
+      "useInCall": "Use voice in a call →",
+      "backToCall": "Back to call",
+      "using": "Generating with your saved voice {name}. Click it again to use a recording.",
+      "deleteTitle": "Delete {name}?",
+      "deleteBody": "The voice is removed for good. Audio you already generated stays in History.",
+      "deleteUsedBy": "Used by {names}. They'll need a new voice before their next call. Audio you already generated stays in History.",
+      "deleteConfirm": "Delete voice",
+      "cancel": "Cancel",
+      "deleted": "{name} deleted",
+      "deleteFailed": "Couldn't delete the voice. Try again.",
+      "limitReached": "You have {max} saved voices, the maximum. Delete one above to save another."
+    }
   },
   "profile": {
     "title": "Profile Settings",
@@ -747,7 +1026,14 @@
         "confirmDescription": "This action cannot be undone. This will permanently delete your account, including:\n• All generated audio files\n• Cloned voices\n• API Usage\n• Custom Call Characters\n• All associated data from our servers",
         "alertTitle": "Confirm you want to delete your account",
         "cancel": "Cancel",
-        "continue": "Continue"
+        "continue": "Continue",
+        "errors": {
+          "manageBilling": "Manage billing",
+          "subscriptionExists": "Your account still has a Stripe subscription. Cancel it in the billing portal and wait until it ends before deleting your account.",
+          "subscriptionCheckFailed": "We could not check your subscription status. Your account has not been deleted. Please try again.",
+          "accountBillingBlocked": "Account deletion is blocked by an earlier deletion request. Contact support via the dashboard chat or info@sexyvoice.ai.",
+          "accountBillingBusy": "Another billing or deletion request is in progress. Please try again later."
+        }
       }
     },
     "apiKeys": {
@@ -798,25 +1084,32 @@
     },
     "memory": {
       "title": "Voice Call Memory",
-      "description": "If you turn on memory during calls, the characters remember a few details about you to keep continuity. You can erase all of it here.",
+      "description": "Characters remember details between calls by default. Turn memory off to stop using and saving memories in future calls. Stored memories stay until you delete them.",
       "button": "Delete all memories",
       "confirmTitle": "Delete all voice call memories?",
       "confirmDescription": "This permanently erases everything the characters have remembered about you from past calls. This cannot be undone.",
       "cancel": "Cancel",
       "continue": "Delete",
       "success": "Your voice call memories were deleted.",
-      "error": "Couldn't delete your memories. Please try again."
+      "error": "Couldn't delete your memories. Please try again.",
+      "settingLabel": "Remember between calls",
+      "settingSaved": "Memory setting saved.",
+      "settingError": "Couldn't save your memory setting. Please try again."
     }
   },
   "apiBilling": {
-    "description": "Monitor API usage, requests, and costs over time."
+    "description": "Monitor API usage and requests over time."
   },
   "pages": {
-    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Voice Generator",
-    "description": "Generate expressive AI speech with emotions in 24+ languages. Free to try text-to-speech with voice cloning, support & natural speech synthesis. Start with free credits – no card required.",
+    "defaultTitle": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
+    "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
     "skipToMainContent": "Skip to main content",
-    "descriptionLogin": "Sign in to access your AI voice dashboard. Manage credits, generate speech with emotions, and clone voices in 24+ languages on SexyVoice.ai.",
-    "descriptionSignup": "Create a free SexyVoice.ai account – get 10,000 credits instantly. Generate realistic AI voices with emotions, clone voices & create expressive speech in 24+ languages.",
+    "descriptionLogin": "Sign in to generate speech, reuse your saved voices, talk to AI characters, and manage your credit balance on SexyVoice.ai.",
+    "descriptionSignup": "Create a free SexyVoice.ai account and get 10,000 credits. Try expressive voice generation, clone your own voice, and talk to AI characters.",
+    "titleVoiceCall": "AI Voice Calling – Talk to Live AI Characters",
+    "descriptionVoiceCall": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
+    "titleVoiceCloning": "AI Voice Cloning",
+    "descriptionVoiceCloning": "Clone a voice from 10 seconds of audio and hear it speak naturally in 28 languages.",
     "titleAudioConverter": "Free Audio Converter – MP3, WAV, FLAC & More",
     "titleTranscribe": "Free Audio Transcription – 99+ Languages",
     "descriptionAudioConverter": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
@@ -825,6 +1118,7 @@
     "keywordsTranscribe": "free audio transcription, speech to text, transcribe audio free, audio to text converter, whisper transcription, openai whisper, offline transcription, browser transcription, voice to text, free speech recognition, transcribe video, multilingual transcription, private transcription, transcribe audio online",
     "keywordsLanding": "text to speech, AI voice generator, voice cloning, AI speech synthesis, voice generation, free TTS, expressive AI voices, AI voice clone, speech synthesis",
     "/": "",
+    "/voice-call": "Voice Call",
     "/login": "Sign In",
     "/signup": "Sign Up Free – 10,000 Credits",
     "/dashboard/call": "Call",
@@ -835,6 +1129,7 @@
     "/dashboard/api-keys": "API Keys",
     "/dashboard/api-billing": "API Billing",
     "/dashboard/usage": "Usage",
+    "/dashboard/profile": "Profile",
     "/tools/audio-converter": "Audio Converter",
     "/tools/transcribe": "Audio Transcription",
     "titleAudioJoiner": "Free Audio Joiner – Merge and Trim Audio",
@@ -857,6 +1152,26 @@
     "header": "Generation History",
     "empty": "No history yet",
     "downloadError": "Failed to download audio",
+    "delete": {
+      "cancel": "Cancel",
+      "deleting": "Deleting...",
+      "single": {
+        "trigger": "Delete",
+        "title": "Delete audio file?",
+        "description": "This audio file will be removed from your history. This action cannot be undone.",
+        "confirm": "Delete",
+        "success": "Audio file deleted",
+        "error": "Failed to delete the audio file. Please try again."
+      },
+      "all": {
+        "trigger": "Delete all",
+        "title": "Delete all audio files?",
+        "description": "{count, plural, one {The audio file will be removed from your history. This action cannot be undone.} other {All # audio files will be removed from your history. This action cannot be undone.}}",
+        "confirm": "Delete all",
+        "success": "All audio files deleted",
+        "error": "Failed to delete all audio files. Please try again."
+      }
+    },
     "ui": {
       "filterText": "Filter text...",
       "customizeColumns": "Customize Columns",
@@ -876,10 +1191,12 @@
       "operations": "Operations",
       "noData": "No usage data",
       "byType": {
-        "tts": "TTS",
+        "tts": "Voice generation",
         "voice_cloning": "Voice Cloning",
         "live_call": "Live Call",
-        "audio_processing": "Audio Processing"
+        "audio_processing": "Audio cleanup",
+        "api_tts": "API voice generation",
+        "api_voice_cloning": "API voice cloning"
       }
     },
     "table": {
@@ -908,6 +1225,7 @@
   },
   "footer": {
     "tagline": "AI-powered voice generation. Create natural, expressive audio in seconds.",
+    "featuresHeading": "Features",
     "toolsHeading": "Tools",
     "companyHeading": "Company",
     "legalHeading": "Legal",
@@ -917,13 +1235,15 @@
     "copyright": "SexyVoice.ai. All rights reserved.",
     "audioConverter": "Free Audio Converter",
     "transcribe": "Free Audio Transcription",
-    "audioJoiner": "Free Audio Joiner"
+    "audioJoiner": "Free Audio Joiner",
+    "voiceCalling": "AI Voice Calling",
+    "voiceCloning": "Voice cloning"
   },
   "promos": {
     "halloweenBanner": {
       "text": "🎃 Halloween Special – Get up to 35% extra credits with a purchase 👻\nLimited time offer 🦇",
-      "ctaLoggedIn": "Claim offer 🎃",
-      "ctaLoggedOut": "Sign up now 🎃",
+      "ctaLoggedIn": "Claim offer",
+      "ctaLoggedOut": "Claim offer",
       "ariaLabelDismiss": "Dismiss Halloween banner",
       "pricing": {
         "bannerText": "🎃 Halloween Special"
@@ -956,6 +1276,12 @@
     }
   },
   "announcements": {
+    "clonedVoiceCallsLaunch": {
+      "text": "Clone your voice from a 10-second recording, then call a character who speaks with it.",
+      "ctaLoggedIn": "Clone a voice",
+      "ctaLoggedOut": "Log in",
+      "ariaLabelDismiss": "Dismiss cloned voice calls announcement"
+    },
     "expressiveVoicesLaunch": {
       "text": "New, more expressive voices are here — powered by Gemini 3.1, with finer control over pacing, breaths, pitch, speed, and intensity.",
       "ctaLoggedIn": "Try voices",
@@ -1126,6 +1452,14 @@
   },
   "errorCodes": {
     "VALIDATION_ERROR_DISPOSABLE_EMAIL": "Disposable email addresses are not allowed",
-    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds."
+    "AUTH_PROVIDER_RATELIMIT": "For security purposes, you can only request this after {time} seconds.",
+    "PROVIDER_UNAVAILABLE": "{provider} is temporarily unavailable. Please retry."
+  },
+  "ttsEditor": {
+    "label": "Speech text",
+    "effects": "Voice effects",
+    "emotions": "Emotions",
+    "pace": "Pace",
+    "vocalSounds": "Vocal sounds"
   }
 }

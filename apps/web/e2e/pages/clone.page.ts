@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
+import { waitForHydration } from '../wait-for-hydration';
+
 /**
  * Page Object Model for Clone Dashboard
  *
@@ -14,7 +16,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * - Character count display
  * - Legal consent checkbox
  * - Clone/Generate button
- * - Sample audio accordion cards
+ * - Demo player and delivery selection
  * - Cancel button (during generation)
  *
  * Usage:
@@ -52,10 +54,6 @@ export class ClonePage {
   readonly generateButton: Locator;
   readonly cancelButton: Locator;
 
-  // Sample audio accordion
-  readonly sampleAccordionItems: Locator;
-  readonly sampleAccordionContents: Locator;
-
   // Error / alert elements
   readonly errorAlert: Locator;
   readonly insufficientCreditsAlert: Locator;
@@ -89,7 +87,7 @@ export class ClonePage {
     // Language selector — the combobox for language selection
     this.languageSelector = page.getByTestId('clone-language-select');
 
-    // Text input (textarea with placeholder)
+    // Voxtral uses a contenteditable editor; other providers use a textarea.
     this.textInput = page.getByTestId('clone-text-input');
     // Character count (e.g., "0 / 500")
     this.characterCount = page.getByTestId('clone-character-count');
@@ -103,14 +101,6 @@ export class ClonePage {
     // across the entire DOM (which is expensive on this complex page).
     this.generateButton = page.getByTestId('clone-generate-button');
     this.cancelButton = page.getByRole('button', { name: /cancel/i });
-
-    // Sample audio accordion items
-    this.sampleAccordionItems = page.locator(
-      '[data-testid^="clone-sample-trigger-"]',
-    );
-    this.sampleAccordionContents = page.locator(
-      '[data-testid^="clone-sample-content-"]',
-    );
 
     // Error alerts
     this.errorAlert = page.locator('[role="alert"]').filter({
@@ -135,19 +125,7 @@ export class ClonePage {
     // Wait for the main clone UI to appear
     await this.textInput.waitFor({ state: 'visible', timeout: 15_000 });
     await expect(this.cardTitle).toBeVisible();
-    // SSR markup appears before React hydration completes. Wait for the
-    // controlled checkbox to receive React internals so interactions hit the
-    // real onCheckedChange handler instead of inert HTML.
-    await this.page.waitForFunction(
-      () => {
-        const el = document.querySelector(
-          '[data-testid="clone-legal-consent"]',
-        );
-        if (!el) return false;
-        return Object.keys(el).some((key) => key.startsWith('__react'));
-      },
-      { timeout: 15_000 },
-    );
+    await waitForHydration(this.page, '[data-testid="clone-legal-consent"]');
   }
 
   // --- Actions ---
@@ -164,11 +142,15 @@ export class ClonePage {
 
   /**
    * Enter text into the text input
-   * @param text - Text to type into the textarea
+   * @param text - Text to enter in the active provider's editor
    */
   async enterText(text: string) {
     await this.textInput.fill(text);
-    await expect(this.textInput).toHaveValue(text);
+    if (await this.textInput.getAttribute('contenteditable')) {
+      await expect(this.textInput).toHaveText(text);
+    } else {
+      await expect(this.textInput).toHaveValue(text);
+    }
     await this.textInput.blur();
   }
 
@@ -238,17 +220,6 @@ export class ClonePage {
     });
     await expect(option).toBeVisible();
     await option.click();
-  }
-
-  /**
-   * Click a sample audio accordion trigger by name
-   * @param sampleName - Name of the sample to expand
-   */
-  async expandSampleAudio(sampleName: string) {
-    const trigger = this.page.getByRole('button', {
-      name: new RegExp(sampleName, 'i'),
-    });
-    await trigger.click();
   }
 
   /**
@@ -350,31 +321,6 @@ export class ClonePage {
   async expectGenerating() {
     await expect(this.generateButton).toContainText(
       /generating|cloning|converting/i,
-      { timeout: 5000 },
-    );
-  }
-
-  /**
-   * Verify sample audio accordion items are present
-   */
-  async expectSampleAudiosPresent() {
-    const count = await this.sampleAccordionItems.count();
-    expect(count).toBeGreaterThan(0);
-  }
-
-  /**
-   * Verify sample audio expanded content is visible
-   * (shows source audio and example output sections)
-   */
-  async expectSampleAudioExpanded(rowIndex = 0) {
-    await expect(this.sampleAccordionItems.nth(rowIndex)).toHaveAttribute(
-      'data-state',
-      'open',
-      { timeout: 5000 },
-    );
-    await expect(this.sampleAccordionContents.nth(rowIndex)).toHaveAttribute(
-      'data-state',
-      'open',
       { timeout: 5000 },
     );
   }

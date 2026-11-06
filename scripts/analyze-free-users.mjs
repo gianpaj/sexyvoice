@@ -12,16 +12,16 @@ import { writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
-if (!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY)) {
+if (!(SUPABASE_URL && SUPABASE_SECRET_KEY)) {
   console.error('Missing required environment variables:');
   console.error('  - NEXT_PUBLIC_SUPABASE_URL');
-  console.error('  - SUPABASE_SERVICE_ROLE_KEY');
+  console.error('  - SUPABASE_SECRET_KEY');
   process.exit(1);
 }
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SECRET_KEY, {
   auth: {
     autoRefreshToken: false,
     persistSession: false,
@@ -137,8 +137,6 @@ async function main() {
     const transactions = transactionsByUser.get(userId) || [];
     const currentCredits = creditsMap.get(userId);
 
-    // Find freemium transaction (when they got free credits)
-    const freemiumTx = transactions.find((t) => t.type === 'freemium');
     const usageTransactions = transactions.filter((t) => t.type === 'usage');
 
     // Calculate total credits received and used
@@ -154,7 +152,7 @@ async function main() {
 
     // Find first and last usage
     const firstUsage = usageTransactions[0];
-    const lastUsage = usageTransactions[usageTransactions.length - 1];
+    const lastUsage = usageTransactions.at(-1);
 
     // Calculate time to exhaust credits
     const registrationDate = new Date(profile.created_at);
@@ -169,17 +167,17 @@ async function main() {
     }
 
     results.push({
-      userId,
-      username: profile.username,
-      registeredAt: profile.created_at,
       currentCredits,
+      firstUsageAt: firstUsage?.created_at || null,
+      lastUsageAt: lastUsage?.created_at || null,
+      registeredAt: profile.created_at,
+      timeToExhaustDays: timeToExhaustDays?.toFixed(2) || 'N/A',
+      timeToExhaustHours: timeToExhaustHours?.toFixed(2) || 'N/A',
       totalCreditsReceived: totalReceived,
       totalCreditsUsed: totalUsed,
       usageCount: usageTransactions.length,
-      firstUsageAt: firstUsage?.created_at || null,
-      lastUsageAt: lastUsage?.created_at || null,
-      timeToExhaustDays: timeToExhaustDays?.toFixed(2) || 'N/A',
-      timeToExhaustHours: timeToExhaustHours?.toFixed(2) || 'N/A',
+      userId,
+      username: profile.username,
     });
   }
 
@@ -216,7 +214,7 @@ async function main() {
   }
 
   // Summary statistics
-  console.log('\n' + '='.repeat(100));
+  console.log(`\n${'='.repeat(100)}`);
   console.log('SUMMARY STATISTICS');
   console.log('='.repeat(100));
 

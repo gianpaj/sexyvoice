@@ -36,7 +36,8 @@ export async function generateMetadata(
 
   if (!routing.locales.includes(lang)) {
     return {
-      title: 'SexyVoice.ai – Free AI Text-to-Speech & Voice Generator',
+      title:
+        'SexyVoice.ai – Free AI Text-to-Speech, Voice Cloning & Real-Time Voice Calls',
     };
   }
 
@@ -45,47 +46,32 @@ export async function generateMetadata(
   const pageTitle =
     pagePath in pages ? pages[pagePath as keyof typeof pages] : undefined;
   const title = pageTitle || pages.defaultTitle;
-  const description =
-    pagePath === '/login'
-      ? pages.descriptionLogin || pages.description
-      : pagePath === '/signup'
-        ? pages.descriptionSignup || pages.description
-        : pages.description;
+  const descriptionOverrides: Partial<Record<string, string>> = {
+    '/login': pages.descriptionLogin,
+    '/signup': pages.descriptionSignup,
+  };
+  const description = descriptionOverrides[pagePath] || pages.description;
   const keywords =
     pagePath === '/' && pages.keywordsLanding
       ? pages.keywordsLanding.split(',').map((keyword) => keyword.trim())
       : undefined;
 
   return {
+    description,
+    icons: {
+      apple: '/apple-touch-icon.png',
+      icon: '/favicon.ico',
+    },
     metadataBase: new URL(
       process.env.NODE_ENV === 'production'
         ? 'https://sexyvoice.ai'
         : 'http://localhost:3000',
     ),
     title: {
-      template: parentTitle?.template || '%s | SexyVoice.ai',
       default: title,
+      template: parentTitle?.template || '%s | SexyVoice.ai',
     },
-    description,
     ...(keywords ? { keywords } : {}),
-    openGraph: {
-      title: {
-        template: '%s | SexyVoice.ai',
-        default: pages.defaultTitle,
-      },
-      description,
-      siteName: 'SexyVoice.ai',
-      ...(openGraph?.url ? { url: openGraph.url } : {}),
-      ...(openGraph?.images ? { images: openGraph.images } : {}),
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: {
-        template: '%s | SexyVoice.ai',
-        default: pages.defaultTitle,
-      },
-      description,
-    },
     alternates: {
       canonical: './',
       languages: {
@@ -93,6 +79,33 @@ export async function generateMetadata(
         ...Object.fromEntries(
           routing.locales.map((locale) => [locale, `./${locale}`]),
         ),
+      },
+    },
+    openGraph: {
+      description,
+      siteName: 'SexyVoice.ai',
+      title: {
+        default: pages.defaultTitle,
+        template: '%s | SexyVoice.ai',
+      },
+      ...(openGraph?.url ? { url: openGraph.url } : {}),
+      images: openGraph?.images ?? [
+        {
+          alt: 'SexyVoice.ai',
+          height: 670,
+          url: '/sexyvoice.ai-og-image.jpg',
+          width: 1200,
+        },
+      ],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      images: ['/sexyvoice.ai-og-image.jpg'],
+      title: {
+        default: pages.defaultTitle,
+        template: '%s | SexyVoice.ai',
       },
     },
   };
@@ -115,6 +128,10 @@ export default async function LangLayout({
 
   return (
     <html lang={lang}>
+      <head>
+        {/* The site is dark-only; tell the Dark Reader extension to stay off */}
+        <meta name="darkreader-lock" />
+      </head>
       <body className={`${inter.className} dark`} suppressHydrationWarning>
         <a className="sr-only focus:not-sr-only" href="#main-content">
           {messages.pages.skipToMainContent}

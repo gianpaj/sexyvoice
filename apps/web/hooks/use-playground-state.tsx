@@ -19,60 +19,32 @@ import {
   type PlaygroundState,
 } from '@/data/playground-state';
 import type { Preset } from '@/data/presets';
+import { getPresetInstructions } from '@/lib/characters';
 import { createPlaygroundStateHelpers } from '@/lib/playground-state-helpers';
 
-const LS_SELECTED_PRESET_ID_KEY = 'PG_SELECTED_PRESET_ID';
-
-const storageHelper = {
-  getStoredSelectedPresetId: (): string =>
-    localStorage.getItem(LS_SELECTED_PRESET_ID_KEY) || '',
-  setStoredSelectedPresetId: (presetId: string | null): void => {
-    if (presetId === null) {
-      localStorage.removeItem(LS_SELECTED_PRESET_ID_KEY);
-    } else {
-      localStorage.setItem(LS_SELECTED_PRESET_ID_KEY, presetId);
-    }
-  },
-};
-
-/**
- * Resolves the best instructions for a given character and language.
- *
- * Priority:
- * 1. Character localizedInstructions for the specific language
- * 2. Preset's default instructions field (fallback)
- */
 function resolveInstructions(
   characterId: string,
   language: CallLanguage,
   allPresets: Preset[],
 ): string {
-  // Find the preset
-  const preset = allPresets.find((p) => p.id === characterId);
-
-  // 1. Custom character localizedInstructions
-  if (preset?.localizedInstructions?.[language] !== undefined) {
-    return preset.localizedInstructions[language] as string;
-  }
-
-  // 3. Fallback to preset's default instructions
-  return preset?.instructions || '';
+  return getPresetInstructions(
+    allPresets.find((p) => p.id === characterId),
+    language,
+  );
 }
 
 // Define action types and payloads
 type Action =
-  | {
-      type: 'SET_SESSION_CONFIG';
-      payload: Partial<PlaygroundState['sessionConfig']>;
-    }
-  | { type: 'SET_INSTRUCTIONS'; payload: string }
   | { type: 'SET_SCENE_INSTRUCTIONS'; payload: string }
-  | { type: 'SET_CUSTOM_CHARACTERS'; payload: Preset[] }
   | { type: 'SET_SELECTED_PRESET_ID'; payload: string | null }
   | { type: 'SET_SELECTED_SCENE_ID'; payload: string | null }
   | { type: 'SET_MEMORY'; payload: boolean }
   | { type: 'SAVE_CUSTOM_CHARACTER'; payload: Preset }
   | { type: 'DELETE_CUSTOM_CHARACTER'; payload: string }
+  | {
+      type: 'RESTORE_CUSTOM_CHARACTER';
+      payload: { index: number; preset: Preset };
+    }
   | { type: 'SET_LANGUAGE'; payload: CallLanguage };
 
 // Create the reducer function
@@ -81,32 +53,12 @@ function playgroundStateReducer(
   action: Action,
 ): PlaygroundState {
   switch (action.type) {
-    case 'SET_SESSION_CONFIG':
-      return {
-        ...state,
-        sessionConfig: {
-          ...state.sessionConfig,
-          ...action.payload,
-        },
-      };
-    case 'SET_INSTRUCTIONS':
-      return {
-        ...state,
-        instructions: action.payload,
-      };
     case 'SET_SCENE_INSTRUCTIONS':
       return {
         ...state,
         sceneInstructions: action.payload,
       };
-    case 'SET_CUSTOM_CHARACTERS':
-      return {
-        ...state,
-        customCharacters: action.payload,
-      };
     case 'SET_SELECTED_PRESET_ID': {
-      storageHelper.setStoredSelectedPresetId(action.payload);
-
       const newState = {
         ...state,
         selectedPresetId: action.payload,
@@ -143,10 +95,10 @@ function playgroundStateReducer(
 
       return {
         ...state,
-        selectedSceneId: action.payload,
         sceneInstructions: isTextModified
           ? state.sceneInstructions
           : (selectedScene?.text ?? ''),
+        selectedSceneId: action.payload,
       };
     }
     case 'SET_MEMORY':
@@ -155,30 +107,7 @@ function playgroundStateReducer(
         memory: action.payload,
       };
     case 'SAVE_CUSTOM_CHARACTER': {
-      const language = state.language;
-      const existingCharacter = state.customCharacters.find(
-        (c) => c.id === action.payload.id,
-      );
-
-      // Build updated localizedInstructions
-      const existingLocalized =
-        existingCharacter?.localizedInstructions ||
-        action.payload.localizedInstructions ||
-        {};
-      const updatedLocalized: Partial<Record<string, string>> = {
-        ...existingLocalized,
-        [language]: action.payload.instructions,
-      };
-
-      // If saving in English, also update the default instructions field
-      const updatedPreset: Preset = {
-        ...action.payload,
-        instructions:
-          language === 'en'
-            ? action.payload.instructions
-            : existingCharacter?.instructions || action.payload.instructions,
-        localizedInstructions: updatedLocalized,
-      };
+      const updatedPreset = action.payload;
 
       const updatedCharacters = state.customCharacters.map((character) =>
         character.id === updatedPreset.id ? updatedPreset : character,
@@ -204,6 +133,17 @@ function playgroundStateReducer(
         customCharacters: updatedCharacters,
       };
     }
+    case 'RESTORE_CUSTOM_CHARACTER': {
+      const { index, preset } = action.payload;
+      if (state.customCharacters.some((c) => c.id === preset.id)) return state;
+      const customCharacters = [...state.customCharacters];
+      customCharacters.splice(
+        Math.min(index, customCharacters.length),
+        0,
+        preset,
+      );
+      return { ...state, customCharacters };
+    }
     case 'SET_LANGUAGE': {
       const newLanguage = action.payload;
       const allPresets = [...state.defaultPresets, ...state.customCharacters];
@@ -221,11 +161,11 @@ function playgroundStateReducer(
 
       return {
         ...state,
-        language: newLanguage,
-        instructions: newInstructions,
         initialInstruction:
           languageInitialInstructions[newLanguage] ||
           languageInitialInstructions.en,
+        instructions: newInstructions,
+        language: newLanguage,
       };
     }
     default:
@@ -238,6 +178,8 @@ interface PlaygroundStateContextProps {
   dispatch: Dispatch<Action>;
   helpers: ReturnType<typeof createPlaygroundStateHelpers>;
   pgState: PlaygroundState;
+  /** Selects a character and keeps the URL in sync so a refresh restores it. */
+  selectPreset: (presetId: string | null) => void;
 }
 
 // Create the context
@@ -268,19 +210,18 @@ const EMPTY_PRESETS: Preset[] = [];
 
 export const PlaygroundStateProvider = ({
   children,
-  defaultPresets: defaultPresetsProp,
+  defaultPresets = EMPTY_PRESETS,
   initialCustomCharacters = EMPTY_PRESETS,
   initialState,
 }: PlaygroundStateProviderProps) => {
-  const mergedDefaultPresets = defaultPresetsProp ?? [];
   const helpers = useMemo(
-    () => createPlaygroundStateHelpers(mergedDefaultPresets),
-    [mergedDefaultPresets],
+    () => createPlaygroundStateHelpers(defaultPresets),
+    [defaultPresets],
   );
   const mergedInitialState: PlaygroundState = {
     ...defaultPlaygroundState,
-    defaultPresets: mergedDefaultPresets,
     customCharacters: initialCustomCharacters,
+    defaultPresets,
     ...initialState,
     sessionConfig: {
       ...defaultPlaygroundState.sessionConfig,
@@ -293,56 +234,43 @@ export const PlaygroundStateProvider = ({
     mergedInitialState,
   );
 
+  // Re-selecting reloads the prompt and session config from the stored
+  // preset, which picks up a character that was just saved.
+  const selectPreset = (presetId: string | null) => {
+    dispatch({ payload: presetId, type: 'SET_SELECTED_PRESET_ID' });
+    helpers.updateBrowserUrl(presetId);
+  };
+
+  // Mount only. The URL is read once and rewritten to match; re-running this
+  // against a later render's props would drop a character created in this
+  // session and reset unsaved instructions.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reads the URL once on mount
   useEffect(() => {
-    // Read the URL
-    const urlData = helpers.decodeFromURLParams(window.location.search);
+    if (!window.location.search) return;
 
-    if (urlData.state.selectedPresetId) {
-      const defaultPreset = helpers
-        .getDefaultPresets()
-        .find((preset) => preset.id === urlData.state.selectedPresetId);
+    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
+    const loadedPreset = [
+      ...helpers.getDefaultPresets(),
+      ...initialCustomCharacters,
+    ].find((preset) => preset.id === presetId);
 
-      if (defaultPreset) {
-        dispatch({ type: 'SET_SELECTED_PRESET_ID', payload: defaultPreset.id });
-        // Don't clear the URL for default presets
-        return;
-      }
-
-      // Handle non-default preset from URL
-      if (urlData.preset?.name) {
-        const newCharacter: Preset = {
-          id: urlData.state.selectedPresetId,
-          name: urlData.preset.name || 'Shared Character',
-          localizedDescriptions: urlData.preset.localizedDescriptions,
-          instructions: urlData.state.instructions || '',
-          sessionConfig: urlData.state.sessionConfig || defaultSessionConfig,
-        };
-
-        const updatedCustomCharacters = [
-          ...initialCustomCharacters,
-          newCharacter,
-        ];
-        dispatch({
-          type: 'SET_CUSTOM_CHARACTERS',
-          payload: updatedCustomCharacters,
-        });
-        dispatch({
-          type: 'SET_SELECTED_PRESET_ID',
-          payload: newCharacter.id,
-        });
-      }
-
-      // Clear the URL for non-default presets
-      window.history.replaceState({}, document.title, window.location.pathname);
+    if (loadedPreset) {
+      dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
     }
-  }, [helpers, initialCustomCharacters]);
+    // Old links carry prompts in the query string. An ID this page did not
+    // load belongs to another user or a deleted character, and call-token
+    // rejects both, so the link is dropped. On a full page load this runs
+    // before Next patches `replaceState`, so the current state is kept.
+    helpers.updateBrowserUrl(loadedPreset?.id ?? null, window.history.state);
+  }, []);
 
   return (
     <PlaygroundStateContext.Provider
       value={{
-        pgState: state,
         dispatch,
         helpers,
+        pgState: state,
+        selectPreset,
       }}
     >
       {children}

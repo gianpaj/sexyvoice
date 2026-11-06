@@ -3,18 +3,36 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 // `Json` is a global ambient type from lib/supabase/types.d.ts.
+//
+// This module is shared with the operational scripts in `scripts/` (imported
+// via Node's native type stripping), so it must only import npm packages and
+// use explicit `.ts` extensions for any relative imports.
 
-// Only calls at least this long are worth analysing; mirrors the
-// analyze-call-sessions.mjs script so the webhook, recent-cron and backfill
-// paths all agree on what counts as analysable.
+// Only calls at least this long are worth analysing; shared by the webhook,
+// the batch drain job and the scripts so every path agrees on what counts as
+// analysable.
 export const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120;
 
 // xAI flagship; supports structured outputs (generateObject). Override via env.
 const DEFAULT_MODEL = 'grok-4.3';
 const MAX_CONVERSATION_CHARS = 4000;
 
-// LLM-facing schema. Keys match the prompt and the analyze-call-sessions.mjs
-// script; `toAnalysisRow` maps them onto the call_session_analysis columns.
+const ASSISTANT_ONLY_NOTE =
+  'No user transcription detected; analysis based on assistant transcript only.';
+
+export const CALL_ANALYSIS_SYSTEM_PROMPT =
+  'You analyse transcripts of AI voice calls between a user and an AI voice ' +
+  'agent. Produce an accurate, structured analysis. Do not invent details ' +
+  'not present in the transcript. When user transcription is missing, infer ' +
+  'from context and mention it in notable_patterns.';
+
+export function getAnalysisModelId(): string {
+  return process.env.XAI_SUMMARY_MODEL || DEFAULT_MODEL;
+}
+
+// LLM-facing schema. `toAnalysisRow` maps the keys onto the
+// call_session_analysis columns. The batch path embeds the derived JSON Schema
+// in the prompt and validates responses against this same schema.
 export const callAnalysisSchema = z.object({
   language: z
     .string()
@@ -71,32 +89,37 @@ export const callAnalysisSchema = z.object({
 export type CallAnalysis = z.infer<typeof callAnalysisSchema>;
 
 export interface CallSessionForAnalysis {
-  id: string;
-  user_id?: string | null;
-  started_at?: string | null;
   duration_seconds?: number | null;
   end_reason?: string | null;
+  id: string;
+  started_at?: string | null;
   transcript: Json | null;
+  user_id?: string | null;
 }
 
 export interface ConversationMessage {
-  role: 'user' | 'assistant';
   content: string;
+  role: 'user' | 'assistant';
   timestamp: string | null;
 }
 
 interface TranscriptTurn {
-  role?: unknown;
   content?: unknown;
-  text?: unknown;
-  transcript?: unknown;
-  timestamp?: unknown;
   created_at?: unknown;
+  role?: unknown;
+  text?: unknown;
   time?: unknown;
+  timestamp?: unknown;
+  transcript?: unknown;
 }
 
 function asString(value: unknown): string {
   return typeof value === 'string' ? value : '';
+}
+
+/** Strip NUL bytes (Postgres rejects them in text/jsonb) and trim. */
+function cleanContent(value: string): string {
+  return value.replaceAll('\u0000', '').trim();
 }
 
 function pickTimestamp(turn: TranscriptTurn): string | null {
@@ -108,7 +131,7 @@ function pickTimestamp(turn: TranscriptTurn): string | null {
  * The transcript JSON is written by the external LiveKit agent and is not a
  * guaranteed shape. Handle a bare array, `{ messages }` (assistant turns) and
  * `{ user_transcriptions }` (user turns), normalising to role/content/timestamp
- * and sorting chronologically. Ported from scripts/analyze-call-sessions.mjs.
+ * and sorting chronologically.
  */
 export function extractMessages(
   transcript: Json | null,
@@ -138,8 +161,8 @@ export function extractMessages(
       (turn): turn is TranscriptTurn => !!turn && typeof turn === 'object',
     )
     .map((turn) => ({
+      content: cleanContent(asString(turn.content) || asString(turn.text)),
       role: (asString(turn.role) || 'assistant') as 'user' | 'assistant',
-      content: (asString(turn.content) || asString(turn.text)).trim(),
       timestamp: pickTimestamp(turn),
     }))
     .filter((msg) => msg.content);
@@ -149,12 +172,12 @@ export function extractMessages(
       (turn): turn is TranscriptTurn => !!turn && typeof turn === 'object',
     )
     .map((turn) => ({
-      role: 'user' as const,
-      content: (
+      content: cleanContent(
         asString(turn.content) ||
-        asString(turn.text) ||
-        asString(turn.transcript)
-      ).trim(),
+          asString(turn.text) ||
+          asString(turn.transcript),
+      ),
+      role: 'user' as const,
       timestamp: pickTimestamp(turn),
     }))
     .filter((msg) => msg.content);
@@ -191,36 +214,32 @@ export function buildConversationSummary(
   return summary;
 }
 
+export interface CallAnalysisPrompt {
+  /** Set when the transcript has no user turns; appended to notable_patterns. */
+  assistantOnlyNote: string | null;
+  messageCount: number;
+  prompt: string;
+  userMessageCount: number;
+}
+
 /**
- * Analyse a call transcript with Grok and return the structured analysis.
- * Throws if the transcript yields no messages or the model fails.
+ * Build the user prompt for a session, or null when the transcript yields no
+ * messages. Shared by the realtime (`generateObject`) and Batch API paths so
+ * both engines see the same conversation and context.
  */
-export async function analyzeTranscript(
+export function buildCallAnalysisPrompt(
   session: CallSessionForAnalysis,
-): Promise<CallAnalysis> {
+): CallAnalysisPrompt | null {
   const messages = extractMessages(session.transcript);
   if (messages.length === 0) {
-    throw new Error('No messages in transcript');
+    return null;
   }
 
   const conversationSummary = buildConversationSummary(messages);
   const userMessageCount = messages.filter((m) => m.role === 'user').length;
-  const assistantOnlyNote =
-    userMessageCount === 0
-      ? 'No user transcription detected; analysis based on assistant transcript only.'
-      : null;
+  const assistantOnlyNote = userMessageCount === 0 ? ASSISTANT_ONLY_NOTE : null;
 
-  const modelId = process.env.XAI_SUMMARY_MODEL ?? DEFAULT_MODEL;
-
-  const { object } = await generateObject({
-    model: xai(modelId),
-    schema: callAnalysisSchema,
-    system:
-      'You analyse transcripts of AI voice calls between a user and an AI voice ' +
-      'agent. Produce an accurate, structured analysis. Do not invent details ' +
-      'not present in the transcript. When user transcription is missing, infer ' +
-      'from context and mention it in notable_patterns.',
-    prompt: `Analyze this AI voice call conversation.
+  const prompt = `Analyze this AI voice call conversation.
 
 CONVERSATION:
 ${conversationSummary}
@@ -229,7 +248,77 @@ CONTEXT:
 - Call duration: ${session.duration_seconds ?? 'unknown'} seconds
 - End reason: ${session.end_reason || 'unknown'}
 - Total messages: ${messages.length}
-${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}`,
+${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}`;
+
+  return {
+    assistantOnlyNote,
+    messageCount: messages.length,
+    prompt,
+    userMessageCount,
+  };
+}
+
+/**
+ * Append the assistant-only note to `notable_patterns` so downstream readers
+ * know the user side of the call was never transcribed.
+ */
+export function finalizeCallAnalysis(
+  analysis: CallAnalysis,
+  assistantOnlyNote: string | null,
+): CallAnalysis {
+  if (!assistantOnlyNote) {
+    return analysis;
+  }
+  return {
+    ...analysis,
+    notable_patterns: analysis.notable_patterns
+      ? `${analysis.notable_patterns} ${assistantOnlyNote}`
+      : assistantOnlyNote,
+  };
+}
+
+/**
+ * Parse a raw model response (plain JSON, optionally wrapped in a Markdown
+ * code fence) and validate it against `callAnalysisSchema`. Throws on invalid
+ * JSON or a schema mismatch so callers never persist a partial row.
+ */
+export function parseCallAnalysisResponse(responseText: string): CallAnalysis {
+  let cleaned = responseText.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.slice(7);
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.slice(3);
+  }
+  if (cleaned.endsWith('```')) {
+    cleaned = cleaned.slice(0, -3);
+  }
+
+  const parsed = JSON.parse(cleaned.trim());
+  const result = callAnalysisSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(
+      `Analysis response failed schema validation: ${result.error.message}`,
+    );
+  }
+  return result.data;
+}
+
+/**
+ * Analyse a call transcript with Grok synchronously and return the structured
+ * analysis. Used by the `CALL_ANALYSIS_REALTIME` webhook bypass and the
+ * scripts' `--realtime` flag; the default engine is the xAI Batch API (see
+ * call-analysis-batch.ts). Throws if the transcript yields no messages or the
+ * model fails.
+ */
+export async function analyzeTranscript(
+  session: CallSessionForAnalysis,
+): Promise<CallAnalysis> {
+  const input = buildCallAnalysisPrompt(session);
+  if (!input) {
+    throw new Error('No messages in transcript');
+  }
+
+  const { object } = await generateObject({
     // Disable AI-SDK telemetry for this call: the prompt embeds the verbatim
     // (intimate/adult) transcript, and the global Sentry vercelAIIntegration is
     // configured with recordInputs/recordOutputs = true. Emitting no telemetry
@@ -239,15 +328,13 @@ ${assistantOnlyNote ? `- Note: ${assistantOnlyNote}` : ''}`,
       recordInputs: false,
       recordOutputs: false,
     },
+    model: xai(getAnalysisModelId()),
+    prompt: input.prompt,
+    schema: callAnalysisSchema,
+    system: CALL_ANALYSIS_SYSTEM_PROMPT,
   });
 
-  if (assistantOnlyNote) {
-    object.notable_patterns = object.notable_patterns
-      ? `${object.notable_patterns} ${assistantOnlyNote}`
-      : assistantOnlyNote;
-  }
-
-  return object;
+  return finalizeCallAnalysis(object, input.assistantOnlyNote);
 }
 
 /** Map the LLM analysis onto a call_session_analysis insert row. */
@@ -256,22 +343,22 @@ export function toAnalysisRow(
   analysis: CallAnalysis,
 ) {
   return {
-    session_id: session.id,
-    user_id: session.user_id ?? null,
-    started_at: session.started_at ?? null,
+    ai_issues: analysis.ai_compliance_issues,
+    analyzed_at: new Date().toISOString(),
+    conversation_quality: analysis.conversation_quality,
     duration_seconds: session.duration_seconds ?? null,
     end_reason: session.end_reason ?? null,
+    engagement_level: analysis.user_engagement_level,
+    error: null,
+    key_requests: analysis.key_user_requests,
     language: analysis.language,
+    notable_patterns: analysis.notable_patterns,
+    session_id: session.id,
+    started_at: session.started_at ?? null,
     topic_category: analysis.topic_category,
     topic_subcategory: analysis.topic_subcategory,
-    engagement_level: analysis.user_engagement_level,
-    conversation_quality: analysis.conversation_quality,
-    where_died: analysis.where_conversation_died,
+    user_id: session.user_id ?? null,
     user_sentiment: analysis.user_sentiment,
-    key_requests: analysis.key_user_requests,
-    ai_issues: analysis.ai_compliance_issues,
-    notable_patterns: analysis.notable_patterns,
-    error: null,
-    analyzed_at: new Date().toISOString(),
+    where_died: analysis.where_conversation_died,
   };
 }

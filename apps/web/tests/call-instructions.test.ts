@@ -1,10 +1,10 @@
 import { captureException, captureMessage } from '@sentry/nextjs';
-import { get } from '@vercel/edge-config';
+import { get } from '@vercel/global-config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getCallInstructionConfig } from '@/lib/edge-config/call-instructions';
 
-vi.mock('@vercel/edge-config', () => ({
+vi.mock('@vercel/global-config', () => ({
   get: vi.fn(),
 }));
 
@@ -55,8 +55,8 @@ describe('getCallInstructionConfig()', () => {
     expect(captureMessage).toHaveBeenCalledWith(
       'Edge Config connection string missing.',
       expect.objectContaining({
-        level: 'warning',
         fingerprint: ['edge-config-missing'],
+        level: 'warning',
         tags: {
           area: 'edge-config',
           config: 'call-instructions',
@@ -92,10 +92,10 @@ describe('getCallInstructionConfig()', () => {
     expect(captureException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        fingerprint: ['edge-config-load-failure'],
         extra: {
           message: 'Failed to load "call-instructions" from Edge Config',
         },
+        fingerprint: ['edge-config-load-failure'],
       }),
     );
   });
