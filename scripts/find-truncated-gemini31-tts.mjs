@@ -45,6 +45,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { readPaidUserIds } from './lib/ledger.mts';
 import { createScriptAdminClient } from './lib/supabase.mts';
 
 const MODEL = 'gemini-3.1-flash-tts-preview';
@@ -186,39 +187,6 @@ async function fetchAllRows(supabase, opts) {
     from += PAGE_SIZE;
   }
   return rows;
-}
-
-// `.in()` is chunked to keep the request URL within limits.
-const IN_CHUNK = 300;
-
-/**
- * Set of user ids (from `userIds`) that have paid — i.e. have at least one
- * `purchase`/`topup` credit transaction. Mirrors `hasUserPaid` in
- * apps/web/lib/supabase/queries.ts.
- */
-async function fetchPaidUserIds(supabase, userIds) {
-  const paid = new Set();
-  for (let i = 0; i < userIds.length; i += IN_CHUNK) {
-    const chunk = userIds.slice(i, i + IN_CHUNK);
-    let from = 0;
-    for (;;) {
-      const { data, error } = await supabase
-        .from('credit_transactions')
-        .select('user_id')
-        .in('user_id', chunk)
-        .in('type', ['purchase', 'topup'])
-        .range(from, from + PAGE_SIZE - 1);
-      if (error) {
-        throw new Error(
-          `Failed to fetch credit_transactions: ${error.message}`,
-        );
-      }
-      for (const t of data) paid.add(t.user_id);
-      if (data.length < PAGE_SIZE) break;
-      from += PAGE_SIZE;
-    }
-  }
-  return paid;
 }
 
 export function analyzeRow(row, opts) {
@@ -455,11 +423,11 @@ function printSummary(
   return candidateCredits;
 }
 
-/** When --paid-only, drop rows whose user has no purchase/topup transaction. */
+/** With --paid-only, keep rows of users who ever paid (hasEverPaid). */
 async function filterPaidOnly(supabase, rows, opts) {
   if (!opts.paidOnly) return rows;
   const userIds = [...new Set(rows.map((r) => r.user_id))];
-  const paidUserIds = await fetchPaidUserIds(supabase, userIds);
+  const paidUserIds = await readPaidUserIds(supabase, userIds);
   const scanRows = rows.filter((r) => paidUserIds.has(r.user_id));
   console.log(
     `Paid-only: ${paidUserIds.size}/${userIds.length} users paid; kept ${scanRows.length}/${rows.length} rows.`,

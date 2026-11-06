@@ -6,6 +6,39 @@ import { printDatabaseTarget, requiredEnv } from './cli.mts';
 
 export type ScriptSupabaseClient = SupabaseClient<Database>;
 
+/** PostgREST returns at most this many rows per request. */
+export const PAGE_SIZE = 1000;
+
+export interface QueryResult<Row> {
+  data: Row[] | null;
+  error: { message: string } | null;
+}
+
+/**
+ * Read every row a query matches, one page at a time. `page` must order by
+ * `id`, limit to PAGE_SIZE and return rows after `afterId`, so concurrent
+ * inserts cannot shift a page. An empty page ends the read, so a lower server
+ * row cap cannot end it early.
+ */
+export async function readAllRows<Row extends { id: string }>(
+  label: string,
+  page: (afterId: string | undefined) => PromiseLike<QueryResult<Row>>,
+): Promise<Row[]> {
+  const rows: Row[] = [];
+  let afterId: string | undefined;
+  for (;;) {
+    const { data, error } = await page(afterId);
+    if (error) {
+      throw new Error(`Failed to read ${label}: ${error.message}`);
+    }
+    if (!data?.length) {
+      return rows;
+    }
+    rows.push(...data);
+    afterId = data.at(-1)?.id;
+  }
+}
+
 /**
  * Secret-key Supabase client for operator commands. It names the target
  * database before the first request. A read-only client rejects every request

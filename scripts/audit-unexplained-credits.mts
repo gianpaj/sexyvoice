@@ -10,11 +10,18 @@ import {
   runScript,
 } from './lib/cli.mts';
 import {
+  type CreditBalance,
+  expectedBalance,
+  readBalances,
+  readCreditTransactions,
+  readUsageEvents,
+} from './lib/ledger.mts';
+import {
   createScriptAdminClient,
+  PAGE_SIZE,
   type ScriptSupabaseClient,
 } from './lib/supabase.mts';
 
-const PAGE_SIZE = 1000;
 const USER_BATCH_SIZE = 50;
 const DEFAULT_MIN_CREDITS = 50;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -38,22 +45,7 @@ interface CliOptions {
   output?: string;
 }
 
-type CreditBalanceRow = Pick<
-  Tables<'credits'>,
-  'amount' | 'updated_at' | 'user_id'
->;
-
-type CreditTransactionRow = Pick<
-  Tables<'credit_transactions'>,
-  'amount' | 'created_at' | 'id' | 'user_id'
->;
-
 type ProfileRow = Pick<Tables<'profiles'>, 'created_at' | 'id' | 'username'>;
-
-type UsageEventRow = Pick<
-  Tables<'usage_events'>,
-  'created_at' | 'credits_used' | 'id' | 'occurred_at' | 'user_id'
->;
 
 interface LedgerAggregate {
   lastTransactionAt: string | null;
@@ -113,11 +105,8 @@ export function reconcileCreditAccount(
 
   const currentBalance = Math.max(0, input.currentBalance);
   const recordedUsage = Math.max(0, input.recordedUsage);
-  const expectedBalance = Math.max(0, input.netLedgerCredits - recordedUsage);
-  const unexplainedGrants = Math.max(
-    0,
-    currentBalance + recordedUsage - input.netLedgerCredits,
-  );
+  const expected = expectedBalance(input.netLedgerCredits, recordedUsage);
+  const unexplainedGrants = Math.max(0, currentBalance - expected);
   const unexplainedRemaining = Math.min(currentBalance, unexplainedGrants);
   const minimumUnexplainedUsed = Math.max(
     0,
@@ -137,7 +126,7 @@ export function reconcileCreditAccount(
 
   return {
     classification,
-    expectedBalance,
+    expectedBalance: Math.max(0, expected),
     minimumUnexplainedUsed,
     unexplainedGrants,
     unexplainedRemaining,
@@ -239,8 +228,8 @@ async function fetchRecentBalances(
   windowStart: string,
   auditAsOf: string,
   limit?: number,
-): Promise<CreditBalanceRow[]> {
-  const rows: CreditBalanceRow[] = [];
+): Promise<CreditBalance[]> {
+  const rows: CreditBalance[] = [];
   let lastUserId: string | undefined;
 
   while (limit === undefined || rows.length < limit) {
@@ -265,7 +254,7 @@ async function fetchRecentBalances(
       );
     }
 
-    const page = (data ?? []) as CreditBalanceRow[];
+    const page = (data ?? []) as CreditBalance[];
     rows.push(...page);
 
     if (page.length < pageSize) break;
@@ -308,30 +297,6 @@ async function fetchProfiles(
   return profiles;
 }
 
-async function fetchBalancesByUserIds(
-  supabase: ScriptSupabaseClient,
-  userIds: string[],
-): Promise<Map<string, CreditBalanceRow>> {
-  const balances = new Map<string, CreditBalanceRow>();
-
-  for (const userIdBatch of chunk(userIds, USER_BATCH_SIZE)) {
-    const { data, error } = await supabase
-      .from('credits')
-      .select('user_id, amount, updated_at')
-      .in('user_id', userIdBatch);
-
-    if (error) {
-      throw new Error(`Failed to recheck credit balances: ${error.message}`);
-    }
-
-    for (const balance of (data ?? []) as CreditBalanceRow[]) {
-      balances.set(balance.user_id, balance);
-    }
-  }
-
-  return balances;
-}
-
 async function fetchLedgerAggregates(
   supabase: ScriptSupabaseClient,
   userIds: string[],
@@ -349,50 +314,26 @@ async function fetchLedgerAggregates(
   const batches = chunk(userIds, USER_BATCH_SIZE);
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
     const userIdBatch = batches[batchIndex];
-    let lastId: string | undefined;
 
     console.log(
       `  Credit transactions batch ${batchIndex + 1}/${batches.length}`,
     );
 
-    while (true) {
-      let query = supabase
-        .from('credit_transactions')
-        .select('id, user_id, amount, created_at')
-        .in('user_id', userIdBatch)
-        .lte('created_at', auditAsOf)
-        .order('id', { ascending: true })
-        .limit(PAGE_SIZE);
+    const transactions = await readCreditTransactions(supabase, userIdBatch, {
+      until: auditAsOf,
+    });
+    for (const transaction of transactions) {
+      const aggregate = aggregates.get(transaction.user_id);
+      if (!aggregate) continue;
 
-      if (lastId) {
-        query = query.gt('id', lastId);
+      aggregate.netCredits += transaction.amount;
+      aggregate.transactionCount += 1;
+      if (
+        aggregate.lastTransactionAt === null ||
+        transaction.created_at > aggregate.lastTransactionAt
+      ) {
+        aggregate.lastTransactionAt = transaction.created_at;
       }
-
-      const { data, error } = await query;
-      if (error) {
-        throw new Error(
-          `Failed to fetch credit transactions: ${error.message}`,
-        );
-      }
-
-      const page = (data ?? []) as CreditTransactionRow[];
-      for (const transaction of page) {
-        const aggregate = aggregates.get(transaction.user_id);
-        if (!aggregate) continue;
-
-        aggregate.netCredits += transaction.amount ?? 0;
-        aggregate.transactionCount += 1;
-        if (
-          aggregate.lastTransactionAt === null ||
-          transaction.created_at > aggregate.lastTransactionAt
-        ) {
-          aggregate.lastTransactionAt = transaction.created_at;
-        }
-      }
-
-      if (page.length < PAGE_SIZE) break;
-      lastId = page.at(-1)?.id;
-      if (!lastId) break;
     }
   }
 
@@ -416,46 +357,24 @@ async function fetchUsageAggregates(
   const batches = chunk(userIds, USER_BATCH_SIZE);
   for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
     const userIdBatch = batches[batchIndex];
-    let lastId: string | undefined;
 
     console.log(`  Usage events batch ${batchIndex + 1}/${batches.length}`);
 
-    while (true) {
-      let query = supabase
-        .from('usage_events')
-        .select('id, user_id, credits_used, occurred_at, created_at')
-        .in('user_id', userIdBatch)
-        .lte('created_at', auditAsOf)
-        .order('id', { ascending: true })
-        .limit(PAGE_SIZE);
+    const events = await readUsageEvents(supabase, userIdBatch, {
+      until: auditAsOf,
+    });
+    for (const event of events) {
+      const aggregate = aggregates.get(event.user_id);
+      if (!aggregate) continue;
 
-      if (lastId) {
-        query = query.gt('id', lastId);
+      aggregate.recordedCredits += event.credits_used;
+      aggregate.eventCount += 1;
+      if (
+        aggregate.lastUsageAt === null ||
+        event.occurred_at > aggregate.lastUsageAt
+      ) {
+        aggregate.lastUsageAt = event.occurred_at;
       }
-
-      const { data, error } = await query;
-      if (error) {
-        throw new Error(`Failed to fetch usage events: ${error.message}`);
-      }
-
-      const page = (data ?? []) as UsageEventRow[];
-      for (const event of page) {
-        const aggregate = aggregates.get(event.user_id);
-        if (!aggregate) continue;
-
-        aggregate.recordedCredits += event.credits_used ?? 0;
-        aggregate.eventCount += 1;
-        if (
-          aggregate.lastUsageAt === null ||
-          event.occurred_at > aggregate.lastUsageAt
-        ) {
-          aggregate.lastUsageAt = event.occurred_at;
-        }
-      }
-
-      if (page.length < PAGE_SIZE) break;
-      lastId = page.at(-1)?.id;
-      if (!lastId) break;
     }
   }
 
@@ -512,7 +431,7 @@ function createDefaultOutputPath(days: number): string {
 }
 
 function buildAuditRows(
-  balances: CreditBalanceRow[],
+  balances: CreditBalance[],
   profiles: Map<string, ProfileRow>,
   ledgers: Map<string, LedgerAggregate>,
   usage: Map<string, UsageAggregate>,
@@ -671,7 +590,7 @@ async function main(): Promise<void> {
   const usage = await fetchUsageAggregates(supabase, userIds, auditAsOf);
 
   console.log('\nRechecking balances for concurrent changes...');
-  const currentBalances = await fetchBalancesByUserIds(supabase, userIds);
+  const currentBalances = await readBalances(supabase, userIds);
   const stableBalances = balances.filter((balance) => {
     const current = currentBalances.get(balance.user_id);
     return (

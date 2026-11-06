@@ -2,6 +2,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
 import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import { type Payment, paidBefore, readPayments } from './lib/ledger.mts';
 import {
   createScriptAdminClient,
   type ScriptSupabaseClient,
@@ -21,12 +22,6 @@ interface CallSession {
   free_call: boolean | null;
   id: string;
   started_at: string;
-  user_id: string;
-}
-
-interface CreditTransaction {
-  created_at: string;
-  type: string;
   user_id: string;
 }
 
@@ -84,43 +79,15 @@ async function fetchCallSessions(
   return results;
 }
 
-/**
- * Fetch all purchase/topup credit transactions for a set of user IDs.
- * Returns them grouped by user_id, each group sorted by created_at ascending.
- */
-async function fetchPaidTransactions(
+/** Purchase and top-up rows grouped by user ID. */
+async function fetchPayments(
   supabase: ScriptSupabaseClient,
   userIds: string[],
-): Promise<Map<string, CreditTransaction[]>> {
-  const map = new Map<string, CreditTransaction[]>();
-
-  if (userIds.length === 0) return map;
-
-  // Supabase has a practical limit on .in() filter size, so batch in groups of 50
-  const BATCH_SIZE = 50;
-
-  for (let i = 0; i < userIds.length; i += BATCH_SIZE) {
-    const batch = userIds.slice(i, i + BATCH_SIZE);
-
-    const { data, error } = await supabase
-      .from('credit_transactions')
-      .select('user_id, type, created_at')
-      .in('user_id', batch)
-      .in('type', ['purchase', 'topup'])
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      throw new Error(`Failed to fetch credit_transactions: ${error.message}`);
-    }
-
-    for (const tx of data ?? []) {
-      const existing = map.get(tx.user_id) ?? [];
-      existing.push(tx as CreditTransaction);
-      map.set(tx.user_id, existing);
-    }
-  }
-
-  return map;
+): Promise<Map<string, Payment[]>> {
+  return Map.groupBy(
+    await readPayments(supabase, userIds),
+    (payment) => payment.user_id,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -128,31 +95,17 @@ async function fetchPaidTransactions(
 // ---------------------------------------------------------------------------
 
 /**
- * Determine whether a user had paid (purchase or topup) before a given date.
- */
-function hadPaidBefore(
-  transactions: CreditTransaction[] | undefined,
-  beforeDate: string,
-): boolean {
-  if (!transactions || transactions.length === 0) return false;
-
-  const before = new Date(beforeDate).getTime();
-
-  return transactions.some((tx) => new Date(tx.created_at).getTime() < before);
-}
-
-/**
  * Process all call sessions and determine the correct free_call value.
  */
 function computeUpdates(
   sessions: CallSession[],
-  paidTxMap: Map<string, CreditTransaction[]>,
+  paymentsByUser: Map<string, Payment[]>,
 ): UpdateResult[] {
   const results: UpdateResult[] = [];
 
   for (const session of sessions) {
-    const userPaid = hadPaidBefore(
-      paidTxMap.get(session.user_id),
+    const userPaid = paidBefore(
+      paymentsByUser.get(session.user_id) ?? [],
       session.started_at,
     );
     // free_call = true when the user had NOT paid before the call
@@ -405,14 +358,14 @@ async function main() {
     console.log(
       `Fetching paid transactions for ${userIds.length} unique user(s)...`,
     );
-    const paidTxMap = await fetchPaidTransactions(supabase, userIds);
-    const usersWithPayments = [...paidTxMap.keys()].length;
+    const paymentsByUser = await fetchPayments(supabase, userIds);
+    const usersWithPayments = paymentsByUser.size;
     console.log(
       `Found ${usersWithPayments} user(s) with purchase/topup transactions.\n`,
     );
 
     // 3. Compute updates
-    const results = computeUpdates(sessions, paidTxMap);
+    const results = computeUpdates(sessions, paymentsByUser);
     const changedCount = results.filter((r) => r.changed).length;
 
     displayChanges(results, true, true);

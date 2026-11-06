@@ -29,6 +29,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { adjustCredits, readBalances, readPaidUserIds } from './lib/ledger.mts';
 import { createScriptAdminClient } from './lib/supabase.mts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -172,68 +173,23 @@ function userLabel(flag, domainsOnly) {
 // ---------------------------------------------------------------------------
 // Credit reset
 // ---------------------------------------------------------------------------
-// The `credit_transaction_type` enum (apps/web/lib/supabase/types.d.ts) only
-// has 'purchase' | 'freemium' | 'topup' | 'refund' — there is no 'penalty' or
-// 'ban' type. Rather than run a schema migration to add one, we reuse 'refund'
-// (the same type scripts/reset-freeloader-credits.mts uses for negative
-// adjustments) and record the real reason in `description` + `metadata`. If a
-// dedicated enum value is added later, change this constant.
-const RESET_TX_TYPE = 'refund';
-const CREDIT_CHUNK = 1000; // Supabase `.in()` cap.
-// Transaction types that mark a user as having paid — never reset these users.
-const PAID_TX_TYPES = ['purchase', 'topup'];
-
-/** Return the subset of user IDs that have a purchase or topup transaction. */
-async function fetchPaidUserIds(supabase, ids) {
-  const paid = new Set();
-  for (let i = 0; i < ids.length; i += CREDIT_CHUNK) {
-    const chunk = ids.slice(i, i + CREDIT_CHUNK);
-    const { data, error } = await supabase
-      .from('credit_transactions')
-      .select('user_id')
-      .in('user_id', chunk)
-      .in('type', PAID_TX_TYPES);
-    if (error) {
-      throw new Error(`Failed to fetch paid transactions: ${error.message}`);
-    }
-    for (const row of data) {
-      paid.add(row.user_id);
-    }
-  }
-  return paid;
-}
 
 /**
- * Reset the flagged users' credits to 0 and log an audit transaction for each
- * user that still has a positive balance. Paid users (any purchase/topup
- * transaction) and users already at 0 are skipped.
+ * Reset the flagged users' credits to 0, each with a ledger row. Paid users
+ * (any purchase or top-up) and users at 0 or below are skipped.
  */
 async function resetFlaggedCredits(supabase, flagged, dryRun, domainsOnly) {
   const byId = new Map(flagged.map((f) => [f.id, f]));
   const ids = [...byId.keys()];
 
-  // Never reset users who have ever paid.
-  const paidIds = await fetchPaidUserIds(supabase, ids);
+  const [paidIds, balances] = await Promise.all([
+    readPaidUserIds(supabase, ids),
+    readBalances(supabase, ids),
+  ]);
   if (paidIds.size > 0) {
     console.log(
       `  Protecting ${paidIds.size} paid user(s) (have a purchase/topup) — they will be skipped.`,
     );
-  }
-
-  // Fetch current balances in chunks.
-  const balances = new Map(); // user_id -> amount
-  for (let i = 0; i < ids.length; i += CREDIT_CHUNK) {
-    const chunk = ids.slice(i, i + CREDIT_CHUNK);
-    const { data, error } = await supabase
-      .from('credits')
-      .select('user_id, amount')
-      .in('user_id', chunk);
-    if (error) {
-      throw new Error(`Failed to fetch credit balances: ${error.message}`);
-    }
-    for (const row of data) {
-      balances.set(row.user_id, row.amount ?? 0);
-    }
   }
 
   const result = {
@@ -247,7 +203,7 @@ async function resetFlaggedCredits(supabase, flagged, dryRun, domainsOnly) {
 
   for (const id of ids) {
     const flag = byId.get(id);
-    const current = balances.get(id);
+    const current = balances.get(id)?.amount;
 
     const label = userLabel(flag, domainsOnly);
 
@@ -273,59 +229,31 @@ async function resetFlaggedCredits(supabase, flagged, dryRun, domainsOnly) {
       continue;
     }
 
-    const ok = await zeroUserCredits(supabase, flag, current, ts);
-    if (ok) {
+    try {
+      await adjustCredits(supabase, {
+        amount: -current,
+        description: `Credits reset to 0 — disposable email signup (${flag.domain})`,
+        metadata: {
+          automated: true,
+          detected_by: flag.by_amieiro ? 'amieiro denyDomains' : 'npm package',
+          domain: flag.domain,
+          previous_amount: current,
+          script: 'check-disposable-emails.mjs',
+          timestamp: ts,
+        },
+        reason: 'disposable_email',
+        userId: id,
+      });
       console.log(`  ✅ ${label}: ${current} → 0`);
       result.reset++;
       result.creditsRemoved += current;
-    } else {
+    } catch (error) {
+      console.log(`  ❌ ${label}: ${error.message}`);
       result.failed++;
     }
   }
 
   return result;
-}
-
-/**
- * Zero a single user's `credits` balance and insert the audit transaction.
- * Logs and returns false on failure.
- */
-async function zeroUserCredits(supabase, flag, current, ts) {
-  const { error: updateError } = await supabase
-    .from('credits')
-    .update({ amount: 0, updated_at: ts })
-    .eq('user_id', flag.id);
-  if (updateError) {
-    console.log(`  ❌ ${flag.email}: ${updateError.message}`);
-    return false;
-  }
-
-  // Audit trail: record the removal as a negative transaction.
-  const source = flag.by_amieiro ? 'amieiro denyDomains' : 'npm package';
-  const { error: txError } = await supabase.from('credit_transactions').insert({
-    amount: -Math.abs(current),
-    description: `Credits reset to 0 — disposable email signup (${flag.domain})`,
-    metadata: {
-      automated: true,
-      detected_by: source,
-      domain: flag.domain,
-      previous_amount: current,
-      reason: 'disposable_email',
-      script: 'check-disposable-emails.mjs',
-      timestamp: ts,
-    },
-    type: RESET_TX_TYPE,
-    user_id: flag.id,
-  });
-  if (txError) {
-    // Balance was already zeroed; surface the audit failure loudly.
-    console.log(
-      `  ⚠️  ${flag.email}: credits zeroed but transaction insert failed: ${txError.message}`,
-    );
-    return false;
-  }
-
-  return true;
 }
 
 async function confirmLiveReset(count) {
@@ -385,6 +313,9 @@ async function handleCreditReset(supabase, flagged) {
   console.log(`  Skipped (≤0):     ${reset.skipped}`);
   console.log(`  Failed:            ${reset.failed}`);
   console.log(`  Credits removed:   ${reset.creditsRemoved}`);
+  if (reset.failed > 0) {
+    process.exitCode = 1;
+  }
   if (args.dryRun) {
     console.log(
       '\n💡 Dry run — no changes were made. Re-run without --dry-run to apply.',

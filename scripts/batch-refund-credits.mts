@@ -8,6 +8,7 @@ import {
   parseCliArgs,
   runScript,
 } from './lib/cli.mts';
+import { adjustCredits } from './lib/ledger.mts';
 import {
   createScriptAdminClient,
   type ScriptSupabaseClient,
@@ -18,7 +19,8 @@ const HELP = `Add credits back for double-billed voice calls, one CSV row at a t
 Usage: pnpm batch-refund-credits <dupes.csv> [--dry-run]
 
 The CSV needs source_id, user_id, event_count and duplicate_credits columns;
-rows whose duplicate_credits is not a positive integer are skipped.
+rows whose duplicate_credits is not a positive integer are skipped. A call
+that already has its refund row is skipped, so a rerun refunds nothing twice.
 
   --dry-run   List the refunds without changing the database
   -h, --help  Show this help`;
@@ -36,7 +38,7 @@ interface RefundResult {
   credits: number;
   reason?: string;
   sourceId: string;
-  status: 'ok' | 'skipped' | 'error';
+  status: 'duplicate' | 'error' | 'ok' | 'skipped';
   userId: string;
 }
 
@@ -108,30 +110,16 @@ async function applyPlatformBugRefund(
   userId: string,
   refundCredits: number,
   sourceId: string,
-): Promise<void> {
-  const description = `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`;
-
-  const { error: txError } = await supabase.from('credit_transactions').insert({
+): Promise<'applied' | 'duplicate'> {
+  const { status } = await adjustCredits(supabase, {
     amount: refundCredits,
-    description,
-    metadata: { reason: 'Double billing - voice call', sourceId },
-    reference_id: null,
-    type: 'refund',
-    user_id: userId,
+    description: `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`,
+    idempotencyKey: `double-billing:${sourceId}`,
+    metadata: { sourceId },
+    reason: 'Double billing - voice call',
+    userId,
   });
-
-  if (txError) {
-    throw new Error(`insert credit_transactions: ${txError.message}`);
-  }
-
-  const { error: creditsError } = await supabase.rpc('increment_user_credits', {
-    credit_amount_var: refundCredits,
-    user_id_var: userId,
-  });
-
-  if (creditsError) {
-    throw new Error(`increment_user_credits: ${creditsError.message}`);
-  }
+  return status;
 }
 
 async function main() {
@@ -210,12 +198,22 @@ async function main() {
     }
 
     try {
-      await applyPlatformBugRefund(
+      const status = await applyPlatformBugRefund(
         supabase,
         row.userId,
         row.duplicateCredits,
         row.sourceId,
       );
+      if (status === 'duplicate') {
+        console.log('already refunded');
+        results.push({
+          credits: row.duplicateCredits,
+          sourceId: row.sourceId,
+          status: 'duplicate',
+          userId: row.userId,
+        });
+        continue;
+      }
       console.log('OK');
       okCount++;
       results.push({
@@ -240,6 +238,9 @@ async function main() {
 
   console.log('\n=== Done ===');
   console.log(`OK     : ${okCount}`);
+  console.log(
+    `Skipped: ${results.filter((r) => r.status === 'duplicate').length} already refunded`,
+  );
   console.log(`Errors : ${errCount}`);
 
   if (errCount > 0) {
