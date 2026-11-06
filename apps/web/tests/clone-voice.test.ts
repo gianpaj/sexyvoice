@@ -31,7 +31,6 @@ const {
   mockSynthesizeInworldSpeech: vi.fn(),
 }));
 vi.mock('@/lib/clone/inworld', () => ({
-  INWORLD_TTS_MODEL: 'inworld-tts-2',
   saveInworldVoice: mockSaveInworldVoice,
   synthesizeInworldSpeech: mockSynthesizeInworldSpeech,
 }));
@@ -196,6 +195,31 @@ describe('Clone Voice API Route', () => {
       expect(queries.reduceCredits).not.toHaveBeenCalled();
     },
   );
+
+  it('reports Inworld as unavailable when saving fails with a 5xx', async () => {
+    vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
+    vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
+    mockSaveInworldVoice.mockRejectedValueOnce(
+      Object.assign(new Error('Inworld voice request failed (502)'), {
+        status: 502,
+      }),
+    );
+    const form = createFormDataWithAudio('', createMockAudioFile(), 'en');
+    form.set('saveVoiceName', 'My voice');
+    form.set('voiceConsent', 'true');
+
+    const response = await POST(
+      new Request('http://localhost/api/clone-voice', {
+        method: 'POST',
+        body: form,
+      }),
+    );
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+    expect(json.details).toEqual({ provider: 'Inworld' });
+  });
 
   it('asks Inworld to remove background noise when cleanup is on', async () => {
     vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
@@ -2526,6 +2550,28 @@ describe('Saved voice generation', () => {
     expect(queries.saveAudioFile).toHaveBeenCalledWith(
       expect.objectContaining({ model: 'inworld-tts-2' }),
     );
+  });
+
+  it('refunds and reports Inworld as unavailable when it fails with a 5xx', async () => {
+    const { captureException } = await import('@sentry/nextjs');
+    mockGetOwnedCallVoice.mockResolvedValueOnce(savedVoice('inworld'));
+    mockSynthesizeInworldSpeech.mockRejectedValueOnce(
+      Object.assign(new Error('Inworld voice request failed (503)'), {
+        status: 503,
+      }),
+    );
+
+    const response = await postSavedVoice('Hello world', savedVoiceId, 'es');
+    const json = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(json.code).toBe('PROVIDER_UNAVAILABLE');
+    expect(json.details).toEqual({ provider: 'Inworld' });
+    expect(queries.restoreCredits).toHaveBeenCalledWith({
+      amount: 132,
+      userId: 'test-user-id',
+    });
+    expect(captureException).not.toHaveBeenCalled();
   });
 
   it('rejects a language an Inworld voice cannot speak', async () => {

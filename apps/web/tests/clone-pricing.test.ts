@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { estimateCloneCredits, getCloneDollarCost } from '@/lib/clone/pricing';
+import { cloneProviderCost, estimateCloneCredits } from '@/lib/clone/pricing';
 
 describe('estimateCloneCredits', () => {
   test('reserves 11 times the base speech estimate', () => {
@@ -13,16 +13,22 @@ describe('estimateCloneCredits', () => {
   });
 });
 
-describe('getCloneDollarCost', () => {
-  test('estimates Voxtral costs using the selected model', () => {
-    const text = 'a'.repeat(1000);
-    expect(getCloneDollarCost('mistral', undefined, text)).toBe(0.016);
-    expect(
-      getCloneDollarCost('mistral', undefined, text, 'voxtral-mini-tts-3-0'),
-    ).toBe(0.013);
+describe('cloneProviderCost', () => {
+  const text = 'a'.repeat(1000);
+
+  test('prices Voxtral 3.0 per character', () => {
+    expect(cloneProviderCost('mistral', text)).toBe(0.013);
+  });
+
+  test('prices Inworld per character', () => {
+    expect(cloneProviderCost('inworld', text)).toBeCloseTo(0.0175);
+  });
+
+  test('prices a Chatterbox run at a flat rate', () => {
+    expect(cloneProviderCost('replicate', text)).toBe(0.0121);
   });
 
   test('preserves the unknown cost for missing text', () => {
-    expect(getCloneDollarCost('mistral')).toBe(-1);
+    expect(cloneProviderCost('mistral', '')).toBe(-1);
   });
 });

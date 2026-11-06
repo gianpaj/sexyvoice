@@ -24,9 +24,9 @@ import {
   type CallCloneProvider,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
-import { CLONE_MIN_AUDIO_SECONDS } from '@/lib/clone/constants';
 import { readCloneError } from '@/lib/clone/error-message';
 import { createMicrophoneReferenceAudioFile } from '@/lib/clone/microphone-reference-audio';
+import { CLONE_PROVIDERS } from '@/lib/clone/providers';
 import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { PlayingBars } from './listen-button';
@@ -69,7 +69,8 @@ export function CloneVoiceDialog({
 }: CloneVoiceDialogProps) {
   const t = useTranslations('call.clone');
   const tClone = useTranslations('clone');
-  const minRecordingSeconds = CLONE_MIN_AUDIO_SECONDS[callCloneProvider];
+  const minRecordingSeconds =
+    CLONE_PROVIDERS[callCloneProvider].minReferenceSeconds;
   const translateErrorCode = useTranslations('errorCodes');
   const player = useSamplePlayer();
   const { convert, ensureLoaded } = useFFmpeg({ lazyLoad: true });

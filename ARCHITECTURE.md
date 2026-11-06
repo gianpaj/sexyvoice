@@ -303,7 +303,8 @@ Changing the default does not convert existing profiles or voice IDs.
 | Chatterbox Multilingual | `da`, `en-multi`, `fi`, `he`, `ms`, `sv`, `sw`                                                                                     | `resemble-ai/chatterbox-multilingual` | Replicate |
 
 The dashboard language dropdown and `POST /api/clone-voice` use
-`apps/web/lib/clone/constants.ts` for the same locale list and provider routing.
+`apps/web/lib/clone/constants.ts` for the same locale list and
+`apps/web/lib/clone/providers.ts` for provider routing.
 The list contains 28 languages plus the explicit English Chatterbox option.
 Mistral confirms 21 languages in its
 [TTS preset table](https://docs.mistral.ai/studio/audio/specs-and-limits/languages)
@@ -312,11 +313,12 @@ Its claimed 35-language coverage is not fully enumerated. Danish, Finnish,
 Hebrew, Malay, Swedish, and Swahili stay on Chatterbox pending confirmation;
 this routing does not establish that Mistral cannot speak them.
 
-Voxtral accepts 1,000 text characters for free users and 4,000 for paid users;
-Chatterbox accepts 300. Reference audio must be at least 10 seconds for every
-provider; `CLONE_MIN_AUDIO_SECONDS` in `lib/clone/constants.ts` sets each one
-separately. Longer references are trimmed to 25 seconds for
-Voxtral or 10 seconds for Chatterbox when conversion permits.
+`CLONE_PROVIDERS` in `lib/clone/providers.ts` holds each provider's model,
+text limits, and reference audio bounds. Voxtral accepts 1,000 text characters
+for free users and 4,000 for paid users; Chatterbox accepts 300 and Inworld
+2,000. Reference audio must be at least 10 seconds for every provider. Longer
+references are trimmed to 25 seconds for Voxtral, 30 for Inworld, or 10 for
+Chatterbox when conversion permits.
 
 Accepted uploads include MP3, OGG/Opus, M4A, and WAV. Browser-recorded WebM is
 converted to WAV in the client; the route rejects unconverted WebM. The route

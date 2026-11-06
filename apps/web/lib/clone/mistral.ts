@@ -2,6 +2,7 @@ import { Mistral } from '@mistralai/mistralai';
 
 import { getProviderStatusCode } from '@/lib/provider-errors';
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
+import { CLONE_PROVIDERS } from './providers';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
 
 let client: Mistral | undefined;
@@ -34,7 +35,7 @@ export async function saveMistralVoice(
     provider: 'mistral',
     generateSample: async () => {
       const speech = await mistral.audio.speech.complete({
-        model: 'voxtral-mini-tts-3-0',
+        model: CLONE_PROVIDERS.mistral.model,
         input: CALL_VOICE_SAMPLE_TEXT,
         voiceId: voice.id,
         responseFormat: 'wav',

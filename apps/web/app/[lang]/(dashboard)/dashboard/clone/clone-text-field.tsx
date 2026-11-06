@@ -8,11 +8,9 @@ import { SpotlightField } from '@/components/spotlight-field';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { UpgradeCrown } from '@/components/upgrade-crown';
-import {
-  CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID,
-  RTL_CLONE_LOCALE_CODES,
-} from '@/lib/clone/constants';
+import { RTL_CLONE_LOCALE_CODES } from '@/lib/clone/constants';
 import { formatCloneMessage } from '@/lib/clone/error-message';
+import { CLONE_PROVIDERS } from '@/lib/clone/providers';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import type { CloneStateAction } from './clone-state';
@@ -43,7 +41,7 @@ export function CloneTextField({
   const textIsOverLimit = text.length > textMaxLength;
   const textLimitTooltip = formatCloneMessage(
     userHasPaid ? t('paidTextLimitTooltip') : t('upgradeTextLimitTooltip'),
-    { MAX: CLONE_TEXT_MAX_LENGTH_VOXTRAL_PAID },
+    { MAX: CLONE_PROVIDERS.mistral.textLimit.paid },
   );
 
   return (

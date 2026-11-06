@@ -179,7 +179,8 @@ Use package filters when you only want one app, e.g.
 - Match the form of address of the section you edit: German, for example,
   uses `du` in some sections and `Sie` in others.
 - Voice cloning copy says "your voice" or mentions the rights to a voice, and
-  gives the minimum as 10 seconds (`CLONE_MIN_AUDIO_SECONDS`).
+  gives the minimum as 10 seconds (`minReferenceSeconds` in
+  `apps/web/lib/clone/providers.ts`).
 
 ## Supabase and Database
 

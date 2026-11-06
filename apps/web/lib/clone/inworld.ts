@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { CALL_VOICE_SAMPLE_TEXT } from './call-voice-sample';
 import { resolveBaseCloneLocale } from './constants';
+import { CLONE_PROVIDERS } from './providers';
 import { saveCallVoiceProfile } from './save-call-voice-profile';
 
 const cloneResponse = z.object({
@@ -35,8 +36,11 @@ async function inworldRequest(path: string, init?: RequestInit) {
     !(response.ok || (init?.method === 'DELETE' && response.status === 404))
   ) {
     const reason = await inworldErrorMessage(response);
-    throw new Error(
-      `Inworld voice request failed (${response.status})${reason ? `: ${reason}` : ''}`,
+    throw Object.assign(
+      new Error(
+        `Inworld voice request failed (${response.status})${reason ? `: ${reason}` : ''}`,
+      ),
+      { status: response.status },
     );
   }
   return response;
@@ -85,7 +89,6 @@ export async function saveInworldVoice(
   });
 }
 
-export const INWORLD_TTS_MODEL = 'inworld-tts-2';
 /** Custom voices allowed in the workspace on the Builder plan. */
 export const INWORLD_WORKSPACE_VOICE_LIMIT = 3000;
 
@@ -115,7 +118,7 @@ export async function synthesizeInworldSpeech(
       text,
       voiceId,
       ...(locale && { language: toInworldLanguage(locale) }),
-      modelId: INWORLD_TTS_MODEL,
+      modelId: CLONE_PROVIDERS.inworld.model,
       audioConfig: { audioEncoding: 'LINEAR16' },
     }),
   });
@@ -132,7 +135,7 @@ export async function deleteInworldVoice(voiceId: string) {
 export async function getInworldVoiceSample(voiceId: string) {
   const query = new URLSearchParams({
     voice_id: voiceId,
-    model_id: 'inworld-tts-2',
+    model_id: CLONE_PROVIDERS.inworld.model,
   });
   const response = await inworldRequest(`/tts/v1/voice:preview?${query}`);
   const { audioContent } = previewResponse.parse(await response.json());

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
+import { VOICE_CLONING_MODELS } from '@/lib/clone/providers';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { createAdminClient } from '@/lib/supabase/admin';
 

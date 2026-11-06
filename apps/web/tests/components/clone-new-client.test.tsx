@@ -330,6 +330,26 @@ const renderedLocaleCodes = () => {
 };
 
 describe('NewVoiceClient', () => {
+  it('tells the user how much reference audio the cloning provider keeps', async () => {
+    mockUpload.files = [];
+    renderClone({ lang: 'en' });
+    expect(
+      await screen.findByText(/Only the first 25 seconds are used/),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the Inworld trim length when saving a voice for calls', async () => {
+    mockUpload.files = [];
+    renderClone({
+      callCloneProvider: 'inworld',
+      initialSaveForCalls: true,
+      userHasPaid: true,
+    });
+    expect(
+      await screen.findByText(/Only the first 30 seconds are used/),
+    ).toBeInTheDocument();
+  });
+
   it('saves a reusable voice without requiring generated speech text', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(

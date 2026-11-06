@@ -39,13 +39,12 @@ import {
 import {
   type CallCloneProvider,
   MAX_SAVED_CALL_VOICES,
+  savedVoiceProvider,
   supportsCallCloneLocale,
 } from '@/lib/clone/call-voice-config';
 import {
-  CLONE_MIN_AUDIO_SECONDS,
   CLONE_SUPPORTED_LOCALE_CODES,
   resolveBaseCloneLocale,
-  VOXTRAL_SUPPORTED_LOCALE_CODES,
 } from '@/lib/clone/constants';
 import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
 import { formatCloneMessage, readCloneError } from '@/lib/clone/error-message';
@@ -54,9 +53,10 @@ import {
   isWebmAudioBlob,
 } from '@/lib/clone/microphone-reference-audio';
 import {
-  getCloneTextMaxLength,
-  getSavedVoiceTextMaxLength,
-} from '@/lib/clone/text-limits';
+  CLONE_PROVIDERS,
+  cloneTextLimit,
+  oneOffCloneProvider,
+} from '@/lib/clone/providers';
 import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
@@ -241,13 +241,10 @@ function NewVoiceClientInner({
     text,
   } = cloneState;
 
-  const usesVoxtral = VOXTRAL_SUPPORTED_LOCALE_CODES.has(selectedLocaleCode);
-  // Saving for calls clones with the call provider; otherwise the locale
-  // picks Voxtral or Chatterbox.
-  let referenceProvider: keyof typeof CLONE_MIN_AUDIO_SECONDS = usesVoxtral
-    ? 'mistral'
-    : 'replicate';
-  if (saveVoiceOnly) referenceProvider = callCloneProvider;
+  const oneOffProvider = oneOffCloneProvider(selectedLocaleCode);
+  const usesVoxtral = oneOffProvider === 'mistral';
+  // Saving for calls clones with the call provider.
+  const referenceProvider = saveVoiceOnly ? callCloneProvider : oneOffProvider;
   const canSaveVoice = supportsCallCloneLocale(
     callCloneProvider,
     selectedLocaleCode,
@@ -366,9 +363,10 @@ function NewVoiceClientInner({
     });
   }, []);
 
+  // Saved voices belong to paid users, so they get the paid limit.
   const textMaxLength = selectedVoice
-    ? getSavedVoiceTextMaxLength(selectedVoice.provider)
-    : getCloneTextMaxLength(selectedLocaleCode, userHasPaid);
+    ? cloneTextLimit(savedVoiceProvider(selectedVoice.provider), true)
+    : cloneTextLimit(oneOffProvider, userHasPaid);
 
   const [fileState, fileActions] = useFileUpload({
     accept: ALLOWED_TYPES,
@@ -684,7 +682,8 @@ function NewVoiceClientInner({
   };
 
   const textIsOverLimit = text.length > textMaxLength;
-  const minAudioSeconds = CLONE_MIN_AUDIO_SECONDS[referenceProvider];
+  const { maxReferenceSeconds, minReferenceSeconds: minAudioSeconds } =
+    CLONE_PROVIDERS[referenceProvider];
   const micTooShort =
     !file &&
     Boolean(micBlob) &&
@@ -798,6 +797,7 @@ function NewVoiceClientInner({
                   }}
                   fileActions={fileActions}
                   fileState={fileState}
+                  maxAudioSeconds={maxReferenceSeconds}
                   mic={{
                     blob: micBlob,
                     mediaBlob: recorderMediaBlob,
