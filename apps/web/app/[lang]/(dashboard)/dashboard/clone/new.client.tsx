@@ -57,13 +57,17 @@ import {
   cloneTextLimit,
   oneOffCloneProvider,
 } from '@/lib/clone/providers';
+import {
+  REFERENCE_AUDIO_ACCEPT,
+  REFERENCE_AUDIO_MAX_BYTES,
+  VOICE_NAME_MAX_LENGTH,
+} from '@/lib/clone/reference-audio';
 import { invalidateCredits } from '@/lib/credits-query';
 import { downloadUrl } from '@/lib/download';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { sortByPageLocale } from '@/lib/i18n/sort-by-page-locale';
-import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import { cn } from '@/lib/utils';
 import { CloneAudioInput } from './clone-audio-input';
 import {
@@ -76,9 +80,6 @@ import { CloneTextField } from './clone-text-field';
 import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
 
 export type { Status } from './clone-state';
-
-const ALLOWED_TYPES =
-  'audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/x-wav,audio/m4a,audio/x-m4a,audio/opus,audio/x-opus,video/webm,.opus';
 
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
@@ -369,8 +370,8 @@ function NewVoiceClientInner({
     : cloneTextLimit(oneOffProvider, userHasPaid);
 
   const [fileState, fileActions] = useFileUpload({
-    accept: ALLOWED_TYPES,
-    maxSize: CLONING_FILE_MAX_SIZE,
+    accept: REFERENCE_AUDIO_ACCEPT,
+    maxSize: REFERENCE_AUDIO_MAX_BYTES,
     multiple: false,
     onFilesAdded,
   });
@@ -579,18 +580,12 @@ function NewVoiceClientInner({
       const voiceResult = (await voiceRes.json()) as
         | CloneSuccessResponse
         | SaveVoiceSuccessResponse;
-      if ('audioReferenceId' in voiceResult) {
-        setSavedVoiceId(voiceResult.audioReferenceId);
+      if ('voice' in voiceResult) {
+        const savedVoice = voiceResult.voice;
+        setSavedVoiceId(savedVoice.id);
         setSavedVoices((voices) => [
-          {
-            id: voiceResult.audioReferenceId,
-            name: voiceName.trim(),
-            locale: selectedLocaleCode,
-            provider: voiceResult.provider,
-          },
-          ...voices.filter(
-            (voice) => voice.id !== voiceResult.audioReferenceId,
-          ),
+          savedVoice,
+          ...voices.filter((voice) => voice.id !== savedVoice.id),
         ]);
         dispatch({ patch: { status: 'idle' }, type: 'patch' });
         toast.success(t('savedVoice.success'));
@@ -887,7 +882,7 @@ function NewVoiceClientInner({
                     <Input
                       disabled={status === 'generating'}
                       id="saved-voice-name"
-                      maxLength={50}
+                      maxLength={VOICE_NAME_MAX_LENGTH}
                       onChange={(e) => {
                         setVoiceName(e.target.value);
                         setSavedVoiceId(null);

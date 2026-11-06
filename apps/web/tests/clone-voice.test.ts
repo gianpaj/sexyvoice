@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/clone-voice/route';
-import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+import { REFERENCE_AUDIO_MAX_BYTES } from '@/lib/clone/reference-audio';
 // biome-ignore lint/performance/noNamespaceImport: tests mock several query exports as one module
 import * as queries from '@/lib/supabase/queries';
 import {
@@ -115,7 +115,13 @@ describe('Clone Voice API Route', () => {
     'saves an owned %s profile without requiring speech text or charging speech credits',
     async (locale) => {
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
-      mockSaveMistralVoice.mockResolvedValueOnce({ id: 'reference' });
+      const saved = {
+        id: 'reference',
+        locale,
+        name: 'My voice',
+        provider: 'mistral',
+      };
+      mockSaveMistralVoice.mockResolvedValueOnce(saved);
       const form = createFormDataWithAudio('', createMockAudioFile(), locale);
       form.set('saveVoiceName', 'My voice');
       form.set('voiceConsent', 'true');
@@ -126,10 +132,7 @@ describe('Clone Voice API Route', () => {
         }),
       );
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({
-        audioReferenceId: 'reference',
-        provider: 'mistral',
-      });
+      expect(await response.json()).toEqual({ voice: saved });
       expect(mockSaveMistralVoice).toHaveBeenCalledWith(
         expect.any(Buffer),
         'My voice',
@@ -167,7 +170,13 @@ describe('Clone Voice API Route', () => {
     async (locale) => {
       vi.stubEnv('CALL_CLONE_PROVIDER', 'inworld');
       vi.mocked(queries.hasUserPaid).mockResolvedValueOnce(true);
-      mockSaveInworldVoice.mockResolvedValueOnce({ id: 'reference' });
+      const saved = {
+        id: 'reference',
+        locale,
+        name: 'My voice',
+        provider: 'inworld',
+      };
+      mockSaveInworldVoice.mockResolvedValueOnce(saved);
       const form = createFormDataWithAudio('', createMockAudioFile(), locale);
       form.set('saveVoiceName', 'My voice');
       form.set('voiceConsent', 'true');
@@ -178,10 +187,7 @@ describe('Clone Voice API Route', () => {
         }),
       );
       expect(response.status).toBe(200);
-      expect(await response.json()).toEqual({
-        audioReferenceId: 'reference',
-        provider: 'inworld',
-      });
+      expect(await response.json()).toEqual({ voice: saved });
       expect(mockSaveInworldVoice).toHaveBeenCalledWith(
         expect.any(Buffer),
         'My voice',
@@ -630,12 +636,12 @@ describe('Clone Voice API Route', () => {
       const json = await response.json();
 
       expect(response.status).toBe(413);
-      const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
+      const maxMb = (REFERENCE_AUDIO_MAX_BYTES / 1024 / 1024).toFixed(1);
       const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
       expect(json.serverMessage).toBe(errorMessage);
       expect(json.code).toBe('errors.fileTooLarge');
       expect(json.details).toMatchObject({
-        MAX_BYTES: CLONING_FILE_MAX_SIZE,
+        MAX_BYTES: REFERENCE_AUDIO_MAX_BYTES,
         MAX_MB: maxMb,
       });
     });

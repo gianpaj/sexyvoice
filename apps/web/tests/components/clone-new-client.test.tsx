@@ -353,7 +353,14 @@ describe('NewVoiceClient', () => {
   it('saves a reusable voice without requiring generated speech text', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(
-        JSON.stringify({ audioReferenceId: 'reference', provider: 'inworld' }),
+        JSON.stringify({
+          voice: {
+            id: 'reference',
+            locale: 'en',
+            name: 'My voice',
+            provider: 'inworld',
+          },
+        }),
         {
           status: 200,
         },

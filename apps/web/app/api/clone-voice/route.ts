@@ -20,6 +20,7 @@ import {
   type CloneRouteErrorCode,
   type CloneSuccessResponse,
   type RouteErrorDetails,
+  type SaveVoiceSuccessResponse,
 } from '@/lib/clone/api-types';
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
 import {
@@ -41,6 +42,12 @@ import {
   cloneTextLimit,
   oneOffCloneProvider,
 } from '@/lib/clone/providers';
+import {
+  MICROPHONE_RECORDING_NAME,
+  REFERENCE_AUDIO_MAX_BYTES,
+  REFERENCE_AUDIO_MIME_TYPES,
+  VOICE_NAME_MAX_LENGTH,
+} from '@/lib/clone/reference-audio';
 import { enhanceReferenceAudio } from '@/lib/clone/reference-audio-enhancement';
 import {
   type CreditReservation,
@@ -63,7 +70,6 @@ import {
   countSavedCallVoices,
   getOwnedCallVoice,
 } from '@/lib/supabase/call-voices';
-import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
 import {
   getCredits,
   hasUserPaid,
@@ -72,23 +78,6 @@ import {
   saveAudioFile,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
-
-const ALLOWED_TYPES = [
-  'audio/mpeg',
-  'audio/mp3',
-  'audio/wav',
-  'audio/ogg',
-  'audio/x-wav',
-  'audio/m4a',
-  'audio/x-m4a',
-  // Opus files (.opus) use audio/opus or audio/x-opus MIME types
-  'audio/opus',
-  'audio/x-opus',
-  // Microphone recordings often come in as WebM/Opus and may be reported as audio/webm or video/webm
-  'audio/webm',
-  'video/webm',
-  'application/octet-stream',
-];
 
 const CHATTERBOX_VERSION =
   '9cfba4c265e685f840612be835424f8c33bdee685d7466ece7684b0d9d4c0b1c';
@@ -301,7 +290,7 @@ async function parseFormData(request: Request): Promise<FormInput> {
   if (
     nameValue !== null &&
     (!saveVoiceName ||
-      saveVoiceName.length > 50 ||
+      saveVoiceName.length > VOICE_NAME_MAX_LENGTH ||
       formData.get(CLONE_FORM_FIELDS.voiceConsent) !== 'true')
   ) {
     throw createRouteError(
@@ -384,7 +373,7 @@ function validateTextLength(
 function validateFileType(file: File): string {
   const normalizedFileType = file.type.split(';')[0]?.trim().toLowerCase();
 
-  if (!ALLOWED_TYPES.includes(normalizedFileType)) {
+  if (!REFERENCE_AUDIO_MIME_TYPES.includes(normalizedFileType)) {
     throw createRouteError(
       'Invalid file type. Only MP3, OGG, Opus, M4A, WAV, or WebM allowed.',
       400,
@@ -397,11 +386,11 @@ function validateFileType(file: File): string {
 }
 
 function validateFileSize(file: File): void {
-  if (file.size > CLONING_FILE_MAX_SIZE) {
-    const maxMb = (CLONING_FILE_MAX_SIZE / 1024 / 1024).toFixed(1);
+  if (file.size > REFERENCE_AUDIO_MAX_BYTES) {
+    const maxMb = (REFERENCE_AUDIO_MAX_BYTES / 1024 / 1024).toFixed(1);
     const errorMessage = `File too large. Max ${maxMb}MB allowed.`;
     throw createRouteError(errorMessage, 413, 'errors.fileTooLarge', {
-      MAX_BYTES: CLONING_FILE_MAX_SIZE,
+      MAX_BYTES: REFERENCE_AUDIO_MAX_BYTES,
       MAX_MB: maxMb,
     });
   }
@@ -660,7 +649,7 @@ async function processAudioFile(
   const filenameLower = file.name.toLowerCase();
   if (
     normalizedMimeType === 'application/octet-stream' ||
-    filenameLower.startsWith('microphone-recording.')
+    filenameLower.startsWith(`${MICROPHONE_RECORDING_NAME}.`)
   ) {
     isMicAudio = true;
     if (
@@ -1497,9 +1486,8 @@ async function saveVoice(
         ),
   );
   return NextResponse.json({
-    audioReferenceId: reference.id,
-    provider,
-  });
+    voice: reference,
+  } satisfies SaveVoiceSuccessResponse);
 }
 
 /** Speak `text` once in the voice of the uploaded reference audio. */

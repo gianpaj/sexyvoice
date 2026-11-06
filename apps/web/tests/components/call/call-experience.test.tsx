@@ -192,9 +192,14 @@ beforeEach(() => {
   window.scrollTo = vi.fn();
   fetchMock = vi.fn(async (url: string, init: RequestInit) => {
     if (url === '/api/clone-voice') {
+      const form = init.body as FormData;
       return Response.json({
-        audioReferenceId: clonedVoiceId,
-        provider: 'inworld',
+        voice: {
+          id: clonedVoiceId,
+          locale: form.get('locale'),
+          name: form.get('saveVoiceName'),
+          provider: 'inworld',
+        },
       });
     }
     const body = JSON.parse(String(init.body));

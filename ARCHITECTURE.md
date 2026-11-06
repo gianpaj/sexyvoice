@@ -221,7 +221,7 @@ flowchart TD
     C --> D["Normalize to WAV when supported and trim to provider limit"]
     D --> S{"Save voice for calls?"}
     S -->|"Yes: paid and consented"| T["Create provider voice, generate R2 preview, and save owned profile"]
-    T --> U["Return audioReferenceId and provider"]
+    T --> U["Return the saved voice row"]
     S -->|"No"| E["Hash processed audio and check Redis output cache"]
     E -->|"Hit"| F["Return cached URL at zero credits"]
     E -->|"Miss"| G{"Enhancement requested?"}
@@ -261,8 +261,11 @@ to Mistral speech synthesis. `saveCallVoiceProfile` uploads the generated WAV to
 the dashboard R2 bucket under `call-voice-samples/<profile-id>/<random-id>.wav`,
 then inserts the provider ID, provider, owner, name, locale, and `sample_url`
 into `audio_references`. If sample generation, upload, or insertion fails, it
-attempts to clean up the provider voice and any attempted R2 upload. The response contains
-`audioReferenceId` and `provider`. This action charges no speech
+attempts to clean up the provider voice and any attempted R2 upload. The response
+returns the saved row (`id`, `name`, `locale`, `provider`) as `voice`, and both
+the Clone page and the call clone dialog add it to their lists. The upload
+contract (accepted types, the 4.5 MB limit, the 50-character name) lives in
+`lib/clone/reference-audio.ts`. This action charges no speech
 credits; sample synthesis incurs provider costs. The reference is retained by
 the selected provider. The preview is stored on the profile, separately from
 speech generations in `audio_files`.

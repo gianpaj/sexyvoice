@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { formatBytes, type useFileUpload } from '@/hooks/use-file-upload';
 import { formatCloneMessage } from '@/lib/clone/error-message';
-import { CLONING_FILE_MAX_SIZE } from '@/lib/supabase/constants';
+import { REFERENCE_AUDIO_MAX_BYTES } from '@/lib/clone/reference-audio';
 
 type FileUploadResult = ReturnType<typeof useFileUpload>;
 
@@ -118,7 +118,7 @@ export function CloneAudioInput({
             <p className="mt-1 text-muted-foreground text-xs">
               {t('fileFormatsText').replace(
                 '__SIZE__',
-                formatBytes(CLONING_FILE_MAX_SIZE),
+                formatBytes(REFERENCE_AUDIO_MAX_BYTES),
               )}
             </p>
             <p className="mt-2 text-muted-foreground text-xs italic">
