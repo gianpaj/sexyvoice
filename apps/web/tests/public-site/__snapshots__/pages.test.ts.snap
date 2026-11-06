@@ -1,0 +1,2149 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`audioConverter page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "https://ffmpeg.org",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`audioConverter page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "https://ffmpeg.org",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`audioConverter page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 2,
+  "mainIds": [
+    "",
+  ],
+}
+`;
+
+exports[`audioConverter page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/de/tools/audio-converter/#webapp",
+        "@type": "WebApplication",
+        "applicationCategory": "MultimediaApplication",
+        "browserRequirements": "Requires a modern browser with WebAssembly support",
+        "description": "Kostenloser Online-Audio-Konverter – Konvertieren Sie MP3, WAV, FLAC, OGG, AAC, MP4 und weitere Formate direkt in Ihrem Browser. Kein Upload erforderlich, 100% privat und offline. Powered by FFmpeg.",
+        "inLanguage": "de",
+        "isAccessibleForFree": true,
+        "name": "Kostenloser Online Audio-Konverter – MP3, WAV, FLAC & mehr",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "operatingSystem": "Any",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai/de/tools/audio-converter",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de/tools/audio-converter",
+            "name": "Audio-Konverter",
+            "position": 2,
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`audioConverter page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/en/tools/audio-converter/#webapp",
+        "@type": "WebApplication",
+        "applicationCategory": "MultimediaApplication",
+        "browserRequirements": "Requires a modern browser with WebAssembly support",
+        "description": "Convert MP3, WAV, FLAC, OGG, AAC & more audio formats free in your browser. No uploads needed – 100% private, works offline. Fast and easy.",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "name": "Free Audio Converter – MP3, WAV, FLAC & More",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "operatingSystem": "Any",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai/en/tools/audio-converter",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en/tools/audio-converter",
+            "name": "Audio Converter",
+            "position": 2,
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`audioJoiner page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "https://ffmpeg.org",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`audioJoiner page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "https://ffmpeg.org",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`audioJoiner page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 2,
+  "mainIds": [
+    "",
+  ],
+}
+`;
+
+exports[`audioJoiner page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/de/tools/audio-joiner/#webapp",
+        "@type": "WebApplication",
+        "applicationCategory": "MultimediaApplication",
+        "applicationSubCategory": "Audio Editing",
+        "browserRequirements": "Requires a modern browser with WebAssembly support",
+        "description": "Mehrere Audiodateien zusammenfügen und jeden Abschnitt direkt im Browser zuschneiden. Privat, kostenlos und ohne Upload.",
+        "inLanguage": "de",
+        "isAccessibleForFree": true,
+        "name": "Kostenloser Audio-Joiner – Audiodateien zusammenfügen und zuschneiden",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "operatingSystem": "Any",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai/de/tools/audio-joiner",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de/tools/audio-joiner",
+            "name": "Audio-Joiner",
+            "position": 2,
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`audioJoiner page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/en/tools/audio-joiner/#webapp",
+        "@type": "WebApplication",
+        "applicationCategory": "MultimediaApplication",
+        "applicationSubCategory": "Audio Editing",
+        "browserRequirements": "Requires a modern browser with WebAssembly support",
+        "description": "Join multiple audio files and trim each segment directly in your browser. Private, free, and no uploads required.",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "name": "Free Audio Joiner – Merge and Trim Audio",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "operatingSystem": "Any",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai/en/tools/audio-joiner",
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en/tools/audio-joiner",
+            "name": "Audio Joiner",
+            "position": 2,
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`blog page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de/blog/realtime-ai-voice-call",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`blog page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en/blog/realtime-ai-voice-call",
+  "/en/blog/hello-from-sexyvoice",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`blog page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [
+    "main-content",
+  ],
+}
+`;
+
+exports[`blog page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "name": "KI-Sprachanrufe in Echtzeit",
+        "position": 1,
+        "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+      },
+    ],
+    "name": "Neueste Beiträge | SexyVoice.ai Blog",
+    "numberOfItems": 1,
+    "url": "https://sexyvoice.ai/de/blog",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "item": "https://sexyvoice.ai/de",
+        "name": "Startseite",
+        "position": 1,
+      },
+      {
+        "@type": "ListItem",
+        "item": "https://sexyvoice.ai/de/blog",
+        "name": "Blog",
+        "position": 2,
+      },
+    ],
+  },
+]
+`;
+
+exports[`blog page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "name": "Real-time AI Voice Calls",
+        "position": 1,
+        "url": "https://sexyvoice.ai/en/blog/realtime-ai-voice-call",
+      },
+      {
+        "@type": "ListItem",
+        "name": "Hello from SexyVoice.ai",
+        "position": 2,
+        "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+      },
+    ],
+    "name": "Latest Posts | SexyVoice.ai Blog",
+    "numberOfItems": 2,
+    "url": "https://sexyvoice.ai/en/blog",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "item": "https://sexyvoice.ai/en",
+        "name": "Home",
+        "position": 1,
+      },
+      {
+        "@type": "ListItem",
+        "item": "https://sexyvoice.ai/en/blog",
+        "name": "Blog",
+        "position": 2,
+      },
+    ],
+  },
+]
+`;
+
+exports[`de blog post realtime-ai-voice-call > renders 1`] = `
+{
+  "chrome": {
+    "footerInMain": false,
+    "footers": 1,
+    "headerInMain": true,
+    "headers": 2,
+    "mainIds": [
+      "",
+    ],
+  },
+  "jsonLd": [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "about": [
+        {
+          "@type": "Thing",
+          "description": "Artificial intelligence technology for replicating human voices",
+          "name": "AI Voice Cloning",
+        },
+        {
+          "@type": "Thing",
+          "description": "Computer generation of human-like speech from text",
+          "name": "Speech Synthesis",
+        },
+        {
+          "@type": "Thing",
+          "description": "AI algorithms that learn patterns from data",
+          "name": "Machine Learning",
+        },
+      ],
+      "articleSection": "Technology",
+      "author": {
+        "@type": "Organization",
+        "name": "SexyVoice.ai",
+        "url": "https://sexyvoice.ai",
+      },
+      "dateModified": "2026-01-15T00:00:00.000Z",
+      "datePublished": "2026-01-15T00:00:00.000Z",
+      "description": "Sprich in Echtzeit mit KI-Charakteren.",
+      "headline": "KI-Sprachanrufe in Echtzeit",
+      "inLanguage": "de",
+      "isAccessibleForFree": true,
+      "keywords": [
+        "AI voice cloning",
+        "voice synthesis",
+        "text-to-speech",
+        "neural networks",
+        "speech generation",
+        "voice technology",
+      ],
+      "mainEntity": {
+        "@type": "TechArticle",
+        "dependencies": "Basic understanding of AI concepts",
+        "description": "Sprich in Echtzeit mit KI-Charakteren.",
+        "name": "KI-Sprachanrufe in Echtzeit",
+        "proficiencyLevel": "Beginner to Advanced",
+      },
+      "publisher": {
+        "@type": "Organization",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://sexyvoice.ai/sexyvoice.png",
+        },
+        "name": "SexyVoice.ai",
+      },
+      "timeRequired": "PT1M",
+      "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+      "wordCount": 5,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "item": "https://sexyvoice.ai/de",
+          "name": "Home",
+          "position": 1,
+        },
+        {
+          "@type": "ListItem",
+          "item": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+          "name": "KI-Sprachanrufe in Echtzeit",
+          "position": 2,
+        },
+      ],
+    },
+  ],
+  "links": [
+    "/de",
+    "/de/login",
+    "/de/signup",
+    "/de/login",
+    "/de/signup",
+    "https://x.com/gianpaj",
+    "/de",
+    "https://x.com/sexyvoiceai",
+    "https://instagram.com/sexyvoice_ai",
+    "/de/voice-call",
+    "/de/voice-cloning",
+    "/de/tools/audio-converter",
+    "/de/tools/transcribe",
+    "/de/tools/audio-joiner",
+    "https://status.sexyvoice.ai",
+    "/de/privacy-policy",
+    "/de/terms",
+  ],
+}
+`;
+
+exports[`en blog post hello-from-sexyvoice > renders 1`] = `
+{
+  "chrome": {
+    "footerInMain": false,
+    "footers": 1,
+    "headerInMain": true,
+    "headers": 2,
+    "mainIds": [
+      "",
+    ],
+  },
+  "jsonLd": [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "about": [
+        {
+          "@type": "Thing",
+          "description": "Artificial intelligence technology for replicating human voices",
+          "name": "AI Voice Cloning",
+        },
+        {
+          "@type": "Thing",
+          "description": "Computer generation of human-like speech from text",
+          "name": "Speech Synthesis",
+        },
+        {
+          "@type": "Thing",
+          "description": "AI algorithms that learn patterns from data",
+          "name": "Machine Learning",
+        },
+      ],
+      "articleSection": "Technology",
+      "author": {
+        "@type": "Organization",
+        "name": "SexyVoice.ai",
+        "url": "https://sexyvoice.ai",
+      },
+      "dateModified": "2025-04-28T00:00:00.000Z",
+      "datePublished": "2025-04-28T00:00:00.000Z",
+      "description": "Next-gen voice AI for synthesis and dubbing.",
+      "headline": "Hello from SexyVoice.ai",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "keywords": [
+        "AI voice cloning",
+        "voice synthesis",
+        "text-to-speech",
+        "neural networks",
+        "speech generation",
+        "voice technology",
+      ],
+      "mainEntity": {
+        "@type": "TechArticle",
+        "dependencies": "Basic understanding of AI concepts",
+        "description": "Next-gen voice AI for synthesis and dubbing.",
+        "name": "Hello from SexyVoice.ai",
+        "proficiencyLevel": "Beginner to Advanced",
+      },
+      "publisher": {
+        "@type": "Organization",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://sexyvoice.ai/sexyvoice.png",
+        },
+        "name": "SexyVoice.ai",
+      },
+      "timeRequired": "PT1M",
+      "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+      "wordCount": 5,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "item": "https://sexyvoice.ai/en",
+          "name": "Home",
+          "position": 1,
+        },
+        {
+          "@type": "ListItem",
+          "item": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+          "name": "Hello from SexyVoice.ai",
+          "position": 2,
+        },
+      ],
+    },
+  ],
+  "links": [
+    "/en",
+    "/en/login",
+    "/en/signup",
+    "/en/login",
+    "/en/signup",
+    "/en",
+    "https://x.com/sexyvoiceai",
+    "https://instagram.com/sexyvoice_ai",
+    "/en/voice-call",
+    "/en/voice-cloning",
+    "/en/tools/audio-converter",
+    "/en/tools/transcribe",
+    "/en/tools/audio-joiner",
+    "https://status.sexyvoice.ai",
+    "/en/privacy-policy",
+    "/en/terms",
+  ],
+}
+`;
+
+exports[`landing page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de/signup",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/signup",
+  "/de/signup",
+  "/de/signup",
+  "/de/signup",
+  "/de/blog/realtime-ai-voice-call",
+  "/de/blog/realtime-ai-voice-call",
+  "/de/blog",
+  "/de/signup",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`landing page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en/signup",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/signup",
+  "/en/signup",
+  "/en/signup",
+  "/en/signup",
+  "/en/blog/realtime-ai-voice-call",
+  "/en/blog/realtime-ai-voice-call",
+  "/en/blog/hello-from-sexyvoice",
+  "/en/blog/hello-from-sexyvoice",
+  "/en/blog",
+  "/en/signup",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`landing page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [
+    "main-content",
+  ],
+}
+`;
+
+exports[`landing page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://x.com/sexyvoiceai",
+          "https://instagram.com/sexyvoice_ai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/#website",
+        "@type": "WebSite",
+        "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+        "inLanguage": "de",
+        "name": "SexyVoice.ai",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/de/#webpage",
+        "@type": "WebPage",
+        "about": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+        "inLanguage": "de",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/#website",
+        },
+        "name": "SexyVoice.ai – Kostenlose KI-Text-zu-Sprache & Echtzeit-Sprachanrufe",
+        "url": "https://sexyvoice.ai/de",
+      },
+      {
+        "@id": "https://sexyvoice.ai/de/#faq",
+        "@type": "FAQPage",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/de/#webpage",
+        },
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Die verfügbaren Sprachen hängen von Stimme und Modell ab. Gemini-3.8-Stimmen unterstützen über 130 Sprachen. Andere Modelle haben eine eigene Sprachauswahl. Wählen Sie eine Stimme für Ihre Zielsprache und hören Sie sich eine Vorschau an. Die Sprachen für das Stimmklonen stehen weiter unten.",
+            },
+            "name": "In welchen Sprachen kann ich Sprache erzeugen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja! Wählen Sie eine mehrsprachige Stimme (z.B. Zephyr) und geben Sie den gewünschten Stil ein – "Britischer Akzent", "Piratenstimme", "Verführerischer Ton" usw. Das Modell passt sich sofort an, und Sie können es mit weiteren Anweisungen verfeinern.",
+            },
+            "name": "Kann ich eine Stimme mit einem bestimmten Akzent oder Stil sprechen lassen, wie Britisch oder Pirat 🏴‍☠️?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nehmen Sie mindestens 10 Sekunden Ihrer eigenen Stimme auf oder laden Sie eine Stimme hoch, die Sie verwenden dürfen. Unsere KI nutzt die Aufnahme, um ihren Klang nachzubilden. Erzeugen Sie sofort Sprache oder speichern Sie die Stimme für später.",
+            },
+            "name": "Wie funktioniert das Klonen von Stimmen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja! Nehmen Sie mindestens 10 Sekunden klarer Sprache auf oder laden Sie eine Aufnahme hoch. Sie können daraus Sprache erzeugen oder Ihre Stimme für später speichern, wenn Sie Credits gekauft haben.",
+            },
+            "name": "Kann ich meine eigene Stimme klonen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Das Speichern einer Stimme ist nach einer einmaligen Credit-Aufladung oder einer Abonnementzahlung kostenlos. Sprache mit einer geklonten Stimme verbraucht mehr Credits als mit unseren Standardstimmen. Längere Texte benötigen mehr. Live-Anrufe werden zum Anruftarif berechnet. Dashboard und API nutzen dasselbe Credit-Guthaben.",
+            },
+            "name": "Wie wird das Klonen von Stimmen berechnet?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Das Stimmklonen unterstützt die folgenden 28 Sprachen:
+
+🇸🇦 Arabisch,
+🇩🇰 Dänisch,
+🇩🇪 Deutsch,
+🇬🇧 Englisch,
+🇫🇮 Finnisch,
+🇫🇷 Französisch,
+🇬🇷 Griechisch,
+🇮🇱 Hebräisch,
+🇮🇳 Hindi,
+🇮🇹 Italienisch,
+🇯🇵 Japanisch,
+🇪🇸 Katalanisch,
+🇰🇷 Koreanisch,
+🇲🇾 Malaiisch,
+🇨🇳 Mandarin-Chinesisch,
+🇳🇱 Niederländisch,
+🇳🇴 Norwegisch,
+🇵🇱 Polnisch,
+🇵🇹 Portugiesisch,
+🇷🇴 Rumänisch,
+🇷🇺 Russisch,
+🇸🇪 Schwedisch,
+🇪🇸 Spanisch,
+🇰🇪 Suaheli,
+🇹🇷 Türkisch,
+🇺🇦 Ukrainisch,
+🇭🇺 Ungarisch,
+und 🇻🇳 Vietnamesisch.",
+            },
+            "name": "Welche Sprachen werden für das Stimmklonen unterstützt?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja. Zahlende Nutzer können bis zu 10 Stimmen speichern und für die Stimmgenerierung oder Live-Anrufe wiederverwenden. Wählen Sie eine gespeicherte Stimme auf der Klonen-Seite, um Sprache zu erzeugen, oder weisen Sie sie beim Erstellen einem Charakter zu.",
+            },
+            "name": "Kann ich meine geklonte Stimme speichern und wiederverwenden?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog.",
+            },
+            "name": "Wie funktionieren Live-KI-Anrufe?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie "Stimme klonen", oder nutzen Sie "Stimme für Anrufe speichern" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters.",
+            },
+            "name": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Live-Anrufe kosten 1000 Credits pro Minute, solange Sie verbunden sind.",
+            },
+            "name": "Was kostet das?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nein. Anrufe kosten 1000 Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens.",
+            },
+            "name": "Kostet ein Anruf mit einer geklonten Stimme mehr?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie "Referenz-Audio bereinigen". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann.",
+            },
+            "name": "Wie bekomme ich den besten Klon?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen.",
+            },
+            "name": "Kann ich die Stimme einer anderen Person klonen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Gespeicherte Anrufstimmen sind nur für Ihr Konto verfügbar. Der Sprachanbieter behält die Aufnahme, damit Sie die Stimme wiederverwenden können. Generierte Audiodateien können Sie im Dashboard löschen. Beim Löschen Ihres Kontos wird auch die Löschung gespeicherter Stimmen und ihrer Hörproben angefordert.",
+            },
+            "name": "Sind meine Stimm-Daten sicher?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Erstellen Sie Audio für Videos, Podcasts, Hörbücher, Spiele, Kurse und soziale Medien. Verwenden Sie nur Stimmen und Inhalte, für die Sie die Rechte haben.",
+            },
+            "name": "Wofür kann ich die Stimmgenerierung nutzen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Neue Nutzer erhalten 10.000 kostenlose Credits. Wie viel Sprache Sie erzeugen können, hängt von Stimme, Modell und Text ab. Kaufen Sie Credits einmalig oder erhalten Sie monatliche Credits mit einem Abonnement. Stimmgenerierung und Anrufe nutzen dasselbe Guthaben.",
+            },
+            "name": "Wie viele Credits benötige ich?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Preisen. Egal ob Sie Kreativer oder ein Unternehmen sind, Sie erhalten professionelle Ergebnisse ohne Verträge oder komplizierte Einrichtungen. Die kostenlosen Credits machen es einfach, alles auszuprobieren.",
+            },
+            "name": "Warum SexyVoice.ai wählen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja. Unsere API ermöglicht Stimmgenerierung in Apps, Websites und Spielen mit denselben Credits wie Ihr Dashboard. Stimmklonen und Live-Anrufe sind in der Web-App verfügbar. Lesen Sie die Dokumentation.",
+            },
+            "name": "Haben Sie eine API für Entwickler?",
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`landing page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://x.com/sexyvoiceai",
+          "https://instagram.com/sexyvoice_ai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/#website",
+        "@type": "WebSite",
+        "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
+        "inLanguage": "en",
+        "name": "SexyVoice.ai",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/en/#webpage",
+        "@type": "WebPage",
+        "about": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
+        "inLanguage": "en",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/#website",
+        },
+        "name": "SexyVoice.ai – Free AI Text-to-Speech & Real-Time Voice Calls",
+        "url": "https://sexyvoice.ai/en",
+      },
+      {
+        "@id": "https://sexyvoice.ai/en/#faq",
+        "@type": "FAQPage",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/en/#webpage",
+        },
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Language support depends on your voice and model. Gemini 3.8 voices support over 130 languages. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below.",
+            },
+            "name": "Which languages can I generate speech in?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! Choose a multilingual voice (e.g., Zephyr) and type the style you want—“British accent,” “pirate voice,” “seductive tone,” etc. The model instantly adapts, and you can refine it with more instructions.",
+            },
+            "name": "Can I make a voice speak with a specific accent or style, like British or pirate🏴‍☠️?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Record or upload at least 10 seconds of your voice, or a voice you have permission to use. Our AI uses the sample to recreate how it sounds. Generate speech right away, or save the voice to use again.",
+            },
+            "name": "How does voice cloning work?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes! Record or upload at least 10 seconds of clean audio. You can generate speech from the recording, or save your voice for later if you have bought credits.",
+            },
+            "name": "Can I clone my own voice?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Saving a voice is free once you have made a top-up or subscription payment. Generating speech in a cloned voice uses more credits than our standard voices, and longer scripts use more. Live calls use credits at the call rate. Your dashboard and API share the same credit balance.",
+            },
+            "name": "How is voice cloning priced?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Voice cloning supports the following 28 languages:
+
+🇸🇦 Arabic,
+🇪🇸 Catalan,
+🇩🇰 Danish,
+🇳🇱 Dutch,
+🇬🇧 English,
+🇫🇮 Finnish,
+🇫🇷 French,
+🇩🇪 German,
+🇬🇷 Greek,
+🇮🇱 Hebrew,
+🇮🇳 Hindi,
+🇭🇺 Hungarian,
+🇮🇹 Italian,
+🇯🇵 Japanese,
+🇰🇷 Korean,
+🇲🇾 Malay,
+🇨🇳 Mandarin Chinese,
+🇳🇴 Norwegian,
+🇵🇱 Polish,
+🇵🇹 Portuguese,
+🇷🇴 Romanian,
+🇷🇺 Russian,
+🇪🇸 Spanish,
+🇰🇪 Swahili,
+🇸🇪 Swedish,
+🇹🇷 Turkish,
+🇺🇦 Ukrainian,
+and 🇻🇳 Vietnamese.",
+            },
+            "name": "Which languages are supported for Voice Cloning?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Paid users can save up to 10 voices and reuse them for voice generation or live calls. Select a saved voice on the Clone page to generate speech, or choose it as the voice when creating a character.",
+            },
+            "name": "Can I save my cloned voice and use it again?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation.",
+            },
+            "name": "How does Live AI Calling work?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose "Clone a voice", or use "Save a voice for calls" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice.",
+            },
+            "name": "Can I call a character in my own voice?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Live calling costs 1000 credits per minute while you're connected.",
+            },
+            "name": "How much does it cost?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Calls cost 1000 credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting.",
+            },
+            "name": "Does calling with a cloned voice cost more?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick "Clean up the reference audio". Leave it off for clean recordings, as it can make them sound worse.",
+            },
+            "name": "How do I get the best clone?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only with their permission. Before cloning, you must confirm that you have the rights to use the voice.",
+            },
+            "name": "Can I clone someone else's voice?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Saved call voices are private to your account. The voice provider retains the reference so you can reuse the voice. You can delete generated audio files in your dashboard. Account deletion also requests removal of saved voices and their previews.",
+            },
+            "name": "Is my voice data secure?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Create audio for videos, podcasts, audiobooks, games, courses, and social posts. Only use voices and content you have the rights to use.",
+            },
+            "name": "What can I use voice generation for?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "New users get 10,000 free credits. How much speech you can generate depends on the voice, model, and text. Buy credits once with a top-up, or get monthly credits with a subscription. Voice generation and calls use the same balance.",
+            },
+            "name": "How many credits do I need?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We combine premium voice quality with simple tools and fair pricing. Whether you’re a creator or a business, you get professional results without contracts or complicated setups. The free credits make it easy to try everything out.",
+            },
+            "name": "Why choose SexyVoice.ai?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Our API lets you add voice generation to apps, websites, and games using the same credits as your dashboard. Voice cloning and live calls are available in the web app. See the documentation.",
+            },
+            "name": "Do you have an API for developers?",
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`login page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+  "/de/reset-password",
+  "/de/signup",
+]
+`;
+
+exports[`login page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+  "/en/reset-password",
+  "/en/signup",
+]
+`;
+
+exports[`login page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [
+    "main-content",
+  ],
+}
+`;
+
+exports[`login page > structured data in de 1`] = `[]`;
+
+exports[`login page > structured data in en 1`] = `[]`;
+
+exports[`privacyPolicy page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`privacyPolicy page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`privacyPolicy page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": true,
+  "footers": 1,
+  "headerInMain": true,
+  "headers": 1,
+  "mainIds": [
+    "",
+  ],
+}
+`;
+
+exports[`privacyPolicy page > structured data in de 1`] = `[]`;
+
+exports[`privacyPolicy page > structured data in en 1`] = `[]`;
+
+exports[`resetPassword page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "login",
+]
+`;
+
+exports[`resetPassword page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "login",
+]
+`;
+
+exports[`resetPassword page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 0,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [],
+}
+`;
+
+exports[`resetPassword page > structured data in de 1`] = `[]`;
+
+exports[`resetPassword page > structured data in en 1`] = `[]`;
+
+exports[`signup page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`signup page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`signup page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [
+    "main-content",
+  ],
+}
+`;
+
+exports[`signup page > structured data in de 1`] = `[]`;
+
+exports[`signup page > structured data in en 1`] = `[]`;
+
+exports[`terms page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`terms page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`terms page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": true,
+  "footers": 1,
+  "headerInMain": true,
+  "headers": 1,
+  "mainIds": [
+    "",
+  ],
+}
+`;
+
+exports[`terms page > structured data in de 1`] = `[]`;
+
+exports[`terms page > structured data in en 1`] = `[]`;
+
+exports[`transcribe page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "https://huggingface.co/docs/transformers.js",
+  "https://openai.com/index/whisper/",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`transcribe page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "https://huggingface.co/docs/transformers.js",
+  "https://openai.com/index/whisper/",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`transcribe page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 2,
+  "mainIds": [
+    "",
+  ],
+}
+`;
+
+exports[`transcribe page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/de/tools/transcribe/#webapp",
+        "@type": "WebApplication",
+        "applicationCategory": "MultimediaApplication",
+        "applicationSubCategory": "Audio Transcription",
+        "browserRequirements": "Requires a modern browser with WebAssembly support",
+        "description": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
+        "featureList": "Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English",
+        "inLanguage": "de",
+        "isAccessibleForFree": true,
+        "name": "Kostenlose Online Audio-Transkription – Sprache zu Text in 99+ Sprachen",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "operatingSystem": "Any",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "screenshot": "https://sexyvoice.ai/posts/free-audio-transcription-tool.webp",
+        "url": "https://sexyvoice.ai/de/tools/transcribe",
+      },
+      {
+        "@id": "https://sexyvoice.ai/de/tools/transcribe/#howto",
+        "@type": "HowTo",
+        "description": "Kostenlose Online-Audio-Transkription – Transkribieren Sie Audio- und Videodateien in Text in über 99 Sprachen mit OpenAI Whisper. 100% privat, läuft direkt in Ihrem Browser. Kein Upload nötig.",
+        "inLanguage": "de",
+        "name": "Kostenlose Online Audio-Transkription – Sprache zu Text in 99+ Sprachen",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Open the transcription tool",
+            "position": 1,
+            "text": "Navigate to the free audio transcription tool on SexyVoice.ai.",
+            "url": "https://sexyvoice.ai/de/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Add your audio",
+            "position": 2,
+            "text": "Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.",
+            "url": "https://sexyvoice.ai/de/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Choose a Whisper model",
+            "position": 3,
+            "text": "Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.",
+            "url": "https://sexyvoice.ai/de/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Select language and task",
+            "position": 4,
+            "text": "Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.",
+            "url": "https://sexyvoice.ai/de/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Transcribe",
+            "position": 5,
+            "text": "Click "Load Model & Transcribe". The model downloads once and is cached for future use.",
+            "url": "https://sexyvoice.ai/de/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Copy your transcript",
+            "position": 6,
+            "text": "Your timestamped transcript appears instantly. Copy it with one click.",
+            "url": "https://sexyvoice.ai/de/tools/transcribe",
+          },
+        ],
+        "totalTime": "PT2M",
+      },
+      {
+        "@id": "https://sexyvoice.ai/de/tools/transcribe/#faq",
+        "@type": "FAQPage",
+        "inLanguage": "de",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja. Kein Konto, keine Kreditkarte, keine Nutzungsbeschränkungen — niemals. Wir haben es als kostenloses öffentliches Werkzeug entwickelt.",
+            },
+            "name": "Ist dieses Audiotranskriptions-Tool wirklich kostenlos?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nein. Die Transkription läuft vollständig in Ihrem Browser über WebAssembly. Ihre Audiodaten verlassen Ihr Gerät nicht.",
+            },
+            "name": "Wird mein Audio auf einen Server hochgeladen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Die mehrsprachigen Whisper-Modelle unterstützen 32 Sprachen: Arabisch, Bengalisch, Chinesisch, Deutsch, Dänisch, Englisch, Finnisch, Französisch, Griechisch, Hebräisch, Hindi, Indonesisch, Italienisch, Japanisch, Koreanisch, Malaiisch, Niederländisch, Norwegisch, Polnisch, Portugiesisch, Rumänisch, Russisch, Schwedisch, Spanisch, Tamil, Telugu, Thailändisch, Tschechisch, Türkisch, Ukrainisch, Ungarisch und Vietnamesisch",
+            },
+            "name": "Welche Sprachen werden unterstützt?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "MP3, WAV, M4A, OGG, FLAC und WebM — alles, was Ihr Browser dekodieren kann. Videodateien funktionieren ebenfalls.",
+            },
+            "name": "Welche Audioformate werden unterstützt?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Das Tool verwendet OpenAI Whisper, eines der genauesten Open-Source-Spracherkennungsmodelle. Wählen Sie Whisper Small (~250 MB) für die beste Genauigkeit oder Whisper Tiny (~40 MB) für Geschwindigkeit.",
+            },
+            "name": "Wie genau ist die Transkription?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nachdem das Modell einmal heruntergeladen wurde, ja. Das Modell wird in Ihrem Browser zwischengespeichert, sodass zukünftige Transkriptionen vollständig offline funktionieren.",
+            },
+            "name": "Funktioniert es ohne Internetverbindung?",
+          },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/de/tools/transcribe",
+            "name": "Audio-Transkription",
+            "position": 2,
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`transcribe page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/en/tools/transcribe/#webapp",
+        "@type": "WebApplication",
+        "applicationCategory": "MultimediaApplication",
+        "applicationSubCategory": "Audio Transcription",
+        "browserRequirements": "Requires a modern browser with WebAssembly support",
+        "description": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
+        "featureList": "Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "name": "Free Audio Transcription – 99+ Languages",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+        },
+        "operatingSystem": "Any",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "screenshot": "https://sexyvoice.ai/posts/free-audio-transcription-tool.webp",
+        "url": "https://sexyvoice.ai/en/tools/transcribe",
+      },
+      {
+        "@id": "https://sexyvoice.ai/en/tools/transcribe/#howto",
+        "@type": "HowTo",
+        "description": "Transcribe audio and video to text in 99+ languages for free. Uses OpenAI Whisper, runs in your browser – no uploads, 100% private and offline.",
+        "inLanguage": "en",
+        "name": "Free Audio Transcription – 99+ Languages",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "Open the transcription tool",
+            "position": 1,
+            "text": "Navigate to the free audio transcription tool on SexyVoice.ai.",
+            "url": "https://sexyvoice.ai/en/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Add your audio",
+            "position": 2,
+            "text": "Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.",
+            "url": "https://sexyvoice.ai/en/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Choose a Whisper model",
+            "position": 3,
+            "text": "Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.",
+            "url": "https://sexyvoice.ai/en/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Select language and task",
+            "position": 4,
+            "text": "Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.",
+            "url": "https://sexyvoice.ai/en/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Transcribe",
+            "position": 5,
+            "text": "Click "Load Model & Transcribe". The model downloads once and is cached for future use.",
+            "url": "https://sexyvoice.ai/en/tools/transcribe",
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Copy your transcript",
+            "position": 6,
+            "text": "Your timestamped transcript appears instantly. Copy it with one click.",
+            "url": "https://sexyvoice.ai/en/tools/transcribe",
+          },
+        ],
+        "totalTime": "PT2M",
+      },
+      {
+        "@id": "https://sexyvoice.ai/en/tools/transcribe/#faq",
+        "@type": "FAQPage",
+        "inLanguage": "en",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. No account, no credit card, no usage limits — ever. We built it as a free public utility.",
+            },
+            "name": "Is this audio transcription tool really free?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. The transcription runs entirely in your browser using WebAssembly. Your audio never leaves your device.",
+            },
+            "name": "Does my audio get uploaded to a server?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The multilingual Whisper models support 32 languages: Arabic, Bengali, Chinese, Czech, Danish, Dutch, English, Finnish, French, German, Greek, Hebrew, Hindi, Hungarian, Indonesian, Italian, Japanese, Korean, Malay, Norwegian, Polish, Portuguese, Romanian, Russian, Spanish, Swedish, Tamil, Telugu, Thai, Turkish, Ukrainian, and Vietnamese.",
+            },
+            "name": "What languages does it support?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "MP3, WAV, M4A, OGG (WhatsApp), FLAC, and WebM — anything your browser can decode. Video files work too.",
+            },
+            "name": "What audio formats are supported?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The tool uses OpenAI Whisper, one of the most accurate open-source speech recognition models. Choose Whisper Small (~250 MB) for the best accuracy, or Whisper Tiny (~40 MB) for speed.",
+            },
+            "name": "How accurate is the transcription?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "After the model downloads once, yes. The model is cached in your browser, so future transcriptions work fully offline.",
+            },
+            "name": "Does it work without an internet connection?",
+          },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en",
+            "name": "Home",
+            "position": 1,
+          },
+          {
+            "@type": "ListItem",
+            "item": "https://sexyvoice.ai/en/tools/transcribe",
+            "name": "Audio Transcription",
+            "position": 2,
+          },
+        ],
+      },
+    ],
+  },
+]
+`;
+
+exports[`voiceCall page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de/signup",
+  "/de/voice-cloning",
+  "/de/signup",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`voiceCall page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en/signup",
+  "/en/voice-cloning",
+  "/en/signup",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`voiceCall page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [
+    "main-content",
+  ],
+}
+`;
+
+exports[`voiceCall page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://x.com/sexyvoiceai",
+          "https://instagram.com/sexyvoice_ai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/#website",
+        "@type": "WebSite",
+        "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+        "inLanguage": "de",
+        "name": "SexyVoice.ai",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/de/voice-call/#webpage",
+        "@type": "WebPage",
+        "about": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "description": "Führen Sie Live-KI-Telefonate mit Ihren Lieblingsstimmen. Sprechen Sie in Echtzeit mit KI-Charakteren – natürliche Gespräche dank der Sprachtechnologie von SexyVoice.ai.",
+        "inLanguage": "de",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/#website",
+        },
+        "name": "KI-Sprachanrufe – Sprechen Sie live mit KI-Charakteren",
+        "url": "https://sexyvoice.ai/de/voice-call",
+      },
+    ],
+  },
+]
+`;
+
+exports[`voiceCall page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://x.com/sexyvoiceai",
+          "https://instagram.com/sexyvoice_ai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/#website",
+        "@type": "WebSite",
+        "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
+        "inLanguage": "en",
+        "name": "SexyVoice.ai",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/en/voice-call/#webpage",
+        "@type": "WebPage",
+        "about": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "description": "Have live AI phone calls with your favorite voices. Talk in real time with AI characters – natural conversations powered by SexyVoice.ai's voice technology.",
+        "inLanguage": "en",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/#website",
+        },
+        "name": "AI Voice Calling – Talk to Live AI Characters",
+        "url": "https://sexyvoice.ai/en/voice-call",
+      },
+    ],
+  },
+]
+`;
+
+exports[`voiceCloning page > links in de 1`] = `
+[
+  "/de",
+  "/de/login",
+  "/de/signup",
+  "/de/login",
+  "/de/signup",
+  "/de/dashboard/clone?demo=heike&take=natural",
+  "/de/voice-call",
+  "/de/signup",
+  "/de",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/de/voice-call",
+  "/de/voice-cloning",
+  "/de/tools/audio-converter",
+  "/de/tools/transcribe",
+  "/de/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/de/privacy-policy",
+  "/de/terms",
+]
+`;
+
+exports[`voiceCloning page > links in en 1`] = `
+[
+  "/en",
+  "/en/login",
+  "/en/signup",
+  "/en/login",
+  "/en/signup",
+  "/en/dashboard/clone?demo=kat&take=natural",
+  "/en/voice-call",
+  "/en/signup",
+  "/en",
+  "https://x.com/sexyvoiceai",
+  "https://instagram.com/sexyvoice_ai",
+  "/en/voice-call",
+  "/en/voice-cloning",
+  "/en/tools/audio-converter",
+  "/en/tools/transcribe",
+  "/en/tools/audio-joiner",
+  "https://status.sexyvoice.ai",
+  "/en/privacy-policy",
+  "/en/terms",
+]
+`;
+
+exports[`voiceCloning page > renders one header and footer around the main content 1`] = `
+{
+  "footerInMain": false,
+  "footers": 1,
+  "headerInMain": false,
+  "headers": 1,
+  "mainIds": [
+    "main-content",
+  ],
+}
+`;
+
+exports[`voiceCloning page > structured data in de 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://x.com/sexyvoiceai",
+          "https://instagram.com/sexyvoice_ai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/#website",
+        "@type": "WebSite",
+        "description": "Generieren Sie ausdrucksstarke KI-Sprache mit Emotionen in 24+ Sprachen oder sprechen Sie in Echtzeit mit KI-Charakteren. Kostenlose Text-zu-Sprache, Stimmenklonung & Live-Sprachanrufe. Starten Sie mit kostenlosen Credits – keine Kreditkarte erforderlich.",
+        "inLanguage": "de",
+        "name": "SexyVoice.ai",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/de/voice-cloning/#webpage",
+        "@type": "WebPage",
+        "about": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "description": "Klone eine Stimme aus 10 Sekunden Audio und höre sie natürlich in 28 Sprachen sprechen.",
+        "inLanguage": "de",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/#website",
+        },
+        "name": "KI-Stimmklonen",
+        "url": "https://sexyvoice.ai/de/voice-cloning",
+      },
+    ],
+  },
+]
+`;
+
+exports[`voiceCloning page > structured data in en 1`] = `
+[
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@id": "https://sexyvoice.ai/#organization",
+        "@type": "Organization",
+        "logo": "https://sexyvoice.ai/web-app-manifest-192x192.png",
+        "name": "SexyVoice.ai",
+        "sameAs": [
+          "https://x.com/sexyvoiceai",
+          "https://instagram.com/sexyvoice_ai",
+        ],
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/#website",
+        "@type": "WebSite",
+        "description": "Generate expressive AI speech with emotions in 24+ languages, or talk to AI characters in real time. Free AI voice generator, voice cloning & live voice calls. Start with free credits – no card required.",
+        "inLanguage": "en",
+        "name": "SexyVoice.ai",
+        "publisher": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "url": "https://sexyvoice.ai",
+      },
+      {
+        "@id": "https://sexyvoice.ai/en/voice-cloning/#webpage",
+        "@type": "WebPage",
+        "about": {
+          "@id": "https://sexyvoice.ai/#organization",
+        },
+        "description": "Clone a voice from 10 seconds of audio and hear it speak naturally in 28 languages.",
+        "inLanguage": "en",
+        "isPartOf": {
+          "@id": "https://sexyvoice.ai/#website",
+        },
+        "name": "AI Voice Cloning",
+        "url": "https://sexyvoice.ai/en/voice-cloning",
+      },
+    ],
+  },
+]
+`;

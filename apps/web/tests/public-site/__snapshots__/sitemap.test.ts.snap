@@ -1,0 +1,658 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sitemap > lists the public pages and posts of every locale 1`] = `
+[
+  {
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de",
+        "en": "https://sexyvoice.ai/en",
+        "es": "https://sexyvoice.ai/es",
+        "fr": "https://sexyvoice.ai/fr",
+        "it": "https://sexyvoice.ai/it",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 1,
+    "url": "https://sexyvoice.ai/da",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/da/[policySlug]",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/da/blog",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/da/cli/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/da/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/da/reset-password",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/da/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/tools/audio-converter",
+        "en": "https://sexyvoice.ai/en/tools/audio-converter",
+        "es": "https://sexyvoice.ai/es/tools/audio-converter",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-converter",
+        "it": "https://sexyvoice.ai/it/tools/audio-converter",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/da/tools/audio-converter",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/tools/audio-joiner",
+        "en": "https://sexyvoice.ai/en/tools/audio-joiner",
+        "es": "https://sexyvoice.ai/es/tools/audio-joiner",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-joiner",
+        "it": "https://sexyvoice.ai/it/tools/audio-joiner",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/da/tools/audio-joiner",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/tools/transcribe",
+        "en": "https://sexyvoice.ai/en/tools/transcribe",
+        "es": "https://sexyvoice.ai/es/tools/transcribe",
+        "fr": "https://sexyvoice.ai/fr/tools/transcribe",
+        "it": "https://sexyvoice.ai/it/tools/transcribe",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/da/tools/transcribe",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/da/voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/da/voice-cloning",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/da/wrapped",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da",
+        "en": "https://sexyvoice.ai/en",
+        "es": "https://sexyvoice.ai/es",
+        "fr": "https://sexyvoice.ai/fr",
+        "it": "https://sexyvoice.ai/it",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 1,
+    "url": "https://sexyvoice.ai/de",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/de/[policySlug]",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/de/blog",
+  },
+  {
+    "lastModified": "2026-01-15T00:00:00.000Z",
+    "priority": 0.7,
+    "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/de/cli/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/de/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/de/reset-password",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/de/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-converter",
+        "en": "https://sexyvoice.ai/en/tools/audio-converter",
+        "es": "https://sexyvoice.ai/es/tools/audio-converter",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-converter",
+        "it": "https://sexyvoice.ai/it/tools/audio-converter",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/de/tools/audio-converter",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-joiner",
+        "en": "https://sexyvoice.ai/en/tools/audio-joiner",
+        "es": "https://sexyvoice.ai/es/tools/audio-joiner",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-joiner",
+        "it": "https://sexyvoice.ai/it/tools/audio-joiner",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/de/tools/audio-joiner",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/transcribe",
+        "en": "https://sexyvoice.ai/en/tools/transcribe",
+        "es": "https://sexyvoice.ai/es/tools/transcribe",
+        "fr": "https://sexyvoice.ai/fr/tools/transcribe",
+        "it": "https://sexyvoice.ai/it/tools/transcribe",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/de/tools/transcribe",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/de/voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/de/voice-cloning",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/de/wrapped",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da",
+        "de": "https://sexyvoice.ai/de",
+        "es": "https://sexyvoice.ai/es",
+        "fr": "https://sexyvoice.ai/fr",
+        "it": "https://sexyvoice.ai/it",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 1,
+    "url": "https://sexyvoice.ai/en",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/en/[policySlug]",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/en/blog",
+  },
+  {
+    "alternates": {
+      "languages": {},
+    },
+    "lastModified": "2026-03-03T00:00:00.000Z",
+    "priority": 0.7,
+    "url": "https://sexyvoice.ai/en/blog/free-audio-joiner-tool",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "es": "https://sexyvoice.ai/es/blog/hello-from-sexyvoice",
+      },
+    },
+    "lastModified": "2025-04-28T00:00:00.000Z",
+    "priority": 0.7,
+    "url": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "de": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
+      },
+    },
+    "lastModified": "2026-01-15T00:00:00.000Z",
+    "priority": 0.7,
+    "url": "https://sexyvoice.ai/en/blog/realtime-ai-voice-call",
+  },
+  {
+    "alternates": {
+      "languages": {},
+    },
+    "lastModified": "2025-06-27T00:00:00.000Z",
+    "priority": 0.7,
+    "url": "https://sexyvoice.ai/en/blog/voice-ai-glossary",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/en/cli/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/en/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/en/reset-password",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/en/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-converter",
+        "de": "https://sexyvoice.ai/de/tools/audio-converter",
+        "es": "https://sexyvoice.ai/es/tools/audio-converter",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-converter",
+        "it": "https://sexyvoice.ai/it/tools/audio-converter",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/en/tools/audio-converter",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-joiner",
+        "de": "https://sexyvoice.ai/de/tools/audio-joiner",
+        "es": "https://sexyvoice.ai/es/tools/audio-joiner",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-joiner",
+        "it": "https://sexyvoice.ai/it/tools/audio-joiner",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/en/tools/audio-joiner",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/transcribe",
+        "de": "https://sexyvoice.ai/de/tools/transcribe",
+        "es": "https://sexyvoice.ai/es/tools/transcribe",
+        "fr": "https://sexyvoice.ai/fr/tools/transcribe",
+        "it": "https://sexyvoice.ai/it/tools/transcribe",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/en/tools/transcribe",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/en/voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/en/voice-cloning",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/en/wrapped",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da",
+        "de": "https://sexyvoice.ai/de",
+        "en": "https://sexyvoice.ai/en",
+        "fr": "https://sexyvoice.ai/fr",
+        "it": "https://sexyvoice.ai/it",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 1,
+    "url": "https://sexyvoice.ai/es",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/es/[policySlug]",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/es/blog",
+  },
+  {
+    "lastModified": "2025-04-28T00:00:00.000Z",
+    "priority": 0.7,
+    "url": "https://sexyvoice.ai/es/blog/hello-from-sexyvoice",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/es/cli/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/es/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/es/reset-password",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/es/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-converter",
+        "de": "https://sexyvoice.ai/de/tools/audio-converter",
+        "en": "https://sexyvoice.ai/en/tools/audio-converter",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-converter",
+        "it": "https://sexyvoice.ai/it/tools/audio-converter",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/es/tools/audio-converter",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-joiner",
+        "de": "https://sexyvoice.ai/de/tools/audio-joiner",
+        "en": "https://sexyvoice.ai/en/tools/audio-joiner",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-joiner",
+        "it": "https://sexyvoice.ai/it/tools/audio-joiner",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/es/tools/audio-joiner",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/transcribe",
+        "de": "https://sexyvoice.ai/de/tools/transcribe",
+        "en": "https://sexyvoice.ai/en/tools/transcribe",
+        "fr": "https://sexyvoice.ai/fr/tools/transcribe",
+        "it": "https://sexyvoice.ai/it/tools/transcribe",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/es/tools/transcribe",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/es/voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/es/voice-cloning",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/es/wrapped",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da",
+        "de": "https://sexyvoice.ai/de",
+        "en": "https://sexyvoice.ai/en",
+        "es": "https://sexyvoice.ai/es",
+        "it": "https://sexyvoice.ai/it",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 1,
+    "url": "https://sexyvoice.ai/fr",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/fr/[policySlug]",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/fr/blog",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/fr/cli/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/fr/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/fr/reset-password",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/fr/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-converter",
+        "de": "https://sexyvoice.ai/de/tools/audio-converter",
+        "en": "https://sexyvoice.ai/en/tools/audio-converter",
+        "es": "https://sexyvoice.ai/es/tools/audio-converter",
+        "it": "https://sexyvoice.ai/it/tools/audio-converter",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/fr/tools/audio-converter",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-joiner",
+        "de": "https://sexyvoice.ai/de/tools/audio-joiner",
+        "en": "https://sexyvoice.ai/en/tools/audio-joiner",
+        "es": "https://sexyvoice.ai/es/tools/audio-joiner",
+        "it": "https://sexyvoice.ai/it/tools/audio-joiner",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/fr/tools/audio-joiner",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/transcribe",
+        "de": "https://sexyvoice.ai/de/tools/transcribe",
+        "en": "https://sexyvoice.ai/en/tools/transcribe",
+        "es": "https://sexyvoice.ai/es/tools/transcribe",
+        "it": "https://sexyvoice.ai/it/tools/transcribe",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/fr/tools/transcribe",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/fr/voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/fr/voice-cloning",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/fr/wrapped",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da",
+        "de": "https://sexyvoice.ai/de",
+        "en": "https://sexyvoice.ai/en",
+        "es": "https://sexyvoice.ai/es",
+        "fr": "https://sexyvoice.ai/fr",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 1,
+    "url": "https://sexyvoice.ai/it",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/it/[policySlug]",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/it/blog",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/it/cli/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/it/login",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/it/reset-password",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.4,
+    "url": "https://sexyvoice.ai/it/signup",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-converter",
+        "de": "https://sexyvoice.ai/de/tools/audio-converter",
+        "en": "https://sexyvoice.ai/en/tools/audio-converter",
+        "es": "https://sexyvoice.ai/es/tools/audio-converter",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-converter",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/it/tools/audio-converter",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/audio-joiner",
+        "de": "https://sexyvoice.ai/de/tools/audio-joiner",
+        "en": "https://sexyvoice.ai/en/tools/audio-joiner",
+        "es": "https://sexyvoice.ai/es/tools/audio-joiner",
+        "fr": "https://sexyvoice.ai/fr/tools/audio-joiner",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/it/tools/audio-joiner",
+  },
+  {
+    "alternates": {
+      "languages": {
+        "da": "https://sexyvoice.ai/da/tools/transcribe",
+        "de": "https://sexyvoice.ai/de/tools/transcribe",
+        "en": "https://sexyvoice.ai/en/tools/transcribe",
+        "es": "https://sexyvoice.ai/es/tools/transcribe",
+        "fr": "https://sexyvoice.ai/fr/tools/transcribe",
+      },
+    },
+    "lastModified": "<page file mtime>",
+    "priority": 0.8,
+    "url": "https://sexyvoice.ai/it/tools/transcribe",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/it/voice-call",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/it/voice-cloning",
+  },
+  {
+    "lastModified": "<page file mtime>",
+    "priority": 0.5,
+    "url": "https://sexyvoice.ai/it/wrapped",
+  },
+]
+`;
