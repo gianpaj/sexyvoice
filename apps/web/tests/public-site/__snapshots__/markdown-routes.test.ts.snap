@@ -240,18 +240,6 @@ Perfekt til indholdsskabere og historiefortællere.
 
 ## Features
 
-### Naturlige stemmer
-
-Integrer naturlige følelser — tilføj latter, suk, hoste og mere — for at skabe autentiske, fængslende lydoplevelser.
-
-### Flersproget support
-
-Vælg mellem 20+ unikke stemmer på flere sprog, perfekt til dine specifikke behov og præferencer.
-
-### Sikkert & privat
-
-Dine stemmedata er beskyttet med sikkerhed på virksomhedsniveau. Fuld kontrol over dit privatliv, profil og historik.
-
 ### Live stemmeopkald
 
 Før samtaler i realtid med AI-karakterer, med vores stemmer eller en, du kloner.
@@ -260,6 +248,18 @@ Før samtaler i realtid med AI-karakterer, med vores stemmer eller en, du kloner
 
 Prøv den live klon-demo: Hør en stemme, der er genskabt ud fra 10 sekunders lyd og taler naturligt på flere sprog.
 
+### Sikkert & privat
+
+Dine stemmedata er beskyttet med sikkerhed på virksomhedsniveau. Fuld kontrol over dit privatliv, profil og historik.
+
+### Naturlige stemmer
+
+Integrer naturlige følelser — tilføj latter, suk, hoste og mere — for at skabe autentiske, fængslende lydoplevelser.
+
+### Flersproget support
+
+Vælg mellem 20+ unikke stemmer på flere sprog, perfekt til dine specifikke behov og præferencer.
+
 ## Prøv vores stemmeprøver
 
 Lyt til stemmeprøver skabt med vores avancerede AI-teknologi
@@ -267,6 +267,32 @@ Lyt til stemmeprøver skabt med vores avancerede AI-teknologi
 ## Ofte stillede spørgsmål
 
 Alt hvad du behøver at vide om SexyVoice.ai
+
+### Live AI-opkald
+
+#### Hvordan fungerer Live AI-opkald?
+
+Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale.
+
+#### Kan jeg ringe til en karakter med min egen stemme?
+
+Ja. Et engangskøb af kreditter eller en abonnementsbetaling låser op for gemte stemmer. Opret en karakter og vælg "Klon en stemme", eller brug "Gem en stemme til opkald" på Klon-siden. Optag eller upload mindst 10 sekunder af din stemme, og vælg den som karakterens stemme.
+
+#### Hvor meget koster det?
+
+Live-opkald koster 1000 kreditter pr. minut, mens du er forbundet.
+
+#### Koster det mere at ringe med en klonet stemme?
+
+Nej. Opkald koster 1000 kreditter pr. minut, uanset hvilken stemme du vælger, og det er gratis at gemme en stemme. Afregningen starter, når karakteren er klar til at tale, ikke mens der forbindes.
+
+#### Hvordan får jeg den bedste klon?
+
+Optag 10–30 sekunder af én person, der taler naturligt i et stille rum, uden musik eller stemmer i baggrunden. Længere klip forkortes til 30 sekunder. Hvis rummet var støjende, så gem stemmen på Klon-siden og sæt flueben ved "Rens referenceaudioen". Lad den være slået fra ved rene optagelser, da den kan få dem til at lyde dårligere.
+
+#### Kan jeg klone en andens stemme?
+
+Kun med deres tilladelse. Før du kloner, skal du bekræfte, at du har rettighederne til at bruge stemmen.
 
 ### Stemmegenerering og stil
 
@@ -329,32 +355,6 @@ og 🇻🇳 Vietnamesisk.
 
 Ja. Betalende brugere kan gemme op til 10 stemmer og genbruge dem til stemmegenerering eller liveopkald. Vælg en gemt stemme på Klon-siden for at generere tale, eller vælg den som stemme, når du opretter en karakter.
 
-### Live AI-opkald
-
-#### Hvordan fungerer Live AI-opkald?
-
-Tryk på opkaldsknappen, og du bliver straks forbundet til et privat AI-stemmeopkald. Du kan tale naturligt, afbryde, skifte emne eller bare lytte – dit opkald flyder som en rigtig samtale.
-
-#### Kan jeg ringe til en karakter med min egen stemme?
-
-Ja. Et engangskøb af kreditter eller en abonnementsbetaling låser op for gemte stemmer. Opret en karakter og vælg "Klon en stemme", eller brug "Gem en stemme til opkald" på Klon-siden. Optag eller upload mindst 10 sekunder af din stemme, og vælg den som karakterens stemme.
-
-#### Hvor meget koster det?
-
-Live-opkald koster {count} kreditter pr. minut, mens du er forbundet.
-
-#### Koster det mere at ringe med en klonet stemme?
-
-Nej. Opkald koster {count} kreditter pr. minut, uanset hvilken stemme du vælger, og det er gratis at gemme en stemme. Afregningen starter, når karakteren er klar til at tale, ikke mens der forbindes.
-
-#### Hvordan får jeg den bedste klon?
-
-Optag 10–30 sekunder af én person, der taler naturligt i et stille rum, uden musik eller stemmer i baggrunden. Længere klip forkortes til 30 sekunder. Hvis rummet var støjende, så gem stemmen på Klon-siden og sæt flueben ved "Rens referenceaudioen". Lad den være slået fra ved rene optagelser, da den kan få dem til at lyde dårligere.
-
-#### Kan jeg klone en andens stemme?
-
-Kun med deres tilladelse. Før du kloner, skal du bekræfte, at du har rettighederne til at bruge stemmen.
-
 ### Brug, sikkerhed & politikker
 
 #### Er mine stemmedata sikre?
@@ -379,7 +379,7 @@ Vi kombinerer premium stemmekvalitet med enkle værktøjer og fair priser. Uanse
 
 #### Har I en API til udviklere?
 
-Ja. Vores API giver dig stemmegenerering i apps, hjemmesider og spil med de samme kreditter som dit dashboard. Stemmekloning og liveopkald findes i webappen. Se {link}.
+Ja. Vores API giver dig stemmegenerering i apps, hjemmesider og spil med de samme kreditter som dit dashboard. Stemmekloning og liveopkald findes i webappen. Se [dokumentationen](https://docs.sexyvoice.ai).
 
 ## Klar til at finde din stemme?
 
@@ -395,7 +395,7 @@ Canonical URL: https://sexyvoice.ai/da
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1637",
+    "x-markdown-tokens": "1645",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -417,18 +417,6 @@ Perfekt für Content-Ersteller und Geschichtenerzähler.
 
 ## Features
 
-### Natürliche Stimmen
-
-Integrieren Sie natürliche Emotionen – fügen Sie Lachen, Seufzer, Husten und mehr hinzu – um authentische, fesselnde Audioerlebnisse zu schaffen.
-
-### Mehrsprachige Unterstützung
-
-Wählen Sie aus über 20 einzigartigen Stimmen in mehreren Sprachen – perfekt für Ihre speziellen Bedürfnisse und Vorlieben.
-
-### Sicher & Privat
-
-Ihre Stimm-Daten sind mit unternehmenstauglicher Sicherheit geschützt. Volle Kontrolle über Datenschutzeinstellungen und Nutzung.
-
 ### Live-Sprachanrufe
 
 Führen Sie Gespräche in Echtzeit mit KI-Charakteren, mit unseren Stimmen oder einer, die Sie klonen.
@@ -437,6 +425,18 @@ Führen Sie Gespräche in Echtzeit mit KI-Charakteren, mit unseren Stimmen oder 
 
 Teste die Live-Klon-Demo: Höre eine Stimme, die aus 10 Sekunden Audio nachgebildet wird und in mehreren Sprachen natürlich spricht.
 
+### Sicher & Privat
+
+Ihre Stimm-Daten sind mit unternehmenstauglicher Sicherheit geschützt. Volle Kontrolle über Datenschutzeinstellungen und Nutzung.
+
+### Natürliche Stimmen
+
+Integrieren Sie natürliche Emotionen – fügen Sie Lachen, Seufzer, Husten und mehr hinzu – um authentische, fesselnde Audioerlebnisse zu schaffen.
+
+### Mehrsprachige Unterstützung
+
+Wählen Sie aus über 20 einzigartigen Stimmen in mehreren Sprachen – perfekt für Ihre speziellen Bedürfnisse und Vorlieben.
+
 ## Probieren Sie unsere Sprachmuster
 
 Hören Sie sich Sprachproben an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden
@@ -444,6 +444,32 @@ Hören Sie sich Sprachproben an, die mit unserer fortschrittlichen KI-Technologi
 ## Häufig gestellte Fragen
 
 Alles, was Sie über SexyVoice.ai wissen müssen
+
+### Live-KI-Anrufe
+
+#### Wie funktionieren Live-KI-Anrufe?
+
+Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog.
+
+#### Kann ich einen Charakter mit meiner eigenen Stimme anrufen?
+
+Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie "Stimme klonen", oder nutzen Sie "Stimme für Anrufe speichern" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters.
+
+#### Was kostet das?
+
+Live-Anrufe kosten 1000 Credits pro Minute, solange Sie verbunden sind.
+
+#### Kostet ein Anruf mit einer geklonten Stimme mehr?
+
+Nein. Anrufe kosten 1000 Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens.
+
+#### Wie bekomme ich den besten Klon?
+
+Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie "Referenz-Audio bereinigen". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann.
+
+#### Kann ich die Stimme einer anderen Person klonen?
+
+Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen.
 
 ### Stimmgenerierung und Stil
 
@@ -506,32 +532,6 @@ und 🇻🇳 Vietnamesisch.
 
 Ja. Zahlende Nutzer können bis zu 10 Stimmen speichern und für die Stimmgenerierung oder Live-Anrufe wiederverwenden. Wählen Sie eine gespeicherte Stimme auf der Klonen-Seite, um Sprache zu erzeugen, oder weisen Sie sie beim Erstellen einem Charakter zu.
 
-### Live-KI-Anrufe
-
-#### Wie funktionieren Live-KI-Anrufe?
-
-Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog.
-
-#### Kann ich einen Charakter mit meiner eigenen Stimme anrufen?
-
-Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie "Stimme klonen", oder nutzen Sie "Stimme für Anrufe speichern" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters.
-
-#### Was kostet das?
-
-Live-Anrufe kosten {count} Credits pro Minute, solange Sie verbunden sind.
-
-#### Kostet ein Anruf mit einer geklonten Stimme mehr?
-
-Nein. Anrufe kosten {count} Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens.
-
-#### Wie bekomme ich den besten Klon?
-
-Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie "Referenz-Audio bereinigen". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann.
-
-#### Kann ich die Stimme einer anderen Person klonen?
-
-Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen.
-
 ### Nutzung, Sicherheit & Richtlinien
 
 #### Sind meine Stimm-Daten sicher?
@@ -556,7 +556,7 @@ Wir kombinieren Premium-Sprachqualität mit einfachen Werkzeugen und fairen Prei
 
 #### Haben Sie eine API für Entwickler?
 
-Ja. Unsere API ermöglicht Stimmgenerierung in Apps, Websites und Spielen mit denselben Credits wie Ihr Dashboard. Stimmklonen und Live-Anrufe sind in der Web-App verfügbar. Lesen Sie die {link}.
+Ja. Unsere API ermöglicht Stimmgenerierung in Apps, Websites und Spielen mit denselben Credits wie Ihr Dashboard. Stimmklonen und Live-Anrufe sind in der Web-App verfügbar. Lesen Sie die [Dokumentation](https://docs.sexyvoice.ai).
 
 ## Bereit, Ihre Stimme zu finden?
 
@@ -572,7 +572,7 @@ Canonical URL: https://sexyvoice.ai/de
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1902",
+    "x-markdown-tokens": "1910",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -594,18 +594,6 @@ Perfect for content creators and storytellers.
 
 ## Features
 
-### Natural Voices
-
-Integrate natural emotions — add laughter, sighs, coughs, and more — to create authentic, captivating audio experiences.
-
-### Multi-Language Support
-
-Pick from 20+ unique voices in multiple languages, perfect for your specific needs and preferences.
-
-### Secure & Private
-
-Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history.
-
 ### Live Voice Calls
 
 Have real-time conversations with AI characters, in our voices or one you clone.
@@ -614,6 +602,18 @@ Have real-time conversations with AI characters, in our voices or one you clone.
 
 Try the live cloning demo: hear a voice recreated from 10 seconds of audio, speaking naturally in multiple languages.
 
+### Secure & Private
+
+Your voice data is protected with enterprise-grade security. Full control over your privacy, profile and history.
+
+### Natural Voices
+
+Integrate natural emotions — add laughter, sighs, coughs, and more — to create authentic, captivating audio experiences.
+
+### Multi-Language Support
+
+Pick from 20+ unique voices in multiple languages, perfect for your specific needs and preferences.
+
 ## Try Our Voice Samples
 
 Listen to voice samples created with our advanced AI technology
@@ -621,6 +621,32 @@ Listen to voice samples created with our advanced AI technology
 ## Frequently Asked Questions
 
 Everything you need to know about SexyVoice.ai
+
+### Live AI Calling
+
+#### How does Live AI Calling work?
+
+Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation.
+
+#### Can I call a character in my own voice?
+
+Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose "Clone a voice", or use "Save a voice for calls" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice.
+
+#### How much does it cost?
+
+Live calling costs 1000 credits per minute while you're connected.
+
+#### Does calling with a cloned voice cost more?
+
+No. Calls cost 1000 credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting.
+
+#### How do I get the best clone?
+
+Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick "Clean up the reference audio". Leave it off for clean recordings, as it can make them sound worse.
+
+#### Can I clone someone else's voice?
+
+Only with their permission. Before cloning, you must confirm that you have the rights to use the voice.
 
 ### Voice generation & styles
 
@@ -683,32 +709,6 @@ and 🇻🇳 Vietnamese.
 
 Yes. Paid users can save up to 10 voices and reuse them for voice generation or live calls. Select a saved voice on the Clone page to generate speech, or choose it as the voice when creating a character.
 
-### Live AI Calling
-
-#### How does Live AI Calling work?
-
-Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation.
-
-#### Can I call a character in my own voice?
-
-Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose "Clone a voice", or use "Save a voice for calls" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice.
-
-#### How much does it cost?
-
-Live calling costs {count} credits per minute while you're connected.
-
-#### Does calling with a cloned voice cost more?
-
-No. Calls cost {count} credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting.
-
-#### How do I get the best clone?
-
-Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick "Clean up the reference audio". Leave it off for clean recordings, as it can make them sound worse.
-
-#### Can I clone someone else's voice?
-
-Only with their permission. Before cloning, you must confirm that you have the rights to use the voice.
-
 ### Usage, safety & policies
 
 #### Is my voice data secure?
@@ -733,7 +733,7 @@ We combine premium voice quality with simple tools and fair pricing. Whether you
 
 #### Do you have an API for developers?
 
-Yes. Our API lets you add voice generation to apps, websites, and games using the same credits as your dashboard. Voice cloning and live calls are available in the web app. See the {link}.
+Yes. Our API lets you add voice generation to apps, websites, and games using the same credits as your dashboard. Voice cloning and live calls are available in the web app. See the [documentation](https://docs.sexyvoice.ai).
 
 ## Ready to find your voice?
 
@@ -749,7 +749,7 @@ Canonical URL: https://sexyvoice.ai/en
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1595",
+    "x-markdown-tokens": "1603",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -771,18 +771,6 @@ Perfecto para creadores de contenido y narradores.
 
 ## Features
 
-### Voz Naturales
-
-Integra emociones naturales—añade risas, suspiros, toses y más—para crear experiencias de audio auténticas y cautivadoras.
-
-### Soporte Multilingüe
-
-Elige entre más de 20 voces únicas en varios idiomas, ideal para tus necesidades y preferencias.
-
-### Seguro y Privado
-
-Tus datos de voz están protegidos con seguridad de nivel empresarial. Control total sobre la privacidad y el uso.
-
 ### Llamadas de Voz en Vivo
 
 Mantén conversaciones en tiempo real con personajes de IA, con nuestras voces o una que clones.
@@ -791,6 +779,18 @@ Mantén conversaciones en tiempo real con personajes de IA, con nuestras voces o
 
 Prueba la demo de clonación en directo: escucha una voz recreada a partir de 10 segundos de audio, hablando con naturalidad en varios idiomas.
 
+### Seguro y Privado
+
+Tus datos de voz están protegidos con seguridad de nivel empresarial. Control total sobre la privacidad y el uso.
+
+### Voz Naturales
+
+Integra emociones naturales—añade risas, suspiros, toses y más—para crear experiencias de audio auténticas y cautivadoras.
+
+### Soporte Multilingüe
+
+Elige entre más de 20 voces únicas en varios idiomas, ideal para tus necesidades y preferencias.
+
 ## Pruebe nuestras muestras de voz
 
 Escucha muestras de voz creadas con nuestra avanzada tecnología de IA
@@ -798,6 +798,32 @@ Escucha muestras de voz creadas con nuestra avanzada tecnología de IA
 ## Preguntas Frecuentes
 
 Todo lo que necesitas saber sobre SexyVoice.ai
+
+### Llamadas de IA en vivo
+
+#### ¿Cómo funcionan las llamadas de IA en vivo?
+
+Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real.
+
+#### ¿Puedo llamar a un personaje con mi propia voz?
+
+Sí. Una recarga o un pago de suscripción desbloquea las voces guardadas. Crea un personaje y elige "Clonar una voz", o usa "Guardar una voz para llamadas" en la página Clonar. Graba o sube al menos 10 segundos de tu voz y elígela como voz del personaje.
+
+#### ¿Cuánto cuesta?
+
+Las llamadas en vivo cuestan 1000 créditos por minuto mientras estás conectado.
+
+#### ¿Cuesta más llamar con una voz clonada?
+
+No. Las llamadas cuestan 1000 créditos por minuto sea cual sea la voz que elijas, y guardar una voz es gratis. La facturación empieza cuando el personaje está listo para hablar, no mientras se conecta.
+
+#### ¿Cómo consigo el mejor clon?
+
+Graba de 10 a 30 segundos de una sola persona hablando con naturalidad en una habitación silenciosa, sin música ni voces de fondo. Los clips más largos se recortan a 30 segundos. Si había ruido, guarda la voz en la página Clonar y marca "Limpiar el audio de referencia". Déjalo desactivado en grabaciones limpias, porque puede empeorar el sonido.
+
+#### ¿Puedo clonar la voz de otra persona?
+
+Solo con su permiso. Antes de clonar, debes confirmar que tienes los derechos para usar esa voz.
 
 ### Generación de voz y estilos
 
@@ -860,32 +886,6 @@ y 🇻🇳 Vietnamita.
 
 Sí. Los usuarios de pago pueden guardar hasta 10 voces y reutilizarlas para generar voz o hacer llamadas en directo. Selecciona una voz guardada en la página Clonar para generar audio, o elígela como voz al crear un personaje.
 
-### Llamadas de IA en vivo
-
-#### ¿Cómo funcionan las llamadas de IA en vivo?
-
-Toca el botón de llamada y te conectarás al instante a una llamada privada con IA. Puedes hablar con naturalidad, interrumpir, cambiar de tema o solo escuchar: la llamada fluye como una conversación real.
-
-#### ¿Puedo llamar a un personaje con mi propia voz?
-
-Sí. Una recarga o un pago de suscripción desbloquea las voces guardadas. Crea un personaje y elige "Clonar una voz", o usa "Guardar una voz para llamadas" en la página Clonar. Graba o sube al menos 10 segundos de tu voz y elígela como voz del personaje.
-
-#### ¿Cuánto cuesta?
-
-Las llamadas en vivo cuestan {count} créditos por minuto mientras estás conectado.
-
-#### ¿Cuesta más llamar con una voz clonada?
-
-No. Las llamadas cuestan {count} créditos por minuto sea cual sea la voz que elijas, y guardar una voz es gratis. La facturación empieza cuando el personaje está listo para hablar, no mientras se conecta.
-
-#### ¿Cómo consigo el mejor clon?
-
-Graba de 10 a 30 segundos de una sola persona hablando con naturalidad en una habitación silenciosa, sin música ni voces de fondo. Los clips más largos se recortan a 30 segundos. Si había ruido, guarda la voz en la página Clonar y marca "Limpiar el audio de referencia". Déjalo desactivado en grabaciones limpias, porque puede empeorar el sonido.
-
-#### ¿Puedo clonar la voz de otra persona?
-
-Solo con su permiso. Antes de clonar, debes confirmar que tienes los derechos para usar esa voz.
-
 ### Uso, seguridad y políticas
 
 #### ¿Están seguros mis datos de voz?
@@ -910,7 +910,7 @@ Combinamos calidad de voz premium con herramientas simples y precios justos. Ya 
 
 #### ¿Tenéis una API para desarrolladores?
 
-Sí. Nuestra API permite añadir generación de voz a apps, sitios web y juegos con los mismos créditos de tu panel. La clonación y las llamadas en directo están disponibles en la aplicación web. Consulta la {link}.
+Sí. Nuestra API permite añadir generación de voz a apps, sitios web y juegos con los mismos créditos de tu panel. La clonación y las llamadas en directo están disponibles en la aplicación web. Consulta la [documentación](https://docs.sexyvoice.ai).
 
 ## ¿Listo para encontrar tu voz?
 
@@ -926,7 +926,7 @@ Canonical URL: https://sexyvoice.ai/es
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1693",
+    "x-markdown-tokens": "1701",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -948,18 +948,6 @@ Parfait pour les créateurs de contenu et les conteurs.
 
 ## Features
 
-### Voix naturelles
-
-Intégrez des émotions naturelles — ajoutez des rires, des soupirs, de la toux et plus encore — pour créer des expériences audio authentiques et captivantes.
-
-### Support multilingue
-
-Choisissez parmi plus de 20 voix uniques dans plusieurs langues, parfaites pour vos besoins et préférences spécifiques.
-
-### Sécurisé et privé
-
-Vos données vocales sont protégées par une sécurité de niveau entreprise. Contrôle total sur votre vie privée, votre profil et votre historique.
-
 ### Appels vocaux en direct
 
 Ayez des conversations en temps réel avec des personnages IA, avec nos voix ou une voix que vous clonez.
@@ -968,6 +956,18 @@ Ayez des conversations en temps réel avec des personnages IA, avec nos voix ou 
 
 Essayez la démo de clonage en direct : écoutez une voix recréée à partir de 10 secondes d’audio, s’exprimant naturellement dans plusieurs langues.
 
+### Sécurisé et privé
+
+Vos données vocales sont protégées par une sécurité de niveau entreprise. Contrôle total sur votre vie privée, votre profil et votre historique.
+
+### Voix naturelles
+
+Intégrez des émotions naturelles — ajoutez des rires, des soupirs, de la toux et plus encore — pour créer des expériences audio authentiques et captivantes.
+
+### Support multilingue
+
+Choisissez parmi plus de 20 voix uniques dans plusieurs langues, parfaites pour vos besoins et préférences spécifiques.
+
 ## Essayez nos échantillons vocaux
 
 Écoutez des échantillons vocaux créés avec notre technologie IA avancée
@@ -975,6 +975,32 @@ Essayez la démo de clonage en direct : écoutez une voix recréée à partir de
 ## Questions fréquentes
 
 Tout ce que vous devez savoir sur SexyVoice.ai
+
+### Appels IA en direct
+
+#### Comment fonctionnent les appels IA en direct ?
+
+Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation.
+
+#### Puis-je appeler un personnage avec ma propre voix ?
+
+Oui. Une recharge ou un paiement d'abonnement débloque les voix enregistrées. Créez un personnage et choisissez « Cloner une voix », ou utilisez « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix, puis choisissez-la comme voix du personnage.
+
+#### Combien ça coûte ?
+
+Les appels en direct coûtent 1000 crédits par minute pendant que vous êtes connecté.
+
+#### Appeler avec une voix clonée coûte-t-il plus cher ?
+
+Non. Les appels coûtent 1000 crédits par minute, quelle que soit la voix choisie, et enregistrer une voix est gratuit. La facturation commence quand le personnage est prêt à parler, pas pendant la connexion.
+
+#### Comment obtenir le meilleur clone ?
+
+Enregistrez 10 à 30 secondes d'une seule personne parlant naturellement dans une pièce calme, sans musique ni voix en arrière-plan. Les extraits plus longs sont coupés à 30 secondes. Si la pièce était bruyante, enregistrez la voix sur la page Cloner et cochez « Nettoyer l'audio de référence ». Laissez-le désactivé pour les enregistrements propres, car il peut les dégrader.
+
+#### Puis-je cloner la voix de quelqu'un d'autre ?
+
+Seulement avec son autorisation. Avant de cloner, vous devez confirmer que vous avez le droit d'utiliser cette voix.
 
 ### Génération vocale et styles
 
@@ -1037,32 +1063,6 @@ et 🇻🇳 Vietnamien.
 
 Oui. Les utilisateurs ayant acheté des crédits peuvent enregistrer jusqu'à 10 voix et les réutiliser pour générer de la parole ou passer des appels en direct. Sélectionnez une voix enregistrée sur la page Cloner, ou choisissez-la comme voix lors de la création d'un personnage.
 
-### Appels IA en direct
-
-#### Comment fonctionnent les appels IA en direct ?
-
-Appuyez sur le bouton d'appel et vous serez connecté instantanément à un appel vocal IA privé. Vous pouvez parler naturellement, interrompre, changer de sujet ou simplement écouter — votre appel se déroule comme une vraie conversation.
-
-#### Puis-je appeler un personnage avec ma propre voix ?
-
-Oui. Une recharge ou un paiement d'abonnement débloque les voix enregistrées. Créez un personnage et choisissez « Cloner une voix », ou utilisez « Enregistrer une voix pour les appels » sur la page Cloner. Enregistrez ou importez au moins 10 secondes de votre voix, puis choisissez-la comme voix du personnage.
-
-#### Combien ça coûte ?
-
-Les appels en direct coûtent {count} crédits par minute pendant que vous êtes connecté.
-
-#### Appeler avec une voix clonée coûte-t-il plus cher ?
-
-Non. Les appels coûtent {count} crédits par minute, quelle que soit la voix choisie, et enregistrer une voix est gratuit. La facturation commence quand le personnage est prêt à parler, pas pendant la connexion.
-
-#### Comment obtenir le meilleur clone ?
-
-Enregistrez 10 à 30 secondes d'une seule personne parlant naturellement dans une pièce calme, sans musique ni voix en arrière-plan. Les extraits plus longs sont coupés à 30 secondes. Si la pièce était bruyante, enregistrez la voix sur la page Cloner et cochez « Nettoyer l'audio de référence ». Laissez-le désactivé pour les enregistrements propres, car il peut les dégrader.
-
-#### Puis-je cloner la voix de quelqu'un d'autre ?
-
-Seulement avec son autorisation. Avant de cloner, vous devez confirmer que vous avez le droit d'utiliser cette voix.
-
 ### Utilisation, sécurité et politiques
 
 #### Mes données vocales sont-elles sécurisées ?
@@ -1087,7 +1087,7 @@ Nous combinons une qualité vocale premium avec des outils simples et des prix �
 
 #### Avez-vous une API pour les développeurs ?
 
-Oui. Notre API ajoute la génération vocale aux applications, sites web et jeux avec les mêmes crédits que votre tableau de bord. Le clonage et les appels en direct sont disponibles dans l'application web. Consultez la {link}.
+Oui. Notre API ajoute la génération vocale aux applications, sites web et jeux avec les mêmes crédits que votre tableau de bord. Le clonage et les appels en direct sont disponibles dans l'application web. Consultez la [documentation](https://docs.sexyvoice.ai).
 
 ## Prêt à trouver votre voix ?
 
@@ -1103,7 +1103,7 @@ Canonical URL: https://sexyvoice.ai/fr
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1883",
+    "x-markdown-tokens": "1891",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1125,18 +1125,6 @@ Perfetto per creatori di contenuti e narratori.
 
 ## Features
 
-### Voci naturali
-
-Integra emozioni naturali — aggiungi risate, sospiri, colpi di tosse e altro — per creare esperienze audio autentiche e coinvolgenti.
-
-### Supporto multilingua
-
-Scegli tra oltre 20 voci uniche in più lingue, perfette per le tue esigenze e preferenze specifiche.
-
-### Sicuro e privato
-
-I tuoi dati vocali sono protetti con sicurezza di livello aziendale. Controllo completo sulla tua privacy, profilo e cronologia.
-
 ### Chiamate vocali dal vivo
 
 Fai conversazioni in tempo reale con personaggi IA, con le nostre voci o una che cloni.
@@ -1145,6 +1133,18 @@ Fai conversazioni in tempo reale con personaggi IA, con le nostre voci o una che
 
 Prova la demo di clonazione dal vivo: ascolta una voce ricreata da 10 secondi di audio, che parla in modo naturale in più lingue.
 
+### Sicuro e privato
+
+I tuoi dati vocali sono protetti con sicurezza di livello aziendale. Controllo completo sulla tua privacy, profilo e cronologia.
+
+### Voci naturali
+
+Integra emozioni naturali — aggiungi risate, sospiri, colpi di tosse e altro — per creare esperienze audio autentiche e coinvolgenti.
+
+### Supporto multilingua
+
+Scegli tra oltre 20 voci uniche in più lingue, perfette per le tue esigenze e preferenze specifiche.
+
 ## Prova i nostri campioni vocali
 
 Ascolta i campioni vocali creati con la nostra tecnologia AI avanzata
@@ -1152,6 +1152,32 @@ Ascolta i campioni vocali creati con la nostra tecnologia AI avanzata
 ## Domande frequenti
 
 Tutto quello che devi sapere su SexyVoice.ai
+
+### Chiamate AI live
+
+#### Come funzionano le chiamate AI live?
+
+Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione.
+
+#### Posso chiamare un personaggio con la mia voce?
+
+Sì. Una ricarica o un pagamento di abbonamento sblocca le voci salvate. Crea un personaggio e scegli "Clona una voce", oppure usa "Salva una voce per le chiamate" nella pagina Clona. Registra o carica almeno 10 secondi della tua voce e sceglila come voce del personaggio.
+
+#### Quanto costa?
+
+Le chiamate live costano 1000 crediti al minuto mentre sei connesso.
+
+#### Chiamare con una voce clonata costa di più?
+
+No. Le chiamate costano 1000 crediti al minuto qualunque voce tu scelga, e salvare una voce è gratis. L'addebito inizia quando il personaggio è pronto a parlare, non durante la connessione.
+
+#### Come ottengo il clone migliore?
+
+Registra 10–30 secondi di una sola persona che parla in modo naturale in una stanza silenziosa, senza musica né voci di sottofondo. I clip più lunghi vengono tagliati a 30 secondi. Se la stanza era rumorosa, salva la voce nella pagina Clona e spunta "Pulisci l'audio di riferimento". Lascialo disattivato per le registrazioni pulite, perché può peggiorarle.
+
+#### Posso clonare la voce di un'altra persona?
+
+Solo con il suo permesso. Prima di clonare devi confermare di avere i diritti per usare quella voce.
 
 ### Generazione vocale e stili
 
@@ -1214,32 +1240,6 @@ e 🇻🇳 Vietnamita.
 
 Sì. Gli utenti paganti possono salvare fino a 10 voci e riutilizzarle per la generazione vocale o le chiamate live. Seleziona una voce salvata nella pagina Clona per generare il parlato, oppure sceglila come voce quando crei un personaggio.
 
-### Chiamate AI live
-
-#### Come funzionano le chiamate AI live?
-
-Tocca il pulsante di chiamata e sarai connesso istantaneamente a una chiamata vocale AI privata. Puoi parlare naturalmente, interrompere, cambiare argomento o semplicemente ascoltare — la tua chiamata scorre come una vera conversazione.
-
-#### Posso chiamare un personaggio con la mia voce?
-
-Sì. Una ricarica o un pagamento di abbonamento sblocca le voci salvate. Crea un personaggio e scegli "Clona una voce", oppure usa "Salva una voce per le chiamate" nella pagina Clona. Registra o carica almeno 10 secondi della tua voce e sceglila come voce del personaggio.
-
-#### Quanto costa?
-
-Le chiamate live costano {count} crediti al minuto mentre sei connesso.
-
-#### Chiamare con una voce clonata costa di più?
-
-No. Le chiamate costano {count} crediti al minuto qualunque voce tu scelga, e salvare una voce è gratis. L'addebito inizia quando il personaggio è pronto a parlare, non durante la connessione.
-
-#### Come ottengo il clone migliore?
-
-Registra 10–30 secondi di una sola persona che parla in modo naturale in una stanza silenziosa, senza musica né voci di sottofondo. I clip più lunghi vengono tagliati a 30 secondi. Se la stanza era rumorosa, salva la voce nella pagina Clona e spunta "Pulisci l'audio di riferimento". Lascialo disattivato per le registrazioni pulite, perché può peggiorarle.
-
-#### Posso clonare la voce di un'altra persona?
-
-Solo con il suo permesso. Prima di clonare devi confermare di avere i diritti per usare quella voce.
-
 ### Utilizzo, sicurezza e policy
 
 #### I miei dati vocali sono sicuri?
@@ -1264,7 +1264,7 @@ Combiniamo qualità vocale premium con strumenti semplici e prezzi equi. Che tu 
 
 #### Avete un'API per sviluppatori?
 
-Sì. La nostra API aggiunge la generazione vocale ad app, siti web e giochi con gli stessi crediti della dashboard. La clonazione e le chiamate live sono disponibili nell'app web. Consulta la {link}.
+Sì. La nostra API aggiunge la generazione vocale ad app, siti web e giochi con gli stessi crediti della dashboard. La clonazione e le chiamate live sono disponibili nell'app web. Consulta la [documentazione](https://docs.sexyvoice.ai).
 
 ## Pronto a trovare la tua voce?
 
@@ -1280,7 +1280,7 @@ Canonical URL: https://sexyvoice.ai/it
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1723",
+    "x-markdown-tokens": "1731",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,

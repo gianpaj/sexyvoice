@@ -11,8 +11,10 @@ import {
   postPath,
 } from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { type FaqQuestion, getLandingContent } from '@/lib/landing-content';
 import type { MarkdownPage } from '@/lib/public-routes';
-import { localeUrl, SITE_URL } from '@/lib/site';
+import { localeUrl } from '@/lib/site';
+import { splitHeroTitle } from '@/lib/text';
 import { routing } from '@/src/i18n/routing';
 
 export const MARKDOWN_CONTENT_TYPE = 'text/markdown; charset=utf-8';
@@ -88,106 +90,74 @@ export function markdownRoute(path: MarkdownPage) {
   ) => markdownResponse((await params).lang, path);
 }
 
-type LandingMessages = IntlMessages['landing'];
-
 /** Dates in agent markdown stay machine-readable: `2025-04-28`. */
 function isoDay(date: string): string {
   return date.slice(0, 10);
 }
 
-function renderHeroSection(lang: Locale, landing: LandingMessages): string[] {
-  const lines: string[] = [];
-  const heroTitle = landing.hero?.title?.replace(/\s*,\s*/g, ' — ') ?? '';
-  if (heroTitle) {
-    lines.push('', `## ${heroTitle}`);
-  }
-  if (landing.hero?.subtitle) {
-    lines.push('', landing.hero.subtitle);
-  }
-  if (landing.hero?.buttonCTA) {
-    const cta =
-      `[${landing.hero.buttonCTA}](${SITE_URL}/${lang}/signup) — ${landing.hero.noCreditCard ?? ''}`.trim();
-    lines.push('', cta);
-  }
-  return lines;
+function faqAnswerMarkdown({ answer, linked }: FaqQuestion): string {
+  return linked
+    ? `${linked.before}[${linked.text}](${linked.url})${linked.after}`
+    : answer;
 }
 
-function renderFeaturesSection(landing: LandingMessages): string[] {
-  const features = landing.features;
-  if (!features) return [];
-  const lines: string[] = ['', '## Features'];
-  for (const key of Object.keys(features) as Array<keyof typeof features>) {
-    const feature = features[key];
-    if (feature?.title) {
-      lines.push('', `### ${feature.title}`);
-    }
-    if (feature?.description) {
-      lines.push('', feature.description);
-    }
-  }
-  return lines;
-}
-
-function renderFaqSection(landing: LandingMessages): string[] {
-  if (!landing.faq?.title) return [];
-  const lines: string[] = ['', `## ${landing.faq.title}`];
-  if (landing.faq.subtitle) {
-    lines.push('', landing.faq.subtitle);
-  }
-  for (const group of landing.faq.groups ?? []) {
-    if (group.category) {
-      lines.push('', `### ${group.category}`);
-    }
-    for (const q of group.questions ?? []) {
-      if (q.question) {
-        lines.push('', `#### ${q.question}`);
-      }
-      if (q.answer) {
-        lines.push('', q.answer);
-      }
-    }
-  }
-  return lines;
-}
-
-function renderCtaSection(lang: Locale, landing: LandingMessages): string[] {
-  if (!landing.cta?.title) return [];
-  const lines: string[] = ['', `## ${landing.cta.title}`];
-  if (landing.cta.subtitle) {
-    lines.push('', landing.cta.subtitle);
-  }
-  if (landing.cta.action) {
-    lines.push('', `[${landing.cta.action}](${SITE_URL}/${lang}/signup)`);
-  }
-  return lines;
-}
-
+/** The landing page as markdown, with the sections and order of the page. */
 export function renderLandingMarkdown(
   lang: Locale,
   messages: IntlMessages,
 ): string {
-  const landing = messages.landing as LandingMessages;
-  const siteTitle = messages.pages?.defaultTitle ?? 'SexyVoice.ai';
-  const description = messages.pages?.description ?? '';
-  const lines: string[] = [`# ${siteTitle}`];
-
-  if (description) {
-    lines.push('', description);
-  }
-
-  lines.push(...renderHeroSection(lang, landing));
-  lines.push(...renderFeaturesSection(landing));
-
-  if (landing.popular?.trySamplesTitle) {
-    lines.push('', `## ${landing.popular.trySamplesTitle}`);
-    if (landing.popular.trySamplesSubtitle) {
-      lines.push('', landing.popular.trySamplesSubtitle);
-    }
-  }
-
-  lines.push(...renderFaqSection(landing));
-  lines.push(...renderCtaSection(lang, landing));
-  lines.push('', '---', '', `Canonical URL: ${SITE_URL}/${lang}`);
+  const { cta, faq, features, hero, samples } = getLandingContent(
+    messages.landing,
+  );
+  const [heroFirst, heroRest] = splitHeroTitle(hero.title);
+  const signupUrl = localeUrl(lang, '/signup');
+  const lines = [
+    `# ${messages.pages.defaultTitle}`,
+    '',
+    messages.pages.description,
+    '',
+    `## ${heroRest ? `${heroFirst.trim()} — ${heroRest.trim()}` : heroFirst}`,
+    '',
+    hero.subtitle,
+    '',
+    `[${hero.buttonCTA}](${signupUrl}) — ${hero.noCreditCard}`,
+    '',
+    '## Features',
+    ...features.flatMap((feature) => [
+      '',
+      `### ${feature.title}`,
+      '',
+      feature.description,
+    ]),
+    '',
+    `## ${samples.title}`,
+    '',
+    samples.subtitle,
+    '',
+    `## ${faq.title}`,
+    '',
+    faq.subtitle,
+    ...faq.groups.flatMap((group) => [
+      '',
+      `### ${group.category}`,
+      ...group.questions.flatMap((question) => [
+        '',
+        `#### ${question.question}`,
+        '',
+        faqAnswerMarkdown(question),
+      ]),
+    ]),
+    '',
+    `## ${cta.title}`,
+    '',
+    cta.subtitle,
+    '',
+    `[${cta.action}](${signupUrl})`,
+    '',
+    '---',
+    '',
+    `Canonical URL: ${localeUrl(lang, '/')}`,
+  ];
   return `${lines.join('\n').trim()}\n`;
 }
 
@@ -196,18 +166,11 @@ export function renderBlogListMarkdown(
   messages: IntlMessages,
   posts: readonly Post[],
 ): string {
-  const landing = messages.landing as LandingMessages;
-  const title = landing.latestPosts ?? 'Latest Posts';
-  const description = landing.blogDescription ?? '';
-  const lines: string[] = [];
-
-  lines.push(`# ${title}`);
-  if (description) {
-    lines.push('', description);
-  }
+  const { blogDescription, latestPosts, noPostsAvailable } = messages.landing;
+  const lines = [`# ${latestPosts}`, '', blogDescription];
 
   if (posts.length === 0) {
-    lines.push('', landing.noPostsAvailable ?? 'No posts available yet.');
+    lines.push('', noPostsAvailable);
   } else {
     for (const post of posts) {
       lines.push('', `## [${post.title}](${localeUrl(lang, postPath(post))})`);

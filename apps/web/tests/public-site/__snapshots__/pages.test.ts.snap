@@ -859,6 +859,54 @@ exports[`landing page > structured data in de 1`] = `
             "@type": "Question",
             "acceptedAnswer": {
               "@type": "Answer",
+              "text": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog.",
+            },
+            "name": "Wie funktionieren Live-KI-Anrufe?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie "Stimme klonen", oder nutzen Sie "Stimme für Anrufe speichern" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters.",
+            },
+            "name": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Live-Anrufe kosten 1000 Credits pro Minute, solange Sie verbunden sind.",
+            },
+            "name": "Was kostet das?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nein. Anrufe kosten 1000 Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens.",
+            },
+            "name": "Kostet ein Anruf mit einer geklonten Stimme mehr?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie "Referenz-Audio bereinigen". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann.",
+            },
+            "name": "Wie bekomme ich den besten Klon?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen.",
+            },
+            "name": "Kann ich die Stimme einer anderen Person klonen?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
               "text": "Die verfügbaren Sprachen hängen von Stimme und Modell ab. Gemini-3.8-Stimmen unterstützen über 130 Sprachen. Andere Modelle haben eine eigene Sprachauswahl. Wählen Sie eine Stimme für Ihre Zielsprache und hören Sie sich eine Vorschau an. Die Sprachen für das Stimmklonen stehen weiter unten.",
             },
             "name": "In welchen Sprachen kann ich Sprache erzeugen?",
@@ -939,54 +987,6 @@ und 🇻🇳 Vietnamesisch.",
               "text": "Ja. Zahlende Nutzer können bis zu 10 Stimmen speichern und für die Stimmgenerierung oder Live-Anrufe wiederverwenden. Wählen Sie eine gespeicherte Stimme auf der Klonen-Seite, um Sprache zu erzeugen, oder weisen Sie sie beim Erstellen einem Charakter zu.",
             },
             "name": "Kann ich meine geklonte Stimme speichern und wiederverwenden?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog.",
-            },
-            "name": "Wie funktionieren Live-KI-Anrufe?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie "Stimme klonen", oder nutzen Sie "Stimme für Anrufe speichern" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters.",
-            },
-            "name": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Live-Anrufe kosten 1000 Credits pro Minute, solange Sie verbunden sind.",
-            },
-            "name": "Was kostet das?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Nein. Anrufe kosten 1000 Credits pro Minute, egal welche Stimme Sie wählen, und das Speichern einer Stimme ist kostenlos. Die Abrechnung beginnt, sobald der Charakter sprechbereit ist, nicht während des Verbindens.",
-            },
-            "name": "Kostet ein Anruf mit einer geklonten Stimme mehr?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Nehmen Sie 10–30 Sekunden einer einzelnen Person auf, die in einem ruhigen Raum natürlich spricht, ohne Musik oder Stimmen im Hintergrund. Längere Aufnahmen werden auf 30 Sekunden gekürzt. War der Raum laut, speichern Sie die Stimme auf der Klonen-Seite und aktivieren Sie "Referenz-Audio bereinigen". Lassen Sie es bei sauberen Aufnahmen aus, da es sie schlechter klingen lassen kann.",
-            },
-            "name": "Wie bekomme ich den besten Klon?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Nur mit deren Erlaubnis. Vor dem Klonen müssen Sie bestätigen, dass Sie die Stimme verwenden dürfen.",
-            },
-            "name": "Kann ich die Stimme einer anderen Person klonen?",
           },
           {
             "@type": "Question",
@@ -1088,6 +1088,54 @@ exports[`landing page > structured data in en 1`] = `
             "@type": "Question",
             "acceptedAnswer": {
               "@type": "Answer",
+              "text": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation.",
+            },
+            "name": "How does Live AI Calling work?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose "Clone a voice", or use "Save a voice for calls" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice.",
+            },
+            "name": "Can I call a character in my own voice?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Live calling costs 1000 credits per minute while you're connected.",
+            },
+            "name": "How much does it cost?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. Calls cost 1000 credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting.",
+            },
+            "name": "Does calling with a cloned voice cost more?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick "Clean up the reference audio". Leave it off for clean recordings, as it can make them sound worse.",
+            },
+            "name": "How do I get the best clone?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Only with their permission. Before cloning, you must confirm that you have the rights to use the voice.",
+            },
+            "name": "Can I clone someone else's voice?",
+          },
+          {
+            "@type": "Question",
+            "acceptedAnswer": {
+              "@type": "Answer",
               "text": "Language support depends on your voice and model. Gemini 3.8 voices support over 130 languages. Other models have their own language coverage. Choose a voice for your target language and preview how it sounds. Voice cloning has a separate language list below.",
             },
             "name": "Which languages can I generate speech in?",
@@ -1168,54 +1216,6 @@ and 🇻🇳 Vietnamese.",
               "text": "Yes. Paid users can save up to 10 voices and reuse them for voice generation or live calls. Select a saved voice on the Clone page to generate speech, or choose it as the voice when creating a character.",
             },
             "name": "Can I save my cloned voice and use it again?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation.",
-            },
-            "name": "How does Live AI Calling work?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose "Clone a voice", or use "Save a voice for calls" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice.",
-            },
-            "name": "Can I call a character in my own voice?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Live calling costs 1000 credits per minute while you're connected.",
-            },
-            "name": "How much does it cost?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "No. Calls cost 1000 credits per minute whichever voice you choose, and saving a voice is free. Billing starts when the character is ready to talk, not while connecting.",
-            },
-            "name": "Does calling with a cloned voice cost more?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Record 10–30 seconds of one person speaking naturally in a quiet room, with no music or background voices. Longer clips are trimmed to 30 seconds. If the room was noisy, save the voice on the Clone page and tick "Clean up the reference audio". Leave it off for clean recordings, as it can make them sound worse.",
-            },
-            "name": "How do I get the best clone?",
-          },
-          {
-            "@type": "Question",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Only with their permission. Before cloning, you must confirm that you have the rights to use the voice.",
-            },
-            "name": "Can I clone someone else's voice?",
           },
           {
             "@type": "Question",

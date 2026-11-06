@@ -38,6 +38,10 @@ describe.each(Object.entries(routes))('%s', (_path, load) => {
   it('returns 404 for an unknown locale', async () => {
     expect((await get(load, { lang: 'pt' })).status).toBe(404);
   });
+
+  it.each(routing.locales)('fills every placeholder in %s', async (lang) => {
+    expect((await get(load, { lang })).body).not.toMatch(/\{\w+\}/);
+  });
 });
 
 describe('blog post markdown', () => {

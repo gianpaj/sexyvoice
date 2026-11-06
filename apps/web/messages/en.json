@@ -211,23 +211,7 @@
         "action": "Clone your voice"
       }
     },
-    "generator": {
-      "title": "Try it now",
-      "subtitle": "Generate your first voice sample",
-      "selectVoice": "Select a voice",
-      "enterText": "Enter text to convert",
-      "speed": "Speed",
-      "pitch": "Pitch",
-      "generating": "Generating...",
-      "play": "Play",
-      "pause": "Pause",
-      "reset": "Reset",
-      "download": "Download"
-    },
     "popular": {
-      "title": "Popular Audio Samples",
-      "subtitle": "Listen to what others have created",
-      "loading": "Loading popular audios...",
       "trySamplesTitle": "Try Our Voice Samples",
       "trySamplesSubtitle": "Listen to voice samples created with our advanced AI technology"
     },

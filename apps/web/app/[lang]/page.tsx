@@ -2,6 +2,7 @@ import {
   ArrowRightIcon,
   AudioLines,
   Globe2,
+  type LucideIcon,
   Mic2,
   PhoneCall,
   Shield,
@@ -10,23 +11,6 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { preconnect } from 'react-dom';
-
-import { listPostsWithCover, postPath } from '@/lib/content';
-import { faqAnswerText } from '@/lib/faq';
-import type { Locale } from '@/lib/i18n/i18n-config';
-import { Link } from '@/lib/i18n/navigation';
-import { pageMetadata } from '@/lib/page-metadata';
-import { FILES_URL } from '@/lib/site';
-import {
-  faqPage,
-  graph,
-  organization,
-  webPage,
-  webSite,
-} from '@/lib/structured-data';
-
-// import { VoiceGenerator } from "@/components/voice-generator";
-// import { PopularAudios } from '@/components/popular-audios';
 
 import { CardDecorator } from '@/components/card-decorator';
 import { FAQComponent } from '@/components/faq';
@@ -37,7 +21,91 @@ import PricingTable from '@/components/pricing-table';
 import { SampleAudioPreviews } from '@/components/sample-audio-previews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { listPostsWithCover, postPath } from '@/lib/content';
+import type { Locale } from '@/lib/i18n/i18n-config';
+import { Link } from '@/lib/i18n/navigation';
+import {
+  getLandingContent,
+  type LandingFeatureKey,
+} from '@/lib/landing-content';
+import { pageMetadata } from '@/lib/page-metadata';
+import { FILES_URL } from '@/lib/site';
+import {
+  faqPage,
+  graph,
+  organization,
+  webPage,
+  webSite,
+} from '@/lib/structured-data';
 import { getSampleAudiosByLanguage } from '../sample-audio';
+
+const FEATURE_ICONS: Record<LandingFeatureKey, LucideIcon> = {
+  multiLanguage: Globe2,
+  security: Shield,
+  voiceCalling: PhoneCall,
+  voiceCloneDemo: AudioLines,
+  voiceCloning: Mic2,
+};
+
+/** A feature card; cards with a page link highlight on hover. */
+function FeatureCard({
+  description,
+  href,
+  icon: Icon,
+  title,
+}: {
+  description: string;
+  href?: string;
+  icon: LucideIcon;
+  title: string;
+}) {
+  const card = (
+    <Card
+      className={
+        href
+          ? 'h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8'
+          : 'group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5'
+      }
+    >
+      <CardHeader>
+        <CardDecorator>
+          <Icon
+            aria-hidden
+            className={
+              href
+                ? 'size-6 text-gray-200 transition-colors group-hover:text-white'
+                : 'size-6 text-gray-200'
+            }
+          />
+        </CardDecorator>
+
+        <h3
+          className={
+            href
+              ? 'mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100'
+              : 'mt-6 text-balance text-center font-medium text-pink-200'
+          }
+        >
+          {title}
+        </h3>
+      </CardHeader>
+
+      <CardContent>
+        <p className="text-pretty text-center text-sm text-zinc-300">
+          {description}
+        </p>
+      </CardContent>
+    </Card>
+  );
+
+  return href ? (
+    <Link className="group max-w-sm rounded-xl" href={href} prefetch>
+      {card}
+    </Link>
+  ) : (
+    card
+  );
+}
 
 export async function generateMetadata(props: {
   params: Promise<{ lang: Locale }>;
@@ -62,10 +130,7 @@ export default async function LandingPage(props: {
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
   const dictLanding = messages.landing;
-
-  const faqQuestions = dictLanding.faq.groups.flatMap(
-    (group) => group.questions,
-  );
+  const content = getLandingContent(dictLanding);
 
   const page = webPage({
     description: messages.pages.description,
@@ -81,13 +146,7 @@ export default async function LandingPage(props: {
       isPartOf: page,
       lang,
       path: '/',
-      questions: faqQuestions.map((q) => ({
-        answer: faqAnswerText(
-          q.answer,
-          (q as { link?: { text: string } }).link,
-        ),
-        question: q.question,
-      })),
+      questions: content.faq.groups.flatMap((group) => group.questions),
     }),
   );
 
@@ -113,10 +172,10 @@ export default async function LandingPage(props: {
             <HeroWaveform />
             <HeroTitle
               className="text-balance font-bold text-5xl leading-14 sm:leading-17 md:text-6xl max-sm:[&:lang(de)]:text-4xl max-sm:[&:lang(de)]:leading-12"
-              title={dictLanding.hero.title}
+              title={content.hero.title}
             />
             <p className="mx-auto max-w-2xl text-balance text-gray-300 text-xl leading-8 sm:leading-10">
-              {dictLanding.hero.subtitle.split('\n').map((line) => (
+              {content.hero.subtitle.split('\n').map((line) => (
                 <span className="block" key={line}>
                   {line}
                 </span>
@@ -132,10 +191,10 @@ export default async function LandingPage(props: {
                 iconPlacement="right"
                 size="lg"
               >
-                <Link href="/signup">{dictLanding.hero.buttonCTA}</Link>
+                <Link href="/signup">{content.hero.buttonCTA}</Link>
               </Button>
               <p className="text-gray-300 text-xs">
-                {dictLanding.hero.noCreditCard}
+                {content.hero.noCreditCard}
               </p>
             </div>
           </div>
@@ -143,140 +202,21 @@ export default async function LandingPage(props: {
           {/* Audio Previews Grid */}
           <SampleAudioPreviews
             initialAudios={getSampleAudiosByLanguage(lang)}
-            trySamplesSubtitle={dictLanding.popular.trySamplesSubtitle}
-            trySamplesTitle={dictLanding.popular.trySamplesTitle}
+            trySamplesSubtitle={content.samples.subtitle}
+            trySamplesTitle={content.samples.title}
           />
-
-          {/* Voice Generator Section */}
-          {/* <div className="max-w-2xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-8 mb-16">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white mb-2">
-                {dict.generator.title}
-              </h2>
-              <p className="text-gray-300">{dict.generator.subtitle}</p>
-            </div>
-            <VoiceGenerator
-              dict={dict.generator}
-              download={dict.generator.download}
-            />
-          </div> */}
-
-          {/* Popular Audios Section */}
-          {/* <div className="max-w-4xl mx-auto mb-16">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              {dict.popular.title}
-            </h2>
-            <p className="text-gray-300 mb-6">
-              {dict.popular.subtitle}
-            </p>
-            <PopularAudios dict={dict.popular} />
-          </div> */}
 
           {/* Features Grid */}
           <div className="mx-auto grid max-w-5xl justify-items-center gap-6 py-16 sm:grid-cols-2 lg:grid-cols-6 lg:*:col-span-2 lg:*:first:col-start-2">
-            <Link
-              className="group max-w-sm rounded-xl"
-              href="/voice-call"
-              prefetch
-            >
-              <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
-                <CardHeader>
-                  <CardDecorator>
-                    <PhoneCall
-                      aria-hidden
-                      className="size-6 text-gray-200 transition-colors group-hover:text-white"
-                    />
-                  </CardDecorator>
-
-                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
-                    {dictLanding.features.voiceCalling.title}
-                  </h3>
-                </CardHeader>
-
-                <CardContent>
-                  <p className="text-pretty text-center text-sm text-zinc-300">
-                    {dictLanding.features.voiceCalling.description}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Link
-              className="group max-w-sm rounded-xl"
-              href="/voice-cloning"
-              prefetch
-            >
-              <Card className="h-full border-fuchsia-400/25 bg-white/3 shadow-zinc-950/5 transition-colors group-hover:border-fuchsia-400/60 group-hover:bg-fuchsia-400/8">
-                <CardHeader>
-                  <CardDecorator>
-                    <AudioLines
-                      aria-hidden
-                      className="size-6 text-gray-200 transition-colors group-hover:text-white"
-                    />
-                  </CardDecorator>
-
-                  <h3 className="mt-6 text-balance text-center font-medium text-pink-200 transition-colors group-hover:text-pink-100">
-                    {dictLanding.features.voiceCloneDemo.title}
-                  </h3>
-                </CardHeader>
-
-                <CardContent>
-                  <p className="text-pretty text-center text-sm text-zinc-300">
-                    {dictLanding.features.voiceCloneDemo.description}
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-            <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
-              <CardHeader>
-                <CardDecorator>
-                  <Shield aria-hidden className="size-6 text-gray-200" />
-                </CardDecorator>
-
-                <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
-                  {dictLanding.features.security.title}
-                </h3>
-              </CardHeader>
-              <CardContent>
-                <p className="text-pretty text-center text-sm text-zinc-300">
-                  {dictLanding.features.security.description}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
-              <CardHeader>
-                <CardDecorator>
-                  <Mic2 aria-hidden className="size-6 text-gray-200" />
-                </CardDecorator>
-
-                <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
-                  {dictLanding.features.voiceCloning.title}
-                </h3>
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-pretty text-center text-sm text-zinc-300">
-                  {dictLanding.features.voiceCloning.description}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="group max-w-sm border-white/10 bg-white/3 shadow-zinc-950/5">
-              <CardHeader>
-                <CardDecorator>
-                  <Globe2 aria-hidden className="size-6 text-gray-200" />
-                </CardDecorator>
-
-                <h3 className="mt-6 text-balance text-center font-medium text-pink-200">
-                  {dictLanding.features.multiLanguage.title}
-                </h3>
-              </CardHeader>
-
-              <CardContent>
-                <p className="text-pretty text-center text-sm text-zinc-300">
-                  {dictLanding.features.multiLanguage.description}
-                </p>
-              </CardContent>
-            </Card>
+            {content.features.map((feature) => (
+              <FeatureCard
+                description={feature.description}
+                href={'href' in feature ? feature.href : undefined}
+                icon={FEATURE_ICONS[feature.key]}
+                key={feature.key}
+                title={feature.title}
+              />
+            ))}
           </div>
 
           <div className="flex flex-col">
@@ -329,7 +269,7 @@ export default async function LandingPage(props: {
             </Link>
           </div>
 
-          <CtaSection cta={dictLanding.cta} />
+          <CtaSection cta={content.cta} />
         </div>
       </div>
     </MarketingPage>

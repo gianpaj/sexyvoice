@@ -211,23 +211,7 @@
         "action": "Clona tu voz"
       }
     },
-    "generator": {
-      "title": "Pruébalo ahora",
-      "subtitle": "Genera tu primera muestra de voz",
-      "selectVoice": "Selecciona una voz",
-      "enterText": "Ingresa texto para convertir",
-      "speed": "Velocidad",
-      "pitch": "Tono",
-      "generating": "Generando...",
-      "play": "Reproducir",
-      "pause": "Pausar",
-      "reset": "Reiniciar",
-      "download": "Descargar"
-    },
     "popular": {
-      "title": "Voces Populares",
-      "subtitle": "Escucha lo que otros han creado",
-      "loading": "Cargando audios populares...",
       "trySamplesTitle": "Pruebe nuestras muestras de voz",
       "trySamplesSubtitle": "Escucha muestras de voz creadas con nuestra avanzada tecnología de IA"
     },

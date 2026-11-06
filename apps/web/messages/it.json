@@ -211,23 +211,7 @@
         "action": "Clona la tua voce"
       }
     },
-    "generator": {
-      "title": "Provalo ora",
-      "subtitle": "Genera il tuo primo file audio",
-      "selectVoice": "Seleziona una voce",
-      "enterText": "Inserisci il testo da convertire",
-      "speed": "Velocità",
-      "pitch": "Tonalità",
-      "generating": "Generazione...",
-      "play": "Riproduci",
-      "pause": "Pausa",
-      "reset": "Reimposta",
-      "download": "Scarica"
-    },
     "popular": {
-      "title": "Campioni audio popolari",
-      "subtitle": "Ascolta cosa hanno creato gli altri",
-      "loading": "Caricamento audio popolari...",
       "trySamplesTitle": "Prova i nostri campioni vocali",
       "trySamplesSubtitle": "Ascolta i campioni vocali creati con la nostra tecnologia AI avanzata"
     },

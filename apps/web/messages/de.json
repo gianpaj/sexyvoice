@@ -211,23 +211,7 @@
         "action": "Stimme klonen"
       }
     },
-    "generator": {
-      "title": "Probieren Sie es jetzt aus",
-      "subtitle": "Generieren Sie Ihre erste Sprachprobe",
-      "selectVoice": "Wählen Sie eine Stimme",
-      "enterText": "Geben Sie Text zum Konvertieren ein",
-      "speed": "Geschwindigkeit",
-      "pitch": "Tonhöhe",
-      "generating": "Wird generiert...",
-      "play": "Abspielen",
-      "pause": "Pause",
-      "reset": "Zurücksetzen",
-      "download": "Herunterladen"
-    },
     "popular": {
-      "title": "Beliebte Audio-Beispiele",
-      "subtitle": "Hören Sie, was andere erstellt haben",
-      "loading": "Beliebte Audios werden geladen...",
       "trySamplesTitle": "Probieren Sie unsere Sprachmuster",
       "trySamplesSubtitle": "Hören Sie sich Sprachproben an, die mit unserer fortschrittlichen KI-Technologie erstellt wurden"
     },

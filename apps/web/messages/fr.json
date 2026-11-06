@@ -211,23 +211,7 @@
         "action": "Clonez votre voix"
       }
     },
-    "generator": {
-      "title": "Essayez maintenant",
-      "subtitle": "Générez votre premier échantillon vocal",
-      "selectVoice": "Sélectionnez une voix",
-      "enterText": "Entrez le texte à convertir",
-      "speed": "Vitesse",
-      "pitch": "Tonalité",
-      "generating": "Génération...",
-      "play": "Lire",
-      "pause": "Pause",
-      "reset": "Réinitialiser",
-      "download": "Télécharger"
-    },
     "popular": {
-      "title": "Échantillons audio populaires",
-      "subtitle": "Écoutez ce que les autres ont créé",
-      "loading": "Chargement des audios populaires...",
       "trySamplesTitle": "Essayez nos échantillons vocaux",
       "trySamplesSubtitle": "Écoutez des échantillons vocaux créés avec notre technologie IA avancée"
     },

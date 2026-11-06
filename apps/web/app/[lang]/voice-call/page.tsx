@@ -151,7 +151,7 @@ export default async function LandingPage(props: Props) {
 
           {/* FAQ Section */}
           <div className="mx-auto max-w-3xl py-16">
-            <FAQComponent lang={lang} priorityGroupIds={['liveCalling']} />
+            <FAQComponent lang={lang} />
           </div>
 
           <CtaSection cta={dictLanding.voiceCall.cta} />

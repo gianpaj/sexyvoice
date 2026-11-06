@@ -211,23 +211,7 @@
         "action": "Klon din stemme"
       }
     },
-    "generator": {
-      "title": "Prøv det nu",
-      "subtitle": "Generer din første stemmeprøve",
-      "selectVoice": "Vælg en stemme",
-      "enterText": "Indtast tekst til konvertering",
-      "speed": "Hastighed",
-      "pitch": "Tonehøjde",
-      "generating": "Genererer...",
-      "play": "Afspil",
-      "pause": "Pause",
-      "reset": "Nulstil",
-      "download": "Download"
-    },
     "popular": {
-      "title": "Populære lydprøver",
-      "subtitle": "Lyt til hvad andre har skabt",
-      "loading": "Indlæser populære lydklip...",
       "trySamplesTitle": "Prøv vores stemmeprøver",
       "trySamplesSubtitle": "Lyt til stemmeprøver skabt med vores avancerede AI-teknologi"
     },
