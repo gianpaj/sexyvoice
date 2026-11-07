@@ -68,7 +68,7 @@ const inRoom = (
 function renderView() {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <InCallView preset={character} />
+      <InCallView character={character} />
     </NextIntlClientProvider>,
   );
 }

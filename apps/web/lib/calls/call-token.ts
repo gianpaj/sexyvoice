@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import { callScenes, isSceneTextModified } from '@/data/call-scenes';
 import type { SessionConfig } from './characters';
 import { getInitialInstruction } from './greetings';
 import { CALL_LANGUAGES, type CallLanguage } from './languages';
 import type { CallModelId } from './models';
+import { callScenes, isSceneTextModified } from './scenes';
 
 /**
  * The browser's per-call choices. call-token loads everything else from the

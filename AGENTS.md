@@ -264,9 +264,9 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   must respect permission and privacy requirements.
 - Mistral TTS blocks sexual content with a 403 `guardrail_violation`, so
   saved call voices use Inworld.
-- `LiveKitRoom` renders its children one render after
-  `PlaygroundStateProvider` rewrites the URL. Read call page query parameters
-  on the server and pass them to `CallExperience`.
+- `LiveKitRoom` renders its children one render after `CallSetupProvider`
+  rewrites the URL. Read call page query parameters on the server and pass
+  them to the providers and `CallExperience`.
 - LiveKit call tokens resolve character prompts server-side. Predefined prompt
   text must never be exposed to the client.
 - `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed

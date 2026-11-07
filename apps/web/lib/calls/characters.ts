@@ -208,6 +208,23 @@ export function callReadiness(
   };
 }
 
+/** A character the creator has not saved yet. */
+export interface CharacterDraft {
+  description: string;
+  name: string;
+  prompt: string;
+  sessionConfig: SessionConfig;
+}
+
+export const newCharacterDraft = (
+  sessionConfig: SessionConfig = DEFAULT_SESSION_CONFIG,
+): CharacterDraft => ({
+  description: '',
+  name: '',
+  prompt: '',
+  sessionConfig: { ...sessionConfig },
+});
+
 /** The body of `POST /api/characters`. An `id` updates that character. */
 export interface SaveCharacterPayload {
   id?: string;

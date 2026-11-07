@@ -101,7 +101,7 @@ function AudioSettingsMenu() {
   );
 }
 
-export function InCallView({ preset }: { preset: Character }) {
+export function InCallView({ character }: { character: Character }) {
   const t = useTranslations('call.inCall');
   const { disconnect, session } = useCallSession();
   const elapsed = useCallElapsed();
@@ -124,14 +124,14 @@ export function InCallView({ preset }: { preset: Character }) {
     >
       <div className="rounded-full p-2.5 shadow-[0_0_0_10px_rgba(124,58,237,0.18),0_0_0_24px_rgba(124,58,237,0.08)]">
         <CharacterAvatar
-          image={preset.image}
-          name={preset.name}
-          seed={preset.id}
+          image={character.image}
+          name={character.name}
+          seed={character.id}
           size="3xl"
         />
       </div>
       <h1 className="mt-[18px] font-bold text-[32px] leading-tight">
-        {preset.name}
+        {character.name}
       </h1>
       <p aria-live="polite" className="text-base text-violet-300">
         {status}

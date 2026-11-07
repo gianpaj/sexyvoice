@@ -1,6 +1,6 @@
 import type { IconName } from 'lucide-react/dynamic';
 
-export interface CallScene {
+interface CallScene {
   icon: IconName;
   id: string;
   text: string;

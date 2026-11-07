@@ -6,13 +6,6 @@ import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  type CustomCallDraft,
-  newCharacterDraft,
-} from '@/data/playground-state';
-import { useDeferredCharacterDelete } from '@/hooks/use-deferred-character-delete';
-import { useMicrophonePermission } from '@/hooks/use-microphone-permission';
-import { usePlaygroundState } from '@/hooks/use-playground-state';
-import {
   SamplePlayerProvider,
   useSamplePlayer,
 } from '@/hooks/use-sample-player';
@@ -23,16 +16,20 @@ import {
 } from '@/lib/call-voices';
 import {
   type Character,
+  type CharacterDraft,
   callReadiness,
   DEFAULT_SESSION_CONFIG,
-  MAX_CUSTOM_CHARACTERS,
+  newCharacterDraft,
 } from '@/lib/calls/characters';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
 import { formatCallTime, inRoom, useCallSession } from './call-session';
+import { useCallSetup } from './call-setup';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
+import { useDeferredCharacterDelete } from './use-deferred-character-delete';
+import { useMicrophonePermission } from './use-microphone-permission';
 
 // Krisp touches browser-only APIs when it loads.
 const InCallView = dynamic(
@@ -71,9 +68,7 @@ export function CallExperience(props: CallExperienceProps) {
 type View = { name: 'picker' } | { name: 'creator'; intent: CreatorIntent };
 
 /** A new character with the voice the Clone page just saved, if found. */
-function returnedCloneDraft(
-  voice: SavedCallVoice | undefined,
-): CustomCallDraft {
+function returnedCloneDraft(voice: SavedCallVoice | undefined): CharacterDraft {
   return newCharacterDraft(
     voice
       ? withCallVoice(DEFAULT_SESSION_CONFIG, {
@@ -97,18 +92,25 @@ function CallExperienceScreens({
   savedVoices: initialSavedVoices,
 }: CallExperienceProps) {
   const t = useTranslations('call');
-  const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
+  const {
+    atCharacterLimit,
+    characters,
+    language,
+    saveCharacter,
+    sceneId,
+    sceneText,
+    selectCharacter,
+    selected,
+  } = useCallSetup();
   const { connect, dismiss, session } = useCallSession();
   const microphone = useMicrophonePermission();
   const player = useSamplePlayer();
   const { flush: flushDeletes, remove } = useDeferredCharacterDelete();
 
   const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
-  const allPresets = helpers.getAllPresets(pgState);
-  const findPreset = (id: string | null) =>
-    allPresets.find((preset) => preset.id === id);
-  const canCreate =
-    isPaidUser && pgState.customCharacters.length < MAX_CUSTOM_CHARACTERS;
+  const findCharacter = (id: string) =>
+    characters.find((character) => character.id === id);
+  const canCreate = isPaidUser && !atCharacterLimit;
 
   // A return from Clone reopens the creator with the draft and the new
   // voice; a link to a character opens its panel.
@@ -148,18 +150,18 @@ function CallExperienceScreens({
     showView({ intent, name: 'creator' });
   };
 
-  const openPanel = (presetId: string) => {
-    selectPreset(presetId);
+  const openPanel = (characterId: string) => {
+    selectCharacter(characterId);
     setHighlightId(null);
     setPanelOpen(true);
   };
 
   const startCall = async (characterId: string) => {
-    const character = findPreset(characterId);
+    const character = findCharacter(characterId);
     if (!character) return;
-    selectPreset(characterId);
+    selectCharacter(characterId);
     // The panel explains what is missing and how to fix it.
-    if (!callReadiness(character, pgState.language, savedVoices).canCall) {
+    if (!callReadiness(character, language, savedVoices).canCall) {
       setPanelOpen(true);
       return;
     }
@@ -167,9 +169,9 @@ function CallExperienceScreens({
     const result = await connect(
       {
         characterId,
-        language: pgState.language,
-        sceneId: pgState.selectedSceneId,
-        sceneText: pgState.sceneInstructions,
+        language,
+        sceneId,
+        sceneText,
       },
       microphone.request,
     );
@@ -181,44 +183,51 @@ function CallExperienceScreens({
     }
   };
 
-  const handleSaved = (preset: Character, updated: boolean) => {
-    dispatch({ payload: preset, type: 'SAVE_CUSTOM_CHARACTER' });
-    selectPreset(preset.id);
+  const handleSaved = (character: Character, updated: boolean) => {
+    saveCharacter(character);
+    selectCharacter(character.id);
     showView({ name: 'picker' });
-    setHighlightId(preset.id);
+    setHighlightId(character.id);
     setPanelOpen(true);
     toast.success(
-      t(updated ? 'creator.updated' : 'creator.saved', { name: preset.name }),
+      t(updated ? 'creator.updated' : 'creator.saved', {
+        name: character.name,
+      }),
     );
   };
 
-  const handleDelete = (preset: Character) => {
-    remove(preset);
+  const handleDelete = (character: Character) => {
+    remove(character);
     if (view.name !== 'picker') showView({ name: 'picker' });
     setPanelOpen(false);
   };
 
-  const callPreset = inRoom(phase) ? findPreset(phase.characterId) : undefined;
+  const callCharacter = inRoom(phase)
+    ? findCharacter(phase.characterId)
+    : undefined;
   const { ended } = session;
-  const endedPreset = ended ? findPreset(ended.characterId) : undefined;
+  const endedCharacter = ended ? findCharacter(ended.characterId) : undefined;
 
   let screen: ReactNode;
-  if (callPreset) {
-    screen = <InCallView preset={callPreset} />;
-  } else if (ended && endedPreset) {
+  if (callCharacter) {
+    screen = <InCallView character={callCharacter} />;
+  } else if (ended && endedCharacter) {
     screen = (
       <CallEndedView
-        connecting={connectingId === endedPreset.id}
+        character={endedCharacter}
+        connecting={connectingId === endedCharacter.id}
         duration={formatCallTime(ended.seconds)}
         onBack={dismiss}
-        onCallAgain={() => startCall(endedPreset.id)}
-        onEdit={() => openCreator({ kind: 'edit', presetId: endedPreset.id })}
+        onCallAgain={() => startCall(endedCharacter.id)}
+        onEdit={() =>
+          openCreator({ kind: 'edit', characterId: endedCharacter.id })
+        }
         onRemix={
           canCreate
-            ? () => openCreator({ kind: 'remix', presetId: endedPreset.id })
+            ? () =>
+                openCreator({ kind: 'remix', characterId: endedCharacter.id })
             : undefined
         }
-        preset={endedPreset}
       />
     );
   } else if (view.name === 'creator') {
@@ -227,9 +236,9 @@ function CallExperienceScreens({
         callCloneProvider={callCloneProvider}
         callVoices={callVoices}
         intent={view.intent}
-        onCall={(presetId) => {
+        onCall={(characterId) => {
           showView({ name: 'picker' });
-          startCall(presetId).catch(() => undefined);
+          startCall(characterId).catch(() => undefined);
         }}
         onCancel={() => showView({ name: 'picker' })}
         onDelete={handleDelete}
@@ -257,18 +266,16 @@ function CallExperienceScreens({
           onCall={startCall}
           onCreate={() => openCreator({ kind: 'create' })}
           onDelete={handleDelete}
-          onDuplicate={(presetId) =>
-            openCreator({ kind: 'duplicate', presetId })
+          onDuplicate={(characterId) =>
+            openCreator({ kind: 'duplicate', characterId })
           }
-          onEdit={(presetId) => openCreator({ kind: 'edit', presetId })}
+          onEdit={(characterId) => openCreator({ kind: 'edit', characterId })}
           onOpen={openPanel}
         />
         {children}
       </div>
     );
   }
-
-  const selected = helpers.getSelectedPreset(pgState);
 
   return (
     <div
@@ -284,14 +291,14 @@ function CallExperienceScreens({
         microphone={microphone.status}
         onDelete={() => selected && handleDelete(selected)}
         onEdit={() =>
-          selected && openCreator({ kind: 'edit', presetId: selected.id })
+          selected && openCreator({ kind: 'edit', characterId: selected.id })
         }
         onOpenChange={(open) => {
           if (!open) player.stop();
           setPanelOpen(open);
         }}
         onRemix={() =>
-          selected && openCreator({ kind: 'remix', presetId: selected.id })
+          selected && openCreator({ kind: 'remix', characterId: selected.id })
         }
         onRetryMicrophone={() => {
           microphone.request().catch(() => undefined);

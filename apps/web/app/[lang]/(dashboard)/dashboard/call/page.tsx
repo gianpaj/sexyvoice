@@ -3,10 +3,10 @@ import { getTranslations } from 'next-intl/server';
 import { CallExperience } from '@/components/call/call-experience';
 import { CallFaq } from '@/components/call/call-faq';
 import { CallSessionProvider } from '@/components/call/call-session';
+import { CallSetupProvider } from '@/components/call/call-setup';
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import CreditsSection from '@/components/credits-section';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { toCharacter } from '@/lib/calls/characters';
 import { toCallLanguage } from '@/lib/calls/languages';
 import { getCallCloneProvider } from '@/lib/clone/call-clone-provider';
@@ -85,22 +85,19 @@ export default async function Call(props: {
   const userCharacters =
     !e2e && isPaidUser ? await getUserCallCharacters(userId) : [];
 
-  const defaultPresets = publicCharacters.map(toCharacter);
-  const initialCustomCharacters = userCharacters.map(toCharacter);
+  const predefinedCharacters = publicCharacters.map(toCharacter);
+  const customCharacters = userCharacters.map(toCharacter);
   const linkedCharacterId =
-    [...defaultPresets, ...initialCustomCharacters].find(
+    [...predefinedCharacters, ...customCharacters].find(
       ({ id }) => id === preset,
     )?.id ?? null;
 
   return (
-    <PlaygroundStateProvider
-      defaultPresets={defaultPresets}
-      initialCustomCharacters={initialCustomCharacters}
-      initialState={{
-        language: toCallLanguage(lang),
-        selectedPresetId: linkedCharacterId ?? defaultPresets[0]?.id ?? null,
-      }}
+    <CallSetupProvider
+      customCharacters={customCharacters}
+      language={toCallLanguage(lang)}
       linkedCharacterId={linkedCharacterId}
+      predefinedCharacters={predefinedCharacters}
     >
       <CallSessionProvider>
         <TooltipProvider>
@@ -139,6 +136,6 @@ export default async function Call(props: {
           </RoomWrapper>
         </TooltipProvider>
       </CallSessionProvider>
-    </PlaygroundStateProvider>
+    </CallSetupProvider>
   );
 }

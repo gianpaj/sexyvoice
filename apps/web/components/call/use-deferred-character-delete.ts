@@ -5,13 +5,13 @@ import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { type Character, deleteCharacter } from '@/lib/calls/characters';
-import { usePlaygroundState } from './use-playground-state';
+import { useCallSetup } from './call-setup';
 
-export const DELETE_UNDO_MS = 6000;
+const DELETE_UNDO_MS = 6000;
 
 interface PendingDelete {
+  character: Character;
   index: number;
-  preset: Character;
   toastId: number | string;
 }
 
@@ -23,7 +23,8 @@ interface PendingDelete {
  * character back.
  */
 export function useDeferredCharacterDelete() {
-  const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
+  const { customCharacters, removeCharacter, restoreCharacter } =
+    useCallSetup();
   const t = useTranslations('call.picker');
   const pending = useRef(new Map<string, PendingDelete>());
 
@@ -33,12 +34,6 @@ export function useDeferredCharacterDelete() {
     return entry;
   };
 
-  const restore = (entry: PendingDelete) =>
-    dispatch({
-      payload: { index: entry.index, preset: entry.preset },
-      type: 'RESTORE_CUSTOM_CHARACTER',
-    });
-
   const commit = async (id: string) => {
     const entry = take(id);
     if (!entry) return;
@@ -46,32 +41,29 @@ export function useDeferredCharacterDelete() {
       .then((response) => response.ok)
       .catch(() => false);
     if (!ok) {
-      restore(entry);
-      toast.error(t('deleteFailed', { name: entry.preset.name }));
+      restoreCharacter(entry.character, entry.index);
+      toast.error(t('deleteFailed', { name: entry.character.name }));
     }
   };
 
   const undo = (id: string) => {
     const entry = take(id);
     if (!entry) return;
-    restore(entry);
-    toast.success(t('restored', { name: entry.preset.name }));
+    restoreCharacter(entry.character, entry.index);
+    toast.success(t('restored', { name: entry.character.name }));
   };
 
-  const remove = (preset: Character) => {
-    const index = pgState.customCharacters.findIndex((c) => c.id === preset.id);
+  const remove = (character: Character) => {
+    const index = customCharacters.findIndex(({ id }) => id === character.id);
     if (index < 0) return;
-    dispatch({ payload: preset.id, type: 'DELETE_CUSTOM_CHARACTER' });
-    if (pgState.selectedPresetId === preset.id) {
-      selectPreset(helpers.getDefaultPresets()[0]?.id ?? null);
-    }
-    const toastId = toast(t('deleted', { name: preset.name }), {
-      action: { label: t('undo'), onClick: () => undo(preset.id) },
+    removeCharacter(character.id);
+    const toastId = toast(t('deleted', { name: character.name }), {
+      action: { label: t('undo'), onClick: () => undo(character.id) },
       duration: DELETE_UNDO_MS,
-      onAutoClose: () => commit(preset.id),
-      onDismiss: () => commit(preset.id),
+      onAutoClose: () => commit(character.id),
+      onDismiss: () => commit(character.id),
     });
-    pending.current.set(preset.id, { index, preset, toastId });
+    pending.current.set(character.id, { character, index, toastId });
   };
 
   /**

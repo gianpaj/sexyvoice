@@ -516,7 +516,11 @@ success response and is reported to Sentry.
 
 ### Call Setup
 
-Characters are voice-and-prompt bundles. The call page
+Characters are voice-and-prompt bundles. Call code lives in `lib/calls/`
+(characters, models, languages, scenes, the call-token request and agent
+metadata, error codes) and `components/call/`. `CallSetupProvider`
+(`components/call/call-setup.tsx`) holds the characters, the selected one,
+the call language and the scene. The call page
 (`components/call/call-experience.tsx`) has a picker with "Your characters"
 and "Featured" grids. A card opens the call panel, a side sheet (bottom sheet
 on phones) with the voice sample, language, scene, microphone status and
@@ -534,9 +538,9 @@ personality and an available voice are required to save, and characters are
 saved before they are called. "Make your own version" of a featured character
 copies its name, description and voice, never its prompt. Free users see the
 Create card as a link to the plans, and "Make your own version" disabled next
-to an `UpgradeCrown`. `callReadiness` in `lib/call-voices.ts` decides whether a
-character can call, for both the panel and a card's Call. Deleting a
-character removes it from the list at once; the DELETE request waits until
+to an `UpgradeCrown`. `callReadiness` in `lib/calls/characters.ts` decides
+whether a character can call, for both the panel and a card's Call. Deleting
+a character removes it from the list at once; the DELETE request waits until
 the Undo toast closes or the page is hidden.
 
 `lib/calls/characters.ts` owns the character row: the select lists, the
@@ -555,7 +559,7 @@ language when the configured provider supports it and English otherwise. The Clo
 back with `?custom=1&voice=<id>` to start a character with that voice. The
 call page reads its query on the server: `?preset=<id>` selects a loaded
 character and opens its panel, and `custom` and `voice` reach `CallExperience`
-as `returnFromClone`. `PlaygroundStateProvider` rewrites the URL on mount,
+as `returnFromClone`. `CallSetupProvider` rewrites the URL on mount,
 before `LiveKitRoom` renders its children. Prompt text never enters the URL;
 only `?preset=<id>` is written.
 

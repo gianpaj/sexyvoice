@@ -11,7 +11,7 @@ import {
   CallSessionProvider,
   useCallSession,
 } from '@/components/call/call-session';
-import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
+import { CallSetupProvider } from '@/components/call/call-setup';
 import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
 import type { Character } from '@/lib/calls/characters';
 import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
@@ -37,14 +37,14 @@ vi.mock('@tanstack/react-query', () => ({
 vi.mock('@/lib/supabase/client', () => ({
   default: () => ({ auth: { getClaims: vi.fn(async () => null) } }),
 }));
-vi.mock('@/hooks/use-microphone-permission', () => ({
+vi.mock('@/components/call/use-microphone-permission', () => ({
   useMicrophonePermission: () => microphone,
 }));
 vi.mock('@/hooks/use-mobile', () => ({ useIsMobile: () => false }));
 vi.mock('next/dynamic', () => ({
   default: () =>
-    function InCallView({ preset }: { preset: Character }) {
-      return <div data-testid="in-call-view">{preset.name}</div>;
+    function InCallView({ character }: { character: Character }) {
+      return <div data-testid="in-call-view">{character.name}</div>;
     },
 }));
 vi.mock('next/image', () => ({
@@ -123,10 +123,10 @@ function renderExperience({
 } = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <PlaygroundStateProvider
-        defaultPresets={[featured]}
-        initialCustomCharacters={customCharacters}
-        initialState={{ selectedPresetId: featured.id }}
+      <CallSetupProvider
+        customCharacters={customCharacters}
+        language="en"
+        predefinedCharacters={[featured]}
       >
         <CallSessionProvider>
           <SessionProbe />
@@ -139,7 +139,7 @@ function renderExperience({
             <p>Footer</p>
           </CallExperience>
         </CallSessionProvider>
-      </PlaygroundStateProvider>
+      </CallSetupProvider>
     </NextIntlClientProvider>,
   );
 }

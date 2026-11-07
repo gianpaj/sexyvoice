@@ -4,16 +4,13 @@ import { act, renderHook } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  PlaygroundStateProvider,
-  usePlaygroundState,
-} from '@/hooks/use-playground-state';
+import { CallSetupProvider, useCallSetup } from '@/components/call/call-setup';
 import {
   type Character,
   characterPrompt,
   DEFAULT_SESSION_CONFIG,
 } from '@/lib/calls/characters';
-import { makeCharacter } from '../utils/call-test-utils';
+import { makeCharacter } from '../../utils/call-test-utils';
 
 const publicCharacter = makeCharacter({
   id: 'ea5b2c17-0000-4000-8000-0000000000a1',
@@ -23,7 +20,7 @@ const publicCharacter = makeCharacter({
   sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Eve' },
 });
 
-const defaultPresets = [publicCharacter];
+const predefinedCharacters = [publicCharacter];
 
 const savedCharacter = makeCharacter({
   id: '9f521791-9ee4-43d9-8345-a9f9e5ad7632',
@@ -33,58 +30,48 @@ const savedCharacter = makeCharacter({
 });
 
 // Mirrors the wiring in app/[lang]/(dashboard)/dashboard/call/page.tsx: the
-// page resolves a `?preset=` link to a loaded character, which is selected;
-// otherwise the first public character is.
+// page resolves a `?preset=` link to a loaded character.
 function makeWrapper(
-  initialCustomCharacters: Character[],
+  customCharacters: Character[],
   linkedCharacterId: string | null = null,
 ) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <PlaygroundStateProvider
-        defaultPresets={defaultPresets}
-        initialCustomCharacters={initialCustomCharacters}
-        initialState={{
-          selectedPresetId: linkedCharacterId ?? publicCharacter.id,
-        }}
+      <CallSetupProvider
+        customCharacters={customCharacters}
+        language="en"
         linkedCharacterId={linkedCharacterId}
+        predefinedCharacters={predefinedCharacters}
       >
         {children}
-      </PlaygroundStateProvider>
+      </CallSetupProvider>
     );
   };
 }
 
 /** The prompt a call with the selected character would use. */
-function selectedPrompt(context: ReturnType<typeof usePlaygroundState>) {
-  const character = context.helpers.getSelectedPreset(context.pgState);
-  return character && characterPrompt(character, context.pgState.language);
+function selectedPrompt(context: ReturnType<typeof useCallSetup>) {
+  const { language, selected } = context;
+  return selected && characterPrompt(selected, language);
 }
 
-describe('usePlaygroundState — preset URL', () => {
+describe('call setup URL', () => {
   it.each(['create', 'edit', 'duplicate'])(
     'preserves saved German prompts on %s',
     (operation) => {
       window.history.replaceState({}, '', '/de/dashboard/call');
-      const { result } = renderHook(() => usePlaygroundState(), {
+      const { result } = renderHook(useCallSetup, {
         wrapper: makeWrapper(operation === 'edit' ? [savedCharacter] : []),
       });
-      act(() =>
-        result.current.dispatch({ type: 'SET_LANGUAGE', payload: 'de' }),
-      );
+      act(() => result.current.setLanguage('de'));
       const response = {
         ...savedCharacter,
         localizedPrompts: { en: 'You are Luna.', de: 'Du bist Luna.' },
       };
-      act(() =>
-        result.current.dispatch({
-          type: 'SAVE_CUSTOM_CHARACTER',
-          payload: response,
-        }),
-      );
-      act(() => result.current.selectPreset(response.id));
+      act(() => result.current.saveCharacter(response));
+      act(() => result.current.selectCharacter(response.id));
 
-      expect(result.current.pgState.customCharacters).toEqual([response]);
+      expect(result.current.customCharacters).toEqual([response]);
       expect(selectedPrompt(result.current)).toBe('Du bist Luna.');
     },
   );
@@ -93,12 +80,12 @@ describe('usePlaygroundState — preset URL', () => {
     const search = `?preset=${savedCharacter.id}&presetName=${savedCharacter.name}&instructions=Old+prompt&sessionConfig.voice=Rex`;
     window.history.replaceState({}, '', `/en/dashboard/call${search}`);
 
-    const { result } = renderHook(() => usePlaygroundState(), {
+    const { result } = renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter], savedCharacter.id),
     });
 
-    expect(result.current.pgState.customCharacters).toEqual([savedCharacter]);
-    expect(result.current.pgState.selectedPresetId).toBe(savedCharacter.id);
+    expect(result.current.customCharacters).toEqual([savedCharacter]);
+    expect(result.current.selected?.id).toBe(savedCharacter.id);
     expect(selectedPrompt(result.current)).toBe(savedCharacter.prompt);
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
@@ -109,12 +96,12 @@ describe('usePlaygroundState — preset URL', () => {
   ])('drops a preset link the page did not load: %s', (search) => {
     window.history.replaceState({}, '', `/en/dashboard/call${search}`);
 
-    const { result } = renderHook(() => usePlaygroundState(), {
+    const { result } = renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter]),
     });
 
-    expect(result.current.pgState.customCharacters).toEqual([savedCharacter]);
-    expect(result.current.pgState.selectedPresetId).toBe(publicCharacter.id);
+    expect(result.current.customCharacters).toEqual([savedCharacter]);
+    expect(result.current.selected?.id).toBe(publicCharacter.id);
     expect(window.location.search).toBe('');
   });
 
@@ -125,7 +112,7 @@ describe('usePlaygroundState — preset URL', () => {
       `/en/dashboard/call?utm_source=newsletter&preset=${savedCharacter.id}&instructions=Old+prompt`,
     );
 
-    const { result } = renderHook(() => usePlaygroundState(), {
+    const { result } = renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter], savedCharacter.id),
     });
 
@@ -133,7 +120,7 @@ describe('usePlaygroundState — preset URL', () => {
       `?utm_source=newsletter&preset=${savedCharacter.id}`,
     );
 
-    act(() => result.current.selectPreset(publicCharacter.id));
+    act(() => result.current.selectCharacter(publicCharacter.id));
 
     expect(window.location.search).toBe(
       `?utm_source=newsletter&preset=${publicCharacter.id}`,
@@ -147,7 +134,7 @@ describe('usePlaygroundState — preset URL', () => {
       `/en/dashboard/call?preset=${savedCharacter.id}&instructions=Old+prompt`,
     );
 
-    renderHook(() => usePlaygroundState(), {
+    renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter], savedCharacter.id),
     });
 
@@ -157,12 +144,12 @@ describe('usePlaygroundState — preset URL', () => {
 
   it('passes a null state on selection so Next can sync its router', () => {
     window.history.replaceState({ __NA: true }, '', '/en/dashboard/call');
-    const { result } = renderHook(() => usePlaygroundState(), {
+    const { result } = renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter]),
     });
     const replaceState = vi.spyOn(window.history, 'replaceState');
 
-    act(() => result.current.selectPreset(publicCharacter.id));
+    act(() => result.current.selectCharacter(publicCharacter.id));
 
     expect(replaceState).toHaveBeenLastCalledWith(
       null,
@@ -172,15 +159,15 @@ describe('usePlaygroundState — preset URL', () => {
     replaceState.mockRestore();
   });
 
-  it('selectPreset writes only the preset ID to the URL, not the prompt', () => {
+  it('selecting writes only the character ID to the URL, not the prompt', () => {
     window.history.replaceState({}, '', '/en/dashboard/call');
 
-    const { result } = renderHook(() => usePlaygroundState(), {
+    const { result } = renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter]),
     });
-    act(() => result.current.selectPreset(savedCharacter.id));
+    act(() => result.current.selectCharacter(savedCharacter.id));
 
-    expect(result.current.pgState.selectedPresetId).toBe(savedCharacter.id);
+    expect(result.current.selected?.id).toBe(savedCharacter.id);
     expect(selectedPrompt(result.current)).toBe(savedCharacter.prompt);
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);
   });
@@ -188,17 +175,17 @@ describe('usePlaygroundState — preset URL', () => {
   it('reloads a saved character when it is selected again', () => {
     window.history.replaceState({}, '', '/en/dashboard/call');
 
-    const { result } = renderHook(() => usePlaygroundState(), {
+    const { result } = renderHook(useCallSetup, {
       wrapper: makeWrapper([savedCharacter]),
     });
-    act(() => result.current.selectPreset(savedCharacter.id));
+    act(() => result.current.selectCharacter(savedCharacter.id));
     act(() =>
-      result.current.dispatch({
-        payload: { ...savedCharacter, prompt: 'You are Luna, updated.' },
-        type: 'SAVE_CUSTOM_CHARACTER',
+      result.current.saveCharacter({
+        ...savedCharacter,
+        prompt: 'You are Luna, updated.',
       }),
     );
-    act(() => result.current.selectPreset(savedCharacter.id));
+    act(() => result.current.selectCharacter(savedCharacter.id));
 
     expect(selectedPrompt(result.current)).toBe('You are Luna, updated.');
     expect(window.location.search).toBe(`?preset=${savedCharacter.id}`);

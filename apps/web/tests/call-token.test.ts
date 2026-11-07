@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { callScenes } from '@/data/call-scenes';
 import { callTokenRequestSchema } from '@/lib/calls/call-token';
 import { CALL_LANGUAGES } from '@/lib/calls/languages';
+import { callScenes } from '@/lib/calls/scenes';
 
 const characterId = '123e4567-e89b-12d3-a456-426614174000';
 

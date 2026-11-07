@@ -7,6 +7,7 @@ import type { Character } from '@/lib/calls/characters';
 import { CharacterAvatar } from './character-avatar';
 
 interface CallEndedViewProps {
+  character: Character;
   connecting: boolean;
   duration: string;
   onBack: () => void;
@@ -14,7 +15,6 @@ interface CallEndedViewProps {
   onEdit: () => void;
   /** Omitted when the user cannot make another character. */
   onRemix?: () => void;
-  preset: Character;
 }
 
 const secondaryButton =
@@ -27,11 +27,11 @@ export function CallEndedView({
   onCallAgain,
   onEdit,
   onRemix,
-  preset,
+  character,
 }: CallEndedViewProps) {
   const t = useTranslations('call.ended');
-  const isOwn = !preset.isPublic;
-  const { name } = preset;
+  const isOwn = !character.isPublic;
+  const { name } = character;
 
   return (
     <div
@@ -39,9 +39,9 @@ export function CallEndedView({
       data-testid="call-ended-view"
     >
       <CharacterAvatar
-        image={preset.image}
+        image={character.image}
         name={name}
-        seed={preset.id}
+        seed={character.id}
         size="2xl"
       />
       <h1 className="mt-2 font-bold text-[26px] leading-tight">

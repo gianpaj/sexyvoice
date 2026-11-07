@@ -149,7 +149,7 @@ function requestCall({
 }
 
 async function defaultSceneText() {
-  const { callScenes } = await import('@/data/call-scenes');
+  const { callScenes } = await import('@/lib/calls/scenes');
   const text = callScenes.find(({ id }) => id === scene.id)?.text;
   if (!text) throw new Error('Missing scene fixture');
   return text;

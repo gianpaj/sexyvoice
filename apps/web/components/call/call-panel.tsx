@@ -26,24 +26,23 @@ import {
   SheetDescription,
   SheetTitle,
 } from '@/components/ui/sheet';
-import type { MicrophoneStatus } from '@/hooks/use-microphone-permission';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { usePlaygroundState } from '@/hooks/use-playground-state';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
 import {
   callReadiness,
   characterDescription,
   characterSampleUrl,
-  MAX_CUSTOM_CHARACTERS,
 } from '@/lib/calls/characters';
 import { CALL_LANGUAGES, isCallLanguage } from '@/lib/calls/languages';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import { cn } from '@/lib/utils';
 import { UpgradeCrown } from '../upgrade-crown';
+import { useCallSetup } from './call-setup';
 import { CharacterAvatar } from './character-avatar';
 import { ListenButton } from './listen-button';
 import { SceneSelector } from './scene-selector';
+import type { MicrophoneStatus } from './use-microphone-permission';
 
 interface CallPanelProps {
   callVoices: CallVoice[];
@@ -78,28 +77,31 @@ export function CallPanel({
   const tCall = useTranslations('call');
   const locale = useLocale();
   const isMobile = useIsMobile();
-  const { pgState, dispatch, helpers } = usePlaygroundState();
+  const {
+    atCharacterLimit,
+    language,
+    selected: character,
+    setLanguage,
+  } = useCallSetup();
   const player = useSamplePlayer();
-  const preset = helpers.getSelectedPreset(pgState);
-  if (!preset) return null;
+  if (!character) return null;
 
-  const isOwn = !preset.isPublic;
-  const { name } = preset;
-  const { audioReferenceId } = preset.sessionConfig;
+  const isOwn = !character.isPublic;
+  const { name } = character;
+  const { audioReferenceId } = character.sessionConfig;
   const { personalityMissing: missingPersonality, voiceMissing } =
-    callReadiness(preset, pgState.language, savedVoices);
-  const voiceName = voiceMissing ? t('noVoice') : preset.sessionConfig.voice;
+    callReadiness(character, language, savedVoices);
+  const voiceName = voiceMissing ? t('noVoice') : character.sessionConfig.voice;
   let voiceDescription: string | null | undefined;
   if (!voiceMissing) {
     voiceDescription = audioReferenceId
       ? t('clonedVoice')
       : callVoices.find((voice) => voice.name === voiceName)?.description;
   }
-  const sampleUrl = characterSampleUrl(preset, pgState.language);
-  const listenKey = `panel:${preset.id}`;
+  const sampleUrl = characterSampleUrl(character, language);
+  const listenKey = `panel:${character.id}`;
   const playing = player.playingKey === listenKey;
-  const canRemix =
-    isPaidUser && pgState.customCharacters.length < MAX_CUSTOM_CHARACTERS;
+  const canRemix = isPaidUser && !atCharacterLimit;
 
   const rowLabel = 'text-slate-300 text-sm';
   const primaryButton =
@@ -135,9 +137,9 @@ export function CallPanel({
         <div className="flex flex-col gap-[22px] px-6 pt-1.5 pb-7">
           <div className="flex items-center gap-4">
             <CharacterAvatar
-              image={preset.image}
+              image={character.image}
               name={name}
-              seed={preset.id}
+              seed={character.id}
               size="xl"
             />
             <div className="flex min-w-0 flex-col gap-1">
@@ -145,7 +147,7 @@ export function CallPanel({
                 {name}
               </SheetTitle>
               <SheetDescription className="text-[15px] text-slate-400">
-                {characterDescription(preset, pgState.language)}
+                {characterDescription(character, language)}
               </SheetDescription>
             </div>
           </div>
@@ -186,11 +188,9 @@ export function CallPanel({
             </label>
             <Select
               onValueChange={(value) => {
-                if (isCallLanguage(value)) {
-                  dispatch({ payload: value, type: 'SET_LANGUAGE' });
-                }
+                if (isCallLanguage(value)) setLanguage(value);
               }}
-              value={pgState.language}
+              value={language}
             >
               <SelectTrigger
                 className="h-11 w-full border-slate-700/70 bg-slate-950/70"

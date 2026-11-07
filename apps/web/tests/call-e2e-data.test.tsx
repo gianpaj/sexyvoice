@@ -9,8 +9,8 @@ import CallPage from '@/app/[lang]/(dashboard)/dashboard/call/page';
 import DashboardUI from '@/app/[lang]/(dashboard)/dashboard.ui';
 import DashboardLayout from '@/app/[lang]/(dashboard)/layout';
 import { CallExperience } from '@/components/call/call-experience';
+import { CallSetupProvider } from '@/components/call/call-setup';
 import CreditsSection from '@/components/credits-section';
-import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { getE2ECallUser } from '@/lib/e2e-call-user';
 import {
   E2E_CALL_VOICES,
@@ -68,10 +68,8 @@ vi.mock('@/lib/supabase/queries', () => ({
   getUserCallCharacters: vi.fn(),
   hasUserPaid: vi.fn(),
 }));
-vi.mock('@/hooks/use-playground-state', () => ({
-  PlaygroundStateProvider: vi.fn(
-    ({ children }: { children: ReactNode }) => children,
-  ),
+vi.mock('@/components/call/call-setup', () => ({
+  CallSetupProvider: vi.fn(({ children }: { children: ReactNode }) => children),
 }));
 vi.mock('@/components/call/call-session', () => ({
   CallSessionProvider: ({ children }: { children: ReactNode }) => children,
@@ -121,8 +119,8 @@ function setCallUserCookie(value: string | undefined) {
 const supabase = {} as unknown as Awaited<ReturnType<typeof createClient>>;
 
 function providerProps() {
-  expect(PlaygroundStateProvider).toHaveBeenCalledOnce();
-  return vi.mocked(PlaygroundStateProvider).mock.calls[0][0];
+  expect(CallSetupProvider).toHaveBeenCalledOnce();
+  return vi.mocked(CallSetupProvider).mock.calls[0][0];
 }
 
 function expectAuthenticated() {
@@ -235,7 +233,7 @@ describe('call E2E data', () => {
         lang: 'de',
         userId,
       });
-      expect(providerProps().initialCustomCharacters).toEqual([]);
+      expect(providerProps().customCharacters).toEqual([]);
       expect(createClient).toHaveBeenCalledTimes(2);
       expect(getVerifiedClaims).toHaveBeenCalledTimes(2);
       expectNoDataCalls();
@@ -265,17 +263,17 @@ describe('call E2E data', () => {
     expectAuthenticated();
     expectNoDataCalls();
     const props = providerProps();
-    expect(props.initialCustomCharacters).toEqual([]);
-    expect(props.defaultPresets?.map((preset) => preset.name)).toEqual([
-      'Lily',
-      'Ramona',
-      'Rafal',
-    ]);
-    expect(props.defaultPresets?.map((preset) => preset.id)).toEqual(
-      E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.id),
-    );
+    expect(props.customCharacters).toEqual([]);
     expect(
-      props.defaultPresets?.map((preset) => preset.sessionConfig.voice),
+      props.predefinedCharacters?.map((character) => character.name),
+    ).toEqual(['Lily', 'Ramona', 'Rafal']);
+    expect(
+      props.predefinedCharacters?.map((character) => character.id),
+    ).toEqual(E2E_PUBLIC_CALL_CHARACTERS.map((character) => character.id));
+    expect(
+      props.predefinedCharacters?.map(
+        (character) => character.sessionConfig.voice,
+      ),
     ).toEqual(['Ara', 'Eve', 'Rex']);
     for (const character of E2E_PUBLIC_CALL_CHARACTERS) {
       expect(character).not.toHaveProperty('prompts');
@@ -286,15 +284,11 @@ describe('call E2E data', () => {
         ),
       ).toMatchObject(character.voices);
     }
-    expect(props.defaultPresets?.map((preset) => preset.prompt)).toEqual([
-      '',
-      '',
-      '',
-    ]);
-    expect(props.initialState).toEqual({
-      language: 'de',
-      selectedPresetId: E2E_PUBLIC_CALL_CHARACTERS[0].id,
-    });
+    expect(
+      props.predefinedCharacters?.map((character) => character.prompt),
+    ).toEqual(['', '', '']);
+    expect(props.language).toBe('de');
+    expect(props.linkedCharacterId).toBeNull();
   });
 
   it.each([
@@ -310,9 +304,6 @@ describe('call E2E data', () => {
     );
 
     expect(providerProps().linkedCharacterId).toBe(linked);
-    expect(providerProps().initialState?.selectedPresetId).toBe(
-      linked ?? E2E_PUBLIC_CALL_CHARACTERS[0].id,
-    );
     expect(vi.mocked(CallExperience).mock.lastCall?.[0].linkedCharacterId).toBe(
       linked,
     );
@@ -412,7 +403,7 @@ describe.each([
     expect(getPublicCallCharacters).toHaveBeenCalledOnce();
     expect(getCallVoices).toHaveBeenCalledOnce();
     expect(getUserCallCharacters).not.toHaveBeenCalled();
-    expect(providerProps().initialCustomCharacters).toEqual([]);
+    expect(providerProps().customCharacters).toEqual([]);
     expect(cookieStore.get).not.toHaveBeenCalled();
   });
 
@@ -452,9 +443,9 @@ describe.each([
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).toHaveBeenCalledExactlyOnceWith(userId);
     const props = providerProps();
-    expect(props.defaultPresets).toHaveLength(1);
+    expect(props.predefinedCharacters).toHaveLength(1);
     // Predefined prompt text never reaches the client props.
-    expect(props.defaultPresets?.[0]).toMatchObject({
+    expect(props.predefinedCharacters?.[0]).toMatchObject({
       id: 'live-public',
       isPublic: publicCharacter.is_public,
       localizedDescriptions: { de: 'Beschreibung' },
@@ -464,8 +455,8 @@ describe.each([
       sessionConfig: { maxOutputTokens: 256, temperature: 0.4, voice: 'Rex' },
       voiceSampleUrl: 'https://example.com/ara.mp3',
     });
-    expect(props.initialCustomCharacters).toHaveLength(1);
-    expect(props.initialCustomCharacters?.[0]).toMatchObject({
+    expect(props.customCharacters).toHaveLength(1);
+    expect(props.customCharacters?.[0]).toMatchObject({
       id: 'live-custom',
       isPublic: false,
       localizedPrompts: { de: 'Lokalisierte Anweisung' },
@@ -473,10 +464,7 @@ describe.each([
       name: 'Paid custom',
       sessionConfig: { maxOutputTokens: null, temperature: 0.8, voice: 'Ara' },
     });
-    expect(props.initialState).toEqual({
-      language: 'de',
-      selectedPresetId: 'live-public',
-    });
+    expect(props.language).toBe('de');
   });
 
   it('skips custom characters for unpaid users and handles empty public presets', async () => {
@@ -488,9 +476,9 @@ describe.each([
     expect(hasUserPaid).toHaveBeenCalledExactlyOnceWith(userId);
     expect(getUserCallCharacters).not.toHaveBeenCalled();
     expect(providerProps()).toMatchObject({
-      defaultPresets: [],
-      initialCustomCharacters: [],
-      initialState: { selectedPresetId: null },
+      customCharacters: [],
+      linkedCharacterId: null,
+      predefinedCharacters: [],
     });
   });
 
