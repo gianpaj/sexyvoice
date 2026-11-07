@@ -206,6 +206,14 @@ and error bodies the routes return. `PROVIDER_UNAVAILABLE` is the only error
 code: the page shows its localized message with the provider name, the route's
 message for any other failure, and the HTTP status after either.
 
+Split mode, for paid users, cuts long text into up to 20 segments that fit
+every model's paid request limit, without breaking a Grok wrapper or an inline
+tag. `useSplitGeneration` in `apps/web/components/split-generation/` generates
+them in order, skips segments already generated, and stops at the first
+failure. Its session is keyed by the full text and the request fields
+`generateSpeech` sends, so any change to them starts over. The latest session
+persists in `localStorage` under `generate-split-session`.
+
 The dashboard sends `textImproved` to record whether Improve text succeeded in
 the current edit chain, not whether the current text still contains AI-added
 tags. Non-empty edits, including select-all replacement with unrelated text,

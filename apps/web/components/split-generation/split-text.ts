@@ -1,28 +1,11 @@
-'use client';
-
+import { TTS_MODELS } from '@/lib/tts/models';
 import { GROK_WRAPPING_TAGS } from '@/lib/tts-editor';
 
-export const SPLIT_SEGMENT_MAX_LENGTH = 500;
+/** Every segment fits each model's paid request limit; split mode is paid. */
+export const SPLIT_SEGMENT_MAX_LENGTH = Math.min(
+  ...Object.values(TTS_MODELS).map((model) => model.textLimit.paid),
+);
 export const SPLIT_SEGMENT_MAX_COUNT = 20;
-const SPLIT_STORAGE_PREFIX = 'generate-split-segments-v1';
-
-export type SplitSegmentStatus = 'idle' | 'generating' | 'success' | 'failed';
-
-export interface SplitSegmentItem {
-  audioUrl: string;
-  id: string;
-  status: SplitSegmentStatus;
-  text: string;
-}
-
-export interface PersistedSplitSegments {
-  generatedByText?: Record<string, string>;
-  segments: Array<{
-    audioUrl?: string;
-    status: SplitSegmentStatus;
-    text: string;
-  }>;
-}
 
 interface SplitLongTextOptions {
   preserveGrokWrappingTags?: boolean;
@@ -40,29 +23,6 @@ const GROK_WRAPPER_CLOSE_TAGS = new Set<string>(
 const SORTED_GROK_WRAPPING_TAGS = GROK_WRAPPING_TAGS.flat().sort(
   (a, b) => b.length - a.length,
 );
-
-async function hashText(text: string): Promise<string> {
-  const msgUint8 = new TextEncoder().encode(text);
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', msgUint8);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-export async function buildSplitStorageKey(
-  voiceName: string,
-  text: string,
-  generationContext = '',
-): Promise<string> {
-  const hash = await hashText(JSON.stringify({ generationContext, text }));
-  return `${SPLIT_STORAGE_PREFIX}:${voiceName}:${hash}`;
-}
-
-export function buildSplitGeneratedByTextKey(
-  text: string,
-  generationContext = '',
-): string {
-  return JSON.stringify({ generationContext, text });
-}
 
 function getGrokWrappingTagAt(input: string, index: number): string | null {
   for (const tag of SORTED_GROK_WRAPPING_TAGS) {
@@ -325,29 +285,4 @@ export function splitLongTextIntoSegments(
 
   pushCurrentSegment();
   return segments;
-}
-
-export type SplitSegmentStatusLabelKey =
-  | 'split.statusGenerated'
-  | 'split.statusGenerating'
-  | 'split.statusFailed'
-  | 'split.statusPending';
-
-export function getSplitSegmentStatusLabelKey(
-  status: SplitSegmentStatus,
-): SplitSegmentStatusLabelKey {
-  switch (status) {
-    case 'success':
-      return 'split.statusGenerated';
-    case 'generating':
-      return 'split.statusGenerating';
-    case 'failed':
-      return 'split.statusFailed';
-    default:
-      return 'split.statusPending';
-  }
-}
-
-export function generateRetrySeed(): number {
-  return Math.floor(1_000_000 + Math.random() * 9_000_000);
 }

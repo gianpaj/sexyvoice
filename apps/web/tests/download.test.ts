@@ -2,7 +2,7 @@
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { downloadUrl } from '@/lib/download';
+import { downloadBlob, downloadUrl } from '@/lib/download';
 
 describe('downloadUrl', () => {
   it('clicks a direct download link for R2 audio without fetching the file', async () => {
@@ -37,5 +37,31 @@ describe('downloadUrl', () => {
     await expect(downloadUrl('', document.createElement('a'))).rejects.toThrow(
       'URL is required',
     );
+  });
+});
+
+describe('downloadBlob', () => {
+  it('downloads the blob under the given name and frees its URL later', () => {
+    vi.useFakeTimers();
+    const createObjectURL = vi.fn(() => 'blob:joined');
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const clicked: { download: string; href: string }[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      clicked.push({ download: this.download, href: this.href });
+    });
+
+    downloadBlob(new Blob(['audio']), 'generated-audio.wav');
+
+    expect(clicked).toEqual([
+      { download: 'generated-audio.wav', href: 'blob:joined' },
+    ]);
+    expect(document.querySelector('a')).toBeNull();
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    vi.runAllTimers();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:joined');
+    vi.useRealTimers();
   });
 });

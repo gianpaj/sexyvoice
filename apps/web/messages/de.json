@@ -549,6 +549,7 @@
       "voiceListLabel": "Stimmen"
     },
     "split": {
+      "characterCount": "{characters} Zeichen -> {segments} Segmente",
       "segmentPreviews": "Segmentvorschauen",
       "segmentLabel": "Segment __INDEX__",
       "downloadAll": "Alle herunterladen",

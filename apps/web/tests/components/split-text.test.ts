@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   SPLIT_SEGMENT_MAX_LENGTH,
   splitLongTextIntoSegments,
-} from '@/components/audio-generator/split-segments-utils';
+} from '@/components/split-generation/split-text';
 
 function expectSegmentsWithinLimit(segments: string[]) {
   for (const segment of segments) {

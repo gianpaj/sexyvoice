@@ -545,6 +545,7 @@
       "voiceListLabel": "Stemmer"
     },
     "split": {
+      "characterCount": "{characters} tegn -> {segments} segmenter",
       "segmentPreviews": "Segmentforhåndsvisninger",
       "segmentLabel": "Segment __INDEX__",
       "downloadAll": "Download alle",

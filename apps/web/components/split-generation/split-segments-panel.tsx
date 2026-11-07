@@ -4,41 +4,35 @@ import { CheckCircle2, Download, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
+import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { AudioPlayerWithContext } from '../audio-player-with-context';
-import {
-  getSplitSegmentStatusLabelKey,
-  SPLIT_SEGMENT_MAX_LENGTH,
-  type SplitSegmentItem,
-} from './split-segments-utils';
+import { SPLIT_SEGMENT_MAX_LENGTH } from './split-text';
+import type {
+  SplitGeneration,
+  SplitSegmentStatus,
+} from './use-split-generation';
 
-interface SplitSegmentsPanelProps {
-  allSegmentsGenerated: boolean;
-  isDownloadingAllSegments: boolean;
-  isGenerating: boolean;
-  isJoinerLoading: boolean;
-  isJoiningSegments: boolean;
-  onDownloadAllSegments: () => void;
-  onDownloadSegment: (url: string) => void;
-  onRetrySegment: (index: number) => void;
-  onSegmentTextChange: (index: number, text: string) => void;
-  segments: SplitSegmentItem[];
-}
+const STATUS_LABEL_KEYS = {
+  failed: 'split.statusFailed',
+  generating: 'split.statusGenerating',
+  idle: 'split.statusPending',
+  success: 'split.statusGenerated',
+} as const satisfies Record<SplitSegmentStatus, string>;
 
 export function SplitSegmentsPanel({
-  segments,
   isGenerating,
-  isJoinerLoading,
-  isJoiningSegments,
-  isDownloadingAllSegments,
-  allSegmentsGenerated,
-  onDownloadAllSegments,
-  onRetrySegment,
-  onSegmentTextChange,
   onDownloadSegment,
-}: SplitSegmentsPanelProps) {
+  onRetrySegment,
+  split,
+}: {
+  isGenerating: boolean;
+  onDownloadSegment: (url: string) => void;
+  onRetrySegment: (index: number) => void;
+  split: SplitGeneration;
+}) {
   const t = useTranslations('generate');
+  const { isDownloadingAll, isJoining, segments } = split;
 
   if (segments.length === 0) {
     return null;
@@ -48,15 +42,15 @@ export function SplitSegmentsPanel({
     <div className="space-y-3 rounded-lg border-0 p-0 md:border md:border-input md:p-3">
       <div className="flex items-center justify-between">
         <p className="font-medium text-sm">{t('split.segmentPreviews')}</p>
-        {allSegmentsGenerated && (
+        {split.allGenerated && (
           <Button
             className="h-8 text-xs"
-            disabled={isDownloadingAllSegments || isJoiningSegments}
-            onClick={onDownloadAllSegments}
+            disabled={isDownloadingAll || isJoining}
+            onClick={split.downloadAll}
             size="sm"
             variant="outline"
           >
-            {isDownloadingAllSegments || isJoiningSegments ? (
+            {isDownloadingAll || isJoining ? (
               <>
                 <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
                 {t('split.joiningWav')}
@@ -95,7 +89,7 @@ export function SplitSegmentsPanel({
                 </p>
               </div>
               <p className="text-muted-foreground text-xs">
-                {t(getSplitSegmentStatusLabelKey(segment.status))}
+                {t(STATUS_LABEL_KEYS[segment.status])}
               </p>
               {segment.status === 'failed' && (
                 <Button
@@ -114,7 +108,7 @@ export function SplitSegmentsPanel({
               disabled={isGenerating}
               maxLength={SPLIT_SEGMENT_MAX_LENGTH}
               onChange={(event) =>
-                onSegmentTextChange(index, event.target.value)
+                split.updateSegmentText(index, event.target.value)
               }
               value={segment.text}
             />
@@ -143,7 +137,7 @@ export function SplitSegmentsPanel({
           </div>
         );
       })}
-      {isJoinerLoading && (
+      {split.isJoinerLoading && (
         <p className="text-muted-foreground text-xs">
           {t('split.preparingJoiner')}
         </p>
