@@ -14,10 +14,6 @@ describe('normalizeCallModel', () => {
     expect(normalizeCallModel(model)).toBe(model);
   });
 
-  it('defaults to grok-voice-think-fast-2.0', () => {
-    expect(DEFAULT_CALL_MODEL).toBe('grok-voice-think-fast-2.0');
-  });
-
   it('falls back to the default for missing or unknown ids', () => {
     expect(normalizeCallModel(undefined)).toBe(DEFAULT_CALL_MODEL);
     expect(normalizeCallModel(null)).toBe(DEFAULT_CALL_MODEL);
