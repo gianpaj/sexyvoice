@@ -1,4 +1,5 @@
 import { defaultSessionConfig, instructions } from './default-config';
+import { ModelId } from './models';
 import type { Preset } from './presets';
 import type { SessionConfig } from './session-config';
 
@@ -72,6 +73,36 @@ export const languageInitialInstructions: Record<CallLanguage, string> = {
 
 export const defaultLanguage: CallLanguage = 'en';
 
+// `<breathy>` is a Grok realtime cue. Cloned-voice pipelines send the LLM's
+// reply to a TTS model that only reads square-bracket tags, so the LLM must
+// not copy it. Inworld's delivery comes from the agent's steering tag.
+const BREATHY_TAG = /<\/?breathy>/g;
+const TTS_PIPELINE_MODELS: readonly string[] = [
+  ModelId.INWORLD_TTS,
+  ModelId.MISTRAL_TTS,
+];
+
+/** The greeting instruction sent to the agent for a call. */
+export function getInitialInstruction(
+  language: CallLanguage,
+  model: string,
+): string {
+  const instruction =
+    languageInitialInstructions[language] ||
+    languageInitialInstructions[defaultLanguage];
+  return TTS_PIPELINE_MODELS.includes(model)
+    ? instruction.replace(BREATHY_TAG, '')
+    : instruction;
+}
+
+/** Unsaved character fields in the creator. */
+export interface CustomCallDraft {
+  description: string;
+  instructions: string;
+  name: string;
+  sessionConfig: SessionConfig;
+}
+
 export interface PlaygroundState {
   /** User-created custom characters */
   customCharacters: Preset[];
@@ -79,8 +110,7 @@ export interface PlaygroundState {
   initialInstruction: string;
   instructions: string;
   language: CallLanguage;
-  /** Long-term memory opt-in. When true, the agent remembers distilled facts
-   * about the user across calls; off (default) stores nothing. */
+  /** Per-call memory flag. The server also applies the profile preference. */
   memory: boolean;
   sceneInstructions: string;
   selectedPresetId: string | null;
@@ -97,7 +127,7 @@ export const defaultPlaygroundState: PlaygroundState = {
   initialInstruction,
   instructions,
   language: defaultLanguage,
-  memory: false,
+  memory: true,
   sceneInstructions: '',
   selectedPresetId: null,
   selectedSceneId: null,

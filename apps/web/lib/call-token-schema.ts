@@ -4,6 +4,7 @@ import { callScenes } from '@/data/call-scenes';
 import { normalizeModelId } from '@/data/models';
 
 const sessionConfigSchema = z.object({
+  audioReferenceId: z.uuid().optional(),
   maxOutputTokens: z.number().nullable(),
   // Normalized at the trust boundary: this value is forwarded verbatim into the
   // LiveKit token metadata and is what the agent runs on, while credits are
@@ -40,10 +41,8 @@ export const callTokenPlaygroundStateSchema = z.object({
       'zh',
     ] as const)
     .optional(),
-  // Long-term memory (opt-in). When true, the agent (sexycall) preloads and
-  // stores distilled facts for this user across calls. Off/absent → nothing is
-  // stored.
-  memory: z.boolean().optional(),
+  // The saved profile preference applies even when the client requests memory.
+  memory: z.boolean().default(true),
   sceneInstructions: z.string().nullable().optional(),
   selectedPresetId: z.uuid().nullable(),
   selectedSceneId: z

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import z from 'zod';
 
+import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import { isDisposableEmail } from '@/lib/disposable-email';
 import { isE2E } from '@/lib/e2e-mode';
 import { i18n, type Locale } from '@/lib/i18n/i18n-config';
@@ -51,8 +52,11 @@ function parseSignUpError(
   return { message: errorMessage };
 }
 
-const getSignupEmailRedirectTo = (origin: string, lang: Locale) =>
-  new URL(`/${lang}/dashboard`, origin).toString();
+const getSignupEmailRedirectTo = (
+  origin: string,
+  lang: Locale,
+  redirectTo: string | null,
+) => new URL(redirectTo ?? `/${lang}/dashboard`, origin).toString();
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -69,6 +73,7 @@ export async function POST(request: Request) {
     email: z.email(),
     password: z.string().min(6).max(72),
     lang: z.enum(i18n.locales).default(i18n.defaultLocale),
+    redirectTo: z.string().max(500).optional(),
   });
 
   const result = schema.safeParse(body);
@@ -91,7 +96,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const emailRedirectTo = getSignupEmailRedirectTo(origin, lang);
+  const redirectTo = getCloneDemoRedirect(result.data.redirectTo);
+  const emailRedirectTo = getSignupEmailRedirectTo(origin, lang, redirectTo);
 
   if (isDisposableEmail(email)) {
     return NextResponse.json(

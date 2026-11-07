@@ -139,6 +139,17 @@ test('catalog contains 11 Gemini identities and one voice per available Spanish 
   }
 });
 
+test('accepts custom voice IDs and rejects unsafe provider names', () => {
+  assert.doesNotThrow(() =>
+    assertSampleVoice({ ...sample, name: 'voice_1n3ne2q96iaf' }),
+  );
+  for (const name of ['_voice', 'voice/1', 'voice.1'])
+    assert.throws(
+      () => assertSampleVoice({ ...sample, name }),
+      /Invalid provider voice/,
+    );
+});
+
 test('rejects Catalan, path traversal, and duplicate destinations', () => {
   assert.throws(
     () => assertSampleVoice({ ...sample, language: 'ca-ES' }),

@@ -9,7 +9,11 @@ import { useIsMobileSizes } from '@/hooks/use-mobile';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 
-export function HeaderStatic() {
+export function HeaderStatic({
+  authRedirectTo,
+}: {
+  authRedirectTo?: string | null;
+} = {}) {
   const locale = useLocale() as Locale;
   const t = useTranslations('header');
   const { isMobile375 } = useIsMobileSizes();
@@ -29,12 +33,24 @@ export function HeaderStatic() {
         <div className="hidden items-center justify-center gap-4 md:flex">
           <div className="space-x-4">
             <Button asChild variant="secondary">
-              <Link href="/login" prefetch>
+              <Link
+                href={{
+                  pathname: '/login',
+                  query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+                }}
+                prefetch
+              >
                 {t('login')}
               </Link>
             </Button>
             <Button asChild effect="ringHover" variant="default">
-              <Link href="/signup" prefetch>
+              <Link
+                href={{
+                  pathname: '/signup',
+                  query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+                }}
+                prefetch
+              >
                 {t('signup')}
               </Link>
             </Button>
@@ -48,7 +64,14 @@ export function HeaderStatic() {
             size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
             variant="secondary"
           >
-            <Link className="w-full" href="/login" prefetch>
+            <Link
+              className="w-full"
+              href={{
+                pathname: '/login',
+                query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+              }}
+              prefetch
+            >
               {t('login')}
             </Link>
           </Button>
@@ -57,7 +80,14 @@ export function HeaderStatic() {
             className="hit-area-2"
             size={isMobile375 && locale !== 'en' ? 'xs' : 'sm'}
           >
-            <Link className="w-full" href="/signup" prefetch>
+            <Link
+              className="w-full"
+              href={{
+                pathname: '/signup',
+                query: authRedirectTo ? { redirect_to: authRedirectTo } : {},
+              }}
+              prefetch
+            >
               {t('signup')}
             </Link>
           </Button>

@@ -3,18 +3,24 @@ import { Suspense } from 'react';
 
 import Footer from '@/components/footer';
 import { HeaderStatic } from '@/components/header-static';
+import { getCloneDemoRedirect } from '@/lib/clone/demo-redirect';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { LoginForm } from './login-form';
 
 export default async function LoginPage(props: {
   params: Promise<{ lang: Locale }>;
+  searchParams?: Promise<{ redirect_to?: string | string[] }>;
 }) {
-  const { lang } = await props.params;
+  const [{ lang }, searchParams] = await Promise.all([
+    props.params,
+    props.searchParams ?? Promise.resolve({ redirect_to: undefined }),
+  ]);
+  const redirectTo = getCloneDemoRedirect(searchParams.redirect_to);
   const t = await getTranslations({ locale: lang, namespace: 'auth' });
 
   return (
     <>
-      <HeaderStatic />
+      <HeaderStatic authRedirectTo={redirectTo} />
       <main
         className="flex min-h-[calc(100vh-65px)] flex-col justify-center bg-linear-to-br from-gray-900 to-gray-800 p-4 pt-11 sm:min-h-screen sm:items-center sm:pt-0"
         id="main-content"

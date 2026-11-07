@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { VOICE_CLONING_MODELS } from '@/lib/clone/constants';
 import type { DailyStatsProfileRelation } from './types';
 import {
   applyPageCursor,
@@ -7,12 +8,6 @@ import {
   formatIdList,
   PAGE_SIZE,
 } from './utils';
-
-const VOICE_CLONING_MODELS = [
-  'resemble-ai/chatterbox-multilingual',
-  'resemble-ai/chatterbox',
-  'voxtral-mini-tts-2603',
-] as const;
 
 // Internal users excluded from daily stats aggregations.
 export const INTERNAL_USER_EMAILS = [
@@ -45,6 +40,10 @@ export type DailyStatsAudioFile = Pick<
 export type DailyStatsProfile = Pick<
   Tables<'profiles'>,
   'created_at' | 'id' | 'username'
+>;
+export type DailyStatsCharacter = Pick<
+  Tables<'characters'>,
+  'created_at' | 'id'
 >;
 // `id` and `started_at` are not reported on; they carry the keyset cursor.
 export type DailyStatsCallSessionDuration = Pick<
@@ -180,6 +179,29 @@ export function getProfilesInRange(
   });
 }
 
+export function getCharactersInRange(
+  supabase: DailyStatsSupabaseClient,
+  start: Date,
+  end: Date,
+  excludeUserIds: readonly string[] = [],
+): Promise<DailyStatsCharacter[]> {
+  return fetchAllPages<DailyStatsCharacter>('created_at', (cursor) => {
+    let query = supabase
+      .from('characters')
+      .select('id, created_at')
+      .eq('is_public', false)
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString());
+    if (excludeUserIds.length > 0) {
+      query = query.notIn('user_id', excludeUserIds);
+    }
+    return applyPageCursor(query, cursor)
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(PAGE_SIZE);
+  });
+}
+
 export function getCreditTransactionsInRange(
   supabase: DailyStatsSupabaseClient,
   start: Date,
@@ -280,12 +302,13 @@ export function getCallSessionsInRange(
       | 'credits_used'
       | 'status'
       | 'free_call'
+      | 'model'
     >
   >('started_at', (cursor) => {
     let query = supabase
       .from('call_sessions')
       .select(
-        'id, started_at, duration_seconds, credits_used, status, free_call',
+        'id, started_at, duration_seconds, credits_used, status, free_call, model',
       )
       .gte('started_at', start.toISOString())
       .lt('started_at', end.toISOString());

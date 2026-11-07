@@ -1,6 +1,8 @@
 # SexyVoice.ai Documentation
 
-Documentation for [SexyVoice.ai](https://sexyvoice.ai) - AI-powered voice generation platform.
+Documentation for [SexyVoice.ai](https://sexyvoice.ai), an AI voice platform.
+
+Use the root [GLOSSARY.md](../../GLOSSARY.md) for domain names and definitions.
 
 **Live docs:** [docs.sexyvoice.ai](https://docs.sexyvoice.ai)
 
@@ -9,8 +11,8 @@ Documentation for [SexyVoice.ai](https://sexyvoice.ai) - AI-powered voice genera
 SexyVoice.ai has three main features:
 
 1. **Generate (Text-to-Speech)** - Convert text into natural-sounding speech
-2. **Voice Cloning** - Create custom voice models from audio samples
-3. **Voice Call (Real-time Voice)** - Live voice interaction capabilities
+2. **Voice Cloning** - Generate speech from reference audio or save a cloned voice for reuse
+3. **Voice Call (Real-time Voice)** - Talk to characters that combine a prompt and a voice
 
 ## Source Code Reference
 

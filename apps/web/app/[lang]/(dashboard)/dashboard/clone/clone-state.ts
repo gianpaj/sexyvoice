@@ -4,18 +4,6 @@ export type CloneDict = (typeof messages)['clone'];
 
 export type Status = 'idle' | 'generating' | 'complete' | 'error';
 
-export const formatCloneMessage = (
-  message: string,
-  values: Record<string, boolean | number | string | null | undefined>,
-) =>
-  Object.entries(values).reduce(
-    (formatted, [key, value]) =>
-      value === null || value === undefined
-        ? formatted
-        : formatted.replaceAll(`__${key}__`, String(value)),
-    message,
-  );
-
 export interface CloneState {
   activeTab: 'upload' | 'preview';
   convertingMicAudio: boolean;

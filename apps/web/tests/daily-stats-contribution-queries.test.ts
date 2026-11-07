@@ -6,6 +6,7 @@ import {
   type DailyStatsCreditTransaction,
   getAllCreditTransactions,
   getCallSessionsInRange,
+  getCharactersInRange,
 } from '../app/api/daily-stats/queries';
 import { PAGE_SIZE } from '../app/api/daily-stats/utils';
 
@@ -66,6 +67,42 @@ const end = new Date('2026-09-06T00:00:00Z');
 
 // Rows carry the keyset cursor columns; paging reads them off the last row.
 const at = (i: number) => new Date(start.getTime() + i * 1000).toISOString();
+describe('new character reads', () => {
+  test('paginates private characters with date and internal-user filters', async () => {
+    const firstPage = Array.from({ length: PAGE_SIZE }, (_, id) => ({
+      created_at: at(id),
+      id: `${id}`,
+    }));
+    const lastPage = [{ created_at: at(PAGE_SIZE), id: 'last' }];
+    let page = 0;
+    const { client, requests } = database(() => ({
+      data: page++ === 0 ? firstPage : lastPage,
+      error: null,
+    }));
+
+    expect(
+      await getCharactersInRange(client, start, end, ['internal']),
+    ).toEqual([...firstPage, ...lastPage]);
+    expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect(request.table).toBe('characters');
+      expect(request.operations).toContainEqual(['eq', ['is_public', false]]);
+      expect(request.operations).toContainEqual([
+        'gte',
+        ['created_at', start.toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'lt',
+        ['created_at', end.toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'notIn',
+        ['user_id', ['internal']],
+      ]);
+    }
+  });
+});
+
 describe('all-time credit transaction reads', () => {
   test('paginates in query order with date and user filters, retaining refunds', async () => {
     const firstPage: DailyStatsCreditTransaction[] = Array.from(
@@ -232,10 +269,26 @@ describe('contribution reads', () => {
     ]);
     expect(calls).toHaveLength(PAGE_SIZE + 1);
     expect(requests).toHaveLength(2);
-    expect(requests[0].operations).toContainEqual([
-      'notIn',
-      ['user_id', ['internal']],
-    ]);
+    for (const request of requests) {
+      expect(request.operations).toContainEqual([
+        'select',
+        [
+          'id, started_at, duration_seconds, credits_used, status, free_call, model',
+        ],
+      ]);
+      expect(request.operations).toContainEqual([
+        'notIn',
+        ['user_id', ['internal']],
+      ]);
+      expect(request.operations).toContainEqual([
+        'gte',
+        ['started_at', start.toISOString()],
+      ]);
+      expect(request.operations).toContainEqual([
+        'lt',
+        ['started_at', end.toISOString()],
+      ]);
+    }
     expect(calls[PAGE_SIZE].id).toBe('1-0');
     expect(requests[1].operations).toContainEqual([
       'gte',

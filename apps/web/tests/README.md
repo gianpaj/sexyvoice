@@ -38,7 +38,7 @@ The test setup includes comprehensive mocks for all external services:
 
 #### AI Services
 
-- **Replicate API**: Voice generation with prediction handling
+- **Replicate API**: Speech generation with prediction handling
 - **Google Generative AI**: TTS with pro/flash model fallback
 - **Mistral**: Voice cloning with `voxtral-mini-tts-2603` for supported locales
 - **Replicate**: Voice cloning with `resemble-ai/chatterbox-multilingual` for other supported locales
@@ -85,7 +85,7 @@ pnpm test:legacy
 
 ### Generate Voice API (`generate-voice.test.ts`)
 
-The voice generation tests cover:
+The speech generation tests cover:
 
 ### Input Validation
 
@@ -103,9 +103,9 @@ The voice generation tests cover:
 
 - Insufficient credits scenarios
 - Credit estimation and deduction
-- Credit transaction logging
+- Usage event recording
 
-### Voice Generation
+### Speech Generation
 
 - Replicate API integration
 - Google Gemini API integration (with fallback)
@@ -162,7 +162,7 @@ The voice cloning tests cover:
 - Insufficient credits scenarios
 - Credit estimation for voice cloning (higher cost than regular generation)
 - Credit deduction after successful cloning
-- Credit transaction logging
+- Usage event recording
 
 ### Voice Cloning
 

@@ -281,11 +281,18 @@ export default function useMediaRecorder({
     cacheMediaBlob(null);
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reports support once per configuration
   useEffect(() => {
+    // Reported rather than thrown: a throw here would unmount the whole page,
+    // including upload paths that work without a recorder.
     if (!window.MediaRecorder) {
-      throw new ReferenceError(
-        'MediaRecorder is not supported in this browser. Please ensure that you are running the latest version of chrome/firefox/edge.',
+      setStatus('failed');
+      onError(
+        new ReferenceError(
+          'MediaRecorder is not supported in this browser. Please ensure that you are running the latest version of chrome/firefox/edge.',
+        ),
       );
+      return;
     }
 
     if (recordScreen && !window.navigator.mediaDevices.getDisplayMedia) {

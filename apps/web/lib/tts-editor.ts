@@ -1,3 +1,8 @@
+import { VOXTRAL_TAGS, type VoxtralTag } from './voxtral-tags';
+
+export type TtsEditorProvider = 'grok' | 'voxtral';
+export type TtsInstantTag = GrokInstantTag | VoxtralTag;
+
 export const GROK_TAG_CHIP_CLASS =
   'inline-flex rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground';
 
@@ -58,8 +63,6 @@ export const GROK_WRAPPING_TAG_DEFINITIONS = GROK_WRAPPING_TAGS.map(
   description: string;
 }[];
 
-const INSTANT_TAGS = GROK_INSTANT_TAGS;
-
 export type GrokInstantTag = (typeof GROK_INSTANT_TAGS)[number];
 export type GrokWrapperOpenTag = (typeof GROK_WRAPPING_TAGS)[number][0];
 export type GrokWrapperCloseTag = (typeof GROK_WRAPPING_TAGS)[number][1];
@@ -81,7 +84,7 @@ export interface GrokTextToken {
 }
 
 export interface GrokInstantTagToken {
-  tag: GrokInstantTag;
+  tag: TtsInstantTag;
   type: 'instant-tag';
 }
 
@@ -115,7 +118,7 @@ export interface GrokTipTapTextNode {
 
 export interface GrokTipTapInstantTagNode {
   attrs: {
-    tag: GrokInstantTag;
+    tag: TtsInstantTag;
   };
   type: 'instantTag';
 }
@@ -155,7 +158,10 @@ interface WrapperFrame {
   openTag: GrokWrapperOpenTag;
 }
 
-const INSTANT_TAG_SET = new Set<string>(INSTANT_TAGS);
+const INSTANT_TAG_SETS = {
+  grok: new Set<string>(GROK_INSTANT_TAGS),
+  voxtral: new Set<string>(VOXTRAL_TAGS),
+};
 
 const WRAPPER_OPEN_TO_CLOSE = new Map<GrokWrapperOpenTag, GrokWrapperCloseTag>(
   GROK_WRAPPING_TAGS.map(([openTag, closeTag]) => [openTag, closeTag]),
@@ -165,13 +171,18 @@ const WRAPPER_CLOSE_TO_OPEN = new Map<GrokWrapperCloseTag, GrokWrapperOpenTag>(
   GROK_WRAPPING_TAGS.map(([openTag, closeTag]) => [closeTag, openTag]),
 );
 
-const SORTED_TAG_CANDIDATES = [
-  ...GROK_INSTANT_TAGS,
-  ...GROK_WRAPPING_TAGS.flat(),
-].sort((a, b) => b.length - a.length);
+const SORTED_TAG_CANDIDATES = {
+  grok: [...GROK_INSTANT_TAGS, ...GROK_WRAPPING_TAGS.flat()].sort(
+    (a, b) => b.length - a.length,
+  ),
+  voxtral: [...VOXTRAL_TAGS].sort((a, b) => b.length - a.length),
+};
 
-function isInstantTag(tag: string): tag is GrokInstantTag {
-  return INSTANT_TAG_SET.has(tag);
+function isInstantTag(
+  tag: string,
+  provider: TtsEditorProvider = 'grok',
+): tag is TtsInstantTag {
+  return INSTANT_TAG_SETS[provider].has(tag);
 }
 
 function isWrapperOpenTag(tag: string): tag is GrokWrapperOpenTag {
@@ -199,8 +210,12 @@ function appendText(target: GrokEditorToken[], value: string) {
   });
 }
 
-function getMatchingTagAt(input: string, index: number): string | null {
-  for (const candidate of SORTED_TAG_CANDIDATES) {
+function getMatchingTagAt(
+  input: string,
+  index: number,
+  provider: TtsEditorProvider,
+): string | null {
+  for (const candidate of SORTED_TAG_CANDIDATES[provider]) {
     if (input.startsWith(candidate, index)) {
       return candidate;
     }
@@ -346,7 +361,10 @@ function isWrapperBoundaryNode(
   );
 }
 
-function serializeInlineNode(node: unknown): string {
+function serializeInlineNode(
+  node: unknown,
+  provider: TtsEditorProvider,
+): string {
   if (!node || typeof node !== 'object') {
     return '';
   }
@@ -365,10 +383,10 @@ function serializeInlineNode(node: unknown): string {
 
   if (maybeNode.type === 'instantTag') {
     const tag = maybeNode.attrs?.tag;
-    return typeof tag === 'string' && isInstantTag(tag) ? tag : '';
+    return typeof tag === 'string' && isInstantTag(tag, provider) ? tag : '';
   }
 
-  if (isWrapperBoundaryNode(maybeNode)) {
+  if (provider === 'grok' && isWrapperBoundaryNode(maybeNode)) {
     return maybeNode.attrs.kind === 'open'
       ? maybeNode.attrs.openTag
       : maybeNode.attrs.closeTag;
@@ -377,7 +395,10 @@ function serializeInlineNode(node: unknown): string {
   return '';
 }
 
-function serializeParagraphNode(node: unknown): string {
+function serializeParagraphNode(
+  node: unknown,
+  provider: TtsEditorProvider,
+): string {
   if (!node || typeof node !== 'object') {
     return '';
   }
@@ -391,14 +412,29 @@ function serializeParagraphNode(node: unknown): string {
     return '';
   }
 
-  return maybeNode.content.map(serializeInlineNode).join('');
+  return maybeNode.content
+    .map((node) => serializeInlineNode(node, provider))
+    .join('');
+}
+
+export function isKnownTtsTag(
+  tag: string,
+  provider: TtsEditorProvider = 'grok',
+): boolean {
+  return (
+    isInstantTag(tag, provider) ||
+    (provider === 'grok' && (isWrapperOpenTag(tag) || isWrapperCloseTag(tag)))
+  );
 }
 
 export function isKnownGrokTag(tag: string): tag is GrokTagText {
-  return isInstantTag(tag) || isWrapperOpenTag(tag) || isWrapperCloseTag(tag);
+  return isKnownTtsTag(tag, 'grok');
 }
 
-export function parseGrokTtsText(input: string): GrokEditorParseResult {
+export function parseTtsText(
+  input: string,
+  provider: TtsEditorProvider = 'grok',
+): GrokEditorParseResult {
   const rootTokens: GrokEditorToken[] = [];
   const stack: WrapperFrame[] = [];
 
@@ -407,7 +443,7 @@ export function parseGrokTtsText(input: string): GrokEditorParseResult {
   let cursor = 0;
 
   while (cursor < input.length) {
-    const match = getMatchingTagAt(input, cursor);
+    const match = getMatchingTagAt(input, cursor, provider);
 
     if (!match) {
       appendText(getCurrentTarget(), input[cursor] ?? '');
@@ -417,7 +453,7 @@ export function parseGrokTtsText(input: string): GrokEditorParseResult {
 
     const matchLength = match.length;
 
-    if (isInstantTag(match)) {
+    if (isInstantTag(match, provider)) {
       getCurrentTarget().push({
         tag: match,
         type: 'instant-tag',
@@ -508,8 +544,11 @@ export function serializeGrokEditorTokens(tokens: GrokEditorToken[]): string {
     .join('');
 }
 
-export function grokTextToTipTapDoc(input: string): GrokTipTapDocNode {
-  const parsed = parseGrokTtsText(input);
+export function ttsTextToTipTapDoc(
+  input: string,
+  provider: TtsEditorProvider = 'grok',
+): GrokTipTapDocNode {
+  const parsed = parseTtsText(input, provider);
 
   return {
     content: tokensToParagraphs(parsed.tokens),
@@ -517,7 +556,10 @@ export function grokTextToTipTapDoc(input: string): GrokTipTapDocNode {
   };
 }
 
-export function grokTipTapDocToText(doc: unknown): string {
+export function ttsTipTapDocToText(
+  doc: unknown,
+  provider: TtsEditorProvider = 'grok',
+): string {
   if (!doc || typeof doc !== 'object') {
     return '';
   }
@@ -531,5 +573,13 @@ export function grokTipTapDocToText(doc: unknown): string {
     return '';
   }
 
-  return maybeDoc.content.map(serializeParagraphNode).join('\n');
+  return maybeDoc.content
+    .map((node) => serializeParagraphNode(node, provider))
+    .join('\n');
 }
+
+export {
+  parseTtsText as parseGrokTtsText,
+  ttsTextToTipTapDoc as grokTextToTipTapDoc,
+  ttsTipTapDocToText as grokTipTapDocToText,
+};

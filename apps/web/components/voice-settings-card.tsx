@@ -1,5 +1,5 @@
 'use client';
-import { Crown, Info, Maximize2, Minimize2 } from 'lucide-react';
+import { Info, Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
   type Dispatch,
@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { UpgradeCrown } from '@/components/upgrade-crown';
 import { VoicePicker } from '@/components/voice-picker';
 import { getEmotionTags, getGeminiStyleCharacterLimit } from '@/lib/ai';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
@@ -202,27 +203,14 @@ export function VoiceSettingsCard({
                 >
                   {styleLength}/{styleCharacterLimit}
                 </p>
-                <TooltipProvider>
-                  <Tooltip delayDuration={100}>
-                    <TooltipTrigger asChild>
-                      <Crown
-                        className={cn(
-                          'h-3.5 w-3.5 cursor-default',
-                          isPaidUser
-                            ? 'text-muted-foreground/50'
-                            : 'text-yellow-400',
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        {isPaidUser
-                          ? t('paidStyleLimitTooltip')
-                          : t('upgradeStyleLimitTooltip')}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <UpgradeCrown
+                  paid={isPaidUser}
+                  tooltip={
+                    isPaidUser
+                      ? t('paidStyleLimitTooltip')
+                      : t('upgradeStyleLimitTooltip')
+                  }
+                />
               </div>
             )}
           </div>
