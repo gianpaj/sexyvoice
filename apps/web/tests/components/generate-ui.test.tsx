@@ -140,53 +140,32 @@ describe('GenerateUI', () => {
     );
   });
 
-  it('omits Gemini style for Grok voices', () => {
+  it('keeps the style across voices and leaves the model rule to the children', () => {
+    const geminiVoice = createVoice({
+      id: 'voice-gemini',
+      model: 'gpro38',
+      name: 'kore',
+    });
     const grokVoice = createVoice({
       id: 'voice-grok',
       model: 'xai',
       name: 'eve',
     });
+    renderGenerateUI([geminiVoice, grokVoice]);
 
-    renderGenerateUI([grokVoice]);
-
-    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: grokVoice,
-      }),
-    );
-
-    expect(mockAudioGenerator).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: grokVoice,
-      }),
-    );
-  });
-
-  it('omits Gemini style for Replicate voices', () => {
-    const replicateVoice = createVoice({
-      id: 'voice-replicate',
-      model:
-        'lucataco/orpheus-3b-0.1-ft:79f2a473e6a9720716a473d9b2f2951437dbf91dc02ccb7079fb3d89b881207f',
-      name: 'tara',
+    act(() => {
+      mockVoiceSettingsCard.mock.calls[0][0].setSelectedStyle('Speak warmly');
+      mockVoiceSettingsCard.mock.calls[0][0].setSelectedVoice('voice-grok');
     });
 
-    renderGenerateUI([replicateVoice]);
-
-    expect(mockVoiceSettingsCard).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: replicateVoice,
-      }),
-    );
-
-    expect(mockAudioGenerator).toHaveBeenCalledWith(
-      expect.objectContaining({
-        selectedStyle: undefined,
-        selectedVoice: replicateVoice,
-      }),
-    );
+    for (const child of [mockVoiceSettingsCard, mockAudioGenerator]) {
+      expect(child).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          selectedStyle: 'Speak warmly',
+          selectedVoice: grokVoice,
+        }),
+      );
+    }
   });
 
   it('uses the featured voice as the initial selected voice when present', () => {

@@ -7,7 +7,7 @@ import { AudioProvider } from '@/components/audio-provider';
 import { GenerationSettingsPanel } from '@/components/generation-settings-panel';
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { useGenerationSettings } from '@/hooks/use-generation-settings';
-import { getTtsModel, isActiveTtsModel } from '@/lib/tts/models';
+import { isActiveTtsModel } from '@/lib/tts/models';
 import { compareVoices, getFeaturedVoice } from '@/lib/voices';
 
 interface GenerateUIProps {
@@ -33,9 +33,6 @@ export function GenerateUI({
   const [selectedStyle, setSelectedStyle] = useState(STYLE_PROMPT_VARIANT_MOAN);
   const { settings, updateSettings, resetSettings } = useGenerationSettings();
   const selectedVoiceSample = voices.find((file) => file.id === selectedVoice);
-  const supportsStyle = Boolean(
-    getTtsModel(selectedVoiceSample?.model)?.styleLimit,
-  );
   return (
     <div className="flex flex-col gap-6">
       <div className="flex justify-end">
@@ -50,7 +47,7 @@ export function GenerateUI({
       <VoiceSettingsCard
         isPaidUser={isPaidUser}
         publicVoices={voices}
-        selectedStyle={supportsStyle ? selectedStyle : undefined}
+        selectedStyle={selectedStyle}
         selectedVoice={selectedVoiceSample}
         setSelectedStyle={setSelectedStyle}
         setSelectedVoice={setSelectedVoice}
@@ -59,7 +56,7 @@ export function GenerateUI({
         <AudioGenerator
           hasEnoughCredits={hasEnoughCredits}
           isPaidUser={isPaidUser}
-          selectedStyle={supportsStyle ? selectedStyle : undefined}
+          selectedStyle={selectedStyle}
           selectedVoice={selectedVoiceSample}
           settings={settings}
         />
