@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type { FileUpload } from '@/hooks/use-file-upload';
 import type { RecorderStatus } from '@/hooks/use-media-recorder';
-import { formatCloneMessage } from '@/lib/clone/error-message';
 import { REFERENCE_AUDIO_MAX_BYTES } from '@/lib/clone/reference-audio';
 import { formatBytes } from '@/lib/utils';
 
@@ -62,10 +61,8 @@ export function CloneAudioInput({
     removeFile,
   } = upload;
 
-  const referenceAudioGuidance = formatCloneMessage(
-    usesVoxtral
-      ? t('referenceAudioGuidanceShort')
-      : t('referenceAudioGuidanceLong'),
+  const referenceAudioGuidance = t(
+    usesVoxtral ? 'referenceAudioGuidanceShort' : 'referenceAudioGuidanceLong',
     { MIN: minAudioSeconds, TRIM_SECONDS: maxAudioSeconds },
   );
 
@@ -104,10 +101,9 @@ export function CloneAudioInput({
             <p className="mb-1.5 font-medium text-sm">{t('uploadAudioFile')}</p>
             <p className="text-muted-foreground text-xs">{t('dragDropText')}</p>
             <p className="mt-1 text-muted-foreground text-xs">
-              {t('fileFormatsText').replace(
-                '__SIZE__',
-                formatBytes(REFERENCE_AUDIO_MAX_BYTES),
-              )}
+              {t('fileFormatsText', {
+                SIZE: formatBytes(REFERENCE_AUDIO_MAX_BYTES),
+              })}
             </p>
             <p className="mt-2 text-muted-foreground text-xs italic">
               {referenceAudioGuidance}
@@ -144,7 +140,7 @@ export function CloneAudioInput({
           />
           {mic.tooShort && (
             <p className="text-center text-destructive text-xs" role="alert">
-              {formatCloneMessage(t('errors.audioDurationInvalidVoxtral'), {
+              {t('errors.audioDurationInvalidVoxtral', {
                 MIN: minAudioSeconds,
               })}
             </p>
@@ -156,7 +152,7 @@ export function CloneAudioInput({
         <div className="text-center text-muted-foreground text-xs">
           <span className="flex items-center justify-center gap-2">
             <PulsatingDots />
-            {formatCloneMessage(t('preparingAudioProcessor'), {
+            {t('preparingAudioProcessor', {
               LANGUAGE: selectedLocaleName,
             })}
           </span>

@@ -56,7 +56,7 @@ describe('CloneTextField', () => {
     );
     expect(
       screen.queryByRole('link', {
-        name: messages.clone.upgradeTextLimitTooltip.replace('__MAX__', '4000'),
+        name: messages.clone.upgradeTextLimitTooltip.replace('{MAX}', '4000'),
       }),
     ).not.toBeInTheDocument();
 
@@ -85,7 +85,7 @@ describe('CloneTextField', () => {
     );
     expect(
       screen.getByRole('link', {
-        name: messages.clone.upgradeTextLimitTooltip.replace('__MAX__', '4000'),
+        name: messages.clone.upgradeTextLimitTooltip.replace('{MAX}', '4000'),
       }),
     ).toHaveAttribute('href', '/dashboard/credits');
   });

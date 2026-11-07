@@ -249,10 +249,7 @@ export function useSplitGeneration({
     if (!(params && session)) return;
     if (texts.length > SPLIT_SEGMENT_MAX_COUNT) {
       toast.error(
-        t('split.tooManySegments').replace(
-          '__COUNT__',
-          String(SPLIT_SEGMENT_MAX_COUNT),
-        ),
+        t('split.tooManySegments', { COUNT: SPLIT_SEGMENT_MAX_COUNT }),
       );
       return;
     }
@@ -277,10 +274,7 @@ export function useSplitGeneration({
             toast.error(
               speechErrorMessage(
                 error,
-                t('split.segmentFailed').replace(
-                  '__INDEX__',
-                  String(index + 1),
-                ),
+                t('split.segmentFailed', { INDEX: index + 1 }),
               ),
             );
           }
@@ -299,18 +293,13 @@ export function useSplitGeneration({
     if (!(params && session?.segments[index])) return;
     try {
       await generateSegment({ params, session, signal }, index, randomSeed());
-      toast.success(
-        t('split.segmentGenerated').replace('__INDEX__', String(index + 1)),
-      );
+      toast.success(t('split.segmentGenerated', { INDEX: index + 1 }));
     } catch (error) {
       if (!signal.aborted) {
         toast.error(
           speechErrorMessage(
             error,
-            t('split.segmentRetryFailed').replace(
-              '__INDEX__',
-              String(index + 1),
-            ),
+            t('split.segmentRetryFailed', { INDEX: index + 1 }),
           ),
         );
       }

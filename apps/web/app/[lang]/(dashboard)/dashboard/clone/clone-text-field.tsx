@@ -6,7 +6,6 @@ import type { Dispatch } from 'react';
 import { SpeechTextField } from '@/components/speech-text-field';
 import { Label } from '@/components/ui/label';
 import { RTL_CLONE_LOCALE_CODES } from '@/lib/clone/constants';
-import { formatCloneMessage } from '@/lib/clone/error-message';
 import { CLONE_PROVIDERS } from '@/lib/clone/providers';
 import type { CloneStateAction } from './clone-state';
 
@@ -28,8 +27,8 @@ export function CloneTextField({
   dispatch: Dispatch<CloneStateAction>;
 }) {
   const t = useTranslations('clone');
-  const textLimitTooltip = formatCloneMessage(
-    userHasPaid ? t('paidTextLimitTooltip') : t('upgradeTextLimitTooltip'),
+  const textLimitTooltip = t(
+    userHasPaid ? 'paidTextLimitTooltip' : 'upgradeTextLimitTooltip',
     { MAX: CLONE_PROVIDERS.mistral.textLimit.paid },
   );
 

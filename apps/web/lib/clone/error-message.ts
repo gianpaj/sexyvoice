@@ -17,19 +17,6 @@ type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
   message?: string;
 };
 
-/** Fills `__KEY__` placeholders in clone copy. */
-export const formatCloneMessage = (
-  message: string,
-  values: Record<string, boolean | number | string | null | undefined>,
-) =>
-  Object.entries(values).reduce(
-    (formatted, [key, value]) =>
-      value === null || value === undefined
-        ? formatted
-        : formatted.replaceAll(`__${key}__`, String(value)),
-    message,
-  );
-
 export const getCloneErrorMessage = (
   t: CloneTranslator,
   translateErrorCode: ErrorCodesTranslator,
@@ -56,8 +43,14 @@ export const getCloneErrorMessage = (
     return serverFallback;
   }
 
-  const message = t(messageKey);
-  return formatCloneMessage(message, details ?? {});
+  // Route details fill the message's ICU arguments, such as {MIN} or {MAX}.
+  const values = Object.fromEntries(
+    Object.entries(details ?? {}).filter(
+      (entry): entry is [string, number | string] =>
+        typeof entry[1] === 'number' || typeof entry[1] === 'string',
+    ),
+  );
+  return t(messageKey, values);
 };
 
 /** Localized message for a failed `POST /api/clone-voice` response. */

@@ -23,11 +23,12 @@ export function useGenerationProgressToast(voiceName?: string) {
       ? 100
       : Math.max(0, Math.round(((safeSegmentNumber - 1) / safeTotal) * 100));
     const title = voiceName
-      ? t('progressTitleWithVoice').replace('__VOICE__', voiceName)
+      ? t('progressTitleWithVoice', { VOICE: voiceName })
       : t('progressTitle');
-    const segmentLabel = t('progressSegment')
-      .replace('__CURRENT__', String(safeSegmentNumber))
-      .replace('__TOTAL__', String(safeTotal));
+    const segmentLabel = t('progressSegment', {
+      CURRENT: safeSegmentNumber,
+      TOTAL: safeTotal,
+    });
 
     toastIdRef.current = toast.loading(
       <div className="w-[280px] space-y-2">

@@ -157,10 +157,10 @@ const errorCodesDict = {
 const dict = {
   savedVoice: enMessages.clone.savedVoice,
   audioConversionFailed: 'Audio conversion failed. Please try recording again.',
-  audioConversionFailedWithMessage: 'Audio conversion failed: __ERROR__',
-  audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
+  audioConversionFailedWithMessage: 'Audio conversion failed: {ERROR}',
+  audioDurationInvalidFallback: 'Audio must be at least {MIN} seconds.',
   audioDurationInvalidVoxtral:
-    'Reference audio must be at least __MIN__ seconds for voice cloning.',
+    'Reference audio must be at least {MIN} seconds for voice cloning.',
   audioDurationUnknown: 'Could not determine audio duration.',
   audioFileLabel: 'Audio File',
   audioProcessorError: 'Audio Processor Error',
@@ -176,20 +176,17 @@ const dict = {
   dragDropText: 'Drag & drop or click to browse',
   englishChatterbox: 'English (Chatterbox)',
   errorCloning: 'Failed to clone voice',
-  errorEnhancingReferenceAudio: 'Failed to enhance reference audio.',
   errors: {
     audioConversionFailed:
       'Failed to convert audio format. Please upload MP3, OGG, Opus, or WAV.',
     audioConversionRequiredWebm:
       'WebM audio must be converted before uploading. Please try recording again.',
-    audioDurationInvalidFallback: 'Audio must be at least __MIN__ seconds.',
+    audioDurationInvalidFallback: 'Audio must be at least {MIN} seconds.',
     audioDurationInvalidVoxtral:
-      'Reference audio must be at least __MIN__ seconds for voice cloning.',
+      'Reference audio must be at least {MIN} seconds for voice cloning.',
     audioDurationUnknown: 'Could not determine audio duration.',
-    ffmpegLoading:
-      'The audio converter is still loading. Please try again in a moment',
     fileTooLarge: 'File size too large. Please use a smaller audio file.',
-    insufficientCredits: 'You need __CREDITS__ credits to clone this audio.',
+    insufficientCredits: 'You need {CREDITS} credits to clone this audio.',
     internalError: 'Failed to clone voice. Please try again.',
     invalidContentType: 'The upload request is invalid. Please try again.',
     invalidFileType:
@@ -201,8 +198,8 @@ const dict = {
     referenceAudioEnhancementInputTooLarge:
       'The reference audio is too large to enhance.',
     referenceAudioEnhancementInputTooLong:
-      'Reference audio cleanup supports clips up to __MAX__ seconds.',
-    textTooLong: 'Text exceeds the maximum length of __MAX__ characters.',
+      'Reference audio cleanup supports clips up to {MAX} seconds.',
+    textTooLong: 'Text exceeds the maximum length of {MAX} characters.',
     unsupportedAudioFormat:
       'Unsupported audio format for voice cloning. Please use MP3, OGG/Opus, WebM, or WAV.',
     unsupportedLocale: 'This language is not supported for voice cloning.',
@@ -211,8 +208,8 @@ const dict = {
   errorTitle: 'Error',
   errorTooLarge: 'File size too large. Please use a smaller audio file.',
   failedToLoadAudioProcessor: 'Failed to load audio processor',
-  failedToStartRecording: 'Failed to start recording: __ERROR__',
-  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. __SIZE__)',
+  failedToStartRecording: 'Failed to start recording: {ERROR}',
+  fileFormatsText: 'MP3, WAV, M4A, OGG or OPUS (WhatsApp) (max. {SIZE})',
   generating: 'Generating',
   languageLabel: 'Language',
   languageSelectPlaceholder: 'Select a language',
@@ -223,23 +220,18 @@ const dict = {
   notEnoughCredits: "You don't have enough credits to generate audio.",
   orUseMicrophone: 'or use your microphone',
   paidTextLimitTooltip:
-    'Paid users can clone longer speech with up to __MAX__ characters.',
+    'Paid users can clone longer speech with up to {MAX} characters.',
   playAudio: 'Play Audio',
-  preparingAudioProcessor: 'Preparing audio processor for __LANGUAGE__...',
+  preparingAudioProcessor: 'Preparing audio processor for {LANGUAGE}...',
   previewTitle: 'Generated Voice Preview',
   referenceAudioEnhancementHelp:
     'Optionally denoise and clean the reference clip before cloning. Best for noisy or imperfect recordings.',
   referenceAudioEnhancementLabel: 'Reference audio enhancement',
   referenceAudioGuidanceLong:
-    'Use a clear reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+    'Use a clear reference clip at least {MIN} seconds long. Only the first {TRIM_SECONDS} seconds are used.',
   referenceAudioGuidanceShort:
-    'Use a clean single-speaker reference clip at least __MIN__ seconds long. Only the first __TRIM_SECONDS__ seconds are used.',
+    'Use a clean single-speaker reference clip at least {MIN} seconds long. Only the first {TRIM_SECONDS} seconds are used.',
   removeFile: 'Remove file',
-  sampleCard: {
-    exampleOutput: 'Example',
-    loadSource: 'Load source',
-    sourceAudio: 'Source audio',
-  },
   subtitle:
     'Upload an audio file and enter text to create a voice clone and generate speech in one step',
   success: 'Audio generated successfully!',
@@ -248,10 +240,9 @@ const dict = {
   textAreaPlaceholder: 'Enter the text you want to convert to speech...',
   textToConvertLabel: 'Enter text to generate speech',
   title: 'Clone a Voice',
-  tryDemo: 'Or try with a demo:',
   unexpectedError: 'Unexpected error occurred',
   upgradeTextLimitTooltip:
-    'Upgrade to a paid plan to clone longer speech with up to __MAX__ characters.',
+    'Upgrade to a paid plan to clone longer speech with up to {MAX} characters.',
   uploadAudioFile: 'Upload audio file',
 } as const;
 
@@ -581,7 +572,7 @@ describe('NewVoiceClient', () => {
       });
     const tooShort =
       enMessages.clone.errors.audioDurationInvalidVoxtral.replace(
-        '__MIN__',
+        '{MIN}',
         '10',
       );
 

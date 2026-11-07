@@ -82,10 +82,7 @@ export function SplitSegmentsPanel({
               <div className="flex items-center gap-2">
                 {segmentStatusIcon}
                 <p className="font-medium text-sm">
-                  {t('split.segmentLabel').replace(
-                    '__INDEX__',
-                    String(index + 1),
-                  )}
+                  {t('split.segmentLabel', { INDEX: index + 1 })}
                 </p>
               </div>
               <p className="text-muted-foreground text-xs">

@@ -47,7 +47,7 @@ import {
   resolveBaseCloneLocale,
 } from '@/lib/clone/constants';
 import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
-import { formatCloneMessage, readCloneError } from '@/lib/clone/error-message';
+import { readCloneError } from '@/lib/clone/error-message';
 import {
   createMicrophoneReferenceAudioFile,
   isWebmAudioBlob,
@@ -287,9 +287,7 @@ function NewVoiceClientInner({
           : t('failedToLoadAudioProcessor');
       dispatch({
         patch: {
-          errorMessage: formatCloneMessage(t('failedToStartRecording'), {
-            ERROR: errorMsg,
-          }),
+          errorMessage: t('failedToStartRecording', { ERROR: errorMsg }),
           ffmpegError: errorMsg,
         },
         type: 'patch',
@@ -481,12 +479,9 @@ function NewVoiceClientInner({
               patch: {
                 errorMessage:
                   convertError instanceof Error
-                    ? formatCloneMessage(
-                        t('audioConversionFailedWithMessage'),
-                        {
-                          ERROR: convertError.message,
-                        },
-                      )
+                    ? t('audioConversionFailedWithMessage', {
+                        ERROR: convertError.message,
+                      })
                     : t('audioConversionFailed'),
                 status: 'error',
               },
