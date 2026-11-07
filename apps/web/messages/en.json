@@ -1202,11 +1202,7 @@
       "ctaLoggedOut": "Claim offer",
       "ariaLabelDismiss": "Dismiss Black Friday banner",
       "countdown": {
-        "prefix": "Deal ends in:",
-        "days": "Days",
-        "hours": "Hours",
-        "minutes": "Min",
-        "seconds": "Sec"
+        "prefix": "Deal ends in:"
       },
       "pricing": {
         "bannerText": "Black Friday Sale"

@@ -1200,11 +1200,7 @@
       "ctaLoggedOut": "Få tilbud",
       "ariaLabelDismiss": "Luk Black Friday-banner",
       "countdown": {
-        "prefix": "Tilbud udløber om:",
-        "days": "Dage",
-        "hours": "Timer",
-        "minutes": "Min",
-        "seconds": "Sek"
+        "prefix": "Tilbud udløber om:"
       },
       "pricing": {
         "bannerText": "Black Friday-udsalg"

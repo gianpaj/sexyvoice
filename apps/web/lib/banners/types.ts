@@ -2,7 +2,6 @@ import type { Locale } from '@/lib/i18n/i18n-config';
 
 export type BannerAudience = 'loggedIn' | 'loggedOut';
 export type BannerKind = 'announcement' | 'promo';
-export type BannerPlacement = 'blog' | 'dashboard' | 'landing';
 export type BannerTheme = 'blue' | 'orange' | 'pink';
 
 export interface BannerArtworkImage {
@@ -20,17 +19,9 @@ export interface BannerArtwork {
   mobile: BannerArtworkImage;
 }
 
-export interface BannerCountdownLabels {
-  days: string;
-  hours: string;
-  minutes: string;
-  prefix: string;
-  seconds: string;
-}
-
 export interface BannerTranslation {
   ariaLabelDismiss: string;
-  countdown?: BannerCountdownLabels;
+  countdown?: { prefix: string };
   ctaLoggedIn: string;
   ctaLoggedOut: string;
   text: string;
@@ -38,9 +29,11 @@ export interface BannerTranslation {
 
 export interface BannerDefinition {
   artwork?: BannerArtwork;
-  countdown?: {
-    endDateEnvVar: string;
-  };
+  /**
+   * Counts down to `NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE` and hides the
+   * banner when it passes.
+   */
+  countdown?: true;
   cta: {
     loggedInHref: (lang: Locale) => string;
     loggedOutHref: (lang: Locale) => string;
@@ -49,11 +42,10 @@ export interface BannerDefinition {
     cookieKey: string;
     days: number;
   };
-  dismissible?: boolean;
   id: string;
   kind: BannerKind;
-  placements: BannerPlacement[];
   priority: number;
+  /** Announcements only; promos take `NEXT_PUBLIC_PROMO_THEME`. */
   theme?: BannerTheme;
 }
 
@@ -61,9 +53,8 @@ export interface ResolvedBanner {
   ariaLabelDismiss: string;
   artwork?: BannerArtwork;
   countdown?: {
-    enabled: boolean;
     endDate: string;
-    labels: BannerCountdownLabels;
+    prefix: string;
   };
   ctaLink: string;
   ctaText: string;
@@ -71,9 +62,7 @@ export interface ResolvedBanner {
     cookieKey: string;
     days: number;
   };
-  dismissible: boolean;
   id: string;
-  kind: BannerKind;
   text: string;
   theme: BannerTheme;
 }

@@ -4,7 +4,6 @@ import { getBannerDefinition } from './registry';
 import type {
   BannerAudience,
   BannerDefinition,
-  BannerPlacement,
   BannerTheme,
   BannerTranslation,
   ResolvedBanner,
@@ -15,131 +14,113 @@ interface ResolveActiveBannerOptions {
   dismissedCookieKeys?: Iterable<string>;
   lang: Locale;
   messages: IntlMessages;
-  placement: BannerPlacement;
+  /** Not read: every banner shows on every page. */
+  placement?: 'blog' | 'dashboard' | 'landing';
 }
 
-export function getActivePromoBannerId() {
-  if (process.env.NEXT_PUBLIC_PROMO_ENABLED !== 'true') {
-    return null;
-  }
+const BANNER_THEMES: readonly BannerTheme[] = ['blue', 'orange', 'pink'];
 
-  return process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER || null;
+/** Checkout grants promo bonus credits whenever this is on. */
+export function isPromoEnabled() {
+  return process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
+}
+
+/** The promo campaign to advertise; promos never fall back to a default. */
+export function getActivePromoBannerId() {
+  return isPromoEnabled()
+    ? process.env.NEXT_PUBLIC_ACTIVE_PROMO_BANNER || null
+    : null;
+}
+
+export function getPromoTheme(): BannerTheme {
+  const theme = process.env.NEXT_PUBLIC_PROMO_THEME;
+  return BANNER_THEMES.find((candidate) => candidate === theme) ?? 'pink';
+}
+
+/** The pricing-table copy of the selected promo campaign. */
+export function getActivePromoPricingText(
+  messages: IntlMessages,
+): string | undefined {
+  const promoId = getActivePromoBannerId();
+  return promoId && Object.hasOwn(messages.promos, promoId)
+    ? messages.promos[promoId as keyof typeof messages.promos].pricing
+        .bannerText
+    : undefined;
 }
 
 function getActiveAnnouncementBannerId() {
   return process.env.NEXT_PUBLIC_ACTIVE_ANNOUNCEMENT_BANNER || null;
 }
 
-function getBannerTheme(definition: BannerDefinition): BannerTheme {
-  if (definition.kind === 'promo') {
-    return (process.env.NEXT_PUBLIC_PROMO_THEME as BannerTheme) || 'pink';
-  }
-
-  return definition.theme || 'pink';
-}
-
 function getBannerTranslation(
   definition: BannerDefinition,
   messages: IntlMessages,
 ): BannerTranslation | null {
-  if (definition.kind === 'promo') {
-    if (!Object.hasOwn(messages.promos, definition.id)) {
-      return null;
-    }
-
-    return messages.promos[
-      definition.id as keyof typeof messages.promos
-    ] as BannerTranslation;
-  }
-
-  if (!Object.hasOwn(messages.announcements, definition.id)) {
-    return null;
-  }
-
-  return messages.announcements[
-    definition.id as keyof typeof messages.announcements
-  ] as BannerTranslation;
+  const translations =
+    definition.kind === 'promo' ? messages.promos : messages.announcements;
+  return Object.hasOwn(translations, definition.id)
+    ? (translations[
+        definition.id as keyof typeof translations
+      ] as BannerTranslation)
+    : null;
 }
 
 function resolveBanner(
   definition: BannerDefinition,
   options: ResolveActiveBannerOptions,
 ): ResolvedBanner | null {
-  if (!definition.placements.includes(options.placement)) {
-    return null;
-  }
-
   const translation = getBannerTranslation(definition, options.messages);
   if (!translation) {
     return null;
   }
 
-  const countdownEndDate =
-    definition.countdown &&
-    process.env[definition.countdown.endDateEnvVar] &&
-    translation.countdown
-      ? process.env[definition.countdown.endDateEnvVar]
+  const countdownEndDate = process.env.NEXT_PUBLIC_PROMO_COUNTDOWN_END_DATE;
+  const countdown =
+    definition.countdown && countdownEndDate && translation.countdown
+      ? { endDate: countdownEndDate, prefix: translation.countdown.prefix }
       : undefined;
 
-  if (isBannerCountdownExpired(countdownEndDate)) {
+  if (isBannerCountdownExpired(countdown?.endDate)) {
     return null;
   }
 
+  const loggedIn = options.audience === 'loggedIn';
   return {
     ariaLabelDismiss: translation.ariaLabelDismiss,
     artwork: definition.artwork,
-    countdown: countdownEndDate
-      ? {
-          enabled: true,
-          endDate: countdownEndDate,
-          labels: translation.countdown!,
-        }
-      : undefined,
-    ctaLink:
-      options.audience === 'loggedIn'
-        ? definition.cta.loggedInHref(options.lang)
-        : definition.cta.loggedOutHref(options.lang),
-    ctaText:
-      options.audience === 'loggedIn'
-        ? translation.ctaLoggedIn
-        : translation.ctaLoggedOut,
-    dismiss: {
-      cookieKey: definition.dismiss.cookieKey,
-      days: definition.dismiss.days,
-    },
-    dismissible: definition.dismissible ?? true,
+    countdown,
+    ctaLink: loggedIn
+      ? definition.cta.loggedInHref(options.lang)
+      : definition.cta.loggedOutHref(options.lang),
+    ctaText: loggedIn ? translation.ctaLoggedIn : translation.ctaLoggedOut,
+    dismiss: definition.dismiss,
     id: definition.id,
-    kind: definition.kind,
     text: translation.text,
-    theme: getBannerTheme(definition),
+    theme:
+      definition.kind === 'promo'
+        ? getPromoTheme()
+        : (definition.theme ?? 'pink'),
   };
 }
 
+/**
+ * The one banner to show: the highest-priority active banner whose
+ * dismissal cookie is not set.
+ */
 export function resolveActiveBanner(
   options: ResolveActiveBannerOptions,
 ): ResolvedBanner | null {
   const dismissedCookieKeys = new Set(options.dismissedCookieKeys ?? []);
-  const activeBannerIds = [
-    getActivePromoBannerId(),
-    getActiveAnnouncementBannerId(),
-  ].filter((bannerId): bannerId is string => Boolean(bannerId));
-
-  const resolvedBanners = activeBannerIds
-    .map((bannerId) => getBannerDefinition(bannerId))
-    .filter(
-      (banner): banner is NonNullable<ReturnType<typeof getBannerDefinition>> =>
-        Boolean(banner),
-    )
-    .filter((banner) => !dismissedCookieKeys.has(banner.dismiss.cookieKey))
-    .map((banner) => ({
-      banner: resolveBanner(banner, options),
-      priority: banner.priority,
-    }))
-    .filter(
-      (candidate): candidate is { banner: ResolvedBanner; priority: number } =>
-        Boolean(candidate.banner),
-    )
-    .sort((a, b) => b.priority - a.priority);
-
-  return resolvedBanners[0]?.banner || null;
+  return (
+    [getActivePromoBannerId(), getActiveAnnouncementBannerId()]
+      .map((bannerId) => (bannerId ? getBannerDefinition(bannerId) : undefined))
+      .filter(
+        (definition): definition is BannerDefinition =>
+          definition !== undefined &&
+          !dismissedCookieKeys.has(definition.dismiss.cookieKey),
+      )
+      .toSorted((a, b) => b.priority - a.priority)
+      .map((definition) => resolveBanner(definition, options))
+      .find((banner) => banner !== null) ?? null
+  );
 }

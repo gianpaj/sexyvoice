@@ -45,7 +45,6 @@ export async function MarketingPage({
         audience: 'loggedOut',
         lang,
         messages: await getMessages({ locale: lang }),
-        placement: 'landing',
       })
     : null;
 

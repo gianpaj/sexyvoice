@@ -1204,11 +1204,7 @@
       "ctaLoggedOut": "Ottieni offerta",
       "ariaLabelDismiss": "Chiudi banner Black Friday",
       "countdown": {
-        "prefix": "L'offerta termina tra:",
-        "days": "Giorni",
-        "hours": "Ore",
-        "minutes": "Min",
-        "seconds": "Sec"
+        "prefix": "L'offerta termina tra:"
       },
       "pricing": {
         "bannerText": "Saldi Black Friday"

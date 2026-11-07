@@ -1204,11 +1204,7 @@
       "ctaLoggedOut": "Jetzt registrieren",
       "ariaLabelDismiss": "Black Friday-Banner schließen",
       "countdown": {
-        "prefix": "Angebot endet in:",
-        "days": "Tage",
-        "hours": "Stunden",
-        "minutes": "Min",
-        "seconds": "Sek"
+        "prefix": "Angebot endet in:"
       },
       "pricing": {
         "bannerText": "Black Friday Verkauf"

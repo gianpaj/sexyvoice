@@ -1204,11 +1204,7 @@
       "ctaLoggedOut": "Regístrate ahora",
       "ariaLabelDismiss": "Descartar banner de Black Friday",
       "countdown": {
-        "prefix": "La oferta termina en:",
-        "days": "Días",
-        "hours": "Horas",
-        "minutes": "Min",
-        "seconds": "Seg"
+        "prefix": "La oferta termina en:"
       },
       "pricing": {
         "bannerText": "Oferta Black Friday"
