@@ -5,8 +5,8 @@ import type React from 'react';
 import { cn } from '@/lib/utils';
 
 export interface ProgressCircleProps extends React.ComponentProps<'svg'> {
-  value: number;
   className?: string;
+  value: number;
 }
 
 // https://github.com/shadcn-ui/ui/issues/697
@@ -49,30 +49,30 @@ export const ProgressCircle = ({
 
   return (
     <svg
+      aria-valuemax={100}
+      aria-valuemin={0}
+      aria-valuenow={normalizedValue}
+      className={cn('size-6 fill-[#fff]', className)}
       role="progressbar"
       viewBox={`0 0 ${size} ${size}`}
-      className={cn('size-6 fill-[#fff]', className)}
-      aria-valuenow={normalizedValue}
-      aria-valuemin={0}
-      aria-valuemax={100}
       {...restSvgProps}
     >
       <circle {...commonParams} className="stroke-white/25" />
       <circle
         {...commonParams}
+        className="stroke-current"
         stroke="currentColor"
         strokeDasharray={circumference}
         strokeDashoffset={circumference - progress}
         strokeLinecap="round"
         transform={`rotate(-90 ${halfSize} ${halfSize})`}
-        className="stroke-current"
       />
       <text
+        className="font-medium text-[0.4rem]"
+        dominantBaseline="central"
+        textAnchor="middle"
         x={halfSize}
         y={halfSize}
-        textAnchor="middle"
-        dominantBaseline="central"
-        className="font-medium text-[0.4rem]"
       >
         {Math.round(normalizedValue)}%
       </text>
