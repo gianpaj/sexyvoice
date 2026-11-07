@@ -267,8 +267,16 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
 - `LiveKitRoom` renders its children one render after `CallSetupProvider`
   rewrites the URL. Read call page query parameters on the server and pass
   them to the providers and `CallExperience`.
-- LiveKit call tokens resolve character prompts server-side. Predefined prompt
-  text must never be exposed to the client.
+- Call code lives in `apps/web/lib/calls/` and `apps/web/components/call/`.
+  `lib/calls/characters.ts` owns the character row; a custom character is
+  deleted by deleting its prompt, which cascades.
+- `/api/call-token` takes only the character ID and per-call choices
+  (language, scene) and resolves the prompt, voice, model and settings from
+  the saved character. Predefined prompt text must never be exposed to the
+  client. The SexyCall agent reads the metadata keys built in
+  `lib/calls/call-token.ts`; change them only together with the agent.
+- Call refusals and agent errors carry a stable `code`; `lib/calls/errors.ts`
+  maps each code to its `call.*` message.
 - `LIVEKIT_AGENT_NAME` defaults to `sexycall` and must match the deployed
   worker's registered agent name. See `docs/devops.md` for dispatch setup.
 - The call agent lives in the `gianpaj/sexycall` repo (Python, LiveKit
