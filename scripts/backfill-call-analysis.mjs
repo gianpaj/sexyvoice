@@ -33,7 +33,6 @@
 
 import {
   aggregateInsights,
-  createAdminClient,
   createXaiClient,
   DEFAULT_BATCH_TIMEOUT_MINUTES,
   getAllCompletedCallSessions,
@@ -44,65 +43,28 @@ import {
   runSmokeTest,
   saveResults,
 } from './analyze-call-sessions.mjs';
+import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
+import { createScriptAdminClient } from './lib/supabase.mts';
 
 function parseArgs() {
-  const args = process.argv.slice(2);
-  const options = {
-    batchTimeoutMinutes: DEFAULT_BATCH_TIMEOUT_MINUTES,
-    debug: false,
-    debugSession: null,
-    dryRun: false,
-    limit: null,
-    minDuration: MIN_ANALYSIS_CALL_DURATION_SECONDS,
-    models: [],
-    realtime: false,
-    retryFailed: false,
-    smokeTest: false,
-  };
-
-  for (const arg of args) {
-    const [key, ...rest] = arg.split('=');
-    const value = rest.join('=');
-    switch (key) {
-      case '--dry-run':
-        options.dryRun = true;
-        break;
-      case '--limit':
-        options.limit = Number.parseInt(value, 10);
-        break;
-      case '--min-duration':
-        options.minDuration = Number.parseInt(value, 10);
-        break;
-      case '--models':
-        options.models = value
-          .split(',')
-          .map((m) => m.trim())
-          .filter(Boolean);
-        break;
-      case '--retry-failed':
-        options.retryFailed = true;
-        break;
-      case '--debug':
-        options.debug = true;
-        break;
-      case '--debug-session':
-        options.debugSession = value || null;
-        options.debug = true;
-        break;
-      case '--smoke-test':
-        options.smokeTest = true;
-        options.debug = true;
-        break;
-      case '--realtime':
-      case '--no-batch':
-        options.realtime = true;
-        break;
-      case '--batch-timeout':
-        options.batchTimeoutMinutes = Number.parseInt(value, 10);
-        break;
-      case '--help':
-      case '-h':
-        console.log(`
+  const { values } = parseCliArgs({
+    options: {
+      'batch-timeout': { type: 'string' },
+      debug: { type: 'boolean' },
+      'debug-session': { type: 'string' },
+      'dry-run': { type: 'boolean' },
+      help: { short: 'h', type: 'boolean' },
+      limit: { type: 'string' },
+      'min-duration': { type: 'string' },
+      models: { type: 'string' },
+      'no-batch': { type: 'boolean' },
+      realtime: { type: 'boolean' },
+      'retry-failed': { type: 'boolean' },
+      'smoke-test': { type: 'boolean' },
+    },
+  });
+  if (values.help) {
+    console.log(`
 Backfill Call Analysis Script
 
 Usage:
@@ -120,19 +82,43 @@ Options:
   --realtime           Use synchronous xAI calls instead of the Batch API
   --batch-timeout=N    Minutes to wait for the batch to finish (default: ${DEFAULT_BATCH_TIMEOUT_MINUTES})
   -h, --help           Show this help
-      `);
-        process.exit(0);
-        break;
-      default:
-        break;
-    }
+    `);
+    return null;
   }
-
-  return options;
+  return {
+    batchTimeoutMinutes:
+      values['batch-timeout'] === undefined
+        ? DEFAULT_BATCH_TIMEOUT_MINUTES
+        : Number.parseInt(values['batch-timeout'], 10),
+    debug: Boolean(
+      values.debug ||
+        values['smoke-test'] ||
+        values['debug-session'] !== undefined,
+    ),
+    debugSession: values['debug-session'] || null,
+    dryRun: Boolean(values['dry-run']),
+    limit:
+      values.limit === undefined ? null : Number.parseInt(values.limit, 10),
+    minDuration:
+      values['min-duration'] === undefined
+        ? MIN_ANALYSIS_CALL_DURATION_SECONDS
+        : Number.parseInt(values['min-duration'], 10),
+    models: (values.models ?? '')
+      .split(',')
+      .map((model) => model.trim())
+      .filter(Boolean),
+    realtime: Boolean(values.realtime || values['no-batch']),
+    retryFailed: Boolean(values['retry-failed']),
+    smokeTest: Boolean(values['smoke-test']),
+  };
 }
 
 async function main() {
   const options = parseArgs();
+  if (!options) {
+    return;
+  }
+  loadScriptEnv();
   console.log('🚀 Backfill Call Analysis');
   console.log(`   Mode: ${options.dryRun ? 'DRY RUN' : 'LIVE'}`);
   console.log(`   Engine: ${options.realtime ? 'real-time' : 'Batch API'}`);
@@ -142,7 +128,7 @@ async function main() {
     }`,
   );
 
-  const supabase = createAdminClient();
+  const supabase = createScriptAdminClient({ readOnly: options.dryRun });
 
   if (options.smokeTest) {
     console.log('\n🧪 xAI smoke test:', await runSmokeTest(createXaiClient()));
@@ -180,7 +166,4 @@ async function main() {
   console.log('\n✅ Backfill complete!');
 }
 
-main().catch((error) => {
-  console.error('❌ Backfill failed:', error);
-  process.exit(1);
-});
+runScript(import.meta.url, main);
