@@ -8,7 +8,7 @@ import type { TtsModel } from '@/lib/tts/models';
 
 export type TagProvider = 'grok' | 'voxtral';
 
-export interface TagCatalog {
+interface TagCatalog {
   /** Label of the tag picker button. */
   effectsLabelKey:
     | 'generate.grok.inlineEffectPlaceholder'

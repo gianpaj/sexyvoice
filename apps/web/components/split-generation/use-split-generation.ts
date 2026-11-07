@@ -27,7 +27,7 @@ import { useGenerationProgressToast } from './use-generation-progress-toast';
 
 export type SplitSegmentStatus = 'idle' | 'generating' | 'success' | 'failed';
 
-export interface SplitSegment {
+interface SplitSegment {
   audioUrl: string;
   id: string;
   status: SplitSegmentStatus;

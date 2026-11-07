@@ -1,6 +1,6 @@
 import { getStyleLimit, getTextLimit, type TtsModel } from './models';
 
-export type SpeechSettingName = keyof TtsModel['settings'];
+type SpeechSettingName = keyof TtsModel['settings'];
 
 interface SpeechSettingRule {
   max?: number;
@@ -20,7 +20,7 @@ export const SPEECH_SETTINGS = {
   temperature: { max: 2, min: 0, paid: true, step: 0.1 },
 } as const satisfies Record<SpeechSettingName, SpeechSettingRule>;
 
-export interface SpeechSettings {
+interface SpeechSettings {
   /** Grok language, `auto` included. */
   language?: string;
   seed?: number;
@@ -28,7 +28,7 @@ export interface SpeechSettings {
   temperature?: number;
 }
 
-export interface GenerationInput {
+interface GenerationInput {
   isPaidUser: boolean;
   /** Requested settings, unchecked: a request body or the stored settings. */
   settings?: Partial<Record<SpeechSettingName, unknown>>;
@@ -36,7 +36,7 @@ export interface GenerationInput {
   text?: string;
 }
 
-export interface GenerationInputCheck {
+interface GenerationInputCheck {
   /** Settings the model honours and the user may set, clamped to range. */
   settings: SpeechSettings;
   /** The delivery style, or undefined when the model takes none. */

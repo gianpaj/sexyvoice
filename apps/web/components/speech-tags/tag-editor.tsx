@@ -58,7 +58,7 @@ function tagDefinition(tag: string, closeTag?: string): TagDef {
   return { closeTag, description: name, label: name, tag };
 }
 
-export interface TagEditorProps {
+interface TagEditorProps {
   ariaLabelledBy?: string;
   charactersLimit: number;
   dir?: 'ltr' | 'rtl';

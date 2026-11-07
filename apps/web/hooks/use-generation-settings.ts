@@ -24,7 +24,7 @@ export const DEFAULT_GENERATION_SETTINGS: GenerationSettings = {
 
 const STORAGE_KEY = 'generation-settings';
 
-export interface UseGenerationSettingsResult {
+interface UseGenerationSettingsResult {
   resetSettings: () => void;
   settings: GenerationSettings;
   updateSettings: (patch: Partial<GenerationSettings>) => void;

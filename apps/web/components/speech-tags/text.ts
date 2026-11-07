@@ -51,9 +51,9 @@ interface InstantTagNode {
   type: 'instantTag';
 }
 
-export type WrapperBoundaryKind = 'open' | 'close';
+type WrapperBoundaryKind = 'open' | 'close';
 
-export interface WrapperBoundaryNode {
+interface WrapperBoundaryNode {
   attrs: { closeTag: string; kind: WrapperBoundaryKind; openTag: string };
   type: 'wrapperBoundary';
 }
