@@ -110,7 +110,9 @@ a secret, identify every producer and consumer that must change together.
 
 ### Core application
 
-- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_SITE_URL`: the public origin for redirects, canonical URLs,
+  hreflang, the sitemap, structured data and agent markdown. Production must
+  be `https://sexyvoice.ai`.
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: safe for browser clients; RLS controls
   database access.

@@ -239,7 +239,7 @@ The app uses a shared banner system for both promotions and announcements:
 
 - `apps/web/components/banner.tsx` renders the banner UI
 - `apps/web/lib/banners/registry.ts` defines supported banners
-- `apps/web/lib/banners/resolve-banner.ts` resolves the single visible banner per placement
+- `apps/web/lib/banners/resolve-banner.ts` resolves the single visible banner
 - `apps/web/components/banner.tsx` writes dismissal cookies through
   `apps/web/lib/cookies.ts`
 

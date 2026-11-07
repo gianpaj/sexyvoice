@@ -97,6 +97,11 @@ Runtime and tooling:
 - `apps/web/lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
   pricing, and OpenAPI generation.
 - `apps/web/lib/i18n/` and `apps/web/messages/*.json` - locale config, navigation, and copy.
+- `apps/web/lib/site.ts`, `lib/page-metadata.ts`, `lib/structured-data.ts`,
+  `lib/content.ts`, `lib/public-routes.ts` and `components/marketing-page.tsx` -
+  the public site: identity, per-page metadata, JSON-LD, posts and policies,
+  the sitemap registry and the marketing shell. `tests/public-site/` pins
+  their output.
 - `apps/web/lib/supabase/` - Supabase clients, typed queries, and admin access.
 - `apps/web/lib/storage/` - Cloudflare R2 upload/delete helpers.
 - `apps/web/supabase/migrations/` - database migrations.
@@ -131,7 +136,7 @@ pnpm format              # Biome format check for web and docs
 pnpm fixall              # Apply Biome format, lint, and assist fixes
 pnpm check-translations  # Validate message key parity across locales
 pnpm build:content       # Build MDX content (Contentlayer2) for the web app
-pnpm clean               # Check unused dependencies with knip
+pnpm clean               # Check unused code with knip (apps/web/knip.jsonc)
 ```
 
 Use package filters when you only want one app, e.g.
@@ -168,7 +173,9 @@ Use package filters when you only want one app, e.g.
 ## Internationalization
 
 - UI copy must use `next-intl`; do not hardcode user-facing English strings.
-- Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`.
+- Supported website locales: `en`, `es`, `de`, `da`, `it`, `fr`, defined once
+  in `apps/web/src/i18n/routing.ts`. `pnpm check-translations` fails when a
+  locale has no message file.
 - Async Server Components use `getTranslations()` for UI text.
   Non-async components can use `useTranslations()`, including on the server.
 - Prefer passing server-translated labels or content to Client Components
@@ -286,7 +293,11 @@ Routes under `apps/web/app/api/v1/*` are API-key authenticated except
   `NEXT_PUBLIC_ACTIVE_PROMO_BANNER`. An unset or empty selection shows no promo
   banner; do not add an implicit campaign fallback.
 - Banner dismissal writes a client-side cookie through
-  `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`.
+  `apps/web/lib/cookies.ts` from `apps/web/components/banner.tsx`. Public
+  pages render the banner through `MarketingPage` without reading cookies;
+  the dashboard filters dismissed banners on the server.
+- `isPromoEnabled()` in `apps/web/lib/promo.ts` is the one promo switch; it
+  also controls checkout bonus credits.
 - Localized copy lives under `promos` or `announcements` in every
   `apps/web/messages/*.json` file.
 - Promo setup guidance lives in `skills/promo-banner/SKILL.md`.
