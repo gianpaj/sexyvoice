@@ -17,6 +17,11 @@ before merging to `main` and after deploying.
   in `.github/workflows/tests.yml` runs `pnpm test:affected` for changed packages
   and their dependents. Inspect its selection with
   `pnpm test:affected --dry=json` when needed.
+- The Playwright workflow in `.github/workflows/e2e-tests.yml` skips E2E unless
+  the web app or a build input in its `changes` filter changed, so a docs-only
+  PR shows `e2e` as skipped. A PR compares with `main`; a push to `main`
+  compares with the previous commit and never cancels another `main` run. Run
+  the workflow manually to test regardless of changes.
 - For deployable changes, verify the affected app's build and exercise the changed
   flow on its preview deployment. Check authentication, billing, generation, and
   storage when the change touches those integrations. For call dashboard
