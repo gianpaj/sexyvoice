@@ -79,6 +79,7 @@ export async function reserveCredits({
 
   await debit({ amount, userId });
   let held = amount;
+  let settled = false;
 
   async function refund(
     refundAmount: number,
@@ -122,6 +123,11 @@ export async function reserveCredits({
     },
 
     async settle(actual, context) {
+      // A second settle would see nothing held and debit `actual` again.
+      if (settled) {
+        throw new Error('Credit reservation already settled');
+      }
+      settled = true;
       const reserved = held;
       held = 0;
 

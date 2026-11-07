@@ -101,4 +101,18 @@ describe('reserveCredits', () => {
     });
     expect(restoreCredits).not.toHaveBeenCalled();
   });
+
+  it('refuses a second settle instead of charging twice', async () => {
+    const reservation = await reserveCredits({
+      actor: 'session',
+      amount: 100,
+      userId,
+    });
+
+    await reservation.settle(100, 'success');
+    await expect(reservation.settle(100, 'success')).rejects.toThrow(
+      'already settled',
+    );
+    expect(reduceCreditsUpTo).not.toHaveBeenCalled();
+  });
 });
