@@ -93,7 +93,11 @@ Runtime and tooling:
 - `apps/web/app/[lang]/` - localized App Router pages and layouts.
 - `apps/web/app/api/` - route handlers, including dashboard APIs and external API v1.
 - `apps/web/components/` - reusable UI and feature components.
-- `apps/web/hooks/` - client hooks, including LiveKit call state.
+- `apps/web/hooks/` - shared client hooks: FFmpeg, recording, uploads, and
+  audio levels.
+- `apps/web/lib/calls/` and `apps/web/components/call/` - AI voice calls:
+  characters, models, languages, scenes, call-token metadata, voices, memory,
+  and the call setup and session providers.
 - `apps/web/lib/api/` - external API v1 auth, schemas, rate limits, errors, logging,
   pricing, and OpenAPI generation.
 - `apps/web/lib/i18n/` and `apps/web/messages/*.json` - locale config, navigation, and copy.

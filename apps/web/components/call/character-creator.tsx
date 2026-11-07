@@ -18,12 +18,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import {
-  type CallVoice,
-  type SavedCallVoice,
-  savedVoiceSampleUrl,
-  withCallVoice,
-} from '@/lib/call-voices';
-import {
   buildSaveCharacterPayload,
   type Character,
   type CharacterDraft,
@@ -35,6 +29,12 @@ import {
   newCharacterDraft,
   saveCharacter,
 } from '@/lib/calls/characters';
+import {
+  type CallVoice,
+  type SavedCallVoice,
+  savedVoiceSampleUrl,
+  withCallVoice,
+} from '@/lib/calls/voices';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { cn } from '@/lib/utils';
 import { useCallSetup } from './call-setup';

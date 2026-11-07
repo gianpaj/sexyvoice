@@ -14,7 +14,8 @@ import {
 import { useFFmpeg } from '@/hooks/use-ffmpeg';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/call-voices';
+import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/calls/voices';
+import { formatClock } from '@/lib/clock';
 import {
   CLONE_FORM_FIELDS,
   type SaveVoiceSuccessResponse,
@@ -51,9 +52,6 @@ interface CloneVoiceDialogProps {
   /** Number of saved voices, for the default name. */
   savedCount: number;
 }
-
-const formatSeconds = (seconds: number) =>
-  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
 const secondaryButton =
   'h-11 rounded-[10px] border border-slate-700/70 px-4 font-medium text-[15px] text-slate-200 hover:bg-slate-800/60 disabled:pointer-events-none disabled:opacity-50';
@@ -508,7 +506,7 @@ export function CloneVoiceDialog({
                             isRecording ? 'text-red-300' : 'text-slate-400',
                           )}
                         >
-                          {formatSeconds(seconds)}
+                          {formatClock(seconds)}
                         </span>
                       </div>
                       <div

@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SavedCallVoices, VoicePicker } from '@/components/call/voice-picker';
 import { SamplePlayerProvider } from '@/hooks/use-sample-player';
-import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
 import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import type { CallVoice, SavedCallVoice } from '@/lib/calls/voices';
 import messages from '@/messages/en.json';
 
 const builtIn = Array.from(

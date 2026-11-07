@@ -18,13 +18,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
+import type { SessionConfig } from '@/lib/calls/characters';
 import {
   type CallVoice,
   type SavedCallVoice,
   savedVoiceSampleUrl,
   withCallVoice,
-} from '@/lib/call-voices';
-import type { SessionConfig } from '@/lib/calls/characters';
+} from '@/lib/calls/voices';
 import { MAX_SAVED_CALL_VOICES } from '@/lib/clone/call-voice-config';
 import { cn } from '@/lib/utils';
 import { ListenButton } from './listen-button';

@@ -13,8 +13,8 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('@/lib/supabase/queries', () => ({ getVoiceIdByName }));
 
-import { savedVoiceUsers, withCallVoice } from '@/lib/call-voices';
 import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import { savedVoiceUsers, withCallVoice } from '@/lib/calls/voices';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
 
 beforeEach(() => {

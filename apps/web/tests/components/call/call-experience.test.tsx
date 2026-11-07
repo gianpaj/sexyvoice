@@ -12,9 +12,9 @@ import {
   useCallSession,
 } from '@/components/call/call-session';
 import { CallSetupProvider } from '@/components/call/call-setup';
-import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
 import type { Character } from '@/lib/calls/characters';
 import { DEFAULT_SESSION_CONFIG } from '@/lib/calls/characters';
+import type { CallVoice, SavedCallVoice } from '@/lib/calls/voices';
 import messages from '@/messages/en.json';
 import { makeCharacter } from '../../utils/call-test-utils';
 

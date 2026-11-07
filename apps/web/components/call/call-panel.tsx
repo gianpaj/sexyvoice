@@ -28,13 +28,13 @@ import {
 } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
-import type { CallVoice, SavedCallVoice } from '@/lib/call-voices';
 import {
   callReadiness,
   characterDescription,
   characterSampleUrl,
 } from '@/lib/calls/characters';
 import { CALL_LANGUAGES, isCallLanguage } from '@/lib/calls/languages';
+import type { CallVoice, SavedCallVoice } from '@/lib/calls/voices';
 import { getTranslatedLanguages } from '@/lib/i18n/get-translated-languages';
 import { cn } from '@/lib/utils';
 import { UpgradeCrown } from '../upgrade-crown';

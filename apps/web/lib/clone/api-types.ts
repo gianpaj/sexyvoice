@@ -67,4 +67,4 @@ export const CLONE_FORM_FIELDS = {
   voiceConsent: 'voiceConsent',
 } as const;
 
-import type { SavedCallVoice } from '@/lib/call-voices';
+import type { SavedCallVoice } from '@/lib/calls/voices';

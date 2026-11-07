@@ -2,7 +2,6 @@ import { captureException } from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { CLONED_VOICE_ID, callVoiceProvider } from '@/lib/call-voices';
 import {
   deleteCustomCharacters,
   MAX_CHARACTER_DESCRIPTION_LENGTH,
@@ -12,7 +11,8 @@ import {
   OWN_CHARACTER_COLUMNS,
   type SaveCharacterPayload,
 } from '@/lib/calls/characters';
-import { normalizeCallModel } from '@/lib/calls/models';
+import { callVoiceProvider, normalizeCallModel } from '@/lib/calls/models';
+import { CLONED_VOICE_ID } from '@/lib/calls/voices';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';

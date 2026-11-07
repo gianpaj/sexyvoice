@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/nextjs';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-import { callVoiceProvider } from '@/lib/call-voices';
+import { callVoiceProvider } from '@/lib/calls/models';
 import {
   countInworldWorkspaceVoices,
   INWORLD_WORKSPACE_VOICE_LIMIT,

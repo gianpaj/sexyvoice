@@ -13,7 +13,7 @@ import {
   needsConversion,
   trimWavBuffer,
 } from '@/lib/audio-converter';
-import { CLONED_VOICE_ID } from '@/lib/call-voices';
+import { CLONED_VOICE_ID } from '@/lib/calls/voices';
 import {
   CLONE_FORM_FIELDS,
   type CloneErrorResponseBody,

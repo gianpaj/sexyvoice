@@ -4,7 +4,7 @@ import {
   type SavedCallVoice,
   savedVoiceMissing,
   savedVoiceSampleUrl,
-} from '@/lib/call-voices';
+} from '@/lib/calls/voices';
 import { DEFAULT_CALL_LANGUAGE } from './languages';
 import {
   type CallModelId,

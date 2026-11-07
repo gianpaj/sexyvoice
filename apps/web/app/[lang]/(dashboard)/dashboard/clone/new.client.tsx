@@ -30,7 +30,7 @@ import { useFFmpeg } from '@/hooks/use-ffmpeg';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { SamplePlayerProvider } from '@/hooks/use-sample-player';
-import type { SavedCallVoice } from '@/lib/call-voices';
+import type { SavedCallVoice } from '@/lib/calls/voices';
 import {
   CLONE_FORM_FIELDS,
   type CloneSuccessResponse,

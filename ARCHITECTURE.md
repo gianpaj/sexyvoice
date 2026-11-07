@@ -911,9 +911,9 @@ apps/
 │   │   ├── stripe/                    # Checkout and webhooks
 │   │   └── v1/                        # External REST API
 │   ├── components/                    # Shared and feature UI
-│   ├── data/                          # Call models, voices, scenes, defaults
-│   ├── hooks/                         # Call, audio, and client state
-│   ├── lib/                           # API, Supabase, storage, AI, and billing
+│   ├── data/                          # Clone demo voices, takes, and assets
+│   ├── hooks/                         # Shared client hooks (FFmpeg, recording, uploads)
+│   ├── lib/                           # TTS, cloning, calls, credits, API, Supabase, storage
 │   ├── messages/                      # next-intl locale files
 │   ├── supabase/migrations/           # PostgreSQL schema and RLS
 │   ├── tests/                         # Vitest tests

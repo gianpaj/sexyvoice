@@ -10,17 +10,17 @@ import {
   useSamplePlayer,
 } from '@/hooks/use-sample-player';
 import {
-  type CallVoice,
-  type SavedCallVoice,
-  withCallVoice,
-} from '@/lib/call-voices';
-import {
   type Character,
   type CharacterDraft,
   callReadiness,
   DEFAULT_SESSION_CONFIG,
   newCharacterDraft,
 } from '@/lib/calls/characters';
+import {
+  type CallVoice,
+  type SavedCallVoice,
+  withCallVoice,
+} from '@/lib/calls/voices';
 import { formatClock } from '@/lib/clock';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';

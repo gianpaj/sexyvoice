@@ -2,8 +2,6 @@ import type { SessionConfig } from '@/lib/calls/characters';
 import { callModelFor } from '@/lib/calls/models';
 import { savedVoiceProvider } from '@/lib/clone/call-voice-config';
 
-export { callVoiceProvider } from '@/lib/calls/models';
-
 /** A built-in call voice from the catalog. */
 export type CallVoice = Pick<
   Tables<'voices'>,
