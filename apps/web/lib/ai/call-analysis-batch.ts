@@ -8,6 +8,7 @@ import {
   callAnalysisSchema,
   finalizeCallAnalysis,
   getAnalysisModelId,
+  NO_TRANSCRIPT_MESSAGES,
   parseCallAnalysisResponse,
 } from './analyze-call.ts';
 import {
@@ -80,7 +81,7 @@ export function prepareCallAnalysisBatchRequest(
   | { error: string } {
   const input = buildCallAnalysisPrompt(session);
   if (!input) {
-    return { error: 'No messages in transcript' };
+    return { error: NO_TRANSCRIPT_MESSAGES };
   }
 
   return {

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { saveAllSessionAnalyses } from '../../../scripts/analyze-call-sessions.mjs';
+import {
+  analyzeCallSessionsWithLLM,
+  saveAllSessionAnalyses,
+} from '../../../scripts/analyze-call-sessions.mjs';
 
 // How the analysis scripts record results in call_analysis_queue and
 // call_session_analysis.
@@ -94,6 +97,18 @@ describe('analysis scripts', () => {
         table: 'call_analysis_queue',
       },
     ]);
+  });
+
+  it('parks a realtime session with no transcript messages at once', async () => {
+    const [result] = await analyzeCallSessionsWithLLM([session('empty')]);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        error: 'No messages in transcript',
+        final: true,
+        sessionId: 'empty',
+      }),
+    );
   });
 
   it('queues a failure for the cron until the last attempt parks it', async () => {

@@ -33,6 +33,7 @@ import { generateText } from 'ai';
 import {
   analyzeTranscript,
   getAnalysisModelId,
+  NO_TRANSCRIPT_MESSAGES,
   MIN_ANALYSIS_CALL_DURATION_SECONDS as SHARED_MIN_DURATION,
 } from '../apps/web/lib/ai/analyze-call.ts';
 import {
@@ -304,7 +305,12 @@ export async function analyzeCallSessionsWithLLM(sessions, options = {}) {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       console.error(`❌ Error analyzing session ${session.id}: ${message}`);
-      results.push({ ...sessionBase(session), error: message });
+      // An empty transcript parks at once, as in the batch path.
+      results.push({
+        ...sessionBase(session),
+        error: message,
+        final: message === NO_TRANSCRIPT_MESSAGES,
+      });
     }
   }
 

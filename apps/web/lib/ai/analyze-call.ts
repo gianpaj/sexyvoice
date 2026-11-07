@@ -13,6 +13,9 @@ import { z } from 'zod';
 // analysable.
 export const MIN_ANALYSIS_CALL_DURATION_SECONDS = 120;
 
+/** The failure for a transcript with no usable messages; it is never retried. */
+export const NO_TRANSCRIPT_MESSAGES = 'No messages in transcript';
+
 // xAI flagship; supports structured outputs (generateObject). Override via env.
 const DEFAULT_MODEL = 'grok-4.3';
 const MAX_CONVERSATION_CHARS = 4000;
@@ -317,7 +320,7 @@ export async function analyzeTranscript(
 ): Promise<CallAnalysis> {
   const input = buildCallAnalysisPrompt(session);
   if (!input) {
-    throw new Error('No messages in transcript');
+    throw new Error(NO_TRANSCRIPT_MESSAGES);
   }
 
   const { object } = await generateObject({
