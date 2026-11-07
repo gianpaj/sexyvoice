@@ -1,21 +1,16 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 
-import {
-  GROK_TAG_CHIP_CLASS,
-  isKnownTtsTag,
-  type TtsEditorProvider,
-  type TtsInstantTag,
-} from '@/lib/tts-editor';
+import { TAG_CHIP_CLASS, type TagProvider } from './catalog';
+import { isKnownTag } from './text';
 
-export const InstantTag = Node.create<{ provider: TtsEditorProvider }>({
+/** A tag performed at one point, rendered as a chip. */
+export const InstantTag = Node.create<{ provider: TagProvider }>({
   addOptions() {
     return { provider: 'grok' };
   },
   addAttributes() {
     return {
-      tag: {
-        default: '[pause]',
-      },
+      tag: { default: null },
     };
   },
 
@@ -32,7 +27,7 @@ export const InstantTag = Node.create<{ provider: TtsEditorProvider }>({
   parseHTML() {
     return [
       {
-        tag: 'span[data-grok-instant-tag]',
+        tag: 'span[data-instant-tag]',
       },
     ];
   },
@@ -41,24 +36,24 @@ export const InstantTag = Node.create<{ provider: TtsEditorProvider }>({
     return [
       'span',
       mergeAttributes(HTMLAttributes, {
-        class: GROK_TAG_CHIP_CLASS,
+        class: TAG_CHIP_CLASS,
         contenteditable: 'false',
-        'data-grok-instant-tag': '',
+        'data-instant-tag': '',
       }),
-      HTMLAttributes.tag,
+      HTMLAttributes.tag ?? '',
     ];
   },
 
   renderText({ node }) {
     const tag = node.attrs.tag;
 
-    return typeof tag === 'string' && isKnownTtsTag(tag, this.options.provider)
+    return typeof tag === 'string' && isKnownTag(tag, this.options.provider)
       ? tag
       : '';
   },
 });
 
-export function createInstantTagNode(tag: TtsInstantTag) {
+export function createInstantTagNode(tag: string) {
   return {
     attrs: {
       tag,

@@ -4,12 +4,12 @@ import { Loader2, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { ExpandableTextarea } from '@/components/expandable-textarea';
+import type { TagProvider } from '@/components/speech-tags/catalog';
+import { TagEditor } from '@/components/speech-tags/tag-editor';
 import { SpotlightField } from '@/components/spotlight-field';
-import { TTSEditor } from '@/components/tts-editor';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { UpgradeCrown } from '@/components/upgrade-crown';
-import type { TtsEditorProvider } from '@/lib/tts-editor';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 
@@ -75,7 +75,7 @@ interface SpeechTextFieldProps {
   onChange: (text: string) => void;
   placeholder: string;
   /** Tag catalog for the tag editor; a plain textarea without one. */
-  provider?: TtsEditorProvider;
+  provider?: TagProvider;
   testIds: { count: string; input: string };
   value: string;
 }
@@ -114,7 +114,7 @@ export function SpeechTextField({
 
   if (provider) {
     return (
-      <TTSEditor
+      <TagEditor
         ariaLabelledBy={ariaLabelledBy}
         charactersLimit={limit}
         dir={dir}

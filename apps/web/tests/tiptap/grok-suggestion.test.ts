@@ -5,11 +5,11 @@ import StarterKit from '@tiptap/starter-kit';
 import { exitSuggestion, Suggestion } from '@tiptap/suggestion';
 import { describe, expect, it, vi } from 'vitest';
 
-import { isGrokWrapperSuggestionAllowed } from '@/components/grok-tts/suggestion-rules';
-import { GROK_INSTANT_TAGS, GROK_WRAPPING_TAGS } from '@/lib/tts-editor';
+import { instantTags, TAG_CATALOGS } from '@/components/speech-tags/catalog';
+import { isWrapperSuggestionAllowed } from '@/components/speech-tags/suggestion-rules';
 
-const WRAPPING_TAGS = GROK_WRAPPING_TAGS.map(([openTag]) => openTag);
-const INSTANT_TAGS = GROK_INSTANT_TAGS;
+const WRAPPING_TAGS = TAG_CATALOGS.grok.wrappers.map(([openTag]) => openTag);
+const INSTANT_TAGS = instantTags('grok');
 
 const GROK_INSTANT_TAG_MENU_PLUGIN_KEY = new PluginKey('grokInstantTagMenu');
 const GROK_WRAPPER_TAG_MENU_PLUGIN_KEY = new PluginKey('grokWrapperTagMenu');
@@ -214,7 +214,8 @@ describe('grok suggestion lifecycle', () => {
       char: '<',
       items: createItems(WRAPPING_TAGS),
       pluginKey: GROK_WRAPPER_TAG_MENU_PLUGIN_KEY,
-      shouldAllow: isGrokWrapperSuggestionAllowed,
+      shouldAllow: (props) =>
+        isWrapperSuggestionAllowed({ ...props, provider: 'grok' }),
     });
 
     const editor = createEditor([suggestion.extension], '<p>emphasis&gt;</p>');
@@ -234,7 +235,8 @@ describe('grok suggestion lifecycle', () => {
       char: '<',
       items: createItems(WRAPPING_TAGS),
       pluginKey: GROK_WRAPPER_TAG_MENU_PLUGIN_KEY,
-      shouldAllow: isGrokWrapperSuggestionAllowed,
+      shouldAllow: (props) =>
+        isWrapperSuggestionAllowed({ ...props, provider: 'grok' }),
     });
 
     const editor = createEditor([suggestion.extension]);
@@ -256,15 +258,17 @@ describe('grok suggestion lifecycle', () => {
     };
 
     expect(() =>
-      isGrokWrapperSuggestionAllowed({
+      isWrapperSuggestionAllowed({
         editor,
+        provider: 'grok',
         range: staleRange,
         state: editor.state,
       }),
     ).not.toThrow();
     expect(
-      isGrokWrapperSuggestionAllowed({
+      isWrapperSuggestionAllowed({
         editor,
+        provider: 'grok',
         range: staleRange,
         state: editor.state,
       }),

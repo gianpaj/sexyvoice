@@ -9,6 +9,7 @@ import {
   useFFmpegJoiner,
 } from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
 import { toast } from '@/components/services/toast';
+import { ttsTagProvider } from '@/components/speech-tags/catalog';
 import { downloadBlob } from '@/lib/download';
 import { randomSeed } from '@/lib/tts/generation-input';
 import {
@@ -164,7 +165,7 @@ export function useSplitGeneration({
 
   const texts = params
     ? splitLongTextIntoSegments(text, {
-        preserveGrokWrappingTags: params.model.provider === 'grok',
+        provider: ttsTagProvider(params.model),
       })
     : [];
   const active = Boolean(params) && enabled && texts.length > 1;

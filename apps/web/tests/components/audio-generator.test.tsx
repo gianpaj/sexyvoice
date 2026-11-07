@@ -109,8 +109,8 @@ vi.mock('@/components/grok-language-select', () => ({
   ),
 }));
 
-vi.mock('@/components/tts-editor', () => ({
-  TTSEditor: ({
+vi.mock('@/components/speech-tags/tag-editor', () => ({
+  TagEditor: ({
     charactersLimit,
     enforceCharactersLimit = true,
     onChange,

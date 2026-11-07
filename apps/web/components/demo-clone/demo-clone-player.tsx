@@ -12,8 +12,8 @@ import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 
-import { GrokTaggedText } from '@/components/grok-tagged-text';
 import { NativeAudioWaveform } from '@/components/native-audio-waveform';
+import { TaggedText } from '@/components/speech-tags/tagged-text';
 import { Button } from '@/components/ui/button';
 import {
   type CloneDemoTakeId,
@@ -277,7 +277,7 @@ export function DemoClonePlayer({
           &ldquo;
         </span>
         <span className="select-all" data-testid="demo-clone-prompt-text">
-          <GrokTaggedText
+          <TaggedText
             className="mx-0.5 inline-flex rounded bg-primary/20 px-1 py-0.5 align-baseline text-blue-300"
             provider="voxtral"
             text={take?.prompt ?? language.prompt}

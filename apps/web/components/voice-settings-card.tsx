@@ -5,6 +5,8 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import { AudioProvider } from '@/components/audio-provider';
 import { ExpandableTextarea } from '@/components/expandable-textarea';
+import { ttsTagProvider } from '@/components/speech-tags/catalog';
+import { TaggedText } from '@/components/speech-tags/tagged-text';
 import {
   Card,
   CardContent,
@@ -20,7 +22,6 @@ import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import { cn } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { AudioPlayerWithContext } from './audio-player-with-context';
-import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
 import {
   Tooltip,
@@ -52,7 +53,7 @@ export function VoiceSettingsCard({
 }) {
   const t = useTranslations('generate');
   const ttsModel = getTtsModel(selectedVoice?.model);
-  const isGrokVoice = ttsModel?.provider === 'grok';
+  const tagProvider = ttsTagProvider(ttsModel);
   const emotionTags =
     selectedVoice && ttsModel
       ? ttsModel.inlineTags(selectedVoice.language)
@@ -105,10 +106,11 @@ export function VoiceSettingsCard({
               <div>
                 <p className="text-muted-foreground text-sm">
                   <b>{getVoiceDisplayName(selectedVoice)}</b> sample prompt:{' '}
-                  {isGrokVoice ? (
+                  {tagProvider ? (
                     <span className="whitespace-break-spaces">
-                      <GrokTaggedText
+                      <TaggedText
                         className="inline-flex rounded bg-gray-700 px-1 py-0.5 font-mono text-gray-200 text-xs"
+                        provider={tagProvider}
                         text={selectedVoice.sample_prompt ?? ''}
                       />
                     </span>

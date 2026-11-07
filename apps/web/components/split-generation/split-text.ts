@@ -1,5 +1,9 @@
+import type { TagProvider } from '@/components/speech-tags/catalog';
+import {
+  parseTaggedText,
+  serializeTokens,
+} from '@/components/speech-tags/text';
 import { TTS_MODELS } from '@/lib/tts/models';
-import { GROK_WRAPPING_TAGS } from '@/lib/tts-editor';
 
 /** Every segment fits each model's paid request limit; split mode is paid. */
 export const SPLIT_SEGMENT_MAX_LENGTH = Math.min(
@@ -8,7 +12,8 @@ export const SPLIT_SEGMENT_MAX_LENGTH = Math.min(
 export const SPLIT_SEGMENT_MAX_COUNT = 20;
 
 interface SplitLongTextOptions {
-  preserveGrokWrappingTags?: boolean;
+  /** Keeps this catalog's wrapper tags whole with their text. */
+  provider?: TagProvider;
 }
 
 interface SplitChunk {
@@ -16,106 +21,22 @@ interface SplitChunk {
   text: string;
 }
 
-const GROK_WRAPPER_OPEN_TO_CLOSE = new Map<string, string>(GROK_WRAPPING_TAGS);
-const GROK_WRAPPER_CLOSE_TAGS = new Set<string>(
-  GROK_WRAPPING_TAGS.map(([, closeTag]) => closeTag),
-);
-const SORTED_GROK_WRAPPING_TAGS = GROK_WRAPPING_TAGS.flat().sort(
-  (a, b) => b.length - a.length,
-);
-
-function getGrokWrappingTagAt(input: string, index: number): string | null {
-  for (const tag of SORTED_GROK_WRAPPING_TAGS) {
-    if (input.startsWith(tag, index)) {
-      return tag;
-    }
-  }
-
-  return null;
-}
-
-function readProtectedGrokWrappingChunk(
-  input: string,
-  startIndex: number,
-): string | null {
-  const openTag = getGrokWrappingTagAt(input, startIndex);
-  const closeTag = openTag ? GROK_WRAPPER_OPEN_TO_CLOSE.get(openTag) : null;
-  if (!(openTag && closeTag)) {
-    return null;
-  }
-
-  const closeStack = [closeTag];
-  let cursor = startIndex + openTag.length;
-
-  while (cursor < input.length) {
-    const tag = getGrokWrappingTagAt(input, cursor);
-    if (!tag) {
-      cursor += 1;
-      continue;
-    }
-
-    const nestedCloseTag = GROK_WRAPPER_OPEN_TO_CLOSE.get(tag);
-    if (nestedCloseTag) {
-      closeStack.push(nestedCloseTag);
-      cursor += tag.length;
-      continue;
-    }
-
-    if (GROK_WRAPPER_CLOSE_TAGS.has(tag)) {
-      const expectedCloseTag = closeStack.at(-1);
-      if (tag === expectedCloseTag) {
-        closeStack.pop();
-        cursor += tag.length;
-        if (closeStack.length === 0) {
-          return input.slice(startIndex, cursor);
-        }
-        continue;
-      }
-
-      cursor += tag.length;
-      continue;
-    }
-
-    cursor += tag.length;
-  }
-
-  return null;
-}
-
-function splitIntoGrokProtectedChunks(text: string): SplitChunk[] {
+/** Closed wrapper tags with their text cannot be cut; the rest can. */
+function splitIntoProtectedChunks(
+  text: string,
+  provider: TagProvider,
+): SplitChunk[] {
   const chunks: SplitChunk[] = [];
-  let cursor = 0;
-  let currentText = '';
-
-  const pushCurrentText = () => {
-    if (!currentText) {
-      return;
+  for (const token of parseTaggedText(text, provider)) {
+    const canSplit = token.type !== 'wrapper-tag';
+    const tokenText = serializeTokens([token]);
+    const previous = chunks.at(-1);
+    if (canSplit && previous?.canSplit) {
+      previous.text += tokenText;
+    } else {
+      chunks.push({ canSplit, text: tokenText });
     }
-
-    chunks.push({
-      canSplit: true,
-      text: currentText,
-    });
-    currentText = '';
-  };
-
-  while (cursor < text.length) {
-    const protectedChunk = readProtectedGrokWrappingChunk(text, cursor);
-    if (protectedChunk) {
-      pushCurrentText();
-      chunks.push({
-        canSplit: false,
-        text: protectedChunk,
-      });
-      cursor += protectedChunk.length;
-      continue;
-    }
-
-    currentText += text[cursor] ?? '';
-    cursor += 1;
   }
-
-  pushCurrentText();
   return chunks;
 }
 
@@ -228,7 +149,7 @@ export function splitLongTextIntoSegments(
   text: string,
   options: SplitLongTextOptions = {},
 ): string[] {
-  if (!options.preserveGrokWrappingTags) {
+  if (!options.provider) {
     return splitPlainTextIntoSegments(text);
   }
 
@@ -248,7 +169,7 @@ export function splitLongTextIntoSegments(
     currentSegment = '';
   };
 
-  for (const chunk of splitIntoGrokProtectedChunks(trimmedText)) {
+  for (const chunk of splitIntoProtectedChunks(trimmedText, options.provider)) {
     if (chunk.canSplit) {
       for (const segment of splitPlainTextIntoUnits(chunk.text)) {
         const candidate = currentSegment

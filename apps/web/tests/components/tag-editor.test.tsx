@@ -13,9 +13,11 @@ import { NextIntlClientProvider } from 'next-intl';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TTSEditor } from '@/components/tts-editor';
-import type { TtsEditorProvider } from '@/lib/tts-editor';
-import { GROK_EMPTY_WRAPPING_TEXT } from '@/lib/tts-editor';
+import {
+  EMPTY_WRAPPER_TEXT,
+  type TagProvider,
+} from '@/components/speech-tags/catalog';
+import { TagEditor } from '@/components/speech-tags/tag-editor';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
 import messages from '@/messages/en.json';
 
@@ -26,7 +28,7 @@ const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
   'text-red-100',
 ] as const;
 const SUPPORTED_GROK_TAG_CHIP_SELECTOR =
-  '[data-grok-instant-tag], [data-grok-wrapper-boundary-node]';
+  '[data-instant-tag], [data-wrapper-boundary]';
 
 const TEST_LIMIT = 5;
 // Where `onUpdate` cuts user input, and the threshold over-limit text must
@@ -59,7 +61,7 @@ interface EditorProps {
   enforceCharactersLimit?: boolean;
   onChange?: (text: string) => void;
   placeholder?: string;
-  provider?: TtsEditorProvider;
+  provider?: TagProvider;
   value?: string;
 }
 
@@ -68,7 +70,7 @@ type ResolvedEditorProps = Required<EditorProps>;
 function editorTree(props: ResolvedEditorProps) {
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      <TTSEditor
+      <TagEditor
         charactersLimit={props.charactersLimit}
         disabled={props.disabled}
         enforceCharactersLimit={props.enforceCharactersLimit}
@@ -137,7 +139,7 @@ function ControlledEditorHarness({
 
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      <TTSEditor
+      <TagEditor
         charactersLimit={500}
         onChange={(text) => {
           onChange(text);
@@ -234,7 +236,7 @@ function pasteIntoEditor(editor: HTMLElement, text: string) {
   });
 }
 
-describe('TTSEditor', () => {
+describe('TagEditor', () => {
   it('renders the editable content area and effects trigger', async () => {
     const onChange = vi.fn();
 
@@ -286,9 +288,9 @@ describe('TTSEditor', () => {
 
   it('reports the normalized text when an external value does not survive the editor round trip', async () => {
     const onChange = vi.fn();
-    // Serialization strips GROK_EMPTY_WRAPPING_TEXT wherever it appears, so
+    // Serialization strips EMPTY_WRAPPER_TEXT wherever it appears, so
     // this 11-character value renders as a 10-character document.
-    const externalValue = `Hello${GROK_EMPTY_WRAPPING_TEXT}world`;
+    const externalValue = `Hello${EMPTY_WRAPPER_TEXT}world`;
     const rendered = renderEditor({ onChange, value: 'Initial value' });
 
     await findEditor();
@@ -311,7 +313,7 @@ describe('TTSEditor', () => {
 
     render(
       <ControlledEditorHarness
-        externalValue={`Hello${GROK_EMPTY_WRAPPING_TEXT}world`}
+        externalValue={`Hello${EMPTY_WRAPPER_TEXT}world`}
         onChange={onChange}
       />,
     );
@@ -946,7 +948,7 @@ describe('TTSEditor', () => {
     });
     expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
     expect(
-      editor.querySelector('[data-grok-instant-tag][tag="[breath]"]'),
+      editor.querySelector('[data-instant-tag][tag="[breath]"]'),
     ).toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello [breath]');
   });
@@ -988,7 +990,7 @@ describe('TTSEditor', () => {
     expect(getSuggestionDecoration(editor)).not.toBeInTheDocument();
     expect(
       editor.querySelector(
-        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<emphasis>"]',
+        '[data-wrapper-boundary][data-wrapper-boundary-kind="open"][data-wrapper-open-tag="<emphasis>"]',
       ),
     ).toBeInTheDocument();
     expect(onChange).toHaveBeenLastCalledWith('Hello <emphasis>');
@@ -1000,7 +1002,7 @@ describe('TTSEditor', () => {
       completeText: 'Hello [breath]',
       name: 'instant tag',
       partialText: 'Hello [breath',
-      selector: '[data-grok-instant-tag][tag="[breath]"]',
+      selector: '[data-instant-tag][tag="[breath]"]',
     },
     {
       closingKey: '>',
@@ -1008,7 +1010,7 @@ describe('TTSEditor', () => {
       name: 'wrapper tag',
       partialText: 'Hello <emphasis',
       selector:
-        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<emphasis>"]',
+        '[data-wrapper-boundary][data-wrapper-boundary-kind="open"][data-wrapper-open-tag="<emphasis>"]',
     },
   ])(
     'undoes and redoes $name conversion',
@@ -1082,28 +1084,28 @@ describe('TTSEditor', () => {
 
     expect(
       editor.querySelector(
-        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<soft>"]',
+        '[data-wrapper-boundary][data-wrapper-boundary-kind="open"][data-wrapper-open-tag="<soft>"]',
       ),
     ).toBeInTheDocument();
     expect(
       editor.querySelector(
-        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="close"][data-grok-wrapper-close-tag="</soft>"]',
+        '[data-wrapper-boundary][data-wrapper-boundary-kind="close"][data-wrapper-close-tag="</soft>"]',
       ),
     ).toBeInTheDocument();
     expect(
-      editor.querySelector('[data-grok-instant-tag][tag="[inhale]"]'),
+      editor.querySelector('[data-instant-tag][tag="[inhale]"]'),
     ).toBeInTheDocument();
     expect(
-      editor.querySelector('[data-grok-instant-tag][tag="[sigh]"]'),
+      editor.querySelector('[data-instant-tag][tag="[sigh]"]'),
     ).toBeInTheDocument();
     expect(
       editor.querySelector(
-        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="open"][data-grok-wrapper-open-tag="<build-intensity>"]',
+        '[data-wrapper-boundary][data-wrapper-boundary-kind="open"][data-wrapper-open-tag="<build-intensity>"]',
       ),
     ).toBeInTheDocument();
     expect(
       editor.querySelector(
-        '[data-grok-wrapper-boundary-node][data-grok-wrapper-boundary-kind="close"][data-grok-wrapper-close-tag="</build-intensity>"]',
+        '[data-wrapper-boundary][data-wrapper-boundary-kind="close"][data-wrapper-close-tag="</build-intensity>"]',
       ),
     ).toBeInTheDocument();
     expect(editor).toHaveTextContent(
@@ -1122,7 +1124,7 @@ describe('Voxtral TTSEditor', () => {
       clipboardData: {
         getData: (type: string) =>
           type === 'text/html'
-            ? '<p><span data-grok-instant-tag="" tag="[pause]">[pause]</span> Hello</p>'
+            ? '<p><span data-instant-tag="" tag="[pause]">[pause]</span> Hello</p>'
             : '[pause] Hello',
         types: ['text/plain', 'text/html'],
       },
@@ -1130,9 +1132,7 @@ describe('Voxtral TTSEditor', () => {
     await waitFor(() =>
       expect(onChange).toHaveBeenLastCalledWith('[pause] Hello'),
     );
-    expect(
-      editor.querySelector('[data-grok-instant-tag]'),
-    ).not.toBeInTheDocument();
+    expect(editor.querySelector('[data-instant-tag]')).not.toBeInTheDocument();
   });
 
   it('shows Voxtral groups without Grok language or wrapper controls', async () => {
@@ -1179,9 +1179,7 @@ describe('Voxtral TTSEditor', () => {
       const editor = await findEditor();
       pasteIntoEditor(editor, text.replaceAll('\n', lineEnding));
       await waitFor(() => expect(onChange).toHaveBeenLastCalledWith(text));
-      expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(
-        3,
-      );
+      expect(editor.querySelectorAll('[data-instant-tag]')).toHaveLength(3);
     },
   );
 
@@ -1242,11 +1240,11 @@ describe('Voxtral TTSEditor', () => {
     const text = '[emotion=sarcastic] Hi [pause]';
     const { rerenderWith } = renderEditor({ provider: 'voxtral', value: text });
     let editor = await findEditor();
-    expect(editor.querySelectorAll('[data-grok-instant-tag]')).toHaveLength(1);
+    expect(editor.querySelectorAll('[data-instant-tag]')).toHaveLength(1);
     rerenderWith({ provider: 'grok', value: text });
     editor = await findEditor();
     expect(editor).toHaveTextContent(text);
-    expect(editor.querySelector('[data-grok-instant-tag]')).toHaveTextContent(
+    expect(editor.querySelector('[data-instant-tag]')).toHaveTextContent(
       '[pause]',
     );
   });

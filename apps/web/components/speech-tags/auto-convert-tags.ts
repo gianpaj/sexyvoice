@@ -2,33 +2,24 @@ import { Extension } from '@tiptap/core';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 
-import {
-  GROK_INSTANT_TAGS,
-  GROK_WRAPPING_TAGS,
-  type GrokTipTapDocNode,
-  type TtsEditorProvider,
-  ttsTextToTipTapDoc,
-  ttsTipTapDocToText,
-} from '@/lib/tts-editor';
-import { VOXTRAL_TAGS } from '@/lib/voxtral-tags';
+import type { TagProvider } from './catalog';
+import { docToTaggedText, type TagDocNode, taggedTextToDoc } from './text';
 
-const AUTO_CONVERT_GROK_TAGS_PLUGIN_KEY = new PluginKey('autoConvertGrokTags');
-
-const WRAPPER_OPEN_TAGS = GROK_WRAPPING_TAGS.map(([openTag]) => openTag);
+const AUTO_CONVERT_TAGS_PLUGIN_KEY = new PluginKey('autoConvertTags');
 
 function getTextOffsetFromSelection(
   doc: ProseMirrorNode,
   position: number,
-  provider: TtsEditorProvider,
+  provider: TagProvider,
 ) {
-  return ttsTipTapDocToText(doc.cut(0, position).toJSON(), provider).length;
+  return docToTaggedText(doc.cut(0, position).toJSON(), provider).length;
 }
 
 function getSelectionOffsets(
   doc: ProseMirrorNode,
   from: number,
   to: number,
-  provider: TtsEditorProvider,
+  provider: TagProvider,
 ) {
   return {
     from: getTextOffsetFromSelection(doc, from, provider),
@@ -39,7 +30,7 @@ function getSelectionOffsets(
 function resolveTextOffsetToDocPosition(
   doc: ProseMirrorNode,
   offset: number,
-  provider: TtsEditorProvider,
+  provider: TagProvider,
 ) {
   let remaining = Math.max(0, offset);
   let resolvedPosition = 1;
@@ -55,7 +46,7 @@ function resolveTextOffsetToDocPosition(
       return !resolved;
     }
 
-    const text = ttsTipTapDocToText(
+    const text = docToTaggedText(
       {
         type: 'doc',
         content: [{ type: 'paragraph', content: [node.toJSON()] }],
@@ -81,44 +72,13 @@ function resolveTextOffsetToDocPosition(
   return resolvedPosition;
 }
 
-function docsAreEqual(
-  currentDoc: ProseMirrorNode,
-  normalizedDoc: GrokTipTapDocNode,
-) {
+function docsAreEqual(currentDoc: ProseMirrorNode, normalizedDoc: TagDocNode) {
   return currentDoc.eq(currentDoc.type.schema.nodeFromJSON(normalizedDoc));
 }
 
-export function normalizePartialInstantTags(
-  input: string,
-  provider: TtsEditorProvider = 'grok',
-) {
-  let normalized = input;
-
-  for (const instantTag of provider === 'grok'
-    ? GROK_INSTANT_TAGS
-    : VOXTRAL_TAGS) {
-    const partialTag = instantTag.slice(1);
-
-    normalized = normalized.replaceAll(`[${partialTag}`, instantTag);
-  }
-
-  return normalized;
-}
-
-export function normalizePartialWrapperOpeningTags(input: string) {
-  let normalized = input;
-
-  for (const openTag of WRAPPER_OPEN_TAGS) {
-    const partialTag = openTag.slice(1);
-
-    normalized = normalized.replaceAll(`<${partialTag}`, openTag);
-  }
-
-  return normalized;
-}
-
-export const AutoConvertGrokTags = Extension.create<{
-  provider: TtsEditorProvider;
+/** Turns tags typed as text into tag nodes by parsing the document again. */
+export const AutoConvertTags = Extension.create<{
+  provider: TagProvider;
 }>({
   addOptions() {
     return { provider: 'grok' };
@@ -132,19 +92,10 @@ export const AutoConvertGrokTags = Extension.create<{
             return null;
           }
 
-          const currentText = ttsTipTapDocToText(
-            newState.doc.toJSON(),
+          const normalizedDoc = taggedTextToDoc(
+            docToTaggedText(newState.doc.toJSON(), provider),
             provider,
           );
-          const instantText = normalizePartialInstantTags(
-            currentText,
-            provider,
-          );
-          const normalizedText =
-            provider === 'grok'
-              ? normalizePartialWrapperOpeningTags(instantText)
-              : instantText;
-          const normalizedDoc = ttsTextToTipTapDoc(normalizedText, provider);
 
           const docsEqual = docsAreEqual(newState.doc, normalizedDoc);
 
@@ -187,10 +138,10 @@ export const AutoConvertGrokTags = Extension.create<{
 
           return transaction;
         },
-        key: AUTO_CONVERT_GROK_TAGS_PLUGIN_KEY,
+        key: AUTO_CONVERT_TAGS_PLUGIN_KEY,
       }),
     ];
   },
 
-  name: 'autoConvertGrokTags',
+  name: 'autoConvertTags',
 });

@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 import { IconSwap } from '@/components/motion-primitives/icon-swap';
 import { attemptPlayback } from '@/lib/media-playback';
-import { GrokTaggedText } from './grok-tagged-text';
+import { TaggedText } from './speech-tags/tagged-text';
 import { Button } from './ui/button';
 
 const PROMPT_TAG_CLASS =
@@ -85,7 +85,7 @@ export function AudioPreviewCard({
         lang={lang}
         title={prompt}
       >
-        <GrokTaggedText className={PROMPT_TAG_CLASS} text={prompt} />
+        <TaggedText className={PROMPT_TAG_CLASS} text={prompt} />
       </div>
     </div>
   );

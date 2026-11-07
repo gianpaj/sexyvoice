@@ -1,20 +1,24 @@
 import type { EditorState } from '@tiptap/pm/state';
 import type { Editor, Range } from '@tiptap/react';
 
-import { GROK_WRAPPING_TAGS } from '@/lib/tts-editor';
-
-const WRAPPER_OPEN_TAGS = GROK_WRAPPING_TAGS.map(([openTag]) => openTag);
+import { TAG_CATALOGS, type TagProvider } from './catalog';
 
 function isResolvableDocPosition(position: number, docSize: number) {
   return Number.isInteger(position) && position >= 0 && position <= docSize;
 }
 
-export function isGrokWrapperSuggestionAllowed({
+/**
+ * The wrapper menu stays closed while the caret sits inside a wrapper tag
+ * being typed, such as after `<so` of `<soft>`.
+ */
+export function isWrapperSuggestionAllowed({
   editor,
+  provider,
   range,
   state,
 }: {
   editor: Editor;
+  provider: TagProvider;
   range: Range;
   state: EditorState;
 }) {
@@ -36,7 +40,7 @@ export function isGrokWrapperSuggestionAllowed({
   const previousText = previousNode?.isText ? (previousNode.text ?? '') : '';
   const combinedTagText = `${previousText}${nextText}`;
 
-  return !WRAPPER_OPEN_TAGS.some((tag) => {
+  return !TAG_CATALOGS[provider].wrappers.some(([tag]) => {
     const partialOpenTag = tag.slice(1);
     return (
       combinedTagText.startsWith(partialOpenTag) ||

@@ -1,30 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
+import { EMPTY_WRAPPER_TEXT } from '@/components/speech-tags/catalog';
 import {
-  normalizePartialInstantTags,
-  normalizePartialWrapperOpeningTags,
-} from '@/components/grok-tts/extensions/auto-convert-grok-tags';
-import { findUnsupportedGrokTagMatches } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
-import {
-  GROK_EMPTY_WRAPPING_TEXT,
-  type GrokInstantTag,
-  type GrokEditorToken as GrokTtsToken,
-  type GrokWrapperCloseTag,
-  type GrokWrapperOpenTag,
-  grokTextToTipTapDoc,
-  grokTipTapDocToText,
-  parseGrokTtsText,
-  serializeGrokEditorTokens as serializeGrokTtsDoc,
-} from '@/lib/tts-editor';
+  docToTaggedText,
+  parseTaggedText,
+  serializeTokens,
+  type TagToken,
+  taggedTextToDoc,
+} from '@/components/speech-tags/text';
+import { findUnknownTagMatches } from '@/components/speech-tags/unknown-tag-highlight';
 
-function text(value: string): GrokTtsToken {
+function text(value: string): TagToken {
   return {
     type: 'text',
     value,
   };
 }
 
-function instant(tag: GrokInstantTag): GrokTtsToken {
+function instant(tag: string): TagToken {
   return {
     tag,
     type: 'instant-tag',
@@ -32,10 +25,10 @@ function instant(tag: GrokInstantTag): GrokTtsToken {
 }
 
 function wrapper(
-  openTag: GrokWrapperOpenTag,
-  closeTag: GrokWrapperCloseTag,
-  children: GrokTtsToken[],
-): GrokTtsToken {
+  openTag: string,
+  closeTag: string,
+  children: TagToken[],
+): TagToken {
   return {
     children,
     closeTag,
@@ -44,11 +37,11 @@ function wrapper(
   };
 }
 
-describe('grok-tts-editor-utils', () => {
-  describe('findUnsupportedGrokTagMatches', () => {
+describe('speech tag text', () => {
+  describe('findUnknownTagMatches', () => {
     it('finds unsupported instant tags', () => {
       expect(
-        findUnsupportedGrokTagMatches('Hello [unknown-tag] world'),
+        findUnknownTagMatches('Hello [unknown-tag] world', 'grok'),
       ).toEqual([
         {
           end: 19,
@@ -59,7 +52,7 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('finds unsupported wrapping tags', () => {
-      expect(findUnsupportedGrokTagMatches('<mystery>Hello</mystery>')).toEqual(
+      expect(findUnknownTagMatches('<mystery>Hello</mystery>', 'grok')).toEqual(
         [
           {
             end: 9,
@@ -77,24 +70,24 @@ describe('grok-tts-editor-utils', () => {
 
     it('ignores supported Grok tags', () => {
       expect(
-        findUnsupportedGrokTagMatches('[pause] <soft>Hello</soft>'),
+        findUnknownTagMatches('[pause] <soft>Hello</soft>', 'grok'),
       ).toEqual([]);
     });
 
     it('preserves malformed but tag-like text as unsupported matches only when complete', () => {
-      expect(findUnsupportedGrokTagMatches('[oops <oops')).toEqual([]);
+      expect(findUnknownTagMatches('[oops <oops', 'grok')).toEqual([]);
     });
   });
 
-  describe('parseGrokTtsText', () => {
+  describe('parseTaggedText', () => {
     it('returns a single text token for plain text', () => {
-      expect(parseGrokTtsText('Hello world').tokens).toEqual([
+      expect(parseTaggedText('Hello world', 'grok')).toEqual([
         text('Hello world'),
       ]);
     });
 
     it('parses instant tags as structured tokens', () => {
-      expect(parseGrokTtsText('Hello [laugh] world').tokens).toEqual([
+      expect(parseTaggedText('Hello [laugh] world', 'grok')).toEqual([
         text('Hello '),
         instant('[laugh]'),
         text(' world'),
@@ -102,13 +95,13 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('parses wrapping tags with nested text', () => {
-      expect(parseGrokTtsText('<soft>Hello</soft>').tokens).toEqual([
+      expect(parseTaggedText('<soft>Hello</soft>', 'grok')).toEqual([
         wrapper('<soft>', '</soft>', [text('Hello')]),
       ]);
     });
 
     it('parses mixed text, instant tags, and wrapping tags', () => {
-      expect(parseGrokTtsText('Hi [pause] <soft>there</soft>').tokens).toEqual([
+      expect(parseTaggedText('Hi [pause] <soft>there</soft>', 'grok')).toEqual([
         text('Hi '),
         instant('[pause]'),
         text(' '),
@@ -117,7 +110,7 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('parses multiline content and preserves newline text nodes', () => {
-      expect(parseGrokTtsText('Line one\n[laugh]\nLine two').tokens).toEqual([
+      expect(parseTaggedText('Line one\n[laugh]\nLine two', 'grok')).toEqual([
         text('Line one\n'),
         instant('[laugh]'),
         text('\nLine two'),
@@ -126,7 +119,7 @@ describe('grok-tts-editor-utils', () => {
 
     it('supports nested wrapping tags', () => {
       expect(
-        parseGrokTtsText('<soft>Hello <fast>there</fast></soft>').tokens,
+        parseTaggedText('<soft>Hello <fast>there</fast></soft>', 'grok'),
       ).toEqual([
         wrapper('<soft>', '</soft>', [
           text('Hello '),
@@ -136,26 +129,26 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('leaves unknown instant tags as plain text', () => {
-      expect(parseGrokTtsText('Hello [unknown-tag] world').tokens).toEqual([
+      expect(parseTaggedText('Hello [unknown-tag] world', 'grok')).toEqual([
         text('Hello [unknown-tag] world'),
       ]);
     });
 
     it('leaves unknown wrapping tags as plain text', () => {
-      expect(parseGrokTtsText('<mystery>Hello</mystery>').tokens).toEqual([
+      expect(parseTaggedText('<mystery>Hello</mystery>', 'grok')).toEqual([
         text('<mystery>Hello</mystery>'),
       ]);
     });
 
     it('parses standalone opening wrapper tags as structured tokens', () => {
-      expect(parseGrokTtsText('<soft>').tokens).toEqual([
+      expect(parseTaggedText('<soft>', 'grok')).toEqual([
         {
           closeTag: '</soft>',
           openTag: '<soft>',
           type: 'wrapper-open-tag',
         },
       ]);
-      expect(parseGrokTtsText('<soft>Hello').tokens).toEqual([
+      expect(parseTaggedText('<soft>Hello', 'grok')).toEqual([
         {
           closeTag: '</soft>',
           openTag: '<soft>',
@@ -163,13 +156,13 @@ describe('grok-tts-editor-utils', () => {
         },
         text('Hello'),
       ]);
-      expect(parseGrokTtsText('Hello</soft>').tokens).toEqual([
+      expect(parseTaggedText('Hello</soft>', 'grok')).toEqual([
         text('Hello</soft>'),
       ]);
     });
 
     it('keeps mismatched closing wrapper tags as plain text after a standalone opening wrapper tag', () => {
-      expect(parseGrokTtsText('<soft>Hello</fast>').tokens).toEqual([
+      expect(parseTaggedText('<soft>Hello</fast>', 'grok')).toEqual([
         {
           closeTag: '</soft>',
           openTag: '<soft>',
@@ -180,30 +173,26 @@ describe('grok-tts-editor-utils', () => {
     });
   });
 
-  describe('serializeGrokTtsDoc', () => {
+  describe('serializeTokens', () => {
     it('serializes plain text tokens back to text', () => {
-      expect(serializeGrokTtsDoc([text('Hello world')])).toBe('Hello world');
+      expect(serializeTokens([text('Hello world')])).toBe('Hello world');
     });
 
     it('serializes instant tags back to bracket syntax', () => {
       expect(
-        serializeGrokTtsDoc([
-          text('Hello '),
-          instant('[laugh]'),
-          text(' world'),
-        ]),
+        serializeTokens([text('Hello '), instant('[laugh]'), text(' world')]),
       ).toBe('Hello [laugh] world');
     });
 
     it('serializes wrapping tags back to paired syntax', () => {
       expect(
-        serializeGrokTtsDoc([wrapper('<soft>', '</soft>', [text('Hello')])]),
+        serializeTokens([wrapper('<soft>', '</soft>', [text('Hello')])]),
       ).toBe('<soft>Hello</soft>');
     });
 
     it('serializes standalone opening wrapper tags back to opening syntax', () => {
       expect(
-        serializeGrokTtsDoc([
+        serializeTokens([
           {
             closeTag: '</soft>',
             openTag: '<soft>',
@@ -215,7 +204,7 @@ describe('grok-tts-editor-utils', () => {
 
     it('serializes nested wrapping tags correctly', () => {
       expect(
-        serializeGrokTtsDoc([
+        serializeTokens([
           wrapper('<soft>', '</soft>', [
             text('Hello '),
             wrapper('<fast>', '</fast>', [text('there')]),
@@ -226,7 +215,7 @@ describe('grok-tts-editor-utils', () => {
 
     it('serializes multiline token trees with preserved newlines', () => {
       expect(
-        serializeGrokTtsDoc([
+        serializeTokens([
           text('Line one\n'),
           instant('[laugh]'),
           text('\nLine two'),
@@ -235,110 +224,52 @@ describe('grok-tts-editor-utils', () => {
     });
   });
 
-  describe('normalizePartialInstantTags', () => {
-    it('normalizes a partial supported instant tag when [ is typed before it', () => {
-      expect(normalizePartialInstantTags('Hello [breath]')).toBe(
-        'Hello [breath]',
-      );
-      expect(normalizePartialInstantTags('Hello [pause]')).toBe(
-        'Hello [pause]',
-      );
-    });
-
-    it('normalizes supported instant tags from partial text', () => {
-      expect(normalizePartialInstantTags('Hello [breath] world')).toBe(
-        'Hello [breath] world',
-      );
-      expect(
-        normalizePartialInstantTags('Use [long-pause] and [tongue-click]'),
-      ).toBe('Use [long-pause] and [tongue-click]');
-    });
-
-    it('leaves unsupported or unrelated text unchanged', () => {
-      expect(normalizePartialInstantTags('Hello [mystery] world')).toBe(
-        'Hello [mystery] world',
-      );
-      expect(normalizePartialInstantTags('Hello breath] world')).toBe(
-        'Hello breath] world',
-      );
-    });
-  });
-
-  describe('normalizePartialWrapperOpeningTags', () => {
-    it('normalizes a partial supported wrapper opening tag when < is typed before it', () => {
-      expect(normalizePartialWrapperOpeningTags('Hello <emphasis>')).toBe(
-        'Hello <emphasis>',
-      );
-      expect(normalizePartialWrapperOpeningTags('Hello <soft>')).toBe(
-        'Hello <soft>',
-      );
-    });
-
-    it('normalizes supported wrapper opening tags from partial text', () => {
-      expect(normalizePartialWrapperOpeningTags('Hello <emphasis> world')).toBe(
-        'Hello <emphasis> world',
-      );
-      expect(
-        normalizePartialWrapperOpeningTags(
-          'Use <build-intensity> and <higher-pitch>',
-        ),
-      ).toBe('Use <build-intensity> and <higher-pitch>');
-    });
-
-    it('leaves unsupported or unrelated text unchanged', () => {
-      expect(normalizePartialWrapperOpeningTags('Hello <mystery> world')).toBe(
-        'Hello <mystery> world',
-      );
-      expect(normalizePartialWrapperOpeningTags('Hello emphasis> world')).toBe(
-        'Hello emphasis> world',
-      );
-    });
-  });
-
   describe('round-trip invariants', () => {
     it('round-trips valid mixed Grok tag content', () => {
       const input =
         'Hello [laugh]\n<soft>Take it <fast>slowly</fast></soft>\n[breath]';
-      const parsed = parseGrokTtsText(input).tokens;
+      const parsed = parseTaggedText(input, 'grok');
 
-      expect(serializeGrokTtsDoc(parsed)).toBe(input);
+      expect(serializeTokens(parsed)).toBe(input);
     });
 
     it('round-trips valid nested wrapper content', () => {
       const input =
         '<soft>Hello <fast>there</fast> and <whisper>stay close</whisper></soft>';
-      const parsed = parseGrokTtsText(input).tokens;
+      const parsed = parseTaggedText(input, 'grok');
 
-      expect(serializeGrokTtsDoc(parsed)).toBe(input);
+      expect(serializeTokens(parsed)).toBe(input);
     });
 
     it('round-trips the singing wrapping tag', () => {
       const input = '<singing>La la la</singing>';
-      const parsed = parseGrokTtsText(input).tokens;
+      const parsed = parseTaggedText(input, 'grok');
 
       expect(parsed).toEqual([
         wrapper('<singing>', '</singing>', [text('La la la')]),
       ]);
-      expect(serializeGrokTtsDoc(parsed)).toBe(input);
+      expect(serializeTokens(parsed)).toBe(input);
     });
 
     it('preserves malformed content by keeping it as text', () => {
       const input = '<soft>Hello</fast> [unknown-tag]';
-      const parsed = parseGrokTtsText(input).tokens;
+      const parsed = parseTaggedText(input, 'grok');
 
-      expect(serializeGrokTtsDoc(parsed)).toBe(input);
+      expect(serializeTokens(parsed)).toBe(input);
     });
 
     it('round-trips unsupported tags as plain text', () => {
       const input = 'Hello [unknown-tag] <mystery>x</mystery>';
 
-      expect(grokTipTapDocToText(grokTextToTipTapDoc(input))).toBe(input);
+      expect(docToTaggedText(taggedTextToDoc(input, 'grok'), 'grok')).toBe(
+        input,
+      );
     });
   });
 
   describe('TipTap document conversion', () => {
     it('converts wrapping tags into wrapper boundary nodes', () => {
-      expect(grokTextToTipTapDoc('<soft>Hello</soft>')).toEqual({
+      expect(taggedTextToDoc('<soft>Hello</soft>', 'grok')).toEqual({
         content: [
           {
             content: [
@@ -371,7 +302,7 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('converts standalone opening wrapper tags into a single opening boundary node', () => {
-      expect(grokTextToTipTapDoc('<soft>')).toEqual({
+      expect(taggedTextToDoc('<soft>', 'grok')).toEqual({
         content: [
           {
             content: [
@@ -392,7 +323,7 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('keeps empty wrapping tags as boundary nodes with placeholder text', () => {
-      expect(grokTextToTipTapDoc('<soft></soft>')).toEqual({
+      expect(taggedTextToDoc('<soft></soft>', 'grok')).toEqual({
         content: [
           {
             content: [
@@ -405,7 +336,7 @@ describe('grok-tts-editor-utils', () => {
                 type: 'wrapperBoundary',
               },
               {
-                text: GROK_EMPTY_WRAPPING_TEXT,
+                text: EMPTY_WRAPPER_TEXT,
                 type: 'text',
               },
               {
@@ -425,7 +356,7 @@ describe('grok-tts-editor-utils', () => {
     });
 
     it('converts instant tags into inline instantTag nodes', () => {
-      expect(grokTextToTipTapDoc('Hello [pause]')).toEqual({
+      expect(taggedTextToDoc('Hello [pause]', 'grok')).toEqual({
         content: [
           {
             content: [
@@ -449,104 +380,113 @@ describe('grok-tts-editor-utils', () => {
 
     it('serializes wrapper boundaries and instant nodes back to Grok text', () => {
       expect(
-        grokTipTapDocToText({
-          content: [
-            {
-              content: [
-                {
-                  attrs: {
-                    closeTag: '</soft>',
-                    kind: 'open',
-                    openTag: '<soft>',
+        docToTaggedText(
+          {
+            content: [
+              {
+                content: [
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      kind: 'open',
+                      openTag: '<soft>',
+                    },
+                    type: 'wrapperBoundary',
                   },
-                  type: 'wrapperBoundary',
-                },
-                {
-                  text: 'Hello ',
-                  type: 'text',
-                },
-                {
-                  attrs: {
-                    tag: '[laugh]',
+                  {
+                    text: 'Hello ',
+                    type: 'text',
                   },
-                  type: 'instantTag',
-                },
-                {
-                  attrs: {
-                    closeTag: '</soft>',
-                    kind: 'close',
-                    openTag: '<soft>',
+                  {
+                    attrs: {
+                      tag: '[laugh]',
+                    },
+                    type: 'instantTag',
                   },
-                  type: 'wrapperBoundary',
-                },
-                {
-                  text: 'there',
-                  type: 'text',
-                },
-              ],
-              type: 'paragraph',
-            },
-          ],
-          type: 'doc',
-        }),
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      kind: 'close',
+                      openTag: '<soft>',
+                    },
+                    type: 'wrapperBoundary',
+                  },
+                  {
+                    text: 'there',
+                    type: 'text',
+                  },
+                ],
+                type: 'paragraph',
+              },
+            ],
+            type: 'doc',
+          },
+          'grok',
+        ),
       ).toBe('<soft>Hello [laugh]</soft>there');
     });
 
     it('serializes a standalone opening wrapper boundary back to opening tag text', () => {
       expect(
-        grokTipTapDocToText({
-          content: [
-            {
-              content: [
-                {
-                  attrs: {
-                    closeTag: '</soft>',
-                    kind: 'open',
-                    openTag: '<soft>',
+        docToTaggedText(
+          {
+            content: [
+              {
+                content: [
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      kind: 'open',
+                      openTag: '<soft>',
+                    },
+                    type: 'wrapperBoundary',
                   },
-                  type: 'wrapperBoundary',
-                },
-              ],
-              type: 'paragraph',
-            },
-          ],
-          type: 'doc',
-        }),
+                ],
+                type: 'paragraph',
+              },
+            ],
+            type: 'doc',
+          },
+          'grok',
+        ),
       ).toBe('<soft>');
     });
 
     it('serializes empty wrapper placeholder text back to empty tags', () => {
       expect(
-        grokTipTapDocToText({
-          content: [
-            {
-              content: [
-                {
-                  attrs: {
-                    closeTag: '</soft>',
-                    kind: 'open',
-                    openTag: '<soft>',
+        docToTaggedText(
+          {
+            content: [
+              {
+                content: [
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      kind: 'open',
+                      openTag: '<soft>',
+                    },
+                    type: 'wrapperBoundary',
                   },
-                  type: 'wrapperBoundary',
-                },
-                {
-                  text: GROK_EMPTY_WRAPPING_TEXT,
-                  type: 'text',
-                },
-                {
-                  attrs: {
-                    closeTag: '</soft>',
-                    kind: 'close',
-                    openTag: '<soft>',
+                  {
+                    text: EMPTY_WRAPPER_TEXT,
+                    type: 'text',
                   },
-                  type: 'wrapperBoundary',
-                },
-              ],
-              type: 'paragraph',
-            },
-          ],
-          type: 'doc',
-        }),
+                  {
+                    attrs: {
+                      closeTag: '</soft>',
+                      kind: 'close',
+                      openTag: '<soft>',
+                    },
+                    type: 'wrapperBoundary',
+                  },
+                ],
+                type: 'paragraph',
+              },
+            ],
+            type: 'doc',
+          },
+          'grok',
+        ),
       ).toBe('<soft></soft>');
     });
   });

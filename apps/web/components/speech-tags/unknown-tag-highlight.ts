@@ -1,14 +1,15 @@
 import { Decoration, type Editor, Extension } from '@tiptap/core';
 
-import { isKnownTtsTag, type TtsEditorProvider } from '@/lib/tts-editor';
+import type { TagProvider } from './catalog';
+import { isKnownTag } from './text';
 
-const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASS =
-  'rounded bg-red-950 px-0.5 text-red-100';
+const UNKNOWN_TAG_HIGHLIGHT_CLASS = 'rounded bg-red-950 px-0.5 text-red-100';
 
+// Tag-shaped text: `[word]`, `[name=value]`, `<word>` and `</word>`.
 const BRACKET_TAG_REGEX = /\[[a-z][a-z -]*(?:=[a-z-]+)?\]/gi;
 const ANGLE_TAG_REGEX = /<\/?[a-z-]+>/gi;
 
-export interface UnsupportedGrokTagMatch {
+interface UnknownTagMatch {
   end: number;
   start: number;
   text: string;
@@ -17,8 +18,8 @@ export interface UnsupportedGrokTagMatch {
 function collectMatches(
   text: string,
   regex: RegExp,
-  matches: UnsupportedGrokTagMatch[],
-  provider: TtsEditorProvider,
+  matches: UnknownTagMatch[],
+  provider: TagProvider,
 ) {
   regex.lastIndex = 0;
 
@@ -30,7 +31,7 @@ function collectMatches(
       continue;
     }
 
-    if (isKnownTtsTag(value, provider)) {
+    if (isKnownTag(value, provider)) {
       continue;
     }
 
@@ -42,11 +43,12 @@ function collectMatches(
   }
 }
 
-export function findUnsupportedGrokTagMatches(
+/** Tag-shaped text the provider's catalog does not know; it stays literal. */
+export function findUnknownTagMatches(
   text: string,
-  provider: TtsEditorProvider = 'grok',
-): UnsupportedGrokTagMatch[] {
-  const matches: UnsupportedGrokTagMatch[] = [];
+  provider: TagProvider,
+): UnknownTagMatch[] {
+  const matches: UnknownTagMatch[] = [];
 
   collectMatches(text, BRACKET_TAG_REGEX, matches, provider);
   collectMatches(text, ANGLE_TAG_REGEX, matches, provider);
@@ -54,11 +56,11 @@ export function findUnsupportedGrokTagMatches(
   return matches.sort((a, b) => a.start - b.start);
 }
 
-function createUnsupportedGrokTagDecorations(
+function createUnknownTagDecorations(
   state: Editor['state'],
   from: number,
   to: number,
-  provider: TtsEditorProvider,
+  provider: TagProvider,
 ) {
   const decorations: Decoration[] = [];
 
@@ -67,14 +69,10 @@ function createUnsupportedGrokTagDecorations(
       return;
     }
 
-    const matches = findUnsupportedGrokTagMatches(node.text, provider);
-
-    for (const match of matches) {
-      const matchFrom = pos + match.start;
-
+    for (const match of findUnknownTagMatches(node.text, provider)) {
       decorations.push(
-        Decoration.Inline(matchFrom, pos + match.end, {
-          class: UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASS,
+        Decoration.Inline(pos + match.start, pos + match.end, {
+          class: UNKNOWN_TAG_HIGHLIGHT_CLASS,
         }),
       );
     }
@@ -83,8 +81,8 @@ function createUnsupportedGrokTagDecorations(
   return decorations;
 }
 
-export const UnsupportedGrokTagHighlight = Extension.create<{
-  provider: TtsEditorProvider;
+export const UnknownTagHighlight = Extension.create<{
+  provider: TagProvider;
 }>({
   addOptions() {
     return { provider: 'grok' };
@@ -93,17 +91,12 @@ export const UnsupportedGrokTagHighlight = Extension.create<{
     const provider = this.options.provider;
     return {
       create: ({ state }) =>
-        createUnsupportedGrokTagDecorations(
-          state,
-          0,
-          state.doc.content.size,
-          provider,
-        ),
+        createUnknownTagDecorations(state, 0, state.doc.content.size, provider),
       createInRange: ({ state, from, to }) =>
-        createUnsupportedGrokTagDecorations(state, from, to, provider),
+        createUnknownTagDecorations(state, from, to, provider),
       update: 'changedRanges',
     };
   },
 
-  name: 'unsupportedGrokTagHighlight',
+  name: 'unknownTagHighlight',
 });

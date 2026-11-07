@@ -363,15 +363,19 @@ live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline
 `apps/web/components/speech-text-field.tsx` is the speech text field of the
 generate and clone pages, with one character count. Providers with a tag
 catalog, Grok speech and Voxtral cloning, get the Tiptap editor in
-`apps/web/components/tts-editor.tsx`; other voices and Chatterbox locales get a
-textarea. The provider selects its tag catalog, autocomplete, and
-unsupported-tag highlighting. Grok supports instant tags and paired wrappers;
-Voxtral supports 34 emotion tags, pace tags, and the documented vocal sounds in
-`apps/web/lib/voxtral-tags.ts`. Voxtral tags apply to the following text without
-a closing tag.
+`apps/web/components/speech-tags/tag-editor.tsx`; other voices and Chatterbox
+locales get a textarea.
 
-`apps/web/lib/tts-editor.ts` parses and serializes provider tags as plain text.
-Copying preserves tag syntax and line breaks; unknown tags remain literal text.
+`apps/web/components/speech-tags/catalog.ts` holds each provider's tag catalog,
+which drives parsing, chips, autocomplete, unknown-tag highlighting, and
+split-safe cutting. Grok supports instant tags and paired wrappers; Voxtral
+supports 34 emotion tags, pace tags, and the documented vocal sounds. Voxtral
+tags apply to the following text without a closing tag. Gemini 3.8 and Orpheus
+tags exist only in their Improve text prompts.
+
+`apps/web/components/speech-tags/text.ts` parses and serializes provider tags as
+plain text. Copying preserves tag syntax and line breaks; unknown tags remain
+literal text.
 The API receives the text unchanged. Tag characters count toward the existing
 text limits. Mistral documents tag behavior as tested in English; its other
 listed languages are untested.

@@ -122,7 +122,7 @@ Clean in, clean out, no engagement unless forced.[long-pause]
 Not her lieutenants, not her ground units <lower-pitch>Lilith herself,</lower-pitch> stood in the center of the cathedral.`;
 
     const segments = splitLongTextIntoSegments(`${prompt} ${prompt}`, {
-      preserveGrokWrappingTags: true,
+      provider: 'grok',
     });
 
     expect(segments).toHaveLength(3);

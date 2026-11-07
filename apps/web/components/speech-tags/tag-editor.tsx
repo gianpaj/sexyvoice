@@ -16,17 +16,6 @@ import {
   useState,
 } from 'react';
 
-import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
-import {
-  createWrapperBoundaryNode,
-  WrapperBoundary,
-} from '@/components/grok-tts/extensions/grok-wrapper-boundary';
-import {
-  createInstantTagNode,
-  InstantTag,
-} from '@/components/grok-tts/extensions/instant-tag';
-import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
-import { isGrokWrapperSuggestionAllowed } from '@/components/grok-tts/suggestion-rules';
 import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,54 +24,43 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
-import {
-  GROK_EMPTY_WRAPPING_TEXT,
-  GROK_INSTANT_TAG_DEFINITIONS,
-  GROK_WRAPPING_TAG_DEFINITIONS,
-  type TtsEditorProvider,
-  type TtsInstantTag,
-  ttsTextToTipTapDoc,
-  ttsTipTapDocToText,
-} from '@/lib/tts-editor';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { VOXTRAL_TAG_GROUPS } from '@/lib/voxtral-tags';
-import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
-import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
+import { UiState } from '../tiptap/tiptap-extension/ui-state-extension';
+import { SlashDropdownMenu } from '../tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
 import type {
   SuggestionItem,
   SuggestionMenuProps,
-} from './tiptap/tiptap-ui-utils/suggestion-menu';
+} from '../tiptap/tiptap-ui-utils/suggestion-menu';
+import { AutoConvertTags } from './auto-convert-tags';
+import { EMPTY_WRAPPER_TEXT, TAG_CATALOGS, type TagProvider } from './catalog';
+import { createInstantTagNode, InstantTag } from './instant-tag';
+import { isWrapperSuggestionAllowed } from './suggestion-rules';
+import {
+  createWrapperBoundaryNode,
+  docToTaggedText,
+  taggedTextToDoc,
+} from './text';
+import { UnknownTagHighlight } from './unknown-tag-highlight';
+import { WrapperBoundary } from './wrapper-boundary';
 
-import './grok-tts-editor.css';
+import './tag-editor.css';
 
-interface InstantTagDef {
+interface TagDef {
+  /** Set for wrapper tags. */
+  closeTag?: string;
   description: string;
   label: string;
-  tag: TtsInstantTag;
+  tag: string;
 }
 
-const VOXTRAL_GROUPS = VOXTRAL_TAG_GROUPS.map(({ labelKey, tags }) => ({
-  labelKey,
-  tags: tags.map((tag) => ({
-    tag,
-    label: tag.slice(1, -1),
-    description: tag.slice(1, -1),
-  })),
-}));
+type WrapperTagDef = TagDef & { closeTag: string };
 
-const WRAPPING_TAGS = GROK_WRAPPING_TAG_DEFINITIONS.map(
-  ({ closeTag, description, label, openTag }) => ({
-    closeTag,
-    description,
-    label,
-    tag: openTag,
-  }),
-);
+function tagDefinition(tag: string, closeTag?: string): TagDef {
+  const name = tag.slice(1, -1);
+  return { closeTag, description: name, label: name, tag };
+}
 
-type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
-type TagDef = InstantTagDef | WrapperTagDef;
-
-export interface TTSEditorProps {
+export interface TagEditorProps {
   ariaLabelledBy?: string;
   charactersLimit: number;
   dir?: 'ltr' | 'rtl';
@@ -91,7 +69,7 @@ export interface TTSEditorProps {
   id?: string;
   onChange: (text: string) => void;
   placeholder?: string;
-  provider: TtsEditorProvider;
+  provider: TagProvider;
   testId?: string;
   /** Rendered at the end of the toolbar row, such as the character count. */
   toolbarEnd?: ReactNode;
@@ -200,19 +178,19 @@ interface AppliedEditorContent {
 function applyEditorContent(
   editor: EditorInstance,
   text: string,
-  provider: TtsEditorProvider,
+  provider: TagProvider,
 ): AppliedEditorContent {
-  editor.commands.setContent(ttsTextToTipTapDoc(text, provider), {
+  editor.commands.setContent(taggedTextToDoc(text, provider), {
     emitUpdate: false,
   });
 
   return {
     selection: moveEditorSelectionToEnd(editor),
-    text: ttsTipTapDocToText(editor.getJSON(), provider),
+    text: docToTaggedText(editor.getJSON(), provider),
   };
 }
 
-interface GrokSlashMenuConfig {
+interface SlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
   customItems: SuggestionItem[];
   pluginKey: string;
@@ -220,11 +198,11 @@ interface GrokSlashMenuConfig {
 }
 
 interface EditorContentAreaProps {
-  slashMenus: GrokSlashMenuConfig[];
+  slashMenus: SlashMenuConfig[];
 }
 
 function createInstantTagSuggestionItem(
-  tag: InstantTagDef,
+  tag: TagDef,
   onSelect: () => void,
 ): SuggestionItem {
   return {
@@ -247,14 +225,9 @@ function createWrapperTagSuggestionItem(
   };
 }
 
-/**
- * EditorContent component that renders the actual editor
- */
-export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
+function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
   const { editor } = use(EditorContext)!;
   const { isDragging } = useUiEditorState(editor);
-
-  // useScrollToHash()
 
   if (!editor) {
     return null;
@@ -287,11 +260,15 @@ export function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
   );
 }
 
-export function TTSEditor(props: TTSEditorProps) {
-  return <ProviderTTSEditor key={props.provider} {...props} />;
+/**
+ * Speech text with inline tags as chips, for providers with a tag catalog.
+ * Extensions read the provider once, so a provider change remounts it.
+ */
+export function TagEditor(props: TagEditorProps) {
+  return <ProviderTagEditor key={props.provider} {...props} />;
 }
 
-function ProviderTTSEditor({
+function ProviderTagEditor({
   ariaLabelledBy,
   provider,
   disabled = false,
@@ -304,23 +281,17 @@ function ProviderTTSEditor({
   placeholder,
   toolbarEnd,
   value,
-}: TTSEditorProps) {
-  const t = useTranslations('generate.grok');
-  const tEditor = useTranslations('ttsEditor');
-  const instantGroups =
-    provider === 'grok'
-      ? [
-          {
-            label: t('inlineEffectPlaceholder'),
-            tags: GROK_INSTANT_TAG_DEFINITIONS,
-          },
-        ]
-      : VOXTRAL_GROUPS.map(({ labelKey, tags }) => ({
-          label: tEditor(labelKey),
-          tags,
-        }));
-  const instantTags = instantGroups.flatMap(({ tags }) => [...tags]);
-  const wrappingTags = provider === 'grok' ? WRAPPING_TAGS : [];
+}: TagEditorProps) {
+  const t = useTranslations();
+  const catalog = TAG_CATALOGS[provider];
+  const instantGroups = catalog.groups.map(({ labelKey, tags }) => ({
+    label: t(labelKey),
+    tags: tags.map((tag) => tagDefinition(tag)),
+  }));
+  const instantTags = instantGroups.flatMap(({ tags }) => tags);
+  const wrappingTags = catalog.wrappers.map(
+    ([openTag, closeTag]) => tagDefinition(openTag, closeTag) as WrapperTagDef,
+  );
   const [effectsOpen, setEffectsOpen] = useState(false);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
@@ -339,14 +310,14 @@ function ProviderTTSEditor({
   }, [charactersLimit, enforceCharactersLimit, onChange]);
 
   const editor = useEditor({
-    content: ttsTextToTipTapDoc(value, provider),
+    content: taggedTextToDoc(value, provider),
     coreExtensionOptions: {
       clipboardTextSerializer: { blockSeparator: '\n' },
     },
     editable: !disabled,
     editorProps: {
       attributes: {
-        'aria-label': placeholder ?? tEditor('label'),
+        'aria-label': placeholder ?? t('ttsEditor.label'),
         ...(ariaLabelledBy ? { 'aria-labelledby': ariaLabelledBy } : {}),
         'aria-disabled': String(disabled),
         dir,
@@ -359,9 +330,6 @@ function ProviderTTSEditor({
         role: 'textbox',
         spellCheck: 'false',
       },
-      handleDOMEvents: {
-        keydown: () => false,
-      },
       handlePaste: (view, event) => {
         const text = event.clipboardData
           ?.getData('text/plain')
@@ -371,7 +339,7 @@ function ProviderTTSEditor({
         // Parse clipboard text for the active provider. HTML chips from another
         // provider must stay literal text rather than lose unsupported tags.
         const doc = view.state.schema.nodeFromJSON(
-          ttsTextToTipTapDoc(text, provider),
+          taggedTextToDoc(text, provider),
         );
         view.dispatch(
           view.state.tr
@@ -380,7 +348,6 @@ function ProviderTTSEditor({
         );
         return true;
       },
-      handleTextInput: () => false,
     },
     extensions: [
       StarterKit.configure({
@@ -404,8 +371,8 @@ function ProviderTTSEditor({
       }),
       InstantTag.configure({ provider }),
       WrapperBoundary,
-      UnsupportedGrokTagHighlight.configure({ provider }),
-      AutoConvertGrokTags.configure({ provider }),
+      UnknownTagHighlight.configure({ provider }),
+      AutoConvertTags.configure({ provider }),
       UiState,
     ],
     immediatelyRender: false,
@@ -427,7 +394,7 @@ function ProviderTTSEditor({
       }
     },
     onUpdate: ({ editor: nextEditor }) => {
-      const fullText = ttsTipTapDocToText(nextEditor.getJSON(), provider);
+      const fullText = docToTaggedText(nextEditor.getJSON(), provider);
       // Clamps user input only, mirroring `maxLength` on the other limited
       // textareas. Text arriving from the parent is applied as given — see the
       // content synchronization effect below.
@@ -452,7 +419,7 @@ function ProviderTTSEditor({
       return;
     }
 
-    const current = ttsTipTapDocToText(editor.getJSON(), provider);
+    const current = docToTaggedText(editor.getJSON(), provider);
     if (current === value) {
       return;
     }
@@ -474,7 +441,7 @@ function ProviderTTSEditor({
     editor?.setEditable(!disabled, false);
   }, [editor, disabled]);
 
-  const insertInstantTag = (tag: InstantTagDef) => {
+  const insertInstantTag = (tag: TagDef) => {
     if (!editor || disabled) {
       return;
     }
@@ -484,10 +451,10 @@ function ProviderTTSEditor({
       lastSelectionRef.current,
     );
     lastSelectionRef.current = selection;
-    const serialized = ttsTipTapDocToText(editor.getJSON(), provider);
+    const serialized = docToTaggedText(editor.getJSON(), provider);
     const selectedTextLength = selection.empty
       ? 0
-      : ttsTipTapDocToText(
+      : docToTaggedText(
           editor.state.doc.cut(selection.from, selection.to).toJSON(),
           provider,
         ).length;
@@ -518,7 +485,7 @@ function ProviderTTSEditor({
     lastSelectionRef.current = selection;
     const wrapperLength = tag.tag.length + tag.closeTag.length;
 
-    const serialized = ttsTipTapDocToText(editor.getJSON(), provider);
+    const serialized = docToTaggedText(editor.getJSON(), provider);
     const nextLength = serialized.length + wrapperLength;
 
     if (enforceCharactersLimit && nextLength > charactersLimit) {
@@ -548,7 +515,7 @@ function ProviderTTSEditor({
         editor.schema.nodeFromJSON(openBoundary),
       );
 
-      tr.insert(insertFrom + 1, editor.schema.text(GROK_EMPTY_WRAPPING_TEXT));
+      tr.insert(insertFrom + 1, editor.schema.text(EMPTY_WRAPPER_TEXT));
       tr.insert(insertFrom + 2, editor.schema.nodeFromJSON(closeBoundary));
 
       const cursorPos = insertFrom + 2;
@@ -600,8 +567,8 @@ function ProviderTTSEditor({
   };
 
   const handleInsertTag = (tag: TagDef) => {
-    if ('closeTag' in tag) {
-      insertWrapperTag(tag);
+    if (tag.closeTag) {
+      insertWrapperTag(tag as WrapperTagDef);
       return;
     }
 
@@ -614,7 +581,7 @@ function ProviderTTSEditor({
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional "latest ref" sync — handleInsertTag is rebuilt each render on purpose so the long-lived slash-menu callbacks always invoke the current closure.
   }, [handleInsertTag]);
 
-  const slashMenus: GrokSlashMenuConfig[] = [
+  const slashMenus: SlashMenuConfig[] = [
     {
       customItems: instantTags.map((tag) =>
         createInstantTagSuggestionItem(tag, () =>
@@ -624,11 +591,11 @@ function ProviderTTSEditor({
       pluginKey: `${provider}InstantTagMenu`,
       triggerChar: '[',
     },
-    ...(provider === 'grok'
+    ...(wrappingTags.length > 0
       ? [
           {
             allow: ({ editor, range, state }) =>
-              isGrokWrapperSuggestionAllowed({ editor, range, state }),
+              isWrapperSuggestionAllowed({ editor, provider, range, state }),
             customItems: wrappingTags.map((tag) =>
               createWrapperTagSuggestionItem(tag, () =>
                 handleInsertTagRef.current(tag),
@@ -636,7 +603,7 @@ function ProviderTTSEditor({
             ),
             pluginKey: `${provider}WrapperTagMenu`,
             triggerChar: '<' as const,
-          } satisfies GrokSlashMenuConfig,
+          } satisfies SlashMenuConfig,
         ]
       : []),
   ];
@@ -670,9 +637,7 @@ function ProviderTTSEditor({
                 variant="outline"
               >
                 <Sparkles className="mr-1.5 size-3.5" />
-                {provider === 'grok'
-                  ? t('inlineEffectPlaceholder')
-                  : tEditor('effects')}
+                {t(catalog.effectsLabelKey)}
                 <ChevronDown className="ml-1 size-3" />
               </Button>
             </PopoverTrigger>
@@ -708,7 +673,7 @@ function ProviderTTSEditor({
                 {wrappingTags.length > 0 && (
                   <div className="p-3">
                     <h4 className="mb-2 font-medium text-sm">
-                      {t('wrappingEffectPlaceholder')}
+                      {t('generate.grok.wrappingEffectPlaceholder')}
                     </h4>
                     <div className="grid grid-cols-2 gap-1">
                       {wrappingTags.map((tag) => (

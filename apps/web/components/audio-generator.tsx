@@ -9,6 +9,7 @@ import { useRef, useState } from 'react';
 import { useAudio } from '@/components/audio-provider';
 import { GrokLanguageSelect } from '@/components/grok-language-select';
 import { toast } from '@/components/services/toast';
+import { ttsTagProvider } from '@/components/speech-tags/catalog';
 import { SpeechTextField } from '@/components/speech-text-field';
 import { SplitSegmentsPanel } from '@/components/split-generation/split-segments-panel';
 import { useSplitGeneration } from '@/components/split-generation/use-split-generation';
@@ -136,7 +137,6 @@ export function AudioGenerator({
   const audio = useAudio();
 
   const ttsModel = getTtsModel(selectedVoice?.model);
-  const isGrokVoice = ttsModel?.provider === 'grok';
   const showEnhanceButton = Boolean(ttsModel?.enhancePrompt);
   const canEstimateCredits = Boolean(ttsModel?.canEstimate);
 
@@ -355,7 +355,7 @@ export function AudioGenerator({
             }
             onChange={handleTextChange}
             placeholder={t('textAreaPlaceholder')}
-            provider={isGrokVoice ? 'grok' : undefined}
+            provider={ttsTagProvider(ttsModel)}
             testIds={{
               count: 'generate-character-count',
               input: 'generate-textarea',

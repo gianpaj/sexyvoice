@@ -1,16 +1,10 @@
 import type { ReactNode } from 'react';
 
-import {
-  type GrokEditorToken,
-  parseTtsText,
-  type TtsEditorProvider,
-} from '@/lib/tts-editor';
+import { TAG_CHIP_CLASS, type TagProvider } from './catalog';
+import { parseTaggedText, type TagToken } from './text';
 
-const GROK_TAG_CHIP_CLASS =
-  'inline-flex rounded bg-gray-700 px-1 py-0.5 font-mono text-xs text-foreground';
-
-function renderGrokToken(
-  token: GrokEditorToken,
+function renderToken(
+  token: TagToken,
   key: string,
   className: string,
 ): ReactNode {
@@ -38,27 +32,25 @@ function renderGrokToken(
     <span key={key}>
       <span className={className}>{token.openTag}</span>{' '}
       {token.children.map((child, index) =>
-        renderGrokToken(child, `${key}.${index}`, className),
+        renderToken(child, `${key}.${index}`, className),
       )}{' '}
       <span className={className}>{token.closeTag}</span>
     </span>
   );
 }
 
-interface GrokTaggedTextProps {
-  className?: string;
-  provider?: TtsEditorProvider;
-  text: string;
-}
-
-export function GrokTaggedText({
-  text,
-  className = GROK_TAG_CHIP_CLASS,
+/** Read-only speech text with its known tags as chips. */
+export function TaggedText({
+  className = TAG_CHIP_CLASS,
   provider = 'grok',
-}: GrokTaggedTextProps) {
-  const tokens: GrokEditorToken[] = parseTtsText(text, provider).tokens;
-
-  return tokens.map((token, index) =>
-    renderGrokToken(token, `${index}`, className),
+  text,
+}: {
+  /** Chip classes, for surfaces with their own palette. */
+  className?: string;
+  provider?: TagProvider;
+  text: string;
+}) {
+  return parseTaggedText(text, provider).map((token, index) =>
+    renderToken(token, `${index}`, className),
   );
 }

@@ -3,7 +3,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import { describe, expect, it } from 'vitest';
 
-import { UnsupportedGrokTagHighlight } from '@/components/grok-tts/extensions/unsupported-grok-tag-highlight';
+import { UnknownTagHighlight } from '@/components/speech-tags/unknown-tag-highlight';
 
 const UNSUPPORTED_GROK_TAG_HIGHLIGHT_CLASSES = [
   'rounded',
@@ -22,12 +22,12 @@ function getHighlightedTags(editor: Editor) {
     .map((element) => element.textContent);
 }
 
-describe('UnsupportedGrokTagHighlight', () => {
+describe('UnknownTagHighlight', () => {
   it('refreshes the edited paragraph without disturbing other highlights', () => {
     const firstTag = '[first]';
     const editor = new Editor({
       content: `<p>${firstTag}</p><p>[second]</p>`,
-      extensions: [StarterKit, UnsupportedGrokTagHighlight],
+      extensions: [StarterKit, UnknownTagHighlight],
     });
 
     expect(getHighlightedTags(editor)).toEqual([firstTag, '[second]']);
