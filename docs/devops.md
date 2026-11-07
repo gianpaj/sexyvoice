@@ -182,6 +182,8 @@ without the column, the call page fails to load.
 - `XAI_SUMMARY_MODEL`: optional call-analysis model override; default `grok-4.3`.
 - `XAI_API_BASE_URL`: optional xAI Batch API REST host override; default
   `https://api.x.ai`.
+- `NEXT_PUBLIC_STYLE_PROMPT_VARIANT_MOAN`: optional style text the Generate
+  page's style field starts with.
 
 ### LiveKit and call analysis
 

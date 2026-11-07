@@ -819,8 +819,10 @@ Dashboard TTS and voice cloning use persistent Redis entries with no explicit
 TTL. Cache hits return the existing URL and consume zero credits.
 
 - TTS keys use a SHA-256 digest of the rendered text, voice, effective model,
-  seed, temperature, and speed. The stored digest is truncated to eight hex
-  characters.
+  and the settings the model uses: seed, temperature, speed, style, and the
+  Grok language when it is not `auto`. The stored digest is truncated to eight
+  hex characters. `lib/tts/cache-key.ts` builds the key, which is also the R2
+  object key.
 - Clone keys use locale, provider, text, processed reference-audio hash, and
   enhancement mode.
 - Paid and free dashboard TTS outputs use separate R2 path prefixes.
