@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ttsTagProvider } from '@/components/speech-tags/catalog';
@@ -184,6 +184,32 @@ export function useSplitGeneration({
     if (session) storeSession(session);
   }, [session]);
 
+  // A new session aborts the run in progress: its audio would be discarded,
+  // but each segment would still cost credits.
+  const runController = useRef<AbortController | null>(null);
+  const sessionKey = session?.key;
+  useEffect(() => {
+    if (!sessionKey) return;
+    return () => runController.current?.abort();
+  }, [sessionKey]);
+
+  /** A run of the current session; it ends with `signal` or the session. */
+  const startRun = (
+    runParams: SpeechParams,
+    runSession: SplitSession,
+    signal: AbortSignal,
+  ) => {
+    const controller = new AbortController();
+    if (signal.aborted) controller.abort();
+    signal.addEventListener('abort', () => controller.abort(), { once: true });
+    runController.current = controller;
+    return {
+      params: runParams,
+      session: runSession,
+      signal: controller.signal,
+    };
+  };
+
   const segments = session?.segments ?? [];
   const allGenerated = segments.length > 0 && segments.every(isSegmentDone);
 
@@ -258,7 +284,7 @@ export function useSplitGeneration({
       return;
     }
 
-    const run = { params, session, signal };
+    const run = startRun(params, session, signal);
     const pending = session.segments.flatMap((segment, index) =>
       isSegmentDone(segment) ? [] : [index],
     );
@@ -270,7 +296,7 @@ export function useSplitGeneration({
         try {
           await generateSegment(run, index);
         } catch (error) {
-          if (!signal.aborted) {
+          if (!run.signal.aborted) {
             toast.error(
               speechErrorMessage(
                 error,
@@ -291,11 +317,12 @@ export function useSplitGeneration({
   /** Generates a failed segment again with a fresh seed. */
   const retry = async (index: number, signal: AbortSignal) => {
     if (!(params && session?.segments[index])) return;
+    const run = startRun(params, session, signal);
     try {
-      await generateSegment({ params, session, signal }, index, randomSeed());
+      await generateSegment(run, index, randomSeed());
       toast.success(t('split.segmentGenerated', { INDEX: index + 1 }));
     } catch (error) {
-      if (!signal.aborted) {
+      if (!run.signal.aborted) {
         toast.error(
           speechErrorMessage(
             error,

@@ -2212,6 +2212,44 @@ describe('AudioGenerator', () => {
       );
     }
 
+    it('stops a run when the text changes', async () => {
+      const user = userEvent.setup();
+      // Each request waits until it is aborted.
+      const fetchMock = vi.fn(
+        (_url: string, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener('abort', () =>
+              reject(new DOMException('Aborted', 'AbortError')),
+            );
+          }),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        selectedStyle: 'calm',
+        selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
+      });
+      const textarea = await screen.findByTestId('generate-textarea');
+      fireEvent.change(textarea, {
+        target: { value: `${firstSegment} ${secondSegment}` },
+      });
+      await user.click(
+        screen.getByRole('checkbox', { name: baseDict.split.splitToggleLabel }),
+      );
+      await user.click(screen.getByTestId('generate-button'));
+      await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+
+      fireEvent.change(textarea, {
+        target: { value: `${secondSegment} ${firstSegment}` },
+      });
+
+      await waitFor(() => {
+        expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+      });
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(mockToastFn.success).not.toHaveBeenCalled();
+      expect(mockToastFn.error).not.toHaveBeenCalled();
+    });
+
     it('starts over when the voice changes', async () => {
       const { view } = await generateTwoSegments({
         selectedVoice: createVoice({ model: 'gpro38', name: 'kore' }),
