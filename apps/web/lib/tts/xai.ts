@@ -1,4 +1,4 @@
-import { GROK_LANGUAGES } from './models';
+import { GROK_LANGUAGES } from './models.ts';
 
 export type XaiTtsCodec = 'mp3' | 'wav';
 
