@@ -65,14 +65,14 @@ The repository has three main workspaces:
 
 ## Provider and Model Map
 
-| Feature                  | Public or stored ID                                       | Runtime provider/model                                              | Notes                                                           |
-| ------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Dashboard and API TTS    | `gpro38`                                                  | `gemini-3.8-flash-tts`                                              | WAV; no provider-model fallback                                 |
-| Dashboard and API TTS    | `xai`                                                     | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                |
-| Dashboard and API TTS    | `orpheus`                                                 | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus` |
-| Voice cloning            | Locale-dependent                                          | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                              |
-| Real-time calls          | `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider    |
-| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                         | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                 |
+| Feature                  | Public or stored ID                                                                              | Runtime provider/model                                              | Notes                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Dashboard and API TTS    | `gpro38`                                                                                         | `gemini-3.8-flash-tts`                                              | WAV; no provider-model fallback                                                     |
+| Dashboard and API TTS    | `xai`                                                                                            | xAI TTS API                                                         | Supports MP3/WAV and a `0.7`–`1.5` speed setting                                    |
+| Dashboard and API TTS    | `orpheus`                                                                                        | Replicate Orpheus                                                   | External API aliases supported Orpheus model paths to `orpheus`                     |
+| Voice cloning            | Locale-dependent                                                                                 | Mistral `voxtral-mini-tts-3-0` or Replicate Chatterbox Multilingual | See the cloning locale table below                                                  |
+| Real-time calls          | `grok-voice-think-fast-2.0` (default), `grok-voice-think-fast-1.0`, `inworld-tts`, `mistral-tts` | Grok realtime, or STT + LLM + Inworld/Mistral TTS                   | Built-in voices use Grok; saved voices select their provider; `lib/calls/models.ts` |
+| Call transcript analysis | `XAI_SUMMARY_MODEL` or `grok-4.3`                                                                | xAI Batch API (JSON-schema prompt)                                  | Async; queued by the webhook, drained by a cron                                     |
 
 ## External REST API
 
@@ -180,7 +180,12 @@ flowchart TD
     H -->|"Failure"| Q["Refund reserved credits"]
 ```
 
-`lib/tts/models.ts` excludes the retired `gpro` and `gpro31` catalogs from
+`lib/tts/models.ts` has one entry per active speech model: provider, stored
+model IDs, label, text and style limits per tier, formats, accepted settings,
+credit estimate, inline tags and enhance prompt. Adding a model means an entry
+there, a provider adapter in `lib/tts/synthesize.ts` for a new provider, a
+price in `lib/tts/provider-cost.ts`, and its `voices` rows. The catalog
+excludes the retired `gpro` and `gpro31` models from
 voice lists, lookups, generation, and estimates. Requests for retired model
 aliases fail validation; retired UUIDs return voice-not-found before cache
 access or charging. Historical voice rows remain public so history joins,
