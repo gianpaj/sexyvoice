@@ -398,8 +398,8 @@ describe('Gemini 3.8 display names', () => {
     });
     const style = screen.getByTestId('generate-style-textarea');
 
-    expect(style.style.getPropertyValue('--ta1-height')).toBe('4rem');
+    expect(style.style.getPropertyValue('--textarea-height')).toBe('4rem');
     await user.click(screen.getByTitle('Fullscreen'));
-    expect(style.style.getPropertyValue('--ta1-height')).toBe('30vh');
+    expect(style.style.getPropertyValue('--textarea-height')).toBe('30vh');
   });
 });

@@ -13,7 +13,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { GrokTTSEditor } from '@/components/grok-tts-editor';
 import { TTSEditor } from '@/components/tts-editor';
 import type { TtsEditorProvider } from '@/lib/tts-editor';
 import { GROK_EMPTY_WRAPPING_TEXT } from '@/lib/tts-editor';
@@ -61,8 +60,6 @@ interface EditorProps {
   onChange?: (text: string) => void;
   placeholder?: string;
   provider?: TtsEditorProvider;
-  selectedGrokLanguage?: string;
-  setSelectedGrokLanguage?: (text: string) => void;
   value?: string;
 }
 
@@ -71,27 +68,15 @@ type ResolvedEditorProps = Required<EditorProps>;
 function editorTree(props: ResolvedEditorProps) {
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      {props.provider === 'voxtral' ? (
-        <TTSEditor
-          charactersLimit={props.charactersLimit}
-          disabled={props.disabled}
-          enforceCharactersLimit={props.enforceCharactersLimit}
-          onChange={props.onChange}
-          placeholder={props.placeholder}
-          provider="voxtral"
-          value={props.value}
-        />
-      ) : (
-        <GrokTTSEditor
-          charactersLimit={props.charactersLimit}
-          enforceCharactersLimit={props.enforceCharactersLimit}
-          onChange={props.onChange}
-          placeholder={props.placeholder}
-          selectedGrokLanguage={props.selectedGrokLanguage}
-          setSelectedGrokLanguage={props.setSelectedGrokLanguage}
-          value={props.value}
-        />
-      )}
+      <TTSEditor
+        charactersLimit={props.charactersLimit}
+        disabled={props.disabled}
+        enforceCharactersLimit={props.enforceCharactersLimit}
+        onChange={props.onChange}
+        placeholder={props.placeholder}
+        provider={props.provider}
+        value={props.value}
+      />
     </NextIntlClientProvider>
   );
 }
@@ -103,8 +88,6 @@ function renderEditor({
   enforceCharactersLimit = true,
   onChange = vi.fn(),
   placeholder = messages.generate.textAreaPlaceholder,
-  selectedGrokLanguage = 'auto',
-  setSelectedGrokLanguage = vi.fn(),
   value = '',
 }: EditorProps = {}) {
   const props: ResolvedEditorProps = {
@@ -114,8 +97,6 @@ function renderEditor({
     enforceCharactersLimit,
     onChange,
     placeholder,
-    selectedGrokLanguage,
-    setSelectedGrokLanguage,
     value,
   };
   const rendered = render(editorTree(props));
@@ -156,15 +137,14 @@ function ControlledEditorHarness({
 
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      <GrokTTSEditor
+      <TTSEditor
         charactersLimit={500}
         onChange={(text) => {
           onChange(text);
           setValue(text);
         }}
         placeholder={messages.generate.textAreaPlaceholder}
-        selectedGrokLanguage="auto"
-        setSelectedGrokLanguage={vi.fn()}
+        provider="grok"
         value={value}
       />
       <button onClick={() => setValue(externalValue)} type="button">
@@ -254,7 +234,7 @@ function pasteIntoEditor(editor: HTMLElement, text: string) {
   });
 }
 
-describe('GrokTTSEditor', () => {
+describe('TTSEditor', () => {
   it('renders the editable content area and effects trigger', async () => {
     const onChange = vi.fn();
 
@@ -266,30 +246,6 @@ describe('GrokTTSEditor', () => {
         name: messages.generate.grok.inlineEffectPlaceholder,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('0 / 500')).toBeInTheDocument();
-  });
-
-  it('shows Automatic first and English second in the language selector', async () => {
-    const user = userEvent.setup();
-    renderEditor();
-
-    const trigger = screen.getByRole('combobox');
-    expect(trigger).toHaveTextContent(messages.generate.grok.langAutomatic);
-
-    await user.click(trigger);
-
-    const options = await screen.findAllByRole('option');
-    const optionLabels = options.map((option) => option.textContent);
-    expect(optionLabels.slice(0, 2)).toEqual([
-      messages.generate.grok.langAutomatic,
-      messages.generate.grok.langEnglish,
-    ]);
-    expect(optionLabels).toEqual(
-      expect.arrayContaining([
-        messages.generate.grok.langArabicEgypt,
-        messages.generate.grok.langArabicSaudiArabia,
-      ]),
-    );
   });
 
   it('renders multiline paragraphs in the ProseMirror editor', async () => {
@@ -312,7 +268,6 @@ describe('GrokTTSEditor', () => {
 
     expect(editor).toHaveTextContent('Line one');
     expect(editor).toHaveTextContent('Line two');
-    expect(screen.getByText('17 / 500')).toBeInTheDocument();
   });
 
   it('synchronizes an external value without emitting onChange', async () => {
@@ -325,7 +280,6 @@ describe('GrokTTSEditor', () => {
 
     await waitFor(() => {
       expect(editor).toHaveTextContent('External value');
-      expect(screen.getByText('14 / 500')).toBeInTheDocument();
     });
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -346,8 +300,8 @@ describe('GrokTTSEditor', () => {
     });
     await settleEffects();
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      '10 / 500',
+    expect(screen.getByTestId('generate-textarea')).toHaveTextContent(
+      'Helloworld',
     );
   });
 
@@ -377,9 +331,6 @@ describe('GrokTTSEditor', () => {
     // A second emission here would mean the reconciliation never converges.
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('parent-value')).toHaveTextContent('Helloworld');
-    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      '10 / 500',
-    );
   });
 
   // External over-limit text stays visible until the user edits it.
@@ -400,9 +351,6 @@ describe('GrokTTSEditor', () => {
     });
     await settleEffects();
     expect(onChange).not.toHaveBeenCalled();
-    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      `${OVER_LIMIT_TEXT.length} / ${TEST_LIMIT}`,
-    );
   });
 
   it('clamps typed text after the character limit grace range', async () => {
@@ -420,12 +368,6 @@ describe('GrokTTSEditor', () => {
     expect(
       onChange.mock.calls.every(([text]) => text.length <= CLAMP_THRESHOLD),
     ).toBe(true);
-    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      `${CLAMP_THRESHOLD} / ${TEST_LIMIT}`,
-    );
-    expect(screen.getByTestId('generate-character-count')).toHaveClass(
-      'text-red-500',
-    );
   });
 
   it('clamps over-limit text on the first edit after enforcement resumes', async () => {
@@ -443,9 +385,6 @@ describe('GrokTTSEditor', () => {
     rendered.rerenderWith({ enforceCharactersLimit: true });
 
     expect(editor).toHaveTextContent(longText);
-    expect(screen.getByTestId('generate-character-count')).toHaveTextContent(
-      `${longText.length} / ${TEST_LIMIT}`,
-    );
 
     editor.focus();
     selectEditorText(editor, 'Z');
@@ -578,7 +517,6 @@ describe('GrokTTSEditor', () => {
     await user.type(editor, longText);
 
     expect(onChange).toHaveBeenLastCalledWith(longText);
-    expect(screen.getByText('20')).toBeInTheDocument();
   });
 
   it('inserts an instant tag at the current caret position', async () => {

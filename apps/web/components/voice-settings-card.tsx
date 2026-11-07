@@ -1,15 +1,10 @@
 'use client';
-import { Info, Maximize2, Minimize2 } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import {
-  type Dispatch,
-  type SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import { AudioProvider } from '@/components/audio-provider';
+import { ExpandableTextarea } from '@/components/expandable-textarea';
 import {
   Card,
   CardContent,
@@ -19,7 +14,6 @@ import {
 } from '@/components/ui/card';
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { VoicePicker } from '@/components/voice-picker';
-import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { validateGenerationInput } from '@/lib/tts/generation-input';
 import { getTtsModel, type TtsProvider } from '@/lib/tts/models';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
@@ -28,7 +22,6 @@ import { getVoiceDisplayName } from '@/lib/voice-names';
 import { AudioPlayerWithContext } from './audio-player-with-context';
 import { GrokTaggedText } from './grok-tagged-text';
 import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
 import {
   Tooltip,
   TooltipContent,
@@ -69,15 +62,6 @@ export function VoiceSettingsCard({
     : null;
   const styleCharacterLimit = styleCheck?.styleLimit ?? null;
   const styleLength = selectedStyle?.length ?? 0;
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: we need selectedStyle
-  useEffect(() => {
-    if (textareaRef.current && !isFullscreen) {
-      resizeTextarea(textareaRef.current, 4, 10, '--ta1-height');
-    }
-  }, [selectedStyle]);
 
   return (
     <Card>
@@ -162,33 +146,16 @@ export function VoiceSettingsCard({
         </AudioProvider>
         {styleCharacterLimit !== null && (
           <div className="relative">
-            <Textarea
-              className="textarea-1 pr-10 transition-[height] duration-200 ease-in-out"
+            <ExpandableTextarea
+              className="pr-10"
+              compactHeight="4rem"
               data-testid="generate-style-textarea"
               maxLength={styleCharacterLimit + CHARACTERS_LIMIT_GRACE}
+              minRows={4}
               onChange={(e) => setSelectedStyle(e.target.value)}
               placeholder={t('voiceSelector.selectStyleTextareaPlaceholder')}
-              ref={textareaRef}
-              style={
-                {
-                  '--ta1-height': isFullscreen ? '30vh' : '4rem',
-                } as React.CSSProperties
-              }
               value={selectedStyle}
             />
-            <Button
-              className="absolute top-2 right-2 h-8 w-8 text-zinc-400 hover:bg-zinc-800 hover:text-white"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              size="icon"
-              title="Fullscreen"
-              variant="ghost"
-            >
-              {isFullscreen ? (
-                <Minimize2 className="h-4 w-4" />
-              ) : (
-                <Maximize2 className="h-4 w-4" />
-              )}
-            </Button>
             <div
               className={cn(
                 'flex items-center justify-end gap-1.5 text-muted-foreground text-sm',

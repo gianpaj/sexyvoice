@@ -690,7 +690,7 @@ describe('shouldDropClientSentryEvent', () => {
               stacktrace: {
                 frames: [
                   {
-                    filename: 'apps/web/components/grok-tts-editor.tsx',
+                    filename: 'apps/web/components/tts-editor.tsx',
                     function: 'restoreSelection',
                   },
                 ],

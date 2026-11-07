@@ -3,33 +3,24 @@
 import { useCompletion } from '@ai-sdk/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import {
-  type ComponentPropsWithoutRef,
-  forwardRef,
-  type ReactNode,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { useRef, useState } from 'react';
 
 import { useAudio } from '@/components/audio-provider';
+import { GrokLanguageSelect } from '@/components/grok-language-select';
 import { toast } from '@/components/services/toast';
+import { SpeechTextField } from '@/components/speech-text-field';
 import { SplitSegmentsPanel } from '@/components/split-generation/split-segments-panel';
 import { useSplitGeneration } from '@/components/split-generation/use-split-generation';
-import { SpotlightField } from '@/components/spotlight-field';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   DEFAULT_GENERATION_SETTINGS,
   type GenerationSettings,
 } from '@/hooks/use-generation-settings';
 import { downloadUrl } from '@/lib/download';
-import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { validateGenerationInput } from '@/lib/tts/generation-input';
 import { getTtsModel } from '@/lib/tts/models';
 import {
@@ -46,13 +37,6 @@ import {
   AudioPlayerWithContext,
 } from './audio-player-with-context';
 import { GenerateButton } from './generate-button';
-
-const NonGrokPromptEditor = dynamic(
-  () => import('./non-grok-editor').then((mod) => mod.NonGrokPromptEditor),
-  { ssr: false },
-);
-
-import { GrokTTSEditor } from './grok-tts-editor';
 import { Alert, AlertDescription } from './ui/alert';
 import {
   Tooltip,
@@ -60,31 +44,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from './ui/tooltip';
-
-interface AnimatedPromptTextareaProps
-  extends ComponentPropsWithoutRef<typeof Textarea> {
-  children?: ReactNode;
-}
-
-export const AnimatedPromptTextarea = forwardRef<
-  HTMLTextAreaElement,
-  AnimatedPromptTextareaProps
->(({ children, className, onBlur, onFocus, ...props }, ref) => (
-  <SpotlightField>
-    <Textarea
-      className={cn(
-        'border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0',
-        className,
-      )}
-      onBlur={onBlur}
-      onFocus={onFocus}
-      ref={ref}
-      {...props}
-    />
-    {children}
-  </SpotlightField>
-));
-AnimatedPromptTextarea.displayName = 'AnimatedPromptTextarea';
 
 interface CreditEstimatorProps {
   buttonLabel: string;
@@ -162,7 +121,6 @@ export function AudioGenerator({
   const [splitTextAudios, setSplitTextAudios] = useState(false);
   const [playerControls, setPlayerControls] =
     useState<AudioPlayerControls | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedGrokLanguage, setSelectedGrokLanguage] = useState('auto');
 
   const textRevisionRef = useRef(0);
@@ -173,13 +131,11 @@ export function AudioGenerator({
     if (!value.trim()) setTextImproved(false);
   };
 
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const abortController = useRef<AbortController | null>(null);
 
   const audio = useAudio();
 
   const ttsModel = getTtsModel(selectedVoice?.model);
-  const isGeminiVoice = ttsModel?.provider === 'gemini';
   const isGrokVoice = ttsModel?.provider === 'grok';
   const showEnhanceButton = Boolean(ttsModel?.enhancePrompt);
   const canEstimateCredits = Boolean(ttsModel?.canEstimate);
@@ -196,14 +152,6 @@ export function AudioGenerator({
   const splitEnabled = isPaidUser && splitTextAudios;
   const textIsOverLimit = !splitEnabled && Boolean(input?.textTooLong);
   const inputIsOverLimit = textIsOverLimit || Boolean(input?.styleTooLong);
-
-  let textareaRightPadding = 'pr-16';
-
-  if (isGeminiVoice) {
-    textareaRightPadding = 'pr-10';
-  } else if (showEnhanceButton) {
-    textareaRightPadding = 'pr-20';
-  }
 
   const speechParams: SpeechParams | null =
     selectedVoice && ttsModel
@@ -333,13 +281,6 @@ export function AudioGenerator({
     }
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: textarea should resize when text or fullscreen changes
-  useEffect(() => {
-    if (textareaRef.current && !isFullscreen) {
-      resizeTextarea(textareaRef.current, 6);
-    }
-  }, [text, isFullscreen]);
-
   // An estimate shows only while the request it priced is unchanged.
   const estimateKey = speechParams
     ? JSON.stringify({
@@ -379,43 +320,48 @@ export function AudioGenerator({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          {isGrokVoice ? (
-            <GrokTTSEditor
-              charactersLimit={charactersLimit}
-              enforceCharactersLimit={!splitEnabled}
-              isPaidUser={isPaidUser}
-              onChange={handleTextChange}
-              placeholder={t('textAreaPlaceholder')}
-              selectedGrokLanguage={selectedGrokLanguage}
-              setSelectedGrokLanguage={setSelectedGrokLanguage}
-              value={text}
-            />
-          ) : (
-            <NonGrokPromptEditor
-              characterCountText={
-                split.active
-                  ? t('split.characterCount', {
-                      characters: text.length,
-                      segments: split.segmentCount,
-                    })
-                  : undefined
-              }
-              charactersLimit={charactersLimit}
-              isEnhancingText={isEnhancingText}
-              isFullscreen={isFullscreen}
-              isGenerating={isGenerating}
-              isPaidUser={isPaidUser}
-              onEnhanceText={handleEnhanceText}
-              onTextChange={handleTextChange}
-              onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
-              showEnhanceButton={showEnhanceButton}
-              text={text}
-              textareaMaxLength={splitEnabled ? null : undefined}
-              textareaRef={textareaRef}
-              textareaRightPadding={textareaRightPadding}
-              textIsOverLimit={textIsOverLimit}
+          {ttsModel?.settings.language && (
+            <GrokLanguageSelect
+              onChange={setSelectedGrokLanguage}
+              value={selectedGrokLanguage}
             />
           )}
+          <SpeechTextField
+            countLabel={
+              split.active
+                ? t('split.characterCount', {
+                    characters: text.length,
+                    segments: split.segmentCount,
+                  })
+                : undefined
+            }
+            enforceLimit={!splitEnabled}
+            enhance={
+              showEnhanceButton
+                ? {
+                    disabled: isGenerating,
+                    isEnhancing: isEnhancingText,
+                    onEnhance: handleEnhanceText,
+                  }
+                : undefined
+            }
+            expandable
+            isPaidUser={isPaidUser}
+            limit={charactersLimit}
+            limitTooltip={
+              isPaidUser
+                ? t('paidCharacterLimitTooltip')
+                : t('upgradeCharacterLimitTooltip')
+            }
+            onChange={handleTextChange}
+            placeholder={t('textAreaPlaceholder')}
+            provider={isGrokVoice ? 'grok' : undefined}
+            testIds={{
+              count: 'generate-character-count',
+              input: 'generate-textarea',
+            }}
+            value={text}
+          />
 
           <TooltipProvider>
             <Tooltip delayDuration={100}>

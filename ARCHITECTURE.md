@@ -360,12 +360,15 @@ live in `apps/web/lib/fetch-with-retry.ts`; they do not impose a caller deadline
 
 ### Tagged speech editing
 
-`apps/web/components/tts-editor.tsx` shares the Tiptap editor between Grok speech
-and Voxtral cloning. The provider selects its tag catalog, autocomplete, and
+`apps/web/components/speech-text-field.tsx` is the speech text field of the
+generate and clone pages, with one character count. Providers with a tag
+catalog, Grok speech and Voxtral cloning, get the Tiptap editor in
+`apps/web/components/tts-editor.tsx`; other voices and Chatterbox locales get a
+textarea. The provider selects its tag catalog, autocomplete, and
 unsupported-tag highlighting. Grok supports instant tags and paired wrappers;
 Voxtral supports 34 emotion tags, pace tags, and the documented vocal sounds in
 `apps/web/lib/voxtral-tags.ts`. Voxtral tags apply to the following text without
-a closing tag. The clone form uses a textarea for Chatterbox locales.
+a closing tag.
 
 `apps/web/lib/tts-editor.ts` parses and serializes provider tags as plain text.
 Copying preserves tag syntax and line breaks; unknown tags remain literal text.

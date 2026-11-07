@@ -7,7 +7,14 @@ import { EditorContent, EditorContext, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { ChevronDown, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { type MouseEvent, use, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent,
+  type ReactNode,
+  use,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { AutoConvertGrokTags } from '@/components/grok-tts/extensions/auto-convert-grok-tags';
 import {
@@ -27,16 +34,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { UpgradeCrown } from '@/components/upgrade-crown';
 import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
-import { GROK_LANGUAGES, type GrokLanguage } from '@/lib/tts/models';
 import {
   GROK_EMPTY_WRAPPING_TEXT,
   GROK_INSTANT_TAG_DEFINITIONS,
@@ -47,7 +45,6 @@ import {
   ttsTipTapDocToText,
 } from '@/lib/tts-editor';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { cn } from '@/lib/utils';
 import { VOXTRAL_TAG_GROUPS } from '@/lib/voxtral-tags';
 import { UiState } from './tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from './tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
@@ -85,58 +82,21 @@ const WRAPPING_TAGS = GROK_WRAPPING_TAG_DEFINITIONS.map(
 type WrapperTagDef = (typeof WRAPPING_TAGS)[number];
 type TagDef = InstantTagDef | WrapperTagDef;
 
-const GROK_LANGUAGE_LABEL_KEYS = {
-  'ar-AE': 'langArabicUnitedArabEmirates',
-  'ar-EG': 'langArabicEgypt',
-  'ar-SA': 'langArabicSaudiArabia',
-  auto: 'langAutomatic',
-  bn: 'langBengali',
-  de: 'langGerman',
-  en: 'langEnglish',
-  'es-ES': 'langSpanishSpain',
-  'es-MX': 'langSpanishMexico',
-  fr: 'langFrench',
-  hi: 'langHindi',
-  id: 'langIndonesian',
-  it: 'langItalian',
-  ja: 'langJapanese',
-  ko: 'langKorean',
-  'pt-BR': 'langPortugueseBrazil',
-  'pt-PT': 'langPortuguesePortugal',
-  ru: 'langRussian',
-  tr: 'langTurkish',
-  vi: 'langVietnamese',
-  zh: 'langChinese',
-} as const satisfies Record<GrokLanguage, string>;
-
-interface BaseTTSEditorProps {
+export interface TTSEditorProps {
   ariaLabelledBy?: string;
   charactersLimit: number;
   dir?: 'ltr' | 'rtl';
   disabled?: boolean;
   enforceCharactersLimit?: boolean;
   id?: string;
-  isPaidUser?: boolean;
   onChange: (text: string) => void;
   placeholder?: string;
-  showCharacterCount?: boolean;
+  provider: TtsEditorProvider;
   testId?: string;
+  /** Rendered at the end of the toolbar row, such as the character count. */
+  toolbarEnd?: ReactNode;
   value: string;
 }
-
-export type TTSEditorProps = BaseTTSEditorProps &
-  (
-    | {
-        provider: 'grok';
-        selectedGrokLanguage: string;
-        setSelectedGrokLanguage: (text: string) => void;
-      }
-    | {
-        provider: 'voxtral';
-        selectedGrokLanguage?: never;
-        setSelectedGrokLanguage?: never;
-      }
-  );
 
 interface EditorSelectionSnapshot {
   empty: boolean;
@@ -338,18 +298,14 @@ function ProviderTTSEditor({
   dir = 'ltr',
   id,
   testId = 'generate-textarea',
-  showCharacterCount = true,
   enforceCharactersLimit = true,
-  isPaidUser,
   charactersLimit,
   onChange,
   placeholder,
-  selectedGrokLanguage,
-  setSelectedGrokLanguage,
+  toolbarEnd,
   value,
 }: TTSEditorProps) {
   const t = useTranslations('generate.grok');
-  const tGenerate = useTranslations('generate');
   const tEditor = useTranslations('ttsEditor');
   const instantGroups =
     provider === 'grok'
@@ -366,7 +322,6 @@ function ProviderTTSEditor({
   const instantTags = instantGroups.flatMap(({ tags }) => [...tags]);
   const wrappingTags = provider === 'grok' ? WRAPPING_TAGS : [];
   const [effectsOpen, setEffectsOpen] = useState(false);
-  const [currentLength, setCurrentLength] = useState(value.length);
   const charactersLimitRef = useRef(charactersLimit);
   const enforceCharactersLimitRef = useRef(enforceCharactersLimit);
   const onChangeRef = useRef(onChange);
@@ -488,7 +443,6 @@ function ProviderTTSEditor({
         text = applied.text;
       }
 
-      setCurrentLength(text.length);
       onChange(text);
     },
   });
@@ -500,7 +454,6 @@ function ProviderTTSEditor({
 
     const current = ttsTipTapDocToText(editor.getJSON(), provider);
     if (current === value) {
-      setCurrentLength(current.length);
       return;
     }
 
@@ -509,7 +462,6 @@ function ProviderTTSEditor({
     const applied = applyEditorContent(editor, value, provider);
     lastSelectionRef.current = applied.selection;
     contentResetSelectionRef.current = applied.selection;
-    setCurrentLength(applied.text.length);
 
     // Reconcile normalized content once. The callback ref keeps parent renders
     // from resetting the document and caret when the input value is unchanged.
@@ -662,11 +614,6 @@ function ProviderTTSEditor({
     // biome-ignore lint/correctness/useExhaustiveDependencies: intentional "latest ref" sync — handleInsertTag is rebuilt each render on purpose so the long-lived slash-menu callbacks always invoke the current closure.
   }, [handleInsertTag]);
 
-  const translatedGrokLanguages = GROK_LANGUAGES.map((value) => ({
-    label: t(GROK_LANGUAGE_LABEL_KEYS[value]),
-    value,
-  }));
-
   const slashMenus: GrokSlashMenuConfig[] = [
     {
       customItems: instantTags.map((tag) =>
@@ -703,146 +650,99 @@ function ProviderTTSEditor({
   }
 
   return (
-    <>
-      {provider === 'grok' && (
-        <div className="space-y-2 sm:w-1/3">
-          <div className="font-medium text-sm">{t('languageLabel')}</div>
-          <Select
-            disabled={disabled}
-            onValueChange={setSelectedGrokLanguage}
-            value={selectedGrokLanguage}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('languageSelectPlaceholder')} />
-            </SelectTrigger>
-            <SelectContent>
-              {translatedGrokLanguages.map(({ value, label }) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      <div className="w-full">
-        <div className="space-y-2">
-          <SpotlightField>
-            <div className="editor-wrapper relative min-h-[8rem] rounded-md bg-transparent p-3 text-sm ring-offset-background">
-              <EditorContext.Provider value={{ editor }}>
-                <EditorContentArea slashMenus={slashMenus} />
-              </EditorContext.Provider>
-            </div>
-          </SpotlightField>
-
-          <div className="mt-2 flex items-center gap-2">
-            <Popover onOpenChange={setEffectsOpen} open={effectsOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  disabled={disabled}
-                  onMouseDown={preserveEditorSelection}
-                  size="sm"
-                  variant="outline"
-                >
-                  <Sparkles className="mr-1.5 size-3.5" />
-                  {provider === 'grok'
-                    ? t('inlineEffectPlaceholder')
-                    : tEditor('effects')}
-                  <ChevronDown className="ml-1 size-3" />
-                </Button>
-              </PopoverTrigger>
-
-              <PopoverContent
-                align="start"
-                className="bg-background p-0 sm:w-100"
-              >
-                <div className="max-h-[400px] overflow-y-auto">
-                  {instantGroups.map((group) => (
-                    <div
-                      className="border-border border-b p-3 last:border-b-0"
-                      key={group.label}
-                    >
-                      <h4 className="mb-2 font-medium text-sm">
-                        {group.label}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-1">
-                        {group.tags.map((tag) => (
-                          <button
-                            className="min-h-10 min-w-0 break-all rounded-sm px-2 py-1.5 text-left font-mono text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
-                            disabled={disabled}
-                            key={tag.tag}
-                            onClick={() => handleInsertTag(tag)}
-                            onMouseDown={preserveSelection}
-                            type="button"
-                          >
-                            {tag.tag}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  {wrappingTags.length > 0 && (
-                    <div className="p-3">
-                      <h4 className="mb-2 font-medium text-sm">
-                        {t('wrappingEffectPlaceholder')}
-                      </h4>
-                      <div className="grid grid-cols-2 gap-1">
-                        {wrappingTags.map((tag) => (
-                          <button
-                            className="w-full min-w-0 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
-                            key={tag.tag}
-                            onClick={() => handleInsertTag(tag)}
-                            onMouseDown={preserveSelection}
-                            type="button"
-                          >
-                            <div className="min-w-0 font-medium">
-                              <span className="inline-block whitespace-nowrap">
-                                {tag.tag}
-                                ...
-                              </span>
-                              <wbr />
-                              <span className="inline-block whitespace-nowrap">
-                                {tag.closeTag}
-                              </span>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            <div className="flex-1" />
-
-            {showCharacterCount && (
-              <div
-                className={cn(
-                  'flex items-center justify-end gap-1.5 text-muted-foreground text-sm tabular-nums',
-                  enforceCharactersLimit &&
-                    currentLength > charactersLimit &&
-                    'text-red-500',
-                )}
-                data-testid="generate-character-count"
-              >
-                {enforceCharactersLimit
-                  ? `${currentLength} / ${charactersLimit}`
-                  : currentLength}
-                <UpgradeCrown
-                  paid={isPaidUser}
-                  tooltip={
-                    isPaidUser
-                      ? tGenerate('paidCharacterLimitTooltip')
-                      : tGenerate('upgradeCharacterLimitTooltip')
-                  }
-                />
-              </div>
-            )}
+    <div className="w-full">
+      <div className="space-y-2">
+        <SpotlightField>
+          <div className="editor-wrapper relative min-h-[8rem] rounded-md bg-transparent p-3 text-sm ring-offset-background">
+            <EditorContext.Provider value={{ editor }}>
+              <EditorContentArea slashMenus={slashMenus} />
+            </EditorContext.Provider>
           </div>
+        </SpotlightField>
+
+        <div className="mt-2 flex items-center gap-2">
+          <Popover onOpenChange={setEffectsOpen} open={effectsOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                disabled={disabled}
+                onMouseDown={preserveEditorSelection}
+                size="sm"
+                variant="outline"
+              >
+                <Sparkles className="mr-1.5 size-3.5" />
+                {provider === 'grok'
+                  ? t('inlineEffectPlaceholder')
+                  : tEditor('effects')}
+                <ChevronDown className="ml-1 size-3" />
+              </Button>
+            </PopoverTrigger>
+
+            <PopoverContent
+              align="start"
+              className="bg-background p-0 sm:w-100"
+            >
+              <div className="max-h-[400px] overflow-y-auto">
+                {instantGroups.map((group) => (
+                  <div
+                    className="border-border border-b p-3 last:border-b-0"
+                    key={group.label}
+                  >
+                    <h4 className="mb-2 font-medium text-sm">{group.label}</h4>
+                    <div className="grid grid-cols-2 gap-1">
+                      {group.tags.map((tag) => (
+                        <button
+                          className="min-h-10 min-w-0 break-all rounded-sm px-2 py-1.5 text-left font-mono text-xs hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring"
+                          disabled={disabled}
+                          key={tag.tag}
+                          onClick={() => handleInsertTag(tag)}
+                          onMouseDown={preserveSelection}
+                          type="button"
+                        >
+                          {tag.tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {wrappingTags.length > 0 && (
+                  <div className="p-3">
+                    <h4 className="mb-2 font-medium text-sm">
+                      {t('wrappingEffectPlaceholder')}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-1">
+                      {wrappingTags.map((tag) => (
+                        <button
+                          className="w-full min-w-0 rounded-sm px-2 py-1.5 text-left text-xs hover:bg-accent"
+                          key={tag.tag}
+                          onClick={() => handleInsertTag(tag)}
+                          onMouseDown={preserveSelection}
+                          type="button"
+                        >
+                          <div className="min-w-0 font-medium">
+                            <span className="inline-block whitespace-nowrap">
+                              {tag.tag}
+                              ...
+                            </span>
+                            <wbr />
+                            <span className="inline-block whitespace-nowrap">
+                              {tag.closeTag}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <div className="flex-1" />
+
+          {toolbarEnd}
         </div>
       </div>
-    </>
+    </div>
   );
 }

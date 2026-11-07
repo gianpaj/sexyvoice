@@ -83,42 +83,49 @@ vi.mock('@/components/streaming-waveform-player', () => ({
   ),
 }));
 
-vi.mock('@/components/grok-tts-editor', () => ({
-  GrokTTSEditor: ({
+vi.mock('@/components/grok-language-select', () => ({
+  GrokLanguageSelect: ({
+    onChange,
+    value,
+  }: {
+    onChange: (language: string) => void;
+    value: string;
+  }) => (
+    <div className="space-y-2 sm:w-1/3">
+      <label className="font-medium text-sm" htmlFor="grok-language">
+        Language
+      </label>
+      <select
+        id="grok-language"
+        onChange={(event) => onChange(event.currentTarget.value)}
+        value={value}
+      >
+        <option value="auto">Automatic</option>
+        <option value="en">English</option>
+        <option value="ar-EG">Arabic (Egypt)</option>
+        <option value="ar-SA">Arabic (Saudi Arabia)</option>
+      </select>
+    </div>
+  ),
+}));
+
+vi.mock('@/components/tts-editor', () => ({
+  TTSEditor: ({
     charactersLimit,
     enforceCharactersLimit = true,
     onChange,
     placeholder,
-    selectedGrokLanguage,
-    setSelectedGrokLanguage,
+    toolbarEnd,
     value,
   }: {
     charactersLimit: number;
     enforceCharactersLimit?: boolean;
     onChange: (text: string) => void;
     placeholder?: string;
-    selectedGrokLanguage: string;
-    setSelectedGrokLanguage: (text: string) => void;
+    toolbarEnd?: React.ReactNode;
     value: string;
   }) => (
     <>
-      <div className="space-y-2 sm:w-1/3">
-        <label className="font-medium text-sm" htmlFor="grok-language">
-          Language
-        </label>
-        <select
-          id="grok-language"
-          onChange={(event) =>
-            setSelectedGrokLanguage(event.currentTarget.value)
-          }
-          value={selectedGrokLanguage}
-        >
-          <option value="auto">Automatic</option>
-          <option value="en">English</option>
-          <option value="ar-EG">Arabic (Egypt)</option>
-          <option value="ar-SA">Arabic (Saudi Arabia)</option>
-        </select>
-      </div>
       <textarea
         aria-label={placeholder}
         maxLength={enforceCharactersLimit ? charactersLimit : undefined}
@@ -126,6 +133,7 @@ vi.mock('@/components/grok-tts-editor', () => ({
         value={value}
       />
       <button type="button">Insert tags</button>
+      {toolbarEnd}
     </>
   ),
 }));
