@@ -621,20 +621,25 @@ Flow:
    dies or fails between the claim and that write, the claim is left alone and
    parked as `failed` after 15 minutes (never resubmitted, since the batch may
    already be billed), with the batch id in the Sentry error when it is known.
-4. Failed requests never persist an analysis row. Retryable failures return to
-   `pending` for up to 3 submissions, then park as `failed` with `last_error`.
-   The analysis scripts count their failures in the same `attempts` column and
-   skip parked sessions; `backfill-call-analysis --retry-failed` reprocesses
-   them. Each in-flight batch is reconciled in isolation
-   (one unreadable batch id is reported to Sentry and skipped, not fatal), and
-   a batch that has not settled after 48 hours is abandoned: its rows return
-   to `pending` under the same attempt limit.
+4. Failed requests never persist an analysis row. `attempts` counts analyses
+   that came back failed, from the cron or the scripts. A retryable failure
+   returns the row to `pending`, so the cron retries it, until the third
+   failed attempt parks it as `failed` with `last_error`; a final failure
+   (no usable transcript, session gone) parks it at once. `failed` is terminal
+   for every engine: the scripts skip parked sessions, and
+   `backfill-call-analysis --retry-failed` reprocesses them. A script's
+   successful analysis completes the session's queue row. Each in-flight batch
+   is reconciled in isolation (one unreadable batch id is reported to Sentry
+   and skipped, not fatal), and a batch that has not settled after 48 hours
+   is abandoned: each of its rows counts a failed attempt.
 
 Shared code: prompt, schema and row mapping in `apps/web/lib/ai/analyze-call.ts`,
-the Batch API client in `apps/web/lib/ai/xai-batch.ts`, and the call-analysis
-batch glue in `apps/web/lib/ai/call-analysis-batch.ts`. The
-`scripts/analyze-call-sessions.mjs` and `scripts/backfill-call-analysis.mjs`
-scripts import the same modules, so every path writes identical rows.
+the Batch API client in `apps/web/lib/ai/xai-batch.ts`, the call-analysis
+batch glue in `apps/web/lib/ai/call-analysis-batch.ts`, and the queue states,
+attempt rule and session columns in `apps/web/lib/ai/call-analysis-queue.ts`.
+The `scripts/analyze-call-sessions.mjs` and
+`scripts/backfill-call-analysis.mjs` scripts import the same modules, so every
+path writes identical rows and follows the same retry rule.
 
 ## Data and Storage
 

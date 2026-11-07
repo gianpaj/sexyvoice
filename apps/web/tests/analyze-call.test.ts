@@ -4,6 +4,7 @@ import {
   analyzeTranscript,
   buildCallAnalysisPrompt,
   buildConversationSummary,
+  type CallSessionForAnalysis,
   callAnalysisSchema,
   extractMessages,
   parseCallAnalysisResponse,
@@ -91,18 +92,34 @@ describe('extractMessages()', () => {
   });
 });
 
+/** A session with the columns an analysis reads; tests set what matters. */
+const callSession = (
+  fields: Partial<CallSessionForAnalysis> &
+    Pick<CallSessionForAnalysis, 'id' | 'transcript'>,
+): CallSessionForAnalysis => ({
+  duration_seconds: 0,
+  end_reason: null,
+  started_at: '2026-11-01T00:00:00.000Z',
+  user_id: 'user-id',
+  ...fields,
+});
+
 describe('buildCallAnalysisPrompt()', () => {
   it('returns null for an empty transcript', () => {
-    expect(buildCallAnalysisPrompt({ id: 's1', transcript: null })).toBeNull();
+    expect(
+      buildCallAnalysisPrompt(callSession({ id: 's1', transcript: null })),
+    ).toBeNull();
   });
 
   it('embeds the conversation, context and assistant-only note', () => {
-    const input = buildCallAnalysisPrompt({
-      duration_seconds: 150,
-      end_reason: 'timeout',
-      id: 's1',
-      transcript: [{ content: 'hello', role: 'assistant' }],
-    });
+    const input = buildCallAnalysisPrompt(
+      callSession({
+        duration_seconds: 150,
+        end_reason: 'timeout',
+        id: 's1',
+        transcript: [{ content: 'hello', role: 'assistant' }],
+      }),
+    );
     expect(input).toMatchObject({ messageCount: 1, userMessageCount: 0 });
     expect(input?.assistantOnlyNote).toMatch(/No user transcription/);
     expect(input?.prompt).toContain('AI: hello');
@@ -203,7 +220,7 @@ describe('analyzeTranscript()', () => {
 
   it('throws when the transcript has no messages', async () => {
     await expect(
-      analyzeTranscript({ id: 's1', transcript: [] }),
+      analyzeTranscript(callSession({ id: 's1', transcript: [] })),
     ).rejects.toThrow('No messages');
     expect(generateObjectMock).not.toHaveBeenCalled();
   });
@@ -225,11 +242,13 @@ describe('analyzeTranscript()', () => {
     });
 
     // assistant-only transcript → notable_patterns should be backfilled
-    const result = await analyzeTranscript({
-      duration_seconds: 200,
-      id: 's1',
-      transcript: [{ content: 'hello there', role: 'assistant' }],
-    });
+    const result = await analyzeTranscript(
+      callSession({
+        duration_seconds: 200,
+        id: 's1',
+        transcript: [{ content: 'hello there', role: 'assistant' }],
+      }),
+    );
 
     expect(result.language).toBe('en');
     expect(result.notable_patterns).toContain('No user transcription');

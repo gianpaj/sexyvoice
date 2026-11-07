@@ -562,9 +562,10 @@ support ticket. Blocked and busy checkout attempts use the Sentry event types
 `analyze-call-sessions` analyzes recent calls with xAI Grok and writes one
 `call_session_analysis` row per call plus an aggregate `call_session_analytics`
 row. `backfill-call-analysis` catches up every completed call without an
-analysis. Both import the prompt, schema, transcript extraction and xAI Batch
-API client from `apps/web/lib/ai/`, so they write the same rows as the webhook
-and its batch cron. `--help` lists their options.
+analysis. Both import the prompt, schema, transcript extraction, queue rules
+and xAI Batch API client from `apps/web/lib/ai/`, so they write the same rows
+and follow the same retry rule as the webhook and its batch cron. `--help`
+lists their options.
 
 ```bash
 pnpm analyze-call-sessions --hours=12
@@ -574,9 +575,14 @@ pnpm backfill-call-analysis --limit=2 --debug
 The live path is the `POST /api/call-sessions/analyze` webhook, which enqueues
 the session, and the `/api/call-sessions/analyze/batch` cron, which drains the
 queue through the xAI Batch API; see [Architecture](../ARCHITECTURE.md) and
-[docs/devops.md](../docs/devops.md). The minimum call length, the attempt limit
-and the model come from `apps/web/lib/ai/analyze-call.ts` and
-`apps/web/lib/ai/call-analysis-batch.ts`. The commands need
+[docs/devops.md](../docs/devops.md).
+
+A successful analysis completes the session's `call_analysis_queue` row. A
+failure returns the session to the cron's queue until the third failed attempt
+(`MAX_CALL_ANALYSIS_ATTEMPTS` in `apps/web/lib/ai/call-analysis-queue.ts`), or
+a transcript without messages, parks it as `failed`. Both commands skip parked
+sessions unless `--retry-failed` is passed. The minimum call length and the
+model come from `apps/web/lib/ai/analyze-call.ts`. The commands need
 `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `XAI_API_KEY`.
 
 ## Sentry issue triage

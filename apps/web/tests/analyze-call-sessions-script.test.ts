@@ -6,6 +6,7 @@ import { saveAllSessionAnalyses } from '../../../scripts/analyze-call-sessions.m
 // call_session_analysis.
 
 interface Write {
+  filter?: unknown;
   options?: unknown;
   rows: unknown;
   table: string;
@@ -21,6 +22,12 @@ const client = {
         data: queueRows.filter((row) => ids.includes(row.session_id)),
         error: null,
       }),
+    }),
+    update: (rows: unknown) => ({
+      in: async (_column: string, ids: string[]) => {
+        writes.push({ filter: ids, rows, table });
+        return { error: null };
+      },
     }),
     upsert: async (rows: unknown, options?: unknown) => {
       writes.push({ options, rows, table });
@@ -42,7 +49,21 @@ const analysis = {
   where_conversation_died: null,
 };
 
-const failure = (sessionId: string) => ({ error: 'parse failed', sessionId });
+const session = (id: string) => ({
+  duration_seconds: 300,
+  end_reason: null,
+  id,
+  started_at: '2026-11-01T00:00:00.000Z',
+  transcript: null,
+  user_id: 'user',
+});
+
+const failure = (id: string, final?: boolean) => ({
+  error: 'parse failed',
+  final,
+  session: session(id),
+  sessionId: id,
+});
 
 beforeEach(() => {
   queueRows = [];
@@ -50,9 +71,9 @@ beforeEach(() => {
 });
 
 describe('analysis scripts', () => {
-  it('saves a successful analysis once per session', async () => {
+  it('saves a successful analysis once and completes its queue row', async () => {
     const counts = await saveAllSessionAnalyses(client, [
-      { analysis, durationSeconds: 300, sessionId: 'done', userId: 'user' },
+      { analysis, session: session('done'), sessionId: 'done' },
     ]);
 
     expect(counts).toEqual({ errorCount: 0, skippedCount: 0, successCount: 1 });
@@ -67,12 +88,17 @@ describe('analysis scripts', () => {
         }),
         table: 'call_session_analysis',
       },
+      {
+        filter: ['done'],
+        rows: expect.objectContaining({ status: 'completed' }),
+        table: 'call_analysis_queue',
+      },
     ]);
   });
 
-  it('counts a failure against sessions the cron does not own', async () => {
+  it('queues a failure for the cron until the last attempt parks it', async () => {
     queueRows = [
-      { attempts: 1, session_id: 'failed-before', status: 'failed' },
+      { attempts: 1, session_id: 'parked', status: 'failed' },
       { attempts: 2, session_id: 'last-try', status: 'failed' },
       { attempts: 1, session_id: 'queued', status: 'pending' },
       { attempts: 1, session_id: 'in-batch', status: 'submitted' },
@@ -80,25 +106,39 @@ describe('analysis scripts', () => {
 
     const counts = await saveAllSessionAnalyses(client, [
       failure('new'),
-      failure('failed-before'),
+      failure('parked'),
       failure('last-try'),
       failure('queued'),
       failure('in-batch'),
+      failure('no-transcript', true),
     ]);
 
-    expect(counts).toEqual({ errorCount: 0, skippedCount: 5, successCount: 0 });
-    expect(writes).toHaveLength(1);
-    expect(writes[0].table).toBe('call_analysis_queue');
-    expect(writes[0].options).toEqual({ onConflict: 'session_id' });
-    expect(writes[0].rows).toEqual([
+    expect(counts).toEqual({ errorCount: 0, skippedCount: 6, successCount: 0 });
+    const upsert = writes.find(({ options }) => options);
+    expect(upsert?.table).toBe('call_analysis_queue');
+    expect(upsert?.options).toEqual({ onConflict: 'session_id' });
+    expect(upsert?.rows).toEqual([
       expect.objectContaining({
         attempts: 1,
         last_error: 'parse failed',
         session_id: 'new',
+        status: 'pending',
+      }),
+      expect.objectContaining({
+        attempts: 2,
+        session_id: 'parked',
+        status: 'pending',
+      }),
+      expect.objectContaining({
+        attempts: 3,
+        session_id: 'last-try',
         status: 'failed',
       }),
-      expect.objectContaining({ attempts: 2, session_id: 'failed-before' }),
-      expect.objectContaining({ attempts: 3, session_id: 'last-try' }),
+      expect.objectContaining({
+        attempts: 1,
+        session_id: 'no-transcript',
+        status: 'failed',
+      }),
     ]);
   });
 });

@@ -396,15 +396,15 @@ Release checks:
   reconciled batches and the new submission (the lifecycle is
   `pending -> submitted -> completed | failed`, with `pending` again on a
   retryable failure, visible in `call_analysis_queue.status` and its
-  timestamps; `attempts` counts batches xAI accepted, so an upload outage
-  never spends a session's retry budget).
+  timestamps; `attempts` counts failed analyses, so an upload outage never
+  spends a session's retry budget).
 - A batch still unsettled 24 hours after submission is reported to Sentry as
   `Call analysis batch appears stuck`; inspect it in the xAI console.
 - Sessions that reach the terminal `failed` state (attempts exhausted,
   unusable transcript, session gone) are reported to Sentry as
   `Call analysis sessions parked as failed` with their ids and errors. A
-  redelivered webhook does not revive them; run `pnpm backfill-call-analysis`
-  to reprocess.
+  redelivered webhook does not revive them; run
+  `pnpm backfill-call-analysis --retry-failed` to reprocess.
 - Read-only check for stuck or failed work:
 
   ```sql

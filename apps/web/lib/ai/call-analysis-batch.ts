@@ -22,12 +22,6 @@ import {
 // Shared with `scripts/` via Node's native type stripping: keep relative
 // imports extension-qualified and avoid `@/` aliases in this module.
 
-/**
- * Failed analyses per session before it is parked as `failed`. The cron drain
- * and the scripts share `call_analysis_queue.attempts` as the counter.
- */
-export const MAX_CALL_ANALYSIS_ATTEMPTS = 3;
-
 /** Per-session context needed to turn a batch outcome back into an analysis. */
 export interface CallAnalysisBatchContext {
   assistantOnlyNote: string | null;
@@ -36,7 +30,13 @@ export interface CallAnalysisBatchContext {
 
 export type CallAnalysisBatchResult =
   | { analysis: CallAnalysis; error?: undefined; sessionId: string }
-  | { analysis?: undefined; error: string; sessionId: string };
+  | {
+      analysis?: undefined;
+      error: string;
+      /** The transcript has no usable messages, so no retry can succeed. */
+      final?: boolean;
+      sessionId: string;
+    };
 
 // The realtime path hands the zod schema to `generateObject`; the Batch API is
 // a raw chat-completions request, so embed the equivalent JSON Schema in the
@@ -47,11 +47,22 @@ const JSON_SCHEMA_TEXT = JSON.stringify(
   2,
 );
 
-export function buildBatchPrompt(prompt: string): string {
+function buildBatchPrompt(prompt: string): string {
   return `${prompt}
 
 Respond with ONLY a JSON object (no markdown, no code blocks) that matches this JSON Schema:
 ${JSON_SCHEMA_TEXT}`;
+}
+
+/**
+ * What turns a session's batch outcome back into an analysis, or null when
+ * its transcript has no usable messages.
+ */
+export function callAnalysisContext(
+  session: CallSessionForAnalysis,
+): CallAnalysisBatchContext | null {
+  const input = buildCallAnalysisPrompt(session);
+  return input ? { assistantOnlyNote: input.assistantOnlyNote, session } : null;
 }
 
 /**
@@ -138,7 +149,11 @@ export function prepareCallAnalysisBatch(
   for (const session of sessions) {
     const prepared = prepareCallAnalysisBatchRequest(session, model);
     if ('error' in prepared) {
-      rejected.push({ error: prepared.error, sessionId: session.id });
+      rejected.push({
+        error: prepared.error,
+        final: true,
+        sessionId: session.id,
+      });
       continue;
     }
     contexts.set(session.id, prepared.context);

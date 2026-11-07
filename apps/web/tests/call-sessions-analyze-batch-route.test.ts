@@ -15,10 +15,10 @@ const mocks = vi.hoisted(() => ({
     getPendingCallAnalyses: vi.fn(),
     getSubmittedCallAnalysesForBatch: vi.fn(),
     markCallAnalysesCompleted: vi.fn(),
-    markCallAnalysisFailed: vi.fn(),
+    recordCallAnalysisFailure: vi.fn(),
     releaseCallAnalysisClaims: vi.fn(),
+    saveCallSessionAnalysis: vi.fn(),
     setCallAnalysisBatchId: vi.fn(),
-    upsertCallSessionAnalysis: vi.fn(),
   },
   waitForBatch: vi.fn(),
 }));
@@ -32,10 +32,7 @@ vi.mock('@sentry/nextjs', () => ({
 vi.mock('@/lib/supabase/admin', () => ({
   createAdminClient: () => ({ client: 'admin' }),
 }));
-vi.mock('@/lib/supabase/call-analysis-queries', () => ({
-  ...mocks.queries,
-  MAX_CALL_ANALYSIS_ATTEMPTS: 3,
-}));
+vi.mock('@/lib/ai/call-analysis-queue', () => mocks.queries);
 // Keep the pure prepare phase real so the route is exercised against actual
 // prompt building; only the paid xAI call is mocked.
 vi.mock('@/lib/ai/call-analysis-batch', async (importOriginal) => ({
@@ -106,9 +103,15 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     mocks.queries.claimPendingCallAnalyses.mockImplementation(
       (_client, sessionIds: string[]) => Promise.resolve(sessionIds),
     );
-    mocks.queries.markCallAnalysisFailed.mockImplementation(
-      (_client, _id, _error, { retry }: { retry: boolean }) =>
-        Promise.resolve(retry ? 'pending' : 'failed'),
+    // The queue's rule: a final failure or the third failed attempt parks.
+    mocks.queries.recordCallAnalysisFailure.mockImplementation(
+      (
+        _client,
+        row: { attempts: number },
+        _error,
+        { final }: { final: boolean },
+      ) =>
+        Promise.resolve(final || row.attempts + 1 >= 3 ? 'failed' : 'pending'),
     );
     mocks.waitForBatch.mockResolvedValue({ settled: false, state: {} });
   });
@@ -187,7 +190,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       pending: [],
       settled: [{ batchId: 'batch_1', completed: 1, failed: 1, retried: 1 }],
     });
-    expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledWith(
+    expect(mocks.queries.saveCallSessionAnalysis).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ id: 's-ok' }),
       analysis,
@@ -196,17 +199,17 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       expect.anything(),
       ['s-ok'],
     );
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    expect(mocks.queries.recordCallAnalysisFailure).toHaveBeenCalledWith(
       expect.anything(),
-      's-retry',
+      expect.objectContaining({ session_id: 's-retry' }),
       'parse failed: bad json',
-      { retry: true },
+      { final: false },
     );
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    expect(mocks.queries.recordCallAnalysisFailure).toHaveBeenCalledWith(
       expect.anything(),
-      's-final',
+      expect.objectContaining({ session_id: 's-final' }),
       'model error',
-      { retry: false },
+      { final: false },
     );
     // Contexts are rebuilt from the queue rows' sessions.
     const contexts = mocks.collectCallAnalysisBatchResults.mock.calls[0][1];
@@ -300,11 +303,11 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       ['s-done'],
     );
     // Sessions with no usable transcript are parked as failed.
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    expect(mocks.queries.recordCallAnalysisFailure).toHaveBeenCalledWith(
       expect.anything(),
-      's-empty',
+      expect.objectContaining({ session_id: 's-empty' }),
       'No messages in transcript',
-      { retry: false },
+      { final: true },
     );
     // Claim happens first, on exactly the analysable rows...
     expect(mocks.queries.claimPendingCallAnalyses).toHaveBeenCalledWith(
@@ -320,11 +323,10 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       's1',
       's2',
     ]);
-    // ...and the batch id (plus the attempt) is attached afterwards, on the
-    // claimed rows only.
+    // ...and the batch id is attached afterwards, on the claimed rows only.
     expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledWith(
       expect.anything(),
-      [rows[0], rows[1]],
+      ['s1', 's2'],
       'batch_2',
     );
     expect(mocks.queries.releaseCallAnalysisClaims).not.toHaveBeenCalled();
@@ -352,7 +354,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     ]);
     expect(mocks.queries.setCallAnalysisBatchId).toHaveBeenCalledWith(
       expect.anything(),
-      [expect.objectContaining({ session_id: 's1' })],
+      ['s1'],
       'batch_4',
     );
   });
@@ -466,7 +468,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
       failed: 0,
       retried: 0,
     });
-    expect(mocks.queries.upsertCallSessionAnalysis).toHaveBeenCalledOnce();
+    expect(mocks.queries.saveCallSessionAnalysis).toHaveBeenCalledOnce();
   });
 
   it('isolates a batch whose state lookup fails and keeps draining the rest', async () => {
@@ -509,7 +511,7 @@ describe('GET /api/call-sessions/analyze/batch', () => {
     vi.useRealTimers();
   });
 
-  it('abandons a batch that has not settled after 48h, retrying rows via attempts', async () => {
+  it('abandons a batch that has not settled after 48h, counting a failed attempt per row', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-01-04T00:00:00Z'));
     mocks.queries.getInFlightCallAnalysisBatches.mockResolvedValue([
@@ -525,17 +527,17 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     expect(body.reconciled.result.abandoned).toEqual(['batch_dead']);
     expect(body.reconciled.result.pending).toEqual([]);
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    expect(mocks.queries.recordCallAnalysisFailure).toHaveBeenCalledWith(
       expect.anything(),
-      's-retry',
+      expect.objectContaining({ session_id: 's-retry' }),
       expect.stringContaining('batch_dead'),
-      { retry: true },
+      { final: false },
     );
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    expect(mocks.queries.recordCallAnalysisFailure).toHaveBeenCalledWith(
       expect.anything(),
-      's-final',
+      expect.objectContaining({ session_id: 's-final' }),
       expect.stringContaining('batch_dead'),
-      { retry: false },
+      { final: false },
     );
     expect(mocks.collectCallAnalysisBatchResults).not.toHaveBeenCalled();
     expect(body.parked).toBe(1);
@@ -551,11 +553,11 @@ describe('GET /api/call-sessions/analyze/batch', () => {
 
     const body = await (await GET(request('Bearer cron-secret'))).json();
 
-    expect(mocks.queries.markCallAnalysisFailed).toHaveBeenCalledWith(
+    expect(mocks.queries.recordCallAnalysisFailure).toHaveBeenCalledWith(
       expect.anything(),
-      's-gone',
+      expect.objectContaining({ session_id: 's-gone' }),
       'Call session no longer available',
-      { retry: false },
+      { final: true },
     );
     expect(body.submitted.result).toMatchObject({
       batchId: 'batch_5',

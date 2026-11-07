@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   claimPendingCallAnalyses,
   getAnalyzedSessionIds,
+  MAX_CALL_ANALYSIS_ATTEMPTS,
   markCallAnalysesCompleted,
+  recordCallAnalysisFailure,
   setCallAnalysisBatchId,
-} from '@/lib/supabase/call-analysis-queries';
+} from '@/lib/ai/call-analysis-queue';
 import type { TypedSupabaseClient } from '@/lib/supabase/client';
 
 // Records every terminal call (the filters applied and the payload) so the
@@ -53,7 +55,7 @@ const client = {
 const ids = (n: number, prefix = 's') =>
   Array.from({ length: n }, (_, i) => `${prefix}${i}`);
 
-describe('call-analysis-queries id chunking', () => {
+describe('call analysis queue id chunking', () => {
   beforeEach(() => {
     calls.length = 0;
     inRows = [];
@@ -96,26 +98,58 @@ describe('call-analysis-queries id chunking', () => {
     expect(claimed).toEqual(['a0', 'a0']);
   });
 
-  it('stamps the batch id per attempt group and charges the attempt only then', async () => {
-    const rows = [
-      ...ids(60, 'a').map((session_id) => ({ attempts: 0, session_id })),
-      ...ids(2, 'b').map((session_id) => ({ attempts: 2, session_id })),
-    ];
+  it('stamps the batch id on claimed rows without counting an attempt', async () => {
+    await setCallAnalysisBatchId(client, ids(60, 'a'), 'batch_1');
 
-    await setCallAnalysisBatchId(client, rows, 'batch_1');
-
-    // 60 rows at attempts=0 → two chunks; 2 rows at attempts=2 → one chunk.
-    expect(calls).toHaveLength(3);
-    expect(
-      calls.map((c) => (c.payload as { attempts: number }).attempts),
-    ).toEqual([1, 1, 3]);
+    expect(calls).toHaveLength(2);
     for (const call of calls) {
       expect((call.payload as { xai_batch_id: string }).xai_batch_id).toBe(
         'batch_1',
       );
-      // Idempotent on retry: rows already stamped are never bumped twice.
+      expect(call.payload).not.toHaveProperty('attempts');
+      // Idempotent on retry: rows already stamped are left alone.
       expect(call.filters).toContainEqual(['eq', 'status', 'submitted']);
       expect(call.filters).toContainEqual(['is', 'xai_batch_id', null]);
     }
   });
+});
+
+describe('call analysis failures', () => {
+  beforeEach(() => {
+    calls.length = 0;
+  });
+
+  it.each([
+    { attempts: 0, final: false, status: 'pending' },
+    {
+      attempts: MAX_CALL_ANALYSIS_ATTEMPTS - 2,
+      final: false,
+      status: 'pending',
+    },
+    {
+      attempts: MAX_CALL_ANALYSIS_ATTEMPTS - 1,
+      final: false,
+      status: 'failed',
+    },
+    { attempts: 0, final: true, status: 'failed' },
+  ])(
+    'counts failure $attempts+1 (final: $final) and leaves the row $status',
+    async ({ attempts, final, status }) => {
+      const result = await recordCallAnalysisFailure(
+        client,
+        { attempts, session_id: 's1' },
+        'parse failed',
+        { final },
+      );
+
+      expect(result).toBe(status);
+      expect(calls).toHaveLength(1);
+      expect(calls[0].payload).toMatchObject({
+        attempts: attempts + 1,
+        last_error: 'parse failed',
+        status,
+      });
+      expect(calls[0].filters).toEqual([['eq', 'session_id', 's1']]);
+    },
+  );
 });

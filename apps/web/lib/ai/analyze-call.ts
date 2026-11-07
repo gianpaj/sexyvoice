@@ -2,7 +2,7 @@ import { xai } from '@ai-sdk/xai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-// `Json` is a global ambient type from lib/supabase/types.d.ts.
+// `Json` and `Tables` are global ambient types from lib/supabase/types.d.ts.
 //
 // This module is shared with the operational scripts in `scripts/` (imported
 // via Node's native type stripping), so it must only import npm packages and
@@ -88,14 +88,16 @@ export const callAnalysisSchema = z.object({
 
 export type CallAnalysis = z.infer<typeof callAnalysisSchema>;
 
-export interface CallSessionForAnalysis {
-  duration_seconds?: number | null;
-  end_reason?: string | null;
-  id: string;
-  started_at?: string | null;
-  transcript: Json | null;
-  user_id?: string | null;
-}
+/** The call_sessions columns an analysis reads (`CALL_ANALYSIS_SESSION_COLUMNS`). */
+export type CallSessionForAnalysis = Pick<
+  Tables<'call_sessions'>,
+  | 'duration_seconds'
+  | 'end_reason'
+  | 'id'
+  | 'started_at'
+  | 'transcript'
+  | 'user_id'
+>;
 
 export interface ConversationMessage {
   content: string;

@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   enqueueCallAnalysis: vi.fn(),
   hasCallSessionAnalysis: vi.fn(),
   maybeSingle: vi.fn(),
-  upsertCallSessionAnalysis: vi.fn(),
+  saveCallSessionAnalysis: vi.fn(),
 }));
 
 // Exercise real request parsing and response codes, not the setup mock.
@@ -27,10 +27,11 @@ vi.mock('@/lib/supabase/admin', () => ({
     }),
   }),
 }));
-vi.mock('@/lib/supabase/call-analysis-queries', () => ({
+vi.mock('@/lib/ai/call-analysis-queue', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/ai/call-analysis-queue')>()),
   enqueueCallAnalysis: mocks.enqueueCallAnalysis,
   hasCallSessionAnalysis: mocks.hasCallSessionAnalysis,
-  upsertCallSessionAnalysis: mocks.upsertCallSessionAnalysis,
+  saveCallSessionAnalysis: mocks.saveCallSessionAnalysis,
 }));
 vi.mock('@/lib/ai/analyze-call', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/ai/analyze-call')>()),
@@ -106,7 +107,7 @@ describe('POST /api/call-sessions/analyze', () => {
       'session-1',
     );
     expect(mocks.analyzeTranscript).not.toHaveBeenCalled();
-    expect(mocks.upsertCallSessionAnalysis).not.toHaveBeenCalled();
+    expect(mocks.saveCallSessionAnalysis).not.toHaveBeenCalled();
   });
 
   it('skips ineligible sessions and sessions that already have an analysis', async () => {
@@ -149,7 +150,7 @@ describe('POST /api/call-sessions/analyze', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });
     expect(mocks.enqueueCallAnalysis).not.toHaveBeenCalled();
-    expect(mocks.upsertCallSessionAnalysis).toHaveBeenCalledWith(
+    expect(mocks.saveCallSessionAnalysis).toHaveBeenCalledWith(
       expect.anything(),
       eligibleSession,
       analysis,
@@ -163,7 +164,7 @@ describe('POST /api/call-sessions/analyze', () => {
     const res = await POST(request({ id: 'session-1' }));
 
     expect(res.status).toBe(500);
-    expect(mocks.upsertCallSessionAnalysis).not.toHaveBeenCalled();
+    expect(mocks.saveCallSessionAnalysis).not.toHaveBeenCalled();
     expect(mocks.captureException).toHaveBeenCalledOnce();
   });
 });
