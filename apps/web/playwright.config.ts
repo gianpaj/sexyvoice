@@ -47,7 +47,6 @@ export default defineConfig({
   // Use more workers in CI (production server handles concurrency well) and
   // a conservative count locally (dev server is single-threaded for compiles).
   workers: process.env.CI ? 4 : 2,
-  // reporter: 'html',
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     // Use "dot" reporter on CI, "list" otherwise (Playwright default).
@@ -105,63 +104,6 @@ export default defineConfig({
       },
       dependencies: ['setup'],
     },
-
-    // Uncomment to test on other browsers
-    // {
-    //   name: 'firefox',
-    //   use: {
-    //     ...devices['Desktop Firefox'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: {
-    //     ...devices['Desktop Safari'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: {
-    //     ...devices['Pixel 5'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: {
-    //     ...devices['iPhone 12'],
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: {
-    //     ...devices['Desktop Edge'],
-    //     channel: 'msedge',
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: {
-    //     ...devices['Desktop Chrome'],
-    //     channel: 'chrome',
-    //     storageState: '.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
   ],
 
   /* Start the app server before running the tests */

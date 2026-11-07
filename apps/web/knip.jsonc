@@ -1,0 +1,26 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // Files that tools without a knip plugin load: Contentlayer reads its
+  // config, Playwright's setup project matches auth.setup.ts by regex, and
+  // Checkly runs checkly.only.ts.
+  "entry": [
+    "contentlayer.config.ts",
+    "e2e/auth/auth.setup.ts",
+    "e2e/checkly.only.ts"
+  ],
+  // Deployed separately with the Deno runtime.
+  "ignore": ["supabase/functions/telegram-bot/index.ts"],
+  // The root installs Biome; developers install the Supabase and portless
+  // CLIs themselves.
+  "ignoreBinaries": ["biome", "portless", "supabase"],
+  "ignoreDependencies": [
+    // Icon set the Tailwind iconify plugin loads for the logos--* classes.
+    "@iconify-json/logos",
+    // Hoisted for Sentry's OpenTelemetry instrumentation; see
+    // pnpm-workspace.yaml.
+    "import-in-the-middle",
+    "require-in-the-middle",
+    // Next resolves it while bundling.
+    "server-only"
+  ]
+}

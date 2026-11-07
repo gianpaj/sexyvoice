@@ -1,5 +1,4 @@
 const { withContentlayer } = require('next-contentlayer2');
-// const { withBotId } = require('botid/next/config');
 const createNextIntlPlugin = require('next-intl/plugin');
 
 const withNextIntl = createNextIntlPlugin({
@@ -33,8 +32,6 @@ const cspHeader = `
 let nextConfig = {
   allowedDevOrigins: ['sv.dev', '*.sv.dev'],
   experimental: {
-    // Enable filesystem caching for `next dev`
-    // turbopackFileSystemCacheForDev: true,
     useTypeScriptCli: true,
   },
   async headers() {
@@ -59,12 +56,7 @@ let nextConfig = {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
-          // header is not necessary on Vercel
-          // {
-          //   // browser should only access using HTTPS, for 2 years
-          //   key: 'Strict-Transport-Security',
-          //   value: 'max-age=63072000; includeSubDomains; preload',
-          // },
+          // Vercel sends Strict-Transport-Security itself.
         ],
         source: '/:path*',
       },
@@ -82,7 +74,6 @@ let nextConfig = {
     ],
   },
   reactCompiler: true,
-  // images: { unoptimized: true },
 
   async rewrites() {
     return {
@@ -121,8 +112,6 @@ if (process.env.ANALYZE === 'true') {
 
 nextConfig = withNextIntl(nextConfig);
 nextConfig = withContentlayer(nextConfig);
-
-// nextConfig = withBotId(nextConfig);
 
 // Injected content via Sentry wizard below
 if (process.env.NODE_ENV === 'production') {

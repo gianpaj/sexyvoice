@@ -269,9 +269,6 @@ importers:
       '@iconify-json/logos':
         specifier: 1.2.11
         version: 1.2.11
-      '@iconify/tailwind':
-        specifier: ^1.2.0
-        version: 1.2.0
       '@iconify/tailwind4':
         specifier: ^1.2.3
         version: 1.2.3(tailwindcss@4.2.2)
@@ -510,9 +507,6 @@ importers:
       '@vitest/coverage-v8':
         specifier: 4.1.11
         version: 4.1.11(vitest@4.1.11)
-      autoprefixer:
-        specifier: 10.4.27
-        version: 10.4.27(postcss@8.5.28)
       dotenv:
         specifier: 16.6.1
         version: 16.6.1
@@ -534,9 +528,6 @@ importers:
       redis-memory-server:
         specifier: 0.16.0
         version: 0.16.0(supports-color@8.1.1)
-      tsx:
-        specifier: 'catalog:'
-        version: 4.19.3
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
@@ -1557,9 +1548,6 @@ packages:
     resolution: {integrity: sha512-z8SKiMHRASJKF/IY//87MF88lcB7ulxh8vlhQXXLWsBkNtOh6ese9R41MyGpQeqXdRvQVt+/fX2glQtHFjQ+MA==}
     peerDependencies:
       tailwindcss: '>= 4.0.0'
-
-  '@iconify/tailwind@1.2.0':
-    resolution: {integrity: sha512-KgpIHWOTcRYw1XcoUqyNSrmYyfLLqZYu3AmP8zdfLk0F5TqRO8YerhlvlQmGfn7rJXgPeZN569xPAJnJ53zZxA==}
 
   '@iconify/tools@5.0.5':
     resolution: {integrity: sha512-JE3uqne+l89kggZYKIukaYDIae4lHKMNVDg7Oc+L+8rPwiMcfD5C56YLWyynyH/ib6I9xDFH1aamdfoL+m7OFA==}
@@ -5887,13 +5875,6 @@ packages:
     resolution: {integrity: sha512-ooviqdwwgfIfNmDwo94wlshcdzfO64XV0Cg6oDsDYBJfITDz1EngD2z7DkbvCWn+XIMsIqW27sEVF6qcpJrRcg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  autoprefixer@10.4.27:
-    resolution: {integrity: sha512-NP9APE+tO+LuJGn7/9+cohklunJsXWiaWEfV3si4Gi/XHDwVNgkwr1J3RQYFIvPy76GmJ9/bW8vyoU1LcxwKHA==}
-    engines: {node: ^10 || ^12 || >=14}
-    hasBin: true
-    peerDependencies:
-      postcss: ^8.1.0
-
   babel-plugin-react-compiler@1.0.0:
     resolution: {integrity: sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw==}
 
@@ -6726,9 +6707,6 @@ packages:
 
   forwarded-parse@2.1.2:
     resolution: {integrity: sha512-alTFZZQDKMporBH77856pXgzhEzaUVmLCDk+egLgIgHst3Tpndzz8MnKe+GzRJRfvVdn69HhpW7cmXzvtLvJAw==}
-
-  fraction.js@5.3.4:
-    resolution: {integrity: sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==}
 
   framer-motion@12.43.0:
     resolution: {integrity: sha512-1eaL3RvR/kAlbG7UYcpMptEyzPoENO0c6w7ZnB3/hh2vSAz/6uGAFn6fdoqTBguNstf3MsFhJHsD/0DHiclG+g==}
@@ -8260,9 +8238,6 @@ packages:
   postcss-selector-parser@6.0.10:
     resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
     engines: {node: '>=4'}
-
-  postcss-value-parser@4.2.0:
-    resolution: {integrity: sha512-1NNCs6uurfkVbeXG4S8JFT9t19m45ICnif8zWLd5oPSZ50QnwMfK+H3jv408d4jw/7Bttv5axS5IiHoLaVNHeQ==}
 
   postcss@8.5.23:
     resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
@@ -10643,10 +10618,6 @@ snapshots:
       '@iconify/types': 2.0.0
       '@iconify/utils': 3.1.0
       tailwindcss: 4.2.2
-
-  '@iconify/tailwind@1.2.0':
-    dependencies:
-      '@iconify/types': 2.0.0
 
   '@iconify/tools@5.0.5':
     dependencies:
@@ -14863,15 +14834,6 @@ snapshots:
 
   auto-bind@5.0.1: {}
 
-  autoprefixer@10.4.27(postcss@8.5.28):
-    dependencies:
-      browserslist: 4.28.1
-      caniuse-lite: 1.0.30001787
-      fraction.js: 5.3.4
-      picocolors: 1.1.1
-      postcss: 8.5.28
-      postcss-value-parser: 4.2.0
-
   babel-plugin-react-compiler@1.0.0:
     dependencies:
       '@babel/types': 7.29.7
@@ -15741,8 +15703,6 @@ snapshots:
       fetch-blob: 3.2.0
 
   forwarded-parse@2.1.2: {}
-
-  fraction.js@5.3.4: {}
 
   framer-motion@12.43.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
@@ -17710,8 +17670,6 @@ snapshots:
     dependencies:
       cssesc: 3.0.0
       util-deprecate: 1.0.2
-
-  postcss-value-parser@4.2.0: {}
 
   postcss@8.5.23:
     dependencies:
