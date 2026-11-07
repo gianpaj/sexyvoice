@@ -1178,6 +1178,34 @@ describe('NewVoiceClient', () => {
       expect(invalidateQueries).not.toHaveBeenCalled();
     });
 
+    it('shows no error when a cancel rejects with another browser message', async () => {
+      const user = userEvent.setup();
+      fetchMock.mockImplementationOnce(
+        (_url: string, init: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () => {
+              // Firefox's wording; the old check matched only Chrome's.
+              reject(new Error('The operation was aborted.'));
+            });
+          }),
+      );
+
+      renderClone();
+      await submitClone(user);
+      await user.click(
+        await screen.findByRole('button', { name: dict.cancelButton }),
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: dict.cancelButton }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(
+        screen.queryByText('The operation was aborted.'),
+      ).not.toBeInTheDocument();
+    });
+
     it('does not refresh credits when the request fails without a response', async () => {
       const user = userEvent.setup();
       const invalidateQueries = vi.spyOn(queryClient, 'invalidateQueries');

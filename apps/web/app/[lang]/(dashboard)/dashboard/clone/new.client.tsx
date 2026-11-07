@@ -439,9 +439,9 @@ function NewVoiceClientInner({
     });
 
     let voiceRes: Response | undefined;
+    const controller = new AbortController();
+    abortController.current = controller;
     try {
-      abortController.current = new AbortController();
-
       let formData: FormData;
       if (selectedVoice) {
         formData = new FormData();
@@ -535,7 +535,7 @@ function NewVoiceClientInner({
       voiceRes = await fetch('/api/clone-voice', {
         body: formData,
         method: 'POST',
-        signal: abortController.current.signal,
+        signal: controller.signal,
       });
 
       // The route settles its reservation and any refund before it responds, so
@@ -586,10 +586,7 @@ function NewVoiceClientInner({
         type: 'patch',
       });
     } catch (err) {
-      if (
-        err instanceof Error &&
-        err.message === 'signal is aborted without reason'
-      ) {
+      if (controller.signal.aborted) {
         return;
       }
       let errorMsg = '';
