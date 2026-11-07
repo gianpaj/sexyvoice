@@ -5,6 +5,7 @@ import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-voice/route';
+import { generateHash } from '@/lib/audio';
 import { dashboardSpeechKey } from '@/lib/tts/cache-key';
 import type { GoogleApiErrorWithStatus } from '@/lib/tts/google-errors';
 import { creditsFromTokens, getTtsModel } from '@/lib/tts/models';
@@ -2232,6 +2233,32 @@ describe('Generate Voice API Route', () => {
         );
       },
     );
+
+    it('keys default requests exactly as the original route did', async () => {
+      // Changing a key cold-starts the dashboard cache, so a change must be
+      // deliberate.
+      setMockGoogleGenAIFactory(() => ({
+        models: { generateContent: vi.fn().mockResolvedValue(geminiAudio) },
+      }));
+      server.use(
+        http.post('https://api.x.ai/v1/tts', () =>
+          HttpResponse.arrayBuffer(new Uint8Array([1, 2]).buffer, {
+            headers: { 'Content-Type': 'audio/mpeg' },
+          }),
+        ),
+      );
+
+      await generate({ voiceId: 'voice-kore-id' });
+      await generate({ voiceId: 'voice-eve-id' });
+
+      // The hash inputs the original route built for these requests.
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        `generated-audio-free/kore-${await generateHash('Hello world-kore-gemini-3.8-flash-tts-style:""')}.wav`,
+      );
+      expect(mockRedisGet).toHaveBeenCalledWith(
+        `generated-audio-free/eve-${await generateHash('Hello world-eve-xai')}.mp3`,
+      );
+    });
 
     it('ignores the temperature for free users', async () => {
       const generateContent = vi.fn().mockResolvedValue(geminiAudio);
