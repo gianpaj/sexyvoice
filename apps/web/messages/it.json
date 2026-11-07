@@ -803,7 +803,7 @@
       "recorded": "Registrata",
       "recordAgain": "Registra di nuovo",
       "dropFile": "Trascina qui un file audio oppure <browse>sfoglia</browse>",
-      "fileHint": "MP3, WAV o M4A · fino a {size} · una sola persona che parla, senza musica",
+      "fileHint": "MP3, WAV o OGG · fino a {size} · una sola persona che parla, senza musica",
       "removeFile": "Rimuovi file",
       "fileTooLarge": "Questo file supera {size}.",
       "needRecording": "Registra prima almeno {seconds} secondi.",

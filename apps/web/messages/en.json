@@ -801,7 +801,7 @@
       "recorded": "Recorded",
       "recordAgain": "Record again",
       "dropFile": "Drop an audio file here, or <browse>browse</browse>",
-      "fileHint": "MP3, WAV or M4A · up to {size} · one person talking, no music",
+      "fileHint": "MP3, WAV or OGG · up to {size} · one person talking, no music",
       "removeFile": "Remove file",
       "fileTooLarge": "This file is larger than {size}.",
       "needRecording": "Record at least {seconds} seconds first.",

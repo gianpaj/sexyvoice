@@ -799,7 +799,7 @@
       "recorded": "Optaget",
       "recordAgain": "Optag igen",
       "dropFile": "Træk en lydfil hertil, eller <browse>gennemse</browse>",
-      "fileHint": "MP3, WAV eller M4A · op til {size} · én person, der taler, ingen musik",
+      "fileHint": "MP3, WAV eller OGG · op til {size} · én person, der taler, ingen musik",
       "removeFile": "Fjern fil",
       "fileTooLarge": "Filen er større end {size}.",
       "needRecording": "Optag mindst {seconds} sekunder først.",

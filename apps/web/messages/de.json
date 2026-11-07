@@ -803,7 +803,7 @@
       "recorded": "Aufgenommen",
       "recordAgain": "Neu aufnehmen",
       "dropFile": "Audiodatei hierher ziehen oder <browse>durchsuchen</browse>",
-      "fileHint": "MP3, WAV oder M4A · bis zu {size} · eine Person spricht, keine Musik",
+      "fileHint": "MP3, WAV oder OGG · bis zu {size} · eine Person spricht, keine Musik",
       "removeFile": "Datei entfernen",
       "fileTooLarge": "Diese Datei ist größer als {size}.",
       "needRecording": "Nimm zuerst mindestens {seconds} Sekunden auf.",

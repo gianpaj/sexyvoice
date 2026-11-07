@@ -28,8 +28,8 @@ import { readCloneError } from '@/lib/clone/error-message';
 import { createMicrophoneReferenceAudioFile } from '@/lib/clone/microphone-reference-audio';
 import { CLONE_PROVIDERS } from '@/lib/clone/providers';
 import {
-  REFERENCE_AUDIO_ACCEPT,
   REFERENCE_AUDIO_MAX_BYTES,
+  SAVED_VOICE_AUDIO_ACCEPT,
   VOICE_NAME_MAX_LENGTH,
 } from '@/lib/clone/reference-audio';
 import { cn, formatBytes } from '@/lib/utils';
@@ -320,7 +320,7 @@ export function CloneVoiceDialog({
         })}
       </span>
       <input
-        accept={REFERENCE_AUDIO_ACCEPT}
+        accept={SAVED_VOICE_AUDIO_ACCEPT}
         className="absolute inset-0 cursor-pointer opacity-0"
         onChange={(event) => chooseFile(event.target.files?.[0])}
         type="file"
