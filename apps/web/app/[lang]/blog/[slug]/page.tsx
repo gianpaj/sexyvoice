@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next/types';
-import { getMessages } from 'next-intl/server';
+import { getMessages, getTranslations } from 'next-intl/server';
 
 import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
@@ -25,6 +25,9 @@ import { calculateReadingTime, countWords } from '@/lib/text';
 
 export const dynamicParams = false;
 
+/** The topics every post lists and tags. */
+const TOPICS = ['voiceAi', 'voiceCloning', 'speechSynthesis'] as const;
+
 export const generateStaticParams = ({
   params: { lang },
 }: {
@@ -43,12 +46,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
+  const t = await getTranslations({ locale: lang, namespace: 'blogPost' });
+
   return {
     ...pageMetadata({
       article: {
         publishedTime: post.date,
         section: 'Technology',
-        tags: ['Voice AI', 'Voice Cloning', 'Speech Synthesis'],
+        tags: TOPICS.map((topic) => t(`topics.${topic}`)),
       },
       description: post.description,
       image: post.image
@@ -81,6 +86,7 @@ const PostLayout = async (props: Props) => {
   }
 
   const messages = (await getMessages({ locale: lang })) as IntlMessages;
+  const t = await getTranslations({ locale: lang, namespace: 'blogPost' });
 
   const wordCount = countWords(post.body.raw);
   const readingTime = calculateReadingTime(wordCount);
@@ -113,14 +119,14 @@ const PostLayout = async (props: Props) => {
         <p itemProp="name">{post.title}</p>
         <div itemProp="abstract">{post.description}</div>
         <p>
-          Target audience:
+          {t('audienceLabel')}
           <span
             itemProp="audience"
             itemScope
             itemType="https://schema.org/EducationalAudience"
           >
-            <span itemProp="educationalRole">storytellers</span>,
-            <span itemProp="educationalRole">content creators</span>
+            <span itemProp="educationalRole">{t('audienceStorytellers')}</span>,
+            <span itemProp="educationalRole">{t('audienceCreators')}</span>
           </span>
         </p>
         <p
@@ -128,11 +134,11 @@ const PostLayout = async (props: Props) => {
           itemScope
           itemType="https://schema.org/DefinedTerm"
         >
-          <span itemProp="name">Beginner to Intermediate</span>
+          <span itemProp="name">{t('level')}</span>
         </p>
         <p>
-          Resource type:
-          <span itemProp="learningResourceType">tutorial</span>
+          {t('resourceTypeLabel')}
+          <span itemProp="learningResourceType">{t('resourceType')}</span>
         </p>
       </div>
 
@@ -144,52 +150,22 @@ const PostLayout = async (props: Props) => {
           itemType="https://schema.org/BlogPosting"
         >
           <header className="my-8 text-center">
-            {/* <nav aria-label="Breadcrumb" className="mb-4">
-              <ol className="inline-flex items-center space-x-1 sm:space-x-0 list-none">
-                <li className="inline-flex items-center">
-                  <a
-                    href={`/${lang}`}
-                    className="text-sm text-gray-500 hover:text-blue-600"
-                  >
-                    Home
-                  </a>
-                </li>
-                <li>
-                  <div className="flex items-center">
-                    <span className="mx-2 text-gray-400">/</span>
-                    <a
-                      href={`/${lang}/blog`}
-                      className="text-sm text-gray-500 hover:text-blue-600"
-                    >
-                      Blog
-                    </a>
-                  </div>
-                </li>
-                <li>
-                  <div className="flex items-center">
-                    <span className="mx-2 text-gray-400">/</span>
-                    <span className="text-sm text-gray-500 truncate max-w-[200px]">
-                      {post.title}
-                    </span>
-                  </div>
-                </li>
-              </ol>
-            </nav> */}
-
             <div className="mb-4 flex items-center justify-center space-x-4 text-gray-600 text-xs">
               <time
                 content={post.date}
                 dateTime={post.date}
                 itemProp="datePublished"
               >
-                Published: {formatPostDate(post.date, lang)}
+                {t('published', { date: formatPostDate(post.date, lang) })}
               </time>
               <span>•</span>
               <span content={`PT${readingTime}M`} itemProp="timeRequired">
-                {readingTime} min read
+                {t('readingTime', { minutes: readingTime })}
               </span>
               <span>•</span>
-              <span itemProp="wordCount">{wordCount} words</span>
+              <span itemProp="wordCount">
+                {t('wordCount', { count: wordCount })}
+              </span>
             </div>
 
             <h1 className="mt-12 mb-4" itemProp="headline">
@@ -205,7 +181,7 @@ const PostLayout = async (props: Props) => {
 
             {/* Enhanced author and publisher information */}
             <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm">
-              <span>By</span>
+              <span>{t('by')}</span>
               <div
                 itemProp="author"
                 itemScope
@@ -282,23 +258,21 @@ const PostLayout = async (props: Props) => {
           {/* Article metadata for AI understanding */}
           <div className="mt-12 border-gray-700 border-t pt-8">
             <div className="mb-4 flex flex-wrap gap-2" itemProp="keywords">
-              <span className="font-medium text-gray-300 text-sm">Topics:</span>
-              <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
-                Voice AI
+              <span className="font-medium text-gray-300 text-sm">
+                {t('topicsLabel')}
               </span>
-              <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
-                Voice Cloning
-              </span>
-              <span className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200">
-                Speech Synthesis
-              </span>
+              {TOPICS.map((topic) => (
+                <span
+                  className="inline-block rounded bg-blue-900 px-2 py-1 text-blue-200"
+                  key={topic}
+                >
+                  {t(`topics.${topic}`)}
+                </span>
+              ))}
             </div>
 
             <div className="text-gray-400 text-sm">
-              <p>
-                This article is part of our comprehensive guide to AI voice
-                technology.
-              </p>
+              <p>{t('seriesNote')}</p>
             </div>
           </div>
         </article>

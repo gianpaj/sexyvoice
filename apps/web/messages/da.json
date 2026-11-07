@@ -1351,6 +1351,33 @@
           "answer": "Når modellen er downloadet én gang, ja. Modellen caches i din browser, så fremtidige transskriptioner fungerer helt offline."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Lydtransskription, Tale til tekst, 99+ sprog, Offline-behandling, Tidsstempler, Videotransskription, Oversættelse til engelsk",
+      "open": {
+        "name": "Åbn transskriptionsværktøjet",
+        "text": "Gå til det gratis lydtransskriptionsværktøj på SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Tilføj din lyd",
+        "text": "Træk og slip en lyd- eller videofil i upload-feltet, klik for at gennemse, eller optag direkte med din mikrofon."
+      },
+      "chooseModel": {
+        "name": "Vælg en Whisper-model",
+        "text": "Vælg {tiny} for hurtig transskription eller {small} for højere nøjagtighed."
+      },
+      "selectLanguage": {
+        "name": "Vælg sprog og opgave",
+        "text": "Vælg sproget i din lyd. Vælg \"{transcribe}\" for at beholde originalsproget, eller \"{translate}\" for at oversætte til engelsk."
+      },
+      "transcribe": {
+        "name": "Transskriber",
+        "text": "Klik på \"{button}\". Modellen downloades én gang og gemmes til senere brug."
+      },
+      "copy": {
+        "name": "Kopiér din transskription",
+        "text": "Din transskription med tidsstempler vises med det samme. Kopiér den med ét klik."
+      }
     }
   },
   "audioJoiner": {
@@ -1402,5 +1429,31 @@
     "emotions": "Følelser",
     "pace": "Tempo",
     "vocalSounds": "Stemmelyde"
+  },
+  "blogPost": {
+    "audienceCreators": "indholdsskabere",
+    "audienceLabel": "Målgruppe:",
+    "audienceStorytellers": "historiefortællere",
+    "by": "Af",
+    "level": "Begynder til øvet",
+    "published": "Udgivet: {date}",
+    "readingTime": "{minutes} min. læsning",
+    "resourceType": "vejledning",
+    "resourceTypeLabel": "Ressourcetype:",
+    "seriesNote": "Denne artikel er en del af vores komplette guide til AI-stemmeteknologi.",
+    "topics": {
+      "speechSynthesis": "Talesyntese",
+      "voiceAi": "Stemme-AI",
+      "voiceCloning": "Stemmekloning"
+    },
+    "topicsLabel": "Emner:",
+    "wordCount": "{count, plural, one {# ord} other {# ord}}"
+  },
+  "policy": {
+    "updated": "Opdateret {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "Kanonisk URL: {url}",
+    "features": "Funktioner"
   }
 }

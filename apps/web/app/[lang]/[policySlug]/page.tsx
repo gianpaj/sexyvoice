@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
@@ -44,6 +45,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function PolicyPage(props: Props) {
   const { lang, policy } = await policyFromParams(props);
+  const t = await getTranslations({ locale: lang, namespace: 'policy' });
 
   return (
     <MarketingPage
@@ -53,7 +55,7 @@ export default async function PolicyPage(props: Props) {
       <div className="mx-auto max-w-3xl px-4 py-10">
         <h1>{policy.title}</h1>
         <p className="mt-2 text-muted-foreground text-sm">
-          Updated {policy.updated}
+          {t('updated', { date: policy.updated })}
         </p>
         <div className="prose prose-invert mt-6 prose-h1:mb-4 prose-h2:mb-4 prose-p:mb-4 prose-h1:font-bold prose-h2:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-p:text-lg">
           <Mdx code={policy.body.code} />

@@ -8,6 +8,7 @@ import {
   renderBlogPostMarkdown,
   renderPolicyMarkdown,
 } from '../lib/markdown-for-agents';
+import en from '../messages/en.json';
 
 vi.mock('contentlayer/generated', () => ({ allPolicyPages: [], allPosts: [] }));
 
@@ -45,7 +46,9 @@ describe('buildMarkdownResponse', () => {
 
 describe('renderBlogListMarkdown', () => {
   const messages = {
+    ...en,
     landing: {
+      ...en.landing,
       blogDescription: 'Guides and news about voice AI.',
       latestPosts: 'Latest Posts',
       noPostsAvailable: 'No posts available yet.',
@@ -94,14 +97,14 @@ describe('renderBlogPostMarkdown', () => {
       title: 'Hello from SexyVoice.ai',
     };
 
-    const markdown = renderBlogPostMarkdown(post as never);
+    const markdown = renderBlogPostMarkdown(post as never, en);
 
     expect(markdown).toContain('# Hello from SexyVoice.ai');
     expect(markdown).toContain('> Intro post');
     expect(markdown).toContain('Published: 2025-04-28');
-    expect(markdown).toContain('Author: SexyVoice.ai');
+    expect(markdown).toContain('By SexyVoice.ai');
     expect(markdown).toContain(
-      'Canonical: https://sexyvoice.ai/en/blog/hello-from-sexyvoice',
+      'Canonical URL: https://sexyvoice.ai/en/blog/hello-from-sexyvoice',
     );
     expect(markdown).toContain('Building the next generation of voice AI');
   });
@@ -120,10 +123,10 @@ describe('renderPolicyMarkdown', () => {
       updated: '2026-03-02',
     };
 
-    const markdown = renderPolicyMarkdown(policy as never);
+    const markdown = renderPolicyMarkdown(policy as never, 'en', en);
 
     expect(markdown).toContain('# Terms & Conditions | SexyVoice.ai');
-    expect(markdown).toContain('_Updated: 2026-03-02_');
+    expect(markdown).toContain('_Updated 2026-03-02_');
     expect(markdown).toContain('Terms of service for SexyVoice.ai.');
     expect(markdown).toContain('## General Terms');
     expect(markdown).toContain('Canonical URL: https://sexyvoice.ai/en/terms');

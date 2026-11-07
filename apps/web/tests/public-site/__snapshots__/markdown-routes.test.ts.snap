@@ -6,7 +6,7 @@ exports[`blog post markdown > serves en hello-from-sexyvoice 1`] = `
 
 > Next-gen voice AI for synthesis and dubbing.
 
-Published: 2025-04-28 · Canonical: https://sexyvoice.ai/en/blog/hello-from-sexyvoice
+Published: 2025-04-28 · Canonical URL: https://sexyvoice.ai/en/blog/hello-from-sexyvoice
 
 Body of hello-from-sexyvoice in en.
 ",
@@ -14,7 +14,7 @@ Body of hello-from-sexyvoice in en.
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "50",
+    "x-markdown-tokens": "51",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -27,7 +27,7 @@ exports[`blog post markdown > serves en voice-ai-glossary 1`] = `
 
 > The definitive glossary of voice AI terminology.
 
-Published: 2025-06-27 · Canonical: https://sexyvoice.ai/en/blog/voice-ai-glossary
+Published: 2025-06-27 · Canonical URL: https://sexyvoice.ai/en/blog/voice-ai-glossary
 
 Body of voice-ai-glossary in en.
 ",
@@ -35,7 +35,7 @@ Body of voice-ai-glossary in en.
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "48",
+    "x-markdown-tokens": "49",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -48,7 +48,7 @@ exports[`blog post markdown > serves es hello-from-sexyvoice 1`] = `
 
 > IA de voz de nueva generación para síntesis y doblaje.
 
-Published: 2025-04-28 · Canonical: https://sexyvoice.ai/es/blog/hello-from-sexyvoice
+Publicado: 2025-04-28 · URL canónica: https://sexyvoice.ai/es/blog/hello-from-sexyvoice
 
 Body of hello-from-sexyvoice in es.
 ",
@@ -56,7 +56,7 @@ Body of hello-from-sexyvoice in es.
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "52",
+    "x-markdown-tokens": "53",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -73,7 +73,7 @@ Der er ingen indlæg endnu.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/da/blog
+Kanonisk URL: https://sexyvoice.ai/da/blog
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -100,13 +100,13 @@ Sprich in Echtzeit mit KI-Charakteren.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/de/blog
+Kanonische URL: https://sexyvoice.ai/de/blog
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "80",
+    "x-markdown-tokens": "81",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -166,7 +166,7 @@ IA de voz de nueva generación para síntesis y doblaje.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/es/blog
+URL canónica: https://sexyvoice.ai/es/blog
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -189,13 +189,13 @@ Aucun article disponible pour le moment.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/fr/blog
+URL canonique : https://sexyvoice.ai/fr/blog
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "57",
+    "x-markdown-tokens": "58",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -212,7 +212,7 @@ Nessun articolo disponibile al momento.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/it/blog
+URL canonico: https://sexyvoice.ai/it/blog
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -238,7 +238,7 @@ Perfekt til indholdsskabere og historiefortællere.
 
 [Tilmeld dig gratis](https://sexyvoice.ai/da/signup) — Intet kreditkort påkrævet
 
-## Features
+## Funktioner
 
 ### Live stemmeopkald
 
@@ -389,13 +389,13 @@ Slut dig til tusindvis af skabere, der stoler på vores platform til at skabe re
 
 ---
 
-Canonical URL: https://sexyvoice.ai/da
+Kanonisk URL: https://sexyvoice.ai/da
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1645",
+    "x-markdown-tokens": "1646",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -415,7 +415,7 @@ Perfekt für Content-Ersteller und Geschichtenerzähler.
 
 [Kostenlos anmelden](https://sexyvoice.ai/de/signup) — Keine Kreditkarte erforderlich
 
-## Features
+## Funktionen
 
 ### Live-Sprachanrufe
 
@@ -566,7 +566,7 @@ Schließen Sie sich Tausenden von Kreativen an, die unserer Plattform vertrauen,
 
 ---
 
-Canonical URL: https://sexyvoice.ai/de
+Kanonische URL: https://sexyvoice.ai/de
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -769,7 +769,7 @@ Perfecto para creadores de contenido y narradores.
 
 [Empezar](https://sexyvoice.ai/es/signup) — Sin tarjeta de crédito
 
-## Features
+## Funciones
 
 ### Llamadas de Voz en Vivo
 
@@ -920,7 +920,7 @@ Sí. Nuestra API permite añadir generación de voz a apps, sitios web y juegos 
 
 ---
 
-Canonical URL: https://sexyvoice.ai/es
+URL canónica: https://sexyvoice.ai/es
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -946,7 +946,7 @@ Parfait pour les créateurs de contenu et les conteurs.
 
 [S'inscrire gratuitement](https://sexyvoice.ai/fr/signup) — Aucune carte de crédit requise
 
-## Features
+## Fonctionnalités
 
 ### Appels vocaux en direct
 
@@ -1097,13 +1097,13 @@ Rejoignez des milliers de créateurs qui font confiance à notre plateforme pour
 
 ---
 
-Canonical URL: https://sexyvoice.ai/fr
+URL canonique : https://sexyvoice.ai/fr
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1891",
+    "x-markdown-tokens": "1893",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1123,7 +1123,7 @@ Perfetto per creatori di contenuti e narratori.
 
 [Registrati gratis](https://sexyvoice.ai/it/signup) — Nessuna carta di credito richiesta
 
-## Features
+## Funzionalità
 
 ### Chiamate vocali dal vivo
 
@@ -1274,13 +1274,13 @@ Unisciti a migliaia di creatori che si affidano alla nostra piattaforma per crea
 
 ---
 
-Canonical URL: https://sexyvoice.ai/it
+URL canonico: https://sexyvoice.ai/it
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "1731",
+    "x-markdown-tokens": "1732",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1291,7 +1291,7 @@ exports[`privacy-policy.md > serves markdown in da 1`] = `
 {
   "body": "# Privacy Policy
 
-_Updated: 2026-11-03_
+_Opdateret 2026-11-03_
 
 How SexyVoice.ai handles data.
 
@@ -1299,7 +1299,7 @@ Privacy Policy body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/privacy-policy
+Kanonisk URL: https://sexyvoice.ai/en/privacy-policy
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -1316,7 +1316,7 @@ exports[`privacy-policy.md > serves markdown in de 1`] = `
 {
   "body": "# Privacy Policy
 
-_Updated: 2026-11-03_
+_Aktualisiert am 2026-11-03_
 
 How SexyVoice.ai handles data.
 
@@ -1324,13 +1324,13 @@ Privacy Policy body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/privacy-policy
+Kanonische URL: https://sexyvoice.ai/en/privacy-policy
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "39",
+    "x-markdown-tokens": "41",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1341,7 +1341,7 @@ exports[`privacy-policy.md > serves markdown in en 1`] = `
 {
   "body": "# Privacy Policy
 
-_Updated: 2026-11-03_
+_Updated 2026-11-03_
 
 How SexyVoice.ai handles data.
 
@@ -1366,7 +1366,7 @@ exports[`privacy-policy.md > serves markdown in es 1`] = `
 {
   "body": "# Política de Privacidad
 
-_Updated: 2026-11-03_
+_Actualizado el 2026-11-03_
 
 Cómo SexyVoice.ai gestiona los datos.
 
@@ -1374,13 +1374,13 @@ Política de Privacidad body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/es/privacy-policy
+URL canónica: https://sexyvoice.ai/es/privacy-policy
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "45",
+    "x-markdown-tokens": "46",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1391,7 +1391,7 @@ exports[`privacy-policy.md > serves markdown in fr 1`] = `
 {
   "body": "# Privacy Policy
 
-_Updated: 2026-11-03_
+_Mis à jour le 2026-11-03_
 
 How SexyVoice.ai handles data.
 
@@ -1399,13 +1399,13 @@ Privacy Policy body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/privacy-policy
+URL canonique : https://sexyvoice.ai/en/privacy-policy
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "39",
+    "x-markdown-tokens": "40",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1416,7 +1416,7 @@ exports[`privacy-policy.md > serves markdown in it 1`] = `
 {
   "body": "# Privacy Policy
 
-_Updated: 2026-11-03_
+_Aggiornato il 2026-11-03_
 
 How SexyVoice.ai handles data.
 
@@ -1424,13 +1424,13 @@ Privacy Policy body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/privacy-policy
+URL canonico: https://sexyvoice.ai/en/privacy-policy
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "39",
+    "x-markdown-tokens": "40",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1441,7 +1441,7 @@ exports[`terms.md > serves markdown in da 1`] = `
 {
   "body": "# Terms & Conditions
 
-_Updated: 2026-07-15_
+_Opdateret 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
@@ -1449,7 +1449,7 @@ Terms & Conditions body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/terms
+Kanonisk URL: https://sexyvoice.ai/en/terms
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
@@ -1466,7 +1466,7 @@ exports[`terms.md > serves markdown in de 1`] = `
 {
   "body": "# Terms & Conditions
 
-_Updated: 2026-07-15_
+_Aktualisiert am 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
@@ -1474,13 +1474,13 @@ Terms & Conditions body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/terms
+Kanonische URL: https://sexyvoice.ai/en/terms
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "41",
+    "x-markdown-tokens": "43",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1491,7 +1491,7 @@ exports[`terms.md > serves markdown in en 1`] = `
 {
   "body": "# Terms & Conditions
 
-_Updated: 2026-07-15_
+_Updated 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
@@ -1516,7 +1516,7 @@ exports[`terms.md > serves markdown in es 1`] = `
 {
   "body": "# Términos y Condiciones
 
-_Updated: 2026-07-15_
+_Actualizado el 2026-07-15_
 
 Términos que rigen el uso de SexyVoice.ai.
 
@@ -1524,13 +1524,13 @@ Términos y Condiciones body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/es/terms
+URL canónica: https://sexyvoice.ai/es/terms
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "44",
+    "x-markdown-tokens": "45",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1541,7 +1541,7 @@ exports[`terms.md > serves markdown in fr 1`] = `
 {
   "body": "# Terms & Conditions
 
-_Updated: 2026-07-15_
+_Mis à jour le 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
@@ -1549,13 +1549,13 @@ Terms & Conditions body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/terms
+URL canonique : https://sexyvoice.ai/en/terms
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "41",
+    "x-markdown-tokens": "43",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,
@@ -1566,7 +1566,7 @@ exports[`terms.md > serves markdown in it 1`] = `
 {
   "body": "# Terms & Conditions
 
-_Updated: 2026-07-15_
+_Aggiornato il 2026-07-15_
 
 Terms governing the use of SexyVoice.ai.
 
@@ -1574,13 +1574,13 @@ Terms & Conditions body.
 
 ---
 
-Canonical URL: https://sexyvoice.ai/en/terms
+URL canonico: https://sexyvoice.ai/en/terms
 ",
   "headers": {
     "cache-control": "public, max-age=0, must-revalidate",
     "content-type": "text/markdown; charset=utf-8",
     "vary": "Accept",
-    "x-markdown-tokens": "41",
+    "x-markdown-tokens": "42",
     "x-robots-tag": "noindex, nofollow",
   },
   "status": 200,

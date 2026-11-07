@@ -1355,6 +1355,33 @@
           "answer": "Nachdem das Modell einmal heruntergeladen wurde, ja. Das Modell wird in Ihrem Browser zwischengespeichert, sodass zukünftige Transkriptionen vollständig offline funktionieren."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Audio-Transkription, Sprache zu Text, 99+ Sprachen, Offline-Verarbeitung, Zeitstempel, Video-Transkription, Übersetzung ins Englische",
+      "open": {
+        "name": "Transkriptions-Tool öffnen",
+        "text": "Öffnen Sie das kostenlose Audio-Transkriptions-Tool auf SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Audio hinzufügen",
+        "text": "Ziehen Sie eine Audio- oder Videodatei in den Upload-Bereich, klicken Sie zum Durchsuchen oder nehmen Sie direkt mit Ihrem Mikrofon auf."
+      },
+      "chooseModel": {
+        "name": "Whisper-Modell wählen",
+        "text": "Wählen Sie {tiny} für eine schnelle Transkription oder {small} für höhere Genauigkeit."
+      },
+      "selectLanguage": {
+        "name": "Sprache und Aufgabe wählen",
+        "text": "Wählen Sie die Sprache Ihrer Aufnahme. Wählen Sie „{transcribe}“, um die Originalsprache beizubehalten, oder „{translate}“, um sie ins Englische zu übersetzen."
+      },
+      "transcribe": {
+        "name": "Transkribieren",
+        "text": "Klicken Sie auf „{button}“. Das Modell wird einmal heruntergeladen und für die spätere Nutzung zwischengespeichert."
+      },
+      "copy": {
+        "name": "Transkript kopieren",
+        "text": "Ihr Transkript mit Zeitstempeln erscheint sofort. Kopieren Sie es mit einem Klick."
+      }
     }
   },
   "audioJoiner": {
@@ -1406,5 +1433,31 @@
     "emotions": "Emotionen",
     "pace": "Tempo",
     "vocalSounds": "Stimmliche Laute"
+  },
+  "blogPost": {
+    "audienceCreators": "Content Creators",
+    "audienceLabel": "Zielgruppe:",
+    "audienceStorytellers": "Geschichtenerzähler",
+    "by": "Von",
+    "level": "Einsteiger bis Fortgeschrittene",
+    "published": "Veröffentlicht: {date}",
+    "readingTime": "{minutes} Min. Lesezeit",
+    "resourceType": "Tutorial",
+    "resourceTypeLabel": "Ressourcentyp:",
+    "seriesNote": "Dieser Artikel ist Teil unseres umfassenden Leitfadens zur KI-Sprachtechnologie.",
+    "topics": {
+      "speechSynthesis": "Sprachsynthese",
+      "voiceAi": "Sprach-KI",
+      "voiceCloning": "Stimmklonen"
+    },
+    "topicsLabel": "Themen:",
+    "wordCount": "{count, plural, one {# Wort} other {# Wörter}}"
+  },
+  "policy": {
+    "updated": "Aktualisiert am {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "Kanonische URL: {url}",
+    "features": "Funktionen"
   }
 }

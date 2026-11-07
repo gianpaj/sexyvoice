@@ -70,11 +70,7 @@ export default function AudioConverterClient() {
       setConversionState('complete');
       setProgress(100);
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('An unknown error occurred during conversion.');
-      }
+      toast.error(t('errors.conversionFailed'));
       console.error('Conversion error:', error);
       resetConversionState();
     }

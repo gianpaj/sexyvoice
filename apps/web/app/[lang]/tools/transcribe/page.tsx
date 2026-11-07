@@ -13,11 +13,21 @@ import {
   organization,
   webApplication,
 } from '@/lib/structured-data';
+import { WHISPER_MODELS } from './components/models';
 import TranscribeClient from './transcribe.client';
 
 interface Props {
   params: Promise<{ lang: Locale }>;
 }
+
+const HOW_TO_STEPS = [
+  'open',
+  'addAudio',
+  'chooseModel',
+  'selectLanguage',
+  'transcribe',
+  'copy',
+] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang } = await params;
@@ -65,8 +75,7 @@ export default async function TranscribePage({ params }: Props) {
       description,
       extra: {
         applicationSubCategory: 'Audio Transcription',
-        featureList:
-          'Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English',
+        featureList: t('howTo.featureList'),
         screenshot: `${SITE_URL}/posts/free-audio-transcription-tool.webp`,
       },
       lang,
@@ -78,32 +87,16 @@ export default async function TranscribePage({ params }: Props) {
       lang,
       name: title,
       path,
-      steps: [
-        {
-          name: 'Open the transcription tool',
-          text: 'Navigate to the free audio transcription tool on SexyVoice.ai.',
-        },
-        {
-          name: 'Add your audio',
-          text: 'Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone.',
-        },
-        {
-          name: 'Choose a Whisper model',
-          text: 'Select Whisper Tiny (~40 MB) for fast transcription or Whisper Small (~250 MB) for higher accuracy.',
-        },
-        {
-          name: 'Select language and task',
-          text: 'Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate" to convert to English.',
-        },
-        {
-          name: 'Transcribe',
-          text: 'Click "Load Model & Transcribe". The model downloads once and is cached for future use.',
-        },
-        {
-          name: 'Copy your transcript',
-          text: 'Your timestamped transcript appears instantly. Copy it with one click.',
-        },
-      ],
+      steps: HOW_TO_STEPS.map((step) => ({
+        name: t(`howTo.${step}.name`),
+        text: t(`howTo.${step}.text`, {
+          button: t('loadAndTranscribe'),
+          small: WHISPER_MODELS[2].label,
+          tiny: WHISPER_MODELS[0].label,
+          transcribe: t('languageSelector.transcribe'),
+          translate: t('languageSelector.translate'),
+        }),
+      })),
       totalTime: 'PT2M',
     }),
     faqPage({ lang, path, questions: faqItems }),

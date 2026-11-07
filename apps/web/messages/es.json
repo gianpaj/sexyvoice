@@ -1355,6 +1355,33 @@
           "answer": "Después de descargar el modelo una vez, sí. El modelo se almacena en caché en tu navegador, por lo que las transcripciones futuras funcionan completamente sin conexión."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Transcripción de audio, Voz a texto, Más de 99 idiomas, Procesamiento sin conexión, Marcas de tiempo, Transcripción de vídeo, Traducción al inglés",
+      "open": {
+        "name": "Abre la herramienta de transcripción",
+        "text": "Accede a la herramienta gratuita de transcripción de audio de SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Añade tu audio",
+        "text": "Arrastra y suelta un archivo de audio o vídeo en la zona de carga, haz clic para explorar o graba directamente con tu micrófono."
+      },
+      "chooseModel": {
+        "name": "Elige un modelo Whisper",
+        "text": "Selecciona {tiny} para una transcripción rápida o {small} para mayor precisión."
+      },
+      "selectLanguage": {
+        "name": "Selecciona el idioma y la tarea",
+        "text": "Elige el idioma de tu audio. Selecciona \"{transcribe}\" para mantener el idioma original o \"{translate}\" para convertirlo al inglés."
+      },
+      "transcribe": {
+        "name": "Transcribe",
+        "text": "Haz clic en \"{button}\". El modelo se descarga una vez y se guarda en caché para usos futuros."
+      },
+      "copy": {
+        "name": "Copia tu transcripción",
+        "text": "Tu transcripción con marcas de tiempo aparece al instante. Cópiala con un clic."
+      }
     }
   },
   "audioJoiner": {
@@ -1406,5 +1433,31 @@
     "emotions": "Emociones",
     "pace": "Ritmo",
     "vocalSounds": "Sonidos vocales"
+  },
+  "blogPost": {
+    "audienceCreators": "creadores de contenido",
+    "audienceLabel": "Público objetivo:",
+    "audienceStorytellers": "narradores",
+    "by": "Por",
+    "level": "De principiante a intermedio",
+    "published": "Publicado: {date}",
+    "readingTime": "{minutes} min de lectura",
+    "resourceType": "tutorial",
+    "resourceTypeLabel": "Tipo de recurso:",
+    "seriesNote": "Este artículo forma parte de nuestra guía completa sobre la tecnología de voz con IA.",
+    "topics": {
+      "speechSynthesis": "Síntesis de voz",
+      "voiceAi": "IA de voz",
+      "voiceCloning": "Clonación de voz"
+    },
+    "topicsLabel": "Temas:",
+    "wordCount": "{count, plural, one {# palabra} other {# palabras}}"
+  },
+  "policy": {
+    "updated": "Actualizado el {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "URL canónica: {url}",
+    "features": "Funciones"
   }
 }

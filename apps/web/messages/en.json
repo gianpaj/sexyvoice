@@ -1353,6 +1353,33 @@
           "answer": "After the model downloads once, yes. The model is cached in your browser, so future transcriptions work fully offline."
         }
       ]
+    },
+    "howTo": {
+      "featureList": "Audio transcription, Speech to text, 99+ languages, Offline processing, Timestamp generation, Video transcription, Translate to English",
+      "open": {
+        "name": "Open the transcription tool",
+        "text": "Navigate to the free audio transcription tool on SexyVoice.ai."
+      },
+      "addAudio": {
+        "name": "Add your audio",
+        "text": "Drag and drop an audio or video file onto the upload zone, click to browse, or record directly with your microphone."
+      },
+      "chooseModel": {
+        "name": "Choose a Whisper model",
+        "text": "Select {tiny} for fast transcription or {small} for higher accuracy."
+      },
+      "selectLanguage": {
+        "name": "Select language and task",
+        "text": "Pick the language of your audio. Choose \"{transcribe}\" to keep the original language, or \"{translate}\" to convert to English."
+      },
+      "transcribe": {
+        "name": "Transcribe",
+        "text": "Click \"{button}\". The model downloads once and is cached for future use."
+      },
+      "copy": {
+        "name": "Copy your transcript",
+        "text": "Your timestamped transcript appears instantly. Copy it with one click."
+      }
     }
   },
   "audioJoiner": {
@@ -1404,5 +1431,31 @@
     "emotions": "Emotions",
     "pace": "Pace",
     "vocalSounds": "Vocal sounds"
+  },
+  "blogPost": {
+    "audienceCreators": "content creators",
+    "audienceLabel": "Target audience:",
+    "audienceStorytellers": "storytellers",
+    "by": "By",
+    "level": "Beginner to Intermediate",
+    "published": "Published: {date}",
+    "readingTime": "{minutes} min read",
+    "resourceType": "tutorial",
+    "resourceTypeLabel": "Resource type:",
+    "seriesNote": "This article is part of our comprehensive guide to AI voice technology.",
+    "topics": {
+      "speechSynthesis": "Speech Synthesis",
+      "voiceAi": "Voice AI",
+      "voiceCloning": "Voice Cloning"
+    },
+    "topicsLabel": "Topics:",
+    "wordCount": "{count, plural, one {# word} other {# words}}"
+  },
+  "policy": {
+    "updated": "Updated {date}"
+  },
+  "markdown": {
+    "canonicalUrl": "Canonical URL: {url}",
+    "features": "Features"
   }
 }
