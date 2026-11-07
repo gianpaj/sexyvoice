@@ -138,4 +138,23 @@ describe('useFFmpegJoiner', () => {
 
     expect(result.current.isProcessing).toBe(false);
   });
+
+  it('listens for encoding progress only after trimming', async () => {
+    ffmpegMocks.load.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useFFmpegJoiner());
+    const segment = { endSec: 1, file: new File(['a'], 'a.wav'), startSec: 0 };
+
+    await act(async () => {
+      await result.current.join([segment], 'wav');
+    });
+
+    const [instance] = ffmpegMocks.instances as InstanceType<
+      typeof ffmpegMocks.FFmpegMock
+    >[];
+    const listen = instance.on.mock.calls.findIndex(
+      ([event]) => event === 'progress',
+    );
+    const [trim] = instance.exec.mock.invocationCallOrder;
+    expect(instance.on.mock.invocationCallOrder[listen]).toBeGreaterThan(trim);
+  });
 });

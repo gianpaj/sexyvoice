@@ -145,7 +145,6 @@ export function useFFmpegJoiner() {
 
     try {
       ffmpeg = await instance.ensureLoaded();
-      ffmpeg.on('progress', onProgress);
       await trimSegmentsToWav({
         cancelRequestedRef,
         ffmpeg,
@@ -157,6 +156,8 @@ export function useFFmpegJoiner() {
       const concatListName = await concatSegments(ffmpeg, segments);
       tempFiles.push(concatListName, 'joined.wav');
 
+      // Trimming runs FFmpeg too; only encoding moves the bar past half.
+      ffmpeg.on('progress', onProgress);
       const outputBlob = await encodeAudio(ffmpeg, 'joined.wav', outputFormat);
       setProgress(1);
 
