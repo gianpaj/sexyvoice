@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { deleteCustomCharacters } from '@/lib/calls/characters';
+import { deleteUserMemories } from '@/lib/calls/memory';
 import { deleteSavedVoice } from '@/lib/clone/delete-saved-voice';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { deleteFileFromR2 } from '@/lib/storage/upload';
@@ -20,7 +21,6 @@ import {
   hasOngoingSubscription,
 } from '@/lib/stripe/stripe-admin';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { deleteUserMemories } from '@/lib/supabase/memories';
 import { getUserByIdWithError } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
 import { encodedRedirect } from '@/lib/utils';

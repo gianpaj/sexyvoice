@@ -4,7 +4,6 @@ import { AccessToken } from 'livekit-server-sdk';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { isCallMemoryEnabled } from '@/lib/call-memory';
 import {
   buildAgentMetadata,
   callTokenRequestSchema,
@@ -12,6 +11,7 @@ import {
 import { characterPrompt, toCharacter } from '@/lib/calls/characters';
 import type { CallErrorCode } from '@/lib/calls/errors';
 import { DEFAULT_CALL_LANGUAGE } from '@/lib/calls/languages';
+import { getCallMemoryPreference } from '@/lib/calls/memory';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
@@ -30,25 +30,6 @@ import { createClient } from '@/lib/supabase/server';
 /** A refusal the browser explains by its `code`. */
 const refuse = (message: string, status: number, code: CallErrorCode) =>
   APIErrorResponse(message, status, { code });
-
-async function resolveMemoryPreference(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-): Promise<boolean> {
-  try {
-    // biome-ignore lint/plugin/use-verified-claims: Read the saved preference so stale JWT metadata cannot override an opt-out.
-    const { data, error } = await supabase.auth.getUser();
-    if (error || data?.user?.id !== userId) {
-      throw new Error('Memory preference unavailable');
-    }
-    return isCallMemoryEnabled(data.user.user_metadata);
-  } catch {
-    logger.warn('Memory preference unavailable; starting call without memory', {
-      user: { id: userId },
-    });
-    return false;
-  }
-}
 
 export async function POST(request: Request) {
   let user: { id: string; email?: string } | null = null;
@@ -130,7 +111,7 @@ export async function POST(request: Request) {
       sceneText,
     } = callRequest;
 
-    const memoryPreference = resolveMemoryPreference(supabase, user.id);
+    const memoryPreference = getCallMemoryPreference(supabase, user.id);
 
     // Prompt, model, voice and temperature come from the saved character.
     const row = await getCallCharacter(characterId);

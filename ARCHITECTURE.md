@@ -496,21 +496,22 @@ language has none), the model, voice, temperature and max output tokens.
 token metadata the agent reads. Predefined character prompt text never reaches
 the browser. Custom characters and scene text require a paid account.
 
-Long-term memory is on by default for free and paid accounts. The Profile
-page's Voice Call Memory switch saves `call_memory_enabled` in Auth
-`user_metadata` through `auth.updateUser()`. `lib/call-memory.ts` resolves an
-absent preference to enabled. The call-token route reads the current preference
-with `getUser()` for each memory-enabled request; JWT metadata is a snapshot
-and cannot override a saved opt-out. The lookup overlaps voice and character
-resolution. A failed lookup logs a warning and starts the call without memory.
-This is a user preference, not an entitlement or authorization check.
+Long-term memory is on by default for free and paid accounts.
+`lib/calls/memory.ts` owns the preference and its erasure. The Profile page's
+Voice Call Memory switch saves `call_memory_enabled` in Auth `user_metadata`
+through `auth.updateUser()`, and an absent preference counts as enabled. The
+call-token route reads the current preference with `getUser()` for each call;
+JWT metadata is a snapshot and cannot override a saved opt-out. The lookup
+overlaps voice and character resolution. A failed lookup logs a warning and
+starts the call without memory. This is a user preference, not an
+entitlement or authorization check.
 
 The setting applies when a call starts, across characters and devices. When
 off, the agent neither loads nor saves memories for that call. Stored memories
 remain until erased with the Profile page's delete action, which calls
 `DELETE /api/memories`. Memory controls live only on the Profile page.
 Account deletion also erases every memory row and its embedding across all
-character scopes. Both deletion paths use `lib/supabase/memories.ts` to filter
+character scopes. Both deletion paths use `lib/calls/memory.ts` to filter
 by the authenticated user. A failed memory erasure blocks the account-deletion
 success response and is reported to Sentry.
 
