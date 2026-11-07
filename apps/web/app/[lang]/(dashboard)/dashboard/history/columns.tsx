@@ -4,9 +4,9 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, Download, MoreVerticalIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { AudioPlayer } from '@/components/audio-player';
-import { toast } from '@/components/services/toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {

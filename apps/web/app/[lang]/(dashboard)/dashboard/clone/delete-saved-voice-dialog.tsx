@@ -2,8 +2,8 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/services/toast';
 import {
   AlertDialog,
   AlertDialogCancel,

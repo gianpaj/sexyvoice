@@ -60,7 +60,7 @@ vi.mock('@/components/audio-provider', () => ({
   }),
 }));
 
-vi.mock('@/components/services/toast', () => ({
+vi.mock('sonner', () => ({
   toast: mockToastFn,
 }));
 

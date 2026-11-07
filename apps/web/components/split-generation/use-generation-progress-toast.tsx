@@ -3,8 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { useEffect, useEffectEvent, useRef } from 'react';
 import type { ExternalToast } from 'sonner';
-
-import { toast } from '@/components/services/toast';
+import { toast } from 'sonner';
 
 /** The loading toast that tracks a split run, segment by segment. */
 export function useGenerationProgressToast(voiceName?: string) {

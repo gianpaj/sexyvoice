@@ -5,10 +5,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { CircleStop, Download, Loader2, RotateCcw } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 import { useAudio } from '@/components/audio-provider';
 import { GrokLanguageSelect } from '@/components/grok-language-select';
-import { toast } from '@/components/services/toast';
 import { ttsTagProvider } from '@/components/speech-tags/catalog';
 import { SpeechTextField } from '@/components/speech-text-field';
 import { SplitSegmentsPanel } from '@/components/split-generation/split-segments-panel';

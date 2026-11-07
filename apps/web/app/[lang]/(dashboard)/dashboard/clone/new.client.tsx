@@ -11,13 +11,13 @@ import {
   useRef,
   useState,
 } from 'react';
+import { toast } from 'sonner';
 
 import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
 import { SavedCallVoices } from '@/components/call/voice-picker';
 import { GenerateButton } from '@/components/generate-button';
-import { toast } from '@/components/services/toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

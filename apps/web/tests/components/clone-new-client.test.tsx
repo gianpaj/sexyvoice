@@ -97,7 +97,7 @@ vi.mock('@/components/audio/microphone-main', () => ({
   },
 }));
 
-vi.mock('@/components/services/toast', () => ({
+vi.mock('sonner', () => ({
   toast: {
     error: mockToastError,
     success: mockToastSuccess,

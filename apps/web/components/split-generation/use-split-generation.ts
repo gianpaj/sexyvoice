@@ -3,12 +3,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   type JoinerSegmentInput,
   useFFmpegJoiner,
 } from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
-import { toast } from '@/components/services/toast';
 import { ttsTagProvider } from '@/components/speech-tags/catalog';
 import { downloadBlob } from '@/lib/download';
 import { randomSeed } from '@/lib/tts/generation-input';
