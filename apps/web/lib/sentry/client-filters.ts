@@ -20,7 +20,21 @@ interface SentryClientEvent {
     values?: SentryException[];
   };
   message?: string;
+  request?: {
+    url?: string;
+  };
 }
+
+/** The browser SDK reports errors only from the production site. */
+export const CLIENT_ALLOW_URLS = [/https?:\/\/(www\.)?sexyvoice\.ai/];
+
+/** Messages from browser extensions and crypto wallets the SDK drops. */
+export const IGNORED_CLIENT_ERRORS = [
+  /extension not found/i,
+  /Cannot assign to read only property/i,
+  /MetaMask/i,
+  /tronLink/i,
+];
 
 const reactRemoveChildNotFoundPattern =
   /Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node/i;
@@ -225,6 +239,11 @@ function isProsemirrorSelectionNoiseException(
 }
 
 export function shouldDropClientSentryEvent(event: SentryClientEvent): boolean {
+  // Pages that browser extensions open over the app:// protocol
+  if (event.request?.url?.includes('app://')) {
+    return true;
+  }
+
   const exceptions = event.exception?.values ?? [];
 
   if (exceptions.some(isReactDomNoiseException)) {

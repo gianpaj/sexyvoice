@@ -5,7 +5,12 @@
 // biome-ignore lint/performance/noNamespaceImport: keep Sentry imports consistent with its Next.js integration
 import * as Sentry from '@sentry/nextjs';
 
-import { isE2E } from '@/lib/e2e-mode';
+import {
+  CONSOLE_LOG_LEVELS,
+  isServerSentryEnabled,
+  SENTRY_DSN,
+  TRACES_SAMPLE_RATE,
+} from '@/lib/sentry/config';
 import {
   ignoredServerSpans,
   sanitizeServerEvent,
@@ -13,22 +18,17 @@ import {
 
 Sentry.init({
   beforeSend: sanitizeServerEvent,
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
-  dsn: 'https://784d74949017ccfddf3df01f224e3e8b@o4509116858695680.ingest.de.sentry.io/4509116876193872',
-  enabled: process.env.NODE_ENV === 'production' && !isE2E(),
+  dsn: SENTRY_DSN,
+  enabled: isServerSentryEnabled(),
   enableLogs: true,
   ignoreSpans: ignoredServerSpans,
   integrations: [
-    // Add the Vercel AI SDK integration
     Sentry.vercelAIIntegration({
       recordInputs: true,
       recordOutputs: true,
     }),
-    // send console.log, console.warn, and console.error calls as logs to Sentry
-    Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+    Sentry.consoleLoggingIntegration({ levels: CONSOLE_LOG_LEVELS }),
   ],
-
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 0.1,
+  tracesSampleRate: TRACES_SAMPLE_RATE,
 });
