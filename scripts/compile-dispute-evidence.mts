@@ -2,6 +2,7 @@ import { writeFile } from 'node:fs/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface } from 'node:readline/promises';
 
+import storageLayout from '../apps/web/lib/storage/layout.ts';
 import { loadScriptEnv, parseCliArgs, runScript } from './lib/cli.mts';
 import {
   type CreditTransaction,
@@ -18,6 +19,16 @@ import {
   type ScriptSupabaseClient,
 } from './lib/supabase.mts';
 import { UUID_PATTERN } from './lib/uuid.mts';
+
+const { AUDIO_FOLDERS } = storageLayout;
+const FREE_FOLDERS = new Set<string>([
+  AUDIO_FOLDERS.clone.free,
+  AUDIO_FOLDERS.speech.free,
+]);
+const PAID_FOLDERS = new Set<string>([
+  AUDIO_FOLDERS.clone.paid,
+  AUDIO_FOLDERS.speech.paid,
+]);
 
 const HELP = `Compile one user's account, payments, usage and ledger reconciliation
 for a Stripe dispute. Reads only; writes dispute-<user-id>-<date>.md to the
@@ -184,8 +195,8 @@ async function getAudioFilesSummary(
   // Paid/free reflects whether the user was a paying customer when the file was
   // generated — NOT whether credits were consumed (credits_used is set for free
   // users too). The signal is captured at generation time as usage.userHasPaid,
-  // and mirrored in the storage_key folder (generated-audio/ vs
-  // generated-audio-free/), used as a fallback for rows predating the flag.
+  // and mirrored in the storage_key folder (AUDIO_FOLDERS), used as a fallback
+  // for rows predating the flag.
   const isPaidRow = (r: (typeof rows)[number]): boolean | null => {
     const userHasPaid =
       r.usage && typeof r.usage === 'object' && !Array.isArray(r.usage)
@@ -194,11 +205,11 @@ async function getAudioFilesSummary(
     if (typeof userHasPaid === 'boolean') {
       return userHasPaid;
     }
-    const key = r.storage_key ?? '';
-    if (key.startsWith('generated-audio-free/')) {
+    const folder = (r.storage_key ?? '').split('/')[0];
+    if (FREE_FOLDERS.has(folder)) {
       return false;
     }
-    if (key.startsWith('generated-audio/')) {
+    if (PAID_FOLDERS.has(folder)) {
       return true;
     }
     return null;

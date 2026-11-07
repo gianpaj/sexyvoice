@@ -14,6 +14,7 @@ import {
   assertUniqueSamples,
   type GeneratedSample,
   readVerifiedSample,
+  SAMPLE_PROVIDER_MODEL,
   type SampleManifest,
 } from './speech-samples.mts';
 
@@ -40,7 +41,7 @@ export async function readGenerationManifest(
   ) as SampleManifest;
   if (
     manifest.version !== 1 ||
-    manifest.model !== 'gemini-3.8-flash-tts' ||
+    manifest.model !== SAMPLE_PROVIDER_MODEL ||
     !Array.isArray(manifest.samples) ||
     !manifest.samples.length
   ) {

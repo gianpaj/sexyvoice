@@ -17,7 +17,7 @@
     "generate-audio-waveforms": "node generate-audio-waveforms.mts",
     "generate-clone-demos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON generate-clone-demos.mts",
     "generate-gemini-speech-samples": "tsx generate-gemini-speech-samples.mts",
-    "generate-xai-speech-samples": "node generate-xai-speech-samples.mjs",
+    "generate-xai-speech-samples": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON generate-xai-speech-samples.mjs",
     "prepare-gemini-voice-sql": "tsx prepare-gemini-voice-sql.mts",
     "refund-credits": "tsx refund-credits.mts",
     "reset-freeloader-credits": "tsx reset-freeloader-credits.mts",

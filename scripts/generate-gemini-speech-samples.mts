@@ -18,14 +18,15 @@ import { replaceJson, sha256 } from './lib/files.mts';
 import {
   readSampleCatalog,
   readVerifiedSample,
+  SAMPLE_PROVIDER_MODEL,
+  SAMPLE_VOICE_MODEL,
   type SampleManifest,
   writeListeningPage,
 } from './lib/speech-samples.mts';
 
 const { speechProviderCost } = providerCost;
 const { convertToWav } = audioHelpers;
-const { buildGeminiTtsContents, buildGeminiVoiceConfig, GEMINI_TTS_38 } =
-  geminiPrompt;
+const { buildGeminiTtsContents, buildGeminiVoiceConfig } = geminiPrompt;
 const { classifyGeminiTtsResponse } = geminiResponse;
 
 function writeManifest(file: string, manifest: SampleManifest) {
@@ -79,13 +80,18 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
     ) as SampleManifest;
     if (
       manifest.version !== 1 ||
-      manifest.model !== GEMINI_TTS_38 ||
+      manifest.model !== SAMPLE_PROVIDER_MODEL ||
       !Array.isArray(manifest.samples)
     )
       throw new Error('Invalid generation manifest');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-    manifest = { failures: [], model: GEMINI_TTS_38, samples: [], version: 1 };
+    manifest = {
+      failures: [],
+      model: SAMPLE_PROVIDER_MODEL,
+      samples: [],
+      version: 1,
+    };
   }
   if (
     manifest.samples.some(
@@ -139,15 +145,15 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
         config: {
           responseModalities: ['AUDIO'],
           speechConfig: {
-            voiceConfig: buildGeminiVoiceConfig(voice.name, 'gpro38'),
+            voiceConfig: buildGeminiVoiceConfig(voice.name, SAMPLE_VOICE_MODEL),
           },
         },
         contents: buildGeminiTtsContents({
-          model: 'gpro38',
+          model: SAMPLE_VOICE_MODEL,
           styleVariant: voice.style,
           text: voice.text,
         }),
-        model: GEMINI_TTS_38,
+        model: SAMPLE_PROVIDER_MODEL,
       });
       const candidate = response.candidates?.[0];
       const audioParts =
@@ -199,7 +205,7 @@ Requires GOOGLE_GENERATIVE_AI_API_KEY and ffmpeg. Listen before running upload-s
       );
       const bytes = await readFile(mp3Path);
       const dollarAmount = speechProviderCost({
-        model: GEMINI_TTS_38,
+        model: SAMPLE_PROVIDER_MODEL,
         occurredAt: generatedAt,
         ...usage,
       });

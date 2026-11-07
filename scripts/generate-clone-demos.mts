@@ -33,8 +33,10 @@ async function main(): Promise<void> {
   });
 
   if (values.help) {
+    const voiceIds = CLONE_DEMO_VOICES.map((voice) => voice.id).join('|');
+    const takeIds = CLONE_DEMO_TAKES.map((take) => take.id).join('|');
     console.log(
-      'Generate Voxtral clone demos from existing reference MP3s.\n--reference-dir <dir> --output-dir <new-dir> [--voice kat|heike] [--take sameOriginal|natural|sarcastic|calmSlow] [--env-file <file>]\nDefaults to all voices and takes. Requires ffmpeg, ffprobe, MISTRAL_API_KEY. Does not upload files or write database rows.',
+      `Generate Voxtral clone demos from existing reference MP3s.\n--reference-dir <dir> --output-dir <new-dir> [--voice ${voiceIds}] [--take ${takeIds}] [--env-file <file>]\nDefaults to all voices and takes. Requires ffmpeg, ffprobe, MISTRAL_API_KEY. Does not upload files or write database rows.`,
     );
     return;
   }

@@ -3,6 +3,10 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
+import cloneDemoConfig from '../apps/web/data/clone-demo-config.ts';
+
+const { CLONE_DEMO_TAKES, CLONE_DEMO_VOICES } = cloneDemoConfig;
+
 function cli(args: string[]) {
   return spawnSync(
     process.execPath,
@@ -15,13 +19,18 @@ function cli(args: string[]) {
   );
 }
 
-test('documents single-voice and single-take generation', () => {
+test('lists the configured voices and takes in the help', () => {
   const result = cli(['--help']);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /--voice kat\|heike/);
-  assert.match(
-    result.stdout,
-    /--take sameOriginal\|natural\|sarcastic\|calmSlow/,
+  assert.ok(
+    result.stdout.includes(
+      `--voice ${CLONE_DEMO_VOICES.map((voice) => voice.id).join('|')}`,
+    ),
+  );
+  assert.ok(
+    result.stdout.includes(
+      `--take ${CLONE_DEMO_TAKES.map((take) => take.id).join('|')}`,
+    ),
   );
 });
 
