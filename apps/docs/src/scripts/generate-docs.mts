@@ -1,11 +1,11 @@
 import { generateFiles } from 'fumadocs-openapi';
 import { createOpenAPI } from 'fumadocs-openapi/server';
-import { openapi } from '@/lib/openapi';
+import { OPENAPI_URL, openapi } from '@/lib/openapi';
 
 // Accept a local schema for branch validation while preserving the published ID.
 const input = process.argv[2]
   ? createOpenAPI({
-      input: { 'https://sexyvoice.ai/api/v1/openapi': process.argv[2] },
+      input: { [OPENAPI_URL]: process.argv[2] },
     })
   : openapi;
 

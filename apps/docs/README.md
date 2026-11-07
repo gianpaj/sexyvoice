@@ -1,50 +1,40 @@
 # SexyVoice.ai Documentation
 
-Documentation for [SexyVoice.ai](https://sexyvoice.ai), an AI voice platform.
+Documentation for [SexyVoice.ai](https://sexyvoice.ai), an AI voice platform,
+built with [Fumadocs](https://fumadocs.dev) on Next.js.
 
 Use [GLOSSARY.md](../../GLOSSARY.md) for domain names and definitions.
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
-
 **Live docs:** [docs.sexyvoice.ai](https://docs.sexyvoice.ai)
-Run development server:
+
+## Development
 
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+pnpm --filter @sexyvoice/docs dev
 ```
 
-Open http://localhost:3000 with your browser to see the result.
+Open http://localhost:3000.
 
-## Explore
+## Structure
 
-In the project, you can see:
+- `content/docs/`: the MDX pages and their `meta.json` navigation files.
+- `source.config.ts`: the Fumadocs MDX collections and frontmatter schema.
+- `src/lib/source.ts`: the content source that pages, search and the LLM
+  routes read.
+- `src/lib/shared.ts`: the docs and web app origins, and the GitHub branch.
 
-- `src/lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `src/lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
+| Route                         | Description                                |
+| ----------------------------- | ------------------------------------------ |
+| `src/app/(docs)/[[...slug]]`  | The documentation pages.                   |
+| `src/app/api/search/route.ts` | The search endpoint.                       |
+| `src/app/api/chat/route.ts`   | The AI assistant endpoint.                 |
+| `src/app/llms*`               | Markdown versions of the pages for agents. |
+| `src/app/og`                  | Open Graph images.                         |
+| `src/app/rss.xml/route.ts`    | The RSS feed at `/rss.xml`.                |
 
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
+The API reference pages in `content/docs/api-reference/endpoints/` are
+generated from the published OpenAPI schema:
 
-### Fumadocs MDX
-
-A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
-
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
-
-## Learn More
-
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+```bash
+pnpm --filter @sexyvoice/docs generate-openapi-docs
+```
