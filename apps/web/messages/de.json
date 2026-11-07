@@ -598,10 +598,10 @@
   },
   "call": {
     "title": "Sprachanrufe",
-    "notice1": "Erkunden Sie Ihre tiefsten Wünsche in völliger Privatsphäre.",
+    "notice1": "Erkunde deine tiefsten Wünsche in völliger Privatsphäre.",
     "notice2": "Ende-zu-Ende verschlüsselt, urteilsfreie Gespräche",
-    "notEnoughCredits": "Sie haben nicht genügend Credits. Das Minimum beträgt {count}",
-    "freeUserCallLimitExceeded": "Ihr kostenloses Kontingent beträgt insgesamt 5 Minuten für alle Anrufe. Kaufen Sie Credits, um weiterzutelefonieren.",
+    "notEnoughCredits": "Du hast nicht genügend Credits. Das Minimum beträgt {count}",
+    "freeUserCallLimitExceeded": "Dein kostenloses Kontingent beträgt insgesamt 5 Minuten für alle Anrufe. Kauf Credits, um weiterzutelefonieren.",
     "languageLabel": "Sprache",
     "languagePlaceholder": "Sprache wählen",
     "sceneLabel": "Szene",
