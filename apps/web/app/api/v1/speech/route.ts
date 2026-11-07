@@ -52,7 +52,7 @@ function speechErrorBody(error: SpeechError) {
     case 'input_too_long':
       return {
         code: 'input_too_long',
-        message: error.message,
+        message: 'The input text is too long for this voice',
         param: 'input',
         status: 400,
         type: 'invalid_request_error',
