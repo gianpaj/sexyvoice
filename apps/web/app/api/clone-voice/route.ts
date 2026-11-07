@@ -643,21 +643,12 @@ async function processAudioFile(
 
   // Normalize MIME type (microphone recordings may include codecs params)
   let normalizedMimeType = file.type.split(';')[0]?.trim().toLowerCase();
-  let isMicAudio = false;
-
-  // Detect microphone recordings
-  const filenameLower = file.name.toLowerCase();
-  if (
+  // An untyped upload is treated as an Ogg microphone take.
+  const isMicAudio =
     normalizedMimeType === 'application/octet-stream' ||
-    filenameLower.startsWith(`${MICROPHONE_RECORDING_NAME}.`)
-  ) {
-    isMicAudio = true;
-    if (
-      normalizedMimeType === 'application/octet-stream' &&
-      !normalizedMimeType.includes('audio/')
-    ) {
-      normalizedMimeType = 'audio/ogg';
-    }
+    file.name.toLowerCase().startsWith(`${MICROPHONE_RECORDING_NAME}.`);
+  if (normalizedMimeType === 'application/octet-stream') {
+    normalizedMimeType = 'audio/ogg';
   }
 
   let processedBuffer: Buffer = buffer;

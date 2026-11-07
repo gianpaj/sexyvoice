@@ -485,11 +485,7 @@ export function CloneVoiceDialog({
                         aria-label={t('startRecording')}
                         className="flex size-14 shrink-0 items-center justify-center rounded-full bg-red-600 disabled:opacity-50"
                         disabled={recorder.status === 'acquiring_media'}
-                        onClick={() => {
-                          recorder
-                            .startRecording()
-                            .catch(() => setProblem(t('micError')));
-                        }}
+                        onClick={() => recorder.startRecording()}
                         type="button"
                       >
                         <span className="size-[18px] rounded-full bg-white" />
