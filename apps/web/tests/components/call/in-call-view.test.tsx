@@ -62,6 +62,7 @@ const inRoom = (
   agentState,
   characterId: character.id,
   name,
+  reconnecting: false,
   startedAt: name === 'connected' ? 0 : null,
 });
 

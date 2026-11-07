@@ -37,6 +37,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('@livekit/components-react', () => ({
+  useConnectionState: () => 'connected',
   useMaybeRoomContext: () => mocks.room,
   useVoiceAssistant: () => ({ agent: mocks.agent, state: 'listening' }),
 }));
@@ -54,6 +55,7 @@ vi.mock('@/components/call/call-session', () => ({
   useCallSession: () => ({
     agentChanged: mocks.agentChanged,
     fail: mocks.fail,
+    roomReconnecting: vi.fn(),
   }),
 }));
 

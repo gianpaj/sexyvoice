@@ -45,6 +45,8 @@ interface RoomPhase {
   agentState: AgentState;
   characterId: string;
   name: 'connecting' | 'connected';
+  /** LiveKit is restoring a dropped connection; the agent may look gone. */
+  reconnecting: boolean;
   /** When the agent was first ready: zero on the call timer. */
   startedAt: number | null;
 }
@@ -70,6 +72,7 @@ type CallEvent =
   | { token: string; type: 'token'; url: string }
   | { type: 'connected' }
   | { at: number; present: boolean; state: AgentState; type: 'agent' }
+  | { reconnecting: boolean; type: 'reconnecting' }
   | { at: number; type: 'end' }
   | { type: 'dismiss' };
 
@@ -96,6 +99,7 @@ function nextSession(session: CallSession, event: CallEvent): CallSession {
           agentState: 'disconnected',
           characterId: phase.characterId,
           name: 'connecting',
+          reconnecting: false,
           startedAt: null,
         },
         room: { token: event.token, url: event.url },
@@ -119,6 +123,13 @@ function nextSession(session: CallSession, event: CallEvent): CallSession {
         },
       };
     }
+    case 'reconnecting':
+      return inRoom(phase)
+        ? {
+            ...session,
+            phase: { ...phase, reconnecting: event.reconnecting },
+          }
+        : session;
     case 'end':
       if (phase.name !== 'connected') return { ...session, phase: IDLE };
       return {
@@ -183,6 +194,7 @@ interface CallSessionContextValue {
   roomConnected: () => void;
   roomDisconnected: () => void;
   roomFailed: (error?: Error) => void;
+  roomReconnecting: (reconnecting: boolean) => void;
   session: CallSession;
 }
 
@@ -311,6 +323,12 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
     },
     [transition],
   );
+  const roomReconnecting = useCallback(
+    (reconnecting: boolean) => {
+      transition({ reconnecting, type: 'reconnecting' });
+    },
+    [transition],
+  );
 
   const { phase } = session;
   const connectingToken =
@@ -324,7 +342,10 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [connectingToken, end]);
 
-  const agentMissing = phase.name === 'connected' && !phase.agentPresent;
+  // A full reconnect removes every participant first, so the agent is only
+  // timed while the room itself is connected.
+  const agentMissing =
+    phase.name === 'connected' && !phase.reconnecting && !phase.agentPresent;
   const agentLeft = agentMissing && phase.agentSeen;
   useEffect(() => {
     if (!agentMissing) return;
@@ -346,6 +367,7 @@ export function CallSessionProvider({ children }: { children: ReactNode }) {
         roomConnected,
         roomDisconnected,
         roomFailed,
+        roomReconnecting,
         session,
       }}
     >

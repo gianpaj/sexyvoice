@@ -106,6 +106,23 @@ describe('agent watchdog', () => {
     expect(mocks.toastError).not.toHaveBeenCalled();
   });
 
+  it('does not time the agent while LiveKit reconnects', async () => {
+    await startConnectedCall();
+    agent(true, 'listening');
+
+    act(() => call.roomReconnecting(true));
+    agent(false, 'disconnected');
+    act(() => vi.advanceTimersByTime(30_000));
+    expect(call.session.phase.name).toBe('connected');
+
+    act(() => call.roomReconnecting(false));
+    act(() => vi.advanceTimersByTime(9999));
+    expect(call.session.phase.name).toBe('connected');
+    agent(true, 'listening');
+    act(() => vi.advanceTimersByTime(10_000));
+    expect(call.session.phase.name).toBe('connected');
+  });
+
   it('waits for the room before timing the agent', async () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>

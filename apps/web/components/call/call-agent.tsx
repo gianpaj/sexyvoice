@@ -1,10 +1,11 @@
 'use client';
 
 import {
+  useConnectionState,
   useMaybeRoomContext,
   useVoiceAssistant,
 } from '@livekit/components-react';
-import type { RpcInvocationData } from 'livekit-client';
+import { ConnectionState, type RpcInvocationData } from 'livekit-client';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -42,11 +43,19 @@ async function showAgentToast(data: RpcInvocationData) {
 export function CallAgent() {
   const room = useMaybeRoomContext();
   const { agent, state } = useVoiceAssistant();
-  const { agentChanged, fail } = useCallSession();
+  const connectionState = useConnectionState();
+  const { agentChanged, fail, roomReconnecting } = useCallSession();
 
   useEffect(() => {
     agentChanged(Boolean(agent), state);
   }, [agent, agentChanged, state]);
+
+  const reconnecting =
+    connectionState === ConnectionState.Reconnecting ||
+    connectionState === ConnectionState.SignalReconnecting;
+  useEffect(() => {
+    roomReconnecting(reconnecting);
+  }, [reconnecting, roomReconnecting]);
 
   useEffect(() => {
     if (!room) return;
