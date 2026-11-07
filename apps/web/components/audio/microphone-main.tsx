@@ -62,6 +62,7 @@ function DeviceSelectDropdown({
 }: {
   onDeviceChange?: (deviceId: string) => void;
 }) {
+  const t = useTranslations('clone');
   const [listRequested, setListRequested] = useState(false);
   const deviceSelect = usePersistentMediaDevice({
     requestPermissions: listRequested,
@@ -82,7 +83,7 @@ function DeviceSelectDropdown({
     <DropdownMenu onOpenChange={(open) => open && setListRequested(true)}>
       <DropdownMenuTrigger asChild>
         <Button
-          aria-label="Choose microphone"
+          aria-label={t('micChoose')}
           className="rounded-l-none border-gray-700 border-l px-2.5 font-semibold text-sm shadow-none hover:bg-neutral-700"
           variant="secondary"
         >
@@ -96,7 +97,7 @@ function DeviceSelectDropdown({
         forceMount
       >
         <DropdownMenuLabel className="text-xs uppercase tracking-widest">
-          Available inputs
+          {t('micInputs')}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {devices.map((device) => (
@@ -177,7 +178,7 @@ export function MicrophoneMain(props: Props) {
         <div className="mt-6 flex w-full justify-center self-center">
           <AudioPlayer blob={mediaBlob} />
           <Button
-            aria-label="Reset Microphone"
+            aria-label={t('micReset')}
             className="ml-2 flex w-10 flex-1 justify-center bg-red-400 disabled:opacity-50"
             disabled={status !== 'stopped'}
             onClick={onClearMediaStream}
