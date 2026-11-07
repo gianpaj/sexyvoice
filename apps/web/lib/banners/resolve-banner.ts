@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { isPromoEnabled } from '@/lib/promo';
 import { isBannerCountdownExpired } from './countdown';
 import { getBannerDefinition } from './registry';
 import type {
@@ -14,16 +15,9 @@ interface ResolveActiveBannerOptions {
   dismissedCookieKeys?: Iterable<string>;
   lang: Locale;
   messages: IntlMessages;
-  /** Not read: every banner shows on every page. */
-  placement?: 'blog' | 'dashboard' | 'landing';
 }
 
 const BANNER_THEMES: readonly BannerTheme[] = ['blue', 'orange', 'pink'];
-
-/** Checkout grants promo bonus credits whenever this is on. */
-export function isPromoEnabled() {
-  return process.env.NEXT_PUBLIC_PROMO_ENABLED === 'true';
-}
 
 /** The promo campaign to advertise; promos never fall back to a default. */
 export function getActivePromoBannerId() {

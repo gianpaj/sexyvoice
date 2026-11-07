@@ -14,6 +14,7 @@ import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { FeatureCard } from '@/components/feature-card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +43,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { FeatureCard } from '@/components/ui/feature-card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {

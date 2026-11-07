@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 interface FeatureCardProps {
-  href: string;
-  icon: LucideIcon;
-  title: string;
   children: React.ReactNode;
   className?: string;
   external?: boolean;
+  href: string;
+  icon: LucideIcon;
+  title: string;
 }
 
 export function FeatureCard({
@@ -38,9 +38,7 @@ export function FeatureCard({
         <Icon className="size-6 text-zinc-100 transition-colors" />
 
         {/* Title */}
-        <h3 className="mt-4 font-semibold text-base text-white">
-          {title}
-        </h3>
+        <h3 className="mt-4 font-semibold text-base text-white">{title}</h3>
 
         {/* Description */}
         <p className="mt-1 font-normal text-base text-zinc-400 leading-6">

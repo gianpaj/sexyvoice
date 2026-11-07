@@ -5,9 +5,9 @@ import { type PlanData, PricingCards } from '@/components/pricing-cards';
 import {
   getActivePromoPricingText,
   getPromoTheme,
-  isPromoEnabled,
 } from '@/lib/banners/resolve-banner';
 import type { Locale } from '@/lib/i18n/i18n-config';
+import { isPromoEnabled } from '@/lib/promo';
 import {
   getSubscriptionPackages,
   getTopupPackages,
