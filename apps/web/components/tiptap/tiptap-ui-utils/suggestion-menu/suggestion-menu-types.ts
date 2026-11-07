@@ -77,6 +77,10 @@ export interface SuggestionMenuProps<T = DefaultContext>
    */
   floatingOptions?: Partial<UseFloatingOptions>;
   /**
+   * Accessible name of the menu.
+   */
+  label: string;
+  /**
    * Maximum height of the suggestion menu.
    * If provided, the menu will scroll if content exceeds this height.
    * @default 384

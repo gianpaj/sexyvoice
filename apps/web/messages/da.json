@@ -1426,6 +1426,8 @@
     "PROVIDER_UNAVAILABLE": "{provider} er midlertidigt utilgængelig. Prøv igen."
   },
   "ttsEditor": {
+    "filterTags": "Filtrer...",
+    "tagSuggestions": "Forslag",
     "label": "Taletekst",
     "effects": "Stemmeeffekter",
     "emotions": "Følelser",

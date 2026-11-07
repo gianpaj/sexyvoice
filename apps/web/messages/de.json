@@ -1430,6 +1430,8 @@
     "PROVIDER_UNAVAILABLE": "{provider} ist vorübergehend nicht verfügbar. Bitte versuche es erneut."
   },
   "ttsEditor": {
+    "filterTags": "Filtern...",
+    "tagSuggestions": "Vorschläge",
     "label": "Sprechtext",
     "effects": "Stimmeffekte",
     "emotions": "Emotionen",

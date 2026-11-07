@@ -1430,6 +1430,8 @@
     "PROVIDER_UNAVAILABLE": "{provider} no está disponible temporalmente. Inténtalo de nuevo."
   },
   "ttsEditor": {
+    "filterTags": "Filtrar...",
+    "tagSuggestions": "Sugerencias",
     "label": "Texto de voz",
     "effects": "Efectos de voz",
     "emotions": "Emociones",

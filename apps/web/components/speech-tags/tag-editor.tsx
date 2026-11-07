@@ -23,9 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useUiEditorState } from '@/hooks/tiptap/use-ui-editor-state';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
-import { UiState } from '../tiptap/tiptap-extension/ui-state-extension';
 import { SlashDropdownMenu } from '../tiptap/tiptap-ui/slash-dropdown-menu/slash-dropdown-menu';
 import type {
   SuggestionItem,
@@ -192,7 +190,7 @@ function applyEditorContent(
 
 interface SlashMenuConfig {
   allow?: NonNullable<SuggestionMenuProps['allow']>;
-  customItems: SuggestionItem[];
+  items: SuggestionItem[];
   pluginKey: string;
   triggerChar: '[' | '<';
 }
@@ -226,8 +224,8 @@ function createWrapperTagSuggestionItem(
 }
 
 function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
+  const t = useTranslations('ttsEditor');
   const { editor } = use(EditorContext)!;
-  const { isDragging } = useUiEditorState(editor);
 
   if (!editor) {
     return null;
@@ -238,21 +236,16 @@ function EditorContentArea({ slashMenus }: EditorContentAreaProps) {
       className="editor-content mx-auto flex h-full w-full max-w-3xl flex-1 flex-col"
       editor={editor}
       role="presentation"
-      style={{
-        cursor: isDragging ? 'grabbing' : 'auto',
-      }}
     >
       {slashMenus.map((menu) => (
         <SlashDropdownMenu
           allow={menu.allow}
           char={menu.triggerChar}
-          config={{
-            customItems: menu.customItems,
-            enabledItems: [],
-            showGroups: false,
-          }}
+          decorationContent={t('filterTags')}
           deleteQueryOnEscape={false}
+          items={menu.items}
           key={menu.pluginKey}
+          label={t('tagSuggestions')}
           pluginKey={menu.pluginKey}
         />
       ))}
@@ -366,14 +359,13 @@ function ProviderTagEditor({
         strike: false,
       }),
       Placeholder.configure({
-        emptyNodeClass: 'is-empty with-slash',
+        emptyNodeClass: 'is-empty',
         placeholder,
       }),
       InstantTag.configure({ provider }),
       WrapperBoundary,
       UnknownTagHighlight.configure({ provider }),
       AutoConvertTags.configure({ provider }),
-      UiState,
     ],
     immediatelyRender: false,
     onCreate: ({ editor: nextEditor }) => {
@@ -583,7 +575,7 @@ function ProviderTagEditor({
 
   const slashMenus: SlashMenuConfig[] = [
     {
-      customItems: instantTags.map((tag) =>
+      items: instantTags.map((tag) =>
         createInstantTagSuggestionItem(tag, () =>
           handleInsertTagRef.current(tag),
         ),
@@ -596,7 +588,7 @@ function ProviderTagEditor({
           {
             allow: ({ editor, range, state }) =>
               isWrapperSuggestionAllowed({ editor, provider, range, state }),
-            customItems: wrappingTags.map((tag) =>
+            items: wrappingTags.map((tag) =>
               createWrapperTagSuggestionItem(tag, () =>
                 handleInsertTagRef.current(tag),
               ),
