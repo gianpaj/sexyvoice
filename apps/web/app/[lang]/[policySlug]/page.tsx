@@ -39,11 +39,12 @@ export const generateStaticParams = () =>
   );
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { policy, policySlug } = await policyFromParams(props);
+  const { lang, policy, policySlug } = await policyFromParams(props);
+  const t = await getTranslations({ locale: lang, namespace: 'pages' });
   // An untranslated policy shows the English text, so its canonical URL is
   // the English page, as in its agent markdown.
   return pageMetadata({
-    description: policy.description ?? '',
+    description: policy.description ?? t('description'),
     lang: policy.locale as Locale,
     locales: policyLocales(policySlug),
     path: `/${policySlug}`,
