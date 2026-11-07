@@ -57,7 +57,13 @@ Don't take shortcuts by just adding local logic to solve a problem.
 - Web app package: `apps/web` (`@sexyvoice/web`).
 - Fumadocs docs app: `apps/docs` (`@sexyvoice/docs`) - deployed to
   `docs.sexyvoice.ai`.
-- Operational one-off scripts: `scripts` (`@sexyvoice/scripts`).
+- Operational one-off scripts: `scripts` (`@sexyvoice/scripts`). See
+  `scripts/README.md` for commands and safety rules.
+- Scripts import some web modules through Node type stripping (`lib/ai/`,
+  parts of `lib/tts/`, `lib/storage/layout.ts`, `lib/clone/voxtral.ts`,
+  `data/clone-demo-config.ts`). Those modules use relative imports with `.ts`
+  extensions and no `@/` aliases. Under `tsx` they load as CommonJS, so a
+  script default-imports the module and destructures it.
 - Workspace config: `pnpm-workspace.yaml` (declares `apps/*`, `packages/*`,
   and `scripts`, plus the shared dependency `catalog:`).
 - Root commands are orchestrated with Turborepo (`turbo.json`).
@@ -205,6 +211,9 @@ Use package filters when you only want one app, e.g.
 - Do not add migrations for one-off data backfills or production data fixes unless
   explicitly requested; provide the SQL for the user to run instead.
 - Enable RLS on new tables and add granular policies.
+- Operator scripts change credits only through `adjustCredits` in
+  `scripts/lib/ledger.mts`, which writes the `refund` ledger row together with
+  the balance change.
 
 ## External API v1
 
