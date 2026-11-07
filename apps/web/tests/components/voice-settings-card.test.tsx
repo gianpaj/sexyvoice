@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { VoiceSettingsCard } from '@/components/voice-settings-card';
 import { getEmotionTags } from '@/lib/ai';
+import enMessages from '@/messages/en.json';
 
 vi.mock('@/components/audio-provider', () => ({
   AudioProvider: ({ children }: { children: React.ReactNode }) => (
@@ -40,6 +41,7 @@ const baseDict = {
     filterModelLabel: 'Model',
     footerCount: '{filtered} of {total} voices',
     geminiInfo: 'Gemini voice info',
+    geminiPromptTip: enMessages.generate.voiceSelector.geminiPromptTip,
     grokInfo: 'Grok voice info',
     multilingualGroupLabel: 'Gemini',
     noVoicesFound: 'No voices found',
@@ -117,6 +119,31 @@ function renderVoiceSettingsCard(
 }
 
 describe('VoiceSettingsCard', () => {
+  it.each([
+    ['gpro', false],
+    ['gpro', true],
+    ['gpro31', false],
+    ['gpro31', true],
+    ['gpro38', false],
+    ['gpro38', true],
+  ] as const)(
+    'shows the prompting tip for %s with paid access %s',
+    (model, isPaidUser) => {
+      renderVoiceSettingsCard({
+        isPaidUser,
+        selectedVoice: createVoice({ model }),
+      });
+
+      const link = screen.getByRole('link', { name: 'Gemini TTS skill' });
+      expect(link).toHaveAttribute(
+        'href',
+        'https://www.skills.sh/memex-lab/product-launch-video-skill/gemini-tts',
+      );
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link.parentElement).toHaveTextContent('Grok or ChatGPT');
+    },
+  );
+
   it('renders the style textarea for Gemini voices', () => {
     renderVoiceSettingsCard({
       selectedStyle: 'warm and intimate',
@@ -149,6 +176,9 @@ describe('VoiceSettingsCard', () => {
         baseDict.voiceSelector.selectStyleTextareaPlaceholder,
       ),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Gemini TTS skill' }),
+    ).not.toBeInTheDocument();
   });
 
   it('hides the style textarea for Replicate voices', () => {
@@ -166,6 +196,9 @@ describe('VoiceSettingsCard', () => {
       screen.queryByPlaceholderText(
         baseDict.voiceSelector.selectStyleTextareaPlaceholder,
       ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Gemini TTS skill' }),
     ).not.toBeInTheDocument();
   });
 
