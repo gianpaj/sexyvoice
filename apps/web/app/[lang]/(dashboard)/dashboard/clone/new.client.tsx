@@ -279,6 +279,8 @@ function NewVoiceClientInner({
       }
       await startRecording();
     } catch (error) {
+      // Release the microphone so the next press starts over.
+      clearMediaStream();
       const errorMsg =
         error instanceof Error
           ? error.message

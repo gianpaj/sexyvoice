@@ -108,6 +108,8 @@ export default function useMediaRecorder({
       setStatus('recording');
       onStart?.();
     } catch (error) {
+      mediaRecorder.current = null;
+      clearMediaStream();
       handleError(toError(error));
     }
   }

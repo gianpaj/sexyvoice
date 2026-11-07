@@ -64,6 +64,35 @@ describe('useMediaRecorder', () => {
     expect(result.current.status).toBe('idle');
   });
 
+  it('releases the microphone when the recorder cannot start', async () => {
+    const stop = vi.fn();
+    vi.stubGlobal(
+      'MediaRecorder',
+      class {
+        constructor() {
+          throw new Error('Unsupported codec');
+        }
+      },
+    );
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: () =>
+          Promise.resolve({ getTracks: () => [{ stop }] } as unknown),
+      },
+    });
+    const onError = vi.fn();
+    const { result } = renderHook(() => useMediaRecorder({ onError }));
+
+    await act(() => result.current.startRecording());
+
+    expect(stop).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'Unsupported codec' }),
+    );
+    expect(result.current.status).toBe('idle');
+  });
+
   it('reports browsers without MediaRecorder once mounted', () => {
     const onError = vi.fn();
     const { result } = renderHook(() => useMediaRecorder({ onError }));
