@@ -50,6 +50,7 @@ describe('microphone volume lifecycle', () => {
     );
     act(() => vi.advanceTimersByTime(10));
     expect(result.current).toHaveLength(5);
+    expect(result.current[0][0]).toBeCloseTo(Math.sqrt(80 / 90));
     rerender({ stream: null });
     expect(result.current).toEqual([]);
   });

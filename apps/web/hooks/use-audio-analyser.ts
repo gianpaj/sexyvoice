@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { levelFromDb } from '@/lib/audio-level';
+
 /**
  * Web Audio API hook that analyses an HTMLAudioElement's frequency data
  * and returns average normalized band values for waveform visualisation and
@@ -125,12 +127,7 @@ export function useAudioAnalyser(
         const count = end - start;
 
         for (let i = start; i < end; i++) {
-          // Raw values are in dB (typically -100 to 0).
-          // Clamp to [-100, -10], map to 0–1, apply sqrt for perceptual scaling.
-          const db = dataArray[i];
-          const clamped = Math.max(-100, Math.min(-10, db));
-          const normalised = (clamped + 100) / 90; // 0–1
-          sum += Math.sqrt(normalised);
+          sum += levelFromDb(dataArray[i]);
         }
 
         result[b] = count > 0 ? sum / count : 0;

@@ -23,7 +23,6 @@ export function MicrophoneVisualizer({
       gap={2}
       maxBarHeight={16}
       minBarHeight={2}
-      state="speaking"
     />
   );
 }
