@@ -894,7 +894,8 @@ function isExpectedReferenceAudioEnhancementFailure(error: unknown): boolean {
 
 /**
  * Clean the reference with fal.ai. Returns null when enhancement fails, so
- * the clone falls back to the original reference.
+ * the clone falls back to the original reference. Throws when the user
+ * cancelled, so nothing is generated or charged.
  */
 async function enhanceReference(
   processedAudio: ProcessedCloneInputAudio,
@@ -932,6 +933,7 @@ async function enhanceReference(
       requestId: enhancedAudio.requestId,
     };
   } catch (enhancementError) {
+    if (signal.aborted) throw enhancementError;
     const expectedEnhancementFailure =
       isExpectedReferenceAudioEnhancementFailure(enhancementError);
 
@@ -1728,6 +1730,10 @@ export async function POST(request: Request) {
     }
     return await cloneOnce(formInput, file, user, userHasPaid, request.signal);
   } catch (error) {
+    // The user cancelled; there is no one to answer.
+    if (request.signal.aborted) {
+      return new Response(null, { status: 499 });
+    }
     if (error instanceof RouteError) {
       return routeErrorResponse(
         error.serverMessage,

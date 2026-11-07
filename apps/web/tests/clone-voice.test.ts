@@ -1588,6 +1588,39 @@ describe('Clone Voice API Route', () => {
       );
     });
 
+    it('stops without generating when the user cancels during enhancement', async () => {
+      const { captureException } = await import('@sentry/nextjs');
+      const controller = new AbortController();
+      mockFalSubscribe.mockImplementationOnce(() => {
+        controller.abort();
+        return Promise.reject(
+          new DOMException('This operation was aborted', 'AbortError'),
+        );
+      });
+
+      const request = new Request('http://localhost/api/clone-voice', {
+        body: createFormDataWithAudio(
+          'Hello world',
+          createMockAudioFile('audio1.wav'),
+          'en',
+          true,
+        ),
+        method: 'POST',
+        signal: controller.signal,
+      });
+
+      const response = await POST(request);
+
+      expect(response.status).toBe(499);
+      expect(mockMistralSpeechComplete).not.toHaveBeenCalled();
+      expect(queries.restoreCredits).toHaveBeenCalledWith({
+        amount: 252,
+        userId: 'test-user-id',
+      });
+      expect(queries.saveAudioFile).not.toHaveBeenCalled();
+      expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should apply a hard timeout to reference audio enhancement requests', async () => {
       const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
       const anySpy = vi.spyOn(AbortSignal, 'any');
