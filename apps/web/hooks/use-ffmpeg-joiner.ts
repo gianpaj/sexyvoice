@@ -136,15 +136,16 @@ export function useFFmpegJoiner() {
     setProgress(0);
     setJoinError(null);
 
-    const ffmpeg = await instance.ensureLoaded();
+    let ffmpeg: FFmpeg | undefined;
     const tempFiles: string[] = [];
     // Encoding reports the second half of the progress bar.
     const onProgress = ({ progress: encoded }: { progress: number }) => {
       setProgress(Math.min(0.5 + encoded * 0.5, 0.99));
     };
-    ffmpeg.on('progress', onProgress);
 
     try {
+      ffmpeg = await instance.ensureLoaded();
+      ffmpeg.on('progress', onProgress);
       await trimSegmentsToWav({
         cancelRequestedRef,
         ffmpeg,
@@ -168,8 +169,10 @@ export function useFFmpegJoiner() {
       setJoinError(err instanceof Error ? err.message : 'Join failed');
       throw err;
     } finally {
-      ffmpeg.off('progress', onProgress);
-      await cleanupTempFiles(ffmpeg, tempFiles);
+      if (ffmpeg) {
+        ffmpeg.off('progress', onProgress);
+        await cleanupTempFiles(ffmpeg, tempFiles);
+      }
       setIsProcessing(false);
     }
   };

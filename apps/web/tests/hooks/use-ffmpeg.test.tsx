@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useFFmpeg } from '@/hooks/use-ffmpeg';
+import { useFFmpegJoiner } from '@/hooks/use-ffmpeg-joiner';
 
 const ffmpegMocks = vi.hoisted(() => {
   const instances: unknown[] = [];
@@ -117,5 +118,24 @@ describe('useFFmpeg', () => {
     expect(handler).toBeTypeOf('function');
     expect(instance.off).toHaveBeenCalledWith('progress', handler);
     expect(audio.type).toBe('audio/wav');
+  });
+});
+
+describe('useFFmpegJoiner', () => {
+  beforeEach(() => {
+    ffmpegMocks.instances.length = 0;
+    ffmpegMocks.load.mockReset();
+  });
+
+  it('stops processing when FFmpeg fails to load', async () => {
+    ffmpegMocks.load.mockRejectedValueOnce(new Error('network'));
+    const { result } = renderHook(() => useFFmpegJoiner());
+    const segment = { endSec: 1, file: new File(['a'], 'a.wav'), startSec: 0 };
+
+    await act(async () => {
+      await expect(result.current.join([segment], 'wav')).rejects.toThrow();
+    });
+
+    expect(result.current.isProcessing).toBe(false);
   });
 });
