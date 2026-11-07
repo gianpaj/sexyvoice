@@ -43,8 +43,10 @@ call-analysis queue logic and the R2 folder layout live in the web app.
   - `adjustCredits` inserts a `refund` row, then calls the increment or
     decrement RPC. A rejected RPC (an HTTP status) deletes the row again; no
     response (status 0) keeps the row and tells the operator to check the
-    balance. Every row carries `metadata.reason`. An optional idempotency key
-    is checked before the insert.
+    balance. Every row carries `metadata.reason`.
+  - `findRefund` finds an earlier refund row by its metadata;
+    `batch-refund-credits` skips a call whose `reason` and `sourceId` already
+    have one, which matches rows from every version of the command.
   - `refundPayment` owns the negative `metadata.dollarAmount` that
     `summarizeLedger` and daily-stats read.
   - Both penalty resets skip paid users.
@@ -62,7 +64,7 @@ call-analysis queue logic and the R2 folder layout live in the web app.
 ## Rejected
 
 - A database function that writes the row and moves the balance in one
-  transaction. The refactor allowed no migration. The idempotency check before
+  transaction. The refactor allowed no migration. The duplicate check before
   the insert is not atomic, which is acceptable for operator runs one at a time.
 - `process.chdir(INIT_CWD)`. It would move default reports with production
   data to the repository root, which `.gitignore` does not cover.
@@ -76,8 +78,6 @@ call-analysis queue logic and the R2 folder layout live in the web app.
 - A penalty reset decrements the balance it read, so a concurrent spend fails
   that user's reset instead of leaving a ledger row that differs from the
   change.
-- `batch-refund-credits` rows written before the idempotency key carry only
-  `metadata.sourceId`, so an old CSV would refund those calls again.
 - Some copies have no importable web source: the Gemini 3.1 model ID, the
   `## TRANSCRIPT` marker and the `-1` duration sentinel in
   `find-truncated-gemini31-tts.mjs`; the hand-built Mistral request in

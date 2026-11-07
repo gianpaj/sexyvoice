@@ -80,9 +80,9 @@ the reason you type.
 
 ### Batch refund credits
 
-Adds credits back for double-billed voice calls, one CSV row per call. Each
-refund row carries an idempotency key built from the call's `source_id`, so a
-rerun skips calls this command already refunded. Run it with `--dry-run` first.
+Adds credits back for double-billed voice calls, one CSV row per call. A call
+that already has a refund row with its `source_id` is skipped, so a rerun
+refunds nothing twice. Run it with `--dry-run` first.
 
 ```bash
 pnpm batch-refund-credits dupes.csv

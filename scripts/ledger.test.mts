@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import {
   adjustCredits,
   type CreditTransaction,
+  findRefund,
   hasCashPurchase,
   hasEverPaid,
   paidBefore,
@@ -263,14 +264,14 @@ test('records the ledger row, then moves the balance', async () => {
     credits: [{ amount: 300, id: randomUUID(), user_id: USER }],
   });
 
-  const added = await adjustCredits(client, {
+  await adjustCredits(client, {
     amount: 200,
     description: 'Refund - Platform bug',
     metadata: { chargeId: 'ch_1' },
     reason: 'Platform bug',
     userId: USER,
   });
-  const removed = await adjustCredits(client, {
+  await adjustCredits(client, {
     amount: -500,
     description: 'Credits reset to 0',
     reason: 'disposable_email',
@@ -278,8 +279,6 @@ test('records the ledger row, then moves the balance', async () => {
     userId: USER,
   });
 
-  assert.equal(added.status, 'applied');
-  assert.equal(removed.status, 'applied');
   assert.equal(tables.credits[0].amount, 0);
   assert.deepEqual(
     tables.credit_transactions.map(
@@ -307,28 +306,27 @@ test('records the ledger row, then moves the balance', async () => {
   );
 });
 
-test('skips an adjustment whose idempotency key already exists', async () => {
-  const { client, tables } = fakeSupabase({
-    credits: [{ amount: 0, id: randomUUID(), user_id: USER }],
+test('finds an earlier refund by its metadata', async () => {
+  const reason = 'Double billing - voice call';
+  const { client } = fakeSupabase({
+    credit_transactions: [
+      {
+        id: 'tx-1',
+        metadata: { reason, sourceId: 'call-1' },
+        type: 'refund',
+        user_id: USER,
+      },
+    ],
   });
-  const adjustment = {
-    amount: 720,
-    description: 'Refund - Double billing',
-    idempotencyKey: 'double-billing:call-1',
-    reason: 'Double billing - voice call',
-    userId: USER,
-  };
 
-  const first = await adjustCredits(client, adjustment);
-  const second = await adjustCredits(client, adjustment);
-
-  assert.equal(first.status, 'applied');
-  assert.deepEqual(second, {
-    status: 'duplicate',
-    transactionId: first.transactionId,
-  });
-  assert.equal(tables.credit_transactions.length, 1);
-  assert.equal(tables.credits[0].amount, 720);
+  assert.equal(
+    await findRefund(client, USER, { reason, sourceId: 'call-1' }),
+    'tx-1',
+  );
+  assert.equal(
+    await findRefund(client, USER, { reason, sourceId: 'call-2' }),
+    null,
+  );
 });
 
 test('removes the ledger row when the database rejects the balance change', async () => {

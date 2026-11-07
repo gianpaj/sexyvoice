@@ -286,12 +286,34 @@ export function summarizeLedger(
   };
 }
 
+/**
+ * The first refund row of the user whose metadata holds these values, such as
+ * an earlier refund for the same call.
+ */
+export async function findRefund(
+  supabase: ScriptSupabaseClient,
+  userId: string,
+  metadata: { [key: string]: string },
+): Promise<string | null> {
+  let query = supabase
+    .from('credit_transactions')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('type', 'refund');
+  for (const [key, value] of Object.entries(metadata)) {
+    query = query.eq(`metadata->>${key}`, value);
+  }
+  const { data, error } = await query.limit(1);
+  if (error) {
+    throw new Error(`Failed to check earlier refunds: ${error.message}`);
+  }
+  return data?.[0]?.id ?? null;
+}
+
 export interface CreditAdjustment {
   /** Signed credits: positive adds to the balance, negative removes. */
   amount: number;
   description: string;
-  /** A second adjustment with the same key for the user is skipped. */
-  idempotencyKey?: string;
   metadata?: { [key: string]: Json | undefined };
   /** Why the credits moved, stored as `metadata.reason`. */
   reason: string;
@@ -301,7 +323,6 @@ export interface CreditAdjustment {
 }
 
 export interface AdjustmentResult {
-  status: 'applied' | 'duplicate';
   transactionId: string;
 }
 
@@ -315,7 +336,7 @@ export async function adjustCredits(
   supabase: ScriptSupabaseClient,
   adjustment: CreditAdjustment,
 ): Promise<AdjustmentResult> {
-  const { amount, idempotencyKey, userId } = adjustment;
+  const { amount, userId } = adjustment;
   if (!UUID_PATTERN.test(userId)) {
     throw new Error(`Invalid user ID: ${userId}`);
   }
@@ -323,33 +344,12 @@ export async function adjustCredits(
     throw new Error(`Credit adjustment must be a non-zero integer: ${amount}`);
   }
 
-  if (idempotencyKey) {
-    const { data, error } = await supabase
-      .from('credit_transactions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('type', 'refund')
-      .eq('metadata->>idempotencyKey', idempotencyKey)
-      .limit(1);
-    if (error) {
-      throw new Error(`Failed to check earlier adjustments: ${error.message}`);
-    }
-    const existing = data?.[0];
-    if (existing) {
-      return { status: 'duplicate', transactionId: existing.id };
-    }
-  }
-
   const { data: row, error: insertError } = await supabase
     .from('credit_transactions')
     .insert({
       amount,
       description: adjustment.description,
-      metadata: {
-        ...adjustment.metadata,
-        ...(idempotencyKey && { idempotencyKey }),
-        reason: adjustment.reason,
-      },
+      metadata: { ...adjustment.metadata, reason: adjustment.reason },
       reference_id: adjustment.referenceId ?? null,
       type: 'refund',
       user_id: userId,
@@ -373,7 +373,7 @@ export async function adjustCredits(
           user_id_var: userId,
         });
   if (!balanceError) {
-    return { status: 'applied', transactionId: row.id };
+    return { transactionId: row.id };
   }
 
   // Status 0 means no response arrived, so the balance may have moved.

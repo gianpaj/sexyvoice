@@ -9,7 +9,7 @@ import {
   runScript,
 } from './lib/cli.mts';
 import { parseCsv } from './lib/csv.mts';
-import { adjustCredits } from './lib/ledger.mts';
+import { adjustCredits, findRefund } from './lib/ledger.mts';
 import {
   createScriptAdminClient,
   type ScriptSupabaseClient,
@@ -81,21 +81,26 @@ function readDupes(filePath: string): DupeRow[] {
   return rows;
 }
 
+const REFUND_REASON = 'Double billing - voice call';
+
 async function applyPlatformBugRefund(
   supabase: ScriptSupabaseClient,
   userId: string,
   refundCredits: number,
   sourceId: string,
 ): Promise<'applied' | 'duplicate'> {
-  const { status } = await adjustCredits(supabase, {
+  // Every version of this command wrote the reason and sourceId.
+  if (await findRefund(supabase, userId, { reason: REFUND_REASON, sourceId })) {
+    return 'duplicate';
+  }
+  await adjustCredits(supabase, {
     amount: refundCredits,
     description: `Refund - Double billing (voice call ${sourceId.slice(0, 8)})`,
-    idempotencyKey: `double-billing:${sourceId}`,
     metadata: { sourceId },
-    reason: 'Double billing - voice call',
+    reason: REFUND_REASON,
     userId,
   });
-  return status;
+  return 'applied';
 }
 
 async function main() {
