@@ -456,6 +456,56 @@ describe('/api/v1/speech', () => {
     expect(generateContent.mock.calls[0][0].config.seed).toBe(1234);
   });
 
+  it('keeps customer text out of the provider logs', async () => {
+    const { logger } = await import('@sentry/nextjs');
+    vi.mocked(logger.info).mockClear();
+    setMockGoogleGenAIFactory(() => ({
+      models: {
+        countTokens: vi.fn(),
+        generateContent: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      data: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=',
+                      mimeType: 'audio/wav',
+                    },
+                  },
+                ],
+              },
+              finishReason: 'STOP',
+            },
+          ],
+          usageMetadata: { totalTokenCount: 23 },
+        }),
+      },
+    }));
+
+    const response = await POST(
+      new Request('http://localhost/api/v1/speech', {
+        body: JSON.stringify({
+          input: 'A private sentence',
+          model: 'gpro38',
+          style: 'whisper',
+          voice: 'kore',
+        }),
+        headers: {
+          authorization: TEST_AUTH_HEADER,
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const logged = JSON.stringify(vi.mocked(logger.info).mock.calls);
+    expect(logged).toContain('Gemini voice generation succeeded');
+    expect(logged).not.toContain('A private sentence');
+    expect(logged).not.toContain('whisper');
+  });
+
   it('passes optional temperature to Gemini provider config', async () => {
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [

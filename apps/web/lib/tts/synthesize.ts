@@ -136,6 +136,11 @@ interface SynthesizedSpeech {
 
 interface SynthesisContext {
   extra?: Record<string, unknown>;
+  /**
+   * Adds the text and style to provider logs. The dashboard sets it for
+   * support investigations; external API text never reaches the logs.
+   */
+  logText?: boolean;
   /** Sentry user and extra fields for provider logs. */
   user: { email?: string; id: string };
 }
@@ -216,7 +221,14 @@ function classifyGeminiRequestError(
       });
     }
     if (google.status === 'INVALID_ARGUMENT') {
-      logger.warn('Gemini rejected TTS request', details);
+      // The reason is the only record of a rejection the user cannot see.
+      logger.warn('Gemini rejected TTS request', {
+        ...details,
+        extra: {
+          ...details.extra,
+          errorMessage: getProviderErrorMessage(error),
+        },
+      });
       return new SpeechError(
         isGeminiInputTooLong(error) ? 'input_too_long' : 'invalid_argument',
         { cause: error, google, provider: 'gemini' },
@@ -313,6 +325,8 @@ async function synthesizeWithGemini(
     finishReason,
     hasAudio: Boolean(data && mimeType),
   });
+  const textPreview = (length: number) =>
+    context.logText ? { textPreview: request.text.slice(0, length) } : {};
   const details = {
     ...context.extra,
     blockReason,
@@ -320,7 +334,7 @@ async function synthesizeWithGemini(
     model: runtimeModel,
     provider: 'gemini',
     responseId: response?.responseId,
-    styleVariant: request.style,
+    ...(context.logText && { styleVariant: request.style }),
     textLength: request.text.length,
     voice: request.voiceName,
   };
@@ -335,7 +349,7 @@ async function synthesizeWithGemini(
 
   if (outcome === 'no_audio') {
     logger.warn('Gemini voice generation returned no audio data', {
-      extra: { ...details, textPreview: request.text.slice(0, 500) },
+      extra: { ...details, ...textPreview(500) },
       user: context.user,
     });
     throw new SpeechError('no_audio', { provider: 'gemini' });
@@ -343,7 +357,13 @@ async function synthesizeWithGemini(
 
   if (outcome !== 'success' || !data || !mimeType) {
     logger.error('Gemini voice generation failed', {
-      extra: { ...details, hasData: Boolean(data), mimeType, response },
+      extra: {
+        ...details,
+        hasData: Boolean(data),
+        mimeType,
+        response,
+        ...textPreview(500),
+      },
       user: context.user,
     });
     // Capture only response shapes that the classifier does not recognize.
@@ -355,7 +375,7 @@ async function synthesizeWithGemini(
         hasData: Boolean(data),
         mimeType,
         model: runtimeModel,
-        textPreview: request.text.slice(0, 200),
+        ...textPreview(200),
         voice: request.voiceName,
       },
       user: { id: context.user.id },
@@ -364,7 +384,7 @@ async function synthesizeWithGemini(
   }
 
   logger.info('Gemini voice generation succeeded', {
-    extra: { ...details, textPreview: request.text.slice(0, 500) },
+    extra: { ...details, ...textPreview(500) },
     user: context.user,
   });
 

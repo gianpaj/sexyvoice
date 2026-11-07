@@ -286,7 +286,7 @@ export async function POST(request: Request) {
         text,
         voiceName: voiceObj.name,
       },
-      { user },
+      { logText: true, user },
     );
     modelUsed = speech.runtimeModel;
 
