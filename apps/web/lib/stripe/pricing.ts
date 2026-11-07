@@ -58,7 +58,6 @@ function getFirstMonthSubscriptionDiscountMultiplier({
 export const getTopupPackages = (lang: Locale) => {
   const promoEnabled = isPromoEnabled();
 
-  // Get promo bonuses
   const promoBonuses = {
     pro: promoEnabled
       ? Number.parseInt(process.env.NEXT_PUBLIC_PROMO_BONUS_PRO || '0', 10)

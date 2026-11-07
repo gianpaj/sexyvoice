@@ -54,7 +54,6 @@ export function DemoCallPlayer({
 
   const hasAudioEnergy = avgEnergy > SPEAKING_LEVEL;
 
-  // Stop and tear down current audio
   const stopAudio = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -78,9 +77,7 @@ export function DemoCallPlayer({
     setCurrentTime(0);
   };
 
-  // Start playback for a given character
   const playCharacter = (charId: string) => {
-    // Clean up any existing audio first
     stopAudio();
 
     const character = DEMO_CHARACTERS.find(({ id }) => id === charId);
@@ -143,7 +140,6 @@ export function DemoCallPlayer({
     });
   };
 
-  // Handle play/stop toggle
   const handlePlayStop = () => {
     if (isPlaying) {
       stopAudio();
@@ -152,10 +148,8 @@ export function DemoCallPlayer({
     }
   };
 
-  // Handle character selection
   const handleCharacterSelect = (charId: string) => {
     if (charId === selectedCharId && !isPlaying) {
-      // Same character, not playing — just play
       playCharacter(charId);
       return;
     }

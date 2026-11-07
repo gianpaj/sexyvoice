@@ -170,13 +170,11 @@ export async function POST(request: Request) {
       voiceId: voice.id,
     });
 
-    // Create access token
     const at = new AccessToken(apiKey, apiSecret, {
       identity: 'human',
       metadata: JSON.stringify(metadata),
     });
 
-    // Add room grants
     at.addGrant({
       canPublish: true,
       canPublishData: true,

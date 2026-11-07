@@ -184,14 +184,10 @@ async function decodeOggVorbis(audioData: Uint8Array): Promise<DecodedAudio> {
   }
 }
 
-/**
- * Convert Float32 PCM samples to Int16 PCM samples
- */
 function float32ToInt16(float32Array: Float32Array): Int16Array {
   const int16Array = new Int16Array(float32Array.length);
 
   for (let i = 0; i < float32Array.length; i++) {
-    // Clamp the value to [-1, 1] range
     const sample = Math.max(-1, Math.min(1, float32Array[i]));
     // Convert to 16-bit integer
     int16Array[i] = sample < 0 ? sample * 0x80_00 : sample * 0x7f_ff;
@@ -200,9 +196,6 @@ function float32ToInt16(float32Array: Float32Array): Int16Array {
   return int16Array;
 }
 
-/**
- * Interleave multiple audio channels into a single array
- */
 function interleaveChannels(channelData: Float32Array[]): Float32Array {
   const numChannels = channelData.length;
   if (numChannels === 0) {
@@ -224,9 +217,6 @@ function interleaveChannels(channelData: Float32Array[]): Float32Array {
   return interleaved;
 }
 
-/**
- * Create a WAV file buffer from PCM data
- */
 function createWavBuffer(
   pcmData: Int16Array,
   sampleRate: number,
@@ -423,13 +413,10 @@ export async function convertToWav(
     throw decodeError;
   }
 
-  // Interleave channels if stereo/multi-channel
   const interleaved = interleaveChannels(decoded.channelData);
 
-  // Convert Float32 to Int16
   const int16Data = float32ToInt16(interleaved);
 
-  // Create WAV buffer
   const wavBuffer = createWavBuffer(
     int16Data,
     decoded.sampleRate,
@@ -452,9 +439,6 @@ export function needsConversion(mimeType: string): boolean {
   );
 }
 
-/**
- * Check if the audio format is supported for conversion
- */
 export function isConversionSupported(
   mimeType: string,
   filename?: string,

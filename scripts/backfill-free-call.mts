@@ -125,9 +125,6 @@ function computeUpdates(
   return results;
 }
 
-/**
- * Apply the updates to the database.
- */
 async function applyUpdates(
   supabase: ScriptSupabaseClient,
   results: UpdateResult[],

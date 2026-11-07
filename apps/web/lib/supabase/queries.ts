@@ -549,7 +549,6 @@ export const insertTopupCreditTransaction = async (
 
   const isFirstTopup = !existingTopup || existingTopup.length === 0;
 
-  // Insert the transaction
   const { error } = await supabase.from('credit_transactions').insert({
     amount: creditAmount,
     description: `Credit top-up - $${dollarAmount}`,

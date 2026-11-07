@@ -31,22 +31,18 @@ export function AudioPreviewCard({
 
   const togglePlay = async () => {
     if (isPlaying) {
-      // Pause the current audio
       if (audioElement) {
         audioElement.pause();
       }
       setIsPlaying(false);
     } else {
-      // Stop any existing audio first
       audioElement?.pause();
 
-      // Create new audio element
       const audio = new Audio(audioSrc);
       audio.addEventListener('ended', () => {
         setIsPlaying(false);
       });
 
-      // Play and store the reference
       setIsPlaying(true);
       setAudioElement(audio);
       await attemptPlayback(

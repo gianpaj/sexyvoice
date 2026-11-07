@@ -176,9 +176,6 @@ async function processUser(
   }
 }
 
-/**
- * Display summary statistics
- */
 function displaySummary(results: ProcessingResult[]): void {
   const successful = results.filter((r) => r.success && !r.error);
   const skipped = results.filter((r) => r.success && r.error);
@@ -215,9 +212,6 @@ function displaySummary(results: ProcessingResult[]): void {
   console.log('');
 }
 
-/**
- * Prompt user for input
- */
 async function promptUser(
   rl: ReturnType<typeof createInterface>,
   question: string,
@@ -226,9 +220,6 @@ async function promptUser(
   return answer.trim();
 }
 
-/**
- * Parse CLI arguments
- */
 function readOptions(): CliOptions {
   const { values, positionals } = parseCliArgs({
     allowPositionals: true,
@@ -247,9 +238,6 @@ function readOptions(): CliOptions {
   };
 }
 
-/**
- * Display help message
- */
 function displayHelp(): void {
   console.log(`
 Usage: pnpm reset-freeloader-credits [options] <csv-file>
@@ -306,9 +294,6 @@ async function getCsvPath(
   return csvPath;
 }
 
-/**
- * Display records to be processed
- */
 function displayRecords(records: FreeloaderRecord[], limit?: number): void {
   const total = records.length;
   const processing = limit ? Math.min(limit, total) : total;
@@ -332,14 +317,10 @@ function displayRecords(records: FreeloaderRecord[], limit?: number): void {
   console.log('');
 }
 
-/**
- * Get dry run confirmation
- */
 async function getDryRunMode(
   rl: ReturnType<typeof createInterface>,
   cliDryrun: boolean,
 ): Promise<boolean> {
-  // If CLI flag is set, use it
   if (cliDryrun) {
     console.log('Running in DRY-RUN mode (--dryrun flag)\n');
     return true;
@@ -398,9 +379,6 @@ async function processRecords(
   return results;
 }
 
-/**
- * Main function
- */
 async function main() {
   const options = readOptions();
 
@@ -419,7 +397,6 @@ async function main() {
     const csvPath = inputPath(await getCsvPath(rl, options.csvPath));
     console.log(`\nReading CSV file: ${csvPath}\n`);
 
-    // Read and parse CSV
     let records = parseCsvFile(csvPath);
 
     if (records.length === 0) {
@@ -428,12 +405,10 @@ async function main() {
       return;
     }
 
-    // Apply limit if specified
     if (options.limit && options.limit < records.length) {
       records = records.slice(0, options.limit);
     }
 
-    // Display summary
     displayRecords(records, options.limit);
 
     const accounts = await fetchAccounts(supabase, records);
@@ -450,7 +425,6 @@ async function main() {
       }
     }
 
-    // Process records
     console.log(`\n${dryRun ? '[DRY RUN] ' : ''}Processing records...\n`);
     const results = await processRecords(supabase, records, accounts, dryRun);
 

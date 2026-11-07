@@ -27,7 +27,6 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient();
 
-    // Check if user is authenticated
     const claims = await getVerifiedClaims(supabase);
 
     if (!claims?.sub) {

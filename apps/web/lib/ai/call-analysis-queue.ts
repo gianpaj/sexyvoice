@@ -257,7 +257,6 @@ export async function markCallAnalysesCompleted(
   }
 }
 
-/** The status a failed analysis leaves its row in. */
 function statusAfterFailure(attempts: number, final: boolean) {
   return final || attempts >= MAX_CALL_ANALYSIS_ATTEMPTS ? 'failed' : 'pending';
 }

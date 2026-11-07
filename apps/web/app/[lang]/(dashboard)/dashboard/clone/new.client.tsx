@@ -242,7 +242,6 @@ function NewVoiceClientInner({
 
   const oneOffProvider = oneOffCloneProvider(selectedLocaleCode);
   const usesVoxtral = oneOffProvider === 'mistral';
-  // Saving for calls clones with the call provider.
   const referenceProvider = saveVoiceOnly ? callCloneProvider : oneOffProvider;
   const canSaveVoice = supportsCallCloneLocale(
     callCloneProvider,

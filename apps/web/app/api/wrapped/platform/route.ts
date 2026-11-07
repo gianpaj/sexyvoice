@@ -195,7 +195,6 @@ function calculateMonthlyStats(
     }
   }
 
-  // Get all unique months and sort them
   const allMonths = new Set([
     ...monthlyAudio.keys(),
     ...monthlyUsers.keys(),
@@ -203,7 +202,6 @@ function calculateMonthlyStats(
   ]);
   const sortedMonths = [...allMonths].sort();
 
-  // Take last 12 months
   const last12Months = sortedMonths.slice(-12);
 
   return last12Months.map((monthKey) => {

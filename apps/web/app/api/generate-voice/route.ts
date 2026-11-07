@@ -97,7 +97,6 @@ function reportCancelledCharge({
 // https://vercel.com/docs/functions/configuring-functions/duration
 export const maxDuration = 600; // seconds - fluid compute is enabled
 
-// Initialize Redis
 const redis = Redis.fromEnv();
 
 export async function POST(request: Request) {

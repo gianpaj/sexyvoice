@@ -109,7 +109,6 @@ export async function POST(request: Request) {
       return APIErrorResponse('Unauthorized', 401);
     }
 
-    // Check if user has paid
     const isPaid = await hasUserPaid(claims.sub);
     if (!isPaid) {
       return APIErrorResponse('Custom characters require a paid account', 403);

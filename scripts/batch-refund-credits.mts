@@ -89,7 +89,7 @@ async function applyPlatformBugRefund(
   refundCredits: number,
   sourceId: string,
 ): Promise<'applied' | 'duplicate'> {
-  // Every version of this command wrote the reason and sourceId.
+  // Every refund this command has written carries this reason and sourceId.
   if (await findRefund(supabase, userId, { reason: REFUND_REASON, sourceId })) {
     return 'duplicate';
   }

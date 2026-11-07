@@ -30,13 +30,11 @@ export function useAudioAnalyser(
   const rafIdRef = useRef<number | null>(null);
 
   const cleanup = useCallback(() => {
-    // Cancel animation frame
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
     }
 
-    // Disconnect source
     if (sourceRef.current) {
       try {
         sourceRef.current.disconnect();
@@ -46,7 +44,6 @@ export function useAudioAnalyser(
       sourceRef.current = null;
     }
 
-    // Disconnect analyser
     if (analyserRef.current) {
       try {
         analyserRef.current.disconnect();
@@ -56,7 +53,6 @@ export function useAudioAnalyser(
       analyserRef.current = null;
     }
 
-    // Close audio context
     if (audioContextRef.current) {
       try {
         audioContextRef.current.close();
@@ -75,7 +71,6 @@ export function useAudioAnalyser(
       return;
     }
 
-    // Create AudioContext
     const ctx = new AudioContext();
     if (ctx.state === 'suspended') {
       ctx.resume();

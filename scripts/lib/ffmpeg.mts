@@ -40,7 +40,6 @@ export function runAudioTool(
   return { stderr: result.stderr.toString(), stdout: result.stdout };
 }
 
-/** Duration of an audio file in seconds, from ffprobe. */
 export function probeDurationSeconds(path: string): number {
   const { stdout } = runAudioTool(
     'ffprobe',

@@ -42,7 +42,6 @@ interface AgentMetadata {
   voice: string;
 }
 
-/** Appends a scene to the character's prompt. */
 function withScene(prompt: string, sceneText: string): string {
   return `${prompt.trim()}\n\nScene instructions:\n${sceneText}`.trim();
 }
