@@ -171,8 +171,12 @@ async function getRecentCallSessions(supabase, hoursAgo, limit = null) {
     throw new Error(`Error fetching call sessions: ${error.message}`);
   }
 
-  const parked = await getParkedSessionIds(supabase);
-  return (data || []).filter((session) => !parked.has(session.id));
+  const sessions = data || [];
+  const parked = await getParkedSessionIds(
+    supabase,
+    sessions.map((session) => session.id),
+  );
+  return sessions.filter((session) => !parked.has(session.id));
 }
 
 /**
@@ -221,7 +225,10 @@ export async function getAllCompletedCallSessions(supabase, options = {}) {
   if (includeParked) {
     return rows;
   }
-  const parked = await getParkedSessionIds(supabase);
+  const parked = await getParkedSessionIds(
+    supabase,
+    rows.map((session) => session.id),
+  );
   return rows.filter((session) => !parked.has(session.id));
 }
 
@@ -547,13 +554,17 @@ export function printSummaryReport(insights) {
 }
 
 export async function persistResults(supabase, allResults, insights, options) {
-  await saveAllSessionAnalyses(supabase, allResults);
-  await saveAnalyticsRecord(supabase, {
-    analysis_date: new Date().toISOString(),
-    insights,
-    time_range_hours: options.timeRangeHours ?? options.hours ?? 0,
-    total_sessions_analyzed: allResults.length,
-  });
+  try {
+    await saveAllSessionAnalyses(supabase, allResults);
+  } finally {
+    // A queue error still fails the run, after the day's analytics row.
+    await saveAnalyticsRecord(supabase, {
+      analysis_date: new Date().toISOString(),
+      insights,
+      time_range_hours: options.timeRangeHours ?? options.hours ?? 0,
+      total_sessions_analyzed: allResults.length,
+    });
+  }
 }
 
 // ============================================================================

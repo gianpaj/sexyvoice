@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   claimPendingCallAnalyses,
   getAnalyzedSessionIds,
+  getParkedSessionIds,
   MAX_CALL_ANALYSIS_ATTEMPTS,
   markCallAnalysesCompleted,
   recordCallAnalysisFailure,
@@ -72,6 +73,16 @@ describe('call analysis queue id chunking', () => {
     ]);
     // Results from every chunk are merged.
     expect(analyzed).toEqual(new Set(['s3']));
+  });
+
+  it('looks up parked sessions among the candidates, in chunks', async () => {
+    inRows = [{ session_id: 's7' }];
+
+    const parked = await getParkedSessionIds(client, ids(120));
+
+    expect(calls).toHaveLength(3);
+    expect(calls[0].filters).toContainEqual(['eq', 'status', 'failed']);
+    expect(parked).toEqual(new Set(['s7']));
   });
 
   it('issues no request for an empty id list', async () => {

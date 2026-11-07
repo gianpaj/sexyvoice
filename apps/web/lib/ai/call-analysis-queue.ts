@@ -332,14 +332,27 @@ export async function saveCallSessionAnalysis(
   check(error);
 }
 
-/** Sessions parked as `failed`, which the scripts skip by default. */
-export async function getParkedSessionIds(client: Client) {
-  const { data, error } = await client
-    .from('call_analysis_queue')
-    .select('session_id')
-    .eq('status', 'failed');
-  check(error);
-  return new Set((data ?? []).map((row) => row.session_id));
+/**
+ * Which of `sessionIds` are parked as `failed`, which the scripts skip by
+ * default. Looked up in chunks, so any number of parked rows is seen.
+ */
+export async function getParkedSessionIds(
+  client: Client,
+  sessionIds: string[],
+): Promise<Set<string>> {
+  const parked = new Set<string>();
+  for (const ids of chunk(sessionIds)) {
+    const { data, error } = await client
+      .from('call_analysis_queue')
+      .select('session_id')
+      .eq('status', 'failed')
+      .in('session_id', ids);
+    check(error);
+    for (const row of data ?? []) {
+      parked.add(row.session_id);
+    }
+  }
+  return parked;
 }
 
 interface CallAnalysisOutcome {
