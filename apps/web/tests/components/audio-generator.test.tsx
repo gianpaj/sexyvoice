@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AudioGenerator } from '@/components/audio-generator';
 import { CHARACTERS_LIMIT_GRACE } from '@/lib/ui-constants';
+import esMessages from '@/messages/es.json';
 
 const streamingOverride = vi.hoisted(() => ({ enabled: false }));
 const invalidateQueries = vi.hoisted(() => vi.fn(() => Promise.resolve()));
@@ -167,6 +168,7 @@ const errorCodesDict = {
 } as const;
 
 const baseDict = {
+  GEMINI_OUTPUT_LIMIT: esMessages.generate.GEMINI_OUTPUT_LIMIT,
   cancel: 'Cancel',
   ctaButton: 'Generate',
   ctaButtonPlural: 'Generate audios',
@@ -1796,6 +1798,49 @@ describe('AudioGenerator', () => {
 
   const LONG_TEXT = 'a'.repeat(301);
   const SHORT_TEXT = 'a'.repeat(10);
+
+  it.each([
+    { transport: 'JSON', isPaidUser: false },
+    { transport: 'SSE', isPaidUser: true },
+  ])(
+    'localizes the Gemini output limit over $transport',
+    async ({ transport, isPaidUser }) => {
+      streamingOverride.enabled = transport === 'SSE';
+      const user = userEvent.setup();
+      const payload = {
+        error: 'The voice reached its audio output limit.',
+        errorCode: 'GEMINI_OUTPUT_LIMIT',
+      };
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(
+          transport === 'SSE'
+            ? makeSseStreamResponse([
+                SSE_AUDIO_FRAME,
+                `event: error\ndata: ${JSON.stringify(payload)}\n\n`,
+              ])
+            : { json: async () => payload, ok: false, status: 422 },
+        );
+      vi.stubGlobal('fetch', fetchMock);
+      renderAudioGenerator({
+        isPaidUser,
+        selectedVoice: createVoice({ model: 'gpro31', name: 'achernar' }),
+      });
+      fireEvent.change(
+        await screen.findByPlaceholderText(baseDict.textAreaPlaceholder),
+        {
+          target: { value: LONG_TEXT },
+        },
+      );
+      await user.click(screen.getByTestId('generate-button'));
+
+      await waitFor(() => {
+        expect(mockToastFn.error).toHaveBeenCalledWith(
+          `${baseDict.GEMINI_OUTPUT_LIMIT} (422)`,
+        );
+      });
+    },
+  );
 
   describe.each(['JSON', 'SSE'])('%s credit refresh', (transport) => {
     it.each([

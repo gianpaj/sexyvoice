@@ -482,6 +482,7 @@
     "downloadAudio": "Scarica audio",
     "enhanceTextTitle": "Migliora il testo con tag emotivi tramite l'IA",
     "error": "Impossibile generare l'audio",
+    "GEMINI_OUTPUT_LIMIT": "La voce ha raggiunto il limite di output audio. Accorcia il testo e riprova.",
     "errorEstimating": "Impossibile stimare i crediti",
     "estimateCreditsButton": "Stima crediti",
     "fullscreenTitle": "Schermo intero",

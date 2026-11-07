@@ -43,7 +43,7 @@ import { APIError } from '@/lib/error-ts';
 import { resolveErrorMessage } from '@/lib/errors/resolve-error-message';
 import { resizeTextarea } from '@/lib/react-textarea-autosize';
 import { MAX_FREE_GENERATIONS } from '@/lib/supabase/constants';
-import { cn, getTtsProvider } from '@/lib/utils';
+import { cn, getErrorStatusCode, getTtsProvider } from '@/lib/utils';
 import { getVoiceDisplayName } from '@/lib/voice-names';
 import { useGenerationProgressToast } from './audio-generator/hooks/use-generation-progress-toast';
 import { useSplitSegments } from './audio-generator/hooks/use-split-segments';
@@ -550,16 +550,21 @@ export function AudioGenerator({
           },
           onError: ({ details, error, errorCode, serverMessage }) => {
             resetStream();
-            const serverFallback = error || serverMessage || t('error');
-            reject(
-              new APIError(
-                resolveErrorMessage(
+            const isOutputLimit = errorCode === 'GEMINI_OUTPUT_LIMIT';
+            const message = isOutputLimit
+              ? t(errorCode)
+              : resolveErrorMessage(
                   translateErrorCode,
                   errorCode,
                   details,
-                  serverFallback,
-                ),
-                new Response(null, { status: 500 }),
+                  error || serverMessage || t('error'),
+                );
+            reject(
+              new APIError(
+                message,
+                new Response(null, {
+                  status: isOutputLimit ? getErrorStatusCode(errorCode) : 500,
+                }),
               ),
             );
           },

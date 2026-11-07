@@ -2071,6 +2071,44 @@ describe('Generate Voice API Route', () => {
       );
     });
 
+    it('rejects Gemini MAX_TOKENS with audio and refunds once', async () => {
+      const { restoreCredits } = await import('@/lib/supabase/queries');
+      const generateContent = vi.fn().mockResolvedValue({
+        candidates: [
+          {
+            content: {
+              parts: [
+                { inlineData: { data: 'AAAAAA==', mimeType: 'audio/wav' } },
+              ],
+            },
+            finishReason: FinishReason.MAX_TOKENS,
+          },
+        ],
+      });
+      setMockGoogleGenAIFactory(() => ({ models: { generateContent } }));
+
+      const response = await POST(
+        new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: 'voice-kore-id',
+          }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+      );
+
+      expect(response.status).toBe(422);
+      expect(await response.json()).toMatchObject({
+        error: expect.stringContaining('output limit'),
+        errorCode: 'GEMINI_OUTPUT_LIMIT',
+      });
+      expect(generateContent).toHaveBeenCalledOnce();
+      expect(restoreCredits).toHaveBeenCalledOnce();
+      expect(mockUploadFileToR2).not.toHaveBeenCalled();
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
     it('should throw error when Gemini response has no data', async () => {
       // Mock Gemini to return response without data (both pro and flash will fail)
       setMockGoogleGenAIFactory(() => ({
@@ -2666,6 +2704,65 @@ describe('Generate Voice API Route', () => {
     afterEach(() => {
       streamingOverride.enabled = undefined;
     });
+
+    it.each(['before audio', 'after audio'])(
+      'rejects Gemini MAX_TOKENS %s and refunds once',
+      async (scenario) => {
+        const { reduceCredits, restoreCredits } = await import(
+          '@/lib/supabase/queries'
+        );
+        const generateContentStream = vi.fn().mockImplementation(function* () {
+          if (scenario === 'after audio') yield createDefaultStreamChunk();
+          yield {
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: 'AAAAAA==',
+                        mimeType: 'audio/L16;rate=24000',
+                      },
+                    },
+                  ],
+                },
+                finishReason: FinishReason.MAX_TOKENS,
+              },
+            ],
+          };
+        });
+        setMockGoogleGenAIFactory(() => ({
+          models: { generateContentStream },
+        }));
+
+        const response = await POST(
+          new Request('http://localhost/api/generate-voice', {
+            body: JSON.stringify({
+              stream: true,
+              text: 'Hello world',
+              voiceId: 'voice-achernar-31-id',
+            }),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          }),
+        );
+        const body = await readSseBody(response);
+
+        expect(body).toContain('event: error');
+        expect(body).toContain('"errorCode":"GEMINI_OUTPUT_LIMIT"');
+        expect(body).not.toContain('event: done');
+        expect(body.match(/event: audio/g) ?? []).toHaveLength(
+          scenario === 'after audio' ? 1 : 0,
+        );
+        expect(generateContentStream).toHaveBeenCalledOnce();
+        expect(reduceCredits).toHaveBeenCalledOnce();
+        expect(restoreCredits).toHaveBeenCalledExactlyOnceWith(
+          vi.mocked(reduceCredits).mock.calls[0]?.[0],
+        );
+        expect(mockUploadFileToR2).not.toHaveBeenCalled();
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+      },
+    );
 
     it('reports a retained charge once when the client disconnects before done delivery', async () => {
       const { insertUsageEvent, restoreCredits } = await import(

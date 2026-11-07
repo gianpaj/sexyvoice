@@ -482,6 +482,7 @@
     "downloadAudio": "Télécharger l'audio",
     "enhanceTextTitle": "Améliorer le texte avec des balises d'émotion IA",
     "error": "Échec de la génération de l'audio",
+    "GEMINI_OUTPUT_LIMIT": "La voix a atteint sa limite de sortie audio. Raccourcissez le texte et réessayez.",
     "errorEstimating": "Impossible d'estimer les crédits",
     "estimateCreditsButton": "Estimer les crédits",
     "fullscreenTitle": "Plein écran",

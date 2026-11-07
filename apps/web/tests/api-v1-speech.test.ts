@@ -879,6 +879,51 @@ describe('/api/v1/speech', () => {
     expect(captureException).not.toHaveBeenCalled();
   });
 
+  it('rejects Gemini MAX_TOKENS with audio and refunds once', async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      candidates: [
+        {
+          content: {
+            parts: [
+              { inlineData: { data: 'AAAAAA==', mimeType: 'audio/wav' } },
+            ],
+          },
+          finishReason: 'MAX_TOKENS',
+        },
+      ],
+    });
+    setMockGoogleGenAIFactory(() => ({ models: { generateContent } }));
+
+    const response = await POST(
+      new Request('http://localhost/api/v1/speech', {
+        body: JSON.stringify({
+          input: 'Hello world',
+          model: 'gpro31',
+          voice: 'achernar',
+        }),
+        headers: {
+          authorization: TEST_AUTH_HEADER,
+          'content-type': 'application/json',
+        },
+        method: 'POST',
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: 'output_limit_exceeded',
+        message: expect.stringContaining('output limit'),
+        param: 'input',
+        type: 'invalid_request_error',
+      },
+    });
+    expect(generateContent).toHaveBeenCalledOnce();
+    expect(restoreCredits).toHaveBeenCalledOnce();
+    expect(mockUploadFileToR2).not.toHaveBeenCalled();
+    expect(captureException).not.toHaveBeenCalled();
+  });
+
   it('returns 503 and refunds when Gemini returns no audio', async () => {
     const generateContent = vi.fn().mockResolvedValue({
       candidates: [
