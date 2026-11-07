@@ -146,6 +146,11 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     "url": "https://sexyvoice.ai/de/blog",
   },
   {
+    "alternates": {
+      "languages": {
+        "en": "https://sexyvoice.ai/en/blog/realtime-ai-voice-call",
+      },
+    },
     "lastModified": "2026-01-15T00:00:00.000Z",
     "priority": 0.7,
     "url": "https://sexyvoice.ai/de/blog/realtime-ai-voice-call",
@@ -431,6 +436,11 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     "url": "https://sexyvoice.ai/es/blog",
   },
   {
+    "alternates": {
+      "languages": {
+        "en": "https://sexyvoice.ai/en/blog/hello-from-sexyvoice",
+      },
+    },
     "lastModified": "2025-04-28T00:00:00.000Z",
     "priority": 0.7,
     "url": "https://sexyvoice.ai/es/blog/hello-from-sexyvoice",

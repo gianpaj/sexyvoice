@@ -27,6 +27,19 @@ describe('sitemap', () => {
     expect([...entries.keys()].filter((url) => url.includes('['))).toEqual([]);
   });
 
+  it('links each translated post both ways', () => {
+    const entries = new Map(sitemap().map((entry) => [entry.url, entry]));
+    const languages = (url: string) =>
+      entries.get(`https://sexyvoice.ai${url}`)?.alternates?.languages;
+
+    expect(languages('/en/blog/hello-from-sexyvoice')).toEqual({
+      es: 'https://sexyvoice.ai/es/blog/hello-from-sexyvoice',
+    });
+    expect(languages('/es/blog/hello-from-sexyvoice')).toEqual({
+      en: 'https://sexyvoice.ai/en/blog/hello-from-sexyvoice',
+    });
+  });
+
   it('lists each policy only in the locales it is written in', () => {
     const policies = sitemap()
       .filter(({ url }) => /\/(privacy-policy|terms)$/.test(url))

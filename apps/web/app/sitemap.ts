@@ -35,10 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: localeUrl(lang, page.path),
     })),
     ...listPosts(lang).map((post) => ({
-      // Posts in the default locale link to their translations.
-      ...(lang === routing.defaultLocale && {
-        alternates: alternates(lang, postPath(post), postLocales(post.slug)),
-      }),
+      alternates: alternates(lang, postPath(post), postLocales(post.slug)),
       lastModified: new Date(post.date).toISOString(),
       priority: POST_PRIORITY,
       url: localeUrl(lang, postPath(post)),
