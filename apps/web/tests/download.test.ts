@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { downloadBlob, downloadUrl } from '@/lib/download';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
 
 describe('downloadUrl', () => {
   it('clicks a direct download link for R2 audio without fetching the file', async () => {
@@ -62,6 +68,5 @@ describe('downloadBlob', () => {
     expect(revokeObjectURL).not.toHaveBeenCalled();
     vi.runAllTimers();
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:joined');
-    vi.useRealTimers();
   });
 });
