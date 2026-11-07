@@ -392,6 +392,8 @@
       "introductoryPrice": "{firstPrice} el primer mes, después {renewalPrice}/mes."
     },
     "plans": {
+      "pricePer1kCredits": "{price} por 1.000 créditos",
+      "savePer1kCredits": "(ahorra {amount}/1.000)",
       "popular": "Más Popular",
       "startFree": "Comenzar Gratis",
       "buyCredits": "Comprar créditos",

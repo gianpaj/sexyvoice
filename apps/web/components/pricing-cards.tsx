@@ -221,12 +221,27 @@ export function PricingCards({
                   )}
                 {!isPromoEnabled && plan.pricePer1kCredits ? (
                   <div className="mt-1 text-muted-foreground text-xs tabular-nums">
-                    ${plan.pricePer1kCredits} per 1k credits
+                    {t('pricePer1kCredits', {
+                      price: format.number(Number(plan.pricePer1kCredits), {
+                        style: 'currency',
+                        currency: 'USD',
+                        maximumFractionDigits: 3,
+                      }),
+                    })}
                     {plan.saveFromPrevPlanPer1kCredits && (
                       <>
                         {' '}
                         <span className="font-medium text-green-400">
-                          (save ${plan.saveFromPrevPlanPer1kCredits}/1k)
+                          {t('savePer1kCredits', {
+                            amount: format.number(
+                              plan.saveFromPrevPlanPer1kCredits,
+                              {
+                                style: 'currency',
+                                currency: 'USD',
+                                maximumFractionDigits: 3,
+                              },
+                            ),
+                          })}
                         </span>
                       </>
                     )}

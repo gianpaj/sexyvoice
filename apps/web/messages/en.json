@@ -392,6 +392,8 @@
       "introductoryPrice": "{firstPrice} for your first month, then {renewalPrice}/month."
     },
     "plans": {
+      "pricePer1kCredits": "{price} per 1k credits",
+      "savePer1kCredits": "(save {amount}/1k)",
       "popular": "Most Popular",
       "startFree": "Start for Free",
       "buyCredits": "Buy credits",

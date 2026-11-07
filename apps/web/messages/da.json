@@ -392,6 +392,8 @@
       "introductoryPrice": "{firstPrice} den første måned, derefter {renewalPrice}/måned."
     },
     "plans": {
+      "pricePer1kCredits": "{price} pr. 1.000 kreditter",
+      "savePer1kCredits": "(spar {amount}/1.000)",
       "popular": "Mest populære",
       "startFree": "Start gratis",
       "buyCredits": "Køb kreditter",
