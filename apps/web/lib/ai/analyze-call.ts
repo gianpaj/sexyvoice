@@ -99,7 +99,7 @@ export type CallSessionForAnalysis = Pick<
   | 'user_id'
 >;
 
-export interface ConversationMessage {
+interface ConversationMessage {
   content: string;
   role: 'user' | 'assistant';
   timestamp: string | null;
@@ -216,7 +216,7 @@ export function buildConversationSummary(
   return summary;
 }
 
-export interface CallAnalysisPrompt {
+interface CallAnalysisPrompt {
   /** Set when the transcript has no user turns; appended to notable_patterns. */
   assistantOnlyNote: string | null;
   messageCount: number;

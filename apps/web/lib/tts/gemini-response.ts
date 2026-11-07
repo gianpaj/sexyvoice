@@ -22,7 +22,7 @@ export function extractInlineAudio(response: GenerateContentResponse | null): {
   return { data: undefined, mimeType: undefined };
 }
 
-export type GeminiTtsResponseOutcome =
+type GeminiTtsResponseOutcome =
   | 'content_blocked'
   | 'no_audio'
   | 'success'

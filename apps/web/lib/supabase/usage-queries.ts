@@ -26,7 +26,7 @@ export interface MonthlyUsageSummary {
   totalOperations: number;
 }
 
-export interface GetUsageEventsOptions {
+interface GetUsageEventsOptions {
   page: number;
   pageSize: number;
   sourceType?: UsageSourceType;

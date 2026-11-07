@@ -2,7 +2,7 @@ import { GROK_LANGUAGES } from './models';
 
 export type XaiTtsCodec = 'mp3' | 'wav';
 
-export interface GenerateXaiTtsInput {
+interface GenerateXaiTtsInput {
   codec?: XaiTtsCodec;
   language: string;
   signal?: AbortSignal;
@@ -12,7 +12,7 @@ export interface GenerateXaiTtsInput {
   voiceId: string;
 }
 
-export interface GenerateXaiTtsResult {
+interface GenerateXaiTtsResult {
   audioBuffer: Buffer;
   codec: XaiTtsCodec;
   contentType: string;

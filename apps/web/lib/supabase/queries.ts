@@ -88,7 +88,7 @@ export async function getCallCharacter(characterId: string) {
   return data;
 }
 
-export interface InsertUsageEventParams {
+interface InsertUsageEventParams {
   apiKeyId?: string | null;
   creditsUsed: number;
   dollarAmount?: number | null;
@@ -604,20 +604,6 @@ const updateUserCredits = async (userId: string, creditAmount: number) => {
   if (error) throw error;
 };
 
-export const getPaidTransactions = async (userId: string) => {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from('credit_transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .in('type', ['purchase', 'topup'])
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-
-  return data;
-};
-
 // Deduplicated per server request: the dashboard layout and its pages both
 // check paid status.
 export const hasUserPaid = cache(async (userId: string): Promise<boolean> => {
@@ -662,9 +648,7 @@ export const getCreditTransactionAmounts = cache(
  * Get the total call duration in seconds for a user.
  * This sums up all duration_seconds from their call_sessions.
  */
-export const getTotalCallDurationSeconds = async (
-  userId: string,
-): Promise<number> => {
+const getTotalCallDurationSeconds = async (userId: string): Promise<number> => {
   const supabase = await createClient();
 
   const { data, error } = await supabase

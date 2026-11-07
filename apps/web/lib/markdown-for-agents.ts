@@ -118,10 +118,7 @@ function faqAnswerMarkdown({ answer, linked }: FaqQuestion): string {
 }
 
 /** The landing page as markdown, with the sections and order of the page. */
-export function renderLandingMarkdown(
-  lang: Locale,
-  messages: IntlMessages,
-): string {
+function renderLandingMarkdown(lang: Locale, messages: IntlMessages): string {
   const { cta, faq, features, hero, samples } = getLandingContent(
     messages.landing,
   );

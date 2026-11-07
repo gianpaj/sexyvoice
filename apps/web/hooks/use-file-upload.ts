@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react';
 
-export type FileUploadError = 'fileTooLarge' | 'invalidFileType';
+type FileUploadError = 'fileTooLarge' | 'invalidFileType';
 
 interface FileUploadOptions {
   /** MIME types, `type/*` wildcards and `.ext` suffixes, comma-separated. */

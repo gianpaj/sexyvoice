@@ -8,8 +8,9 @@
     "e2e/auth/auth.setup.ts",
     "e2e/checkly.only.ts"
   ],
-  // Deployed separately with the Deno runtime.
-  "ignore": ["supabase/functions/telegram-bot/index.ts"],
+  // Deployed separately with the Deno runtime. components/ui keeps the full
+  // export surface of each shadcn/ui install.
+  "ignore": ["supabase/functions/telegram-bot/index.ts", "components/ui/**"],
   // The root installs Biome; developers install the Supabase and portless
   // CLIs themselves.
   "ignoreBinaries": ["biome", "portless", "supabase"],

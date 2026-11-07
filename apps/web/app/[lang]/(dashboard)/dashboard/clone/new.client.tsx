@@ -79,8 +79,6 @@ import { cloneStateReducer, initialCloneState } from './clone-state';
 import { CloneTextField } from './clone-text-field';
 import { DeleteSavedVoiceDialog } from './delete-saved-voice-dialog';
 
-export type { Status } from './clone-state';
-
 // ─── PreviewTabContent ────────────────────────────────────────────────────────
 
 function PreviewTabContent({

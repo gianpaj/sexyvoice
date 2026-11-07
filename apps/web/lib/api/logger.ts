@@ -6,7 +6,7 @@ const axiom = new Axiom({
 
 const DATASET = 'vercel';
 
-export interface LogFields {
+interface LogFields {
   apiKeyId?: string;
   cached?: boolean;
   creditsUsed?: number;

@@ -22,7 +22,7 @@ const CALL_ERROR_MESSAGES = {
 
 export type CallErrorCode = keyof typeof CALL_ERROR_MESSAGES;
 
-export type CallErrorMessage = (typeof CALL_ERROR_MESSAGES)[CallErrorCode];
+type CallErrorMessage = (typeof CALL_ERROR_MESSAGES)[CallErrorCode];
 
 /** The message for a code, or `fallback` for a code this app does not know. */
 export function callErrorMessage(

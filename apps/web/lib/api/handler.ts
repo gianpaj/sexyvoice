@@ -9,7 +9,7 @@ import { createLogger } from '@/lib/api/logger';
 import { consumeRateLimit, type RateLimitState } from '@/lib/api/rate-limit';
 import { jsonWithRateLimitHeaders } from '@/lib/api/responses';
 
-export interface ExternalApiContext {
+interface ExternalApiContext {
   auth: NonNullable<Awaited<ReturnType<typeof validateApiKey>>>;
   log: ReturnType<typeof createLogger>;
   rateLimit: RateLimitState;

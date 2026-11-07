@@ -19,7 +19,7 @@ export interface FaqQuestion {
   question: string;
 }
 
-export interface FaqGroup {
+interface FaqGroup {
   category: string;
   id: string;
   questions: FaqQuestion[];

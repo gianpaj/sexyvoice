@@ -28,7 +28,7 @@ export interface CallAnalysisBatchContext {
   session: CallSessionForAnalysis;
 }
 
-export type CallAnalysisBatchResult =
+type CallAnalysisBatchResult =
   | { analysis: CallAnalysis; error?: undefined; sessionId: string }
   | {
       analysis?: undefined;
@@ -130,7 +130,7 @@ export function resolveCallAnalysisBatchOutcome(
   }
 }
 
-export interface PreparedCallAnalysisBatch {
+interface PreparedCallAnalysisBatch {
   contexts: Map<string, CallAnalysisBatchContext>;
   /** Sessions rejected before upload (no usable transcript). */
   rejected: CallAnalysisBatchResult[];
@@ -174,7 +174,7 @@ export async function createCallAnalysisBatch(
   return createBatch(`call-analysis-${requests.length}`, fileId);
 }
 
-export interface SubmittedCallAnalysisBatch {
+interface SubmittedCallAnalysisBatch {
   batchId: string;
   contexts: Map<string, CallAnalysisBatchContext>;
   rejected: CallAnalysisBatchResult[];

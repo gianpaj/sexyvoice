@@ -13,7 +13,7 @@ import {
  * service role (external API, where the user comes from an API key). Refunds
  * always run as the service role.
  */
-export type CreditActor = 'session' | 'service';
+type CreditActor = 'session' | 'service';
 
 export type SettlementOutcome =
   | 'exact'

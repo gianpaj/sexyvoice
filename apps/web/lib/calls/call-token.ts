@@ -27,7 +27,7 @@ export type CallTokenRequest = z.input<typeof callTokenRequestSchema>;
  * shapes are its contract. `voice` is a `voices.id` for built-in voices and
  * an `audio_references.id` for saved voices.
  */
-export interface AgentMetadata {
+interface AgentMetadata {
   character_id: string;
   initial_instruction: string;
   instructions: string;

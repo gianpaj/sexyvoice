@@ -88,7 +88,7 @@ export async function getPendingCallAnalyses(
   return (data ?? []) as QueuedCallSession[];
 }
 
-export interface InFlightCallAnalysisBatch {
+interface InFlightCallAnalysisBatch {
   batchId: string;
   /** Earliest submission in the batch; used to flag stuck batches. */
   submittedAt: string | null;
@@ -342,7 +342,7 @@ export async function getParkedSessionIds(client: Client) {
   return new Set((data ?? []).map((row) => row.session_id));
 }
 
-export interface CallAnalysisOutcome {
+interface CallAnalysisOutcome {
   analysis?: CallAnalysis;
   error?: string;
   /** No retry can succeed, such as a transcript without messages. */

@@ -11,7 +11,7 @@ import { routing } from '@/src/i18n/routing';
 // The posts and policies the site publishes. Pages, agent markdown and the
 // sitemap all read them here, so a draft stays hidden everywhere.
 
-export type PostWithCover = Post & { image: string };
+type PostWithCover = Post & { image: string };
 
 /** How many posts the blog index and its markdown list. */
 export const BLOG_INDEX_LIMIT = 20;
@@ -59,7 +59,7 @@ export function formatPostDate(date: string, locale: Locale): string {
 
 export const POLICY_SLUGS = ['privacy-policy', 'terms'] as const;
 
-export type PolicySlug = (typeof POLICY_SLUGS)[number];
+type PolicySlug = (typeof POLICY_SLUGS)[number];
 
 export function isPolicySlug(value: string): value is PolicySlug {
   return (POLICY_SLUGS as readonly string[]).includes(value);

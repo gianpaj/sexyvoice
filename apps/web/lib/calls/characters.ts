@@ -284,7 +284,7 @@ export function buildSaveCharacterPayload({
   };
 }
 
-export type SaveCharacterResult =
+type SaveCharacterResult =
   | { character: Character; ok: true }
   | { error: string; ok: false };
 

@@ -15,7 +15,7 @@ interface FalEnhancedAudioResponse {
   };
 }
 
-export interface EnhancedReferenceAudioResult {
+interface EnhancedReferenceAudioResult {
   buffer: Buffer;
   mimeType: string;
   modelUsed: string;

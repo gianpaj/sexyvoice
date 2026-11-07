@@ -17,7 +17,7 @@ import { OggOpusDecoder } from 'ogg-opus-decoder';
 
 import { isWav } from './audio';
 
-export type SupportedAudioFormat = 'mp3' | 'ogg' | 'vorbis' | 'webm';
+type SupportedAudioFormat = 'mp3' | 'ogg' | 'vorbis' | 'webm';
 
 export class AudioDecodeError extends Error {
   decoderMessage?: string;

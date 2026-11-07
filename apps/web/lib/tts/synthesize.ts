@@ -33,7 +33,7 @@ import type { TtsModel, TtsProvider } from './models';
 import { generateXaiTts, type XaiTtsCodec } from './xai';
 
 /** Why a provider produced no audio. Each surface maps a kind to its response. */
-export type SpeechErrorKind =
+type SpeechErrorKind =
   | 'aborted'
   | 'content_blocked'
   | 'input_too_long'
@@ -102,7 +102,7 @@ export function isAbortError(error: unknown): boolean {
   return /\babort(?:ed| ?error)\b/.test(error.message.toLowerCase());
 }
 
-export interface SpeechRequest {
+interface SpeechRequest {
   codec?: XaiTtsCodec;
   /** Stored `voices.model`; the Replicate model path for Orpheus. */
   dbModel: string;
@@ -120,7 +120,7 @@ export interface SpeechRequest {
   voiceName: string;
 }
 
-export interface SynthesizedSpeech {
+interface SynthesizedSpeech {
   audio: Buffer;
   /** Grok output codec. */
   codec?: XaiTtsCodec;

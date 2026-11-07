@@ -17,7 +17,7 @@ type CloneErrorResponse = Partial<CloneErrorResponseBody> & {
   message?: string;
 };
 
-export const getCloneErrorMessage = (
+const getCloneErrorMessage = (
   t: CloneTranslator,
   translateErrorCode: ErrorCodesTranslator,
   code?: CloneRouteErrorCode,

@@ -8,7 +8,7 @@ export const AUDIO_FOLDERS = {
   speech: { free: 'generated-audio-free', paid: 'generated-audio' },
 } as const;
 
-export type AudioKind = keyof typeof AUDIO_FOLDERS;
+type AudioKind = keyof typeof AUDIO_FOLDERS;
 
 export function audioFolder(kind: AudioKind, isPaidUser: boolean): string {
   return isPaidUser ? AUDIO_FOLDERS[kind].paid : AUDIO_FOLDERS[kind].free;

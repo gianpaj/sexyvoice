@@ -6,7 +6,7 @@ import { routing } from '@/src/i18n/routing';
 
 const TITLE_TEMPLATE = `%s | ${SITE_NAME}`;
 
-export interface OgImage {
+interface OgImage {
   alt: string;
   height: number;
   url: string;

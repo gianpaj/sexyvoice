@@ -28,7 +28,7 @@ import { RTL_CLONE_LOCALE_CODES } from '@/lib/clone/constants';
 import { Link } from '@/lib/i18n/navigation';
 import { attemptPlayback } from '@/lib/media-playback';
 
-export type DemoCloneLabels = IntlMessages['landing']['demoClone'];
+type DemoCloneLabels = IntlMessages['landing']['demoClone'];
 
 interface DemoClonePlayerProps {
   initialSpeakerId: string;

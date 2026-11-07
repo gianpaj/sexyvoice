@@ -4,7 +4,7 @@ import type {
 } from '@/components/transcript/transcript-display';
 import { FILES_URL } from '@/lib/site';
 
-export interface DemoCharacter {
+interface DemoCharacter {
   /** Tailwind gradient for the avatar ring. */
   accent: string;
   audioSrc: string;

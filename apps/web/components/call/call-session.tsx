@@ -54,7 +54,7 @@ export type CallPhase =
   | { characterId: string; name: 'requesting' }
   | RoomPhase;
 
-export interface CallSession {
+interface CallSession {
   /** The last call that reached the room, until dismissed or replaced. */
   ended: { characterId: string; seconds: number } | null;
   phase: CallPhase;

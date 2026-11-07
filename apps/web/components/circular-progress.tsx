@@ -4,7 +4,7 @@ import type React from 'react';
 
 import { cn } from '@/lib/utils';
 
-export interface ProgressCircleProps extends React.ComponentProps<'svg'> {
+interface ProgressCircleProps extends React.ComponentProps<'svg'> {
   className?: string;
   value: number;
 }

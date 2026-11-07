@@ -13,7 +13,6 @@ import {
 } from './clone-demo-languages';
 
 export type { CloneDemoTakeId } from './clone-demo-config';
-export { CLONE_DEMO_TAKES } from './clone-demo-config';
 export type { DemoLanguageCode } from './clone-demo-languages';
 export {
   DEMO_FALLBACK_LANGUAGE,
@@ -43,7 +42,7 @@ export interface DemoCloneSpeaker {
   takes: readonly DemoCloneTake[];
 }
 
-export interface DemoCloneLanguage {
+interface DemoCloneLanguage {
   languageCode: DemoLanguageCode;
   /** Staged text, not the transcript of any ready audio. */
   prompt: string;
