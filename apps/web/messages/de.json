@@ -284,8 +284,8 @@
               "answer": "Tippen Sie auf die Anruf-Schaltfläche und Sie werden sofort mit einem privaten KI-Sprachanruf verbunden. Sie können ganz normal sprechen, unterbrechen, das Thema wechseln oder einfach zuhören – das Gespräch läuft wie ein echter Dialog."
             },
             {
-              "question": "Kann ich einen Charakter mit meiner eigenen Stimme anrufen?",
-              "answer": "Ja. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet gespeicherte Stimmen frei. Erstellen Sie einen Charakter und wählen Sie \"Stimme klonen\", oder nutzen Sie \"Stimme für Anrufe speichern\" auf der Klonen-Seite. Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch und wählen Sie sie als Stimme des Charakters."
+              "question": "Wie starte ich einen Sprachanruf mit einer geklonten Stimme?",
+              "answer": "Öffnen Sie die Anrufseite, erstellen Sie einen Charakter und wählen Sie Ihre gespeicherte geklonte Stimme aus. Speichern Sie den Charakter und starten Sie den Anruf. Wenn Sie noch keine Stimme gespeichert haben, wählen Sie beim Erstellen des Charakters \"Stimme klonen\" oder auf der Klonen-Seite \"Stimme für Anrufe speichern\". Nehmen Sie mindestens 10 Sekunden Ihrer Stimme auf oder laden Sie eine Aufnahme hoch. Eine einmalige Credit-Aufladung oder eine Abonnementzahlung schaltet eigene Charaktere und gespeicherte Stimmen frei."
             },
             {
               "question": "Was kostet das?",

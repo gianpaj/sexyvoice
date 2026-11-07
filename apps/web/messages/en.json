@@ -284,8 +284,8 @@
               "answer": "Tap the call button and you'll be connected instantly to a private AI voice call. You can talk naturally, interrupt, change topics, or listen — your call flows like a real conversation."
             },
             {
-              "question": "Can I call a character in my own voice?",
-              "answer": "Yes. A top-up or subscription payment unlocks saved voices. Create a character and choose \"Clone a voice\", or use \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice, then choose it as the character's voice."
+              "question": "How do I make a voice call with a cloned voice?",
+              "answer": "Go to the Call page, create a character, and select your saved cloned voice. Save the character, then start the call. If you haven't saved a voice yet, choose \"Clone a voice\" in the character creator, or \"Save a voice for calls\" on the Clone page. Record or upload at least 10 seconds of your voice. A top-up or subscription payment unlocks custom characters and saved voices."
             },
             {
               "question": "How much does it cost?",
