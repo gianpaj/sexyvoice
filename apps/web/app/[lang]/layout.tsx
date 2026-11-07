@@ -10,13 +10,16 @@ import {
   setRequestLocale,
 } from 'next-intl/server';
 
-import { Providers } from '@/app/providers';
+import { Toaster } from '@/components/ui/sonner';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { siteMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
 import '../globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
+
+/** How long a toast stays up unless it sets its own duration. */
+const TOAST_DURATION_MS = 6000;
 
 interface Props {
   children: React.ReactNode;
@@ -70,7 +73,8 @@ export default async function LangLayout({
           </>
         )}
         <NextIntlClientProvider locale={lang} messages={messages}>
-          <Providers>{children}</Providers>
+          {children}
+          <Toaster duration={TOAST_DURATION_MS} />
         </NextIntlClientProvider>
       </body>
     </html>
