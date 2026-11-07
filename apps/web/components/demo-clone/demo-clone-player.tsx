@@ -23,44 +23,18 @@ import {
   getDemoCloneSpeaker,
   resolveInitialDemoLanguageCode,
 } from '@/data/demo-clone';
+import { RTL_CLONE_LOCALE_CODES } from '@/lib/clone/constants';
 import { Link } from '@/lib/i18n/navigation';
 import { attemptPlayback } from '@/lib/media-playback';
 
-export interface DemoCloneLabels {
-  audioError: string;
-  backToClone: string;
-  calmSlow: string;
-  clonedVoice: string;
-  comingSoon: string;
-  deliveryLabel: string;
-  hearOriginal: string;
-  loading: string;
-  natural: string;
-  originalVoice: string;
-  pauseAudio: string;
-  pickLanguage: string;
-  pickSpeaker: string;
-  playAudio: string;
-  preparedExamplesCaption: string;
-  retry: string;
-  sameOriginal: string;
-  samplePending: string;
-  sarcastic: string;
-  seek: string;
-  signUpAndClone: string;
-  subtitle: string;
-  title: string;
-  tryVoice: string;
-}
+export type DemoCloneLabels = IntlMessages['landing']['demoClone'];
 
 interface DemoClonePlayerProps {
-  applying?: boolean;
   initialSpeakerId: string;
   initialTakeId?: CloneDemoTakeId;
   labels: DemoCloneLabels;
   languageLabels: Record<DemoLanguageCode, string>;
   locale?: string;
-  onTryVoice?: (speakerId: string, takeId: CloneDemoTakeId) => void;
 }
 
 type Playback = 'idle' | 'loading' | 'playing' | 'error';
@@ -74,8 +48,6 @@ export function DemoClonePlayer({
   labels,
   languageLabels,
   locale,
-  onTryVoice,
-  applying = false,
 }: DemoClonePlayerProps) {
   const preferredLanguage = resolveInitialDemoLanguageCode(
     locale ?? getDemoCloneSpeaker(initialSpeakerId).languageCode,
@@ -200,7 +172,7 @@ export function DemoClonePlayer({
         <p className="text-muted-foreground text-sm">{labels.subtitle}</p>
       </div>
 
-      <fieldset className="mt-6 border-0 p-0" disabled={applying}>
+      <fieldset className="mt-6 border-0 p-0">
         <legend className="mb-3 text-muted-foreground text-xs">
           {labels.pickLanguage}
         </legend>
@@ -234,7 +206,7 @@ export function DemoClonePlayer({
       </fieldset>
 
       {speaker && take ? (
-        <fieldset className="mt-5 border-0 p-0" disabled={applying}>
+        <fieldset className="mt-5 border-0 p-0">
           <legend className="mb-3 text-muted-foreground text-xs">
             {labels.deliveryLabel}
           </legend>
@@ -270,7 +242,7 @@ export function DemoClonePlayer({
       <blockquote
         className="my-6 text-pretty text-xl leading-8 tracking-tight"
         data-testid="demo-clone-script"
-        dir={languageCode === 'ar' ? 'rtl' : 'ltr'}
+        dir={RTL_CLONE_LOCALE_CODES.has(languageCode) ? 'rtl' : 'ltr'}
         lang={languageCode}
       >
         <span aria-hidden="true" className="select-none">
@@ -426,35 +398,17 @@ export function DemoClonePlayer({
                 ? labels.backToClone
                 : labels.hearOriginal}
             </Button>
-            {onTryVoice ? (
-              <Button
-                className="min-h-11"
+            <Button asChild className="min-h-11">
+              <Link
                 data-testid="demo-clone-try"
-                disabled={applying}
-                onClick={() => {
-                  stop();
-                  onTryVoice(speaker.id, take.id);
+                href={{
+                  pathname: '/dashboard/clone',
+                  query: { demo: speaker.id, take: take.id },
                 }}
-                type="button"
               >
-                {applying && (
-                  <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" />
-                )}
-                {labels.tryVoice}
-              </Button>
-            ) : (
-              <Button asChild className="min-h-11">
-                <Link
-                  data-testid="demo-clone-try"
-                  href={{
-                    pathname: '/dashboard/clone',
-                    query: { demo: speaker.id, take: take.id },
-                  }}
-                >
-                  {labels.signUpAndClone}
-                </Link>
-              </Button>
-            )}
+                {labels.signUpAndClone}
+              </Link>
+            </Button>
           </div>
           <p className="mt-4 text-pretty text-muted-foreground text-xs">
             {labels.preparedExamplesCaption}

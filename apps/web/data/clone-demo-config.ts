@@ -1,5 +1,8 @@
 export const CLONE_DEMO_MODEL = 'voxtral-mini-tts-3-0';
 
+/** Folder of the prepared demo clips under `apps/web/public`. */
+export const CLONE_DEMO_ASSET_DIR = 'demo-clones/voxtral-3';
+
 export const CLONE_DEMO_TAKES = [
   { id: 'sameOriginal', tags: [] },
   { id: 'natural', tags: [] },

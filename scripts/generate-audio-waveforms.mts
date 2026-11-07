@@ -2,6 +2,7 @@
 import { readFileSync, statSync } from 'node:fs';
 import { basename, isAbsolute, resolve } from 'node:path';
 
+import { CLONE_DEMO_ASSET_DIR } from '../apps/web/data/clone-demo-config.ts';
 import {
   assertWaveformPoints,
   DEFAULT_WAVEFORM_POINTS,
@@ -65,7 +66,7 @@ pnpm generate-audio-waveforms [options] [audio files...]
 With no files, process every asset already listed in the manifest.
 Explicit files add or update entries keyed by filename; duplicate filenames are rejected.
 
---audio-dir <dir>   Directory for manifest-listed files (default: apps/web/public/demo-clones/voxtral-3)
+--audio-dir <dir>   Directory for manifest-listed files (default: apps/web/public/${CLONE_DEMO_ASSET_DIR})
 --manifest <file>   Existing JSON manifest with an assets object (default: apps/web/data/clone-demo-assets.json)
 --points <number>  Peaks per channel, 1–4096 (default: ${DEFAULT_WAVEFORM_POINTS})
 --force            Recompute even when the audio hash and peak count match
@@ -83,7 +84,7 @@ Requires ffmpeg and ffprobe for files needing generation. Matching waveforms are
   const root = resolve(import.meta.dirname, '..');
   const audioDirectory = values['audio-dir']
     ? inputPath(values['audio-dir'])
-    : resolve(root, 'apps/web/public/demo-clones/voxtral-3');
+    : resolve(root, 'apps/web/public', CLONE_DEMO_ASSET_DIR);
   const manifestPath = values.manifest
     ? inputPath(values.manifest)
     : resolve(root, 'apps/web/data/clone-demo-assets.json');
