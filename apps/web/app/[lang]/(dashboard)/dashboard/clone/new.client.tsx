@@ -50,7 +50,7 @@ import { loadDemoCloneReference } from '@/lib/clone/demo-reference';
 import { readCloneError } from '@/lib/clone/error-message';
 import {
   createMicrophoneReferenceAudioFile,
-  isWebmAudioBlob,
+  needsWavConversion,
 } from '@/lib/clone/microphone-reference-audio';
 import {
   CLONE_PROVIDERS,
@@ -454,7 +454,7 @@ function NewVoiceClientInner({
       } else {
         let audioToProcess = file;
         if (micBlob && !file) {
-          const shouldConvertMicAudio = isWebmAudioBlob(micBlob);
+          const shouldConvertMicAudio = needsWavConversion(micBlob);
 
           if (shouldConvertMicAudio) {
             dispatch({
