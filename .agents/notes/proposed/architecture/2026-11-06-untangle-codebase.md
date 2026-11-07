@@ -114,6 +114,20 @@ structural fix removed are listed in each commit body and in the PR.
 - The LiveKit token carries the character prompt in participant metadata,
   which the browser can decode. Closing it needs the SexyCall agent to read
   the prompt from server-side dispatch metadata or load it itself.
+- Free users see the split toggle and paid speech settings dimmed but
+  focusable, without the `UpgradeCrown` AGENTS.md asks for. That is a visible
+  change for the owner to approve.
+- Remaining copies found in review:
+  - The text-limit message is written in three routes.
+  - `postSpeechRoute` and `readCloneError` each parse route errors.
+  - `proxy.ts` keeps its own markdown and public path lists.
+  - Promo settings span `lib/promo.ts`, the banner resolver, Stripe pricing
+    and checkout.
+  - `robots.txt` and the docs app hardcode the site origin.
+  - `/blog.md` lists posts the blog index hides (no cover image).
+  - Scripts write default outputs to `scripts/` but resolve path arguments
+    from `INIT_CWD`. Two scripts page with offsets of their own, and
+    `analyze-call-sessions.mjs` escapes CSV without the formula guard.
 
 ## Verification
 
@@ -121,3 +135,5 @@ structural fix removed are listed in each commit body and in the PR.
   and the scripts suite pass at each merge point.
 - Each area added tests that pin its behaviour before the change and the
   bugs it fixed. Playwright runs in CI only.
+- Read-only reviewers checked each area against the base branch; each
+  confirmed finding has its own fix commit and test.
