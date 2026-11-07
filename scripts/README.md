@@ -1,114 +1,225 @@
 # Scripts
 
-## Generate prepared cloning demos
+Operator commands for credits, R2 audio, voice samples, clone demos and
+production investigations. Deployment configuration lives in
+[docs/devops.md](../docs/devops.md).
 
-The voices, delivery prompts, and supported voice/take pairs live in
-`apps/web/data/clone-demo-config.ts`. Supply authorized, complete reference
-recordings as `kat-reference.mp3` and `heike-reference.mp3` in a local directory.
-Use the intended source version; the bundled reference can differ from the R2
-objects `clone-demos/kat-reference.mp3` and `clone-demos/heike-reference.mp3`.
+## Running a command
 
-Frontend-only language slots and translated draft prompts live separately in
-`apps/web/data/clone-demo-languages.ts`. They do not enable generation or imply
-that recordings exist. To publish a language, configure its actual voice with
-its own authorized reference and matching prompt in `clone-demo-config.ts`,
-then publish the corresponding MP3s and manifest entries together. Do not attach
-a draft prompt to an existing recording with different text.
-
-Generate all supported pairs with:
+Run every command from the repository root:
 
 ```bash
-pnpm --filter @sexyvoice/scripts exec node \
-  --disable-warning=MODULE_TYPELESS_PACKAGE_JSON generate-clone-demos.mts \
-  --reference-dir /absolute/path/references \
-  --output-dir /absolute/path/new-demo-run
+pnpm <command> [options]
+pnpm <command> --help
 ```
 
-To generate one take, add `--voice kat --take sameOriginal` or
-`--voice kat --take calmSlow`. `sameOriginal` is available only for Kat. Copy only
-the intended result MP3 and its matching request and asset metadata into
-`apps/web/data/clone-demo-assets.json`. Replace a reference preview and its
-metadata only when intentionally publishing a reference change. Keep unrelated
-recordings unchanged.
+`--help` lists a command's options and defaults; this file does not repeat
+them. Relative paths in arguments resolve from the directory you run `pnpm`
+in.
 
-Requires `MISTRAL_API_KEY`, `ffmpeg`, and `ffprobe`. Optional `--env-file` flags
-load explicit environment files. The script preserves the complete reference;
-it converts a separate copy to mono, 24 kHz WAV for Mistral. Kat has four
-supported takes; Heike has three. Raw generated WAVs remain in the run directory.
+Commands read env files from fixed locations, highest precedence first:
+`scripts/.env.local`, `apps/web/.env.local`, `scripts/.env`, then
+`apps/web/.env`. The first file that sets a variable wins, and a variable set
+in the shell beats every file. A command that takes `--env-file` reads only the
+files you name, and a missing file is an error.
 
-Reference playback previews and generated results use 128 kbps MP3. Shared
-normalization in `lib/clone-demo-audio.mts` targets -14 LUFS and limits true peaks
-to -1.5 dBTP. It measures the decoded MP3 and permits up to four encodes from the
-original input to achieve the target within 0.5 LUFS. It never overwrites a source
-or existing output. Failure publishes no output MP3.
+## Safety rules
 
-`generation.json` records input hashes per request, prompts, full-response
-latency, estimated provider cost, output durations, and MP3 hashes. Request
-metadata is saved before MP3 encoding, so an encoding failure does not require
-another provider request. Recover from the retained WAV rather than generating
-paid audio again. An unrecorded latency is `null`, not an estimate.
+- A command that uses Supabase prints its target before the first request, for
+  example `Supabase: abc.supabase.co (PRODUCTION, read-write)`. Check it before
+  you confirm a write.
+- `compile-dispute-evidence`, `find-truncated-gemini31-tts`,
+  `audit-unexplained-credits` and the dry-run flags of the credit commands use
+  a read-only client. It rejects every request except `GET` and `HEAD` before
+  the request leaves the process.
+- Every credit change goes through `adjustCredits` in `lib/ledger.mts`, which
+  writes one `refund` ledger row and moves the balance by the same amount. When
+  the database rejects the balance change, it deletes the row again.
+- Penalty resets never touch a paid user, meaning anyone with a purchase or
+  top-up row.
+- R2 uploads never overwrite a different object. Backups and the orphan cleanup
+  never overwrite a local file.
+- Coding agents follow the database rules in
+  [AGENTS.md](../AGENTS.md#mandatory-rules) and run no writing command against
+  production without explicit approval.
 
-Review the clips and confirm that each take speaks the complete prompt before
-publishing assets under `apps/web/public/demo-clones/voxtral-3/`. Merge the
-matching report entries into `apps/web/data/clone-demo-assets.json`; preserve
-per-request source hashes when changing a voice's reference. The web tests
-check asset hashes and prompt consistency. The script does not upload files or
-change database rows.
+## Writing a command
 
-## Generate waveform peaks
+- Parse arguments, load env files and start `main` with `lib/cli.mts`
+  (`parseCliArgs`, `loadScriptEnv`, `inputPath`, `runScript`). `runScript`
+  prints the error and sets exit code 1 when `main` throws.
+- Create Supabase clients with `createScriptAdminClient()` from
+  `lib/supabase.mts`. Pass `readOnly: true` when the command only reads.
+- Read and change credits through `lib/ledger.mts`. Use `lib/files.mts`,
+  `lib/csv.mts`, `lib/ffmpeg.mts` and `lib/r2-keys.mts` for reports, CSV,
+  ffmpeg and R2 keys.
+- `tsx` loads web `.ts` modules as CommonJS, so a `tsx` command imports them
+  with a default import and destructures. A command run by plain `node` uses
+  named imports. A web module that a script imports may only use relative
+  imports with `.ts` extensions.
+- Add the command to `scripts/package.json`, and alias it in the root
+  `package.json` as `pnpm --filter @sexyvoice/scripts <command>`.
 
-Analyze the final, normalized MP3s before uploading those exact files to R2:
+## Credits
+
+### Refund credits
+
+Refunds one user interactively, either as cash back against a purchase or as
+a credits-only refund for a platform bug. The command asks for every amount and
+for confirmation before it writes. `--help` states the refund caps.
 
 ```bash
-pnpm generate-audio-waveforms
+pnpm refund-credits <user-id>
 ```
 
-The command processes every asset listed in
-`apps/web/data/clone-demo-assets.json`, using local files from
-`apps/web/public/demo-clones/voxtral-3/`. It preserves the other manifest fields
-and adds `waveform: { sourceSha256, peaks }` to each asset. `peaks` contains one
-array per audio channel, with 256 signed, normalized amplitudes per channel,
-rounded to four decimal places. This is ordinary JSON data, not a WaveSurfer
-binary or version-specific format.
+A user who never paid cash cannot get a cash refund. A cash refund removes the
+credits and stores a negative `metadata.dollarAmount`, with `reference_id` set
+to the purchase's payment intent. A platform-bug refund adds credits and stores
+the reason you type.
 
-For future speaker takes, pass the final local files explicitly:
+### Batch refund credits
+
+Adds credits back for double-billed voice calls, one CSV row per call. Each
+refund row carries an idempotency key built from the call's `source_id`, so a
+rerun skips calls this command already refunded. Run it with `--dry-run` first.
 
 ```bash
-pnpm generate-audio-waveforms path/to/italian-anxious.mp3 path/to/spanish-anxious.mp3
+pnpm batch-refund-credits dupes.csv
 ```
 
-Explicit files add or update manifest entries keyed by filename. Duplicate
-filenames from different directories are rejected. Existing request metadata
-and unrelated assets remain unchanged. Adding waveform metadata does not
-publish a voice or connect a pending language to an existing reference.
+Export the CSV from this query:
 
-Options:
+```sql
+WITH dupes AS (
+    SELECT
+        source_id,
+        user_id,
+        COUNT(*)                                  AS event_count,
+        MIN(occurred_at)                          AS first_event_at,
+        MAX(occurred_at)                          AS last_event_at,
+        SUM(credits_used)   - MAX(credits_used)   AS duplicate_credits,
+        SUM(dollar_amount)  - MAX(dollar_amount)  AS duplicate_dollars,
+        ARRAY_AGG(DISTINCT metadata ->> 'end_reason') AS end_reasons
+    FROM usage_events
+    WHERE source_type = 'live_call'
+    GROUP BY source_id, user_id
+    HAVING COUNT(*) > 1
+)
+SELECT * FROM dupes
+ORDER BY event_count DESC, last_event_at DESC;
+```
 
-- `--audio-dir <dir>` changes where manifest-listed files are read. Use a local
-  directory of final MP3s or downloads of the exact R2 objects; the script does
-  not fetch remote audio.
-- `--manifest <file>` selects another existing JSON manifest with an `assets`
-  object.
-- `--points <number>` selects 1–4096 peaks per channel; the default is 256.
-- `--force` recomputes matching entries.
+### Reset freeloader credits
 
-FFmpeg and FFprobe are required only for files needing extraction. The script
-skips entries whose audio hash, waveform source hash, and peak count match.
-Changing a recording or the requested resolution triggers regeneration. It
-updates the manifest atomically after all selected files succeed and checks
-for concurrent manifest edits before writing. Audio files are read-only; the command
-makes no provider calls or uploads.
+Resets to 0 the balances of users who exploited a bug that skipped credit
+deductions. It reads the CSV that `identify-freeloaders.sql` exports, skips
+paid users and small balances, and asks you to type `RESET CREDITS` before a
+live run.
 
-The demo reads these peaks from the bundled manifest. Take and reference changes
-reuse the waveform renderer instead of fetching and decoding MP3s to draw them.
-The native audio element still loads each recording for playback. Missing or
-stale waveform hashes fail with a command to regenerate the data.
+```bash
+pnpm reset-freeloader-credits freeloaders.csv --dryrun
+```
 
-## Upload files to R2
+### Check disposable emails
 
-`upload-r2-files.mts` uploads any file type, including multiple files selected
-with a shell glob. From the repository root, upload all prepared clone
-demo MP3s with one command:
+Counts recent signups whose email domain is disposable, by the
+`disposable-email-domains-js` package and by the amieiro list bundled for
+signup. With `--reset-credits` it also resets the flagged users' credits to 0.
+Run `pnpm sync-deny-domains` first if you need a fresh list.
+
+```bash
+pnpm check-disposable-emails --days 14 --reset-credits --dry-run
+```
+
+It writes a summary and a CSV of flagged profiles to the working directory, or
+to `--out`. A live reset asks you to type `RESET CREDITS` unless you pass
+`--yes`. Detection goes by domain and the amieiro list is broad, so spot-check
+the CSV before a live reset. The weekly `sync-deny-domains` workflow runs this
+command as a dry run and posts the result in its PR.
+
+### Audit unexplained credits
+
+Finds recently changed balances that the ledger and recorded usage do not
+explain. It only reads, and it writes an owner-only CSV report when it flags
+anyone.
+
+```bash
+pnpm audit-unexplained-credits --days 3
+```
+
+The console uses short `snake_case` labels; the CSV uses the matching
+`camelCase` names plus timestamps and record counts.
+
+| Console column     | CSV column               | Meaning                                                              |
+| ------------------ | ------------------------ | -------------------------------------------------------------------- |
+| `classification`   | `classification`         | How the unexplained credits appear to have been used.                |
+| `net_ledger`       | `netLedgerCredits`       | Sum of `credit_transactions.amount` through the audit cutoff.        |
+| `recorded_usage`   | `recordedUsage`          | Sum of `usage_events.credits_used` through the cutoff.               |
+| `expected`         | `expectedBalance`        | Balance the ledger supports after recorded usage.                    |
+| `current`          | `currentBalance`         | The whole `credits.amount`; this is not the suspicious amount.       |
+| `unexplained`      | `unexplainedGrants`      | Credits in the gap between the current and expected balances.        |
+| `minimum_used`     | `minimumUnexplainedUsed` | Lower bound for unexplained credits already spent.                   |
+| `remaining`        | `unexplainedRemaining`   | Unexplained credits that may still be in the balance.                |
+| `history_coverage` | `historyCoverage`        | `partial_pre_usage_events` when the account predates `usage_events`. |
+
+`unspent` means every unexplained credit may still be in the balance, `used`
+means all of them were spent, and `used_and_remaining` means some of each.
+`invalid_balance` marks a negative balance. `reconcileCreditAccount` in
+`audit-unexplained-credits.mts` computes these columns, and `expectedBalance` in
+`lib/ledger.mts` is the ledger equation.
+
+The report lists accounting anomalies. It is not proof of abuse, so never use
+it for automatic enforcement. Historical under-debits and missing opening
+balances also leave a gap. Accounts that predate `usage_events` miss old usage,
+which can understate their gap, and the audit cannot see forged matching ledger
+rows.
+
+### Compile dispute evidence
+
+Collects one user's account, payments, usage, delivered audio, voice clones,
+calls and ledger reconciliation for a Stripe dispute. It only reads. It prints
+the report and writes `dispute-<user-id>-<date>.md` to the working directory.
+
+```bash
+pnpm compile-dispute-evidence <user-id>
+```
+
+The Markdown file holds production account data. Keep it out of the
+repository and delete it when the dispute closes.
+
+- Payments are the `purchase`, `topup` and `refund` rows with their dollar
+  amounts, payment intents and subscriptions.
+- Usage comes from `usage_events`, grouped by source; it is the strongest proof
+  that the service was used.
+- Audio counts as paid or free by whether the user had paid when it was
+  generated (`usage.userHasPaid`), with the storage folder as a fallback. It is
+  not about `credits_used`, which free users also have.
+- The reconciliation shows the expected balance and its delta from the actual
+  balance. A delta of 0 means the ledger explains the balance.
+
+To size a refund, return the cash value of the credits from the disputed charge
+that the user has not spent. `refund-credits` suggests the user's average
+credit rate for a partial refund and the purchase's own price for a whole one.
+When the usage looks like abuse, such as a new account with heavy usage
+followed by a chargeback, the usage and audio evidence supports contesting the
+dispute.
+
+### Backfill free calls
+
+Sets `call_sessions.free_call` to true when the user had no purchase or top-up
+before the call started (`paidBefore` in `lib/ledger.mts`), and to false
+otherwise. It asks for confirmation before it updates rows.
+
+```bash
+pnpm backfill-free-call --dryrun
+```
+
+## R2 audio
+
+### Upload files to R2
+
+Uploads any files to a bucket under a prefix, keeping their basenames. This
+uploads all prepared clone demo MP3s:
 
 ```bash
 pnpm upload-r2-files --bucket sv-audio-files \
@@ -118,279 +229,162 @@ pnpm upload-r2-files --bucket sv-audio-files \
   apps/web/public/demo-clones/voxtral-3/*.mp3
 ```
 
-Files keep their basenames under the destination prefix. `--bucket` is required;
-`--prefix` defaults to the bucket root. `--content-type` applies to the whole
-batch and defaults to `application/octet-stream`. Paths are relative to the
-working directory. No generation manifest is required.
+The command uploads by default; `--dry-run` validates the files and prints the
+destinations without credentials or network requests. Uploads need
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` and `R2_ENDPOINT`.
 
-The command uploads by default. Add `--dry-run` to validate files and print
-all destinations without credentials or network requests. Uploads require
-`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_ENDPOINT`; repeat
-`--env-file` to load multiple environment files.
+The generic uploader and the speech-sample uploader share their conditional
+write and verification. They refuse to overwrite a different object and check
+the R2 size, content type and SHA-256 metadata. `--public-url` also checks the
+hash and content type of the public download; omit it for private buckets. A
+failed file prints an error and makes the exit status nonzero while the other
+files continue. Public verification does not test browser CORS, so check
+reference fetching from production and preview origins before you switch
+runtime URLs. Uploading changes no runtime URL, local file or database row.
 
-The generic command and speech-sample uploader share conditional-write and
-verification logic. They refuse to overwrite different objects and verify R2
-size, content type, and SHA-256 metadata. `--public-url` additionally checks
-public download hashes and content types; omit it for private buckets.
-Failures are printed and produce a nonzero exit status while other files
-continue uploading. Public verification does not test browser CORS; verify
-reference fetching from production and preview origins before switching runtime
-URLs. Uploading does not change runtime URLs, delete local files, or write
-database rows.
+### R2 audio backup
 
-## Restore account billing
-
-Account deletion blocks checkout during cleanup and releases its block when the
-request finishes, including handled failures. Retained Auth users can sign in
-and check out again. A terminated request or failed Redis release can block
-checkout and further deletion requests. Both return `accountBillingBlocked`
-with support guidance. A competing reservation returns `accountBillingBusy`
-and asks the user to wait. Deletion returns these errors without reporting
-Sentry exceptions.
-The coordination rules live in
-[Architecture](../ARCHITECTURE.md#identity-and-session-handling).
-
-Support can clear the block so the user can keep the account or finish deleting
-it:
-
-1. Identify the exact Supabase Auth user ID and verify that their profile exists.
-   Review the failed deletion and any partial cleanup with the user; restoring
-   billing does not restore deleted files or characters.
-2. Confirm in request logs that every deletion request for this user has finished
-   or terminated. Ask the user to stop retrying deletion during recovery. An
-   expired Redis reservation alone does not prove the cleanup process stopped.
-3. Run the command below with the intended environment's `apps/web/.env.local`.
-   It uses the existing Upstash environment variables.
-   Replace the placeholder with the verified UUID.
+Copies missing R2 objects to a local drive. It never deletes R2 objects or
+local files, and it never overwrites a local path.
 
 ```bash
-pnpm --filter @sexyvoice/scripts run restore-account-billing -- \
-  --env-file ../apps/web/.env.local \
-  --user-id 'verified-auth-user-uuid' \
-  --cleanup-stopped
+pnpm backup-r2-audio --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket
 ```
 
-`restore-account-billing.mts` validates the UUID and requires `--cleanup-stopped`
-after the log checks above. It loads environment files with `loadScriptEnv()`
-and calls the shared `restoreAccountBilling` helper.
+Mount the external volume and create the download directory first. The command
+checks it before it lists R2, so a missing volume cannot turn into a directory
+on the internal disk. A dry run neither needs nor creates the directory.
+`--source` limits the scan to exact bucket prefixes, and `--max-download-size`
+caps new transfers, which the command fills oldest first.
 
-The helper atomically refuses recovery while a billing or deletion reservation
-exists. It deletes only `stripe:account:{userId}:deleted`. It also handles legacy
-blocks whose value is `1`. Do not force-delete an operation key to bypass this
-check. If it reports `accountBillingBusy`, wait for the request to finish and
-its reservation to clear, then repeat the log checks before retrying.
-
-Have the user retry checkout or deletion and record the recovery in the support ticket.
-Blocked and busy checkout attempts use the Sentry event types
-`checkout_billing_blocked` and `checkout_billing_busy`; Stripe failures use
-`checkout_session_creation_error`.
-
-## R2 audio backup
-
-This command copies missing R2 objects to a local drive. It never deletes R2
-objects or local files, and it never overwrites an existing local path.
-
-A normal run requires the exact download directory to exist with write and
-traversal access. Mount the external volume and create the backup directory
-before running the command. The startup check happens before R2 listing, so a
-missing volume cannot become a directory on the internal disk. A dry run does
-not create or require the download directory.
-
-Back up both complete configured buckets:
-
-```bash
-pnpm backup-r2-audio -- \
-  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket
-```
-
-Limit the scan to one or more exact bucket prefixes:
-
-```bash
-pnpm backup-r2-audio -- \
-  --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
-  --source sv-audio-files/generated-audio/,sv-api-speech-audio-files
-```
-
-Use `--dry-run` to list, compare, and report without downloading. Use
-`--max-download-size 20GB` to cap new transfers. The command selects missing
-objects from oldest to newest and can fit a later small object when an older
-object exceeds the remaining cap.
-
-The package command sets `NODE_ENV=production` before loading Ink. React's
-development reconciler retains performance measurements on every Ink render and
+The package command sets `NODE_ENV=production` before it loads Ink. React's
+development reconciler keeps performance measurements for every Ink render and
 can exhaust the V8 heap during long transfers.
 
-Files keep their full bucket and key under the destination. Existing files with
-a simple ETag receive size and MD5 verification. Files with opaque or multipart
-ETags receive size-only verification. A mismatch is reported and left untouched.
+Files keep their full bucket and key under the destination. An existing file
+with a simple ETag gets a size and MD5 check, and one with an opaque or
+multipart ETag gets a size check only. The command reports a mismatch and
+leaves the file alone.
+The command writes `scripts/backups/r2-audio-backup-<timestamp>.json`. It needs
+`R2_ENDPOINT`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` with list and read
+access; the default sources also need `R2_BUCKET_NAME` and
+`R2_SPEECH_API_BUCKET_NAME`.
 
-The command writes `scripts/backups/r2-audio-backup-<timestamp>.json`. It
-requires `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`. Default
-sources also require `R2_BUCKET_NAME` and `R2_SPEECH_API_BUCKET_NAME`. The R2
-credentials need list and read access.
+### R2 orphan audio cleanup
 
-## R2 orphan audio cleanup
-
-This command inventories free-user audio objects that are at least 45 days old
-and have no matching `audio_files.storage_key`. It scans only the configured
-`generated-audio-free/` and `cloned-audio-free/` locations.
-
-Create an inventory manifest first:
+Finds free-user audio objects that are old enough for cleanup and that no
+`audio_files.storage_key` references, in the free-user folders only.
+`lib/r2-orphan-audio-cleanup.mts` holds the minimum age and the folder
+allowlist. Create an inventory manifest first:
 
 ```bash
 pnpm cleanup-orphaned-r2-audio
 ```
 
 Review the JSON under `scripts/backups/` without editing it. The action command
-validates the candidate list and all derived totals, so use the manifest as
-generated or reject the run. The inventory reports total objects and bytes for
-each configured bucket. It also reports scanned objects, objects younger than 45
-days, old objects still referenced by the database, and orphan candidates for
-every allowed cleanup prefix.
+validates the candidates and every derived total, so use the manifest as
+generated or reject the run. The inventory reports each bucket's totals and,
+per cleanup folder, the scanned objects, the objects too young, the old objects
+still referenced and the orphan candidates. R2 has no bucket-size response, so
+the inventory pages through all object metadata without downloading contents.
 
-R2 has no aggregate bucket-size response. Inventory paginates all object metadata
-to calculate bucket totals. It does not download object contents, and objects
-outside the cleanup prefixes can never become candidates.
-
-A cleanup action with `--download` requires the exact download directory to
-exist with write and traversal access. Mount the external volume and prepare
-that directory before running the action. Cleanup checks it before reading the
-manifest or touching R2, so a missing volume cannot become a backup on the
-internal disk.
-
-Download one bounded batch to an external drive with:
+Then download one bounded batch to an external drive:
 
 ```bash
-pnpm cleanup-orphaned-r2-audio -- \
+pnpm cleanup-orphaned-r2-audio \
   --manifest scripts/backups/r2-orphan-candidates-<timestamp>.json \
   --download \
   --download-dir /Volumes/ExternalHD/sexyvoice-r2-bucket \
   --max-download-size 20GB
 ```
 
-Add `--delete --yes` to delete only objects with verified local copies. To
-delete without downloading, use `--delete --force --yes`. `--force` skips only
-the local backup check. The command still validates the manifest, checks the
-allowlist, refetches database keys, and compares live R2 metadata. Soft-deleted
-`audio_files` rows intentionally remain references and continue to protect their
-R2 objects.
+The download directory must already exist, as for the backup. Add
+`--delete --yes` to delete only objects with checksum-verified local copies. To
+delete without downloading, pass `--delete --force --yes`; `--force` skips the
+backup check only. The command still validates the manifest, checks the
+allowlist, refetches the database keys and compares live R2 metadata before
+each single-object delete. Soft-deleted `audio_files` rows count as references
+and keep protecting their objects. After deleting from the main dashboard
+bucket, the command evicts the matching Redis cache entry.
 
-The command requires:
+The command needs `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`,
+`R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME` and
+`R2_SPEECH_API_BUCKET_NAME`, plus `KV_REST_API_URL` and `KV_REST_API_TOKEN` to
+delete. The R2 credentials need list, read and head access, and delete access
+for deletion.
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SECRET_KEY`
-- `R2_ENDPOINT`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET_NAME`
-- `R2_SPEECH_API_BUCKET_NAME`
-- `KV_REST_API_URL` (deletion mode)
-- `KV_REST_API_TOKEN` (deletion mode)
+## Voice samples
 
-R2 credentials need list, read, and head access. Deletion mode also needs delete
-access. The destructive loop rechecks and deletes one object at a time to keep
-the gap between the final database check and deletion small. After deleting an
-object from the main dashboard bucket, the command evicts the matching Redis URL
-cache entry.
+### Gemini 3.8 voice samples
 
-## TypeScript maintenance scripts
-
-Every command uses `lib/cli.mts` for arguments, env files and its entry point,
-and creates privileged Supabase clients with `createScriptAdminClient()` from
-`lib/supabase.mts`. Keep command-specific warnings and confirmation policy in
-the command.
-
-## Gemini 3.8 voice samples
-
-`gemini-38-catalog.json` contains 28 additive entries: 11 existing Gemini identities,
-nine Spain Spanish voices, and eight Mexican Spanish voices. The 2026-09-23
-Supabase CLI inventory covers all 36 TTS rows. Its 14 non-Gemini identities are
-listed as unsupported in the catalog; they cannot be recreated by selecting their
-names in Gemini. Mexican provider IDs use `es-419` with the `Mexico Spanish`
-accent; catalog labels use `es-MX`. Catalan is excluded.
-
-Run these commands from `scripts/`. Use `pnpm run <command> --` when passing
-`--env-file`, so pnpm forwards the flag to the script. Environment loading uses
-`loadScriptEnv()`; `--env-file` accepts an explicit dotenv path and can be repeated.
-Existing process variables take precedence. Keep credentials out of arguments and
-Git.
+`gemini-38-catalog.json` lists the Gemini 3.8 voices to add. It also lists the
+existing non-Gemini identities as unsupported, because selecting their names in
+Gemini cannot recreate them. Mexican provider IDs use `es-419` with the
+`Mexico Spanish` accent, while catalog labels use `es-MX`. The catalog excludes
+Catalan.
 
 ```bash
-# Validate prompts and output paths without calling Google
-pnpm run generate-gemini-speech-samples -- \
-  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 --dry-run
-
-# Generate local MP3s directly through Google; requires ffmpeg
-pnpm run generate-gemini-speech-samples -- \
-  --catalog gemini-38-catalog.json --out generated-speech/gemini-38 \
-  --env-file /absolute/path/to/.env.local
+pnpm generate-gemini-speech-samples \
+  --catalog scripts/gemini-38-catalog.json \
+  --out scripts/generated-speech/gemini-38 \
+  --env-file apps/web/.env.local
 ```
 
-The generator requires `GOOGLE_GENERATIVE_AI_API_KEY`. It sends the transcript as
-text and the delivery direction as speech metadata through the shared web-app
-helpers. The 3.8 model receives the exact regional provider ID. Each output uses
+Add `--dry-run` to validate prompts and output paths without calling Google.
+The generator needs `GOOGLE_GENERATIVE_AI_API_KEY` and ffmpeg. It sends the
+transcript as text and the delivery direction as speech metadata through the
+web app's helpers, with the exact regional provider ID. Each output file is
 `<provider-name>-gpro38-preview.mp3`, matching the live catalog's root-level,
-model-suffixed preview convention.
+model-suffixed previews.
 
-`manifest.json` records catalog IDs, transcripts, directions, file hashes, token
-usage, and provider costs. `listen.html` provides local audio controls for the
-batch. Open it in a browser and listen before uploading. `--keep-wav` retains the
-intermediate audio. Rerunning the same command verifies and skips completed MP3s;
-it does not regenerate them. For changed prompts, use a new output directory.
-Move any untracked partial output aside before retrying a failed conversion.
+`manifest.json` records catalog IDs, transcripts, directions, file hashes,
+token usage and provider costs. Open `listen.html` in a browser and listen to
+the batch before you upload. `--keep-wav` keeps the intermediate audio. A rerun
+verifies and skips completed MP3s; for changed prompts, use a new output
+directory. Move any untracked partial output aside before retrying a failed
+conversion.
 
 ### Upload reviewed samples
 
-The separate uploader requires a directory containing `manifest.json`. It accepts
-any destination bucket and folder, with `--folder .` selecting the bucket root.
-The live catalog uses `sv-audio-files` and `https://files.sexyvoice.ai`.
+The uploader needs a directory with `manifest.json`. `--folder .` is the bucket
+root; the live catalog uses `sv-audio-files` and `https://files.sexyvoice.ai`.
 
 ```bash
-pnpm run upload-speech-samples -- \
-  --path generated-speech/gemini-38 --bucket sv-audio-files \
-  --folder . --public-url https://files.sexyvoice.ai --dry-run
-
-# After listening, explicitly upload the reviewed batch
-pnpm run upload-speech-samples -- \
-  --path generated-speech/gemini-38 --bucket sv-audio-files \
+pnpm upload-speech-samples \
+  --path scripts/generated-speech/gemini-38 --bucket sv-audio-files \
   --folder . --public-url https://files.sexyvoice.ai \
-  --env-file /absolute/path/to/.env.local --upload
+  --env-file apps/web/.env.local --upload
 ```
 
-The default is a dry run with no network requests. `--voices <uuid,uuid>` selects
-reviewed catalog entries from the generation manifest. Uploads use the shared R2
-client and `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`.
-Conditional puts refuse overwrites. A retry can verify an identical existing
-object. A different object fails without changing it.
-
-`uploads.json` records the current batch's verified URLs and failures. Verification
-checks R2 metadata and the SHA-256 of the public MP3. If a public URL is unavailable,
-rerun after it becomes accessible. Final SQL requires the full catalog, so rerun
-with all reviewed IDs after any partial batches; identical objects are only
-verified again.
+Without `--upload` the command is a dry run with no network requests.
+`--voices <uuid,uuid>` selects reviewed catalog entries. Uploads use the shared
+R2 client, refuse overwrites, and verify an identical existing object on a
+retry. `uploads.json` records the batch's verified URLs and failures, checked
+against R2 metadata and the SHA-256 of the public MP3. Final SQL needs the
+whole catalog, so rerun with all reviewed IDs after partial batches; identical
+objects are only verified again.
 
 ### Prepare additive SQL
 
-The checked-in `add-gemini-38-voices.sql` contains the verified 28-row catalog,
-with `is_public = false`. It preserves existing rows and skips existing `gpro38`
-identities on reruns. Use `--draft` to prepare guarded SQL before upload; after
-verification, prepare executable SQL locally:
+The checked-in `add-gemini-38-voices.sql` holds the verified catalog with
+`is_public = false`. It keeps existing rows and skips existing `gpro38`
+identities on reruns. `--draft` prepares guarded SQL before upload. After the
+upload, prepare executable SQL:
 
 ```bash
-pnpm run prepare-gemini-voice-sql -- \
-  --catalog gemini-38-catalog.json --samples generated-speech/gemini-38 \
-  --out generated-speech/gemini-38/add-voices.sql
+pnpm prepare-gemini-voice-sql \
+  --catalog scripts/gemini-38-catalog.json \
+  --samples scripts/generated-speech/gemini-38 \
+  --out scripts/generated-speech/gemini-38/add-voices.sql
 ```
 
-Friendly labels come from `apps/web/lib/voice-names.ts`. Selectors and the
-local listening page show these names; database names, API identifiers, provider
-requests, filenames, and cache identities retain the provider IDs.
-
-This command validates catalog, generation, local file hashes, and verified upload
-records. It writes SQL without executing it. Deploy `gpro38` support before using
-these voices for generation. Database writes follow the
-[database rules](../AGENTS.md#mandatory-rules) unless the user explicitly
-authorizes an exception.
+The command checks the catalog, the generation manifest, the local file hashes
+and the verified upload records, and writes SQL without running it. Friendly
+labels come from `apps/web/lib/voice-names.ts`; database names, API
+identifiers, provider requests, filenames and cache keys keep the provider IDs.
+Deploy `gpro38` support before generating with these voices. Database writes
+follow the [database rules](../AGENTS.md#mandatory-rules) unless the user
+explicitly authorizes an exception.
 
 ### Custom Gemini 3.8 voices
 
@@ -403,332 +397,191 @@ a stored voice belongs to the Google project that created it, so
 before it expires; a new ID needs a new `voices` row and display label.
 
 Generate a custom voice sample from its own one-voice catalog and output
-directory, so the 28-voice batch stays unchanged.
+directory, so the main batch stays unchanged.
 
-## Audio cleanup comparison
+### xAI voice samples
 
-`compare-audio-cleanup.mts` runs local audio through fal cleanup models and
-writes a side-by-side listening page. It compares `fal-ai/deepfilternet3`, the
-model behind clone reference audio enhancement, with
-[`veed/clean-audio`](https://fal.ai/models/veed/clean-audio). Inputs
-are trimmed to 60 seconds to match the clone route. Existing outputs are reused.
+Generates MP3 samples of xAI voices with the web app's xAI request
+(`apps/web/lib/tts/xai.ts`), so the samples sound like the product. It needs
+`XAI_API_KEY`.
 
 ```bash
-# List inputs and estimated cost without calling fal
-pnpm compare-audio-cleanup --dry-run ~/samples/cloning
-
-# Clean every file and open generated-speech/audio-cleanup/listen.html
-pnpm run compare-audio-cleanup -- --env-file ../apps/web/.env.local ~/samples/cloning
+pnpm generate-xai-speech-samples --voices yis75yfp --language es-MX
 ```
 
-Requires `FAL_KEY`, `ffmpeg`, and `ffprobe`.
+## Clone demos
 
-VEED Clean Audio is not better than DeepFilterNet3. On 2026-09-30, 44 cloning
-samples showed no consistent quality gain; VEED sounded worse on some clips.
-VEED costs less on clips longer than 12.5 seconds ($0.0125 per started minute
-versus $0.001 per second), but it averaged 12.5 seconds per clip against 6.7
-seconds for DeepFilterNet3. Clone enhancement stays on DeepFilterNet3.
+### Generate prepared cloning demos
 
-## Reset Freeloader Credits Script
+The voices, delivery prompts and supported voice and take pairs live in
+`apps/web/data/clone-demo-config.ts`. Supply authorized, complete reference
+recordings as `kat-reference.mp3` and `heike-reference.mp3` in a local
+directory. Use the intended source version; the bundled reference can differ
+from the R2 objects `clone-demos/kat-reference.mp3` and
+`clone-demos/heike-reference.mp3`.
 
-Node.js/TypeScript script to reset credits to 0 for users who exploited a bug that prevented credit deduction.
-
-### Quick Start
+Frontend-only language slots and translated draft prompts live separately in
+`apps/web/data/clone-demo-languages.ts`. They do not enable generation or imply
+that recordings exist. To publish a language, configure its actual voice with
+its own authorized reference and matching prompt in `clone-demo-config.ts`,
+then publish the matching MP3s and manifest entries together. Do not attach a
+draft prompt to an existing recording with different text.
 
 ```bash
-# Show help
-pnpm reset-freeloader-credits --help
-
-# Test with dry-run flag (no changes made)
-pnpm reset-freeloader-credits --dryrun freeloaders.csv
-
-# Test with limited records
-pnpm reset-freeloader-credits --dryrun --limit 10 freeloaders.csv
-
-# Run for real (will prompt for confirmation)
-pnpm reset-freeloader-credits freeloaders.csv
+pnpm generate-clone-demos \
+  --reference-dir /absolute/path/references \
+  --output-dir /absolute/path/new-demo-run
 ```
 
-### CLI Options
+`--voice` and `--take` generate one take. `--help` lists the voices and takes,
+and the command rejects a pair the config does not support. Copy only the
+intended result MP3 and its matching request and asset metadata into
+`apps/web/data/clone-demo-assets.json`. Replace a reference preview and its
+metadata only when you mean to publish a reference change, and leave unrelated
+recordings alone.
 
-- `--dryrun` - Run in dry-run mode (no database changes)
-- `-l, --limit <number>` - Limit number of records to process
-- `-h, --help` - Show help message
+The command needs `MISTRAL_API_KEY`, `ffmpeg` and `ffprobe`. It keeps the
+complete reference and converts a separate mono 24 kHz WAV copy for Mistral.
+Raw generated WAVs stay in the run directory. Previews and results are 128 kbps
+MP3s normalized by `lib/clone-demo-audio.mts`, which holds the loudness target,
+the true-peak limit and the encode attempts. It never overwrites a source or an
+existing output, and a failure publishes no MP3.
 
-### CSV Format
+`generation.json` records input hashes per request, prompts, full-response
+latency, estimated provider cost, output durations and MP3 hashes. The command
+saves request metadata before it encodes the MP3, so recover a failed encode
+from the retained WAV instead of paying for another generation. An unrecorded latency is
+`null`, not an estimate.
 
-```csv
-id,username,created_at,total_credits_received,total_credits_used,current_credits,usage_percentage
-26fb4371-...,user@email.com,2025-11-26 16:11:36.930227+00,10000,11856,2464,118.56
-```
+Review the clips and confirm that each take speaks the complete prompt before
+publishing assets under `apps/web/public/demo-clones/voxtral-3/`. Merge the
+matching report entries into `apps/web/data/clone-demo-assets.json`, keeping
+per-request source hashes when a voice's reference changes. The web tests check
+asset hashes and prompt consistency. The command uploads no file and changes no
+database row.
 
-### Features
+### Generate waveform peaks
 
-- **Batch processing**: Fetches credit balances in batches of 10 (10x faster!)
-- **CLI options**: `--dryrun`, `--limit`, `--help` flags
-- Dry-run mode for safe testing
-- UUID validation
-- Environment detection (local vs production)
-- Individual error handling per user
-- Optional audit trail transaction logging
-- Detailed progress reporting
-
-### Performance
-
-- 50 users: ~10 seconds (vs ~50 seconds sequential)
-- 100 users: ~10 seconds (vs ~100 seconds sequential)
-- Processes 10 users per database query
-
-### Documentation
-
-- [identify-freeloaders.sql](./identify-freeloaders.sql) - SQL to find freeloaders
-
----
-
-## Audit Unexplained Credits Script
-
-Read-only Node.js/TypeScript audit that finds recently changed balances that
-cannot be explained by recorded credit transactions and usage events.
-
-### Quick Start
+Analyze the final, normalized MP3s before uploading those exact files to R2:
 
 ```bash
-# Scan users whose balance changed in the last 3 days
-pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 3
-
-# Raise the reporting threshold (default: 50 credits)
-pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 7 --min-credits 100
-
-# Limit candidates while testing
-pnpm --filter @sexyvoice/scripts audit-unexplained-credits -- --days 1 --limit 25
+pnpm generate-audio-waveforms
 ```
 
-### CLI Options
+With no files, the command processes every asset in
+`apps/web/data/clone-demo-assets.json` from
+`apps/web/public/demo-clones/voxtral-3/`. It keeps the other manifest fields
+and adds `waveform: { sourceSha256, peaks }` to each asset. `peaks` holds one
+array of signed, normalized amplitudes per audio channel, rounded to four
+decimal places. This is plain JSON, not a WaveSurfer binary format.
 
-- `--days <number>` - Required lookback window for `credits.updated_at`
-- `--min-credits <number>` - Minimum unexplained grant to report; defaults to `50`
-- `-l, --limit <number>` - Limit recently changed balances scanned
-- `-o, --output <path>` - Set the CSV report path
-- `-h, --help` - Show help
+For future speaker takes, pass the final local files, for example
+`pnpm generate-audio-waveforms path/to/italian-anxious.mp3`. Explicit files add
+or update entries keyed by filename, and the command rejects duplicate
+filenames from different directories. Adding waveform data does not publish a voice or
+connect a pending language to an existing reference.
 
-### How it works
+FFmpeg and FFprobe are needed only for files that need extraction. The command
+skips entries whose audio hash, waveform source hash and peak count match, so a
+changed recording or resolution triggers regeneration. It replaces the manifest
+atomically after every selected file succeeds and checks for concurrent edits
+before writing. Audio files are read-only, and the command makes no provider
+call or upload.
 
-1. Sets a fixed audit cutoff with a five-minute safety lag.
-2. Finds balances updated during the requested window using stable keyset
-   pagination.
-3. Fetches those users' recorded transaction and usage history up to the cutoff.
-4. Rechecks balances and skips any account that changed during the audit.
-5. Compares stable balances with the balance explained by the recorded ledger.
-6. Prints a summary and, when it flags users, writes a permission-restricted CSV
-   report.
+The demo reads these peaks from the bundled manifest, so take and reference
+changes reuse the waveform renderer instead of decoding MP3s to draw them. The
+audio element still loads each recording for playback. A missing or stale
+waveform hash fails with a command to regenerate the data.
 
-### Output columns
+### Audio cleanup comparison
 
-The console uses short `snake_case` labels. The CSV uses the corresponding
-`camelCase` names and includes additional timestamps and record counts. The
-console's `(index)` column is only a display row number.
-
-| Console column     | CSV column               | Meaning                                                                                                                     |
-| ------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `classification`   | `classification`         | How the unexplained credits appear to have been used.                                                                       |
-| `net_ledger`       | `netLedgerCredits`       | Sum of `credit_transactions.amount` through the audit cutoff, including negative adjustments.                               |
-| `recorded_usage`   | `recordedUsage`          | Sum of `usage_events.credits_used` through the cutoff. This may exclude older usage recorded before `usage_events` existed. |
-| `expected`         | `expectedBalance`        | Balance supported by the ledger after subtracting recorded usage.                                                           |
-| `current`          | `currentBalance`         | User's complete balance in `credits.amount`; this is not the suspicious amount.                                             |
-| `unexplained`      | `unexplainedGrants`      | Credits in the accounting difference between the current and expected balances.                                             |
-| `minimum_used`     | `minimumUnexplainedUsed` | Conservative lower bound for unexplained credits already consumed.                                                          |
-| `remaining`        | `unexplainedRemaining`   | Unexplained credits that may remain in the current balance.                                                                 |
-| `history_coverage` | `historyCoverage`        | Whether `usage_events` likely covers the account's full history.                                                            |
-| `user_id`          | `userId`                 | Supabase user UUID.                                                                                                         |
-| `username`         | `username`               | Profile username or email.                                                                                                  |
-
-The reconciliation uses these formulas:
-
-```text
-expected = max(0, net_ledger - recorded_usage)
-unexplained = max(0, current + recorded_usage - net_ledger)
-remaining = min(current, unexplained)
-minimum_used = max(0, unexplained - remaining)
-```
-
-For example, a user with `600,000` net ledger credits, `17,500` recorded usage,
-and a `582,704` current balance has an expected balance of `582,500`. Only the
-`204`-credit difference is unexplained; the full `582,704` balance is not
-suspicious.
-
-Classifications have these meanings:
-
-- `unspent` - All unexplained credits may remain in the current balance.
-- `used` - All unexplained credits must have been consumed.
-- `used_and_remaining` - Some unexplained credits must have been consumed, and
-  some may remain.
-- `invalid_balance` - The current balance is negative and violates the expected
-  balance invariant.
-
-`history_coverage` has two values:
-
-- `recorded_events_only` - The account was created after usage event tracking
-  began, so recorded usage should cover its full history.
-- `partial_pre_usage_events` - The account predates usage event tracking, so the
-  audit may omit older usage.
-
-These classifications provide conservative accounting estimates. Credits are
-fungible, so the audit cannot identify which specific credits a user consumed.
-
-The script enforces read-only access by rejecting every HTTP method except `GET`
-and `HEAD` before it reaches Supabase. It requires
-`NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`. Environment files are
-loaded in this order: `scripts/.env.local`, `apps/web/.env.local`,
-`scripts/.env`, then `apps/web/.env`.
-
-The report is an accounting anomaly report, **not proof of abuse and not safe to
-use for automatic enforcement**. Historical under-debits and missing opening
-balances can also produce residuals. Missing usage events lower the residual
-instead, so rows for accounts created before the `usage_events` migration,
-marked as partial history, can understate unexplained credits. The audit also
-cannot detect forged matching ledger rows.
-
----
-
-## Backfill Free Call Script
-
-Retroactively sets the `free_call` column on `call_sessions` by checking whether the
-user had a paid transaction (`purchase` or `topup`) before the call started.
-
-### Quick Start
+`compare-audio-cleanup` runs local audio through `fal-ai/deepfilternet3`, the
+model behind clone reference enhancement, and
+[`veed/clean-audio`](https://fal.ai/models/veed/clean-audio), then writes a
+side-by-side `listen.html`. It needs `FAL_KEY`, `ffmpeg` and `ffprobe`.
 
 ```bash
-# Show help
-pnpm backfill-free-call --help
-
-# Dry-run to preview changes
-pnpm backfill-free-call --dryrun
-
-# Dry-run first 50 records
-pnpm backfill-free-call --dryrun --limit 50
-
-# Apply changes (prompts for confirmation)
-pnpm backfill-free-call
+pnpm compare-audio-cleanup --env-file apps/web/.env.local ~/samples/cloning
 ```
 
-### CLI Options
+Clone enhancement stays on DeepFilterNet3. On 2026-09-30, 44 cloning samples
+showed no consistent quality gain from VEED, which sounded worse on some clips
+and took nearly twice as long per clip.
 
-- `--dryrun` - Run in dry-run mode (no database changes)
-- `-l, --limit <number>` - Limit number of call sessions to process
-- `-h, --help` - Show help message
+## Accounts
 
-### What it does
+### Restore account billing
 
-- Fetches `call_sessions` in batches of 1000
-- Fetches paid credit transactions in batches of 50 users
-- Sets `free_call = true` if the user had **no** paid transaction before the call
-- Sets `free_call = false` if the user **had** paid before the call
-- Applies updates in batches of 100
+Account deletion blocks checkout during cleanup and releases the block when the
+request finishes, including handled failures. Retained Auth users can sign in
+and check out again. A terminated request or a failed Redis release can leave
+checkout and further deletion requests blocked; both return
+`accountBillingBlocked` with support guidance. A competing reservation returns
+`accountBillingBusy` and asks the user to wait. Deletion returns these errors
+without reporting Sentry exceptions. The coordination rules live in
+[Architecture](../ARCHITECTURE.md#identity-and-session-handling).
 
-### Notes
+Support can clear the block so the user can keep the account or finish deleting
+it:
 
-- Requires `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
-- Output timestamps are normalized to second precision
-
----
-
-## Call Transcript Analysis Scripts
-
-Analyze `call_sessions` transcripts with xAI Grok and write one rich row per call
-to `call_session_analysis` (language, topic, engagement, sentiment, key requests,
-AI issues, etc.), plus an aggregate row to `call_session_analytics`. There are two
-entry points that share a single engine (`analyze-call-sessions.mjs`). The
-prompt, analysis schema, transcript extraction and xAI Batch API client are
-imported from the web app (`apps/web/lib/ai/analyze-call.ts`,
-`apps/web/lib/ai/call-analysis-batch.ts`, `apps/web/lib/ai/xai-batch.ts`) via
-Node's native type stripping, so the scripts, the webhook and its batch drain
-cron all write identical rows.
-
-- **`analyze-call-sessions`** - recent / daily-cron run over calls started in the
-  last N hours.
-- **`backfill-call-analysis`** - one-off catch-up over **all** completed,
-  unanalyzed calls (paginated), with model and duration filters.
-
-The live path (not a script) is asynchronous: the `POST /api/call-sessions/analyze`
-webhook fired when a call completes only enqueues the session, and the
-`/api/call-sessions/analyze/batch` Vercel cron drains the queue through the xAI
-Batch API (see `docs/devops.md`, "Call transcript analysis"). Run
-`backfill-call-analysis --retry-failed` to catch up sessions the queue parked as
-`failed`.
-
-Only successful analyses are persisted. Each failure increments the session's
-`call_analysis_queue.attempts` (shared with the cron drain); after 3 failed
-attempts the session is parked and both scripts skip it unless
-`--retry-failed` is passed. Calls shorter than 120s and sessions that already have an analysis row
-are skipped.
-
-### Quick Start
+1. Identify the exact Supabase Auth user ID and verify that their profile
+   exists. Review the failed deletion and any partial cleanup with the user;
+   restoring billing does not restore deleted files or characters.
+2. Confirm in request logs that every deletion request for this user has
+   finished or terminated. Ask the user to stop retrying deletion during
+   recovery. An expired Redis reservation alone does not prove the cleanup
+   stopped.
+3. Run the command below with the intended environment's
+   `apps/web/.env.local`, which holds the Upstash variables. Replace the
+   placeholder with the verified UUID.
 
 ```bash
-# Show help
-pnpm analyze-call-sessions --help
-pnpm backfill-call-analysis --help
+pnpm restore-account-billing \
+  --env-file apps/web/.env.local \
+  --user-id 'verified-auth-user-uuid' \
+  --cleanup-stopped
+```
 
-# Analyze calls from the last 12h (default: 24h)
+The command validates the UUID, requires `--cleanup-stopped` after the log
+checks above, and calls the shared `restoreAccountBilling` helper.
+
+The helper refuses recovery while a billing or deletion reservation exists. It
+deletes only `stripe:account:{userId}:deleted` and also handles legacy blocks
+whose value is `1`. Do not force-delete an operation key to get past this
+check. If it reports `accountBillingBusy`, wait for the request to finish and
+its reservation to clear, then repeat the log checks before retrying.
+
+Have the user retry checkout or deletion, and record the recovery in the
+support ticket. Blocked and busy checkout attempts use the Sentry event types
+`checkout_billing_blocked` and `checkout_billing_busy`; Stripe failures use
+`checkout_session_creation_error`.
+
+## Call transcript analysis
+
+`analyze-call-sessions` analyzes recent calls with xAI Grok and writes one
+`call_session_analysis` row per call plus an aggregate `call_session_analytics`
+row. `backfill-call-analysis` catches up every completed call without an
+analysis. Both import the prompt, schema, transcript extraction and xAI Batch
+API client from `apps/web/lib/ai/`, so they write the same rows as the webhook
+and its batch cron. `--help` lists their options.
+
+```bash
 pnpm analyze-call-sessions --hours=12
-
-# Dry-run: analyze but write CSV + insights instead of the database
-pnpm analyze-call-sessions --dry-run
-
-# First real Batch API run is cheapest to validate with a tiny sample
 pnpm backfill-call-analysis --limit=2 --debug
-
-# Backfill everything (all completed, unanalyzed calls)
-pnpm backfill-call-analysis
 ```
 
-### Engine: xAI Batch API
-
-Both scripts default to the [xAI Batch API](https://docs.x.ai/developers/advanced-api-usage/batch-api):
-requests are uploaded as a JSONL batch, then the script block-polls until the
-batch completes before writing results. It is discounted and has no per-request
-rate limits, at the cost of async latency — best suited to the large backfill.
-Use `--realtime` to fall back to synchronous per-call generation (the AI SDK
-`generateObject` path) instead.
-
-### CLI Options
-
-Shared by both scripts:
-
-- `--dry-run` - Analyze but write CSV + insights instead of the database
-- `--limit=N` - Limit the number of calls to analyze
-- `--realtime` (alias `--no-batch`) - Use synchronous xAI calls instead of the Batch API
-- `--batch-timeout=N` - Minutes to wait for the batch to finish (default: 60)
-- `--debug` - Verbose logging
-- `--debug-session=UUID` - Only analyze/debug a specific session id
-- `--smoke-test` - Run a tiny xAI request first to validate the model id
-- `-h, --help` - Show help message
-
-`analyze-call-sessions` only:
-
-- `--hours=N` - Analyze calls started in the last N hours (default: 24)
-
-`backfill-call-analysis` only:
-
-- `--min-duration=N` - Minimum call duration in seconds (default: 120)
-- `--models=a,b,c` - Only analyze these call models
-
-### Environment
-
-Requires `.env` or `.env.local` with:
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SECRET_KEY`
-- `XAI_API_KEY`
-- `XAI_SUMMARY_MODEL` (optional; defaults to `grok-4.3`)
-- `XAI_API_BASE_URL` (optional; defaults to `https://api.x.ai`)
-
----
+The live path is the `POST /api/call-sessions/analyze` webhook, which enqueues
+the session, and the `/api/call-sessions/analyze/batch` cron, which drains the
+queue through the xAI Batch API; see [Architecture](../ARCHITECTURE.md) and
+[docs/devops.md](../docs/devops.md). The minimum call length, the attempt limit
+and the model come from `apps/web/lib/ai/analyze-call.ts` and
+`apps/web/lib/ai/call-analysis-batch.ts`. The commands need
+`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` and `XAI_API_KEY`.
 
 ## Sentry issue triage
 
-Use this read-only procedure for issue-level crashes and browser/device details.
-For handled generation failures and credit complaints, use the
+Use this read-only procedure for issue-level crashes and browser or device
+details. For handled generation failures and credit complaints, use the
 [Gemini application-log investigation](#2-correlate-sentry-application-logs).
 
 Verify the existing CLI authentication and list issues:
@@ -772,10 +625,11 @@ PY
 The [issue events API](https://docs.sentry.io/api/events/list-an-issues-events/)
 caps full-event pages at 10. Follow its `Link` header's next cursor when
 `results="true"`; one page is not the complete incident history. Inspect
-`dateCreated`, `tags`, `contexts.device`, `contexts.browser`, `contexts.os`, and
-`entries` for breadcrumbs, exceptions, and request details. Event contents may
-include customer data: keep exports out of the repository and shared reports.
-Resolving or muting an issue is a separate action, not part of diagnosis.
+`dateCreated`, `tags`, `contexts.device`, `contexts.browser`, `contexts.os` and
+`entries` for breadcrumbs, exceptions and request details. Event contents may
+include customer data, so keep exports out of the repository and shared
+reports. Resolving or muting an issue is a separate action, not part of
+diagnosis.
 
 ## Investigate Gemini TTS Errors and Credit Charges
 
@@ -785,8 +639,8 @@ workflow for humans and coding agents. The companion agent instructions are in
 `skills/investigate-gemini-tts-credit-report/SKILL.md`.
 
 The investigation is read-only. Do not run refund scripts, database mutations,
-Supabase RPCs, or any other production write while following it. A refund is a
-separate action that requires explicit human approval after the evidence and
+Supabase RPCs or any other production write while following it. A refund is a
+separate action that needs explicit human approval after the evidence and the
 amount have been reviewed.
 
 ### Inputs and scope
@@ -794,49 +648,44 @@ amount have been reviewed.
 Collect:
 
 - the user's UUID;
-- the start and end timestamps in UTC, including enough buffer to catch retries;
-- any generation IDs, request IDs, filenames, screenshots, or exact error text;
+- the start and end timestamps in UTC, with enough buffer to catch retries;
+- any generation IDs, request IDs, filenames, screenshots or exact error text;
 - whether the complaint concerns an error response, the delivered audio, or
   both.
 
-Do not infer a narrow time window from the report when one can be obtained from
-the user or production records. State any assumed window in the final report.
-Use a temporary directory outside the repository for logs, downloaded audio,
-environment files, and generated reports. These artifacts may contain user text,
-email addresses, signed URLs, or other production data.
+Do not infer a narrow time window from the report when the user or production
+records can supply one, and state any assumed window in the final report. Use a
+temporary directory outside the repository for logs, downloaded audio,
+environment files and generated reports. These artifacts may contain user text,
+email addresses, signed URLs or other production data.
 
 ### 1. Establish the ledger baseline
 
-Run the read-only dispute evidence script to reconcile the complete account
+Run the read-only dispute evidence command to reconcile the complete account
 ledger:
 
 ```bash
-pnpm --filter @sexyvoice/scripts compile-dispute-evidence -- <user-id>
+pnpm compile-dispute-evidence <user-id>
 ```
 
-The expected balance is:
-
-```text
-purchased + freemium + refund adjustments - usage = expected balance
-current balance - expected balance = unexplained delta
-```
-
-A zero delta means the stored credit balance agrees with the stored ledger. It
-does not prove that every delivered artifact was usable. A non-zero delta is a
+It reports the expected balance and the delta between the current and expected
+balances; `expectedBalance` in `lib/ledger.mts` defines the equation. A zero
+delta means the stored balance agrees with the stored ledger. It does not prove
+that every delivered artifact was usable. A non-zero delta is a
 billing-integrity finding that must be explained before considering any refund.
 
-The script writes a Markdown report containing production account data. Move it
-to the temporary investigation directory and remove it after the investigation.
-Do not paste irrelevant PII into tickets or the final report.
+The command writes a Markdown report with production account data. Move it to
+the temporary investigation directory and remove it after the investigation. Do
+not paste irrelevant PII into tickets or the final report.
 
-If the script does not expose a required detail, use the configured Supabase CLI
-or database client only for scoped `SELECT`/read-only queries. Inspect the query
-before execution. Never use `INSERT`, `UPDATE`, `DELETE`, DDL, RPC calls, or a
-script with a write mode during an investigation.
+If the report lacks a detail you need, use the configured Supabase CLI or
+database client only for scoped `SELECT` or other read-only queries. Inspect
+the query before running it. Never use `INSERT`, `UPDATE`, `DELETE`, DDL, RPC
+calls or a command with a write mode during an investigation.
 
 ### 2. Correlate Sentry application logs
 
-Use Sentry as the primary source for application errors and handled Gemini
+Sentry is the primary source for application errors and handled Gemini
 failures. Query the production project across the exact UTC window:
 
 ```bash
@@ -849,9 +698,9 @@ sentry-cli logs list \
 
 Start without a level filter. The generation route records several handled
 Gemini failures as `warn`, including provider unavailability, rejected input,
-quota exhaustion, and responses with no audio. Add terms to `--query` to refine
-the results by `level`, message, model, provider response ID, or refund context.
-Useful messages include:
+quota exhaustion and responses with no audio. Add terms to `--query` to refine
+by `level`, message, model, provider response ID or refund context. Useful
+messages include:
 
 - `Gemini voice generation succeeded`;
 - `Gemini voice generation returned no audio data`;
@@ -861,9 +710,9 @@ Useful messages include:
 - `Failed to restore reserved credits`;
 - `Failed to refund unused reserved credits`.
 
-`--log-level` controls `sentry-cli`'s own output verbosity; it does not filter
-the returned application logs. Filter application levels inside `--query`, such
-as `level:error` or `level:warn`.
+`--log-level` controls `sentry-cli`'s own output and does not filter the
+returned application logs. Filter application levels inside `--query`, such as
+`level:error` or `level:warn`.
 
 The `sentry-cli logs` command is beta and may change. Confirm the installed
 syntax before adapting a command:
@@ -872,21 +721,23 @@ syntax before adapting a command:
 sentry-cli logs list --org sexyvoiceai --project 4509116876193872 --help
 ```
 
-Use an existing authenticated CLI configuration with read access to the project;
-do not put an auth token in commands, reports, or shared notes. If the first
-query returns no rows, keep the same UTC window and broaden the Sentry search by
-removing `user.id` and using a supplied response ID, known message, or model.
-Narrow busy windows instead of assuming that the 1000-row result cap contains
-every matching attempt.
+Use an existing authenticated CLI configuration with read access to the
+project, and never put an auth token in commands, reports or shared notes. If
+the first query returns no rows, keep the same UTC window and broaden the
+search by removing `user.id` and using a supplied response ID, known message or
+model. Narrow busy windows instead of assuming that the 1000-row result cap
+holds every matching attempt.
 
 Correlate attempts by `user.id`, timestamp, message, model, response ID,
 artifact ID, and credit reservation or refund context. Read the current
-generation route before relying on historical message names or refund behavior.
+generation route before relying on historical message names or refund
+behavior.
 
 ### Vercel fallback
 
 Use Vercel only when Sentry has no matching evidence, the request may have
-failed before application logging, or platform HTTP/request metadata is needed:
+failed before application logging, or you need platform HTTP or request
+metadata:
 
 ```bash
 vercel logs --environment production --since <start-iso> --until <end-iso> --limit 1000 --json
@@ -895,7 +746,7 @@ vercel logs --environment production --request-id <request-id> --json
 ```
 
 Label Vercel-only timestamp correlations as inferences unless a request ID,
-response ID, or artifact ID joins them to Sentry or database evidence.
+response ID or artifact ID joins them to Sentry or database evidence.
 
 Classify each relevant attempt as one of:
 
@@ -913,7 +764,7 @@ with usable audio.
 Run the transcript-duration detector for the exact UTC window:
 
 ```bash
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
+pnpm find-truncated-gemini31-tts \
   --user <user-id> \
   --since <start-iso> \
   --until <end-iso> \
@@ -924,20 +775,20 @@ The detector produces short-output candidates and review-only long-output
 anomalies, not confirmed defects. Long-output anomalies must not enter refund
 calculations. For each disputed or flagged artifact, compare its database
 status, credits, model, transcript, duration, provider token metadata, storage
-object, and the matching request log. Download audio only when necessary and
-keep it in the temporary directory.
+object and matching request log. Download audio only when necessary and keep it
+in the temporary directory.
 
-Confirm a delivered-audio defect with independent evidence such as listening to
-the complete artifact, verifying that transcript content is missing, or finding
-that the file is empty, corrupt, or materially shorter than its transcript can
-support. One heuristic alone must not determine a refund.
+Confirm a delivered-audio defect with independent evidence, such as listening
+to the complete artifact, verifying that transcript content is missing, or
+finding that the file is empty, corrupt or materially shorter than its
+transcript can support. One heuristic alone must not decide a refund.
 
-### Audio energy and “silence”
+### Audio energy and silence
 
-`ffmpeg`'s `silencedetect` filter finds intervals below a selected amplitude
+`ffmpeg`'s `silencedetect` filter finds intervals below a chosen amplitude
 threshold for a minimum duration. It does not prove that those intervals are
-inaudible. Quiet speech, room tone, compression artifacts, fades, and poor
-recording levels can all fall below the threshold while remaining audible.
+inaudible. Quiet speech, room tone, compression artifacts, fades and poor
+recording levels can all fall below the threshold while staying audible.
 
 For example:
 
@@ -945,28 +796,28 @@ For example:
 ffmpeg -i <audio-file> -af silencedetect=noise=-40dB:d=0.5 -f null -
 ```
 
-Report this result as “approximately N seconds below -40 dBFS for at least 0.5
-seconds,” not “N seconds of silence.” Always state the threshold and minimum
-duration. Do not use low-energy duration by itself to classify audio as broken
-or to calculate a refund.
+Report this result as "approximately N seconds below -40 dBFS for at least 0.5
+seconds", not "N seconds of silence". Always state the threshold and the
+minimum duration. Do not use low-energy duration by itself to classify audio as
+broken or to calculate a refund.
 
 ### 4. Separate findings from hypotheses
 
 Use these evidence classes:
 
-- **Proven billing defect:** a debit or usage charge lacks the expected delivery
-  or refund and creates an explainable credit shortfall.
-- **Confirmed delivered-audio defect:** the artifact was billed and delivered,
-  but independent inspection confirms missing, corrupt, or unusable output.
-- **Suspected quality defect:** a heuristic or subjective review raises concern,
-  but the expected content may still be audible or present.
-- **No discrepancy found:** the ledger reconciles, failures were refunded, and
+- **Proven billing defect.** A debit or usage charge lacks the expected
+  delivery or refund and creates an explainable credit shortfall.
+- **Confirmed delivered-audio defect.** The artifact was billed and delivered,
+  but independent inspection confirms missing, corrupt or unusable output.
+- **Suspected quality defect.** A heuristic or subjective review raises
+  concern, but the expected content may still be audible or present.
+- **No discrepancy found.** The ledger reconciles, failures were refunded, and
   no delivered artifact was independently confirmed defective.
-- **Inconclusive:** required logs or artifacts are unavailable.
+- **Inconclusive.** Required logs or artifacts are unavailable.
 
-Keep these claims separate. In particular, a reconciled ledger rules out an
-unexplained balance mismatch, but it does not rule out compensation for a
-confirmed defective artifact.
+Keep these claims separate. A reconciled ledger rules out an unexplained
+balance mismatch, but it does not rule out compensation for a confirmed
+defective artifact.
 
 ### 5. Report and clean up
 
@@ -974,585 +825,78 @@ Return:
 
 1. user ID and UTC investigation window;
 2. data sources and exact commands used;
-3. ledger equation, current balance, expected balance, and delta;
+3. ledger equation, current balance, expected balance and delta;
 4. request counts by outcome, with request IDs when available;
 5. delivered artifacts reviewed and their evidence;
-6. proven findings, suspected issues, and confidence labels;
+6. proven findings, suspected issues and confidence labels;
 7. proposed credit adjustment, if supported, without executing it;
 8. missing evidence and recommended next action.
 
 Before finishing, remove or move to the system Trash all temporary environment
-files, logs, reports, signed URLs, and downloaded user audio. State what was
+files, logs, reports, signed URLs and downloaded user audio. State what was
 cleaned up and whether anything remains recoverable in Trash.
 
----
+## Find truncated Gemini 3.1 Flash TTS
 
-## Find Truncated Gemini 3.1 Flash TTS Script
-
-Read-only Node.js script that flags `gemini-3.1-flash-tts-preview`
+`find-truncated-gemini31-tts` flags `gemini-3.1-flash-tts-preview`
 `audio_files` whose measured duration is unusually short or long for the stored
-transcript. Use it as one signal in the broader
+transcript. It only reads. Use it as one signal in the
 [Gemini TTS investigation](#investigate-gemini-tts-errors-and-credit-charges),
 not as proof of truncation or authorization for a refund.
 
-### Why truncation can cause an overcharge
-
-Gemini TTS credits are `ceil(totalTokenCount * 1.1)` where
-`totalTokenCount = promptTokenCount + candidatesTokenCount` (see
-`apps/web/lib/tts/models.ts` → `creditsFromTokens`). If the model reads a
-long prompt but produces only part of the requested speech, the prompt tokens
-can still contribute to the charge.
-
-### Detection signal and limits
-
-The transcript stored in `audio_files.text_content` (everything after the
-`## TRANSCRIPT` marker, see `apps/web/lib/tts/gemini-prompt.ts`) is the text that
-should have been spoken. Dividing its character count by `duration` gives
-characters per second. An extreme mismatch is a useful truncation signal:
-
-- strong candidate: `~2400 spoken chars / 7.08s ≈ 340 cps`;
-- typical example: `~1050 spoken chars / 70.24s ≈ 15 cps`.
-
-Speech rate and stored prompt structure vary. The detector does not verify the
-spoken words, audio quality, low-energy passages, or whether the user considers
-the artifact usable. Rows with `duration = -1` (the “couldn't measure” sentinel)
-are listed as `unknown-duration` and are not judged.
-
-The detector also reports review-only long outputs when:
-
-```text
-actual duration > expected duration * long factor
-expected duration = spoken characters / normal cps
-```
-
-The default long factor is `2`. The check applies only when the transcript meets
-`--min-chars`. It records the actual-to-expected duration ratio for review.
-Long-output anomalies are quality signals; they do not contribute to candidate
-credit exposure or refund commands.
-
-### Quick Start
-
 ```bash
-# Scan one user in an exact UTC window
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
-  --user <user-id> --since <start-iso> --until <end-iso>
-
-# Use a stricter long-output review threshold
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- \
-  --user <user-id> --long-factor 2.5
-
-# Scan the user's complete history for this model
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts -- --user <user-id>
-
-# Scan all users
-pnpm --filter @sexyvoice/scripts find-truncated-gemini31-tts
+pnpm find-truncated-gemini31-tts --user <user-id> --since <start-iso> --until <end-iso>
 ```
 
-### CLI Options
-
-- `--user <uuid>` — only scan this `user_id` (default: all users)
-- `--threshold <cps>` — flag when spoken characters per second exceed this
-  heuristic threshold (default: `30`)
-- `--min-chars <n>` — ignore clips whose transcript is shorter than this
-  (default: `150`)
-- `--normal-cps <cps>` — comparison rate used to estimate duration and the
-  “delivered %” column (default: `15`); this is not measured transcript coverage
-- `--long-factor <n>` — report output longer than expected by this factor
-  (default: `2`; must be greater than `1`)
-- `--active-only` — skip soft-deleted rows (`deleted_at` not null)
-- `--since <date>` — only scan files created on or after this ISO date/timestamp
-- `--until <date>` — only scan files created on or before this ISO date/timestamp
-- `--paid-only` — only scan users with a `purchase` or `topup` transaction
-- `--out <path>` — JSON report path (default: `./truncated-gemini31-tts.json`)
-- `--reason <text>` — reason included in conditional refund instructions
-
-### Output
-
-- A candidate table with characters per second, duration, transcript length,
-  estimated delivered percentage, credits, and output/input token ratio.
-- A separate `REVIEW-ONLY LONG OUTPUTS` table with actual duration, expected
-  duration, and the actual-to-expected ratio. These rows never enter refund
-  exposure or refund commands.
-- Candidate credit exposure by user. This is not a confirmed refund amount.
-- Conditional refund commands retained for a human-approved follow-up. Never
-  run them based only on this detector.
-- A JSON report with `candidates`, `abnormallyLong`, `unknownDuration`, the
-  `summary.abnormallyLong` count, time bounds, thresholds, and explicit
-  heuristic/approval warnings.
-
-Independently inspect every candidate and reconcile the account ledger before
-proposing a refund. See [Refund Credits Script](#refund-credits-script) only
-after a human has approved a confirmed amount.
-
-### Requirements
-
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and
-  `SUPABASE_SECRET_KEY` (read-only usage).
-
----
-
-## Refund Credits Script
-
-Interactive Node.js/TypeScript script to process credit refunds for users.
-
-### Features
-
-- Calculates maximum refundable amount based on credits purchased vs. used
-- Prevents refunds for freemium-only users
-- Links refund to original payment intent
-- Optional Stripe charge ID tracking
-- Interactive prompts with confirmation
-- Smart dollar amount suggestions (uses exact transaction amount when refunding full transaction)
-- Validates credit balance integrity before processing
-- Automatically updates the `credits` table to reflect the refunded amount
-
-### Usage
-
-```bash
-# Run with user ID as argument
-pnpm refund-credits -- <user-id>
-
-# Or run interactively (will prompt for user ID)
-pnpm refund-credits
-```
-
-### What it does
-
-1. Fetches all credit transactions for the user
-2. Calculates total credits purchased (from `purchase` and `topup` transactions)
-3. Calculates total credits used (from `usage_events.credits_used`)
-4. Calculates total credits already refunded (from `refund` transactions)
-5. Fetches user's credit balance from `credits` table
-6. **Validates that calculated credits match actual balance** (throws error if mismatch)
-7. Determines maximum refundable credits (purchased - used - refunded)
-8. Calculates USD refund amount based on credit rate
-9. Prompts for credit amount to refund and which transaction to refund against
-10. **Suggests dollar amount**: If refunding full transaction, suggests exact transaction amount; otherwise uses credit rate calculation
-11. Prompts for USD amount to refund (can accept suggestion or enter custom amount)
-12. Optionally records Stripe charge ID (`ch_...`)
-13. Inserts negative credit transaction with `refund` type
-14. Updates the `credits` table by calling `decrement_user_credits` function
-
-### Requirements
-
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
-- User must have `purchase` or `topup` transactions with `metadata.dollarAmount`
-- Freemium-only users cannot be refunded
-
-### Example Output
-
-```
-Processing refund for user: xxx-xxx-xxx
-
-=== Credit Refund Calculation ===
-Total Credits Purchased: 5000
-Total Credits Used: 1200
-Total Credits Refunded: 0
-Available Credits: 3800
-Total Spent: $50.00
-Credit Rate: $0.0100 per credit
-
-Max Refundable Credits: 3800
-Max Refund Amount: $38.00
-```
-
-### How It Works
-
-The script prevents duplicate refunds by tracking all previous refunds and automatically updates the user's credit balance:
-
-**Available Credits Formula:**
-
-```
-Available Credits = (Purchased + Topup + Freemium) - Used - Refunded
-```
-
-**Maximum Refundable Credits Formula:**
-
-```
-Max Refundable = Total Purchased - Total Used - Total Already Refunded
-```
-
-**Example scenario:**
-
-- User purchased 5000 credits for $50.00
-- User used 1200 credits
-- User previously received a refund of 500 credits
-- Maximum refundable now: 5000 - 1200 - 500 = **3300 credits** ($33.00)
-
-This ensures:
-
-- Users can't be refunded more than they paid
-- Users can't get refunds for credits they've already used
-- Users can't receive multiple refunds for the same credits
-- Data integrity is validated before processing (calculated vs actual balance)
-- The `credits` table accurately reflects the user's remaining credits after refund
-- Smart dollar amount suggestions prevent rounding errors on full transaction refunds
-
-### Data Integrity Check
-
-Before processing any refund, the script validates that the calculated available credits matches the actual balance in the `credits` table.
-
-The calculated available credits = (purchase + topup + freemium credits) - (credits used from `usage_events`) - (previously refunded credits)
-
-If there's a mismatch, the script will throw an error:
-
-```
-Credit mismatch detected!
-  Calculated from usage_events: 3800
-  Actual balance in credits table: 3750
-  Please investigate data integrity before processing refund.
-```
-
-This prevents refunds when there are data inconsistencies that need to be resolved first.
-
-### Smart Dollar Amount Suggestions
-
-When you select a transaction to refund:
-
-**If refunding the full transaction amount:**
-
-```
-💡 Note: Refunding full transaction amount. Suggested refund: $10.00
-Enter USD amount to refund [suggested: $10.00]:
-```
-
-The script suggests the exact dollar amount from that transaction's metadata, preventing rounding errors.
-
-**If refunding a partial amount:**
-
-```
-Calculated refund based on credit rate: $7.50
-Enter USD amount to refund [suggested: $7.50]:
-```
-
-The script calculates the amount based on the credit rate (total spent / total credits).
-
-You can press Enter to accept the suggestion, or enter a custom amount.
-
----
-
-## Batch Refund Credits Script
-
-Processes platform-bug credit refunds in bulk from a CSV of duplicate usage events. Adds credits back to affected users (no USD refund) one by one, with a single confirmation prompt before starting.
-
-### Usage
-
-```bash
-# Dry run first to verify CSV parsing and row count
-pnpm batch-refund-credits -- dupes.csv --dry-run
-
-# Apply refunds (prompts for confirmation)
-pnpm batch-refund-credits -- dupes.csv
-```
-
-### CSV Format
-
-Export the duplicate sessions query result as CSV:
-
-```csv
-source_id,user_id,event_count,first_event_at,last_event_at,duplicate_credits,duplicate_dollars,end_reasons
-38ae34f3-f7fd-48ec-88dc-0955f0722812,8c56bc8d-b16f-4de3-acf7-2f58313b209b,19,2026-05-15 16:45:07+00,2026-05-15 16:47:46+00,72000,null,"[""credit_limit""]"
-```
-
-Only `source_id`, `user_id`, and `duplicate_credits` are used. Rows with `duplicate_credits` ≤ 0 or null are skipped automatically.
-
-### SQL to identify duplicate sessions
-
-```sql
-WITH dupes AS (
-    SELECT
-        source_id,
-        user_id,
-        COUNT(*)                                  AS event_count,
-        MIN(occurred_at)                          AS first_event_at,
-        MAX(occurred_at)                          AS last_event_at,
-        SUM(credits_used)   - MAX(credits_used)   AS duplicate_credits,
-        SUM(dollar_amount)  - MAX(dollar_amount)  AS duplicate_dollars,
-        ARRAY_AGG(DISTINCT metadata ->> 'end_reason') AS end_reasons
-    FROM usage_events
-    WHERE source_type = 'live_call'
-    GROUP BY source_id, user_id
-    HAVING COUNT(*) > 1
-)
-SELECT * FROM dupes
-ORDER BY event_count DESC, last_event_at DESC;
-```
-
-### What it does
-
-1. Parses the CSV (handles quoted fields)
-2. Shows total rows and total credits to restore, then asks for confirmation
-3. For each row, inserts a `refund` credit transaction (positive amount, credits added back) and calls `increment_user_credits`
-4. Continues on per-row errors — failed rows are listed in the summary
-5. Exits with code 1 if any rows failed
-
-Each refund transaction is recorded with:
-
-- `type: 'refund'`
-- `description: "Refund - Double billing (voice call <source_id_prefix>)"`
-- `metadata.reason: "Double billing - voice call"`
-- `metadata.sourceId`: the full source_id for traceability
-
-### Requirements
-
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
-
----
-
-## Compile Dispute Evidence Script
-
-Read-only Node.js/TypeScript script (`compile-dispute-evidence.mts`) that compiles
-a single user's complete account data to respond to a Stripe payment dispute
-(chargeback). It makes **no** database writes and **no** Stripe API calls — it
-only reads from Supabase, so it's safe to run against production.
-
-The output serves two audiences at once: a human-readable summary for deciding
-whether to contest or refund the dispute, and a Stripe-ready evidence record
-proving the user signed up, paid, and actually used the service.
-
-### Usage
-
-```bash
-# Run with user ID as argument
-pnpm compile-dispute-evidence -- <user-id>
-
-# Or run interactively (will prompt for user ID)
-pnpm compile-dispute-evidence
-```
-
-The script prints the report to the console **and** writes a Markdown file to
-the current directory: `dispute-<user_id>-<YYYY-MM-DD>.md`, which you can attach
-to the Stripe dispute response.
-
-### What it gathers (all scoped to the one user)
-
-1. **Account** — `profiles`: email (`username`), Stripe customer ID
-   (`stripe_id`), and signup date. Proves identity and when they joined.
-2. **Payments** — `credit_transactions` of type `purchase` / `topup` / `refund`:
-   date, credits, USD (`metadata.dollarAmount`), Stripe **Payment Intent**
-   (`reference_id`) and **subscription** (`subscription_id`). Links each charge
-   to Stripe.
-3. **Usage** — `usage_events` aggregated by `source_type` (`tts`,
-   `voice_cloning`, `live_call`, API…): event count, total quantity, credits
-   used, and first/last `occurred_at`. This append-only audit log is the
-   strongest proof the service was used.
-4. **Delivered artifacts** (metadata only — no `text_content`, no URLs):
-   - `audio_files`: count, total duration, models, and the **first/last paid**
-     and **first free** generation dates. Paid/free reflects whether the user
-     was a paying customer when the file was generated (`usage.userHasPaid`,
-     with the `generated-audio/` vs `generated-audio-free/` `storage_key` folder
-     as a fallback) — **not** `credits_used`, which is set for free users too.
-   - `voices`: count of voice clones created.
-   - `call_sessions`: count, billed minutes, duration, credits used.
-5. **Totals & reconciliation** — total paid, credits purchased / freemium /
-   used / refunded, current balance vs. expected balance, and the delta
-   (`✅` when it reconciles).
-
-### Deciding how much to refund
-
-The reconciliation makes it easy to size a fair refund: refund only the **cash
-value of the credits from the disputed charge that haven't been consumed yet**,
-at that charge's own rate (`dollarAmount / credits`). Credits the user already
-turned into delivered audio represent value delivered and shouldn't be refunded
-as cash. When the usage profile looks like abuse (new account, large usage, then
-chargeback), the `usage_events` + `audio_files` data is strong evidence to
-**contest** the dispute instead.
-
-### Requirements
-
-- `.env` or `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`
-
----
-
-## Check Disposable Emails Script
-
-Node.js script (`check-disposable-emails.mjs`) that fetches the most recently
-created `profiles` and checks how many `username` values (which are actually the
-user's email) belong to a disposable / temporary email provider. It can
-optionally reset the flagged users' credits to 0.
-
-Two independent sources are cross-checked:
-
-1. The `disposable-email-domains-js` npm package (the same one used by the web
-   app's signup route, `apps/web/app/auth/signup/route.ts`).
-2. The `denyDomains.txt` list from
-   [amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains),
-   which is shallow-cloned into `scripts/.cache` on first run and `git pull`ed
-   on subsequent runs.
-
-### Quick Start
-
-```bash
-# Check the last 1000 profiles (default) and write a summary + CSV
-pnpm check-disposable-emails
-
-# Check the last 3000 profiles (paginates past Supabase's 1000-row cap)
-pnpm check-disposable-emails -- --limit 3000
-
-# Only profiles created in the last 14 days
-pnpm check-disposable-emails -- --days 14
-
-# Preview resetting flagged users' credits to 0 (no DB changes)
-pnpm check-disposable-emails -- --days 14 --reset-credits --dry-run
-
-# Apply the reset (prompts for a typed "RESET CREDITS" confirmation)
-pnpm check-disposable-emails -- --days 14 --reset-credits
-
-# Apply without the prompt (e.g. CI)
-pnpm check-disposable-emails -- --days 14 --reset-credits --yes
-```
-
-### CLI Options
-
-- `--limit <n>` - Number of most-recent profiles to fetch (default: 1000)
-- `--days <n>` - Only consider profiles created in the last `<n>` days
-- `--out <dir>` - Output directory for the summary / CSV (default: cwd)
-- `--no-clone` - Skip cloning/updating the amieiro repo (use cached copy)
-- `--reset-credits` - Reset flagged users' credits to 0
-- `--dry-run` - With `--reset-credits`, only report what would change
-- `--yes` - Skip the interactive confirmation for a live reset
-
-### Output
-
-- `disposable-emails-summary-<timestamp>.txt` - Counts and percentages by
-  source, plus the most common disposable domains (also printed to stdout)
-- `disposable-emails-<timestamp>.csv` - Every flagged profile with
-  `by_package` / `by_amieiro` columns (gitignored)
-
-### Credit reset
-
-When `--reset-credits` is passed, for each flagged user with a **positive**
-balance the script resets their credits. Users are **skipped** when they:
-
-- have ever paid — any `purchase` or `topup` `credit_transactions` row, or
-- already have a balance of ≤0.
-
-For each user that is reset, the script:
-
-1. Sets `credits.amount` to 0
-2. Inserts an audit `credit_transactions` row with:
-   - `type: 'refund'` — the `credit_transaction_type` enum has no `penalty` /
-     `ban` value, so this reuses `'refund'` (as
-     `reset-freeloader-credits.mts` does) and records the real reason in the
-     description / metadata. To change it later, edit the `RESET_TX_TYPE`
-     constant (and add the enum value via a migration first).
-   - `amount: -<previous balance>`
-   - `description: "Credits reset to 0 — disposable email signup (<domain>)"`
-   - `metadata.reason: "disposable_email"` plus `domain`, `detected_by`,
-     `previous_amount`, and a `timestamp`
-
-> ⚠️ Detection is **domain-based** and the amieiro list is broad. Spot-check the
-> generated CSV before a live reset to make sure no legitimate users are caught.
-
-### Requirements
-
-- `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` — read
-  automatically from `apps/web/.env.local` (then `scripts/.env`)
-- `git` (for cloning the amieiro list on first run)
-
----
-
-## Sync Deny Domains Script
-
-`sync-deny-domains.mjs` regenerates the disposable-domain list bundled into the
-web app's signup route. It clones/updates
-[amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains)
-in `scripts/.cache`, normalizes its deny list (trim, lowercase, dedupe, sort)
-and writes it to `apps/web/lib/disposable-email/deny-domains.json` as a minified
-JSON array, which the web app imports and turns into a `Set`.
-
-The signup route (`apps/web/app/auth/signup/route.ts`) checks this list **in
-addition** to the `disposable-email-domains-js` package, which catches far more
-disposable signups (~16% vs ~1.6% of recent profiles in production).
-
-```bash
-# Refresh the bundled list (run after amieiro publishes updates)
-pnpm sync-deny-domains
-```
-
-The generated `deny-domains.json` is ~3 MB; it is committed (so deploys don't
-need network access) and excluded from the formatter via `.biomeignore` (kept
-minified). TypeScript widens the homogeneous array to `string[]`, so importing it
-stays cheap to type-check.
-
----
-
-## Credit Transactions (Supabase)
-
-### 1. Download Only Paid Transactions
-
-- Display 500 rows
-- Export as SQL
-
-<https://supabase.com/dashboard/project/xx/editor/92829?schema=public&sort=created_at%3Adesc&filter=type%3Aneq%3Afreemium>
-
-```bash
-export SUPABASE_DB_URL=postgresql://postgres:xxx@db.yyyy.supabase.co:5432/postgres
-```
-
-```bash
-psql $SUPABASE_DB_URL -c "COPY (select * from public.credit_transactions order by credit_transactions.id asc nulls last) TO STDOUT WITH CSV HEADER DELIMITER ',';" > credit_transactions_rows.csv
-```
-
-### 2. Visualize
-
-```bash
-python scripts/visualize-transactions.py backups/credit_transactions_rows_2025-10-25T15-38_cleaned.csv
-Loading CSV file: backups/credit_transactions_rows_2025-10-25T15-38_cleaned.csv
-Successfully loaded x rows
-Filtered from x to x transactions (purchase/topup only)
-
-Creating visualizations for x credit transactions...
-============================================================
-Dashboard saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_dashboard.png
-Weekly MTD comparison chart saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_weekly_mtd_comparison.png
-Hourly heatmap saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_hourly_heatmap.png
-Monthly trends chart saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_monthly_trends.png
-User behavior charts saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_user_behavior.png
-Daily patterns chart saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_daily_patterns.png
-Transaction types chart saved to: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_transaction_types.png
-
-All visualizations created! 📊
-Files saved with prefix: backups/credit_transactions_rows_2025-10-25T15-38_cleaned_
-```
-
----
-
-## Waveform Video Generator
-
-Modern audio visualizer that turns any ffmpeg-compatible audio file into a
-gradient waveform video with multiple style presets.
-
-### Usage
-
-```bash
-# Neon gradient at 60fps with a custom title
-python scripts/generate_waveform_video.py input.wav output.mp4 --style neon --fps 60 --title "Deep Night Session"
-
-# Light mode preview at 720p
-python scripts/generate_waveform_video.py song.mp3 preview.mp4 --style minimal --width 1280 --height 720
-```
-
-### Options
-
-- `--style`: `neon` (default), `minimal`, `sunset`, `forest`
-- `--fps`: Frames per second (default 30)
-- `--width` / `--height`: Output resolution
-- `--title`: Optional text rendered above the waveform
-- `--preset`: ffmpeg x264 preset passed through MoviePy
-
-## Credit Transaction Analysis Scripts
-
-Python scripts for analyzing credit transaction data from SexyVoice.ai to extract insights about user purchasing behavior and patterns.
-
-### Basic Analysis
-
-```bash
-python analyze-credit-transactions.py path/to/credit_transactions.csv
-```
-
-### Create Visualizations
-
-```bash
-python visualize-transactions.py path/to/credit_transactions.csv
-```
+Gemini credits come from the total token count (`creditsFromTokens` in
+`apps/web/lib/tts/models.ts`), so a long prompt that the model only partly
+voices still costs its prompt tokens. The detector divides the transcript's
+characters by the audio duration and flags rates far above natural speech. It
+also lists output much longer than expected, for review only. `--help` gives
+the thresholds. Speech rate and prompt structure vary, and the detector does not
+check the spoken words, the audio quality or whether the user found the
+artifact usable. It lists rows with an unmeasured duration as
+`unknown-duration` and does not judge them.
+
+The command prints candidate tables, candidate credit exposure by user and
+conditional `refund-credits` commands, and writes a JSON report. The exposure
+is not a confirmed refund amount. Inspect every candidate and reconcile the
+ledger before proposing a refund, and run [`refund-credits`](#refund-credits)
+only after a human approves a confirmed amount.
+
+## Other commands
+
+- `pnpm sync-deny-domains` refreshes
+  `apps/web/lib/disposable-email/deny-domains.json` from a shallow clone of
+  [amieiro/disposable-email-domains](https://github.com/amieiro/disposable-email-domains)
+  in `scripts/.cache`. Signup checks this list as well as the
+  `disposable-email-domains-js` package. The file is committed so deploys need
+  no network access, and `.biomeignore` keeps it minified.
+- `pnpm benchmark-daily-stats --label <name> --date YYYY-MM-DD` times the local
+  daily stats route; see
+  [local benchmarking](../apps/web/app/api/daily-stats/README.md#local-benchmarking).
+
+## Shell, SQL and Python tools
+
+These run directly, not through `pnpm`.
+
+- `db_backups.sh`, `db_local_restore.sh` and `extract_public_data.sh` back up
+  the cloud database and restore it locally; see
+  [db_back_and_restore_README.md](./db_back_and_restore_README.md).
+- `create-release.sh` checks the version, tags the release and creates the
+  GitHub release from `Changelog.md`. It pushes the tag.
+- `check-markdown-routes.sh [base-url]` checks the `.md` routes and the blog
+  Markdown rewrite against a running app.
+- `identify-freeloaders.sql` exports the CSV for `reset-freeloader-credits`.
+  `inactive-empty-user-profiles-retention.sql` previews inactive empty profiles
+  and holds a commented-out delete. Run hand-written SQL only after review,
+  through the Supabase SQL editor.
+- `get-and-clean-transactions.sh` exports `credit_transactions` with profile
+  usernames to `backups/` through `psql` and `SUPABASE_DB_URL`.
+  `get-and-clean-stripe-payments.sh` exports succeeded Stripe payment intents
+  with the Stripe CLI and cleans them with `clean-stripe-payments.py`.
+- `setup-analysis-environment.sh` creates a Python virtual environment outside
+  the repository and installs `requirements.txt` for
+  `analyze-credit-transactions.py`, `visualize-transactions.py`,
+  `compare-payments.py` and `generate_waveform_video.py`. Each prints its usage
+  when run without arguments.
