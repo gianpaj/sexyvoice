@@ -217,8 +217,7 @@ export async function POST(request: Request) {
     captureException(error, {
       user: user ? { email: user.email, id: user.id } : undefined,
     });
-    return APIErrorResponse('Error generating token', 500, {
-      details: Error.isError(error) ? error.message : JSON.stringify(error),
-    });
+    // Sentry has the error; the browser shows its generic connection error.
+    return APIErrorResponse('Error generating token', 500);
   }
 }
