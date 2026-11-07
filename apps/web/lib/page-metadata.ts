@@ -94,6 +94,11 @@ export function pageMetadata({
   title,
 }: PageMetadataOptions): Metadata {
   const url = localeUrl(lang, path);
+  // A title that already names the site skips the layout's brand suffix.
+  const pageTitle =
+    typeof title === 'string' && title.endsWith(SITE_NAME)
+      ? { absolute: title }
+      : title;
   const xDefaultLocale = locales.includes(routing.defaultLocale)
     ? routing.defaultLocale
     : locales[0];
@@ -102,7 +107,7 @@ export function pageMetadata({
     images: [image],
     locale: lang,
     siteName: SITE_NAME,
-    title,
+    title: pageTitle,
     url,
   };
 
@@ -126,12 +131,12 @@ export function pageMetadata({
     openGraph: article
       ? { ...openGraph, ...article, type: 'article' }
       : { ...openGraph, type: 'website' },
-    title,
+    title: pageTitle,
     twitter: {
       card: 'summary_large_image',
       description,
       images: [image.url],
-      title,
+      title: pageTitle,
     },
   };
 }

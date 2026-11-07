@@ -637,7 +637,7 @@ exports[`blog post head > de realtime-ai-voice-call 1`] = `
 
 exports[`blog post head > en hello-from-sexyvoice 1`] = `
 [
-  "<title>Hello from SexyVoice.ai | SexyVoice.ai</title>",
+  "<title>Hello from SexyVoice.ai</title>",
   "<meta name="description" content="Next-gen voice AI for synthesis and dubbing."/>",
   "<meta name="author" content="SexyVoice.ai"/>",
   "<meta name="keywords" content="SexyVoice.ai,AI voice generation"/>",
@@ -645,7 +645,7 @@ exports[`blog post head > en hello-from-sexyvoice 1`] = `
   "<link rel="alternate" hrefLang="en" href="https://sexyvoice.ai/en/blog/hello-from-sexyvoice"/>",
   "<link rel="alternate" hrefLang="es" href="https://sexyvoice.ai/es/blog/hello-from-sexyvoice"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en/blog/hello-from-sexyvoice"/>",
-  "<meta property="og:title" content="Hello from SexyVoice.ai | SexyVoice.ai"/>",
+  "<meta property="og:title" content="Hello from SexyVoice.ai"/>",
   "<meta property="og:description" content="Next-gen voice AI for synthesis and dubbing."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/en/blog/hello-from-sexyvoice"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -661,7 +661,7 @@ exports[`blog post head > en hello-from-sexyvoice 1`] = `
   "<meta property="article:tag" content="Voice Cloning"/>",
   "<meta property="article:tag" content="Speech Synthesis"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="Hello from SexyVoice.ai | SexyVoice.ai"/>",
+  "<meta name="twitter:title" content="Hello from SexyVoice.ai"/>",
   "<meta name="twitter:description" content="Next-gen voice AI for synthesis and dubbing."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.png"/>",
   "<link rel="icon" href="/favicon.ico"/>",
@@ -706,7 +706,7 @@ exports[`blog post head > en voice-ai-glossary 1`] = `
 
 exports[`blog post head > es hello-from-sexyvoice 1`] = `
 [
-  "<title>Hola desde SexyVoice.ai | SexyVoice.ai</title>",
+  "<title>Hola desde SexyVoice.ai</title>",
   "<meta name="description" content="IA de voz de nueva generación para síntesis y doblaje."/>",
   "<meta name="author" content="SexyVoice.ai"/>",
   "<meta name="keywords" content="SexyVoice.ai,generación de voz con IA"/>",
@@ -714,7 +714,7 @@ exports[`blog post head > es hello-from-sexyvoice 1`] = `
   "<link rel="alternate" hrefLang="en" href="https://sexyvoice.ai/en/blog/hello-from-sexyvoice"/>",
   "<link rel="alternate" hrefLang="es" href="https://sexyvoice.ai/es/blog/hello-from-sexyvoice"/>",
   "<link rel="alternate" hrefLang="x-default" href="https://sexyvoice.ai/en/blog/hello-from-sexyvoice"/>",
-  "<meta property="og:title" content="Hola desde SexyVoice.ai | SexyVoice.ai"/>",
+  "<meta property="og:title" content="Hola desde SexyVoice.ai"/>",
   "<meta property="og:description" content="IA de voz de nueva generación para síntesis y doblaje."/>",
   "<meta property="og:url" content="https://sexyvoice.ai/es/blog/hello-from-sexyvoice"/>",
   "<meta property="og:site_name" content="SexyVoice.ai"/>",
@@ -730,7 +730,7 @@ exports[`blog post head > es hello-from-sexyvoice 1`] = `
   "<meta property="article:tag" content="Clonación de voz"/>",
   "<meta property="article:tag" content="Síntesis de voz"/>",
   "<meta name="twitter:card" content="summary_large_image"/>",
-  "<meta name="twitter:title" content="Hola desde SexyVoice.ai | SexyVoice.ai"/>",
+  "<meta name="twitter:title" content="Hola desde SexyVoice.ai"/>",
   "<meta name="twitter:description" content="IA de voz de nueva generación para síntesis y doblaje."/>",
   "<meta name="twitter:image" content="https://sexyvoice.ai/sexyvoice.png"/>",
   "<link rel="icon" href="/favicon.ico"/>",

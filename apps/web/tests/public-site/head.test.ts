@@ -126,6 +126,15 @@ describe('head rules', () => {
     },
   );
 
+  it('keeps a post title that already names the site', async () => {
+    const tags = await renderHead(blogPostRoute('hello-from-sexyvoice'), 'en');
+    expect(titles(tags)).toEqual({
+      og: 'Hello from SexyVoice.ai',
+      title: 'Hello from SexyVoice.ai',
+      twitter: 'Hello from SexyVoice.ai',
+    });
+  });
+
   it('links a post only to its translations', async () => {
     const tags = await renderHead(blogPostRoute('voice-ai-glossary'), 'en');
     expect(alternates(tags)).toEqual({
