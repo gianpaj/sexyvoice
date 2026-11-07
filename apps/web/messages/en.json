@@ -1367,7 +1367,7 @@
       },
       "selectLanguage": {
         "name": "Select language and task",
-        "text": "Pick the language of your audio. Choose \"{transcribe}\" to keep the original language, or \"{translate}\" to convert to English."
+        "text": "Pick the language of your audio. Choose \"{transcribe}\" to keep the original language, or \"{translate}\"."
       },
       "transcribe": {
         "name": "Transcribe",

@@ -1369,7 +1369,7 @@
       },
       "selectLanguage": {
         "name": "Seleziona lingua e attività",
-        "text": "Scegli la lingua del tuo audio. Scegli \"{transcribe}\" per mantenere la lingua originale o \"{translate}\" per convertirlo in inglese."
+        "text": "Scegli la lingua del tuo audio. Scegli \"{transcribe}\" per mantenere la lingua originale o \"{translate}\"."
       },
       "transcribe": {
         "name": "Trascrivi",

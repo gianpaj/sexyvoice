@@ -1369,7 +1369,7 @@
       },
       "selectLanguage": {
         "name": "Sprache und Aufgabe wählen",
-        "text": "Wählen Sie die Sprache Ihrer Aufnahme. Wählen Sie „{transcribe}“, um die Originalsprache beizubehalten, oder „{translate}“, um sie ins Englische zu übersetzen."
+        "text": "Wählen Sie die Sprache Ihrer Aufnahme. Wählen Sie „{transcribe}“, um die Originalsprache beizubehalten, oder „{translate}“."
       },
       "transcribe": {
         "name": "Transkribieren",

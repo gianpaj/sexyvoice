@@ -1365,7 +1365,7 @@
       },
       "selectLanguage": {
         "name": "Vælg sprog og opgave",
-        "text": "Vælg sproget i din lyd. Vælg \"{transcribe}\" for at beholde originalsproget, eller \"{translate}\" for at oversætte til engelsk."
+        "text": "Vælg sproget i din lyd. Vælg \"{transcribe}\" for at beholde originalsproget, eller \"{translate}\"."
       },
       "transcribe": {
         "name": "Transskriber",

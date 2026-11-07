@@ -1669,7 +1669,7 @@ exports[`transcribe page > structured data in de 1`] = `
             "@type": "HowToStep",
             "name": "Sprache und Aufgabe wählen",
             "position": 4,
-            "text": "Wählen Sie die Sprache Ihrer Aufnahme. Wählen Sie „Transkribieren“, um die Originalsprache beizubehalten, oder „Ins Englische übersetzen“, um sie ins Englische zu übersetzen.",
+            "text": "Wählen Sie die Sprache Ihrer Aufnahme. Wählen Sie „Transkribieren“, um die Originalsprache beizubehalten, oder „Ins Englische übersetzen“.",
             "url": "https://sexyvoice.ai/de/tools/transcribe",
           },
           {
@@ -1837,7 +1837,7 @@ exports[`transcribe page > structured data in en 1`] = `
             "@type": "HowToStep",
             "name": "Select language and task",
             "position": 4,
-            "text": "Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate to English" to convert to English.",
+            "text": "Pick the language of your audio. Choose "Transcribe" to keep the original language, or "Translate to English".",
             "url": "https://sexyvoice.ai/en/tools/transcribe",
           },
           {
