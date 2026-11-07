@@ -172,7 +172,8 @@ function CallExperienceScreens({
         characterId,
         language,
         sceneId,
-        sceneText,
+        // Scene text kept from an earlier pick must not reach the agent.
+        sceneText: sceneId ? sceneText : null,
       },
       microphone.request,
     );

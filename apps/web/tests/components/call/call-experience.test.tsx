@@ -320,7 +320,7 @@ describe('CallExperience panel', () => {
         characterId: featured.id,
         language: 'en',
         sceneId: null,
-        sceneText: '',
+        sceneText: null,
       },
     ]);
     expect(await screen.findByTestId('in-call-view')).toHaveTextContent('Lily');
