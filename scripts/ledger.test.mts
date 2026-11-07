@@ -347,23 +347,25 @@ test('removes the ledger row when the database rejects the balance change', asyn
   assert.equal(tables.credits[0].amount, 40);
 });
 
-test('keeps the ledger row when the balance update got no response', async () => {
-  const { client, tables } = fakeSupabase({}, () => ({
-    error: { message: 'TypeError: fetch failed' },
-    status: 0,
-  }));
+for (const status of [0, 504]) {
+  test(`keeps the ledger row when the balance update returns ${status}`, async () => {
+    const { client, tables } = fakeSupabase({}, () => ({
+      error: { message: 'TypeError: fetch failed' },
+      status,
+    }));
 
-  await assert.rejects(
-    adjustCredits(client, {
-      amount: 10,
-      description: 'Refund',
-      reason: 'Platform bug',
-      userId: USER,
-    }),
-    /outcome unknown/,
-  );
-  assert.equal(tables.credit_transactions.length, 1);
-});
+    await assert.rejects(
+      adjustCredits(client, {
+        amount: 10,
+        description: 'Refund',
+        reason: 'Platform bug',
+        userId: USER,
+      }),
+      /outcome unknown/,
+    );
+    assert.equal(tables.credit_transactions.length, 1);
+  });
+}
 
 test('rejects invalid adjustments before any request', async () => {
   const { client, tables } = fakeSupabase({});

@@ -376,8 +376,8 @@ export async function adjustCredits(
     return { transactionId: row.id };
   }
 
-  // Status 0 means no response arrived, so the balance may have moved.
-  if (status === 0) {
+  // No response, or a gateway or server error: the balance may have moved.
+  if (status === 0 || status >= 500) {
     throw new Error(
       `Balance update outcome unknown (${balanceError.message}); ledger row ${row.id} was written. Check the balance before retrying.`,
     );

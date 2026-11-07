@@ -41,8 +41,8 @@ call-analysis queue logic and the R2 folder layout live in the web app.
     `hasUserPaid`), `paidBefore(at)` for `free_call`, and `hasCashPurchase`
     for cash refunds.
   - `adjustCredits` inserts a `refund` row, then calls the increment or
-    decrement RPC. A rejected RPC (an HTTP status) deletes the row again; no
-    response (status 0) keeps the row and tells the operator to check the
+    decrement RPC. A rejected RPC (a 4xx status) deletes the row again; no
+    response or a 5xx keeps the row and tells the operator to check the
     balance. Every row carries `metadata.reason`.
   - `findRefund` finds an earlier refund row by its metadata;
     `batch-refund-credits` skips a call whose `reason` and `sourceId` already
