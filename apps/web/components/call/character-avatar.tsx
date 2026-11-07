@@ -19,6 +19,9 @@ export function avatarColorClass(seed: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
 }
 
+/** Character pictures are served from `public/characters/`. */
+export const characterImageSrc = (image: string) => `/characters/${image}`;
+
 const SIZES = {
   sm: { box: 'size-11', text: 'text-lg', px: 44 },
   md: { box: 'size-14', text: 'text-[22px]', px: 56 },
@@ -58,7 +61,7 @@ export function CharacterAvatar({
           className="object-cover"
           fill
           sizes={`${s.px}px`}
-          src={`/characters/${image}`}
+          src={characterImageSrc(image)}
         />
       </span>
     );

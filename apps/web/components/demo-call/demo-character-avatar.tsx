@@ -2,6 +2,8 @@
 
 import Image from 'next/image';
 
+import { characterImageSrc } from '@/components/call/character-avatar';
+
 interface DemoCharacterAvatarProps {
   accentGradient: string;
   energy: number;
@@ -55,7 +57,7 @@ export function DemoCharacterAvatar({
               fill
               priority
               sizes="(max-width: 640px) 80px, 96px"
-              src={`/characters/${image}`}
+              src={characterImageSrc(image)}
             />
           </div>
         </div>

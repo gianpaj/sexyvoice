@@ -2,15 +2,7 @@
 
 import { useEffect, useReducer, useRef } from 'react';
 
-export interface TranscriptChunk {
-  text: string;
-  timestamp: [number, number | null];
-}
-
-export interface TranscriptionResult {
-  chunks?: TranscriptChunk[];
-  text: string;
-}
+import type { TranscriptionResult } from '@/components/transcript/transcript-display';
 
 export interface DownloadProgress {
   file?: string;

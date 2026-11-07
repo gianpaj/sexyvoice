@@ -21,10 +21,11 @@ import {
   DEFAULT_SESSION_CONFIG,
   newCharacterDraft,
 } from '@/lib/calls/characters';
+import { formatClock } from '@/lib/clock';
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
-import { formatCallTime, inRoom, useCallSession } from './call-session';
+import { inRoom, useCallSession } from './call-session';
 import { useCallSetup } from './call-setup';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
@@ -216,7 +217,7 @@ function CallExperienceScreens({
       <CallEndedView
         character={endedCharacter}
         connecting={connectingId === endedCharacter.id}
-        duration={formatCallTime(ended.seconds)}
+        duration={formatClock(ended.seconds, { padMinutes: true })}
         onBack={dismiss}
         onCallAgain={() => startCall(endedCharacter.id)}
         onEdit={() =>

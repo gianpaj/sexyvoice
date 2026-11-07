@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePersistentMediaDevice } from '@/hooks/use-persistent-media-device';
 import type { Character } from '@/lib/calls/characters';
-import { formatCallTime, useCallElapsed, useCallSession } from './call-session';
+import { formatClock } from '@/lib/clock';
+import { useCallElapsed, useCallSession } from './call-session';
 import { CharacterAvatar } from './character-avatar';
 import {
   enableKrispNoiseFilterIfReady,
@@ -137,7 +138,7 @@ export function InCallView({ character }: { character: Character }) {
         {status}
       </p>
       <p className="text-[15px] text-slate-400 tabular-nums">
-        {formatCallTime(elapsed)}
+        {formatClock(elapsed, { padMinutes: true })}
       </p>
       <div className="mt-4 flex gap-5">
         <button

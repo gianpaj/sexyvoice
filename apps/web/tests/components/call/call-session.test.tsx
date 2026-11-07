@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CallSessionProvider,
-  formatCallTime,
   useCallElapsed,
   useCallSession,
 } from '@/components/call/call-session';
@@ -134,7 +133,7 @@ describe('call timer', () => {
 
     agent(true, 'speaking');
     act(() => vi.advanceTimersByTime(3000));
-    expect(formatCallTime(elapsed)).toBe('00:03');
+    expect(elapsed).toBe(3);
   });
 
   it('keeps counting while the agent restarts and records the call length', async () => {
@@ -143,7 +142,7 @@ describe('call timer', () => {
     act(() => vi.advanceTimersByTime(2000));
     agent(true, 'initializing');
     act(() => vi.advanceTimersByTime(2000));
-    expect(formatCallTime(elapsed)).toBe('00:04');
+    expect(elapsed).toBe(4);
 
     act(() => call.disconnect());
 
@@ -154,10 +153,6 @@ describe('call timer', () => {
     });
     expect(mocks.toastError).not.toHaveBeenCalled();
     expect(mocks.toastInfo).not.toHaveBeenCalled();
-  });
-
-  it('formats an hour-long call', () => {
-    expect(formatCallTime(3725)).toBe('01:02:05');
   });
 });
 

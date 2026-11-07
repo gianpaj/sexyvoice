@@ -5,13 +5,13 @@ import ReactDOM from 'react-dom';
 
 import { CardDecorator } from '@/components/card-decorator';
 import { DemoCallSection } from '@/components/demo-call/demo-call-section';
+import { DEMO_CHARACTERS } from '@/components/demo-call/demo-characters';
 import { FAQComponent } from '@/components/faq';
 import HeroWaveform from '@/components/hero-waveform';
 import { MarketingPage } from '@/components/marketing-page';
 import { CtaSection, HeroTitle } from '@/components/marketing-sections';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { demoCallData } from '@/data/demo-transcripts';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { Link } from '@/lib/i18n/navigation';
 import { pageMetadata } from '@/lib/page-metadata';
@@ -39,7 +39,7 @@ export default async function LandingPage(props: Props) {
   // Ramona is the character selected by default. `crossOrigin` must match the
   // `<audio crossOrigin="anonymous">` the player creates, or the browser keys
   // the preload separately and downloads the clip twice.
-  ReactDOM.preload(demoCallData.ramona.audioSrc, {
+  ReactDOM.preload(DEMO_CHARACTERS[0].audioSrc, {
     as: 'audio',
     crossOrigin: 'anonymous',
   });

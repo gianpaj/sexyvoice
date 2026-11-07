@@ -23,6 +23,7 @@ import {
   getDemoCloneSpeaker,
   resolveInitialDemoLanguageCode,
 } from '@/data/demo-clone';
+import { formatClock } from '@/lib/clock';
 import { RTL_CLONE_LOCALE_CODES } from '@/lib/clone/constants';
 import { Link } from '@/lib/i18n/navigation';
 import { attemptPlayback } from '@/lib/media-playback';
@@ -38,9 +39,6 @@ interface DemoClonePlayerProps {
 }
 
 type Playback = 'idle' | 'loading' | 'playing' | 'error';
-
-const formatTime = (seconds: number) =>
-  `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
 export function DemoClonePlayer({
   initialSpeakerId,
@@ -307,7 +305,7 @@ export function DemoClonePlayer({
                 </p>
               </div>
               <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
-                {formatTime(currentTime)} / {formatTime(clip.durationSeconds)}
+                {formatClock(currentTime)} / {formatClock(clip.durationSeconds)}
               </span>
             </div>
             <div className="flex items-center gap-3">

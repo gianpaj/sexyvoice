@@ -5,20 +5,25 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { formatClock } from '@/lib/clock';
 import { cn } from '@/lib/utils';
-import type { TranscriptionResult } from '../hooks/use-transcriber';
+
+/** A timed part of a transcript; `null` ends at the end of the audio. */
+export interface TranscriptChunk {
+  text: string;
+  timestamp: [number, number | null];
+}
+
+export interface TranscriptionResult {
+  chunks?: TranscriptChunk[];
+  text: string;
+}
 
 interface Props {
   allowCopy?: boolean;
   currentTime?: number | null;
   partialTranscript?: string;
   transcript: TranscriptionResult | null;
-}
-
-function formatTimestamp(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 function findActiveChunkIndex(
@@ -120,7 +125,7 @@ export function TranscriptDisplay({
                       isActive ? 'text-primary' : 'text-muted-foreground/60',
                     )}
                   >
-                    {formatTimestamp(chunk.timestamp[0])}
+                    {formatClock(chunk.timestamp[0])}
                   </span>
                   <p
                     className={cn(

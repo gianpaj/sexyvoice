@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
 import { AudioPlayer } from '@/components/audio-player';
+import { TranscriptDisplay } from '@/components/transcript/transcript-display';
 import { Button } from '@/components/ui/button';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { AudioInput } from './components/audio-input';
@@ -12,7 +13,6 @@ import { LanguageSelector } from './components/language-selector';
 import { ModelSelector } from './components/model-selector';
 import { WHISPER_MODELS } from './components/models';
 import { ProgressDisplay } from './components/progress-display';
-import { TranscriptDisplay } from './components/transcript-display';
 import { useTranscriber } from './hooks/use-transcriber';
 import './transcribe.css';
 

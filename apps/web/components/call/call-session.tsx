@@ -381,14 +381,3 @@ export function useCallElapsed(): number {
 
   return startedAt !== null && tick.startedAt === startedAt ? tick.seconds : 0;
 }
-
-/** MM:SS, or HH:MM:SS from one hour. */
-export function formatCallTime(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const pad = (value: number) => value.toString().padStart(2, '0');
-  return hours > 0
-    ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-    : `${pad(minutes)}:${pad(seconds)}`;
-}
