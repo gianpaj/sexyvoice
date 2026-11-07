@@ -14,8 +14,10 @@ const REPOSITORY_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const DEFAULT_ENV_FILES = [
   'scripts/.env.local',
   'apps/web/.env.local',
+  '.env.local',
   'scripts/.env',
   'apps/web/.env',
+  '.env',
 ].map((file) => path.join(REPOSITORY_ROOT, file));
 
 /** Resolve a path argument from the directory the command was run in. */

@@ -18,8 +18,9 @@ them. Relative paths in arguments resolve from the directory you run `pnpm`
 in.
 
 Commands read env files from fixed locations, highest precedence first:
-`scripts/.env.local`, `apps/web/.env.local`, `scripts/.env`, then
-`apps/web/.env`. The first file that sets a variable wins, and a variable set
+`scripts/.env.local`, `apps/web/.env.local`, the repository root `.env.local`,
+`scripts/.env`, `apps/web/.env`, then the root `.env`. The first file that
+sets a variable wins, and a variable set
 in the shell beats every file. A command that takes `--env-file` reads only the
 files you name, and a missing file is an error.
 

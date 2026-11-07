@@ -84,8 +84,10 @@ test('reads local env files before shared ones', () => {
   assert.deepEqual(relative, [
     'scripts/.env.local',
     'apps/web/.env.local',
+    '.env.local',
     'scripts/.env',
     'apps/web/.env',
+    '.env',
   ]);
 });
 

@@ -12,7 +12,9 @@ call-analysis queue logic and the R2 folder layout live in the web app.
 - `lib/cli.mts` owns env loading, argument parsing, path arguments and the
   entry point.
   - Env files load from fixed paths: `scripts/.env.local`,
-    `apps/web/.env.local`, `scripts/.env`, `apps/web/.env`. The first value
+    `apps/web/.env.local`, the root `.env.local`, `scripts/.env`,
+    `apps/web/.env`, the root `.env`. The root files are included because
+    some checkouts keep their env there. The first value
     wins and the shell beats every file. `--env-file` loads only the named
     files and fails on a missing one, so a typo cannot fall back to another
     environment.
