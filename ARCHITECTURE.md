@@ -881,15 +881,16 @@ refill rate of 60 requests per minute per API key hash.
   logo and social links. `lib/structured-data.ts` builds JSON-LD from it, with
   one Organization node that other nodes reference by `@id`.
 - `lib/page-metadata.ts` builds each page's metadata: canonical URL, hreflang
-  for every locale plus `x-default`, the title template and the share image.
-  The root layout holds only site-wide defaults.
+  for the locales the page exists in plus `x-default`, the title template and
+  the share image. The root layout holds only site-wide defaults.
 - `components/marketing-page.tsx` renders the public shell (banner, header,
   `<main id="main-content">`, footer). Tool pages and shared hero and CTA
   sections build on it.
 - `lib/content.ts` reads posts and policies. Drafts never build a page or reach
-  the sitemap.
-- `lib/public-routes.ts` lists the public pages the sitemap publishes, each
-  with its translations.
+  the sitemap. Policies are written in English and Spanish; other locales show
+  the English text, with the English page as canonical.
+- `lib/public-routes.ts` lists the pages that exist in every locale. The
+  sitemap adds posts and policies in the locales they are written in.
 - `lib/landing-content.ts` feeds the landing page, its FAQ JSON-LD and
   `/landing.md` from one model; `lib/markdown-for-agents.ts` renders the agent
   markdown for pages and posts.
