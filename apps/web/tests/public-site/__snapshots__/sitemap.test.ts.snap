@@ -44,19 +44,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "de": "https://sexyvoice.ai/de/privacy-policy",
-        "en": "https://sexyvoice.ai/en/privacy-policy",
-        "es": "https://sexyvoice.ai/es/privacy-policy",
-        "fr": "https://sexyvoice.ai/fr/privacy-policy",
-        "it": "https://sexyvoice.ai/it/privacy-policy",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/da/privacy-policy",
-  },
-  {
-    "alternates": {
-      "languages": {
         "de": "https://sexyvoice.ai/de/signup",
         "en": "https://sexyvoice.ai/en/signup",
         "es": "https://sexyvoice.ai/es/signup",
@@ -66,19 +53,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/da/signup",
-  },
-  {
-    "alternates": {
-      "languages": {
-        "de": "https://sexyvoice.ai/de/terms",
-        "en": "https://sexyvoice.ai/en/terms",
-        "es": "https://sexyvoice.ai/es/terms",
-        "fr": "https://sexyvoice.ai/fr/terms",
-        "it": "https://sexyvoice.ai/it/terms",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/da/terms",
   },
   {
     "alternates": {
@@ -192,19 +166,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/privacy-policy",
-        "en": "https://sexyvoice.ai/en/privacy-policy",
-        "es": "https://sexyvoice.ai/es/privacy-policy",
-        "fr": "https://sexyvoice.ai/fr/privacy-policy",
-        "it": "https://sexyvoice.ai/it/privacy-policy",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/de/privacy-policy",
-  },
-  {
-    "alternates": {
-      "languages": {
         "da": "https://sexyvoice.ai/da/signup",
         "en": "https://sexyvoice.ai/en/signup",
         "es": "https://sexyvoice.ai/es/signup",
@@ -214,19 +175,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/de/signup",
-  },
-  {
-    "alternates": {
-      "languages": {
-        "da": "https://sexyvoice.ai/da/terms",
-        "en": "https://sexyvoice.ai/en/terms",
-        "es": "https://sexyvoice.ai/es/terms",
-        "fr": "https://sexyvoice.ai/fr/terms",
-        "it": "https://sexyvoice.ai/it/terms",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/de/terms",
   },
   {
     "alternates": {
@@ -363,11 +311,7 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/privacy-policy",
-        "de": "https://sexyvoice.ai/de/privacy-policy",
         "es": "https://sexyvoice.ai/es/privacy-policy",
-        "fr": "https://sexyvoice.ai/fr/privacy-policy",
-        "it": "https://sexyvoice.ai/it/privacy-policy",
       },
     },
     "priority": 0.3,
@@ -389,11 +333,7 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/terms",
-        "de": "https://sexyvoice.ai/de/terms",
         "es": "https://sexyvoice.ai/es/terms",
-        "fr": "https://sexyvoice.ai/fr/terms",
-        "it": "https://sexyvoice.ai/it/terms",
       },
     },
     "priority": 0.3,
@@ -511,11 +451,7 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/privacy-policy",
-        "de": "https://sexyvoice.ai/de/privacy-policy",
         "en": "https://sexyvoice.ai/en/privacy-policy",
-        "fr": "https://sexyvoice.ai/fr/privacy-policy",
-        "it": "https://sexyvoice.ai/it/privacy-policy",
       },
     },
     "priority": 0.3,
@@ -537,11 +473,7 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/terms",
-        "de": "https://sexyvoice.ai/de/terms",
         "en": "https://sexyvoice.ai/en/terms",
-        "fr": "https://sexyvoice.ai/fr/terms",
-        "it": "https://sexyvoice.ai/it/terms",
       },
     },
     "priority": 0.3,
@@ -654,19 +586,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/privacy-policy",
-        "de": "https://sexyvoice.ai/de/privacy-policy",
-        "en": "https://sexyvoice.ai/en/privacy-policy",
-        "es": "https://sexyvoice.ai/es/privacy-policy",
-        "it": "https://sexyvoice.ai/it/privacy-policy",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/fr/privacy-policy",
-  },
-  {
-    "alternates": {
-      "languages": {
         "da": "https://sexyvoice.ai/da/signup",
         "de": "https://sexyvoice.ai/de/signup",
         "en": "https://sexyvoice.ai/en/signup",
@@ -676,19 +595,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/fr/signup",
-  },
-  {
-    "alternates": {
-      "languages": {
-        "da": "https://sexyvoice.ai/da/terms",
-        "de": "https://sexyvoice.ai/de/terms",
-        "en": "https://sexyvoice.ai/en/terms",
-        "es": "https://sexyvoice.ai/es/terms",
-        "it": "https://sexyvoice.ai/it/terms",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/fr/terms",
   },
   {
     "alternates": {
@@ -797,19 +703,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
   {
     "alternates": {
       "languages": {
-        "da": "https://sexyvoice.ai/da/privacy-policy",
-        "de": "https://sexyvoice.ai/de/privacy-policy",
-        "en": "https://sexyvoice.ai/en/privacy-policy",
-        "es": "https://sexyvoice.ai/es/privacy-policy",
-        "fr": "https://sexyvoice.ai/fr/privacy-policy",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/it/privacy-policy",
-  },
-  {
-    "alternates": {
-      "languages": {
         "da": "https://sexyvoice.ai/da/signup",
         "de": "https://sexyvoice.ai/de/signup",
         "en": "https://sexyvoice.ai/en/signup",
@@ -819,19 +712,6 @@ exports[`sitemap > lists the public pages and posts of every locale 1`] = `
     },
     "priority": 0.4,
     "url": "https://sexyvoice.ai/it/signup",
-  },
-  {
-    "alternates": {
-      "languages": {
-        "da": "https://sexyvoice.ai/da/terms",
-        "de": "https://sexyvoice.ai/de/terms",
-        "en": "https://sexyvoice.ai/en/terms",
-        "es": "https://sexyvoice.ai/es/terms",
-        "fr": "https://sexyvoice.ai/fr/terms",
-      },
-    },
-    "priority": 0.3,
-    "url": "https://sexyvoice.ai/it/terms",
   },
   {
     "alternates": {

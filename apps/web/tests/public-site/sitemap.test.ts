@@ -26,4 +26,20 @@ describe('sitemap', () => {
     }
     expect([...entries.keys()].filter((url) => url.includes('['))).toEqual([]);
   });
+
+  it('lists each policy only in the locales it is written in', () => {
+    const policies = sitemap()
+      .filter(({ url }) => /\/(privacy-policy|terms)$/.test(url))
+      .map(({ alternates, url }) => [
+        url,
+        Object.keys(alternates?.languages ?? {}),
+      ]);
+
+    expect(policies).toEqual([
+      ['https://sexyvoice.ai/en/privacy-policy', ['es']],
+      ['https://sexyvoice.ai/en/terms', ['es']],
+      ['https://sexyvoice.ai/es/privacy-policy', ['en']],
+      ['https://sexyvoice.ai/es/terms', ['en']],
+    ]);
+  });
 });

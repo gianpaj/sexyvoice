@@ -1,8 +1,18 @@
 import type { MetadataRoute } from 'next';
 
-import { listPosts, postLocales, postPath } from '@/lib/content';
+import {
+  listPolicies,
+  listPosts,
+  policyLocales,
+  postLocales,
+  postPath,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
-import { POST_PRIORITY, PUBLIC_PAGES } from '@/lib/public-routes';
+import {
+  POLICY_PRIORITY,
+  POST_PRIORITY,
+  PUBLIC_PAGES,
+} from '@/lib/public-routes';
 import { localeUrl } from '@/lib/site';
 import { routing } from '@/src/i18n/routing';
 
@@ -32,6 +42,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(post.date).toISOString(),
       priority: POST_PRIORITY,
       url: localeUrl(lang, postPath(post)),
+    })),
+    ...listPolicies(lang).map((policy) => ({
+      alternates: alternates(
+        lang,
+        `/${policy.slug}`,
+        policyLocales(policy.slug),
+      ),
+      priority: POLICY_PRIORITY,
+      url: localeUrl(lang, `/${policy.slug}`),
     })),
   ]);
 }

@@ -4,7 +4,12 @@ import { getTranslations } from 'next-intl/server';
 
 import { MarketingPage } from '@/components/marketing-page';
 import { Mdx } from '@/components/mdx-components';
-import { getPolicy, isPolicySlug, POLICY_SLUGS } from '@/lib/content';
+import {
+  getPolicy,
+  isPolicySlug,
+  POLICY_SLUGS,
+  policyLocales,
+} from '@/lib/content';
 import type { Locale } from '@/lib/i18n/i18n-config';
 import { pageMetadata } from '@/lib/page-metadata';
 import { routing } from '@/src/i18n/routing';
@@ -34,10 +39,13 @@ export const generateStaticParams = () =>
   );
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { lang, policy, policySlug } = await policyFromParams(props);
+  const { policy, policySlug } = await policyFromParams(props);
+  // An untranslated policy shows the English text, so its canonical URL is
+  // the English page, as in its agent markdown.
   return pageMetadata({
     description: policy.description ?? '',
-    lang,
+    lang: policy.locale as Locale,
+    locales: policyLocales(policySlug),
     path: `/${policySlug}`,
     title: policy.title,
   });

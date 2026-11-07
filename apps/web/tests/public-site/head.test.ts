@@ -53,7 +53,15 @@ describe('blog post head', () => {
 
 describe('head rules', () => {
   // Utility pages without their own metadata keep the layout defaults.
-  const { cliLogin, resetPassword, wrapped, ...localizedRoutes } = publicRoutes;
+  // Policies exist only in the locales they are written in.
+  const {
+    cliLogin,
+    privacyPolicy,
+    resetPassword,
+    terms,
+    wrapped,
+    ...localizedRoutes
+  } = publicRoutes;
 
   describe.each(Object.entries(localizedRoutes))('%s', (_name, route) => {
     it.each(routing.locales)(
@@ -98,6 +106,25 @@ describe('head rules', () => {
       },
     );
   });
+
+  it.each([
+    ['en', 'en'],
+    ['es', 'es'],
+    ['de', 'en'],
+  ] as const)(
+    'links the %s privacy policy only to its translations',
+    async (lang, textLocale) => {
+      const tags = await renderHead(publicRoutes.privacyPolicy, lang);
+      const url = (locale: string) => `${SITE}/${locale}/privacy-policy`;
+
+      expect(attribute(tags, /rel="canonical"/, 'href')).toBe(url(textLocale));
+      expect(alternates(tags)).toEqual({
+        en: url('en'),
+        es: url('es'),
+        'x-default': url('en'),
+      });
+    },
+  );
 
   it('links a post only to its translations', async () => {
     const tags = await renderHead(blogPostRoute('voice-ai-glossary'), 'en');

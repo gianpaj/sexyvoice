@@ -65,6 +65,18 @@ export function isPolicySlug(value: string): value is PolicySlug {
   return (POLICY_SLUGS as readonly string[]).includes(value);
 }
 
+/** The policies written in `locale`; other locales show the English text. */
+export function listPolicies(locale: Locale): PolicyPage[] {
+  return allPolicyPages.filter((policy) => policy.locale === locale);
+}
+
+/** The locales with a translation of the policy. */
+export function policyLocales(slug: string): Locale[] {
+  return routing.locales.filter((locale) =>
+    listPolicies(locale).some((policy) => policy.slug === slug),
+  );
+}
+
 /** The policy in one locale, or the English original when untranslated. */
 export function getPolicy(
   locale: Locale,
