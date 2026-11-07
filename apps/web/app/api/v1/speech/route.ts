@@ -59,7 +59,11 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
-import { generateXaiTts, normalizeXaiTtsCodec } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  isTransientXaiTtsFailure,
+  normalizeXaiTtsCodec,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -749,7 +753,7 @@ export async function POST(request: Request) {
           voiceId: voice,
         });
       } catch (error) {
-        if (isTransientProviderFailure(error)) {
+        if (isTransientXaiTtsFailure(error)) {
           return respondWithProviderUnavailable(
             'xai_provider_unavailable',
             error,

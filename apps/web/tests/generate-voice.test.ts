@@ -896,59 +896,77 @@ describe('Generate Voice API Route', () => {
       );
     });
 
-    it('returns 503 without Sentry capture when xAI TTS is unavailable', async () => {
-      const { restoreCredits } = await import('@/lib/supabase/queries');
-      server.use(
-        http.post('https://api.x.ai/v1/tts', () =>
-          HttpResponse.json(
-            { error: 'provider failure' },
-            {
-              status: 500,
-            },
-          ),
-        ),
-      );
+    it.each(['upstream 5xx', 'headers timeout'])(
+      'returns 503 without Sentry capture when xAI TTS is unavailable (%s)',
+      async (failure) => {
+        const { restoreCredits } = await import('@/lib/supabase/queries');
+        const fetchSpy = vi.spyOn(globalThis, 'fetch');
+        if (failure === 'headers timeout') {
+          fetchSpy.mockRejectedValueOnce(
+            new TypeError('fetch failed', {
+              cause: Object.assign(new Error('Headers Timeout Error'), {
+                code: 'UND_ERR_HEADERS_TIMEOUT',
+              }),
+            }),
+          );
+        } else {
+          server.use(
+            http.post('https://api.x.ai/v1/tts', () =>
+              HttpResponse.json(
+                { error: 'provider failure' },
+                {
+                  status: 500,
+                },
+              ),
+            ),
+          );
+        }
 
-      const request = new Request('http://localhost/api/generate-voice', {
-        body: JSON.stringify({
-          text: 'Hello world',
-          voiceId: 'voice-eve-id',
-        }),
-        headers: {
-          'content-type': 'application/json',
-        },
-        method: 'POST',
-      });
-
-      const response = await POST(request);
-      const json = await response.json();
-
-      expect(response.status).toBe(503);
-      expect(json.error).toBe('Grok is temporarily unavailable. Please retry.');
-      expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
-      expect(json.details).toEqual({ provider: 'Grok' });
-      expect(restoreCredits).toHaveBeenCalledOnce();
-      expect(restoreCredits).toHaveBeenCalledWith({
-        amount: expect.any(Number),
-        userId: 'test-user-id',
-      });
-      expect(Sentry.captureException).not.toHaveBeenCalled();
-      expect(Sentry.logger.warn).toHaveBeenCalledWith(
-        'Grok TTS provider unavailable',
-        expect.objectContaining({
-          extra: expect.objectContaining({
-            model: 'xai',
-            voice: 'eve',
+        const request = new Request('http://localhost/api/generate-voice', {
+          body: JSON.stringify({
+            text: 'Hello world',
+            voiceId: 'voice-eve-id',
           }),
-        }),
-      );
-      expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          extra: expect.objectContaining({ text: expect.anything() }),
-        }),
-      );
-    });
+          headers: {
+            'content-type': 'application/json',
+          },
+          method: 'POST',
+        });
+
+        const response = await POST(request).finally(() => {
+          fetchSpy.mockRestore();
+        });
+        const json = await response.json();
+
+        expect(response.status).toBe(503);
+        expect(json.error).toBe(
+          'Grok is temporarily unavailable. Please retry.',
+        );
+        expect(json.errorCode).toBe('PROVIDER_UNAVAILABLE');
+        expect(json.details).toEqual({ provider: 'Grok' });
+        expect(restoreCredits).toHaveBeenCalledOnce();
+        expect(restoreCredits).toHaveBeenCalledWith({
+          amount: expect.any(Number),
+          userId: 'test-user-id',
+        });
+        expect(Sentry.captureException).not.toHaveBeenCalled();
+        expect(Sentry.logger.warn).toHaveBeenCalledWith(
+          'Grok TTS provider unavailable',
+          expect.objectContaining({
+            extra: expect.objectContaining({
+              model: 'xai',
+              voice: 'eve',
+            }),
+          }),
+        );
+        expect(Sentry.logger.warn).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            extra: expect.objectContaining({ text: expect.anything() }),
+          }),
+        );
+      },
+    );
 
     it('keeps Grok R2 failures on the platform error path', async () => {
       const { restoreCredits } = await import('@/lib/supabase/queries');

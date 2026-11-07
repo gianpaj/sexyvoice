@@ -1,3 +1,20 @@
+import { isTransientProviderFailure } from '@/lib/provider-errors';
+
+export function isTransientXaiTtsFailure(error: unknown): boolean {
+  if (error instanceof TypeError) {
+    const cause: unknown = error.cause;
+    if (
+      Error.isError(cause) &&
+      'code' in cause &&
+      cause.code === 'UND_ERR_HEADERS_TIMEOUT'
+    ) {
+      return true;
+    }
+  }
+
+  return isTransientProviderFailure(error);
+}
+
 export type XaiTtsCodec = 'mp3' | 'wav';
 
 export interface GenerateXaiTtsInput {

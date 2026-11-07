@@ -56,7 +56,11 @@ import {
   classifyGeminiTtsResponse,
   geminiOutcomeToErrorCode,
 } from '@/lib/tts/gemini-response';
-import { generateXaiTts, normalizeXaiTtsSpeed } from '@/lib/tts/xai';
+import {
+  generateXaiTts,
+  isTransientXaiTtsFailure,
+  normalizeXaiTtsSpeed,
+} from '@/lib/tts/xai';
 import {
   calculateCreditsFromTokens,
   ERROR_CODES,
@@ -913,7 +917,7 @@ export async function POST(request: Request) {
           voiceId: voiceObj.name,
         });
       } catch (error) {
-        if (isTransientProviderFailure(error)) {
+        if (isTransientXaiTtsFailure(error)) {
           logger.warn('Grok TTS provider unavailable', {
             extra: {
               codec: outputCodec,
