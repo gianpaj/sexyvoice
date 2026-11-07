@@ -78,7 +78,7 @@ vi.mock(
   }),
 );
 
-vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
+vi.mock('@/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({
     convert: vi.fn(),
     ensureLoaded: mockEnsureLoaded,

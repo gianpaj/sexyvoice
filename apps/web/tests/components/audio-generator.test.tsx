@@ -43,7 +43,7 @@ vi.mock('@ai-sdk/react', () => ({
   }),
 }));
 
-vi.mock('@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner', () => ({
+vi.mock('@/hooks/use-ffmpeg-joiner', () => ({
   useFFmpegJoiner: () => ({
     cancel: vi.fn(),
     error: null,

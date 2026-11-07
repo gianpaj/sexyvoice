@@ -4,7 +4,6 @@ import { Check, Mic, Play, Square, Upload, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 
-import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { MicrophoneVisualizer } from '@/components/audio/microphone-visualizer';
 import {
   Dialog,
@@ -12,6 +11,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useFFmpeg } from '@/hooks/use-ffmpeg';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { useSamplePlayer } from '@/hooks/use-sample-player';
 import { type SavedCallVoice, savedVoiceSampleUrl } from '@/lib/call-voices';

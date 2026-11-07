@@ -5,21 +5,21 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { useFFmpeg } from '@/hooks/use-ffmpeg';
+import type { AudioOutputFormat } from '@/lib/ffmpeg';
 import { ConvertButton } from './components/convert-button';
 import { DownloadSection } from './components/download-section';
 import { DropZone } from './components/drop-zone';
 import { FileInfo } from './components/file-info';
 import { FormatSelector } from './components/format-selector';
-import { useFFmpeg } from './hooks/use-ffmpeg';
 import './audio-converter.css';
 
-type AudioFormat = 'mp3' | 'wav' | 'ogg' | 'aac' | 'flac' | 'm4a' | 'mp4';
 type ConversionState = 'idle' | 'converting' | 'complete';
 
 export default function AudioConverterClient() {
   const t = useTranslations('audioConverter');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [outputFormat, setOutputFormat] = useState<AudioFormat>('mp3');
+  const [outputFormat, setOutputFormat] = useState<AudioOutputFormat>('mp3');
   const [conversionState, setConversionState] =
     useState<ConversionState>('idle');
   const [progress, setProgress] = useState(0);

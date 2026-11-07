@@ -2,11 +2,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  cloneStateReducer,
-  initialCloneState,
-} from '@/app/[lang]/(dashboard)/dashboard/clone/clone-state';
-import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
+import { useFFmpeg } from '@/hooks/use-ffmpeg';
 
 const ffmpegMocks = vi.hoisted(() => {
   const instances: unknown[] = [];
@@ -17,8 +13,9 @@ const ffmpegMocks = vi.hoisted(() => {
     deleteFile = vi.fn();
     exec = vi.fn();
     load = load;
+    off = vi.fn();
     on = vi.fn();
-    readFile = vi.fn();
+    readFile = vi.fn(async () => new Uint8Array([1, 2, 3]));
     writeFile = vi.fn();
 
     constructor() {
@@ -80,8 +77,8 @@ describe('useFFmpeg', () => {
     );
 
     const { result } = renderHook(() => useFFmpeg({ lazyLoad: true }));
-    let firstLoad!: Promise<void>;
-    let secondLoad!: Promise<void>;
+    let firstLoad!: Promise<unknown>;
+    let secondLoad!: Promise<unknown>;
 
     act(() => {
       firstLoad = result.current.ensureLoaded();
@@ -101,25 +98,24 @@ describe('useFFmpeg', () => {
     expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
   });
-});
 
-describe('cloneStateReducer', () => {
-  it('preserves state identity for no-op patches', () => {
-    const nextState = cloneStateReducer(initialCloneState, {
-      patch: { ffmpegError: null },
-      type: 'patch',
+  it('removes its progress listener after each conversion', async () => {
+    ffmpegMocks.load.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useFFmpeg({ lazyLoad: true }));
+
+    let audio!: Blob;
+    await act(async () => {
+      audio = await result.current.convert(new Blob(['take']), 'wav');
     });
 
-    expect(nextState).toBe(initialCloneState);
-  });
-
-  it('returns a new state for changed patches', () => {
-    const nextState = cloneStateReducer(initialCloneState, {
-      patch: { text: 'hello' },
-      type: 'patch',
-    });
-
-    expect(nextState).not.toBe(initialCloneState);
-    expect(nextState.text).toBe('hello');
+    const [instance] = ffmpegMocks.instances as InstanceType<
+      typeof ffmpegMocks.FFmpegMock
+    >[];
+    const handler = instance.on.mock.calls.find(
+      ([event]) => event === 'progress',
+    )?.[1];
+    expect(handler).toBeTypeOf('function');
+    expect(instance.off).toHaveBeenCalledWith('progress', handler);
+    expect(audio.type).toBe('audio/wav');
   });
 });

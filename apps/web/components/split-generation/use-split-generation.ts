@@ -5,11 +5,11 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ttsTagProvider } from '@/components/speech-tags/catalog';
 import {
   type JoinerSegmentInput,
   useFFmpegJoiner,
-} from '@/app/[lang]/tools/audio-joiner/hooks/use-ffmpeg-joiner';
-import { ttsTagProvider } from '@/components/speech-tags/catalog';
+} from '@/hooks/use-ffmpeg-joiner';
 import { downloadBlob } from '@/lib/download';
 import { randomSeed } from '@/lib/tts/generation-input';
 import {

@@ -13,7 +13,6 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
-import { useFFmpeg } from '@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg';
 import { AudioPlayerWithContext } from '@/components/audio-player-with-context';
 import { AudioProvider } from '@/components/audio-provider';
 import { SavedCallVoices } from '@/components/call/voice-picker';
@@ -27,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UpgradeCrown } from '@/components/upgrade-crown';
 import { type CloneDemoTakeId, getDemoCloneSelection } from '@/data/demo-clone';
+import { useFFmpeg } from '@/hooks/use-ffmpeg';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import useMediaRecorder from '@/hooks/use-media-recorder';
 import { SamplePlayerProvider } from '@/hooks/use-sample-player';

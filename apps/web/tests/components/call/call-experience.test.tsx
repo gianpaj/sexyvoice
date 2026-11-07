@@ -71,7 +71,7 @@ vi.mock('next/image', () => ({
   ),
 }));
 vi.mock('sonner', () => ({ toast: toastMock }));
-vi.mock('@/app/[lang]/tools/audio-converter/hooks/use-ffmpeg', () => ({
+vi.mock('@/hooks/use-ffmpeg', () => ({
   useFFmpeg: () => ({ convert: vi.fn(), ensureLoaded: vi.fn() }),
 }));
 vi.mock('@/lib/i18n/navigation', () => ({
