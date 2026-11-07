@@ -73,8 +73,8 @@ vi.mock('@/hooks/use-playground-state', () => ({
     ({ children }: { children: ReactNode }) => children,
   ),
 }));
-vi.mock('@/hooks/use-connection', () => ({
-  ConnectionProvider: ({ children }: { children: ReactNode }) => children,
+vi.mock('@/components/call/call-session', () => ({
+  CallSessionProvider: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock('@/components/ui/tooltip', () => ({
   TooltipProvider: ({ children }: { children: ReactNode }) => children,
@@ -295,6 +295,27 @@ describe('call E2E data', () => {
       language: 'de',
       selectedPresetId: E2E_PUBLIC_CALL_CHARACTERS[0].id,
     });
+  });
+
+  it.each([
+    [E2E_PUBLIC_CALL_CHARACTERS[1].id, E2E_PUBLIC_CALL_CHARACTERS[1].id],
+    ['1c9a4f3e-0000-4000-8000-000000000001', null],
+    [[E2E_PUBLIC_CALL_CHARACTERS[1].id, 'other'], null],
+  ])('resolves the link ?preset=%s on the server', async (preset, linked) => {
+    renderToStaticMarkup(
+      await CallPage({
+        params: params(),
+        searchParams: Promise.resolve({ preset }),
+      }),
+    );
+
+    expect(providerProps().linkedCharacterId).toBe(linked);
+    expect(providerProps().initialState?.selectedPresetId).toBe(
+      linked ?? E2E_PUBLIC_CALL_CHARACTERS[0].id,
+    );
+    expect(vi.mocked(CallExperience).mock.lastCall?.[0].linkedCharacterId).toBe(
+      linked,
+    );
   });
 
   it('hands a return from the Clone page to the experience', async () => {

@@ -32,15 +32,22 @@ const savedCharacter = makeCharacter({
   sessionConfig: { ...DEFAULT_SESSION_CONFIG, voice: 'Rex' },
 });
 
-// Mirrors the wiring in app/[lang]/(dashboard)/dashboard/call/page.tsx, which
-// seeds the first public character as the initial selection.
-function makeWrapper(initialCustomCharacters: Character[]) {
+// Mirrors the wiring in app/[lang]/(dashboard)/dashboard/call/page.tsx: the
+// page resolves a `?preset=` link to a loaded character, which is selected;
+// otherwise the first public character is.
+function makeWrapper(
+  initialCustomCharacters: Character[],
+  linkedCharacterId: string | null = null,
+) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <PlaygroundStateProvider
         defaultPresets={defaultPresets}
         initialCustomCharacters={initialCustomCharacters}
-        initialState={{ selectedPresetId: publicCharacter.id }}
+        initialState={{
+          selectedPresetId: linkedCharacterId ?? publicCharacter.id,
+        }}
+        linkedCharacterId={linkedCharacterId}
       >
         {children}
       </PlaygroundStateProvider>
@@ -87,7 +94,7 @@ describe('usePlaygroundState — preset URL', () => {
     window.history.replaceState({}, '', `/en/dashboard/call${search}`);
 
     const { result } = renderHook(() => usePlaygroundState(), {
-      wrapper: makeWrapper([savedCharacter]),
+      wrapper: makeWrapper([savedCharacter], savedCharacter.id),
     });
 
     expect(result.current.pgState.customCharacters).toEqual([savedCharacter]);
@@ -119,7 +126,7 @@ describe('usePlaygroundState — preset URL', () => {
     );
 
     const { result } = renderHook(() => usePlaygroundState(), {
-      wrapper: makeWrapper([savedCharacter]),
+      wrapper: makeWrapper([savedCharacter], savedCharacter.id),
     });
 
     expect(window.location.search).toBe(
@@ -141,7 +148,7 @@ describe('usePlaygroundState — preset URL', () => {
     );
 
     renderHook(() => usePlaygroundState(), {
-      wrapper: makeWrapper([savedCharacter]),
+      wrapper: makeWrapper([savedCharacter], savedCharacter.id),
     });
 
     expect(window.history.state).toEqual({ __NA: true });

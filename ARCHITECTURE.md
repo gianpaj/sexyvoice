@@ -459,15 +459,27 @@ The token route accepts 20 call languages. It requires at least 1,000 credits;
 free users also have a five-minute lifetime call allowance. The current billed
 rate is 1,000 credits per minute.
 
-The call-token request has a 30-second deadline covering the response body;
-expiry aborts the request, shows a localized error, and releases the call button.
-The browser allows another 30 seconds for the initial LiveKit connection, including
-regional retries, after the call token is available. Connecting to the room
-clears the deadline. A deadline expiry or terminal connection error disconnects
-the room, shows a localized message, and resets the call controls so the user can
-try again with a fresh token. An unexpected disconnect after connection also
-resets the controls and refreshes credits; an intentional hangup does not show a
-connection error.
+`CallSessionProvider` (`components/call/call-session.tsx`) owns one call at a
+time: requesting a token, connecting to the room, connected, and the last
+ended call. LiveKit's room callbacks and the agent's presence and state, reported
+from inside the room, feed it, and the views render its state. It owns three
+deadlines. The call-token request has 30 seconds, covering the response body;
+expiry aborts the request, shows a localized error, and releases the call
+button. The initial LiveKit connection, including regional retries, has
+another 30 seconds once the token is available; connecting to the room clears
+it. A connected call ends when the agent does not join, or leaves and does not
+come back, within 10 seconds. A deadline expiry or terminal connection error
+disconnects the room, shows a localized message, and resets the call controls
+so the user can try again with a fresh token. An unexpected disconnect after
+connection also resets the controls and refreshes credits; an intentional
+hangup does not show a connection error.
+
+Refusals and agent errors carry stable codes, listed with their messages in
+`lib/calls/errors.ts`. call-token returns `code` in its error responses
+(`insufficient_credits`, `free_call_limit`, `paid_character`, `paid_scene`,
+`character_not_found`, `voice_not_found`); the agent's `pg.error` RPC sends
+`active_call`, `insufficient_credits` or `instructions_rejected`. An unknown
+code shows a generic localized message.
 
 In this audio-only wrapper, `LiveKitRoom.onError` after connection reports
 microphone acquisition or publishing failures. Every such error shows localized
@@ -541,7 +553,8 @@ The creator's Clone a voice dialog records or uploads a sample and saves a
 profile through the save-only `/api/clone-voice` path, using the call
 language when the configured provider supports it and English otherwise. The Clone page links
 back with `?custom=1&voice=<id>` to start a character with that voice. The
-call page reads that query on the server and passes it to `CallExperience`
+call page reads its query on the server: `?preset=<id>` selects a loaded
+character and opens its panel, and `custom` and `voice` reach `CallExperience`
 as `returnFromClone`. `PlaygroundStateProvider` rewrites the URL on mount,
 before `LiveKitRoom` renders its children. Prompt text never enters the URL;
 only `?preset=<id>` is written.

@@ -10,11 +10,15 @@ import {
   callTokenRequestSchema,
 } from '@/lib/calls/call-token';
 import { characterPrompt, toCharacter } from '@/lib/calls/characters';
+import type { CallErrorCode } from '@/lib/calls/errors';
 import { DEFAULT_CALL_LANGUAGE } from '@/lib/calls/languages';
 import { APIErrorResponse } from '@/lib/error-ts';
 import { getVerifiedClaims } from '@/lib/supabase/auth';
 import { resolveCallVoice } from '@/lib/supabase/call-voices';
-import { MINIMUM_CREDITS_FOR_CALL } from '@/lib/supabase/constants';
+import {
+  FREE_USER_CALL_LIMIT_SECONDS,
+  MINIMUM_CREDITS_FOR_CALL,
+} from '@/lib/supabase/constants';
 import {
   getCallCharacter,
   getCredits,
@@ -22,6 +26,10 @@ import {
   isFreeUserOverCallLimit,
 } from '@/lib/supabase/queries';
 import { createClient } from '@/lib/supabase/server';
+
+/** A refusal the browser explains by its `code`. */
+const refuse = (message: string, status: number, code: CallErrorCode) =>
+  APIErrorResponse(message, status, { code });
 
 async function resolveMemoryPreference(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -67,17 +75,17 @@ export async function POST(request: Request) {
         extra: { currentCreditsAmount: currentAmount },
         user: { email: user.email, id: user.id },
       });
-      return APIErrorResponse('Insufficient credits', 402);
+      return refuse('Insufficient credits', 402, 'insufficient_credits');
     }
 
-    // Check if free user has exceeded the 5-minute call limit
     if (isOverCallLimit) {
       logger.info('Free user exceeded call limit', {
         user: { email: user.email, id: user.id },
       });
-      return APIErrorResponse(
-        'Free users are limited to 5 minutes of calls. Please upgrade to continue.',
+      return refuse(
+        `Free users are limited to ${FREE_USER_CALL_LIMIT_SECONDS / 60} minutes of calls`,
         403,
+        'free_call_limit',
       );
     }
 
@@ -127,27 +135,28 @@ export async function POST(request: Request) {
     // Prompt, model, voice and temperature come from the saved character.
     const row = await getCallCharacter(characterId);
     if (!row) {
-      return APIErrorResponse('Character not found', 404);
+      return refuse('Character not found', 404, 'character_not_found');
     }
     const character = toCharacter(row);
 
     let isPaidUser: boolean | undefined;
     if (!character.isPublic) {
       if (row.user_id !== user.id) {
-        return APIErrorResponse('Character not found', 404);
+        return refuse('Character not found', 404, 'character_not_found');
       }
       isPaidUser = await hasUserPaid(user.id);
       if (!isPaidUser) {
-        return APIErrorResponse(
+        return refuse(
           'Custom characters require a paid account',
           403,
+          'paid_character',
         );
       }
     }
 
     const prompt = characterPrompt(character, language);
     if (!prompt.trim()) {
-      return APIErrorResponse('Character prompt not found', 404);
+      return refuse('Character prompt not found', 404, 'character_not_found');
     }
 
     const { sessionConfig } = character;
@@ -156,14 +165,14 @@ export async function POST(request: Request) {
       captureException('Voice not found', {
         extra: { voice: sessionConfig.voice },
       });
-      return APIErrorResponse('Voice not found', 404);
+      return refuse('Voice not found', 404, 'voice_not_found');
     }
 
     const scene = sceneText?.trim() ?? '';
     if (scene) {
       isPaidUser ??= await hasUserPaid(user.id);
       if (!isPaidUser) {
-        return APIErrorResponse('Scenes require a paid account', 403);
+        return refuse('Scenes require a paid account', 403, 'paid_scene');
       }
     }
 

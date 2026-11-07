@@ -1,8 +1,14 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ConnectionProvider, useConnection } from '@/hooks/use-connection';
+import {
+  CallSessionProvider,
+  useCallSession,
+} from '@/components/call/call-session';
+import messages from '@/messages/en.json';
 
 // What the browser shows when call-token refuses a call.
 
@@ -14,33 +20,34 @@ vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => mocks }));
 vi.mock('@/lib/supabase/client', () => ({
   default: () => ({ auth: { getClaims: vi.fn() } }),
 }));
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string, values?: Record<string, unknown>) =>
-    values ? `${key} ${JSON.stringify(values)}` : key,
-}));
 vi.mock('sonner', () => ({ toast: { error: mocks.toastError } }));
-vi.mock('@/hooks/use-playground-state', () => ({
-  usePlaygroundState: () => ({
-    pgState: {
-      language: 'de',
-      sceneInstructions: 'Meet me on the late train.',
-      selectedPresetId: '123e4567-e89b-12d3-a456-426614174000',
-      selectedSceneId: 'bartender-after-closing',
-    },
-  }),
-}));
 
-function respond(status: number) {
+const request = {
+  characterId: '123e4567-e89b-12d3-a456-426614174000',
+  language: 'de',
+  sceneId: 'bartender-after-closing',
+  sceneText: 'Meet me on the late train.',
+} as const;
+
+function wrapper({ children }: { children: ReactNode }) {
+  return (
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <CallSessionProvider>{children}</CallSessionProvider>
+    </NextIntlClientProvider>
+  );
+}
+
+function respond(status: number, body: object = {}) {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue(Response.json({ error: 'Refused' }, { status })),
+    vi.fn().mockResolvedValue(Response.json(body, { status })),
   );
 }
 
 async function startCall() {
-  const { result } = renderHook(useConnection, { wrapper: ConnectionProvider });
+  const { result } = renderHook(useCallSession, { wrapper });
   await act(async () => {
-    await result.current.connect().catch(() => undefined);
+    await result.current.connect(request);
   });
   return result;
 }
@@ -57,36 +64,45 @@ describe('call-token requests', () => {
     await startCall();
     const [url, init] = vi.mocked(fetch).mock.calls[0];
     expect(url).toBe('/api/call-token');
-    expect(JSON.parse(String(init?.body))).toEqual({
-      characterId: '123e4567-e89b-12d3-a456-426614174000',
-      language: 'de',
-      sceneId: 'bartender-after-closing',
-      sceneText: 'Meet me on the late train.',
-    });
+    expect(JSON.parse(String(init?.body))).toEqual(request);
   });
 });
 
 describe('call-token errors in the browser', () => {
-  it('names the minimum credits for a call', async () => {
-    respond(402);
-    await startCall();
-    expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
-      'notEnoughCredits {"count":1000}',
-    );
-  });
-
-  it('shows the free call limit for a refused call', async () => {
-    respond(403);
-    await startCall();
-    expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
-      'freeUserCallLimitExceeded',
-    );
-  });
-
-  it.each([400, 404, 500])('shows nothing for status %i', async (status) => {
-    respond(status);
+  it.each([
+    [
+      402,
+      'insufficient_credits',
+      messages.call.notEnoughCredits.replace('{count}', '1000'),
+    ],
+    [403, 'free_call_limit', messages.call.freeUserCallLimitExceeded],
+    [403, 'paid_character', messages.call.upgradeRequired],
+    [403, 'paid_scene', messages.call.upgradeRequired],
+    [404, 'character_not_found', messages.call.characterUnavailable],
+    [404, 'voice_not_found', messages.call.characterUnavailable],
+  ])('explains a %i %s refusal', async (status, code, message) => {
+    respond(status, { code, error: 'Refused' });
     const result = await startCall();
-    expect(mocks.toastError).not.toHaveBeenCalled();
-    expect(result.current.shouldConnect).toBe(false);
+    expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(message);
+    expect(result.current.session.phase.name).toBe('idle');
+  });
+
+  it.each([400, 401, 500])(
+    'reports a failed connection for status %i',
+    async (status) => {
+      respond(status, { error: 'Refused' });
+      await startCall();
+      expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+        messages.call.connectionFailed,
+      );
+    },
+  );
+
+  it('reports a failed connection when the request cannot be sent', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+    await startCall();
+    expect(mocks.toastError).toHaveBeenCalledExactlyOnceWith(
+      messages.call.connectionFailed,
+    );
   });
 });

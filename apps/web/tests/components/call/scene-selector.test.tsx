@@ -20,12 +20,14 @@ const mockPgStateRef: { current: Partial<PlaygroundState> } = {
 // Mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('@livekit/components-react', () => ({
-  useConnectionState: () => mockConnectionState.value,
-}));
-
-vi.mock('livekit-client', () => ({
-  ConnectionState: { Connected: 'connected', Disconnected: 'disconnected' },
+vi.mock('@/components/call/call-session', () => ({
+  useCallSession: () => ({
+    session: {
+      phase: {
+        name: mockConnectionState.value === 'connected' ? 'connected' : 'idle',
+      },
+    },
+  }),
 }));
 
 vi.mock('lucide-react/dynamic', () => ({
@@ -43,10 +45,6 @@ vi.mock('next-intl', () => ({
     };
     return labels[key] ?? key;
   },
-}));
-
-vi.mock('@/hooks/use-connection', () => ({
-  useConnection: () => ({}),
 }));
 
 vi.mock('@/hooks/use-playground-state', () => ({

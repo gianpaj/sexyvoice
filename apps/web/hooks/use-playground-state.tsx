@@ -137,6 +137,8 @@ interface PlaygroundStateProviderProps {
   defaultPresets?: Character[];
   initialCustomCharacters?: Character[];
   initialState?: Partial<PlaygroundState>;
+  /** The loaded character a `?preset=` link named; the page checks it. */
+  linkedCharacterId?: string | null;
 }
 
 const EMPTY_PRESETS: Character[] = [];
@@ -146,6 +148,7 @@ export const PlaygroundStateProvider = ({
   defaultPresets = EMPTY_PRESETS,
   initialCustomCharacters = EMPTY_PRESETS,
   initialState,
+  linkedCharacterId = null,
 }: PlaygroundStateProviderProps) => {
   const helpers = useMemo(
     () => createPlaygroundStateHelpers(defaultPresets),
@@ -168,27 +171,15 @@ export const PlaygroundStateProvider = ({
     helpers.updateBrowserUrl(presetId);
   };
 
-  // Mount only. The URL is read once and rewritten to match; re-running this
-  // against a later render's props would drop a character created in this
-  // session.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reads the URL once on mount
+  // Mount only: rewrite the page link to the URL contract. Old links carry
+  // prompts in the query string, and a `preset` the page did not load
+  // belongs to another user or a deleted character. On a full page load this
+  // runs before Next patches `replaceState`, so the current state is kept.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the page link is read once
   useEffect(() => {
-    if (!window.location.search) return;
-
-    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
-    const loadedPreset = [
-      ...helpers.getDefaultPresets(),
-      ...initialCustomCharacters,
-    ].find((preset) => preset.id === presetId);
-
-    if (loadedPreset) {
-      dispatch({ payload: loadedPreset.id, type: 'SET_SELECTED_PRESET_ID' });
+    if (window.location.search) {
+      helpers.updateBrowserUrl(linkedCharacterId, window.history.state);
     }
-    // Old links carry prompts in the query string. An ID this page did not
-    // load belongs to another user or a deleted character, and call-token
-    // rejects both, so the link is dropped. On a full page load this runs
-    // before Next patches `replaceState`, so the current state is kept.
-    helpers.updateBrowserUrl(loadedPreset?.id ?? null, window.history.state);
   }, []);
 
   return (

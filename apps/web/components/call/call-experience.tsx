@@ -1,24 +1,14 @@
 'use client';
 
-import { useConnectionState } from '@livekit/components-react';
-import { ConnectionState } from 'livekit-client';
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
-import {
-  type ReactNode,
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-} from 'react';
+import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
   type CustomCallDraft,
   newCharacterDraft,
 } from '@/data/playground-state';
-import { useCallTimer } from '@/hooks/use-call-timer';
-import { useConnection } from '@/hooks/use-connection';
 import { useDeferredCharacterDelete } from '@/hooks/use-deferred-character-delete';
 import { useMicrophonePermission } from '@/hooks/use-microphone-permission';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
@@ -40,6 +30,7 @@ import {
 import type { CallCloneProvider } from '@/lib/clone/call-voice-config';
 import { CallEndedView } from './call-ended-view';
 import { CallPanel } from './call-panel';
+import { formatCallTime, inRoom, useCallSession } from './call-session';
 import { CharacterCreator, type CreatorIntent } from './character-creator';
 import { CharacterPicker } from './character-picker';
 
@@ -57,13 +48,13 @@ interface CallExperienceProps {
   /** Marks the page as rendering E2E fixtures for Playwright. */
   e2eFixtures?: boolean;
   isPaidUser: boolean;
+  /** A loaded character the page link named with `?preset=`: opens its panel. */
+  linkedCharacterId?: string | null;
   /** Credits summary shown above the picker on small screens. */
   mobileCredits?: ReactNode;
   /**
    * Set when the Clone page links back with `?custom=1&voice=<id>`: open the
-   * creator with that saved voice. The page reads the query on the server
-   * because `PlaygroundStateProvider` rewrites the URL before LiveKitRoom
-   * mounts this component.
+   * creator with that saved voice.
    */
   returnFromClone?: { voiceId: string | null } | null;
   savedVoices: SavedCallVoice[];
@@ -100,63 +91,54 @@ function CallExperienceScreens({
   children,
   e2eFixtures,
   isPaidUser,
+  linkedCharacterId,
   mobileCredits,
   returnFromClone,
   savedVoices: initialSavedVoices,
 }: CallExperienceProps) {
   const t = useTranslations('call');
   const { pgState, dispatch, helpers, selectPreset } = usePlaygroundState();
-  const { connect, shouldConnect } = useConnection();
-  const connectionState = useConnectionState();
-  const { formattedTime } = useCallTimer(connectionState);
+  const { connect, dismiss, session } = useCallSession();
   const microphone = useMicrophonePermission();
   const player = useSamplePlayer();
   const { flush: flushDeletes, remove } = useDeferredCharacterDelete();
 
-  const [view, setView] = useState<View>({ name: 'picker' });
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-  const [callPresetId, setCallPresetId] = useState<string | null>(null);
-  const [ended, setEnded] = useState<{
-    duration: string;
-    presetId: string;
-  } | null>(null);
-  const [connecting, setConnecting] = useState(false);
   const [savedVoices, setSavedVoices] = useState(initialSavedVoices);
-
   const allPresets = helpers.getAllPresets(pgState);
   const findPreset = (id: string | null) =>
     allPresets.find((preset) => preset.id === id);
   const canCreate =
     isPaidUser && pgState.customCharacters.length < MAX_CUSTOM_CHARACTERS;
 
-  // A call shows from a successful token request until LiveKit disconnects.
-  // The last connected duration outlives the timer, which resets to zero.
-  const inCall =
-    callPresetId !== null &&
-    (shouldConnect || connectionState !== ConnectionState.Disconnected);
-  const lastDuration = useRef('');
-  const reachedConnected = useRef(false);
-  useEffect(() => {
-    if (connectionState === ConnectionState.Connected) {
-      reachedConnected.current = true;
-      lastDuration.current = formattedTime;
-    }
-  }, [connectionState, formattedTime]);
-  // RoomWrapper clears `shouldConnect` when LiveKit drops or fails the room.
-  useEffect(() => {
-    if (inCall || callPresetId === null) return;
-    if (reachedConnected.current) {
-      setEnded({ duration: lastDuration.current, presetId: callPresetId });
-    }
-    reachedConnected.current = false;
-    setCallPresetId(null);
-  }, [inCall, callPresetId]);
+  // A return from Clone reopens the creator with the draft and the new
+  // voice; a link to a character opens its panel.
+  const openCreatorFromClone = Boolean(returnFromClone && canCreate);
+  const [view, setView] = useState<View>(() =>
+    openCreatorFromClone
+      ? {
+          intent: {
+            draft: returnedCloneDraft(
+              savedVoices.find(({ id }) => id === returnFromClone?.voiceId),
+            ),
+            kind: 'create',
+          },
+          name: 'creator',
+        }
+      : { name: 'picker' },
+  );
+  const [panelOpen, setPanelOpen] = useState(
+    !openCreatorFromClone && Boolean(linkedCharacterId),
+  );
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  const { phase } = session;
+  const inCall = inRoom(phase);
+  const connectingId = phase.name === 'requesting' ? phase.characterId : null;
 
   const showView = (next: View) => {
     player.stop();
     setPanelOpen(false);
-    setEnded(null);
+    dismiss();
     setView(next);
     window.scrollTo({ top: 0 });
   };
@@ -172,70 +154,32 @@ function CallExperienceScreens({
     setPanelOpen(true);
   };
 
-  // Links to a character open its panel; a return from Clone reopens the
-  // creator with the draft and the new voice.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: initial URL only
-  useEffect(() => {
-    if (returnFromClone && canCreate) {
-      const voice = savedVoices.find(
-        ({ id }) => id === returnFromClone.voiceId,
-      );
-      setView({
-        intent: { draft: returnedCloneDraft(voice), kind: 'create' },
-        name: 'creator',
-      });
-      return;
-    }
-    const presetId = helpers.getPresetIdFromUrlParams(window.location.search);
-    if (findPreset(presetId)) setPanelOpen(true);
-  }, []);
-
-  const startCall = async () => {
-    if (connecting) return;
-    const presetId = pgState.selectedPresetId;
-    setConnecting(true);
-    try {
-      if (!(await microphone.request())) {
-        setEnded(null);
-        setPanelOpen(true);
-        return;
-      }
-      player.stop();
-      await connect();
-      setCallPresetId(presetId);
-      setEnded(null);
-      setPanelOpen(false);
-    } catch (error) {
-      console.error('Connection failed:', error);
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  // `connect` reads the selected character from state, so a Call outside the
-  // panel selects it first and starts once that render has happened.
-  const [pendingCallId, setPendingCallId] = useState<string | null>(null);
-  const callCharacter = (presetId: string) => {
-    if (connecting || pendingCallId) return;
-    selectPreset(presetId);
-    setPendingCallId(presetId);
-  };
-  const startPendingCall = useEffectEvent(() => {
-    const preset = findPreset(pendingCallId);
-    setPendingCallId(null);
-    if (!preset) return;
+  const startCall = async (characterId: string) => {
+    const character = findPreset(characterId);
+    if (!character) return;
+    selectPreset(characterId);
     // The panel explains what is missing and how to fix it.
-    if (!callReadiness(preset, pgState.language, savedVoices).canCall) {
+    if (!callReadiness(character, pgState.language, savedVoices).canCall) {
       setPanelOpen(true);
       return;
     }
-    startCall().catch(() => undefined);
-  });
-  useEffect(() => {
-    if (pendingCallId && pgState.selectedPresetId === pendingCallId) {
-      startPendingCall();
+    player.stop();
+    const result = await connect(
+      {
+        characterId,
+        language: pgState.language,
+        sceneId: pgState.selectedSceneId,
+        sceneText: pgState.sceneInstructions,
+      },
+      microphone.request,
+    );
+    if (result === 'blocked') {
+      dismiss();
+      setPanelOpen(true);
+    } else if (result === 'started') {
+      setPanelOpen(false);
     }
-  }, [pendingCallId, pgState.selectedPresetId]);
+  };
 
   const handleSaved = (preset: Character, updated: boolean) => {
     dispatch({ payload: preset, type: 'SAVE_CUSTOM_CHARACTER' });
@@ -254,19 +198,20 @@ function CallExperienceScreens({
     setPanelOpen(false);
   };
 
-  const callPreset = findPreset(callPresetId);
-  const endedPreset = ended ? findPreset(ended.presetId) : undefined;
+  const callPreset = inRoom(phase) ? findPreset(phase.characterId) : undefined;
+  const { ended } = session;
+  const endedPreset = ended ? findPreset(ended.characterId) : undefined;
 
   let screen: ReactNode;
-  if (inCall && callPreset) {
-    screen = <InCallView elapsed={formattedTime} preset={callPreset} />;
+  if (callPreset) {
+    screen = <InCallView preset={callPreset} />;
   } else if (ended && endedPreset) {
     screen = (
       <CallEndedView
-        connecting={connecting}
-        duration={ended.duration}
-        onBack={() => setEnded(null)}
-        onCallAgain={startCall}
+        connecting={connectingId === endedPreset.id}
+        duration={formatCallTime(ended.seconds)}
+        onBack={dismiss}
+        onCallAgain={() => startCall(endedPreset.id)}
         onEdit={() => openCreator({ kind: 'edit', presetId: endedPreset.id })}
         onRemix={
           canCreate
@@ -284,7 +229,7 @@ function CallExperienceScreens({
         intent={view.intent}
         onCall={(presetId) => {
           showView({ name: 'picker' });
-          callCharacter(presetId);
+          startCall(presetId).catch(() => undefined);
         }}
         onCancel={() => showView({ name: 'picker' })}
         onDelete={handleDelete}
@@ -306,12 +251,10 @@ function CallExperienceScreens({
         </div>
         {mobileCredits}
         <CharacterPicker
-          connectingId={
-            pendingCallId ?? (connecting ? pgState.selectedPresetId : null)
-          }
+          connectingId={connectingId}
           highlightId={highlightId}
           isPaidUser={isPaidUser}
-          onCall={callCharacter}
+          onCall={startCall}
           onCreate={() => openCreator({ kind: 'create' })}
           onDelete={handleDelete}
           onDuplicate={(presetId) =>
@@ -336,7 +279,7 @@ function CallExperienceScreens({
       {screen}
       <CallPanel
         callVoices={callVoices}
-        connecting={connecting}
+        connecting={connectingId !== null}
         isPaidUser={isPaidUser}
         microphone={microphone.status}
         onDelete={() => selected && handleDelete(selected)}
@@ -353,7 +296,7 @@ function CallExperienceScreens({
         onRetryMicrophone={() => {
           microphone.request().catch(() => undefined);
         }}
-        onStartCall={startCall}
+        onStartCall={() => selected && startCall(selected.id)}
         open={panelOpen && !inCall}
         savedVoices={savedVoices}
       />

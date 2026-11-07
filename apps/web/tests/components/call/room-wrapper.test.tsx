@@ -10,11 +10,14 @@ import {
 } from '@testing-library/react';
 import { DisconnectReason, PublishTrackError } from 'livekit-client';
 import { NextIntlClientProvider, useTranslations } from 'next-intl';
-import { type PropsWithChildren, useState } from 'react';
+import type { PropsWithChildren } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  CallSessionProvider,
+  useCallSession,
+} from '@/components/call/call-session';
 import { RoomWrapper } from '@/components/call/room-wrapper';
-import { ConnectionProvider, useConnection } from '@/hooks/use-connection';
 import messages from '@/messages/en.json';
 
 const mocks = vi.hoisted(() => ({
@@ -33,9 +36,7 @@ vi.mock('@livekit/components-react', () => ({
   RoomAudioRenderer: () => null,
   StartAudio: () => null,
 }));
-vi.mock('@/hooks/use-agent', () => ({
-  AgentProvider: ({ children }: PropsWithChildren) => children,
-}));
+vi.mock('@/components/call/call-agent', () => ({ CallAgent: () => null }));
 vi.mock('@tanstack/react-query', () => ({
   useQueryClient: () => mocks.queryClient,
 }));
@@ -43,51 +44,43 @@ vi.mock('@/lib/supabase/client', () => {
   const client = { auth: { getClaims: mocks.getClaims } };
   return { default: () => client };
 });
-vi.mock('@/hooks/use-playground-state', () => ({
-  usePlaygroundState: () => ({
-    pgState: {
-      language: 'en',
-      sceneInstructions: '',
-      selectedPresetId: 'character-id',
-      selectedSceneId: null,
-    },
-  }),
-}));
 vi.mock('sonner', () => ({
   toast: { error: mocks.toastError, info: mocks.toastInfo },
 }));
 
-// Mirrors the call panel's start button: busy from the click until the room
-// is released.
+// Mirrors the call panel's start button: busy from the click until the call
+// ends.
 function StartCallButton() {
-  const { connect, shouldConnect } = useConnection();
+  const { connect, session } = useCallSession();
   const t = useTranslations('call');
-  const [connecting, setConnecting] = useState(false);
-  const busy = connecting || shouldConnect;
-
-  const startCall = async () => {
-    setConnecting(true);
-    try {
-      await connect();
-    } catch (error) {
-      console.error('Connection failed:', error);
-    } finally {
-      setConnecting(false);
-    }
-  };
+  const busy = session.phase.name !== 'idle';
 
   return (
-    <button disabled={busy} onClick={startCall} type="button">
+    <button
+      disabled={busy}
+      onClick={() => connect({ characterId: 'character-id' })}
+      type="button"
+    >
       {busy ? t('connecting') : t('startCall')}
     </button>
   );
 }
 
 function EndCallButton() {
-  const { disconnect } = useConnection();
+  const { disconnect } = useCallSession();
   return (
-    <button onClick={() => disconnect()} type="button">
+    <button onClick={disconnect} type="button">
       End call
+    </button>
+  );
+}
+
+// Stands in for the agent joining the room.
+function AgentJoinsButton() {
+  const { agentChanged } = useCallSession();
+  return (
+    <button onClick={() => agentChanged(true, 'listening')} type="button">
+      Agent joins
     </button>
   );
 }
@@ -95,12 +88,13 @@ function EndCallButton() {
 function TestCall() {
   return (
     <NextIntlClientProvider locale="en" messages={messages}>
-      <ConnectionProvider>
+      <CallSessionProvider>
         <RoomWrapper>
           <StartCallButton />
           <EndCallButton />
+          <AgentJoinsButton />
         </RoomWrapper>
-      </ConnectionProvider>
+      </CallSessionProvider>
     </NextIntlClientProvider>
   );
 }
@@ -191,6 +185,7 @@ describe('call connection deadline', () => {
     await startCall();
     const signal = vi.mocked(fetch).mock.calls[0][1]?.signal;
     act(() => mocks.roomProps?.onConnected?.());
+    fireEvent.click(screen.getByRole('button', { name: 'Agent joins' }));
 
     await act(async () => vi.advanceTimersByTime(60_000));
 
@@ -223,6 +218,7 @@ describe('call connection deadline', () => {
     await startCall();
     act(() => vi.advanceTimersByTime(15_000));
     act(() => mocks.roomProps?.onConnected?.());
+    fireEvent.click(screen.getByRole('button', { name: 'Agent joins' }));
 
     await act(async () => vi.advanceTimersByTime(60_000));
 

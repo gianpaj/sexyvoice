@@ -1,7 +1,5 @@
 'use client';
 
-import { useConnectionState } from '@livekit/components-react';
-import { ConnectionState } from 'livekit-client';
 import { DynamicIcon } from 'lucide-react/dynamic';
 import { useTranslations } from 'next-intl';
 
@@ -15,6 +13,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { callScenes } from '@/data/call-scenes';
 import { usePlaygroundState } from '@/hooks/use-playground-state';
+import { useCallSession } from './call-session';
 
 const NO_SCENE_VALUE = 'none';
 
@@ -23,8 +22,7 @@ interface SceneSelectorProps {
 }
 
 export function SceneSelector({ isPaidUser = false }: SceneSelectorProps) {
-  const connectionState = useConnectionState();
-  const isConnected = connectionState === ConnectionState.Connected;
+  const isConnected = useCallSession().session.phase.name === 'connected';
   const t = useTranslations('call');
   const { pgState, dispatch } = usePlaygroundState();
   const selectedValue = pgState.selectedSceneId ?? NO_SCENE_VALUE;

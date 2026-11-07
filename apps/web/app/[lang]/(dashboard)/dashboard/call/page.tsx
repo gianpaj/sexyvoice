@@ -2,10 +2,10 @@ import { getTranslations } from 'next-intl/server';
 
 import { CallExperience } from '@/components/call/call-experience';
 import { CallFaq } from '@/components/call/call-faq';
+import { CallSessionProvider } from '@/components/call/call-session';
 import { RoomWrapper } from '@/components/call/room-wrapper';
 import CreditsSection from '@/components/credits-section';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { ConnectionProvider } from '@/hooks/use-connection';
 import { PlaygroundStateProvider } from '@/hooks/use-playground-state';
 import { toCharacter } from '@/lib/calls/characters';
 import { toCallLanguage } from '@/lib/calls/languages';
@@ -36,11 +36,12 @@ export default async function Call(props: {
   params: Promise<{ lang: Locale }>;
   searchParams: Promise<{
     custom?: string | string[];
+    preset?: string | string[];
     voice?: string | string[];
   }>;
 }) {
   const { lang } = await props.params;
-  const { custom, voice } = await props.searchParams;
+  const { custom, preset, voice } = await props.searchParams;
   const returnFromClone =
     custom === '1'
       ? { voiceId: typeof voice === 'string' ? voice : null }
@@ -86,6 +87,10 @@ export default async function Call(props: {
 
   const defaultPresets = publicCharacters.map(toCharacter);
   const initialCustomCharacters = userCharacters.map(toCharacter);
+  const linkedCharacterId =
+    [...defaultPresets, ...initialCustomCharacters].find(
+      ({ id }) => id === preset,
+    )?.id ?? null;
 
   return (
     <PlaygroundStateProvider
@@ -93,10 +98,11 @@ export default async function Call(props: {
       initialCustomCharacters={initialCustomCharacters}
       initialState={{
         language: toCallLanguage(lang),
-        selectedPresetId: defaultPresets[0]?.id ?? null,
+        selectedPresetId: linkedCharacterId ?? defaultPresets[0]?.id ?? null,
       }}
+      linkedCharacterId={linkedCharacterId}
     >
-      <ConnectionProvider>
+      <CallSessionProvider>
         <TooltipProvider>
           <RoomWrapper>
             <CallExperience
@@ -104,6 +110,7 @@ export default async function Call(props: {
               callVoices={callVoices}
               e2eFixtures={Boolean(e2e)}
               isPaidUser={isPaidUser}
+              linkedCharacterId={linkedCharacterId}
               mobileCredits={
                 <div className="lg:hidden" data-testid="call-mobile-credits">
                   <CreditsSection
@@ -131,7 +138,7 @@ export default async function Call(props: {
             </CallExperience>
           </RoomWrapper>
         </TooltipProvider>
-      </ConnectionProvider>
+      </CallSessionProvider>
     </PlaygroundStateProvider>
   );
 }

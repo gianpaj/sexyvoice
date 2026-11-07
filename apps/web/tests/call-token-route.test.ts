@@ -350,6 +350,47 @@ describe('call-token agent contract', () => {
   });
 });
 
+describe('call-token refusals', () => {
+  const codeOf = async (response: Response) =>
+    ((await response.json()) as { code?: string }).code;
+
+  it('names insufficient credits and the free call limit', async () => {
+    vi.mocked(queries.getCredits).mockResolvedValueOnce(999);
+    expect(await codeOf(await requestCall({ characterId: predefinedId }))).toBe(
+      'insufficient_credits',
+    );
+
+    vi.mocked(queries.isFreeUserOverCallLimit).mockResolvedValueOnce(true);
+    expect(await codeOf(await requestCall({ characterId: predefinedId }))).toBe(
+      'free_call_limit',
+    );
+  });
+
+  it('names a deleted character and a deleted voice', async () => {
+    mocks.characters.delete(predefinedId);
+    expect(await codeOf(await requestCall({ characterId: predefinedId }))).toBe(
+      'character_not_found',
+    );
+
+    vi.mocked(queries.hasUserPaid).mockResolvedValue(true);
+    mocks.reference.mockResolvedValue({ data: null, error: null });
+    expect(await codeOf(await requestCall({ characterId: customId }))).toBe(
+      'voice_not_found',
+    );
+  });
+
+  it('names the plan a custom character and a scene need', async () => {
+    expect(await codeOf(await requestCall({ characterId: customId }))).toBe(
+      'paid_character',
+    );
+    expect(
+      await codeOf(
+        await requestCall({ characterId: predefinedId, sceneText: 'Hi' }),
+      ),
+    ).toBe('paid_scene');
+  });
+});
+
 describe('call-token scenes', () => {
   it('requires a paid account for scene text', async () => {
     const response = await requestCall({
