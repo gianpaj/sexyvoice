@@ -4,11 +4,12 @@ import type { PolicyPage, Post } from 'contentlayer/generated';
 // Each post covers one listing rule: translated, untranslated, without a cover
 // image, and a draft.
 
+// Compiled MDX shared by every fixture; the markdown routes read `raw`.
+const MDX_CODE =
+  "return { default: () => _jsx_runtime.jsx('p', { children: 'Body' }) };";
+
 function mdxBody(text: string) {
-  return {
-    code: `return { default: () => _jsx_runtime.jsx('p', { children: ${JSON.stringify(text)} }) };`,
-    raw: `${text}\n`,
-  };
+  return { code: MDX_CODE, raw: `${text}\n` };
 }
 
 function rawData(dir: string, file: string) {
